@@ -1,0 +1,33 @@
+{
+  "name": "lively.ast",
+  "version": "0.1.0",
+  "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha tests/tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.ast.git"
+  },
+  "keywords": [
+    "LivelyWeb"
+  ],
+  "author": "Robert Krahn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LivelyKernel/lively.ast/issues"
+  },
+  "homepage": "https://github.com/LivelyKernel/lively.ast",
+  "dependencies": {
+    "acorn": "git://github.com/marijnh/acorn.git#master",
+    "lively.lang": "git://github.com/LivelyKernel/lively.lang.git#master"
+  },
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "mocha": "^2.0.1"
+  }
+}
