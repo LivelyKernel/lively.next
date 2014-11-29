@@ -1,6 +1,15 @@
 /*global window, process, global*/
 
-;(function(acorn, exports) {
+;(function(run) {
+  var isCommonJS = typeof module !== "undefined" && module.require;
+  var _acorn = isCommonJS ? require("acorn") : acorn;
+  var _lively = typeof lively !== "undefined" ? lively : {};
+  var _livelyLang = isCommonJS ? require("lively.lang") : _lively.lang;
+  var _exports = isCommonJS ? exports : _lively.ast || (_lively.ast = {});
+  run(_acorn, _lively, _livelyLang, _exports);
+})(function(acorn, lively, lang, exports) {
+
+  exports.acorn = acorn;
 
   exports.parse = function(source, options) {
     // proxy function to acorn.parse.
@@ -22,7 +31,6 @@
 
     options = options || {};
     options.ecmaVersion = 6;
-
     if (options.withComments) {
       // record comments
       delete options.withComments;
@@ -57,7 +65,7 @@
 
     function assignCommentsToBlockNodes(commentData) {
       comments.forEach(function(comment) {
-        var node = lively.ast.acorn.nodesAt(comment.start, ast)
+        var node = exports.nodesAt(comment.start, ast)
             .reverse().detect(function(node) {
               return node.type === 'BlockStatement' || node.type === 'Program'; })
         if (!node) node = ast;
@@ -166,7 +174,7 @@
     if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
     try {
       // we only parse to find errors
-      ast = lively.ast.acorn.parse(safeSource || source, options);
+      ast = exports.parse(safeSource || source, options);
       if (safeSource) ast = null; // we parsed only for finding errors
       else if (options.addSource) acorn.walk.addSource(ast, source);
     } catch (e) { err = e; }
@@ -1022,7 +1030,4 @@
 
 // }); // end of module
 
-})(typeof acorn !== "undefined" ? acorn : require("acorn"),
-   typeof exports !== "undefined" ? exports :
-   (typeof lively !== "undefined" ?
-     (lively.ast = {}) : (this["lively.ast"] = {})));
+});

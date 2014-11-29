@@ -24,6 +24,7 @@
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
     "acorn": "git://github.com/marijnh/acorn.git#master",
+    "escodegen": "^1.4.1",
     "lively.lang": "git://github.com/LivelyKernel/lively.lang.git#master"
   },
   "devDependencies": {
