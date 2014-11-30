@@ -1,14 +1,40 @@
 lively.require("lively.lang.Runtime").toRun(function() {
 
-  var r = lively.lang.Runtime.Registry;
-  r.addProject(r.default(), {
+  var r = lively.lang.Runtime;
+  r.Registry.addProject(r.Registry.default(), {
     name: "lively.ast",
     rootDir: "/home/lively/expt/lively.ast/",
 
+    reloadAll: function(project, thenDo) {
+      // var project = r.Registry.default().projects["lively.ast"];
+
+      // project.reloadAll(project, function(err) { err ? show(err.stack || String(err)) : alertOK("reloaded!"); })
+      var files = ["./env.js",
+                   "./index.js",
+                   "./lib/acorn-extension.js",
+                   "./lib/mozilla-ast-visitors.js",
+                   "./lib/mozilla-ast-visitor-interface.js"];
+
+      lively.lang.fun.composeAsync(
+        function readFiles(n) {
+          lively.lang.arr.mapAsyncSeries(files,
+            function(fn,_,n) {
+              lively.shell.cat(fn, {cwd: project.rootDir},
+              function(err, c) { n(err, {name: fn, content: c}); });
+            }, n)
+        },
+        function(fileContents, next) {
+          lively.lang.arr.mapAsyncSeries(fileContents,
+            function(ea,_,n) { r.Project.processChange(project, ea.name, ea.content, n); },
+            next);
+        }
+      )(thenDo);
+    },
+
     resources: {
 
-      "interface code": {
-        matches: /(lib\/.*\.js|index\.js)$/,
+      "env.js": {
+        matches: /env.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
           var state = project.state || {};
           var withAcornLibDo = state.acorn ?
@@ -16,18 +42,27 @@ lively.require("lively.lang.Runtime").toRun(function() {
             loadFreshAcorn;
           withAcornLibDo(function(err, acorn) {
             if (err) return whenHandled(err);
-            state = project.state = lively.lang.obj.extend(state, {
-              acorn: acorn,
-              escodegen: Global.escodegen,
+            state = project.state = {
+              acorn: acorn, escodegen: escodegen,
               lively: {
                 lang: lively.lang,
-                ast: lively.lang.Path("state.lively.ast").get(project) || {}
+                ast: lively.lang.Path("state.lively.ast").get(project) || {},
+                'lively.lang_env': null
               }
-            });
+            }
+            state.window = state;
             evalCode(change.newSource, state, change.resourceId);
-            lively.ast2 = state.lively.ast;
       	  	whenHandled();
           });
+        }
+      },
+
+      "interface code": {
+        matches: /(lib\/.*|index)\.js$/,
+        changeHandler: function(change, project, resource, whenHandled) {
+          var state = project.state || {};
+          evalCode(change.newSource, state, change.resourceId);
+    	  	whenHandled();
         }
       },
 

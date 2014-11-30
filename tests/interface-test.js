@@ -1,9 +1,9 @@
 /*global process, beforeEach, afterEach, describe, it*/
 
 var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
-var ast = typeof lively !== "undefined" ? lively.ast : module.require("../index.js");
-
-// var ast = lively.ast2;
+var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
+var env = module && module.require ? module.require("../env") : lively['lively.lang_env'];
+var ast = env['lively.ast'];
 
 describe('interface', function() {
   it('parses JavaScript code', function() {

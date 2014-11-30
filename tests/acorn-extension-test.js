@@ -1,9 +1,10 @@
 /*global process, beforeEach, afterEach, describe, it*/
 
 var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
-var ast = typeof lively !== "undefined" ? lively.ast : module.require("../index.js");
-
-// var ast = lively.ast2;
+var env = module && module.require ? module.require("../env") : lively['lively.lang_env'];
+var escodegen = env.escodegen;
+var lang = env['lively.lang'];
+var ast = env.isCommonJS ? require('../index') : env['lively.ast'];
 
 describe('acorn.walk extension', function() {
 
@@ -12,13 +13,13 @@ describe('acorn.walk extension', function() {
   it("finds siblings", function() {
     var src = 'function foo() {\nvar a;\nvar b;\nvar c;\nvar d;\n}';
     var parsed = ast.parse(src);
-    var decls = parsed.body[0].body.body.clone();
+    var decls = Array.prototype.slice.call(parsed.body[0].body.body);
     var a = decls[0];
     var b = decls[1];
     var c = decls[2];
     var d = decls[3];
 
-    expect(decls.without(b)).deep.equals(acorn.walk.findSiblings(parsed, b));
+    expect(lang.arr.without(decls, b)).deep.equals(acorn.walk.findSiblings(parsed, b));
     expect([a]).deep.equals(acorn.walk.findSiblings(parsed, b, 'before'));
     expect([c,d]).deep.equals(acorn.walk.findSiblings(parsed, b, 'after'));
     
@@ -28,16 +29,16 @@ describe('acorn.walk extension', function() {
 
   it("findNodeByAstIndex", function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
-        ast = acorn.parse(src),
-        expected = ast.body[1].body.body[1].argument, // the y in "return y"
-        found = acorn.walk.findNodeByAstIndex(ast, 9);
+        parsed = acorn.parse(src),
+        expected = parsed.body[1].body.body[1].argument, // the y in "return y"
+        found = acorn.walk.findNodeByAstIndex(parsed, 9);
     expect(expected).equals(found, 'node not found');
   });
   
   it("findNodeByAstIndexNoReIndex", function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
-        ast = acorn.parse(src),
-        found = acorn.walk.findNodeByAstIndex(ast, 9, false);
+        parsed = acorn.parse(src),
+        found = acorn.walk.findNodeByAstIndex(parsed, 9, false);
     expect(null).equals(found, 'node found (but should not add index)');
   });
   
@@ -57,22 +58,22 @@ describe('acorn.walk extension', function() {
     }]
   
     tests.forEach(function(test, i) {
-      var ast = acorn.parse(test.src),
-        found = acorn.walk.findStatementOfNode(ast, test.target(ast));
-      expect(test.expected(ast)).equals(found, 'node not found ' + (i + 1));
+      var parsed = acorn.parse(test.src),
+        found = acorn.walk.findStatementOfNode(parsed, test.target(parsed));
+      expect(test.expected(parsed)).equals(found, 'node not found ' + (i + 1));
     });
   });
   
   it("updateSourceCodePositions", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
-        ast = acorn.parse(src),
-        genSrc = escodegen.generate(ast),
+        parsed = acorn.parse(src),
+        genSrc = escodegen.generate(parsed),
         genAst = acorn.parse(genSrc);
   
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
-    lively.ast.acorn.rematchAstWithSource(ast, genSrc);
-    expect(ast).to.deep.equal(genAst, 'source code positions were not corrected');
+    ast.acorn.rematchAstWithSource(parsed, genSrc);
+    expect(parsed).to.deep.equal(genAst, 'source code positions were not corrected');
   });
   
   it("updateSourceCodePositionsInSubTree", function() {
@@ -83,7 +84,7 @@ describe('acorn.walk extension', function() {
       genSrc = escodegen.generate(ast2),
       genAst = acorn.parse(genSrc);
   
-    lively.ast.acorn.rematchAstWithSource(ast1, genSrc, null, 'body.1');
+    ast.acorn.rematchAstWithSource(ast1, genSrc, null, 'body.1');
     expect(ast1).to.deep.equal(genAst.body[1], 'source code positions were not corrected');
   });
   
@@ -95,7 +96,7 @@ describe('acorn.walk extension', function() {
         genAst = acorn.parse(genSrc);
 
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
-    lively.ast.acorn.rematchAstWithSource(parsed, genSrc, true);
+    ast.acorn.rematchAstWithSource(parsed, genSrc, true);
 
     // sample some locations
     var tests = [{  // var = x = { z: 3 };
@@ -120,13 +121,13 @@ describe('acorn.walk extension', function() {
     });
 
     // compare withour considering locations
-    lively.ast.acorn.withMozillaAstDo(parsed, {}, function(next, node) { delete node.loc; next(); })
+    ast.acorn.withMozillaAstDo(parsed, {}, function(next, node) { delete node.loc; next(); })
     expect(parsed).to.deep.equal(genAst, 'source code positions were not corrected');
   });
   
   it("parseWithComments", function() {
     var src = '// comment1\n\n//comment2\nvar x = 3; // comment3\n// comment3\nfunction foo() { var y = 3; /*comment4*/ return y }; x + foo();',
-        parsed = lively.ast.parse(src, {withComments: true}),
+        parsed = ast.parse(src, {withComments: true}),
         comments = parsed.comments,
         expectedTopLevelComments = [{
           column: false, isBlock: false, line: false,
