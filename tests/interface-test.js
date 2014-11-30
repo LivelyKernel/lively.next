@@ -2,7 +2,7 @@
 
 var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
 var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
-var env = module && module.require ? module.require("../env") : lively['lively.lang_env'];
+var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
 var ast = env['lively.ast'];
 
 describe('interface', function() {

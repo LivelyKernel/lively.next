@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha tests/*-test.js"
+    "test": "node_modules/mocha/bin/mocha tests/*-test.js && node_modules/mocha-phantomjs/bin/mocha-phantomjs tests/run-tests.html"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,8 @@
   },
   "devDependencies": {
     "chai": "^1.10.0",
-    "mocha": "^2.0.1"
+    "mocha": "^2.0.1",
+    "mocha-phantomjs": "^3.5.1",
+    "phantomjs": "^1.9.12"
   }
 }

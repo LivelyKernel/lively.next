@@ -12,13 +12,35 @@
     <script type="text/javascript" src="helper.js"></script>
     <script type="text/javascript" src="../node_modules/mocha/mocha.js"></script>
     <script type="text/javascript" src="../node_modules/chai/chai.js"></script>
+    <script type="text/javascript" src="../node_modules/escodegen/escodegen.browser.min.js"></script>
     <script type="text/javascript" src="../node_modules/acorn/acorn.js"></script>
+    <script type="text/javascript" src="../node_modules/acorn/util/walk.js"></script>
+    <script type="text/javascript" src="../node_modules/acorn/acorn_loose.js"></script>
+    
+    <!--FIXME!!!-->
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/base.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/events.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/object.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/collection.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/function.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/string.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/number.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/date.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/class.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/messenger.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/lib/worker.js"></script>
+
     <script type="text/javascript">
       mocha.setup("bdd");
       // mocha.globals(["jQuery", "$", "script*", "BlobBuilder"]);
       var urls = [
+        '../env.js',
         '../index.js',
-        'tests.js'
+        "../lib/acorn-extension.js",
+        "../lib/mozilla-ast-visitors.js",
+        "../lib/mozilla-ast-visitor-interface.js",
+        "acorn-extension-test.js",
+        "interface-test.js"
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();

@@ -1,7 +1,7 @@
 /*global window, process, global*/
 
 ;(function(run) {
-  var env = module && module.require ? module.require("./env") : lively['lively.lang_env'];
+  var env = typeof module !== "undefined" && module.require ? module.require("./env") : lively['lively.lang_env'];
   run(env.acorn, env.lively, env["lively.lang"], env["lively.ast"]);
   if (env.isCommonJS) {
     require("./lib/acorn-extension");

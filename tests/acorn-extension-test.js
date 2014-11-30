@@ -1,7 +1,7 @@
 /*global process, beforeEach, afterEach, describe, it*/
 
 var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
-var env = module && module.require ? module.require("../env") : lively['lively.lang_env'];
+var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
 var escodegen = env.escodegen;
 var lang = env['lively.lang'];
 var ast = env.isCommonJS ? require('../index') : env['lively.ast'];
