@@ -2,6 +2,8 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-browserify');
+  require("./grunt-browserify-inlinerequire")();
 
   grunt.initConfig({
 
@@ -21,6 +23,11 @@ module.exports = function(grunt) {
               "lib/mozilla-ast-visitors.js",
               "lib/mozilla-ast-visitor-interface.js"],
         dest: 'lively.ast.dev.js'
+      },
+      "mocha-bundle": {
+        src: ["node_modules/mocha/mocha.js",
+              "bundles/chai-bundle.js"],
+        dest: "bundles/mocha-bundle.js"
       }
     },
 
@@ -32,10 +39,32 @@ module.exports = function(grunt) {
                 + '<%= grunt.template.today("yyyy-mm-dd") %> */\n'
         },
         files: {'lively.ast.min.js': 'lively.ast.dev.js'}
+      },
+      "mocha-bundle": {
+        files: {"bundles/mocha-bundle.min.js": "bundles/mocha-bundle.js"}
+      }
+    },
+
+    browserify: {
+      "chai-bundle": {
+        src: [],
+        dest: './bundles/chai-bundle.js',
+        options: {
+          inlineRequire: {
+            tempFilename: './bundles/chai-bundle-pre.js',
+            inlineCode: "var c = require('chai'), subset = require('chai-subset');c.use(subset); global.expect = c.expect; module.exports = c;",
+            requires: [{name: "chai", basedir: '.', expose: 'chai'}]
+          },
+          browserifyOptions: {standalone: 'chai', debug: false}
+        }
       }
     }
 
   });
 
   grunt.registerTask('build', ['concat', 'uglify']);
+
+  // note that mocha isn't browserify compatible
+  grunt.registerTask('mocha-bundle', ['browserify:chai-bundle', 'concat:mocha-bundle', 'uglify:mocha-bundle']);
+
 };
