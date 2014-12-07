@@ -28,8 +28,8 @@ module.exports = function(grunt) {
       },
       "mocha-bundle": {
         src: ["node_modules/mocha/mocha.js",
-              "bundles/chai-bundle.js"],
-        dest: "bundles/mocha-bundle.js"
+              "tests/chai-bundle.js"],
+        dest: "tests/mocha-bundle.js"
       }
     },
 
@@ -43,18 +43,20 @@ module.exports = function(grunt) {
         files: {'lively.ast.min.js': 'lively.ast.dev.js'}
       },
       "mocha-bundle": {
-        files: {"bundles/mocha-bundle.min.js": "bundles/mocha-bundle.js"}
+        files: {"tests/mocha-bundle.min.js": "tests/mocha-bundle.js"}
       }
     },
 
     browserify: {
       "chai-bundle": {
         src: [],
-        dest: './bundles/chai-bundle.js',
+        dest: './tests/chai-bundle.js',
         options: {
           inlineRequire: {
-            tempFilename: './bundles/chai-bundle-pre.js',
-            inlineCode: "var c = require('chai'), subset = require('chai-subset');c.use(subset); global.expect = c.expect; module.exports = c;",
+            tempFilename: './tests/chai-bundle-pre.js',
+            inlineCode: "var c = require('chai'), subset = require('chai-subset');"
+                      + "c.use(subset); global.expect = c.expect;"
+                      + "module.exports = c;",
             requires: [{name: "chai", basedir: '.', expose: 'chai'}]
           },
           browserifyOptions: {standalone: 'chai', debug: false}
