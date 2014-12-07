@@ -4,9 +4,8 @@
 
 - [ ] comments
 - [ ] source maps
-- [ ] lively.ast.query
-- [ ] lively.ast.transform
-- [ ] lively.ast.scopes
+- [X] lively.ast.query
+- [X] lively.ast.transform
 
 ## lively integration
 
@@ -89,6 +88,34 @@
   - `acorn.rematchAstWithSource`
   - `acorn.stringify`
 
+### lib/query.js
+
+- retrieve information from ASTs, defines JS scopes and provides scope-based queries
+- partly very specific methods, e.g. to gather top level var declarations, globals
+- uses mozilla visitors, acorn interface
+- interface
+    - `query.scopes`
+    - `query.nodesAtIndex`
+    - `query.scopesAtIndex`
+    - `query.scopeAtIndex`
+    - `query.scopesAtPos`
+    - `query.nodesInScopeOf`
+    - `query.topLevelDeclsAndRefs`
+    - `query.findGlobalVarRefs`
+    - `query.findNodesIncludingLines`
+    - `query.findReferencesAndDeclsInScope`
+    - `query.findDeclarationClosestToIndex`
+
+### lib/transform.js
+
+- transforming, rewriting ASTs, e.g. for injection of instrumentation code
+- interface
+    - `transform.replace`
+    - `transform.replaceTopLevelVarDeclAndUsageForCapturing`
+    - `transform.oneDeclaratorPerVarDecl`
+    - `transform.returnLastStatement`
+    - `transform.wrapInFunction`
+
 ## tests cover
 
 - acorn-extension-test.js
@@ -102,6 +129,12 @@
 
 - tests/interface-test.js
   - `lively.ast.parse`
+
+- tests/query.js
+  - `lively.ast.query`
+
+- tests/transform.js
+  - `lively.ast.transform`
 
 <!---=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--->
 
