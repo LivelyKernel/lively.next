@@ -21,7 +21,9 @@ module.exports = function(grunt) {
               "index.js",
               "lib/acorn-extension.js",
               "lib/mozilla-ast-visitors.js",
-              "lib/mozilla-ast-visitor-interface.js"],
+              "lib/mozilla-ast-visitor-interface.js",
+              "lib/query.js",
+              "lib/transform.js"],
         dest: 'lively.ast.dev.js'
       },
       "mocha-bundle": {

@@ -19,6 +19,8 @@ var env = {
   acorn: acorn
 }
 
+env.lively.ast = env['lively.ast'];
+
 if (isCommonJS) lang.obj.extend(module.exports, env);
 else env.lively['lively.lang_env'] = env;
 

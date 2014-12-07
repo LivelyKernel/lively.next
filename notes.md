@@ -6,6 +6,7 @@
 - [ ] source maps
 - [X] lively.ast.query
 - [X] lively.ast.transform
+- [ ] create documentation
 
 ## lively integration
 
