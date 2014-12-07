@@ -33,7 +33,7 @@
     // }
 
     options = options || {};
-    options.ecmaVersion = 6;
+    options.ecmaVersion = options.ecmaVersion || 6;
     if (options.withComments) {
       // record comments
       delete options.withComments;

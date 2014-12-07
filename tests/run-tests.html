@@ -30,8 +30,12 @@
         "../lib/acorn-extension.js",
         "../lib/mozilla-ast-visitors.js",
         "../lib/mozilla-ast-visitor-interface.js",
+        "../lib/query.js",
+        "../lib/transform.js",
         "acorn-extension-test.js",
-        "interface-test.js"
+        "interface-test.js",
+        "query-test.js",
+        "transform-test.js"
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();

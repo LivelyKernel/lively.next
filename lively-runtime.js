@@ -13,15 +13,23 @@ lively.require("lively.lang.Runtime").toRun(function() {
                    "./index.js",
                    "./lib/acorn-extension.js",
                    "./lib/mozilla-ast-visitors.js",
-                   "./lib/mozilla-ast-visitor-interface.js"];
+                   "./lib/mozilla-ast-visitor-interface.js",
+                   "./lib/query.js",
+                   "./lib/transform.js",
+                   "./tests/interface-test.js",
+                   "./tests/acorn-extension-test.js",
+                   "./tests/query-test.js",
+                   "./tests/transform-test.js"
+                   ];
 
       lively.lang.fun.composeAsync(
+        function deps(n) { lively.requires("lively.MochaTests").toRun(function() { n(); }); },
         function readFiles(n) {
           lively.lang.arr.mapAsyncSeries(files,
             function(fn,_,n) {
               lively.shell.cat(fn, {cwd: project.rootDir},
               function(err, c) { n(err, {name: fn, content: c}); });
-            }, n)
+            }, n);
         },
         function(fileContents, next) {
           lively.lang.arr.mapAsyncSeries(fileContents,
