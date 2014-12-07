@@ -1,6 +1,6 @@
 /*global process, beforeEach, afterEach, describe, it, expect*/
 typeof module !== "undefined" && console.log("foooooo? " + typeof module !== "undefined" && module.require);
-if (typeof module !== "undefined" && module.require) module.require("../bundles/chai-bundle.js");
+if (typeof module !== "undefined" && module.require) module.require("./chai-bundle.js");
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
 var lang = env['lively.lang'], ast = env.isCommonJS ? require('../index') : env['lively.ast'];
 
