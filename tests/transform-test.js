@@ -8,8 +8,8 @@ describe('ast.transform', function() {
 
   it("helperReplaceNode", function() {
     var source = "var x = 3,\n"
-               + "    y = x + x;\n"
-               + "y + 2;\n";
+                 + "    y = x + x;\n"
+                 + "y + 2;\n";
     var ast = lively.ast.parse(source);
     var target = ast.body[0].declarations[0].init;
     var hist = lively.ast.transform.helper.replaceNode(target,
@@ -47,8 +47,8 @@ describe('ast.transform', function() {
 
   it("helperSortNodesForReplace", function() {
     var source = "var x = 3,\n"
-         + "    y = x + x;\n"
-         + "y + 2;\n";
+               + "    y = x + x;\n"
+               + "y + 2;\n";
     var ast = lively.ast.parse(source);
     var result = [
       ast.body[0],
@@ -115,12 +115,12 @@ describe('ast.transform', function() {
   it("replace", function() {
 
     var code              = 'var x = 3 + foo();',
-      ast               = lively.ast.parse(code),
-      toReplace         = ast.body[0].declarations[0].init.left,
-      replacement       = function() { return {type: "Literal", value: "baz"}; },
-      result            = lively.ast.transform.replace(ast, toReplace, replacement),
-      transformedString = result.source,
-      expected          = 'var x = \'baz\' + foo();'
+        ast               = lively.ast.parse(code),
+        toReplace         = ast.body[0].declarations[0].init.left,
+        replacement       = function() { return {type: "Literal", value: "baz"}; },
+        result            = lively.ast.transform.replace(ast, toReplace, replacement),
+        transformedString = result.source,
+        expected          = 'var x = \'baz\' + foo();'
 
     expect(transformedString).equals(expected);
 
@@ -140,75 +140,75 @@ describe('ast.transform', function() {
 
   it("replaceNodeWithMany", function() {
     var code = 'var x = 3, y = 2;',
-      ast = lively.ast.parse(code),
-      toReplace = ast.body[0],
-      replacement1 = lively.ast.parse("Global.x = 3").body[0],
-      replacement2 = lively.ast.parse("Global.y = 2").body[0],
-      replacement = function() { return [replacement1, replacement2]; },
-      result = lively.ast.transform.replace(ast, toReplace, replacement),
-      expected = 'Global.x = 3;\nGlobal.y = 2;'
+        ast = lively.ast.parse(code),
+        toReplace = ast.body[0],
+        replacement1 = lively.ast.parse("Global.x = 3").body[0],
+        replacement2 = lively.ast.parse("Global.y = 2").body[0],
+        replacement = function() { return [replacement1, replacement2]; },
+        result = lively.ast.transform.replace(ast, toReplace, replacement),
+        expected = 'Global.x = 3;\nGlobal.y = 2;'
 
     expect(result.source).equals(expected);
   });
 
   it("replaceNodeWithManyKeepsSource", function() {
     var code = '/*bla\nbla*/\n  var x = 3,\n      y = 2;',
-      ast = lively.ast.parse(code, {}),
-      toReplace = ast.body[0],
-      replacement = function() {
-        return [lively.ast.parse("Global.x = 3").body[0],
-            lively.ast.parse("Global.y = 2").body[0]];
-      },
-      result = lively.ast.transform.replace(code, toReplace, replacement),
-      expected = '/*bla\nbla*/\n  Global.x = 3;\n  Global.y = 2;'
+        ast = lively.ast.parse(code, {}),
+        toReplace = ast.body[0],
+        replacement = function() {
+          return [lively.ast.parse("Global.x = 3").body[0],
+              lively.ast.parse("Global.y = 2").body[0]];
+        },
+        result = lively.ast.transform.replace(code, toReplace, replacement),
+        expected = '/*bla\nbla*/\n  Global.x = 3;\n  Global.y = 2;'
 
     expect(result.source).equals(expected);
   });
 
   it("oneVarDeclaratorPerDeclaration", function() {
     var code = '/*test*/var x = 3, y = 2; function foo() { var z = 1, u = 0; }',
-      result = lively.ast.transform.oneDeclaratorPerVarDecl(code),
-      expected = '/*test*/var x = 3;\nvar y = 2; function foo() { var z = 1;\n var u = 0; }'
+        result = lively.ast.transform.oneDeclaratorPerVarDecl(code),
+        expected = '/*test*/var x = 3;\nvar y = 2; function foo() { var z = 1;\n var u = 0; }'
     expect(result.source).equals(expected);
 
     var code = "var x = 3, y = (function() { var y = 3, z = 2; })(); ",
-      result = lively.ast.transform.oneDeclaratorPerVarDecl(code),
-      expected = "var x = 3;\nvar y = function () {\n        var y = 3;\n        var z = 2;\n    }(); "
+        result = lively.ast.transform.oneDeclaratorPerVarDecl(code),
+        expected = "var x = 3;\nvar y = function () {\n        var y = 3;\n        var z = 2;\n    }(); "
     expect(result.source).equals(expected);
   });
 
   it("transformTopLevelVarDeclsForCapturing", function() {
     var code     = "var y, z = foo + bar; baz.foo(z, 3)",
-      expected = "Global.y = Global['y'] || undefined;\nGlobal.z = Global.foo + Global.bar; Global.baz.foo(Global.z, 3)",
-      recorder = {name: "Global", type: "Identifier"},
-      result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+        expected = "Global.y = Global['y'] || undefined;\nGlobal.z = Global.foo + Global.bar; Global.baz.foo(Global.z, 3)",
+        recorder = {name: "Global", type: "Identifier"},
+        result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
     expect(result.source).equals(expected);
   });
 
   it("transformTopLevelVarAndFuncDeclsForCapturing", function() {
     var code     = "var z = 3, y = 4; function foo() { var x = 5; }",
-      expected = "Global.foo = foo;\nGlobal.z = 3;\nGlobal.y = 4; function foo() { var x = 5; }",
-      recorder = {name: "Global", type: "Identifier"},
-      result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+        expected = "Global.foo = foo;\nGlobal.z = 3;\nGlobal.y = 4; function foo() { var x = 5; }",
+        recorder = {name: "Global", type: "Identifier"},
+        result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
     expect(result.source).equals(expected);
   });
 
   it("transformTopLevelVarDeclsAndVarUsageForCapturing", function() {
     var code              = "var z = 3, y = 42, obj = {a: '123', b: function b(n) { return 23 + n; }};\n"
-               + "function foo(y) { var x = 5 + y.b(z); }\n",
-      ast               = lively.ast.parse(code, {addSource: true}),
-      expected          = "Global.foo = foo;\n"
-               + "Global.z = 3;\n"
-               + "Global.y = 42;\n"
-               + "Global.obj = {\n"
-               + "    a: '123',\n"
-               + "    b: function b(n) {\n"
-               + "        return 23 + n;\n"
-               + "    }\n"
-               + "};\n"
-               + "function foo(y) { var x = 5 + y.b(Global.z); }\n",
-      recorder          = {name: "Global", type: "Identifier"},
-      result            = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+                          + "function foo(y) { var x = 5 + y.b(z); }\n",
+        ast               = lively.ast.parse(code, {addSource: true}),
+        expected          = "Global.foo = foo;\n"
+                          + "Global.z = 3;\n"
+                          + "Global.y = 42;\n"
+                          + "Global.obj = {\n"
+                          + "    a: '123',\n"
+                          + "    b: function b(n) {\n"
+                          + "        return 23 + n;\n"
+                          + "    }\n"
+                          + "};\n"
+                          + "function foo(y) { var x = 5 + y.b(Global.z); }\n",
+        recorder          = {name: "Global", type: "Identifier"},
+        result            = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
 
 
     expect(result.source).equals(expected);
@@ -216,9 +216,9 @@ describe('ast.transform', function() {
 
   it("transformTopLevelVarDeclsAndVarUsageInCatch", function() {
     var code              = "try { throw {} } catch (e) { e }\n",
-      ast               = lively.ast.parse(code, {addSource: true}),
-      recorder          = {name: "Global", type: "Identifier"},
-      result            = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+        ast               = lively.ast.parse(code, {addSource: true}),
+        recorder          = {name: "Global", type: "Identifier"},
+        result            = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
 
     expect(result.source).equals(code);
   });
@@ -234,37 +234,37 @@ describe('ast.transform', function() {
 
   it("transformTopLevelVarDeclsForCapturingWithoutGlobals", function() {
     var code     = "var x = 2; y = 3; z = 4; baz(x, y, z)",
-      expected = "foo.x = 2; foo.y = 3; z = 4; baz(foo.x, foo.y, z)",
-      recorder = {name: "foo", type: "Identifier"},
-      result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-        code, recorder, {exclude: ['baz', 'z']});
+        expected = "foo.x = 2; foo.y = 3; z = 4; baz(foo.x, foo.y, z)",
+        recorder = {name: "foo", type: "Identifier"},
+        result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+          code, recorder, {exclude: ['baz', 'z']});
     expect(result.source).equals(expected);
   });
 
   it("transformTopLevelVarDeclsAndCaptureDefRanges", function() {
     var code     = "var y = 1, x = 2;\nvar y = 3; z = 4; baz(x, y, z); function baz(a,b,c) {}",
-      expected = {
-       baz: [{end: 72, start: 50, type: "FunctionDeclaration"}],
-       x: [{end: 16, start: 11, type: "VariableDeclarator"}],
-       y: [{end: 9, start: 4, type: "VariableDeclarator"},
-         {end: 27, start: 22, type: "VariableDeclarator"}]},
-      recorder = {name: "foo", type: "Identifier"},
-      result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-        code, recorder, {recordDefRanges: true});
+        expected = {
+         baz: [{end: 72, start: 50, type: "FunctionDeclaration"}],
+         x: [{end: 16, start: 11, type: "VariableDeclarator"}],
+         y: [{end: 9, start: 4, type: "VariableDeclarator"},
+           {end: 27, start: 22, type: "VariableDeclarator"}]},
+        recorder = {name: "foo", type: "Identifier"},
+        result   = lively.ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+          code, recorder, {recordDefRanges: true});
     expect(result.defRanges).deep.equals(expected);
   });
 
   it("transformToReturnLastStatement", function() {
     var code = "var z = foo + bar; baz.foo(z, 3)",
-      expected = "var z = foo + bar; return baz.foo(z, 3)",
-      transformed = lively.ast.transform.returnLastStatement(code);
+        expected = "var z = foo + bar; return baz.foo(z, 3)",
+        transformed = lively.ast.transform.returnLastStatement(code);
     expect(transformed).equals(expected);
   });
 
   it("wrapInFunction", function() {
     var code = "var z = foo + bar; baz.foo(z, 3);",
-      expected = "function() {\nvar z = foo + bar; return baz.foo(z, 3);\n}",
-      transformed = lively.ast.transform.wrapInFunction(code);
+        expected = "function() {\nvar z = foo + bar; return baz.foo(z, 3);\n}",
+        transformed = lively.ast.transform.wrapInFunction(code);
     expect(transformed).equals(expected);
   });
 
