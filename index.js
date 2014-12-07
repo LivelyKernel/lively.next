@@ -7,6 +7,8 @@
     require("./lib/acorn-extension");
     require("./lib/mozilla-ast-visitors");
     require("./lib/mozilla-ast-visitor-interface");
+    require("./lib/query");
+    require("./lib/transform");
     module.exports = env["lively.ast"];
   }
 
