@@ -16,7 +16,7 @@ module.exports = function(grunt) {
               "node_modules/acorn/acorn.js",
               "node_modules/acorn/util/walk.js",
               "node_modules/acorn/acorn_loose.js",
-              "node_modules/lively.lang/lively.lang.min.js",
+              "node_modules/lively.lang/lively.lang.dev.js",
               "env.js",
               "index.js",
               "lib/acorn-extension.js",
