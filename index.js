@@ -61,7 +61,7 @@ lang.obj.extend(exports, {
       options.dontTransform, options.topLevelDefRangeRecorder);
     code = vm.transformSingleExpression(code);
 
-    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_"); 
+    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
 
     return code;
   },
@@ -89,11 +89,10 @@ lang.obj.extend(exports, {
     var vm = exports, result, err,
         context = options.context || vm.getGlobal(),
         recorder = options.topLevelVarRecorder;
-    code = vm.evalCodeTransform(code, options);
-
-    typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
 
     try {
+      code = vm.evalCodeTransform(code, options);
+      typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
       result = vm._eval.call(context, code, recorder);
     } catch (e) { err = e; } finally { thenDo(err, result); }
   },
