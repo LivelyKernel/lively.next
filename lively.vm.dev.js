@@ -4541,6 +4541,16 @@ var obj = exports.obj = {
       Array.prototype.slice.call(object) : exports.obj.extend({}, object);
   },
 
+  extract: function(properties, object, mapFunc) {
+    return properties.reduce(function(extracted, name) {
+      if (object.hasOwnProperty(name)) {
+        var val = mapFunc ? mapFunc(name, object[name]) : object[name];
+        extracted[name] = val;
+      }
+      return extracted;
+    }, {});
+  },
+
   // -=-=-=-=-=-
   // inspection
   // -=-=-=-=-=-
@@ -13626,20 +13636,13 @@ lang.obj.extend(exports, {
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
     blacklist = blacklist || [];
-    try {
-      var undeclaredToTransform = lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-          transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-            code, {name: varRecorderName, type: "Identifier"},
-            {ignoreUndeclaredExcept: undeclaredToTransform,
-             exclude: blacklist, recordDefRanges: !!defRangeRecorder});
-
-      code = transformed.source;
-
-      if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
-    } catch(e) {
-      if (typeof lively && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e)
-      else console.error("Eval preprocess error: %s", e.stack || e);
-    }
+    var undeclaredToTransform = lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
+        transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+          code, {name: varRecorderName, type: "Identifier"},
+          {ignoreUndeclaredExcept: undeclaredToTransform,
+           exclude: blacklist, recordDefRanges: !!defRangeRecorder});
+    code = transformed.source;
+    if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
     return code;
   },
 
@@ -13672,7 +13675,7 @@ lang.obj.extend(exports, {
       options.dontTransform, options.topLevelDefRangeRecorder);
     code = vm.transformSingleExpression(code);
 
-    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_"); 
+    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
 
     return code;
   },
@@ -13700,11 +13703,10 @@ lang.obj.extend(exports, {
     var vm = exports, result, err,
         context = options.context || vm.getGlobal(),
         recorder = options.topLevelVarRecorder;
-    code = vm.evalCodeTransform(code, options);
-
-    typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
 
     try {
+      code = vm.evalCodeTransform(code, options);
+      typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
       result = vm._eval.call(context, code, recorder);
     } catch (e) { err = e; } finally { thenDo(err, result); }
   },

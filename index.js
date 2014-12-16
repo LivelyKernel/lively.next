@@ -15,20 +15,13 @@ lang.obj.extend(exports, {
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
     blacklist = blacklist || [];
-    try {
-      var undeclaredToTransform = lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-          transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-            code, {name: varRecorderName, type: "Identifier"},
-            {ignoreUndeclaredExcept: undeclaredToTransform,
-             exclude: blacklist, recordDefRanges: !!defRangeRecorder});
-
-      code = transformed.source;
-
-      if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
-    } catch(e) {
-      if (typeof lively && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e)
-      else console.error("Eval preprocess error: %s", e.stack || e);
-    }
+    var undeclaredToTransform = lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
+        transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+          code, {name: varRecorderName, type: "Identifier"},
+          {ignoreUndeclaredExcept: undeclaredToTransform,
+           exclude: blacklist, recordDefRanges: !!defRangeRecorder});
+    code = transformed.source;
+    if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
     return code;
   },
 
