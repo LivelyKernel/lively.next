@@ -7,7 +7,7 @@ lively.require("lively.lang.Runtime").toRun(function() {
 
     reloadAll: function(project, thenDo) {
       // var project = r.Registry.default().projects["lively.ast"];
-
+      // project.rootDir = "/Users/robert/Lively/lively.ast"
       // project.reloadAll(project, function(err) { err ? show(err.stack || String(err)) : alertOK("reloaded!"); })
       var files = ["./env.js",
                    "./index.js",
@@ -47,7 +47,7 @@ lively.require("lively.lang.Runtime").toRun(function() {
           var state = project.state || {};
           var withAcornLibDo = state.acorn ?
             function(thenDo) { thenDo(null, state.acorn); } :
-            loadFreshAcorn;
+            loadFreshAcorn.curry(project.rootDir);
           withAcornLibDo(function(err, acorn) {
             if (err) return whenHandled(err);
             state = project.state = {
@@ -102,21 +102,20 @@ lively.require("lively.lang.Runtime").toRun(function() {
     	});
   }
   
-  function loadFreshAcorn(thenDo) {
-    var baseURL = URL.root.withFilename("node_modules/lively.ast/node_modules/acorn/");
+  function loadFreshAcorn(livelyAstDir, thenDo) {
     var oldAcorn = Global.acorn;
     delete Global.acorn;
     lively.lang.arr.mapAsyncSeries(
       ['acorn.js','acorn_loose.js','util/walk.js'],
        function(fn,_,n) {
-         baseURL.withFilename(fn).asWebResource().beAsync()
-           .get().whenDone(function(content, status) {
-             try { eval(content+"\n//# sourceURL="+fn); } catch (e) {
+         lively.shell.cat(
+           lively.lang.string.joinPath(livelyAstDir, "node_modules/acorn/", fn),
+           function(err, src) {
+             if (err) return n(err, null);
+             try { eval(src+"\n//# sourceURL="+fn); } catch (e) {
                show("error getting " + fn + "\n" + e);
-               return n(e);
-             }
-             n();
-           })
+               return n(e); }
+             n(); });
        },
        function(err) {
          if (err) show("could not load acorn: " + (err.stack || err));
