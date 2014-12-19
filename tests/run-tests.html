@@ -31,10 +31,12 @@
         "../lib/mozilla-ast-visitor-interface.js",
         "../lib/query.js",
         "../lib/transform.js",
+        "../lib/comments.js",
         "acorn-extension-test.js",
         "interface-test.js",
         "query-test.js",
-        "transform-test.js"
+        "transform-test.js",
+        "comments-test.js"
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();
