@@ -117,7 +117,7 @@ describe('acorn.walk extension', function() {
     }];
 
     tests.forEach(function(test, i) {
-      expect(test.subject).to.deep.equal(test.expected, 'incorrect location for test ' + (i+1));
+      expect(test.subject).to.containSubset(test.expected, 'incorrect location for test ' + (i+1));
     });
 
     // compare withour considering locations
