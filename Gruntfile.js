@@ -11,12 +11,26 @@ module.exports = function(grunt) {
 
     concat: {
       options: {sourceMap: true, sourceMapStyle: 'link', separator: ';\n'},
-      livelyAST: {
+      livelyASTBundle: {
         src: ["node_modules/escodegen/escodegen.browser.min.js",
               "node_modules/acorn/acorn.js",
               "node_modules/acorn/util/walk.js",
               "node_modules/acorn/acorn_loose.js",
               "node_modules/lively.lang/lively.lang.dev.js",
+              "env.js",
+              "index.js",
+              "lib/acorn-extension.js",
+              "lib/mozilla-ast-visitors.js",
+              "lib/mozilla-ast-visitor-interface.js",
+              "lib/query.js",
+              "lib/transform.js"],
+        dest: 'lively.ast.dev-bundle.js'
+      },
+      livelyAST: {
+        src: ["node_modules/escodegen/escodegen.browser.min.js",
+              "node_modules/acorn/acorn.js",
+              "node_modules/acorn/util/walk.js",
+              "node_modules/acorn/acorn_loose.js",
               "env.js",
               "index.js",
               "lib/acorn-extension.js",
@@ -34,6 +48,14 @@ module.exports = function(grunt) {
     },
 
     uglify: {
+      livelyASTBundle: {
+        options: {
+          sourceMap: true,
+          banner: '/*! <%= pkg.name %>-v<%= pkg.version %> '
+                + '<%= grunt.template.today("yyyy-mm-dd") %> */\n'
+        },
+        files: {'lively.ast.min-bundle.js': 'lively.ast.dev-bundle.js'}
+      },
       livelyAST: {
         options: {
           sourceMap: true,
