@@ -1,8 +1,13 @@
 /*global process, beforeEach, afterEach, describe, it, expect*/
 
-if (typeof module !== "undefined" && module.require) module.require("./chai-bundle.js");
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
-var lang = env['lively.lang'], ast = env.isCommonJS ? require('../index') : env['lively.ast'];
+var escodegen = env.escodegen, lang = env['lively.lang'], expect, ast;
+if (env.isCommonJS) {
+  var chai = module.require('chai');
+  chai.use(require('chai-subset'));
+  expect = chai.expect;
+  ast = require('../index');
+} else { expect = chai.expect; ast = env['lively.ast']; }
 
 var arr = lang.arr;
 

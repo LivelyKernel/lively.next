@@ -1,10 +1,13 @@
 /*global process, beforeEach, afterEach, describe, it*/
 
-var expect = typeof module !== "undefined" && module.require ? module.require('chai').expect : chai.expect;
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
-var escodegen = env.escodegen;
-var lang = env['lively.lang'];
-var ast = env.isCommonJS ? require('../index') : env['lively.ast'];
+var escodegen = env.escodegen, lang = env['lively.lang'], expect, ast;
+if (env.isCommonJS) {
+  var chai = module.require('chai');
+  chai.use(require('chai-subset'));
+  expect = chai.expect;
+  ast = require('../index');
+} else { expect = chai.expect; ast = env['lively.ast']; }
 
 describe('acorn.walk extension', function() {
 
