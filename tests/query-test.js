@@ -3,9 +3,9 @@
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
 var escodegen = env.escodegen, lang = env['lively.lang'], expect, ast;
 if (env.isCommonJS) {
-  var chai = module.require('chai');
-  chai.use(require('chai-subset'));
-  expect = chai.expect;
+  var _chai = module.require('chai');
+  _chai.use(require('chai-subset'));
+  expect = _chai.expect;
   ast = require('../index');
 } else { expect = chai.expect; ast = env['lively.ast']; }
 
@@ -118,62 +118,81 @@ describe('ast.query', function() {
     expect(expected2).deep.equals(chain(nodes2).pluck("type").value());
   });
 
-  it("findScopeAtIndex", function() {
-    var src = fun.extractBody(function() {
-    var x = {
-      f: function(a) {
-      return function(a) { return a + 1};
-      },
-      f2: function() {}
-    }
-    });
-    var index = 35; // on first return
-    var parsed = ast.acorn.parse(src, {addSource: true});
-    var result = ast.query.scopesAtIndex(parsed, index);
+  describe("find scopes", function() {
 
-    var scopes = ast.query.scopes(parsed);
-    var expected = [scopes, scopes.subScopes[0]]
-    expect(expected).deep.equals(result);
+    it("findScopeAtIndex", function() {
+      var src = fun.extractBody(function() {
+      var x = {
+        f: function(a) {
+        return function(a) { return a + 1};
+        },
+        f2: function() {}
+      }
+      });
+      var index = 35; // on first return
+      var parsed = ast.acorn.parse(src, {addSource: true});
+      var result = ast.query.scopesAtIndex(parsed, index);
+  
+      var scopes = ast.query.scopes(parsed);
+      var expected = [scopes, scopes.subScopes[0]]
+      expect(expected).deep.equals(result);
+    });
+  
+    it("findScopeAtIndexWhenIndexPointsToFuncDecl", function() {
+      var src = 'var x = "fooo"; function bar() { var z = "baz" }';
+      var parsed = ast.acorn.parse(src, {addSource: true});
+      var scopes = ast.query.scopes(parsed);
+  
+      var index = 26; // on bar
+      var result = ast.query.scopeAtIndex(parsed, index);
+      expect(scopes).deep.equals(result);
+  
+      var index = 34; // inside bar body
+      var result = ast.query.scopeAtIndex(parsed, index);
+      expect(scopes.subScopes[0]).deep.equals(result);
+    });
+  
+    it.only("findScopeAtIndexWhenIndexPointsToArg", function() {
+      var src = 'var x = "fooo"; function bar(zork) { var z = zork + "baz"; }';
+      var parsed = ast.acorn.parse(src, {addSource: true});
+      var scopes = ast.query.scopes(parsed);
+  
+      var index = 31; // on zork
+      var result = ast.query.scopeAtIndex(parsed, index);
+  
+      expect(scopes.subScopes[0]).deep.equals(result);
+    });
+
   });
 
-  it("findScopeAtIndexWhenIndexPointsToFuncDecl", function() {
-    var src = 'var x = "fooo"; function bar() { var z = "baz" }';
-    var parsed = ast.acorn.parse(src, {addSource: true});
-    var scopes = ast.query.scopes(parsed);
-
-    var index = 26; // on bar
-    var result = ast.query.scopeAtIndex(parsed, index);
-    expect(scopes).deep.equals(result);
-
-    var index = 34; // inside bar body
-    var result = ast.query.scopeAtIndex(parsed, index);
-    expect(scopes.subScopes[0]).deep.equals(result);
-  });
-
-  it("findDeclarationClosestToIndex", function() {
-    var src = fun.extractBody(function() {
-    var x = 3, yyy = 4;
-    var z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }
+  describe("finding references and declarations", function() {
+    
+    it("findDeclarationClosestToIndex", function() {
+      var src = fun.extractBody(function() {
+        var x = 3, yyy = 4;
+        var z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }
+      });
+      var index = 48; // second yyy of addition
+      // show(src.slice(index-1,index+1))
+      var parsed = ast.acorn.parse(src);
+      var result = ast.query.findDeclarationClosestToIndex(parsed, "yyy", index);
+      expect({end:14,name:"yyy",start:11,type:"Identifier"}).deep.equals(result);
     });
-    var index = 48; // second yyy of addition
-    // show(src.slice(index-1,index+1))
-    var parsed = ast.acorn.parse(src);
-    var result = ast.query.findDeclarationClosestToIndex(parsed, "yyy", index);
-    expect({end:14,name:"yyy",start:11,type:"Identifier"}).deep.equals(result);
-  });
-
-  it("findReferencesAndDeclsInScope", function() {
-    var src = fun.extractBody(function() {
-    var x = 3, y = 4;
-    var z = function() { y + y + (function(y) { y+1 })(); }
+  
+    it("findReferencesAndDeclsInScope", function() {
+      var src = fun.extractBody(function() {
+        var x = 3, y = 4;
+        var z = function() { y + y + (function(y) { y+1 })(); }
+      });
+      var parsed = ast.acorn.parse(src);
+      var scope = ast.query.scopes(parsed);
+      var result = ast.query.findReferencesAndDeclsInScope(scope, "y");
+      var expected = [{end:12,name:"y",start:11,type:"Identifier"},
+                      {end:40,name:"y",start:39,type:"Identifier"},
+                      {end:44,name:"y",start:43,type:"Identifier"}];
+      expect(expected).deep.equals(result);
     });
-    var parsed = ast.acorn.parse(src);
-    var scope = ast.query.scopes(parsed);
-    var result = ast.query.findReferencesAndDeclsInScope(scope, "y");
-    var expected = [{end:12,name:"y",start:11,type:"Identifier"},
-                    {end:40,name:"y",start:39,type:"Identifier"},
-                    {end:44,name:"y",start:43,type:"Identifier"}];
-    expect(expected).deep.equals(result);
+
   });
 
 });
