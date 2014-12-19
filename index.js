@@ -9,6 +9,7 @@
     require("./lib/mozilla-ast-visitor-interface");
     require("./lib/query");
     require("./lib/transform");
+    require("./lib/comments");
     module.exports = env["lively.ast"];
   }
 
