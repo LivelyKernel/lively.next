@@ -46,7 +46,7 @@ describe('ast.query', function() {
         varDecls: [{declarations: [{id: {name: 'foo'}}, {id: {name: 'baz'}}]}],
         funcDecls: [],
         params: [{name: "y"}],
-        refs: [{name: "x"}, {name: "bar"}, {name: "bar"}, {name: "Object"}],        
+        refs: [{name: "x"}, {name: "bar"}, {name: "bar"}, {name: "Object"}],
       }]
     }
 
@@ -72,10 +72,10 @@ describe('ast.query', function() {
 
   it("findGlobalVars", function() {
     var code = "var margin = {top: 20, right: 20, bottom: 30, left: 40},\n"
-         + "    width = 960 - margin.left - margin.right,\n"
-         + "    height = 500 - margin.top - margin.bottom;\n"
-         + "function blup() {}\n"
-         + "foo + String(baz) + foo + height;\n"
+             + "    width = 960 - margin.left - margin.right,\n"
+             + "    height = 500 - margin.top - margin.bottom;\n"
+             + "function blup() {}\n"
+             + "foo + String(baz) + foo + height;\n"
     var result = ast.query.findGlobalVarRefs(code);
 
     var expected = [{start:169,end:172, name:"foo", type:"Identifier"},
@@ -87,8 +87,8 @@ describe('ast.query', function() {
 
   it("recognizeFunctionDeclaration", function() {
     var code = "this.addScript(function run(n) { if (n > 0) run(n-1); show('done'); });",
-      result = ast.query.topLevelDeclsAndRefs(code),
-      expected = ["show"];
+        result = ast.query.topLevelDeclsAndRefs(code),
+        expected = ["show"];
     expect(expected).deep.equals(result.undeclaredNames);
   });
 
@@ -106,10 +106,49 @@ describe('ast.query', function() {
     expect(expected).deep.equals(result.undeclaredNames);
   });
 
+  describe("patterns", function() {
+
+    describe("obj destructuring", function() {
+
+      describe("params", function() {
+        it("simple", function() {
+          var code = "({x}) => x",
+              result = ast.query.topLevelDeclsAndRefs(code),
+              expected = [];
+          expect(expected).deep.equals(result.undeclaredNames);
+        });
+
+        it("alias", function() {
+          var code = "({x: y}) => y",
+              result = ast.query.topLevelDeclsAndRefs(code),
+              expected = [];
+          expect(expected).deep.equals(result.undeclaredNames);
+        });
+
+        it("nested", function() {
+          var code = "({x: {a}}) => a",
+              result = ast.query.topLevelDeclsAndRefs(code),
+              expected = [];
+          expect(expected).deep.equals(result.undeclaredNames);
+        });
+      });
+
+      describe("vars", function() {
+        it("simple", function() {
+          var code = "var {x} = {x: 3};"
+          var parsed = ast.parse(code);
+          var scopes = ast.query.scopes(parsed);
+          expect(["x"]).deep.equals(ast.query._declaredVarNames(scopes));
+        });
+
+      });
+    });
+  });
+
   it("findNodesIncludingLines", function() {
     var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n";
 
-    var expected1 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression","FunctionExpression","BlockStatement","ReturnStatement","Literal"],
+    var expected1 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression","Property", "FunctionExpression","BlockStatement","ReturnStatement","Literal"],
       nodes1 = ast.query.findNodesIncludingLines(null, code, [3]);
     expect(expected1).deep.equals(chain(nodes1).pluck("type").value());
 
@@ -132,41 +171,41 @@ describe('ast.query', function() {
       var index = 35; // on first return
       var parsed = ast.acorn.parse(src, {addSource: true});
       var result = ast.query.scopesAtIndex(parsed, index);
-  
+
       var scopes = ast.query.scopes(parsed);
       var expected = [scopes, scopes.subScopes[0]]
       expect(expected).deep.equals(result);
     });
-  
+
     it("findScopeAtIndexWhenIndexPointsToFuncDecl", function() {
       var src = 'var x = "fooo"; function bar() { var z = "baz" }';
       var parsed = ast.acorn.parse(src, {addSource: true});
       var scopes = ast.query.scopes(parsed);
-  
+
       var index = 26; // on bar
       var result = ast.query.scopeAtIndex(parsed, index);
       expect(scopes).deep.equals(result);
-  
+
       var index = 34; // inside bar body
       var result = ast.query.scopeAtIndex(parsed, index);
       expect(scopes.subScopes[0]).deep.equals(result);
     });
-  
-    it.only("findScopeAtIndexWhenIndexPointsToArg", function() {
+
+    it("findScopeAtIndexWhenIndexPointsToArg", function() {
       var src = 'var x = "fooo"; function bar(zork) { var z = zork + "baz"; }';
       var parsed = ast.acorn.parse(src, {addSource: true});
       var scopes = ast.query.scopes(parsed);
-  
+
       var index = 31; // on zork
       var result = ast.query.scopeAtIndex(parsed, index);
-  
+
       expect(scopes.subScopes[0]).deep.equals(result);
     });
 
   });
 
   describe("finding references and declarations", function() {
-    
+
     it("findDeclarationClosestToIndex", function() {
       var src = fun.extractBody(function() {
         var x = 3, yyy = 4;
@@ -178,7 +217,7 @@ describe('ast.query', function() {
       var result = ast.query.findDeclarationClosestToIndex(parsed, "yyy", index);
       expect({end:14,name:"yyy",start:11,type:"Identifier"}).deep.equals(result);
     });
-  
+
     it("findReferencesAndDeclsInScope", function() {
       var src = fun.extractBody(function() {
         var x = 3, y = 4;

@@ -14,5 +14,4 @@ describe('interface', function() {
     expect(ast.parse("1 + 2")).deep.property("body[0].type")
       .equals("ExpressionStatement");
   });
-
 });
