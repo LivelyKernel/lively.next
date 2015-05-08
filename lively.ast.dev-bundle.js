@@ -12214,8 +12214,8 @@ var escodegen = isCommonJS ? require("escodegen") : escodegen;
 var acorn = !isCommonJS && Global.acorn;
 if (!acorn && isCommonJS) {
     acorn = require("acorn-jsx");
-    acorn.walk = require("acorn-jsx/node_modules/acorn/dist/walk");
-    acorn.parse_dammit = require("acorn-jsx/node_modules/acorn/dist/acorn_loose").parse_dammit;
+    acorn.walk = require("acorn/dist/walk");
+    acorn.parse_dammit = require("acorn/dist/acorn_loose").parse_dammit;
 }
 
 var env = {
