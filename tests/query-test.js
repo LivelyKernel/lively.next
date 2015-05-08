@@ -143,6 +143,28 @@ describe('ast.query', function() {
 
       });
     });
+
+    describe("arr destructuring", function() {
+
+      describe("params", function() {
+        it("simple", function() {
+          var code = "([x,{y}]) => x + y",
+              result = ast.query.topLevelDeclsAndRefs(code),
+              expected = [];
+          expect(expected).deep.equals(result.undeclaredNames);
+        });
+      });
+
+      describe("vars", function() {
+        it("simple", function() {
+          var code = "var {x} = {x: 3};"
+          var parsed = ast.parse(code);
+          var scopes = ast.query.scopes(parsed);
+          expect(["x"]).deep.equals(ast.query._declaredVarNames(scopes));
+        });
+      });
+
+    });
   });
 
   it("findNodesIncludingLines", function() {
