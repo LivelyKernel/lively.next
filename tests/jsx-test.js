@@ -18,4 +18,11 @@ describe('jsx', function() {
       .equals("JSXElement");
   });
 
+  it("can be scope analyzed", function() {
+    var code = 'var app = <Nav color="blue" />;',
+        result = ast.query.topLevelDeclsAndRefs(code, {plugins: {jsx: true}}),
+        expected = ['app'];
+    expect(expected).deep.equals(result.declaredNames);
+  });
+
 });

@@ -15,7 +15,8 @@
 
 })(function(acorn, lively, lang, exports) {
 
-  exports.acorn = acorn;
+  if (exports.acorn) exports.acorn = lang.obj.extend(exports.acorn, acorn);
+  else exports.acorn = acorn;
 
   exports.parse = function(source, options) {
     // proxy function to acorn.parse.
@@ -37,6 +38,8 @@
 
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
+    options.plugins = options.plugins || {};
+    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
     if (options.withComments) {
       // record comments
       delete options.withComments;
@@ -128,6 +131,9 @@
   exports.parseFunction = function(source, options) {
     options = options || {};
     options.ecmaVersion = 6;
+    options.plugins = options.plugins || {};
+    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+
     var src = '(' + source + ')',
       ast = acorn.parse(src);
     /*if (options.addSource) */acorn.walk.addSource(ast, src);
@@ -175,7 +181,10 @@
   exports.fuzzyParse = function(source, options) {
     // options: verbose, addSource, type
     options = options || {};
-    options.ecmaVersion = 6;
+    options.ecmaVersion = options.ecmaVersion || 6;
+    options.plugins = options.plugins || {};
+    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
     try {
