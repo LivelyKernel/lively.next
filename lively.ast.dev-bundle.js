@@ -12223,7 +12223,7 @@ var env = {
   Global: Global,
   lively: isCommonJS ? (Global.lively || {}) : (Global.lively || (Global.lively = {})),
   "lively.lang": lang,
-  "lively.ast": {},
+  "lively.ast": (Global.lively && Global.lively.ast) || {},
   escodegen: escodegen,
   acorn: acorn
 }
@@ -12252,7 +12252,8 @@ else env.lively['lively.lang_env'] = env;
 
 })(function(acorn, lively, lang, exports) {
 
-  exports.acorn = acorn;
+  if (exports.acorn) exports.acorn = lang.obj.extend(exports.acorn, acorn);
+  else exports.acorn = acorn;
 
   exports.parse = function(source, options) {
     // proxy function to acorn.parse.
@@ -12274,6 +12275,8 @@ else env.lively['lively.lang_env'] = env;
 
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
+    options.plugins = options.plugins || {};
+    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
     if (options.withComments) {
       // record comments
       delete options.withComments;
@@ -12365,6 +12368,9 @@ else env.lively['lively.lang_env'] = env;
   exports.parseFunction = function(source, options) {
     options = options || {};
     options.ecmaVersion = 6;
+    options.plugins = options.plugins || {};
+    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+
     var src = '(' + source + ')',
       ast = acorn.parse(src);
     /*if (options.addSource) */acorn.walk.addSource(ast, src);
@@ -12412,7 +12418,10 @@ else env.lively['lively.lang_env'] = env;
   exports.fuzzyParse = function(source, options) {
     // options: verbose, addSource, type
     options = options || {};
-    options.ecmaVersion = 6;
+    options.ecmaVersion = options.ecmaVersion || 6;
+    options.plugins = options.plugins || {};
+    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
     try {
@@ -12455,7 +12464,8 @@ else env.lively['lively.lang_env'] = env;
   run(env.acorn, env.escodegen, env.lively, env['lively.lang'], env['lively.ast']);
 })(function(acorn, escodegen, lively, lang, exports) {
 
-  exports.acorn = acorn;
+  if (exports.acorn) exports.acorn = lang.obj.extend(exports.acorn, acorn);
+  else exports.acorn = acorn;
 
 // -=-=-=-=-=-=-=-=-=-=-=-
 // from lively.ast.acorn
@@ -12510,8 +12520,13 @@ acorn.walk.findNodesIncluding = function(ast, pos, test, base) {
 };
 
 acorn.walk.addSource = function(ast, source, completeSrc, forceNewSource) {
+  var options = options || {};
+  options.ecmaVersion = options.ecmaVersion || 6;
+  options.plugins = options.plugins || {};
+  options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+
   source = typeof ast === 'string' ? ast : source;
-  ast = typeof ast === 'string' ? acorn.parse(ast) : ast;
+  ast = typeof ast === 'string' ? acorn.parse(ast, options) : ast;
   completeSrc = !!completeSrc;
   return acorn.walk.forEachNode(ast, function(node) {
     if (node.source && !forceNewSource) return;
@@ -12521,6 +12536,11 @@ acorn.walk.addSource = function(ast, source, completeSrc, forceNewSource) {
 };
 
 acorn.walk.inspect = function(ast, source) {
+  var options = options || {};
+  options.ecmaVersion = options.ecmaVersion || 6;
+  options.plugins = options.plugins || {};
+  options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+
   source = typeof ast === 'string' ? ast : null;
   ast = typeof ast === 'string' ? acorn.parse(ast) : ast;
   source && acorn.walk.addSource(ast, source);
@@ -13651,7 +13671,7 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     var retVal;
     node.elements.forEach(function(ea, i) {
       if (ea) {
-        // ea can be of type Expression or 
+        // ea can be of type Expression or
         retVal = this.accept(ea, depth, state, path.concat(["elements", i]));
       }
     }, this);
@@ -13945,7 +13965,7 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     var retVal;
     node.head.forEach(function(ea, i) {
       if (ea) {
-        // ea can be of type VariableDeclarator or 
+        // ea can be of type VariableDeclarator or
         retVal = this.accept(ea, depth, state, path.concat(["head", i]));
       }
     }, this);
@@ -13975,7 +13995,7 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     var retVal;
     node.elements.forEach(function(ea, i) {
       if (ea) {
-        // ea can be of type Pattern or 
+        // ea can be of type Pattern or
         retVal = this.accept(ea, depth, state, path.concat(["elements", i]));
       }
     }, this);
@@ -14085,7 +14105,103 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     // value is a node of type FunctionExpression
     retVal = this.accept(node.value, depth, state, path.concat(["value"]));
     return retVal;
+  },
+
+  visitJSXIdentifier: function(node, depth, state, path) {
+    var retVal;
+    return retVal;
+  },
+
+  visitJSXMemberExpression: function(node, depth, state, path) {
+    var retVal;
+    // object is a node of type JSXMemberExpression
+    retVal = this.accept(node.object, depth, state, path.concat(["object"]));
+
+    // property is a node of type JSXIdentifier
+    retVal = this.accept(node.property, depth, state, path.concat(["property"]));
+    return retVal;
+  },
+
+  visitJSXNamespacedName: function(node, depth, state, path) {
+    var retVal;
+    // namespace is a node of type JSXIdentifier
+    retVal = this.accept(node.namespace, depth, state, path.concat(["namespace"]));
+
+    // name is a node of type JSXIdentifier
+    retVal = this.accept(node.name, depth, state, path.concat(["name"]));
+    return retVal;
+  },
+
+  visitJSXEmptyExpression: function(node, depth, state, path) {
+    var retVal;
+    return retVal;
+  },
+
+  visitJSXBoundaryElement: function(node, depth, state, path) {
+    var retVal;
+    // name is a node of type JSXIdentifier
+    retVal = this.accept(node.name, depth, state, path.concat(["name"]));
+    return retVal;
+  },
+
+  visitJSXOpeningElement: function(node, depth, state, path) {
+    var retVal;
+    node.attributes.forEach(function(ea, i) {
+      // ea is of type JSXAttribute or JSXSpreadAttribute
+      retVal = this.accept(ea, depth, state, path.concat(["attributes", i]));
+    }, this);
+
+    // node.selfClosing has a specific type that is boolean
+    if (node.selfClosing) {/*do stuff*/}
+    return retVal;
+  },
+
+  visitJSXClosingElement: function(node, depth, state, path) {
+    var retVal;
+    return retVal;
+  },
+
+  visitJSXAttribute: function(node, depth, state, path) {
+    var retVal;
+    // name is a node of type JSXIdentifier
+    retVal = this.accept(node.name, depth, state, path.concat(["name"]));
+
+    if (node.value) {
+      // value is a node of type Literal
+      retVal = this.accept(node.value, depth, state, path.concat(["value"]));
+    }
+    return retVal;
+  },
+
+  visitSpreadElement: function(node, depth, state, path) {
+    var retVal;
+    // argument is a node of type Expression
+    retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
+    return retVal;
+  },
+
+  visitJSXSpreadAttribute: function(node, depth, state, path) {
+    var retVal;
+    return retVal;
+  },
+
+  visitJSXElement: function(node, depth, state, path) {
+    var retVal;
+    // openingElement is a node of type JSXOpeningElement
+    retVal = this.accept(node.openingElement, depth, state, path.concat(["openingElement"]));
+
+    node.children.forEach(function(ea, i) {
+      // ea is of type Literal or JSXExpressionContainer or JSXElement
+      retVal = this.accept(ea, depth, state, path.concat(["children", i]));
+    }, this);
+
+    if (node.closingElement) {
+      // closingElement is a node of type JSXClosingElement
+      retVal = this.accept(node.closingElement, depth, state, path.concat(["closingElement"]));
+    }
+    return retVal;
   }
+
 });
 
 exports.MozillaAST.PrinterVisitor = lang.class.create(exports.MozillaAST.BaseVisitor, 'lively.ast.PrinterVisitor', {
@@ -14312,7 +14428,7 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
   visitVariableDeclarator: function (node, depth, scope, path) {
     var retVal;
 
-  // ignore id
+    // ignore id
     // scope.varDeclPaths.push(path);
     // if (node.id.type === "Identifier") {
     //   scope.varDecls.push(node);
@@ -14372,6 +14488,7 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
     var newScope = this.visitFunction(node, depth, scope, path);
 
     var retVal;
+    // ignore params
     // node.params.forEach(function(ea, i) {
     //   // ea is of type Pattern
     //   retVal = this.accept(ea, depth, scope, path.concat(["params", i]));
@@ -14401,7 +14518,6 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
   },
 
   visitIdentifier: function ($super, node, depth, scope, path) {
-    // if (path.slice(-3)[0] !== "declarations") scope.refs.push(node);
     scope.refs.push(node);
     return $super(node, depth, scope, path);
   },
@@ -14457,37 +14573,6 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
     var retVal;
     // ignore label
     retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-    return retVal;
-  },
-
-  // visitObjectPattern: function(node, depth, scope, path) {
-  //   var retVal;
-
-  //   node.properties.forEach(function(ea, i) {
-  //     // ea.key is of type node
-  //     retVal = this.accept(ea.key, depth, scope, path.concat(["properties", i, "key"]));
-      
-  //     debugger;
-  //     if (path.slice(-3)[0] === "declarations")
-  //       scope.varDecls.push(ea.key);
-  //     // if (path.slice(-3)[0] === "declarations")
-  //     //   scope.varDecls.push(ea.key);
-  //     // scope.params.push(ea.key);
-
-  //     // ea.value is of type node
-  //     retVal = this.accept(ea.value, depth, scope, path.concat(["properties", i, "value"]));
-  //   }, this);
-  //   return retVal;
-  // },
-
-  visitArrayPattern: function(node, depth, state, path) {
-    var retVal;
-    node.elements.forEach(function(ea, i) {
-      if (ea) {
-        // ea can be of type Pattern or 
-        retVal = this.accept(ea, depth, state, path.concat(["elements", i]));
-      }
-    }, this);
     return retVal;
   },
 
@@ -14652,26 +14737,16 @@ var arr = lang.arr, chain = lang.chain;
 
 var helpers = {
 
-  patternIds: function(pattern) {
-    return chain(pattern.properties)
-      .pluck("value")
-      .flatmap(function(ea) {
-        if (ea.type === "Identifier") return [ea];
-        if (ea.type === "ObjectPattern") return helpers.patternIds(ea);
-        return [];
-      }).value();
-  },
-
   declIds: function(nodes) {
-    return chain(nodes).flatmap(function(ea) {
-      if (!ea) return null;
-      if (ea.type === "ObjectPattern") {
-        return helpers.patternIds(ea);
-      }
-      if (ea.type === "Identifier") { return [ea]; }
-      return null;
-    })
-    .compact().value();
+    return arr.flatmap(nodes, function(ea) {
+      if (!ea) return [];
+      if (ea.type === "Identifier") return [ea];
+      if (ea.type === "ObjectPattern")
+        return helpers.declIds(arr.pluck(ea.properties, "value"));
+      if (ea.type === "ArrayPattern")
+        return helpers.declIds(ea.elements);
+      return [];
+    });
   },
 
   varDeclIds: function(scope) {
@@ -14767,7 +14842,7 @@ exports.query = {
       .concat(arr.pluck(helpers.varDeclIds(scope), 'name'))
       .concat(chain(scope.classDecls).pluck('id').pluck('name').value())
       .concat(!useComments ? [] :
-        exports.query.findJsLintGlobalDeclarations(
+        exports.query._findJsLintGlobalDeclarations(
           scope.node.type === 'Program' ?
             scope.node : scope.node.body));
   },
@@ -14784,11 +14859,14 @@ exports.query = {
   },
 
   topLevelDeclsAndRefs: function(ast, options) {
-    if (typeof ast === "string") ast = exports.parse(ast, {withComments: true});
+    options = options || {};
+    options.withComments = true;
+
+    if (typeof ast === "string") ast = exports.parse(ast, options);
 
     var q           = exports.query,
         scope       = exports.query.scopes(ast),
-        useComments = options && !!options.jslintGlobalComment,
+        useComments = !!options.jslintGlobalComment,
         declared    = q._declaredVarNames(scope, useComments),
         refs        = scope.refs.concat(arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
         undeclared  = chain(refs).pluck('name').withoutAll(declared).value();
