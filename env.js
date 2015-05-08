@@ -14,7 +14,7 @@ var env = {
   Global: Global,
   lively: isCommonJS ? (Global.lively || {}) : (Global.lively || (Global.lively = {})),
   "lively.lang": lang,
-  "lively.ast": {},
+  "lively.ast": (Global.lively && Global.lively.ast) || {},
   escodegen: escodegen,
   acorn: acorn
 }
