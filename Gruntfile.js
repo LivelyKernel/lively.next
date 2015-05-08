@@ -12,10 +12,10 @@ module.exports = function(grunt) {
     concat: {
       options: {sourceMap: true, sourceMapStyle: 'link', separator: ';\n'},
       livelyASTBundle: {
-        src: ["node_modules/escodegen/escodegen.browser.min.js",
-              "node_modules/acorn/acorn.js",
-              "node_modules/acorn/util/walk.js",
-              "node_modules/acorn/acorn_loose.js",
+        src: ["escodegen.browser.min.js",
+              "acorn-jsx-browser.js",
+              "node_modules/acorn/dist/walk.js",
+              "node_modules/acorn/dist/acorn_loose.js",
               "node_modules/lively.lang/lively.lang.dev.js",
               "env.js",
               "index.js",
@@ -27,10 +27,10 @@ module.exports = function(grunt) {
         dest: 'lively.ast.dev-bundle.js'
       },
       livelyAST: {
-        src: ["node_modules/escodegen/escodegen.browser.min.js",
-              "node_modules/acorn/acorn.js",
-              "node_modules/acorn/util/walk.js",
-              "node_modules/acorn/acorn_loose.js",
+        src: ["escodegen.browser.min.js",
+              "acorn-jsx-browser.js",
+              "node_modules/acorn/dist/walk.js",
+              "node_modules/acorn/dist/acorn_loose.js",
               "env.js",
               "index.js",
               "lib/acorn-extension.js",
@@ -70,6 +70,18 @@ module.exports = function(grunt) {
     },
 
     browserify: {
+      "acorn-jsx": {
+        src: [],
+        dest: './acorn-jsx-browser.js',
+        options: {
+          inlineRequire: {
+            tempFilename: './acorn-jsx-browser-pre.js',
+            inlineCode: "module.exports = require('acorn-jsx');",
+            requires: [{name: "acorn-jsx"}]
+          },
+          browserifyOptions: {standalone: 'acorn', debug: false}
+        }
+      },
       "chai-bundle": {
         src: [],
         dest: './tests/chai-bundle.js',
@@ -88,7 +100,7 @@ module.exports = function(grunt) {
 
   });
 
-  grunt.registerTask('build', ['concat', 'uglify']);
+  grunt.registerTask('build', ['browserify:acorn-jsx', 'concat', 'uglify']);
 
   // note that mocha isn't browserify compatible
   grunt.registerTask('mocha-bundle', ['browserify:chai-bundle', 'concat:mocha-bundle', 'uglify:mocha-bundle']);
