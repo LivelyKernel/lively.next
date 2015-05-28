@@ -25,7 +25,7 @@ describe('acorn.walk extension', function() {
     expect(lang.arr.without(decls, b)).deep.equals(acorn.walk.findSiblings(parsed, b));
     expect([a]).deep.equals(acorn.walk.findSiblings(parsed, b, 'before'));
     expect([c,d]).deep.equals(acorn.walk.findSiblings(parsed, b, 'after'));
-    
+
   });
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -37,48 +37,48 @@ describe('acorn.walk extension', function() {
         found = acorn.walk.findNodeByAstIndex(parsed, 9);
     expect(expected).equals(found, 'node not found');
   });
-  
+
   it("findNodeByAstIndexNoReIndex", function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
         parsed = acorn.parse(src),
         found = acorn.walk.findNodeByAstIndex(parsed, 9, false);
     expect(null).equals(found, 'node found (but should not add index)');
   });
-  
+
   it("findStatementOfNode", function() {
     var tests = [{
       src: 'var x = 3; function foo() { var y = 3; return y + 2 }; x + foo();',
       target: function(ast) { return ast.body[1].body.body[1].argument.left; },
-      expected: function(ast) { return ast.body[1].body.body[1]; },
+      expected: function(ast) { return ast.body[1].body.body[1]; }
     }, {
       src: 'var x = 1; x;',
       target: function(ast) { return ast.body[1]; },
-      expected: function(ast) { return ast.body[1]; },
+      expected: function(ast) { return ast.body[1]; }
     }, {
       src: 'switch (123) { case 123: debugger; }',
       target: function(ast) { return ast.body[0].cases[0].consequent[0]; },
-      expected: function(ast) { return ast.body[0].cases[0].consequent[0]; },
-    }]
-  
+      expected: function(ast) { return ast.body[0].cases[0].consequent[0]; }
+    }];
+
     tests.forEach(function(test, i) {
       var parsed = acorn.parse(test.src),
         found = acorn.walk.findStatementOfNode(parsed, test.target(parsed));
       expect(test.expected(parsed)).equals(found, 'node not found ' + (i + 1));
     });
   });
-  
+
   it("updateSourceCodePositions", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
         parsed = acorn.parse(src),
         genSrc = escodegen.generate(parsed),
         genAst = acorn.parse(genSrc);
-  
+
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
     ast.acorn.rematchAstWithSource(parsed, genSrc);
     expect(parsed).to.deep.equal(genAst, 'source code positions were not corrected');
   });
-  
+
   it("updateSourceCodePositionsInSubTree", function() {
     var src1 = 'function foo() { var y = 3; return y; }',
       src2 = 'var x = { z: 3 };\nfunction foo() {\n   var y = 3;\n   return y;\n}\nx.z + foo();',
@@ -86,11 +86,11 @@ describe('acorn.walk extension', function() {
       ast2 = acorn.parse(src2),
       genSrc = escodegen.generate(ast2),
       genAst = acorn.parse(genSrc);
-  
+
     ast.acorn.rematchAstWithSource(ast1, genSrc, null, 'body.1');
     expect(ast1).to.deep.equal(genAst.body[1], 'source code positions were not corrected');
   });
-  
+
   it("updateSourceCodeLocations", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
@@ -127,7 +127,7 @@ describe('acorn.walk extension', function() {
     ast.acorn.withMozillaAstDo(parsed, {}, function(next, node) { delete node.loc; next(); })
     expect(parsed).to.deep.equal(genAst, 'source code positions were not corrected');
   });
-  
+
   it("parseWithComments", function() {
     var src = '// comment1\n\n//comment2\nvar x = 3; // comment3\n// comment3\nfunction foo() { var y = 3; /*comment4*/ return y }; x + foo();',
         parsed = ast.parse(src, {withComments: true}),
@@ -151,7 +151,7 @@ describe('acorn.walk extension', function() {
           start: 87,end: 99,
           isBlock: true, text: "comment4"
         }];
-  
+
     expect(parsed.comments).to.deep.equal(expectedTopLevelComments, 'topLevel');
     expect(parsed.body[1].body.comments).to.deep.equal(expectedScopedComments, 'scoped');
   });
