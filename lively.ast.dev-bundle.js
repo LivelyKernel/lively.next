@@ -12216,6 +12216,7 @@ if (!acorn && isCommonJS) {
     acorn = require("acorn-jsx");
     acorn.walk = require("acorn/dist/walk");
     acorn.parse_dammit = require("acorn/dist/acorn_loose").parse_dammit;
+    Global.acorn = acorn;
 }
 
 var env = {
@@ -12226,7 +12227,7 @@ var env = {
   "lively.ast": (Global.lively && Global.lively.ast) || {},
   escodegen: escodegen,
   acorn: acorn
-}
+};
 
 env.lively.ast = env['lively.ast'];
 
