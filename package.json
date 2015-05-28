@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
-    "acorn": "^1.0.3",
+    "acorn": "~1.0.3",
     "acorn-jsx": "^1.0.1",
     "escodegen": "^1.6.1",
     "lively.lang": "git://github.com/LivelyKernel/lively.lang.git#master"
