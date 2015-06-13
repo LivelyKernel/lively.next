@@ -157,20 +157,29 @@ describe('ast.query', function() {
 
       describe("vars", function() {
         it("simple", function() {
-          var code = "var {x} = {x: 3};"
-          var parsed = ast.parse(code);
-          var scopes = ast.query.scopes(parsed);
+          var code = "var {x} = {x: 3};",
+              parsed = ast.parse(code),
+              scopes = ast.query.scopes(parsed);
           expect(["x"]).deep.equals(ast.query._declaredVarNames(scopes));
         });
       });
 
       describe("...", function() {
+
         it("as param", function() {
           var code = "(a, ...b) => a + b[0];",
               result = ast.query.topLevelDeclsAndRefs(code),
               expected = [];
           expect(expected).deep.equals(result.undeclaredNames);
         });
+
+        it("as assignment", function() {
+          var code = "var [head, ...inner] = [1,2,3,4,5];",
+              parsed = ast.parse(code),
+              scopes = ast.query.scopes(parsed);
+          expect(["head", "inner"]).deep.equals(ast.query._declaredVarNames(scopes));
+        });
+
       });
 
     });
