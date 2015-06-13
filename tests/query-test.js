@@ -164,6 +164,15 @@ describe('ast.query', function() {
         });
       });
 
+      describe("...", function() {
+        it("as param", function() {
+          var code = "(a, ...b) => a + b[0];",
+              result = ast.query.topLevelDeclsAndRefs(code),
+              expected = [];
+          expect(expected).deep.equals(result.undeclaredNames);
+        });
+      });
+
     });
   });
 
