@@ -1,21 +1,33 @@
 var fs = require("fs");
 var lang = require("lively.lang");
 var ast = require("lively.ast");
+var path = require("path");
 
 var obj = lang.obj;
 var arr = lang.arr;
 var fun = lang.fun;
 var string = lang.string;
 
-var projectPath = "./";
-var dryRun = false;
-
 module.exports = generateDoc;
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 function generateDoc(options, thenDo) {
-  options = options || {};
+  // Reads JS source files, extracts toplevel, object, and function comments
+  // and generates a documentation from these. Will insert doc into README.md or
+  // doc files.
+  // options `{dryRun: BOOL, projectPath: STRING, files: ARRAY[STRING], intoFiles: BOOL}`
+  // `intoFiles`: split documentation into individual doc/xxx.md files or README.md (default)
+  // Example:
+  // var files = ["lib/foo.js", "lib/bar.js"];
+  // require("./generate-doc").generateDoc({
+  //   projectPath: "/foo/bar", files: files},
+  //   function(err, markup, fileData) { /*...*/ })/
+
+  options = lively.lang.obj.merge({
+    dryRun: false,
+    projectPath: "./",
+    files: null,
+    intoFiles: false
+  }, options);
   
   var files = options.files;
   
@@ -25,30 +37,30 @@ function generateDoc(options, thenDo) {
 
   global.fileData = {};
   fun.composeAsync(
-      step1_readSourceFiles.bind(global,files),
+      step1_readSourceFiles.bind(global, options),
       step2_extractCommentsFromFileData,
       step3_markdownFromFileData,
       step4_commentCoverageFromFileData,
       step5_markdownTocFromFileData,
       step6_markdownDocumentationFromFileData,
-      step7_markdownDocFilesFromFileData,
+      step7_markdownDocFilesFromFileData.bind(global, options),
       step8_markdownTocFromFileData
   )(function(err, markup, fileData) {
       if (err) console.error(String(err));
       else console.log("DONE!");
-    
-      // this.updateMarkdownPreview(markup);
       thenDo && thenDo(err);
   });
 
 }
 
 function readFile(name, thenDo) {
+  // ignore-in-doc
   fs.readFile(name, function(err, out) { thenDo(err, out && String(out)); });
 }
 
-function writeFile(name, content, thenDo) {
-  if (dryRun) {
+function writeFile(options, name, content, thenDo) {
+  // ignore-in-doc
+  if (options.dryRun) {
     console.log("WRITING %s\n%s", name, content);
     thenDo(null);
   } else {
@@ -56,7 +68,10 @@ function writeFile(name, content, thenDo) {
   }
 }
 
+var ignoredComments = {};
 function processComment(comments, comment) {
+  // ignore-in-doc
+
   if (ignoreComment(comment)) return comments;
   removePublicDecl(comment);
   // markTypes(comment);
@@ -108,11 +123,19 @@ function processComment(comments, comment) {
 
   function removePublicDecl(comment) {
     if (comment.comment.trim() === 'show-in-doc') comment.comment = "";
-    return comment
+    return comment;
   }
   
   function ignoreComment(comment) {
-    if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')) return true;
+    var ignored = ignoredComments[comment.file] || (ignoredComments[comment.file] = {});
+    var path = comment.path.join(".");
+    if (ignored[path]
+     || obj.keys(ignored).some(function(prefix) {
+         return path.startsWith(prefix); })) return true;
+    if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')) {
+      ignored[path] = true;
+      return true;
+    }
     if (!comment.name) return true;
     if (comment.type !== "method") return false;
     // aloow only one comment (the first one) per method
@@ -122,12 +145,13 @@ function processComment(comments, comment) {
   }
 }
 
-function step1_readSourceFiles(files, thenDo) {
+function step1_readSourceFiles(options, thenDo) {
+  // ignore-in-doc
   var fileData = {};
   console.log("loading...");
-  arr.doAndContinue(files, function(next, fn, i) {
-    console.log("...%s/%s", i, files.length);
-    readFile(fn, function(err, out) {
+  arr.doAndContinue(options.files, function(next, fn, i) {
+    console.log("...%s/%s", i, options.files.length);
+    readFile(path.join(options.projectPath, fn), function(err, out) {
       fileData[fn] = {content: out};
       next();
     });
@@ -136,16 +160,18 @@ function step1_readSourceFiles(files, thenDo) {
 
 
 function step2_extractCommentsFromFileData(fileData, thenDo) {
+  // ignore-in-doc
   Object.keys(fileData).forEach(function(fn) {
     try {
       var comments = ast.comments.extractComments(fileData[fn].content);
+      comments.forEach(function(ea) { ea.file = fn; });
       fileData[fn].comments = comments.reduce(processComment, []);
       var topLevelComment = arr.detect(comments, function(ea) { return !string.startsWith(ea.comment, "global") && !ea.path.length; });
       fileData[fn].topLevelComment = (topLevelComment ? topLevelComment.comment : "").replace(/^\s+(\*\s+)?/gm, "");
 
     } catch (err) {
       console.error("error extracting comments in file "
-           + fn + ":\n" + (err.stack || err))
+           + fn + ":\n" + (err.stack || err) + "\n" + fileData[fn].content);
     }
   });
   thenDo(null, fileData);
@@ -154,6 +180,7 @@ function step2_extractCommentsFromFileData(fileData, thenDo) {
 
 
 function step3_markdownFromFileData(fileData, thenDo) {
+  // ignore-in-doc
   Object.keys(fileData).forEach(function(fn) {
     if (fileData[fn].comments)
       fileData[fn].markdown = markdownFromComments(fn, fileData[fn].comments);
@@ -163,6 +190,7 @@ function step3_markdownFromFileData(fileData, thenDo) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
   function markdownFromComments(fileName, comments) {
+    // ignore-in-doc
     return arr.compact(comments.map(function(ea) {
        if (ea.comment.trim().match(/^[-=-]+$/)) return null;
        switch (ea.type) {
@@ -174,7 +202,7 @@ function step3_markdownFromFileData(fileData, thenDo) {
            return string.format('#### %s%s%s(%s)\n\n%s', anchorFor(ea), objName, ea.name, ea.args.join(', '), ea.comment);
         }
         case 'function': {
-          if (!ea.name.match(/^[A-Z]/)) return null;
+          if (ea.name.match(/^[A-Z]/)) return null;
           return string.format('#### %s%s(%s)\n\n%s', anchorFor(ea), ea.name, ea.args.join(', '), ea.comment);
         }
          default: return null;
@@ -183,6 +211,7 @@ function step3_markdownFromFileData(fileData, thenDo) {
   }
 
   function anchorFor(comment) {
+    // ignore-in-doc
     return string.format('<a name="%s%s"></a>',
       comment.objectName ? comment.objectName + "-" : "",
       comment.name);
@@ -192,6 +221,7 @@ function step3_markdownFromFileData(fileData, thenDo) {
 
 
 function step4_commentCoverageFromFileData(fileData, thenDo) {
+  // ignore-in-doc
   Object.keys(fileData).forEach(function(fn) {
     fileData[fn].coverage = coverageFromComments(fn, fileData[fn].comments);
   });
@@ -200,6 +230,7 @@ function step4_commentCoverageFromFileData(fileData, thenDo) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
   function coverageFromComments(fileName, comments) {
+    // ignore-in-doc
     var coverage = {};
     comments.map(function(ea) {
       if (ea.comment.trim().match(/^[-=-]+$/)) return null;
@@ -230,6 +261,7 @@ function step4_commentCoverageFromFileData(fileData, thenDo) {
 
 
 function step5_markdownTocFromFileData(fileData, thenDo) {
+  // ignore-in-doc
   Object.keys(fileData).forEach(function(fn) {
     if (fileData[fn].coverage)
       fileData[fn].markdownToc = printKeysWithLists(fileData[fn].coverage);
@@ -239,6 +271,7 @@ function step5_markdownTocFromFileData(fileData, thenDo) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function printKeysWithLists(obj) {
+    // ignore-in-doc
     return Object.keys(obj)
         .map(function(k) {
           var objHeading = "- [" + k + "](#" + k + ")";
@@ -252,6 +285,7 @@ function step5_markdownTocFromFileData(fileData, thenDo) {
 }
 
 function step6_markdownDocumentationFromFileData(fileData, thenDo) {
+  // ignore-in-doc
   var markupToc = "### Contents\n\n"
                 + lang.chain(fileData).values().pluck('markdownToc')
                     .invoke("trim").compact().value().join("\n\n");
@@ -264,7 +298,10 @@ function step6_markdownDocumentationFromFileData(fileData, thenDo) {
 
 
 
-function step7_markdownDocFilesFromFileData(markup, fileData, thenDo) {
+function step7_markdownDocFilesFromFileData(options, markup, fileData, thenDo) {
+  // ignore-in-doc
+
+  if (!options.intoFiles) return thenDo(null, options, markup, fileData);
 
   console.log("writing...");
 
@@ -276,19 +313,23 @@ function step7_markdownDocFilesFromFileData(markup, fileData, thenDo) {
     var content = "## " + fn + "\n\n" + fileData[fn].topLevelComment + "\n\n"
       + (fileData[fn].markdownToc || "*no toc!*") + "\n\n" + fileData[fn].markdown;
 
-    writeFile(docFile, content, function(err) { next(err); });
+    writeFile(options, path.join(options.projectPath, docFile),
+      content, function(err) { next(err); });
   }, function() { thenDo(null, markup, fileData); });
 
 }
 
 
 
-function step8_markdownTocFromFileData(markup, fileData, thenDo) {
+function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
+  // ignore-in-doc
   var startMarker = "<!---DOC_GENERATED_START--->";
   var endMarker = "<!---DOC_GENERATED_END--->";
 
-  putOutlineIntoReadme();
-  // putEntireDocIntoReadme();
+  if (options.intoFiles)
+    putOutlineIntoReadme();
+  else
+    putEntireDocIntoReadme();
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -308,7 +349,9 @@ function step8_markdownTocFromFileData(markup, fileData, thenDo) {
 
   function updateReadme(content) {
     fun.composeAsync(
-      function(next) { readFile("README.md", next); },
+      function(next) {
+        readFile(path.join(options.projectPath, "README.md"), next);
+      },
       function(readmeContent, next) {
         var startIdx = readmeContent.indexOf(startMarker) + startMarker.length;
         var endIdx = readmeContent.indexOf(endMarker);
@@ -317,7 +360,8 @@ function step8_markdownTocFromFileData(markup, fileData, thenDo) {
         next(null, start + "\n" + content + "\n" + end);
       },
       function(updatedReadmeContent, next) {
-        writeFile("README.md", updatedReadmeContent, function(err) { next(err); });
+        writeFile(options, path.join(options.projectPath, "README.md"),
+          updatedReadmeContent, function(err) { next(err); });
       }
     )(function(err) { thenDo(err, markup, fileData) });
   }
