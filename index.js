@@ -85,7 +85,11 @@ function writeFile(options, name, content, thenDo) {
 function processComment(comments, comment) {
   // ignore-in-doc
 
-  if (ignoreComment(comment)) return [];
+  if (ignoreComment(comment)) {
+    comment.ignored = true;
+    return [];
+  }
+
   removePublicDecl(comment);
   // markTypes(comment);
   ignoreTypes(comment);
@@ -94,6 +98,7 @@ function processComment(comments, comment) {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   function markTypes(comment) {
+    // ignore-in-doc
     var text = comment.comment;
     // var text = " [a] -> (a -> Boolean) -> c? -> a "
     var matches = string.reMatches(text, /^[ [\[\]\(\)a-z\?\*\+]+(?:->[ [\[\]\(\)a-z\?\*\+]+)+$/igm);
@@ -107,6 +112,7 @@ function processComment(comments, comment) {
   }
 
   function ignoreTypes(comment) {
+    // ignore-in-doc
     var text = comment.comment;
     // var text = " [a] -> (a -> Boolean) -> c? -> a "
     var matches = string.reMatches(text, /^[ [\[\]\(\)a-z\?\*\+]+(?:->[ [\[\]\(\)a-z\?\*\+]+)+$/igm);
@@ -134,24 +140,25 @@ function processComment(comments, comment) {
   }
 
   function removePublicDecl(comment) {
-    if (comment.comment.trim() === 'show-in-doc') comment.comment = "";
+    comment.comment = comment.comment.replace(/\s*show-in-docs?\s*/m, "");
     return comment;
   }
-  
+
   function ignoreComment(comment) {
+    // ignore-in-doc
+    if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')) return true;
+    if (string.startsWith(comment.comment.trim(), 'show-in-doc')) return false;
     var ignored = arr.filterByKey(comments, "ignored");
-    var path = comment.path.join(".");
-    if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')
-     || ignored.some(function(ea) { return path.match(new RegExp("^" + ea.path.join("."))); })
-     || !comment.name
-     || comment.type === "method"
-     || comments.slice(0, comments.indexOf(comment)).some(function(c) { return c.name == comment.name && c.objectName == comment.objectName; })) {
-      comment.ignored = true;
-      return true;
-    }
-    comment.ignored = false;
-    return false;
+    var commentsBefore = arr.withoutAll(comments.slice(0, comments.indexOf(comment)), ignored);
+    if (ignored.some(function(ea) { return obj.equals(comment.path, ea.path); })) return true;
+    if (!comment.name) return true;
+    if (comment.type !== "method") return false;
+    // allow only one comment (the first one) per method
+    return commentsBefore.some(function(c) {
+        return c.name == comment.name && c.objectName == comment.objectName;
+    });
   }
+
 }
 
 function step1_readSourceFiles(options, thenDo) {
@@ -211,7 +218,6 @@ function step3_markdownFromFileData(fileData, thenDo) {
            return string.format('#### %s%s%s(%s)\n\n%s', anchorFor(ea), objName, ea.name, ea.args.join(', '), ea.comment);
         }
         case 'function': {
-          if (ea.name.match(/^[A-Z]/)) return null;
           return string.format('#### %s%s(%s)\n\n%s', anchorFor(ea), ea.name, ea.args.join(', '), ea.comment);
         }
          default: return null;
@@ -324,7 +330,7 @@ function step7_markdownDocFilesFromFileData(options, markup, fileData, thenDo) {
 
     writeFile(options, path.join(options.projectPath, docFile),
       content, function(err) { next(err); });
-  }, function() { thenDo(null, markup, fileData); });
+  }, function() { thenDo(null, options, markup, fileData); });
 
 }
 
