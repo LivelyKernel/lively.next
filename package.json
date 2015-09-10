@@ -23,6 +23,6 @@
     "lively.lang": "^0.4.4"
   },
   "scripts": {
-    "doc": "node -e 'require(process.cwd())({files: [\"index.js\"]})'",
+    "doc": "node -e 'require(process.cwd())({files: [\"index.js\"]})'"
   }
 }
