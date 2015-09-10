@@ -69,7 +69,10 @@ function generateDoc(options, thenDo) {
 
 function readFile(name, thenDo) {
   // ignore-in-doc
-  fs.readFile(name, function(err, out) { thenDo(err, out && String(out)); });
+  if (fs.existsSync(name))
+    fs.readFile(name, function(err, out) { thenDo(err, out && String(out)); });
+  else
+    thenDo(new Error("File " + name + " does not exist!"));
 }
 
 function writeFile(options, name, content, thenDo) {
