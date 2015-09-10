@@ -16,13 +16,19 @@ function generateDoc(options, thenDo) {
   // doc files.
   // options `{dryRun: BOOL, projectPath: STRING, files: ARRAY[STRING], intoFiles: BOOL}`
   // `intoFiles`: split documentation into individual doc/xxx.md files or README.md (default)
+  // A commom usage is to add a package.json script like
+  // ```json
+  // "scripts": {
+  //   "doc": "node -e 'require(process.cwd())({files: [\"index.js\"]})'"
+  // }
+  // and then run `npm run doc`
   // Example:
   // var files = ["lib/foo.js", "lib/bar.js"];
-  // require("./generate-doc").generateDoc({
+  // require("doc-comments")({
   //   projectPath: "/foo/bar", files: files},
   //   function(err, markup, fileData) { /*...*/ })/
 
-  options = lively.lang.obj.merge({
+  options = obj.merge({
     dryRun: false,
     projectPath: "./",
     files: null,
@@ -34,8 +40,6 @@ function generateDoc(options, thenDo) {
   if (!files) return thenDo(new Error("No files specified!"));
 
   var commentData = {};
-
-  global.fileData = {};
   fun.composeAsync(
       step1_readSourceFiles.bind(global, options),
       step2_extractCommentsFromFileData,
@@ -46,9 +50,19 @@ function generateDoc(options, thenDo) {
       step7_markdownDocFilesFromFileData.bind(global, options),
       step8_markdownTocFromFileData
   )(function(err, markup, fileData) {
-      if (err) console.error(String(err));
-      else console.log("DONE!");
-      thenDo && thenDo(err);
+      if (err) { console.error(String(err));  }
+      else {
+        var report = lang.chain(fileData).keys().flatmap(function(file) {
+          var data = fileData[file];
+          var commentLines = lang.chain(data.comments)
+            .withoutAll(arr.filterByKey(data.comments, "ignored"))
+            .map(function(comment) { return "  " + comment.name + " (" + comment.type + ")"; })
+            .value();
+          return commentLines.length ? [file].concat(commentLines) : [];
+        }).value().join("\n");
+        console.log("generated docs:\n%s", report);
+      }
+      thenDo && thenDo(err, markup, fileData);
   });
 
 }
@@ -68,17 +82,15 @@ function writeFile(options, name, content, thenDo) {
   }
 }
 
-var ignoredComments = {};
 function processComment(comments, comment) {
   // ignore-in-doc
 
-  if (ignoreComment(comment)) return comments;
+  if (ignoreComment(comment)) return [];
   removePublicDecl(comment);
   // markTypes(comment);
   ignoreTypes(comment);
   markExamples(comment);
-  comments.push(comment)
-  return comments; 
+  return [comment]; 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   function markTypes(comment) {
@@ -127,21 +139,18 @@ function processComment(comments, comment) {
   }
   
   function ignoreComment(comment) {
-    var ignored = ignoredComments[comment.file] || (ignoredComments[comment.file] = {});
+    var ignored = arr.filterByKey(comments, "ignored");
     var path = comment.path.join(".");
-    if (ignored[path]
-     || obj.keys(ignored).some(function(prefix) {
-         return path.startsWith(prefix); })) return true;
-    if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')) {
-      ignored[path] = true;
+    if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')
+     || ignored.some(function(ea) { return path.match(new RegExp("^" + ea.path.join("."))); })
+     || !comment.name
+     || comment.type === "method"
+     || comments.slice(0, comments.indexOf(comment)).some(function(c) { return c.name == comment.name && c.objectName == comment.objectName; })) {
+      comment.ignored = true;
       return true;
     }
-    if (!comment.name) return true;
-    if (comment.type !== "method") return false;
-    // aloow only one comment (the first one) per method
-    return comments.some(function(c) {
-        return c.name == comment.name && c.objectName == comment.objectName;
-    });
+    comment.ignored = false;
+    return false;
   }
 }
 
@@ -165,7 +174,7 @@ function step2_extractCommentsFromFileData(fileData, thenDo) {
     try {
       var comments = ast.comments.extractComments(fileData[fn].content);
       comments.forEach(function(ea) { ea.file = fn; });
-      fileData[fn].comments = comments.reduce(processComment, []);
+      fileData[fn].comments = arr.flatmap(comments, processComment.bind(null, comments));
       var topLevelComment = arr.detect(comments, function(ea) { return !string.startsWith(ea.comment, "global") && !ea.path.length; });
       fileData[fn].topLevelComment = (topLevelComment ? topLevelComment.comment : "").replace(/^\s+(\*\s+)?/gm, "");
 

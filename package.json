@@ -21,5 +21,8 @@
   "dependencies": {
     "lively.ast": "^0.2.7",
     "lively.lang": "^0.4.4"
+  },
+  "scripts": {
+    "build": "node -e 'require(process.cwd())({files: [\"index.js\"]})'"
   }
 }

@@ -16,11 +16,17 @@ Extract comments from JavaScript source code and generate API documentation.
  doc files.
  options `{dryRun: BOOL, projectPath: STRING, files: ARRAY[STRING], intoFiles: BOOL}`
  `intoFiles`: split documentation into individual doc/xxx.md files or README.md (default)
+ A commom usage is to add a package.json script like
+ ```json
+ "scripts": {
+   "doc": "node -e 'require(process.cwd())({files: [\"index.js\"]})'"
+ }
+ and then run `npm run doc`
  
 
 ```js
 var files = ["lib/foo.js", "lib/bar.js"];
-require("./generate-doc").generateDoc({
+require("doc-comments")({
   projectPath: "/foo/bar", files: files},
   function(err, markup, fileData) { /*...*/ })/
 ```
