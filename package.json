@@ -1,0 +1,25 @@
+{
+  "name": "doc-comments",
+  "version": "0.1.0",
+  "description": "Extract comments from JavaScript source code and generate API documentation.",
+  "main": "index.js",
+  "keywords": [
+    "comments",
+    "documentation",
+    "generator"
+  ],
+  "author": "Robert Krahn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rksm/doc-comments"
+  },
+  "bugs": {
+    "url": "https://github.com/rksm/doc-comments/issues"
+  },
+  "homepage": "https://github.com/rksm/doc-comments",
+  "dependencies": {
+    "lively.ast": "^0.2.7",
+    "lively.lang": "^0.4.4"
+  }
+}
