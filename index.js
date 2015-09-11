@@ -15,13 +15,10 @@ function generateDoc(options, thenDo) {
   // and generates a documentation from these. Will insert doc into README.md or
   // doc files.
   // options `{dryRun: BOOL, projectPath: STRING, files: ARRAY[STRING], intoFiles: BOOL}`
-  // `intoFiles`: split documentation into individual doc/xxx.md files or README.md (default)
-  // A commom usage is to add a package.json script like
-  // ```json
-  // "scripts": {
-  //   "doc": "node -e 'require(process.cwd())({files: [\"index.js\"]})'"
-  // }
-  // and then run `npm run doc`
+  // `intoFiles`: split documentation into individual doc/xxx.md files or README.md (default).
+  // The README.md file should include insertion markers
+  // `<!---DOC_GENERATED_START--->` and
+  // `<!---DOC_GENERATED_END--->`.
   // Example:
   // var files = ["lib/foo.js", "lib/bar.js"];
   // require("doc-comments")({
