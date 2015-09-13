@@ -23,10 +23,10 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
-    "acorn": "~1.0.3",
-    "acorn-jsx": "^1.0.1",
-    "escodegen": "^1.6.1",
-    "lively.lang": ">=0.4.1"
+    "acorn": "^2.4",
+    "acorn-jsx": "^2.0",
+    "escodegen": "^1.7",
+    "lively.lang": "^0.4"
   },
   "devDependencies": {
     "browserify": "^7.0.0",
