@@ -9,7 +9,7 @@ if (env.isCommonJS) {
   ast = require('../index');
 } else { expect = chai.expect; ast = env['lively.ast']; }
 
-describe('jsx', function() {
+xdescribe('jsx', function() {
 
   it("can be parsed", function() {
     var code = 'var app = <Nav color="blue" />;'

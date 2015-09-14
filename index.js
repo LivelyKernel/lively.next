@@ -39,7 +39,7 @@
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
     options.plugins = options.plugins || {};
-    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
     if (options.withComments) {
       // record comments
       delete options.withComments;
@@ -132,7 +132,7 @@
     options = options || {};
     options.ecmaVersion = 6;
     options.plugins = options.plugins || {};
-    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
 
     var src = '(' + source + ')',
       ast = acorn.parse(src);
@@ -183,7 +183,7 @@
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
     options.plugins = options.plugins || {};
-    options.plugins.jsx = options.plugins.hasOwnProperty("jsx") ? options.plugins.jsx : true;
+    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
 
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }

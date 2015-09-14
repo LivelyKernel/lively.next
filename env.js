@@ -4,7 +4,8 @@ var lang = typeof lively !== "undefined" ? lively.lang : isCommonJS && module.re
 var escodegen = isCommonJS ? require("escodegen") : escodegen;
 var acorn = !isCommonJS && Global.acorn;
 if (!acorn && isCommonJS) {
-    acorn = require("acorn-jsx");
+    // acorn = require("acorn-jsx");
+    acorn = require("acorn");
     acorn.walk = require("acorn/dist/walk");
     acorn.parse_dammit = require("acorn/dist/acorn_loose").parse_dammit;
     Global.acorn = acorn;

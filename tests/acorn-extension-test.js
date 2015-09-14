@@ -133,21 +133,21 @@ describe('acorn.walk extension', function() {
         parsed = ast.parse(src, {withComments: true}),
         comments = parsed.comments,
         expectedTopLevelComments = [{
-          column: false, isBlock: false, line: false,
+          column: undefined, line: undefined, isBlock: false,
           start: 0, end: 11,
           node: null, text: " comment1"
         },{
-          column: false, isBlock: false, line: false,
+          column: undefined, line: undefined, isBlock: false,
           start: 13, end: 23,
           node: null, text: "comment2"
         },{
-          column: false, isBlock: false, line: false,
+          column: undefined, line: undefined, isBlock: false,
           start: 35, end: 58,
           node: null, text: " comment3\n comment3"
         }],
         expectedScopedComments = [{
           node: null,
-          column: false, line: false,
+          column: undefined, line: undefined, 
           start: 87,end: 99,
           isBlock: true, text: "comment4"
         }];
