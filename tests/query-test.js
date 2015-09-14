@@ -135,10 +135,24 @@ describe('ast.query', function() {
 
       describe("vars", function() {
         it("simple", function() {
-          var code = "var {x} = {x: 3};"
+          var code = "var {x, y} = {x: 3, y: 4};"
           var parsed = ast.parse(code);
           var scopes = ast.query.scopes(parsed);
-          expect(["x"]).deep.equals(ast.query._declaredVarNames(scopes));
+          expect(["x", "y"]).deep.equals(ast.query._declaredVarNames(scopes));
+        });
+
+        it("nested", function() {
+          var code = "var {x, y: [{z}]} = {x: 3, y: [{z: 4}]};"
+          var parsed = ast.parse(code);
+          var scopes = ast.query.scopes(parsed);
+          expect(["x", "z"]).deep.equals(ast.query._declaredVarNames(scopes));
+        });
+
+        it("let", function() {
+          var code = "let {x, y} = {x: 3, y: 4};"
+          var parsed = ast.parse(code);
+          var scopes = ast.query.scopes(parsed);
+          expect(["x", "y"]).deep.equals(ast.query._declaredVarNames(scopes));
         });
 
       });
@@ -274,4 +288,17 @@ describe('ast.query', function() {
 
   });
 
+  describe("helper", function() {
+    var objExpr = ast.parse("({x: 23, y: [{z: 4}]});").body[0].expression;
+    expect(arr.pluck(ast.query.helpers.objPropertiesAsList(objExpr, [], true), "key"))
+      .eql([["x"], ["y", 0, "z"]]);
+    expect(arr.pluck(ast.query.helpers.objPropertiesAsList(objExpr, [], false), "key"))
+      .eql([["x"], ["y"], ["y", 0, "z"]]);
+
+    var objExpr = ast.parse("var {x, y: [{z}]} = {x: 23, y: [{z: 4}]};").body[0].declarations[0].id;
+    expect(arr.pluck(ast.query.helpers.objPropertiesAsList(objExpr, [], true), "key"))
+      .eql([["x"], ["y", 0, "z"]]);
+    expect(arr.pluck(ast.query.helpers.objPropertiesAsList(objExpr, [], false), "key"))
+      .eql([["x"], ["y"], ["y", 0, "z"]]);
+  });
 });
