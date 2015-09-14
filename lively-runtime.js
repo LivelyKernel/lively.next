@@ -3,12 +3,14 @@ lively.require("lively.lang.Runtime").toRun(function() {
   var r = lively.lang.Runtime;
   r.Registry.addProject(r.Registry.default(), {
     name: "lively.ast",
-    rootDir: "/home/lively/expt/lively.ast/",
+    doitContext: {},
 
     reloadAll: function(project, thenDo) {
+      // Global.acorn = project.doitContext.acorn;
+      // lively.ast = project.doitContext.ast;
       // var project = r.Registry.default().projects["lively.ast"];
-      // project.rootDir = "/Users/robert/Lively/lively.ast"
       // project.reloadAll(project, function(err) { err ? show(err.stack || String(err)) : alertOK("reloaded!"); })
+      // project.doitContext.
       var files = ["./env.js",
                    "./index.js",
                    "./lib/acorn-extension.js",
@@ -23,7 +25,13 @@ lively.require("lively.lang.Runtime").toRun(function() {
                    ];
 
       lively.lang.fun.composeAsync(
-        function deps(n) { lively.requires("lively.MochaTests").toRun(function() { n(); }); },
+        function deps(n) {
+          lively.requires("lively.MochaTests").toRun(function() {
+            project.doitContext.chai = Global.chai;
+            project.doitContext.mocha = Global.mocha;
+            n();
+          });
+        },
         function readFiles(n) {
           lively.lang.arr.mapAsyncSeries(files,
             function(fn,_,n) {
@@ -44,13 +52,13 @@ lively.require("lively.lang.Runtime").toRun(function() {
       "env.js": {
         matches: /env.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
-          var state = project.state || {};
-          var withAcornLibDo = state.acorn ?
-            function(thenDo) { thenDo(null, state.acorn); } :
+          var doitContext = project.doitContext || {};
+          var withAcornLibDo = doitContext.acorn ?
+            function(thenDo) { thenDo(null, doitContext.acorn); } :
             loadFreshAcorn.curry(project.rootDir);
           withAcornLibDo(function(err, acorn) {
             if (err) return whenHandled(err);
-            state = project.state = {
+            doitContext = project.doitContext = {
               acorn: acorn, escodegen: escodegen,
               lively: {
                 lang: lively.lang,
@@ -58,8 +66,8 @@ lively.require("lively.lang.Runtime").toRun(function() {
                 'lively.lang_env': null
               }
             }
-            state.window = state;
-            evalCode(change.newSource, state, change.resourceId);
+            doitContext.window = doitContext;
+            evalCode(change.newSource, doitContext, change.resourceId);
       	  	whenHandled();
           });
         }
@@ -68,8 +76,8 @@ lively.require("lively.lang.Runtime").toRun(function() {
       "interface code": {
         matches: /(lib\/.*|index)\.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
-          var state = project.state || {};
-          evalCode(change.newSource, state, change.resourceId);
+          var doitContext = project.doitContext || {};
+          evalCode(change.newSource, doitContext, change.resourceId);
     	  	whenHandled();
         }
       },
@@ -77,12 +85,12 @@ lively.require("lively.lang.Runtime").toRun(function() {
       "tests": {
         matches: /tests\/.*\.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
-          if (!project.state) {
+          if (!project.doitContext) {
             var msg = "cannot update runtime state for " + change.resourceId + "\n because the lib code wasn't loaded."
             show(msg); whenHandled(new Error(msg)); return;
           }
           lively.requires("lively.MochaTests").toRun(function() {
-            evalCode(change.newSource, project.state, change.resourceId);
+            evalCode(change.newSource, project.doitContext, change.resourceId);
             lively.MochaTests.runAll();
       	  	whenHandled();
           })
@@ -106,10 +114,10 @@ lively.require("lively.lang.Runtime").toRun(function() {
     var oldAcorn = Global.acorn;
     delete Global.acorn;
     lively.lang.arr.mapAsyncSeries(
-      ['acorn.js','acorn_loose.js','util/walk.js'],
+      ['acorn.js','acorn_loose.js','walk.js'],
        function(fn,_,n) {
          lively.shell.cat(
-           lively.lang.string.joinPath(livelyAstDir, "node_modules/acorn/", fn),
+           lively.lang.string.joinPath(livelyAstDir, "node_modules/acorn/dist", fn),
            function(err, src) {
              if (err) return n(err, null);
              try { eval(src+"\n//# sourceURL="+fn); } catch (e) {

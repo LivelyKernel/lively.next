@@ -7,7 +7,7 @@ if (env.isCommonJS) {
   chai.use(require('chai-subset'));
   expect = chai.expect;
   ast = require('../index');
-} else { expect = chai.expect; ast = env['lively.ast']; }
+} else { expect = window.chai.expect; ast = env['lively.ast']; }
 
 var arr = lang.arr;
 
