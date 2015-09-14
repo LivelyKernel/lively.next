@@ -38,6 +38,7 @@
 
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
+    options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
     if (options.withComments) {
@@ -131,6 +132,7 @@
   exports.parseFunction = function(source, options) {
     options = options || {};
     options.ecmaVersion = 6;
+    options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
 
@@ -182,6 +184,7 @@
     // options: verbose, addSource, type
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
+    options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
 
