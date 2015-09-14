@@ -13,7 +13,8 @@ module.exports = function(grunt) {
       options: {sourceMap: true, sourceMapStyle: 'link', separator: ';\n'},
       livelyASTBundle: {
         src: ["escodegen.browser.min.js",
-              "acorn-jsx-browser.js",
+              // "acorn-jsx-browser.js",
+              "node_modules/acorn/dist/acorn.js",
               "node_modules/acorn/dist/walk.js",
               "node_modules/acorn/dist/acorn_loose.js",
               "node_modules/lively.lang/lively.lang.dev.js",
@@ -27,7 +28,8 @@ module.exports = function(grunt) {
         dest: 'lively.ast.dev-bundle.js'
       },
       livelyAST: {
-        src: ["acorn-jsx-browser.js",
+        src: [ //"acorn-jsx-browser.js",
+              "node_modules/acorn/dist/acorn.js",
               "node_modules/acorn/dist/walk.js",
               "node_modules/acorn/dist/acorn_loose.js",
               "env.js",
