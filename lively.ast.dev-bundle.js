@@ -4969,6 +4969,7 @@ lp.lookAhead = function (n) {
 });;
 /*global window, process, global*/
 
+
 ;(function(Global) {
 
   var globalInterfaceSpec = [
@@ -5114,11 +5115,16 @@ lp.lookAhead = function (n) {
     globalInterfaceSpec.forEach(function(ea) {
       if (ea.action === "installMethods") {
         var p = livelyLang.Path(ea.target)
+        var source = livelyLang.Path(ea.source).get(livelyLang);
         var target = p.get(Global);
         if (!target) return;
-        ea.methods.forEach(function(name) { delete target[name]; });
+        ea.methods
+          .filter(function(name) { return source === target[name]; })
+          .forEach(function(name) { delete target[name]; });
         if (ea.alias)
-          ea.alias.forEach(function(mapping) { delete target[mapping[0]]; });
+          ea.alias
+            .filter(function(name) { return source === target[name]; })
+            .forEach(function(mapping) { delete target[mapping[0]]; });
 
       } else if (ea.action === "installObject") {
         var p = livelyLang.Path(ea.target);
@@ -5287,7 +5293,6 @@ var obj = exports.obj = {
   // testing
   // -=-=-=-=-
 
-
   isArray: function(obj) { /*show-in-doc*/ return obj && Array.isArray(obj); },
 
   isElement: function(object) { /*show-in-doc*/ return object && object.nodeType == 1; },
@@ -5305,6 +5310,17 @@ var obj = exports.obj = {
   isRegExp: function(object) { /*show-in-doc*/ return object instanceof RegExp; },
 
   isObject: function(object) { /*show-in-doc*/ return typeof object == "object"; },
+
+  isPrimitive: function(obj) {
+    // show-in-doc
+    if (!obj) return true;
+    switch (typeof obj) {
+      case "string":
+      case "number":
+      case "boolean": return true;
+    }
+    return false;
+  },
 
   isEmpty: function(object) {
     /*show-in-doc*/
@@ -5411,18 +5427,26 @@ var obj = exports.obj = {
 
   clone: function(object) {
     // Shallow copy
-    return Array.isArray(object) ?
-      Array.prototype.slice.call(object) : exports.obj.extend({}, object);
+    if (obj.isPrimitive(object)) return object;
+    if (Array.isArray(object)) return Array.prototype.slice.call(object);
+    var clone = {};
+    for (var key in object) {
+      if (object.hasOwnProperty(key))
+        clone[key] = object[key];
+    }
+    return clone;
   },
 
-  extract: function(properties, object, mapFunc) {
-    return properties.reduce(function(extracted, name) {
-      if (object.hasOwnProperty(name)) {
-        var val = mapFunc ? mapFunc(name, object[name]) : object[name];
-        extracted[name] = val;
-      }
-      return extracted;
-    }, {});
+  extract: function(object, properties, mapFunc) {
+    // Takes a list of properties and returns a new object with those
+    // properties shallow-copied from object
+    var copied = {};
+    for (var i = 0; i < properties.length; i++) {
+      if (properties[i] in object)
+        copied[properties[i]] = mapFunc ?
+          mapFunc(properties[i], object[properties[i]]) : object[properties[i]];
+    }
+    return copied;
   },
 
   // -=-=-=-=-=-
@@ -5738,6 +5762,7 @@ var properties = exports.properties = {
 // js object path accessor
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+// show-in-doc
 // A `Path` is an objectified chain of property names (kind of a "complex"
 // getter and setter). Path objects can make access and writes into deeply nested
 // structures more convenient. `Path` provide "safe" get and set operations and
@@ -5848,6 +5873,26 @@ obj.extend(Path.prototype, {
     return delete parent[this._parts[this._parts.length-1]];
   },
 
+  withParentAndKeyDo: function(obj, ensure, doFunc) {
+    // Deeply resolve path in `obj`, not fully, however, only to the parent
+    // element of the last part of path. Take the parent, the key (the last
+    // part of path) and pass it to `doFunc`. When `ensure` is true, create
+    // objects along path it path does not resolve
+    if (this.isRoot()) return doFunc(null, null);
+    var parent = obj;
+    for (var i = 0; i < this._parts.length-1; i++) {
+      var part = this._parts[i];
+      if (parent.hasOwnProperty(part) && (typeof parent[part] === "object" || typeof parent[part] === "function")) {
+        parent = parent[part];
+      } else if (ensure) {
+        parent = parent[part] = {};
+      } else {
+        return doFunc(null, part);
+      }
+    }
+    return doFunc(parent, this._parts[this._parts.length-1]);
+  },
+
   set: function(obj, val, ensure) {
     // Deeply resolve path in `obj` and set the resulting property to `val`. If
     // `ensure` is true, create nested structure in between as necessary.
@@ -5859,19 +5904,18 @@ obj.extend(Path.prototype, {
     // var o2 = {foo: {}};
     // path.set(o2, 43, true)
     // o2 // => {foo: {bar: {baz: 43}}}
-    if (this.isRoot()) return undefined;
-    var parent = obj
-    for (var i = 0; i < this._parts.length-1; i++) {
-      var part = this._parts[i];
-      if (parent.hasOwnProperty(part) && (typeof parent[part] === "object" || typeof parent[part] === "function")) {
-        parent = parent[part];
-      } else if (ensure) {
-        parent = parent[part] = {};
-      } else {
-        return undefined;
-      }
-    }
-    return parent[this._parts[this._parts.length-1]] = val;
+    return this.withParentAndKeyDo(obj, ensure,
+      function(parent, key) { return parent ? parent[key] = val : undefined; });
+  },
+
+  defineProperty: function(obj, propertySpec, ensure) {
+    // like `Path>>set`, however uses Objeect.defineProperty
+    return this.withParentAndKeyDo(obj, ensure,
+      function(parent, key) {
+        return parent ?
+          Object.defineProperty(parent, key, propertySpec) :
+          undefined;
+      });
   },
 
   get: function(obj, n) {
@@ -6234,11 +6278,11 @@ var arr = exports.arr = {
   uniq: function(array, sorted) {
     // non-mutating
     // Removes duplicates from array.
-    return array.inject([], function(a, value, index) {
-      if (0 === index || (sorted ? a.last() != value : !a.include(value)))
+    return array.reduce(function(a, value, index) {
+      if (0 === index || (sorted ? a.last() != value : a.indexOf(value) === -1))
         a.push(value);
       return a;
-    });
+    }, []);
   },
 
   uniqBy: function(array, comparator, context) {
@@ -6567,7 +6611,7 @@ var arr = exports.arr = {
     // calls `waitSecs`. Eventually `endFunc` is called. When passing a number n
     // as `optSynchronChunks`, only every nth iteration is delayed.
     endFunc = endFunc || function() {};
-    return array.clone().reverse().inject(endFunc, function(nextFunc, ea, idx) {
+    return array.clone().reverse().reduce(function(nextFunc, ea, idx) {
       return function() {
         iterator.call(context || (typeof window !== 'undefined' ? window : global), ea, idx);
         // only really delay every n'th call optionally
@@ -6577,7 +6621,7 @@ var arr = exports.arr = {
           nextFunc.delay(waitSecs);
         }
       }
-    })();
+    }, endFunc)();
   },
 
   forEachShowingProgress: function(/*array, progressBar, iterator, labelFunc, whenDoneFunc, context or spec*/) {
@@ -6750,6 +6794,7 @@ var arr = exports.arr = {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     function extractBatch(batch, sizes) {
+      // ignore-in-doc
       // Array -> Array -> Array[Array,Array]
       // case 1: no sizes to distribute, we are done
       if (!sizes.length) return [batch, []];
@@ -7013,6 +7058,7 @@ var arr = exports.arr = {
   },
 }
 
+// show-in-doc
 // A Grouping is created by arr.groupBy and maps keys to Arrays.
 var Group = exports.Group = function Group() {}
 
@@ -7097,7 +7143,8 @@ Group.prototype.count = function() {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// A grid is just a two-dimaensional array, representing a table-like data
+// show-in-doc
+// A grid is a two-dimaensional array, representing a table-like data
 var grid = exports.grid = {
 
   create: function(rows, columns, initialObj) {
@@ -7226,6 +7273,7 @@ var grid = exports.grid = {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+// show-in-doc
 // Intervals are arrays whose first two elements are numbers and the
 // first element should be less or equal the second element, see
 // [`interval.isInterval`](). This abstraction is useful when working with text
@@ -7464,6 +7512,7 @@ var interval = exports.interval = {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+// show-in-doc
 // Accessor to sub-ranges of arrays. This is used, for example, for rendering
 // large lists or tables in which only a part of the items should be used for
 // processing or rendering. An array projection provides convenient access and
@@ -7591,6 +7640,100 @@ var tree = exports.tree = {
     return mapFunc(treeNode, mappedNodes);
   },
 }
+
+})(typeof module !== "undefined" && module.require && typeof process !== "undefined" ?
+  require('./base') :
+  (typeof lively !== "undefined" && lively.lang ?
+     lively.lang : {}));
+;/*global*/
+
+/*
+Computation over graphs. Unless otherwise specified a graph is a simple JS
+object whose properties are interpreted as nodes that refer to arrays whose
+elements describe edges. Example:
+
+```js
+var testGraph = {
+  "a": ["b", "c"],
+  "b": ["c", "d", "e", "f"],
+  "d": ["c", "f"],
+  "e": ["a", "f"],
+  "f": []
+}
+```
+*/
+
+;(function(exports) {
+"use strict";
+
+var obj = exports.obj;
+var arr = exports.arr;
+
+// show-in-doc
+var graph = exports.graph = {
+
+  clone: function(graph) {
+    // return a copy of graph map
+    var cloned = {};
+    for (var id in graph)
+      cloned[id] = graph[id].slice();
+    return cloned;
+  },
+
+  without: function(graph, ids) {
+    // return a copy of graph map with ids removed
+    var cloned = {};
+    for (var id in graph) {
+      if (ids.indexOf(id) > -1) continue;
+      cloned[id] = graph[id].filter(function(id) {
+        return ids.indexOf(id) === -1; });
+    }
+    return cloned;
+  },
+
+  hull: function(graphMap, id, ignore, maxDepth) {
+    // Takes a graph in object format and a start id and then traverses the
+    // graph and gathers all nodes that can be reached from that start id.
+    // Returns a list of those nodes.
+    // Optionally use `ignore` list to filter out certain nodes that shouldn't
+    // be considered and maxDepth to stop early. By default a maxDepth of 20 is
+    // used.
+    // Example:
+    // var testGraph = {
+    // "a": ["b", "c"],
+    // "b": ["c", "d", "e", "f"],
+    // "d": ["c", "f"],
+    // "e": ["a", "f"],
+    // "f": []
+    // }
+    // graph.hull(testGraph, "d") // => ["c", "f"]
+    // graph.hull(testGraph, "e") // => ['a', 'f', 'b', 'c', 'd', 'e']
+    // graph.hull(testGraph, "e", ["b"]) // =? ["a", "f", "c"]
+    return arr.uniq(
+            arr.flatten(
+              obj.values(
+                graph.subgraphReachableBy(
+                  graphMap, id, ignore, maxDepth))))
+  },
+
+  subgraphReachableBy: function(graphMap, id, ignore, maxDepth) {
+    // show-in-doc
+    // Like hull but returns subgraph map of `graphMap`
+    // Example:
+    // graph.subgraphReachableBy(testGraph, "e", [], 2);
+    // // => {e: [ 'a', 'f' ], a: [ 'b', 'c' ], f: []}
+    maxDepth = maxDepth || 10;
+    if (ignore) graphMap = graph.without(graphMap, ignore);
+    var ids = [id], step = 0, subgraph = {};
+    while (ids.length && step++ < maxDepth) {
+      ids = ids.reduce(function(ids, id) {
+        return subgraph[id] ?
+          ids : ids.concat(subgraph[id] = graphMap[id] || []);
+      }, []);
+    }
+    return subgraph;
+  }
+};
 
 })(typeof module !== "undefined" && module.require && typeof process !== "undefined" ?
   require('./base') :
@@ -7812,7 +7955,7 @@ var fun = exports.fun = {
     var store = fun._throttledByName || (fun._throttledByName = {});
     if (store[name]) return store[name];
     function throttleNamedWrapper() {
-      // cleaning up
+      // ignore-in-doc, cleaning up
       fun.debounceNamed(name, wait, function() { delete store[name]; })();
       func.apply(this, arguments);
     }
@@ -7828,7 +7971,7 @@ var fun = exports.fun = {
     var store = fun._debouncedByName || (fun._debouncedByName = {});
     if (store[name]) return store[name];
     function debounceNamedWrapper() {
-      // cleaning up
+      // ignore-in-doc, cleaning up
       delete store[name];
       func.apply(this, arguments);
     }
@@ -8985,6 +9128,7 @@ var string = exports.string = {
     return nodeList.join('\n');
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     function iterator(depth, index, node) {
+      // ignore-in-doc
       // 1. Create stringified representation of node
       nodeList[index] = (string.times(indent, depth)) + nodePrinter(node, depth);
       var children = childGetter(node, depth),
@@ -9366,7 +9510,9 @@ var string = exports.string = {
 		 * providing access to strings as preformed UTF-8
 		 * 8-bit unsigned value arrays.
 		 */
-		function md5blk(s) { 		/* I figured global was faster.   */
+		function md5blk(s) {
+		  // ignore-in-doc
+		  /* I figured global was faster.   */
 			var md5blks = [], i; 	/* Andy King said do it this way. */
 			for (i=0; i<64; i+=4) {
 			md5blks[i>>2] = s.charCodeAt(i)
@@ -9434,6 +9580,7 @@ var string = exports.string = {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     function splitInThree(string, start, end, startGap, endGap) {
+      // ignore-in-doc
       // split string at start and end
       // return (0, start), (start, end), (end, ...)
       startGap = startGap || 0; endGap = endGap || 0;
@@ -9443,6 +9590,7 @@ var string = exports.string = {
     }
 
     function matchStringForward(s, pattern) {
+      // ignore-in-doc
       // try to match pattern at beginning of string. if matched, return
       // result object with {
       //   match: STRING,
@@ -9466,6 +9614,7 @@ var string = exports.string = {
     }
 
     function matchStringForwardWithAllPatterns(s, patterns) {
+      // ignore-in-doc
       // like matchStringForward, just apply list of patterns
       var pos = 0;
       for (var i = 0; i < patterns.length; i++) {
@@ -9515,6 +9664,7 @@ var string = exports.string = {
     }
 
     function embeddedReMatch(s, patternString) {
+      // ignore-in-doc
       // the main match func
       var patterns = splitIntoPatterns(patternString)
       var result = matchStringForwardWithAllPatterns(s, patterns);
@@ -10881,6 +11031,7 @@ var messenger = exports.messenger = {
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         function deliver(queued) {
+          // ignore-in-doc
           if (messenger._inflight.indexOf(queued) === -1) return; // timed out
           var msg = queued[0], callback = queued[1];
           if (callback)
@@ -12373,7 +12524,7 @@ acorn.walk.toLKObjects = function(ast) {
 };
 
 acorn.walk.copy = function(ast, override) {
-  var visitors = Object.extend({
+  var visitors = lang.obj.extend({
     Program: function(n, c) {
       return {
         start: n.start, end: n.end, type: 'Program',
@@ -14211,11 +14362,36 @@ var helpers = {
         .flatten()
         .pluck('id')
         .value());
-  }
+  },
 
+  objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
+    // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
+    // nodes as a list
+    return arr.flatmap(objExpr.properties, function(prop) {
+      var key = prop.key.name
+      // var result = [{key: path.concat([key]), value: prop.value}];
+      var result = [];
+      var thisNode = {key: path.concat([key]), value: prop.value};
+      switch (prop.value.type) {
+        case "ArrayExpression": case "ArrayPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(arr.flatmap(prop.value.elements, function(el, i) {
+            return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs); }));
+          break;
+        case "ObjectExpression": case "ObjectPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+          break;
+        default: result.push(thisNode);
+      }
+      return result;
+    });
+  }
 }
 
 exports.query = {
+
+  helpers: helpers,
 
   knownGlobals: [
      "true", "false", "null", "undefined", "arguments",
@@ -14460,6 +14636,30 @@ exports.transform = {
       // b contains a
       if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
       throw new Error('Comparing nodes');
+    },
+
+    memberExpression: function(keys) {
+      // var keys = ["foo", "bar", [0], "baz"];
+      // escodegen.generate(this.ast.transform.helper.memberExpression(keys)); // => foo.bar[0].baz
+      var memberExpression = keys.slice(1).reduce(function(memberExpr, key) {
+        return {
+          computed: typeof key !== "string",
+          object: memberExpr,
+          property: nodeForKey(key),
+          type: "MemberExpression"
+        }
+      }, nodeForKey(keys[0]))
+      return memberExpression;
+      return {
+        type: "ExpressionStatement",
+        expression: memberExpression
+      };
+
+      function nodeForKey(key) {
+        return typeof key === "string" ?
+          {name: key, type: "Identifier"} :
+          {raw: String(key), type: "Literal", value: key}
+      }
     },
 
     replaceNode: function(target, replacementFunc, sourceOrChanges) {
@@ -14735,6 +14935,54 @@ exports.transform = {
     return exports.transform.helper.replaceNodes(targetsAndReplacements, source);
   },
 
+  oneDeclaratorForVarsInDestructoring: function(astOrSource) {
+    var ast = typeof astOrSource === 'object' ?
+        astOrSource : exports.parse(astOrSource),
+      source = typeof astOrSource === 'string' ?
+        astOrSource : (ast.source || exports.stringify(ast)),
+      scope = exports.query.scopes(ast),
+      varDecls = (function findVarDecls(scope) {
+        return arr.flatten(scope.varDecls
+          .concat(scope.subScopes.map(findVarDecls)));
+      })(scope);
+
+    var targetsAndReplacements = varDecls.map(function(decl) {
+      return {
+        target: decl,
+        replacementFunc: function(declNode, s, wasChanged) {
+          if (wasChanged) {
+            // reparse node if necessary, e.g. if init was changed before like in
+            // var x = (function() { var y = ... })();
+            declNode = exports.parse(s).body[0];
+          }
+
+          return arr.flatmap(declNode.declarations, function(declNode) {
+            var extractedId = {type: "Identifier", name: "__temp"},
+                extractedInit = {
+                  type: "VariableDeclaration", kind: "var",
+                  declarations: [{type: "VariableDeclarator", id: extractedId, init: declNode.init}]
+                }
+
+            var propDecls = arr.pluck(exports.query.helpers.objPropertiesAsList(declNode.id, [], false), "key")
+              .map(function(keyPath) {
+                return {
+                  type: "VariableDeclaration", kind: "var",
+                  declarations: [{
+                    type: "VariableDeclarator", kind: "var",
+                    id: {type: "Identifier", name: arr.last(keyPath)},
+                    init: exports.transform.helper.memberExpression([extractedId.name].concat(keyPath))}]
+                }
+              });
+
+            return [extractedInit].concat(propDecls);
+          });
+        }
+      }
+    });
+
+    return exports.transform.helper.replaceNodes(targetsAndReplacements, source);
+  },
+
   returnLastStatement: function(source, opts) {
     opts = opts || {};
     var parse = exports.parse,
@@ -14742,7 +14990,7 @@ exports.transform = {
       last = ast.body.pop(),
       newLastsource = 'return ' + source.slice(last.start, last.end);
     if (!opts.asAST) return source.slice(0, last.start) + newLastsource;
-    
+
     var newLast = parse(newLastsource, {allowReturnOutsideFunction: true, ecmaVersion: 6}).body.slice(-1)[0];
     ast.body.push(newLast);
     ast.end += 'return '.length;

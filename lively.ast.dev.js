@@ -5696,7 +5696,7 @@ acorn.walk.toLKObjects = function(ast) {
 };
 
 acorn.walk.copy = function(ast, override) {
-  var visitors = Object.extend({
+  var visitors = lang.obj.extend({
     Program: function(n, c) {
       return {
         start: n.start, end: n.end, type: 'Program',
@@ -7534,11 +7534,36 @@ var helpers = {
         .flatten()
         .pluck('id')
         .value());
-  }
+  },
 
+  objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
+    // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
+    // nodes as a list
+    return arr.flatmap(objExpr.properties, function(prop) {
+      var key = prop.key.name
+      // var result = [{key: path.concat([key]), value: prop.value}];
+      var result = [];
+      var thisNode = {key: path.concat([key]), value: prop.value};
+      switch (prop.value.type) {
+        case "ArrayExpression": case "ArrayPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(arr.flatmap(prop.value.elements, function(el, i) {
+            return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs); }));
+          break;
+        case "ObjectExpression": case "ObjectPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+          break;
+        default: result.push(thisNode);
+      }
+      return result;
+    });
+  }
 }
 
 exports.query = {
+
+  helpers: helpers,
 
   knownGlobals: [
      "true", "false", "null", "undefined", "arguments",
@@ -7783,6 +7808,30 @@ exports.transform = {
       // b contains a
       if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
       throw new Error('Comparing nodes');
+    },
+
+    memberExpression: function(keys) {
+      // var keys = ["foo", "bar", [0], "baz"];
+      // escodegen.generate(this.ast.transform.helper.memberExpression(keys)); // => foo.bar[0].baz
+      var memberExpression = keys.slice(1).reduce(function(memberExpr, key) {
+        return {
+          computed: typeof key !== "string",
+          object: memberExpr,
+          property: nodeForKey(key),
+          type: "MemberExpression"
+        }
+      }, nodeForKey(keys[0]))
+      return memberExpression;
+      return {
+        type: "ExpressionStatement",
+        expression: memberExpression
+      };
+
+      function nodeForKey(key) {
+        return typeof key === "string" ?
+          {name: key, type: "Identifier"} :
+          {raw: String(key), type: "Literal", value: key}
+      }
     },
 
     replaceNode: function(target, replacementFunc, sourceOrChanges) {
@@ -8058,6 +8107,54 @@ exports.transform = {
     return exports.transform.helper.replaceNodes(targetsAndReplacements, source);
   },
 
+  oneDeclaratorForVarsInDestructoring: function(astOrSource) {
+    var ast = typeof astOrSource === 'object' ?
+        astOrSource : exports.parse(astOrSource),
+      source = typeof astOrSource === 'string' ?
+        astOrSource : (ast.source || exports.stringify(ast)),
+      scope = exports.query.scopes(ast),
+      varDecls = (function findVarDecls(scope) {
+        return arr.flatten(scope.varDecls
+          .concat(scope.subScopes.map(findVarDecls)));
+      })(scope);
+
+    var targetsAndReplacements = varDecls.map(function(decl) {
+      return {
+        target: decl,
+        replacementFunc: function(declNode, s, wasChanged) {
+          if (wasChanged) {
+            // reparse node if necessary, e.g. if init was changed before like in
+            // var x = (function() { var y = ... })();
+            declNode = exports.parse(s).body[0];
+          }
+
+          return arr.flatmap(declNode.declarations, function(declNode) {
+            var extractedId = {type: "Identifier", name: "__temp"},
+                extractedInit = {
+                  type: "VariableDeclaration", kind: "var",
+                  declarations: [{type: "VariableDeclarator", id: extractedId, init: declNode.init}]
+                }
+
+            var propDecls = arr.pluck(exports.query.helpers.objPropertiesAsList(declNode.id, [], false), "key")
+              .map(function(keyPath) {
+                return {
+                  type: "VariableDeclaration", kind: "var",
+                  declarations: [{
+                    type: "VariableDeclarator", kind: "var",
+                    id: {type: "Identifier", name: arr.last(keyPath)},
+                    init: exports.transform.helper.memberExpression([extractedId.name].concat(keyPath))}]
+                }
+              });
+
+            return [extractedInit].concat(propDecls);
+          });
+        }
+      }
+    });
+
+    return exports.transform.helper.replaceNodes(targetsAndReplacements, source);
+  },
+
   returnLastStatement: function(source, opts) {
     opts = opts || {};
     var parse = exports.parse,
@@ -8065,7 +8162,7 @@ exports.transform = {
       last = ast.body.pop(),
       newLastsource = 'return ' + source.slice(last.start, last.end);
     if (!opts.asAST) return source.slice(0, last.start) + newLastsource;
-    
+
     var newLast = parse(newLastsource, {allowReturnOutsideFunction: true, ecmaVersion: 6}).body.slice(-1)[0];
     ast.body.push(newLast);
     ast.end += 'return '.length;

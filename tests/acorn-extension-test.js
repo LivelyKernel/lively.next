@@ -156,4 +156,16 @@ describe('acorn.walk extension', function() {
     expect(parsed.body[1].body.comments).to.deep.equal(expectedScopedComments, 'scoped');
   });
 
+  it("should deep copy ast", function() {
+    var parsed = ast.parse('var x = 3;', {addSource: true, addAstIndex: true}),
+        parsedCopy = acorn.walk.copy(parsed);
+
+    // FIXME: sourceType should be copied too
+    delete parsed.sourceType;
+
+    expect(parsed).to.eql(parsedCopy);
+    parsed.body[0].declarations[0].init.value = 'foo';
+    expect(parsed).not.to.eql(parsedCopy);
+  });
+
 });
