@@ -1,8 +1,11 @@
 /*global process, beforeEach, afterEach, describe, it, expect*/
 
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
-if (typeof module !== "undefined" && module.require) module.require("./chai-bundle.js");
+var chai = env.isCommonJS ? module.require("chai") : window.chai;
+var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
+var expect = chai.expect; chai.use(chaiSubset);
 var lang = env.lively.lang || lively.lang, vm = env.isCommonJS ? require('../index') : lively.vm;
+var Global = env.Global;
 
 describe('lively.vm', function() {
 
@@ -57,9 +60,9 @@ describe('lively.vm', function() {
       expect(varMapper.x).equals(3);
       expect(varMapper.y).equals(5);
 
-      expect(!varMapper.hasOwnProperty('z')).to.be.true('Global "z" was recorded');
+      expect(!varMapper.hasOwnProperty('z')).equals(true, 'Global "z" was recorded');
       // don't leave globals laying around
-      vm.syncEval("delete z;", {topLevelVarRecorder: varMapper})
+      delete Global.z;
     });
 
     it("dontCaptureBlacklisted", function() {
@@ -71,7 +74,7 @@ describe('lively.vm', function() {
         });
 
       expect(varMapper.x).equals(3);
-      expect(!varMapper.hasOwnProperty('y')).to.be.true('y recorded?');
+      expect(!varMapper.hasOwnProperty('y')).equals(true, 'y recorded?');
 
     });
 

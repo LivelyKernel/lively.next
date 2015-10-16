@@ -6,14 +6,20 @@
     <link type="text/css" rel="stylesheet" href="../node_modules/mocha/mocha.css" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="pragma" content="no-cache" />
-
   </head>
   <body>
     <div id="mocha"></div>
-    <script type="text/javascript" src="helper.js"></script>
-    <script type="text/javascript" src="mocha-bundle.js"></script>
     <script type="text/javascript" src="../node_modules/lively.ast/lively.ast.dev-bundle.js"></script>
+    <script type="text/javascript" src="helper.js"></script>
+    <script type="text/javascript" src="../node_modules/mocha/mocha.js"></script>
+    <script type="text/javascript" src="../node_modules/chai/chai.js"></script>
+    <script type="text/javascript" >window.module = {exports: {}};</script>
+    <script type="text/javascript" src="../node_modules/chai-subset/lib/chai-subset.js"></script>
+    <script type="text/javascript" >window.chaiSubset = module.exports; delete window.module;</script>
     <script type="text/javascript" >
+      window.expect = chai.expect;
+      chai.use(window.chaiSubset);
+      mocha.globals(["script*", "z"/*for onlyCaptureWhitelistedGlobals*/]);
       mocha.setup("bdd");
       var urls = [
         '../env.js',
