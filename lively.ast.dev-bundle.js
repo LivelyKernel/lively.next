@@ -5459,9 +5459,20 @@ var obj = exports.obj = {
     // meant to be used while interactivively exploring JavaScript programs and
     // state.
     //
-    // `options` can be {printFunctionSource: BOOLEAN, escapeKeys: BOOLEAN, maxDepth: NUMBER}
+    // `options` can be {
+    //   printFunctionSource: BOOLEAN,
+    //   escapeKeys: BOOLEAN,
+    //   maxDepth: NUMBER,
+    //   customPrinter: FUNCTION 
+    // }
     options = options || {};
     depth = depth || 0;
+    
+    if (options.customPrinter) {
+      var ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
+      var customInspected = options.customPrinter(object, ignoreSignal);
+      if (customInspected !== ignoreSignal) return customInspected
+    }
     if (!object) return print(object);
 
     // print function
@@ -6355,7 +6366,14 @@ var arr = exports.arr = {
   },
 
   flatmap: function(array, it, ctx) {
-    return Array.prototype.concat.apply([], array.map(it, ctx));
+    // the simple version
+    // Array.prototype.concat.apply([], array.map(it, ctx));
+    // causes stack overflows with really big arrays
+    var results = [];
+    for (var i = 0; i < array.length; i++) {
+      results.push.apply(results, it.call(ctx, array[i], i));
+    }
+    return results;
   },
 
   interpose: function(array, delim) {
@@ -6829,6 +6847,24 @@ var arr = exports.arr = {
     }, array);
   },
 
+  take: function(arr, n) { return arr.slice(0, n); },
+
+  drop: function(arr, n) { return arr.slice(n); },
+  
+  takeWhile: function(arr, fun, context) {
+    var i = 0;;
+    for (; i < arr.length; i++)
+      if (!fun.call(context, arr[i], i)) break;
+    return arr.slice(0, i);
+  },
+
+  dropWhile: function(arr, fun, context) {
+    var i = 0;;
+    for (; i < arr.length; i++)
+      if (!fun.call(context, arr[i], i)) break;
+    return arr.slice(i);
+  },
+
   // -=-=-=-=-=-
   // randomness
   // -=-=-=-=-=-
@@ -7146,6 +7182,37 @@ Group.prototype.count = function() {
 // show-in-doc
 // A grid is a two-dimaensional array, representing a table-like data
 var grid = exports.grid = {
+
+  get: function(grid, nRow, nCol) {
+    var row = grid[nRow];
+    return row ? row[nCol] : undefined;
+  },
+
+  set: function(grid, nRow, nCol, obj) {
+    var row = grid[nRow];
+    if (row) row[nCol] = obj;
+    return obj;
+  },
+
+  getRow: function(grid, nRow) {
+    return grid[nRow];
+  },
+
+  setRow: function(grid, nRow, newRow) {
+    return grid[nRow] = newRow;
+  },
+
+
+  getCol: function(grid, nCol) {
+    return grid.reduce(function(col, row) {
+      col.push(row[nCol]); return col; }, []);
+  },
+
+  setCol: function(grid, nCol, newCol) {
+    return grid.map(function(row, i) {
+      return row[nCol] ? row[nCol] = newCol[i] : undefined;
+    });
+  },
 
   create: function(rows, columns, initialObj) {
     // Example:
@@ -8846,7 +8913,7 @@ Closure.prototype.recreateFuncFromSource = function(funcSource, optFunc) {
 
   // ignore-in-doc
   // FIXME!!!
-  if (typeof lively !== 'undefined' && lively.Config && lively.Config.get('loadRewrittenCode')) {
+  if (typeof lively !== 'undefined' && lively.Config && lively.Config.loadRewrittenCode) {
       module('lively.ast.Rewriting').load(true);
       var namespace = '[runtime]';
       if (optFunc && optFunc.sourceModule)
@@ -8868,7 +8935,7 @@ Closure.prototype.recreateFuncFromSource = function(funcSource, optFunc) {
     var func = fun.evalJS.call(this, src) || this.couldNotCreateFunc(src);
     this.addFuncProperties(func);
     this.originalFunc = func;
-    if (typeof lively !== 'undefined' && lively.Config && lively.Config.get('loadRewrittenCode')) {
+    if (typeof lively !== 'undefined' && lively.Config && lively.Config.loadRewrittenCode) {
       func._cachedAst.source = funcSource;
       // FIXME: adjust start and end of FunctionExpression (because of brackets)
       func._cachedAst.start++;
@@ -9858,15 +9925,35 @@ var string = exports.string = {
     return s.slice(0, s.length - 1) + String.fromCharCode(s.charCodeAt(s.length - 1) + 1);
   },
 
-  digitValue: function() {
+  digitValue: function(s) {
     // ignore-in-doc
-    return this.charCodeAt(0) - "0".charCodeAt(0);
+    return s.charCodeAt(0) - "0".charCodeAt(0);
   },
 
   times: function(s, count) {
     // Example:
     // string.times("test", 3) // => "testtesttest"
     return count < 1 ? '' : new Array(count + 1).join(s);
+  },
+
+  applyChange: function(string, change) {
+    // change is of the form
+    // `{start: Number, end: Number, lines: [String], action: "insert"|"remove"}`
+    if (change.action === "insert") {
+      return string.slice(0, change.start)
+           + change.lines.join("\n")
+           + string.slice(change.start);
+    } else if (change.action === "remove") {
+        return string.slice(0, change.start)
+             + string.slice(change.end);
+    }
+    return string;
+  },
+
+  applyChanges: function(s, changes) {
+    return changes.reduce(function(result, change) {
+      return string.applyChange(s, change);
+    }, s);
   }
 
 }

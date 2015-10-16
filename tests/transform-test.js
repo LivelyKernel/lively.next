@@ -50,8 +50,8 @@ describe('ast.transform', function() {
         {target: parsed.body[0].declarations[0], replacementFunc: function(node, source, wasChanged) { wasChanged2 = wasChanged; return replacement2; }}],
         {changes: [], source: source});
 
-      expect(!wasChanged1).to.be.true("wasChanged1");
-      expect(wasChanged2).to.be.true("wasChanged2");
+      expect(!wasChanged1).equals(true, "wasChanged1");
+      expect(wasChanged2).equals(true, "wasChanged2");
 
       expect(hist.source).deep.equals("var zzz = 24;\n");
     });
