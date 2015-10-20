@@ -58,11 +58,27 @@ describe('acorn.walk extension', function() {
       src: 'switch (123) { case 123: debugger; }',
       target: function(ast) { return ast.body[0].cases[0].consequent[0]; },
       expected: function(ast) { return ast.body[0].cases[0].consequent[0]; }
+    }, {
+      src: 'if (true) { var a = 1; }',
+      target: function(ast) { return ast.body[0].consequent.body[0].declarations[0]; },
+      expected: function(ast) { return ast.body[0].consequent.body[0]; }
+    }, {
+      src: 'if (true) var a = 1;',
+      target: function(ast) { return ast.body[0].consequent.declarations[0]; },
+      expected: function(ast) { return ast.body[0].consequent; }
+    }, {
+      src: 'if (true) var a = 1; else var a = 2;',
+      target: function(ast) { return ast.body[0].alternate.declarations[0]; },
+      expected: function(ast) { return ast.body[0].alternate; }
+    }, {
+      src: 'a;', // testing scenario where node is not found
+      target: function(ast) { return { type: 'EmptyStatement' } },
+      expected: function(ast) { return undefined; }
     }];
 
     tests.forEach(function(test, i) {
       var parsed = acorn.parse(test.src),
-        found = acorn.walk.findStatementOfNode(parsed, test.target(parsed));
+          found = acorn.walk.findStatementOfNode(parsed, test.target(parsed));
       expect(test.expected(parsed)).equals(found, 'node not found ' + (i + 1));
     });
   });
