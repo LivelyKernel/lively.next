@@ -12959,20 +12959,30 @@ acorn.walk.visitors = {
     if (!target) { target = ast; ast = options; options = null }
     if (!options) options = {}
     if (!ast.astIndex) acorn.walk.addAstIndex(ast);
-    var found, targetReached = false, bodyNodes, lastStatement;
+    var found, targetReached = false;
+    var statements = [
+          // ES5
+          'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement',
+          'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement',
+          'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement',
+          'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration',
+          'VariableDeclaration',
+          // ES2015:
+          'ClassDeclaration'
+        ];
     acorn.withMozillaAstDo(ast, {}, function(next, node, depth, state, path) {
       if (targetReached || node.astIndex < target.astIndex) return;
-      if (node.type === "Program" || node.type === "BlockStatement") {
-        bodyNodes = node.body;
-      } else if (node.type === "SwitchCase") {
-        bodyNodes = node.consequent;
-      }
-      if (bodyNodes) {
-        var nodeIdxInProgramNode = bodyNodes.indexOf(node);
-        if (nodeIdxInProgramNode > -1) lastStatement = node;
-      }
-      if (!targetReached && (node === target || node.astIndex === target.astIndex)) {
-        targetReached = true; found = options.asPath ? path : lastStatement;
+      if (node === target || node.astIndex === target.astIndex) {
+        targetReached = true;
+        if (options.asPath)
+          found = path;
+        else {
+          var p = lang.Path(path);
+          do {
+            found = p.get(ast);
+            p = p.slice(0, p.size() - 1);
+          } while ((statements.indexOf(found.type) == -1) && (p.size() > 0));
+        }
       }
       !targetReached && next();
     });

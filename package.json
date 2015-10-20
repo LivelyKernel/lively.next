@@ -1,6 +1,6 @@
 {
   "name": "lively.ast",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "index.js",
   "directories": {
@@ -26,7 +26,7 @@
     "acorn": "^2.4",
     "acorn-jsx": "^2.0",
     "escodegen": "^1.7",
-    "lively.lang": "^0.4"
+    "lively.lang": ">=0.4.11"
   },
   "devDependencies": {
     "browserify": "^7.0.0",
