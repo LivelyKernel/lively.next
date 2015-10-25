@@ -1,99 +1,73 @@
 lively.require("lively.lang.Runtime").toRun(function() {
 
-  var r = lively.lang.Runtime;
-  r.Registry.addProject(r.Registry.default(), {
+  lively.lang.Runtime.Registry.addProject({
+
     name: "lively.ast",
-    doitContext: {},
+    
+    state: {},
 
     reloadAll: function(project, thenDo) {
-      // Global.acorn = project.doitContext.acorn;
-      // lively.ast = project.doitContext.ast;
-      // var project = r.Registry.default().projects["lively.ast"];
-      // project.reloadAll(project, function(err) { err ? show(err.stack || String(err)) : alertOK("reloaded!"); })
-      // project.doitContext.
-      var files = ["./env.js",
-                   "./index.js",
-                   "./lib/acorn-extension.js",
-                   "./lib/mozilla-ast-visitors.js",
-                   "./lib/mozilla-ast-visitor-interface.js",
-                   "./lib/query.js",
-                   "./lib/transform.js",
-                   "./tests/interface-test.js",
-                   "./tests/acorn-extension-test.js",
-                   "./tests/query-test.js",
-                   "./tests/transform-test.js"
-                   ];
-
-      lively.lang.fun.composeAsync(
-        function deps(n) {
-          lively.requires("lively.MochaTests").toRun(function() {
-            project.doitContext.chai = Global.chai;
-            project.doitContext.mocha = Global.mocha;
-            n();
-          });
-        },
-        function readFiles(n) {
-          lively.lang.arr.mapAsyncSeries(files,
-            function(fn,_,n) {
-              lively.shell.cat(fn, {cwd: project.rootDir},
-              function(err, c) { n(err, {name: fn, content: c}); });
-            }, n);
-        },
-        function(fileContents, next) {
-          lively.lang.arr.mapAsyncSeries(fileContents,
-            function(ea,_,n) { r.Project.processChange(project, ea.name, ea.content, n); },
-            next);
-        }
-      )(thenDo);
+      var files = ["env.js",
+                   "index.js",
+                   "lib/acorn-extension.js",
+                   "lib/mozilla-ast-visitors.js",
+                   "lib/mozilla-ast-visitor-interface.js",
+                   "lib/query.js",
+                   "lib/transform.js",
+                   "lib/code-categorizer",
+                   "tests/interface-test.js",
+                   "tests/acorn-extension-test.js",
+                   "tests/query-test.js",
+                   "tests/transform-test.js",
+                   "tests/code-categorizer.js"];
+      lively.lang.Runtime.loadFiles(project, files, thenDo);
     },
 
     resources: {
 
       "env.js": {
         matches: /env.js$/,
-        changeHandler: function(change, project, resource, whenHandled) {
-          var doitContext = project.doitContext || {};
-          var withAcornLibDo = doitContext.acorn ?
-            function(thenDo) { thenDo(null, doitContext.acorn); } :
-            loadFreshAcorn.curry(project.rootDir);
-          withAcornLibDo(function(err, acorn) {
-            if (err) return whenHandled(err);
-            doitContext = project.doitContext = {
-              acorn: acorn, escodegen: escodegen,
-              lively: {
-                lang: lively.lang,
-                ast: lively.lang.Path("state.lively.ast").get(project) || {},
-                'lively.lang_env': null
-              }
+        changeHandler: function(change, project, resource) {
+          var s = project.state;
+          lively.lang.obj.extend(s, {
+            window: s,
+            acorn: window.acorn,
+            escodegen: window.escodegen,
+            lively: {
+              lang: lively.lang,
+              ast: lively.lang.Path("state.lively.ast").get(project) || {},
+              'lively.lang_env': null
             }
-            doitContext.window = doitContext;
-            evalCode(change.newSource, doitContext, change.resourceId);
-      	  	whenHandled();
           });
+  				lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId);
         }
       },
 
       "interface code": {
         matches: /(lib\/.*|index)\.js$/,
-        changeHandler: function(change, project, resource, whenHandled) {
-          var doitContext = project.doitContext || {};
-          evalCode(change.newSource, doitContext, change.resourceId);
-    	  	whenHandled();
+        changeHandler: function(change, project, resource) {
+          lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId);
         }
       },
 
       "tests": {
         matches: /tests\/.*\.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
-          if (!project.doitContext) {
-            var msg = "cannot update runtime state for " + change.resourceId + "\n because the lib code wasn't loaded."
-            show(msg); whenHandled(new Error(msg)); return;
-          }
-          lively.requires("lively.MochaTests").toRun(function() {
-            evalCode(change.newSource, project.doitContext, change.resourceId);
-            lively.MochaTests.runAll();
-      	  	whenHandled();
-          })
+          // since the tests depend on mocha we make sure this is loaded:
+          lively.lang.fun.composeAsync(
+            function(next) {
+              lively.require("lively.MochaTests").toRun(function() { next(); });
+            },
+            function(next) {
+              lively.lang.obj.extend(project.state, {mocha: Global.mocha, chai: Global.chai, expect: Global.expect});
+              lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId);
+              next();
+            }
+          )(function(err) {
+            if (err) show(String(err));
+            else lively.lang.fun.debounceNamed("lively.ast-runtime-test-load", 300,
+              function() { alertOK("lively.ast tests loaded"); });
+          });
         }
       }
     }
@@ -101,15 +75,6 @@ lively.require("lively.lang.Runtime").toRun(function() {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function evalCode(code, state, resourceName) {
-    lively.lang.VM.runEval(code,
-      {topLevelVarRecorder: state, context: state, sourceURL: resourceName},
-      function(err, _result) {
-    		err && show("error when updating the runtime for " + resourceName + "\n" + (err.stack || err));
-    		!err && alertOK("updated");
-    	});
-  }
-  
   function loadFreshAcorn(livelyAstDir, thenDo) {
     var oldAcorn = Global.acorn;
     delete Global.acorn;
