@@ -12959,20 +12959,30 @@ acorn.walk.visitors = {
     if (!target) { target = ast; ast = options; options = null }
     if (!options) options = {}
     if (!ast.astIndex) acorn.walk.addAstIndex(ast);
-    var found, targetReached = false, bodyNodes, lastStatement;
+    var found, targetReached = false;
+    var statements = [
+          // ES5
+          'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement',
+          'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement',
+          'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement',
+          'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration',
+          'VariableDeclaration',
+          // ES2015:
+          'ClassDeclaration'
+        ];
     acorn.withMozillaAstDo(ast, {}, function(next, node, depth, state, path) {
       if (targetReached || node.astIndex < target.astIndex) return;
-      if (node.type === "Program" || node.type === "BlockStatement") {
-        bodyNodes = node.body;
-      } else if (node.type === "SwitchCase") {
-        bodyNodes = node.consequent;
-      }
-      if (bodyNodes) {
-        var nodeIdxInProgramNode = bodyNodes.indexOf(node);
-        if (nodeIdxInProgramNode > -1) lastStatement = node;
-      }
-      if (!targetReached && (node === target || node.astIndex === target.astIndex)) {
-        targetReached = true; found = options.asPath ? path : lastStatement;
+      if (node === target || node.astIndex === target.astIndex) {
+        targetReached = true;
+        if (options.asPath)
+          found = path;
+        else {
+          var p = lang.Path(path);
+          do {
+            found = p.get(ast);
+            p = p.slice(0, p.size() - 1);
+          } while ((statements.indexOf(found.type) == -1) && (p.size() > 0));
+        }
       }
       !targetReached && next();
     });
@@ -15129,14 +15139,15 @@ var arr = lang.arr;
 
 lang.obj.extend(exports, {
 
-  transformForVarRecord: function(code, varRecorder, varRecorderName, blacklist, defRangeRecorder) {
+  transformForVarRecord: function(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals) {
     // variable declaration and references in the the source code get
     // transformed so that they are bound to `varRecorderName` aren't local
     // state. THis makes it possible to capture eval results, e.g. for
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
     blacklist = blacklist || [];
-    var undeclaredToTransform = lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
+    var undeclaredToTransform = recordGlobals ?
+          null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
         transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
           code, {name: varRecorderName, type: "Identifier"},
           {ignoreUndeclaredExcept: undeclaredToTransform,
@@ -15172,7 +15183,9 @@ lang.obj.extend(exports, {
 
     if (recorder) code = vm.transformForVarRecord(
       code, recorder, varRecorderName,
-      options.dontTransform, options.topLevelDefRangeRecorder);
+      options.dontTransform,
+      options.topLevelDefRangeRecorder,
+      !!options.recordGlobals);
     code = vm.transformSingleExpression(code);
 
     if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
@@ -15194,7 +15207,8 @@ lang.obj.extend(exports, {
     //   varRecorderName: STRING, // default is '__lvVarRecorder'
     //   topLevelVarRecorder: OBJECT,
     //   context: OBJECT,
-    //   sourceURL: STRING
+    //   sourceURL: STRING,
+    //   recordGlobals: BOOLEAN // also transform free vars? default is false
     // }
     if (typeof options === 'function' && arguments.length === 2) {
       thenDo = options; options = {};
