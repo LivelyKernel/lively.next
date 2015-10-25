@@ -3,7 +3,7 @@
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
 var chai = env.isCommonJS ? module.require("chai") : window.chai;
 var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
-var expect = chai.expect; chai.use(chaiSubset);
+var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
 var lang = env.lively.lang || lively.lang, vm = env.isCommonJS ? require('../index') : lively.vm;
 var Global = env.Global;
 
@@ -130,6 +130,18 @@ describe('lively.vm', function() {
         /at eval.*my-great-source!:1/,
         "stack does not have sourceURL info:\n"
       + lang.string.lines(err.stack).slice(0,3).join('\n'));
+    });
+
+  });
+  
+  describe("record free variables", function() {
+
+    it.only("adds them to var recorder", function() {
+      var varMapper = {};
+      var code = "x = 3 + 2";
+      var result = vm.syncEval(code, {topLevelVarRecorder: varMapper, recordGlobals: true});
+      expect(result).equals(5);
+      expect(varMapper.x).equals(5);
     });
 
   });

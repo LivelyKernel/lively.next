@@ -8,14 +8,15 @@ var arr = lang.arr;
 
 lang.obj.extend(exports, {
 
-  transformForVarRecord: function(code, varRecorder, varRecorderName, blacklist, defRangeRecorder) {
+  transformForVarRecord: function(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals) {
     // variable declaration and references in the the source code get
     // transformed so that they are bound to `varRecorderName` aren't local
     // state. THis makes it possible to capture eval results, e.g. for
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
     blacklist = blacklist || [];
-    var undeclaredToTransform = lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
+    var undeclaredToTransform = recordGlobals ?
+          null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
         transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
           code, {name: varRecorderName, type: "Identifier"},
           {ignoreUndeclaredExcept: undeclaredToTransform,
@@ -51,7 +52,9 @@ lang.obj.extend(exports, {
 
     if (recorder) code = vm.transformForVarRecord(
       code, recorder, varRecorderName,
-      options.dontTransform, options.topLevelDefRangeRecorder);
+      options.dontTransform,
+      options.topLevelDefRangeRecorder,
+      !!options.recordGlobals);
     code = vm.transformSingleExpression(code);
 
     if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
@@ -73,7 +76,8 @@ lang.obj.extend(exports, {
     //   varRecorderName: STRING, // default is '__lvVarRecorder'
     //   topLevelVarRecorder: OBJECT,
     //   context: OBJECT,
-    //   sourceURL: STRING
+    //   sourceURL: STRING,
+    //   recordGlobals: BOOLEAN // also transform free vars? default is false
     // }
     if (typeof options === 'function' && arguments.length === 2) {
       thenDo = options; options = {};
