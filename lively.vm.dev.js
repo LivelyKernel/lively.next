@@ -31,6 +31,7 @@ lang.obj.extend(exports, {
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
     blacklist = blacklist || [];
+    blacklist.push("arguments");
     var undeclaredToTransform = recordGlobals ?
           null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
         transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
