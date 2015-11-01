@@ -5007,6 +5007,7 @@ else env.lively['lively.lang_env'] = env;
     require("./lib/query");
     require("./lib/transform");
     require("./lib/comments");
+    require("./lib/code-categorizer");
     module.exports = env["lively.ast"];
   }
 
@@ -5316,7 +5317,7 @@ acorn.walk.withParentInfo = function(ast, iterator, options) {
   // options = {visitAllNodes: BOOL}
   options = options || {};
   function makeScope(parentScope) {
-    var scope = {id: Strings.newUUID(), parentScope: parentScope, containingScopes: []};
+    var scope = {id: lang.string.newUUID(), parentScope: parentScope, containingScopes: []};
     parentScope && parentScope.containingScopes.push(scope);
     return scope;
   }
@@ -6987,6 +6988,37 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
       retVal = this.accept(node.closingElement, depth, state, path.concat(["closingElement"]));
     }
     return retVal;
+  },
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // https://github.com/estree/estree
+  // rk 2015-10-31
+
+  visitTemplateLiteral: function(node, depth, state, path) {
+    var retVal;
+    node.quasis.forEach(function(ea, i) {
+      // ea is of type TemplateElement
+      retVal = this.accept(ea, depth, state, path.concat(["quasis", i]));
+    }, this);
+    node.expressions.forEach(function(ea, i) {
+      // ea is of type Expression
+      retVal = this.accept(ea, depth, state, path.concat(["expressions", i]));
+    }, this);
+    return retVal;
+  },
+
+  visitTaggedTemplateExpression: function(node, depth, state, path) {
+    var retVal;
+    // tag is of type Expression
+    retVal = this.accept(node.tag, depth, state, path.concat(["tag"]));
+    // quasi is of type TemplateLiteral
+    retVal = this.accept(node.quasi, depth, state, path.concat(["quasi"]));
+    return retVal;
+  },
+
+  visitTemplateElement: function(node, depth, state, path) {
+    // node.tail is of type boolean
+    // node.value is {cooked: string;raw: string;}
   }
 
 });
@@ -7386,7 +7418,10 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
     // value is a node of type FunctionExpression
     retVal = this.accept(node.value, depth, scope, path.concat(["value"]));
     return retVal;
-  }
+  },
+
+  visitBreakStatement: function(node, depth, scope, path) { return null; },
+  visitContinueStatement: function(node, depth, scope, path) { return null; }
 
 });
 
