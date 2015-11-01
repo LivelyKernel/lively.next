@@ -199,6 +199,20 @@ describe('ast.query', function() {
     });
   });
 
+  describe("templateStrings", function() {
+    it("simple", function() {
+      var code = "var x = `foo`;",
+          parsed = ast.parse(code),
+          scopes = ast.query.scopes(parsed);
+      expect(["x"]).deep.equals(ast.query._declaredVarNames(scopes));
+    });
+    it("with expressions", function() {
+      var code = "var x = `foo ${y}`;",
+          result = ast.query.topLevelDeclsAndRefs(code);
+      expect(["y"]).deep.equals(result.undeclaredNames);
+    });
+  });
+
   it("findNodesIncludingLines", function() {
     var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n";
 
