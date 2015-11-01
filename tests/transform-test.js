@@ -282,6 +282,26 @@ describe('ast.transform', function() {
         });
 
       });
+
+      describe("labels", function() {
+
+        it("continue", function() {
+          var code = "loop1:\nfor (var i = 0; i < 3; i++) continue loop1;",
+              parsed = ast.parse(code, {addSource: true}),
+              recorder = {name: "Global", type: "Identifier"},
+              result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+          expect(result.source).equals(code);
+        });
+
+        it("break", function() {
+          var code = "loop1:\nfor (var i = 0; i < 3; i++) break loop1;",
+              parsed = ast.parse(code, {addSource: true}),
+              recorder = {name: "Global", type: "Identifier"},
+              result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+          expect(result.source).equals(code);
+        });
+
+      });
       
       describe("destructuring", function() {
 

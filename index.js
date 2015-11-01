@@ -10,6 +10,7 @@
     require("./lib/query");
     require("./lib/transform");
     require("./lib/comments");
+    require("./lib/code-categorizer");
     module.exports = env["lively.ast"];
   }
 
