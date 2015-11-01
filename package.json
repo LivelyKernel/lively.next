@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
-    "lively.ast": "^0.2.9",
+    "lively.ast": "^0.2.11",
     "lively.lang": "^0.4.11"
   },
   "devDependencies": {
