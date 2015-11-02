@@ -24,7 +24,9 @@ module.exports = function(grunt) {
               "lib/mozilla-ast-visitors.js",
               "lib/mozilla-ast-visitor-interface.js",
               "lib/query.js",
-              "lib/transform.js"],
+              "lib/transform.js",
+              "lib/comments.js",
+              "lib/code-categorizer.js"],
         dest: 'lively.ast.dev-bundle.js'
       },
       livelyAST: {
@@ -38,7 +40,9 @@ module.exports = function(grunt) {
               "lib/mozilla-ast-visitors.js",
               "lib/mozilla-ast-visitor-interface.js",
               "lib/query.js",
-              "lib/transform.js"],
+              "lib/transform.js",
+              "lib/comments.js",
+              "lib/code-categorizer.js"],
         dest: 'lively.ast.dev.js'
       },
       "mocha-bundle": {
