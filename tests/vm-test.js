@@ -136,7 +136,7 @@ describe('lively.vm', function() {
   
   describe("record free variables", function() {
 
-    it.only("adds them to var recorder", function() {
+    it("adds them to var recorder", function() {
       var varMapper = {};
       var code = "x = 3 + 2";
       var result = vm.syncEval(code, {topLevelVarRecorder: varMapper, recordGlobals: true});
