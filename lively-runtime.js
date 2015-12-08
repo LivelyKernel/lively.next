@@ -2,6 +2,7 @@ lively.require("lively.lang.Runtime").toRun(function() {
 
   lively.lang.Runtime.Registry.addProject({
     name: "lively.vm",
+    state: {},
 
     reloadAll: function(project, thenDo) {
       var files = ["env.js", "index.js", "tests/vm-test.js"];
@@ -40,6 +41,7 @@ lively.require("lively.lang.Runtime").toRun(function() {
             show(msg); whenHandled(new Error(msg)); return;
           }
           lively.requires("lively.MochaTests").toRun(function() {
+            lively.lang.obj.extend(project.state, {mocha: Global.mocha, chai: Global.chai, expect: Global.expect});
             lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId, whenHandled);
           });
         }
