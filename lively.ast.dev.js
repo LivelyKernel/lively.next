@@ -7484,7 +7484,7 @@ var methods = {
       return string;
     }
 
-    new exports.PrinterVisitor().accept(ast, {index: 0}, tree, []);
+    new exports.MozillaAST.PrinterVisitor().accept(ast, {index: 0}, tree, []);
     return Strings.printTree(tree[0], printFunc, function(ea) { return ea.children; }, '  ');
   },
 
@@ -7998,7 +7998,7 @@ exports.transform = {
     var forLoopDecls = scope.varDecls.filter(function(decl, i) {
       var path = lang.Path(scope.varDeclPaths[i]),
           parent = path.slice(0,-1).get(ast);
-      return parent.type === "ForStatement";
+      return parent.type === "ForStatement" || parent.type === "ForInStatement";
     });
     arr.pushAll(blacklist, chain(forLoopDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
 
@@ -8555,7 +8555,7 @@ function classDef(node) {
     name: p("expression.arguments.0.value").get(node),
     node: node
   };
-  var props = lively.lang.arr.flatmap(
+  var props = arr.flatmap(
     node.expression.arguments,
     function(argNode) {
       if (argNode.type !== "ObjectExpression") return [];
@@ -8584,10 +8584,10 @@ function extendDef(node) {
 
 function varDefs(node) {
   if (node.type !== "VariableDeclaration") return null;
-  return lively.lang.arr.flatmap(
+  return arr.flatmap(
     withVarDeclIds(node),
     function(ea) {
-      return lively.lang.arr.flatmap(
+      return arr.flatmap(
         ea.ids,
         function(id) {
           var def = {name: id.name, node: ea.node, type: "var-decl"};
@@ -8663,12 +8663,12 @@ function isFunctionWrapper(node) {
 }
 
 function declIds(idNodes) {
-  return lively.lang.arr.flatmap(idNodes, function(ea) {
+  return arr.flatmap(idNodes, function(ea) {
     if (!ea) return [];
     if (ea.type === "Identifier") return [ea];
     if (ea.type === "RestElement") return [ea.argument];
     if (ea.type === "ObjectPattern")
-      return declIds(lively.lang.arr.pluck(ea.properties, "value"));
+      return declIds(arr.pluck(ea.properties, "value"));
     if (ea.type === "ArrayPattern")
       return declIds(ea.elements);
     return [];
@@ -8688,13 +8688,13 @@ function withVarDeclIds(varNode) {
 function findDecls(ast, options) {
   // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
 
-  options = options || lively.lang.obj.merge({hideOneLiners: false}, options);
+  options = options || obj.merge({hideOneLiners: false}, options);
 
   if (typeof ast === "string")
-    ast = lively.ast.parse(ast, {addSource: true});
+    ast = exports.parse(ast, {addSource: true});
 
   var topLevelNodes = ast.type === "Program" ? ast.body : ast.body.body,
-      defs = lively.lang.arr.flatmap(topLevelNodes,
+      defs = arr.flatmap(topLevelNodes,
         function(n) {
           return moduleDef(n, options)
               || functionWrapper(n, options)
