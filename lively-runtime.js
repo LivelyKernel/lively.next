@@ -14,12 +14,12 @@ lively.require("lively.lang.Runtime").toRun(function() {
                    "lib/mozilla-ast-visitor-interface.js",
                    "lib/query.js",
                    "lib/transform.js",
-                   "lib/code-categorizer",
+                   "lib/code-categorizer.js",
                    "tests/interface-test.js",
                    "tests/acorn-extension-test.js",
                    "tests/query-test.js",
                    "tests/transform-test.js",
-                   "tests/code-categorizer.js"];
+                   "tests/code-categorizer-test.js"];
       lively.lang.Runtime.loadFiles(project, files, thenDo);
     },
 

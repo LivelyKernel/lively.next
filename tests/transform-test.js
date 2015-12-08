@@ -261,23 +261,30 @@ describe('ast.transform', function() {
         expect(result.defRanges).deep.equals(expected);
       });
 
+      it("transformTopLevelVarDeclsAndVarUsageInCatch", function() {
+        var code              = "try { throw {} } catch (e) { e }\n",
+            parsed               = ast.parse(code, {addSource: true}),
+            recorder          = {name: "Global", type: "Identifier"},
+            result            = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+
+        expect(result.source).equals(code);
+      });
+
       describe("for statement", function() {
 
-        it("transformTopLevelVarDeclsAndVarUsageInCatch", function() {
-          var code              = "try { throw {} } catch (e) { e }\n",
-              parsed               = ast.parse(code, {addSource: true}),
-              recorder          = {name: "Global", type: "Identifier"},
-              result            = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-
-          expect(result.source).equals(code);
-        });
-
-        it("transformTopLevelVarDeclsAndVarUsageInForLoop", function() {
+        it("standard for won't get rewritten", function() {
           var code     = "for (var i = 0; i < 5; i ++) { i; }",
               parsed      = ast.parse(code, {addSource: true}),
               recorder = {name: "Global", type: "Identifier"},
               result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+          expect(result.source).equals(code);
+        });
 
+        it("for-in won't get rewritten", function() {
+          var code     = "for (var x in {}) { x; }",
+              parsed   = ast.parse(code, {addSource: true}),
+              recorder = {name: "Global", type: "Identifier"},
+              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
           expect(result.source).equals(code);
         });
 
