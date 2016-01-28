@@ -6537,6 +6537,14 @@ var arr = exports.arr = {
   // sorting
   // -=-=-=-=-
 
+  isSorted: function(array, descending) {
+    var isSorted = true;
+    for (var i = 1; i < array.length; i++) {
+      if (!descending && arr[i-1] > arr[i]) return false;
+      else if (descending && arr[i-1] < arr[i]) return false;
+    }
+  },
+
   sort: function(array, sortFunc) {
     // [a] -> (a -> Number)? -> [a]
     // Just `Array.prototype.sort`
@@ -6900,6 +6908,60 @@ var arr = exports.arr = {
     return arr.range(0,Math.ceil(array.length/tupleLength)-1).map(function(n) {
       return array.slice(n*tupleLength, n*tupleLength+tupleLength);
     }, array);
+  },
+
+  permutations: (function() {
+    function computePermutations(restArray, values) {
+      return !restArray.length ? [values] :
+        arr.flatmap(restArray, function(ea, i) {
+          return computePermutations(
+            restArray.slice(0, i).concat(restArray.slice(i+1)),
+            values.concat([ea]));
+        });
+    }
+    return function(array) { return computePermutations(array, []); }
+  })(),
+
+  combinationsPick: function(listOfListsOfValues, pickIndices) {
+    // Given a "listOfListsOfValues" in the form of an array of arrays and
+    // `pickIndices` list with the size of the number of arrays which indicates what
+    // values to pick from each of the arrays, return a list with two values:
+    // 1. values picked from each of the arrays, 2. the next pickIndices or null if at end
+    // Example:
+    //  var searchSpace = [["a", "b", "c"], [1,2]];
+    //  arr.combinationsPick(searchSpace, [0,1]);
+    //    // => [["a",2], [1,0]]
+    //  arr.combinationsPick(searchSpace, [1,0]);
+    //    // => [["b",1], [1,1]]
+    var values = listOfListsOfValues.map(function(subspace, i) {
+          return subspace[pickIndices[i]]; }),
+        nextState = pickIndices.slice();
+    for (var i = listOfListsOfValues.length; i--; i >= 0) {
+      var subspace = listOfListsOfValues[i], nextIndex = nextState[i] + 1;
+      if (subspace[nextIndex]) { nextState[i] = nextIndex; break; }
+      else if (i === 0) { nextState = undefined; break; }
+      else { nextState[i] = 0; }
+    }
+    return [values, nextState];
+  },
+
+  combinations: function(listOfListsOfValues) {
+    // Given a "listOfListsOfValues" in the form of an array of arrays,
+    // retrieve all the combinations by picking one item from each array.
+    // This basically creates a search tree, traverses it and gathers all node
+    // values whenever a leaf node is reached.
+    // Example:
+    //   lively.lang.arr.combinations([['a', 'b', 'c'], [1, 2]])
+    //    // => [["a", 1], ["a", 2], ["b", 1], ["b", 2], ["c", 1], ["c", 2]]
+    var size = listOfListsOfValues.reduce(function(prod, space) { return prod * space.length; }, 1),
+        searchState = listOfListsOfValues.map(function(_) { return 0; }),
+        results = new Array(size);
+    for (var i = 0; i < size; i++) {
+      var result = arr.combinationsPick(listOfListsOfValues, searchState);
+      results[i] = result[0];
+      searchState = result[1];
+    }
+    return results;
   },
 
   take: function(arr, n) { return arr.slice(0, n); },
@@ -7752,7 +7814,6 @@ var tree = exports.tree = {
         return tree.map(n, mapFunc, childGetter); })));
   },
 
-  
   mapTree: function(treeNode, mapFunc, childGetter) {
     // Traverses the tree and creates a structurally identical tree but with
     // mapped nodes
@@ -7760,7 +7821,8 @@ var tree = exports.tree = {
       return tree.mapTree(n, mapFunc, childGetter);
     })
     return mapFunc(treeNode, mappedNodes);
-  },
+  }
+
 }
 
 })(typeof module !== "undefined" && module.require && typeof process !== "undefined" ?
@@ -13838,6 +13900,20 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     return retVal;
   },
 
+  visitClassExpression: function(node, depth, scope, path) {
+    scope.classDecls.push(node);
+
+    var retVal;
+
+    if (node.superClass) {
+      this.accept(node.superClass, depth, scope, path.concat(["superClass"]));
+    }
+
+    // body is a node of type ClassBody
+    retVal = this.accept(node.body, depth, scope, path.concat(["body"]));
+    return retVal;
+  },
+
   visitClassBody: function(node, depth, state, path) {
     var retVal;
     node.body.forEach(function(ea, i) {
@@ -13865,6 +13941,66 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     return retVal;
   },
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // es6 modules
+
+  visitImportDeclaration: function(node, depth, state, path) {
+    var retVal;
+
+    node.specifiers.forEach(function(ea, i) {
+      retVal = this.accept(ea, depth, state, path.concat(["specifiers", i]));
+    }, this);
+
+    if (node.source) retVal = this.accept(node.source, depth, state, path.concat(["source"]));
+
+    return retVal;
+  },
+
+  visitImportSpecifier: function(node, depth, state, path) {
+    var retVal;
+    retVal = this.accept(node.local, depth, state, path.concat(["local"]));
+    retVal = this.accept(node.imported, depth, state, path.concat(["imported"]));
+    var retVal;
+  },
+
+  visitImportDefaultSpecifier: function(node, depth, state, path) {
+    return this.accept(node.local, depth, state, path.concat(["local"]));
+  },
+
+  visitImportNamespaceSpecifier: function(node, depth, state, path) {
+    return this.accept(node.local, depth, state, path.concat(["local"]));
+  },
+
+  visitExportNamedDeclaration: function(node, depth, state, path) {
+    var retVal;
+    if (node.declaration) retVal = this.accept(node.declaration, depth, state, path.concat(["declaration"]));
+
+    node.specifiers.forEach(function(ea, i) {
+      retVal = this.accept(ea, depth, state, path.concat(["specifiers", i]));
+    }, this);
+
+    if (node.source) retVal = this.accept(node.source, depth, state, path.concat(["source"]));
+
+    return retVal;
+  },
+
+  visitExportSpecifier: function(node, depth, state, path) {
+    var retVal;
+    retVal = this.accept(node.local, depth, state, path.concat(["local"]));
+    retVal = this.accept(node.exported, depth, state, path.concat(["exported"]));
+    var retVal;
+  },
+
+  visitExportDefaultDeclaration: function(node, depth, state, path) {
+    return this.accept(node.declaration, depth, state, path.concat(["declaration"]));
+  },
+
+  visitExportAllDeclaration: function(node, depth, state, path) {
+    return this.accept(node.source, depth, state, path.concat(["source"]));
+  },
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // jsx
   visitJSXIdentifier: function(node, depth, state, path) {
     var retVal;
     return retVal;
@@ -14189,6 +14325,7 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
       funcDecls: [],
       classDecls: [],
       methodDecls: [],
+      importDecls: [],
       refs: [],
       params: [],
       catches: [],
@@ -14391,7 +14528,29 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
   },
 
   visitBreakStatement: function(node, depth, scope, path) { return null; },
-  visitContinueStatement: function(node, depth, scope, path) { return null; }
+  visitContinueStatement: function(node, depth, scope, path) { return null; },
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // es6 modules
+  visitImportSpecifier: function(node, depth, scope, path) {
+    scope.importDecls.push(node.local);
+    var retVal;
+    // retVal = this.accept(node.local, depth, scope, path.concat(["local"]));
+    retVal = this.accept(node.imported, depth, scope, path.concat(["imported"]));
+    var retVal;
+  },
+
+  visitImportDefaultSpecifier: function(node, depth, scope, path) {
+    scope.importDecls.push(node.local);
+    // return this.accept(node.local, depth, scope, path.concat(["local"]));
+    return undefined;
+  },
+
+  visitImportNamespaceSpecifier: function(node, depth, scope, path) {
+    scope.importDecls.push(node.local);
+    // return this.accept(node.local, depth, scope, path.concat(["local"]));
+    return undefined;
+  }
 
 });
 
@@ -14447,7 +14606,7 @@ var methods = {
       if (printPositions) { additional.push(ea.node.start + '-' + ea.node.end); }
       if (printSource) {
         var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-          printed = Strings.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+          printed = lively.lang.string.print.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
         additional.push(printed);
       }
       if (additional.length) { string += '(' + additional.join(',') + ')'; }
@@ -14455,7 +14614,7 @@ var methods = {
     }
 
     new exports.MozillaAST.PrinterVisitor().accept(ast, {index: 0}, tree, []);
-    return Strings.printTree(tree[0], printFunc, function(ea) { return ea.children; }, '  ');
+    return lively.lang.string.printTree(tree[0], printFunc, function(ea) { return ea.children; }, '  ');
   },
 
   compareAst: function(node1, node2) {
@@ -14657,6 +14816,7 @@ exports.query = {
       .concat(arr.pluck(scope.catches, 'name'))
       .concat(arr.pluck(helpers.varDeclIds(scope), 'name'))
       .concat(chain(scope.classDecls).pluck('id').pluck('name').value())
+      .concat(arr.pluck(scope.importDecls, 'name'))
       .concat(!useComments ? [] :
         exports.query._findJsLintGlobalDeclarations(
           scope.node.type === 'Program' ?
