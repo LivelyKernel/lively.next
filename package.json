@@ -24,9 +24,9 @@
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
     "acorn": "^2.7.0",
-    "acorn-jsx": "^2.0.1",
+    "acorn-jsx": "^2.0",
     "escodegen": "^1.8.0",
-    "lively.lang": "^0.4.15"
+    "lively.lang": ">=0.4.11"
   },
   "devDependencies": {
     "browserify": "^7.0.0",

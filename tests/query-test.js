@@ -213,16 +213,16 @@ describe('ast.query', function() {
     });
   });
 
-  describe("es6 modules", function() {
+  describe("es6 modules", () => {
 
-    it("recognizes export declarations", function() {
+    it("recognizes export declarations", () => {
       var code = "export var x = 42; export function y() {}; export default function z() {};",
           parsed = ast.parse(code),
           scopes = ast.query.scopes(parsed);
       expect(["y", "z", "x"]).deep.equals(ast.query._declaredVarNames(scopes));
     });
 
-    it("recognizes import declarations", function() {
+    it("recognizes import declarations", () => {
       var code = "import foo from 'bar';\n"
                + "import { baz } from 'zork';\n"
               + "import { qux as corge } from 'quux';\n",
