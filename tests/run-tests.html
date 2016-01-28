@@ -22,6 +22,7 @@
     <script type="text/javascript" src="../node_modules/lively.lang/lively.lang.dev.js"></script>
 
     <script type="text/javascript">
+      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
       mocha.setup("bdd");
       mocha.globals(["script*"]);
       var urls = [
@@ -45,8 +46,7 @@
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();
-        if (window.mochaPhantomJS) mochaPhantomJS.run();
-        else mocha.run();
+        mocha.run();
       });
     </script>
 
