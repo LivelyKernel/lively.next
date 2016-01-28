@@ -11,7 +11,7 @@ if (env.isCommonJS) {
 
 describe('es6', function() {
 
-  it("can be parsed", function() {
+  it("arrow function", function() {
     var code = '() => 23;'
     var parsed = ast.parse(code);
     expect(parsed).deep.property("body[0].expression.type")

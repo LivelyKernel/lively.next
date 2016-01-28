@@ -213,6 +213,27 @@ describe('ast.query', function() {
     });
   });
 
+  describe("es6 modules", () => {
+
+    it("recognizes export declarations", () => {
+      var code = "export var x = 42; export function y() {}; export default function z() {};",
+          parsed = ast.parse(code),
+          scopes = ast.query.scopes(parsed);
+      expect(["y", "z", "x"]).deep.equals(ast.query._declaredVarNames(scopes));
+    });
+
+    it("recognizes import declarations", () => {
+      var code = "import foo from 'bar';\n"
+               + "import { baz } from 'zork';\n"
+              + "import { qux as corge } from 'quux';\n",
+              // rk not yet supproted by acorn as of 2016-01-28:
+              // + "import { * as grault } from 'garply';\n",
+          parsed = ast.parse(code),
+          scopes = ast.query.scopes(parsed);
+      expect(["foo", "baz", "corge"/*, "grault"*/]).deep.equals(ast.query._declaredVarNames(scopes));
+    });
+  });
+
   it("findNodesIncludingLines", function() {
     var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n";
 
