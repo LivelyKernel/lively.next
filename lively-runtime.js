@@ -60,13 +60,13 @@ lively.require("lively.lang.Runtime").toRun(function() {
             },
             function(next) {
               lively.lang.obj.extend(project.state, {mocha: Global.mocha, chai: Global.chai, expect: Global.expect});
-              lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId);
-              next();
+              lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId, next);
             }
           )(function(err) {
+            whenHandled(err);
             if (err) show(String(err));
             else lively.lang.fun.debounceNamed("lively.ast-runtime-test-load", 300,
-              function() { alertOK("lively.ast tests loaded"); });
+              () => $world.alertOK("lively.ast tests loaded"))();
           });
         }
       }
