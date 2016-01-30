@@ -1,10 +1,8 @@
-/*global module,lively*/
+/*global module,exports,require*/
 
-var exports = typeof module !== "undefined" && module.require ? module.exports : (lively.vm = {});
-var lang = typeof module !== "undefined" && module.require ? module.require("lively.lang") : lively.lang;
-var ast = typeof module !== "undefined" && module.require ? module.require("lively.ast") : lively.ast;
-
+var lang = require("lively.lang");
 var arr = lang.arr;
+var ast = require("lively.ast");
 
 lang.obj.extend(exports, {
 
@@ -64,6 +62,9 @@ lang.obj.extend(exports, {
   },
 
   getGlobal: function() {
+    if (typeof window !== undefined) return window;
+    if (typeof global !== undefined) return global;
+    if (typeof Global !== undefined) return Global;
     return (function() { return this; })();
   },
 
@@ -106,3 +107,5 @@ lang.obj.extend(exports, {
   }
 
 });
+
+exports.cjs = require("./lib/modules/cjs");
