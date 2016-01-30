@@ -27,23 +27,25 @@ lively.require("lively.lang.Runtime").toRun(function() {
       "interface code": {
         matches: /(lib\/.*|index)\.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
-          var state = project.state || {};
-          lively.lang.Runtime.evalCode(project, change.newSource, state, change.resourceId, whenHandled);
-          if (state.vm) lively.vm = state.vm;
+          whenHandled();
+          // var state = project.state || {};
+          // lively.lang.Runtime.evalCode(project, change.newSource, state, change.resourceId, whenHandled);
+          // if (state.vm) lively.vm = state.vm;
         }
       },
 
       "tests": {
         matches: /tests\/.*\.js$/,
         changeHandler: function(change, project, resource, whenHandled) {
-          if (!project.state) {
-            var msg = "cannot update runtime for " + change.resourceId + "\n because the runtime state is undefined."
-            show(msg); whenHandled(new Error(msg)); return;
-          }
-          lively.requires("lively.MochaTests").toRun(function() {
-            lively.lang.obj.extend(project.state, {mocha: Global.mocha, chai: Global.chai, expect: Global.expect});
-            lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId, whenHandled);
-          });
+          whenHandled();
+          // if (!project.state) {
+          //   var msg = "cannot update runtime for " + change.resourceId + "\n because the runtime state is undefined."
+          //   show(msg); whenHandled(new Error(msg)); return;
+          // }
+          // lively.requires("lively.MochaTests").toRun(function() {
+          //   lively.lang.obj.extend(project.state, {mocha: Global.mocha, chai: Global.chai, expect: Global.expect});
+          //   lively.lang.Runtime.evalCode(project, change.newSource, project.state, change.resourceId, whenHandled);
+          // });
         }
       }
     }
