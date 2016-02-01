@@ -25,16 +25,16 @@ describe("common-js modules", () => {
   before(() => cjs.wrapModuleLoad());
   after(() => cjs.unwrapModuleLoad());
   beforeEach(() => require(moduleName));
-  afterEach(() => delete require.cache[require.resolve(moduleName)]);
+  afterEach(() => cjs.forgetModule(moduleName));
 
   it("captures internal module state", function() {
     expect(cjs.envFor(moduleName))
-      .deep.property("recorder.internalState")
-      .equals(23);
+      .deep.property("recorder.exports.foo")
+      .equals(123);
   });
 
   it("evaluates inside of module", function() {
-    expect(cjs.evalIn(moduleName, "internalState")).equals(23);
+    expect(cjs.evalIn(moduleName, "exports.foo")).equals(123);
   });
 
 });
