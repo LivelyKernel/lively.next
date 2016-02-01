@@ -19,17 +19,17 @@
     <script type="text/javascript" >
       window.expect = chai.expect;
       chai.use(window.chaiSubset);
-      mocha.globals(["script*", "z"/*for onlyCaptureWhitelistedGlobals*/]);
       mocha.setup("bdd");
-      var urls = [
-        '../env.js',
-        '../index.js',
-        'vm-test.js'
-      ];
+      mocha.globals(["script*", "z"/*for onlyCaptureWhitelistedGlobals*/]);
+      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
+      var es6Enabled = true;
+      try { eval("() => 123"); } catch(e) { es6Enabled = false; }
+      var urls = es6Enabled ?
+        ["../dist/lively.vm.js", "vm-test.js"] :
+        ["../dist/lively.vm.min.js", "../node_modules/babel-core/browser.js", "vm-test.js"];
       loadUncached(urls, function() {
         mocha.checkLeaks();
-        if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
-        else { mocha.run(); }
+        mocha.run();
       });
     </script>
 

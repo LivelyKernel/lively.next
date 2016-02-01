@@ -78,19 +78,17 @@ describe("evaluation", function() {
 
   it("dontTransformVarDeclsInForLoop", function() {
     var code = "var sum = 0;\n"
-         + "for (var i = 0; i < 5; i ++) { sum += i; }\n"
-         + "sum"
+        + "for (var i = 0; i < 5; i ++) { sum += i; }\n"
+        + "sum"
     var recorder = {};
     var result = vm.syncEval(code, {topLevelVarRecorder: recorder});
     expect(recorder.sum).equals(10);
-
   });
 
   it("dontTransformCatchClause", function() {
     var code = 'try { throw new Error("foo") } catch (e) { e.message }'
     var result = vm.syncEval(code, {topLevelVarRecorder: {}});
     expect(result).equals('foo');
-
   });
 
   it("captureDefRanges", function() {
@@ -114,7 +112,6 @@ describe("evaluation", function() {
     var rec = {x: 23};
     vm.syncEval(code, {topLevelVarRecorder: rec});
     expect(rec.y).equals(26);
-
   });
 
   it("evalCanSetSourceURL", function() {
