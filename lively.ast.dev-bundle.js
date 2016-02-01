@@ -11997,9 +11997,9 @@ var worker = exports.worker = {
      lively.lang : {}));
 
 //;
-var isCommonJS = typeof module !== "undefined" && module.require;
+var isCommonJS = typeof module !== "undefined" && !!module.require;
 var Global = typeof window !== "undefined" ? window : global;
-var lang = typeof lively !== "undefined" ? lively.lang : isCommonJS && module.require("lively.lang");
+var lang = isCommonJS ? module.require("lively.lang") : (Global.lively && lively.lang);
 var escodegen = isCommonJS ? require("escodegen") : escodegen;
 var acorn = !isCommonJS && Global.acorn;
 if (!acorn && isCommonJS) {
