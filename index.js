@@ -62,9 +62,9 @@ lang.obj.extend(exports, {
   },
 
   getGlobal: function() {
-    if (typeof window !== undefined) return window;
-    if (typeof global !== undefined) return global;
-    if (typeof Global !== undefined) return Global;
+    if (typeof window !== "undefined") return window;
+    if (typeof global !== "undefined") return global;
+    if (typeof Global !== "undefined") return Global;
     return (function() { return this; })();
   },
 
