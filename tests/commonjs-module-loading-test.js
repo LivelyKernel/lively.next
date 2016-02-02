@@ -8,19 +8,9 @@ var lang = env.lively.lang || lively.lang, vm = env.isCommonJS ? require('../ind
 var Global = env.Global;
 
 var cjs = vm.cjs;
+var moduleName = "./test-resources/some-cjs-module";
 
 describe("common-js modules", () => {
-
-// /*global require, process, before, after, beforeEach, afterEach, describe, it, expect, global*/
-
-// var chai = require("chai");
-// var chaiSubset = require("chai-subset")
-// var expect = chai.expect; chai.use(chaiSubset);
-// var lang = require("lively.lang");
-// var fs = require("fs");
-// var evaluator = require("../lib/evaluator");
-
-  var moduleName = "./test-resources/some-cjs-module";
 
   before(() => cjs.wrapModuleLoad());
   after(() => cjs.unwrapModuleLoad());
@@ -29,12 +19,13 @@ describe("common-js modules", () => {
 
   it("captures internal module state", function() {
     expect(cjs.envFor(moduleName))
-      .deep.property("recorder.exports.foo")
-      .equals(123);
+      .deep.property("recorder.internalState").equals(23);
+    expect(cjs.envFor(moduleName))
+      .deep.property("recorder.module.exports.state").equals(42);
   });
 
   it("evaluates inside of module", function() {
-    expect(cjs.evalIn(moduleName, "exports.foo")).equals(123);
+    expect(cjs.evalIn(moduleName, "internalState")).equals(23);
   });
 
 });
