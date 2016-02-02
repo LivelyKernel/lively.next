@@ -166,7 +166,7 @@ var helper = require("./cjs-helper");
 var loadedModules = {};
 var originalCompile = null;
 var exceptions = [module.filename];
-var scratchModule = path.join(__dirname, "..", "scratch.js");
+var scratchModule = path.join(__dirname, "cjs-scratch.js"); // fallback eval target
 
 function instrumentedFiles() {
   return Object.keys(loadedModules);
@@ -4486,7 +4486,7 @@ exports['1.3.132.0.35'] = 'p521'
 
   var Buffer;
   try {
-    Buffer = require('buffer').Buffer;
+    Buffer = require('buf' + 'fer').Buffer;
   } catch (e) {
   }
 
@@ -4936,10 +4936,14 @@ exports['1.3.132.0.35'] = 'p521'
 
   BN.prototype.toBuffer = function toBuffer (endian, length) {
     assert(typeof Buffer !== 'undefined');
-    return new Buffer(this.toArray(endian, length));
+    return this.toArrayLike(Buffer, endian, length);
   };
 
   BN.prototype.toArray = function toArray (endian, length) {
+    return this.toArrayLike(Array, endian, length);
+  };
+
+  BN.prototype.toArrayLike = function toArrayLike (ArrayType, endian, length) {
     var byteLength = this.byteLength();
     var reqLength = length || Math.max(1, byteLength);
     assert(byteLength <= reqLength, 'byte array longer than desired length');
@@ -4947,7 +4951,7 @@ exports['1.3.132.0.35'] = 'p521'
 
     this.strip();
     var littleEndian = endian === 'le';
-    var res = new Array(reqLength);
+    var res = new ArrayType(reqLength);
 
     var b, i;
     var q = this.clone();
@@ -7829,7 +7833,7 @@ exports['1.3.132.0.35'] = 'p521'
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":6}],45:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 (function (Buffer){
 var bn = require('bn.js');
 var randomBytes = require('randombytes');
@@ -15480,7 +15484,7 @@ function formatReturnValue(bn, enc, len) {
 }).call(this,require("buffer").Buffer)
 },{"bn.js":110,"buffer":7,"elliptic":111}],110:[function(require,module,exports){
 arguments[4][44][0].apply(exports,arguments)
-},{"buffer":6,"dup":44}],111:[function(require,module,exports){
+},{"dup":44}],111:[function(require,module,exports){
 arguments[4][46][0].apply(exports,arguments)
 },{"../package.json":134,"./elliptic/curve":114,"./elliptic/curves":117,"./elliptic/ec":118,"./elliptic/eddsa":121,"./elliptic/hmac-drbg":124,"./elliptic/utils":126,"brorand":127,"dup":46}],112:[function(require,module,exports){
 arguments[4][47][0].apply(exports,arguments)
@@ -15527,80 +15531,8 @@ arguments[4][67][0].apply(exports,arguments)
 },{"../hash":128,"dup":67}],133:[function(require,module,exports){
 arguments[4][68][0].apply(exports,arguments)
 },{"dup":68,"inherits":204}],134:[function(require,module,exports){
-module.exports={
-  "name": "elliptic",
-  "version": "6.2.3",
-  "description": "EC cryptography",
-  "main": "lib/elliptic.js",
-  "files": [
-    "lib"
-  ],
-  "scripts": {
-    "coverage": "npm run unit --coverage",
-    "coveralls": "npm run coverage && cat ./coverage/lcov.info | coveralls",
-    "jscs": "jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/*.js",
-    "jshint": "jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/*.js",
-    "lint": "npm run jscs && npm run jshint",
-    "test": "npm run lint && npm run unit",
-    "unit": "istanbul test _mocha --reporter=spec test/*-test.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/indutny/elliptic.git"
-  },
-  "keywords": [
-    "EC",
-    "Elliptic",
-    "curve",
-    "Cryptography"
-  ],
-  "author": {
-    "name": "Fedor Indutny",
-    "email": "fedor@indutny.com"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/indutny/elliptic/issues"
-  },
-  "homepage": "https://github.com/indutny/elliptic",
-  "devDependencies": {
-    "coveralls": "^2.11.3",
-    "istanbul": "^0.4.2",
-    "jscs": "^2.9.0",
-    "jshint": "^2.6.0",
-    "mocha": "^2.1.0"
-  },
-  "dependencies": {
-    "bn.js": "^4.0.0",
-    "brorand": "^1.0.1",
-    "hash.js": "^1.0.0",
-    "inherits": "^2.0.1"
-  },
-  "gitHead": "c32f20b22b420eb6af3c6dda28963deb7facf823",
-  "_id": "elliptic@6.2.3",
-  "_shasum": "18e46d7306b0951275a2d42063270a14b74ebe99",
-  "_from": "elliptic@>=6.0.0 <7.0.0",
-  "_npmVersion": "3.3.12",
-  "_nodeVersion": "5.4.1",
-  "_npmUser": {
-    "name": "indutny",
-    "email": "fedor@indutny.com"
-  },
-  "dist": {
-    "shasum": "18e46d7306b0951275a2d42063270a14b74ebe99",
-    "tarball": "http://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz"
-  },
-  "maintainers": [
-    {
-      "name": "indutny",
-      "email": "fedor@indutny.com"
-    }
-  ],
-  "directories": {},
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz"
-}
-
-},{}],135:[function(require,module,exports){
+arguments[4][69][0].apply(exports,arguments)
+},{"dup":69}],135:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var inherits = require('inherits')
@@ -17321,7 +17253,7 @@ module.exports={
 }
 },{}],153:[function(require,module,exports){
 arguments[4][44][0].apply(exports,arguments)
-},{"buffer":6,"dup":44}],154:[function(require,module,exports){
+},{"dup":44}],154:[function(require,module,exports){
 var bn = require('bn.js');
 var brorand = require('brorand');
 
@@ -17554,7 +17486,7 @@ function i2ops(c) {
 }).call(this,require("buffer").Buffer)
 },{"buffer":7,"create-hash":135}],159:[function(require,module,exports){
 arguments[4][44][0].apply(exports,arguments)
-},{"buffer":6,"dup":44}],160:[function(require,module,exports){
+},{"dup":44}],160:[function(require,module,exports){
 arguments[4][45][0].apply(exports,arguments)
 },{"bn.js":159,"buffer":7,"dup":45,"randombytes":202}],161:[function(require,module,exports){
 arguments[4][70][0].apply(exports,arguments)
