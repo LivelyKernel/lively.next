@@ -74,29 +74,33 @@ lang.obj.extend(exports, {
 
   _normalizeEvalOptions(opts) {
     if (!opts) opts = {};
-    
-    var current = opts.currentModule || opts.sourceURL;
-    if (current && !opts.sourceURL) opts.sourceURL = current;
+    opts = lively.lang.obj.merge({
+      currentModule: null,
+      sourceURL: opts.currentModule,
+      runtime: null,
+      context: exports.getGlobal(),
+      varRecorderName: '__lvVarRecorder',
+      dontTransform: [], // blacklist vars
+      topLevelDefRangeRecorder: null, // object for var ranges
+      recordGlobals: null,
+      onPromiseResolved: null,
+      promiseTimeout: 200,
+      waitForPromise: !!opts.onPromiseResolved
+    }, opts);
 
-    var moduleEnv = opts.runtime && opts.runtime.modules && opts.runtime.modules[current];
-    if (moduleEnv) {
-      opts.varRecorderName = moduleEnv.varRecorderName;
-      opts.topLevelVarRecorder = moduleEnv.topLevelVarRecorder;
-      opts.context = moduleEnv.context;
-      opts.dontTransform = moduleEnv.dontTransform;
-      opts.topLevelDefRangeRecorder = moduleEnv.topLevelDefRangeRecorder;
-      opts.recordGlobals = moduleEnv.recordGlobals;
+    if (opts.currentModule) {
+      var moduleEnv = opts.runtime
+                   && opts.runtime.modules
+                   && opts.runtime.modules[opts.currentModule];
+      if (moduleEnv) opts = lively.lang.obj.merge(opts, moduleEnv);
     }
 
-    if (!opts.context) opts.context = exports.getGlobal(); // "this"
-    if (!opts.varRecorderName) opts.varRecorderName = '__lvVarRecorder';
-
-    // options.dontTransform
-    // options.topLevelDefRangeRecorder,
-    // options.recordGlobals
-    // options.sourceURL
-    
     return opts;
+  },
+
+  _waitForPromise: function(promise, timeout) {
+      var timeoutP = new Promise(resolve => setTimeout(resolve, timeout.ms, timeout));
+      return Promise.race([timeoutP, promise]);
   },
 
   runEval: function (code, options, thenDo) {
@@ -126,9 +130,28 @@ lang.obj.extend(exports, {
       code = exports.evalCodeTransform(code, options);
       typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
       result = exports._eval.call(options.context, code, options.topLevelVarRecorder);
+    } catch (e) { err = e; }
+
+    if (typeof thenDo === "function") thenDo(err, result);
+
+    var promisedResult = Promise.defer();
+    if (!err
+     && options.waitForPromise
+     && result instanceof Promise) {
+      var timeout = {ms: options.promiseTimeout};
+      exports._waitForPromise(result, timeout)
+        .then(resolved => promisedResult.resolve(resolved !== timeout ? resolved : result))
+        .catch(rejected => promisedResult.reject(rejected));
+      if (typeof options.onPromiseResolved === "function") {
+        promisedResult.promise.then(
+          x => options.onPromiseResolved(null, x),
+          err => options.onPromiseResolved(err));
+      }
+    } else {
+      if (err) promisedResult.reject(err); else promisedResult.resolve(result)
     }
-    catch (e) { err = e; }
-    finally { thenDo(err, result); }
+
+    return promisedResult.promise;
   },
 
   syncEval: function(string, options) {
