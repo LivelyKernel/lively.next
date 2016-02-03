@@ -134,13 +134,31 @@ describe("context recording", () => {
   describe("record free variables", () => {
 
     it("adds them to var recorder", () => {
-      var varMapper = {};
-      var code = "x = 3 + 2";
-      var result = vm.syncEval(code, {topLevelVarRecorder: varMapper, recordGlobals: true});
+      var varMapper = {},
+          code = "x = 3 + 2",
+          result = vm.syncEval(code, {topLevelVarRecorder: varMapper, recordGlobals: true});
       expect(result).equals(5);
       expect(varMapper.x).equals(5);
     });
 
+  });
+  
+});
+
+describe("runtime", () => {
+
+  it("evaluation uses runtime", () => {
+    var runtime = {
+      modules: {
+        "foo/bar.js": {
+          topLevelVarRecorder: {},
+          recordGlobals: true
+        }
+      }
+    }
+
+    vm.syncEval("var x = 3 + 2", {runtime: runtime, currentModule: "foo/bar.js"});
+    expect(runtime.modules["foo/bar.js"].topLevelVarRecorder.x).equals(5);
   });
   
 });

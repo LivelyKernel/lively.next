@@ -1,8 +1,9 @@
 /*global module,exports,require*/
 
-var lang = require("lively.lang");
+var lang = typeof window !== "undefined" ? lively.lang : require("lively.lang");
 var arr = lang.arr;
-var ast = require("lively.ast");
+var ast = typeof window !== "undefined" ? lively.ast : require("lively.ast");
+var exports = typeof window !== "undefined" ? (lively.vm || (lively.vm = {})) : module.exports;
 
 lang.obj.extend(exports, {
 
@@ -45,16 +46,15 @@ lang.obj.extend(exports, {
   },
 
   evalCodeTransform: function(code, options) {
-    var vm = exports,
-        recorder = options.topLevelVarRecorder,
-        varRecorderName = options.varRecorderName || '__lvVarRecorder';
-
-    if (recorder) code = vm.transformForVarRecord(
-      code, recorder, varRecorderName,
-      options.dontTransform,
-      options.topLevelDefRangeRecorder,
-      !!options.recordGlobals);
-    code = vm.transformSingleExpression(code);
+    if (options.topLevelVarRecorder)
+      code = exports.transformForVarRecord(
+        code,
+        options.topLevelVarRecorder,
+        options.varRecorderName || '__lvVarRecorder',
+        options.dontTransform,
+        options.topLevelDefRangeRecorder,
+        !!options.recordGlobals);
+    code = exports.transformSingleExpression(code);
 
     if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
 
@@ -72,28 +72,63 @@ lang.obj.extend(exports, {
     return eval(__lvEvalStatement);
   },
 
+  _normalizeEvalOptions(opts) {
+    if (!opts) opts = {};
+    
+    var current = opts.currentModule || opts.sourceURL;
+    if (current && !opts.sourceURL) opts.sourceURL = current;
+
+    var moduleEnv = opts.runtime && opts.runtime.modules && opts.runtime.modules[current];
+    if (moduleEnv) {
+      opts.varRecorderName = moduleEnv.varRecorderName;
+      opts.topLevelVarRecorder = moduleEnv.topLevelVarRecorder;
+      opts.context = moduleEnv.context;
+      opts.dontTransform = moduleEnv.dontTransform;
+      opts.topLevelDefRangeRecorder = moduleEnv.topLevelDefRangeRecorder;
+      opts.recordGlobals = moduleEnv.recordGlobals;
+    }
+
+    if (!opts.context) opts.context = exports.getGlobal(); // "this"
+    if (!opts.varRecorderName) opts.varRecorderName = '__lvVarRecorder';
+
+    // options.dontTransform
+    // options.topLevelDefRangeRecorder,
+    // options.recordGlobals
+    // options.sourceURL
+    
+    return opts;
+  },
+
   runEval: function (code, options, thenDo) {
     // The main function where all eval options are configured.
-    // options can include {
+    // options can be: {
+    //   runtime: {
+    //     modules: {[MODULENAME: PerModuleOptions]}
+    //   }
+    // }
+    // or directly, PerModuleOptions = {
     //   varRecorderName: STRING, // default is '__lvVarRecorder'
     //   topLevelVarRecorder: OBJECT,
     //   context: OBJECT,
     //   sourceURL: STRING,
     //   recordGlobals: BOOLEAN // also transform free vars? default is false
     // }
-    if (typeof options === 'function' && arguments.length === 2) {
-      thenDo = options; options = {};
-    } else if (!options) options = {};
 
-    var vm = exports, result, err,
-        context = options.context || vm.getGlobal(),
-        recorder = options.topLevelVarRecorder;
+    if (typeof options === 'function' && arguments.length === 2) {
+      thenDo = options; options = null;
+    }
+
+    options = exports._normalizeEvalOptions(options);
+
+    var result, err;
 
     try {
-      code = vm.evalCodeTransform(code, options);
+      code = exports.evalCodeTransform(code, options);
       typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
-      result = vm._eval.call(context, code, recorder);
-    } catch (e) { err = e; } finally { thenDo(err, result); }
+      result = exports._eval.call(options.context, code, options.topLevelVarRecorder);
+    }
+    catch (e) { err = e; }
+    finally { thenDo(err, result); }
   },
 
   syncEval: function(string, options) {
