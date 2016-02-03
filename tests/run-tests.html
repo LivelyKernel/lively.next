@@ -15,18 +15,17 @@
     <script type="text/javascript" src="../node_modules/chai/chai.js"></script>
     <script type="text/javascript" >window.module = {exports: {}};</script>
     <script type="text/javascript" src="../node_modules/chai-subset/lib/chai-subset.js"></script>
-    <script type="text/javascript" >window.chaiSubset = module.exports; delete window.module;</script>
     <script type="text/javascript" >
-      window.expect = chai.expect;
-      chai.use(window.chaiSubset);
+      var chaiSubset = module.exports; chai.use(chaiSubset); delete window.module;
       mocha.setup("bdd");
       mocha.globals(["script*", "z"/*for onlyCaptureWhitelistedGlobals*/]);
       if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
       var es6Enabled = true;
       try { eval("() => 123"); } catch(e) { es6Enabled = false; }
-      var urls = es6Enabled ?
-        ["../dist/lively.vm.js", "vm-test.js"] :
-        ["../dist/lively.vm.min.js", "../node_modules/babel-core/browser.js", "vm-test.js"];
+      var tests = ["vm-test.js"];
+      var urls = (es6Enabled ?
+        ["../dist/lively.vm.js"] :
+        ["../dist/lively.vm.min.js", "../node_modules/babel-core/browser.js"]).concat(tests);
       loadUncached(urls, function() {
         mocha.checkLeaks();
         mocha.run();
