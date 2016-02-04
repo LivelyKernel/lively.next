@@ -167,3 +167,4 @@ lang.obj.extend(exports, {
 });
 
 exports.cjs = require("./lib/modules/cjs");
+exports.getCompletions = require("./lib/completions").getCompletions;
