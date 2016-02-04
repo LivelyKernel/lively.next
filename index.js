@@ -74,7 +74,7 @@ lang.obj.extend(exports, {
 
   _normalizeEvalOptions(opts) {
     if (!opts) opts = {};
-    opts = lively.lang.obj.merge({
+    opts = lang.obj.merge({
       currentModule: null,
       sourceURL: opts.currentModule,
       runtime: null,
@@ -92,7 +92,7 @@ lang.obj.extend(exports, {
       var moduleEnv = opts.runtime
                    && opts.runtime.modules
                    && opts.runtime.modules[opts.currentModule];
-      if (moduleEnv) opts = lively.lang.obj.merge(opts, moduleEnv);
+      if (moduleEnv) opts = lang.obj.merge(opts, moduleEnv);
     }
 
     return opts;
