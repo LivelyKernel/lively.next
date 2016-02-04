@@ -18,14 +18,17 @@
     <script type="text/javascript" >
       var chaiSubset = module.exports; chai.use(chaiSubset); delete window.module;
       mocha.setup("bdd");
-      mocha.globals(["script*", "z"/*for onlyCaptureWhitelistedGlobals*/]);
+      mocha.globals([
+        "script*"/*jQuery*/,
+        "z",/*for "only capture whitelisted globals"*/
+        "obj1", "obj2"/*for completion tests*/]);
       if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
       var es6Enabled = true;
       try { eval("() => 123"); } catch(e) { es6Enabled = false; }
-      var tests = ["vm-test.js"];
+      var tests = ["vm-test.js", "completion-test.js"];
       var urls = (es6Enabled ?
         ["../dist/lively.vm.js"] :
-        ["../dist/lively.vm.min.js", "../node_modules/babel-core/browser.js"]).concat(tests);
+        ["../dist/lively.vm.min.js", "../node_modules/babel-core/browser-polyfill.js", "../node_modules/babel-core/browser.js"]).concat(tests);
       loadUncached(urls, function() {
         mocha.checkLeaks();
         mocha.run();
