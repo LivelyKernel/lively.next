@@ -7,7 +7,6 @@ var lively = window.lively || (window.lively = {}); lively.vm = require('./index
 var lang = typeof window !== "undefined" ? lively.lang : lively.lang;
 var arr = lang.arr;
 var ast = typeof window !== "undefined" ? lively.ast : lively.ast;
-var exports = typeof window !== "undefined" ? (lively.vm || (lively.vm = {})) : module.exports;
 
 lang.obj.extend(exports, {
 
@@ -87,6 +86,7 @@ lang.obj.extend(exports, {
       dontTransform: [], // blacklist vars
       topLevelDefRangeRecorder: null, // object for var ranges
       recordGlobals: null,
+      returnPromise: true,
       onPromiseResolved: null,
       promiseTimeout: 200,
       waitForPromise: !!opts.onPromiseResolved
@@ -128,34 +128,42 @@ lang.obj.extend(exports, {
 
     options = exports._normalizeEvalOptions(options);
 
-    var result, err;
-
     try {
       code = exports.evalCodeTransform(code, options);
+    } catch (e) {
+      console.warn("lively.vm evalCodeTransform not working: %s", e.stack || e);
+    }
+
+    var result, err;
+    try {
       typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
       result = exports._eval.call(options.context, code, options.topLevelVarRecorder);
     } catch (e) { err = e; }
 
     if (typeof thenDo === "function") thenDo(err, result);
 
-    var promisedResult = Promise.defer();
-    if (!err
-     && options.waitForPromise
-     && result instanceof Promise) {
-      var timeout = {ms: options.promiseTimeout};
-      exports._waitForPromise(result, timeout)
-        .then(resolved => promisedResult.resolve(resolved !== timeout ? resolved : result))
-        .catch(rejected => promisedResult.reject(rejected));
-      if (typeof options.onPromiseResolved === "function") {
-        promisedResult.promise.then(
-          x => options.onPromiseResolved(null, x),
-          err => options.onPromiseResolved(err));
+    if (!options.returnPromise && !options.waitForPromise) return undefined;
+
+    var promisedResult = new Promise((resolve, reject) => {
+      if (!err
+       && options.waitForPromise
+       && result instanceof Promise) {
+        var timeout = {ms: options.promiseTimeout};
+        exports._waitForPromise(result, timeout)
+          .then(resolved => resolve(resolved !== timeout ? resolved : result))
+          .catch(rejected => reject(rejected));
       }
-    } else {
-      if (err) promisedResult.reject(err); else promisedResult.resolve(result)
+      else if (err) reject(err);
+      else resolve(result);
+    });
+    
+    if (typeof options.onPromiseResolved === "function") {
+      promisedResult.then(
+        x => options.onPromiseResolved(null, x),
+        err => options.onPromiseResolved(err));
     }
 
-    return promisedResult.promise;
+    return promisedResult;
   },
 
   syncEval: function(string, options) {
@@ -164,7 +172,7 @@ lang.obj.extend(exports, {
     // evaluation might not return immediatelly. This makes is possible to
     // change the evaluation backend, e.g. to be a remotely attached runtime
     var result;
-    exports.runEval(string, options, function(e, r) { result = e || r; });
+    exports.runEval(string, lively.lang.obj.merge(options, {returnPromise: false}), function(e, r) { result = e || r; });
     return result;
   }
 

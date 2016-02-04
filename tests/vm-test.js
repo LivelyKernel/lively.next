@@ -4,30 +4,32 @@ var env = typeof module !== "undefined" && module.require ? module.require("../e
 var chai = env.isCommonJS ? module.require("chai") : window.chai;
 var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
 var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
-var lang = env.lively.lang || lively.lang, vm = env.isCommonJS ? require('../index') : lively.vm;
+var lang = env.lively.lang || lively.lang,
+    vm = env.isCommonJS ? require('../index') : lively.vm;
 var Global = env.Global;
 
 describe("evaluation", function() {
 
-  it("simple eval", function() {
+  it("syncEval", function() {
     expect(vm.syncEval('1 + 2')).equals(3);
     expect(vm.syncEval('this.foo + 2;', {context: {foo: 3}})).equals(5);
     expect(vm.syncEval('throw new Error("foo");')).to.containSubset({message: "foo"});
-
-    var result = null;
-    vm.runEval('1+2', function(_, r) { result = r; })
-    expect(result).to.containSubset(3);
-
-    var result = null;
-    vm.runEval('throw new Error("foo");', function(err, _e) { result = err; })
-    expect(result).to.containSubset({message: 'foo'});
   });
 
-  it("eval and capture topLevelVars", function() {
-    var varMapper = {};
-    var code = "var x = 3 + 2";
-    var result = vm.syncEval(code, {topLevelVarRecorder: varMapper});
+  it("runEval", () =>
+    vm.runEval('1+2')
+      .then(val => expect(val).to.containSubset(3))
+      .catch(err => expect(false, "got error in runEval " + err)));
 
+  it("runEval promise-rejects on error", () =>
+    vm.runEval('throw new Error("foo");')
+      .then(val => expect(false, "got value in eval that should have errored " + val))
+      .catch(err => expect(String(err)).to.match(/error.*foo/i)));
+
+  it("eval and capture topLevelVars", function() {
+    var varMapper = {},
+        code = "var x = 3 + 2",
+        result = vm.syncEval(code, {topLevelVarRecorder: varMapper});
     expect(result).equals(5);
     expect(varMapper.x).equals(5);
   });
@@ -104,7 +106,7 @@ describe("evaluation", function() {
     expect(lang.obj.inspect(rangeRecorder)).equals(lang.obj.inspect(expectedRanges));
     expect(lang.obj.inspect(rec)).equals(lang.obj.inspect(expectedValues));
     // don't leave globals laying around
-    vm.syncEval("delete z;", {topLevelVarRecorder: rec, topLevelDefRangeRecorder: rangeRecorder})
+    delete Global.z;
   });
 
   it("dont undefine vars", function() {
@@ -133,14 +135,18 @@ describe("evaluation", function() {
     it("runEval returns promise", () => 
       vm.runEval("3+5").then(val => expect(val).to.equal(8)));
 
-    var code = "new Promise((resolve, reject) => setTimeout(() => resolve(23), 200));";
+    var code = "new Promise(function(resolve, reject) { return setTimeout(resolve, 200, 23); });"
 
     it("sync eval onPromiseResolved", done => {
-      var val, p = vm.syncEval(code, {
-        onPromiseResolved: (err, _val) => val = _val,
+      var val, err, p = vm.syncEval(code, {
+        onPromiseResolved: (_err, _val) => { val = _val; err = _err; },
         promiseTimeout: 400
       });
-      setTimeout(() => { expect(val).to.equal(23); done(); }, 400);
+      setTimeout(() => {
+        expect(err).to.equal(null);
+        expect(val).to.equal(23);
+        done();
+      }, 400);
     });
 
     it("run eval waits for promise", () =>
