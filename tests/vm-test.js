@@ -11,35 +11,40 @@ var Global = env.Global;
 describe("evaluation", function() {
 
   it("syncEval", function() {
-    expect(vm.syncEval('1 + 2')).equals(3);
-    expect(vm.syncEval('this.foo + 2;', {context: {foo: 3}})).equals(5);
-    expect(vm.syncEval('throw new Error("foo");')).to.containSubset({message: "foo"});
+    expect(vm.syncEval('1 + 2')).property("value").equals(3);
+    expect(vm.syncEval('this.foo + 2;', {context: {foo: 3}})).property("value").equals(5);
+    expect(vm.syncEval('throw new Error("foo");'))
+      .to.containSubset({isError: true})
+      .property("value").matches(/Error.*foo/);
   });
 
   it("runEval", () =>
     vm.runEval('1+2')
-      .then(val => expect(val).to.containSubset(3))
+      .then(result => expect(result.value).equal(3))
       .catch(err => expect(false, "got error in runEval " + err)));
 
   it("runEval promise-rejects on error", () =>
     vm.runEval('throw new Error("foo");')
-      .then(val => expect(false, "got value in eval that should have errored " + val))
-      .catch(err => expect(String(err)).to.match(/error.*foo/i)));
+      .then(result => {
+        expect(result).property("isError").to.be.true;
+        expect(result).property("value").to.match(/error.*foo/i)
+      })
+      .catch(err => expect(false, "got error in runEval " + err)))
 
   it("eval and capture topLevelVars", function() {
     var varMapper = {},
         code = "var x = 3 + 2",
         result = vm.syncEval(code, {topLevelVarRecorder: varMapper});
-    expect(result).equals(5);
+    expect(result.value).equals(5);
     expect(varMapper.x).equals(5);
   });
 
   it("eval single expressions", function() {
     var result = vm.syncEval('function() {}');
-    expect(result).to.be.a("function");
+    expect(result.value).to.be.a("function");
     var result = vm.syncEval('{x: 3}');
-    expect(result).to.an('object');
-    expect(result.x).equals(3);
+    expect(result.value).to.an('object');
+    expect(result.value.x).equals(3);
   });
 
   it("evalCapturedVarsReplaceVarRefs", function() {
@@ -47,7 +52,7 @@ describe("evaluation", function() {
     var code = "var x = 3; var y = foo() + x; function foo() { return x++ }; y";
     var result = vm.syncEval(code, {topLevelVarRecorder: varMapper});
 
-    expect(result).equals(7);
+    expect(result.value).equals(7);
     expect(varMapper.x).equals(4);
     expect(varMapper.y).equals(7);
   });
@@ -55,7 +60,7 @@ describe("evaluation", function() {
   it("only capture whitelisted globals", function() {
     var varMapper = {y: undefined};
     var code = "var x = 3; y = 5; z = 4;";
-    var result = vm.syncEval(code, {topLevelVarRecorder: varMapper});
+    vm.syncEval(code, {topLevelVarRecorder: varMapper});
 
     expect(varMapper.x).equals(3);
     expect(varMapper.y).equals(5);
@@ -67,41 +72,38 @@ describe("evaluation", function() {
 
   it("dont capture blacklisted", function() {
     var varMapper = {},
-      code = "var x = 3, y = 5;",
-      result = vm.syncEval(code, {
-        topLevelVarRecorder: varMapper,
-        dontTransform: ['y']
-      });
-
+      code = "var x = 3, y = 5;";
+    vm.syncEval(code, {
+      topLevelVarRecorder: varMapper,
+      dontTransform: ['y']
+    });
     expect(varMapper.x).equals(3);
     expect(!varMapper.hasOwnProperty('y')).equals(true, 'y recorded?');
-
   });
 
   it("dont transform var decls in for loop", function() {
     var code = "var sum = 0;\n"
         + "for (var i = 0; i < 5; i ++) { sum += i; }\n"
-        + "sum"
-    var recorder = {};
-    var result = vm.syncEval(code, {topLevelVarRecorder: recorder});
+        + "sum", recorder = {};
+    vm.syncEval(code, {topLevelVarRecorder: recorder});
     expect(recorder.sum).equals(10);
   });
 
   it("eval captured vars replace var refs", function() {
-    var code = 'try { throw new Error("foo") } catch (e) { e.message }'
-    var result = vm.syncEval(code, {topLevelVarRecorder: {}});
-    expect(result).equals('foo');
+    var code = 'try { throw new Error("foo") } catch (e) { e.message }',
+        result = vm.syncEval(code, {topLevelVarRecorder: {}});
+    expect(result.value).equals('foo');
   });
 
   it("capture def ranges", function() {
-    var code   = "var y = 1, x = 2;\nvar y = 3; z = 4; baz(x, y, z); function baz(a,b,c) {}",
-      expectedValues = {baz: function baz(a,b,c) {}, y: 3, x: 2},
-      expectedRanges = {
-        baz: [{end: 72, start: 50, type: "FunctionDeclaration"}],
-          x: [{end: 16, start: 11, type: "VariableDeclarator"}],
-          y: [{end: 9, start: 4, type: "VariableDeclarator"},
-              {end: 27, start: 22, type: "VariableDeclarator"}]},
-        rec = {}, rangeRecorder = {};
+    var code = "var y = 1, x = 2;\nvar y = 3; z = 4; baz(x, y, z); function baz(a,b,c) {}",
+        expectedValues = {baz: function baz(a,b,c) {}, y: 3, x: 2},
+        expectedRanges = {
+          baz: [{end: 72, start: 50, type: "FunctionDeclaration"}],
+            x: [{end: 16, start: 11, type: "VariableDeclarator"}],
+            y: [{end: 9, start: 4, type: "VariableDeclarator"},
+                {end: 27, start: 22, type: "VariableDeclarator"}]},
+          rec = {}, rangeRecorder = {};
     vm.syncEval(code, {topLevelVarRecorder: rec, topLevelDefRangeRecorder: rangeRecorder});
     expect(lang.obj.inspect(rangeRecorder)).equals(lang.obj.inspect(expectedRanges));
     expect(lang.obj.inspect(rec)).equals(lang.obj.inspect(expectedValues));
@@ -110,8 +112,8 @@ describe("evaluation", function() {
   });
 
   it("dont undefine vars", function() {
-    var code = "var x; var y = x + 3;";
-    var rec = {x: 23};
+    var code = "var x; var y = x + 3;",
+        rec = {x: 23};
     vm.syncEval(code, {topLevelVarRecorder: rec});
     expect(rec.y).equals(26);
   });
@@ -121,19 +123,19 @@ describe("evaluation", function() {
       console.log("FIXME sourceURL currently only works for web browser");
       return;
     }
-    var code = "throw new Error('test');";
-    var err = vm.syncEval(code, {sourceURL: "my-great-source!"});
-    expect(err.stack).to.match(
+    var code = "throw new Error('test');",
+        result = vm.syncEval(code, {sourceURL: "my-great-source!"});
+    expect(result.value.stack).to.match(
       /at eval.*my-great-source!:1/,
       "stack does not have sourceURL info:\n"
-    + lang.string.lines(err.stack).slice(0,3).join('\n'));
+    + lang.string.lines(result.value.stack).slice(0,3).join('\n'));
   });
 
 
   describe("promises", () => {
 
     it("runEval returns promise", () => 
-      vm.runEval("3+5").then(val => expect(val).to.equal(8)));
+      vm.runEval("3+5").then(result => expect(result).property("value").to.equal(8)));
 
     var code = "new Promise(function(resolve, reject) { return setTimeout(resolve, 200, 23); });"
 
@@ -151,7 +153,8 @@ describe("evaluation", function() {
 
     it("run eval waits for promise", () =>
       vm.runEval(code, {waitForPromise: true})
-        .then(val => expect(val).to.equal(23)));
+        .then(result => expect(result).to.containSubset({
+          isPromise: true, promiseStatus: "fulfilled", promisedValue: 23})));
   });
 
 });
@@ -164,7 +167,7 @@ describe("context recording", () => {
       var varMapper = {},
           code = "x = 3 + 2",
           result = vm.syncEval(code, {topLevelVarRecorder: varMapper, recordGlobals: true});
-      expect(result).equals(5);
+      expect(result).property("value").equals(5);
       expect(varMapper.x).equals(5);
     });
 

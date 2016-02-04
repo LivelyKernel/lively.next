@@ -17,11 +17,11 @@ describe("lively compat", function() {
     delete Global.fun;
 
     var result1 = vm.syncEval(src);
-    expect(result1).equals(6, 'simple eval not working');
+    expect(result1).property("value").equals(6, 'simple eval not working');
 
     var result2 = vm.syncEval(src, {topLevelVarRecorder: varMapper});
     var varMapper = {};
-    expect(result2).equals(6, 'capturing eval not working');
+    expect(result2).property("value").equals(6, 'capturing eval not working');
 
     expect(Object.keys(varMapper).length).equals(0, 'varMApper captured stuff');
   });

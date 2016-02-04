@@ -47,4 +47,11 @@ describe("completion", () => {
         expect(objectCompletions).to.deep.equal(expected);
       }));
 
-});
+  it("of resolved promise", () => 
+    vm.getCompletions(
+      code => vm.runEval(code, {waitForPromise: true}),
+      "Promise.resolve(23).")
+        .then(result =>
+          expect(result).property("promiseResolvedCompletions").property(0)
+            .to.deep.equal(["23", []])))
+  });

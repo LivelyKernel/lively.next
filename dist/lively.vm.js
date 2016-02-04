@@ -1,188 +1,17 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var lively = window.lively || (window.lively = {}); lively.vm = require('./index');
 },{"./index":2}],2:[function(require,module,exports){
-(function (global){
 /*global module,exports,require*/
 
 var lang = typeof window !== "undefined" ? lively.lang : lively.lang;
-var arr = lang.arr;
-var ast = typeof window !== "undefined" ? lively.ast : lively.ast;
 
-lang.obj.extend(exports, {
-
-  transformForVarRecord: function(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals) {
-    // variable declaration and references in the the source code get
-    // transformed so that they are bound to `varRecorderName` aren't local
-    // state. THis makes it possible to capture eval results, e.g. for
-    // inspection, watching and recording changes, workspace vars, and
-    // incrementally evaluating var declarations and having values bound later.
-    blacklist = blacklist || [];
-    blacklist.push("arguments");
-    var undeclaredToTransform = recordGlobals ?
-          null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-        transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-          code, {name: varRecorderName, type: "Identifier"},
-          {ignoreUndeclaredExcept: undeclaredToTransform,
-           exclude: blacklist, recordDefRanges: !!defRangeRecorder});
-    code = transformed.source;
-    if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
-    return code;
-  },
-
-  transformSingleExpression: function(code) {
-    // evaling certain expressions such as single functions or object
-    // literals will fail or not work as intended. When the code being
-    // evaluated consists just out of a single expression we will wrap it in
-    // parens to allow for those cases
-    try {
-      var parsed = ast.fuzzyParse(code);
-      if (parsed.body.length === 1 &&
-         (parsed.body[0].type === 'FunctionDeclaration'
-       || parsed.body[0].type === 'BlockStatement')) {
-        code = '(' + code.replace(/;\s*$/, '') + ')';
-      }
-    } catch(e) {
-      if (typeof lively && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e)
-      else console.error("Eval preprocess error: %s", e.stack || e);
-    }
-    return code;
-  },
-
-  evalCodeTransform: function(code, options) {
-    if (options.topLevelVarRecorder)
-      code = exports.transformForVarRecord(
-        code,
-        options.topLevelVarRecorder,
-        options.varRecorderName || '__lvVarRecorder',
-        options.dontTransform,
-        options.topLevelDefRangeRecorder,
-        !!options.recordGlobals);
-    code = exports.transformSingleExpression(code);
-
-    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-
-    return code;
-  },
-
-  getGlobal: function() {
-    if (typeof window !== "undefined") return window;
-    if (typeof global !== "undefined") return global;
-    if (typeof Global !== "undefined") return Global;
-    return (function() { return this; })();
-  },
-
-  _eval: function(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/) {
-    return eval(__lvEvalStatement);
-  },
-
-  _normalizeEvalOptions(opts) {
-    if (!opts) opts = {};
-    opts = lang.obj.merge({
-      currentModule: null,
-      sourceURL: opts.currentModule,
-      runtime: null,
-      context: exports.getGlobal(),
-      varRecorderName: '__lvVarRecorder',
-      dontTransform: [], // blacklist vars
-      topLevelDefRangeRecorder: null, // object for var ranges
-      recordGlobals: null,
-      returnPromise: true,
-      onPromiseResolved: null,
-      promiseTimeout: 200,
-      waitForPromise: !!opts.onPromiseResolved
-    }, opts);
-
-    if (opts.currentModule) {
-      var moduleEnv = opts.runtime
-                   && opts.runtime.modules
-                   && opts.runtime.modules[opts.currentModule];
-      if (moduleEnv) opts = lang.obj.merge(opts, moduleEnv);
-    }
-
-    return opts;
-  },
-
-  _waitForPromise: function(promise, timeout) {
-      var timeoutP = new Promise(resolve => setTimeout(resolve, timeout.ms, timeout));
-      return Promise.race([timeoutP, promise]);
-  },
-
-  runEval: function (code, options, thenDo) {
-    // The main function where all eval options are configured.
-    // options can be: {
-    //   runtime: {
-    //     modules: {[MODULENAME: PerModuleOptions]}
-    //   }
-    // }
-    // or directly, PerModuleOptions = {
-    //   varRecorderName: STRING, // default is '__lvVarRecorder'
-    //   topLevelVarRecorder: OBJECT,
-    //   context: OBJECT,
-    //   sourceURL: STRING,
-    //   recordGlobals: BOOLEAN // also transform free vars? default is false
-    // }
-
-    if (typeof options === 'function' && arguments.length === 2) {
-      thenDo = options; options = null;
-    }
-
-    options = exports._normalizeEvalOptions(options);
-
-    try {
-      code = exports.evalCodeTransform(code, options);
-    } catch (e) {
-      console.warn("lively.vm evalCodeTransform not working: %s", e.stack || e);
-    }
-
-    var result, err;
-    try {
-      typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
-      result = exports._eval.call(options.context, code, options.topLevelVarRecorder);
-    } catch (e) { err = e; }
-
-    if (typeof thenDo === "function") thenDo(err, result);
-
-    if (!options.returnPromise && !options.waitForPromise) return undefined;
-
-    var promisedResult = new Promise((resolve, reject) => {
-      if (!err
-       && options.waitForPromise
-       && result instanceof Promise) {
-        var timeout = {ms: options.promiseTimeout};
-        exports._waitForPromise(result, timeout)
-          .then(resolved => resolve(resolved !== timeout ? resolved : result))
-          .catch(rejected => reject(rejected));
-      }
-      else if (err) reject(err);
-      else resolve(result);
-    });
-    
-    if (typeof options.onPromiseResolved === "function") {
-      promisedResult.then(
-        x => options.onPromiseResolved(null, x),
-        err => options.onPromiseResolved(err));
-    }
-
-    return promisedResult;
-  },
-
-  syncEval: function(string, options) {
-    // See #runEval for options.
-    // Although the defaul eval is synchronous we assume that the general
-    // evaluation might not return immediatelly. This makes is possible to
-    // change the evaluation backend, e.g. to be a remotely attached runtime
-    var result;
-    exports.runEval(string, lively.lang.obj.merge(options, {returnPromise: false}), function(e, r) { result = e || r; });
-    return result;
-  }
-
+module.exports = lang.obj.merge(
+  require("./lib/evaluator"),
+  require("./lib/completions"),
+  {cjs: require("./lib/modules/cjs")
 });
-
-exports.cjs = require("./lib/modules/cjs");
-exports.getCompletions = require("./lib/completions").getCompletions;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lib/completions":3,"./lib/modules/cjs":5,"lively.ast":"lively.ast","lively.lang":"lively.lang"}],3:[function(require,module,exports){
+},{"./lib/completions":3,"./lib/evaluator":4,"./lib/modules/cjs":5,"lively.lang":"lively.lang"}],3:[function(require,module,exports){
+(function (__filename){
 /*global require, __dirname*/
 
 var lang = lively.lang;
@@ -217,10 +46,10 @@ function isClass(obj) {
 function pluck(list, prop) { return list.map(function(ea) { return ea[prop]; }); }
 
 function getObjectForCompletion(evalFunc, stringToEval) {
+  var startLetters = '';
   return Promise.resolve().then(() => {
     // thenDo = function(err, obj, startLetters)
-    var idx = stringToEval.lastIndexOf('.'),
-        startLetters = '';
+    var idx = stringToEval.lastIndexOf('.');
     if (idx >= 0) {
       startLetters = stringToEval.slice(idx+1);
       stringToEval = stringToEval.slice(0,idx);
@@ -228,18 +57,21 @@ function getObjectForCompletion(evalFunc, stringToEval) {
       startLetters = stringToEval;
       stringToEval = '(typeof window === "undefined" ? global : window)';
     }
-    var completions = [], obj = evalFunc(stringToEval);
-    return {obj: obj, startLetters: startLetters};
-  });
+    return evalFunc(stringToEval);
+  })
+  .then(evalResult => ({
+    evalResult: evalResult,
+    startLetters: startLetters,
+    code: stringToEval
+  }));
 }
 
 function propertyExtract(excludes, obj, extractor) {
-  // show(''+excludes)
   return Object.getOwnPropertyNames(obj)
-    .filter(function(key) { return excludes.indexOf(key) === -1; })
+    .filter(key => excludes.indexOf(key) === -1)
     .map(extractor)
-    .filter(function(ea) { return !!ea; })
-    .sort(function(a,b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
+    .filter(ea => !!ea)
+    .sort((a,b) => a.name < b.name ? -1 : (a.name > b.name ? 1 : 0));
 }
 
 function getMethodsOf(excludes, obj) {
@@ -296,6 +128,19 @@ function getCompletionsOfObj(obj, thenDo) {
   thenDo(err, completions);
 }
 
+function descriptorsOfObjAndProtoProperties(obj) {
+  var excludes = [],
+      completions = getProtoChain(obj)
+        .map(function(proto) {
+          var descr = getDescriptorOf(obj, proto),
+              methodsAndAttributes = getMethodsOf(excludes, proto)
+                .concat(getAttributesOf(excludes, proto));
+          excludes = excludes.concat(pluck(methodsAndAttributes, 'name'));
+          return [descr, pluck(methodsAndAttributes, 'completion')];
+        });
+  return completions;
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // the main deal
 function getCompletions(evalFunc, string, thenDo) {
@@ -306,38 +151,261 @@ function getCompletions(evalFunc, string, thenDo) {
   // letters = filter for properties of foo().bar
   // ("foo().bar.baz." for props of the result of the complete string)
   var promise = getObjectForCompletion(evalFunc, string)
-    .then(objAndStartLetters => {
-      var excludes = [],
-          completions = getProtoChain(objAndStartLetters.obj)
-            .map(function(proto) {
-              var descr = getDescriptorOf(objAndStartLetters.obj, proto),
-                  methodsAndAttributes = getMethodsOf(excludes, proto)
-                    .concat(getAttributesOf(excludes, proto));
-              excludes = excludes.concat(pluck(methodsAndAttributes, 'name'));
-              return [descr, pluck(methodsAndAttributes, 'completion')];
-            });
-      return {
-        completions: completions,
-        startLetters: objAndStartLetters.startLetters
-      };
+    .then(evalResultAndStartLetters => {
+      var evalResult = evalResultAndStartLetters.evalResult,
+          value = evalResult && evalResult.isEvalResult ? evalResult.value : evalResult,
+          result = {
+            completions: descriptorsOfObjAndProtoProperties(value),
+            startLetters: evalResultAndStartLetters.startLetters,
+            code: evalResultAndStartLetters.code
+          };
+
+      if (evalResult && evalResult.isPromise) {
+        if (evalResult.promiseStatus === "fulfilled")
+          result.promiseResolvedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue)
+        else if (evalResult.promiseStatus === "rejected")
+          result.promiseRejectedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue)
+      }
+      return result;
   });
   if (typeof thenDo === "function") {
     promise.then(result => thenDo(null, result)).catch(err => thenDo(err));
   }
-  return promise
+  return promise;
+}
+
+function test() {
+  var env = cjs.envFor(__filename)
+  getCompletions(code => cjs.evalIn(__filename, code), "Promise.resolve(23).")
+  getCompletions(code => cjs.evalIn(__filename, code), "Promise.resolve(23)")
+  var cjs = require("/Users/robert/Lively/lively-dev/lively.vm/lib/modules/cjs.js");
+  cjs.reloadModule("/Users/robert/Lively/lively-dev/lively.vm/lib/modules/cjs.js")
+  cjs.reloadModule(__filename)
+  // cjs.evalIn(__filename, "Promise.resolve(23)", {}).then(val => console.log(val) || val)
+  // vm.cjs.evalIn(msg.data.module, code, {})  
 }
 
 module.exports = {
   getCompletions: getCompletions
 }
 
-},{"fs":6,"lively.lang":"lively.lang","path":208,"util":226}],4:[function(require,module,exports){
-(function (process){
-/*global process, require, global*/
+}).call(this,"/lib/completions.js")
+},{"/Users/robert/Lively/lively-dev/lively.vm/lib/modules/cjs.js":5,"fs":6,"lively.lang":"lively.lang","path":208,"util":226}],4:[function(require,module,exports){
+(function (global){
+/*global module,exports,require*/
 
-var callsite = require("callsite");
+var lang = typeof window !== "undefined" ? lively.lang : lively.lang,
+    ast = typeof window !== "undefined" ? lively.ast : lively.ast;
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helper
+
+function _normalizeEvalOptions(opts) {
+  if (!opts) opts = {};
+  opts = lang.obj.merge({
+    currentModule: null,
+    sourceURL: opts.currentModule,
+    runtime: null,
+    context: getGlobal(),
+    varRecorderName: '__lvVarRecorder',
+    dontTransform: [], // blacklist vars
+    topLevelDefRangeRecorder: null, // object for var ranges
+    recordGlobals: null,
+    returnPromise: true,
+    onPromiseResolved: null,
+    promiseTimeout: 200,
+    waitForPromise: !!opts.onPromiseResolved
+  }, opts);
+
+  if (opts.currentModule) {
+    var moduleEnv = opts.runtime
+                 && opts.runtime.modules
+                 && opts.runtime.modules[opts.currentModule];
+    if (moduleEnv) opts = lang.obj.merge(opts, moduleEnv);
+  }
+
+  return opts;
+}
+
+function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/) {
+  return eval(__lvEvalStatement);
+}
+
+function tryToWaitForPromise(evalResult, timeoutMs) {
+  console.assert(evalResult.isPromise, "no promise in tryToWaitForPromise???");
+  var timeout = {},
+      timeoutP = new Promise(resolve => setTimeout(resolve, timeoutMs, timeout));
+  return Promise.race([timeoutP, evalResult.value])
+    .then(resolved => lang.obj.extend(evalResult, resolved !== timeout ?
+            {promiseStatus: "fulfilled", promisedValue: resolved} :
+            {promiseStatus: "pending"}))
+    .catch(rejected => lang.obj.extend(evalResult,
+            {promiseStatus: "rejected", promisedValue: rejected}))
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// evaluator interface
+
+function EvalResult() {}
+EvalResult.prototype.isEvalResult = true;
+EvalResult.prototype.value = undefined;
+EvalResult.prototype.warnings = [];
+EvalResult.prototype.isError = false;
+EvalResult.prototype.isPromise = false;
+EvalResult.prototype.promisedValue = undefined;
+EvalResult.prototype.promiseStatus = undefined;
+
+function transformForVarRecord(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals) {
+  // variable declaration and references in the the source code get
+  // transformed so that they are bound to `varRecorderName` aren't local
+  // state. THis makes it possible to capture eval results, e.g. for
+  // inspection, watching and recording changes, workspace vars, and
+  // incrementally evaluating var declarations and having values bound later.
+  blacklist = blacklist || [];
+  blacklist.push("arguments");
+  var undeclaredToTransform = recordGlobals ?
+        null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
+      transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+        code, {name: varRecorderName, type: "Identifier"},
+        {ignoreUndeclaredExcept: undeclaredToTransform,
+         exclude: blacklist, recordDefRanges: !!defRangeRecorder});
+  code = transformed.source;
+  if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
+  return code;
+}
+
+function transformSingleExpression(code) {
+  // evaling certain expressions such as single functions or object
+  // literals will fail or not work as intended. When the code being
+  // evaluated consists just out of a single expression we will wrap it in
+  // parens to allow for those cases
+  try {
+    var parsed = ast.fuzzyParse(code);
+    if (parsed.body.length === 1 &&
+       (parsed.body[0].type === 'FunctionDeclaration'
+     || parsed.body[0].type === 'BlockStatement')) {
+      code = '(' + code.replace(/;\s*$/, '') + ')';
+    }
+  } catch(e) {
+    if (typeof lively && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e)
+    else console.error("Eval preprocess error: %s", e.stack || e);
+  }
+  return code;
+}
+
+function evalCodeTransform(code, options) {
+  if (options.topLevelVarRecorder)
+    code = transformForVarRecord(
+      code,
+      options.topLevelVarRecorder,
+      options.varRecorderName || '__lvVarRecorder',
+      options.dontTransform,
+      options.topLevelDefRangeRecorder,
+      !!options.recordGlobals);
+  code = transformSingleExpression(code);
+  
+  if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+  
+  return code;
+}
+
+function getGlobal() {
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  if (typeof Global !== "undefined") return Global;
+  return (function() { return this; })();
+}
+
+function runEval(code, options, thenDo) {
+  // The main function where all eval options are configured.
+  // options can be: {
+  //   runtime: {
+  //     modules: {[MODULENAME: PerModuleOptions]}
+  //   }
+  // }
+  // or directly, PerModuleOptions = {
+  //   varRecorderName: STRING, // default is '__lvVarRecorder'
+  //   topLevelVarRecorder: OBJECT,
+  //   context: OBJECT,
+  //   sourceURL: STRING,
+  //   recordGlobals: BOOLEAN // also transform free vars? default is false
+  // }
+
+  if (typeof options === 'function' && arguments.length === 2) {
+    thenDo = options; options = null;
+  }
+
+  options = _normalizeEvalOptions(options);
+
+  var warnings = [];
+
+  try {
+    code = evalCodeTransform(code, options);
+  } catch (e) {
+    var warning = "lively.vm evalCodeTransform not working: " + (e.stack || e);
+    console.warn(warning);
+    warnings.push(warning);
+  }
+
+  var result = new EvalResult();
+  try {
+    typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
+    result.value = _eval.call(options.context, code, options.topLevelVarRecorder);
+  } catch (e) { result.isError = true; result.value = e; }
+
+  if (typeof thenDo === "function") thenDo(null, result);
+
+  if (result.value instanceof Promise) result.isPromise = true;
+  if (!options.returnPromise && !options.waitForPromise) return undefined;
+
+  var evalPromise;
+  if (!options.waitForPromise || !result.isPromise) {
+    evalPromise = Promise.resolve(result);
+  } else {
+    evalPromise = tryToWaitForPromise(result, options.promiseTimeout);
+    if (typeof options.onPromiseResolved === "function") {
+      evalPromise.then(result => result.hasOwnProperty("promisedValue")
+                              && options.onPromiseResolved(null, result.promisedValue));
+    }
+  }
+
+  return evalPromise;
+}
+
+function syncEval(string, options) {
+  // See #runEval for options.
+  // Although the defaul eval is synchronous we assume that the general
+  // evaluation might not return immediatelly. This makes is possible to
+  // change the evaluation backend, e.g. to be a remotely attached runtime
+  options = lively.lang.obj.merge(options, {returnPromise: false});
+  var result;
+  runEval(string, options, (e, r) => result = e || r);
+  return result;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+exports.transformForVarRecord     = transformForVarRecord;
+exports.transformSingleExpression = transformSingleExpression;
+exports.evalCodeTransform         = evalCodeTransform;
+exports.getGlobal                 = getGlobal;
+exports.runEval                   = runEval;
+exports.syncEval                  = syncEval;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"lively.ast":"lively.ast","lively.lang":"lively.lang"}],5:[function(require,module,exports){
+(function (process,global,__dirname){
+/*global process, require, global, __dirname*/
+
+var Module = require("module").Module;
+var evaluator = require("../evaluator");
+var uuid = require("node-uuid");
 var path = require("path");
+var lang = lively.lang;
+var callsite = require("callsite");
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helper
 function resolveFileName(file) {
   if (path.isAbsolute(file)) {
     try {
@@ -359,24 +427,8 @@ function resolveFileName(file) {
     return require.resolve(path.join(process.cwd(), file));
   } catch (e) {}
 
-  return file; 
+  return file;
 }
-
-module.exports = {
-  resolveFileName: resolveFileName
-}
-}).call(this,require('_process'))
-},{"_process":209,"callsite":229,"path":208}],5:[function(require,module,exports){
-(function (global,__dirname){
-/*global process, require, global, __dirname*/
-
-var Module = require("module").Module;
-var vm = require("../../index.js");
-var uuid = require("node-uuid");
-var path = require("path");
-var lang = lively.lang;
-var helper = require("./cjs-helper");
-
 
 // maps filenames to envs = {isLoaded: BOOL, loadError: ERROR, recorder: OBJECT}
 var loadedModules = {};
@@ -399,7 +451,6 @@ function ensureEnv(fullName) {
     });
 }
 
-
 function prepareCodeForCustomCompile(source, filename, env) {
   source = String(source);
   var magicVars = ["exports", "require", "module", "__filename", "__dirname"],
@@ -415,7 +466,7 @@ function prepareCodeForCustomCompile(source, filename, env) {
         .join("\n");
 
   try {
-    return (header + "\n" + vm.evalCodeTransform(source, tfmOptions));
+    return (header + "\n" + evaluator.evalCodeTransform(source, tfmOptions));
   } catch (e) { return e; }
 }
 
@@ -435,7 +486,7 @@ function customCompile(content, filename) {
       tfmedContent = prepareCodeForCustomCompile(content, filename, env);
 
   if (tfmedContent instanceof Error) {
-    console.warn("Cannot compile module %s:", filename, e);
+    console.warn("Cannot compile module %s:", filename, tfmedContent);
     env.loadError = tfmedContent;
     var result = originalCompile.call(this, content, filename);
     return result;
@@ -471,12 +522,12 @@ function unwrapModuleLoad() {
 
 function envFor(moduleName) {
   // var fullName = require.resolve(moduleName);
-  var fullName = helper.resolveFileName(moduleName);
+  var fullName = resolveFileName(moduleName);
   return ensureEnv(fullName);
 }
 
 function evalIn(moduleName, code, options) {
-  var fullName = helper.resolveFileName(moduleName);
+  var fullName = resolveFileName(moduleName);
   if (!require.cache[fullName]) {
     try {
       require(fullName);
@@ -498,47 +549,64 @@ function evalIn(moduleName, code, options) {
   rec.exports = m.exports;
   rec.module = m;
   global[recName] = rec;
-  var result = vm.syncEval(code, lang.obj.merge(options, {
-    recordGlobals: true,
-    dontTransform: [recName, "global"],
-    varRecorderName: recName,
-    topLevelVarRecorder: rec,
-    sourceURL: moduleName,
-    context: rec.exports || {}
-  }));
-  
-  // delete global[recName];
-  return result;
+  options = lang.obj.merge(
+    {waitForPromise: true},
+    options, {
+      recordGlobals: true,
+      dontTransform: [recName, "global"],
+      varRecorderName: recName,
+      topLevelVarRecorder: rec,
+      sourceURL: moduleName,
+      context: rec.exports || {}
+    });
+  return evaluator.runEval(code, options);
 }
 
-function evalInAndPrint(code, module, options, thenDo) {
+function printPromise(promise, options) {
+  return "Promise({"
+      + "status: " + lang.string.print(promise.status)
+      + (promise.status === "pending" ?
+        "" : ", value: " + printResult(promise.value, options))
+      + "})";
+}
+
+function printResult(result, options) {
+  var isPromise = result && !!result.promise && !!result.promise.status;
+
+  if (isPromise) {
+    if (options.asString || options.inspect)
+      return printPromise(result.promise, options);
+    else if (result.promise.status === "pending")
+      result.promise.value = "Promise()";  // for JSON stringify
+  }
+
+  if (options.asString)
+    return String(result);
+
+  if (options.inspect) {
+    var printDepth = options.printDepth || 2;
+    return lang.obj.inspect(result, {maxDepth: printDepth})
+  }
+
+  // tries to return as value
+  try {
+    JSON.stringify(result);
+    return result;
+  } catch (e) {
+    try {
+      var printDepth = options.printDepth || 2;
+      return lang.obj.inspect(result, {maxDepth: printDepth})
+    } catch (e) { return String(result); }
+  }
+}
+
+function evalInAndPrint(code, module, options) {
   var mod = module || scratchModule,
       code = code || "'no code'",
-      options = options || {},
-      result = evalIn(mod, code, options);
-  if (result instanceof Error) result = result.stack;
-  else if (options.asString) {
-    result = String(result);
-  } else if (options.inspect) {
-    var printDepth = options.printDepth || 2;
-    try {
-      result = lang.obj.inspect(result, {maxDepth: printDepth})
-    } catch (e) {
-      result = "Error inspecting " + result + ": " + e.stack;
-    }
-  } else { // tries to return as value
-    try {
-      JSON.stringify(result);
-    } catch (e) {
-        try {
-          var printDepth = options.printDepth || 2;
-          result = lang.obj.inspect(result, {maxDepth: printDepth})
-        } catch (e) {
-          result = String(result);
-        }
-    }
-  }
-  thenDo(null, result);
+      options = options || {};
+  return evalIn(mod, code, options)
+    .catch(err => { return err.stack; })
+    .then(result => printResult(result, options));
 }
 
 function status(thenDo) {
@@ -565,7 +633,7 @@ function statusForPrinted(moduleName, options, thenDo) {
     recorderName:      env.recorderName,
     recordedVariables: env.recorder
   }
-  
+
   thenDo(null, lang.obj.inspect(state, {maxDepth: options.depth}));
 }
 
@@ -575,7 +643,7 @@ function reloadModule(moduleName) {
 }
 
 function forgetModule(moduleName) {
-  var id = helper.resolveFileName(moduleName),
+  var id = resolveFileName(moduleName),
       moduleMap = Module._cache,
       deps = findDependentModules(id, moduleMap);
   deps.forEach(d => {
@@ -589,7 +657,7 @@ function findDependentModules(id, moduleMap) {
   // which modules (module ids) are (in)directly required by module with id
   // moduleMap will probably be require.cache
   // var moduleMap = require.cache;
-  
+
   var depMap = Object.keys(moduleMap).reduce((deps, k) => {
     deps[k] = moduleMap[k].children.map(ea => ea.id); return deps; }, {});
 
@@ -612,6 +680,7 @@ function findDependentModules(id, moduleMap) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 module.exports = {
+  resolveFileName: resolveFileName,
   wrapModuleLoad: wrapModuleLoad,
   unwrapModuleLoad: unwrapModuleLoad,
   envFor: envFor,
@@ -625,8 +694,8 @@ module.exports = {
   forgetModule: forgetModule
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/modules")
-},{"../../index.js":2,"./cjs-helper":4,"lively.lang":"lively.lang","module":6,"node-uuid":230,"path":208}],6:[function(require,module,exports){
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/modules")
+},{"../evaluator":4,"_process":209,"callsite":229,"lively.lang":"lively.lang","module":6,"node-uuid":230,"path":208}],6:[function(require,module,exports){
 
 },{}],7:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
