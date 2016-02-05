@@ -562,50 +562,51 @@ function evalIn(moduleName, code, options) {
   return evaluator.runEval(code, options);
 }
 
-function printPromise(promise, options) {
+function printPromise(evalResult, options) {
   return "Promise({"
-      + "status: " + lang.string.print(promise.status)
-      + (promise.status === "pending" ?
-        "" : ", value: " + printResult(promise.value, options))
+      + "status: " + lang.string.print(evalResult.promiseStatus)
+      + (evalResult.promiseStatus === "pending" ?
+        "" : ", value: " + printResult(evalResult.promisedValue, options))
       + "})";
 }
 
-function printResult(result, options) {
-  var isPromise = result && !!result.promise && !!result.promise.status;
+function printResult(evalResult, options) {
+  var value = evalResult && evalResult.isEvalResult ?
+    evalResult.value : evalResult
 
-  if (isPromise) {
+  if (evalResult && evalResult.isPromise) {
     if (options.asString || options.inspect)
-      return printPromise(result.promise, options);
-    else if (result.promise.status === "pending")
-      result.promise.value = "Promise()";  // for JSON stringify
+      return printPromise(evalResult, options);
+    else if (evalResult.promiseStatus === "pending")
+      value = 'Promise({status: "pending"})';  // for JSON stringify
   }
 
   if (options.asString)
-    return String(result);
+    return String(value);
 
   if (options.inspect) {
     var printDepth = options.printDepth || 2;
-    return lang.obj.inspect(result, {maxDepth: printDepth})
+    return lang.obj.inspect(value, {maxDepth: printDepth})
   }
 
   // tries to return as value
   try {
-    JSON.stringify(result);
-    return result;
+    JSON.stringify(value);
+    return value;
   } catch (e) {
     try {
       var printDepth = options.printDepth || 2;
-      return lang.obj.inspect(result, {maxDepth: printDepth})
-    } catch (e) { return String(result); }
+      return lang.obj.inspect(value, {maxDepth: printDepth})
+    } catch (e) { return String(value); }
   }
 }
 
 function evalInAndPrint(code, module, options) {
   var mod = module || scratchModule,
-      code = code || "'no code'",
-      options = options || {};
+      code = code || "'no code'";
+  options = options || {};
   return evalIn(mod, code, options)
-    .catch(err => { return err.stack; })
+    .catch(err => err.stack)
     .then(result => printResult(result, options));
 }
 

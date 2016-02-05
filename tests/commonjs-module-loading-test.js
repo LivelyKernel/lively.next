@@ -17,15 +17,35 @@ describe("common-js modules", () => {
   beforeEach(() => require(moduleName));
   afterEach(() => vm.cjs.forgetModule(moduleName));
 
-  it("captures internal module state", () => {
-    expect(vm.cjs.envFor(moduleName))
-      .deep.property('recorder.internalState').equals(23);
-    expect(vm.cjs.envFor(moduleName))
-      .deep.property('recorder.module.exports.state').equals(42);
+  describe("module state", () => {
+    it("captures internal module state", () => {
+      expect(vm.cjs.envFor(moduleName))
+        .deep.property('recorder.internalState').equals(23);
+      expect(vm.cjs.envFor(moduleName))
+        .deep.property('recorder.module.exports.state').equals(42);
+    });
   });
 
-  it("evaluates inside of module", () =>
-    vm.cjs.evalIn(moduleName, "internalState")
-      .then(evalResult => expect(evalResult).property("value").equals(23)));
+  describe("eval", () => {
+    it("evaluates inside of module", () =>
+      vm.cjs.evalIn(moduleName, "internalState")
+        .then(evalResult => expect(evalResult).property("value").equals(23)));
+  });
+
+  describe("eval + print", () => {
+    it("asString", () =>
+      vm.cjs.evalInAndPrint("3 + 4", moduleName, {asString: true})
+        .then(printed => console.log(printed) || expect(printed).equals("7")));
+
+    it("inspect", () =>
+      vm.cjs.evalInAndPrint(
+        "({foo: {bar: {baz: 42}, zork: 'graul'}})", moduleName,{inspect: true, printDepth: 2})
+          .then(printed => expect(printed).equals("{\n  foo: {\n    bar: {/*...*/},\n    zork: \"graul\"\n  }\n}")));
+
+    it("prints promises", () =>
+      vm.cjs.evalInAndPrint(
+        "Promise.resolve(23)", moduleName, {asString: true})
+          .then(printed => expect(printed).equals('Promise({status: "fulfilled", value: 23})')));
+  });
 
 });
