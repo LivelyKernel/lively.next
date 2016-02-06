@@ -22,14 +22,12 @@
         "script*"/*jQuery*/,
         "z",/*for "only capture whitelisted globals"*/
         "obj1", "obj2"/*for completion tests*/]);
-      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
-      var es6Enabled = true;
-      try { eval("() => 123"); } catch(e) { es6Enabled = false; }
-      var tests = ["vm-test.js", "completion-test.js"];
-      var urls = (es6Enabled ?
-        ["../dist/lively.vm.js"] :
-        ["../dist/lively.vm.min.js", "../node_modules/babel-core/browser-polyfill.js", "../node_modules/babel-core/browser.js"]).concat(tests);
-      loadUncached(urls, function() {
+      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();;
+      loadUncached([
+        "../dist/lively.vm.js",
+        "vm-test.js",
+        "completion-test.js"
+      ], function() {
         mocha.checkLeaks();
         mocha.run();
       });

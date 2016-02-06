@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "babel-core": "^5.8.35",
     "callsite": "^1.0.0",
-    "lively.ast": "^0.2.18",
+    "lively.ast": "^0.2.21",
     "lively.lang": "^0.5.4",
     "node-uuid": "^1.4.7"
   },

@@ -377,7 +377,7 @@ function syncEval(string, options) {
   // Although the defaul eval is synchronous we assume that the general
   // evaluation might not return immediatelly. This makes is possible to
   // change the evaluation backend, e.g. to be a remotely attached runtime
-  options = lively.lang.obj.merge(options, {returnPromise: false});
+  options = lang.obj.merge(options, {returnPromise: false});
   var result;
   runEval(string, options, (e, r) => result = e || r);
   return result;
@@ -430,11 +430,14 @@ function resolveFileName(file) {
   return file;
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module wrapping + loading
+
 // maps filenames to envs = {isLoaded: BOOL, loadError: ERROR, recorder: OBJECT}
-var loadedModules = {};
-var originalCompile = null;
-var exceptions = [module.filename];
-var scratchModule = path.join(__dirname, "cjs-scratch.js"); // fallback eval target
+var loadedModules = {},
+    originalCompile = null,
+    exceptions = [module.filename],
+    scratchModule = path.join(__dirname, "cjs-scratch.js"); // fallback eval target
 
 function instrumentedFiles() { return Object.keys(loadedModules); }
 function isLoaded(fileName) { return require.cache[fileName] && fileName in loadedModules; }
@@ -526,41 +529,57 @@ function envFor(moduleName) {
   return ensureEnv(fullName);
 }
 
-function evalIn(moduleName, code, options) {
-  var fullName = resolveFileName(moduleName);
-  if (!require.cache[fullName]) {
-    try {
-      require(fullName);
-    } catch (e) {
-      return new Error("Cannot find module " + moduleName + " (tried as " + fullName + ")");
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// instrumented code evaluation
+
+function runEval(code, options) {
+  options = lang.obj.merge({currentModule: null, printed: null}, options);
+
+  return new Promise((resolve, reject) => {
+    // if (!options.currentModule) return reject(new Error("options.currentModule not defined"));
+    if (!options.currentModule) options.currentModule = scratchModule;
+    var fullName = resolveFileName(options.currentModule);
+    if (!require.cache[fullName]) {
+      try {
+        require(fullName);
+      } catch (e) {
+        return reject(new Error(`Cannot find module ${options.currentModule} (tried as ${fullName})`));
+      }
     }
-  }
-  var m = require.cache[fullName],
-      env = envFor(fullName),
-      rec = env.recorder,
-      recName = env.recorderName;
-  rec.__filename = m.filename;
-  var dirname = rec.__dirname = path.dirname(m.filename);
-  // rec.require = function(fname) {
-  //   if (!path.isAbsolute(fname))
-  //     fname = path.join(dirname, fname);
-  //   return Module._load(fname, m);
-  // };
-  rec.exports = m.exports;
-  rec.module = m;
-  global[recName] = rec;
-  options = lang.obj.merge(
-    {waitForPromise: true},
-    options, {
-      recordGlobals: true,
-      dontTransform: [recName, "global"],
-      varRecorderName: recName,
-      topLevelVarRecorder: rec,
-      sourceURL: moduleName,
-      context: rec.exports || {}
-    });
-  return evaluator.runEval(code, options);
+    
+    var m = require.cache[fullName],
+        env = envFor(fullName),
+        rec = env.recorder,
+        recName = env.recorderName;
+    rec.__filename = m.filename;
+    var dirname = rec.__dirname = path.dirname(m.filename);
+    // rec.require = function(fname) {
+    //   if (!path.isAbsolute(fname))
+    //     fname = path.join(dirname, fname);
+    //   return Module._load(fname, m);
+    // };
+    rec.exports = m.exports;
+    rec.module = m;
+    global[recName] = rec;
+    options = lang.obj.merge(
+      {waitForPromise: true},
+      options, {
+        recordGlobals: true,
+        dontTransform: [recName, "global"],
+        varRecorderName: recName,
+        topLevelVarRecorder: rec,
+        sourceURL: options.currentModule,
+        context: rec.exports || {}
+      });
+    return evaluator.runEval(code, options)
+      .then(result => resolve(options.printed ?
+        printResult(result, options.printed) : result))
+      .catch(err => reject(err));
+  })
 }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// printing eval results
 
 function printPromise(evalResult, options) {
   return "Promise({"
@@ -601,14 +620,8 @@ function printResult(evalResult, options) {
   }
 }
 
-function evalInAndPrint(code, module, options) {
-  var mod = module || scratchModule,
-      code = code || "'no code'";
-  options = options || {};
-  return evalIn(mod, code, options)
-    .catch(err => err.stack)
-    .then(result => printResult(result, options));
-}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module runtime status
 
 function status(thenDo) {
   var files = Object.keys(loadedModules);
@@ -654,6 +667,9 @@ function forgetModule(moduleName) {
   return id;
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module dependencies
+
 function findDependentModules(id, moduleMap) {
   // which modules (module ids) are (in)directly required by module with id
   // moduleMap will probably be require.cache
@@ -684,15 +700,14 @@ module.exports = {
   resolveFileName: resolveFileName,
   wrapModuleLoad: wrapModuleLoad,
   unwrapModuleLoad: unwrapModuleLoad,
-  envFor: envFor,
-  evalIn: evalIn,
-  evalInAndPrint: evalInAndPrint,
-  status: status,
-  statusForPrinted: statusForPrinted,
-  instrumentedFiles: instrumentedFiles,
   prepareCodeForCustomCompile: prepareCodeForCustomCompile,
   reloadModule: reloadModule,
-  forgetModule: forgetModule
+  forgetModule: forgetModule,
+  instrumentedFiles: instrumentedFiles,
+  status: status,
+  statusForPrinted: statusForPrinted,
+  envFor: envFor,
+  runEval: runEval
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/modules")

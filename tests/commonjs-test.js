@@ -34,6 +34,7 @@ describe("common-js modules", () => {
   });
 
   describe("eval + print", () => {
+
     it("asString", () =>
       cjs.runEval("3 + 4", {currentModule: moduleName, printed: {asString: true}})
         .then(printed => console.log(printed) || expect(printed).equals("7")));
