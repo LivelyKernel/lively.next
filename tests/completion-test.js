@@ -11,7 +11,7 @@ var Global = env.Global;
 describe("completion", () => {
 
   it("can compute properties and method completions of an object", () =>
-    vm.getCompletions(code => vm.syncEval(code, {topLevelVarRecorder: {foo: {bar: 23}}}), "foo.")
+    vm.completions.getCompletions(code => vm.syncEval(code, {topLevelVarRecorder: {foo: {bar: 23}}}), "foo.")
       .then(result => {
         expect(result).property("startLetters").to.equal("");
         expect(result).property("completions").property(0).to.deep.equal(["[object Object]", ["bar"]]);
@@ -30,7 +30,7 @@ describe("completion", () => {
       }));
 
   it("finds inherited props", () =>
-    vm.getCompletions(
+    vm.completions.getCompletions(
       vm.syncEval,
       "var obj1 = {m2: function() {}, m3:function(a, b, c) {}},\n"
             + "obj2 = {a: 3, m1: function(a) {}, m2:function(x) {}, __proto__: obj1};\n"
@@ -48,7 +48,7 @@ describe("completion", () => {
       }));
 
   it("of resolved promise", () => 
-    vm.getCompletions(
+    vm.completions.getCompletions(
       code => vm.runEval(code, {waitForPromise: true}),
       "Promise.resolve(23).")
         .then(result =>

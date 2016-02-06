@@ -6,10 +6,10 @@ var lively = window.lively || (window.lively = {}); lively.vm = require('./index
 var lang = typeof window !== "undefined" ? lively.lang : lively.lang;
 
 module.exports = lang.obj.merge(
-  require("./lib/evaluator"),
-  require("./lib/completions"),
-  {cjs: require("./lib/modules/cjs")
-});
+  require("./lib/evaluator"), {
+    completions: require("./lib/completions"),
+    cjs: require("./lib/modules/cjs")
+  });
 },{"./lib/completions":3,"./lib/evaluator":4,"./lib/modules/cjs":5,"lively.lang":"lively.lang"}],3:[function(require,module,exports){
 (function (__filename){
 /*global require, __dirname*/

@@ -6,45 +6,47 @@ var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSub
 var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
 
 var lang = env.lively.lang || lively.lang,
-    vm = env.isCommonJS ? require('../index') : lively.vm;
+    vm = env.isCommonJS ? require('../index') : lively.vm,
+    cjs = vm.cjs;
 
 describe("common-js modules", () => {
 
   var moduleName = "./test-resources/some-cjs-module";
 
-  before(() => vm.cjs.wrapModuleLoad());
-  after(() => vm.cjs.unwrapModuleLoad());
+  before(() => cjs.wrapModuleLoad());
+  after(() => cjs.unwrapModuleLoad());
   beforeEach(() => require(moduleName));
-  afterEach(() => vm.cjs.forgetModule(moduleName));
+  afterEach(() => cjs.forgetModule(moduleName));
 
   describe("module state", () => {
     it("captures internal module state", () => {
-      expect(vm.cjs.envFor(moduleName))
+      expect(cjs.envFor(moduleName))
         .deep.property('recorder.internalState').equals(23);
-      expect(vm.cjs.envFor(moduleName))
+      expect(cjs.envFor(moduleName))
         .deep.property('recorder.module.exports.state').equals(42);
     });
   });
 
   describe("eval", () => {
     it("evaluates inside of module", () =>
-      vm.cjs.evalIn(moduleName, "internalState")
+      cjs.runEval("internalState", {currentModule: moduleName})
         .then(evalResult => expect(evalResult).property("value").equals(23)));
   });
 
   describe("eval + print", () => {
     it("asString", () =>
-      vm.cjs.evalInAndPrint("3 + 4", moduleName, {asString: true})
+      cjs.runEval("3 + 4", {currentModule: moduleName, printed: {asString: true}})
         .then(printed => console.log(printed) || expect(printed).equals("7")));
 
     it("inspect", () =>
-      vm.cjs.evalInAndPrint(
-        "({foo: {bar: {baz: 42}, zork: 'graul'}})", moduleName,{inspect: true, printDepth: 2})
+      cjs.runEval(
+        "({foo: {bar: {baz: 42}, zork: 'graul'}})",
+        {currentModule: moduleName, printed: {inspect: true, printDepth: 2}})
           .then(printed => expect(printed).equals("{\n  foo: {\n    bar: {/*...*/},\n    zork: \"graul\"\n  }\n}")));
 
     it("prints promises", () =>
-      vm.cjs.evalInAndPrint(
-        "Promise.resolve(23)", moduleName, {asString: true})
+      cjs.runEval(
+        "Promise.resolve(23)", {currentModule: moduleName, printed: {asString: true}})
           .then(printed => expect(printed).equals('Promise({status: "fulfilled", value: 23})')));
   });
 
