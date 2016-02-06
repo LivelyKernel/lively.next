@@ -19,13 +19,15 @@
     <script type="text/javascript" src="../node_modules/acorn/dist/acorn.js"></script>
     <script type="text/javascript" src="../node_modules/acorn/dist/walk.js"></script>
     <script type="text/javascript" src="../node_modules/acorn/dist/acorn_loose.js"></script>
-    <script type="text/javascript" src="../node_modules/lively.lang/lively.lang.dev.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>
 
     <script type="text/javascript">
       if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
       mocha.setup("bdd");
       mocha.globals(["script*"]);
       var urls = [
+        // "../lively.ast.dev-bundle.js",
+
         '../env.js',
         '../index.js',
         "../lib/acorn-extension.js",
@@ -35,6 +37,7 @@
         "../lib/transform.js",
         "../lib/comments.js",
         "../lib/code-categorizer.js",
+
         "acorn-extension-test.js",
         "interface-test.js",
         "query-test.js",

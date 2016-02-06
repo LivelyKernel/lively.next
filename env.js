@@ -1,4 +1,4 @@
-var isCommonJS = typeof module !== "undefined" && !!module.require;
+var isCommonJS = typeof module !== "undefined" && typeof require !== "undefined";
 var Global = typeof window !== "undefined" ? window : global;
 var lang = isCommonJS ? module.require("lively.lang") : (Global.lively && lively.lang);
 var escodegen = isCommonJS ? require("escodegen") : escodegen;
