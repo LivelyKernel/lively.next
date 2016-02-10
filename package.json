@@ -24,8 +24,8 @@
   "dependencies": {
     "babel-core": "^5.8.35",
     "callsite": "^1.0.0",
-    "lively.ast": "^0.2.21",
-    "lively.lang": "^0.5.4",
+    "lively.ast": "^0.3.2",
+    "lively.lang": "^0.5.11",
     "node-uuid": "^1.4.7"
   },
   "devDependencies": {
