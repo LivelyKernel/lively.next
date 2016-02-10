@@ -6,6 +6,8 @@ fswatch -0 -r . | xargs -0 -I{} bash -c \
   "[[ \"{}\" =~ .js$ ]] && [[ ! \"{}\" =~ .bundle. ]] && node build.js;"
 */
 
+var ast = require("./index");
+
 var uglify          = require("uglify-js"),
     browserify      = require("browserify"),
     babel           = require("babel-core"),

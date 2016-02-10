@@ -3,7 +3,7 @@
 var lang = require("lively.lang");
 var acorn = exports.acorn = require("acorn/dist/acorn");
 acorn.walk = require("acorn/dist/walk");
-acorn.parse_dammit = require("acorn/dist/acorn_loose");
+lang.obj.extend(acorn, require("acorn/dist/acorn_loose"));
 exports.escodegen = require("escodegen");
 
 lang.obj.extend(
