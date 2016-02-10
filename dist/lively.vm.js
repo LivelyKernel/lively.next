@@ -283,7 +283,8 @@ function transformSingleExpression(code) {
     var parsed = ast.fuzzyParse(code);
     if (parsed.body.length === 1 &&
        (parsed.body[0].type === 'FunctionDeclaration'
-     || parsed.body[0].type === 'BlockStatement')) {
+    || (parsed.body[0].type === 'BlockStatement'
+     && parsed.body[0].body[0].type === 'LabeledStatement'))) {
       code = '(' + code.replace(/;\s*$/, '') + ')';
     }
   } catch(e) {
@@ -543,10 +544,10 @@ function runEval(code, options) {
       try {
         require(fullName);
       } catch (e) {
-        return reject(new Error(`Cannot find module ${options.currentModule} (tried as ${fullName})`));
+        return reject(new Error(`Cannot load module ${options.currentModule} (tried as ${fullName})\noriginal load error: ${e.stack}`));
       }
     }
-    
+
     var m = require.cache[fullName],
         env = envFor(fullName),
         rec = env.recorder,
