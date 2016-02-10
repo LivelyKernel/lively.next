@@ -9,25 +9,38 @@
   </head>
   <body>
     <div id="mocha"></div>
-    <script type="text/javascript" src="../node_modules/lively.ast/lively.ast.dev-bundle.js"></script>
+    <script type="text/javascript" src="../node_modules/lively.ast/dist/lively.ast.bundle.es5.js"></script>
+
     <script type="text/javascript" src="helper.js"></script>
     <script type="text/javascript" src="../node_modules/mocha/mocha.js"></script>
     <script type="text/javascript" src="../node_modules/chai/chai.js"></script>
-    <script type="text/javascript" >window.module = {exports: {}};</script>
+    <script type="text/javascript" >window.prevModule = window.module; window.module = {exports: {}};</script>
     <script type="text/javascript" src="../node_modules/chai-subset/lib/chai-subset.js"></script>
     <script type="text/javascript" >
-      var chaiSubset = module.exports; chai.use(chaiSubset); delete window.module;
+      var chaiSubset = module.exports; chai.use(chaiSubset); window.module = window.prevModule;
+      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();;
       mocha.setup("bdd");
+      
+      var es6Support = true;
+      try { eval('() => {}'); } catch (e) { es6Support = false; }
+      
       mocha.globals([
         "script*"/*jQuery*/,
         "z",/*for "only capture whitelisted globals"*/
         "obj1", "obj2"/*for completion tests*/]);
-      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();;
-      loadUncached([
+
+      var urls = es6Support ? [
         "../dist/lively.vm.js",
         "vm-test.js",
         "completion-test.js"
-      ], function() {
+      ] : [
+        "../dist/lively.vm.es5.js",
+        "../node_modules/babel-core/browser-polyfill.js",
+        "../node_modules/babel-core/browser.js",
+        "vm-test.js",
+        "completion-test.js"
+      ]
+      loadUncached(urls, function() {
         mocha.checkLeaks();
         mocha.run();
       });

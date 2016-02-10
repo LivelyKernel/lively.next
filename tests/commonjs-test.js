@@ -29,26 +29,26 @@ describe("common-js modules", () => {
 
   describe("eval", () => {
     it("evaluates inside of module", () =>
-      cjs.runEval("internalState", {currentModule: moduleName})
+      cjs.runEval("internalState", {currentModule: moduleName, fromModule: __filename})
         .then(evalResult => expect(evalResult).property("value").equals(23)));
   });
 
   describe("eval + print", () => {
 
     it("asString", () =>
-      cjs.runEval("3 + 4", {currentModule: moduleName, printed: {asString: true}})
-        .then(printed => console.log(printed) || expect(printed).equals("7")));
+      cjs.runEval("3 + 4", {currentModule: moduleName, fromModule: __filename, printed: {asString: true}})
+        .then(printed => console.log(printed) || expect(printed).to.containSubset({value: "7"})));
 
     it("inspect", () =>
       cjs.runEval(
         "({foo: {bar: {baz: 42}, zork: 'graul'}})",
-        {currentModule: moduleName, printed: {inspect: true, printDepth: 2}})
-          .then(printed => expect(printed).equals("{\n  foo: {\n    bar: {/*...*/},\n    zork: \"graul\"\n  }\n}")));
+        {currentModule: moduleName, fromModule: __filename, printed: {inspect: true, printDepth: 2}})
+          .then(printed => expect(printed).to.containSubset({value: "{\n  foo: {\n    bar: {/*...*/},\n    zork: \"graul\"\n  }\n}"})));
 
     it("prints promises", () =>
       cjs.runEval(
-        "Promise.resolve(23)", {currentModule: moduleName, printed: {asString: true}})
-          .then(printed => expect(printed).equals('Promise({status: "fulfilled", value: 23})')));
+        "Promise.resolve(23)", {currentModule: moduleName, fromModule: __filename, printed: {asString: true}})
+          .then(printed => expect(printed).to.containSubset({value: 'Promise({status: "fulfilled", value: 23})'})));
   });
 
 });
