@@ -14,12 +14,12 @@
 
     <!--<script type="text/javascript" src="../lively.ast.min.js"></script>-->
 
-    <script type="text/javascript" src="../escodegen.browser.min.js"></script>
+    <!--<script type="text/javascript" src="../escodegen.browser.min.js"></script>-->
     <!--<script type="text/javascript" src="../acorn-jsx-browser.js"></script>-->
-    <script type="text/javascript" src="../node_modules/acorn/dist/acorn.js"></script>
-    <script type="text/javascript" src="../node_modules/acorn/dist/walk.js"></script>
-    <script type="text/javascript" src="../node_modules/acorn/dist/acorn_loose.js"></script>
-    <script type="text/javascript" src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>
+    <!--<script type="text/javascript" src="../node_modules/acorn/dist/acorn.js"></script>-->
+    <!--<script type="text/javascript" src="../node_modules/acorn/dist/walk.js"></script>-->
+    <!--<script type="text/javascript" src="../node_modules/acorn/dist/acorn_loose.js"></script>-->
+    <!--<script type="text/javascript" src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>-->
 
     <script type="text/javascript">
       if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
@@ -27,23 +27,13 @@
       mocha.globals(["script*"]);
       var urls = [
         // "../lively.ast.dev-bundle.js",
-
-        '../env.js',
-        '../index.js',
-        "../lib/acorn-extension.js",
-        "../lib/mozilla-ast-visitors.js",
-        "../lib/mozilla-ast-visitor-interface.js",
-        "../lib/query.js",
-        "../lib/transform.js",
-        "../lib/comments.js",
-        "../lib/code-categorizer.js",
+        "../dist/lively.ast.bundle.es5.js",
 
         "acorn-extension-test.js",
         "interface-test.js",
         "query-test.js",
         "transform-test.js",
         "comments-test.js",
-        "jsx-test.js",
         "es6-test.js",
         "code-categorizer-test.js"
       ];

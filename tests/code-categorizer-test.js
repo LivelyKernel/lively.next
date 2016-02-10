@@ -1,13 +1,18 @@
-/*global process, beforeEach, afterEach, describe, it*/
+/*global process, require, beforeEach, afterEach, describe, it*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
-var escodegen = env.escodegen, lang = env['lively.lang'], expect, ast;
-if (env.isCommonJS) {
-  var chai = module.require('chai');
+if (typeof window !== "undefined") {
+  var chai = window.chai;
+  var expect = window.expect;
+  var lang = window.lively.lang;
+  var ast = window.lively.ast;
+} else {
+  var chai = require('chai');
+  var expect = chai.expect;
+  var lang = require("lively.lang");
+  var ast = require('../index');
   chai.use(require('chai-subset'));
-  expect = chai.expect;
-  ast = require('../index');
-} else { expect = window.chai.expect; ast = env['lively.ast']; }
+}
+var escodegen = ast.escodegen;
 
 function categorize(code) {
   var parsed = ast.parse(code),
@@ -58,7 +63,7 @@ describe('code categorizer', function() {
             {name: "foo", type: "lively-class-instance-method", node: result.ast.body[0].expression.arguments[1].properties[0], get parent() { return expected[0]; }},
             {name: "bar", type: "lively-class-instance-property", node: result.ast.body[0].expression.arguments[1].properties[1], get parent() { return expected[0]; }}];
       expect(result.decls).to.deep.equal(expected, "1");
-  
+
       var result = categorize("Object.subclass('Foo', 'test', {foo: function() { return 23; }, bar: 24}, 'baz');"),
           expected = [
             {name: "Foo", type: "lively-class-definition", node: result.ast.body[0]},
@@ -66,7 +71,7 @@ describe('code categorizer', function() {
             {name: "bar", type: "lively-class-instance-property", node: result.ast.body[0].expression.arguments[2].properties[1], get parent() { return expected[0]; }}];
       expect(result.decls).to.deep.equal(expected, "2mm");
     }),
-  
+
     it("test06FindMethodAndPropertiessOfObject", function() {
       // lively.ast.printAst("var x = {foo: function() { return 23; }, bar: 24};")
       var result = categorize("var x = {foo: function() { return 23; }, bar: 24};"),

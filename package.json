@@ -1,13 +1,14 @@
 {
   "name": "lively.ast",
-  "version": "0.2.21",
+  "version": "0.3.0",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha tests/*-test.js && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html"
+    "test": "node_modules/mocha/bin/mocha tests/*-test.js && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html",
+    "build": "node -e \"require('./build.js')();\""
   },
   "repository": {
     "type": "git",
@@ -24,19 +25,16 @@
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
     "acorn": "^2.7.0",
-    "acorn-jsx": "^2.0",
     "escodegen": "^1.8.0",
-    "lively.lang": "^0.5.7"
+    "lively.lang": "^0.5.11"
   },
   "devDependencies": {
-    "browserify": "^7.0.0",
+    "babel-core": "^6.5.1",
+    "browserify": "^13.0.0",
     "chai": "^3.3.0",
     "chai-subset": "^1.1.0",
-    "grunt": "^0.4.5",
-    "grunt-browserify": "^3.2.1",
-    "grunt-contrib-concat": "^0.5.0",
-    "grunt-contrib-uglify": "^0.6.0",
     "mocha": "^2.3.3",
-    "mocha-phantomjs-core": "^1.3.0"
+    "mocha-phantomjs-core": "^1.3.0",
+    "uglify-js": "^2.6.1"
   }
 }

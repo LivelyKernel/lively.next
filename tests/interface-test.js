@@ -1,13 +1,18 @@
-/*global process, beforeEach, afterEach, describe, it*/
+/*global process, require, beforeEach, afterEach, describe, it*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : lively['lively.lang_env'];
-var escodegen = env.escodegen, lang = env['lively.lang'], expect, ast;
-if (env.isCommonJS) {
-  var chai = module.require('chai');
+if (typeof window !== "undefined") {
+  var chai = window.chai;
+  var expect = window.expect;
+  var lang = window.lively.lang;
+  var ast = window.lively.ast;
+} else {
+  var chai = require('chai');
+  var expect = chai.expect;
+  var lang = require("lively.lang");
+  var ast = require('../index');
   chai.use(require('chai-subset'));
-  expect = chai.expect;
-  ast = require('../index');
-} else { expect = window.chai.expect; ast = env['lively.ast']; }
+}
+var escodegen = ast.escodegen;
 
 describe('interface', function() {
   it('parses JavaScript code', function() {
