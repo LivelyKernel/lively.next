@@ -6,8 +6,9 @@ var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSub
 var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
 var lang = env.lively.lang || lively.lang,
     vm = env.isCommonJS ? require('../index') : lively.vm;
-var Global = env.Global;
+var Global = typeof global !== "undefined" ? global : window;
 
+Global
 describe("evaluation", function() {
 
   it("syncEval", function() {
@@ -58,8 +59,8 @@ describe("evaluation", function() {
   });
 
   it("only capture whitelisted globals", function() {
-    var varMapper = {y: undefined};
-    var code = "var x = 3; y = 5; z = 4;";
+    var varMapper = {y: undefined},
+        code = "var x = 3; y = 5; z = 4;";
     vm.syncEval(code, {topLevelVarRecorder: varMapper});
 
     expect(varMapper.x).equals(3);
