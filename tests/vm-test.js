@@ -188,7 +188,7 @@ describe("runtime", () => {
       }
     }
 
-    vm.syncEval("var x = 3 + 2; y = 2", {runtime: runtime, currentModule: "foo/bar.js"});
+    vm.syncEval("var x = 3 + 2; y = 2", {runtime: runtime, targetModule: "foo/bar.js"});
     expect(runtime.modules["foo/bar.js"].topLevelVarRecorder.x).equals(5);
     expect(runtime.modules["foo/bar.js"].topLevelVarRecorder.y).equals(2);
   });

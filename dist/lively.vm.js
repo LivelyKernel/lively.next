@@ -8,9 +8,411 @@ var lang = typeof window !== "undefined" ? lively.lang : lively.lang;
 module.exports = lang.obj.merge(
   require("./lib/evaluator"), {
     completions: require("./lib/completions"),
-    cjs: require("./lib/modules/cjs")
+    cjs: require("./lib/commonjs-interface")
   });
-},{"./lib/completions":3,"./lib/evaluator":4,"./lib/modules/cjs":5,"lively.lang":"lively.lang"}],3:[function(require,module,exports){
+},{"./lib/commonjs-interface":3,"./lib/completions":4,"./lib/evaluator":5,"lively.lang":"lively.lang"}],3:[function(require,module,exports){
+(function (process,global,__dirname){
+/*global process, require, global, __dirname*/
+
+var Module = require("module").Module;
+var util = require("util");
+var evaluator = require("./evaluator");
+// var modules = require("./modules");
+var uuid = require("node-uuid");
+var path = require("path");
+var lang = lively.lang;
+var callsite = require("callsite");
+var fs = require("fs");
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helper
+function resolve(file, parent) {
+  // normal resolve
+  try {
+    return Module._resolveFilename(file, parent);
+  } catch (e) {}
+
+  // manual lookup using path
+  if (!path.isAbsolute(file) && parent) {
+    var parentId = typeof parent === "string" ? parent : parent.id;
+    if (!file.match(/\.js$/)) file += ".js";
+    try {
+      return Module._resolveFilename(path.join(parentId, "..", file));
+    } catch (e) {}
+  }
+
+  // manual lookup using callstack
+  var frames = callsite(), frame;
+  for (var i = 2; i < frames.length; i++) {
+    frame = frames[i];
+    var frameFile = frame.getFileName();
+    if (!frameFile) continue;
+    var dir = path.dirname(frameFile),
+        full = path.join(dir, file);
+    try { return Module._resolveFilename(full, parent || module); } catch (e) {}
+  }
+
+  // last resort: current working directory
+  try {
+    return Module._resolveFilename(path.join(process.cwd(), file), parent || module);
+  } catch (e) {}
+
+  return file;
+}
+
+function sourceOf(moduleName, parent) {
+  return lang.promise()
+    .then(() =>
+      lively.lang.promise.convertCallbackFun(fs.readFile)(resolve(moduleName, parent)))
+    .then(String);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module wrapping + loading
+
+// maps filenames to envs = {isLoaded: BOOL, loadError: ERROR, recorder: OBJECT}
+var loadedModules = {},
+    requireMap = {},
+    originalCompile = null, originalLoad = null,
+    // exceptions = [module.filename],
+    exceptions = [],
+    scratchModule = path.join(__dirname, "commonjs-scratch.js"); // fallback eval target
+
+function instrumentedFiles() { return Object.keys(loadedModules); }
+function isLoaded(fileName) { return require.cache[fileName] && fileName in loadedModules; }
+function ensureRecorder(fullName) { return ensureEnv(fullName).recorder; }
+
+function ensureEnv(fullName) {
+  return loadedModules[fullName]
+    || (loadedModules[fullName] = {
+      isInstrumented: false,
+      loadError: undefined,
+      // recorderName: "eval_rec_" + path.basename(fullName).replace(/[^a-z]/gi, "_"),
+      recorderName: "eval_rec_" + fullName.replace(/[^a-z]/gi, "_"),
+      recorder: Object.create(global)
+    });
+}
+
+function prepareCodeForCustomCompile(source, filename, env) {
+  source = String(source);
+  var magicVars = ["exports", "require", "module", "__filename", "__dirname"],
+      tfmOptions = {
+        topLevelVarRecorder: env.recorder,
+        varRecorderName: env.recorderName,
+        dontTransform: [env.recorderName, "global"].concat(magicVars),
+        recordGlobals: true
+      },
+      header = "var " + env.recorderName + " = global." + env.recorderName + ";\n",
+      header = header + magicVars
+        .map(varName => env.recorderName + "." + varName + "=" + varName + ";")
+        .join("\n");
+
+  try {
+    return (header + "\n"
+          + ";(function() {\n"
+          + evaluator.evalCodeTransform(source, tfmOptions)
+          + "\n})();");
+  } catch (e) { return e; }
+}
+
+var loadDepth = 0;
+function customCompile(content, filename) {
+  // wraps Module.prototype._compile to capture top-level module definitions
+  if (exceptions.indexOf(filename) > -1 || isLoaded(filename))
+    return originalCompile.call(this, content, filename);
+
+  // console.log(lang.string.indent("[lively.vm commonjs] loads %s", " ", loadDepth), filename);
+
+  // if cache was cleared also reset our recorded state
+  if (!require.cache[filename] && loadedModules[filename])
+    delete loadedModules[filename];
+
+  var env = ensureEnv(filename),
+      _ = env.isInstrumented = true,
+      tfmedContent = prepareCodeForCustomCompile(content, filename, env);
+
+  if (tfmedContent instanceof Error) {
+    console.warn("Cannot compile module %s:", filename, tfmedContent);
+    env.loadError = tfmedContent;
+    var result = originalCompile.call(this, content, filename);
+    return result;
+  }
+
+  global[env.recorderName] = env.recorder;
+  loadDepth++;
+  try {
+    var result = originalCompile.call(this, tfmedContent, filename);
+    env.loadError = undefined;
+    return result;
+  } catch (e) {
+    console.log("-=-=-=-=-=-=-=-");
+    console.error("[lively.vm commonjs] evaluator error loading module: ", e);
+    console.log("-=-=-=-=-=-=-=-");
+    console.log(tfmedContent);
+    console.log("-=-=-=-=-=-=-=-");
+    env.loadError = e; throw e;
+  } finally {
+    loadDepth--;
+    // console.log(lang.string.indent("[lively.vm commonjs] done loading %s", " ", loadDepth), filename);
+    // delete global[env.recorderName];
+  }
+}
+
+function customLoad(request, parent, isMain) {
+  var id = resolve(request, parent);
+  
+var parentRel = path.relative(process.cwd(), resolve(parent.id));
+console.log(lang.string.indent("%s -> %s", " ", loadDepth), parentRel, request);
+
+  if (!requireMap[parent.id]) requireMap[parent.id] = [id];
+  else requireMap[parent.id].push(id);
+  return originalLoad.call(this, request, parent, isMain);
+}
+
+function wrapModuleLoad() {
+  if (!originalCompile)
+    originalCompile = Module.prototype._compile;
+  Module.prototype._compile = customCompile;
+  if (!originalLoad)
+    originalLoad = Module._load;
+  Module._load = customLoad;
+}
+
+function unwrapModuleLoad() {
+  if (originalCompile)
+    Module.prototype._compile = originalCompile;
+  if (originalLoad)
+    Module._load = originalLoad;
+}
+
+function envFor(moduleName) {
+  // var fullName = require.resolve(moduleName);
+  var fullName = resolve(moduleName);
+  return ensureEnv(fullName);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// instrumented code evaluation
+
+function runEval(code, options) {
+
+  options = lang.obj.merge({targetModule: null, parentModule: null, printed: null}, options);
+
+  return Promise.resolve().then(() => {
+    // if (!options.targetModule) return reject(new Error("options.targetModule not defined"));
+    if (!options.targetModule) {
+      options.targetModule = scratchModule;
+    } else {
+      options.targetModule = resolve(options.targetModule, options.parentModule);
+    }
+
+    var fullName = resolve(options.targetModule);
+    if (!require.cache[fullName]) {
+      try {
+        require(fullName);
+      } catch (e) {
+        throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
+      }
+    }
+
+    var m = require.cache[fullName],
+        env = envFor(fullName),
+        rec = env.recorder,
+        recName = env.recorderName;
+    rec.__filename = m.filename;
+    var dirname = rec.__dirname = path.dirname(m.filename);
+    // rec.require = function(fname) {
+    //   if (!path.isAbsolute(fname))
+    //     fname = path.join(dirname, fname);
+    //   return Module._load(fname, m);
+    // };
+    rec.exports = m.exports;
+    rec.module = m;
+    global[recName] = rec;
+    options = lang.obj.merge(
+      {waitForPromise: true},
+      options, {
+        recordGlobals: true,
+        dontTransform: [recName, "global"],
+        varRecorderName: recName,
+        topLevelVarRecorder: rec,
+        sourceURL: options.targetModule,
+        context: rec.exports || {}
+      });
+
+    if (!options.printed) {
+      var printKeys = lang.arr.intersect(Object.keys(options), ["printDepth", "asString", "inspect"]);
+      if (printKeys.length) {
+        options.printed = printKeys.reduce((printed, k) => {
+          printed[k] = options[k];
+          delete options[k];
+          return printed;
+        }, {printDepth: 2, inspect: false, asString: false});
+      }
+    }
+
+    return evaluator.runEval(code, options).then(result => {
+      if (options.printed) result.value = printResult(result, options.printed);
+      return result;
+    });
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// printing eval results
+
+function printPromise(evalResult, options) {
+  return "Promise({"
+      + "status: " + lang.string.print(evalResult.promiseStatus)
+      + (evalResult.promiseStatus === "pending" ?
+        "" : ", value: " + printResult(evalResult.promisedValue, options))
+      + "})";
+}
+
+function printResult(evalResult, options) {
+  var value = evalResult && evalResult.isEvalResult ?
+    evalResult.value : evalResult
+
+  if (evalResult.isError || value instanceof Error) {
+    return value.stack || String(value);
+  }
+
+  if (evalResult && evalResult.isPromise) {
+    if (options.asString || options.inspect)
+      return printPromise(evalResult, options);
+    else if (evalResult.promiseStatus === "pending")
+      value = 'Promise({status: "pending"})';  // for JSON stringify
+  }
+
+  if (options.asString)
+    return String(value);
+
+  if (options.inspect) {
+    var printDepth = options.printDepth || 2;
+    return lang.obj.inspect(value, {maxDepth: printDepth})
+  }
+
+  // tries to return as value
+  try {
+    JSON.stringify(value);
+    return value;
+  } catch (e) {
+    try {
+      var printDepth = options.printDepth || 2;
+      return lang.obj.inspect(value, {maxDepth: printDepth})
+    } catch (e) { return String(value); }
+  }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module runtime status
+
+function status(thenDo) {
+  var files = Object.keys(loadedModules);
+  var envs = files.reduce((envs, fn) => {
+    envs[fn] = {
+      loadError:         loadedModules[fn].loadError,
+      isLoaded:          isLoaded(fn),
+      recorderName:      loadedModules[fn].recorderName,
+      isInstrumented:    loadedModules[fn].isInstrumented,
+      recordedVariables: Object.keys(loadedModules[fn].recorder)
+    }
+    return envs;
+  }, {});
+  thenDo(null, envs);
+}
+
+function statusForPrinted(moduleName, options, thenDo) {
+  options = lang.obj.merge({depth: 3}, options);
+  var env = envFor(moduleName);
+
+  var state = {
+    loadError:         env.loadError,
+    recorderName:      env.recorderName,
+    recordedVariables: env.recorder
+  }
+
+  thenDo(null, lang.obj.inspect(state, {maxDepth: options.depth}));
+}
+
+function reloadModule(moduleName, parent) {
+  var id = forgetModule(moduleName, parent);
+  return require(id);
+}
+
+function forgetModules(fullModuleIds, moduleMap) {
+  fullModuleIds.forEach(id => {
+    delete moduleMap[id];
+    delete loadedModules[id];
+  });
+}
+
+function forgetModule(moduleName, parent) {
+  var id = resolve(moduleName, parent),
+      deps = findDependentsOf(id);
+  forgetModules([id].concat(deps), Module._cache);
+  return id;
+}
+
+function forgetModuleDeps(moduleName, parent) {
+  var id = resolve(moduleName, parent),
+      deps = findDependentsOf(id);
+  forgetModules(deps, Module._cache);
+  return id;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module dependencies
+
+function findDependentsOf(id) {
+  // which modules (module ids) are (in)directly required by module with id
+  // Let's say you have
+  // module1: exports.x = 23;
+  // module2: exports.y = require("./module1").x + 1;
+  // module3: exports.z = require("./module2").y + 1;
+  // `findDependentsOf` gives you an answer what modules are "stale" when you
+  // change module1
+  return lang.graph.hull(lang.graph.invert(requireMap), resolve(id));
+}
+
+function findRequirementsOf(id) {
+  // which modules (module ids) are (in)directly required by module with id
+  // Let's say you have
+  // module1: exports.x = 23;
+  // module2: exports.y = require("./module1").x + 1;
+  // module3: exports.z = require("./module2").y + 1;
+  // `findRequirementsOf("./module3")` will report ./module2 and ./module1
+  return lang.graph.hull(requireMap, resolve(id));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+module.exports = {
+  resolve: resolve,
+  sourceOf: sourceOf,
+
+  wrapModuleLoad: wrapModuleLoad,
+  unwrapModuleLoad: unwrapModuleLoad,
+  prepareCodeForCustomCompile: prepareCodeForCustomCompile,
+
+  reloadModule: reloadModule,
+  forgetModule: forgetModule,
+  forgetModuleDeps: forgetModuleDeps,
+
+  findRequirementsOf: findRequirementsOf,
+  findDependentsOf: findDependentsOf,
+  _requireMap: requireMap,
+
+  instrumentedFiles: instrumentedFiles,
+  status: status,
+  statusForPrinted: statusForPrinted,
+
+  envFor: envFor,
+  runEval: runEval
+}
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib")
+},{"./evaluator":5,"_process":209,"callsite":229,"fs":6,"lively.lang":"lively.lang","module":6,"node-uuid":230,"path":208,"util":226}],4:[function(require,module,exports){
 (function (__filename){
 /*global require, __dirname*/
 
@@ -178,8 +580,8 @@ function test() {
   var env = cjs.envFor(__filename)
   getCompletions(code => cjs.evalIn(__filename, code), "Promise.resolve(23).")
   getCompletions(code => cjs.evalIn(__filename, code), "Promise.resolve(23)")
-  var cjs = require("/Users/robert/Lively/lively-dev/lively.vm/lib/modules/cjs.js");
-  cjs.reloadModule("/Users/robert/Lively/lively-dev/lively.vm/lib/modules/cjs.js")
+  var cjs = require("/Users/robert/Lively/lively-dev/lively.vm/lib/commonjs-interface.js");
+  cjs.reloadModule("/Users/robert/Lively/lively-dev/lively.vm/lib/commonjs-interface.js")
   cjs.reloadModule(__filename)
   // cjs.evalIn(__filename, "Promise.resolve(23)", {}).then(val => console.log(val) || val)
   // vm.cjs.evalIn(msg.data.module, code, {})  
@@ -190,7 +592,7 @@ module.exports = {
 }
 
 }).call(this,"/lib/completions.js")
-},{"/Users/robert/Lively/lively-dev/lively.vm/lib/modules/cjs.js":5,"fs":6,"lively.lang":"lively.lang","path":208,"util":226}],4:[function(require,module,exports){
+},{"/Users/robert/Lively/lively-dev/lively.vm/lib/commonjs-interface.js":3,"fs":6,"lively.lang":"lively.lang","path":208,"util":226}],5:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/
 
@@ -203,8 +605,8 @@ var lang = typeof window !== "undefined" ? lively.lang : lively.lang,
 function _normalizeEvalOptions(opts) {
   if (!opts) opts = {};
   opts = lang.obj.merge({
-    currentModule: null,
-    sourceURL: opts.currentModule,
+    targetModule: null,
+    sourceURL: opts.targetModule,
     runtime: null,
     context: getGlobal(),
     varRecorderName: '__lvVarRecorder',
@@ -217,10 +619,10 @@ function _normalizeEvalOptions(opts) {
     waitForPromise: !!opts.onPromiseResolved
   }, opts);
 
-  if (opts.currentModule) {
+  if (opts.targetModule) {
     var moduleEnv = opts.runtime
                  && opts.runtime.modules
-                 && opts.runtime.modules[opts.currentModule];
+                 && opts.runtime.modules[opts.targetModule];
     if (moduleEnv) opts = lang.obj.merge(opts, moduleEnv);
   }
 
@@ -394,325 +796,7 @@ exports.runEval                   = runEval;
 exports.syncEval                  = syncEval;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"lively.ast":"lively.ast","lively.lang":"lively.lang"}],5:[function(require,module,exports){
-(function (process,global,__dirname){
-/*global process, require, global, __dirname*/
-
-var Module = require("module").Module;
-var evaluator = require("../evaluator");
-var uuid = require("node-uuid");
-var path = require("path");
-var lang = lively.lang;
-var callsite = require("callsite");
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// helper
-function resolveFileName(file) {
-  if (path.isAbsolute(file)) {
-    try {
-      return require.resolve(file);
-    } catch (e) { return file; }
-  }
-
-  var frames = callsite(), frame;
-  for (var i = 2; i < frames.length; i++) {
-    frame = frames[i];
-    var frameFile = frame.getFileName();
-    if (!frameFile) continue;
-    var dir = path.dirname(frameFile);
-    var full = path.join(dir, file);
-    try { return require.resolve(full); } catch (e) {}
-  }
-
-  try {
-    return require.resolve(path.join(process.cwd(), file));
-  } catch (e) {}
-
-  return file;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// module wrapping + loading
-
-// maps filenames to envs = {isLoaded: BOOL, loadError: ERROR, recorder: OBJECT}
-var loadedModules = {},
-    originalCompile = null,
-    exceptions = [module.filename],
-    scratchModule = path.join(__dirname, "cjs-scratch.js"); // fallback eval target
-
-function instrumentedFiles() { return Object.keys(loadedModules); }
-function isLoaded(fileName) { return require.cache[fileName] && fileName in loadedModules; }
-function ensureRecorder(fullName) { return ensureEnv(fullName).recorder; }
-
-function ensureEnv(fullName) {
-  return loadedModules[fullName]
-    || (loadedModules[fullName] = {
-      customCompiled: false,
-      loadError: undefined,
-      // recorderName: "eval_rec_" + path.basename(fullName).replace(/[^a-z]/gi, "_"),
-      recorderName: "eval_rec_" + fullName.replace(/[^a-z]/gi, "_"),
-      recorder: Object.create(global)
-    });
-}
-
-function prepareCodeForCustomCompile(source, filename, env) {
-  source = String(source);
-  var magicVars = ["exports", "require", "module", "__filename", "__dirname"],
-      tfmOptions = {
-        topLevelVarRecorder: env.recorder,
-        varRecorderName: env.recorderName,
-        dontTransform: [env.recorderName, "global"].concat(magicVars),
-        recordGlobals: true
-      },
-      header = "var " + env.recorderName + " = global." + env.recorderName + ";\n",
-      header = header + magicVars
-        .map(varName => env.recorderName + "." + varName + "=" + varName + ";")
-        .join("\n");
-
-  try {
-    return (header + "\n" + evaluator.evalCodeTransform(source, tfmOptions));
-  } catch (e) { return e; }
-}
-
-function customCompile(content, filename) {
-  // wraps Module.prototype._compile to capture top-level module definitions
-  if (exceptions.indexOf(filename) > -1 || isLoaded(filename))
-    return originalCompile.call(this, content, filename);
-
-  console.log("[lively.vm commonjs] loads %s", filename);
-
-  // if cache was cleared also reset our recorded state
-  if (!require.cache[filename] && loadedModules[filename])
-    delete loadedModules[filename];
-
-  var env = ensureEnv(filename),
-      _ = env.customCompiled = true,
-      tfmedContent = prepareCodeForCustomCompile(content, filename, env);
-
-  if (tfmedContent instanceof Error) {
-    console.warn("Cannot compile module %s:", filename, tfmedContent);
-    env.loadError = tfmedContent;
-    var result = originalCompile.call(this, content, filename);
-    return result;
-  }
-
-  global[env.recorderName] = env.recorder;
-  try {
-    var result = originalCompile.call(this, tfmedContent, filename);
-    env.loadError = undefined;
-    return result;
-  } catch (e) {
-    console.log("-=-=-=-=-=-=-=-");
-    console.error("[lively.vm commonjs] evaluator error loading module: ", e);
-    console.log("-=-=-=-=-=-=-=-");
-    console.log(tfmedContent);
-    console.log("-=-=-=-=-=-=-=-");
-    env.loadError = e; throw e;
-  } finally {
-    // delete global[env.recorderName];
-  }
-}
-
-function wrapModuleLoad() {
-  if (!originalCompile)
-    originalCompile = Module.prototype._compile;
-  Module.prototype._compile = customCompile;
-}
-
-function unwrapModuleLoad() {
-  if (originalCompile)
-    Module.prototype._compile = originalCompile;
-}
-
-function envFor(moduleName) {
-  // var fullName = require.resolve(moduleName);
-  var fullName = resolveFileName(moduleName);
-  return ensureEnv(fullName);
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// instrumented code evaluation
-
-function runEval(code, options) {
-  options = lang.obj.merge({currentModule: null, printed: null}, options);
-
-  return new Promise((resolve, reject) => {
-    // if (!options.currentModule) return reject(new Error("options.currentModule not defined"));
-    if (!options.currentModule) options.currentModule = scratchModule;
-    var fullName = resolveFileName(options.currentModule);
-    if (!require.cache[fullName]) {
-      try {
-        require(fullName);
-      } catch (e) {
-        return reject(new Error(`Cannot load module ${options.currentModule} (tried as ${fullName})\noriginal load error: ${e.stack}`));
-      }
-    }
-
-    var m = require.cache[fullName],
-        env = envFor(fullName),
-        rec = env.recorder,
-        recName = env.recorderName;
-    rec.__filename = m.filename;
-    var dirname = rec.__dirname = path.dirname(m.filename);
-    // rec.require = function(fname) {
-    //   if (!path.isAbsolute(fname))
-    //     fname = path.join(dirname, fname);
-    //   return Module._load(fname, m);
-    // };
-    rec.exports = m.exports;
-    rec.module = m;
-    global[recName] = rec;
-    options = lang.obj.merge(
-      {waitForPromise: true},
-      options, {
-        recordGlobals: true,
-        dontTransform: [recName, "global"],
-        varRecorderName: recName,
-        topLevelVarRecorder: rec,
-        sourceURL: options.currentModule,
-        context: rec.exports || {}
-      });
-    return evaluator.runEval(code, options)
-      .then(result => resolve(options.printed ?
-        printResult(result, options.printed) : result))
-      .catch(err => reject(err));
-  })
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// printing eval results
-
-function printPromise(evalResult, options) {
-  return "Promise({"
-      + "status: " + lang.string.print(evalResult.promiseStatus)
-      + (evalResult.promiseStatus === "pending" ?
-        "" : ", value: " + printResult(evalResult.promisedValue, options))
-      + "})";
-}
-
-function printResult(evalResult, options) {
-  var value = evalResult && evalResult.isEvalResult ?
-    evalResult.value : evalResult
-
-  if (evalResult && evalResult.isPromise) {
-    if (options.asString || options.inspect)
-      return printPromise(evalResult, options);
-    else if (evalResult.promiseStatus === "pending")
-      value = 'Promise({status: "pending"})';  // for JSON stringify
-  }
-
-  if (options.asString)
-    return String(value);
-
-  if (options.inspect) {
-    var printDepth = options.printDepth || 2;
-    return lang.obj.inspect(value, {maxDepth: printDepth})
-  }
-
-  // tries to return as value
-  try {
-    JSON.stringify(value);
-    return value;
-  } catch (e) {
-    try {
-      var printDepth = options.printDepth || 2;
-      return lang.obj.inspect(value, {maxDepth: printDepth})
-    } catch (e) { return String(value); }
-  }
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// module runtime status
-
-function status(thenDo) {
-  var files = Object.keys(loadedModules);
-  var envs = files.reduce((envs, fn) => {
-    envs[fn] = {
-      loadError:         loadedModules[fn].loadError,
-      isLoaded:          isLoaded(fn),
-      recorderName:      loadedModules[fn].recorderName,
-      customCompiled:    loadedModules[fn].customCompiled,
-      recordedVariables: Object.keys(loadedModules[fn].recorder)
-    }
-    return envs;
-  }, {});
-  thenDo(null, envs);
-}
-
-function statusForPrinted(moduleName, options, thenDo) {
-  options = lang.obj.merge({depth: 3}, options);
-  var env = envFor(moduleName);
-
-  var state = {
-    loadError:         env.loadError,
-    recorderName:      env.recorderName,
-    recordedVariables: env.recorder
-  }
-
-  thenDo(null, lang.obj.inspect(state, {maxDepth: options.depth}));
-}
-
-function reloadModule(moduleName) {
-  var id = forgetModule(moduleName);
-  return require(id);
-}
-
-function forgetModule(moduleName) {
-  var id = resolveFileName(moduleName),
-      moduleMap = Module._cache,
-      deps = findDependentModules(id, moduleMap);
-  deps.forEach(d => {
-    delete moduleMap[d];
-    delete loadedModules[d];
-  });
-  return id;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// module dependencies
-
-function findDependentModules(id, moduleMap) {
-  // which modules (module ids) are (in)directly required by module with id
-  // moduleMap will probably be require.cache
-  // var moduleMap = require.cache;
-
-  var depMap = Object.keys(moduleMap).reduce((deps, k) => {
-    deps[k] = moduleMap[k].children.map(ea => ea.id); return deps; }, {});
-
-  return dependsOf(id, [id], 0);
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function dependsOf(id, deps) {
-    var newDeps = (depMap[id] || []).filter(dep => deps.indexOf(dep) === -1);
-    if (newDeps.length === 0) return deps;
-    deps = deps.concat(newDeps);
-    for (var i = 0; i < newDeps.length; i++) {
-      var newDepsDeep = dependsOf(newDeps[i], deps);
-      newDepsDeep.forEach(dep => deps.indexOf(dep) === -1 && deps.push(dep));
-    }
-    return deps;
-  }
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-module.exports = {
-  resolveFileName: resolveFileName,
-  wrapModuleLoad: wrapModuleLoad,
-  unwrapModuleLoad: unwrapModuleLoad,
-  prepareCodeForCustomCompile: prepareCodeForCustomCompile,
-  reloadModule: reloadModule,
-  forgetModule: forgetModule,
-  instrumentedFiles: instrumentedFiles,
-  status: status,
-  statusForPrinted: statusForPrinted,
-  envFor: envFor,
-  runEval: runEval
-}
-
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/modules")
-},{"../evaluator":4,"_process":209,"callsite":229,"lively.lang":"lively.lang","module":6,"node-uuid":230,"path":208}],6:[function(require,module,exports){
+},{"lively.ast":"lively.ast","lively.lang":"lively.lang"}],6:[function(require,module,exports){
 
 },{}],7:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
@@ -6611,6 +6695,7 @@ exports['1.3.132.0.35'] = 'p521'
 
   BN.prototype.imuln = function imuln (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
 
     // Carry
     var carry = 0;
@@ -6842,6 +6927,7 @@ exports['1.3.132.0.35'] = 'p521'
   // Add plain number `num` to `this`
   BN.prototype.iaddn = function iaddn (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
     if (num < 0) return this.isubn(-num);
 
     // Possible sign change
@@ -6882,6 +6968,7 @@ exports['1.3.132.0.35'] = 'p521'
   // Subtract plain number `num` from `this`
   BN.prototype.isubn = function isubn (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
     if (num < 0) return this.iaddn(-num);
 
     if (this.negative !== 0) {
@@ -7043,11 +7130,25 @@ exports['1.3.132.0.35'] = 'p521'
       a.iushrn(shift);
     }
 
-    return { div: q || null, mod: a };
+    return {
+      div: q || null,
+      mod: a
+    };
   };
 
+  // NOTE: 1) `mode` can be set to `mod` to request mod only,
+  //       to `div` to request div only, or be absent to
+  //       request both div & mod
+  //       2) `positive` is true if unsigned mod is requested
   BN.prototype.divmod = function divmod (num, mode, positive) {
     assert(!num.isZero());
+
+    if (this.isZero()) {
+      return {
+        div: new BN(0),
+        mod: new BN(0)
+      };
+    }
 
     var div, mod, res;
     if (this.negative !== 0 && num.negative === 0) {
@@ -7077,7 +7178,10 @@ exports['1.3.132.0.35'] = 'p521'
         div = res.div.neg();
       }
 
-      return { div: div, mod: res.mod };
+      return {
+        div: div,
+        mod: res.mod
+      };
     }
 
     if ((this.negative & num.negative) !== 0) {
@@ -7100,17 +7204,26 @@ exports['1.3.132.0.35'] = 'p521'
 
     // Strip both numbers to approximate shift value
     if (num.length > this.length || this.cmp(num) < 0) {
-      return { div: new BN(0), mod: this };
+      return {
+        div: new BN(0),
+        mod: this
+      };
     }
 
     // Very short reduction
     if (num.length === 1) {
       if (mode === 'div') {
-        return { div: this.divn(num.words[0]), mod: null };
+        return {
+          div: this.divn(num.words[0]),
+          mod: null
+        };
       }
 
       if (mode === 'mod') {
-        return { div: null, mod: new BN(this.modn(num.words[0])) };
+        return {
+          div: null,
+          mod: new BN(this.modn(num.words[0]))
+        };
       }
 
       return {
@@ -7335,8 +7448,8 @@ exports['1.3.132.0.35'] = 'p521'
   };
 
   BN.prototype.gcd = function gcd (num) {
-    if (this.isZero()) return num.clone();
-    if (num.isZero()) return this.clone();
+    if (this.isZero()) return num.abs();
+    if (num.isZero()) return this.abs();
 
     var a = this.clone();
     var b = num.clone();
@@ -7727,8 +7840,13 @@ exports['1.3.132.0.35'] = 'p521'
       input.words[i - 10] = ((next & mask) << 4) | (prev >>> 22);
       prev = next;
     }
-    input.words[i - 10] = prev >>> 22;
-    input.length -= 9;
+    prev >>>= 22;
+    input.words[i - 10] = prev;
+    if (prev === 0 && input.length > 10) {
+      input.length -= 10;
+    } else {
+      input.length -= 9;
+    }
   };
 
   K256.prototype.imulK = function imulK (num) {
@@ -13349,8 +13467,7 @@ module.exports={
     }
   ],
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz",
-  "readme": "ERROR: No README data found!"
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz"
 }
 
 },{}],71:[function(require,module,exports){
@@ -13826,6 +13943,7 @@ base.Node = require('./node');
 },{"./buffer":77,"./node":79,"./reporter":80}],79:[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
+var DecoderBuffer = require('../base').DecoderBuffer;
 var assert = require('minimalistic-assert');
 
 // Supported tags
@@ -13838,7 +13956,7 @@ var tags = [
 // Public methods list
 var methods = [
   'key', 'obj', 'use', 'optional', 'explicit', 'implicit', 'def', 'choice',
-  'any'
+  'any', 'contains'
 ].concat(tags);
 
 // Overrided methods list
@@ -13874,6 +13992,7 @@ function Node(enc, parent) {
   state['default'] = null;
   state.explicit = null;
   state.implicit = null;
+  state.contains = null;
 
   // Should create new instance on each method
   if (!state.parent) {
@@ -14078,6 +14197,15 @@ Node.prototype.choice = function choice(obj) {
   return this;
 };
 
+Node.prototype.contains = function contains(item) {
+  var state = this._baseState;
+
+  assert(state.use === null);
+  state.contains = item;
+
+  return this;
+};
+
 //
 // Decoding
 //
@@ -14179,6 +14307,12 @@ Node.prototype._decode = function decode(input) {
       });
       if (fail)
         return err;
+    }
+
+    // Decode contained/encoded by schema, only in bit or octet strings
+    if (state.contains && (state.tag === 'octstr' || state.tag === 'bitstr')) {
+      var data = new DecoderBuffer(result);
+      result = this._getUse(state.contains, input._reporterState.obj)._decode(data);
     }
   }
 
@@ -14323,6 +14457,9 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     result = this._createEncoderBuffer(data);
   } else if (state.choice) {
     result = this._encodeChoice(data, reporter);
+  } else if (state.contains) {
+    content = this._getUse(state.contains, parent)._encode(data, reporter);
+    primitive = true;
   } else if (state.children) {
     content = state.children.map(function(child) {
       if (child._baseState.tag === 'null_')
@@ -14342,7 +14479,6 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     }, this).filter(function(child) {
       return child;
     });
-
     content = this._createEncoderBuffer(content);
   } else {
     if (state.tag === 'seqof' || state.tag === 'setof') {
@@ -14435,6 +14571,7 @@ Node.prototype._isNumstr = function isNumstr(str) {
 Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '\(\)\+,\-\.\/:=\?]*$/.test(str);
 };
+
 },{"../base":78,"minimalistic-assert":89}],80:[function(require,module,exports){
 var inherits = require('inherits');
 
@@ -14772,6 +14909,7 @@ DERNode.prototype._decodeStr = function decodeStr(buffer, tag) {
 };
 
 DERNode.prototype._decodeObjid = function decodeObjid(buffer, values, relative) {
+  var result;
   var identifiers = [];
   var ident = 0;
   while (!buffer.isEmpty()) {

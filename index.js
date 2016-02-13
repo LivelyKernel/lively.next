@@ -5,5 +5,5 @@ var lang = typeof window !== "undefined" ? lively.lang : require("lively.lang");
 module.exports = lang.obj.merge(
   require("./lib/evaluator"), {
     completions: require("./lib/completions"),
-    cjs: require("./lib/modules/cjs")
+    cjs: require("./lib/commonjs-interface")
   });
