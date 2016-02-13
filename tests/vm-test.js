@@ -8,7 +8,6 @@ var lang = env.lively.lang || lively.lang,
     vm = env.isCommonJS ? require('../index') : lively.vm;
 var Global = typeof global !== "undefined" ? global : window;
 
-Global
 describe("evaluation", function() {
 
   it("syncEval", function() {
