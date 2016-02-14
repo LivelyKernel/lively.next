@@ -197,7 +197,6 @@ function envFor(moduleName) {
 function runEval(code, options) {
 
   options = lang.obj.merge({targetModule: null, parentModule: null, printed: null}, options);
-
   return Promise.resolve().then(() => {
     // if (!options.targetModule) return reject(new Error("options.targetModule not defined"));
     if (!options.targetModule) {
@@ -273,7 +272,7 @@ function printResult(evalResult, options) {
   var value = evalResult && evalResult.isEvalResult ?
     evalResult.value : evalResult
 
-  if (evalResult.isError || value instanceof Error) {
+  if (evalResult && (evalResult.isError || value instanceof Error)) {
     return value.stack || String(value);
   }
 
