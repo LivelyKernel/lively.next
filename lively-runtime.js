@@ -7,8 +7,9 @@ lively.require("lively.lang.Runtime").toRun(function() {
     state: {},
 
     reloadAll: function(project, thenDo) {
-      var files = ["env.js",
-                   "index.js",
+      // var project = lively.lang.Runtime.Registry.current().projects["lively.ast"]
+      // lively.lang.Runtime.loadFiles(project, files, show.curry("%s %o"));
+      var files = ["index.js",
                    "lib/acorn-extension.js",
                    "lib/mozilla-ast-visitors.js",
                    "lib/mozilla-ast-visitor-interface.js",
