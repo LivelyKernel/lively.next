@@ -1,5 +1,6 @@
 /*global window, process, global*/
 
+
 ;(function(Global) {
 
   var globalInterfaceSpec = [
@@ -5825,16 +5826,22 @@ exports.promise = function promise(obj) {
 obj.extend(exports.promise, {
 
   delay: function(ms, resolveVal) {
+    // Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
+    // before resolving
     return new Promise(resolve => {
       setTimeout(resolve, ms, resolveVal); });
   },
 
   delayReject: function(ms, rejectVal) {
+    // like `promise.delay` but rejects
     return new Promise((_, reject) => {
       setTimeout(reject, ms, rejectVal); });
   },
 
   timeout: function(ms, promise) {
+    // Takes a promise and either resolves to the value of the original promise
+    // when it succeeds before `ms` milliseconds passed or fails with a timeout
+    // error
     return new Promise((resolve, reject) => {
       var done = false;
       setTimeout(() => {
@@ -5908,6 +5915,20 @@ obj.extend(exports.promise, {
   },
 
   chain: function(promiseFuncs) {
+    // Similar to Promise.all but takes a list of promise-producing functions
+    // (instead of Promises directly) that are run sequentially. Each function
+    // gets the result of the previous promise and a shared "state" object passed
+    // in. The function should return either a value or a promise. The result of
+    // the entire chain call is a promise itself that either resolves to the last
+    // returned value or rejects with an error that appeared somewhere in the
+    // promise chain. In case of an error the chain stops at that point.
+    // Example:
+    // lively.lang.promise.chain([
+    //   () => Promise.resolve(23),
+    //   (prevVal, state) => { state.first = prevVal; return prevVal + 2 },
+    //   (prevVal, state) => { state.second = prevVal; return state }
+    // ]).then(result => console.log(result));
+    // // => prints {first: 23,second: 25}
     return new Promise((resolve, reject) => {
       exports.promise._chainResolveNext(
         promiseFuncs.slice(), undefined, {},
@@ -6095,7 +6116,22 @@ var graph = exports.graph = {
       }, []);
     }
     return subgraph;
+  },
+
+  invert: function(g) {
+    // inverts the references of graph object `g`.
+    // Example:
+    // graph.invert({a: ["b"], b: ["a", "c"]})
+    //   // => {a: ["b"], b: ["a"], c: ["b"]}
+    return Object.keys(g).reduce((inverted, k) => {
+      g[k].forEach(k2 => {
+        if (!inverted[k2]) inverted[k2] = [k];
+        else inverted[k2].push(k)
+      });
+      return inverted;
+    }, {});
   }
+
 };
 
 })(typeof module !== "undefined" && module.require && typeof process !== "undefined" ?
@@ -10781,16 +10817,15 @@ exports.transform = {
        // => "A.x = 3; A.y = 2; z = 4"
     */
 
-    var ignoreUndeclaredExcept = (options && options.ignoreUndeclaredExcept) || null
-    var whitelist = (options && options.include) || null;
-    var blacklist = (options && options.exclude) || [];
-    var recordDefRanges = options && options.recordDefRanges;
-
-    var parsed = typeof astOrSource === 'object' ?
-        astOrSource : ast.parse(astOrSource),
-      source = typeof astOrSource === 'string' ?
-        astOrSource : (parsed.source || ast.stringify(parsed)),
-      topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+    var ignoreUndeclaredExcept = (options && options.ignoreUndeclaredExcept) || null,
+        whitelist = (options && options.include) || null,
+        blacklist = (options && options.exclude) || [],
+        recordDefRanges = options && options.recordDefRanges,
+        parsed = typeof astOrSource === 'object' ?
+          astOrSource : ast.parse(astOrSource),
+        source = typeof astOrSource === 'string' ?
+          astOrSource : (parsed.source || ast.stringify(parsed)),
+        topLevel = ast.query.topLevelDeclsAndRefs(parsed);
 
     if (ignoreUndeclaredExcept) {
       blacklist = arr.withoutAll(topLevel.undeclaredNames, ignoreUndeclaredExcept).concat(blacklist);
@@ -10798,15 +10833,26 @@ exports.transform = {
 
     // 1. find those var declarations that should not be rewritten. we
     // currently ignore var declarations in for loops and the error parameter
-    // declaration in catch clauses
+    // declaration in catch clauses. Also es6 import / export declaration need
+    // a special treatment
     var scope = topLevel.scope;
     arr.pushAll(blacklist, arr.pluck(scope.catches, "name"));
-    var forLoopDecls = scope.varDecls.filter(function(decl, i) {
+    var specialDecls = scope.varDecls.reduce((result, decl, i) => {
       var path = lang.Path(scope.varDeclPaths[i]),
           parent = path.slice(0,-1).get(parsed);
-      return parent.type === "ForStatement" || parent.type === "ForInStatement";
-    });
-    arr.pushAll(blacklist, chain(forLoopDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+      if (parent.type === "ForStatement"
+       || parent.type === "ForInStatement") {
+         result.forDecls.push({decl: decl, parent: parent, scope: scope});
+         result.ignore.push(decl);
+       }
+      if (parent.type === "ExportNamedDeclaration") {
+        result.exportDecls.push({decl: decl, parent: parent, scope: scope});
+        result.ignore.push(decl);
+      }
+      return result;
+    }, {ignore: [], forDecls: [], exportDecls: []});
+    var ignoreDecls = specialDecls.ignore;
+    arr.pushAll(blacklist, chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
 
     // 2. make all references declared in the toplevel scope into property
     // reads of assignToObj
@@ -10824,7 +10870,7 @@ exports.transform = {
     // 3. turn var declarations into assignments to assignToObj
     // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
     result = ast.transform.helper.replaceNodes(
-      arr.withoutAll(topLevel.varDecls, forLoopDecls)
+      arr.withoutAll(topLevel.varDecls, ignoreDecls)
         .map(function(decl) {
           return {
             target: decl,
@@ -10847,7 +10893,21 @@ exports.transform = {
           }
         }), result);
 
-    // 4. assignments for function declarations in the top level scope are
+    // 4. es6 export declaration are left untouched but a capturing assignment
+    // is added after the export so that we get the value:
+    // "export var x = 23;" => "export var x = 23; Global.x = x;"
+    if (specialDecls.exportDecls) {
+      result = ast.transform.helper.replaceNodes(
+        specialDecls.exportDecls.map((spec) => {
+          return {
+            target: spec.parent,
+            replacementFunc: (exportNode, s, wasChanged) =>
+              [exportNode].concat(spec.decl.declarations.map(decl => assign(decl.id, decl.id)))
+          }
+        }), result);
+    }
+
+    // 5. assignments for function declarations in the top level scope are
     // put in front of everything else:
     // "return bar(); function bar() { return 23 }" -> "Global.bar = bar; return bar(); function bar() { return 23 }"
     if (topLevel.funcDecls.length) {
@@ -10866,7 +10926,7 @@ exports.transform = {
       }
     }
 
-    // 5. def ranges so that we know at which source code positions the
+    // 6. def ranges so that we know at which source code positions the
     // definitions are
     if (recordDefRanges)
       result.defRanges = chain(scope.varDecls)
