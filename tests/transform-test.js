@@ -312,40 +312,73 @@ describe('ast.transform', function() {
         });
 
       });
-      
-      describe("destructuring", function() {
 
-        describe("object notation", function() {
+      describe("es6", () => {
 
-          it("object literal into var decls", function() {
-            var code = "var {y, z} = {y: 3, z: 4};",
-                result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
-                expected = "var __temp = {\n    y: 3,\n    z: 4\n};\nvar y = __temp.y;\nvar z = __temp.z;";
+        describe("destructuring", function() {
+
+          describe("object notation", function() {
+
+            it("object literal into var decls", function() {
+              var code = "var {y, z} = {y: 3, z: 4};",
+                  result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
+                  expected = "var __temp = {\n    y: 3,\n    z: 4\n};\nvar y = __temp.y;\nvar z = __temp.z;";
+              expect(result.source).equals(expected);
+            });
+
+            it("expression into var decls", function() {
+              var code = "var {y, z} = foo;",
+                  result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
+                  expected = "var __temp = foo;\nvar y = __temp.y;\nvar z = __temp.z;"
+              expect(result.source).equals(expected);
+            });
+
+            it("nested", function() {
+              var code = "var {x, y: [{z}]} = {x: 3, y: [{z: 4}]};",
+                  result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
+                  expected = "var __temp = {\n    x: 3,\n    y: [{ z: 4 }]\n};\nvar x = __temp.x;\nvar y = __temp.y;\nvar z = __temp.y[0].z;";
+              expect(result.source).equals(expected);
+            });
+
+          })
+
+          xit("transformTopLevelVarAndFuncDeclsForCapturing", function() {
+            var code     = "var {y, z} = {y: 3, z: 4}; function foo() { var x = 5; }",
+                expected = "Global.foo = foo;\nGlobal.z = 4;\nGlobal.y = 3; function foo() { var x = 5; }",
+                recorder = {name: "Global", type: "Identifier"},
+                result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
             expect(result.source).equals(expected);
           });
 
-          it("expression into var decls", function() {
-            var code = "var {y, z} = foo;",
-                result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
-                expected = "var __temp = foo;\nvar y = __temp.y;\nvar z = __temp.z;"
-            expect(result.source).equals(expected);
-          });
+        });
 
-          it("nested", function() {
-            var code = "var {x, y: [{z}]} = {x: 3, y: [{z: 4}]};",
-                result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
-                expected = "var __temp = {\n    x: 3,\n    y: [{ z: 4 }]\n};\nvar x = __temp.x;\nvar y = __temp.y;\nvar z = __temp.y[0].z;";
-            expect(result.source).equals(expected);
-          });
-          
-        })
-
-        xit("transformTopLevelVarAndFuncDeclsForCapturing", function() {
-          var code     = "var {y, z} = {y: 3, z: 4}; function foo() { var x = 5; }",
-              expected = "Global.foo = foo;\nGlobal.z = 4;\nGlobal.y = 3; function foo() { var x = 5; }",
-              recorder = {name: "Global", type: "Identifier"},
-              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+        it("captures let as var (...for now)", () => {
+          var code     = "let x = 23, y = x + 1;",
+              expected = "Global.x = 23;\nGlobal.y = Global.x + 1;",
+              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, {name: "Global", type: "Identifier"});
           expect(result.source).equals(expected);
+        });
+
+        it("captures const as var (...for now)", () => {
+          var code     = "const x = 23, y = x + 1;",
+              expected = "Global.x = 23;\nGlobal.y = Global.x + 1;",
+              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, {name: "Global", type: "Identifier"});
+          expect(result.source).equals(expected);
+        });
+
+        describe("exports", () => {
+          it("does not rewrite exports but adds capturing statement", () => {
+            var code     = "var a = 23;\n"
+                         + "export var x = a + 1, y = x + 2;"
+                         + "export default function f() {}\n",
+                expected = "Global.f = f;\n"
+                         + "Global.a = 23;\n"
+                         + "export var x = a + 1, y = x + 2;\n"
+                         + "Global.x = x;\n"
+                         + "Global.y = y;export default function f() {}\n",
+                result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, {name: "Global", type: "Identifier"});
+            expect(result.source).equals(expected);
+          });
         });
 
       });
