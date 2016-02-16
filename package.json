@@ -24,9 +24,10 @@
   "dependencies": {
     "babel-core": "^5.8.35",
     "callsite": "^1.0.0",
-    "lively.ast": "^0.3.2",
+    "lively.ast": "^0.3.3",
     "lively.lang": "^0.5.12",
-    "node-uuid": "^1.4.7"
+    "node-uuid": "^1.4.7",
+    "systemjs": "^0.19.20"
   },
   "devDependencies": {
     "browserify": "^13.0.0",

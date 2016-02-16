@@ -29,9 +29,11 @@ fun.composeAsync(
         .add("./exports.js")
         .external("lively.ast")
         .external("lively.lang")
+        .external("systemjs")
         .bundle(n),
   (code, n) => n(null, String(code)),
   (code, n) => n(null, code.replace(/require\(['"](lively.ast|lively.lang)['"]\)/g, '$1')),
+  (code, n) => n(null, code.replace(/require\(['"]systemjs['"]\)/g, '(typeof window !== "undefined" ? window.System : global.System)')),
   log("3. write " + target),
   (code, n) => fs.writeFile(target, code, err => n(err, code)),
   log("4. write " + target.replace(/\.js$/,".es5.js")),

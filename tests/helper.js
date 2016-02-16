@@ -1,12 +1,12 @@
 function loadUncached(urls, thenDo) {
   if (!urls.length) { thenDo && thenDo(); return; }
   var url = urls.shift();
+  loadViaScript(url, urls, thenDo)
+}
 
-  if (typeof babel !== "undefined") {
-    babel.load(url, function() { loadUncached(urls, thenDo); })
-  } else {
-    loadViaScript(url, urls, thenDo)
-  }
+function loadUncached_es5Compat(urls, thenDo) {
+  if (!urls.length) { thenDo && thenDo(); return; }
+  babel.load(urls[0], function() { loadUncached_es5Compat(urls.slice(1), thenDo); });
 }
 
 function loadViaScript(url, urls, thenDo) {

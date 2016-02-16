@@ -10,6 +10,8 @@
   <body>
     <div id="mocha"></div>
     <script type="text/javascript" src="../node_modules/lively.ast/dist/lively.ast.bundle.es5.js"></script>
+    <script type="text/javascript" src="../node_modules/babel-core/browser.js"></script>
+    <script type="text/javascript" src="../node_modules/systemjs/dist/system.src.js"></script>
 
     <script type="text/javascript" src="helper.js"></script>
     <script type="text/javascript" src="../node_modules/mocha/mocha.js"></script>
@@ -23,27 +25,25 @@
       
       var es6Support = true;
       try { eval('() => {}'); } catch (e) { es6Support = false; }
-      
+
       mocha.globals([
         "script*"/*jQuery*/,
         "z",/*for "only capture whitelisted globals"*/
         "obj1", "obj2"/*for completion tests*/]);
 
-      var urls = es6Support ? [
-        "../dist/lively.vm.js",
-        "vm-test.js",
-        "completion-test.js"
-      ] : [
-        "../dist/lively.vm.es5.js",
-        "../node_modules/babel-core/browser-polyfill.js",
-        "../node_modules/babel-core/browser.js",
-        "vm-test.js",
-        "completion-test.js"
-      ]
-      loadUncached(urls, function() {
-        mocha.checkLeaks();
-        mocha.run();
-      });
+      loadUncached(es6Support ?
+        ["../dist/lively.vm.js"] : [
+        "../dist/lively.vm.es5.js", "../node_modules/babel-core/browser-polyfill.js"],
+        function() {
+          (es6Support ? loadUncached : loadUncached_es5Compat)([
+            "vm-test.js",
+            "completion-test.js",
+            "es6-module-loading-test.js"
+          ], function() {
+            // mocha.checkLeaks();
+            mocha.run();
+          })
+        });
     </script>
 
   </body>
