@@ -16,6 +16,20 @@ var escodegen = ast.escodegen;
 
 var arr = lang.arr;
 
+function _testVarTfm(descr, code, expected, only) {
+  if (typeof expected === "undefined") {
+    expected = code; code = descr;
+  }
+  return (only ? it.only : it)(descr, () => {
+    var result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+      code, {name: "_rec", type: "Identifier"});
+    expect(result.source).equals(expected);
+  });
+}
+
+function testVarTfm(descr, code, expected) { return _testVarTfm(descr, code, expected, false); }
+function only_testVarTfm(descr, code, expected) { return _testVarTfm(descr, code, expected, true); }
+
 describe('ast.transform', function() {
 
   describe("helper", function() {
@@ -205,42 +219,27 @@ describe('ast.transform', function() {
 
     describe("capturing", function() {
 
-      it("transformTopLevelVarDeclsForCapturing", function() {
-        var code     = "var y, z = foo + bar; baz.foo(z, 3)",
-            expected = "Global.y = Global['y'] || undefined;\nGlobal.z = Global.foo + Global.bar; Global.baz.foo(Global.z, 3)",
-            recorder = {name: "Global", type: "Identifier"},
-            result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-        expect(result.source).equals(expected);
-      });
+      testVarTfm("transformTopLevelVarDeclsForCapturing",
+                 "var y, z = foo + bar; baz.foo(z, 3)",
+                 "_rec.y = _rec['y'] || undefined;\n_rec.z = _rec.foo + _rec.bar; _rec.baz.foo(_rec.z, 3)");
 
-      it("transformTopLevelVarAndFuncDeclsForCapturing", function() {
-        var code     = "var z = 3, y = 4; function foo() { var x = 5; }",
-            expected = "Global.foo = foo;\nGlobal.z = 3;\nGlobal.y = 4; function foo() { var x = 5; }",
-            recorder = {name: "Global", type: "Identifier"},
-            result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-        expect(result.source).equals(expected);
-      });
+      testVarTfm("transformTopLevelVarAndFuncDeclsForCapturing",
+                 "var z = 3, y = 4; function foo() { var x = 5; }",
+                 "_rec.foo = foo;\n_rec.z = 3;\n_rec.y = 4; function foo() { var x = 5; }")
 
-      it("transformTopLevelVarDeclsAndVarUsageForCapturing", function() {
-        var code              = "var z = 3, y = 42, obj = {a: '123', b: function b(n) { return 23 + n; }};\n"
-                              + "function foo(y) { var x = 5 + y.b(z); }\n",
-            parsed               = ast.parse(code, {addSource: true}),
-            expected          = "Global.foo = foo;\n"
-                              + "Global.z = 3;\n"
-                              + "Global.y = 42;\n"
-                              + "Global.obj = {\n"
-                              + "    a: '123',\n"
-                              + "    b: function b(n) {\n"
-                              + "        return 23 + n;\n"
-                              + "    }\n"
-                              + "};\n"
-                              + "function foo(y) { var x = 5 + y.b(Global.z); }\n",
-            recorder          = {name: "Global", type: "Identifier"},
-            result            = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-
-
-        expect(result.source).equals(expected);
-      });
+      testVarTfm("transformTopLevelVarDeclsAndVarUsageForCapturing",
+                 "var z = 3, y = 42, obj = {a: '123', b: function b(n) { return 23 + n; }};\n"
+               + "function foo(y) { var x = 5 + y.b(z); }\n",
+                 "_rec.foo = foo;\n"
+               + "_rec.z = 3;\n"
+               + "_rec.y = 42;\n"
+               + "_rec.obj = {\n"
+               + "    a: '123',\n"
+               + "    b: function b(n) {\n"
+               + "        return 23 + n;\n"
+               + "    }\n"
+               + "};\n"
+               + "function foo(y) { var x = 5 + y.b(_rec.z); }\n");
 
       it("transformTopLevelVarDeclsForCapturingWithoutGlobals", function() {
         var code     = "var x = 2; y = 3; z = 4; baz(x, y, z)",
@@ -264,53 +263,31 @@ describe('ast.transform', function() {
         expect(result.defRanges).deep.equals(expected);
       });
 
-      it("transformTopLevelVarDeclsAndVarUsageInCatch", function() {
-        var code              = "try { throw {} } catch (e) { e }\n",
-            parsed               = ast.parse(code, {addSource: true}),
-            recorder          = {name: "Global", type: "Identifier"},
-            result            = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-
-        expect(result.source).equals(code);
-      });
+      testVarTfm("transformTopLevelVarDeclsAndVarUsageInCatch",
+                 "try { throw {} } catch (e) { e }\n",
+                 "try { throw {} } catch (e) { e }\n");
 
       describe("for statement", function() {
 
-        it("standard for won't get rewritten", function() {
-          var code     = "for (var i = 0; i < 5; i ++) { i; }",
-              parsed      = ast.parse(code, {addSource: true}),
-              recorder = {name: "Global", type: "Identifier"},
-              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-          expect(result.source).equals(code);
-        });
+        testVarTfm("standard for won't get rewritten",
+                   "for (var i = 0; i < 5; i ++) { i; }",
+                   "for (var i = 0; i < 5; i ++) { i; }");
 
-        it("for-in won't get rewritten", function() {
-          var code     = "for (var x in {}) { x; }",
-              parsed   = ast.parse(code, {addSource: true}),
-              recorder = {name: "Global", type: "Identifier"},
-              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-          expect(result.source).equals(code);
-        });
+        testVarTfm("for-in won't get rewritten",
+                   "for (var x in {}) { x; }",
+                   "for (var x in {}) { x; }");
 
       });
 
       describe("labels", function() {
 
-        it("continue", function() {
-          var code = "loop1:\nfor (var i = 0; i < 3; i++) continue loop1;",
-              parsed = ast.parse(code, {addSource: true}),
-              recorder = {name: "Global", type: "Identifier"},
-              result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-          expect(result.source).equals(code);
-        });
+        testVarTfm("ignores continue",
+                   "loop1:\nfor (var i = 0; i < 3; i++) continue loop1;",
+                   "loop1:\nfor (var i = 0; i < 3; i++) continue loop1;");
 
-        it("break", function() {
-          var code = "loop1:\nfor (var i = 0; i < 3; i++) break loop1;",
-              parsed = ast.parse(code, {addSource: true}),
-              recorder = {name: "Global", type: "Identifier"},
-              result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-          expect(result.source).equals(code);
-        });
-
+        testVarTfm("ignores break",
+                   "loop1:\nfor (var i = 0; i < 3; i++) break loop1;",
+                   "loop1:\nfor (var i = 0; i < 3; i++) break loop1;");
       });
 
       describe("es6", () => {
@@ -352,33 +329,59 @@ describe('ast.transform', function() {
 
         });
 
-        it("captures let as var (...for now)", () => {
-          var code     = "let x = 23, y = x + 1;",
-              expected = "Global.x = 23;\nGlobal.y = Global.x + 1;",
-              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, {name: "Global", type: "Identifier"});
-          expect(result.source).equals(expected);
-        });
+        describe("let + const", () => {
 
-        it("captures const as var (...for now)", () => {
-          var code     = "const x = 23, y = x + 1;",
-              expected = "Global.x = 23;\nGlobal.y = Global.x + 1;",
-              result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, {name: "Global", type: "Identifier"});
-          expect(result.source).equals(expected);
+          testVarTfm("captures let as var (...for now)",
+                     "let x = 23, y = x + 1;",
+                     "_rec.x = 23;\n_rec.y = _rec.x + 1;");
+
+          testVarTfm("captures const as var (...for now)",
+                     "const x = 23, y = x + 1;",
+                     "_rec.x = 23;\n_rec.y = _rec.x + 1;");
         });
 
         describe("exports", () => {
-          it("does not rewrite exports but adds capturing statement", () => {
-            var code     = "var a = 23;\n"
-                         + "export var x = a + 1, y = x + 2;"
-                         + "export default function f() {}\n",
-                expected = "Global.f = f;\n"
-                         + "Global.a = 23;\n"
-                         + "export var x = a + 1, y = x + 2;\n"
-                         + "Global.x = x;\n"
-                         + "Global.y = y;export default function f() {}\n",
-                result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, {name: "Global", type: "Identifier"});
-            expect(result.source).equals(expected);
-          });
+
+          testVarTfm("does not rewrite exports but adds capturing statement",
+                     "var a = 23;\n"
+                   + "export var x = a + 1, y = x + 2;"
+                   + "export default function f() {}\n",
+                     "_rec.f = f;\n"
+                   + "_rec.a = 23;\n"
+                   + "export var x = _rec.a + 1, y = x + 2;\n"
+                   + "_rec.x = x;\n"
+                   + "_rec.y = y;export default function f() {}\n");
+
+        });
+        
+        describe("import", () => {
+
+          testVarTfm("import x from './some-es6-module.js';",
+                     "import x from './some-es6-module.js';\n_rec.x = x;");
+
+          testVarTfm("import * as name from 'module-name';",
+                     "import * as name from 'module-name';\n_rec.name = name;");
+
+          testVarTfm("import { member } from 'module-name';",
+                     "import { member } from 'module-name';\n_rec.member = member;");
+
+          testVarTfm("import { member as alias } from 'module-name';",
+                     "import { member as alias } from 'module-name';\n_rec.alias = alias;");
+
+          testVarTfm("import { member1 , member2 } from 'module-name';",
+                     "import {\n    member1,\n    member2\n} from 'module-name';\n_rec.member1 = member1;\n_rec.member2 = member2;");
+
+          testVarTfm("import { member1 , member2 as alias} from 'module-name';",
+                     "import {\n    member1,\n    member2 as alias\n} from 'module-name';\n_rec.member1 = member1;\n_rec.alias = alias;");
+
+          testVarTfm("import defaultMember, { member } from 'module-name';",
+                     "import defaultMember, { member } from 'module-name';\n_rec.defaultMember = defaultMember;\n_rec.member = member;");
+
+          testVarTfm("import defaultMember, * as name from 'module-name';",
+                     "import defaultMember, * as name from 'module-name';\n_rec.defaultMember = defaultMember;\n_rec.name = name;");
+
+          testVarTfm("import 'module-name';",
+                     "import 'module-name';");
         });
 
       });
@@ -387,26 +390,16 @@ describe('ast.transform', function() {
 
   });
 
-  describe("return last statement", function() {
-
-    it("transformToReturnLastStatement", function() {
-      var code = "var z = foo + bar; baz.foo(z, 3)",
-          expected = "var z = foo + bar; return baz.foo(z, 3)",
-          transformed = ast.transform.returnLastStatement(code);
-      expect(transformed).equals(expected);
-    });
-
+  describe("return last statement", () => {
+    it("transforms last statement into return", () =>
+      expect(ast.transform.returnLastStatement("var z = foo + bar; baz.foo(z, 3)"))
+        .equals("var z = foo + bar; return baz.foo(z, 3)"));
   });
 
-  describe("wrapInFunction", function() {
-
-    it("wrapInFunction", function() {
-      var code = "var z = foo + bar; baz.foo(z, 3);",
-          expected = "function() {\nvar z = foo + bar; return baz.foo(z, 3);\n}",
-          transformed = ast.transform.wrapInFunction(code);
-      expect(transformed).equals(expected);
-    });
-
+  describe("wrapInFunction", () => {
+    it("wraps statements into a function", () =>
+      expect(ast.transform.wrapInFunction("var z = foo + bar; baz.foo(z, 3);"))
+        .equals("function() {\nvar z = foo + bar; return baz.foo(z, 3);\n}"));
   });
 
 });

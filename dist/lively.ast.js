@@ -3416,7 +3416,7 @@ exports.transform = {
     // I don't wan't to make it part of our AST API
 
     _node2string: function(node) {
-      return node.source || ast.stringify(node)
+      return typeof node.source === "string" ? node.source : ast.stringify(node)
     },
 
     _findIndentAt: function(string, pos) {
@@ -3507,7 +3507,6 @@ exports.transform = {
 
           throw new Error('Cannot deal with change ' + Objects.inspect(change));
         }, {start: target.start, end: target.end});
-
       var helper = ast.transform.helper,
         source = sourceChanges.source,
         replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
@@ -3602,13 +3601,31 @@ exports.transform = {
          result.ignore.push(decl);
        }
       if (parent.type === "ExportNamedDeclaration") {
-        result.exportDecls.push({decl: decl, parent: parent, scope: scope});
+        result.additionalCaptures.push({target: parent, captures: decl.declarations.map(decl => assign(decl.id, decl.id))});
         result.ignore.push(decl);
       }
       return result;
-    }, {ignore: [], forDecls: [], exportDecls: []});
+    }, {ignore: [], forDecls: [], additionalCaptures: []});
     var ignoreDecls = specialDecls.ignore;
     arr.pushAll(blacklist, chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+
+    // 1.b import decls
+    scope.node.body.forEach(node => {
+      if (node.type !== "ImportDeclaration") return;
+      var captures = node.specifiers.reduce((captures, specifier) => {
+        switch (specifier.type) {
+          case "ImportSpecifier":
+            blacklist.push(specifier.imported.name);
+          case "ImportNamespaceSpecifier":
+          case "ImportDefaultSpecifier":
+            captures.push(assign(specifier.local, specifier.local));
+            break;
+        }
+        return captures;
+      }, []);
+      if (!captures.length) return;
+      specialDecls.additionalCaptures.push({target: node, captures: captures});
+    });
 
     // 2. make all references declared in the toplevel scope into property
     // reads of assignToObj
@@ -3640,7 +3657,7 @@ exports.transform = {
                 var init = {
                  operator: "||",
                  type: "LogicalExpression",
-                 left: {computed: true, object: assignToObj,property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
+                 left: {computed: true, object: assignToObj, property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
                  right: {name: "undefined", type: "Identifier"}
                 }
                 return shouldDeclBeCaptured(ea) ?
@@ -3652,13 +3669,18 @@ exports.transform = {
     // 4. es6 export declaration are left untouched but a capturing assignment
     // is added after the export so that we get the value:
     // "export var x = 23;" => "export var x = 23; Global.x = x;"
-    if (specialDecls.exportDecls) {
+    if (specialDecls.additionalCaptures.length) {
       result = ast.transform.helper.replaceNodes(
-        specialDecls.exportDecls.map((spec) => {
+        specialDecls.additionalCaptures.map((captureSpec) => {
           return {
-            target: spec.parent,
-            replacementFunc: (exportNode, s, wasChanged) =>
-              [exportNode].concat(spec.decl.declarations.map(decl => assign(decl.id, decl.id)))
+            target: captureSpec.target,
+            replacementFunc: (targetNode, s, wasChanged) => {
+              if (wasChanged) {
+                var node = ast.parse(s);
+                targetNode = node.body[0] || targetNode;
+              }
+              return [targetNode].concat(captureSpec.captures)
+            }
           }
         }), result);
     }
@@ -3695,7 +3717,6 @@ exports.transform = {
         }, {});
 
     result.ast = parsed;
-
     return result;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -3705,7 +3726,9 @@ exports.transform = {
         && (!whitelist || whitelist.indexOf(ref.name) > -1);
     }
 
-    function shouldDeclBeCaptured(decl) { return shouldRefBeCaptured(decl.id); }
+    function shouldDeclBeCaptured(decl) {
+      return shouldRefBeCaptured(decl.id);
+    }
 
     function assign(id, value) {
       return {

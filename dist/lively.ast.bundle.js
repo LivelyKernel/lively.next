@@ -10676,7 +10676,7 @@ exports.transform = {
           return source.slice(0, change.pos) + source.slice(change.pos + change.length);
         } else if (change.type === 'add') {
           return source.slice(0, change.pos) + change.string + source.slice(change.pos);
-        }
+        }C
         throw new Error('Uexpected change ' + Objects.inspect(change));
       }, source);
     },
@@ -10901,8 +10901,13 @@ exports.transform = {
         specialDecls.exportDecls.map((spec) => {
           return {
             target: spec.parent,
-            replacementFunc: (exportNode, s, wasChanged) =>
-              [exportNode].concat(spec.decl.declarations.map(decl => assign(decl.id, decl.id)))
+            replacementFunc: (exportNode, s, wasChanged) => {
+              if (wasChanged) {
+                var node = ast.parse(s);
+                exportNode = node.body[0] || exportNode;
+              }
+              return [exportNode].concat(spec.decl.declarations.map(decl => assign(decl.id, decl.id)))
+            }
           }
         }), result);
     }
@@ -10949,7 +10954,9 @@ exports.transform = {
         && (!whitelist || whitelist.indexOf(ref.name) > -1);
     }
 
-    function shouldDeclBeCaptured(decl) { return shouldRefBeCaptured(decl.id); }
+    function shouldDeclBeCaptured(decl) {
+      return shouldRefBeCaptured(decl.id);
+    }
 
     function assign(id, value) {
       return {

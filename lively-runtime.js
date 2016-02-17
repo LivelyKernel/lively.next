@@ -1,4 +1,4 @@
-lively.require("lively.lang.Runtime").toRun(function() {
+lively.require("lively.lang.Runtime", "lively.ide.CommandLineInterface").toRun(function() {
 
   lively.lang.Runtime.Registry.addProject({
 
@@ -8,20 +8,27 @@ lively.require("lively.lang.Runtime").toRun(function() {
 
     reloadAll: function(project, thenDo) {
       // var project = lively.lang.Runtime.Registry.current().projects["lively.ast"]
-      // lively.lang.Runtime.loadFiles(project, files, show.curry("%s %o"));
-      var files = ["index.js",
-                   "lib/acorn-extension.js",
-                   "lib/mozilla-ast-visitors.js",
-                   "lib/mozilla-ast-visitor-interface.js",
-                   "lib/query.js",
-                   "lib/transform.js",
-                   "lib/code-categorizer.js",
-                   "tests/interface-test.js",
-                   "tests/acorn-extension-test.js",
-                   "tests/query-test.js",
-                   "tests/transform-test.js",
-                   "tests/code-categorizer-test.js"];
-      lively.lang.Runtime.loadFiles(project, files, thenDo);
+      // project.reloadAll(project, show.curry("%s %s"))
+      var dist = lively.lang.string.joinPath(project.rootDir, "dist/lively.ast.js"),
+          indicator,
+          cat = lively.lang.promise(lively.shell.cat.bind(lively.shell)),
+          run = lively.lang.promise(lively.shell.run.bind(lively.shell));
+      return lively.ide.withLoadingIndicatorDo("loading lively.ast")
+        .then(_indicator => (indicator = _indicator) && run("npm run build", {cwd: project.rootDir}))
+        .then(() => cat(dist))
+        .then((code) => lively.lang.Runtime.evalCode(project, code, project.state, dist, () => {}))
+        .then(() => {
+          indicator.remove();
+          typeof thenDo === "function" && thenDo();
+          $world.alertOK("lively.ast loaded");
+          return project;
+        })
+        .catch((err) => {
+          indicator.remove();
+          typeof thenDo === "function" && thenDo(err);
+          $world.logError("Error loading lively.ast: " + err);
+          return err;
+        });
     },
 
     resources: {
