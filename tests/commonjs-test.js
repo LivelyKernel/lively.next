@@ -43,24 +43,6 @@ describe("common-js modules", () => {
         .then(evalResult => expect(evalResult).property("value").equals(23)));
   });
 
-  describe("eval + print", () => {
-
-    it("asString", () =>
-      cjs.runEval("3 + 4", {targetModule: module1, parentModule: parentModule, printed: {asString: true}})
-        .then(printed => console.log(printed) || expect(printed).to.containSubset({value: "7"})));
-
-    it("inspect", () =>
-      cjs.runEval(
-        "({foo: {bar: {baz: 42}, zork: 'graul'}})",
-        {targetModule: module1, parentModule: parentModule, printed: {inspect: true, printDepth: 2}})
-          .then(printed => expect(printed).to.containSubset({value: "{\n  foo: {\n    bar: {/*...*/},\n    zork: \"graul\"\n  }\n}"})));
-
-    it("prints promises", () =>
-      cjs.runEval(
-        "Promise.resolve(23)", {targetModule: module1, parentModule: parentModule, printed: {asString: true}})
-          .then(printed => expect(printed).to.containSubset({value: 'Promise({status: "fulfilled", value: 23})'})));
-  });
-
   describe("reloading", () => {
 
     beforeEach(() => require(module3));

@@ -139,24 +139,27 @@ describe("evaluation", function() {
 
     var code = "new Promise(function(resolve, reject) { return setTimeout(resolve, 200, 23); });"
 
-    it("sync eval onPromiseResolved", done => {
-      var val, err, p = vm.syncEval(code, {
-        onPromiseResolved: (_err, _val) => { val = _val; err = _err; },
-        promiseTimeout: 400
-      });
-      setTimeout(() => {
-        expect(err).to.equal(null);
-        expect(val).to.equal(23);
-        done();
-      }, 400);
-    });
-
     it("run eval waits for promise", () =>
       vm.runEval(code, {waitForPromise: true})
         .then(result => expect(result).to.containSubset({
           isPromise: true, promiseStatus: "fulfilled", promisedValue: 23})));
   });
 
+  describe("printed", () => {
+
+    it("asString", () =>
+      vm.runEval("3 + 4", {asString: true})
+        .then(printed => expect(printed).to.containSubset({value: "7"})));
+
+    it("inspect", () =>
+      vm.runEval("({foo: {bar: {baz: 42}, zork: 'graul'}})", {inspect: true, printDepth: 2})
+        .then(printed => expect(printed).to.containSubset({value: "{\n  foo: {\n    bar: {/*...*/},\n    zork: \"graul\"\n  }\n}"})));
+
+    it("prints promises", () =>
+      vm.runEval("Promise.resolve(23)", {asString: true})
+        .then(printed => expect(printed).to.containSubset({value: 'Promise({status: "fulfilled", value: 23})'})));
+
+  });
 });
 
 describe("context recording", () => {
