@@ -532,7 +532,7 @@ module.exports = {
 }
 
 },{"fs":7,"lively.lang":"lively.lang","path":209,"util":227}],5:[function(require,module,exports){
-(function (global,__filename){
+(function (global){
 /*global process, require, global, __dirname*/
 
 var lang = lively.lang;
@@ -543,7 +543,8 @@ var System = (typeof window !== "undefined" ? window.System : global.System);
 (function setupSystemjs() {
   System.config({transpiler: 'babel', babelOptions: {}});
   System.trace = true;
-  System.__defineGetter__("__lively_vm__", () => require(__filename));
+  // System.__defineGetter__("__lively_vm__", () => require(__filename));
+  System.__defineGetter__("__lively_vm__", () => module.exports);
 })();
 
 var loadedModules = loadedModules || {},
@@ -707,7 +708,7 @@ module.exports = {
   // forgetModule: forgetModule
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/es6-interface.js")
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./evaluator":6,"lively.lang":"lively.lang","systemjs":"systemjs"}],6:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/

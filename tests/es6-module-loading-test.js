@@ -1,4 +1,4 @@
-/*global process, beforeEach, afterEach, describe, it, expect*/
+/*global process, before, beforeEach, afterEach, describe, it, expect*/
 
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
 var chai = env.isCommonJS ? module.require("chai") : window.chai;
@@ -13,26 +13,20 @@ var module1 = "test-resources/some-es6-module.js";
 
 describe("es6 modules", () => {
 
-  beforeEach(function() {
-    es6.config({baseURL: '/Users/robert/Lively/lively-dev/lively.vm/tests/'});
-
+  before(function() {
     if (typeof require === "function") {
       cjs.reloadModule(cjs.resolve("systemjs"));
-      // es6 = require("../lib/es6-interface");
-      // es6.config({baseURL: '/Users/robert/Lively/lively-dev/lively.vm/tests/'});
+      es6.config({baseURL: 'tests/'});
     } else {
-      // es6 = vm.es6;
-      // es6.config({baseURL: '/'});
-      // es6.config({baseURL: '/tests', map: {babel: '../node_modules/babel-core/browser.js'}});
+      es6.config({
+        baseURL: document.URL.replace(/\/[^\/]*$/, ""),
+        map: {babel: '../node_modules/babel-core/browser.js'}
+      });
     }
-    // if (System.loads) delete System.loads["file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js"];
-    // System.delete("file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js");
-    es6.wrapModuleLoad();
   });
 
-  afterEach(() => {
-    es6.unwrapModuleLoad();
-  });
+  beforeEach(() => es6.wrapModuleLoad());
+  afterEach(() => es6.unwrapModuleLoad());
 
   it("can be loaded", () =>
     es6.import(module1).then(m => expect(m.x).equals(47)));
