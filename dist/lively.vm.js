@@ -75,7 +75,12 @@ function sourceOf(moduleName, parent) {
 var loadedModules = {},
     requireMap = {},
     originalCompile = null, originalLoad = null,
-    exceptions = [module.filename],
+    exceptions = [
+      (id) => module.filename === id,
+      (id) => ["lively.lang/node_modules", "lively.vm/node_modules", "code-pump/node_modules"]
+              .some(ignore => id.indexOf(ignore) > -1)
+    ],
+    // exceptions = [module.filename],
     // exceptions = [],
     scratchModule = path.join(__dirname, "commonjs-scratch.js"); // fallback eval target
 
@@ -120,7 +125,7 @@ var loadDepth = 0;
 function customCompile(content, filename) {
   console.log("[lively.vm customCompile] %s", filename);
   // wraps Module.prototype._compile to capture top-level module definitions
-  if (exceptions.indexOf(filename) > -1 || isLoaded(filename))
+  if (exceptions.some(exc => exc(filename)) || isLoaded(filename))
     return originalCompile.call(this, content, filename);
 
   // console.log(lang.string.indent("[lively.vm commonjs] loads %s", " ", loadDepth), filename);
@@ -161,9 +166,9 @@ function customCompile(content, filename) {
 }
 
 function customLoad(request, parent, isMain) {
-  var id = resolve(request, parent);
-  var parentId = resolve(parent.id);
-  if (exceptions.indexOf(id) > -1 || exceptions.indexOf(parentId) > -1)
+  var id = resolve(request, parent),
+      parentId = resolve(parent.id);
+  if (exceptions.some(exc => exc(id)) || exceptions.some(exc => exc(parentId)))
     return originalLoad.call(this, request, parent, isMain);
 
 
@@ -201,10 +206,9 @@ function envFor(moduleName) {
 // instrumented code evaluation
 
 function runEval(code, options) {
+  options = lang.obj.merge({targetModule: null, parentModule: null}, options);
 
-  options = lang.obj.merge({targetModule: null, parentModule: null, printed: null}, options);
   return Promise.resolve().then(() => {
-    // if (!options.targetModule) return reject(new Error("options.targetModule not defined"));
     if (!options.targetModule) {
       options.targetModule = scratchModule;
     } else {
@@ -234,79 +238,17 @@ function runEval(code, options) {
     rec.exports = m.exports;
     rec.module = m;
     global[recName] = rec;
-    options = lang.obj.merge(
-      {waitForPromise: true},
-      options, {
-        recordGlobals: true,
-        dontTransform: [recName, "global"],
-        varRecorderName: recName,
-        topLevelVarRecorder: rec,
-        sourceURL: options.targetModule,
-        context: rec.exports || {}
-      });
-
-    if (!options.printed) {
-      var printKeys = lang.arr.intersect(Object.keys(options), ["printDepth", "asString", "inspect"]);
-      if (printKeys.length) {
-        options.printed = printKeys.reduce((printed, k) => {
-          printed[k] = options[k];
-          delete options[k];
-          return printed;
-        }, {printDepth: 2, inspect: false, asString: false});
-      }
-    }
-
-    return evaluator.runEval(code, options).then(result => {
-      if (options.printed) result.value = printResult(result, options.printed);
-      return result;
+    options = lang.obj.merge(options, {
+      recordGlobals: true,
+      dontTransform: [recName, "global"],
+      varRecorderName: recName,
+      topLevelVarRecorder: rec,
+      sourceURL: options.targetModule,
+      context: rec.exports || {}
     });
+
+    return evaluator.runEval(code, options);
   });
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// printing eval results
-
-function printPromise(evalResult, options) {
-  return "Promise({"
-      + "status: " + lang.string.print(evalResult.promiseStatus)
-      + (evalResult.promiseStatus === "pending" ?
-        "" : ", value: " + printResult(evalResult.promisedValue, options))
-      + "})";
-}
-
-function printResult(evalResult, options) {
-  var value = evalResult && evalResult.isEvalResult ?
-    evalResult.value : evalResult
-
-  if (evalResult && (evalResult.isError || value instanceof Error)) {
-    return value.stack || String(value);
-  }
-
-  if (evalResult && evalResult.isPromise) {
-    if (options.asString || options.inspect)
-      return printPromise(evalResult, options);
-    else if (evalResult.promiseStatus === "pending")
-      value = 'Promise({status: "pending"})';  // for JSON stringify
-  }
-
-  if (options.asString)
-    return String(value);
-
-  if (options.inspect) {
-    var printDepth = options.printDepth || 2;
-    return lang.obj.inspect(value, {maxDepth: printDepth})
-  }
-
-  // tries to return as value
-  try {
-    JSON.stringify(value);
-    return value;
-  } catch (e) {
-    try {
-      var printDepth = options.printDepth || 2;
-      return lang.obj.inspect(value, {maxDepth: printDepth})
-    } catch (e) { return String(value); }
-  }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -590,78 +532,76 @@ module.exports = {
 }
 
 },{"fs":7,"lively.lang":"lively.lang","path":209,"util":227}],5:[function(require,module,exports){
-(function (global){
+(function (global,__filename){
 /*global process, require, global, __dirname*/
+
+var lang = lively.lang;
 
 var evaluator = require("./evaluator");
 var System = (typeof window !== "undefined" ? window.System : global.System);
-System.config({transpiler: 'babel', babelOptions: {}});
 
-// var Module = require("module").Module;
-// var vm = require("../../index.js");
-// var uuid = require("node-uuid");
-// var path = require("path");
-// var lang = lively.lang;
+(function setupSystemjs() {
+  System.config({transpiler: 'babel', babelOptions: {}});
+  System.trace = true;
+  System.__defineGetter__("__lively_vm__", () => require(__filename));
+})();
 
+var loadedModules = loadedModules || {},
+    exceptions = [
+      id => id.indexOf("lively.vm/node_modules") > -1
+    ];
 
-// maps filenames to envs = {isLoaded: BOOL, loadError: ERROR, recorder: OBJECT}
-// var loadedModules = {};
-// var originalCompile = null;
-// var exceptions = [module.filename];
-// var scratchModule = path.join(__dirname, "es6-scratch.js"); // fallback eval target
-
-function instrumentedFiles() {}
-function isLoaded(fileName) {}
-
-function ensureEnv(fullName, thenDo) {
-  var modRec = System._loader.moduleRecords[fullName];
-  if (modRec) return modRec;
-
-  System.import(fullName)
-    .then(m => thenDo(null, System._loader.moduleRecords[fullName]))
-    .catch(thenDo)
-}
-
-function ensureRecorder(fullName) {}
-
-var loadedModules = {}, exceptions = [];
-
-function instrumentedFiles() { return Object.keys(loadedModules); }
-function isLoaded(fileName) { return fileName in loadedModules; }
-function ensureRecorder(fullName) { return ensureEnv(fullName).recorder; }
-
-function ensureEnv(fullName) {
-  return loadedModules[fullName]
-    || (loadedModules[fullName] = {
-      isInstrumented: false,
-      loadError: undefined,
-      // recorderName: "eval_rec_" + path.basename(fullName).replace(/[^a-z]/gi, "_"),
-      recorderName: "eval_rec_" + fullName.replace(/[^a-z]/gi, "_"),
-      recorder: Object.create(global)
-    });
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// loading
+function importES6Module(path, options) {
+  if (typeof options !== "undefined")
+    System.config(options);
+  return System.import(path);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module environment + runtime state
+function instrumentedFiles() { return Object.keys(loadedModules); }
+function isLoaded(fullname) { return fullname in loadedModules; }
 
-function prepareCodeForCustomCompile(source, filename, env) {
+function resolve(name, parentName, parentAddress) {
+  return System.normalizeSync(name, parentName, parentAddress);
+}
+
+function envFor(fullname) {
+  if (loadedModules[fullname]) return loadedModules[fullname];
+  var env = loadedModules[fullname] = {
+    isInstrumented: false,
+    loadError: undefined,
+    recorderName: "__state_recorder__",
+    dontTransform: ["__state_recorder__", "global", "System", "__lvVarRecorder"],
+    recorder: Object.create(global)
+  }
+  return env;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// code instrumentation
+
+function prepareCodeForCustomCompile(source, fullname, env) {
   source = String(source);
   var tfmOptions = {
         topLevelVarRecorder: env.recorder,
         varRecorderName: env.recorderName,
-        dontTransform: [env.recorderName, "global"],
+        dontTransform: env.dontTransform,
         recordGlobals: true
       },
-      header = "var " + env.recorderName + " = global." + env.recorderName + ";\n";
+      header = `var ${env.recorderName} = System.__lively_vm__.envFor("${fullname}").recorder;\n`;
 
   try {
-    return (header + "\n"
-          + ";(function() {\n"
-          + evaluator.evalCodeTransform(source, tfmOptions)
-          + "\n})();");
-  } catch (e) { return e; }
+    return header + evaluator.evalCodeTransform(source, tfmOptions);
+  } catch (e) {
+    console.error("Error in prepareCodeForCustomCompile", e.stack);
+    return source;
+  }
 }
 
-function customTranslate(load) {
+function customTranslate(proceed, load) {
   // load like
   // {
   //   address: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
@@ -670,18 +610,24 @@ function customTranslate(load) {
   //   source: "..."
   // }
 
-  var env = ensureEnv(load.name);
-  load.source = prepareCodeForCustomCompile(load.source, load.name, env);
-  // console.log(load.source);
-  return Promise.resolve(load);
+  if (exceptions.some(exc => exc(load.name))) {
+    console.log("[lively.vm es6 customTranslate ignoring] %s", load.name);
+    return proceed(load);
+    // return Promise.resolve(load);
+    // return System.origTranslate.call(System, load);
+  }
+
+  console.log("[lively.vm es6 customTranslate] %s", load.name);
+  load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
+  return proceed(load);
 }
 
 function wrapModuleLoad() {
-  if (System.origTranslate) return;
-  System.origTranslate = System.translate
-  System.translate = function(load) {
-    return customTranslate(load).then(load =>
-      System.origTranslate.call(System, load))
+  if (!System.origTranslate) {
+    System.origTranslate = System.translate
+    System.translate = function(load) {
+      return customTranslate(System.origTranslate.bind(System), load);
+    }
   }
 }
 
@@ -690,23 +636,53 @@ function unwrapModuleLoad() {
   delete System.origTranslate;
 }
 
-function envFor(moduleName) {}
-function evalIn(moduleName, code, options) {}
-function evalInAndPrint(code, module, options, thenDo) {}
-function status(thenDo) {}
-function statusForPrinted(moduleName, options, thenDo) {}
-function reloadModule(moduleName) {}
-function forgetModule(moduleName) {}
-function findDependentModules(id, moduleMap) {}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// evaluation
+
+function runEval(code, options) {
+
+  options = lang.obj.merge({targetModule: null, parentModule: null, parentAddress: null, printed: null}, options);
+  return Promise.resolve().then(() => {
+    // if (!options.targetModule) return reject(new Error("options.targetModule not defined"));
+    if (!options.targetModule) {
+      options.targetModule = "*scratch*";
+    } else {
+      options.targetModule = resolve(options.targetModule, options.parentModule, options.parentAddress);
+    }
+
+    var fullname = resolve(options.targetModule);
+    
+    return importES6Module(fullname)
+        // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
+      .then((m) => {
+        var env = envFor(fullname),
+            rec = env.recorder,
+            recName = env.recorderName;
+        options = lang.obj.merge(
+          {waitForPromise: true},
+          options, {
+            recordGlobals: true,
+            dontTransform: env.dontTransform,
+            varRecorderName: recName,
+            topLevelVarRecorder: rec,
+            sourceURL: options.targetModule,
+            context: m
+          });
+
+        code = `var ${env.recorderName} = __lvVarRecorder;\n${code}`;
+
+        return evaluator.runEval(code, options);
+      })
+      .then(result => {
+        // if (options.printed) result.value = printResult(result, options.printed);
+        // if (options.printed) result.value = String(result.value);
+        return result;
+      });
+      // .catch(err => console.error(err) || err)
+  });
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function importES6Module(path, options) {
-  // console.log(options);
-  if (typeof options !== "undefined")
-    System.config(options);
-  return System.import(path);
-}
 
 module.exports = {
   import: importES6Module,
@@ -714,7 +690,13 @@ module.exports = {
 
   wrapModuleLoad: wrapModuleLoad,
   unwrapModuleLoad: unwrapModuleLoad,
-  // envFor: envFor,
+  envFor: envFor,
+
+  resolve: resolve,
+  _loadedModules: loadedModules,
+
+  runEval: runEval
+
   // evalIn: evalIn,
   // evalInAndPrint: evalInAndPrint,
   // status: status,
@@ -725,8 +707,8 @@ module.exports = {
   // forgetModule: forgetModule
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./evaluator":6,"systemjs":"systemjs"}],6:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/es6-interface.js")
+},{"./evaluator":6,"lively.lang":"lively.lang","systemjs":"systemjs"}],6:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/
 
@@ -748,9 +730,8 @@ function _normalizeEvalOptions(opts) {
     topLevelDefRangeRecorder: null, // object for var ranges
     recordGlobals: null,
     returnPromise: true,
-    onPromiseResolved: null,
     promiseTimeout: 200,
-    waitForPromise: !!opts.onPromiseResolved
+    waitForPromise: true
   }, opts);
 
   if (opts.targetModule) {
@@ -789,7 +770,55 @@ EvalResult.prototype.warnings = [];
 EvalResult.prototype.isError = false;
 EvalResult.prototype.isPromise = false;
 EvalResult.prototype.promisedValue = undefined;
-EvalResult.prototype.promiseStatus = undefined;
+EvalResult.prototype.promiseStatus = "unknown";
+
+function print(value, options) {
+  if (options.isError || value instanceof Error) return value.stack || String(value);
+
+  if (options.isPromise) {
+    var status = lang.string.print(options.promiseStatus),
+        value = options.promiseStatus === "pending" ?
+          undefined : print(options.promisedValue, lively.lang.obj.merge(options, {isPromise: false}));
+    return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + value)}})`;
+  }
+  
+  if (value instanceof Promise)
+    return 'Promise({status: "unknown"})';
+  if (options.inspect) {
+    var printDepth = options.printDepth || 2;
+    return lang.obj.inspect(value, {maxDepth: printDepth})
+  }
+
+  // options.asString
+  return String(value);
+}
+
+EvalResult.prototype.printed = function(options) {
+  this.value = print(this.value, lively.lang.obj.merge(options, {
+    isError: this.isError,
+    isPromise: this.isPromise,
+    promisedValue: this.promisedValue,
+    promiseStatus: this.promiseStatus,
+  }));
+}
+
+EvalResult.prototype.processSync = function(options) {
+  if (options.inspect || options.asString) this.value = this.print(this.value, options);
+  return this;
+}
+
+EvalResult.prototype.process = function(options) {
+  var result = this;
+  if (result.isPromise && options.waitForPromise) {
+    return tryToWaitForPromise(result, options.promiseTimeout)
+      .then(() => {
+        if (options.inspect || options.asString) result.printed(options);
+        return result;
+      });
+  }
+  if (options.inspect || options.asString) result.printed(options);
+  return Promise.resolve(result);
+}
 
 function transformForVarRecord(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals) {
   // variable declaration and references in the the source code get
@@ -840,9 +869,9 @@ function evalCodeTransform(code, options) {
       options.topLevelDefRangeRecorder,
       !!options.recordGlobals);
   code = transformSingleExpression(code);
-  
+
   if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-  
+
   return code;
 }
 
@@ -888,25 +917,30 @@ function runEval(code, options, thenDo) {
   try {
     typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
     result.value = _eval.call(options.context, code, options.topLevelVarRecorder);
+    if (result.value instanceof Promise) result.isPromise = true;
   } catch (e) { result.isError = true; result.value = e; }
 
-  if (typeof thenDo === "function") thenDo(null, result);
-
-  if (result.value instanceof Promise) result.isPromise = true;
-  if (!options.returnPromise && !options.waitForPromise) return undefined;
-
-  var evalPromise;
-  if (!options.waitForPromise || !result.isPromise) {
-    evalPromise = Promise.resolve(result);
-  } else {
-    evalPromise = tryToWaitForPromise(result, options.promiseTimeout);
-    if (typeof options.onPromiseResolved === "function") {
-      evalPromise.then(result => result.hasOwnProperty("promisedValue")
-                              && options.onPromiseResolved(null, result.promisedValue));
-    }
+  if (options.sync) return result.processSync(options);
+  else {
+    return (typeof thenDo === "function") ? 
+      new Promise((resolve, reject) =>
+        result.process(options)
+          .then(() => { thenDo(null, result); resolve(result); })
+          .catch(err => { thenDo(err); reject(err); })) :
+      result.process(options);
   }
 
-  return evalPromise;
+  // // tries to return as value
+  // try {
+  //   JSON.stringify(value);
+  //   return value;
+  // } catch (e) {
+  //   try {
+  //     var printDepth = options.printDepth || 2;
+  //     return lang.obj.inspect(value, {maxDepth: printDepth})
+  //   } catch (e) { return String(value); }
+  // }
+
 }
 
 function syncEval(string, options) {
@@ -914,10 +948,8 @@ function syncEval(string, options) {
   // Although the defaul eval is synchronous we assume that the general
   // evaluation might not return immediatelly. This makes is possible to
   // change the evaluation backend, e.g. to be a remotely attached runtime
-  options = lang.obj.merge(options, {returnPromise: false});
-  var result;
-  runEval(string, options, (e, r) => result = e || r);
-  return result;
+  options = lang.obj.merge(options, {sync: true});
+  return runEval(string, options);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -6829,6 +6861,7 @@ exports['1.3.132.0.35'] = 'p521'
 
   BN.prototype.imuln = function imuln (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
 
     // Carry
     var carry = 0;
@@ -7060,6 +7093,7 @@ exports['1.3.132.0.35'] = 'p521'
   // Add plain number `num` to `this`
   BN.prototype.iaddn = function iaddn (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
     if (num < 0) return this.isubn(-num);
 
     // Possible sign change
@@ -7100,6 +7134,7 @@ exports['1.3.132.0.35'] = 'p521'
   // Subtract plain number `num` from `this`
   BN.prototype.isubn = function isubn (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
     if (num < 0) return this.iaddn(-num);
 
     if (this.negative !== 0) {
@@ -7261,11 +7296,25 @@ exports['1.3.132.0.35'] = 'p521'
       a.iushrn(shift);
     }
 
-    return { div: q || null, mod: a };
+    return {
+      div: q || null,
+      mod: a
+    };
   };
 
+  // NOTE: 1) `mode` can be set to `mod` to request mod only,
+  //       to `div` to request div only, or be absent to
+  //       request both div & mod
+  //       2) `positive` is true if unsigned mod is requested
   BN.prototype.divmod = function divmod (num, mode, positive) {
     assert(!num.isZero());
+
+    if (this.isZero()) {
+      return {
+        div: new BN(0),
+        mod: new BN(0)
+      };
+    }
 
     var div, mod, res;
     if (this.negative !== 0 && num.negative === 0) {
@@ -7295,7 +7344,10 @@ exports['1.3.132.0.35'] = 'p521'
         div = res.div.neg();
       }
 
-      return { div: div, mod: res.mod };
+      return {
+        div: div,
+        mod: res.mod
+      };
     }
 
     if ((this.negative & num.negative) !== 0) {
@@ -7318,17 +7370,26 @@ exports['1.3.132.0.35'] = 'p521'
 
     // Strip both numbers to approximate shift value
     if (num.length > this.length || this.cmp(num) < 0) {
-      return { div: new BN(0), mod: this };
+      return {
+        div: new BN(0),
+        mod: this
+      };
     }
 
     // Very short reduction
     if (num.length === 1) {
       if (mode === 'div') {
-        return { div: this.divn(num.words[0]), mod: null };
+        return {
+          div: this.divn(num.words[0]),
+          mod: null
+        };
       }
 
       if (mode === 'mod') {
-        return { div: null, mod: new BN(this.modn(num.words[0])) };
+        return {
+          div: null,
+          mod: new BN(this.modn(num.words[0]))
+        };
       }
 
       return {
@@ -7553,8 +7614,8 @@ exports['1.3.132.0.35'] = 'p521'
   };
 
   BN.prototype.gcd = function gcd (num) {
-    if (this.isZero()) return num.clone();
-    if (num.isZero()) return this.clone();
+    if (this.isZero()) return num.abs();
+    if (num.isZero()) return this.abs();
 
     var a = this.clone();
     var b = num.clone();
@@ -7945,8 +8006,13 @@ exports['1.3.132.0.35'] = 'p521'
       input.words[i - 10] = ((next & mask) << 4) | (prev >>> 22);
       prev = next;
     }
-    input.words[i - 10] = prev >>> 22;
-    input.length -= 9;
+    prev >>>= 22;
+    input.words[i - 10] = prev;
+    if (prev === 0 && input.length > 10) {
+      input.length -= 10;
+    } else {
+      input.length -= 9;
+    }
   };
 
   K256.prototype.imulK = function imulK (num) {
@@ -13567,8 +13633,7 @@ module.exports={
     }
   ],
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz",
-  "readme": "ERROR: No README data found!"
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz"
 }
 
 },{}],72:[function(require,module,exports){
@@ -14044,6 +14109,7 @@ base.Node = require('./node');
 },{"./buffer":78,"./node":80,"./reporter":81}],80:[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
+var DecoderBuffer = require('../base').DecoderBuffer;
 var assert = require('minimalistic-assert');
 
 // Supported tags
@@ -14056,7 +14122,7 @@ var tags = [
 // Public methods list
 var methods = [
   'key', 'obj', 'use', 'optional', 'explicit', 'implicit', 'def', 'choice',
-  'any'
+  'any', 'contains'
 ].concat(tags);
 
 // Overrided methods list
@@ -14092,6 +14158,7 @@ function Node(enc, parent) {
   state['default'] = null;
   state.explicit = null;
   state.implicit = null;
+  state.contains = null;
 
   // Should create new instance on each method
   if (!state.parent) {
@@ -14296,6 +14363,15 @@ Node.prototype.choice = function choice(obj) {
   return this;
 };
 
+Node.prototype.contains = function contains(item) {
+  var state = this._baseState;
+
+  assert(state.use === null);
+  state.contains = item;
+
+  return this;
+};
+
 //
 // Decoding
 //
@@ -14397,6 +14473,12 @@ Node.prototype._decode = function decode(input) {
       });
       if (fail)
         return err;
+    }
+
+    // Decode contained/encoded by schema, only in bit or octet strings
+    if (state.contains && (state.tag === 'octstr' || state.tag === 'bitstr')) {
+      var data = new DecoderBuffer(result);
+      result = this._getUse(state.contains, input._reporterState.obj)._decode(data);
     }
   }
 
@@ -14541,6 +14623,9 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     result = this._createEncoderBuffer(data);
   } else if (state.choice) {
     result = this._encodeChoice(data, reporter);
+  } else if (state.contains) {
+    content = this._getUse(state.contains, parent)._encode(data, reporter);
+    primitive = true;
   } else if (state.children) {
     content = state.children.map(function(child) {
       if (child._baseState.tag === 'null_')
@@ -14560,7 +14645,6 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     }, this).filter(function(child) {
       return child;
     });
-
     content = this._createEncoderBuffer(content);
   } else {
     if (state.tag === 'seqof' || state.tag === 'setof') {
@@ -14653,6 +14737,7 @@ Node.prototype._isNumstr = function isNumstr(str) {
 Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '\(\)\+,\-\.\/:=\?]*$/.test(str);
 };
+
 },{"../base":79,"minimalistic-assert":90}],81:[function(require,module,exports){
 var inherits = require('inherits');
 
@@ -14990,6 +15075,7 @@ DERNode.prototype._decodeStr = function decodeStr(buffer, tag) {
 };
 
 DERNode.prototype._decodeObjid = function decodeObjid(buffer, values, relative) {
+  var result;
   var identifiers = [];
   var ident = 0;
   while (!buffer.isEmpty()) {
