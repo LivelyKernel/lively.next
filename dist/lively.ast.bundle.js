@@ -7256,7 +7256,7 @@ window.escodegen = require('escodegen');
 lively.ast = require('./index');
 },{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-20 02:53 PST
+// Generated on 16-02-20 13:40 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -9481,7 +9481,7 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
   if (options.es6ExportId) {
     options.excludeRefs.push(options.es6ExportId);
     options.excludeRefs.push(options.es6ModulesId);
-    rewritten = es6ExportToExportObjAssignments(rewritten, options);
+    rewritten = es6ModuleTransforms(rewritten, options);
   }
 
   // 4. make all references declared in the toplevel scope into property
@@ -9631,7 +9631,7 @@ function insertDeclarationsForExports(parsed, options) {
   return parsed;
 }
 
-function es6ExportToExportObjAssignments(parsed, options) {
+function es6ModuleTransforms(parsed, options) {
   parsed.body = parsed.body.reduce((stmts, stmt) => {
     var nodes;
     if (stmt.type === "ExportNamedDeclaration") {
@@ -9670,6 +9670,15 @@ function es6ExportToExportObjAssignments(parsed, options) {
       ];
       options.excludeRefs.push(key.name);
       options.excludeDecls.push(key.name);
+    } else if (stmt.type ===  "ImportDeclaration") {
+      nodes = stmt.specifiers.length ?
+        stmt.specifiers.map(specifier => {
+          var local = specifier.local,
+              imported = (specifier.type === "ImportSpecifier" && specifier.imported.name)
+                      || (specifier.type === "ImportDefaultSpecifier" && "default")
+                      || null;
+          return varDeclForImportObj(local, imported ? {type: "Literal", value: imported} : null, stmt.source, options.modulesObj);
+        }) : {type: "ExpressionStatement", expression: member(stmt.source, options.modulesObj, true)};
     } else nodes = [stmt];
     return stmts.concat(nodes);
   }, []);
@@ -9716,8 +9725,8 @@ function shouldRefBeCaptured(ref, options) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function member(prop, obj) {
-  return {type: "MemberExpression", computed: false, object: obj, property: prop}
+function member(prop, obj, computed) {
+  return {type: "MemberExpression", computed: computed || false, object: obj, property: prop}
 }
 
 function varDecl(declarator) {
@@ -9751,6 +9760,15 @@ function assignmentFromImportToExport(keyLeft, keyRight, moduleId, exportedObj, 
   }
 }
 
+function varDeclForImportObj(localId, imported, moduleSource, modulesObj) {
+  return varDecl({
+    type: "VariableDeclarator",
+    id: localId,
+    init: imported ?
+      member(imported, member(moduleSource, modulesObj, true), true) :
+      member(moduleSource, modulesObj, true)
+  });
+}
 },{"../generated/estree-visitor":2,"../index":3,"lively.lang":"lively.lang"}],6:[function(require,module,exports){
 /*global window, process, global*/
 
