@@ -1,7 +1,5 @@
 /*global process, before, beforeEach, afterEach, describe, it, expect*/
 
-
-
 var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
 var chai = env.isCommonJS ? module.require("chai") : window.chai;
 var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
