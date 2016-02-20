@@ -21,7 +21,9 @@ function _testVarTfm(descr, code, expected, only) {
     expected = code; code = descr;
   }
   return (only ? it.only : it)(descr, () => {
-    var result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+    // var result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+    //   code, {name: "_rec", type: "Identifier"});
+    var result = ast.capturing.rewriteToCaptureTopLevelVariables(
       code, {name: "_rec", type: "Identifier"});
     expect(result.source).equals(expected);
   });
@@ -29,6 +31,19 @@ function _testVarTfm(descr, code, expected, only) {
 
 function testVarTfm(descr, code, expected) { return _testVarTfm(descr, code, expected, false); }
 function only_testVarTfm(descr, code, expected) { return _testVarTfm(descr, code, expected, true); }
+
+function _testExportTfm(descr, code, expected, only) {
+  if (typeof expected === "undefined") {
+    expected = code; code = descr;
+  }
+  return (only ? it.only : it)(descr, () => {
+    var result = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+      code, {name: "_rec", type: "Identifier"}, {es6ExportId: "_exports", es6ModulesId: "_modules"});
+    expect(result.source).equals(expected);
+  });
+}
+function testExportTfm(descr, code, expected) { return _testExportTfm(descr, code, expected, false); }
+function only_testExportTfm(descr, code, expected) { return _testExportTfm(descr, code, expected, true); }
 
 describe('ast.transform', function() {
 
@@ -121,17 +136,17 @@ describe('ast.transform', function() {
       var source = "var x = 3,\n"
            + "    y = x + x;\n"
            + "y + 2;\n";
-      var parsed = ast.parse(source);
-      var hist = ast.transform.helper.replaceNodes([
-        {target: parsed.body[0], replacementFunc: function(node, source) { return {type: "Literal", value: "foo"}; }},
-        {target: parsed.body[0].declarations[1].init.right, replacementFunc: function() { return {type: "Literal", value: "bar"}; }}],
-        {changes: [], source: source});
+      var parsed = ast.parse(source),
+          hist = ast.transform.helper.replaceNodes([
+            {target: parsed.body[0], replacementFunc: function(node, source) { return {type: "Literal", value: "foo"}; }},
+            {target: parsed.body[0].declarations[1].init.right, replacementFunc: function() { return {type: "Literal", value: "bar"}; }}],
+            {changes: [], source: source});
 
       var expected = {
         changes: [{type: 'del', pos: 23, length: 1},
-             {type: 'add', pos: 23, string: "'bar'"},
-             {type: 'del', pos: 0, length: 29},
-             {type: 'add', pos: 0, string: "'foo'"}],
+                  {type: 'add', pos: 23, string: "'bar'"},
+                  {type: 'del', pos: 0, length: 29},
+                  {type: 'add', pos: 0, string: "'foo'"}],
         source: "'foo'\ny + 2;\n"
       }
 
@@ -221,7 +236,7 @@ describe('ast.transform', function() {
 
       testVarTfm("transformTopLevelVarDeclsForCapturing",
                  "var y, z = foo + bar; baz.foo(z, 3)",
-                 "_rec.y = _rec['y'] || undefined;\n_rec.z = _rec.foo + _rec.bar; _rec.baz.foo(_rec.z, 3)");
+                 "_rec.y = _rec['y'] || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);");
 
       testVarTfm("transformTopLevelVarAndFuncDeclsForCapturing",
                  "var z = 3, y = 4; function foo() { var x = 5; }",
@@ -382,6 +397,46 @@ describe('ast.transform', function() {
 
           testVarTfm("import 'module-name';",
                      "import 'module-name';");
+        });
+
+        describe("export", () => {
+
+          testVarTfm("var x = 23; export { x as y };",
+                     "_rec.x = 23; var x = _rec.x;\n export {\n    x as y\n};");
+
+          testExportTfm("export default 23;",
+                        "_exports['default'] = 23;");
+
+          testExportTfm("export default function () {};",
+                        "_exports['default'] = function () {\n};;");
+
+          testExportTfm("export default function* () {};",
+                        "_exports['default'] = function* () {\n};;");
+
+          testExportTfm("export default class Foo {a() { return 23; }};",
+                        "_exports['default'] = class Foo {\n    a() {\n        return 23;\n    }\n};;");
+
+          testExportTfm("export { name1, name2 };",
+                        "var name2 = _rec.name2;\nvar name1 = _rec.name1;\n_exports['name1'] = name1;\n_exports['name2'] = name2;");
+
+          testExportTfm("export var x = 34, y = x + 3;",
+                        "var x = 34, y = x + 3;\n_rec.x = x;\n_rec.y = y;\n_exports['x'] = 34;\n_exports['y'] = x + 3;");
+
+          testExportTfm("export let x = 34;",
+                        "let x = 34;\n_rec.x = x;\n_exports['x'] = 34;");
+
+          testExportTfm("export let x = 34;",
+                        "let x = 34;\n_rec.x = x;\n_exports['x'] = 34;");
+
+          testExportTfm("export { name1 as default };",
+                        "var name1 = _rec.name1;\n_exports['default'] = name1;");
+
+          testExportTfm("export * from 'foo';",
+                        "for (var name in _modules['foo'])\n    _exports[name] = _modules['foo'][name];");
+
+          // export * from …;
+          // export { name1, name2, …, nameN } from …;
+          // export { import1 as name1, import2 as name2, …, nameN } from …;
         });
 
       });
