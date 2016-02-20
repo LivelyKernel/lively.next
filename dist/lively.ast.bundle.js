@@ -7256,7 +7256,7 @@ window.escodegen = require('escodegen');
 lively.ast = require('./index');
 },{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-20 13:40 PST
+// Generated on 16-02-20 14:06 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -9432,9 +9432,9 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
   options = lang.obj.merge({
     ignoreUndeclaredExcept: null,
     includeRefs: null,
-    excludeRefs: [],
+    excludeRefs: (options && options.exclude) || [],
     includeDecls: null,
-    excludeDecls: [],
+    excludeDecls: (options && options.exclude) || [],
     recordDefRanges: false,
     es6ExportId: null,
     es6ModulesId: null,
