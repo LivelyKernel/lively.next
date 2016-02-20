@@ -20,6 +20,7 @@ lang.obj.extend(
   require("./lib/mozilla-ast-visitor-interface"),
   require("./lib/query"),
   require("./lib/transform"),
+  require("./lib/capturing"),
   require("./lib/comments"),
   require("./lib/code-categorizer"));
 
