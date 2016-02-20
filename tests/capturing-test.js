@@ -166,20 +166,6 @@ describe("ast.capturing", function() {
                  "_rec.x = 23;\n_rec.y = _rec.x + 1;");
     });
 
-    describe("exports", () => {
-
-      testVarTfm("does not rewrite exports but adds capturing statement",
-                 "var a = 23;\n"
-               + "export var x = a + 1, y = x + 2;"
-               + "export default function f() {}\n",
-                 "_rec.f = f;\n"
-               + "_rec.a = 23;\n"
-               + "export var x = _rec.a + 1, y = x + 2;\n"
-               + "_rec.x = x;\n"
-               + "_rec.y = y;\nexport default function f() {\n}");
-
-    });
-    
     describe("import", () => {
 
       testVarTfm("import x from './some-es6-module.js';",
@@ -212,12 +198,25 @@ describe("ast.capturing", function() {
 
     describe("export", () => {
 
+      testVarTfm("does not rewrite exports but adds capturing statement",
+                 "var a = 23;\n"
+               + "export var x = a + 1, y = x + 2;"
+               + "export default function f() {}\n",
+                 "_rec.f = f;\n"
+               + "_rec.a = 23;\n"
+               + "export var x = _rec.a + 1, y = x + 2;\n"
+               + "_rec.x = x;\n"
+               + "_rec.y = y;\nexport default function f() {\n}");
+
       testVarTfm("var x = 23; export { x as y };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x as y\n};");
 
+      testVarTfm("export const x = 23;",
+                 "export const x = 23;\n_rec.x = x;");
+
     });
     
-    xdescribe("export obj", () => {
+    describe("export obj", () => {
 
       testExportTfm("export default function () {};",
                     "_exports['default'] = function () {\n};\n;");
@@ -229,28 +228,28 @@ describe("ast.capturing", function() {
                     "_exports['default'] = class Foo {\n    a() {\n        return 23;\n    }\n};\n;");
 
       testExportTfm("export { name1, name2 };",
-                    "var name1 = _rec.name1;\nvar name2 = _rec.name2;\n_exports['name1'] = name1;\n_exports['name2'] = name2;");
+                    "_exports['name1'] = _rec.name1;\n_exports['name2'] = _rec.name2;");
 
       testExportTfm("export var x = 34, y = x + 3;",
-                    "var x = 34, y = x + 3;\n_exports['x'] = x;\n_exports['y'] = y;\n_rec.x = x;\n_rec.y = y;");
+                    "var x = 34, y = x + 3;\n_exports['x'] = x;\n_exports['y'] = y;");
 
       testExportTfm("export let x = 34;",
-                    "let x = 34;\n_exports['x'] = x;\n_rec.x = x;");
+                    "let x = 34;\n_exports['x'] = x;");
 
       testExportTfm("export let x = 34;",
-                         "let x = 34;\n_exports['x'] = x;\n_rec.x = x;");
+                    "let x = 34;\n_exports['x'] = x;");
 
       testExportTfm("export { name1 as default };",
-                    "var name1 = _rec.name1;\n_exports['default'] = name1;");
+                    "_exports['default'] = _rec.name1;");
 
       testExportTfm("export * from 'foo';",
-                    "for (var name in _modules['foo'])\n    _exports[name] = _modules['foo'][name];");
+                    "for (var _exports__iterator__ in _modules['foo'])\n    _exports[_exports__iterator__] = _modules['foo'][_exports__iterator__];");
 
       testExportTfm("export { name1, name2 } from 'foo';",
                     "_exports['name1'] = _modules['foo']['name1'];\n_exports['name2'] = _modules['foo']['name2'];");
 
-      // export { name1, name2, …, nameN } from …;
-      // export { import1 as name1, import2 as name2, …, nameN } from …;
+      testExportTfm("export { name1 as foo1, name2 as bar2 } from 'foo';",
+                    "_exports['foo1'] = _modules['foo']['name1'];\n_exports['bar2'] = _modules['foo']['name2'];");
 
     });
 

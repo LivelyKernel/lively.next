@@ -3,7 +3,1067 @@ var lively = window.lively || (window.lively = {});
 window.acorn = require('acorn');
 window.escodegen = require('escodegen');
 lively.ast = require('./index');
-},{"./index":2,"acorn":10,"escodegen":15}],2:[function(require,module,exports){
+},{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
+// <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
+// Generated on 16-02-20 02:53 PST
+function Visitor() {}
+Visitor.prototype.accept = function accept(node, state, path) {
+  if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
+  if (!node.type) throw new Error("Strangee AST node without type in Visitor.accept:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
+  switch(node.type) {
+    case "Node": return this.visitNode(node, state, path);
+    case "SourceLocation": return this.visitSourceLocation(node, state, path);
+    case "Position": return this.visitPosition(node, state, path);
+    case "Program": return this.visitProgram(node, state, path);
+    case "Function": return this.visitFunction(node, state, path);
+    case "Statement": return this.visitStatement(node, state, path);
+    case "SwitchCase": return this.visitSwitchCase(node, state, path);
+    case "CatchClause": return this.visitCatchClause(node, state, path);
+    case "VariableDeclarator": return this.visitVariableDeclarator(node, state, path);
+    case "Expression": return this.visitExpression(node, state, path);
+    case "Property": return this.visitProperty(node, state, path);
+    case "Pattern": return this.visitPattern(node, state, path);
+    case "Super": return this.visitSuper(node, state, path);
+    case "SpreadElement": return this.visitSpreadElement(node, state, path);
+    case "TemplateElement": return this.visitTemplateElement(node, state, path);
+    case "Class": return this.visitClass(node, state, path);
+    case "ClassBody": return this.visitClassBody(node, state, path);
+    case "MethodDefinition": return this.visitMethodDefinition(node, state, path);
+    case "ModuleDeclaration": return this.visitModuleDeclaration(node, state, path);
+    case "ModuleSpecifier": return this.visitModuleSpecifier(node, state, path);
+    case "Identifier": return this.visitIdentifier(node, state, path);
+    case "Literal": return this.visitLiteral(node, state, path);
+    case "ExpressionStatement": return this.visitExpressionStatement(node, state, path);
+    case "BlockStatement": return this.visitBlockStatement(node, state, path);
+    case "EmptyStatement": return this.visitEmptyStatement(node, state, path);
+    case "DebuggerStatement": return this.visitDebuggerStatement(node, state, path);
+    case "WithStatement": return this.visitWithStatement(node, state, path);
+    case "ReturnStatement": return this.visitReturnStatement(node, state, path);
+    case "LabeledStatement": return this.visitLabeledStatement(node, state, path);
+    case "BreakStatement": return this.visitBreakStatement(node, state, path);
+    case "ContinueStatement": return this.visitContinueStatement(node, state, path);
+    case "IfStatement": return this.visitIfStatement(node, state, path);
+    case "SwitchStatement": return this.visitSwitchStatement(node, state, path);
+    case "ThrowStatement": return this.visitThrowStatement(node, state, path);
+    case "TryStatement": return this.visitTryStatement(node, state, path);
+    case "WhileStatement": return this.visitWhileStatement(node, state, path);
+    case "DoWhileStatement": return this.visitDoWhileStatement(node, state, path);
+    case "ForStatement": return this.visitForStatement(node, state, path);
+    case "ForInStatement": return this.visitForInStatement(node, state, path);
+    case "Declaration": return this.visitDeclaration(node, state, path);
+    case "ThisExpression": return this.visitThisExpression(node, state, path);
+    case "ArrayExpression": return this.visitArrayExpression(node, state, path);
+    case "ObjectExpression": return this.visitObjectExpression(node, state, path);
+    case "FunctionExpression": return this.visitFunctionExpression(node, state, path);
+    case "UnaryExpression": return this.visitUnaryExpression(node, state, path);
+    case "UpdateExpression": return this.visitUpdateExpression(node, state, path);
+    case "BinaryExpression": return this.visitBinaryExpression(node, state, path);
+    case "AssignmentExpression": return this.visitAssignmentExpression(node, state, path);
+    case "LogicalExpression": return this.visitLogicalExpression(node, state, path);
+    case "MemberExpression": return this.visitMemberExpression(node, state, path);
+    case "ConditionalExpression": return this.visitConditionalExpression(node, state, path);
+    case "CallExpression": return this.visitCallExpression(node, state, path);
+    case "SequenceExpression": return this.visitSequenceExpression(node, state, path);
+    case "ArrowFunctionExpression": return this.visitArrowFunctionExpression(node, state, path);
+    case "YieldExpression": return this.visitYieldExpression(node, state, path);
+    case "TemplateLiteral": return this.visitTemplateLiteral(node, state, path);
+    case "TaggedTemplateExpression": return this.visitTaggedTemplateExpression(node, state, path);
+    case "AssignmentProperty": return this.visitAssignmentProperty(node, state, path);
+    case "ArrayPattern": return this.visitArrayPattern(node, state, path);
+    case "RestElement": return this.visitRestElement(node, state, path);
+    case "AssignmentPattern": return this.visitAssignmentPattern(node, state, path);
+    case "ClassExpression": return this.visitClassExpression(node, state, path);
+    case "MetaProperty": return this.visitMetaProperty(node, state, path);
+    case "ImportDeclaration": return this.visitImportDeclaration(node, state, path);
+    case "ImportSpecifier": return this.visitImportSpecifier(node, state, path);
+    case "ImportDefaultSpecifier": return this.visitImportDefaultSpecifier(node, state, path);
+    case "ImportNamespaceSpecifier": return this.visitImportNamespaceSpecifier(node, state, path);
+    case "ExportNamedDeclaration": return this.visitExportNamedDeclaration(node, state, path);
+    case "ExportSpecifier": return this.visitExportSpecifier(node, state, path);
+    case "ExportDefaultDeclaration": return this.visitExportDefaultDeclaration(node, state, path);
+    case "ExportAllDeclaration": return this.visitExportAllDeclaration(node, state, path);
+    case "RegExpLiteral": return this.visitRegExpLiteral(node, state, path);
+    case "FunctionDeclaration": return this.visitFunctionDeclaration(node, state, path);
+    case "VariableDeclaration": return this.visitVariableDeclaration(node, state, path);
+    case "NewExpression": return this.visitNewExpression(node, state, path);
+    case "ForOfStatement": return this.visitForOfStatement(node, state, path);
+    case "ClassDeclaration": return this.visitClassDeclaration(node, state, path);
+  }
+  throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
+}
+Visitor.prototype.visitNode = function visitNode(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
+  var visitor = this;
+  // start is of types Position
+  node["start"] = visitor.accept(node["start"], state, path.concat(["start"]));
+  // end is of types Position
+  node["end"] = visitor.accept(node["end"], state, path.concat(["end"]));
+  return node;
+}
+Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
+  var visitor = this;
+  return node;
+}
+Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
+  var visitor = this;
+  // body is a list with types Statement, ModuleDeclaration
+  node["body"] = node["body"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["body", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  node["params"] = node["params"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["params", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  if (node["test"]) {
+    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  }
+  // consequent is a list with types Statement
+  node["consequent"] = node["consequent"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["consequent", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
+  var visitor = this;
+  // param is of types Pattern
+  node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
+  var visitor = this;
+  // id is of types Pattern
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // init is of types Expression
+  if (node["init"]) {
+    node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
+  var visitor = this;
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // value is of types Expression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitClass = function visitClass(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
+  var visitor = this;
+  // body is a list with types MethodDefinition
+  node["body"] = node["body"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["body", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
+  var visitor = this;
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // value is of types FunctionExpression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
+  var visitor = this;
+  // expression is of types Expression
+  node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
+  var visitor = this;
+  // body is a list with types Statement
+  node["body"] = node["body"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["body", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
+  var visitor = this;
+  // object is of types Expression
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  if (node["label"]) {
+    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  if (node["label"]) {
+    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // consequent is of types Statement
+  node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
+  // alternate is of types Statement
+  if (node["alternate"]) {
+    node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
+  var visitor = this;
+  // discriminant is of types Expression
+  node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
+  // cases is a list with types SwitchCase
+  node["cases"] = node["cases"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["cases", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
+  var visitor = this;
+  // block is of types BlockStatement
+  node["block"] = visitor.accept(node["block"], state, path.concat(["block"]));
+  // handler is of types CatchClause
+  if (node["handler"]) {
+    node["handler"] = visitor.accept(node["handler"], state, path.concat(["handler"]));
+  }
+  // finalizer is of types BlockStatement
+  if (node["finalizer"]) {
+    node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
+  var visitor = this;
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
+  var visitor = this;
+  // init is of types VariableDeclaration, Expression
+  if (node["init"]) {
+    node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
+  }
+  // test is of types Expression
+  if (node["test"]) {
+    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  }
+  // update is of types Expression
+  if (node["update"]) {
+    node["update"] = visitor.accept(node["update"], state, path.concat(["update"]));
+  }
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
+  var visitor = this;
+  // left is of types VariableDeclaration, Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
+  var visitor = this;
+  // elements is a list with types Expression
+  if (node["elements"]) {
+    node["elements"] = node["elements"].reduce(function(results, ea, i) {
+      var result = visitor.accept(ea, state, path.concat(["elements", i]));
+      if (Array.isArray(result)) results.push.apply(results, result);
+      else results.push(result);
+      return results;
+    }, []);  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
+  var visitor = this;
+  // properties is a list with types Property
+  node["properties"] = node["properties"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["properties", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  node["params"] = node["params"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["params", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Expression
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Expression
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
+  var visitor = this;
+  // object is of types Expression
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // property is of types Expression
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // alternate is of types Expression
+  node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
+  // consequent is of types Expression
+  node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression
+  node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["arguments", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
+  var visitor = this;
+  // expressions is a list with types Expression
+  node["expressions"] = node["expressions"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["expressions", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
+  var visitor = this;
+  // body is of types BlockStatement, Expression
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  node["params"] = node["params"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["params", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
+  var visitor = this;
+  // quasis is a list with types TemplateElement
+  node["quasis"] = node["quasis"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["quasis", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // expressions is a list with types Expression
+  node["expressions"] = node["expressions"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["expressions", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
+  var visitor = this;
+  // tag is of types Expression
+  node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
+  // quasi is of types TemplateLiteral
+  node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
+  var visitor = this;
+  // value is of types Pattern, Expression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
+  var visitor = this;
+  // elements is a list with types Pattern
+  if (node["elements"]) {
+    node["elements"] = node["elements"].reduce(function(results, ea, i) {
+      var result = visitor.accept(ea, state, path.concat(["elements", i]));
+      if (Array.isArray(result)) results.push.apply(results, result);
+      else results.push(result);
+      return results;
+    }, []);  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
+  var visitor = this;
+  // argument is of types Pattern
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
+  var visitor = this;
+  // left is of types Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
+  var visitor = this;
+  // meta is of types Identifier
+  node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
+  // property is of types Identifier
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
+  var visitor = this;
+  // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
+  node["specifiers"] = node["specifiers"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // source is of types Literal
+  node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
+  var visitor = this;
+  // imported is of types Identifier
+  node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
+  var visitor = this;
+  // declaration is of types Declaration
+  if (node["declaration"]) {
+    node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
+  }
+  // specifiers is a list with types ExportSpecifier
+  node["specifiers"] = node["specifiers"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // source is of types Literal
+  if (node["source"]) {
+    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  }
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
+  var visitor = this;
+  // exported is of types Identifier
+  node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
+  var visitor = this;
+  // declaration is of types Declaration, Expression
+  node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
+  var visitor = this;
+  // source is of types Literal
+  node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
+  var visitor = this;
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // params is a list with types Pattern
+  node["params"] = node["params"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["params", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
+  var visitor = this;
+  // declarations is a list with types VariableDeclarator
+  node["declarations"] = node["declarations"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["declarations", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression
+  node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["arguments", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
+  var visitor = this;
+  // left is of types VariableDeclaration, Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+
+// >>>>>>>>>>>>> END OF AUTO GENERATED CODE >>>>>>>>>>>>>
+
+module.exports = Visitor;
+},{}],3:[function(require,module,exports){
 /*global process, global, require, exports*/
 
 var lang = lively.lang;
@@ -26,6 +1086,7 @@ lang.obj.extend(
   require("./lib/mozilla-ast-visitor-interface"),
   require("./lib/query"),
   require("./lib/transform"),
+  require("./lib/capturing"),
   require("./lib/comments"),
   require("./lib/code-categorizer"));
 
@@ -233,7 +1294,7 @@ function nodesAt(pos, ast) {
   return acorn.walk.findNodesIncluding(ast, pos);
 }
 
-},{"./lib/acorn-extension":3,"./lib/code-categorizer":4,"./lib/comments":5,"./lib/mozilla-ast-visitor-interface":6,"./lib/mozilla-ast-visitors":7,"./lib/query":8,"./lib/transform":9,"acorn/dist/acorn":10,"acorn/dist/acorn_loose":11,"acorn/dist/walk":12,"escodegen":15,"lively.lang":"lively.lang"}],3:[function(require,module,exports){
+},{"./lib/acorn-extension":4,"./lib/capturing":5,"./lib/code-categorizer":6,"./lib/comments":7,"./lib/mozilla-ast-visitor-interface":8,"./lib/mozilla-ast-visitors":9,"./lib/query":10,"./lib/transform":11,"acorn/dist/acorn":12,"acorn/dist/acorn_loose":13,"acorn/dist/walk":14,"escodegen":17,"lively.lang":"lively.lang"}],4:[function(require,module,exports){
 /*global process, global, require*/
 
 // acorn, escodegen, lively, lang, exports
@@ -1097,7 +2158,349 @@ acorn.walk.visitors = {
 
 })();
 
-},{"../index":2,"lively.lang":"lively.lang"}],4:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],5:[function(require,module,exports){
+/*global process, global, exports*/
+
+var ast = require("../index");
+var lang = lively.lang;
+var Visitor = require("../generated/estree-visitor");
+
+exports.capturing = {
+  rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
+}
+
+function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
+  /* replaces var and function declarations with assignment statements.
+  * Example:
+     exports.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+       "var x = 3, y = 2, z = 4",
+       {name: "A", type: "Identifier"}, ['z']).source;
+     // => "A.x = 3; A.y = 2; z = 4"
+  */
+
+  options = lang.obj.merge({
+    ignoreUndeclaredExcept: null,
+    includeRefs: null,
+    excludeRefs: [],
+    includeDecls: null,
+    excludeDecls: [],
+    recordDefRanges: false,
+    es6ExportId: null,
+    es6ModulesId: null,
+    captureObj: assignToObj || {type: "Identifier", name: "__rec"},
+    exportedObj: {name: options && options.es6ExportId || "_exported", type: "Identifier"},
+    modulesObj: {name: options && options.es6ModulesId || "_loaded_modules", type: "Identifier"},
+  }, options);
+
+  var parsed = typeof astOrSource === 'object' ?
+        astOrSource : ast.parse(astOrSource),
+      source = typeof astOrSource === 'string' ?
+        astOrSource : (parsed.source || ast.stringify(parsed)),
+      rewritten = parsed;
+
+
+  // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
+  // if it is a list of names we will capture all refs with those names
+  if (options.ignoreUndeclaredExcept) {
+    var topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+    options.excludeRefs = lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
+    options.excludeDecls = lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
+  }
+  
+  options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
+  options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
+
+  // 1. def ranges so that we know at which source code positions the
+  // definitions are
+  var defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
+
+  // 2. find those var declarations that should not be rewritten. we
+  // currently ignore var declarations in for loops and the error parameter
+  // declaration in catch clauses. Also es6 import / export declaration need
+  // a special treatment
+  // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
+  // as this is not valid syntax. Instead we add a var declaration using the
+  // recorder as init for those exports later
+  options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
+  options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
+
+  // 3. if the es6ExportId options is defined we rewrite the es6 form into an
+  // obj assignment, converting es6 code to es5 using the extra
+  // options.exportedObj and options.modulesObj as capture / sources
+  if (options.es6ExportId) {
+    options.excludeRefs.push(options.es6ExportId);
+    options.excludeRefs.push(options.es6ModulesId);
+    rewritten = es6ExportToExportObjAssignments(rewritten, options);
+  }
+
+  // 4. make all references declared in the toplevel scope into property
+  // reads of captureObj
+  // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
+  rewritten = replaceRefs(parsed, options);
+
+  // 5. turn var declarations into assignments to captureObj
+  // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
+  rewritten = replaceVarDecls(rewritten, options);
+
+  // 6. es6 export declaration are left untouched but a capturing assignment
+  // is added after the export so that we get the value:
+  // "export var x = 23;" => "export var x = 23; Global.x = x;"
+  rewritten = insertCapturesForExportDeclarations(rewritten, options);
+
+  // 7. es6 import declaration are left untouched but a capturing assignment
+  // is added after the import so that we get the value:
+  // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
+  rewritten = insertCapturesForImportDeclarations(rewritten, options);
+
+  // 8. Since variable declarations like "var x = 23" were transformed to sth
+  // like "_rex.x = 23" exports can't simply reference vars anymore and
+  // "export { _rec.x }" is invalid syntax. So in front of those exports we add
+  // var decls manually
+  rewritten = insertDeclarationsForExports(rewritten, options);
+
+  // 9. assignments for function declarations in the top level scope are
+  // put in front of everything else to mirror the func hoisting:
+  // "return bar(); function bar() { return 23 }" ->
+  //   "Global.bar = bar; return bar(); function bar() { return 23 }"
+  rewritten = putFunctionDeclsInFront(rewritten, options);
+
+// console.log(ast.stringify(rewritten));
+  // console.log(require("util").inspect(rewritten.body, {depth: 10}));
+
+  return {
+    ast: rewritten,
+    source: ast.stringify(rewritten),
+    defRanges: defRanges
+  }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function replace(parsed, replacer) {
+  var v = new Visitor();
+  v.visitVariableDeclaration
+  v.accept = lang.fun.wrap(v.accept, (proceed, node, state, path) => replacer(proceed(node, state, path)));
+  return v.accept(parsed, null, []);
+}
+
+function replaceRefs(parsed, options) {
+  var topLevel = ast.query.topLevelDeclsAndRefs(parsed),
+      refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, options))
+  return replace(parsed, node => refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node);
+}
+
+function replaceVarDecls(parsed, options) {
+  var topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+  return replace(parsed, node => {
+    if (topLevel.varDecls.indexOf(node) === -1) return node;
+    var decls = node.declarations.filter(decl => shouldDeclBeCaptured(decl, options));
+    if (!decls.length) return node;
+    return node.declarations.map(ea => {
+      var init = ea.init || {
+        operator: "||",
+        type: "LogicalExpression",
+        left: {computed: true, object: options.captureObj, property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
+        right: {name: "undefined", type: "Identifier"}
+      };
+      return shouldDeclBeCaptured(ea, options) ?
+        assignExpr(options.captureObj, ea.id, init, false) : ea;
+    });
+  });
+}
+
+function additionalIgnoredDecls(parsed, options) {
+  var topLevel = ast.query.topLevelDeclsAndRefs(parsed),
+      ignoreDecls = topLevel.scope.varDecls.reduce((result, decl, i) => {
+        var path = lang.Path(topLevel.scope.varDeclPaths[i]),
+            parent = path.slice(0,-1).get(parsed);
+        if (parent.type === "ForStatement"
+         || parent.type === "ForInStatement"
+         || (/*!options.es6ExportId &&*/ parent.type === "ExportNamedDeclaration")) { result.push(decl); }
+        return result;
+      }, []);
+  return []
+    .concat(lang.arr.pluck(topLevel.scope.catches, "name"))
+    .concat(lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+}
+
+function additionalIgnoredRefs(parsed, options) {
+  var topLevel = ast.query.topLevelDeclsAndRefs(parsed),
+      ignoreDecls = topLevel.scope.varDecls.reduce((result, decl, i) => {
+        var path = lang.Path(topLevel.scope.varDeclPaths[i]),
+            parent = path.slice(0,-1).get(parsed);
+        if (parent.type === "ForStatement"
+         || parent.type === "ForInStatement"
+         || (/*!options.es6ExportId &&*/ parent.type === "ExportNamedDeclaration")) { result.push(decl); }
+        return result;
+      }, []),
+      ignoredImportAndExportNames = /*options.es6ExportId ? [] :*/ parsed.body.reduce((ignored, stmt) => {
+        if (stmt.type === "ImportDeclaration")
+          return stmt.specifiers.reduce((ignored, specifier) =>
+            specifier.type === "ImportSpecifier" ?
+              ignored.concat([specifier.imported.name]) : ignored, ignored);
+        if ((stmt.type === "ExportNamedDeclaration"
+          || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers)
+          return ignored.concat(stmt.specifiers.map(specifier => specifier.local.name));
+        return ignored;
+      }, []);
+  return []
+    .concat(lang.arr.pluck(topLevel.scope.catches, "name"))
+    .concat(ignoredImportAndExportNames)
+    .concat(lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+}
+
+function insertCapturesForExportDeclarations(parsed, options) {
+  // if (options.es6ExportId) return parsed;
+  parsed.body = parsed.body.reduce((stmts, stmt) =>
+    stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.declaration ? [stmt] :
+      [stmt].concat(stmt.declaration.declarations.map(decl =>
+        assignExpr(options.captureObj, decl.id, decl.id, false)))), []);
+  return parsed;
+}
+
+function insertCapturesForImportDeclarations(parsed, options) {
+  // if (options.es6ExportId) return parsed;
+  parsed.body = parsed.body.reduce((stmts, stmt) =>
+    stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] :
+      [stmt].concat(stmt.specifiers.map(specifier =>
+        assignExpr(options.captureObj, specifier.local, specifier.local, false)))), []);
+  return parsed;
+}
+
+function insertDeclarationsForExports(parsed, options) {
+  // if (options.es6ExportId) return parsed;
+  parsed.body = parsed.body.reduce((stmts, stmt) =>
+    stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ? [stmt] :
+      stmt.specifiers.map(specifier =>
+        varDecl({
+          type: "VariableDeclarator",
+          id: specifier.local,
+          init: member(specifier.local, options.captureObj)
+        })).concat(stmt)), []);
+  return parsed;
+}
+
+function es6ExportToExportObjAssignments(parsed, options) {
+  parsed.body = parsed.body.reduce((stmts, stmt) => {
+    var nodes;
+    if (stmt.type === "ExportNamedDeclaration") {
+      if (stmt.source) {
+        var key = moduleId = stmt.source;
+        nodes = stmt.specifiers.map(specifier => ({
+          type: "ExpressionStatement",
+          expression: assignmentFromImportToExport(
+            {type: "Literal", value: specifier.exported.name},
+            {type: "Literal", value: specifier.local.name},
+             moduleId, options.exportedObj, options.modulesObj)}));
+      } else if (stmt.declaration) {
+        nodes = [stmt.declaration].concat(
+            stmt.declaration.declarations.map(decl =>
+              assignExpr(options.exportedObj, {type: "Literal", value: decl.id.name}, decl.id, true)));
+      } else {
+        nodes = stmt.specifiers.map(specifier =>
+            assignExpr(options.exportedObj,
+              {type: "Literal", value: specifier.exported.name},
+              shouldDeclBeCaptured({id: specifier.local}, options) ?
+                member(specifier.local, options.captureObj) :
+                specifier.local,
+              true));
+      }
+    } else if (stmt.type === "ExportDefaultDeclaration") {
+      nodes = [assignExpr(options.exportedObj, {type: "Literal", value: "default"}, stmt.declaration, true)];
+    } else if (stmt.type === "ExportAllDeclaration") {
+      var key = {name: options.es6ExportId + "__iterator__", type: "Identifier"}, moduleId = stmt.source;
+      nodes = [
+        {
+          type: "ForInStatement",
+          body: {type: "ExpressionStatement", expression: assignmentFromImportToExport(key, key, moduleId, options.exportedObj, options.modulesObj)},
+          left: {type: "VariableDeclaration", kind: "var", declarations: [{type: "VariableDeclarator", id: key, init: null}]},
+          right: {type: "MemberExpression", computed: true, object: options.modulesObj, property: moduleId},
+        }
+      ];
+      options.excludeRefs.push(key.name);
+      options.excludeDecls.push(key.name);
+    } else nodes = [stmt];
+    return stmts.concat(nodes);
+  }, []);
+
+  return parsed;
+}
+
+function putFunctionDeclsInFront(parsed, options) {
+  var topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+  if (!topLevel.funcDecls.length) return parsed;
+  var globalFuncs = topLevel.funcDecls
+    .filter(ea => shouldDeclBeCaptured(ea, options))
+    .map((decl) => {
+      var funcId = {type: "Identifier", name: decl.id.name};
+      return assignExpr(options.captureObj, funcId, funcId, false);
+    });
+  parsed.body = globalFuncs.concat(parsed.body);
+  return parsed;
+}
+
+function computeDefRanges(parsed, options) {
+  var topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+  var defRanges = lang.chain(topLevel.scope.varDecls)
+    .pluck("declarations").flatten().value()
+    .concat(topLevel.scope.funcDecls)
+    .reduce((defs, decl) => {
+      if (!defs[decl.id.name]) defs[decl.id.name] = []
+      defs[decl.id.name].push({type: decl.type, start: decl.start, end: decl.end});
+      return defs;
+    }, {});
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function shouldDeclBeCaptured(decl, options) {
+  return options.excludeDecls.indexOf(decl.id.name) === -1
+    && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+}
+
+function shouldRefBeCaptured(ref, options) {
+  return options.excludeRefs.indexOf(ref.name) === -1
+    && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function member(prop, obj) {
+  return {type: "MemberExpression", computed: false, object: obj, property: prop}
+}
+
+function varDecl(declarator) {
+  return {
+   declarations: [declarator],
+   kind: "var", type: "VariableDeclaration"
+  }
+}
+
+function assignExpr(assignee, propId, value, computed) {
+  return {
+   type: "ExpressionStatement", expression: {
+    type: "AssignmentExpression", operator: "=",
+    right: value || {type: "Identifier", name: 'undefined'},
+    left: {
+      type: "MemberExpression", computed: computed || false,
+      object: assignee, property: propId
+    }
+   }
+  }
+}
+
+function assignmentFromImportToExport(keyLeft, keyRight, moduleId, exportedObj, modulesObj) {
+  return {
+    type: "AssignmentExpression", operator: "=",
+    left: {computed: true, property: keyLeft, type: "MemberExpression", object: exportedObj},
+    right: {
+      computed: true, property: keyRight, type: "MemberExpression", 
+      object: {computed: true, property: moduleId, type: "MemberExpression", object: modulesObj},
+    }
+  }
+}
+
+},{"../generated/estree-visitor":2,"../index":3,"lively.lang":"lively.lang"}],6:[function(require,module,exports){
 /*global window, process, global*/
 
 var ast = require("../index"),
@@ -1295,7 +2698,7 @@ exports.codeCategorizer = {
   findDecls: findDecls
 }
 
-},{"../index":2,"lively.lang":"lively.lang"}],5:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],7:[function(require,module,exports){
 /*global process, global, exports*/
 
 var lang = lively.lang;
@@ -1587,7 +2990,7 @@ exports.comments = {
 
 }
 
-},{"../index":2,"lively.lang":"lively.lang"}],6:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],8:[function(require,module,exports){
 /*global process, global, exports*/
 
 var lang = lively.lang;
@@ -1703,7 +3106,7 @@ lang.obj.extend(ast, methods);
 // FIXME! Don't extend acorn object!
 lang.obj.extend(ast.acorn, methods);
 
-},{"../index":2,"lively.lang":"lively.lang"}],7:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],9:[function(require,module,exports){
 /*global process, global, exports*/
 
 var lang = lively.lang;
@@ -2567,19 +3970,19 @@ exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAS
     return retVal;
   },
 
-  visitExportSpecifier: function(node, depth, state, path) {
-    var retVal;
-    retVal = this.accept(node.local, depth, state, path.concat(["local"]));
-    retVal = this.accept(node.exported, depth, state, path.concat(["exported"]));
-    var retVal;
-  },
-
   visitExportDefaultDeclaration: function(node, depth, state, path) {
     return this.accept(node.declaration, depth, state, path.concat(["declaration"]));
   },
 
   visitExportAllDeclaration: function(node, depth, state, path) {
     return this.accept(node.source, depth, state, path.concat(["source"]));
+  },
+
+  visitExportSpecifier: function(node, depth, state, path) {
+    var retVal;
+    retVal = this.accept(node.local, depth, state, path.concat(["local"]));
+    retVal = this.accept(node.exported, depth, state, path.concat(["exported"]));
+    var retVal;
   },
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2909,6 +4312,7 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
       classDecls: [],
       methodDecls: [],
       importDecls: [],
+      exportDecls: [],
       refs: [],
       params: [],
       catches: [],
@@ -3140,11 +4544,26 @@ exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisit
     retVal = this.accept(node.local, depth, state, path.concat(["local"]));
     // retVal = this.accept(node.exported, depth, state, path.concat(["exported"]));
     var retVal;
+  },
+
+  visitExportNamedDeclaration: function($super, node, depth, scope, path) {
+    scope.exportDecls.push(node);
+    return $super(node, depth, scope, path);
+  },
+
+  visitExportDefaultDeclaration: function($super, node, depth, scope, path) {
+    scope.exportDecls.push(node);
+    return $super(node, depth, scope, path);
+  },
+
+  visitExportAllDeclaration: function($super, node, depth, scope, path) {
+    scope.exportDecls.push(node);
+    return $super(node, depth, scope, path);
   }
 
 });
 
-},{"../index":2,"lively.lang":"lively.lang"}],8:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],10:[function(require,module,exports){
 /*global process, global, exports*/
 
 var lang = lively.lang;
@@ -3400,7 +4819,7 @@ exports.query = {
 
 };
 
-},{"../index":2,"lively.lang":"lively.lang"}],9:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],11:[function(require,module,exports){
 /*global process, global, exports*/
 
 var lang = lively.lang;
@@ -3416,7 +4835,7 @@ exports.transform = {
     // I don't wan't to make it part of our AST API
 
     _node2string: function(node) {
-      return typeof node.source === "string" ? node.source : ast.stringify(node)
+      return node.source || ast.stringify(node)
     },
 
     _findIndentAt: function(string, pos) {
@@ -3507,6 +4926,7 @@ exports.transform = {
 
           throw new Error('Cannot deal with change ' + Objects.inspect(change));
         }, {start: target.start, end: target.end});
+
       var helper = ast.transform.helper,
         source = sourceChanges.source,
         replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
@@ -3572,15 +4992,16 @@ exports.transform = {
        // => "A.x = 3; A.y = 2; z = 4"
     */
 
-    var ignoreUndeclaredExcept = (options && options.ignoreUndeclaredExcept) || null,
-        whitelist = (options && options.include) || null,
-        blacklist = (options && options.exclude) || [],
-        recordDefRanges = options && options.recordDefRanges,
-        parsed = typeof astOrSource === 'object' ?
-          astOrSource : ast.parse(astOrSource),
-        source = typeof astOrSource === 'string' ?
-          astOrSource : (parsed.source || ast.stringify(parsed)),
-        topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+    var ignoreUndeclaredExcept = (options && options.ignoreUndeclaredExcept) || null
+    var whitelist = (options && options.include) || null;
+    var blacklist = (options && options.exclude) || [];
+    var recordDefRanges = options && options.recordDefRanges;
+
+    var parsed = typeof astOrSource === 'object' ?
+        astOrSource : ast.parse(astOrSource),
+      source = typeof astOrSource === 'string' ?
+        astOrSource : (parsed.source || ast.stringify(parsed)),
+      topLevel = ast.query.topLevelDeclsAndRefs(parsed);
 
     if (ignoreUndeclaredExcept) {
       blacklist = arr.withoutAll(topLevel.undeclaredNames, ignoreUndeclaredExcept).concat(blacklist);
@@ -3588,44 +5009,15 @@ exports.transform = {
 
     // 1. find those var declarations that should not be rewritten. we
     // currently ignore var declarations in for loops and the error parameter
-    // declaration in catch clauses. Also es6 import / export declaration need
-    // a special treatment
+    // declaration in catch clauses
     var scope = topLevel.scope;
     arr.pushAll(blacklist, arr.pluck(scope.catches, "name"));
-    var specialDecls = scope.varDecls.reduce((result, decl, i) => {
+    var forLoopDecls = scope.varDecls.filter(function(decl, i) {
       var path = lang.Path(scope.varDeclPaths[i]),
           parent = path.slice(0,-1).get(parsed);
-      if (parent.type === "ForStatement"
-       || parent.type === "ForInStatement") {
-         result.forDecls.push({decl: decl, parent: parent, scope: scope});
-         result.ignore.push(decl);
-       }
-      if (parent.type === "ExportNamedDeclaration") {
-        result.additionalCaptures.push({target: parent, captures: decl.declarations.map(decl => assign(decl.id, decl.id))});
-        result.ignore.push(decl);
-      }
-      return result;
-    }, {ignore: [], forDecls: [], additionalCaptures: []});
-    var ignoreDecls = specialDecls.ignore;
-    arr.pushAll(blacklist, chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
-
-    // 1.b import decls
-    scope.node.body.forEach(node => {
-      if (node.type !== "ImportDeclaration") return;
-      var captures = node.specifiers.reduce((captures, specifier) => {
-        switch (specifier.type) {
-          case "ImportSpecifier":
-            blacklist.push(specifier.imported.name);
-          case "ImportNamespaceSpecifier":
-          case "ImportDefaultSpecifier":
-            captures.push(assign(specifier.local, specifier.local));
-            break;
-        }
-        return captures;
-      }, []);
-      if (!captures.length) return;
-      specialDecls.additionalCaptures.push({target: node, captures: captures});
+      return parent.type === "ForStatement" || parent.type === "ForInStatement";
     });
+    arr.pushAll(blacklist, chain(forLoopDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
 
     // 2. make all references declared in the toplevel scope into property
     // reads of assignToObj
@@ -3643,7 +5035,7 @@ exports.transform = {
     // 3. turn var declarations into assignments to assignToObj
     // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
     result = ast.transform.helper.replaceNodes(
-      arr.withoutAll(topLevel.varDecls, ignoreDecls)
+      arr.withoutAll(topLevel.varDecls, forLoopDecls)
         .map(function(decl) {
           return {
             target: decl,
@@ -3657,7 +5049,7 @@ exports.transform = {
                 var init = {
                  operator: "||",
                  type: "LogicalExpression",
-                 left: {computed: true, object: assignToObj, property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
+                 left: {computed: true, object: assignToObj,property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
                  right: {name: "undefined", type: "Identifier"}
                 }
                 return shouldDeclBeCaptured(ea) ?
@@ -3666,26 +5058,7 @@ exports.transform = {
           }
         }), result);
 
-    // 4. es6 export declaration are left untouched but a capturing assignment
-    // is added after the export so that we get the value:
-    // "export var x = 23;" => "export var x = 23; Global.x = x;"
-    if (specialDecls.additionalCaptures.length) {
-      result = ast.transform.helper.replaceNodes(
-        specialDecls.additionalCaptures.map((captureSpec) => {
-          return {
-            target: captureSpec.target,
-            replacementFunc: (targetNode, s, wasChanged) => {
-              if (wasChanged) {
-                var node = ast.parse(s);
-                targetNode = node.body[0] || targetNode;
-              }
-              return [targetNode].concat(captureSpec.captures)
-            }
-          }
-        }), result);
-    }
-
-    // 5. assignments for function declarations in the top level scope are
+    // 4. assignments for function declarations in the top level scope are
     // put in front of everything else:
     // "return bar(); function bar() { return 23 }" -> "Global.bar = bar; return bar(); function bar() { return 23 }"
     if (topLevel.funcDecls.length) {
@@ -3704,7 +5077,7 @@ exports.transform = {
       }
     }
 
-    // 6. def ranges so that we know at which source code positions the
+    // 5. def ranges so that we know at which source code positions the
     // definitions are
     if (recordDefRanges)
       result.defRanges = chain(scope.varDecls)
@@ -3717,6 +5090,7 @@ exports.transform = {
         }, {});
 
     result.ast = parsed;
+
     return result;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -3726,9 +5100,7 @@ exports.transform = {
         && (!whitelist || whitelist.indexOf(ref.name) > -1);
     }
 
-    function shouldDeclBeCaptured(decl) {
-      return shouldRefBeCaptured(decl.id);
-    }
+    function shouldDeclBeCaptured(decl) { return shouldRefBeCaptured(decl.id); }
 
     function assign(id, value) {
       return {
@@ -3874,7 +5246,7 @@ exports.transform = {
 
 };
 
-},{"../index":2,"lively.lang":"lively.lang"}],10:[function(require,module,exports){
+},{"../index":3,"lively.lang":"lively.lang"}],12:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.acorn = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 // A recursive descent parser operates by defining functions for all
@@ -7217,7 +8589,7 @@ exports.nonASCIIwhitespace = nonASCIIwhitespace;
 },{}]},{},[3])(3)
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}(g.acorn || (g.acorn = {})).loose = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 "use strict";
@@ -8520,7 +9892,7 @@ lp.lookAhead = function (n) {
 },{"..":1,"./state":5}]},{},[3])(3)
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./acorn":10}],12:[function(require,module,exports){
+},{"./acorn":12}],14:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}(g.acorn || (g.acorn = {})).walk = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 // AST walker module for Mozilla Parser API compatible trees
@@ -8900,7 +10272,7 @@ base.ComprehensionExpression = function (node, st, c) {
 },{}]},{},[1])(1)
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9128,7 +10500,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":14}],14:[function(require,module,exports){
+},{"_process":16}],16:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -9221,7 +10593,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -11824,7 +13196,7 @@ process.umask = function() { return 0; };
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":34,"estraverse":16,"esutils":20,"source-map":21}],16:[function(require,module,exports){
+},{"./package.json":36,"estraverse":18,"esutils":22,"source-map":23}],18:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -12671,7 +14043,7 @@ process.umask = function() { return 0; };
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -12817,7 +14189,7 @@ process.umask = function() { return 0; };
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*
   Copyright (C) 2013-2014 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2014 Ivan Nikulin <ifaaan@gmail.com>
@@ -12954,7 +14326,7 @@ process.umask = function() { return 0; };
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -13121,7 +14493,7 @@ process.umask = function() { return 0; };
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":18}],20:[function(require,module,exports){
+},{"./code":20}],22:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -13156,7 +14528,7 @@ process.umask = function() { return 0; };
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./ast":17,"./code":18,"./keyword":19}],21:[function(require,module,exports){
+},{"./ast":19,"./code":20,"./keyword":21}],23:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -13166,7 +14538,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":29,"./source-map/source-map-generator":30,"./source-map/source-node":31}],22:[function(require,module,exports){
+},{"./source-map/source-map-consumer":31,"./source-map/source-map-generator":32,"./source-map/source-node":33}],24:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13265,7 +14637,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":32,"amdefine":33}],23:[function(require,module,exports){
+},{"./util":34,"amdefine":35}],25:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13409,7 +14781,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":24,"amdefine":33}],24:[function(require,module,exports){
+},{"./base64":26,"amdefine":35}],26:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13453,7 +14825,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":33}],25:[function(require,module,exports){
+},{"amdefine":35}],27:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13875,7 +15247,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":22,"./base64-vlq":23,"./binary-search":26,"./source-map-consumer":29,"./util":32,"amdefine":33}],26:[function(require,module,exports){
+},{"./array-set":24,"./base64-vlq":25,"./binary-search":28,"./source-map-consumer":31,"./util":34,"amdefine":35}],28:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13957,7 +15329,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":33}],27:[function(require,module,exports){
+},{"amdefine":35}],29:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -14262,7 +15634,7 @@ define(function (require, exports, module) {
   exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 });
 
-},{"./basic-source-map-consumer":25,"./binary-search":26,"./source-map-consumer":29,"./util":32,"amdefine":33}],28:[function(require,module,exports){
+},{"./basic-source-map-consumer":27,"./binary-search":28,"./source-map-consumer":31,"./util":34,"amdefine":35}],30:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2014 Mozilla Foundation and contributors
@@ -14350,7 +15722,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":32,"amdefine":33}],29:[function(require,module,exports){
+},{"./util":34,"amdefine":35}],31:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -14574,7 +15946,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./basic-source-map-consumer":25,"./indexed-source-map-consumer":27,"./util":32,"amdefine":33}],30:[function(require,module,exports){
+},{"./basic-source-map-consumer":27,"./indexed-source-map-consumer":29,"./util":34,"amdefine":35}],32:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -14976,7 +16348,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":22,"./base64-vlq":23,"./mapping-list":28,"./util":32,"amdefine":33}],31:[function(require,module,exports){
+},{"./array-set":24,"./base64-vlq":25,"./mapping-list":30,"./util":34,"amdefine":35}],33:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -15392,7 +16764,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":30,"./util":32,"amdefine":33}],32:[function(require,module,exports){
+},{"./source-map-generator":32,"./util":34,"amdefine":35}],34:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -15713,7 +17085,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":33}],33:[function(require,module,exports){
+},{"amdefine":35}],35:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
@@ -16018,7 +17390,7 @@ function amdefine(module, requireFn) {
 module.exports = amdefine;
 
 }).call(this,require('_process'),"/node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"_process":14,"path":13}],34:[function(require,module,exports){
+},{"_process":16,"path":15}],36:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
