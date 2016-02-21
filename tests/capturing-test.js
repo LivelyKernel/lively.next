@@ -33,7 +33,7 @@ function _testModuleTfm(descr, code, expected, only) {
   }
   return (only ? it.only : it)(descr, () => {
     var result = ast.capturing.rewriteToCaptureTopLevelVariables(
-      code, {name: "_rec", type: "Identifier"}, {es6ExportId: "_exports", es6ModulesId: "_modules"});
+      code, {name: "_rec", type: "Identifier"}, {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"});
     expect(result.source).equals(expected);
   });
 }
@@ -196,34 +196,34 @@ describe("ast.capturing", function() {
                  "import 'module-name';");
     });
 
-    describe("import obj", () => {
+    describe("manual import", () => {
 
       testModuleTfm("import x from './some-es6-module.js';",
-                    "_rec.x = _modules['./some-es6-module.js']['default'];");
+                    "_rec.x = _moduleImport('./some-es6-module.js', 'default');");
 
       testModuleTfm("import * as name from 'module-name';",
-                    "_rec.name = _modules['module-name'];");
+                    "_rec.name = _moduleImport('module-name');");
 
       testModuleTfm("import { member } from 'module-name';",
-                    "_rec.member = _modules['module-name']['member'];");
+                    "_rec.member = _moduleImport('module-name', 'member');");
 
       testModuleTfm("import { member as alias } from 'module-name';",
-                    "_rec.alias = _modules['module-name']['member'];");
+                    "_rec.alias = _moduleImport('module-name', 'member');");
 
       testModuleTfm("import { member1 , member2 } from 'module-name';",
-                    "_rec.member1 = _modules['module-name']['member1'];\n_rec.member2 = _modules['module-name']['member2'];");
+                    "_rec.member1 = _moduleImport('module-name', 'member1');\n_rec.member2 = _moduleImport('module-name', 'member2');");
 
       testModuleTfm("import { member1 , member2 as alias} from 'module-name';",
-                    "_rec.member1 = _modules['module-name']['member1'];\n_rec.alias = _modules['module-name']['member2'];");
+                    "_rec.member1 = _moduleImport('module-name', 'member1');\n_rec.alias = _moduleImport('module-name', 'member2');");
 
       testModuleTfm("import defaultMember, { member } from 'module-name';",
-                    "_rec.defaultMember = _modules['module-name']['default'];\n_rec.member = _modules['module-name']['member'];");
+                    "_rec.defaultMember = _moduleImport('module-name', 'default');\n_rec.member = _moduleImport('module-name', 'member');");
 
       testModuleTfm("import defaultMember, * as name from 'module-name';",
-                    "_rec.defaultMember = _modules['module-name']['default'];\n_rec.name = _modules['module-name'];");
+                    "_rec.defaultMember = _moduleImport('module-name', 'default');\n_rec.name = _moduleImport('module-name');");
 
       testModuleTfm("import 'module-name';",
-                    "_modules['module-name'];");
+                    "_moduleImport('module-name');");
     });
 
     describe("export", () => {
@@ -249,37 +249,38 @@ describe("ast.capturing", function() {
     describe("export obj", () => {
 
       testModuleTfm("export default function () {};",
-                    "_exports['default'] = function () {\n};\n;");
+                    "_moduleExport('default', function () {\n});\n;");
 
       testModuleTfm("export default function* () {};",
-                    "_exports['default'] = function* () {\n};\n;");
+                    "_moduleExport('default', function* () {\n});\n;");
 
       testModuleTfm("export default class Foo {a() { return 23; }};",
-                    "_exports['default'] = class Foo {\n    a() {\n        return 23;\n    }\n};\n;");
+                    "_moduleExport('default', class Foo {\n    a() {\n        return 23;\n    }\n});\n;");
 
       testModuleTfm("export { name1, name2 };",
-                    "_exports['name1'] = _rec.name1;\n_exports['name2'] = _rec.name2;");
+                    "_moduleExport('name1', _rec.name1);\n_moduleExport('name2', _rec.name2);");
 
       testModuleTfm("export var x = 34, y = x + 3;",
-                    "var x = 34, y = x + 3;\n_exports['x'] = x;\n_exports['y'] = y;");
+                    "var x = 34, y = x + 3;\n_moduleExport('x', x);\n_moduleExport('y', y);");
 
       testModuleTfm("export let x = 34;",
-                    "let x = 34;\n_exports['x'] = x;");
+                    "let x = 34;\n_moduleExport('x', x);");
 
       testModuleTfm("export let x = 34;",
-                    "let x = 34;\n_exports['x'] = x;");
+                    "let x = 34;\n_moduleExport('x', x);");
 
       testModuleTfm("export { name1 as default };",
-                    "_exports['default'] = _rec.name1;");
+                    "_moduleExport('default', _rec.name1);");
 
       testModuleTfm("export * from 'foo';",
-                    "for (var _exports__iterator__ in _modules['foo'])\n    _exports[_exports__iterator__] = _modules['foo'][_exports__iterator__];");
+                    "for (var _moduleExport__iterator__ in _moduleImport('foo'))\n"
+                  + "    _moduleExport(_moduleExport__iterator__, _moduleImport('foo', _moduleExport__iterator__));");
 
-      testModuleTfm("export { name1, name2 } from 'foo';",
-                    "_exports['name1'] = _modules['foo']['name1'];\n_exports['name2'] = _modules['foo']['name2'];");
+      testModuleTfm("export { name1, name2 } from 'foo'",
+                    "_moduleExport('name1', _moduleImport('foo', 'name1'));\n_moduleExport('name2', _moduleImport('foo', 'name2'));");
 
       testModuleTfm("export { name1 as foo1, name2 as bar2 } from 'foo';",
-                    "_exports['foo1'] = _modules['foo']['name1'];\n_exports['bar2'] = _modules['foo']['name2'];");
+                    "_moduleExport('foo1', _moduleImport('foo', 'name1'));\n_moduleExport('bar2', _moduleImport('foo', 'name2'));");
 
     });
 

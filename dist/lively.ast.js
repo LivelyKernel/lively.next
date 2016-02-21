@@ -5,7 +5,7 @@ window.escodegen = require('escodegen');
 lively.ast = require('./index');
 },{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-20 14:06 PST
+// Generated on 16-02-20 23:55 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -2185,11 +2185,11 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
     includeDecls: null,
     excludeDecls: (options && options.exclude) || [],
     recordDefRanges: false,
-    es6ExportId: null,
-    es6ModulesId: null,
+    es6ExportFuncId: null,
+    es6ImportFuncId: null,
     captureObj: assignToObj || {type: "Identifier", name: "__rec"},
-    exportedObj: {name: options && options.es6ExportId || "_exported", type: "Identifier"},
-    modulesObj: {name: options && options.es6ModulesId || "_loaded_modules", type: "Identifier"},
+    moduleExportFunc: {name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier"},
+    moduleImportFunc: {name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier"},
   }, options);
 
   var parsed = typeof astOrSource === 'object' ?
@@ -2224,12 +2224,12 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
   options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
   options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
 
-  // 3. if the es6ExportId options is defined we rewrite the es6 form into an
+  // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
   // obj assignment, converting es6 code to es5 using the extra
-  // options.exportedObj and options.modulesObj as capture / sources
-  if (options.es6ExportId) {
-    options.excludeRefs.push(options.es6ExportId);
-    options.excludeRefs.push(options.es6ModulesId);
+  // options.moduleExportFunc and options.moduleImportFunc as capture / sources
+  if (options.es6ExportFuncId) {
+    options.excludeRefs.push(options.es6ExportFuncId);
+    options.excludeRefs.push(options.es6ImportFuncId);
     rewritten = es6ModuleTransforms(rewritten, options);
   }
 
@@ -2315,7 +2315,7 @@ function additionalIgnoredDecls(parsed, options) {
             parent = path.slice(0,-1).get(parsed);
         if (parent.type === "ForStatement"
          || parent.type === "ForInStatement"
-         || (/*!options.es6ExportId &&*/ parent.type === "ExportNamedDeclaration")) { result.push(decl); }
+         || (parent.type === "ExportNamedDeclaration")) { result.push(decl); }
         return result;
       }, []);
   return []
@@ -2330,10 +2330,10 @@ function additionalIgnoredRefs(parsed, options) {
             parent = path.slice(0,-1).get(parsed);
         if (parent.type === "ForStatement"
          || parent.type === "ForInStatement"
-         || (/*!options.es6ExportId &&*/ parent.type === "ExportNamedDeclaration")) { result.push(decl); }
+         || (parent.type === "ExportNamedDeclaration")) { result.push(decl); }
         return result;
       }, []),
-      ignoredImportAndExportNames = /*options.es6ExportId ? [] :*/ parsed.body.reduce((ignored, stmt) => {
+      ignoredImportAndExportNames = parsed.body.reduce((ignored, stmt) => {
         if (stmt.type === "ImportDeclaration")
           return stmt.specifiers.reduce((ignored, specifier) =>
             specifier.type === "ImportSpecifier" ?
@@ -2350,7 +2350,6 @@ function additionalIgnoredRefs(parsed, options) {
 }
 
 function insertCapturesForExportDeclarations(parsed, options) {
-  // if (options.es6ExportId) return parsed;
   parsed.body = parsed.body.reduce((stmts, stmt) =>
     stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.declaration ? [stmt] :
       [stmt].concat(stmt.declaration.declarations.map(decl =>
@@ -2359,7 +2358,6 @@ function insertCapturesForExportDeclarations(parsed, options) {
 }
 
 function insertCapturesForImportDeclarations(parsed, options) {
-  // if (options.es6ExportId) return parsed;
   parsed.body = parsed.body.reduce((stmts, stmt) =>
     stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] :
       [stmt].concat(stmt.specifiers.map(specifier =>
@@ -2368,7 +2366,6 @@ function insertCapturesForImportDeclarations(parsed, options) {
 }
 
 function insertDeclarationsForExports(parsed, options) {
-  // if (options.es6ExportId) return parsed;
   parsed.body = parsed.body.reduce((stmts, stmt) =>
     stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ? [stmt] :
       stmt.specifiers.map(specifier =>
@@ -2388,33 +2385,31 @@ function es6ModuleTransforms(parsed, options) {
         var key = moduleId = stmt.source;
         nodes = stmt.specifiers.map(specifier => ({
           type: "ExpressionStatement",
-          expression: assignmentFromImportToExport(
+          expression: exportFromImport(
             {type: "Literal", value: specifier.exported.name},
             {type: "Literal", value: specifier.local.name},
-             moduleId, options.exportedObj, options.modulesObj)}));
+             moduleId, options.moduleExportFunc, options.moduleImportFunc)}));
       } else if (stmt.declaration) {
-        nodes = [stmt.declaration].concat(
-            stmt.declaration.declarations.map(decl =>
-              assignExpr(options.exportedObj, {type: "Literal", value: decl.id.name}, decl.id, true)));
+        nodes = [stmt.declaration].concat(stmt.declaration.declarations.map(decl =>
+          exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id)));
       } else {
         nodes = stmt.specifiers.map(specifier =>
-            assignExpr(options.exportedObj,
-              {type: "Literal", value: specifier.exported.name},
-              shouldDeclBeCaptured({id: specifier.local}, options) ?
-                member(specifier.local, options.captureObj) :
-                specifier.local,
-              true));
+        exportCallStmt(options.moduleExportFunc, specifier.exported.name,
+          shouldDeclBeCaptured({id: specifier.local}, options) ?
+            member(specifier.local, options.captureObj) :
+            specifier.local))
       }
     } else if (stmt.type === "ExportDefaultDeclaration") {
-      nodes = [assignExpr(options.exportedObj, {type: "Literal", value: "default"}, stmt.declaration, true)];
+      // nodes = [assignExpr(options.moduleExportFunc, {type: "Literal", value: "default"}, stmt.declaration, true)];
+      nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
     } else if (stmt.type === "ExportAllDeclaration") {
-      var key = {name: options.es6ExportId + "__iterator__", type: "Identifier"}, moduleId = stmt.source;
+      var key = {name: options.es6ExportFuncId + "__iterator__", type: "Identifier"}, moduleId = stmt.source;
       nodes = [
         {
           type: "ForInStatement",
-          body: {type: "ExpressionStatement", expression: assignmentFromImportToExport(key, key, moduleId, options.exportedObj, options.modulesObj)},
+          body: {type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc)},
           left: {type: "VariableDeclaration", kind: "var", declarations: [{type: "VariableDeclarator", id: key, init: null}]},
-          right: {type: "MemberExpression", computed: true, object: options.modulesObj, property: moduleId},
+          right: importCall(null, moduleId, options.moduleImportFunc),
         }
       ];
       options.excludeRefs.push(key.name);
@@ -2426,8 +2421,8 @@ function es6ModuleTransforms(parsed, options) {
               imported = (specifier.type === "ImportSpecifier" && specifier.imported.name)
                       || (specifier.type === "ImportDefaultSpecifier" && "default")
                       || null;
-          return varDeclForImportObj(local, imported ? {type: "Literal", value: imported} : null, stmt.source, options.modulesObj);
-        }) : {type: "ExpressionStatement", expression: member(stmt.source, options.modulesObj, true)};
+          return varDeclAndImportCall(local, imported || null, stmt.source, options.moduleImportFunc);
+        }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
     } else nodes = [stmt];
     return stmts.concat(nodes);
   }, []);
@@ -2498,26 +2493,42 @@ function assignExpr(assignee, propId, value, computed) {
   }
 }
 
-function assignmentFromImportToExport(keyLeft, keyRight, moduleId, exportedObj, modulesObj) {
-  return {
-    type: "AssignmentExpression", operator: "=",
-    left: {computed: true, property: keyLeft, type: "MemberExpression", object: exportedObj},
-    right: {
-      computed: true, property: keyRight, type: "MemberExpression", 
-      object: {computed: true, property: moduleId, type: "MemberExpression", object: modulesObj},
-    }
-  }
+function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
+  return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
 }
 
-function varDeclForImportObj(localId, imported, moduleSource, modulesObj) {
+function varDeclAndImportCall(localId, imported, moduleSource, moduleImportFunc) {
   return varDecl({
     type: "VariableDeclarator",
     id: localId,
-    init: imported ?
-      member(imported, member(moduleSource, modulesObj, true), true) :
-      member(moduleSource, modulesObj, true)
+    init: importCall(imported, moduleSource, moduleImportFunc)
   });
 }
+
+function importCall(imported, moduleSource, moduleImportFunc) {
+  if (typeof imported === "string") imported = {type: "Literal", value: imported};
+  return {
+    arguments: [moduleSource].concat(imported || []),
+    callee: moduleImportFunc, type: "CallExpression"
+  };
+}
+
+function importCallStmt(imported, moduleSource, moduleImportFunc) {
+  return {
+    type: "ExpressionStatement",
+    expression: importCall(imported, moduleSource, moduleImportFunc)
+  };
+}
+
+function exportCall(exportFunc, local, exportedObj) {
+  if (typeof local === "string") local = {type: "Literal", value: local};
+  return {arguments: [local, exportedObj], callee: exportFunc, type: "CallExpression"};
+}
+
+function exportCallStmt(exportFunc, local, exportedObj) {
+  return {type: "ExpressionStatement", expression: exportCall(exportFunc, local, exportedObj)};
+}
+
 },{"../generated/estree-visitor":2,"../index":3,"lively.lang":"lively.lang"}],6:[function(require,module,exports){
 /*global window, process, global*/
 
