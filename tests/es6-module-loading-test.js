@@ -108,35 +108,46 @@ describe("es6 modules", () => {
 
   });
 
-  describe("reloading", () => {
+  describe("code changes", () => {
 
-    beforeEach(() => es6.import(module3));
-    // afterEach(() => cjs.forgetModule(module3));
+    function changeModule1Source() {
+      // "internalState = 1" => "internalState = 2"
+      return es6.sourceOf(module1).then(s =>
+        es6.sourceChange(module1,
+          s.replace(/(internalState = )([0-9]+)/, "$12"),
+          {evaluate: true}));
+    }
 
-    it("computes required modules of some module", () => {
-      expect(es6.findRequirementsOf(module3)).to.deep.equal(
-        [es6.resolve(module2), es6.resolve(module1)]);
-    });
+    it("modifies module and its exports", () =>
+      es6.import(module1).then(m => {
+        expect(es6.envFor(es6.resolve(module1)).recorder.internalState).to.equal(1, "internal state before change");
+        expect(m.x).to.equal(3, "export state before change");
+        return changeModule1Source().then(() => {
+            expect(es6.envFor(es6.resolve(module1)).recorder.internalState).to.equal(2, "internal state after change");
+            expect(m.x).to.equal(5, "export state after change");
+        });
+      }));
 
-    it("computes dependent modules of some module", () => {
-      expect(es6.findDependentsOf(module1)).to.deep.equal(
-        [es6.resolve(module2), es6.resolve(module3)]);
-    });
+    it("affects dependent modules", () =>
+      es6.import(module2).then(m => {
+        expect(m.y).to.equal(5, "before change");
+        return changeModule1Source().then(() =>
+          expect(m.y).to.equal(7, "state after change"));
+        }));
 
-    it("can reload module dependencies", () => {
-      return es6.import(module3)
-        .then(m => expect(m.z).to.equal(147))
-      // we change module1 and check that the value of module3 that indirectly
-      // depends on module1 has changed as well
+    it("reload module dependencies", () =>
+      es6.import(module3)
+        .then(m => expect(m.z).to.equal(15))
+        // we change module1 and check that the value of module3 that indirectly
+        // depends on module1 has changed as well
         .then(() => es6.sourceOf(module1))
         // es6.sourceOf("tests/" + module1)
-        .then(s => s.replace(/(internalState = )([0-9]+)/, "$142"))
+        .then(s => s.replace(/(internalState = )([0-9]+)/, "$12"))
         .then(s => es6.runEval(s, {asString: true, targetModule: module1}))
         .then(result => expect(result.value).to.not.match(/error/i))
         .then(() => es6.forgetModuleDeps(module1))
         .then(() => es6.import(module3))
-        .then(m => expect(m.z).to.equal(25));
-    });
+        .then(m => expect(m.z).to.equal(21)));
   });
 
 });
