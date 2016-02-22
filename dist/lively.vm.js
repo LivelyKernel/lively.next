@@ -62,10 +62,8 @@ function resolve(file, parent) {
 }
 
 function sourceOf(moduleName, parent) {
-  return lang.promise()
-    .then(() =>
-      lively.lang.promise.convertCallbackFun(fs.readFile)(resolve(moduleName, parent)))
-    .then(String);
+  var read = lang.promise.convertCallbackFun(fs.readFile);
+  return read(resolve(moduleName, parent)).then(String);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -536,9 +534,12 @@ module.exports = {
 /*global process, require, global, __dirname*/
 
 var lang = lively.lang;
+var ast = lively.ast;
 
 var evaluator = require("./evaluator");
 var System = (typeof window !== "undefined" ? window.System : global.System);
+
+var debug = false;
 
 (function setupSystemjs() {
   System.config({transpiler: 'babel', babelOptions: {}});
@@ -566,6 +567,7 @@ function instrumentedFiles() { return Object.keys(loadedModules); }
 function isLoaded(fullname) { return fullname in loadedModules; }
 
 function resolve(name, parentName, parentAddress) {
+  // if (name.match(/^([\w+_]+:)?\/\//)) return name;
   return System.normalizeSync(name, parentName, parentAddress);
 }
 
@@ -574,11 +576,85 @@ function envFor(fullname) {
   var env = loadedModules[fullname] = {
     isInstrumented: false,
     loadError: undefined,
-    recorderName: "__state_recorder__",
-    dontTransform: ["__state_recorder__", "global", "System", "__lvVarRecorder"],
-    recorder: Object.create(global)
+    recorderName: "__lvVarRecorder",
+    dontTransform: ["__lvVarRecorder", "global", "System", "_moduleExport", "_moduleImport"],
+    recorder: Object.create(global, {
+      _moduleExport: {
+        get() { return updateModuleExports.bind(null, fullname); }
+      },
+      _moduleImport: {
+        get: function() {
+          return (moduleName, name) => {
+            console.log(Object.keys(System._loader.moduleRecords));
+            var fullModuleName = resolve(moduleName, fullname),
+                rec = moduleRecordFor(fullModuleName);
+            if (!rec) throw new Error(`import of ${name} failed: ${moduleName} (tried as ${fullModuleName}) is not loaded!`);
+            return rec.exports[name];
+          }
+        }
+      }
+    })
   }
   return env;
+}
+
+function moduleRecordFor(fullname) {
+  var record = System._loader.moduleRecords[fullname];
+  if (!record) return null;
+  if (!record.hasOwnProperty("__lively_vm__")) record.__lively_vm__ = {
+    evalOnlyExport: {}
+  };
+  return record;
+}
+
+function updateModuleRecordOf(fullname, doFunc) {
+  var record = moduleRecordFor(fullname);
+  if (!record) throw new Error(`es6 environment global of ${fullname}: module not loaded, cannot get export object!`);
+  record.locked = true;
+  try {
+    doFunc(record);
+  } finally { record.locked = false; }
+}
+
+function sourceOf(moduleName, parent) {
+  var name = resolve(moduleName),
+      load = (System.loads && System.loads[name]) || {
+        status: 'loading', address: name, name: name,
+        linkSets: [], dependencies: [], metadata: {}};
+  return System.fetch(load);
+}
+
+
+function updateModuleExports(fullname, name, value) {
+  updateModuleRecordOf(fullname, (record) => {
+    debug && console.log("[lively.vm es6 updateModuleExports] %s export %s = %s", fullname, name, String(value));
+
+    var isNewExport = !(name in record.exports);
+    if (isNewExport) record.__lively_vm__.evalOnlyExport[name] = true;
+    var isEvalOnlyExport = record.__lively_vm__.evalOnlyExport[name];
+    record.exports[name] = value;
+
+    if (isEvalOnlyExport) {
+      // if it's a new export we don't need to update dependencies, just the
+      // module itself since no depends know about the export...
+      // HMM... what about *-imports?
+      if (isNewExport) {
+        Object.defineProperty(System._loader.modules[fullname].module, name, {
+          configurable: false, enumerable: true,
+          get() { return record.exports[name]; }
+        });
+      }
+    } else {
+      for (var i = 0, l = record.importers.length; i < l; i++) {
+        var importerModule = record.importers[i];
+        if (!importerModule.locked) {
+          var importerIndex = importerModule.dependencies.indexOf(record);
+          importerModule.setters[importerIndex](record.exports);
+          importerModule.execute();
+        }
+      }
+    }
+  });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -612,13 +688,13 @@ function customTranslate(proceed, load) {
   // }
 
   if (exceptions.some(exc => exc(load.name))) {
-    console.log("[lively.vm es6 customTranslate ignoring] %s", load.name);
+    debug && console.log("[lively.vm es6 customTranslate ignoring] %s", load.name);
     return proceed(load);
     // return Promise.resolve(load);
     // return System.origTranslate.call(System, load);
   }
 
-  console.log("[lively.vm es6 customTranslate] %s", load.name);
+  debug && console.log("[lively.vm es6 customTranslate] %s", load.name);
   load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
   return proceed(load);
 }
@@ -640,9 +716,24 @@ function unwrapModuleLoad() {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // evaluation
 
-function runEval(code, options) {
+function ensureImportsAreLoaded(code, parentModule) {
+  var body = ast.parse("import {y} from './another-es6-module.js'; y").body,
+      imports = body.filter(node => node.type === "ImportDeclaration");
+  return Promise.all(imports.map(node => {
+    var fullName = resolve(node.source.value, parentModule);
+    return moduleRecordFor(fullName) ? undefined : System.import(fullName);
+  })).catch(err => {
+    console.error("Error ensuring imports: " + err.message);
+    throw err;
+  });
+}
 
-  options = lang.obj.merge({targetModule: null, parentModule: null, parentAddress: null, printed: null}, options);
+function runEval(code, options) {
+  options = lang.obj.merge({
+    targetModule: null, parentModule: null,
+    parentAddress: null, printed: null
+  }, options);
+
   return Promise.resolve().then(() => {
     // if (!options.targetModule) return reject(new Error("options.targetModule not defined"));
     if (!options.targetModule) {
@@ -652,10 +743,11 @@ function runEval(code, options) {
     }
 
     var fullname = resolve(options.targetModule);
-    
+
+    // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
     return importES6Module(fullname)
-        // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
-      .then((m) => {
+      .then(() => ensureImportsAreLoaded(code, options.targetModule))
+      .then(() => {
         var env = envFor(fullname),
             rec = env.recorder,
             recName = env.recorderName;
@@ -667,10 +759,13 @@ function runEval(code, options) {
             varRecorderName: recName,
             topLevelVarRecorder: rec,
             sourceURL: options.targetModule,
-            context: m
+            context: rec,
+            es6ExportFuncId: "_moduleExport",
+            es6ImportFuncId: "_moduleImport"
           });
 
-        code = `var ${env.recorderName} = __lvVarRecorder;\n${code}`;
+        code = `var _moduleExport = __lvVarRecorder._moduleExport, _moduleImport = __lvVarRecorder._moduleImport;\n${code}`;
+        // code = `var ${env.recorderName} = __lvVarRecorder;\n${code}`;
 
         return evaluator.runEval(code, options);
       })
@@ -683,33 +778,159 @@ function runEval(code, options) {
   });
 }
 
+function sourceChange(moduleName, newSource, options) {
+  var fullname = resolve(moduleName),
+      load = {
+        status: 'loading',
+        source: newSource,
+        name: fullname,
+        linkSets: [],
+        dependencies: [],
+        metadata: {format: "esm"}
+      };
+
+  return _systemTranslateParsed(load).then(updateData => {
+    var record = moduleRecordFor(fullname),
+        _exports = (name, val) => updateModuleExports(fullname, name, val),
+        declared = updateData.declare(_exports);
+
+    return Promise.all(updateData.localDeps.map(depName => {
+      var depFullname = resolve(depName),
+          depRecord = moduleRecordFor(depFullname);
+      return depRecord ? depRecord :
+        importES6Module(depFullname).then(() =>
+          ({name: depName, fullname: depFullname, record: moduleRecordFor(depFullname)}));
+    }))
+    .then(deps => {
+      // 1. update dependencies
+      record.dependencies = deps.map(ea => ea.record);
+      // hmm... for house keeping... not really needed right now, though
+      var load = System.loads && System.loads[fullname];
+      if (load) {
+        load.deps = deps.map(ea => ea.name);
+        load.depMap = deps.reduce((map, dep) => { map[dep.name] = dep.fullname; return map; }, {});
+        if (load.metadata && load.metadata.entry) {
+          load.metadata.entry.deps = load.deps;
+          load.metadata.entry.normalizedDeps = deps.map(ea => ea.fullname);
+          load.metadata.entry.declare = updateData.declare;
+        }
+      }
+      // 2. run setters to populate imports
+      record.dependencies.forEach((d,i) => declared.setters[i](d.exports));
+      // 3. execute module body
+      return declared.execute();
+    });
+  });
+}
+
+function _systemTranslateParsed(load) {
+  // brittle!
+  // The result of System.translate is source code for a call to
+  // System.register that can't be run standalone. We parse the necessary
+  // details from it that we will use to re-define the module
+  // (dependencies, setters, execute)
+  return System.translate(load).then(translated => {
+    // translated looks like
+    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
+    //   "use strict";
+    //   var x, z, y;
+    //   return {
+    //     setters: [function (_someEs6ModuleJs) { ... }],
+    //     execute: function () {...}
+    //   };
+    // });
+    var parsed = ast.parse(translated)
+    var call = parsed.body[0].expression;
+    var moduleName = call.arguments[0].value;
+    var registerCall = call.callee.body.body[0].expression;
+    var depNames = lang.arr.pluck(registerCall["arguments"][0].elements, "value").map(ea => resolve(ea, moduleName))
+    var declareFuncNode = call.callee.body.body[0].expression["arguments"][1]
+    var declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end)
+    var declare = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});`)
+    return {localDeps: depNames, declare: declare};
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module dependencies
+
+function forgetModuleDeps(moduleName) {
+  var id = resolve(moduleName),
+      deps = findDependentsOf(id);
+  deps.forEach(ea => System.delete(ea));
+  return id;
+}
+
+function forgetModule(moduleName) {
+  System.delete(forgetModuleDeps(moduleName));
+}
+
+function computeRequireMap() {
+  return Object.keys(System.loads).reduce((requireMap, k) => {
+    requireMap[k] = lang.obj.values(System.loads[k].depMap);
+    return requireMap;
+  }, {});
+}
+
+function computeRequireMap_alt() {
+  return Object.keys(System._loader.moduleRecords).reduce((requireMap, k) => {
+    requireMap[k] = System._loader.moduleRecords[k].dependencies.map(ea => ea.name);
+    return requireMap;
+  }, {});
+}
+
+function findDependentsOf(id) {
+  // which modules (module ids) are (in)directly import module with id
+  // Let's say you have
+  // module1: export var x = 23;
+  // module2: import {x} from "module1.js"; export var y = x + 1;
+  // module3: import {y} from "module2.js"; export var z = y + 1;
+  // `findDependentsOf` gives you an answer what modules are "stale" when you
+  // change module1 = module2 + module3
+  return lang.graph.hull(lang.graph.invert(computeRequireMap()), resolve(id));
+}
+
+function findRequirementsOf(id) {
+  // which modules (module ids) are (in)directly required by module with id
+  // Let's say you have
+  // module1: export var x = 23;
+  // module2: import {x} from "module1.js"; export var y = x + 1;
+  // module3: import {y} from "module2.js"; export var z = y + 1;
+  // `findRequirementsOf("./module3")` will report ./module2 and ./module1
+  return lang.graph.hull(computeRequireMap(), resolve(id));
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 module.exports = {
+  System: System,
+
   import: importES6Module,
   config: System.config.bind(System),
 
   wrapModuleLoad: wrapModuleLoad,
   unwrapModuleLoad: unwrapModuleLoad,
   envFor: envFor,
+  _moduleRecordFor: moduleRecordFor,
+  _updateModuleRecordOf: updateModuleRecordOf,
+  _updateModuleExports: updateModuleExports,
 
   resolve: resolve,
   _loadedModules: loadedModules,
 
-  runEval: runEval
+  runEval: runEval,
 
-  // evalIn: evalIn,
-  // evalInAndPrint: evalInAndPrint,
-  // status: status,
-  // statusForPrinted: statusForPrinted,
-  // instrumentedFiles: instrumentedFiles,
-  // prepareCodeForCustomCompile: prepareCodeForCustomCompile,
-  // reloadModule: reloadModule,
-  // forgetModule: forgetModule
+  findRequirementsOf: findRequirementsOf,
+  findDependentsOf: findDependentsOf,
+  forgetModuleDeps: forgetModuleDeps,
+  forgetModule: forgetModule,
+
+  sourceOf: sourceOf,
+  sourceChange: sourceChange
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./evaluator":6,"lively.lang":"lively.lang","systemjs":"systemjs"}],6:[function(require,module,exports){
+},{"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","systemjs":"systemjs"}],6:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/
 
@@ -779,7 +1000,7 @@ function print(value, options) {
   if (options.isPromise) {
     var status = lang.string.print(options.promiseStatus),
         value = options.promiseStatus === "pending" ?
-          undefined : print(options.promisedValue, lively.lang.obj.merge(options, {isPromise: false}));
+          undefined : print(options.promisedValue, lang.obj.merge(options, {isPromise: false}));
     return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + value)}})`;
   }
   
@@ -795,7 +1016,7 @@ function print(value, options) {
 }
 
 EvalResult.prototype.printed = function(options) {
-  this.value = print(this.value, lively.lang.obj.merge(options, {
+  this.value = print(this.value, lang.obj.merge(options, {
     isError: this.isError,
     isPromise: this.isPromise,
     promisedValue: this.promisedValue,
@@ -821,7 +1042,7 @@ EvalResult.prototype.process = function(options) {
   return Promise.resolve(result);
 }
 
-function transformForVarRecord(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals) {
+function transformForVarRecord(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals, es6ExportFuncId, es6ImportFuncId) {
   // variable declaration and references in the the source code get
   // transformed so that they are bound to `varRecorderName` aren't local
   // state. THis makes it possible to capture eval results, e.g. for
@@ -831,9 +1052,11 @@ function transformForVarRecord(code, varRecorder, varRecorderName, blacklist, de
   blacklist.push("arguments");
   var undeclaredToTransform = recordGlobals ?
         null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-      transformed = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+      transformed = ast.capturing.rewriteToCaptureTopLevelVariables(
         code, {name: varRecorderName, type: "Identifier"},
-        {ignoreUndeclaredExcept: undeclaredToTransform,
+        {es6ImportFuncId: es6ImportFuncId,
+         es6ExportFuncId: es6ExportFuncId,
+         ignoreUndeclaredExcept: undeclaredToTransform,
          exclude: blacklist, recordDefRanges: !!defRangeRecorder});
   code = transformed.source;
   if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
@@ -868,7 +1091,9 @@ function evalCodeTransform(code, options) {
       options.varRecorderName || '__lvVarRecorder',
       options.dontTransform,
       options.topLevelDefRangeRecorder,
-      !!options.recordGlobals);
+      !!options.recordGlobals,
+      options.es6ExportFuncId,
+      options.es6ImportFuncId);
   code = transformSingleExpression(code);
 
   if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
@@ -908,6 +1133,7 @@ function runEval(code, options, thenDo) {
 
   try {
     code = evalCodeTransform(code, options);
+    // console.log(code);
   } catch (e) {
     var warning = "lively.vm evalCodeTransform not working: " + (e.stack || e);
     console.warn(warning);
