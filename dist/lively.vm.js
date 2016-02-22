@@ -25,6 +25,8 @@ var lang = lively.lang;
 var callsite = require("callsite");
 var fs = require("fs");
 
+var debug = false;
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helper
 function resolve(file, parent) {
@@ -121,7 +123,7 @@ function prepareCodeForCustomCompile(source, filename, env) {
 
 var loadDepth = 0;
 function customCompile(content, filename) {
-  console.log("[lively.vm customCompile] %s", filename);
+  debug && console.log("[lively.vm customCompile] %s", filename);
   // wraps Module.prototype._compile to capture top-level module definitions
   if (exceptions.some(exc => exc(filename)) || isLoaded(filename))
     return originalCompile.call(this, content, filename);
@@ -169,9 +171,11 @@ function customLoad(request, parent, isMain) {
   if (exceptions.some(exc => exc(id)) || exceptions.some(exc => exc(parentId)))
     return originalLoad.call(this, request, parent, isMain);
 
-
-var parentRel = path.relative(process.cwd(), parentId);
-console.log(lang.string.indent("%s -> %s", " ", loadDepth), parentRel, request);
+  if (debug) {
+    // var parentRel = path.relative(process.cwd(), parentId);
+    // console.log(lang.string.indent("%s -> %s", " ", loadDepth), parentRel, request);
+    console.log(id);
+  }
 
   if (!requireMap[parent.id]) requireMap[parent.id] = [id];
   else requireMap[parent.id].push(id);
@@ -530,9 +534,10 @@ module.exports = {
 }
 
 },{"fs":7,"lively.lang":"lively.lang","path":209,"util":227}],5:[function(require,module,exports){
-(function (global){
+(function (global,__dirname){
 /*global process, require, global, __dirname*/
 
+var path = require("path");
 var lang = lively.lang;
 var ast = lively.ast;
 
@@ -550,7 +555,7 @@ var debug = false;
 
 var loadedModules = loadedModules || {},
     exceptions = [
-      id => id.indexOf("lively.vm/node_modules") > -1
+      id => id.indexOf(path.join(__dirname, "../node_modules")) > -1
     ];
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -929,8 +934,8 @@ module.exports = {
   sourceChange: sourceChange
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","systemjs":"systemjs"}],6:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib")
+},{"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","path":209,"systemjs":"systemjs"}],6:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/
 
