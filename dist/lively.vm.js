@@ -1042,7 +1042,15 @@ EvalResult.prototype.process = function(options) {
   return Promise.resolve(result);
 }
 
-function transformForVarRecord(code, varRecorder, varRecorderName, blacklist, defRangeRecorder, recordGlobals, es6ExportFuncId, es6ImportFuncId) {
+function transformForVarRecord(
+  code,
+  varRecorder,
+  varRecorderName,
+  blacklist,
+  defRangeRecorder,
+  recordGlobals,
+  es6ExportFuncId,
+  es6ImportFuncId) {
   // variable declaration and references in the the source code get
   // transformed so that they are bound to `varRecorderName` aren't local
   // state. THis makes it possible to capture eval results, e.g. for
