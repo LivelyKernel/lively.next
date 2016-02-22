@@ -7256,7 +7256,7 @@ window.escodegen = require('escodegen');
 lively.ast = require('./index');
 },{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-21 17:37 PST
+// Generated on 16-02-21 21:38 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -9449,7 +9449,6 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
         astOrSource : (parsed.source || ast.stringify(parsed)),
       rewritten = parsed;
 
-
   // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
   // if it is a list of names we will capture all refs with those names
   if (options.ignoreUndeclaredExcept) {
@@ -9475,7 +9474,6 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
   options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
   options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
 
-// console.log(options.excludeRefs);
   // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
   // obj assignment, converting es6 code to es5 using the extra
   // options.moduleExportFunc and options.moduleImportFunc as capture / sources
@@ -9697,7 +9695,7 @@ function putFunctionDeclsInFront(parsed, options) {
 
 function computeDefRanges(parsed, options) {
   var topLevel = ast.query.topLevelDeclsAndRefs(parsed);
-  var defRanges = lang.chain(topLevel.scope.varDecls)
+  return lang.chain(topLevel.scope.varDecls)
     .pluck("declarations").flatten().value()
     .concat(topLevel.scope.funcDecls)
     .reduce((defs, decl) => {
