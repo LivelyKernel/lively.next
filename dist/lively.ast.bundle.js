@@ -7256,20 +7256,21 @@ window.escodegen = require('escodegen');
 var ast = require('./index');
 if (!lively.ast) lively.ast = ast;
 else {
-  if (lively.ast.acorn)
-    for (var name in ast.acorn)
+  if (lively.ast.acorn) {
+    for (var name in ast.acorn) {
       if (ast.acorn.hasOwnProperty(name))
         lively.ast.acorn[name] = ast.acorn[name];
-  else lively.ast.acorn = ast.acorn
-  for (var name in ast)
+    }
+  } else { lively.ast.acorn = ast.acorn; }
+  for (var name in ast) {
     if (ast.hasOwnProperty(name) && name !== "acorn")
       lively.ast[name] = ast[name];
+  }
 }
-  
 
 },{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-21 23:53 PST
+// Generated on 16-02-22 14:01 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
