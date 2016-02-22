@@ -590,11 +590,18 @@ function envFor(fullname) {
       _moduleImport: {
         get: function() {
           return (moduleName, name) => {
-            console.log(Object.keys(System._loader.moduleRecords));
             var fullModuleName = resolve(moduleName, fullname),
-                rec = moduleRecordFor(fullModuleName);
-            if (!rec) throw new Error(`import of ${name} failed: ${moduleName} (tried as ${fullModuleName}) is not loaded!`);
-            return rec.exports[name];
+                imported = System._loader.modules[fullModuleName];
+            if (!imported) throw new Error(`import of ${name} failed: ${moduleName} (tried as ${fullModuleName}) is not loaded!`);
+            if (name == undefined)
+              return imported.module;
+            if (!imported.module.hasOwnProperty(name))
+              console.warn(`import from ${moduleName}: Has no export ${name}!`);
+            return imported.module[name];
+            // var fullModuleName = resolve(moduleName, fullname),
+            //     rec = moduleRecordFor(fullModuleName);
+            // if (!rec) throw new Error(`import of ${name} failed: ${moduleName} (tried as ${fullModuleName}) is not loaded!`);
+            // return rec.exports[name];
           }
         }
       }
@@ -7110,7 +7117,6 @@ exports['1.3.132.0.35'] = 'p521'
 
   BN.prototype.imuln = function imuln (num) {
     assert(typeof num === 'number');
-    assert(num < 0x4000000);
 
     // Carry
     var carry = 0;
@@ -7342,7 +7348,6 @@ exports['1.3.132.0.35'] = 'p521'
   // Add plain number `num` to `this`
   BN.prototype.iaddn = function iaddn (num) {
     assert(typeof num === 'number');
-    assert(num < 0x4000000);
     if (num < 0) return this.isubn(-num);
 
     // Possible sign change
@@ -7383,7 +7388,6 @@ exports['1.3.132.0.35'] = 'p521'
   // Subtract plain number `num` from `this`
   BN.prototype.isubn = function isubn (num) {
     assert(typeof num === 'number');
-    assert(num < 0x4000000);
     if (num < 0) return this.iaddn(-num);
 
     if (this.negative !== 0) {
@@ -7545,25 +7549,11 @@ exports['1.3.132.0.35'] = 'p521'
       a.iushrn(shift);
     }
 
-    return {
-      div: q || null,
-      mod: a
-    };
+    return { div: q || null, mod: a };
   };
 
-  // NOTE: 1) `mode` can be set to `mod` to request mod only,
-  //       to `div` to request div only, or be absent to
-  //       request both div & mod
-  //       2) `positive` is true if unsigned mod is requested
   BN.prototype.divmod = function divmod (num, mode, positive) {
     assert(!num.isZero());
-
-    if (this.isZero()) {
-      return {
-        div: new BN(0),
-        mod: new BN(0)
-      };
-    }
 
     var div, mod, res;
     if (this.negative !== 0 && num.negative === 0) {
@@ -7593,10 +7583,7 @@ exports['1.3.132.0.35'] = 'p521'
         div = res.div.neg();
       }
 
-      return {
-        div: div,
-        mod: res.mod
-      };
+      return { div: div, mod: res.mod };
     }
 
     if ((this.negative & num.negative) !== 0) {
@@ -7619,26 +7606,17 @@ exports['1.3.132.0.35'] = 'p521'
 
     // Strip both numbers to approximate shift value
     if (num.length > this.length || this.cmp(num) < 0) {
-      return {
-        div: new BN(0),
-        mod: this
-      };
+      return { div: new BN(0), mod: this };
     }
 
     // Very short reduction
     if (num.length === 1) {
       if (mode === 'div') {
-        return {
-          div: this.divn(num.words[0]),
-          mod: null
-        };
+        return { div: this.divn(num.words[0]), mod: null };
       }
 
       if (mode === 'mod') {
-        return {
-          div: null,
-          mod: new BN(this.modn(num.words[0]))
-        };
+        return { div: null, mod: new BN(this.modn(num.words[0])) };
       }
 
       return {
@@ -7863,8 +7841,8 @@ exports['1.3.132.0.35'] = 'p521'
   };
 
   BN.prototype.gcd = function gcd (num) {
-    if (this.isZero()) return num.abs();
-    if (num.isZero()) return this.abs();
+    if (this.isZero()) return num.clone();
+    if (num.isZero()) return this.clone();
 
     var a = this.clone();
     var b = num.clone();
@@ -8255,13 +8233,8 @@ exports['1.3.132.0.35'] = 'p521'
       input.words[i - 10] = ((next & mask) << 4) | (prev >>> 22);
       prev = next;
     }
-    prev >>>= 22;
-    input.words[i - 10] = prev;
-    if (prev === 0 && input.length > 10) {
-      input.length -= 10;
-    } else {
-      input.length -= 9;
-    }
+    input.words[i - 10] = prev >>> 22;
+    input.length -= 9;
   };
 
   K256.prototype.imulK = function imulK (num) {
@@ -13882,7 +13855,8 @@ module.exports={
     }
   ],
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz"
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],72:[function(require,module,exports){
@@ -14358,7 +14332,6 @@ base.Node = require('./node');
 },{"./buffer":78,"./node":80,"./reporter":81}],80:[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
-var DecoderBuffer = require('../base').DecoderBuffer;
 var assert = require('minimalistic-assert');
 
 // Supported tags
@@ -14371,7 +14344,7 @@ var tags = [
 // Public methods list
 var methods = [
   'key', 'obj', 'use', 'optional', 'explicit', 'implicit', 'def', 'choice',
-  'any', 'contains'
+  'any'
 ].concat(tags);
 
 // Overrided methods list
@@ -14407,7 +14380,6 @@ function Node(enc, parent) {
   state['default'] = null;
   state.explicit = null;
   state.implicit = null;
-  state.contains = null;
 
   // Should create new instance on each method
   if (!state.parent) {
@@ -14612,15 +14584,6 @@ Node.prototype.choice = function choice(obj) {
   return this;
 };
 
-Node.prototype.contains = function contains(item) {
-  var state = this._baseState;
-
-  assert(state.use === null);
-  state.contains = item;
-
-  return this;
-};
-
 //
 // Decoding
 //
@@ -14722,12 +14685,6 @@ Node.prototype._decode = function decode(input) {
       });
       if (fail)
         return err;
-    }
-
-    // Decode contained/encoded by schema, only in bit or octet strings
-    if (state.contains && (state.tag === 'octstr' || state.tag === 'bitstr')) {
-      var data = new DecoderBuffer(result);
-      result = this._getUse(state.contains, input._reporterState.obj)._decode(data);
     }
   }
 
@@ -14872,9 +14829,6 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     result = this._createEncoderBuffer(data);
   } else if (state.choice) {
     result = this._encodeChoice(data, reporter);
-  } else if (state.contains) {
-    content = this._getUse(state.contains, parent)._encode(data, reporter);
-    primitive = true;
   } else if (state.children) {
     content = state.children.map(function(child) {
       if (child._baseState.tag === 'null_')
@@ -14894,6 +14848,7 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     }, this).filter(function(child) {
       return child;
     });
+
     content = this._createEncoderBuffer(content);
   } else {
     if (state.tag === 'seqof' || state.tag === 'setof') {
@@ -14986,7 +14941,6 @@ Node.prototype._isNumstr = function isNumstr(str) {
 Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '\(\)\+,\-\.\/:=\?]*$/.test(str);
 };
-
 },{"../base":79,"minimalistic-assert":90}],81:[function(require,module,exports){
 var inherits = require('inherits');
 
@@ -15324,7 +15278,6 @@ DERNode.prototype._decodeStr = function decodeStr(buffer, tag) {
 };
 
 DERNode.prototype._decodeObjid = function decodeObjid(buffer, values, relative) {
-  var result;
   var identifiers = [];
   var ident = 0;
   while (!buffer.isEmpty()) {
