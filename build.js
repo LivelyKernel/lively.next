@@ -29,7 +29,20 @@ var uglify          = require("uglify-js"),
     exportCode = `var lively = window.lively || (window.lively = {});
 window.acorn = require('acorn');
 window.escodegen = require('escodegen');
-lively.ast = require('./index');`;
+var ast = require('./index');
+if (!lively.ast) lively.ast = ast;
+else {
+  if (lively.ast.acorn)
+    for (var name in ast.acorn)
+      if (ast.acorn.hasOwnProperty(name))
+        lively.ast.acorn[name] = ast.acorn[name];
+  else lively.ast.acorn = ast.acorn
+  for (var name in ast)
+    if (ast.hasOwnProperty(name) && name !== "acorn")
+      lively.ast[name] = ast[name];
+}
+  
+`;
 
 function buildchain(target, exportCode, externals, thenDo) {
   fun.composeAsync(
