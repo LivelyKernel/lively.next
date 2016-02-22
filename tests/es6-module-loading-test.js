@@ -86,12 +86,17 @@ describe("es6 modules", () => {
         () => es6.runEval("export var foo = 3;", {asString: true, targetModule: module1}),
         (result, state) => {
           expect(result.value).to.not.match(/error/i);
-          expect(state.m1.foo).to.equal(3, "foo not defined in module1 after eval");
+          // Hmmm.... frozen modules require us to re-import... damn!
+          // expect(state.m1.foo).to.equal(3, "foo not defined in module1 after eval");
+          return es6.import(module1)
+            .then((m1) => expect(m1.foo).to.equal(3, "foo not defined in module1 after eval"))
         },
         () => es6.runEval("export var foo = 5;", {asString: true, targetModule: module1}),
         (result, state) => {
           expect(result.value).to.not.match(/error/i);
-          expect(state.m1.foo).to.equal(5, "foo updated in module1 after re-eval");
+          // expect(state.m1.foo).to.equal(5, "foo updated in module1 after re-eval");
+          return es6.import(module1)
+            .then((m1) => expect(m1.foo).to.equal(5, "foo updated in module1 after re-eval"))
         }]));
 
     it("of import statement", () =>
