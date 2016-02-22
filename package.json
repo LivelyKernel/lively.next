@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.4.3",
+  "version": "0.4.5",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index.js",
   "scripts": {
