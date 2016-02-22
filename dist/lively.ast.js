@@ -5,7 +5,7 @@ window.escodegen = require('escodegen');
 lively.ast = require('./index');
 },{"./index":3,"acorn":12,"escodegen":17}],2:[function(require,module,exports){
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-20 23:55 PST
+// Generated on 16-02-21 17:37 PST
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -2224,6 +2224,7 @@ function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
   options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
   options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
 
+// console.log(options.excludeRefs);
   // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
   // obj assignment, converting es6 code to es5 using the extra
   // options.moduleExportFunc and options.moduleImportFunc as capture / sources
@@ -2334,11 +2335,11 @@ function additionalIgnoredRefs(parsed, options) {
         return result;
       }, []),
       ignoredImportAndExportNames = parsed.body.reduce((ignored, stmt) => {
-        if (stmt.type === "ImportDeclaration")
+        if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration")
           return stmt.specifiers.reduce((ignored, specifier) =>
             specifier.type === "ImportSpecifier" ?
               ignored.concat([specifier.imported.name]) : ignored, ignored);
-        if ((stmt.type === "ExportNamedDeclaration"
+        if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration"
           || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers)
           return ignored.concat(stmt.specifiers.map(specifier => specifier.local.name));
         return ignored;
