@@ -36,7 +36,11 @@ describe("es6 modules", () => {
     es6.wrapModuleLoad();
   });
 
-  afterEach(() => es6.forgetModule(module1));
+  afterEach(() => {
+    es6.forgetModule(module1);
+    es6.forgetModule(module2);
+    es6.forgetModule(module3);
+  });
 
   it("can be loaded", () =>
     es6.import(module1).then(m => expect(m.x).equals(3)));
@@ -128,12 +132,30 @@ describe("es6 modules", () => {
         });
       }));
 
+    it("modifies imports", () =>
+      es6.import(module2)
+        .then(() =>
+          expect(es6._moduleRecordFor(es6.resolve(module2)).dependencies.map(ea => ea.name))
+            .to.deep.equal([es6.resolve(module1)], "deps before"))
+        .then(m => es6.sourceChange(module2,
+                    "import { z as x } from './yet-another-es6-module.js'; export var y = x + 2;",
+                    {evaluate: true}))
+        .then(() =>
+          expect(es6._moduleRecordFor(es6.resolve(module2)).dependencies.map(ea => ea.name))
+              .to.deep.equal([es6.resolve(module3)], "deps after")));
+
     it("affects dependent modules", () =>
       es6.import(module2).then(m => {
         expect(m.y).to.equal(5, "before change");
         return changeModule1Source().then(() =>
           expect(m.y).to.equal(7, "state after change"));
         }));
+
+    it("affects eval state", () =>
+      es6.import(module1)
+        .then(m => changeModule1Source())
+        .then(() => es6.runEval("[internalState, x]", {targetModule: module1}))
+        .then(result => expect(result.value).to.deep.equal([2, 5])));
 
     it("reload module dependencies", () =>
       es6.import(module3)
