@@ -94,6 +94,14 @@ describe("es6 modules", () => {
           expect(state.m1.foo).to.equal(5, "foo updated in module1 after re-eval");
         }]));
 
+    it("of import statement", () =>
+      // test if import is transformed to lookup + if the imported module gets before eval
+      lang.promise.chain([
+        () => es6.runEval("import {y} from './another-es6-module.js'; y", {targetModule: module1}),
+        (result, state) => {
+          expect(result.value).to.not.match(/error/i);
+          expect(result.value).to.equal(5, "imported value");
+        }]))
   });
 
   describe("dependencies", () => {
