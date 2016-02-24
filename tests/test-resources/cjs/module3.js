@@ -1,4 +1,4 @@
-var other = require("./another-cjs-module");
+var other = require("./module2");
 
 // console.log("running " + __filename);
 
