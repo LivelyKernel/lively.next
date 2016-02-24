@@ -1,4 +1,4 @@
-console.log("running some-es6-module");
+console.log("running es6 module1");
 
 function someFunction() { return 3 + internalState; }
 

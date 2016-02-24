@@ -16,23 +16,18 @@ var Global = env.Global;
 
 var es6 = vm.es6;
 
-var module1 = "test-resources/some-es6-module.js";
-var module2 = "test-resources/another-es6-module.js";
-var module3 = "test-resources/yet-another-es6-module.js";
+var module1 = "test-resources/es6/module1.js";
+var module2 = "test-resources/es6/module2.js";
+var module3 = "test-resources/es6/module3.js";
 
 describe("es6 modules", () => {
 
   before(function() {
-    if (typeof require === "function") {
-      // vm.cjs.reloadModule(vm.cjs.resolve("systemjs"));
-      es6.config({baseURL: 'tests/'});
-    } else {
-      es6.config({
-        transpiler: 'babel', babelOptions: {},
-        baseURL: document.URL.replace(/\/[^\/]*$/, ""),
-        map: {babel: '../node_modules/babel-core/browser.js'}
-      });
-    }
+    es6._init(env.isCommonJS ? {baseURL: 'tests/'} : {
+      transpiler: 'babel', babelOptions: {},
+      baseURL: document.URL.replace(/\/[^\/]*$/, ""),
+      map: {babel: '../node_modules/babel-core/browser.js'}
+    });
     es6.wrapModuleLoad();
   });
 
@@ -102,7 +97,7 @@ describe("es6 modules", () => {
     it("of import statement", () =>
       // test if import is transformed to lookup + if the imported module gets before eval
       lang.promise.chain([
-        () => es6.runEval("import {y} from './another-es6-module.js'; y", {targetModule: module1}),
+        () => es6.runEval("import {y} from './module2.js'; y", {targetModule: module1}),
         (result, state) => {
           expect(result.value).to.not.match(/error/i);
           expect(result.value).to.equal(5, "imported value");
@@ -151,7 +146,7 @@ describe("es6 modules", () => {
           expect(es6._moduleRecordFor(es6.resolve(module2)).dependencies.map(ea => ea.name))
             .to.deep.equal([es6.resolve(module1)], "deps before"))
         .then(m => es6.sourceChange(module2,
-                    "import { z as x } from './yet-another-es6-module.js'; export var y = x + 2;",
+                    "import { z as x } from './module3.js'; export var y = x + 2;",
                     {evaluate: true}))
         .then(() =>
           expect(es6._moduleRecordFor(es6.resolve(module2)).dependencies.map(ea => ea.name))

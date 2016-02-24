@@ -12,7 +12,7 @@ module.exports = lang.obj.merge(
     es6: require("./lib/es6-interface")
   });
 },{"./lib/commonjs-interface":3,"./lib/completions":4,"./lib/es6-interface":5,"./lib/evaluator":6,"lively.lang":"lively.lang"}],3:[function(require,module,exports){
-(function (process,global,__dirname){
+(function (process,global,__filename,__argument0,__argument1,__argument2,__argument3,__dirname){
 /*global process, require, global, __dirname*/
 
 var Module = require("module").Module;
@@ -30,6 +30,8 @@ var debug = false;
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helper
 function resolve(file, parent) {
+  if (typeof parent === "string") parent = {id: parent};
+
   // normal resolve
   try {
     return Module._resolveFilename(file, parent);
@@ -37,10 +39,9 @@ function resolve(file, parent) {
 
   // manual lookup using path
   if (!path.isAbsolute(file) && parent) {
-    var parentId = typeof parent === "string" ? parent : parent.id;
     if (!file.match(/\.js$/)) file += ".js";
     try {
-      return Module._resolveFilename(path.join(parentId, "..", file));
+      return Module._resolveFilename(path.join(parent.id, "..", file));
     } catch (e) {}
   }
 
@@ -94,7 +95,8 @@ function ensureEnv(fullName) {
       isInstrumented: false,
       loadError: undefined,
       // recorderName: "eval_rec_" + path.basename(fullName).replace(/[^a-z]/gi, "_"),
-      recorderName: "eval_rec_" + fullName.replace(/[^a-z]/gi, "_"),
+      // recorderName: "eval_rec_" + fullName.replace(/[^a-z]/gi, "_"),
+      recorderName: "__lv_rec__",
       recorder: Object.create(global)
     });
 }
@@ -108,10 +110,8 @@ function prepareCodeForCustomCompile(source, filename, env) {
         dontTransform: [env.recorderName, "global"].concat(magicVars),
         recordGlobals: true
       },
-      header = "var " + env.recorderName + " = global." + env.recorderName + ";\n",
-      header = header + magicVars
-        .map(varName => env.recorderName + "." + varName + "=" + varName + ";")
-        .join("\n");
+      header = `var __cjs = require('${__filename}'),\n    ${env.recorderName} = (__cjs.default ? __cjs.default.envFor : __cjs.envFor)('${filename}').recorder;\n`
+             + magicVars.map(varName => `${env.recorderName}.${varName} = ${varName};`).join("\n");
 
   try {
     return (header + "\n"
@@ -172,9 +172,9 @@ function customLoad(request, parent, isMain) {
     return originalLoad.call(this, request, parent, isMain);
 
   if (debug) {
-    // var parentRel = path.relative(process.cwd(), parentId);
-    // console.log(lang.string.indent("%s -> %s", " ", loadDepth), parentRel, request);
-    console.log(id);
+    var parentRel = path.relative(process.cwd(), parentId);
+    console.log(lang.string.indent("[lively.vm cjs dependency] %s -> %s", " ", loadDepth), parentRel, request);
+    // console.log(id);
   }
 
   if (!requireMap[parent.id]) requireMap[parent.id] = [id];
@@ -251,6 +251,10 @@ function runEval(code, options) {
 
     return evaluator.runEval(code, options);
   });
+}
+
+function importCjsModule(name) {
+  return new Promise(ok => ok(require(resolve(name))));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -341,31 +345,42 @@ function findRequirementsOf(id) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 module.exports = {
-  resolve: resolve,
-  sourceOf: sourceOf,
-
-  wrapModuleLoad: wrapModuleLoad,
-  unwrapModuleLoad: unwrapModuleLoad,
-  prepareCodeForCustomCompile: prepareCodeForCustomCompile,
-
-  reloadModule: reloadModule,
-  forgetModule: forgetModule,
-  forgetModuleDeps: forgetModuleDeps,
-
-  findRequirementsOf: findRequirementsOf,
-  findDependentsOf: findDependentsOf,
+  // internals
   _requireMap: requireMap,
-
-  instrumentedFiles: instrumentedFiles,
   _loadedModules: loadedModules,
+  instrumentedFiles: instrumentedFiles,
+  _prepareCodeForCustomCompile: prepareCodeForCustomCompile,
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // accessing
+  sourceOf: sourceOf,
+  envFor: envFor,
   status: status,
   statusForPrinted: statusForPrinted,
 
-  envFor: envFor,
-  runEval: runEval
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // eval + changes
+  runEval: runEval,
+  // sourceChange: sourceChange,
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // loading + dependencies
+  // reloadModule: reloadModule,
+  resolve: resolve,
+  "import": importCjsModule,
+  reloadModule: reloadModule,
+  forgetModule: forgetModule,
+  forgetModuleDeps: forgetModuleDeps,
+  findRequirementsOf: findRequirementsOf,
+  findDependentsOf: findDependentsOf,
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // instrumentation
+  wrapModuleLoad: wrapModuleLoad,
+  unwrapModuleLoad: unwrapModuleLoad
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib")
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib/commonjs-interface.js",arguments[3],arguments[4],arguments[5],arguments[6],"/lib")
 },{"./evaluator":6,"_process":210,"callsite":230,"fs":7,"lively.lang":"lively.lang","module":7,"node-uuid":231,"path":209,"util":227}],4:[function(require,module,exports){
 /*global require, __dirname*/
 
@@ -540,30 +555,73 @@ module.exports = {
 var path = require("path");
 var lang = lively.lang;
 var ast = lively.ast;
-
 var evaluator = require("./evaluator");
-var System = (typeof window !== "undefined" ? window.System : global.System);
 
-var debug = false;
-
-(function setupSystemjs() {
-  System.config({transpiler: 'babel', babelOptions: {}});
-  System.trace = true;
-  // System.__defineGetter__("__lively_vm__", () => require(__filename));
-  System.__defineGetter__("__lively_vm__", () => module.exports);
-})();
+var debug = true;
 
 var loadedModules = loadedModules || {},
     exceptions = [
-      id => id.indexOf(path.join(__dirname, "../node_modules")) > -1
-    ];
+      id => id.indexOf(path.join(__dirname, "../node_modules")) > -1,
+      id => id.slice(-3) !== ".js"
+    ],
+    pendingConfigs = [], configInitialized = false,
+    _currentSystem,
+    // Stolen from SystemJS
+    esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+    
+init();
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// configuration
+function init(cfg) {
+  var SystemLoader = (typeof window !== "undefined" ? window.System : global.System).constructor;
+  global.System = _currentSystem = new SystemLoader();
+  cfg = lang.obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
+  config(cfg);
+
+  _currentSystem.trace = true;
+  // System.__defineGetter__("__lively_vm__", () => require(__filename));
+  _currentSystem.__defineGetter__("__lively_vm__", () => module.exports);
+
+  if (_currentSystem.get("@system-env").node) {
+    var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
+        "cluster", "console", "crypto", "dgram", "dns", "domain", "Events", "fs",
+        "http", "https", "module", "net", "os", "path", "punycode", "querystring",
+        "readline", "repl", "stream", "stringdecoder", "timers", "tls_(ssl)",
+        "tty", "url", "util", "v8", "vm", "zlib"],
+        map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
+    config({
+      defaultJSExtensions: true,
+      map: map,
+        // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
+      paths: {"node_modules:*": "./node_modules/*"},
+      packageConfigPaths: ['./node_modules/*/package.json']
+    });
+  }
+}
+
+function config(cfg) {
+  // First config call needs to have baseURL. To still allow setting other
+  // config parameters we cache non-baseURL calls that come before and run them
+  // as soon as we get the baseURL
+  if (!configInitialized && !cfg.baseURL) {
+    debug && console.log("[lively.vm es6 config call queued]")
+    pendingConfigs.push(cfg);
+    return;
+  }
+  _currentSystem.config(cfg);
+  if (!configInitialized) {
+    configInitialized = true;
+    pendingConfigs.forEach(ea => _currentSystem.config(ea));
+  }
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // loading
 function importES6Module(path, options) {
-  if (typeof options !== "undefined")
-    System.config(options);
-  return System.import(path);
+  if (typeof options !== "undefined") config(options);
+  return _currentSystem.import(path);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -573,7 +631,7 @@ function isLoaded(fullname) { return fullname in loadedModules; }
 
 function resolve(name, parentName, parentAddress) {
   // if (name.match(/^([\w+_]+:)?\/\//)) return name;
-  return System.normalizeSync(name, parentName, parentAddress);
+  return _currentSystem.normalizeSync(name, parentName, parentAddress);
 }
 
 function envFor(fullname) {
@@ -591,7 +649,7 @@ function envFor(fullname) {
         get: function() {
           return (moduleName, name) => {
             var fullModuleName = resolve(moduleName, fullname),
-                imported = System._loader.modules[fullModuleName];
+                imported = _currentSystem._loader.modules[fullModuleName];
             if (!imported) throw new Error(`import of ${name} failed: ${moduleName} (tried as ${fullModuleName}) is not loaded!`);
             if (name == undefined)
               return imported.module;
@@ -611,7 +669,7 @@ function envFor(fullname) {
 }
 
 function moduleRecordFor(fullname) {
-  var record = System._loader.moduleRecords[fullname];
+  var record = _currentSystem._loader.moduleRecords[fullname];
   if (!record) return null;
   if (!record.hasOwnProperty("__lively_vm__")) record.__lively_vm__ = {
     evalOnlyExport: {}
@@ -630,10 +688,10 @@ function updateModuleRecordOf(fullname, doFunc) {
 
 function sourceOf(moduleName, parent) {
   var name = resolve(moduleName),
-      load = (System.loads && System.loads[name]) || {
+      load = (_currentSystem.loads && _currentSystem.loads[name]) || {
         status: 'loading', address: name, name: name,
         linkSets: [], dependencies: [], metadata: {}};
-  return System.fetch(load);
+  return _currentSystem.fetch(load);
 }
 
 
@@ -651,8 +709,8 @@ function updateModuleExports(fullname, name, value) {
       // module itself since no depends know about the export...
       // HMM... what about *-imports?
       if (isNewExport) {
-        var oldM = System._loader.modules[fullname].module;
-        var m = System._loader.modules[fullname].module = new oldM.constructor();
+        var oldM = _currentSystem._loader.modules[fullname].module;
+        var m = _currentSystem._loader.modules[fullname].module = new oldM.constructor();
         var pNames = Object.getOwnPropertyNames(record.exports);
         for (var i = 0; i < pNames.length; i++) (function(key) {
           Object.defineProperty(m, key, {
@@ -699,6 +757,26 @@ function prepareCodeForCustomCompile(source, fullname, env) {
   }
 }
 
+function addNodejsWrapperSource(load) {
+  // On nodejs we might run alongside normal node modules. To not load those
+  // twice we have this little hack...
+  try {
+    var Module = require("module").Module,
+        id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
+        nodeModule = Module._cache[id];
+    if (nodeModule) {
+      load.source = `export default System._nodeRequire('${id}');`;
+      debug && console.log("[lively.vm es6 customTranslate] loading %s from nodejs module cache", load.name);
+      return true;
+    } else {
+      debug && console.log("[lively.vm es6 customTranslate] %s not yet in nodejs module cache", load.name);
+    }
+  } catch (e) {
+    debug && console.log("[lively.vm es6 customTranslate] %s unknown to nodejs", load.name);
+  }
+  return false;
+}
+
 function customTranslate(proceed, load) {
   // load like
   // {
@@ -711,27 +789,48 @@ function customTranslate(proceed, load) {
   if (exceptions.some(exc => exc(load.name))) {
     debug && console.log("[lively.vm es6 customTranslate ignoring] %s", load.name);
     return proceed(load);
-    // return Promise.resolve(load);
-    // return System.origTranslate.call(System, load);
   }
 
-  debug && console.log("[lively.vm es6 customTranslate] %s", load.name);
-  load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
+  var start = Date.now();
+  debug && console.log("[lively.vm es6 customTranslate] start %s at %s", load.name, start);
+
+  if (!_currentSystem.get("@system-env").node) {
+    // on non-nodejs systems currently only esm format is supported
+    load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
+  } else {
+    if (addNodejsWrapperSource(load)) {
+      /* nothing to do */
+    } else {
+      var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || esmRegEx.test(load.source);
+      // console.log(load.name + " isEsm? " + isEsm)
+      if (isEsm) {
+        load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
+        // console.log(load.source)
+      } else {
+        var cjs = require("./commonjs-interface.js"),
+            id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
+        load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id));
+      }
+    }
+  }
+  debug && console.log("[lively.vm es6 customTranslate] done %s after %sms", load.name, Date.now()-start);
   return proceed(load);
 }
 
 function wrapModuleLoad() {
-  if (!System.origTranslate) {
-    System.origTranslate = System.translate
-    System.translate = function(load) {
-      return customTranslate(System.origTranslate.bind(System), load);
+  if (!_currentSystem.origTranslate) {
+    _currentSystem.origTranslate = _currentSystem.translate
+    _currentSystem.translate = function(load) {
+      return customTranslate(_currentSystem.origTranslate.bind(_currentSystem), load);
     }
   }
 }
 
 function unwrapModuleLoad() {
-  System.translate = System.origTranslate;
-  delete System.origTranslate;
+  if (_currentSystem.origTranslate) {
+    _currentSystem.translate = _currentSystem.origTranslate;
+    delete _currentSystem.origTranslate;
+  }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -742,7 +841,7 @@ function ensureImportsAreLoaded(code, parentModule) {
       imports = body.filter(node => node.type === "ImportDeclaration");
   return Promise.all(imports.map(node => {
     var fullName = resolve(node.source.value, parentModule);
-    return moduleRecordFor(fullName) ? undefined : System.import(fullName);
+    return moduleRecordFor(fullName) ? undefined : _currentSystem.import(fullName);
   })).catch(err => {
     console.error("Error ensuring imports: " + err.message);
     throw err;
@@ -826,7 +925,7 @@ function sourceChange(moduleName, newSource, options) {
       // 1. update dependencies
       record.dependencies = deps.map(ea => ea.record);
       // hmm... for house keeping... not really needed right now, though
-      var load = System.loads && System.loads[fullname];
+      var load = _currentSystem.loads && _currentSystem.loads[fullname];
       if (load) {
         load.deps = deps.map(ea => ea.name);
         load.depMap = deps.reduce((map, dep) => { map[dep.name] = dep.fullname; return map; }, {});
@@ -850,7 +949,7 @@ function _systemTranslateParsed(load) {
   // System.register that can't be run standalone. We parse the necessary
   // details from it that we will use to re-define the module
   // (dependencies, setters, execute)
-  return System.translate(load).then(translated => {
+  return _currentSystem.translate(load).then(translated => {
     // translated looks like
     // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
     //   "use strict";
@@ -878,24 +977,24 @@ function _systemTranslateParsed(load) {
 function forgetModuleDeps(moduleName) {
   var id = resolve(moduleName),
       deps = findDependentsOf(id);
-  deps.forEach(ea => System.delete(ea));
+  deps.forEach(ea => _currentSystem.delete(ea));
   return id;
 }
 
 function forgetModule(moduleName) {
-  System.delete(forgetModuleDeps(moduleName));
+  _currentSystem.delete(forgetModuleDeps(moduleName));
 }
+
+// function computeRequireMap() {
+//   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
+//     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
+//     return requireMap;
+//   }, {});
+// }
 
 function computeRequireMap() {
-  return Object.keys(System.loads).reduce((requireMap, k) => {
-    requireMap[k] = lang.obj.values(System.loads[k].depMap);
-    return requireMap;
-  }, {});
-}
-
-function computeRequireMap_alt() {
-  return Object.keys(System._loader.moduleRecords).reduce((requireMap, k) => {
-    requireMap[k] = System._loader.moduleRecords[k].dependencies.map(ea => ea.name);
+  return Object.keys(_currentSystem._loader.moduleRecords).reduce((requireMap, k) => {
+    requireMap[k] = _currentSystem._loader.moduleRecords[k].dependencies.map(ea => ea.name);
     return requireMap;
   }, {});
 }
@@ -924,34 +1023,46 @@ function findRequirementsOf(id) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 module.exports = {
-  System: System,
-
-  import: importES6Module,
-  config: System.config.bind(System),
-
-  wrapModuleLoad: wrapModuleLoad,
-  unwrapModuleLoad: unwrapModuleLoad,
-  envFor: envFor,
+  // internals
+  get System () { return _currentSystem; },
+  set System (v) { return _currentSystem = v; },
+  _init: init,
+  _loadedModules: loadedModules,
+  config: config,
   _moduleRecordFor: moduleRecordFor,
   _updateModuleRecordOf: updateModuleRecordOf,
   _updateModuleExports: updateModuleExports,
 
-  resolve: resolve,
-  _loadedModules: loadedModules,
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // accessing
+  sourceOf: sourceOf,
+  envFor: envFor,
+  // status: status,
+  // statusForPrinted: statusForPrinted,
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // eval + changes
   runEval: runEval,
+  sourceChange: sourceChange,
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // loading + dependencies
+  resolve: resolve,
+  import: importES6Module,
+  // reloadModule: reloadModule,
+  forgetModule: forgetModule,
+  forgetModuleDeps: forgetModuleDeps,
   findRequirementsOf: findRequirementsOf,
   findDependentsOf: findDependentsOf,
-  forgetModuleDeps: forgetModuleDeps,
-  forgetModule: forgetModule,
 
-  sourceOf: sourceOf,
-  sourceChange: sourceChange
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // instrumentation
+  wrapModuleLoad: wrapModuleLoad,
+  unwrapModuleLoad: unwrapModuleLoad
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib")
-},{"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","path":209,"systemjs":"systemjs"}],6:[function(require,module,exports){
+},{"./commonjs-interface.js":3,"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","module":7,"path":209,"systemjs":"systemjs"}],6:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/
 
@@ -7117,6 +7228,7 @@ exports['1.3.132.0.35'] = 'p521'
 
   BN.prototype.imuln = function imuln (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
 
     // Carry
     var carry = 0;
@@ -7348,6 +7460,7 @@ exports['1.3.132.0.35'] = 'p521'
   // Add plain number `num` to `this`
   BN.prototype.iaddn = function iaddn (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
     if (num < 0) return this.isubn(-num);
 
     // Possible sign change
@@ -7388,6 +7501,7 @@ exports['1.3.132.0.35'] = 'p521'
   // Subtract plain number `num` from `this`
   BN.prototype.isubn = function isubn (num) {
     assert(typeof num === 'number');
+    assert(num < 0x4000000);
     if (num < 0) return this.iaddn(-num);
 
     if (this.negative !== 0) {
@@ -7549,11 +7663,25 @@ exports['1.3.132.0.35'] = 'p521'
       a.iushrn(shift);
     }
 
-    return { div: q || null, mod: a };
+    return {
+      div: q || null,
+      mod: a
+    };
   };
 
+  // NOTE: 1) `mode` can be set to `mod` to request mod only,
+  //       to `div` to request div only, or be absent to
+  //       request both div & mod
+  //       2) `positive` is true if unsigned mod is requested
   BN.prototype.divmod = function divmod (num, mode, positive) {
     assert(!num.isZero());
+
+    if (this.isZero()) {
+      return {
+        div: new BN(0),
+        mod: new BN(0)
+      };
+    }
 
     var div, mod, res;
     if (this.negative !== 0 && num.negative === 0) {
@@ -7583,7 +7711,10 @@ exports['1.3.132.0.35'] = 'p521'
         div = res.div.neg();
       }
 
-      return { div: div, mod: res.mod };
+      return {
+        div: div,
+        mod: res.mod
+      };
     }
 
     if ((this.negative & num.negative) !== 0) {
@@ -7606,17 +7737,26 @@ exports['1.3.132.0.35'] = 'p521'
 
     // Strip both numbers to approximate shift value
     if (num.length > this.length || this.cmp(num) < 0) {
-      return { div: new BN(0), mod: this };
+      return {
+        div: new BN(0),
+        mod: this
+      };
     }
 
     // Very short reduction
     if (num.length === 1) {
       if (mode === 'div') {
-        return { div: this.divn(num.words[0]), mod: null };
+        return {
+          div: this.divn(num.words[0]),
+          mod: null
+        };
       }
 
       if (mode === 'mod') {
-        return { div: null, mod: new BN(this.modn(num.words[0])) };
+        return {
+          div: null,
+          mod: new BN(this.modn(num.words[0]))
+        };
       }
 
       return {
@@ -7841,8 +7981,8 @@ exports['1.3.132.0.35'] = 'p521'
   };
 
   BN.prototype.gcd = function gcd (num) {
-    if (this.isZero()) return num.clone();
-    if (num.isZero()) return this.clone();
+    if (this.isZero()) return num.abs();
+    if (num.isZero()) return this.abs();
 
     var a = this.clone();
     var b = num.clone();
@@ -8233,8 +8373,13 @@ exports['1.3.132.0.35'] = 'p521'
       input.words[i - 10] = ((next & mask) << 4) | (prev >>> 22);
       prev = next;
     }
-    input.words[i - 10] = prev >>> 22;
-    input.length -= 9;
+    prev >>>= 22;
+    input.words[i - 10] = prev;
+    if (prev === 0 && input.length > 10) {
+      input.length -= 10;
+    } else {
+      input.length -= 9;
+    }
   };
 
   K256.prototype.imulK = function imulK (num) {
@@ -13855,8 +14000,7 @@ module.exports={
     }
   ],
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz",
-  "readme": "ERROR: No README data found!"
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.2.3.tgz"
 }
 
 },{}],72:[function(require,module,exports){
@@ -14332,6 +14476,7 @@ base.Node = require('./node');
 },{"./buffer":78,"./node":80,"./reporter":81}],80:[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
+var DecoderBuffer = require('../base').DecoderBuffer;
 var assert = require('minimalistic-assert');
 
 // Supported tags
@@ -14344,7 +14489,7 @@ var tags = [
 // Public methods list
 var methods = [
   'key', 'obj', 'use', 'optional', 'explicit', 'implicit', 'def', 'choice',
-  'any'
+  'any', 'contains'
 ].concat(tags);
 
 // Overrided methods list
@@ -14380,6 +14525,7 @@ function Node(enc, parent) {
   state['default'] = null;
   state.explicit = null;
   state.implicit = null;
+  state.contains = null;
 
   // Should create new instance on each method
   if (!state.parent) {
@@ -14584,6 +14730,15 @@ Node.prototype.choice = function choice(obj) {
   return this;
 };
 
+Node.prototype.contains = function contains(item) {
+  var state = this._baseState;
+
+  assert(state.use === null);
+  state.contains = item;
+
+  return this;
+};
+
 //
 // Decoding
 //
@@ -14685,6 +14840,12 @@ Node.prototype._decode = function decode(input) {
       });
       if (fail)
         return err;
+    }
+
+    // Decode contained/encoded by schema, only in bit or octet strings
+    if (state.contains && (state.tag === 'octstr' || state.tag === 'bitstr')) {
+      var data = new DecoderBuffer(result);
+      result = this._getUse(state.contains, input._reporterState.obj)._decode(data);
     }
   }
 
@@ -14829,6 +14990,9 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     result = this._createEncoderBuffer(data);
   } else if (state.choice) {
     result = this._encodeChoice(data, reporter);
+  } else if (state.contains) {
+    content = this._getUse(state.contains, parent)._encode(data, reporter);
+    primitive = true;
   } else if (state.children) {
     content = state.children.map(function(child) {
       if (child._baseState.tag === 'null_')
@@ -14848,7 +15012,6 @@ Node.prototype._encodeValue = function encode(data, reporter, parent) {
     }, this).filter(function(child) {
       return child;
     });
-
     content = this._createEncoderBuffer(content);
   } else {
     if (state.tag === 'seqof' || state.tag === 'setof') {
@@ -14941,6 +15104,7 @@ Node.prototype._isNumstr = function isNumstr(str) {
 Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '\(\)\+,\-\.\/:=\?]*$/.test(str);
 };
+
 },{"../base":79,"minimalistic-assert":90}],81:[function(require,module,exports){
 var inherits = require('inherits');
 
@@ -15278,6 +15442,7 @@ DERNode.prototype._decodeStr = function decodeStr(buffer, tag) {
 };
 
 DERNode.prototype._decodeObjid = function decodeObjid(buffer, values, relative) {
+  var result;
   var identifiers = [];
   var ident = 0;
   while (!buffer.isEmpty()) {
