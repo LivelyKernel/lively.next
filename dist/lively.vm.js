@@ -3,7 +3,7 @@ var lively = window.lively || (window.lively = {}); lively.vm = require('./index
 },{"./index":2}],2:[function(require,module,exports){
 /*global module,exports,require*/
 
-var lang = typeof window !== "undefined" ? lively.lang : lively.lang;
+var lang = lively.lang;
 
 module.exports = lang.obj.merge(
   require("./lib/evaluator"), {
@@ -15,15 +15,14 @@ module.exports = lang.obj.merge(
 (function (process,global,__filename,__argument0,__argument1,__argument2,__argument3,__dirname){
 /*global process, require, global, __dirname*/
 
-var Module = require("module").Module;
-var util = require("util");
+var Module    = require("module").Module;
+var util      = require("util");
 var evaluator = require("./evaluator");
-// var modules = require("./modules");
-var uuid = require("node-uuid");
-var path = require("path");
-var lang = lively.lang;
-var callsite = require("callsite");
-var fs = require("fs");
+var uuid      = require("node-uuid");
+var path      = require("path");
+var lang      = lively.lang;
+var callsite  = require("callsite");
+var fs        = require("fs");
 
 var debug = false;
 
@@ -110,7 +109,7 @@ function prepareCodeForCustomCompile(source, filename, env) {
         dontTransform: [env.recorderName, "global"].concat(magicVars),
         recordGlobals: true
       },
-      header = `var __cjs = require('${__filename}'),\n    ${env.recorderName} = (__cjs.default ? __cjs.default.envFor : __cjs.envFor)('${filename}').recorder;\n`
+      header = lang.string.format("var __cjs = require('%s'),\n    %s = (__cjs.default ? __cjs.default.envFor : __cjs.envFor)('%s').recorder;\n", __filename, env.recorderName, filename)
              + magicVars.map(varName => `${env.recorderName}.${varName} = ${varName};`).join("\n");
 
   try {
@@ -385,9 +384,6 @@ module.exports = {
 /*global require, __dirname*/
 
 var lang = lively.lang;
-var util = require('util');
-var fs = require('fs');
-var path = require('path');
 
 // helper
 function signatureOf(name, func) {
@@ -548,24 +544,31 @@ module.exports = {
   getCompletions: getCompletions
 }
 
-},{"fs":7,"lively.lang":"lively.lang","path":209,"util":227}],5:[function(require,module,exports){
-(function (global,__dirname){
+},{"lively.lang":"lively.lang"}],5:[function(require,module,exports){
+(function (global){
 /*global process, require, global, __dirname*/
+
+"format cjs";
 
 var path = require("path");
 var lang = lively.lang;
 var ast = lively.ast;
 var evaluator = require("./evaluator");
+// var _System = global.System || (typeof window !== "undefined" ? window.System : global.System);
+var _System = global.System;
 
 var debug = true;
 
 var loadedModules = loadedModules || {},
     exceptions = [
-      id => id.indexOf(path.join(__dirname, "../node_modules")) > -1,
+      // id => id.indexOf(path.join(__dirname, "../node_modules")) > -1,
+      id => lang.string.include(id, "babel-core/browser.js") || lang.string.include(id, "system.src.js"),
       id => id.slice(-3) !== ".js"
     ],
     pendingConfigs = [], configInitialized = false,
     _currentSystem,
+    esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
+    cjsFormatCommentRegExp = /['"]format cjs['"];/,
     // Stolen from SystemJS
     esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
     
@@ -575,30 +578,26 @@ init();
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // configuration
 function init(cfg) {
-  var SystemLoader = (typeof window !== "undefined" ? window.System : global.System).constructor;
+  var SystemLoader = _System.constructor;
   global.System = _currentSystem = new SystemLoader();
-  cfg = lang.obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
-  config(cfg);
-
   _currentSystem.trace = true;
-  // System.__defineGetter__("__lively_vm__", () => require(__filename));
   _currentSystem.__defineGetter__("__lively_vm__", () => module.exports);
-
+  
+  cfg = lang.obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
   if (_currentSystem.get("@system-env").node) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
-        "cluster", "console", "crypto", "dgram", "dns", "domain", "Events", "fs",
+        "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs",
         "http", "https", "module", "net", "os", "path", "punycode", "querystring",
         "readline", "repl", "stream", "stringdecoder", "timers", "tls_(ssl)",
         "tty", "url", "util", "v8", "vm", "zlib"],
         map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
-    config({
-      defaultJSExtensions: true,
-      map: map,
-        // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
-      paths: {"node_modules:*": "./node_modules/*"},
-      packageConfigPaths: ['./node_modules/*/package.json']
-    });
+    cfg.map = lang.obj.merge(map, cfg.map);
+    // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
+    cfg.paths = lang.obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
+    cfg.packageConfigPaths = cfg.packageConfigPaths || ['./node_modules/*/package.json'];
+    if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
   }
+  config(cfg);
 }
 
 function config(cfg) {
@@ -757,23 +756,34 @@ function prepareCodeForCustomCompile(source, fullname, env) {
   }
 }
 
-function addNodejsWrapperSource(load) {
+function getCachedNodejsModule(load) {
   // On nodejs we might run alongside normal node modules. To not load those
   // twice we have this little hack...
   try {
     var Module = require("module").Module,
         id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
         nodeModule = Module._cache[id];
-    if (nodeModule) {
-      load.source = `export default System._nodeRequire('${id}');`;
-      debug && console.log("[lively.vm es6 customTranslate] loading %s from nodejs module cache", load.name);
-      return true;
-    } else {
-      debug && console.log("[lively.vm es6 customTranslate] %s not yet in nodejs module cache", load.name);
-    }
+    return nodeModule;
   } catch (e) {
-    debug && console.log("[lively.vm es6 customTranslate] %s unknown to nodejs", load.name);
+    debug && console.log("[lively.vm es6 getCachedNodejsModule] %s unknown to nodejs", load.name);
   }
+  return null;
+}
+
+function addNodejsWrapperSource(load) {
+  // On nodejs we might run alongside normal node modules. To not load those
+  // twice we have this little hack...
+  var m = getCachedNodejsModule(load);
+  if (m) {
+    load.source = `export default System._nodeRequire('${m.id}');\n`;
+    load.source += lang.properties.allOwnPropertiesOrFunctions(m.exports).map(k =>
+      lang.classHelper.isValidIdentifier(k) ? 
+        `export var ${k} = System._nodeRequire('${m.id}')['${k}'];` :
+        `/*ignoring export "${k}" b/c it is not a valid identifier*/`).join("\n")
+    debug && console.log("[lively.vm es6 customTranslate] loading %s from nodejs module cache", load.name);
+    return true;
+  }
+  debug && console.log("[lively.vm es6 customTranslate] %s not yet in nodejs module cache", load.name);
   return false;
 }
 
@@ -791,27 +801,37 @@ function customTranslate(proceed, load) {
     return proceed(load);
   }
 
-  var start = Date.now();
-  debug && console.log("[lively.vm es6 customTranslate] start %s at %s", load.name, start);
+  if (_currentSystem.get("@system-env").node && addNodejsWrapperSource(load)) {
+    console.log("[lively.vm es6] loaded %s from nodejs cache", load.name)
+    return proceed(load);
+  }
 
-  if (!_currentSystem.get("@system-env").node) {
+  var start = Date.now();
+
+  if (_currentSystem.get("@system-env").node) {
+    var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6'
+             || (esmFormatCommentRegExp.test(load.source.slice(0,5000)))
+             || (!cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source));
+    // console.log(load.name + " isEsm? " + isEsm)
+    if (isEsm) {
+      load.metadata.format = "esm";
+      load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
+      load.metadata["lively.vm instrumented"] = true;
+      console.log("[lively.vm es6] loaded %s as es6 module", load.name)
+      // console.log(load.source)
+    } else {
+      load.metadata.format = "cjs";
+      var cjs = require("./commonjs-interface.js"),
+          id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
+      load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id));
+      load.metadata["lively.vm instrumented"] = true;
+      console.log("[lively.vm es6] loaded %s as instrumented cjs module", load.name)
+      // console.log("[lively.vm es6] no rewrite for cjs module", load.name)
+    }
+  } else {
     // on non-nodejs systems currently only esm format is supported
     load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
-  } else {
-    if (addNodejsWrapperSource(load)) {
-      /* nothing to do */
-    } else {
-      var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || esmRegEx.test(load.source);
-      // console.log(load.name + " isEsm? " + isEsm)
-      if (isEsm) {
-        load.source = prepareCodeForCustomCompile(load.source, load.name, envFor(load.name));
-        // console.log(load.source)
-      } else {
-        var cjs = require("./commonjs-interface.js"),
-            id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
-        load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id));
-      }
-    }
+    load.metadata["lively.vm instrumented"] = true;
   }
   debug && console.log("[lively.vm es6 customTranslate] done %s after %sms", load.name, Date.now()-start);
   return proceed(load);
@@ -1027,7 +1047,8 @@ module.exports = {
   get System () { return _currentSystem; },
   set System (v) { return _currentSystem = v; },
   _init: init,
-  _loadedModules: loadedModules,
+  get _loadedModules () { return loadedModules; },
+  set _loadedModules (v) { return loadedModules = v; },
   config: config,
   _moduleRecordFor: moduleRecordFor,
   _updateModuleRecordOf: updateModuleRecordOf,
@@ -1061,8 +1082,8 @@ module.exports = {
   unwrapModuleLoad: unwrapModuleLoad
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib")
-},{"./commonjs-interface.js":3,"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","module":7,"path":209,"systemjs":"systemjs"}],6:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./commonjs-interface.js":3,"./evaluator":6,"lively.ast":"lively.ast","lively.lang":"lively.lang","module":7,"path":209}],6:[function(require,module,exports){
 (function (global){
 /*global module,exports,require*/
 
