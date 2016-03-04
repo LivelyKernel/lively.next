@@ -4,22 +4,20 @@
   <script src="browser-helper.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.23/system.src.js"></script>
   <script src="../dist/escodegen.browser.js"></script>
-  <script src="../node_modules/lively.lang/dist/lively.lang.dev.js"></script>
+  <script src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>
   <script src="../dist/lively.ast.es6.js"></script>
   <script>
   </script>
   <script>
-    System.trace = true;
-    get("../dist/lively.ast.es6-config.json")
-      .then(JSON.parse)
-      .then(System.config.bind(System))
-      .then(() => System.import("lively.ast"))
-      .then(function(ast) {
+    get("../dist/lively.ast.es6-config.json", function(err, cfg) {
+      log(err);
+      System.config(JSON.parse(cfg));
+      System.import("lively.ast").then(function(ast) {
         log(ast.parse("1+3"));
         log(ast.stringify(ast.parse("1+3")));
         log("DONE")
-      })
-      .catch(function(err) { log(String(err.stack)); console.error("ERROR", err); });
+      }).catch(function(err) { log(String(err.stack)); console.error("ERROR", err); });
+    });
   </script>
 </body>
 </html>

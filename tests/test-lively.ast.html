@@ -2,12 +2,12 @@
 <body>
   <ol id="log"></ol>
   <script src="../dist/escodegen.browser.js"></script>
-  <script src="../node_modules/lively.lang/dist/lively.lang.dev.js"></script>
+  <script src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>
   <script src="../dist/lively.ast.js"></script>
   <script>
     function log(msg) {
       var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
-      document.querySelector("#log").insertAdjacentHTML("beforeend", `<li><pre>${stringified}</pre></li>`);
+      document.querySelector("#log").insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
     }
   </script>
   <script>

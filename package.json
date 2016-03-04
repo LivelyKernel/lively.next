@@ -1,6 +1,6 @@
 {
   "name": "lively.ast",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "index.js",
   "directories": {
@@ -35,6 +35,7 @@
     "estree-to-js": "^0.1.0",
     "mocha": "^2.3.3",
     "mocha-phantomjs-core": "^1.3.0",
+    "systemjs": "^0.19.23",
     "systemjs-builder": "^0.15.10"
   }
 }

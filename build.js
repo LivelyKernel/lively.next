@@ -82,8 +82,8 @@ function build() {
       config: baseConfig,
       outFile: moduleName + '/dist/lively.ast.es6.js',
       substitutions: [
-        {match: load => load.name.match(/lively.lang\/index.js$/), code: "module.exports = lively.lang;"},
-        {match: load => load.name.match(/escodegen.(browser.)?.js/), code: "for (var name in escodegen) module.exports[name] = window.escodegen[name];"}
+        {match: load => load.name.match(/lively.lang\/index.js$/), code: "module.exports = typeof process !== 'undefined' ? System._nodeRequire('lively.lang') : lively.lang;"},
+        {match: load => load.name.match(/escodegen.(browser.)?js/), code: "var escodegen = typeof process !== 'undefined' ? System._nodeRequire('escodegen') : window.escodegen; for (var name in escodegen) module.exports[name] = escodegen[name];"}
       ],
       buildMethod: "bundle",
       onBuildDone: build => lang.promise(fs.writeFile)(moduleName + "/dist/lively.ast.es6-config.json", createSystemjsConfigForLaterConsumption(moduleName, moduleMain, bundleConfig, build))
@@ -93,8 +93,8 @@ function build() {
       config: baseConfig,
       outFile: moduleName + '/dist/lively.ast.js',
       substitutions: [
-        {match: load => load.name.match(/lively.lang\/index.js$/), code: "module.exports = lively.lang;"},
-        {match: load => load.name.match(/escodegen.(browser.)?.js/), code: "for (var name in escodegen) module.exports[name] = window.escodegen[name];"}
+        {match: load => load.name.match(/lively.lang\/index.js$/), code: "module.exports = typeof process !== 'undefined' ? System._nodeRequire('lively.lang') : lively.lang;"},
+        {match: load => load.name.match(/escodegen.(browser.)?js/), code: "var escodegen = typeof process !== 'undefined' ? System._nodeRequire('escodegen') : window.escodegen; for (var name in escodegen) module.exports[name] = escodegen[name];"}
       ],
       buildMethod: "buildStatic",
       transformSource: build => wrapStaticSystemjsModuleForConsumption(moduleName, build.source)
@@ -254,7 +254,7 @@ function systemjsBuildConfig() {
       // "acorn": "node_modules/acorn"
       // "escodegen": "node_modules/escodegen/escodegen.js"
     }),
-    meta: {escodegen: {format: "global"}},
+    // meta: {escodegen: {format: "global"}},
     packages: cfg.packages,
     packageConfigPaths: cfg.packageConfigPaths,
     defaultJSExtensions: true

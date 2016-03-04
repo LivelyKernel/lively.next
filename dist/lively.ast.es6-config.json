@@ -46,9 +46,9 @@
     "lively.ast": [
       "lively.ast/index.js",
       "lively.ast/node_modules/lively.lang/index.js",
-      "lively.ast/node_modules/acorn/dist/acorn.js",
-      "lively.ast/node_modules/acorn/dist/walk.js",
       "lively.ast/dist/escodegen.browser.js",
+      "lively.ast/node_modules/acorn/dist/walk.js",
+      "lively.ast/node_modules/acorn/dist/acorn.js",
       "lively.ast/node_modules/acorn/dist/acorn_loose.js",
       "lively.ast/lib/acorn-extension.js",
       "lively.ast/lib/mozilla-ast-visitors.js",
