@@ -57,7 +57,7 @@ function build() {
       outFile: moduleName + "/dist/lively.ast.es6.bundle.js",
       substitutions: [],
       buildMethod: "bundle",
-      transformSource: build => build.source + "\n" + createSystemjsConfigForLaterConsumption(moduleName, moduleMain, bundleConfig, build)
+      onBuildDone: build => lang.promise(fs.writeFile)(moduleName + "/dist/lively.ast.es6.bundle-config.json", createSystemjsConfigForLaterConsumption(moduleName, moduleMain, bundleConfig, build))
     },
 
     {
@@ -86,7 +86,7 @@ function build() {
         {match: load => load.name.match(/escodegen.(browser.)?.js/), code: "for (var name in escodegen) module.exports[name] = window.escodegen[name];"}
       ],
       buildMethod: "bundle",
-      transformSource: build => build.source + "\n" + createSystemjsConfigForLaterConsumption(moduleName, moduleMain, bundleConfig, build)
+      onBuildDone: build => lang.promise(fs.writeFile)(moduleName + "/dist/lively.ast.es6-config.json", createSystemjsConfigForLaterConsumption(moduleName, moduleMain, bundleConfig, build))
     },
 
     {
@@ -277,8 +277,11 @@ function systemjsBuild(from, targets) {
         builder = new Builder(t.config),
         buildConfig = {fetch: systemJSFetch.bind(null, t.substitutions || []), runtime: false};
     console.log("[build] " + t.outFile);
-    return builder[t.buildMethod](from, buildConfig).then(build =>
-      fs.writeFileSync(t.outFile, t.transformSource ? t.transformSource(build) : build.source));
+    return builder[t.buildMethod](from, buildConfig).then(build => {
+      var source = t.transformSource ? t.transformSource(build) : build.source;
+      fs.writeFileSync(t.outFile, source);
+      return Promise.resolve(t.onBuildDone ? t.onBuildDone(build) : null).then(() => build);
+    });
   }));
 }
 
@@ -314,5 +317,6 @@ function createSystemjsConfigForLaterConsumption(moduleName, moduleMain, cfg, bu
   }, cfgForBrowser.map);
   cfgForBrowser.map[moduleName] = moduleMain;
   cfgForBrowser.bundles = lang.obj.deepMerge(cfgForBrowser.bundles || {[moduleName]: build.modules});
-  return `System.config(${JSON.stringify(cfgForBrowser, null, 2)});`;
+  // return `System.config(${});`;
+  return JSON.stringify(cfgForBrowser, null, 2);
 }
