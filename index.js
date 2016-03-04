@@ -1,10 +1,13 @@
 /*global process, global, require, exports*/
 
+var isNode = typeof require !== "undefined" && typeof exports !== "undefined";
+
 var lang = require("lively.lang");
 var acorn = exports.acorn = require("acorn/dist/acorn");
 acorn.walk = require("acorn/dist/walk");
 lang.obj.extend(acorn, require("acorn/dist/acorn_loose"));
-exports.escodegen = require("escodegen");
+var GLOBAL = typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : (typeof Global !== "undefined" ? Global : global))
+exports.escodegen = GLOBAL.escodegen || require("escodegen");
 
 lang.obj.extend(
   exports,
@@ -23,7 +26,6 @@ lang.obj.extend(
   require("./lib/capturing"),
   require("./lib/comments"),
   require("./lib/code-categorizer"));
-
 
 function parse(source, options) {
   // proxy function to acorn.parse.

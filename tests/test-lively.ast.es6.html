@@ -1,0 +1,29 @@
+<html>
+<body>
+  <ol id="log"></ol>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.23/system.src.js"></script>
+  <script src="../dist/escodegen.browser.js"></script>
+  <script src="../node_modules/lively.lang/dist/lively.lang.dev.js"></script>
+  <script src="../dist/lively.ast.es6.js"></script>
+  <script>
+    function log(msg) {
+      var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
+      document.querySelector("#log").insertAdjacentHTML("beforeend", `<li><pre>${stringified}</li>`);
+    }
+  </script>
+  <script>
+    System.trace = true;
+    System.config({
+      // baseURL: "http://localhost:8080/",
+      bundles: System.__lively_ast_es6
+    })
+    System.import("lively.ast")
+      .then(function(ast) {
+        log(ast.parse("1+3"));
+        log(ast.stringify(ast.parse("1+3")));
+        log("DONE")
+      })
+      .catch(function(err) { log(String(err.stack)); console.error("ERROR", err); });
+  </script>
+</body>
+</html>

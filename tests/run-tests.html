@@ -8,18 +8,11 @@
     <meta http-equiv="pragma" content="no-cache" />
   </head>
   <body>
+    <div id="scratch"></div>
     <div id="mocha"></div>
     <script type="text/javascript" src="helper.js"></script>
     <script type="text/javascript" src="mocha-bundle.js"></script>
-
-    <!--<script type="text/javascript" src="../lively.ast.min.js"></script>-->
-
-    <!--<script type="text/javascript" src="../escodegen.browser.min.js"></script>-->
-    <!--<script type="text/javascript" src="../acorn-jsx-browser.js"></script>-->
-    <!--<script type="text/javascript" src="../node_modules/acorn/dist/acorn.js"></script>-->
-    <!--<script type="text/javascript" src="../node_modules/acorn/dist/walk.js"></script>-->
-    <!--<script type="text/javascript" src="../node_modules/acorn/dist/acorn_loose.js"></script>-->
-    <!--<script type="text/javascript" src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>-->
+    <script type="text/javascript" src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>
 
     <script type="text/javascript">
       if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
@@ -27,16 +20,17 @@
       mocha.globals(["script*"]);
       var urls = [
         // "../lively.ast.dev-bundle.js",
-        "../dist/lively.ast.bundle.es5.js",
+        "../dist/lively.ast.bundle.js",
 
         "acorn-extension-test.js",
+        "browser-loading-test.js",
+        "capturing-test.js",
+        "code-categorizer-test.js",
+        "comments-test.js",
+        "es6-test.js",
         "interface-test.js",
         "query-test.js",
         "transform-test.js",
-        "capturing-test.js",
-        "comments-test.js",
-        "es6-test.js",
-        "code-categorizer-test.js"
       ];
       loadUncached(urls, function() {
         mocha.checkLeaks();

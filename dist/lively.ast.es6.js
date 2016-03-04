@@ -1,22 +1,4 @@
-
-  "format cjs";
-  (function define_lively_ast() {
-    var isNodejs = typeof require !== "undefined" && typeof exports !== "undefined",
-        GLOBAL = typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : global);
-    if (!isNodejs) {
-      if (GLOBAL.require) GLOBAL.__prev_require__ = GLOBAL.require;
-      GLOBAL.require = function(name) { console.log("require %s", name); };
-      if (GLOBAL.module) GLOBAL.__prev_module__ = GLOBAL.module;
-      GLOBAL.module = {exports: {}};
-    }
-
-    !function(e){function r(e,r,o){return 4===arguments.length?t.apply(this,arguments):void n(e,{declarative:!0,deps:r,declare:o})}function t(e,r,t,o){n(e,{declarative:!1,deps:r,executingRequire:t,execute:o})}function n(e,r){r.name=e,e in p||(p[e]=r),r.normalizedDeps=r.deps}function o(e,r){if(r[e.groupIndex]=r[e.groupIndex]||[],-1==v.call(r[e.groupIndex],e)){r[e.groupIndex].push(e);for(var t=0,n=e.normalizedDeps.length;n>t;t++){var a=e.normalizedDeps[t],u=p[a];if(u&&!u.evaluated){var d=e.groupIndex+(u.declarative!=e.declarative);if(void 0===u.groupIndex||u.groupIndex<d){if(void 0!==u.groupIndex&&(r[u.groupIndex].splice(v.call(r[u.groupIndex],u),1),0==r[u.groupIndex].length))throw new TypeError("Mixed dependency cycle detected");u.groupIndex=d}o(u,r)}}}}function a(e){var r=p[e];r.groupIndex=0;var t=[];o(r,t);for(var n=!!r.declarative==t.length%2,a=t.length-1;a>=0;a--){for(var u=t[a],i=0;i<u.length;i++){var s=u[i];n?d(s):l(s)}n=!n}}function u(e){return x[e]||(x[e]={name:e,dependencies:[],exports:{},importers:[]})}function d(r){if(!r.module){var t=r.module=u(r.name),n=r.module.exports,o=r.declare.call(e,function(e,r){if(t.locked=!0,"object"==typeof e)for(var o in e)n[o]=e[o];else n[e]=r;for(var a=0,u=t.importers.length;u>a;a++){var d=t.importers[a];if(!d.locked)for(var i=0;i<d.dependencies.length;++i)d.dependencies[i]===t&&d.setters[i](n)}return t.locked=!1,r},r.name);t.setters=o.setters,t.execute=o.execute;for(var a=0,i=r.normalizedDeps.length;i>a;a++){var l,s=r.normalizedDeps[a],c=p[s],v=x[s];v?l=v.exports:c&&!c.declarative?l=c.esModule:c?(d(c),v=c.module,l=v.exports):l=f(s),v&&v.importers?(v.importers.push(t),t.dependencies.push(v)):t.dependencies.push(null),t.setters[a]&&t.setters[a](l)}}}function i(e){var r,t=p[e];if(t)t.declarative?c(e,[]):t.evaluated||l(t),r=t.module.exports;else if(r=f(e),!r)throw new Error("Unable to load dependency "+e+".");return(!t||t.declarative)&&r&&r.__useDefault?r["default"]:r}function l(r){if(!r.module){var t={},n=r.module={exports:t,id:r.name};if(!r.executingRequire)for(var o=0,a=r.normalizedDeps.length;a>o;o++){var u=r.normalizedDeps[o],d=p[u];d&&l(d)}r.evaluated=!0;var c=r.execute.call(e,function(e){for(var t=0,n=r.deps.length;n>t;t++)if(r.deps[t]==e)return i(r.normalizedDeps[t]);throw new TypeError("Module "+e+" not declared as a dependency.")},t,n);c&&(n.exports=c),t=n.exports,t&&t.__esModule?r.esModule=t:r.esModule=s(t)}}function s(r){if(r===e)return r;var t={};if("object"==typeof r||"function"==typeof r)if(g){var n;for(var o in r)(n=Object.getOwnPropertyDescriptor(r,o))&&h(t,o,n)}else{var a=r&&r.hasOwnProperty;for(var o in r)(!a||r.hasOwnProperty(o))&&(t[o]=r[o])}return t["default"]=r,h(t,"__useDefault",{value:!0}),t}function c(r,t){var n=p[r];if(n&&!n.evaluated&&n.declarative){t.push(r);for(var o=0,a=n.normalizedDeps.length;a>o;o++){var u=n.normalizedDeps[o];-1==v.call(t,u)&&(p[u]?c(u,t):f(u))}n.evaluated||(n.evaluated=!0,n.module.execute.call(e))}}function f(e){if(D[e])return D[e];if("@node/"==e.substr(0,6))return y(e.substr(6));var r=p[e];if(!r)throw"Module "+e+" not present.";return a(e),c(e,[]),p[e]=void 0,r.declarative&&h(r.module.exports,"__esModule",{value:!0}),D[e]=r.declarative?r.module.exports:r.esModule}var p={},v=Array.prototype.indexOf||function(e){for(var r=0,t=this.length;t>r;r++)if(this[r]===e)return r;return-1},g=!0;try{Object.getOwnPropertyDescriptor({a:0},"a")}catch(m){g=!1}var h;!function(){try{Object.defineProperty({},"a",{})&&(h=Object.defineProperty)}catch(e){h=function(e,r,t){try{e[r]=t.value||t.get.call(e)}catch(n){}}}}();var x={},y="undefined"!=typeof System&&System._nodeRequire||"undefined"!=typeof require&&require.resolve&&"undefined"!=typeof process&&require,D={"@empty":{}};return function(e,n,o){return function(a){a(function(a){for(var u={_nodeRequire:y,register:r,registerDynamic:t,get:f,set:function(e,r){D[e]=r},newModule:function(e){return e}},d=0;d<n.length;d++)(function(e,r){r&&r.__esModule?D[e]=r:D[e]=s(r)})(n[d],arguments[d]);o(u);var i=f(e[0]);if(e.length>1)for(var d=1;d<e.length;d++)f(e[d]);return i.__useDefault?i["default"]:i})}}}("undefined"!=typeof self?self:global)
-
-(["1","1"], [], function($__System) {
-
-!function(e){function n(e,n){for(var t=e.split(".");t.length;)n=n[t.shift()];return n}function t(n){if(Object.keys)Object.keys(e).forEach(n);else for(var t in e)o.call(e,t)&&n(t)}function r(n){t(function(t){if(-1==a.call(l,t)){try{var r=e[t]}catch(f){l.push(t)}n(t,r)}})}var f,i=$__System,o=Object.prototype.hasOwnProperty,a=Array.prototype.indexOf||function(e){for(var n=0,t=this.length;t>n;n++)if(this[n]===e)return n;return-1},l=["_g","sessionStorage","localStorage","clipboardData","frames","frameElement","external","mozAnimationStartTime","webkitStorageInfo","webkitIndexedDB"];i.set("@@global-helpers",i.newModule({prepareGlobal:function(t,i,o){var a=e.define;e.define=void 0;var l;if(o){l={};for(var c in o)l[c]=e[c],e[c]=o[c]}return i||(f={},r(function(e,n){f[e]=n})),function(){var t;if(i)t=n(i,e);else{var o,c,u={};r(function(e,n){f[e]!==n&&"undefined"!=typeof n&&(u[e]=n,"undefined"!=typeof o?c||o===n||(c=!0):o=n)}),t=c?u:o}if(l)for(var s in l)e[s]=l[s];return e.define=a,t}}}))}("undefined"!=typeof self?self:global);
-!function(){var t=$__System;if("undefined"!=typeof window&&"undefined"!=typeof document&&window.location)var s=location.protocol+"//"+location.hostname+(location.port?":"+location.port:"");t.set("@@cjs-helpers",t.newModule({getPathVars:function(t){var n,o=t.lastIndexOf("!");n=-1!=o?t.substr(0,o):t;var e=n.split("/");return e.pop(),e=e.join("/"),"file:///"==n.substr(0,8)?(n=n.substr(7),e=e.substr(7),isWindows&&(n=n.substr(1),e=e.substr(1))):s&&n.substr(0,s.length)===s&&(n=n.substr(s.length),e=e.substr(s.length)),{filename:n,dirname:e}}}))}();
-$__System.registerDynamic("2", [], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/node_modules/acorn/dist/walk.js", [], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
@@ -449,7 +431,7 @@ $__System.registerDynamic("2", [], true, function($__require, exports, module) {
   return module.exports;
 });
 
-$__System.registerDynamic("3", [], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/node_modules/acorn/dist/acorn.js", [], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
@@ -3356,7 +3338,13 @@ $__System.registerDynamic("3", [], true, function($__require, exports, module) {
   return module.exports;
 });
 
-$__System.registerDynamic("4", ["3"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/node_modules/acorn/package.json", [], false, function() {
+  return {
+    "main": "dist/acorn.js"
+  };
+});
+
+System.registerDynamic("lively.ast/node_modules/acorn/dist/acorn_loose.js", ["./acorn"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
@@ -3410,7 +3398,7 @@ $__System.registerDynamic("4", ["3"], true, function($__require, exports, module
     })({
       1: [function(_dereq_, module, exports) {
         "use strict";
-        module.exports = typeof acorn != 'undefined' ? acorn : $__require('3');
+        module.exports = typeof acorn != 'undefined' ? acorn : $__require('./acorn');
       }, {}],
       2: [function(_dereq_, module, exports) {
         "use strict";
@@ -4686,8 +4674,8 @@ $__System.registerDynamic("4", ["3"], true, function($__require, exports, module
   return module.exports;
 });
 
-$__System.registerDynamic("5", [], false, function($__require, $__exports, $__module) {
-  var _retrieveGlobal = $__System.get("@@global-helpers").prepareGlobal($__module.id, null, null);
+System.registerDynamic("lively.ast/dist/escodegen.browser.js", [], false, function($__require, $__exports, $__module) {
+  var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal($__module.id, null, null);
   (function() {
     (function(global) {
       function require(file, parentModule) {
@@ -9473,13 +9461,13 @@ $__System.registerDynamic("5", [], false, function($__require, $__exports, $__mo
   return _retrieveGlobal();
 });
 
-$__System.registerDynamic("6", ["7", "1"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/acorn-extension.js", ["lively.lang", "../index"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var lang = $__require('7');
-  var ast = $__require('1');
+  var lang = $__require('lively.lang');
+  var ast = $__require('../index');
   var acorn = ast.acorn;
   acorn.walk.forEachNode = function(parsed, func, state, options) {
     options = options || {};
@@ -10395,13 +10383,13 @@ $__System.registerDynamic("6", ["7", "1"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("8", ["7", "1"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/mozilla-ast-visitors.js", ["lively.lang", "../index"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var lang = $__require('7');
-  var ast = $__require('1');
+  var lang = $__require('lively.lang');
+  var ast = $__require('../index');
   exports.MozillaAST = {};
   exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAST.BaseVisitor", "visiting", {
     accept: function(node, depth, state, path) {
@@ -11372,13 +11360,13 @@ $__System.registerDynamic("8", ["7", "1"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("9", ["7", "1"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/mozilla-ast-visitor-interface.js", ["lively.lang", "../index"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var lang = $__require('7');
-  var ast = $__require('1');
+  var lang = $__require('lively.lang');
+  var ast = $__require('../index');
   var methods = {
     withMozillaAstDo: function(parsed, state, func) {
       var vis = new ast.MozillaAST.BaseVisitor(),
@@ -11499,15 +11487,15 @@ $__System.registerDynamic("9", ["7", "1"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("a", ["7", "1"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/query.js", ["lively.lang", "../index"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var lang = $__require('7');
+  var lang = $__require('lively.lang');
   var arr = lang.arr,
       chain = lang.chain;
-  var ast = $__require('1');
+  var ast = $__require('../index');
   var acorn = ast.acorn;
   var helpers = {
     declIds: function(nodes) {
@@ -11708,16 +11696,16 @@ $__System.registerDynamic("a", ["7", "1"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("b", ["7", "1"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/transform.js", ["lively.lang", "../index"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var lang = $__require('7');
+  var lang = $__require('lively.lang');
   var chain = lang.chain,
       arr = lang.arr,
       str = lang.string;
-  var ast = $__require('1');
+  var ast = $__require('../index');
   var acorn = ast.acorn;
   exports.transform = {
     helper: {
@@ -12083,7 +12071,7 @@ $__System.registerDynamic("b", ["7", "1"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("c", [], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/generated/estree-visitor.js", [], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
@@ -13093,15 +13081,15 @@ $__System.registerDynamic("c", [], true, function($__require, exports, module) {
   return module.exports;
 });
 
-$__System.registerDynamic("d", ["1", "7", "c"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/capturing.js", ["../index", "lively.lang", "../generated/estree-visitor"], true, function($__require, exports, module) {
   "use strict";
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var ast = $__require('1');
-  var lang = $__require('7');
-  var Visitor = $__require('c');
+  var ast = $__require('../index');
+  var lang = $__require('lively.lang');
+  var Visitor = $__require('../generated/estree-visitor');
   exports.capturing = {rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables};
   function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
     options = lang.obj.merge({
@@ -13452,18 +13440,18 @@ $__System.registerDynamic("d", ["1", "7", "c"], true, function($__require, expor
   return module.exports;
 });
 
-$__System.registerDynamic("e", ["7", "1"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/lib/comments.js", ["lively.lang", "../index"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var lang = $__require('7');
+  var lang = $__require('lively.lang');
   var arr = lang.arr,
       chain = lang.chain,
       obj = lang.obj,
       path = lang.Path,
       str = lang.string,
-      ast = $__require('1');
+      ast = $__require('../index');
   exports.comments = {
     getCommentPrecedingNode: function(parsed, node) {
       var statementPath = ast.acorn.walk.findStatementOfNode({asPath: true}, parsed, node),
@@ -13700,7 +13688,7 @@ $__System.registerDynamic("e", ["7", "1"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("7", [], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/node_modules/lively.lang/index.js", [], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
@@ -13709,13 +13697,19 @@ $__System.registerDynamic("7", [], true, function($__require, exports, module) {
   return module.exports;
 });
 
-$__System.registerDynamic("f", ["1", "7"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/package.json", [], false, function() {
+  return {
+    "main": "index.js"
+  };
+});
+
+System.registerDynamic("lively.ast/lib/code-categorizer.js", ["../index", "lively.lang"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
-  var ast = $__require('1'),
-      lang = $__require('7'),
+  var ast = $__require('../index'),
+      lang = $__require('lively.lang'),
       arr = lang.arr,
       chain = lang.chain,
       obj = lang.obj,
@@ -13910,25 +13904,25 @@ $__System.registerDynamic("f", ["1", "7"], true, function($__require, exports, m
   return module.exports;
 });
 
-$__System.registerDynamic("1", ["7", "3", "2", "4", "5", "6", "8", "9", "a", "b", "d", "e", "f"], true, function($__require, exports, module) {
+System.registerDynamic("lively.ast/index.js", ["lively.lang", "acorn/dist/acorn", "acorn/dist/walk", "acorn/dist/acorn_loose", "escodegen", "./lib/acorn-extension", "./lib/mozilla-ast-visitors", "./lib/mozilla-ast-visitor-interface", "./lib/query", "./lib/transform", "./lib/capturing", "./lib/comments", "./lib/code-categorizer"], true, function($__require, exports, module) {
   ;
   var define,
       global = this,
       GLOBAL = this;
   var isNode = typeof $__require !== "undefined" && typeof exports !== "undefined";
-  var lang = $__require('7');
-  var acorn = exports.acorn = $__require('3');
-  acorn.walk = $__require('2');
-  lang.obj.extend(acorn, $__require('4'));
+  var lang = $__require('lively.lang');
+  var acorn = exports.acorn = $__require('acorn/dist/acorn');
+  acorn.walk = $__require('acorn/dist/walk');
+  lang.obj.extend(acorn, $__require('acorn/dist/acorn_loose'));
   var GLOBAL = typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : (typeof Global !== "undefined" ? Global : global));
-  exports.escodegen = GLOBAL.escodegen || $__require('5');
+  exports.escodegen = GLOBAL.escodegen || $__require('escodegen');
   lang.obj.extend(exports, {
     parse: parse,
     parseFunction: parseFunction,
     parseLikeOMeta: parseLikeOMeta,
     fuzzyParse: fuzzyParse,
     nodesAt: nodesAt
-  }, $__require('6'), $__require('8'), $__require('9'), $__require('a'), $__require('b'), $__require('d'), $__require('e'), $__require('f'));
+  }, $__require('./lib/acorn-extension'), $__require('./lib/mozilla-ast-visitors'), $__require('./lib/mozilla-ast-visitor-interface'), $__require('./lib/query'), $__require('./lib/transform'), $__require('./lib/capturing'), $__require('./lib/comments'), $__require('./lib/code-categorizer'));
   function parse(source, options) {
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 6;
@@ -14113,36 +14107,69 @@ $__System.registerDynamic("1", ["7", "3", "2", "4", "5", "6", "8", "9", "a", "b"
   return module.exports;
 });
 
-})
-(function(factory) {
-  if (typeof define == 'function' && define.amd)
-    define([], factory);
-  else if (typeof module == 'object' && module.exports && typeof require == 'function')
-    module.exports = factory();
-  else
-    factory();
+System.config({
+  "transpiler": "babel",
+  "babelOptions": {
+    "stage": 2
+  },
+  "map": {
+    "acorn": "lively.ast/node_modules/acorn",
+    "lively.lang": "lively.ast/node_modules/lively.lang/index.js",
+    "escodegen": "lively.ast/dist/escodegen.browser.js",
+    "addons": "@empty",
+    "assert": "@empty",
+    "buffer": "@empty",
+    "child_process": "@empty",
+    "cluster": "@empty",
+    "console": "@empty",
+    "crypto": "@empty",
+    "dgram": "@empty",
+    "dns": "@empty",
+    "domain": "@empty",
+    "events": "@empty",
+    "fs": "@empty",
+    "http": "@empty",
+    "https": "@empty",
+    "module": "@empty",
+    "net": "@empty",
+    "os": "@empty",
+    "path": "@empty",
+    "punycode": "@empty",
+    "querystring": "@empty",
+    "readline": "@empty",
+    "repl": "@empty",
+    "stream": "@empty",
+    "stringdecoder": "@empty",
+    "timers": "@empty",
+    "tls": "@empty",
+    "tty": "@empty",
+    "url": "@empty",
+    "util": "@empty",
+    "v8": "@empty",
+    "vm": "@empty",
+    "zlib": "@empty",
+    "lively.ast": "lively.ast/index.js"
+  },
+  "defaultJSExtensions": true,
+  "bundles": {
+    "lively.ast": [
+      "lively.ast/index.js",
+      "lively.ast/node_modules/lively.lang/index.js",
+      "lively.ast/node_modules/acorn/dist/walk.js",
+      "lively.ast/node_modules/acorn/dist/acorn.js",
+      "lively.ast/dist/escodegen.browser.js",
+      "lively.ast/node_modules/acorn/dist/acorn_loose.js",
+      "lively.ast/lib/acorn-extension.js",
+      "lively.ast/lib/mozilla-ast-visitor-interface.js",
+      "lively.ast/lib/mozilla-ast-visitors.js",
+      "lively.ast/lib/query.js",
+      "lively.ast/lib/transform.js",
+      "lively.ast/lib/capturing.js",
+      "lively.ast/lib/code-categorizer.js",
+      "lively.ast/lib/comments.js",
+      "lively.ast/package.json",
+      "lively.ast/node_modules/acorn/package.json",
+      "lively.ast/generated/estree-visitor.js"
+    ]
+  }
 });
-
-    if (!isNodejs) {
-      var lv = GLOBAL.lively || (GLOBAL.lively = {}),
-          exported = GLOBAL.module.exports;
-      if (!lv.ast) lv.ast = exported;
-      else {
-        if (lv.ast.acorn) {
-          for (var name in exported.acorn) {
-            if (exported.acorn.hasOwnProperty(name))
-              lv.ast.acorn[name] = exported.acorn[name];
-          }
-        } else { lv.ast.acorn = exported.acorn; }
-        for (var name in exported) {
-          if (exported.hasOwnProperty(name) && name !== "acorn")
-            lv.ast[name] = exported[name];
-        }
-      }
-      if (GLOBAL.__prev_module__) GLOBAL.module = GLOBAL.__prev_module__;
-      else delete GLOBAL.module;
-      if (GLOBAL.__prev_require__) GLOBAL.require = GLOBAL.__prev_require__;
-      else delete GLOBAL.require;
-    }
-  })();
-  
