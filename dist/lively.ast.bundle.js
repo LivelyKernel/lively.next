@@ -10403,7 +10403,7 @@ $__System.registerDynamic("8", ["7", "1"], true, function($__require, exports, m
   var lang = $__require('7');
   var ast = $__require('1');
   exports.MozillaAST = {};
-  exports.MozillaAST.BaseVisitor = lang.class.create(Object, "lively.ast.MozillaAST.BaseVisitor", "visiting", {
+  exports.MozillaAST.BaseVisitor = lang.klass.create(Object, "lively.ast.MozillaAST.BaseVisitor", "visiting", {
     accept: function(node, depth, state, path) {
       path = path || [];
       return this['visit' + node.type](node, depth, state, path);
@@ -11038,7 +11038,7 @@ $__System.registerDynamic("8", ["7", "1"], true, function($__require, exports, m
     },
     visitTemplateElement: function(node, depth, state, path) {}
   });
-  exports.MozillaAST.PrinterVisitor = lang.class.create(exports.MozillaAST.BaseVisitor, 'lively.ast.PrinterVisitor', {accept: function($super, node, state, tree, path) {
+  exports.MozillaAST.PrinterVisitor = lang.klass.create(exports.MozillaAST.BaseVisitor, 'lively.ast.PrinterVisitor', {accept: function($super, node, state, tree, path) {
       var pathString = path.map(function(ea) {
         return typeof ea === 'string' ? '.' + ea : '[' + ea + ']';
       }).join('');
@@ -11051,7 +11051,7 @@ $__System.registerDynamic("8", ["7", "1"], true, function($__require, exports, m
         children: myChildren
       });
     }});
-  exports.MozillaAST.ComparisonVisitor = lang.class.create(exports.MozillaAST.BaseVisitor, "lively.ast.ComparisonVisitor", "comparison", {
+  exports.MozillaAST.ComparisonVisitor = lang.klass.create(exports.MozillaAST.BaseVisitor, "lively.ast.ComparisonVisitor", "comparison", {
     recordNotEqual: function(node1, node2, state, msg) {
       state.comparisons.errors.push({
         node1: node1,
@@ -11193,7 +11193,7 @@ $__System.registerDynamic("8", ["7", "1"], true, function($__require, exports, m
       $super(node1, node2, state, path);
     }
   });
-  exports.MozillaAST.ScopeVisitor = lang.class.create(exports.MozillaAST.BaseVisitor, "lively.ast.ScopeVisitor", 'scope specific', {newScope: function(scopeNode, parentScope) {
+  exports.MozillaAST.ScopeVisitor = lang.klass.create(exports.MozillaAST.BaseVisitor, "lively.ast.ScopeVisitor", 'scope specific', {newScope: function(scopeNode, parentScope) {
       var scope = {
         node: scopeNode,
         varDecls: [],
@@ -13257,14 +13257,15 @@ $__System.registerDynamic("d", ["1", "7", "c"], true, function($__require, expor
     return parsed;
   }
   function insertDeclarationsForExports(parsed, options) {
+    var topLevel = ast.query.topLevelDeclsAndRefs(parsed);
     parsed.body = parsed.body.reduce(function(stmts, stmt) {
       return stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ? [stmt] : stmt.specifiers.map(function(specifier) {
-        return varDecl({
+        return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDecl(parsed, {
           type: "VariableDeclarator",
           id: specifier.local,
           init: member(specifier.local, options.captureObj)
         });
-      }).concat(stmt));
+      }).filter(Boolean).concat(stmt));
     }, []);
     return parsed;
   }
@@ -13326,7 +13327,7 @@ $__System.registerDynamic("d", ["1", "7", "c"], true, function($__require, expor
         nodes = stmt.specifiers.length ? stmt.specifiers.map(function(specifier) {
           var local = specifier.local,
               imported = specifier.type === "ImportSpecifier" && specifier.imported.name || specifier.type === "ImportDefaultSpecifier" && "default" || null;
-          return varDeclAndImportCall(local, imported || null, stmt.source, options.moduleImportFunc);
+          return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
         }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
       } else
         nodes = [stmt];
@@ -13377,8 +13378,18 @@ $__System.registerDynamic("d", ["1", "7", "c"], true, function($__require, expor
       property: prop
     };
   }
-  function varDecl(declarator) {
-    return {
+  function varDecl(parsed, declarator) {
+    var topLevel = ast.query.topLevelDeclsAndRefs(parsed),
+        name = declarator.id.name;
+    return topLevel.declaredNames.indexOf(name) > -1 ? {
+      type: "ExpressionStatement",
+      expression: {
+        type: "AssignmentExpression",
+        operator: "=",
+        right: declarator.init,
+        left: declarator.id
+      }
+    } : {
       declarations: [declarator],
       kind: "var",
       type: "VariableDeclaration"
@@ -13406,8 +13417,8 @@ $__System.registerDynamic("d", ["1", "7", "c"], true, function($__require, expor
   function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
     return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
   }
-  function varDeclAndImportCall(localId, imported, moduleSource, moduleImportFunc) {
-    return varDecl({
+  function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
+    return varDecl(parsed, {
       type: "VariableDeclarator",
       id: localId,
       init: importCall(imported, moduleSource, moduleImportFunc)
@@ -14561,7 +14572,7 @@ $__System.registerDynamic("11", ["10"], true, function($__require, exports, modu
         cls.addMethods(spec);
       }
     };
-    exports.class = {
+    exports.klass = exports.class = {
       create: function() {
         var args = exports.arr.from(arguments),
             superclass = args.shift(),
@@ -14604,7 +14615,7 @@ $__System.registerDynamic("11", ["10"], true, function($__require, exports, modu
           };
         }
         ;
-        exports.class.addMethods.apply(Global, [klass].concat(args));
+        exports.klass.addMethods.apply(Global, [klass].concat(args));
         if (!klass.prototype.initialize)
           klass.prototype.initialize = function() {};
         return klass;
@@ -14620,7 +14631,7 @@ $__System.registerDynamic("11", ["10"], true, function($__require, exports, modu
           } else if (Global.RealTrait && args[i] instanceof RealTrait) {
             traits.push(args[i]);
           } else {
-            exports.class.addCategorizedMethods(klass, category, args[i] instanceof Function ? (args[i])() : args[i]);
+            exports.klass.addCategorizedMethods(klass, category, args[i] instanceof Function ? (args[i])() : args[i]);
           }
         }
         for (i = 0; i < traits.length; i++)
@@ -14703,14 +14714,14 @@ $__System.registerDynamic("11", ["10"], true, function($__require, exports, modu
         classHelper.addMixin(klass, recordType.prototype.create(spec).prototype);
       },
       isSubclassOf: function(klassA, klassB) {
-        return exports.class.superclasses(klassA).indexOf(klassB) > -1;
+        return exports.klass.superclasses(klassA).indexOf(klassB) > -1;
       },
       superclasses: function(klass) {
         if (!klass.superclass)
           return [];
         if (klass.superclass === Object)
           return [Object];
-        return exports.class.superclasses(klass.superclass).concat([klass.superclass]);
+        return exports.klass.superclasses(klass.superclass).concat([klass.superclass]);
       },
       categoryNameFor: function(klass, propName) {
         for (var categoryName in klass.categories) {
@@ -18447,7 +18458,7 @@ $__System.registerDynamic("10", [], true, function($__require, exports, module) 
     }, {
       action: "installMethods",
       target: "Function.prototype",
-      sources: ["class"],
+      sources: ["klass"],
       methods: ["create", "addMethods", "isSubclassOf", "superclasses", "categoryNameFor", "remove"],
       alias: [["subclass", "create"]]
     }, {
