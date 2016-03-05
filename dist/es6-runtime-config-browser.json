@@ -1,0 +1,30 @@
+{
+  "defaultJSExtensions": true,
+  "transpiler": "babel",
+  "babelOptions": {"stage": 2},
+  "map": {
+    "lively.vm": "",
+    "babel": "node_modules/babel-core/browser.js",
+    "lively.lang": "node_modules/lively.lang",
+    "lively.ast": "node_modules/lively.ast",
+    "node_modules/lively.ast": {
+      "acorn": "node_modules/lively.ast/node_modules/acorn",
+      "escodegen": "lively.vm/node_modules/lively.ast/dist/escodegen.browser"
+    },
+    "path": "@empty",
+    "module": "@empty",
+    "callsite": "@empty",
+    "fs": "@empty",
+    "events": "@empty",
+    "util": "@empty",
+    "os": "@empty",
+    "child_process": "@empty"
+  },
+  "packages": {
+    "lively.vm": {"main": "index.js", "configured": true},
+    "lively.lang": {"main": "index.js", "configured": true},
+    "lively.ast": {"main": "index.js", "configured": true},
+    "lively.ast/node_modules/acorn": {"main": "dist/acorn.js", "format": "cjs", "configured": true},
+    "lively.ast/dist/escodegen.browser.js": {"format": "global", "configured": true}
+  }
+}

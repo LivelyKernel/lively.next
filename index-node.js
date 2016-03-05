@@ -8,27 +8,8 @@ var lang = require("lively.lang");
 
 // configures current SystemJS instance to load lively.vm + deps
 function configure() {
-  require("./node_modules/lively.ast/dist/lively.ast.es6.bundle.js");
-  
-  var astConfig = require("./node_modules/lively.ast/dist/lively.ast.es6-config.json"),
-      vmConfig = lang.obj.deepMerge(astConfig, {
-        defaultJSExtensions: true,
-        map: {
-          "lively.lang": "node_modules/lively.lang/index.js",
-          "callsite": "node_modules/callsite/index.js",
-          "babel": "node_modules/babel-core/browser.js",
-          "assert": "@node/assert",
-          "buffer": "@node/buffer",
-          "child_process": "@node/child_process",
-          "events": "@node/events",
-          "fs": "@node/fs",
-          "module": "@node/module",
-          "path": "@node/path",
-          "util": "@node/util",
-          "vm": "@node/vm",
-        }
-      });
-  
+  var vmConfig = require("./dist/es6-runtime-config-node.json")  
+  vmConfig.baseURL = vmConfig.map["lively.vm"] = process.cwd()
   System.config(vmConfig);
 }
 
