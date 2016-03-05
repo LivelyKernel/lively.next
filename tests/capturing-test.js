@@ -19,7 +19,7 @@ function _testVarTfm(descr, code, expected, only) {
   }
   return (only ? it.only : it)(descr, () => {
     var result = ast.capturing.rewriteToCaptureTopLevelVariables(
-      code, {name: "_rec", type: "Identifier"});
+        code, {name: "_rec", type: "Identifier"});
     expect(result.source).equals(expected);
   });
 }
@@ -243,6 +243,12 @@ describe("ast.capturing", function() {
 
       testVarTfm("export const x = 23;",
                  "export const x = 23;\n_rec.x = x;");
+
+      testVarTfm('import * as completions from "./lib/completions.js";\n'
+               + "export { completions }",
+                 "import * as completions from './lib/completions.js';\n"
+               + "_rec.completions = completions;\n"
+               + "export {\n    completions\n};");
 
     });
     
