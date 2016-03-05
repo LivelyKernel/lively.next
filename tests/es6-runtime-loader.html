@@ -1,7 +1,63 @@
 <html>
 <body>
   <ol id="log"></ol>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.23/system.src.js"></script>
-  <script src="es6-runtime-loader.js"></script>
+  <script src="../node_modules/systemjs/dist/system.src.js"></script>
+  <script>
+
+function log(msg) {
+  console.log(msg);
+  var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
+  document.querySelector("#log").insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
+}
+
+function get(url, thenDo) {
+  var res, rej, p;
+  if (typeof Promise === "function") p = new Promise(function(resolve, reject) { res = resolve; rej = reject; });
+  var xhr = new XMLHttpRequest();
+  xhr.onerror = function(err) { thenDo && thenDo(err); rej && rej(err); };
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == XMLHttpRequest.DONE) {
+      thenDo && thenDo(null, xhr.responseText)
+      res && res(xhr.responseText)
+    }
+  };
+  xhr.open('GET', url, true); xhr.send(null);
+  return p;
+}
+
+
+var root = (function() {
+  var l = document.location;
+  return `${l.protocol}//${l.hostname}:${l.port}`
+})();
+
+var config;
+get("../dist/es6-runtime-config-browser.json")
+  .then(conf => {
+    config = JSON.parse(conf);
+    config.baseURL = "../";
+    config.map["lively.vm"] = root;
+    log(JSON.stringify(config, null, 2))
+    System.config(config);
+  })
+  .then(() => System.import("lively.vm"))
+  .then(vm =>
+    vm.runEval("'Normal load DO' + 'NE'")
+      .then(r => { if (r.error) throw r.error; log(r); })
+      .then(() => vm))
+  .then(vm => vm.bootstrap(() => System.config(config)))
+  .then(vm => {
+    log("lively.vm bootstrapped...!");
+    return vm.es6.runEval("Object.keys(currentSystem().__lively_vm__.loadedModules)", {targetModule: "./lib/es6-interface.js"})
+  })
+  .then(result => log(result)) // load check
+  .then(() => log("DONE"))
+  .catch(err => {
+    if (err.originalErr) err = err.originalErr;
+    log(err.stack);
+    console.error(err.stack);
+  })
+
+  </script>
 </body>
 </html>
