@@ -8,7 +8,7 @@
     get("../dist/es6-runtime-config.json", function(err, conf) {
       System.fetch = function(load, fetch) {
         // add hoc transpilation for non-es6 browsers like phantom or safari
-        var es6ToEs5List = ["lib/capturing.js"];
+        var es6ToEs5List = ["lib/capturing.js", "lively.lang/lib/graph.js", "lively.lang/lib/promise.js"];
         if (es6ToEs5List.some(function(ea) { return load.name.match(ea); })) {
           return this.constructor.prototype.fetch.call(this, load)
             .then(function(source) { return babel.transform(source, {stage: 2}).code; })
