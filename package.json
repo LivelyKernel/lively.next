@@ -26,7 +26,7 @@
   "dependencies": {
     "acorn": "^2.7.0",
     "escodegen": "^1.8.0",
-    "lively.lang": "^0.5.11"
+    "lively.lang": "^0.5.16"
   },
   "devDependencies": {
     "babel-core": "^5.8.35",

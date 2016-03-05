@@ -1,0 +1,32 @@
+<html>
+<body>
+  <ol id="log"></ol>
+  <script src="browser-helper.js"></script>
+  <script src="../node_modules/babel-core/browser.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.23/system.src.js"></script>
+  <script>
+    get("../dist/es6-runtime-config.json", function(err, conf) {
+      System.fetch = function(load, fetch) {
+        // add hoc transpilation for non-es6 browsers like phantom or safari
+        var es6ToEs5List = ["lib/capturing.js"];
+        if (es6ToEs5List.some(function(ea) { return load.name.match(ea); })) {
+          return this.constructor.prototype.fetch.call(this, load)
+            .then(function(source) { return babel.transform(source, {stage: 2}).code; })
+        }
+        return this.constructor.prototype.fetch.call(this, load);
+      };
+      System.config(JSON.parse(conf.replace(/__AST_DIR__/g, "../"))); 
+      System.import("lively.ast/index.js")
+        .then(function(ast) {
+          log(ast.fuzzyParse("1+3 0"));
+          log(ast.stringify(ast.parse("1+3")));
+          log("DONE");
+        })
+        .catch(function(err) {
+          console.error("ERROR", err);
+          log(String(err.stack));
+        });
+    });
+  </script>
+</body>
+</html>
