@@ -5,21 +5,26 @@
   <script src="../index-browser.js"></script>
   <script>
 
+function print(val) {
+  return JSON.stringify(val, null, 2);
+}
 function show(msg) {
   console.log(msg);
-  var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
+  var stringified = typeof msg === "object" ? print(msg) : String(msg);
   document.querySelector("#log").insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
 }
 
 var vmPath = document.location.pathname.split("/").slice(0,-2).join("/");
+var testEval = "Object.keys(currentSystem().__lively_vm__.loadedModules)";
 
 lively.vm.bootstrap(vmPath)
   .then(vm => {
     show("lively.vm bootstrapped...!");
-    return vm.es6.runEval("Object.keys(currentSystem().__lively_vm__.loadedModules)", {targetModule: "lively.vm/lib/es6-interface.js"})
+    return vm.es6.runEval(testEval, {targetModule: "lively.vm/lib/es6-interface.js"})
   })
   .then(result => {
-    show(result);
+    if (result.error || result.value instanceof Error) throw (result.error || result.value);
+    show(testEval + " => " + print(result.value));
     show("DONE")
   })
   .catch(err => {
