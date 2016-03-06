@@ -45,38 +45,9 @@ function bootstrap() {
       toRemove.forEach(ea => delete cache[ea]);
 
       vm.es6._init(); // create a new System instance
-      // vm.es6.wrapModuleLoad();
-      // return load();
-      
-return new Promise((resolve, reject) => {
-    configure();
-
-// System.normalize = function (name, parentName, parentAddress) {
-//   return this.constructor.prototype.normalize.call(this, name, parentName, parentAddress)
-//     .then(resolved => {
-//       console.log("%s => %s", name , resolved);
-//       return resolved
-//     })
-// }
-
-  vm.es6.wrapModuleLoad();
-    System.import("./index.js")
-      .then(index => lang.obj.extend(module.exports, index))
-      .then(vm => {
-        lang.obj.extend(module.exports, vm);
-        vm.setBootstrapFunction(bootstrap); // vm.bootstrap = bootstrap;
-        vm.setLoadFunction(load); // vm.load = load;
-        vm.setConfigureFunction(configure); // vm.configure = configure;
-        return vm;
-      })
-      .then(resolve)
-      .catch(reject)
-  })
-    })
-    .then(vm => {
-      console.log("[lively.vm bootstrap] loaded bootstraped vm");
-      return vm;
-    })
+      vm.es6.wrapModuleLoad();
+      return load();
+    }).then(vm => { console.log("[lively.vm bootstrap] loaded bootstraped vm"); return vm; })
 }
 
 // Will be populated with index.js exports
