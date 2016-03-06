@@ -19,19 +19,20 @@
     return p;
   }
 
-  var root = (function() {
-    var l = document.location;
-    return `${l.protocol}//${l.hostname}:${l.port}`
-  })();
+  // var root = (function() {
+  //   var l = document.location;
+  //   return `${l.protocol}//${l.hostname}:${l.port}`
+  // })();
 
   // configures current SystemJS instance to load lively.vm + deps
   function configure(vmPath) {
     return get(vmPath + "/dist/es6-runtime-config-browser.json")
-      .then(conf => {
+      .then(function(conf) {
         var config = JSON.parse(conf);
         config.baseURL = "/";
         config.map["lively.vm"] = vmPath;
-        config.paths = {["lively.vm/*"]: vmPath + "/*"}
+        if (!config.paths) config.paths = {};
+        config.paths["lively.vm/*"] = vmPath + "/*";
         System.config(config);
         return config;
       })
@@ -41,7 +42,7 @@
   function load(vmPath) {
     return configure(vmPath)
       .then(function() { return System.import("lively.vm")})
-      .then(vm => {
+      .then(function(vm) {
         if (!window.lively) window.lively = {};
         window.lively.vm = vm;
         vm.setBootstrapFunction(bootstrap); // vm.bootstrap = bootstrap;
@@ -54,18 +55,38 @@
   function bootstrap(vmPath) {
     var vm = window.lively && window.lively.vm;
 
-    return new Promise((resolve, reject) => resolve(!vm || !vm.es6 ? load(vmPath) : vm))
-      .then(vm => {
+    return new Promise(function(resolve) { return resolve(!vm || !vm.es6 ? load(vmPath) : vm); })
+      .then(function(vm) {
         console.log("[lively.vm bootstrap] loaded boot vm");
         // FIXME remove loaded global stuff?
         vm.es6._init(); // create a new System instance
         vm.es6.wrapModuleLoad();
         return load(vmPath);
       })
-      .then(vm => {
+      .then(function(vm) {
         console.log("[lively.vm bootstrap] loaded bootstraped vm");
         return vm;
       });
+  }
+
+  // a hack: to force non esm files that have es6 syntax in them to be
+  // transpiled. SystemJS only transpiles proper es6 modules
+  var es5CompatFiles = [];
+  System._ensureES5Transpile = function(files) {
+    es5CompatFiles.push.apply(es5CompatFiles, files);
+    if (!System.__es5CompatFetchHookInstalled) {
+      System.__es5CompatFetchHookInstalled = true;
+      System.fetch = function(load) {
+        return this.constructor.prototype.fetch.call(this, load)
+          .then(function(source) {
+            if (es5CompatFiles.some(function(f) { return load.name.indexOf(f) > -1; })) {
+              console.log("[_ensureES5Transpile] " + load.name);
+              source = load.source = babel.transform(source, {stage: 2}).code;
+            }
+            return source;
+          });
+      }
+    }
   }
 
   if (!window.lively) window.lively = {};

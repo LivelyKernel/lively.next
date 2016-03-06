@@ -9,42 +9,35 @@
   </head>
   <body>
     <div id="mocha"></div>
-    <script type="text/javascript" src="../node_modules/lively.ast/dist/lively.ast.bundle.es5.js"></script>
-    <script type="text/javascript" src="../node_modules/babel-core/browser.js"></script>
-    <script type="text/javascript" src="../node_modules/systemjs/dist/system.src.js"></script>
-
+    <script src="../node_modules/babel-core/browser-polyfill.js"></script>
+    <script src="../node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../index-browser.js"></script>
     <script type="text/javascript" src="helper.js"></script>
-    <script type="text/javascript" src="../node_modules/mocha/mocha.js"></script>
-    <script type="text/javascript" src="../node_modules/chai/chai.js"></script>
-    <script type="text/javascript" >window.prevModule = window.module; window.module = {exports: {}};</script>
-    <script type="text/javascript" src="../node_modules/chai-subset/lib/chai-subset.js"></script>
-    <script type="text/javascript" >
-      var chaiSubset = module.exports; chai.use(chaiSubset); window.module = window.prevModule;
-      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();;
-      mocha.setup("bdd");
+
+    <script>
+      System._ensureES5Transpile([
+        "lively.ast/lib/capturing.js",
+        "lively.lang/lib/promise.js",
+        "lively.lang/lib/graph.js"]);
+
+      lively.vm.load("../")
+        .then(function() {
+          System.config({
+            map: {
+              mocha: "../node_modules/mocha/mocha.js",
+              chai: "../node_modules/chai/chai.js",
+              "chai-subset": "../node_modules/chai-subset/lib/chai-subset.js"
+            },
+            meta: {"../node_modules/mocha/mocha.js": {exports: 'mocha', format: 'global'}}
+          });
+        })
+        .then(function() { return System.import("./es6-mocha-runner.js"); })
+        .catch(function(err) {
+          if (err.originalErr) err = err.originalErr
+          console.error(err.message);
+          console.error(err.stack);
+        })
       
-      var es6Support = true;
-      try { eval('() => {}'); } catch (e) { es6Support = false; }
-
-      mocha.globals([
-        "script*"/*jQuery*/,
-        "z",/*for "only capture whitelisted globals"*/
-        "obj1", "obj2"/*for completion tests*/]);
-
-      loadUncached(es6Support ?
-        ["../dist/lively.vm.js"] : [
-        "../dist/lively.vm.es5.js", "../node_modules/babel-core/browser-polyfill.js"],
-        function() {
-          (es6Support ? loadUncached : loadUncached_es5Compat)([
-            "vm-test.js",
-            "completion-test.js",
-            "es6-test.js"
-          ], function() {
-            // mocha.checkLeaks();
-            mocha.run();
-          })
-        });
     </script>
-
   </body>
 </html>

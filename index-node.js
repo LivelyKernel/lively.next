@@ -9,8 +9,8 @@ var lang = require("lively.lang");
 // configures current SystemJS instance to load lively.vm + deps
 function configure() {
   var vmConfig = require("./dist/es6-runtime-config.json")  
-  vmConfig.map["lively.vm"] = "./"
-  vmConfig.paths = {["lively.vm/*"]: "./*"}
+  vmConfig.map["lively.vm"] = __dirname
+  vmConfig.paths = {["lively.vm/*"]: __dirname + "/*"}
   System.config(vmConfig);
 }
 
@@ -18,7 +18,7 @@ function configure() {
 function load() {
   return new Promise((resolve, reject) => {
     configure();
-    System.import("./index.js")
+    System.import("lively.vm")
       .then(index => lang.obj.extend(module.exports, index))
       .then(vm => {
         lang.obj.extend(module.exports, vm);

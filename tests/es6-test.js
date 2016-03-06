@@ -1,20 +1,10 @@
 /*global process, before, beforeEach, afterEach, describe, it, expect*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
-var chai = env.isCommonJS ? module.require("chai") : window.chai;
-var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
-var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
-var lang = env.lively.lang || lively.lang, vm = env.isCommonJS ? require('../index') : lively.vm;
-var Global = env.Global;
-// if (typeof mocha === "undefined") {
-//     var mocha = global.mocha = new (require("mocha"))();
-//     mocha.suite.emit('pre-require', global, __filename, mocha);
-//     mocha.suite.emit('require', module.exports, __filename, mocha);
-//     mocha.suite.emit('post-require', global, __filename, mocha);
-//     // mocha.run()
-// }
+import { expect } from "chai";
+import { es6 } from "lively.vm";
+import lang from "lively.lang";
 
-var es6 = vm.es6;
+var isNode = System.get("@system-env").node;
 
 var module1 = "test-resources/es6/module1.js";
 var module2 = "test-resources/es6/module2.js";
@@ -23,7 +13,7 @@ var module3 = "test-resources/es6/module3.js";
 describe("es6 modules", () => {
 
   before(function() {
-    es6._init(env.isCommonJS ? {baseURL: 'tests/'} : {
+    es6._init(isNode ? {baseURL: './'} : {
       transpiler: 'babel', babelOptions: {},
       baseURL: document.URL.replace(/\/[^\/]*$/, ""),
       map: {babel: '../node_modules/babel-core/browser.js'}
@@ -177,7 +167,8 @@ describe("es6 modules", () => {
         .then(result => expect(result.value).to.not.match(/error/i))
         .then(() => es6.forgetModuleDeps(module1))
         .then(() => es6.import(module3))
-        .then(m => expect(m.z).to.equal(21)));
+        .then(m => expect(m.z).to.equal(21))
+        );
   });
 
 });

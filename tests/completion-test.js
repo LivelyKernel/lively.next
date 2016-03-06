@@ -1,12 +1,8 @@
 /*global process, beforeEach, afterEach, describe, it, expect*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
-var chai = env.isCommonJS ? module.require("chai") : window.chai;
-var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
-var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
-var lang = env.lively.lang || lively.lang,
-    vm = env.isCommonJS ? require('../index') : lively.vm;
-var Global = env.Global;
+import { expect } from "chai";
+import * as vm from "lively.vm";
+import lang from "lively.lang";
 
 describe("completion", () => {
 

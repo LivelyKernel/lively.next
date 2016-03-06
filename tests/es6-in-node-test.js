@@ -5,7 +5,7 @@ var chai = env.isCommonJS ? module.require("chai") : window.chai;
 var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
 var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
 var lang = env.lively.lang || lively.lang,
-    vm = env.isCommonJS ? require('../index') : lively.vm;
+    vm = env.isCommonJS ? require('../index-node') : lively.vm;
 var Global = env.Global;
 
 var es6 = vm.es6;

@@ -4,7 +4,7 @@
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index-node.js",
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha tests/*-test.js && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html",
+    "test": "cd tests/ && node es6-mocha-nodejs-runner.js && cd .. && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html",
     "build": "node build.js"
   },
   "repository": {

@@ -1,11 +1,9 @@
-/*global process, beforeEach, afterEach, describe, it, expect*/
+/*global beforeEach, afterEach, describe, it, global*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
-var chai = env.isCommonJS ? module.require("chai") : window.chai;
-var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
-var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
-var lang = env.lively.lang || lively.lang,
-    vm = env.isCommonJS ? require('../index') : lively.vm;
+import { expect } from "chai";
+import * as vm from "lively.vm";
+import lang from "lively.lang";
+
 var Global = typeof global !== "undefined" ? global : window;
 
 describe("evaluation", function() {
@@ -119,7 +117,7 @@ describe("evaluation", function() {
   });
 
   it("eval can set source url", function() {
-    if ((typeof module !== "undefined" && module.require)  || navigator.userAgent.match(/PhantomJS/)) {
+    if ((System.get("@system-env").node)  || navigator.userAgent.match(/PhantomJS/)) {
       console.log("FIXME sourceURL currently only works for web browser");
       return;
     }
