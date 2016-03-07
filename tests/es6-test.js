@@ -92,6 +92,27 @@ describe("es6 modules", () => {
           expect(result.value).to.not.match(/error/i);
           expect(result.value).to.equal(5, "imported value");
         }]))
+
+    it("of var being exported", () =>
+      // Load module1 and module2 which depends on module1
+      lang.promise.chain([
+        () => Promise.all([es6.import(module1), es6.import(module2)]),
+        (modules, state) => {
+          state.m1 = modules[0]; state.m2 = modules[1];
+          expect(state.m1.x).to.equal(3);
+          expect(state.m2.y).to.equal(5);
+        },
+          // Modify module1
+        () => es6.runEval("var x = 9;", {asString: true, targetModule: module1}),
+        (result, state) => {
+          expect(result.value).to.not.match(/error/i);
+          expect(state.m1.x).to.equal(9, "module1 not updated");
+          expect(state.m2.y).to.equal(11, "module2 not updated after its dependency changed");
+          return Promise.all([
+            es6.import(module1).then(m => expect(m.x).to.equal(9)),
+            es6.import(module2).then(m => expect(m.y).to.equal(11)),
+          ]);
+        }]));
   });
 
   describe("dependencies", () => {
