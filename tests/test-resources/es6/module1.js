@@ -1,4 +1,5 @@
-console.log("running es6 module1");
+var log = typeof show !== "undefined" ? show : console.log
+log("running es6 module1");
 
 function someFunction() { return 3 + internalState; }
 

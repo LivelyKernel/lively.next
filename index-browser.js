@@ -30,6 +30,7 @@
       .then(function(conf) {
         var config = JSON.parse(conf);
         config.baseURL = "/";
+        // config.baseURL = System.baseURL;
         config.map["lively.vm"] = vmPath;
         if (!config.paths) config.paths = {};
         config.paths["lively.vm/*"] = vmPath + "/*";
