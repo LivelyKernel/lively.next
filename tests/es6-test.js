@@ -6,9 +6,11 @@ import lang from "lively.lang";
 
 var isNode = System.get("@system-env").node;
 
-var module1 = "test-resources/es6/module1.js";
-var module2 = "test-resources/es6/module2.js";
-var module3 = "test-resources/es6/module3.js";
+// var base = es6.resolve("lively.vm/tests/");
+var base = "";
+var module1 = base + "test-resources/es6/module1.js";
+var module2 = base + "test-resources/es6/module2.js";
+var module3 = base + "test-resources/es6/module3.js";
 
 describe("es6 modules", () => {
 
@@ -188,8 +190,20 @@ describe("es6 modules", () => {
         .then(result => expect(result.value).to.not.match(/error/i))
         .then(() => es6.forgetModuleDeps(module1))
         .then(() => es6.import(module3))
-        .then(m => expect(m.z).to.equal(21))
-        );
+        .then(m => expect(m.z).to.equal(21)));
   });
 
+  describe("unload module", () => {
+    
+    it("forgets module and recordings", () =>
+      es6.import(module3)
+        .then(() => es6.forgetModule(module2))
+        .then(_ => {
+          expect(es6._moduleRecordFor(es6.resolve(module2))).to.equal(null);
+          expect(es6._moduleRecordFor(es6.resolve(module3))).to.equal(null);
+          expect(es6.envFor(es6.resolve(module2)).recorder).to.not.have.property("x");
+          expect(es6.envFor(es6.resolve(module3)).recorder).to.not.have.property("z");
+        }));
+
+  });
 });

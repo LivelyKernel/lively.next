@@ -17,6 +17,7 @@ var mochaTestScripts = [
   "./cjs-test.js",
   "./es6-test.js",
   "./bootstrap-test.js",
+
 // tests/es6-in-node-test.js
 // tests/es6-test.js
 // tests/lively-compat-test.js
