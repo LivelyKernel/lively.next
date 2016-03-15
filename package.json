@@ -1,0 +1,32 @@
+{
+  "name": "lively-mocha-tester",
+  "main": "index.js",
+  "defaultJSExtensions": true,
+  "systemjs": {
+    "main": "index.js",
+    "meta": {
+      "node_modules/mocha/mocha.js": {
+        "exports": "mocha",
+        "format": "global"
+      },
+      "node_modules/lively.lang": {
+        "main": "index.js",
+        "defaultJSExtensions": true
+      },
+      "packageConfigPaths": [
+        "node_modules/*/package.js"
+      ]
+    },
+    "map": {
+      "chai": "./node_modules/chai/chai.js",
+      "chai-subset": "./node_modules/chai-subset/lib/chai-subset.js",
+      "mocha": "./node_modules/mocha/mocha.js",
+      "lively.lang": "node_modules/lively.lang"
+    }
+  },
+  "dependencies": {
+    "chai": "^3.5.0",
+    "chai-subset": "^1.2.1",
+    "mocha": "^2.4.5"
+  }
+}
