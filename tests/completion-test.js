@@ -1,6 +1,8 @@
-/*global process, beforeEach, afterEach, describe, it, expect*/
+/*global beforeEach, afterEach, describe, it*/
 
-import { expect } from "chai";
+import chai, { expect } from "chai";
+import subset from "chai-subset";
+chai.use(subset);
 import * as vm from "lively.vm";
 import lang from "lively.lang";
 
