@@ -26,17 +26,24 @@
 
   // configures current SystemJS instance to load lively.vm + deps
   function configure(vmPath) {
-    return get(vmPath + "/dist/es6-runtime-config-browser.json")
-      .then(function(conf) {
-        var config = JSON.parse(conf);
-        config.baseURL = "/";
-        // config.baseURL = System.baseURL;
-        config.map["lively.vm"] = vmPath;
-        if (!config.paths) config.paths = {};
-        config.paths["lively.vm/*"] = vmPath + "/*";
-        System.config(config);
-        return config;
-      })
+    return Promise.resolve(System.config({
+            "transpiler": "babel",
+            "babelOptions": {"stage": 2},
+              map: {
+                "lively.vm": vmPath,
+                "babel": "lively.vm/node_modules/babel-core/browser.js",
+                "path": "@empty",
+                "module": "@empty",
+                "fs": "@empty"
+
+              },
+              // packages: {"acorn": { format: "cjs", },},
+              paths: {"lively.vm/*": vmPath + "/*"},
+              packageConfigPaths: [
+                "lively.vm/node_modules/lively.ast/node_modules/*/package.json",
+                "lively.vm/node_modules/*/package.json",
+                "lively.vm/package.json"]
+            }))
   }
 
   // async load of ./index.js
