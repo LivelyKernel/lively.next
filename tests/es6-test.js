@@ -6,8 +6,7 @@ import lang from "lively.lang";
 
 var isNode = System.get("@system-env").node;
 
-// var base = es6.resolve("lively.vm/tests/");
-var base = "";
+var base = es6.resolve("lively.vm/tests/");
 var module1 = base + "test-resources/es6/module1.js";
 var module2 = base + "test-resources/es6/module2.js";
 var module3 = base + "test-resources/es6/module3.js";
@@ -15,12 +14,15 @@ var module3 = base + "test-resources/es6/module3.js";
 describe("es6 modules", () => {
 
   before(function() {
-    es6._init(isNode ? {baseURL: './'} : {
-      transpiler: 'babel', babelOptions: {},
-      baseURL: document.URL.replace(/\/[^\/]*$/, ""),
-      map: {babel: '../node_modules/babel-core/browser.js'}
-    });
-    es6.wrapModuleLoad();
+    // no need to init when we are in Lively
+    if (typeof $world === "undefined") {
+      es6._init(isNode ? {baseURL: './'} : {
+        transpiler: 'babel', babelOptions: {},
+        baseURL: document.URL.replace(/\/[^\/]*$/, ""),
+        map: {babel: '../node_modules/babel-core/browser.js'}
+      });
+      es6.wrapModuleLoad();
+    }
   });
 
   afterEach(() => {
@@ -115,6 +117,18 @@ describe("es6 modules", () => {
             es6.import(module2).then(m => expect(m.y).to.equal(11)),
           ]);
         }]));
+
+    it("of new var that is exported and then changes", () =>
+      es6.import(module1)
+        // define a new var that is exported
+        .then(_ => es6.runEval("var foo = 1; export { foo }", {asString: true, targetModule: module1}))
+        .then(() => expect(es6._moduleRecordFor(module1).exports).to.have.property("foo", 1, "of record"))
+        .then(() => es6.import(module1).then(m1 => expect(m1).to.have.property("foo", 1, "of module")))
+        // now change that var and see if the export is updated
+        .then(() => es6.runEval("var foo = 2;", {asString: true, targetModule: module1}))
+        .then(() => expect(es6._moduleRecordFor(module1).exports).to.have.property("foo", 2, "of record after change"))
+        .then(() => es6.import(module1).then(m1 => expect(m1).to.have.property("foo", 2, "of module after change"))));
+
   });
 
   describe("dependencies", () => {
