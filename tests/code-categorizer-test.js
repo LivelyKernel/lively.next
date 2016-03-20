@@ -1,22 +1,13 @@
-/*global process, require, beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, describe, it*/
 
-if (typeof window !== "undefined") {
-  var chai = window.chai;
-  var expect = window.expect;
-  var lang = window.lively.lang;
-  var ast = window.lively.ast;
-} else {
-  var chai = require('chai');
-  var expect = chai.expect;
-  var lang = require("lively.lang");
-  var ast = require('../index');
-  chai.use(require('chai-subset'));
-}
-var escodegen = ast.escodegen;
+import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+
+import { parse } from "../lib/parser.js";
+import { findDecls } from "../lib/code-categorizer.js";
 
 function categorize(code) {
-  var parsed = ast.parse(code),
-      result = ast.codeCategorizer.findDecls(parsed);
+  var parsed = parse(code),
+      result = findDecls(parsed);
   return {ast: parsed, decls: result};
 }
 

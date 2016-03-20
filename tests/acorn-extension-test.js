@@ -1,35 +1,26 @@
-/*global process, require, beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, describe, it*/
 
-if (typeof window !== "undefined") {
-  var chai = window.chai;
-  var expect = window.expect;
-  var lang = window.lively.lang;
-  var ast = window.lively.ast;
-} else {
-  var chai = require('chai');
-  var expect = chai.expect;
-  var lang = require("lively.lang");
-  var ast = require('../index');
-  chai.use(require('chai-subset'));
-}
-var escodegen = ast.escodegen;
+import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+import { escodegen } from "escodegen";
+import { withMozillaAstDo, rematchAstWithSource } from "../lib/mozilla-ast-visitor-interface.js";
+import { parse } from "../lib/parser.js";
+import { arr } from "lively.lang";
+import { acorn, walk } from "../lib/acorn-extension.js";
 
-describe('acorn.walk extension', function() {
-
-  var acorn = ast.acorn;
+describe('walk extension', function() {
 
   it("finds siblings", function() {
     var src = 'function foo() {\nvar a;\nvar b;\nvar c;\nvar d;\n}';
-    var parsed = ast.parse(src);
+    var parsed = parse(src);
     var decls = Array.prototype.slice.call(parsed.body[0].body.body);
     var a = decls[0];
     var b = decls[1];
     var c = decls[2];
     var d = decls[3];
 
-    expect(lang.arr.without(decls, b)).deep.equals(acorn.walk.findSiblings(parsed, b));
-    expect([a]).deep.equals(acorn.walk.findSiblings(parsed, b, 'before'));
-    expect([c,d]).deep.equals(acorn.walk.findSiblings(parsed, b, 'after'));
+    expect(arr.without(decls, b)).deep.equals(walk.findSiblings(parsed, b));
+    expect([a]).deep.equals(walk.findSiblings(parsed, b, 'before'));
+    expect([c,d]).deep.equals(walk.findSiblings(parsed, b, 'after'));
 
   });
 
@@ -37,16 +28,16 @@ describe('acorn.walk extension', function() {
 
   it("findNodeByAstIndex", function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
-        parsed = acorn.parse(src),
+        parsed = parse(src),
         expected = parsed.body[1].body.body[1].argument, // the y in "return y"
-        found = acorn.walk.findNodeByAstIndex(parsed, 9);
+        found = walk.findNodeByAstIndex(parsed, 9);
     expect(expected).equals(found, 'node not found');
   });
 
   it("findNodeByAstIndexNoReIndex", function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
-        parsed = acorn.parse(src),
-        found = acorn.walk.findNodeByAstIndex(parsed, 9, false);
+        parsed = parse(src),
+        found = walk.findNodeByAstIndex(parsed, 9, false);
     expect(null).equals(found, 'node found (but should not add index)');
   });
 
@@ -82,8 +73,8 @@ describe('acorn.walk extension', function() {
     }];
 
     tests.forEach(function(test, i) {
-      var parsed = acorn.parse(test.src),
-          found = acorn.walk.findStatementOfNode(parsed, test.target(parsed));
+      var parsed = parse(test.src),
+          found = walk.findStatementOfNode(parsed, test.target(parsed));
       expect(test.expected(parsed)).equals(found, 'node not found ' + (i + 1));
     });
   });
@@ -91,36 +82,36 @@ describe('acorn.walk extension', function() {
   it("updateSourceCodePositions", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
-        parsed = acorn.parse(src),
+        parsed = parse(src),
         genSrc = escodegen.generate(parsed),
-        genAst = acorn.parse(genSrc);
+        genAst = parse(genSrc);
 
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
-    ast.acorn.rematchAstWithSource(parsed, genSrc);
+    rematchAstWithSource(parsed, genSrc);
     expect(parsed).to.deep.equal(genAst, 'source code positions were not corrected');
   });
 
   it("updateSourceCodePositionsInSubTree", function() {
     var src1 = 'function foo() { var y = 3; return y; }',
       src2 = 'var x = { z: 3 };\nfunction foo() {\n   var y = 3;\n   return y;\n}\nx.z + foo();',
-      ast1 = acorn.parse(src1).body[0],
-      ast2 = acorn.parse(src2),
+      ast1 = parse(src1).body[0],
+      ast2 = parse(src2),
       genSrc = escodegen.generate(ast2),
-      genAst = acorn.parse(genSrc);
+      genAst = parse(genSrc);
 
-    ast.acorn.rematchAstWithSource(ast1, genSrc, null, 'body.1');
+    rematchAstWithSource(ast1, genSrc, null, 'body.1');
     expect(ast1).to.deep.equal(genAst.body[1], 'source code positions were not corrected');
   });
 
   it("updateSourceCodeLocations", function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
-        parsed = acorn.parse(src),
+        parsed = parse(src),
         genSrc = escodegen.generate(parsed),
-        genAst = acorn.parse(genSrc);
+        genAst = parse(genSrc);
 
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
-    ast.acorn.rematchAstWithSource(parsed, genSrc, true);
+    rematchAstWithSource(parsed, genSrc, true);
 
     // sample some locations
     var tests = [{  // var = x = { z: 3 };
@@ -145,13 +136,13 @@ describe('acorn.walk extension', function() {
     });
 
     // compare withour considering locations
-    ast.acorn.withMozillaAstDo(parsed, {}, function(next, node) { delete node.loc; next(); })
+    withMozillaAstDo(parsed, {}, function(next, node) { delete node.loc; next(); })
     expect(parsed).to.deep.equal(genAst, 'source code positions were not corrected');
   });
 
   it("parseWithComments", function() {
     var src = '// comment1\n\n//comment2\nvar x = 3; // comment3\n// comment3\nfunction foo() { var y = 3; /*comment4*/ return y }; x + foo();',
-        parsed = ast.parse(src, {withComments: true}),
+        parsed = parse(src, {withComments: true}),
         comments = parsed.comments,
         expectedTopLevelComments = [{
           column: undefined, line: undefined, isBlock: false,
@@ -178,8 +169,8 @@ describe('acorn.walk extension', function() {
   });
 
   it("should deep copy ast", function() {
-    var parsed = ast.parse('var x = 3;', {addSource: true, addAstIndex: true}),
-        parsedCopy = acorn.walk.copy(parsed);
+    var parsed = parse('var x = 3;', {addSource: true, addAstIndex: true}),
+        parsedCopy = walk.copy(parsed);
 
     // FIXME: sourceType should be copied too
     delete parsed.sourceType;

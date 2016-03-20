@@ -1,25 +1,16 @@
 /*global process, require, beforeEach, afterEach, describe, it*/
 
-if (typeof window !== "undefined") {
-  var chai = window.chai;
-  var expect = window.expect;
-  var lang = window.lively.lang;
-  var ast = window.lively.ast;
-} else {
-  var chai = require('chai');
-  var expect = chai.expect;
-  var lang = require("lively.lang");
-  var ast = require('../index');
-  chai.use(require('chai-subset'));
-}
+import { string, fun } from "lively.lang";
+
+import { expect } from "lively-mocha-tester";
 
 function testPageLoad(url, waitForHTMLMatch) {
   return it('can load ' + url, function(done) {
-    document.querySelector('#scratch').insertAdjacentHTML('beforeend', lang.string.format('<iframe width="400" height="600" src="%s"></iframe>', url));
+    document.querySelector('#scratch').insertAdjacentHTML('beforeend', string.format('<iframe width="400" height="600" src="%s"></iframe>', url));
     var testProcess = setInterval(function () {
       var iframe = document.querySelector('#scratch iframe'),
-          log = iframe.contentDocument.body.querySelector('#log'),
-          match = log.innerText.match(waitForHTMLMatch);
+          log = iframe && iframe.contentDocument.body.querySelector('#log'),
+          match = log && log.innerText.match(waitForHTMLMatch);
       if (!match) return;
       clearInterval(testProcess);
       done();
@@ -52,8 +43,7 @@ function testNodejsRuntimeLoad(name, src) {
 }
 
 function testNodejsLoad(bundleFile) {
-  var src =   "var System = require(\"systemjs\");\n"
-            + "require(\"" + bundleFile + "\");\n"
+  var src = "require(\"" + bundleFile + "\");\n"
             + "System.config(require(\"" + bundleFile.replace(/\.js$/, "-config.json") + "\"));\n"
             + "\n"
             + "System.import(\"lively.ast\")\n"
@@ -73,22 +63,27 @@ describe('loading', function() {
   this.timeout(5000);
 
   if (typeof window !== "undefined") {
+    beforeEach(function() {
+      if (!document.querySelector('#scratch'))
+        document.body.insertAdjacentHTML('beforeend', '<div id="scratch"></div>');
+    });
+
     afterEach(function() {
       document.querySelector('#scratch').innerHTML = '';
     });
 
     testPageLoad("es6-runtime-loader.html", /DONE$/m);
-    testPageLoad("test-lively.ast.bundle.html", /DONE$/m);
-    testPageLoad("test-lively.ast.html", /DONE$/m);
-    testPageLoad("test-lively.ast.es6.bundle.html", /DONE$/m);
-    testPageLoad("test-lively.ast.es6.html", /DONE$/m);
+    // testPageLoad("test-lively.ast.bundle.html", /DONE$/m);
+    // testPageLoad("test-lively.ast.html", /DONE$/m);
+    // testPageLoad("test-lively.ast.es6.bundle.html", /DONE$/m);
+    // testPageLoad("test-lively.ast.es6.html", /DONE$/m);
 
   } else {
     this.timeout(5000);
     testNodejsRuntimeLoad("runtime load",
-      lang.fun.extractBody(function() {
-        var System = require("systemjs");
-        var conf = require("./dist/es6-runtime-config.json");
+      fun.extractBody(function() {
+        // var System = require("systemjs");
+        var conf = require("../dist/es6-runtime-config.json");
         conf = JSON.parse(JSON.stringify(conf).replace(/__AST_DIR__/g, "./"));
         System.config(conf);
         System.import("lively.ast")

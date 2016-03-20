@@ -1,22 +1,12 @@
 /*global process, require, beforeEach, afterEach, describe, it*/
 
-if (typeof window !== "undefined") {
-  var chai = window.chai;
-  var expect = window.expect;
-  var lang = window.lively.lang;
-  var ast = window.lively.ast;
-} else {
-  var chai = require('chai');
-  var expect = chai.expect;
-  var lang = require("lively.lang");
-  var ast = require('../index');
-  chai.use(require('chai-subset'));
-}
-var escodegen = ast.escodegen;
+import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+
+import { parse } from "../lib/parser.js";
 
 describe('interface', function() {
   it('parses JavaScript code', function() {
-    expect(ast.parse("1 + 2")).deep.property("body[0].type")
+    expect(parse("1 + 2")).deep.property("body[0].type")
       .equals("ExpressionStatement");
   });
 });

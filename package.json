@@ -1,10 +1,46 @@
 {
   "name": "lively.ast",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "index.js",
-  "directories": {
-    "test": "test"
+  "systemjs": {
+    "main": "es6-migration.js",
+    "meta": {
+      "node_modules/acorn": {
+        "format": "global",
+        "main": "dist/acorn.js"
+      },
+      "./dist/escodegen.browser.js": {
+        "format": "global",
+        "configured": true
+      },
+      "./dist/es6-runtime-config.json": {
+        "format": "json"
+      },
+      "./node_modules/acorn/dist/acorn_loose.js": {
+        "format": "global",
+        "configured": true,
+        "map": {
+          "./acorn": "../acorn.js"
+        }
+      }
+    },
+    "map": {
+      "acorn": "./node_modules/acorn/dist/acorn.js",
+      "lively.lang": "node_modules/lively.lang",
+      "escodegen": "./dist/escodegen.browser.js",
+      "util": {
+        "node": "@node/util",
+        "~node": "@empty"
+      },
+      "child_process": {
+        "node": "@node/child_process",
+        "~node": "@empty"
+      }
+    },
+    "packageConfigPaths": [
+      "node_modules/*/package.json"
+    ]
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha tests/*-test.js && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html",
@@ -15,7 +51,12 @@
     "url": "https://github.com/LivelyKernel/lively.ast.git"
   },
   "keywords": [
-    "LivelyWeb"
+    "LivelyWeb",
+    "parser",
+    "parsing",
+    "estree",
+    "ast",
+    "lively"
   ],
   "author": "Robert Krahn",
   "license": "MIT",

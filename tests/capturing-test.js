@@ -1,24 +1,17 @@
-/*global process, require, beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, describe, it*/
 
-if (typeof window !== "undefined") {
-  var chai = window.chai;
-  var expect = window.expect;
-  var lang = window.lively.lang;
-  var ast = window.lively.ast;
-} else {
-  var chai = require('chai');
-  var expect = chai.expect;
-  var lang = require("lively.lang");
-  var ast = require('../index');
-  chai.use(require('chai-subset'));
-}
+import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+
+import * as transform from "../lib/transform.js";
+import { rewriteToCaptureTopLevelVariables } from "../lib/capturing.js";
+
 
 function _testVarTfm(descr, code, expected, only) {
   if (typeof expected === "undefined") {
     expected = code; code = descr;
   }
   return (only ? it.only : it)(descr, () => {
-    var result = ast.capturing.rewriteToCaptureTopLevelVariables(
+    var result = rewriteToCaptureTopLevelVariables(
         code, {name: "_rec", type: "Identifier"});
     expect(result.source).equals(expected);
   });
@@ -32,7 +25,7 @@ function _testModuleTfm(descr, code, expected, only) {
     expected = code; code = descr;
   }
   return (only ? it.only : it)(descr, () => {
-    var result = ast.capturing.rewriteToCaptureTopLevelVariables(
+    var result = rewriteToCaptureTopLevelVariables(
       code, {name: "_rec", type: "Identifier"}, {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"});
     expect(result.source).equals(expected);
   });
@@ -68,7 +61,7 @@ describe("ast.capturing", function() {
     var code     = "var x = 2; y = 3; z = 4; baz(x, y, z)",
         expected = "foo.x = 2; foo.y = 3; z = 4; baz(foo.x, foo.y, z)",
         recorder = {name: "foo", type: "Identifier"},
-        result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+        result   = transform.replaceTopLevelVarDeclAndUsageForCapturing(
           code, recorder, {exclude: ['baz', 'z']});
     expect(result.source).equals(expected);
   });
@@ -81,7 +74,7 @@ describe("ast.capturing", function() {
          y: [{end: 9, start: 4, type: "VariableDeclarator"},
            {end: 27, start: 22, type: "VariableDeclarator"}]},
         recorder = {name: "foo", type: "Identifier"},
-        result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(
+        result   = transform.replaceTopLevelVarDeclAndUsageForCapturing(
           code, recorder, {recordDefRanges: true});
     expect(result.defRanges).deep.equals(expected);
   });
@@ -124,34 +117,34 @@ describe("ast.capturing", function() {
 
         it("object literal into var decls", function() {
           var code = "var {y, z} = {y: 3, z: 4};",
-              result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
+              result = transform.oneDeclaratorForVarsInDestructoring(code),
               expected = "var __temp = {\n    y: 3,\n    z: 4\n};\nvar y = __temp.y;\nvar z = __temp.z;";
           expect(result.source).equals(expected);
         });
 
         it("expression into var decls", function() {
           var code = "var {y, z} = foo;",
-              result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
+              result = transform.oneDeclaratorForVarsInDestructoring(code),
               expected = "var __temp = foo;\nvar y = __temp.y;\nvar z = __temp.z;"
           expect(result.source).equals(expected);
         });
 
         it("nested", function() {
           var code = "var {x, y: [{z}]} = {x: 3, y: [{z: 4}]};",
-              result = ast.transform.oneDeclaratorForVarsInDestructoring(code),
+              result = transform.oneDeclaratorForVarsInDestructoring(code),
               expected = "var __temp = {\n    x: 3,\n    y: [{ z: 4 }]\n};\nvar x = __temp.x;\nvar y = __temp.y;\nvar z = __temp.y[0].z;";
           expect(result.source).equals(expected);
         });
 
       })
 
-      xit("transformTopLevelVarAndFuncDeclsForCapturing", function() {
-        var code     = "var {y, z} = {y: 3, z: 4}; function foo() { var x = 5; }",
-            expected = "Global.foo = foo;\nGlobal.z = 4;\nGlobal.y = 3; function foo() { var x = 5; }",
-            recorder = {name: "Global", type: "Identifier"},
-            result   = ast.transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
-        expect(result.source).equals(expected);
-      });
+      // xit("transformTopLevelVarAndFuncDeclsForCapturing", function() {
+      //   var code     = "var {y, z} = {y: 3, z: 4}; function foo() { var x = 5; }",
+      //       expected = "Global.foo = foo;\nGlobal.z = 4;\nGlobal.y = 3; function foo() { var x = 5; }",
+      //       recorder = {name: "Global", type: "Identifier"},
+      //       result   = transform.replaceTopLevelVarDeclAndUsageForCapturing(code, recorder);
+      //   expect(result.source).equals(expected);
+      // });
 
     });
 
@@ -268,9 +261,6 @@ describe("ast.capturing", function() {
 
       testModuleTfm("export var x = 34, y = x + 3;",
                     "var x = 34, y = x + 3;\n_moduleExport('x', x);\n_moduleExport('y', y);");
-
-      testModuleTfm("export let x = 34;",
-                    "let x = 34;\n_moduleExport('x', x);");
 
       testModuleTfm("export let x = 34;",
                     "let x = 34;\n_moduleExport('x', x);");
