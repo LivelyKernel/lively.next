@@ -2,7 +2,6 @@
 
 import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
 
-import * as escodegen from "escodegen";
 import { parse } from "../lib/parser.js";
 import { fun, Group, obj } from "lively.lang";
 import { extractComments, getCommentPrecedingNode } from "../lib/comments.js";

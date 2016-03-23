@@ -1,11 +1,11 @@
 /*global beforeEach, afterEach, describe, it*/
 
 import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
-import { escodegen } from "escodegen";
 import { withMozillaAstDo, rematchAstWithSource } from "../lib/mozilla-ast-visitor-interface.js";
 import { parse } from "../lib/parser.js";
 import { arr } from "lively.lang";
 import { acorn, walk } from "../lib/acorn-extension.js";
+import stringify from "../lib/stringify.js";
 
 describe('walk extension', function() {
 
@@ -83,7 +83,7 @@ describe('walk extension', function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
         parsed = parse(src),
-        genSrc = escodegen.generate(parsed),
+        genSrc = stringify(parsed),
         genAst = parse(genSrc);
 
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
@@ -96,7 +96,7 @@ describe('walk extension', function() {
       src2 = 'var x = { z: 3 };\nfunction foo() {\n   var y = 3;\n   return y;\n}\nx.z + foo();',
       ast1 = parse(src1).body[0],
       ast2 = parse(src2),
-      genSrc = escodegen.generate(ast2),
+      genSrc = stringify(ast2),
       genAst = parse(genSrc);
 
     rematchAstWithSource(ast1, genSrc, null, 'body.1');
@@ -107,7 +107,7 @@ describe('walk extension', function() {
     var src = 'var x = { z: 3 }; function foo() { var y = 3; return y; } x.z + foo();',
         prettySrc = 'var x = { z: 3 };\nfunction foo() {\n    var y = 3;\n    return y;\n}\nx.z + foo();',
         parsed = parse(src),
-        genSrc = escodegen.generate(parsed),
+        genSrc = stringify(parsed),
         genAst = parse(genSrc);
 
     expect(prettySrc).equals(genSrc, 'pretty printed source and generated source do not match');
