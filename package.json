@@ -6,27 +6,20 @@
   "systemjs": {
     "main": "es6-migration.js",
     "meta": {
-      "node_modules/acorn": {
-        "format": "global",
-        "main": "dist/acorn.js"
-      },
       "./dist/escodegen.browser.js": {
         "format": "global",
         "configured": true
       },
-      "./dist/es6-runtime-config.json": {
-        "format": "json"
-      },
-      "./node_modules/acorn/dist/acorn_loose.js": {
-        "format": "global",
-        "configured": true,
-        "map": {
-          "./acorn": "../acorn.js"
-        }
+      "./node_modules/acorn": {
+        "main": "./src/index.js",
+        "format": "esm",
+        "configured": true
       }
     },
     "map": {
-      "acorn": "./node_modules/acorn/dist/acorn.js",
+      "acorn": "./node_modules/acorn",
+      "./node_modules/acorn/src.js": "./node_modules/acorn/src/index.js",
+      "./node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
       "lively.lang": "node_modules/lively.lang",
       "escodegen": "./dist/escodegen.browser.js",
       "util": {
