@@ -16,9 +16,11 @@ $ http-server . -p 8080
 
 ## command line
 
+If installed globally and the mocha-es6 bin is in your PATH:
+
 ```
 $ cd mocha-es6/examples
 $ mocha-es6 ./tests.js
 ```
 
-(If the mocha-es6 bin is not in your PATH run directly via `./bin/mocha-es6.js`)
+Otherwise run it directly via `./bin/mocha-es6.js`.
