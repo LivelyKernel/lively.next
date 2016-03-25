@@ -6,13 +6,17 @@ Here is how to run the example tests:
 
 1. Start a http server
 
-    $ npm install -g http-server
-    $ cd mocha-es6/
-    $ http-server . -p 8080
+```
+$ npm install -g http-server
+$ cd mocha-es6/
+$ http-server . -p 8080
+```
 
-2. Visit http://localhost:8080/examples/run-tests.html
+2. Visit [http://localhost:8080/examples/run-tests.html]()
 
 ## command line
 
-    $ cd mocha-es6/examples
-    $ mocha-es6 ./tests.js
+```
+$ cd mocha-es6/examples
+$ mocha-es6 ./tests.js
+```
