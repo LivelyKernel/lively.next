@@ -1,32 +1,31 @@
 {
-  "name": "lively-mocha-tester",
+  "name": "mocha-es6",
   "main": "index.js",
-  "defaultJSExtensions": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "babel-core": "^5.8.35",
+    "chai": "^3.5.0",
+    "chai-subset": "^1.2.1",
+    "mocha": "^2.4.5"
+  },
+  "bin": {
+    "mocha-es6": "bin/mocha-es6.js"
+  },
+  "license": "MIT",
+  "author": "Robert Krahn",
   "systemjs": {
     "main": "index.js",
     "meta": {
-      "node_modules/mocha/mocha.js": {
-        "exports": "mocha",
-        "format": "global"
-      },
-      "node_modules/lively.lang": {
-        "main": "index.js",
-        "defaultJSExtensions": true
-      },
+      "./node_modules/mocha/mocha.js": {"format": "global", "exports": "mocha"},
+      "mocha-es6/node_modules/mocha/mocha.js": {"format": "global", "exports": "mocha"},
       "packageConfigPaths": [
         "node_modules/*/package.js"
       ]
     },
     "map": {
-      "chai": "./node_modules/chai/chai.js",
-      "chai-subset": "./node_modules/chai-subset/lib/chai-subset.js",
-      "mocha": "./node_modules/mocha/mocha.js",
-      "lively.lang": "node_modules/lively.lang"
+      "chai": "mocha-es6/node_modules/chai/chai.js",
+      "chai-subset": "mocha-es6/node_modules/chai-subset/lib/chai-subset.js",
+      "mocha": "mocha-es6/node_modules/mocha/mocha.js"
     }
-  },
-  "dependencies": {
-    "chai": "^3.5.0",
-    "chai-subset": "^1.2.1",
-    "mocha": "^2.4.5"
   }
 }
