@@ -12,7 +12,7 @@ $ cd mocha-es6/
 $ http-server . -p 8080
 ```
 
-2. Visit [http://localhost:8080/examples/run-tests.html]()
+2. Visit [http://localhost:8080/examples/run-tests.html](http://localhost:8080/examples/run-tests.html)
 
 ## command line
 
@@ -20,3 +20,5 @@ $ http-server . -p 8080
 $ cd mocha-es6/examples
 $ mocha-es6 ./tests.js
 ```
+
+(If the mocha-es6 bin is not in your PATH run directly via `./bin/mocha-es6.js`)
