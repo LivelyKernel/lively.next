@@ -1,0 +1,19 @@
+{
+  "name": "lively.modules",
+  "systemjs": {
+    "map": {
+      "fetch": "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.js",
+      "URI": "./lib/URI.js"
+    },
+    "meta": {
+      "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.js": {
+        "format": "global",
+        "exports": "fetch"
+      },
+      "./lib/URI.js": {
+        "format": "global",
+        "exports": "URI"
+      }
+    }
+  }
+}
