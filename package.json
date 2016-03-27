@@ -36,7 +36,7 @@
     }
   },
   "dependencies": {
-    "lively.lang": "^0.5.17"
+    "lively.lang": "^0.5.18"
   },
   "devDependencies": {
     "mocha-es6": "^0.1.6"
