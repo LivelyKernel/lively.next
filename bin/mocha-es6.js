@@ -23,7 +23,8 @@ Promise.resolve()
     console.log(systemConfPrint());
     err = err.originalErr || err;
     console.error(err.stack);
-  })
+    process.exit(1);
+  });
 
 
 function readProcessArgs() {
