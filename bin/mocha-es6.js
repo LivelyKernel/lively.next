@@ -51,6 +51,7 @@ function loadConfig() {
   if (args.config) require(args.config)
   else {
 
+    var map = {"mocha-es6": path.join(__dirname, "..")};
     var pkgCfgPaths = ["file://" + path.join(__dirname, "../package.json")];
 
     var projectConf = path.join(dir, "package.json");
@@ -63,7 +64,8 @@ function loadConfig() {
       // but they arent!
       try {
         var json = require(path.join(dir, "package.json"));
-        pkgCfgPaths = pkgCfgPaths.concat(json.systemjs.packageConfigPaths);
+        map[json.name] = ".";
+        pkgCfgPaths = pkgCfgPaths.concat(json.systemjs.packageConfigPaths || []);
       } catch (e) {}
     }
 
@@ -72,10 +74,9 @@ function loadConfig() {
       transpiler: "babel",
       "babel": path.join(__dirname, "../node_modules/babel-core/browser.js"),
       defaultJSExtensions: true,
-      map: {"mocha-es6": path.join(__dirname, "..")},
+      map: map,
       packageConfigPaths: pkgCfgPaths
     });
-
   }
 }
 
