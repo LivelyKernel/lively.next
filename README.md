@@ -2,7 +2,7 @@
 
 JavaScript package and module system for interactive development
 
-![](http://lively-web.org/users/robertkrahn/uploads/Screen_Shot_2016-03-26_at_8.26.14_PM.png)
+![](http://lively-web.org/users/robertkrahn/uploads/Screen_Shot_2016-03-26_at_8.30.54_PM.png)
 
 ## Goals
 
