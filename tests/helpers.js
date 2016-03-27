@@ -21,7 +21,6 @@ function createFilesWeb(baseDir, fileSpec) {
 
 function createFilesNode(baseDir, fileSpec) {
   baseDir = baseDir.replace(/^[^\/]+:\/\//, "");
-  console.log(baseDir)
   return new Promise((resolve, reject) => {
     if (!existsSync(baseDir)) mkdirSync(baseDir);
     Object.keys(fileSpec).map(fileName =>
@@ -38,19 +37,14 @@ var createFiles = isNode ? createFilesNode : createFilesWeb;
 function removeDirWeb(dir) { return f(dir, {method: "DELETE"}); }
 
 function removeDirNode(path) {
-  return new Promise((resolve, reject) => {
-    if (!existsSync(path)) return resolve();
-    readdirSync(path).forEach(function(file,index){
-      var curPath = path + "/" + file;
-      if(lstatSync(curPath).isDirectory()) { // recurse
-        removeDirNode(curPath);
-      } else { // delete file
-        unlinkSync(curPath);
-      }
-    });
-    rmdirSync(path);
-    resolve();
+  if (!existsSync(path)) return Promise.resolve();
+  readdirSync(path).forEach(function(file,index){
+    var curPath = path + "/" + file;
+    if(lstatSync(curPath).isDirectory()) removeDirNode(curPath);
+    else unlinkSync(curPath);
   });
+  rmdirSync(path);
+  return Promise.resolve();
 };
 
 var removeDir = isNode ? removeDirNode : removeDirWeb;

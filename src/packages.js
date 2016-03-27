@@ -9,7 +9,7 @@ function registerPackage(System, packageURL) {
   System = getSystem(System);
 
   packageURL = String(packageURL).replace(/\/$/, "");
-  System.packages[packageURL] || (System.packages[packageURL] = {});
+  var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
 
   var packageConfigURL = packageURL + "/package.json";
   
@@ -18,15 +18,17 @@ function registerPackage(System, packageURL) {
   return System.import(packageConfigURL)
     .then(config => {
       arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL);
-      return config.name;
+      return config;
     })
     .catch((err) => {
       delete System.meta[packageConfigURL];
-      return packageURL.split("/").slice(-1)[0];
+      var name = packageURL.split("/").slice(-1)[0];
+      return {name: name}
     })
-    .then(name => {
-      System.config({map: {[name]: packageURL}})
-      return name;
+    .then(pkgConfig => {
+      System.config({map: {[pkgConfig.name]: packageURL}});
+      packageInSystem.main = (pkgConfig.systemjs && pkgConfig.systemjs.main) || pkgConfig.main || "index.js";
+      return pkgConfig.name;
     });
 }
 
