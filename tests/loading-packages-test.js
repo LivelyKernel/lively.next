@@ -3,10 +3,11 @@
 import { expect } from "mocha-es6";
 import { removeDir, createFiles } from "./helpers.js";
 
-import { getSystem, removeSystem } from "../system.js";
-import { registerPackage } from "../packages.js";
+import { getSystem, removeSystem } from "../src/system.js";
+import { registerPackage } from "../src/packages.js";
 
-var dir = System.normalizeSync("./tests/"),
+console.log(System.normalizeSync("lively.modules/tests/"))
+var dir = System.normalizeSync("lively.modules/tests/"),
     testDir = dir + "test-project/"
 
 describe("package loading", () => {

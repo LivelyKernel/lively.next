@@ -1,8 +1,8 @@
 /*global beforeEach, afterEach, describe, it*/
 import { expect } from "mocha-es6";
 
-import { getSystem, removeSystem } from "../system.js";
-import { install as installHook, remove as removeHook } from "../hooks.js";
+import { getSystem, removeSystem } from "../src/system.js";
+import { install as installHook, remove as removeHook } from "../src/hooks.js";
 
 describe("hooks", () => {
 

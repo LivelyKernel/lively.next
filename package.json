@@ -8,6 +8,7 @@
       "./node_modules/lively.lang/package.json"
     ],
     "map": {
+      "lively.modules": ".",
       "lively.lang": "./node_modules/lively.lang/index.js",
       "fetch": {
         "node": "@empty",
@@ -38,6 +39,6 @@
     "lively.lang": "^0.5.17"
   },
   "devDependencies": {
-    "mocha-es6": "^0.1.4"
+    "mocha-es6": "^0.1.5"
   }
 }

@@ -1,5 +1,5 @@
 import { obj, arr } from "lively.lang";
-import { getSystem } from "./system.js";
+import { getSystem } from "./src/system.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // module access
