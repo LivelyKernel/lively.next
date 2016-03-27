@@ -2,6 +2,8 @@
 
 JavaScript package and module system for interactive development
 
+![](http://lively-web.org/users/robertkrahn/uploads/Screen_Shot_2016-03-26_at_8.26.14_PM.png)
+
 ## Goals
 
 lively.modules provides a framework for loading, defining and interactively modifying *JavaScript modules*. A module is an entity containing JavaScript source code that adheres to the definition of the [ECMAScript Language Specification](https://tc39.github.io/ecma262/#sec-modules).
