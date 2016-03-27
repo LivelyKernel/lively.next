@@ -33,9 +33,9 @@ function removeSystem(nameOrSystem) {
 }
 
 function ensureExtension(System) {
-  if (!System["__lively.modules__"]) System["__lively.modules__"] = {
-    hooks: {}
-  };
+  var ext = System["__lively.modules__"]
+        || (System["__lively.modules__"] = {loadedModules: {}});
+  return System["__lively.modules__"];
 }
 
 function makeSystem(cfg) {
@@ -77,4 +77,44 @@ function printSystemConfig(System) {
     packageConfigPaths:  System.packageConfigPaths,
   }
   return JSON.stringify(json, null, 2);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// import { scheduleModuleExportsChange } from "export-import.js";
+
+export { loadedModules };
+
+function loadedModules(System) {
+  var ext = ensureExtension(System);
+  return ext.loadedModules;
+}
+
+function moduleEnv(System, moduleId) {
+  var ext = ensureExtension(System);
+
+  if (ext.loadedModules[moduleId]) return ext.loadedModules[moduleId];
+  return ext.loadedModules[moduleId] = {
+    loadError: undefined,
+    recorderName: "__rec__",
+    recorder: Object.create(GLOBAL, {
+      _moduleExport: {
+        // get() { return (name, val) => scheduleModuleExportsChange(moduleId, name, val, true/*add export*/); }
+        get() { return (name, val) => {/*...*/}; }
+      },
+      _moduleImport: {
+        get: function() {
+          return (imported, name) => {
+            var id = System.normalizeSync(imported, moduleId),
+                imported = System._loader.modules[id];
+            if (!imported) throw new Error(`import of ${name} failed: ${imported} (tried as ${id}) is not loaded!`);
+            if (name == undefined) return imported.module;
+            if (!imported.module.hasOwnProperty(name))
+              console.warn(`import from ${imported}: Has no export ${name}!`);
+            return imported.module[name];
+          }
+        }
+      }
+    })
+  }
 }

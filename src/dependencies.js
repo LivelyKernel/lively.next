@@ -1,4 +1,5 @@
 import { graph, arr } from "lively.lang";
+import { loadedModules } from "./system.js";
 export { findDependentsOf, findRequirementsOf, computeRequireMap };
 
 // function forgetModuleDeps(moduleName, opts) {
@@ -48,7 +49,7 @@ export { findDependentsOf, findRequirementsOf, computeRequireMap };
 function computeRequireMap(System) {
   if (System.loads) {
     var store = System.loads,
-        modNames = arr.uniq(Object.keys(System.__lively_vm__.loadedModules).concat(Object.keys(store)));
+        modNames = arr.uniq(Object.keys(loadedModules(System)).concat(Object.keys(store)));
     return modNames.reduce((requireMap, k) => {
       var depMap = store[k] ? store[k].depMap : {};
       requireMap[k] = Object.keys(depMap).map(localName => {
