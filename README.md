@@ -1,4 +1,5 @@
-# lively.modules
+# lively.modules [![Build Status](https://travis-ci.org/LivelyKernel/lively.modules.svg)](https://travis-ci.org/LivelyKernel/lively.modules)
+
 JavaScript package and module system for interactive development
 
 ## Goals
