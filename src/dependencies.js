@@ -1,50 +1,61 @@
-import { graph, arr } from "lively.lang";
+import { graph, arr, obj } from "lively.lang";
 import { loadedModules } from "./system.js";
-export { findDependentsOf, findRequirementsOf, computeRequireMap };
 
-// function forgetModuleDeps(moduleName, opts) {
-//   opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts)
-//   var id = resolve(moduleName),
-//       deps = findDependentsOf(id);
-//   deps.forEach(ea => {
-//     currentSystem().delete(ea);
-//     if (currentSystem().loads) delete currentSystem().loads[ea];
-//     opts.forgetEnv && forgetEnvOf(ea);
-//   });
-//   return id;
+export {
+  findDependentsOf, findRequirementsOf, computeRequireMap,
+  forgetModuleDeps, forgetModule,
+  reloadModule
+};
+
+function forgetEnvOf(System, fullname) {
+  delete System["__lively.modules__"].loadedModules[fullname];
+}
+
+function forgetModuleDeps(System, moduleName, opts) {
+  opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
+  var id = System.normalizeSync(moduleName),
+      deps = findDependentsOf(System, id);
+  deps.forEach(ea => {
+    System.delete(ea);
+    if (System.loads) delete System.loads[ea];
+    opts.forgetEnv && forgetEnvOf(System, ea);
+  });
+  return id;
+}
+
+function forgetModule(System, moduleName, opts) {
+  opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
+  var id = opts.forgetDeps ?
+    forgetModuleDeps(System, moduleName, opts) :
+    System.normalizeSync(moduleName);
+  System.delete(moduleName);
+  System.delete(id);
+  if (System.loads) {
+    delete System.loads[moduleName];
+    delete System.loads[id];
+  }
+  if (opts.forgetEnv) {
+    forgetEnvOf(System, id);
+    forgetEnvOf(System, moduleName);
+  }
+}
+
+function reloadModule(System, moduleName, opts) {
+  opts = obj.merge({reloadDeps: true, resetEnv: true}, opts);
+  var id = System.normalizeSync(moduleName),
+      toBeReloaded = [id];
+  if (opts.reloadDeps) toBeReloaded = findDependentsOf(System, id).concat(toBeReloaded);
+  forgetModule(System, id, {forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
+  return Promise.all(toBeReloaded.map(ea => ea !== id && System.import(ea)))
+          .then(() => System.import(id));
+}
+
+// function computeRequireMap() {
+//   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
+//     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
+//     return requireMap;
+//   }, {});
 // }
-
-// function forgetModule(moduleName, opts) {
-//   opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
-//   var id = opts.forgetDeps ? forgetModuleDeps(moduleName, opts) : resolve(moduleName);
-//   currentSystem().delete(moduleName);
-//   currentSystem().delete(id);
-//   if (currentSystem().loads) {
-//     delete currentSystem().loads[moduleName];
-//     delete currentSystem().loads[id];
-//   }
-//   if (opts.forgetEnv) {
-//     forgetEnvOf(id);
-//     forgetEnvOf(moduleName);
-//   }
-// }
-
-// function reloadModule(moduleName, opts) {
-//   opts = obj.merge({reloadDeps: true, resetEnv: true}, opts);
-//   var id = resolve(moduleName),
-//       toBeReloaded = [id];
-//   if (opts.reloadDeps) toBeReloaded = findDependentsOf(id).concat(toBeReloaded);
-//   forgetModule(id, {forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
-//   return Promise.all(toBeReloaded.map(ea => ea !== id && importES6Module(ea)))
-//       .then(() => importES6Module(id));
-// }
-
-// // function computeRequireMap() {
-// //   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
-// //     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
-// //     return requireMap;
-// //   }, {});
-// // }
 
 function computeRequireMap(System) {
   if (System.loads) {
@@ -75,8 +86,8 @@ function findDependentsOf(System, name) {
   // module3: import {y} from "module2.js"; export var z = y + 1;
   // `findDependentsOf` gives you an answer what modules are "stale" when you
   // change module1 = module2 + module3
-  return System.normalize(name)
-    .then(id => graph.hull(graph.invert(computeRequireMap(System)), id));
+  var id = System.normalizeSync(name);
+  return graph.hull(graph.invert(computeRequireMap(System)), id);
 }
 
 function findRequirementsOf(System, name) {
@@ -86,6 +97,6 @@ function findRequirementsOf(System, name) {
   // module2: import {x} from "module1.js"; export var y = x + 1;
   // module3: import {y} from "module2.js"; export var z = y + 1;
   // `findRequirementsOf("./module3")` will report ./module2 and ./module1
-  return System.normalize(name)
-    .then(id => graph.hull(computeRequireMap(System), id));
+  var id = System.normalizeSync(name);
+  return graph.hull(computeRequireMap(System), id);
 }
