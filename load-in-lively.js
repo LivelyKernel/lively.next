@@ -8,6 +8,7 @@ System.config({
     "lively.lang": "node_modules/lively.lang",
     "mocha-es6": "lively.modules/node_modules/mocha-es6",
     "lively.vm": "node_modules/lively.vm",
+    "lively.ast": "http://localhost:9001/node_modules/lively.vm/node_modules/lively.ast",
   },
   meta: {
     "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.js": {
@@ -17,6 +18,7 @@ System.config({
   },
   packageConfigPaths: [
     "lively.modules/node_modules/lively.lang/package.json",
+    "node_modules/lively.vm/package.json",
     "node_modules/lively.lang/package.json",
     "lively.modules/package.json",
     "lively.modules/node_modules/mocha-es6/package.json"]
@@ -24,7 +26,10 @@ System.config({
 
 System.import("lively.lang")
   .then(() => System.import("mocha-es6"))
-  .then(() => System.import("lively.modules/index.js"))
+  .then(() => System.import("lively.vm"))
+  .then(() => System.import("lively.vm/node_modules/lively.ast"))
+  // .then(() => System.import("lively.modules/index.js"))
+  // .then(() => System.import("lively.modules/src/eval.js"))
   .then(show.curry("%s"))
   .catch(show.curry("%s"))
 

@@ -1,3 +1,4 @@
+import * as ast from "lively.ast";
 import { obj } from "lively.lang";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -9,6 +10,7 @@ var SystemClass = currentSystem().constructor;
 if (!SystemClass.systems) SystemClass.systems = {};
 
 SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
+  var System = this;
   return {
     moduleEnv: moduleEnv,
     evaluationDone: function(moduleId) {
@@ -17,8 +19,7 @@ SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
       // runScheduledExportChanges(moduleId);
     },
     dumpConfig: function() {
-      var System = currentSystem(),
-          json = {
+      var json = {
             baseURL: System.baseURL,
             transpiler: System.transpiler,
             map: System.map,
@@ -81,7 +82,7 @@ function makeSystem(cfg) {
   }
 
   System.config(cfg);
-  
+
   return System;
 }
 
@@ -113,9 +114,12 @@ function moduleEnv(System, moduleId) {
 
   if (ext.loadedModules[moduleId]) return ext.loadedModules[moduleId];
 
-  return ext.loadedModules[moduleId] = {
+  var env = {
     loadError: undefined,
-    recorderName: "__rec__",
+    recorderName: "__lvVarRecorder",
+    dontTransform: ["__rec__", "__lvVarRecorder", "global",
+    // "System",
+    "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
     recorder: Object.create(GLOBAL, {
       _moduleExport: {
         // get() { return (name, val) => scheduleModuleExportsChange(moduleId, name, val, true/*add export*/); }
@@ -136,6 +140,10 @@ function moduleEnv(System, moduleId) {
       }
     })
   }
+
+  env.recorder.System = System;
+
+  return ext.loadedModules[moduleId] = env;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

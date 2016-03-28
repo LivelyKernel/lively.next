@@ -23,7 +23,8 @@ describe("instrumentation", () => {
   var S;
   beforeEach(() => {
     S = getSystem("test", {baseURL: dir});
-    return createFiles(testProjectDir, testProjectSpec);
+    return createFiles(testProjectDir, testProjectSpec)
+      .then(() => S.import(testProjectDir + "file1.js"));
   });
 
   afterEach(() => {
@@ -31,9 +32,10 @@ describe("instrumentation", () => {
     return removeDir(testProjectDir);
   });
 
-  it("gets access to internal module state", () =>
-    S.import(testProjectDir + "file1.js")
-    .then(() => expect(moduleEnv(S, testProjectDir + "file1.js"))
-                  .to.have.deep.property("recorder.z", 2)));
+  it("gets access to internal module state", () => {
+    var env = moduleEnv(S, testProjectDir + "file1.js");
+    expect(env).to.have.deep.property("recorder.z", 2);
+    expect(env).to.have.deep.property("recorder.x", 3);
+  });
 
 })
