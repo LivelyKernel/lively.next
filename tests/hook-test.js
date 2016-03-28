@@ -2,7 +2,7 @@
 import { expect } from "mocha-es6";
 
 import { getSystem, removeSystem } from "../src/system.js";
-import { install as installHook, remove as removeHook } from "../src/hooks.js";
+import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "../src/hooks.js";
 
 describe("hooks", () => {
 
@@ -30,5 +30,11 @@ describe("hooks", () => {
     installHook(System, "normalize", hook);
     removeHook(System, "normalize", "hook");
     return System.normalize("foo", "bar").then(n => expect(n).to.equal(System.baseURL + "foo", "remove issue"));
+  });
+
+  it("hook installed test", () => {
+    function hook(proceed, name, parent) { return proceed(name, parent); }
+    installHook(System, "normalize", hook);
+    expect(isHookInstalled(System, "normalize", "hook")).to.equal(true);
   });
 });

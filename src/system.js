@@ -1,46 +1,69 @@
 import { obj } from "lively.lang";
 
-export { getSystem, removeSystem, ensureExtension,  printSystemConfig  };
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var GLOBAL = typeof window !== "undefined" ? window : (typeof Global !== "undefined" ? Global : global);
 var isNode = currentSystem().get("@system-env").node;
 
 var SystemClass = currentSystem().constructor;
-var systems = {};
+if (!SystemClass.systems) SystemClass.systems = {};
 
-var debug = false; 
+SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
+  return {
+    moduleEnv: moduleEnv,
+    evaluationDone: function(moduleId) {
+      // var env = moduleEnv(moduleId);
+      // addGetterSettersForNewVars(moduleId, env);
+      // runScheduledExportChanges(moduleId);
+    },
+    dumpConfig: function() {
+      var System = currentSystem(),
+          json = {
+            baseURL: System.baseURL,
+            transpiler: System.transpiler,
+            map: System.map,
+            meta: System.meta,
+            packages: System.packages,
+            paths: System.paths,
+            packageConfigPaths: System.packageConfigPaths
+          }
+      return JSON.stringify(json, null, 2);
+    },
+    loadedModules: this["__lively.modules__loadedModules"] || (this["__lively.modules__loadedModules"] = {})
+  }
+})
 
+function systems() { return SystemClass.systems }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// System creation + access interface
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function currentSystem() { return GLOBAL.System; }
 
 function nameOfSystem(System) {
-  return Object.keys(systems).detect(name => systems[name] === System);
+  return Object.keys(systems()).detect(name => systems()[name] === System);
 }
 
 function getSystem(nameOrSystem, config) {
   return nameOrSystem && typeof nameOrSystem !== "string" ?
-    nameOrSystem : systems[nameOrSystem] || (systems[nameOrSystem] = makeSystem(config));
+    nameOrSystem : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
 }
 
 function removeSystem(nameOrSystem) {
   // FIXME "unload" code...???
   var name = nameOrSystem && typeof nameOrSystem !== "string" ?
     nameOfSystem(nameOrSystem) : nameOrSystem;
-  delete systems[name];
+  delete systems()[name];
 }
 
-function ensureExtension(System) {
-  var ext = System["__lively.modules__"]
-        || (System["__lively.modules__"] = {loadedModules: {}});
-  return System["__lively.modules__"];
-}
+import { wrapModuleLoad } from "./instrumentation.js"
 
 function makeSystem(cfg) {
   var System = new SystemClass();
   System.trace = true;
+
+  wrapModuleLoad(System);
 
   cfg = obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
   if (System.get("@system-env").node) {
@@ -83,17 +106,13 @@ function printSystemConfig(System) {
 
 // import { scheduleModuleExportsChange } from "export-import.js";
 
-export { loadedModules };
-
-function loadedModules(System) {
-  var ext = ensureExtension(System);
-  return ext.loadedModules;
-}
+function loadedModules(System) { return System["__lively.modules__"].loadedModules; }
 
 function moduleEnv(System, moduleId) {
-  var ext = ensureExtension(System);
+  var ext = System["__lively.modules__"];
 
   if (ext.loadedModules[moduleId]) return ext.loadedModules[moduleId];
+
   return ext.loadedModules[moduleId] = {
     loadError: undefined,
     recorderName: "__rec__",
@@ -118,3 +137,13 @@ function moduleEnv(System, moduleId) {
     })
   }
 }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// exports
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+export {
+  getSystem, removeSystem,
+  printSystemConfig,
+  loadedModules, moduleEnv
+};

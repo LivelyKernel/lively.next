@@ -1,15 +1,10 @@
 import { arr, fun } from "lively.lang";
-import { getSystem, ensureExtension } from "./system.js";
+import { getSystem } from "./system.js";
 
 function install(System, hookName, hook) {
   System = getSystem(System);
   System[hookName] = fun.wrap(System[hookName], hook);
   System[hookName].hookFunc = hook;
-
-  // var ext = ensureExtension(System);
-  // var hookData = ext.hooks[hookName] || (ext.hooks[hookName] = {original: null, hooks: []});
-  // if (!hookData.original) hookData.original = System[hookName];
-  // arr.pushIfNotIncluded(hookData.hooks, hook);
 }
 
 function remove(System, methodName, hookOrName) {
@@ -33,4 +28,16 @@ function remove(System, methodName, hookOrName) {
   return true;
 }
 
-export { install, remove };
+function isInstalled(System, methodName, hookOrName) {
+  var f = System[methodName];
+  while (f) {
+    if (f.hookFunc) {
+      if (typeof hookOrName === "string" && f.hookFunc.name === hookOrName) return true;
+      else if (f.hookFunc === hookOrName) return true;
+    }
+    f = f.originalFunction;
+  }
+  return false;
+}
+
+export { install, remove, isInstalled };
