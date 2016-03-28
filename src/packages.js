@@ -1,5 +1,4 @@
 import { arr } from "lively.lang";
-import { getSystem } from "./system.js";
 
 export { registerPackage };
 
@@ -8,8 +7,6 @@ export { registerPackage };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function registerPackage(System, packageURL) {
-  System = getSystem(System);
-
   packageURL = String(packageURL).replace(/\/$/, "");
   var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
 

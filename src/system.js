@@ -103,6 +103,9 @@ function printSystemConfig(System) {
   return JSON.stringify(json, null, 2);
 }
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module state
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function loadedModules(System) { return System["__lively.modules__"].loadedModules; }
@@ -160,6 +163,16 @@ function addGetterSettersForNewVars(System, moduleId) {
   });
 }
 
+function sourceOf(System, moduleName, parent) {
+  return System.normalize(moduleName, parent)
+    .then(id => {
+      var load = (System.loads && System.loads[id]) || {
+        status: 'loading', address: id, name: id,
+        linkSets: [], dependencies: [], metadata: {}};
+      return System.fetch(load);
+    });
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // module records
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -189,5 +202,6 @@ export {
   getSystem, removeSystem,
   printSystemConfig,
   moduleRecordFor, updateModuleRecordOf,
-  loadedModules, moduleEnv
+  loadedModules, moduleEnv,
+  sourceOf
 };

@@ -1,9 +1,10 @@
-import { string, properties, classHelper } from "lively.lang";
+import * as ast from "lively.ast";
+import { arr, string, properties, classHelper } from "lively.lang";
 import { moduleEnv } from "./system.js";
 import { evalCodeTransform } from "lively.vm/lib/evaluator.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-export { wrapModuleLoad }
+export { wrapModuleLoad, instrumentSourceOfModuleLoad }
 
 var debug = false;
 var isNode = System.get("@system-env").node;
@@ -147,6 +148,36 @@ function customTranslate(proceed, load) {
 
   debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now()-start);
   return proceed(load);
+}
+
+function instrumentSourceOfModuleLoad(System, load) {
+  // brittle!
+  // The result of System.translate is source code for a call to
+  // System.register that can't be run standalone. We parse the necessary
+  // details from it that we will use to re-define the module
+  // (dependencies, setters, execute)
+  return System.translate(load).then(translated => {
+    // translated looks like
+    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
+    //   "use strict";
+    //   var x, z, y;
+    //   return {
+    //     setters: [function (_someEs6ModuleJs) { ... }],
+    //     execute: function () {...}
+    //   };
+    // });
+
+    var parsed            = ast.parse(translated),
+        call              = parsed.body[0].expression,
+        moduleName        = call.arguments[0].value,
+        registerCall      = call.callee.body.body[0].expression,
+        depNames          = arr.pluck(registerCall["arguments"][0].elements, "value"),
+        declareFuncNode   = call.callee.body.body[0].expression["arguments"][1],
+        declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
+        declare           = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});\n//@ sourceURL=${moduleName}\n`);
+    if (typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
+    return {localDeps: depNames, declare: declare};
+  });
 }
 
 function wrapModuleLoad(System) {

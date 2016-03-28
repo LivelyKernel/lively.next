@@ -1,8 +1,6 @@
 import { arr, fun } from "lively.lang";
-import { getSystem } from "./system.js";
 
 function install(System, hookName, hook) {
-  System = getSystem(System);
   System[hookName] = fun.wrap(System[hookName], hook);
   System[hookName].hookFunc = hook;
 }
