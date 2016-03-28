@@ -36,7 +36,7 @@ function updateModuleExports(System, moduleId, keysAndValues) {
       debug && console.log("[lively.vm es6 updateModuleExports] %s export %s = %s", moduleId, name, String(value).slice(0,30).replace(/\n/g, "") + "...");
 
       var isNewExport = !(name in record.exports);
-      if (isNewExport) record.__lively_vm__.evalOnlyExport[name] = true;
+      if (isNewExport) record.__lively_modules__.evalOnlyExport[name] = true;
       // var isEvalOnlyExport = record.__lively_vm__.evalOnlyExport[name];
       record.exports[name] = value;
 

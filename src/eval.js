@@ -1,6 +1,6 @@
 import * as ast from "lively.ast";
 import { obj } from "lively.lang";
-import { moduleRecord, moduleEnv } from "./system.js";
+import { moduleRecordFor, moduleEnv } from "./system.js";
 import * as evaluator from "lively.vm/lib/evaluator.js";
 
 export { runEval }
@@ -10,8 +10,7 @@ function ensureImportsAreLoaded(System, code, parentModule) {
       imports = body.filter(node => node.type === "ImportDeclaration");
   return Promise.all(imports.map(node =>
           System.normalize(node.source.value, parentModule)
-            .then(fullName => moduleRecord(fullName) ?
-              undefined : System.import(fullName))))
+            .then(fullName => moduleRecordFor(System, fullName) ? undefined : System.import(fullName))))
         .catch(err => { console.error("Error ensuring imports: " + err.message); throw err; });
 }
 

@@ -12,6 +12,7 @@ var dir = System.normalizeSync("lively.modules/tests/"),
     testProjectSpec = {
       "file1.js": "import { y } from './file2.js'; var z = 2; export var x = y + z;",
       "file2.js": "export var y = 1;",
+      "file3.js": "export var bar = 5;",
       "package.json": '{"name": "test-project-1", "main": "file1.js"}',
     }
 
@@ -56,34 +57,36 @@ describe("eval", () => {
         ]);
       }]));
 
-  // it("of export statement with new export", () =>
-  //   lang.promise.chain([
-  //     () => Promise.all([es6.import(module1), es6.import(module2)]),
-  //     (modules, state) => { state.m1 = modules[0]; state.m2 = modules[1]; },
-  //     () => es6.runEval("export var foo = 3;", {asString: true, targetModule: module1}),
-  //     (result, state) => {
-  //       expect(result.value).to.not.match(/error/i);
-  //       // Hmmm.... frozen modules require us to re-import... damn!
-  //       // expect(state.m1.foo).to.equal(3, "foo not defined in module1 after eval");
-  //       return es6.import(module1)
-  //         .then((m1) => expect(m1.foo).to.equal(3, "foo not defined in module1 after eval"))
-  //     },
-  //     () => es6.runEval("export var foo = 5;", {asString: true, targetModule: module1}),
-  //     (result, state) => {
-  //       expect(result.value).to.not.match(/error/i);
-  //       // expect(state.m1.foo).to.equal(5, "foo updated in module1 after re-eval");
-  //       return es6.import(module1)
-  //         .then((m1) => expect(m1.foo).to.equal(5, "foo updated in module1 after re-eval"))
-  //     }]));
+  it("of export statement with new export", () =>
+    promise.chain([
+      () => () => Promise.all([
+        System.import(testProjectDir + "file1.js"),
+        System.import(testProjectDir + "file2.js")]),
+      (modules, state) => ([m1, m2], state) => { state.m1 = m1; state.m2 = m2; },
+      () => runEval(System, "export var foo = 3;", {asString: true, targetModule: testProjectDir + "file2.js"}),
+      (result, {m1, m2}) => {
+        expect(result.value).to.not.match(/error/i);
+        // Hmmm.... frozen modules require us to re-import... damn!
+        // expect(state.m1.foo).to.equal(3, "foo not defined in module1 after eval");
+        return System.import(testProjectDir + "file2.js")
+          .then((m) => expect(m.foo).to.equal(3, "foo not defined after eval"))
+      },
+      () => runEval(System, "export var foo = 5;", {asString: true, targetModule: testProjectDir + "file2.js"}),
+      (result, {m1, m2}) => {
+        expect(result.value).to.not.match(/error/i);
+        // expect(state.m1.foo).to.equal(5, "foo updated in module1 after re-eval");
+        return System.import(testProjectDir + "file2.js")
+          .then((m) => expect(m.foo).to.equal(5, "foo updated in module1 after re-eval"));
+      }]));
 
-  // it("of import statement", () =>
-  //   // test if import is transformed to lookup + if the imported module gets before eval
-  //   lang.promise.chain([
-  //     () => es6.runEval("import {y} from './module2.js'; y", {targetModule: module1}),
-  //     (result, state) => {
-  //       expect(result.value).to.not.match(/error/i);
-  //       expect(result.value).to.equal(5, "imported value");
-  //     }]))
+  it("of import statement", () =>
+    // test if import is transformed to lookup + if the imported module gets before eval
+    promise.chain([
+      () => runEval(System, "import { bar } from './file3.js'; bar", {targetModule: testProjectDir + "file1.js"}),
+      (result, state) => {
+        expect(result.value).to.not.match(/error/i);
+        expect(result.value).to.equal(5, "imported value");
+      }]))
 
   // it("of var being exported", () =>
   //   // Load module1 and module2 which depends on module1
