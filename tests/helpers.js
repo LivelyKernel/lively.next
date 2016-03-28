@@ -1,13 +1,12 @@
 /*global System*/
 
-import { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, readdirSync, readFileSync, lstatSync, unlinkSync, rmdirSync, writeFileSync, mkdirSync } from "fs";
 import fetch from "fetch";
 
 var isNode = System.get("@system-env").node;
 
 // FIXME: __rec__.fetch(...) doesnt work, arg..>!
 var f = !isNode && fetch.bind(System.global);
-
 
 
 function createFilesWeb(baseDir, fileSpec) {
@@ -49,5 +48,21 @@ function removeDirNode(path) {
 
 var removeDir = isNode ? removeDirNode : removeDirWeb;
 
+function modifyFileWeb(file, modifyFunc) {
+  return f(file, {method: "GET"})
+    .then(res => res.text())
+    .then(content => modifyFunc(content))
+    .then(modified => f(file, {method: "PUT", body: String(modified)}));
+}
 
-export { createFiles, removeDir }
+function modifyFileNode(file, modifyFunc) {
+  file = file.replace(/^[^\/]+:\/\//, "");
+  return new Promise((resolve, reject) => {
+    writeFileSync(file, modifyFunc(readFileSync(file).toString()));
+    resolve();
+  });
+}
+
+var modifyFile = isNode ? modifyFileNode : modifyFileWeb;
+
+export { createFiles, removeDir, modifyFile }
