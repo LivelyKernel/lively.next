@@ -15,7 +15,7 @@ function runScheduledExportChanges(System, moduleId) {
   var pendingExportChanges = System["__lively.modules__"].pendingExportChanges,
       keysAndValues = pendingExportChanges[moduleId];
   if (!keysAndValues) return;
-  clearPendingModuleExportChanges(System ,moduleId);
+  clearPendingModuleExportChanges(System, moduleId);
   updateModuleExports(System, moduleId, keysAndValues);
 }
 
@@ -26,7 +26,6 @@ function clearPendingModuleExportChanges(System, moduleId) {
 
 function updateModuleExports(System, moduleId, keysAndValues) {
   var debug = System["__lively.modules__"].debug;
-
   updateModuleRecordOf(System, moduleId, (record) => {
 
     var newExports = [], existingExports = [];
