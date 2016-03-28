@@ -1,36 +1,39 @@
 import * as ast from "lively.ast";
 import { obj } from "lively.lang";
+import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var GLOBAL = typeof window !== "undefined" ? window : (typeof Global !== "undefined" ? Global : global);
-var isNode = currentSystem().get("@system-env").node;
+var isNode = System.get("@system-env").node;
 
-var SystemClass = currentSystem().constructor;
+var SystemClass = System.constructor;
 if (!SystemClass.systems) SystemClass.systems = {};
 
 SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
   var System = this;
   return {
+    debug: false,
     moduleEnv: moduleEnv,
     evaluationDone: function(moduleId) {
-      // var env = moduleEnv(moduleId);
-      // addGetterSettersForNewVars(moduleId, env);
-      // runScheduledExportChanges(moduleId);
+      var env = moduleEnv(System, moduleId);
+      addGetterSettersForNewVars(System, moduleId, env);
+      runScheduledExportChanges(System, moduleId);
     },
     dumpConfig: function() {
-      var json = {
-            baseURL: System.baseURL,
-            transpiler: System.transpiler,
-            map: System.map,
-            meta: System.meta,
-            packages: System.packages,
-            paths: System.paths,
-            packageConfigPaths: System.packageConfigPaths
-          }
-      return JSON.stringify(json, null, 2);
+      return JSON.stringify({
+        baseURL: System.baseURL,
+        transpiler: System.transpiler,
+        defaultJSExtensions: System.defaultJSExtensions,
+        map: System.map,
+        meta: System.meta,
+        packages: System.packages,
+        paths: System.paths,
+        packageConfigPaths: System.packageConfigPaths
+      }, null, 2);
     },
-    loadedModules: this["__lively.modules__loadedModules"] || (this["__lively.modules__loadedModules"] = {})
+    loadedModules: System["__lively.modules__loadedModules"] || (System["__lively.modules__loadedModules"] = {}),
+    pendingExportChanges: System["__lively.modules__pendingExportChanges"] || (System["__lively.modules__pendingExportChanges"] = {})
   }
 })
 
@@ -39,8 +42,6 @@ function systems() { return SystemClass.systems }
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // System creation + access interface
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function currentSystem() { return GLOBAL.System; }
 
 function nameOfSystem(System) {
   return Object.keys(systems()).detect(name => systems()[name] === System);
@@ -105,8 +106,6 @@ function printSystemConfig(System) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// import { scheduleModuleExportsChange } from "export-import.js";
-
 function loadedModules(System) { return System["__lively.modules__"].loadedModules; }
 
 function moduleEnv(System, moduleId) {
@@ -122,8 +121,7 @@ function moduleEnv(System, moduleId) {
     "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
     recorder: Object.create(GLOBAL, {
       _moduleExport: {
-        // get() { return (name, val) => scheduleModuleExportsChange(moduleId, name, val, true/*add export*/); }
-        get() { return (name, val) => {/*...*/}; }
+        get() { return (name, val) => scheduleModuleExportsChange(System, moduleId, name, val, true/*add export*/); }
       },
       _moduleImport: {
         get: function() {
@@ -146,6 +144,43 @@ function moduleEnv(System, moduleId) {
   return ext.loadedModules[moduleId] = env;
 }
 
+function addGetterSettersForNewVars(System, moduleId, env) {
+  // after eval we modify the env so that all captures vars are wrapped in
+  // getter/setter to be notified of changes
+  // FIXME: better to not capture via assignments but use func calls...!
+  var prefix = "__lively.modules__";
+  Object.keys(env).forEach(key => {
+    if (key.indexOf(prefix) === 0 || env.__lookupGetter__(key)) return;
+    env[prefix + key] = env[key];
+    env.__defineGetter__(key, () => env[prefix + key]);
+    env.__defineSetter__(key, (v) => {
+      scheduleModuleExportsChange(System, moduleId, key, v, false/*add export*/);
+      return env[prefix + key] = v;
+    });
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module records
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function moduleRecordFor(System, fullname) {
+  var record = System._loader.moduleRecords[fullname];
+  if (!record) return null;
+  if (!record.hasOwnProperty("__lively_modules__"))
+    record.__lively_modules__ = {evalOnlyExport: {}};
+  return record;
+}
+
+function updateModuleRecordOf(System, fullname, doFunc) {
+  var record = moduleRecordFor(System, fullname);
+  if (!record) throw new Error(`es6 environment global of ${fullname}: module not loaded, cannot get export object!`);
+  record.locked = true;
+  try {
+    return doFunc(record);
+  } finally { record.locked = false; }
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // exports
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -153,5 +188,6 @@ function moduleEnv(System, moduleId) {
 export {
   getSystem, removeSystem,
   printSystemConfig,
+  moduleRecordFor, updateModuleRecordOf,
   loadedModules, moduleEnv
 };

@@ -1,6 +1,7 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
+import { promise } from "lively.lang";
 import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem, moduleEnv } from "../src/system.js";
@@ -33,26 +34,27 @@ describe("eval", () => {
     runEval(System, "1 + z + x", {targetModule: testProjectDir + "file1.js"})
       .then(result => expect(result.value).equals(6)));
 
-  // it("of export statement", () =>
-  //   // Load module1 and module2 which depends on module1
-  //   lang.promise.chain([
-  //     () => Promise.all([es6.import(module1), es6.import(module2)]),
-  //     (modules, state) => {
-  //       state.m1 = modules[0]; state.m2 = modules[1];
-  //       expect(state.m1.x).to.equal(3);
-  //       expect(state.m2.y).to.equal(5);
-  //     },
-  //       // Modify module1
-  //     () => es6.runEval("export var x = 9;", {asString: true, targetModule: module1}),
-  //     (result, state) => {
-  //       expect(result.value).to.not.match(/error/i);
-  //       expect(state.m1.x).to.equal(9, "module1 not updated");
-  //       expect(state.m2.y).to.equal(11, "module2 not updated after its dependency changed");
-  //       return Promise.all([
-  //         es6.import(module1).then(m => expect(m.x).to.equal(9)),
-  //         es6.import(module2).then(m => expect(m.y).to.equal(11)),
-  //       ]);
-  //     }]));
+  it("of export statement", () =>
+    promise.chain([
+      () => Promise.all([
+        System.import(testProjectDir + "file1.js"),
+        System.import(testProjectDir + "file2.js")]),
+      ([m1, m2], state) => {
+        state.m1 = m1; state.m2 = m2;
+        expect(m1.x).to.equal(3);
+        expect(m2.y).to.equal(1);
+      },
+        // Modify module1
+      () => runEval(System, "export var y = 2;", {asString: true, targetModule: testProjectDir + "file2.js"}),
+      (result, {m1, m2}) => {
+        expect(result.value).to.not.match(/error/i);
+        expect(m2.y).to.equal(2, "file2.js not updated");
+        expect(m1.x).to.equal(4, "file1.js not updated after its dependency changed");
+        return Promise.all([
+          System.import(testProjectDir + "file1.js").then(m => expect(m.x).to.equal(4)),
+          System.import(testProjectDir + "file2.js").then(m => expect(m.y).to.equal(2)),
+        ]);
+      }]));
 
   // it("of export statement with new export", () =>
   //   lang.promise.chain([
