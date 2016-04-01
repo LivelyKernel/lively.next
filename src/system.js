@@ -87,6 +87,8 @@ function makeSystem(cfg) {
   cfg.packageConfigPaths = cfg.packageConfigPaths || ['./node_modules/*/package.json'];
   // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
 
+  if (!cfg.baseURL) cfg.baseURL = "/";
+  
   System.config(cfg);
 
   return System;

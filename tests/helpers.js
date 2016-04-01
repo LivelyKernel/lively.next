@@ -1,6 +1,7 @@
 /*global System*/
 
 import { existsSync, readdirSync, readFileSync, lstatSync, unlinkSync, rmdirSync, writeFileSync, mkdirSync } from "fs";
+import { obj } from "lively.lang";
 import fetch from "fetch";
 
 var isNode = System.get("@system-env").node;
@@ -65,4 +66,14 @@ function modifyFileNode(file, modifyFunc) {
 
 var modifyFile = isNode ? modifyFileNode : modifyFileWeb;
 
-export { createFiles, removeDir, modifyFile }
+function modifyJSON(file, changeObj) {
+  return modifyFile(file,
+    content => JSON.stringify(obj.deepMerge(JSON.parse(content), changeObj)));
+}
+
+function noTrailingSlash(path) { return path.replace(/\/$/, ""); }
+
+var inspect = !isNode && typeof lively !== "undefined" && lively.morphic.inspect ?
+  lively.morphic.inspect : console.log.bind(console);
+
+export { createFiles, removeDir, modifyFile, modifyJSON, noTrailingSlash, inspect }
