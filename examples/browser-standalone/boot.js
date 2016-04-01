@@ -1,27 +1,35 @@
 /*global System*/
 
+System.normalizeSync = wrap(System.normalizeSync, function(proceed, name, parentName, isPlugin) {
+  return fixNormalize(proceed(name, parentName, isPlugin))
+});
+
 System.normalize = wrap(System.normalize, function(proceed, name, parentName, parentAddress) {
   var System = this;
   return proceed(name, parentName, parentAddress)
-    .then(result => {
-      var base = result.replace(/\.js$/, "");
-      if (base in System.packages) {
-        var main = System.packages[base].main;
-        if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
-      }
-      return result;
-    })
+    .then(fixNormalize)
 });
+
+function fixNormalize(normalized) {
+  var base = normalized.replace(/\.js$/, "").replace(/([^:])\/[\/]+/g, "$1/");
+  if (base in System.packages) {
+    var main = System.packages[base].main;
+    if (main) {
+      return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+    }
+  }
+  return normalized;
+}
 
 System.config({
   baseURL: "/",
   transpiler: "babel",
   map: {
-    "babel": "node_modules/babel-core/browser.js",
-    "lively.modules": "../../",
-    "lively.lang": "node_modules/lively.lang",
-    "lively.vm": "node_modules/lively.vm",
-    "lively.ast": "node_modules/lively.ast",
+    "babel": "lively.modules/node_modules/babel-core/browser.js",
+    "lively.modules": "../..",
+    "lively.lang": "lively.modules/node_modules/lively.lang",
+    "lively.vm": "lively.modules/node_modules/lively.vm",
+    "lively.ast": "lively.modules/node_modules/lively.ast",
       "path": "@empty",
       "fs": "@empty",
       "events": "@empty",
@@ -36,15 +44,15 @@ System.config({
     }
   },
   packages: {
-    "node_modules/lively.lang": {main: "index.js"},
-    "node_modules/lively.ast": {main: "index.js"},
-    "node_modules/lively.vm": {main: "index.js"},
+    "lively.modules/node_modules/lively.lang": {main: "index.js"},
+    "lively.modules/node_modules/lively.ast": {main: "index.js"},
+    "lively.modules/node_modules/lively.vm": {main: "index.js"},
   },
   packageConfigPaths: [
-    "node_modules/lively.vm/package.json",
-    "node_modules/lively.ast/package.json",
-    "node_modules/lively.lang/package.json",
-    "package.json"
+    "lively.modules/node_modules/lively.vm/package.json",
+    "lively.modules/node_modules/lively.ast/package.json",
+    "lively.modules/node_modules/lively.lang/package.json",
+    "lively.modules/package.json"
   ]
 })
 
