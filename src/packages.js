@@ -24,7 +24,6 @@ function _tryToLoadPackageConfig(System, packageURL) {
 
   return System.import(packageConfigURL)
     .then(config => {
-// inspect(System)
       arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL)
       return config;
     })

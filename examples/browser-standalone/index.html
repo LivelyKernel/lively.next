@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.modules browser standalone example</title>
+  </head>
+  <body>
+    <div id="log"></div>
+    <script src="../../node_modules/systemjs/dist/system.src.js"></script>
+    <script src="boot.js"></script>
+    <script>
+      System.import("lively.modules")
+        .then((m) => {
+          log("lively.modules loaded")
+          var System = window.System = m.System;
+          return System.normalize("./test-package/")
+            .then(url => {
+              log(url);
+              debugger;
+              return m.registerPackage(url)
+            })
+            .then(() => System.import("./test-package"))
+            .then(() => log("OK"))
+            // .catch(err => log(String(err)))
+        })
+        .catch(err => {
+          if (err.originalErr) log(err.originalErr.stack);
+          log(err.stack || err);
+          log(systemConfPrint());
+        })
+
+    </script>
+  </body>
+</html>
