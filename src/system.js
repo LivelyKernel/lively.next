@@ -1,6 +1,7 @@
 import * as ast from "lively.ast";
 import { obj, properties } from "lively.lang";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
+import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -66,8 +67,12 @@ function makeSystem(cfg) {
 
   wrapModuleLoad(System);
 
+  if (!isHookInstalled(System, "normalizePackageMainModules"))
+    installHook(System, "normalize", normalizePackageMainModules);
+
   cfg = obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
-  if (System.get("@system-env").node) {
+
+  if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
         "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs",
         "http", "https", "module", "net", "os", "path", "punycode", "querystring",
@@ -76,16 +81,29 @@ function makeSystem(cfg) {
         map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
     cfg.map = obj.merge(map, cfg.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
-    cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
-    cfg.packageConfigPaths = cfg.packageConfigPaths || ['./node_modules/*/package.json'];
-    // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
+    // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
   }
+
+  cfg.packageConfigPaths = cfg.packageConfigPaths || ['./node_modules/*/package.json'];
+  // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
 
   System.config(cfg);
 
   return System;
 }
 
+function normalizePackageMainModules(proceed, name, parent, parentAddress) {
+  var System = this;
+  return proceed(name, parent, parentAddress)
+    .then(result => {
+      var base = result.replace(/\.js$/, "");
+      if (base in System.packages) {
+        var main = System.packages[base].main;
+        if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+      }
+      return result;
+    })
+}
 
 function printSystemConfig(System) {
   System = getSystem(System);
