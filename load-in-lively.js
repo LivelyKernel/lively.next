@@ -1,9 +1,9 @@
 var System = lively.vm.es6.currentSystem();
 
-System.normalizeSync = System.normalizeSync.getOriginal().wrap(function(proceed, name, parentName, parentAddress) {
-  return packageMainRedirect(packageJSONNoJs(proceed(name, parentName, parentAddress)));
+System.normalizeSync = System.normalizeSync.getOriginal().wrap(function(proceed, name, parentName, isPlugin) {
+  return packageMainRedirect(packageJSONNoJs(proceed(name, parentName, isPlugin)));
 })
-  
+
 System.normalize = System.normalize.getOriginal().wrap(function(proceed, name, parentName, parentAddress) {
   var System = this;
   return proceed(name, parentName, parentAddress)
@@ -34,7 +34,7 @@ System.config({
     "mocha-es6": "lively.modules/node_modules/mocha-es6",
     "lively.vm": "node_modules/lively.vm",
     "lively.ast": "http://localhost:9001/node_modules/lively.vm/node_modules/lively.ast",
-          "path": "@empty",
+    "path": "@empty",
       "fs": "@empty",
       "events": "@empty",
       "util": "@empty",
@@ -47,6 +47,10 @@ System.config({
       "exports": "fetch"
     },
     "lively.modules": {main: "index.js"},
+    "lively.modules/node_modules/lively.ast/dist/escodegen.browser.js": {
+      "format": "global",
+      "configured": true
+    },
   },
   packages: {
     "node_modules/lively.lang": {main: "index.js"},

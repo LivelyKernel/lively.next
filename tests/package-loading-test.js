@@ -5,7 +5,7 @@ import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } fro
 
 import { obj } from "lively.lang";
 import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
-import { registerPackage } from "../src/packages.js";
+import { registerPackage, applyConfig } from "../src/packages.js";
 
 var testDir = System.normalizeSync("lively.modules/tests/");
 
@@ -104,4 +104,17 @@ describe("package loading", function() {
 
   });
 
+});
+
+describe("package configuration test", () => {
+  
+  var S;
+  beforeEach(() => S = getSystem("test", {baseURL: testDir}));
+  afterEach(() => removeSystem("test"));
+  
+  it("installs hooks", () =>
+    applyConfig(S, {lively: {hooks: [{target: "normalize", source: "(proceed, name, parent, parentAddress) => proceed(name + 'x', parent, parentAddress)"}]}}, "barr")
+      .then(_ => S.normalize("foo"))
+      .then(n => expect(n).to.match(/x$/)));
+  
 });
