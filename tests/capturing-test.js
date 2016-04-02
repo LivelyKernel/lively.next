@@ -1,6 +1,6 @@
 /*global beforeEach, afterEach, describe, it*/
 
-import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+import { expect } from "mocha-es6";
 
 import * as transform from "../lib/transform.js";
 import { rewriteToCaptureTopLevelVariables } from "../lib/capturing.js";

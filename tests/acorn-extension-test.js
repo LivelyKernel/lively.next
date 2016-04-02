@@ -1,6 +1,6 @@
 /*global beforeEach, afterEach, describe, it*/
 
-import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+import { expect } from "mocha-es6";
 import { withMozillaAstDo, rematchAstWithSource } from "../lib/mozilla-ast-visitor-interface.js";
 import { parse } from "../lib/parser.js";
 import { arr } from "lively.lang";

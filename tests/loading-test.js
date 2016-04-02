@@ -2,7 +2,7 @@
 
 import { string, fun } from "lively.lang";
 
-import { expect } from "lively-mocha-tester";
+import { expect } from "mocha-es6";
 
 function testPageLoad(url, waitForHTMLMatch) {
   return it('can load ' + url, function(done) {
@@ -28,14 +28,14 @@ function testNodejsRuntimeLoad(name, src) {
                 + "    console.log(\"[" + name + " require] %s\", request)\n"
                 + "  return load.call(this, request, parent, isMain);\n"
                 + "};\n"
-                + "\n"
+                + "var System = require('systemjs');"
                 + src;
-
-      var spawn = require("child_process").spawn,
+      var spawn = System._nodeRequire("child_process").spawn,
           proc = spawn("node", ["-e", src]),
           out = "";
-      proc.on("error", reject);
-      proc.stdout.on("data", function(d) { out += String(d); });
+      proc.on("error", function(err) { console.log(err);            reject(err); });
+      proc.stdout.on("data", function(d) { console.log(String(d));  out += String(d); });
+      proc.stderr.on("data", function(d) { console.log(String(d));  out += String(d); });
       proc.on("exit", function() { resolve(out); });
     })
     .then(function(out) { return expect(out).to.match(/\nDONE\n/m); });
@@ -43,8 +43,7 @@ function testNodejsRuntimeLoad(name, src) {
 }
 
 function testNodejsLoad(bundleFile) {
-  var src = "require(\"" + bundleFile + "\");\n"
-            + "System.config(require(\"" + bundleFile.replace(/\.js$/, "-config.json") + "\"));\n"
+  var src = "System.config(require(\"./package.json\").systemjs);\n"
             + "\n"
             + "System.import(\"lively.ast\")\n"
             + "  .then(function(ast) {\n"
@@ -58,7 +57,7 @@ function testNodejsLoad(bundleFile) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-describe('loading', function() {
+xdescribe('loading', function() {
 
   this.timeout(5000);
 
@@ -81,20 +80,27 @@ describe('loading', function() {
   } else {
     this.timeout(5000);
     testNodejsRuntimeLoad("runtime load",
-      fun.extractBody(function() {
-        // var System = require("systemjs");
-        var conf = require("../dist/es6-runtime-config.json");
-        conf = JSON.parse(JSON.stringify(conf).replace(/__AST_DIR__/g, "./"));
+        `var conf = require("./package.json").systemjs;
+        conf.transpiler = "babel";
+        conf.babel = System.normalizeSync("babel");
+        //conf.babel = "${System.normalizeSync("babel")}";
+        // conf.map.babel = "${System.normalizeSync("babel")}";
         System.config(conf);
-        System.import("lively.ast")
+        console.log(System.babel)
+        console.log(System.baseURL)
+        System.import("./index.js")
           .then(function(ast) {
-              console.log(ast.fuzzyParse('1+3 0'));
-              console.log(ast.stringify(ast.parse('1+3')));
-              console.log('DONE');
-          }).catch(function(err) { return console.error('ERROR', err); });
-      }));
-    testNodejsLoad("./dist/lively.ast.es6.bundle.js");
-    testNodejsLoad("./dist/lively.ast.es6.js");
+            console.log(ast.parse("1+3"));
+            console.log(ast.stringify(ast.parse("1+3")));
+            console.log("DONE")
+          })
+          .catch(function(err) { console.log(String(err.stack)); console.error("ERROR", err); });`);
+
+    // testNodejsLoad("./dist/lively.ast.es6.bundle.js");
+    
+    // testNodejsLoad("./dist/lively.ast.es6.bundle.js");
+
+    // testNodejsLoad("./dist/lively.ast.es6.js");
   }
 
 });

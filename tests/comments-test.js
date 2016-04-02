@@ -1,6 +1,6 @@
 /*global process, require, beforeEach, afterEach, describe, it*/
 
-import { expect } from "lively-mocha-tester/node_modules/chai/chai.js";
+import { expect } from "mocha-es6";
 
 import { parse } from "../lib/parser.js";
 import { fun, Group, obj } from "lively.lang";

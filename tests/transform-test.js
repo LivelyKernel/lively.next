@@ -1,6 +1,6 @@
 /*global beforeEach, afterEach, describe, it*/
 
-import { expect } from "lively-mocha-tester";
+import { expect } from "mocha-es6";
 
 import { helper, replace, oneDeclaratorPerVarDecl, returnLastStatement, wrapInFunction } from "../lib/transform.js";
 import { parse } from "../lib/parser.js";
