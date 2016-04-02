@@ -3,45 +3,6 @@
   "version": "0.6.0",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "index.js",
-  "systemjs": {
-    "main": "es6-migration.js",
-    "meta": {
-      "./dist/escodegen.browser.js": {
-        "format": "global",
-        "configured": true
-      },
-      "./node_modules/acorn": {
-        "main": "./src/index.js",
-        "format": "esm",
-        "configured": true
-      },
-      "./node_modules/mocha-es6": {
-        "main": "./index.js"
-      }
-    },
-    "map": {
-      "mocha-es6": "./node_modules/mocha-es6",
-      "acorn": "./node_modules/acorn",
-      "./node_modules/acorn/src.js": "./node_modules/acorn/src/index.js",
-      "./node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
-      "node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
-      "lively.lang": "./node_modules/lively.lang",
-      "escodegen": "./dist/escodegen.browser.js",
-      "util": {
-        "node": "@node/util",
-        "~node": "@empty"
-      },
-      "child_process": {
-        "node": "@node/child_process",
-        "~node": "@empty"
-      }
-    },
-    "packageConfigPaths": [
-      "./node_modules/lively.lang/package.json",
-      "./node_modules/mocha-es6/package.json",
-      "node_modules/*/package.json"
-    ]
-  },
   "scripts": {
     "test": "./node_modules/mocha-es6/bin/mocha-es6.js tests/*-test.js",
     "build": "node -e \"require('./build.js')();\""
@@ -76,5 +37,28 @@
     "mocha-phantomjs-core": "^1.3.0",
     "systemjs": "^0.19.23",
     "systemjs-builder": "^0.15.10"
+  },
+  "systemjs": {
+    "map": {
+      "escodegen": "./dist/escodegen.browser.js",
+      "./node_modules/acorn/src.js": "./node_modules/acorn/src/index.js",
+      "./node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
+      "node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
+      "acorn/src/": "./node_modules/acorn/src/index.js"
+    },
+    "paths": {
+      "acorn/src/": "acorn/src/index.js"
+    },
+    "meta": {
+      "dist/escodegen.browser.js": {
+        "format": "global"
+      }
+    }
+  },
+  "lively": {
+    "packageMap": {
+      "lively.lang": "./node_modules/lively.lang",
+      "acorn": "./node_modules/acorn"
+    }
   }
 }
