@@ -7,8 +7,8 @@ import { install as installHook, remove as removeHook, isInstalled as isHookInst
 describe("hooks", () => {
 
   var System;
-  beforeEach(() => { System = getSystem("test"); });
-  afterEach(() => { removeSystem("test"); });
+  beforeEach(() => System = getSystem("test"));
+  afterEach(() => removeSystem("test"));
 
   it("install normalize hook", () => {
     var hook = (proceed, name, parent) => (name === 'foo' && parent === 'bar' ? Promise.resolve('123') : proceed(name, parent));

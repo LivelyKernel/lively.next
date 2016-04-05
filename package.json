@@ -5,16 +5,8 @@
   },
   "systemjs": {
     "main": "./index.js",
-    "packageConfigPaths": [
-      "./node_modules/lively.lang/package.json",
-      "./node_modules/lively.vm/package.json",
-      "./node_modules/lively.ast/package.json"
-    ],
     "map": {
       "lively.modules": ".",
-      "lively.lang": "./node_modules/lively.lang",
-      "lively.vm": "./node_modules/lively.vm",
-      "lively.ast": "./node_modules/lively.ast",
       "fetch": {
         "node": "@empty",
         "~node": "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.js"
@@ -26,18 +18,6 @@
       "URI": "./lib/URI.js"
     },
     "meta": {
-      "lively.lang": {
-        "main": "./index.js",
-        "format": "cjs"
-      },
-      "lively.ast": {
-        "main": "./index.js",
-        "format": "cjs"
-      },
-      "lively.vm": {
-        "main": "./index.js",
-        "map": {}
-      },
       "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.js": {
         "format": "global",
         "exports": "fetch"
@@ -46,6 +26,13 @@
         "format": "global",
         "exports": "URI"
       }
+    }
+  },
+  "lively": {
+    "packageMap": {
+      "lively.lang": "./node_modules/lively.lang",
+      "lively.ast": "./node_modules/lively.ast",
+      "lively.vm": "./node_modules/lively.vm"
     }
   },
   "dependencies": {

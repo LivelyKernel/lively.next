@@ -1,4 +1,4 @@
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 
 export { registerPackage, applyConfig, knownPackages };
@@ -7,6 +7,28 @@ export { registerPackage, applyConfig, knownPackages };
 function isJsFile(url) { return /\.js/i.test(url); }
 function asDir(url) {
   return isJsFile(url) ? url.replace(/\/[^\/]*$/, "") : url.replace(/\/$/, "");
+}
+
+var join = string.joinPath;
+
+function urlResolve(url) {
+  var urlMatch = url.match(/^([^:]+:\/\/)(.*)/);
+  if (!urlMatch) return url;
+  
+  var protocol = urlMatch[1],
+      path = urlMatch[2],
+      result = path;
+      show(result)
+  // /foo/../bar --> /bar
+  do {
+      path = result;
+      result = path.replace(/\/[^\/]+\/\.\./, '');
+  } while (result != path);
+  // foo//bar --> foo/bar
+  result = result.replace(/(^|[^:])[\/]+/g, '$1/');
+  // foo/./bar --> foo/bar
+  result = result.replace(/\/\.\//g, '/');
+  return protocol + result;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -33,6 +55,7 @@ function registerPackage(System, packageURL) {
 
 function tryToLoadPackageConfig(System, packageURL) {
   var packageConfigURL = packageURL + "/package.json";
+
   System.config({
     meta: {[packageConfigURL]: {format: "json"}},
     packages: {[packageURL]: {meta: {"package.json": {format: "json"}}}}
@@ -129,29 +152,32 @@ function applyLivelyConfigBundles(System, livelyConfig, packageURL) {
 }
 
 function applyLivelyConfigPackageMap(System, livelyConfig, packageURL) {
+  if (!livelyConfig.packageMap) return Promise.resolve({subPackages: []});
+  return Promise.all(Object.keys(livelyConfig.packageMap)
+          .map(name => subpackageNameAndAddress(System, livelyConfig, name, packageURL)))
+        .then(subPackages => ({subPackages: subPackages}));
+}
+
+function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageURL) {
   var pConf = System.packages[packageURL],
       preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
         livelyConfig.preferLoadedPackages : true;
 
-  if (!livelyConfig.packageMap) return Promise.resolve({subPackages: []});
-
-  return Promise.all(
-    Object.keys(livelyConfig.packageMap).map(name =>
-      System.normalize(name, packageURL + "/")
-        .then(normalized => {
-          if (preferLoadedPackages && (pConf.map[name] || System.map[name] || System.get(normalized)))
-            return Promise.resolve({name: name, address: pConf.map[name] || System.map[name] || normalized});
-
-          pConf.map[name] = livelyConfig.packageMap[name];
-
-          // lookup
-          return System.normalize(livelyConfig.packageMap[name], packageURL + "/")
-            .then(normalized => {
-              // SystemJS sometimes adds .js extension even without defaultJSExtensions, grrr
-              if (!/\.js$/.test(livelyConfig.packageMap[name])) normalized = normalized.replace(/\.js$/, "");
-              return {name: name, address: normalized};
-            });
-      }))).then(subPackages => ({subPackages: subPackages}));
+  return System.normalize(subPackageName, packageURL + "/")
+    .then(normalized => {
+      if (preferLoadedPackages && (pConf.map[subPackageName] || System.map[subPackageName] || System.get(normalized)))
+        return Promise.resolve({name: subPackageName, address: pConf.map[subPackageName] || System.map[subPackageName] || normalized});
+  
+      pConf.map[subPackageName] = livelyConfig.packageMap[subPackageName];
+  
+      // lookup
+      var mapped = livelyConfig.packageMap[subPackageName],
+          isURL = /^[^:\\]+:\/\//.test(mapped),
+          subpackageURL = isURL ?
+            mapped :
+            urlResolve(join(mapped[0] === "." ? packageURL : System.baseURL, mapped));
+      return {name: subPackageName, address: subpackageURL};
+    });
 }
 
 function knownPackages(System) {
