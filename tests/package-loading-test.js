@@ -28,7 +28,7 @@ describe("package loading", function() {
         "index.js": "export { x, version } from 'some-project';",
         "package.json": JSON.stringify({
           name: "dependent-project", dependencies: {"some-project": "*"},
-          lively: {packageMap: {"some-project": project1bDir + "entry-b.js"}}
+          lively: {packageMap: {"some-project": project1bDir}}
         })
       }
 
@@ -61,8 +61,11 @@ describe("package loading", function() {
         .then(_ => System.import("some-project"))
         .then(mod => expect(mod).to.have.property("x", 2))
         .then(m => expect(System.packages).to.deep.equal({
-            [noTrailingSlash(project1aDir)]:
-              {main: "entry-a.js", map: {}, names: ["some-project"]}})));
+            [noTrailingSlash(project1aDir)]: {
+              main: "entry-a.js",
+              meta: {"package.json": {format: "json"}},
+              map: {},
+              names: ["some-project"]}})));
 
     it("registers and loads dependent packages", () =>
       Promise.all([
@@ -83,7 +86,8 @@ describe("package loading", function() {
 
     it("uses specified dependency when preferLoaded is false", () =>
       modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false}})
-        .then(() => registerPackage(System, project2Dir).then(() => System.import("dependent-project")))
+        .then(() => registerPackage(System, project2Dir))
+        .then(() => System.import("dependent-project"))
         .then(m => expect(m.version).to.equal("b")));
 
     it("deals with package map directory entry", () =>
