@@ -45,7 +45,7 @@ function tryToLoadPackageConfig(System, packageURL) {
       return config;
     })
     .catch((err) => {
-      console.log("[lively.modules package] Unable loading package config %s: ", packageConfigURL, err);
+      console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
       delete System.meta[packageConfigURL];
       var name = packageURL.split("/").slice(-1)[0];
       return {name: name}; // "pseudo-config"
@@ -60,12 +60,13 @@ function applyConfig(System, packageConfig, packageURL) {
   // and uses the "lively" section as described in `applyLivelyConfig`
 
   return Promise.resolve().then(() => {
-    System.config({map: {[packageConfig.name]: packageURL}});
-  
-    var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {}),
+    var name            = packageConfig.name || packageURL.split("/").slice(-1)[0],
+        packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {}),
         sysConfig       = packageConfig.systemjs,
         livelyConfig    = packageConfig.lively,
         main            = packageConfig.main || "index.js";
+
+    System.config({map: {[name]: packageURL}});
   
     if (!packageInSystem.map) packageInSystem.map = {};
   
@@ -79,7 +80,7 @@ function applyConfig(System, packageConfig, packageURL) {
     return (livelyConfig ? applyLivelyConfig(System, livelyConfig, packageURL) : Promise.resolve({subPackages: []}))
       .then((packageApplyResult) => {
         packageInSystem.names = packageInSystem.names || [];
-        arr.pushIfNotIncluded(packageInSystem.names, packageConfig.name);
+        arr.pushIfNotIncluded(packageInSystem.names, name);
         packageInSystem.main = main;
         return packageApplyResult;
       });
