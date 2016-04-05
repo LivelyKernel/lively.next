@@ -100,6 +100,7 @@ function applyLivelyConfig(System, livelyConfig, packageURL) {
   //   entries in packageMap are specifically meant to be sub-packages!
   // Will return a {subPackages: [{name, address},...]} object
   applyLivelyConfigHooks(System, livelyConfig, packageURL);
+  applyLivelyConfigBundles(System, livelyConfig, packageURL);
   return applyLivelyConfigPackageMap(System, livelyConfig, packageURL);
 }
 
@@ -113,6 +114,18 @@ function applyLivelyConfigHooks(System, livelyConfig, packageURL) {
       console.error("Error installing hook for %s: %s", packageURL, e, h);
     }
   });
+}
+
+function applyLivelyConfigBundles(System, livelyConfig, packageURL) {
+  if (!livelyConfig.bundles) return Promise.resolve();
+  var normalized = Object.keys(livelyConfig.bundles).reduce((bundles, name) => {
+    var absName = packageURL.replace(/\/$/, "") + "/" + name;
+    var files = livelyConfig.bundles[name].map(f => System.normalizeSync(f, packageURL + "/"));
+    bundles[absName] = files;
+    return bundles;
+  }, {});
+  System.config({bundles: normalized});
+  return Promise.resolve();
 }
 
 function applyLivelyConfigPackageMap(System, livelyConfig, packageURL) {

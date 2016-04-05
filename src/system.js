@@ -8,6 +8,7 @@ import { install as installHook, isInstalled as isHookInstalled } from "./hooks.
 var GLOBAL = typeof window !== "undefined" ? window : (typeof Global !== "undefined" ? Global : global);
 var isNode = System.get("@system-env").node;
 
+
 var SystemClass = System.constructor;
 if (!SystemClass.systems) SystemClass.systems = {};
 
@@ -16,6 +17,8 @@ SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
   return {
     debug: false,
     moduleEnv: moduleEnv,
+    // TODO this is just a test, won't work in all cases...
+    get itself() { return System.get(System.normalizeSync("lively.modules/index.js")); },
     evaluationDone: function(moduleId) {
       addGetterSettersForNewVars(System, moduleId);
       runScheduledExportChanges(System, moduleId);
