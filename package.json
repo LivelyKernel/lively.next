@@ -39,23 +39,60 @@
     "systemjs-builder": "^0.15.10"
   },
   "systemjs": {
+    "main": "index.js",
     "map": {
+      "lively.ast": ".",
       "escodegen": "./dist/escodegen.browser.js",
-      "./node_modules/acorn/src.js": "./node_modules/acorn/src/index.js",
-      "./node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
-      "node_modules/acorn/src/": "./node_modules/acorn/src/index.js",
-      "acorn/src/": "./node_modules/acorn/src/index.js"
-    },
-    "paths": {
-      "acorn/src/": "acorn/src/index.js"
+      "lively.lang": "node_modules/lively.lang",
+      "acorn": "./node_modules/acorn",
+      "util": {
+        "node": "@node/util",
+        "~node": "@empty"
+      },
+      "child_process": {
+        "node": "@node/child_process",
+        "~node": "@empty"
+      }
     },
     "meta": {
       "dist/escodegen.browser.js": {
         "format": "global"
+      },
+      "lively.lang": {
+        "main": "./index.js",
+        "format": "cjs"
+      },
+      "node_modules/lively.lang/package.json": {
+        "format": "json"
+      },
+      "package.json": {
+        "format": "json"
+      },
+      "node_modules/acorn/package.json": {
+        "format": "json"
+      },
+      "node_modules/lively.lang": {
+        "meta": {
+          "format": "cjs",
+          "defaultJSExtensions": true
+        }
       }
-    }
+    },
+    "packageConfigPaths": [
+      "node_modules/*/package.json",
+      "./package.json",
+      "./node_modules/lively.lang/package.json",
+      "./node_modules/acorn/package.json"
+    ]
   },
+
   "lively": {
+    "hooks": [
+      {
+        "target": "normalize",
+        "source": "(proceed, name, parent, parentAddress) => proceed(name === '..' ? name = '../index.js' : name, parent, parentAddress)"
+      }
+    ],
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
       "acorn": "./node_modules/acorn"
