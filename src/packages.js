@@ -17,7 +17,8 @@ function registerPackage(System, packageURL) {
   // packageURL = String(packageURL).replace(/\/$/, "");
   // console.log("%s ... %s", packageURL, asDir(String(packageURL)))
 
-  packageURL = asDir(String(packageURL));
+  // packageURL = asDir(String(packageURL));
+  packageURL = String(packageURL).replace(/\/$/, "");
 
   System.debug && console.log("[lively.modules package register] %s", packageURL)
 

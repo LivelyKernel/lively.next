@@ -1,8 +1,9 @@
 import { obj, arr } from "lively.lang";
-import { getSystem } from "./src/system.js";
+import { getSystem, removeSystem } from "./src/system.js";
 
+// System accessors
 var defaultSystem = getSystem("default");
-export { defaultSystem as System }
+export { defaultSystem as System, getSystem, removeSystem }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
