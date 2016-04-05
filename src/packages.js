@@ -32,7 +32,10 @@ function registerPackage(System, packageURL) {
 
 function tryToLoadPackageConfig(System, packageURL) {
   var packageConfigURL = packageURL + "/package.json";
-  System.meta[packageConfigURL] = {format: "json"};
+  System.config({
+    meta: {[packageConfigURL]: {format: "json"}},
+    packages: {[packageURL]: {meta: {"package.json": {format: "json"}}}}
+  });
 
   System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL)
 
