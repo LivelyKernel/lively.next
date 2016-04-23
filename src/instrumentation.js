@@ -31,7 +31,8 @@ var node_modulesDir = System.normalizeSync("lively.modules/node_modules/");
 
 var exceptions = [
       // id => id.indexOf(resolve("node_modules/")) > -1,
-      id => canonicalURL(id).indexOf(node_modulesDir) > -1,
+      // id => canonicalURL(id).indexOf(node_modulesDir) > -1,
+      id => string.include(id, "acorn/src"),
       id => string.include(id, "babel-core/browser.js") || string.include(id, "system.src.js"),
       // id => lang.string.include(id, "lively.ast.es6.bundle.js"),
       id => id.slice(-3) !== ".js"
