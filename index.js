@@ -1,9 +1,21 @@
 import { obj, arr } from "lively.lang";
-import { getSystem, removeSystem } from "./src/system.js";
+import { getSystem, removeSystem, moduleEnv as _moduleEnv, moduleRecordFor as _moduleRecordFor, sourceOf as _sourceOf, printSystemConfig as _printSystemConfig } from "./src/system.js";
 
 // System accessors
-var defaultSystem = getSystem("default");
-export { defaultSystem as System, getSystem, removeSystem }
+var GLOBAL = typeof window !== "undefined" ? window :
+              (typeof global !== "undefined" ? global :
+                (typeof self !== "undefined" ? self : this));
+
+var defaultSystem = defaultSystem || getSystem("default");
+function changeSystem(newSystem, makeGlobal) {
+  defaultSystem = newSystem;
+  if (makeGlobal) GLOBAL.System = newSystem;
+}
+function sourceOf(id) { return _sourceOf(defaultSystem, id); }
+function moduleEnv(id) { return _moduleEnv(defaultSystem, id); }
+function moduleRecordFor(id) { return _moduleRecordFor(defaultSystem, id); }
+function printSystemConfig() { return _printSystemConfig(defaultSystem); }
+export { defaultSystem as System, getSystem, removeSystem, printSystemConfig, changeSystem, sourceOf, moduleEnv, moduleRecordFor }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages

@@ -15,8 +15,7 @@ if (!SystemClass.systems) SystemClass.systems = {};
 SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
   var System = this;
   return {
-    debug: false,
-    moduleEnv: moduleEnv,
+    moduleEnv: function(id) { return moduleEnv(System, id); },
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.normalizeSync("lively.modules/index.js")); },
     evaluationDone: function(moduleId) {
@@ -122,6 +121,7 @@ function printSystemConfig(System) {
     packages:            System.packages,
     paths:               System.paths,
     packageConfigPaths:  System.packageConfigPaths,
+    bundles:             System.bundles
   }
   return JSON.stringify(json, null, 2);
 }
@@ -142,7 +142,7 @@ function moduleEnv(System, moduleId) {
     loadError: undefined,
     recorderName: "__lvVarRecorder",
     dontTransform: ["__rec__", "__lvVarRecorder", "global",
-    // "System",
+    "System",
     "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
     recorder: Object.create(GLOBAL, {
       _moduleExport: {

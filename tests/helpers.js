@@ -21,7 +21,6 @@ var isNode = System.get("@system-env").node;
 // FIXME: __rec__.fetch(...) doesnt work, arg..>!
 var f = !isNode && fetch.bind(System.global);
 
-
 function createFilesWeb(baseDir, fileSpec) {
   return f(baseDir, {method: "MKCOL"})
     .then(arg =>
