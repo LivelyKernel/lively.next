@@ -20,9 +20,10 @@ export { defaultSystem as System, getSystem, removeSystem, printSystemConfig, ch
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { registerPackage as _registerPackage } from './src/packages.js'
+import { registerPackage as _registerPackage, groupIntoPackages as _groupIntoPackages } from './src/packages.js'
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
-export { registerPackage }
+function groupIntoPackages(moduleNames, packageNames) { return _groupIntoPackages(defaultSystem, moduleNames, packageNames); }
+export { registerPackage, groupIntoPackages }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules

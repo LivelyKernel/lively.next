@@ -1,7 +1,7 @@
 import { arr, string } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-export { registerPackage, applyConfig, knownPackages };
+export { registerPackage, applyConfig, knownPackages, groupIntoPackages };
 
 // helper
 function isJsFile(url) { return /\.js/i.test(url); }
@@ -186,4 +186,17 @@ function knownPackages(System) {
     if (pkg.names) pkg.names.forEach(name => nameMap[name] = packageURL);
     return nameMap;
   }, {});
+}
+
+function groupIntoPackages(System, moduleNames, packageNames) {
+
+  return arr.groupBy(moduleNames, groupFor);
+
+  function groupFor(moduleName) {
+    var fullname = System.normalizeSync(moduleName),
+        matching = packageNames.filter(p => fullname.indexOf(p) === 0);
+    return matching.length ?
+      matching.reduce((specific, ea) => ea.length > specific.length ? ea : specific) :
+      "no group";
+  }
 }
