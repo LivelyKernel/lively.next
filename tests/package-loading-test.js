@@ -117,8 +117,27 @@ describe("package configuration test", () => {
   afterEach(() => removeSystem("test"));
   
   it("installs hooks", () =>
-    applyConfig(S, {lively: {hooks: [{target: "normalize", source: "(proceed, name, parent, parentAddress) => proceed(name + 'x', parent, parentAddress)"}]}}, "barr")
+    Promise.resolve()
+      .then(() => applyConfig(S, {lively: {hooks: [{target: "normalize", source: "(proceed, name, parent, parentAddress) => proceed(name + 'x', parent, parentAddress)"}]}}, "barr"))
       .then(_ => S.normalize("foo"))
       .then(n => expect(n).to.match(/x$/)));
-  
+
+  it("installs meta data in package", () =>
+    Promise.resolve()
+      .then(() => applyConfig(S, {lively: {meta: {"foo": {format: "global"}}}}, "some-project-url"))
+      .then(n => expect(S.packages["some-project-url"].meta).to.deep.equal({"foo": {format: "global"}})));
+
+  it("installs absolute addressed meta data in System.meta", () => {
+    var testName = testDir + "foo";
+    return Promise.resolve()
+      .then(() => applyConfig(S, {lively: {meta: {[testName]: {format: "global"}}}}, "some-project-url"))
+      .then(n => expect(S.packages["some-project-url"]).to.not.have.property("meta"))
+      .then(n => expect(S.meta).to.deep.equal({[testName]: {format: "global"}}));
+  });
+
+  it("can resolve .. in url", () =>
+    Promise.resolve()
+      .then(() => expect(S.normalizeSync("..", testDir + "foo/bar.js")).to.equal(testDir + "index.js"))
+      .then(() => S.normalize("..", testDir + "foo/bar.js"))
+      .then((result) => expect(result).to.equal(testDir + "index.js")));
 });

@@ -69,8 +69,11 @@ function makeSystem(cfg) {
 
   wrapModuleLoad(System);
 
-  if (!isHookInstalled(System, "normalizePackageMainModules"))
-    installHook(System, "normalize", normalizePackageMainModules);
+  if (!isHookInstalled(System, "normalizeHook"))
+    installHook(System, "normalize", normalizeHook);
+
+  if (!isHookInstalled(System, "normalizeSync", "normalizeSyncHook"))
+    installHook(System, "normalizeSync", normalizeSyncHook);
 
   cfg = obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
 
@@ -96,18 +99,112 @@ function makeSystem(cfg) {
   return System;
 }
 
-function normalizePackageMainModules(proceed, name, parent, parentAddress) {
+function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this;
+  if (name === "..") name = '../index.js'; // Fix ".."
+
   return proceed(name, parent, parentAddress)
     .then(result => {
+
+      // lookup package main
       var base = result.replace(/\.js$/, "");
       if (base in System.packages) {
         var main = System.packages[base].main;
         if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
       }
+      
+      // Fix issue with accidentally adding .js
+      var m = result.match(/(.*json)\.js/i);
+      if (m) return m[1];
+
       return result;
     })
 }
+
+function normalizeSyncHook(proceed, name, parent, isPlugin) {
+  var System = this;
+  if (name === "..") name = '../index.js'; // Fix ".."
+
+  // systemjs' normalizeSync has by default not the fancy
+  // '{node: "events", "~node": "@mepty"}' mapping but we need it
+  var pkg = parent && normalize_packageOfURL(parent, System);
+  if (pkg) {
+    var mappedObject = pkg.map[name] || System.map[name];
+    if (typeof mappedObject === "object") {
+      name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
+    }
+  }
+
+  var result =  proceed(name, parent, isPlugin)
+  
+  // lookup package main
+  var base = result.replace(/\.js$/, "");
+  if (base in System.packages) {
+    var main = System.packages[base].main;
+    if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+  }
+  
+  // Fix issue with accidentally adding .js
+  var m = result.match(/(.*json)\.js/i);
+  if (m) return m[1];
+
+  return result;
+
+}
+
+function normalize_doMapWithObject(mappedObject, pkg, loader) {
+  // SystemJS allows stuff like {events: {"node": "@node/events", "~node": "@empty"}}
+  // for conditional name lookups based on the environment. The resolution
+  // process in SystemJS is asynchronous, this one here synch. to support
+  // normalizeSync and a one-step-load
+  var env = loader.get(pkg.map['@env'] || '@system-env');
+  // first map condition to match is used
+  var resolved;
+  for (var e in mappedObject) {
+    var negate = e[0] == '~';
+    var value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
+    if (!negate && value || negate && !value) {
+      resolved = mappedObject[e];
+      break;
+    }
+  }
+
+  if (resolved) {
+    if (typeof resolved != 'string')
+      throw new Error('Unable to map a package conditional to a package conditional.');
+  }
+  return resolved;
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function normalize_readMemberExpression(p, value) {
+    var pParts = p.split('.');
+    while (pParts.length)
+      value = value[pParts.shift()];
+    return value;
+  }
+}
+
+function normalize_packageOfURL(url, System) {
+  // given a url like "http://localhost:9001/lively.lang/lib/base.js" finds the
+  // corresponding package name in loader.packages, like "http://localhost:9001/lively.lang"
+  // ... actually it returns the package
+  var packageNames = Object.keys(System.packages || {}),
+      matchingPackages = packageNames
+        .map(pkgName =>
+          url.indexOf(pkgName) === 0 ?
+            {url: pkgName, penalty: url.slice(pkgName.length).length} : null)
+        .filter(ea => !!ea),
+      pName = matchingPackages.length ?
+        matchingPackages.reduce((matchingPkg, ea) => matchingPkg.penalty > ea.penalty ? ea: matchingPkg).url :
+        null;
+  return pName ? System.packages[pName] : null;
+}
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// debugging
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function printSystemConfig(System) {
   System = getSystem(System);
