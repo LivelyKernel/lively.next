@@ -55,7 +55,7 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
         recordGlobals: true
       },
       header = (debug ? `console.log("[lively.modules] executing module ${fullname}");\n` : "")
-            + `var __lively_modules__ = System["__lively.modules__"], ${env.recorderName} = __lively_modules__.moduleEnv(System, "${fullname}").recorder;\n`,
+            + `var __lively_modules__ = System["__lively.modules__"], ${env.recorderName} = __lively_modules__.moduleEnv("${fullname}").recorder;\n`,
       footer = `\n__lively_modules__.evaluationDone("${fullname}");`;
 
   try {
