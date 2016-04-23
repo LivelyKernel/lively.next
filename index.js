@@ -58,3 +58,11 @@ function isHookInstalled(methodName, hookOrName) { return _isHookInstalled(defau
 function installHook(hookName, hook) { return _installHook(defaultSystem, hookName, hook); }
 function removeHook(methodName, hookOrName) { return _removeHook(defaultSystem, methodName, hookOrName); }
 export { isHookInstalled, installHook, removeHook }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// instrumentation
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoad/*, getExceptions, setExceptions*/ } from "./src/instrumentation.js";
+function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
+function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
+

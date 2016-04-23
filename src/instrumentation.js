@@ -4,7 +4,7 @@ import { moduleEnv } from "./system.js";
 import { evalCodeTransform } from "lively.vm/lib/evaluator.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-export { wrapModuleLoad, instrumentSourceOfModuleLoad }
+export { wrapModuleLoad, unwrapModuleLoad, instrumentSourceOfModuleLoad, getExceptions, setExceptions }
 
 var isNode = System.get("@system-env").node;
 
