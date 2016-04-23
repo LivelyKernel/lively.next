@@ -38,13 +38,17 @@ import {
   findDependentsOf as _findDependentsOf,
   findRequirementsOf as _findRequirementsOf,
   forgetModule as _forgetModule,
-  reloadModule as _reloadModule
+  reloadModule as _reloadModule,
+  computeRequireMap
 } from './src/dependencies.js'
+import { importsAndExportsOf as _importsAndExportsOf } from './src/import-export.js';
 function findDependentsOf(module) { return _findDependentsOf(defaultSystem, module); }
 function findRequirementsOf(module) { return _findRequirementsOf(defaultSystem, module); }
 function forgetModule(module, opts) { return _forgetModule(defaultSystem, module, opts); }
 function reloadModule(module, opts) { return _reloadModule(defaultSystem, module, opts); }
-export { findDependentsOf, findRequirementsOf, forgetModule, reloadModule }
+function requireMap() { return computeRequireMap(defaultSystem); }
+function importsAndExportsOf(System, moduleName, parent) { return _importsAndExportsOf(defaultSystem, moduleName, parent); }
+export { findDependentsOf, findRequirementsOf, forgetModule, reloadModule, requireMap, importsAndExportsOf }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // hooks

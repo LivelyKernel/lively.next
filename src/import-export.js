@@ -2,7 +2,7 @@ import * as ast from "lively.ast";
 import { arr } from "lively.lang"
 import { moduleRecordFor, updateModuleRecordOf, sourceOf } from "./system.js"
 
-export { runScheduledExportChanges, scheduleModuleExportsChange };
+export { runScheduledExportChanges, scheduleModuleExportsChange, importsAndExportsOf };
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
   var pendingExportChanges = System["__lively.modules__"].pendingExportChanges,
