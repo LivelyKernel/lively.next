@@ -67,3 +67,10 @@ import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoa
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// eval
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import { runEval as _runEval } from './src/eval.js';
+function runEval(code, options) { return _runEval(defaultSystem, code, options); }
+export { runEval };
+
