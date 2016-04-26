@@ -2022,7 +2022,7 @@ System.register('acorn/src/expression.js', [
                     prop.kind = 'init';
                     prop.method = true;
                     prop.value = this.parseMethod(isGenerator);
-                } else if (this.options.ecmaVersion >= 5 && !prop.computed && prop.key.type === 'Identifier' && (prop.key.name === 'get' || prop.key.name === 'set') && (this.type != tt.comma && this.type != tt.braceR)) {
+                } else if (this.options.ecmaVersion >= 5 && !prop.computed && prop.key.type === 'Identifier' && (prop.key.name === 'get' || prop.key.name === 'set') && this.type != tt.comma && this.type != tt.braceR) {
                     if (isGenerator || isPattern)
                         this.unexpected();
                     prop.kind = prop.key.name;
@@ -4703,7 +4703,7 @@ System.register('acorn/src/loose/statement.js', [
                         this.eat(tt.comma);
                         continue;
                     }
-                    if (method.key.type === 'Identifier' && !method.computed && method.key.name === 'static' && (this.tok.type != tt.parenL && this.tok.type != tt.braceL)) {
+                    if (method.key.type === 'Identifier' && !method.computed && method.key.name === 'static' && this.tok.type != tt.parenL && this.tok.type != tt.braceL) {
                         method['static'] = true;
                         isGenerator = this.eat(tt.star);
                         this.parsePropertyName(method);
@@ -5226,7 +5226,7 @@ System.register('acorn/src/loose/expression.js', [
                         prop.kind = 'init';
                         prop.method = true;
                         prop.value = this.parseMethod(isGenerator);
-                    } else if (this.options.ecmaVersion >= 5 && prop.key.type === 'Identifier' && !prop.computed && (prop.key.name === 'get' || prop.key.name === 'set') && (this.tok.type != tt.comma && this.tok.type != tt.braceR)) {
+                    } else if (this.options.ecmaVersion >= 5 && prop.key.type === 'Identifier' && !prop.computed && (prop.key.name === 'get' || prop.key.name === 'set') && this.tok.type != tt.comma && this.tok.type != tt.braceR) {
                         prop.kind = prop.key.name;
                         this.parsePropertyName(prop);
                         prop.value = this.parseMethod(false);

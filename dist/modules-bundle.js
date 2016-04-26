@@ -36,7 +36,7 @@ return {
   "dependencies": {
     "babel-core": "^5.8.38",
     "lively.ast": "^0.5.4",
-    "lively.lang": "^0.5.19",
+    "lively.lang": "^0.5.20",
     "lively.vm": "^0.4.9",
     "systemjs": "^0.19.24"
   },
@@ -58,7 +58,7 @@ System.register('lively.modules/index.js', [
     './src/eval.js'
 ], function (_export) {
     'use strict';
-    var obj, arr, getSystem, removeSystem, _moduleEnv, _moduleRecordFor, _sourceOf, _printSystemConfig, _registerPackage, _groupIntoPackages, _moduleSourceChange, _findDependentsOf, _findRequirementsOf, _forgetModule, _reloadModule, computeRequireMap, _importsAndExportsOf, _isHookInstalled, _installHook, _removeHook, wrapModuleLoad, unwrapModuleLoad, getExceptions, setExceptions, prepareCodeForCustomCompile, _runEval, GLOBAL, defaultSystem;
+    var obj, arr, getSystem, removeSystem, _moduleEnv, _moduleRecordFor, _sourceOf, _printSystemConfig, _registerPackage, _groupIntoPackages, _moduleSourceChange, _findDependentsOf, _findRequirementsOf, _forgetModule, _reloadModule, computeRequireMap, _importsAndExportsOf, _isHookInstalled, _installHook, _removeHook, _wrapModuleLoad, _unwrapModuleLoad, _runEval, GLOBAL, defaultSystem;
     function changeSystem(newSystem, makeGlobal) {
         _export('System', defaultSystem = newSystem);
         if (makeGlobal)
@@ -112,6 +112,12 @@ System.register('lively.modules/index.js', [
     function removeHook(methodName, hookOrName) {
         return _removeHook(defaultSystem, methodName, hookOrName);
     }
+    function wrapModuleLoad() {
+        _wrapModuleLoad(defaultSystem);
+    }
+    function unwrapModuleLoad() {
+        _unwrapModuleLoad(defaultSystem);
+    }
     function runEval(code, options) {
         return _runEval(defaultSystem, code, options);
     }
@@ -152,11 +158,8 @@ System.register('lively.modules/index.js', [
                 _removeHook = _srcHooksJs.remove;
             },
             function (_srcInstrumentationJs) {
-                wrapModuleLoad = _srcInstrumentationJs.wrapModuleLoad;
-                unwrapModuleLoad = _srcInstrumentationJs.unwrapModuleLoad;
-                getExceptions = _srcInstrumentationJs.getExceptions;
-                setExceptions = _srcInstrumentationJs.setExceptions;
-                prepareCodeForCustomCompile = _srcInstrumentationJs.prepareCodeForCustomCompile;
+                _wrapModuleLoad = _srcInstrumentationJs.wrapModuleLoad;
+                _unwrapModuleLoad = _srcInstrumentationJs.unwrapModuleLoad;
             },
             function (_srcEvalJs) {
                 _runEval = _srcEvalJs.runEval;
@@ -185,7 +188,6 @@ System.register('lively.modules/index.js', [
             _export('isHookInstalled', isHookInstalled);
             _export('installHook', installHook);
             _export('removeHook', removeHook);
-            _export('prepareCodeForCustomCompile', prepareCodeForCustomCompile);
             _export('runEval', runEval);
         }
     };
@@ -218,8 +220,10 @@ System.register('lively.modules/src/system.js', [
         var System = new SystemClass();
         System.trace = true;
         wrapModuleLoad(System);
-        if (!isHookInstalled(System, 'normalizePackageMainModules'))
-            installHook(System, 'normalize', normalizePackageMainModules);
+        if (!isHookInstalled(System, 'normalizeHook'))
+            installHook(System, 'normalize', normalizeHook);
+        if (!isHookInstalled(System, 'normalizeSync', 'normalizeSyncHook'))
+            installHook(System, 'normalizeSync', normalizeSyncHook);
         cfg = obj.merge({
             transpiler: 'babel',
             babelOptions: {}
@@ -270,8 +274,10 @@ System.register('lively.modules/src/system.js', [
         System.config(cfg);
         return System;
     }
-    function normalizePackageMainModules(proceed, name, parent, parentAddress) {
+    function normalizeHook(proceed, name, parent, parentAddress) {
         var System = this;
+        if (name === '..')
+            name = '../index.js';
         return proceed(name, parent, parentAddress).then(function (result) {
             var base = result.replace(/\.js$/, '');
             if (base in System.packages) {
@@ -279,8 +285,70 @@ System.register('lively.modules/src/system.js', [
                 if (main)
                     return base.replace(/\/$/, '') + '/' + main.replace(/^\.?\//, '');
             }
+            var m = result.match(/(.*json)\.js/i);
+            if (m)
+                return m[1];
             return result;
         });
+    }
+    function normalizeSyncHook(proceed, name, parent, isPlugin) {
+        var System = this;
+        if (name === '..')
+            name = '../index.js';
+        var pkg = parent && normalize_packageOfURL(parent, System);
+        if (pkg) {
+            var mappedObject = pkg.map[name] || System.map[name];
+            if (typeof mappedObject === 'object') {
+                name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
+            }
+        }
+        var result = proceed(name, parent, isPlugin);
+        var base = result.replace(/\.js$/, '');
+        if (base in System.packages) {
+            var main = System.packages[base].main;
+            if (main)
+                return base.replace(/\/$/, '') + '/' + main.replace(/^\.?\//, '');
+        }
+        var m = result.match(/(.*json)\.js/i);
+        if (m)
+            return m[1];
+        return result;
+    }
+    function normalize_doMapWithObject(mappedObject, pkg, loader) {
+        var env = loader.get(pkg.map['@env'] || '@system-env');
+        var resolved;
+        for (var e in mappedObject) {
+            var negate = e[0] == '~';
+            var value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
+            if (!negate && value || negate && !value) {
+                resolved = mappedObject[e];
+                break;
+            }
+        }
+        if (resolved) {
+            if (typeof resolved != 'string')
+                throw new Error('Unable to map a package conditional to a package conditional.');
+        }
+        return resolved;
+        function normalize_readMemberExpression(p, value) {
+            var pParts = p.split('.');
+            while (pParts.length)
+                value = value[pParts.shift()];
+            return value;
+        }
+    }
+    function normalize_packageOfURL(url, System) {
+        var packageNames = Object.keys(System.packages || {}), matchingPackages = packageNames.map(function (pkgName) {
+                return url.indexOf(pkgName) === 0 ? {
+                    url: pkgName,
+                    penalty: url.slice(pkgName.length).length
+                } : null;
+            }).filter(function (ea) {
+                return !!ea;
+            }), pName = matchingPackages.length ? matchingPackages.reduce(function (matchingPkg, ea) {
+                return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
+            }).url : null;
+        return pName ? System.packages[pName] : null;
     }
     function printSystemConfig(System) {
         System = getSystem(System);
@@ -301,7 +369,7 @@ System.register('lively.modules/src/system.js', [
     function loadedModules(System) {
         return System['__lively.modules__'].loadedModules;
     }
-    function moduleEnv(System, moduleId) {
+    function _moduleEnv(System, moduleId) {
         var ext = System['__lively.modules__'];
         if (ext.loadedModules[moduleId])
             return ext.loadedModules[moduleId];
@@ -344,7 +412,7 @@ System.register('lively.modules/src/system.js', [
         return ext.loadedModules[moduleId] = env;
     }
     function addGetterSettersForNewVars(System, moduleId) {
-        var rec = moduleEnv(System, moduleId).recorder, prefix = '__lively.modules__';
+        var rec = _moduleEnv(System, moduleId).recorder, prefix = '__lively.modules__';
         properties.own(rec).forEach(function (key) {
             if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key))
                 return;
@@ -420,17 +488,9 @@ System.register('lively.modules/src/system.js', [
             SystemClass.prototype.__defineGetter__('__lively.modules__', function () {
                 var System = this;
                 return Object.defineProperties({
-                    moduleEnv: function (_moduleEnv) {
-                        function moduleEnv(_x) {
-                            return _moduleEnv.apply(this, arguments);
-                        }
-                        moduleEnv.toString = function () {
-                            return _moduleEnv.toString();
-                        };
-                        return moduleEnv;
-                    }(function (id) {
-                        return moduleEnv(System, id);
-                    }),
+                    moduleEnv: function moduleEnv(id) {
+                        return _moduleEnv(System, id);
+                    },
                     evaluationDone: function evaluationDone(moduleId) {
                         addGetterSettersForNewVars(System, moduleId);
                         runScheduledExportChanges(System, moduleId);
@@ -465,7 +525,7 @@ System.register('lively.modules/src/system.js', [
             _export('moduleRecordFor', moduleRecordFor);
             _export('updateModuleRecordOf', updateModuleRecordOf);
             _export('loadedModules', loadedModules);
-            _export('moduleEnv', moduleEnv);
+            _export('moduleEnv', _moduleEnv);
             _export('sourceOf', sourceOf);
         }
     };
@@ -1263,7 +1323,6 @@ System.register('lively.modules/src/instrumentation.js', [
             esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
             cjsFormatCommentRegExp = /['"]format cjs['"];/;
             esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
-            _export('prepareCodeForCustomCompile', prepareCodeForCustomCompile);
         }
     };
 })

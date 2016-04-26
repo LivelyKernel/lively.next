@@ -24,8 +24,7 @@ return {
   "lively": {
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
-      "lively.ast": "./node_modules/lively.ast",
-      "callsite": "./node_modules/callsite"
+      "lively.ast": "./node_modules/lively.ast"
     }
   },
   "scripts": {
@@ -48,7 +47,6 @@ return {
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
     "babel-core": "^5.8.35",
-    "callsite": "^1.0.0",
     "lively.ast": "^0.5.4",
     "lively.lang": "^0.5.12",
     "node-uuid": "^1.4.7",

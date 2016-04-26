@@ -1,7 +1,7 @@
 System.registerDynamic('lively.lang/package.json', [], false, function(require, exports, module) {
 return {
   "name": "lively.lang",
-  "version": "0.5.20",
+  "version": "0.5.21",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
   "main": "index.js",
   "systemjs": {

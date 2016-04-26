@@ -60,16 +60,6 @@ return {
     }
   },
   "lively": {
-    "hooks": [
-      {
-        "target": "normalize",
-        "source": "(proceed, name, parent, parentAddress) => proceed(name === '..' ? name = '../index.js' : name, parent, parentAddress)"
-      },
-      {
-        "target": "normalizeSync",
-        "source": "(proceed, name, parent, isPlugin) => proceed(name === '..' ? name = '../index.js' : name, parent, isPlugin)"
-      }
-    ],
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
       "acorn": "./node_modules/acorn"
@@ -1683,7 +1673,6 @@ System.register('lively.ast/lib/stringify.js', [
         _function:
             while (_again) {
                 var object = _x, property = _x2, receiver = _x3;
-                desc = parent = getter = undefined;
                 _again = false;
                 if (object === null)
                     object = Function.prototype;
@@ -1697,6 +1686,7 @@ System.register('lively.ast/lib/stringify.js', [
                         _x2 = property;
                         _x3 = receiver;
                         _again = true;
+                        desc = parent = undefined;
                         continue _function;
                     }
                 } else if ('value' in desc) {
@@ -2506,17 +2496,6 @@ System.register('lively.ast/lib/capturing.js', [
 ], function (_export) {
     'use strict';
     var obj, chain, arr, fun, Path, parse, query, Visitor, stringify;
-    function test() {
-        var astOrSource = 'class Foo {\n  a() {\n    return 23;\n  }\n}';
-        var assignToObj = {
-            name: 'A',
-            type: 'Identifier'
-        };
-        var options = {};
-        var toplevel = query.topLevelDeclsAndRefs(parsed);
-        toplevel.classDecls;
-        rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options).source;
-    }
     function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
         options = obj.merge({
             ignoreUndeclaredExcept: null,
