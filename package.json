@@ -8,7 +8,6 @@
     "map": {
       "lively.lang": "./node_modules/lively.lang/index.js",
       "lively.ast": "./node_modules/lively.ast/index.js",
-      "callsite": "./node_modules/callsite/index.js",
       "path": {
         "node": "@node/path",
         "~node": "@empty"
@@ -48,11 +47,11 @@
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
     "babel-core": "^5.8.35",
-    "callsite": "^1.0.0",
     "lively.ast": "^0.5.4",
     "lively.lang": "^0.5.12",
     "node-uuid": "^1.4.7",
-    "systemjs": "^0.19.20"
+    "systemjs": "^0.19.20",
+    "systemjs-builder": "^0.15.13"
   },
   "devDependencies": {
     "browserify": "^13.0.0",
