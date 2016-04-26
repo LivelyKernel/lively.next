@@ -1,5 +1,5 @@
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-02-26 00:31 PST
+// Generated on 16-04-09 19:27 PDT
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -63,6 +63,7 @@ Visitor.prototype.accept = function accept(node, state, path) {
     case "TemplateLiteral": return this.visitTemplateLiteral(node, state, path);
     case "TaggedTemplateExpression": return this.visitTaggedTemplateExpression(node, state, path);
     case "AssignmentProperty": return this.visitAssignmentProperty(node, state, path);
+    case "ObjectPattern": return this.visitObjectPattern(node, state, path);
     case "ArrayPattern": return this.visitArrayPattern(node, state, path);
     case "RestElement": return this.visitRestElement(node, state, path);
     case "AssignmentPattern": return this.visitAssignmentPattern(node, state, path);
@@ -561,7 +562,7 @@ Visitor.prototype.visitThisExpression = function visitThisExpression(node, state
 }
 Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
   var visitor = this;
-  // elements is a list with types Expression
+  // elements is a list with types Expression, SpreadElement
   if (node["elements"]) {
     node["elements"] = node["elements"].reduce(function(results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["elements", i]));
@@ -667,7 +668,7 @@ Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node,
 }
 Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
   var visitor = this;
-  // object is of types Expression
+  // object is of types Expression, Super
   node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
   // property is of types Expression
   node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
@@ -693,9 +694,9 @@ Visitor.prototype.visitConditionalExpression = function visitConditionalExpressi
 }
 Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
   var visitor = this;
-  // callee is of types Expression
+  // callee is of types Expression, Super
   node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-  // arguments is a list with types Expression
+  // arguments is a list with types Expression, SpreadElement
   node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
     var result = visitor.accept(ea, state, path.concat(["arguments", i]));
     if (Array.isArray(result)) results.push.apply(results, result);
@@ -792,6 +793,20 @@ Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(nod
   // key is of types Expression
   node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
   // loc is of types SourceLocation
+  if (node["loc"]) {
+    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+  }
+  return node;
+}
+Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
+  var visitor = this;
+  // properties is a list with types AssignmentProperty
+  node["properties"] = node["properties"].reduce(function(results, ea, i) {
+    var result = visitor.accept(ea, state, path.concat(["properties", i]));
+    if (Array.isArray(result)) results.push.apply(results, result);
+    else results.push(result);
+    return results;
+  }, []);  // loc is of types SourceLocation
   if (node["loc"]) {
     node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
   }
@@ -1009,9 +1024,9 @@ Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(n
 }
 Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
   var visitor = this;
-  // callee is of types Expression
+  // callee is of types Expression, Super
   node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-  // arguments is a list with types Expression
+  // arguments is a list with types Expression, SpreadElement
   node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
     var result = visitor.accept(ea, state, path.concat(["arguments", i]));
     if (Array.isArray(result)) results.push.apply(results, result);
