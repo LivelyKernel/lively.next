@@ -31,18 +31,25 @@
             "babelOptions": {"stage": 2},
               map: {
                 "lively.vm": vmPath,
+                "lively.lang": "node_modules/lively.lang/index.js",
+                "lively.ast": "node_modules/lively.ast/index.js",
                 "babel": "lively.vm/node_modules/babel-core/browser.js",
                 "path": "@empty",
                 "module": "@empty",
-                "fs": "@empty"
+                "fs": "@empty",
+                "events": "@empty",
+                "os": "@empty",
 
               },
               // packages: {"acorn": { format: "cjs", },},
               paths: {"lively.vm/*": vmPath + "/*"},
               packageConfigPaths: [
                 "lively.vm/node_modules/lively.ast/node_modules/*/package.json",
+                "node_modules/lively.ast/package.json",
+                "node_modules/lively.lang/package.json",
                 "lively.vm/node_modules/*/package.json",
-                "lively.vm/package.json"]
+                "lively.vm/package.json"
+              ]
             }))
   }
 
