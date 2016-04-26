@@ -27,6 +27,30 @@
           log(systemConfPrint());
         })
 
+      function systemConfPrint() {
+        var S = System;
+        var json = {
+          baseURL: S.baseURL,
+          transpiler: S.transpiler,
+          defaultJSExtensions: S.defaultJSExtensions,
+          map: S.map,
+          meta: S.meta,
+          packages: S.packages,
+          paths: S.paths,
+          packageConfigPaths: S.packageConfigPaths,
+        }
+        return JSON.stringify(json, null, 2);
+      }
+
+      function log(msg) {
+        console.log(msg);
+        var logEl = document.querySelector("#log");
+        if (logEl) {
+          var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
+          logEl.insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
+        }
+      }
+
     </script>
   </body>
 </html>
