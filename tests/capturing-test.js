@@ -159,6 +159,22 @@ describe("ast.capturing", function() {
                  "_rec.x = 23;\n_rec.y = _rec.x + 1;");
     });
 
+    describe("class", () => {
+
+      testVarTfm("captures class def",
+                 "class Foo {\n  a() {\n    return 23;\n  }\n}",
+                 'class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;');
+
+    });
+
+    describe("template strings", () => {
+
+      testVarTfm("ref inside",
+                 "`${foo}`",
+                 '`${ _rec.foo }`;');
+
+    });
+
     describe("import", () => {
 
       testVarTfm("import x from './some-es6-module.js';",

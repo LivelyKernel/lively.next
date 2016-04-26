@@ -228,6 +228,20 @@ describe('query', function() {
     });
   });
 
+
+  describe("es6 classes", function() {
+
+    it('recognizes super call', function() {
+      var code = "class Foo extends Bar {\n"
+               + "  m() { return super.m() + 2; }\n"
+               + "};\n",
+          parsed = parse(code),
+          toplevel = query.topLevelDeclsAndRefs(parsed);
+      expect(toplevel.undeclaredNames).deep.equals(["Bar"]);
+    });
+
+  });
+
   it("findNodesIncludingLines", function() {
     var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n";
 
