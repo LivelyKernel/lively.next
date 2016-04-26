@@ -43,8 +43,6 @@
     "map": {
       "lively.ast": ".",
       "escodegen": "./dist/escodegen.browser.js",
-      "lively.lang": "node_modules/lively.lang",
-      "acorn": "./node_modules/acorn",
       "util": {
         "node": "@node/util",
         "~node": "@empty"
@@ -57,42 +55,10 @@
     "meta": {
       "dist/escodegen.browser.js": {
         "format": "global"
-      },
-      "lively.lang": {
-        "main": "./index.js",
-        "format": "cjs"
-      },
-      "node_modules/lively.lang/package.json": {
-        "format": "json"
-      },
-      "package.json": {
-        "format": "json"
-      },
-      "node_modules/acorn/package.json": {
-        "format": "json"
-      },
-      "node_modules/lively.lang": {
-        "meta": {
-          "format": "cjs",
-          "defaultJSExtensions": true
-        }
       }
-    },
-    "packageConfigPaths": [
-      "node_modules/*/package.json",
-      "./package.json",
-      "./node_modules/lively.lang/package.json",
-      "./node_modules/acorn/package.json"
-    ]
+    }
   },
-
   "lively": {
-    "hooks": [
-      {
-        "target": "normalize",
-        "source": "(proceed, name, parent, parentAddress) => proceed(name === '..' ? name = '../index.js' : name, parent, parentAddress)"
-      }
-    ],
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
       "acorn": "./node_modules/acorn"
