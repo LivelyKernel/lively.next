@@ -95,8 +95,8 @@ describe('query', function() {
 
   it("recognizeClassDeclaration", function() {
     var code = "class Foo {\n" + "  constructor(name) { this.name = name; }\n" + "}\n"+ "new Foo();",
-      result = query.topLevelDeclsAndRefs(code),
-      expected = [];
+        result = query.topLevelDeclsAndRefs(code),
+        expected = [];
     expect(expected).deep.equals(result.undeclaredNames);
   });
 

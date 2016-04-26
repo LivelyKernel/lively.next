@@ -20,8 +20,8 @@ module.exports = function() {
   return lang.promise.chain([
     log("1. Creating estree visitor"),
     createEstreeVisitorModule,
-    log("2. Initializing build of packages"),
-    build,
+    // log("2. Initializing build of packages"),
+    // build,
     log("SUCCESS")
   ])
   .catch(err => console.error(err.stack || err));

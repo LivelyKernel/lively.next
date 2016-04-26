@@ -175,6 +175,28 @@ describe("ast.capturing", function() {
 
     });
 
+    xdescribe("patterns", () => {
+
+      testVarTfm("var {x} = {x: 3};",
+                 "???");
+// var _x = { x: 3 };
+// var x = _x.x;
+
+      testVarTfm("var {x, x: {y: z}} = _",
+                 "???");
+// var _ref = _;
+// var x = _ref.x;
+// var z = _ref.x.y;
+
+      testVarTfm("var [a, b, ...x] = [];",
+                 "???");
+// var _ref = [];
+// var a = _ref[0];
+// var b = _ref[1];
+// var x = _ref.slice(2);
+
+    });
+
     describe("import", () => {
 
       testVarTfm("import x from './some-es6-module.js';",
@@ -253,6 +275,9 @@ describe("ast.capturing", function() {
       testVarTfm("export const x = 23;",
                  "export const x = 23;\n_rec.x = x;");
 
+      testVarTfm("export function x() {};",
+                 '_rec.x = x;\nexport function x() {\n}\n_rec.x = x;\n;'); // hmmm, could be better!
+
       testVarTfm('import * as completions from "./lib/completions.js";\n'
                + "export { completions }",
                  "import * as completions from './lib/completions.js';\n"
@@ -260,8 +285,11 @@ describe("ast.capturing", function() {
                + "export {\n    completions\n};");
 
     });
-    
+
     describe("export obj", () => {
+
+      testModuleTfm("export function foo(a) { return a + 3; };",
+                    "_rec.foo = foo;\nfunction foo(a) {\n    return a + 3;\n}\n_moduleExport('foo', _rec.foo);\n;");
 
       testModuleTfm("export default function () {};",
                     "_moduleExport('default', function () {\n});\n;");
