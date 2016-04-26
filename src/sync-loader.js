@@ -88,8 +88,7 @@ function getDefinedAsEntries(System, pkgURL) {
     if (!def) return null; // alread loaded
     var normalizedDeps = def.deps.map(dep =>
       System.normalizeSync(dep, def.name))
-    var e = obj.deepMerge({deps: [], normalizedDeps: normalizedDeps},
-      def);
+    var e = obj.deepMerge({deps: [], normalizedDeps: normalizedDeps, metadata: {}}, def);
     e.esmExports = true; // ????
     return e;
   }).filter(ea => !!ea);

@@ -11,6 +11,7 @@ System.normalize = wrap(System.normalize, function(proceed, name, parentName, pa
 });
 
 function fixNormalize(normalized) {
+  normalized = normalized.replace(/\/\.js$/, "/index.js");
   var base = normalized.replace(/\.js$/, "").replace(/([^:])\/[\/]+/g, "$1/");
   if (base in System.packages) {
     var main = System.packages[base].main;
@@ -24,6 +25,7 @@ function fixNormalize(normalized) {
 System.config({
   baseURL: "/",
   transpiler: "babel",
+  defaultJSExtensions: true,
   map: {
     "babel": "lively.modules/node_modules/babel-core/browser.js",
     "lively.modules": "../..",
