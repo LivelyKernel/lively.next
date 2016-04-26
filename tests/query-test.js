@@ -191,6 +191,13 @@ describe('query', function() {
       });
 
     });
+    
+    it("finds default params", () => {
+      var code = "function x(y = 2) { return y; }",
+          parsed = parse(code),
+          scopes = query.scopes(parsed).subScopes[0];
+      expect(["x", "y"]).deep.equals(query._declaredVarNames(scopes));
+    });
   });
 
   describe("templateStrings", function() {
@@ -200,6 +207,7 @@ describe('query', function() {
           scopes = query.scopes(parsed);
       expect(["x"]).deep.equals(query._declaredVarNames(scopes));
     });
+
     it("with expressions", function() {
       var code = "var x = `foo ${y}`;",
           result = query.topLevelDeclsAndRefs(code);
