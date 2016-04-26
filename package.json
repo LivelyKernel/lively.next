@@ -6,8 +6,6 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "lively.lang": "./node_modules/lively.lang/index.js",
-      "lively.ast": "./node_modules/lively.ast/index.js",
       "path": {
         "node": "@node/path",
         "~node": "@empty"
@@ -19,13 +17,14 @@
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
-      },
-      "chai": "./node_modules/chai/chai.js",
-      "chai-subset": "./node_modules/chai-subset/lib/chai-subset.js"
-    },
-    "packageConfigPaths": [
-      "node_modules/*/package.json"
-    ]
+      }
+    }
+  },
+  "lively": {
+    "packageMap": {
+      "lively.lang": "./node_modules/lively.lang",
+      "lively.ast": "./node_modules/lively.ast"
+    }
   },
   "scripts": {
     "test": "cd tests/ && node es6-mocha-nodejs-runner.js && cd .. && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html",
