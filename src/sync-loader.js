@@ -10,8 +10,9 @@ var __global = System.get("@system-env").node ?
 
 import { graph, obj } from "lively.lang";
 import { applyConfig as realApplyConfig } from "./packages.js";
+import { getSystem, removeSystem } from "./system.js";
 
-export { importSync }
+export { importSync, getSystem, removeSystem }
 
 
 function importSync(System, moduleName) {
@@ -222,6 +223,7 @@ function linkDynamicModule(entry, loader) {
   exports = module.exports;
 
   // __esModule flag treats as already-named
+  var Module = System.get("@system-env").constructor;
   if (exports && (exports.__esModule || exports instanceof Module))
     entry.esModule = exports;
   // set module as 'default' export, then fake named exports by iterating properties
