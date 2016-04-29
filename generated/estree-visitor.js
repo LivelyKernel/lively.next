@@ -1,3 +1,4 @@
+"format esm";
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
 // Generated on 16-04-09 19:27 PDT
 function Visitor() {}
@@ -1070,5 +1071,4 @@ Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, s
 }
 
 // >>>>>>>>>>>>> END OF AUTO GENERATED CODE >>>>>>>>>>>>>
-
-module.exports = Visitor;
+export default Visitor
