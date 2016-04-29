@@ -1,7 +1,7 @@
 System.registerDynamic('lively.vm/package.json', [], false, function(require, exports, module) {
 return {
   "name": "lively.vm",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index-node.js",
   "systemjs": {
@@ -46,21 +46,12 @@ return {
   },
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
-    "babel-core": "^5.8.35",
     "lively.ast": "^0.5.4",
-    "lively.lang": "^0.5.12",
-    "node-uuid": "^1.4.7",
-    "systemjs": "^0.19.20",
-    "systemjs-builder": "^0.15.13"
+    "lively.lang": "^0.5.12"
   },
   "devDependencies": {
-    "browserify": "^13.0.0",
-    "chai": "^3.3.0",
-    "chai-subset": "^1.1.0",
-    "code-pump": "^0.1.6",
-    "mocha": "^2.3.3",
-    "mocha-phantomjs-core": "^1.3.0",
-    "uglify-js": "^2.6.1"
+    "rollup": "^0.26.1",
+    "rollup-plugin-node-builtins": "^1.0.4"
   }
 }
 
@@ -561,14 +552,14 @@ System.register('lively.vm/lib/commonjs-interface.js', [
             isNode = System.get('@system-env').node;
             GLOBAL = typeof window !== 'undefined' ? window : typeof Global !== 'undefined' ? Global : global;
             debug = false;
-            join = path.join || lang.string.joinPath;
-            isAbsolute = path.isAbsolute || function (p) {
+            join = lang.string.joinPath;
+            isAbsolute = function isAbsolute(p) {
                 return !!p.match(/^(\/|[^\/]+:\/\/)/);
             };
             relative = path.relative || function (base, path) {
                 return path;
             };
-            dirname = path.dirname || function (path) {
+            dirname = function dirname(path) {
                 return path.replace(/\/[^\/]+$/, '');
             };
             nodeModules = isNode ? Object.defineProperties({}, {

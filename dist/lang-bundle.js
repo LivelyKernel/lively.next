@@ -1,7 +1,7 @@
 System.registerDynamic('lively.lang/package.json', [], false, function(require, exports, module) {
 return {
   "name": "lively.lang",
-  "version": "0.5.21",
+  "version": "0.5.22",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
   "main": "index.js",
   "systemjs": {
@@ -57,6 +57,7 @@ return {
   "dependencies": {},
   "devDependencies": {
     "doc-comments": "^0.1.2",
+    "lively.ast": "^0.6.0",
     "babel-core": "^5.8.35",
     "uglify-js": "^2.6.1",
     "expect.js": "*",
@@ -147,7 +148,7 @@ System.registerDynamic('lively.lang/lib/base.js', [], true, function(require, ex
   var isNode = typeof require !== 'undefined' && typeof exports !== 'undefined';
 
   var livelyLang = createLivelyLangObject();
-  if (isNode) { module.exports = livelyLang; return; }
+  if (isNode) { module.exports = livelyLang; if (!Global.lively) return; }
   
   livelyLang._prevLivelyGlobal = Global.lively;
   if (!Global.lively) Global.lively = {};
@@ -302,7 +303,9 @@ System.registerDynamic('lively.lang/lib/base.js', [], true, function(require, ex
     Global.NativeArrayFunctions = livelyLang.arrNative;
   }
 
-})(typeof window !== "undefined" ? window : global);
+})(typeof window !== "undefined" ? window :
+    typeof global!=="undefined" ? global :
+      typeof self!=="undefined" ? self : this);
 
 });
 

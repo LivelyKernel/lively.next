@@ -16,8 +16,7 @@ return {
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
-      },
-      "URI": "./lib/URI.js"
+      }
     }
   },
   "lively": {
@@ -369,7 +368,7 @@ System.register('lively.modules/src/system.js', [
     function loadedModules(System) {
         return System['__lively.modules__'].loadedModules;
     }
-    function _moduleEnv(System, moduleId) {
+    function moduleEnv(System, moduleId) {
         var ext = System['__lively.modules__'];
         if (ext.loadedModules[moduleId])
             return ext.loadedModules[moduleId];
@@ -412,7 +411,7 @@ System.register('lively.modules/src/system.js', [
         return ext.loadedModules[moduleId] = env;
     }
     function addGetterSettersForNewVars(System, moduleId) {
-        var rec = _moduleEnv(System, moduleId).recorder, prefix = '__lively.modules__';
+        var rec = moduleEnv(System, moduleId).recorder, prefix = '__lively.modules__';
         properties.own(rec).forEach(function (key) {
             if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key))
                 return;
@@ -488,9 +487,17 @@ System.register('lively.modules/src/system.js', [
             SystemClass.prototype.__defineGetter__('__lively.modules__', function () {
                 var System = this;
                 return Object.defineProperties({
-                    moduleEnv: function moduleEnv(id) {
-                        return _moduleEnv(System, id);
-                    },
+                    moduleEnv: function (_moduleEnv) {
+                        function moduleEnv(_x) {
+                            return _moduleEnv.apply(this, arguments);
+                        }
+                        moduleEnv.toString = function () {
+                            return _moduleEnv.toString();
+                        };
+                        return moduleEnv;
+                    }(function (id) {
+                        return moduleEnv(System, id);
+                    }),
                     evaluationDone: function evaluationDone(moduleId) {
                         addGetterSettersForNewVars(System, moduleId);
                         runScheduledExportChanges(System, moduleId);
@@ -525,7 +532,7 @@ System.register('lively.modules/src/system.js', [
             _export('moduleRecordFor', moduleRecordFor);
             _export('updateModuleRecordOf', updateModuleRecordOf);
             _export('loadedModules', loadedModules);
-            _export('moduleEnv', _moduleEnv);
+            _export('moduleEnv', moduleEnv);
             _export('sourceOf', sourceOf);
         }
     };
@@ -1398,6 +1405,281 @@ System.register('lively.modules/src/eval.js', [
         ],
         execute: function () {
             _export('runEval', runEval);
+        }
+    };
+})
+System.register('lively.modules/src/bundling.js', [
+    'lively.lang',
+    'lively.ast',
+    '../tests/helpers.js'
+], function (_export) {
+    'use strict';
+    var Path, arr, ast, writeFile, removeFile;
+    function bundle(System, bundleFile, files) {
+        return Promise.all(files.map(function (ea) {
+            var moduleName = typeof ea === 'string' ? ea : ea.moduleName;
+            if (!moduleName)
+                throw new Error('Error bundling module ' + ea);
+            var newName = ea.nameInBundle || moduleName;
+            return System.normalize(moduleName).then(function (url) {
+                return (System.get(url) ? Promise.resolve() : System['import'](url)).then(function () {
+                    return createRegisterModuleFor(System, url, ea.nameInBundle);
+                });
+            });
+        })).then(function (sources) {
+            return System.normalize(bundleFile).then(function (outFile) {
+                return writeFile(outFile, sources.join('\n'));
+            });
+        });
+    }
+    function createRegisterModuleFor(System, url, nameInBundle, formatOverride) {
+        var load = System.loads && System.loads[url];
+        if (!load)
+            throw new Error(url + ' not loaded / traced!');
+        var format = formatOverride || load.metadata.format;
+        if (format === 'json') {
+            return createJSONRegisterDynamicModuleFromLoad(System, url, nameInBundle, load);
+        } else if (format === 'esm' || format === 'es6') {
+            return createRegisterModuleFromLoad(load, nameInBundle);
+        } else if (format === 'global') {
+            return createGlobalRegisterDynamicModule(System, url, nameInBundle, load.source, load.deps);
+        } else if (format === 'cjs') {
+            return createCommonJSRegisterDynamicModule(System, url, nameInBundle, load.metadata.entry.executingRequire, load.deps);
+        } else {
+            throw new Error('Cannot create register module for ' + url + ' with format ' + format);
+        }
+    }
+    function createRegisterModuleFromLoad(load, nameInBundle) {
+        return new Promise(function (resolve, reject) {
+            var name = load.name;
+            if (!load.source)
+                return reject(new Error('No source for ' + name));
+            var parsed = ast.parse(load.source);
+            if ('CallExpression' !== Path('body.0.expression.type').get(parsed))
+                return reject(new Error('Load source is not a call Expression (' + name + ')'));
+            if ('CallExpression' !== Path('body.0.expression.callee.body.body.0.expression.type').get(parsed))
+                return reject(new Error('Load source body inner is not a System.register call expressions (' + name + ')'));
+            if ('System' !== Path('body.0.expression.callee.body.body.0.expression.callee.object.name').get(parsed))
+                return reject(new Error('Not a call to System! (' + name + ')'));
+            if ('register' !== Path('body.0.expression.callee.body.body.0.expression.callee.property.name').get(parsed))
+                return reject(new Error('Not a call to System.register! (' + name + ')'));
+            var moduleName = nameInBundle || Path('body.0.expression.arguments.0.value').get(parsed);
+            if (!moduleName)
+                return reject(new Error('Could not extract module name from ' + name));
+            var registerCall = Path('body.0.expression.callee.body.body.0.expression').get(parsed);
+            registerCall['arguments'].unshift({
+                type: 'Literal',
+                value: moduleName
+            });
+            resolve(ast.stringify(registerCall));
+        });
+    }
+    function createGlobalRegisterDynamicModule(System, url, nameInBundle, source, deps) {
+        var modSource = 'var _retrieveGlobal = System.get("@@global-helpers").prepareGlobal(module.id, null, null);\n' + ('(function() {\n' + source + '\n})();\n') + 'return _retrieveGlobal();';
+        return createRegisterDynamicModuleWithSource(System, url, nameInBundle, modSource, false, deps);
+    }
+    function createCommonJSRegisterDynamicModule(System, url, nameInBundle, executingRequire, deps) {
+        var load = {
+            status: 'loading',
+            address: url,
+            name: url,
+            linkSets: [],
+            dependencies: [],
+            metadata: {}
+        };
+        return System.fetch(load).then(function (source) {
+            return createRegisterDynamicModuleWithSource(System, url, nameInBundle, source, executingRequire, deps);
+        });
+    }
+    function createJSONRegisterDynamicModuleFromLoad(System, url, nameInBundle, load) {
+        return createRegisterDynamicModuleWithSource(System, url, nameInBundle, 'return ' + load.source, false, []);
+    }
+    function createRegisterDynamicModuleWithSource(System, url, nameInBundle, source, executingRequire, deps) {
+        var depsString = '[' + (deps.length ? '\'' + deps.join('\', \'') + '\'' : '') + ']';
+        return Promise.resolve('System.registerDynamic(\'' + (nameInBundle || url) + '\', ' + depsString + ', ' + !!executingRequire + ', ' + ('function(require, exports, module) {\n' + source + '\n});\n'));
+    }
+    return {
+        setters: [
+            function (_livelyLang) {
+                Path = _livelyLang.Path;
+                arr = _livelyLang.arr;
+            },
+            function (_livelyAst) {
+                ast = _livelyAst;
+            },
+            function (_testsHelpersJs) {
+                writeFile = _testsHelpersJs.writeFile;
+                removeFile = _testsHelpersJs.removeFile;
+            }
+        ],
+        execute: function () {
+            _export('bundle', bundle);
+        }
+    };
+})
+System.register('lively.modules/tests/helpers.js', [
+    'fs',
+    'lively.lang',
+    'fetch'
+], function (_export) {
+    'use strict';
+    var node_existsSync, node_readdirSync, node_readFileSync, node_lstatSync, node_unlinkSync, node_unlink, node_rmdirSync, node_writeFile, node_writeFileSync, node_mkdirSync, obj, fetch, isNode, f, createFiles, readFile, removeDir, removeFile, modifyFile, writeFile, inspect;
+    function createFilesWeb(baseDir, fileSpec) {
+        return f(baseDir, { method: 'MKCOL' }).then(function (arg) {
+            return Promise.all(Object.keys(fileSpec).map(function (fileName) {
+                return typeof fileSpec[fileName] === 'object' ? createFilesWeb(baseDir + '/' + fileName, fileSpec[fileName]) : f(baseDir + '/' + fileName, {
+                    method: 'PUT',
+                    body: String(fileSpec[fileName])
+                });
+            }));
+        });
+    }
+    function createFilesNode(baseDir, fileSpec) {
+        baseDir = baseDir.replace(/^[^\/]+:\/\//, '');
+        return new Promise(function (resolve, reject) {
+            if (!node_existsSync(baseDir))
+                node_mkdirSync(baseDir);
+            Object.keys(fileSpec).map(function (fileName) {
+                return typeof fileSpec[fileName] === 'object' ? createFilesNode(baseDir + '/' + fileName, fileSpec[fileName]) : node_writeFileSync(baseDir + '/' + fileName, String(fileSpec[fileName]));
+            });
+            resolve();
+        });
+    }
+    function readFileWeb(file) {
+        return f(file, { method: 'GET' }).then(function (res) {
+            return res.text();
+        });
+    }
+    function readFileNode(file) {
+        file = file.replace(/^[^\/]+:\/\//, '');
+        return Promise.resolve().then(function () {
+            return node_readFileSync(file).toString();
+        });
+    }
+    function removeDirWeb(dir) {
+        return f(dir, { method: 'DELETE' });
+    }
+    function removeDirNode(path) {
+        if (!node_existsSync(path))
+            return Promise.resolve();
+        node_readdirSync(path).forEach(function (file, index) {
+            var curPath = path + '/' + file;
+            if (node_lstatSync(curPath).isDirectory())
+                removeDirNode(curPath);
+            else
+                node_unlinkSync(curPath);
+        });
+        node_rmdirSync(path);
+        return Promise.resolve();
+    }
+    function removeFileNode(file) {
+        file = file.replace(/^[^\/]+:\/\//, '');
+        return new Promise(function (resolve, reject) {
+            return node_unlink(file, function (err) {
+                return err ? reject(err) : resolve();
+            });
+        });
+    }
+    function modifyFileWeb(file, modifyFunc) {
+        return readFileWeb(file).then(function (content) {
+            return modifyFunc(content);
+        }).then(function (modified) {
+            return f(file, {
+                method: 'PUT',
+                body: String(modified)
+            });
+        });
+    }
+    function modifyFileNode(file, modifyFunc) {
+        file = file.replace(/^[^\/]+:\/\//, '');
+        return new Promise(function (resolve, reject) {
+            node_writeFileSync(file, modifyFunc(node_readFileSync(file).toString()));
+            resolve();
+        });
+    }
+    function writeFileWeb(file, content) {
+        return f(file, {
+            method: 'PUT',
+            body: String(content)
+        });
+    }
+    function writeFileNode(file, content) {
+        file = file.replace(/^[^\/]+:\/\//, '');
+        return new Promise(function (resolve, reject) {
+            return node_writeFile(file, String(content), function (err) {
+                return err ? reject(err) : resolve();
+            });
+        });
+    }
+    function modifyJSON(file, changeObj) {
+        return modifyFile(file, function (content) {
+            return JSON.stringify(obj.deepMerge(JSON.parse(content), changeObj));
+        });
+    }
+    function noTrailingSlash(path) {
+        return path.replace(/\/$/, '');
+    }
+    function runInIframe(id, func) {
+        var iframe;
+        return new Promise(function (resolve, reject) {
+            if (document.getElementById(id))
+                return reject(new Error('iframe with id ' + id + ' already exists'));
+            iframe = document.createElement('iframe');
+            iframe.id = id;
+            document.body.appendChild(iframe);
+            var GLOBAL = iframe.contentWindow;
+            return resolve(GLOBAL['eval'](String(func)).call(GLOBAL));
+        }).then(function (result) {
+            iframe && iframe.parentNode.removeChild(iframe);
+            return result;
+        })['catch'](function (err) {
+            iframe && iframe.parentNode.removeChild(iframe);
+            throw err;
+        });
+    }
+    return {
+        setters: [
+            function (_fs) {
+                node_existsSync = _fs.existsSync;
+                node_readdirSync = _fs.readdirSync;
+                node_readFileSync = _fs.readFileSync;
+                node_lstatSync = _fs.lstatSync;
+                node_unlinkSync = _fs.unlinkSync;
+                node_unlink = _fs.unlink;
+                node_rmdirSync = _fs.rmdirSync;
+                node_writeFile = _fs.writeFile;
+                node_writeFileSync = _fs.writeFileSync;
+                node_mkdirSync = _fs.mkdirSync;
+            },
+            function (_livelyLang) {
+                obj = _livelyLang.obj;
+            },
+            function (_fetch) {
+                fetch = _fetch['default'];
+            }
+        ],
+        execute: function () {
+            isNode = System.get('@system-env').node;
+            f = !isNode && fetch.bind(System.global);
+            createFiles = isNode ? createFilesNode : createFilesWeb;
+            readFile = isNode ? readFileNode : readFileWeb;
+            ;
+            removeDir = isNode ? removeDirNode : removeDirWeb;
+            ;
+            removeFile = isNode ? removeFileNode : removeDirWeb;
+            modifyFile = isNode ? modifyFileNode : modifyFileWeb;
+            writeFile = isNode ? writeFileNode : writeFileWeb;
+            inspect = !isNode && typeof lively !== 'undefined' && lively.morphic.inspect ? lively.morphic.inspect : console.log.bind(console);
+            _export('createFiles', createFiles);
+            _export('removeDir', removeDir);
+            _export('modifyFile', modifyFile);
+            _export('modifyJSON', modifyJSON);
+            _export('readFile', readFile);
+            _export('writeFile', writeFile);
+            _export('removeFile', removeFile);
+            _export('noTrailingSlash', noTrailingSlash);
+            _export('inspect', inspect);
+            _export('runInIframe', runInIframe);
         }
     };
 })

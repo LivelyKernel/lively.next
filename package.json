@@ -2,7 +2,8 @@
   "name": "lively.modules",
   "version": "0.1.0",
   "scripts": {
-    "test": "mocha-es6 tests/*-test.js"
+    "test": "mocha-es6 tests/*-test.js",
+    "build": "node tools/build.js"
   },
   "systemjs": {
     "main": "./index.js",
@@ -15,8 +16,7 @@
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
-      },
-      "URI": "./lib/URI.js"
+      }
     }
   },
   "lively": {
@@ -34,9 +34,9 @@
   },
   "dependencies": {
     "babel-core": "^5.8.38",
-    "lively.ast": "^0.5.4",
-    "lively.lang": "^0.5.20",
-    "lively.vm": "^0.4.9",
+    "lively.ast": "^0.6.0",
+    "lively.lang": "^0.5.22",
+    "lively.vm": "^0.5.0",
     "systemjs": "^0.19.24"
   },
   "devDependencies": {
