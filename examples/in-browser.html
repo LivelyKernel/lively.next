@@ -1,0 +1,10 @@
+<html>
+<body>
+  <script src="../dist/lively.ast.js"></script>
+  <script>
+    function log(msg) { document.write(`<pre>${JSON.stringify(msg, null, 2)}</pre>`) }
+      log(lively.ast.stringify(lively.ast.parse("1+2")));
+      log(lively.ast.query.topLevelDeclsAndRefs(lively.ast.parse("this.x = foo")));
+  </script>
+</body>
+</html>
