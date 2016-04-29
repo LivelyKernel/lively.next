@@ -4,7 +4,7 @@ import { expect } from "mocha-es6";
 import { withMozillaAstDo, rematchAstWithSource } from "../lib/mozilla-ast-visitor-interface.js";
 import { parse } from "../lib/parser.js";
 import { arr } from "lively.lang";
-import { acorn, walk } from "../lib/acorn-extension.js";
+import { acorn, walk, findSiblings, findNodeByAstIndex, findStatementOfNode, copy } from "../lib/acorn-extension.js";
 import stringify from "../lib/stringify.js";
 
 describe('walk extension', function() {
@@ -18,9 +18,9 @@ describe('walk extension', function() {
     var c = decls[2];
     var d = decls[3];
 
-    expect(arr.without(decls, b)).deep.equals(walk.findSiblings(parsed, b));
-    expect([a]).deep.equals(walk.findSiblings(parsed, b, 'before'));
-    expect([c,d]).deep.equals(walk.findSiblings(parsed, b, 'after'));
+    expect(arr.without(decls, b)).deep.equals(findSiblings(parsed, b));
+    expect([a]).deep.equals(findSiblings(parsed, b, 'before'));
+    expect([c,d]).deep.equals(findSiblings(parsed, b, 'after'));
 
   });
 
@@ -30,14 +30,14 @@ describe('walk extension', function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
         parsed = parse(src),
         expected = parsed.body[1].body.body[1].argument, // the y in "return y"
-        found = walk.findNodeByAstIndex(parsed, 9);
+        found = findNodeByAstIndex(parsed, 9);
     expect(expected).equals(found, 'node not found');
   });
 
   it("findNodeByAstIndexNoReIndex", function() {
     var src = 'var x = 3; function foo() { var y = 3; return y }; x + foo();',
         parsed = parse(src),
-        found = walk.findNodeByAstIndex(parsed, 9, false);
+        found = findNodeByAstIndex(parsed, 9, false);
     expect(null).equals(found, 'node found (but should not add index)');
   });
 
@@ -74,7 +74,7 @@ describe('walk extension', function() {
 
     tests.forEach(function(test, i) {
       var parsed = parse(test.src),
-          found = walk.findStatementOfNode(parsed, test.target(parsed));
+          found = findStatementOfNode(parsed, test.target(parsed));
       expect(test.expected(parsed)).equals(found, 'node not found ' + (i + 1));
     });
   });
@@ -170,7 +170,7 @@ describe('walk extension', function() {
 
   it("should deep copy ast", function() {
     var parsed = parse('var x = 3;', {addSource: true, addAstIndex: true}),
-        parsedCopy = walk.copy(parsed);
+        parsedCopy = copy(parsed);
 
     // FIXME: sourceType should be copied too
     delete parsed.sourceType;
