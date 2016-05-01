@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
-require("/Users/robert/Lively/lively-dev/lively.modules/node_modules/systemjs")
+require("systemjs")
 global.babel  = require("babel-core")
 var parseArgs = require('minimist');
 var glob      = require('glob');
-var modules   = require("lively.modules/dist/lively.modules.js")
+var modules   = require("lively.modules")
 var path      = require("path");
 var fs        = require("fs");
 var dir       = process.cwd();

@@ -1,11 +1,12 @@
 {
   "name": "mocha-es6",
   "main": "index.js",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "dependencies": {
     "babel-core": "^5.8.35",
+    "lively.modules": "^0.1.2",
     "mocha": "^2.4.5",
-    "lively.modules": "^0.1.0"
+    "systemjs": "^0.19.27"
   },
   "devDependencies": {
     "chai-subset": "^1.2.1",
