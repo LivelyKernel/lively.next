@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "dist/lively.modules.js",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
@@ -43,6 +43,6 @@
     "whatwg-fetch": "^1.0.0"
   },
   "devDependencies": {
-    "mocha-es6": "^0.2.6"
+    "mocha-es6": "^0.2.7"
   }
 }
