@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "dist/lively.modules.js",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
