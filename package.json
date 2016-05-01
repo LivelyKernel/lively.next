@@ -1,6 +1,7 @@
 {
   "name": "lively.modules",
   "version": "0.1.0",
+  "main": "dist/lively.modules.js",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
     "build": "node tools/build.js"
@@ -20,6 +21,7 @@
     }
   },
   "lively": {
+    "main": "index.js",
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
       "lively.ast": "./node_modules/lively.ast",
