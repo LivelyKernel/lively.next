@@ -2,9 +2,6 @@
 
 import mocha from "mocha";
 import chai, { expect } from "chai";
-import subset from "chai-subset";
-
-chai.use(subset);
 
 export { loadTestFile, loadTestFiles, runTestFiles, chai, mocha, expect };
 
@@ -37,13 +34,8 @@ function gatherTests(suite, depth) {
     .concat(suite.suites.reduce((tests, suite) => tests.concat(gatherTests(suite, depth + 1)), []));
 }
 
-function createMocha(reporter) {
-  if (!reporter || reporter === "console") reporter = ConsoleReporter;
-  return new (mocha.constructor)({reporter: reporter});
-}
-
 function loadTestFiles(files, optMocha, optGLOBAL, reporter) {
-  var m = optMocha || createMocha(reporter),
+  var m = optMocha || new (mocha.constructor)({reporter: reporter || ConsoleReporter}),
       testState = {mocha: m, files: [], tests: []};
   return files.reduce((nextP, f) =>
     nextP
@@ -60,10 +52,10 @@ function loadTestFile(file, parent, optMocha, optGLOBAL, reporter) {
   return System.normalize(file, parent)
     .then((file) => {
       System.delete(file);
-      if (System.__lively_vm__) delete System.__lively_vm__.loadedModules[file]
+      // if (System.__lively_vm__) delete System.__lively_vm__.loadedModules[file]
     })
     .then(() =>
-      prepareMocha(optMocha || createMocha(reporter), GLOBAL)
+      prepareMocha(optMocha || new (mocha.constructor)({reporter: reporter || ConsoleReporter}), GLOBAL)
         .then(mocha => {
           mocha.suite.emit('pre-require', GLOBAL, file, mocha);
           return System.import(file)
@@ -101,7 +93,7 @@ function runTestFiles(files, options) {
     .then(testState => new Promise((resolve, reject) => {
       var mocha = testState.mocha;
       if (options.grep) mocha = mocha.grep(options.grep);
-      return mocha.run(failures => resolve(failures));
+      return mocha.run(failures => resolve());
     }));
 }
 
