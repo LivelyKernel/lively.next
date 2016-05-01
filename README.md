@@ -22,3 +22,22 @@ Its main purpose is to
 - For the purpose of grouping modules together and providing a method for module lookup introduce a lightweight concept of a *package*.
 
 <small><sup>[*](#resolve-module-note)</sup> The ES specification explicitly [leaves the semantics for "HostResolveImportedModule" open to module implementations](https://tc39.github.io/ecma262/#sec-hostresolveimportedmodule)</small>
+
+## Usage
+
+To load lively.modules you can use the pre-build `dist/lively.modules.js` file.
+Once that happens the `lively.modules` global will provide an interface for
+loading packages, modifying modules, evaluating source code in module contexts
+etc.
+
+See the examples in [](examples/browser/) and [](examples/nodejs/) for more details.
+
+## API
+
+TODO
+
+## Development
+
+To bootstrap lively.modules please see the example in [](examples/bootstrap/). lively.modules is completely capable to "develop itself" and was done so from the beginning :)
+
+To build a new version yourself run `npm run build`.

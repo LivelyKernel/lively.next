@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.modules browser example</title>
+  </head>
+  <body>
+    <script src="../../node_modules/babel-core/browser.js"></script>
+    <script src="../../node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../../dist/lively.modules.js"></script>
+    
+    <ul id="log"></ul>
+    <script> // helper
+      function log(msg) {
+        console.log(msg);
+        var logEl = document.querySelector("#log");
+        if (logEl) {
+          var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
+          logEl.insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
+        }
+      }
+    </script>
+
+    <script>
+      var packageURL = System.normalizeSync("../..");
+      log("Loading " + packageURL + ", please wait...");
+      lively.modules.importPackage(packageURL)
+        .then(module => log("Successfully bootstrapped lively.modules, interface method and attributes:\n  " + Object.keys(module).join("\n  ")))
+        .catch(err => {
+          if (err.originalErr) log(err.originalErr.stack);
+          log(err.stack || err);
+        });
+    </script>
+  </body>
+</html>
