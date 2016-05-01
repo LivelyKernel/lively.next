@@ -1,6 +1,6 @@
 /*global beforeEach, afterEach, describe, it, global*/
 
-import { expect } from "chai";
+import { expect } from "mocha-es6";
 import * as vm from "lively.vm";
 import lang from "lively.lang";
 

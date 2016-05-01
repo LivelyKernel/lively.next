@@ -1,15 +1,14 @@
 /*global process, beforeEach, afterEach, describe, it, expect*/
 
-var env = typeof module !== "undefined" && module.require ? module.require("../env") : window;
-var chai = env.isCommonJS ? module.require("chai") : window.chai;
-var chaiSubset = env.isCommonJS ? module.require("chai-subset") : window.chaiSubset;
-var expect = chai.expect; chaiSubset && chai.use(chaiSubset);
-var lang = env.lively.lang || lively.lang, vm = env.isCommonJS ? require('../index') : lively.vm;
+import { expect } from "mocha-es6";
+import * as vm from "lively.vm";
+import lang from "lively.lang";
+
+var Global = typeof global !== "undefined" ? global : window;
 
 describe("lively compat", function() {
 
   it("addScriptWithVarMapping", function() {
-    var Global = typeof window !== "undefined" ? window : global;
     Global.fun = (lang || lively.lang).fun;
     var src = "var obj = {c: 3};\n"
         + "lively.lang.fun.asScriptOf(function(a) { return a + b + this.c; }, obj, 'm', {b: 2});\n"
