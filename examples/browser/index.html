@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>lively.modules browser standalone example</title>
+    <title>lively.modules browser example</title>
   </head>
   <body>
     <script src="../../node_modules/babel-core/browser.js"></script>
@@ -20,7 +20,7 @@
     </script>
 
     <script>
-      // 1. Load the package at examples/browser-standalone/test-package/
+      // 1. Load the package at examples/browser/test-package/
       // and import its main file
       lively.modules.importPackage("test-package")
         .then(module => log("Successfully loaded test-package: " + JSON.stringify(module)))
