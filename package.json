@@ -1,10 +1,12 @@
 {
   "name": "mocha-es6",
   "main": "index.js",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "dependencies": {
     "babel-core": "^5.8.35",
+    "glob": "^7.0.3",
     "lively.modules": "^0.1.2",
+    "minimist": "^1.2.0",
     "mocha": "^2.4.5",
     "systemjs": "^0.19.27"
   },
