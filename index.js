@@ -20,10 +20,11 @@ export { defaultSystem as System, getSystem, removeSystem, printSystemConfig, ch
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { registerPackage as _registerPackage, groupIntoPackages as _groupIntoPackages } from './src/packages.js'
+import { importPackage as _importPackage, registerPackage as _registerPackage, groupIntoPackages as _groupIntoPackages } from './src/packages.js'
+function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
 function groupIntoPackages(moduleNames, packageNames) { return _groupIntoPackages(defaultSystem, moduleNames, packageNames); }
-export { registerPackage, groupIntoPackages }
+export { importPackage, registerPackage, groupIntoPackages }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
@@ -66,6 +67,7 @@ export { isHookInstalled, installHook, removeHook }
 import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoad/*, getExceptions, setExceptions*/ } from "./src/instrumentation.js";
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
+export { wrapModuleLoad, unwrapModuleLoad }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // eval
