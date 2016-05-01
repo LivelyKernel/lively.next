@@ -5,24 +5,11 @@ var path = require("path");
 var rollup = require('rollup');
 var builtins = require('rollup-plugin-node-builtins');
 
-// import commonjs from 'rollup-plugin-commonjs';
-// import nodeResolve from 'rollup-plugin-node-resolve';
-// import globals from 'rollup-plugin-node-globals';
-// import builtins from 'rollup-plugin-node-builtins';
-// import json from 'rollup-plugin-json';
-// rollup({
-//   entry: 'main.js',
-//   plugins: [
-//     builtins(),
-//     nodeResolve({ jsnext: true, main: true, browser: true }),
-//     commonjs({
-//       ignoreGlobal: true
-//     }),
-//     globals(),
-//     json()
-//   ]
-// })
-var targetFile = "dist/lively.vm.js";
+var targetFile1 = "dist/lively.vm_no-deps.js";
+var targetFile2 = "dist/lively.vm.js";
+
+var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
+var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
 
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
 module.exports = Promise.resolve()
@@ -39,21 +26,27 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
-        "escodegen": "GLOBAL.escodegen",
         "module": "typeof module !== 'undefined' ? module.constructor : {}",
         "fs": "typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: () => { throw new Error('fs module not available'); }}"
       },
     }))
 
   // 3. massage code a little
-  .then(bundled => `(function() {
+  .then(bundled => {
+    var noDeps = `(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   ${bundled.code}
-  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
-})();`)
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
+})();`,
+        complete = `${langSource}\n${astSource}\n${noDeps}`;
+    return {noDeps: noDeps, complete: complete}
+  })
 
   // 4. inject dependencies
-  .then(source => fs.writeFileSync(targetFile, source))
+  .then(sources => {
+    fs.writeFileSync(targetFile1, sources.noDeps);
+    fs.writeFileSync(targetFile2, sources.complete);
+  })
   .catch(err => { console.error(err.stack || err); throw err; })

@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index-node.js",
   "systemjs": {
@@ -28,7 +28,7 @@
   },
   "scripts": {
     "test": "cd tests/ && node es6-mocha-nodejs-runner.js && cd .. && phantomjs node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js tests/run-tests.html",
-    "build": "node build.js"
+    "build": "node tools/build.js"
   },
   "repository": {
     "type": "git",
