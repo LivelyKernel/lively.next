@@ -1,7 +1,7 @@
 import { arr, string } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-export { registerPackage, applyConfig, knownPackages, groupIntoPackages };
+export { importPackage, registerPackage, applyConfig, knownPackages, groupIntoPackages };
 
 // helper
 function isJsFile(url) { return /\.js/i.test(url); }
@@ -42,18 +42,29 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function registerPackage(System, packageURL) {
-  // packageURL = String(packageURL).replace(/\/$/, "");
-  // console.log("%s ... %s", packageURL, asDir(String(packageURL)))
+function importPackage(System, packageURL) {
+  return System.normalize(packageURL)
+    .then(resolvedURL => // ensure it's a directory
+      resolvedURL.match(/\.js/) ?
+        resolvedURL.split("/").slice(0,-1).join("/") :
+        resolvedURL)
+    .then(url => registerPackage(System, url))
+    .then(() => System.normalize(packageURL))
+    .then(entry => System.import(entry));
+}
 
+function registerPackage(System, packageURL) {
   if (!isURL(packageURL)) {
     return Promise.reject(new Error(`Error registering package: ${packageURL} is not a valid URL`));
   }
 
-  // packageURL = asDir(String(packageURL));
+  if (packageURL.match(/\.js$/)) {
+    return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + packageURL));
+  }
+
   packageURL = String(packageURL).replace(/\/$/, "");
 
-  System.debug && console.log("[lively.modules package register] %s", packageURL)
+  System.debug && console.log("[lively.modules package register] %s", packageURL);
 
   var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
 
