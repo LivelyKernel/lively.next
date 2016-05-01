@@ -1,8 +1,8 @@
 {
   "name": "lively.ast",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
-  "main": "index.js",
+  "main": "dist/lively.ast.js",
   "scripts": {
     "test": "./node_modules/mocha-es6/bin/mocha-es6.js tests/*-test.js",
     "build": "node ./tools/build.js"
@@ -62,6 +62,7 @@
     }
   },
   "lively": {
+    "main": "index.js",
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang"
     }
