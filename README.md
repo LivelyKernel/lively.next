@@ -1,12 +1,15 @@
 # lively.modules [![Build Status](https://travis-ci.org/LivelyKernel/lively.modules.svg)](https://travis-ci.org/LivelyKernel/lively.modules)
 
-JavaScript package and module system for interactive development
+JavaScript package and module system for interactive development.
 
 ![](http://lively-web.org/users/robertkrahn/uploads/Screen_Shot_2016-03-26_at_8.30.54_PM.png)
 
 ## Goals
 
-lively.modules provides a framework for loading, defining and interactively modifying *JavaScript modules*. A module is an entity containing JavaScript source code that adheres to the definition of the [ECMAScript Language Specification](https://tc39.github.io/ecma262/#sec-modules).
+lively.modules provides a framework for loading, defining and interactively
+modifying *JavaScript modules*. A module is an entity containing JavaScript
+source code that adheres to the definition of the
+[ECMAScript Language Specification](https://tc39.github.io/ecma262/#sec-modules).
 
 <small>For an intro to the topic see [ES6 In Depth: Modules at mozilla.org](https://hacks.mozilla.org/2015/08/es6-in-depth-modules/)</small>
 
@@ -18,10 +21,16 @@ Its main purpose is to
     - imported and exported values
     - source code
     - internal definitions
-- Provide a user friendly and practical implementation of how imported modules are resolved <a name="resolve-module-note">*</a>.
-- For the purpose of grouping modules together and providing a method for module lookup introduce a lightweight concept of a *package*.
+- Provide a user friendly and practical implementation of how imported modules
+  are resolved <a name="resolve-module-note">*</a>.
+- For the purpose of grouping modules together and providing a method for
+  module lookup introduce a lightweight concept of a *package*.
 
-<small><sup>[*](#resolve-module-note)</sup> The ES specification explicitly [leaves the semantics for "HostResolveImportedModule" open to module implementations](https://tc39.github.io/ecma262/#sec-hostresolveimportedmodule)</small>
+
+<small><sup>[*](#resolve-module-note)</sup> The ES specification explicitly
+[leaves the semantics for "HostResolveImportedModule" open to module
+implementations](https://tc39.github.io/ecma262/#sec-hostresolveimportedmodule)</small>
+
 
 ## Usage
 
@@ -30,7 +39,8 @@ Once that happens the `lively.modules` global will provide an interface for
 loading packages, modifying modules, evaluating source code in module contexts
 etc.
 
-See the examples in [](examples/browser/) and [](examples/nodejs/) for more details.
+See the examples in [examples/browser/](examples/browser/) and
+[examples/nodejs/](examples/nodejs/) for more details.
 
 ## API
 
@@ -38,6 +48,8 @@ TODO
 
 ## Development
 
-To bootstrap lively.modules please see the example in [](examples/bootstrap/). lively.modules is completely capable to "develop itself" and was done so from the beginning :)
+To bootstrap lively.modules please see the example in
+[examples/bootstrap/](examples/bootstrap/). lively.modules is completely
+capable to "develop itself" and was done so from the beginning :)
 
 To build a new version yourself run `npm run build`.
