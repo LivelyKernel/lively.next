@@ -18,7 +18,7 @@ lively.lang.promise.chain([
     readProcessArgs();
   },
   () => console.log("1. Loading lively.mocha"),
-  (_, state) => modules.importPackage("/Users/robert/Lively/lively-dev/mocha-es6"),
+  (_, state) => modules.importPackage(path.join(__dirname, "..")),
   (mochaEs6, state) => state.mochaEs6 = mochaEs6,
   () => console.log("2. Importing project at " + dir),
   () => modules.importPackage("file://" + dir),
@@ -28,7 +28,10 @@ lively.lang.promise.chain([
   (_, state) => console.log("4. Running tests in\n  " + state.testFiles.join("\n  ")),
   (_, state) => state.mochaEs6.runTestFiles(state.testFiles),
   failureCount => process.exit(failureCount)
-]).catch(err => console.error(err.stack))
+]).catch(err => {
+  console.error(err.stack || err);
+  process.exit(1);
+})
 
 function readProcessArgs() {
   args = parseArgs(process.argv.slice(2), {
