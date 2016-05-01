@@ -93,7 +93,7 @@ function runTestFiles(files, options) {
     .then(testState => new Promise((resolve, reject) => {
       var mocha = testState.mocha;
       if (options.grep) mocha = mocha.grep(options.grep);
-      return mocha.run(failures => resolve());
+      return mocha.run(failures => resolve(failures));
     }));
 }
 
