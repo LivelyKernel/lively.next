@@ -23398,7 +23398,10 @@ lp.lookAhead = function (n) {
   }
 
   function makeSystem(cfg) {
-    var System = new SystemClass();
+    return prepareSystem(new SystemClass(), cfg);
+  }
+
+  function prepareSystem(System, config) {
     System.trace = true;
 
     wrapModuleLoad$1(System);
@@ -23409,7 +23412,7 @@ lp.lookAhead = function (n) {
     if (!isHookInstalled$1(System, "normalizeSync", "normalizeSyncHook"))
       installHook$1(System, "normalizeSync", normalizeSyncHook);
 
-    cfg = lively_lang.obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
+    config = lively_lang.obj.merge({transpiler: 'babel', babelOptions: {}}, config);
 
     if (isNode) {
       var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
@@ -23418,17 +23421,15 @@ lp.lookAhead = function (n) {
           "readline", "repl", "stream", "stringdecoder", "timers", "tls",
           "tty", "url", "util", "v8", "vm", "zlib"],
           map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
-      cfg.map = lively_lang.obj.merge(map, cfg.map);
+      config.map = lively_lang.obj.merge(map, config.map);
       // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
       // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
     }
 
-    cfg.packageConfigPaths = cfg.packageConfigPaths || ['./node_modules/*/package.json'];
+    config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
     // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
 
-    if (!cfg.baseURL) cfg.baseURL = "/";
-    
-    System.config(cfg);
+    System.config(config);
 
     return System;
   }
@@ -24093,15 +24094,15 @@ lp.lookAhead = function (n) {
       });
   }
 
-  // System accessors
   var GLOBAL = typeof window !== "undefined" ? window :
                 (typeof global !== "undefined" ? global :
                   (typeof self !== "undefined" ? self : this));
 
-  exports.System = exports.System || getSystem("default");
+  exports.System = exports.System || prepareSystem(GLOBAL.System);
   function changeSystem(newSystem, makeGlobal) {
     exports.System = newSystem;
     if (makeGlobal) GLOBAL.System = newSystem;
+    return newSystem;
   }
   function sourceOf(id) { return sourceOf$1(exports.System, id); }
   function moduleEnv(id) { return moduleEnv$1(exports.System, id); }

@@ -64,7 +64,10 @@ function removeSystem(nameOrSystem) {
 import { wrapModuleLoad } from "./instrumentation.js"
 
 function makeSystem(cfg) {
-  var System = new SystemClass();
+  return prepareSystem(new SystemClass(), cfg);
+}
+
+function prepareSystem(System, config) {
   System.trace = true;
 
   wrapModuleLoad(System);
@@ -75,7 +78,7 @@ function makeSystem(cfg) {
   if (!isHookInstalled(System, "normalizeSync", "normalizeSyncHook"))
     installHook(System, "normalizeSync", normalizeSyncHook);
 
-  cfg = obj.merge({transpiler: 'babel', babelOptions: {}}, cfg);
+  config = obj.merge({transpiler: 'babel', babelOptions: {}}, config);
 
   if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
@@ -84,17 +87,15 @@ function makeSystem(cfg) {
         "readline", "repl", "stream", "stringdecoder", "timers", "tls",
         "tty", "url", "util", "v8", "vm", "zlib"],
         map = nodejsCoreModules.reduce((map, ea) => { map[ea] = "@node/" + ea; return map; }, {});
-    cfg.map = obj.merge(map, cfg.map);
+    config.map = obj.merge(map, config.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
     // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
   }
 
-  cfg.packageConfigPaths = cfg.packageConfigPaths || ['./node_modules/*/package.json'];
+  config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
   // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
 
-  if (!cfg.baseURL) cfg.baseURL = "/";
-  
-  System.config(cfg);
+  System.config(config);
 
   return System;
 }
@@ -319,7 +320,7 @@ function updateModuleRecordOf(System, fullname, doFunc) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export {
-  getSystem, removeSystem,
+  getSystem, removeSystem, prepareSystem,
   printSystemConfig,
   moduleRecordFor, updateModuleRecordOf,
   loadedModules, moduleEnv,

@@ -37,7 +37,8 @@ module.exports = Promise.resolve()
   .then(bundled => {
     var source = bundled.code;
     // FIXME rollup inlines our optional assignment that we need for self-dev
-    source = source.replace('defaultSystem || getSystem("default")', 'exports.System || getSystem("default")');
+
+    source = source.replace('defaultSystem || prepareSystem(GLOBAL.System)', 'exports.System || prepareSystem(GLOBAL.System)');
     var noDeps = `(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
