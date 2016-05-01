@@ -21,7 +21,7 @@ function remove(System, methodName, hookOrName) {
   arr.remove(chain, found);
   
   System[methodName] = chain.reduceRight((method, wrapper) =>
-    method.wrap(wrapper.hookFunc || wrapper));
+    fun.wrap(method, wrapper.hookFunc || wrapper));
 
   return true;
 }
