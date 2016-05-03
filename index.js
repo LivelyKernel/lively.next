@@ -19,11 +19,22 @@ function changeSystem(newSystem, makeGlobal) {
   if (makeGlobal) GLOBAL.System = newSystem;
   return newSystem;
 }
+function loadedModules() { return Object.keys(lively.modules.requireMap()); }
 function sourceOf(id) { return _sourceOf(defaultSystem, id); }
 function moduleEnv(id) { return _moduleEnv(defaultSystem, id); }
 function moduleRecordFor(id) { return _moduleRecordFor(defaultSystem, id); }
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
-export { defaultSystem as System, getSystem, removeSystem, printSystemConfig, changeSystem, sourceOf, moduleEnv, moduleRecordFor }
+export {
+  defaultSystem as System,
+  getSystem,
+  removeSystem,
+  loadedModules,
+  printSystemConfig,
+  changeSystem,
+  sourceOf,
+  moduleEnv,
+  moduleRecordFor
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
