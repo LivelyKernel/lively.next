@@ -1071,6 +1071,7 @@
       if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
       Object.defineProperty(rec, prefix + key, {
         enumerable: false,
+        writable: true,
         value: rec[key]
       });
       Object.defineProperty(rec, key, {
@@ -1360,7 +1361,7 @@
             _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
             declared = updateData.declare(_exports);
 
-        System.__lively_vm__.evaluationDone(load.name);
+        System["__lively.modules__"].evaluationDone(load.name);
 
         // ensure dependencies are loaded
         debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);

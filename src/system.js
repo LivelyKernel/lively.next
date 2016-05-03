@@ -277,6 +277,7 @@ function addGetterSettersForNewVars(System, moduleId) {
     if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
     Object.defineProperty(rec, prefix + key, {
       enumerable: false,
+      writable: true,
       value: rec[key]
     });
     Object.defineProperty(rec, key, {
