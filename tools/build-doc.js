@@ -12,7 +12,8 @@ module.exports = new Promise((resolve, reject) =>
       files: files,
       intoFiles: true,
       dryRun: false,
-      alias: {"index.js": "main interface"}
+      alias: {"index.js": "main interface"},
+      introIntoReadme: false
     },
     (err, markup, fileData) =>
       err ? reject(err) : resolve()));
