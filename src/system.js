@@ -275,11 +275,17 @@ function addGetterSettersForNewVars(System, moduleId) {
       prefix = "__lively.modules__";
   properties.own(rec).forEach(key => {
     if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
-    rec[prefix + key] = rec[key];
-    rec.__defineGetter__(key, () => rec[prefix + key]);
-    rec.__defineSetter__(key, (v) => {
-      scheduleModuleExportsChange(System, moduleId, key, v, false/*add export*/);
-      return rec[prefix + key] = v;
+    Object.defineProperty(rec, prefix + key, {
+      enumerable: false,
+      value: rec[key]
+    });
+    Object.defineProperty(rec, key, {
+      enumerable: true,
+      get: () => rec[prefix + key],
+      set: (v) => {
+        scheduleModuleExportsChange(System, moduleId, key, v, false/*add export*/);
+        return rec[prefix + key] = v;
+      }
     });
   });
 }
