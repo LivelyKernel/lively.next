@@ -25,11 +25,13 @@ function generateDoc(options, thenDo) {
   //   projectPath: "/foo/bar", files: files},
   //   function(err, markup, fileData) { /*...*/ })/
 
-  options = obj.merge({
+  options = obj.deepMerge({
     dryRun: false,
     projectPath: "./",
     files: null,
-    intoFiles: false
+    intoFiles: false,
+    alias: {},
+    introIntoReadme: true
   }, options);
   
   var files = options.files;
@@ -367,7 +369,7 @@ function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
       var s = string.format(
         "### [%s](%s)\n\n%s\n\n",
         (options.alias && options.alias[fn]) || fn, docFileForSourceFile(fn),
-        fileData[fn].topLevelComment);
+        options.introIntoReadme ? fileData[fn].topLevelComment : "");
       content.push(s);
     });
     updateReadme(content.join("\n\n"));
