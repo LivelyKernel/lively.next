@@ -1,6 +1,6 @@
 {
   "name": "doc-comments",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Extract comments from JavaScript source code and generate API documentation.",
   "main": "index.js",
   "keywords": [
