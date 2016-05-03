@@ -45,6 +45,10 @@ See the examples in [examples/browser/](examples/browser/) and
 ## API
 
 <!---DOC_GENERATED_START--->
+### [main interface](doc/index.md)
+
+
+
 
 <!---DOC_GENERATED_END--->
 
