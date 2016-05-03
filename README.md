@@ -31,6 +31,8 @@ Its main purpose is to
 [leaves the semantics for "HostResolveImportedModule" open to module
 implementations](https://tc39.github.io/ecma262/#sec-hostresolveimportedmodule)</small>
 
+For more please see [doc/rationale.md](doc/rationale.md).
+
 
 ## Usage
 
