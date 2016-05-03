@@ -82,6 +82,13 @@ function writeFile(options, name, content, thenDo) {
   }
 }
 
+function docFileForSourceFile(sourceFileName) {
+  var parts = sourceFileName.split("/");
+  return (parts.length > 1 ?
+    ["doc"].concat(sourceFileName.split("/").slice(1)).join("/") :
+    "doc/" + sourceFileName).replace(/\.js$/, ".md");
+}
+
 function processComment(comments, comment) {
   // ignore-in-doc
 
@@ -146,6 +153,7 @@ function processComment(comments, comment) {
 
   function ignoreComment(comment) {
     // ignore-in-doc
+    if (string.startsWith(comment.comment.trim(), '-=-=-')) return true;
     if (string.startsWith(comment.comment.trim(), 'ignore-in-doc')) return true;
     if (string.startsWith(comment.comment.trim(), 'show-in-doc')) return false;
     var ignored = arr.filterByKey(comments, "ignored");
@@ -166,8 +174,11 @@ function step1_readSourceFiles(options, thenDo) {
   var fileData = {};
   console.log("loading...");
   arr.doAndContinue(options.files, function(next, fn, i) {
-    console.log("...%s/%s", i, options.files.length);
-    readFile(path.join(options.projectPath, fn), function(err, out) {
+    console.log("...%s/%s", i+1, options.files.length);
+    var fullFn = path.join(options.projectPath, fn);
+    if (!fs.existsSync(fullFn))
+      return next(new Error(`File ${fullFn} does not exist!`));
+    readFile(fullFn, function(err, out) {
       fileData[fn] = {content: out};
       next();
     });
@@ -183,8 +194,14 @@ function step2_extractCommentsFromFileData(fileData, thenDo) {
       comments.forEach(function(ea) { ea.file = fn; });
       fileData[fn].comments = arr.flatmap(comments, processComment.bind(null, comments));
       var topLevelComment = arr.detect(comments, function(ea) { return !string.startsWith(ea.comment, "global") && !ea.path.length; });
-      fileData[fn].topLevelComment = (topLevelComment ? topLevelComment.comment : "").replace(/^\s+(\*\s+)?/gm, "");
-
+      var comment =  topLevelComment.comment || "";
+      var lines = string.lines(comment);
+      var commonIndent = lines.reduce((commonIndent, line) =>
+        line.match(/^\s*$/) ?
+          commonIndent :
+          Math.min(commonIndent, line.match(/^\s*/)[0].length), Infinity);
+      comment = lines.map(line => line.slice(commonIndent)).join("\n");
+      fileData[fn].topLevelComment = comment;
     } catch (err) {
       console.error("error extracting comments in file "
            + fn + ":\n" + (err.stack || err) + "\n" + fileData[fn].content);
@@ -194,9 +211,9 @@ function step2_extractCommentsFromFileData(fileData, thenDo) {
 }
 
 
-
 function step3_markdownFromFileData(fileData, thenDo) {
   // ignore-in-doc
+
   Object.keys(fileData).forEach(function(fn) {
     if (fileData[fn].comments)
       fileData[fn].markdown = markdownFromComments(fn, fileData[fn].comments);
@@ -311,8 +328,6 @@ function step6_markdownDocumentationFromFileData(fileData, thenDo) {
   thenDo(null, markup, fileData)
 }
 
-
-
 function step7_markdownDocFilesFromFileData(options, markup, fileData, thenDo) {
   // ignore-in-doc
 
@@ -323,13 +338,13 @@ function step7_markdownDocFilesFromFileData(options, markup, fileData, thenDo) {
   var sourceFiles = Object.keys(fileData);
 
   arr.doAndContinue(sourceFiles, function(next, fn, i) {
-    console.log("...%s/%s", i, sourceFiles.length);
-    var docFile = fn.replace(/lib\//, 'doc/').replace(/\.js$/, '.md');
-    var content = "## " + fn + "\n\n" + fileData[fn].topLevelComment + "\n\n"
-      + (fileData[fn].markdownToc || "*no toc!*") + "\n\n" + fileData[fn].markdown;
+    console.log("...%s/%s", i+1, sourceFiles.length);
 
-    writeFile(options, path.join(options.projectPath, docFile),
-      content, function(err) { next(err); });
+    var docFile = docFileForSourceFile(fn),
+        name = (options.alias && options.alias[fn]) || fn,
+        content = `## ${name}\n\n${fileData[fn].topLevelComment}\n\n${fileData[fn].markdownToc || "<!--*no toc!*-->"}\n\n${fileData[fn].markdown}`;
+
+    writeFile(options, path.join(options.projectPath, docFile), content, function(err) { next(err); });
   }, function() { thenDo(null, options, markup, fileData); });
 
 }
@@ -338,13 +353,11 @@ function step7_markdownDocFilesFromFileData(options, markup, fileData, thenDo) {
 
 function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
   // ignore-in-doc
-  var startMarker = "<!---DOC_GENERATED_START--->";
-  var endMarker = "<!---DOC_GENERATED_END--->";
+  var startMarker = "<!---DOC_GENERATED_START--->",
+      endMarker = "<!---DOC_GENERATED_END--->";
 
-  if (options.intoFiles)
-    putOutlineIntoReadme();
-  else
-    putEntireDocIntoReadme();
+  if (options.intoFiles) putOutlineIntoReadme();
+  else putEntireDocIntoReadme();
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -352,8 +365,8 @@ function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
     var content = [];
     Object.keys(fileData).forEach(function(fn) {
       var s = string.format(
-        "### [%s](doc/%s)\n\n%s\n\n",
-        fn.replace(/^lib\//, ""), fn.replace(/\.js$/, ".md").replace(/^lib\//, ""),
+        "### [%s](%s)\n\n%s\n\n",
+        (options.alias && options.alias[fn]) || fn, docFileForSourceFile(fn),
         fileData[fn].topLevelComment);
       content.push(s);
     });
@@ -368,10 +381,10 @@ function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
         readFile(path.join(options.projectPath, "README.md"), next);
       },
       function(readmeContent, next) {
-        var startIdx = readmeContent.indexOf(startMarker) + startMarker.length;
-        var endIdx = readmeContent.indexOf(endMarker);
-        var start = readmeContent.slice(0, startIdx);
-        var end = readmeContent.slice(endIdx);
+        var startIdx = readmeContent.indexOf(startMarker) + startMarker.length,
+            endIdx = readmeContent.indexOf(endMarker),
+            start = readmeContent.slice(0, startIdx),
+            end = readmeContent.slice(endIdx);
         next(null, start + "\n" + content + "\n" + end);
       },
       function(updatedReadmeContent, next) {
