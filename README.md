@@ -44,7 +44,9 @@ See the examples in [examples/browser/](examples/browser/) and
 
 ## API
 
-TODO
+<!---DOC_GENERATED_START--->
+
+<!---DOC_GENERATED_END--->
 
 ## Development
 

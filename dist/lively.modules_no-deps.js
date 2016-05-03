@@ -616,7 +616,7 @@
     lively_lang.arr.remove(chain, found);
     
     System[methodName] = chain.reduceRight((method, wrapper) =>
-      method.wrap(wrapper.hookFunc || wrapper));
+      lively_lang.fun.wrap(method, wrapper.hookFunc || wrapper));
 
     return true;
   }
@@ -1023,7 +1023,7 @@
   // module state
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function loadedModules(System) { return System["__lively.modules__"].loadedModules; }
+  function loadedModules$1(System) { return System["__lively.modules__"].loadedModules; }
 
   function moduleEnv$1(System, moduleId) {
     var ext = System["__lively.modules__"];
@@ -1069,11 +1069,17 @@
         prefix = "__lively.modules__";
     lively_lang.properties.own(rec).forEach(key => {
       if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
-      rec[prefix + key] = rec[key];
-      rec.__defineGetter__(key, () => rec[prefix + key]);
-      rec.__defineSetter__(key, (v) => {
-        scheduleModuleExportsChange(System, moduleId, key, v, false/*add export*/);
-        return rec[prefix + key] = v;
+      Object.defineProperty(rec, prefix + key, {
+        enumerable: false,
+        value: rec[key]
+      });
+      Object.defineProperty(rec, key, {
+        enumerable: true,
+        get: () => rec[prefix + key],
+        set: (v) => {
+          scheduleModuleExportsChange(System, moduleId, key, v, false/*add export*/);
+          return rec[prefix + key] = v;
+        }
       });
     });
   }
@@ -1453,7 +1459,7 @@
   function computeRequireMap(System) {
     if (System.loads) {
       var store = System.loads,
-          modNames = lively_lang.arr.uniq(Object.keys(loadedModules(System)).concat(Object.keys(store)));
+          modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
       return modNames.reduce((requireMap, k) => {
         var depMap = store[k] ? store[k].depMap : {};
         requireMap[k] = Object.keys(depMap).map(localName => {
@@ -1564,6 +1570,7 @@
     if (makeGlobal) GLOBAL.System = newSystem;
     return newSystem;
   }
+  function loadedModules() { return Object.keys(lively.modules.requireMap()); }
   function sourceOf(id) { return sourceOf$1(exports.System, id); }
   function moduleEnv(id) { return moduleEnv$1(exports.System, id); }
   function moduleRecordFor(id) { return moduleRecordFor$1(exports.System, id); }
@@ -1577,7 +1584,7 @@
   function forgetModule(module, opts) { return forgetModule$1(exports.System, module, opts); }
   function reloadModule(module, opts) { return reloadModule$1(exports.System, module, opts); }
   function requireMap() { return computeRequireMap(exports.System); }
-  function importsAndExportsOf(System, moduleName, parent) { return importsAndExportsOf$1(exports.System, moduleName, parent); }
+  function importsAndExportsOf(moduleName) { return importsAndExportsOf$1(exports.System, moduleName); }
   function isHookInstalled(methodName, hookOrName) { return isHookInstalled$1(exports.System, methodName, hookOrName); }
   function installHook(hookName, hook) { return installHook$1(exports.System, hookName, hook); }
   function removeHook(methodName, hookOrName) { return removeHook$1(exports.System, methodName, hookOrName); }
@@ -1587,6 +1594,7 @@
 
   exports.getSystem = getSystem;
   exports.removeSystem = removeSystem;
+  exports.loadedModules = loadedModules;
   exports.printSystemConfig = printSystemConfig;
   exports.changeSystem = changeSystem;
   exports.sourceOf = sourceOf;
