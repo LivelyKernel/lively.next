@@ -60,7 +60,7 @@ describe("package loading", function() {
       registerPackage(System, project1aDir)
         .then(_ => System.import("some-project"))
         .then(mod => expect(mod).to.have.property("x", 2))
-        .then(m => expect(System.packages).to.deep.equal({
+        .then(m => expect(System.packages).to.containSubset({
             [noTrailingSlash(project1aDir)]: {
               main: "entry-a.js",
               meta: {"package.json": {format: "json"}},
@@ -119,8 +119,8 @@ describe("package configuration test", () => {
   it("installs hooks", () =>
     Promise.resolve()
       .then(() => applyConfig(S, {lively: {hooks: [{target: "normalize", source: "(proceed, name, parent, parentAddress) => proceed(name + 'x', parent, parentAddress)"}]}}, "barr"))
-      .then(_ => S.normalize("foo"))
-      .then(n => expect(n).to.match(/x$/)));
+      .then(_ => (S.defaultJSExtensions = true) && S.normalize("foo"))
+      .then(n => expect(n).to.match(/foox.js$/)));
 
   it("installs meta data in package", () =>
     Promise.resolve()
