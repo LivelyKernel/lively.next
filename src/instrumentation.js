@@ -54,9 +54,15 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
         dontTransform: env.dontTransform,
         recordGlobals: true
       },
-      header = (debug ? `console.log("[lively.modules] executing module ${fullname}");\n` : "")
-            + `var __lively_modules__ = System["__lively.modules__"], ${env.recorderName} = __lively_modules__.moduleEnv("${fullname}").recorder;\n`,
-      footer = `\n__lively_modules__.evaluationDone("${fullname}");`;
+      isGlobal = env.recorderName === "System.global",
+      header = (debug ? `console.log("[lively.modules] executing module ${fullname}");\n` : ""),
+      footer = "";
+
+  // FIXME how to update exports in that case?
+  if (!isGlobal) {
+    header += `var __lively_modules__ = System["__lively.modules__"],\n    ${env.recorderName} = __lively_modules__.moduleEnv("${fullname}").recorder;`;
+    footer += `\n__lively_modules__.evaluationDone("${fullname}");`
+  }
 
   try {
     var rewrittenSource = header + evalCodeTransform(source, tfmOptions) + footer;
@@ -125,27 +131,31 @@ function customTranslate(proceed, load) {
            || (!load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0,5000)))
            || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
       isCjs = load.metadata.format == 'cjs',
-      isGlobal = load.metadata.format == 'global';
-  // console.log(load.name + " isEsm? " + isEsm)
+      // isGlobal = load.metadata.format == 'global' || !load.metadata.format,
+      isGlobal = load.metadata.format == 'global',
+      env = moduleEnv(System, load.name);
 
   if (isEsm) {
     load.metadata.format = "esm";
-    load.source = prepareCodeForCustomCompile(load.source, load.name, moduleEnv(System, load.name), debug);
-    load.metadata["lively.vm instrumented"] = true;
+    load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+    load.metadata["lively.modules instrumented"] = true;
     debug && console.log("[lively.modules] loaded %s as es6 module", load.name)
     // debug && console.log(load.source)
   } else if (isCjs && isNode) {
     load.metadata.format = "cjs";
     var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
     load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-    load.metadata["lively.vm instrumented"] = true;
+    load.metadata["lively.modules instrumented"] = true;
     debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
     // console.log("[lively.modules] no rewrite for cjs module", load.name)
   } else if (isGlobal) {
-    load.source = prepareCodeForCustomCompile(load.source, load.name, moduleEnv(System, load.name), debug);
-    load.metadata["lively.vm instrumented"] = true;
+    env.recorderName = "System.global";
+    env.recorder = System.global;
+    load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+    load.metadata["lively.modules instrumented"] = true;
+    debug && console.log(load.source);
   } else {
-    debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle global format", load.name);
+    debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
   }
 
   debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now()-start);

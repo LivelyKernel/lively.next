@@ -1,20 +1,21 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { removeDir, createFiles } from "./helpers.js";
+import { removeDir, createFiles, inspect as i } from "./helpers.js";
 
 import { getSystem, removeSystem, moduleEnv } from "../src/system.js";
-// import { moduleState } from "../src/instrumentation.js";
-
-// System.constructor.systems.test["__lively.modules__"].loadedModules
 
 var dir = System.normalizeSync("lively.modules/tests/"),
-// var dir = lively.vm.es6.currentSystem().normalizeSync("lively.modules/tests/"),
     testProjectDir = dir + "test-project-dir/",
     testProjectSpec = {
-      "file1.js": "import { y } from './file2.js'; var z = 2; export var x = y + z;",
+      "file1.js": "import { y } from './file2.js'; export var x = y + 2;",
       "file2.js": "export var y = 1;",
-      "package.json": '{"name": "test-project-1", "main": "file1.js"}',
+      "file3.js": "var zzz = 4; System.global.z = zzz / 2;",
+      "package.json": JSON.stringify({
+                        "name": "test-project-1",
+                        "main": "file1.js",
+                        "systemjs": {"meta": {"file3.js": {format: "global", exports: "z"}}}
+                      })
     }
 
 
@@ -23,6 +24,8 @@ describe("instrumentation", () => {
   var S;
   beforeEach(() => {
     S = getSystem("test", {baseURL: dir});
+    delete S.global.z;
+    delete S.global.zzz;
     return createFiles(testProjectDir, testProjectSpec)
       .then(() => S.import(testProjectDir + "file1.js"));
   });
@@ -34,8 +37,20 @@ describe("instrumentation", () => {
 
   it("gets access to internal module state", () => {
     var env = moduleEnv(S, testProjectDir + "file1.js");
-    expect(env).to.have.deep.property("recorder.z", 2);
+    expect(env).to.have.deep.property("recorder.y", 1);
     expect(env).to.have.deep.property("recorder.x", 3);
   });
 
-})
+  describe("of global modules", () => {
+
+    it("can access local state", () => 
+      S.import(`${testProjectDir}file3.js`)
+        .then(() => {
+          var env = moduleEnv(S, `${testProjectDir}file3.js`);
+          expect(env).to.have.deep.property("recorder.zzz", 4);
+          expect(S.get(testProjectDir + "file3.js")).to.have.property("z", 2);
+        }))
+
+  });
+
+});
