@@ -4,15 +4,9 @@ import { expect } from "mocha-es6";
 import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem, moduleRecordFor, moduleEnv, sourceOf } from "../src/system.js";
-import { moduleSourceChange } from "../src/change.js";
+import { moduleSourceChange, moduleSourceChangeAction } from "../src/change.js";
 import { forgetModuleDeps } from "../src/dependencies.js";
 import { runEval } from "../src/eval.js";
-
-function changeModuleSource(System, moduleName, changeFunc) {
-  return sourceOf(System, moduleName)
-          .then(changeFunc)
-          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
-}
 
 describe("code changes of esm format module", () => {
 
@@ -30,7 +24,7 @@ describe("code changes of esm format module", () => {
 
   function changeModule2Source() {
     // "internal = 1" => "internal = 2"
-    return changeModuleSource(S, module2, s => s.replace(/(internal = )([0-9]+)/, "$12"));
+    return moduleSourceChangeAction(S, module2, s => s.replace(/(internal = )([0-9]+)/, "$12"));
   }
 
   var S;
@@ -112,7 +106,7 @@ describe("code changes of global format module", () => {
     S.import(module1).then(m => {
       expect(moduleEnv(S, module1).recorder.zzz).to.equal(4, "zzz state before change");
       expect(m.z).to.equal(2, "export state before change");
-      return changeModuleSource(S, module1, s => s.replace(/zzz = 4;/, "zzz = 6;"))
+      return moduleSourceChangeAction(S, module1, s => s.replace(/zzz = 4;/, "zzz = 6;"))
         .then(() => {
             expect(moduleEnv(S, module1).recorder.zzz).to.equal(6, "zzz state after change");
             // expect(m.z).to.equal(3, "export state after change");
@@ -124,7 +118,7 @@ describe("code changes of global format module", () => {
 
   it("affects eval state", () =>
     S.import(module1)
-      .then(m => changeModuleSource(S, module1, s => s.replace(/zzz = 4/, "zzz = 6")))
+      .then(m => moduleSourceChangeAction(S, module1, s => s.replace(/zzz = 4/, "zzz = 6")))
       .then(() => runEval(S, "[zzz, z]", {targetModule: module1}))
       .then(result => expect(result.value).to.deep.equal([6, 3])));
 

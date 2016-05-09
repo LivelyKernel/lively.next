@@ -1,4 +1,4 @@
-import { moduleRecordFor, metadata } from "./system.js";
+import { moduleRecordFor, metadata, sourceOf } from "./system.js";
 import {
   instrumentSourceOfEsmModuleLoad,
   instrumentSourceOfGlobalModuleLoad
@@ -6,7 +6,20 @@ import {
 import { scheduleModuleExportsChange } from "./import-export.js";
 import { runEval } from "./eval.js";
 
-export { moduleSourceChange }
+export { moduleSourceChange, moduleSourceChangeAction }
+
+function moduleSourceChangeAction(System, moduleName, changeFunc) {
+  return sourceOf(System, moduleName)
+          .then(changeFunc)
+          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
+}
+export { moduleSourceChange, moduleSourceChangeAction }
+
+function moduleSourceChangeAction(System, moduleName, changeFunc) {
+  return sourceOf(System, moduleName)
+          .then(changeFunc)
+          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
+}
 
 function moduleSourceChange(System, moduleName, newSource, options) {
   return System.normalize(moduleName)
