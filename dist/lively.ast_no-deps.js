@@ -13920,7 +13920,6 @@ lp.lookAhead = function (n) {
             scope.node : scope.node.body));
   }
 
-
   function _findJsLintGlobalDeclarations(node) {
     if (!node || !node.comments) return [];
     return lively_lang.arr.flatten(
@@ -14006,18 +14005,22 @@ lp.lookAhead = function (n) {
     }
   }
 
+  // helper for findDeclarationClosestToIndex
+  function _declsOf(scope) {
+    return scope.params
+      .concat(scope.funcDecls.map(ea => ea.id))
+      .concat(helpers.varDeclIds(scope))
+      .concat(scope.importDecls)
+      .concat(scope.classDecls.map(ea => ea.id))
+      .concat(scope.catches);
+  }
+
   function findDeclarationClosestToIndex(parsed, name, index) {
-    // var scopes = lively.ast
-    function varDeclIdsOf(scope) {
-      return scope.params
-        .concat(lively_lang.arr.pluck(scope.funcDecls, 'id'))
-        .concat(helpers.varDeclIds(scope));
-    }
     var found = null;
     lively_lang.arr.detect(
       scopesAtIndex(parsed, index).reverse(),
-      function(scope) {
-        var decls = varDeclIdsOf(scope),
+      (scope) => {
+        var decls = _declsOf(scope),
             idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
         if (idx === -1) return false;
         found = decls[idx]; return true;
