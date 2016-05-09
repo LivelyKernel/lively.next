@@ -113,7 +113,7 @@ function normalizeHook(proceed, name, parent, parentAddress) {
         var main = System.packages[base].main;
         if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
       }
-      
+
       // Fix issue with accidentally adding .js
       var m = result.match(/(.*json)\.js/i);
       if (m) return m[1];
@@ -137,14 +137,14 @@ function normalizeSyncHook(proceed, name, parent, isPlugin) {
   }
 
   var result =  proceed(name, parent, isPlugin)
-  
+
   // lookup package main
   var base = result.replace(/\.js$/, "");
   if (base in System.packages) {
     var main = System.packages[base].main;
     if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
   }
-  
+
   // Fix issue with accidentally adding .js
   var m = result.match(/(.*json)\.js/i);
   if (m) return m[1];
@@ -305,6 +305,11 @@ function sourceOf(System, moduleName, parent) {
     });
 }
 
+function metadata(System, moduleId) {
+  var load = System.loads ? System.loads[moduleId] : null;
+  return load ? load.metadata : null;
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // module records
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -334,6 +339,6 @@ export {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig,
   moduleRecordFor, updateModuleRecordOf,
-  loadedModules, moduleEnv,
+  loadedModules, moduleEnv, metadata,
   sourceOf
 };
