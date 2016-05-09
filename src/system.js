@@ -239,7 +239,7 @@ function moduleEnv(System, moduleId) {
   var env = {
     loadError: undefined,
     recorderName: "__lvVarRecorder",
-    dontTransform: ["__rec__", "__lvVarRecorder", "global", "System", "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
+    dontTransform: ["__rec__", "__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
     recorder: Object.create(GLOBAL, {
       _moduleExport: {
         get() { return (name, val) => scheduleModuleExportsChange(System, moduleId, name, val, true/*add export*/); }
