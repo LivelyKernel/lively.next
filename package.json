@@ -25,7 +25,8 @@
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
       "lively.ast": "./node_modules/lively.ast",
-      "lively.vm": "./node_modules/lively.vm"
+      "lively.vm": "./node_modules/lively.vm",
+      "mocha-es6": "./node_modules/mocha-es6"
     },
     "meta": {
       "./node_modules/whatwg-fetch/fetch.js": {

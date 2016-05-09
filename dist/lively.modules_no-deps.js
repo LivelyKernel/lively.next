@@ -660,9 +660,15 @@
           dontTransform: env.dontTransform,
           recordGlobals: true
         },
-        header = (debug ? `console.log("[lively.modules] executing module ${fullname}");\n` : "")
-              + `var __lively_modules__ = System["__lively.modules__"], ${env.recorderName} = __lively_modules__.moduleEnv("${fullname}").recorder;\n`,
-        footer = `\n__lively_modules__.evaluationDone("${fullname}");`;
+        isGlobal = env.recorderName === "System.global",
+        header = (debug ? `console.log("[lively.modules] executing module ${fullname}");\n` : ""),
+        footer = "";
+
+    // FIXME how to update exports in that case?
+    if (!isGlobal) {
+      header += `var __lively_modules__ = System["__lively.modules__"],\n    ${env.recorderName} = __lively_modules__.moduleEnv("${fullname}").recorder;`;
+      footer += `\n__lively_modules__.evaluationDone("${fullname}");`
+    }
 
     try {
       var rewrittenSource = header + evaluator.evalCodeTransform(source, tfmOptions) + footer;
@@ -731,39 +737,62 @@
              || (!load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0,5000)))
              || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
         isCjs = load.metadata.format == 'cjs',
-        isGlobal = load.metadata.format == 'global';
-    // console.log(load.name + " isEsm? " + isEsm)
+        isGlobal = load.metadata.format == 'global' || !load.metadata.format,
+        env = moduleEnv$1(System, load.name),
+        instrumented = false;
 
     if (isEsm) {
       load.metadata.format = "esm";
-      load.source = prepareCodeForCustomCompile(load.source, load.name, moduleEnv$1(System, load.name), debug);
-      load.metadata["lively.vm instrumented"] = true;
+      load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+      load.metadata["lively.modules instrumented"] = true;
+      instrumented = true;
       debug && console.log("[lively.modules] loaded %s as es6 module", load.name)
       // debug && console.log(load.source)
+
     } else if (isCjs && isNode$1) {
       load.metadata.format = "cjs";
       var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
       load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-      load.metadata["lively.vm instrumented"] = true;
+      load.metadata["lively.modules instrumented"] = true;
+      instrumented = true;
       debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
       // console.log("[lively.modules] no rewrite for cjs module", load.name)
-    } else if (isGlobal) {
-      load.source = prepareCodeForCustomCompile(load.source, load.name, moduleEnv$1(System, load.name), debug);
-      load.metadata["lively.vm instrumented"] = true;
-    } else {
-      debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle global format", load.name);
+
+    } else if (load.metadata.format === "global") {
+      env.recorderName = "System.global";
+      env.recorder = System.global;
+      load.metadata.format = "global";
+      load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+      load.metadata["lively.modules instrumented"] = true;
+      instrumented = true;
+      debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name)
+    }
+
+    if (!instrumented) {
+      debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
     }
 
     debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now()-start);
     return proceed(load);
   }
 
-  function instrumentSourceOfModuleLoad(System, load) {
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // Functions below are for re-loading modules from change.js. We typically
+  // start with a load object that skips the normalize / fetch step. Since we need
+  // to jumo in the "middle" of the load process and SystemJS does not provide an
+  // interface to this, we need to invoke the translate / instantiate / execute
+  // manually
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function instrumentSourceOfEsmModuleLoad(System, load) {
     // brittle!
     // The result of System.translate is source code for a call to
     // System.register that can't be run standalone. We parse the necessary
     // details from it that we will use to re-define the module
     // (dependencies, setters, execute)
+    // Note: this only works for esm modules!
+
     return System.translate(load).then(translated => {
       // translated looks like
       // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
@@ -783,8 +812,19 @@
           declareFuncNode   = call.callee.body.body[0].expression["arguments"][1],
           declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
           declare           = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});\n//@ sourceURL=${moduleName}\n`);
-      if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
+
+      if (System.debug && typeof $morph !== "undefined" && $morph("log"))
+        $morph("log").textString = declare;
+
       return {localDeps: depNames, declare: declare};
+    });
+  }
+
+  function instrumentSourceOfGlobalModuleLoad(System, load) {
+
+    return System.translate(load).then(translated => {
+      // return {localDeps: depNames, declare: declare};
+      return {translated: translated};
     });
   }
 
@@ -907,7 +947,7 @@
           var main = System.packages[base].main;
           if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
         }
-        
+
         // Fix issue with accidentally adding .js
         var m = result.match(/(.*json)\.js/i);
         if (m) return m[1];
@@ -931,14 +971,14 @@
     }
 
     var result =  proceed(name, parent, isPlugin)
-    
+
     // lookup package main
     var base = result.replace(/\.js$/, "");
     if (base in System.packages) {
       var main = System.packages[base].main;
       if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
     }
-    
+
     // Fix issue with accidentally adding .js
     var m = result.match(/(.*json)\.js/i);
     if (m) return m[1];
@@ -1033,9 +1073,7 @@
     var env = {
       loadError: undefined,
       recorderName: "__lvVarRecorder",
-      dontTransform: ["__rec__", "__lvVarRecorder", "global",
-      "System",
-      "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
+      dontTransform: ["__rec__", "__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
       recorder: Object.create(GLOBAL$1, {
         _moduleExport: {
           get() { return (name, val) => scheduleModuleExportsChange(System, moduleId, name, val, true/*add export*/); }
@@ -1067,6 +1105,12 @@
     // FIXME: better to not capture via assignments but use func calls...!
     var rec = moduleEnv$1(System, moduleId).recorder,
         prefix = "__lively.modules__";
+
+    if (rec === System.global) {
+      console.warn(`[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!`)
+      return;
+    }
+
     lively_lang.properties.own(rec).forEach(key => {
       if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
       Object.defineProperty(rec, prefix + key, {
@@ -1093,6 +1137,11 @@
           linkSets: [], dependencies: [], metadata: {}};
         return System.fetch(load);
       });
+  }
+
+  function metadata(System, moduleId) {
+    var load = System.loads ? System.loads[moduleId] : null;
+    return load ? load.metadata : null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1339,33 +1388,110 @@
     }
   }
 
+  function ensureImportsAreLoaded(System, code, parentModule) {
+    var body = ast.parse(code).body,
+        imports = body.filter(node => node.type === "ImportDeclaration");
+    return Promise.all(imports.map(node =>
+            System.normalize(node.source.value, parentModule)
+              .then(fullName => moduleRecordFor$1(System, fullName) ? undefined : System.import(fullName))))
+          .catch(err => { console.error("Error ensuring imports: " + err.message); throw err; });
+  }
+
+
+  function runEval$1(System, code, options) {
+    options = lively_lang.obj.merge({
+      targetModule: null, parentModule: null,
+      parentAddress: null
+    }, options);
+
+    return Promise.resolve()
+      .then(() => {
+        var targetModule = options.targetModule || "*scratch*";
+        return System.normalize(targetModule, options.parentModule, options.parentAddress);
+      })
+      .then((targetModule) => {
+        var fullname = options.targetModule = targetModule;
+    
+        // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
+    
+        return System.import(fullname)
+          .then(() => ensureImportsAreLoaded(System, code, fullname))
+          .then(() => {
+            var env = moduleEnv$1(System, fullname),
+                rec = env.recorder,
+                recName = env.recorderName,
+                header = `var _moduleExport = ${recName}._moduleExport,\n`
+                       + `    _moduleImport = ${recName}._moduleImport;\n`;
+
+            code = header + code;
+
+            options = lively_lang.obj.merge(
+              {waitForPromise: true},
+              options, {
+                recordGlobals: true,
+                dontTransform: env.dontTransform,
+                varRecorderName: recName,
+                topLevelVarRecorder: rec,
+                sourceURL: options.sourceURL || options.targetModule,
+                context: rec,
+                es6ExportFuncId: "_moduleExport",
+                es6ImportFuncId: "_moduleImport",
+                // header: header
+              });
+    
+            // clearPendingModuleExportChanges(fullname);
+    
+            return evaluator.runEval(code, options).then(result => {
+              System["__lively.modules__"].evaluationDone(fullname); return result; })
+          })
+          // .catch(err => console.error(err) || err)
+      });
+  }
+
   function moduleSourceChange$1(System, moduleName, newSource, options) {
+    return System.normalize(moduleName)
+      .then(moduleId => {
+        var meta = metadata(System, moduleId);
+        switch (meta ? meta.format : undefined) {
+          case 'es6': case 'esm': case undefined:
+            return moduleSourceChangeEsm(System, moduleId, newSource, options);
+
+          case 'global':
+            return moduleSourceChangeGlobal(System, moduleId, newSource, options);
+
+          default:
+            throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format `)
+        }
+      });
+  }
+
+  function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     var debug = System["__lively.modules__"].debug,
         load = {
           status: 'loading',
           source: newSource,
-          name: null,
+          name: moduleId,
+          address: moduleId,
           linkSets: [],
           dependencies: [],
           metadata: {format: "esm"}
         };
-    
-    return System.normalize(moduleName)
-      .then(moduleId => {
-        load.name = moduleId;
-        return System.get(moduleId) ? Promise.resolve() : System.import(moduleId)
-      })
-      .then((_) => instrumentSourceOfModuleLoad(System, load))
-      .then(updateData => {
-        var record = moduleRecordFor$1(System, load.name),
-            _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
-            declared = updateData.declare(_exports);
 
+    return (System.get(moduleId) ? Promise.resolve() : System.import(moduleId))
+
+      // translate the source and produce a {declare: FUNCTION, localDeps:
+      // [STRING]} object
+      .then((_) => instrumentSourceOfEsmModuleLoad(System, load))
+
+      .then(updateData => {
+        // evaluate the module source
+        var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
+            declared = updateData.declare(_exports);
         System["__lively.modules__"].evaluationDone(load.name);
 
-        // ensure dependencies are loaded
         debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
 
+        // ensure dependencies are loaded
         return Promise.all(
           // gather the data we need for the update, this includes looking up the
           // imported modules and getting the module record and module object as
@@ -1387,7 +1513,9 @@
 
         .then(deps => {
           // 1. update dependencies
-          record.dependencies = deps.map(ea => ea.record);
+          var record = moduleRecordFor$1(System, load.name);
+          if (record) record.dependencies = deps.map(ea => ea.record);
+
           // hmm... for house keeping... not really needed right now, though
           var prevLoad = System.loads && System.loads[load.name];
           if (prevLoad) {
@@ -1405,6 +1533,186 @@
           return declared.execute();
         });
       });
+  }
+
+  function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
+    var load = {
+      status: 'loading',
+      source: newSource,
+      name: moduleId,
+      address: moduleId,
+      linkSets: [],
+      dependencies: [],
+      metadata: {format: "global"}
+    };
+
+    return (System.get(moduleId) ? Promise.resolve() : System.import(moduleId))
+
+      // translate the source and produce a {declare: FUNCTION, localDeps:
+      // [STRING]} object
+      .then((_) => instrumentSourceOfGlobalModuleLoad(System, load))
+
+      .then(updateData => {
+        load.source = updateData.translated;
+        var entry = doInstantiateGlobalModule(System, load);
+        System.delete(moduleId);
+        System.set(entry.name, entry.esModule)
+        return entry.module;
+      });
+  }
+
+  function doInstantiateGlobalModule(System, load) {
+
+    var entry = __createEntry();
+    entry.name = load.name;
+    entry.esmExports = true;
+    load.metadata.entry = entry;
+
+    entry.deps = [];
+
+    for (var g in load.metadata.globals) {
+      var gl = load.metadata.globals[g];
+      if (gl)
+        entry.deps.push(gl);
+    }
+
+    entry.execute = function executeGlobalModule(require, exports, module) {
+
+      // SystemJS exports detection for global modules is based in new props
+      // added to the global. In order to allow re-load we remove previously
+      // "exported" values
+      var prevMeta = metadata(System, module.id),
+          exports = prevMeta && prevMeta.entry
+                 && prevMeta.entry.module && prevMeta.entry.module.exports;
+      if (exports)
+        Object.keys(exports).forEach(name => {
+          try { delete System.global[name]; } catch (e) {
+            console.warn(`[lively.modules] executeGlobalModule: Cannot delete global["${name}"]`)
+          }
+        });
+
+      var globals;
+      if (load.metadata.globals) {
+        globals = {};
+        for (var g in load.metadata.globals)
+          if (load.metadata.globals[g])
+            globals[g] = require(load.metadata.globals[g]);
+      }
+
+      var exportName = load.metadata.exports;
+
+      if (exportName)
+        load.source += `\nSystem.global["${exportName}"] = ${exportName};`
+
+      var retrieveGlobal = System.get('@@global-helpers').prepareGlobal(module.id, exportName, globals);
+
+      __evaluateGlobalLoadSource(System, load);
+
+      return retrieveGlobal();
+    }
+
+    return runExecuteOfGlobalModule(System, entry);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function __createEntry() {
+    return {
+      name: null,
+      deps: null,
+      originalIndices: null,
+      declare: null,
+      execute: null,
+      executingRequire: false,
+      declarative: false,
+      normalizedDeps: null,
+      groupIndex: null,
+      evaluated: false,
+      module: null,
+      esModule: null,
+      esmExports: false
+    };
+  }
+
+  function __evaluateGlobalLoadSource(System, load) {
+    // System clobbering protection (mostly for Traceur)
+    var curLoad, curSystem, callCounter = 0, __global = System.global;
+    return __exec.call(System, load);
+
+    function preExec(loader, load) {
+      if (callCounter++ == 0)
+        curSystem = __global.System;
+      __global.System = __global.SystemJS = loader;
+    }
+
+    function postExec() {
+      if (--callCounter == 0)
+        __global.System = __global.SystemJS = curSystem;
+      curLoad = undefined;
+    }
+
+    function __exec(load) {
+      // if ((load.metadata.integrity || load.metadata.nonce) && supportsScriptExec)
+      //   return scriptExec.call(this, load);
+      try {
+        preExec(this, load);
+        curLoad = load;
+        (0, eval)(load.source);
+        postExec();
+      }
+      catch (e) {
+        postExec();
+        throw new Error(`Error evaluating ${load.address}:\n${e.stack}`);
+      }
+    };
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function runExecuteOfGlobalModule(System, entry) {
+    // if (entry.module) return;
+
+    var exports = {},
+        module = entry.module = {exports: exports, id: entry.name};
+
+    // // AMD requires execute the tree first
+    // if (!entry.executingRequire) {
+    //   for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
+    //     var depName = entry.normalizedDeps[i];
+    //     var depEntry = loader.defined[depName];
+    //     if (depEntry)
+    //       linkDynamicModule(depEntry, loader);
+    //   }
+    // }
+
+    // now execute
+    entry.evaluated = true;
+    var output = entry.execute.call(System.global, function(name) {
+      var dep = entry.deps.find(dep => dep === name),
+          loadedDep = (dep && System.get(entry.normalizedDeps[entry.deps.indexOf(dep)]))
+                   || System.get(System.normalizeSync(name, entry.name));
+      if (loadedDep) return loadedDep;
+      throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
+    }, exports, module);
+
+    if (output)
+      module.exports = output;
+
+    // create the esModule object, which allows ES6 named imports of dynamics
+    exports = module.exports;
+
+    // __esModule flag treats as already-named
+    var Module = System.get("@system-env").constructor;
+    if (exports && (exports.__esModule || exports instanceof Module))
+      entry.esModule = exports;
+    // set module as 'default' export, then fake named exports by iterating properties
+    else if (entry.esmExports && exports !== System.global)
+      entry.esModule = System.newModule(exports);
+    // just use the 'default' export
+    else
+      entry.esModule = { 'default': exports };
+
+    return entry;
   }
 
   function forgetEnvOf(System, fullname) {
@@ -1499,66 +1807,6 @@
     // `findRequirementsOf("./module3")` will report ./module2 and ./module1
     var id = System.normalizeSync(name);
     return lively_lang.graph.hull(computeRequireMap(System), id);
-  }
-
-  function ensureImportsAreLoaded(System, code, parentModule) {
-    var body = ast.parse(code).body,
-        imports = body.filter(node => node.type === "ImportDeclaration");
-    return Promise.all(imports.map(node =>
-            System.normalize(node.source.value, parentModule)
-              .then(fullName => moduleRecordFor$1(System, fullName) ? undefined : System.import(fullName))))
-          .catch(err => { console.error("Error ensuring imports: " + err.message); throw err; });
-  }
-
-
-  function runEval$1(System, code, options) {
-    options = lively_lang.obj.merge({
-      targetModule: null, parentModule: null,
-      parentAddress: null
-    }, options);
-
-    return Promise.resolve()
-      .then(() => {
-        var targetModule = options.targetModule || "*scratch*";
-        return System.normalize(targetModule, options.parentModule, options.parentAddress);
-      })
-      .then((targetModule) => {
-        var fullname = options.targetModule = targetModule;
-    
-        // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
-    
-        return System.import(fullname)
-          .then(() => ensureImportsAreLoaded(System, code, fullname))
-          .then(() => {
-            var env = moduleEnv$1(System, fullname),
-                rec = env.recorder,
-                recName = env.recorderName,
-                header = `var _moduleExport = ${recName}._moduleExport,\n`
-                       + `    _moduleImport = ${recName}._moduleImport;\n`;
-
-            code = header + code;
-
-            options = lively_lang.obj.merge(
-              {waitForPromise: true},
-              options, {
-                recordGlobals: true,
-                dontTransform: env.dontTransform,
-                varRecorderName: recName,
-                topLevelVarRecorder: rec,
-                sourceURL: options.sourceURL || options.targetModule,
-                context: rec,
-                es6ExportFuncId: "_moduleExport",
-                es6ImportFuncId: "_moduleImport",
-                // header: header
-              });
-    
-            // clearPendingModuleExportChanges(fullname);
-    
-            return evaluator.runEval(code, options).then(result => {
-              System["__lively.modules__"].evaluationDone(fullname); return result; })
-          })
-          // .catch(err => console.error(err) || err)
-      });
   }
 
   var GLOBAL = typeof window !== "undefined" ? window :
