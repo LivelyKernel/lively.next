@@ -13,20 +13,6 @@ function moduleSourceChangeAction(System, moduleName, changeFunc) {
           .then(changeFunc)
           .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
 }
-export { moduleSourceChange, moduleSourceChangeAction }
-
-function moduleSourceChangeAction(System, moduleName, changeFunc) {
-  return sourceOf(System, moduleName)
-          .then(changeFunc)
-          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
-}
-export { moduleSourceChange, moduleSourceChangeAction }
-
-function moduleSourceChangeAction(System, moduleName, changeFunc) {
-  return sourceOf(System, moduleName)
-          .then(changeFunc)
-          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
-}
 
 function moduleSourceChange(System, moduleName, newSource, options) {
   var oldSource, moduleId;

@@ -144,7 +144,7 @@ function normalizeSyncHook(proceed, name, parent, isPlugin) {
   // '{node: "events", "~node": "@mepty"}' mapping but we need it
   var pkg = parent && normalize_packageOfURL(parent, System);
   if (pkg) {
-    var mappedObject = pkg.map[name] || System.map[name];
+    var mappedObject = (pkg.map && pkg.map[name]) || System.map[name];
     if (typeof mappedObject === "object") {
       name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
     }
