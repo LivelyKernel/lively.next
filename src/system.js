@@ -271,6 +271,12 @@ function addGetterSettersForNewVars(System, moduleId) {
   // FIXME: better to not capture via assignments but use func calls...!
   var rec = moduleEnv(System, moduleId).recorder,
       prefix = "__lively.modules__";
+
+  if (rec === System.global) {
+    console.warn(`[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!`)
+    return;
+  }
+
   properties.own(rec).forEach(key => {
     if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
     Object.defineProperty(rec, prefix + key, {

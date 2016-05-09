@@ -24,8 +24,8 @@ describe("instrumentation", () => {
   var S;
   beforeEach(() => {
     S = getSystem("test", {baseURL: dir});
-    delete S.global.z;
-    delete S.global.zzz;
+    try { delete S.global.z; } catch (e) {}
+    try { delete S.global.zzz; } catch (e) {}
     return createFiles(testProjectDir, testProjectSpec)
       .then(() => S.import(testProjectDir + "file1.js"));
   });

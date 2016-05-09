@@ -4,7 +4,11 @@ import { moduleEnv } from "./system.js";
 import { evalCodeTransform } from "lively.vm/lib/evaluator.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-export { wrapModuleLoad, unwrapModuleLoad, instrumentSourceOfModuleLoad, getExceptions, setExceptions }
+export {
+  wrapModuleLoad, unwrapModuleLoad,
+  getExceptions, setExceptions,
+  instrumentSourceOfEsmModuleLoad, instrumentSourceOfGlobalModuleLoad
+}
 
 var isNode = System.get("@system-env").node;
 
@@ -131,30 +135,38 @@ function customTranslate(proceed, load) {
            || (!load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0,5000)))
            || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
       isCjs = load.metadata.format == 'cjs',
-      // isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-      isGlobal = load.metadata.format == 'global',
-      env = moduleEnv(System, load.name);
+      isGlobal = load.metadata.format == 'global' || !load.metadata.format,
+      env = moduleEnv(System, load.name),
+      instrumented = false;
 
   if (isEsm) {
     load.metadata.format = "esm";
     load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
     load.metadata["lively.modules instrumented"] = true;
+    instrumented = true;
     debug && console.log("[lively.modules] loaded %s as es6 module", load.name)
     // debug && console.log(load.source)
+
   } else if (isCjs && isNode) {
     load.metadata.format = "cjs";
     var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
     load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
     load.metadata["lively.modules instrumented"] = true;
+    instrumented = true;
     debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
     // console.log("[lively.modules] no rewrite for cjs module", load.name)
-  } else if (isGlobal) {
+
+  } else if (load.metadata.format === "global") {
     env.recorderName = "System.global";
     env.recorder = System.global;
+    load.metadata.format = "global";
     load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
     load.metadata["lively.modules instrumented"] = true;
-    debug && console.log(load.source);
-  } else {
+    instrumented = true;
+    debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name)
+  }
+
+  if (!instrumented) {
     debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
   }
 
@@ -162,12 +174,23 @@ function customTranslate(proceed, load) {
   return proceed(load);
 }
 
-function instrumentSourceOfModuleLoad(System, load) {
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Functions below are for re-loading modules from change.js. We typically
+// start with a load object that skips the normalize / fetch step. Since we need
+// to jumo in the "middle" of the load process and SystemJS does not provide an
+// interface to this, we need to invoke the translate / instantiate / execute
+// manually
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function instrumentSourceOfEsmModuleLoad(System, load) {
   // brittle!
   // The result of System.translate is source code for a call to
   // System.register that can't be run standalone. We parse the necessary
   // details from it that we will use to re-define the module
   // (dependencies, setters, execute)
+  // Note: this only works for esm modules!
+
   return System.translate(load).then(translated => {
     // translated looks like
     // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
@@ -187,8 +210,19 @@ function instrumentSourceOfModuleLoad(System, load) {
         declareFuncNode   = call.callee.body.body[0].expression["arguments"][1],
         declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
         declare           = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});\n//@ sourceURL=${moduleName}\n`);
-    if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
+
+    if (System.debug && typeof $morph !== "undefined" && $morph("log"))
+      $morph("log").textString = declare;
+
     return {localDeps: depNames, declare: declare};
+  });
+}
+
+function instrumentSourceOfGlobalModuleLoad(System, load) {
+
+  return System.translate(load).then(translated => {
+    // return {localDeps: depNames, declare: declare};
+    return {translated: translated};
   });
 }
 
