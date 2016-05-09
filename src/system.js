@@ -12,16 +12,24 @@ var isNode = System.get("@system-env").node;
 var SystemClass = System.constructor;
 if (!SystemClass.systems) SystemClass.systems = {};
 
+var defaultOptions = {
+  notificationLimit: null
+}
+
 SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
   var System = this;
   return {
+
     moduleEnv: function(id) { return moduleEnv(System, id); },
+
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.normalizeSync("lively.modules/index.js")); },
+
     evaluationDone: function(moduleId) {
       addGetterSettersForNewVars(System, moduleId);
       runScheduledExportChanges(System, moduleId);
     },
+
     dumpConfig: function() {
       return JSON.stringify({
         baseURL: System.baseURL,
@@ -34,10 +42,16 @@ SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
         packageConfigPaths: System.packageConfigPaths
       }, null, 2);
     },
-    loadedModules: System["__lively.modules__loadedModules"] || (System["__lively.modules__loadedModules"] = {}),
-    pendingExportChanges: System["__lively.modules__pendingExportChanges"] || (System["__lively.modules__pendingExportChanges"] = {})
+
+    // this is where the canonical state of the module system is held...
+    loadedModules: System["__lively.modules__loadedModules"]                     || (System["__lively.modules__loadedModules"] = {}),
+    pendingExportChanges: System["__lively.modules__pendingExportChanges"]       || (System["__lively.modules__pendingExportChanges"] = {}),
+    notifications: System["__lively.modules__notifications"]                     || (System["__lively.modules__notifications"] = []),
+    notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
+    options: System["__lively.modules__options"]                                 || (System["__lively.modules__options"] = obj.deepCopy(defaultOptions))
   }
-})
+
+});
 
 function systems() { return SystemClass.systems }
 

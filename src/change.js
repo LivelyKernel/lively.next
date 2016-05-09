@@ -4,8 +4,15 @@ import {
   instrumentSourceOfGlobalModuleLoad
 } from "./instrumentation.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
-import { runEval } from "./eval.js";
+import { recordModuleChange } from "./notify.js";
 
+export { moduleSourceChange, moduleSourceChangeAction }
+
+function moduleSourceChangeAction(System, moduleName, changeFunc) {
+  return sourceOf(System, moduleName)
+          .then(changeFunc)
+          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
+}
 export { moduleSourceChange, moduleSourceChangeAction }
 
 function moduleSourceChangeAction(System, moduleName, changeFunc) {
@@ -22,8 +29,11 @@ function moduleSourceChangeAction(System, moduleName, changeFunc) {
 }
 
 function moduleSourceChange(System, moduleName, newSource, options) {
+  var oldSource, moduleId;
   return System.normalize(moduleName)
-    .then(moduleId => {
+    .then(id => moduleId = id)
+    .then(() => sourceOf(System, moduleId).then(source => oldSource = source))
+    .then(() => {
       var meta = metadata(System, moduleId);
       switch (meta ? meta.format : undefined) {
         case 'es6': case 'esm': case undefined:
@@ -35,6 +45,13 @@ function moduleSourceChange(System, moduleName, newSource, options) {
         default:
           throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format `)
       }
+    })
+    .then(result => {
+      recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
+      return result;
+    }, error => {
+      recordModuleChange(System, moduleId, oldSource, newSource, error, options, Date.now());
+      throw error;
     });
 }
 

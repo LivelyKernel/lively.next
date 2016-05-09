@@ -2,6 +2,7 @@ import * as ast from "lively.ast";
 import { obj } from "lively.lang";
 import { moduleRecordFor, moduleEnv } from "./system.js";
 import * as evaluator from "lively.vm/lib/evaluator.js";
+import { recordDoitRequest, recordDoitResult } from "./notify.js";
 
 export { runEval }
 
@@ -21,6 +22,8 @@ function runEval(System, code, options) {
     parentAddress: null
   }, options);
 
+  var originalCode = code;
+
   return Promise.resolve()
     .then(() => {
       var targetModule = options.targetModule || "*scratch*";
@@ -28,9 +31,9 @@ function runEval(System, code, options) {
     })
     .then((targetModule) => {
       var fullname = options.targetModule = targetModule;
-  
+
       // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
-  
+
       return System.import(fullname)
         .then(() => ensureImportsAreLoaded(System, code, fullname))
         .then(() => {
@@ -55,11 +58,15 @@ function runEval(System, code, options) {
               es6ImportFuncId: "_moduleImport",
               // header: header
             });
-  
+
           // clearPendingModuleExportChanges(fullname);
-  
+          recordDoitRequest(System, originalCode, options, Date.now());
+
           return evaluator.runEval(code, options).then(result => {
-            System["__lively.modules__"].evaluationDone(fullname); return result; })
+            System["__lively.modules__"].evaluationDone(fullname);
+            recordDoitResult(System, originalCode, options, result, Date.now());
+            return result;
+          })
         })
         // .catch(err => console.error(err) || err)
     });
