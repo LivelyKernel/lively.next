@@ -44,10 +44,15 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 
 function importPackage(System, packageURL) {
   return System.normalize(packageURL)
-    .then(resolvedURL => // ensure it's a directory
-      resolvedURL.match(/\.js/) ?
-        resolvedURL.split("/").slice(0,-1).join("/") :
-        resolvedURL)
+    .then(resolvedURL => {
+      // ensure it's a directory
+      if (!resolvedURL.match(/\.js/))
+        return resolvedURL;
+      else if (resolvedURL.indexOf(packageURL + ".js") > -1)
+        return resolvedURL.replace(/\.js$/, "");
+      else
+        return resolvedURL.split("/").slice(0,-1).join("/");
+    })
     .then(url => registerPackage(System, url))
     .then(() => System.normalize(packageURL))
     .then(entry => System.import(entry));
