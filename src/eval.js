@@ -60,11 +60,17 @@ function runEval(System, code, options) {
             });
 
           // clearPendingModuleExportChanges(fullname);
-          recordDoitRequest(System, originalCode, options, Date.now());
+          recordDoitRequest(
+            System, originalCode,
+            {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
+            Date.now());
 
           return evaluator.runEval(code, options).then(result => {
             System["__lively.modules__"].evaluationDone(fullname);
-            recordDoitResult(System, originalCode, options, result, Date.now());
+            recordDoitResult(
+              System, originalCode,
+              {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
+              result, Date.now());
             return result;
           })
         })
