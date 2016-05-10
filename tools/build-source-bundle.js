@@ -3,6 +3,7 @@
 var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
+var babel = require('rollup-plugin-babel');
 
 var fetchFile = require.resolve("whatwg-fetch/fetch.js");
 var targetFile1 = "dist/lively.modules_no-deps.js";
@@ -17,6 +18,10 @@ module.exports = Promise.resolve()
     entry: "index.js",
     plugins: [
       // builtins(),
+      babel({
+        exclude: 'node_modules/**',
+        sourceMap: true
+      })
     ]
   }))
   .then(bundle =>
