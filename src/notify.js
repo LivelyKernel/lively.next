@@ -1,5 +1,6 @@
 export {
   getNotifications,
+  record,
   recordDoitResult, recordDoitRequest,
   recordModuleChange,
   subscribe
@@ -21,47 +22,41 @@ function truncateNotifications(System) {
   }
 }
 
+function record(System, event) {
+  getNotifications(System).push(event);
+  truncateNotifications(System);
+  notifySubscriber(System, event.type, event);
+  return event;
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // doits
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function recordDoitRequest(System, code, options, time) {
-  var recorded = {
+  return record(System, {
     type: "doitrequest",
     code: code, options: options,
     time: time || Date.now()
-  }
-  getNotifications(System).push(recorded);
-  truncateNotifications(System);
-  notifySubscriber(System, 'doitrequest', recorded);
-  return recorded;
+  })
 }
 
 function recordDoitResult(System, code, options, result, time) {
-  var recorded = {
+  return record(System, {
     type: "doitresult",
     code: code, options: options, result: result,
     time: time || Date.now()
-  }
-  getNotifications(System).push(recorded);
-  truncateNotifications(System);
-  notifySubscriber(System, 'doitresult', recorded);
-  return recorded;
+  });
 }
 
 function recordModuleChange(System, moduleId, oldSource, newSource, error, options, time) {
-  var recorded = {
+  return record(System, {
     type: "modulechange",
     module: moduleId,
     oldCode: oldSource, newCode: newSource,
     error: error, options: options,
     time: time || Date.now()
-  }
-  getNotifications(System).push(recorded);
-  truncateNotifications(System);
-  notifySubscriber(System, 'modulechange', recorded);
-  return recorded;
+  });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
