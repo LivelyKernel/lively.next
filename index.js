@@ -338,3 +338,12 @@ export { wrapModuleLoad, unwrapModuleLoad }
 import { runEval as _runEval } from './src/eval.js';
 function runEval(code, options) { return _runEval(defaultSystem, code, options); }
 export { runEval };
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// notifications
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import * as notify from "./src/notify.js";
+function getNotifications() { return notify.getNotifications(defaultSystem); }
+function subscribe(type, name, handlerFunc) { return notify.subscribe(defaultSystem, type, name, handlerFunc); }
+function unsubscribe(type, nameOrHandlerFunc) { return notify.subscribe(defaultSystem, type, nameOrHandlerFunc); }
+export { getNotifications, subscribe, unsubscribe };
