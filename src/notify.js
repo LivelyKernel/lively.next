@@ -1,9 +1,12 @@
+var eventTypes = ["modulechange", "doitrequest", "doitresult"];
+
 export {
   getNotifications,
   record,
   recordDoitResult, recordDoitRequest,
   recordModuleChange,
-  subscribe
+  subscribe, unsubscribe,
+  eventTypes
 };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -64,11 +67,11 @@ function recordModuleChange(System, moduleId, oldSource, newSource, error, optio
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function notifySubscriber(System, type, data) {
-  subsribersForType(System, type).forEach(handlerFunc => {
+  subsribersForType(System, type).forEach(({name, handler}) => {
     try {
-      handlerFunc(data);
+      handler(data);
     } catch (e) {
-      console.error(`Error in lively.modules notification hander ${handlerFunc}:\n${e.stackk}`)
+      console.error(`Error in lively.modules notification handler ${name || handler}:\n${e.stack}`)
     }
   });
 }
@@ -78,8 +81,50 @@ function subsribersForType(System, type) {
   return subscribers[type] || (subscribers[type] = []);
 }
 
-function subscribe(System, type, handlerFunc) {
-  if (["modulechange", "doitrequest", "doitresult"].indexOf(type) === -1) throw new Error(`Unknown notification type ${type}`);
+function _addSubscriber(System, name, type, handlerFunc) {
+  var subscribers = subsribersForType(System, type);
+  if (name) _removeNamedSubscriptionOfType(System, name, type);
+  subscribers.push({name: name, handler: handlerFunc});
+}
+
+function _removeNamedSubscriptionOfType(System, name, type) {
+  var subscribers = subsribersForType(System, type);
+  subscribers.forEach((ea, i) =>
+    ea.name === name && subscribers.splice(i, 1));
+}
+
+function _removeSubscriptionOfType(System, handlerFunc, type) {
+  var subscribers = subsribersForType(System, type);
+  subscribers.forEach((ea, i) =>
+    ea.handler === handlerFunc && subscribers.splice(i, 1));
+}
+
+function subscribe(System, type, name, handlerFunc) {
+  if (typeof name === "function") {
+    handlerFunc = name;
+    name = undefined
+  }
+
+  if (typeof type === "function") {
+    handlerFunc = type;
+    type = undefined;
+    name = undefined;
+  }
+  
+  if (type && eventTypes.indexOf(type) === -1) throw new Error(`Unknown notification type ${type}`);
   if (typeof handlerFunc !== "function") throw new Error(`handlerFunc in subscribe is not a function ${handlerFunc}`);
-  subsribersForType(System, type).push(handlerFunc);
+  var types = type ? [type] : eventTypes;
+  types.forEach(type => _addSubscriber(System, name, type, handlerFunc));
+}
+
+function unsubscribe(System, type, nameOrHandlerFunc) {
+  if (typeof nameOrHandlerFunc === "undefined") {
+    nameOrHandlerFunc = type;
+    type = undefined;
+  }
+
+  var types = type ? [type] : eventTypes,
+      remover = typeof nameOrHandlerFunc === "function" ?
+        _removeSubscriptionOfType : _removeNamedSubscriptionOfType;
+  types.forEach(type => remover(System, nameOrHandlerFunc, type))
 }
