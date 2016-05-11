@@ -16779,9 +16779,9 @@ lp.lookAhead = function (n) {
     visitImportSpecifier: function(node, depth, scope, path) {
       scope.importDecls.push(node.local);
       var retVal;
-      // retVal = this.accept(node.local, depth, scope, path.concat(["local"]));
-      retVal = this.accept(node.imported, depth, scope, path.concat(["imported"]));
-      var retVal;
+      retVal = this.accept(node.local, depth, scope, path.concat(["local"]));
+      // retVal = this.accept(node.imported, depth, scope, path.concat(["imported"]));
+      return retVal;
     },
 
     visitImportDefaultSpecifier: function(node, depth, scope, path) {
@@ -19248,15 +19248,19 @@ lp.lookAhead = function (n) {
     }).result;
   }
 
+  function declarationsOfScope(scope, includeOuter) {
+    // returns Identifier nodes
+    return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : [])
+      .concat(helpers.declIds(scope.params))
+      .concat(scope.funcDecls.map(ea => ea.id))
+      .concat(helpers.varDeclIds(scope))
+      .concat(scope.catches)
+      .concat(scope.classDecls.map(ea => ea.id))
+      .concat(scope.importDecls)
+  }
+
   function _declaredVarNames(scope, useComments) {
-    return (scope.node.id && scope.node.id.name ?
-        [scope.node.id && scope.node.id.name] : [])
-      .concat(lively_lang.chain(scope.funcDecls).pluck('id').pluck('name').compact().value())
-      .concat(lively_lang.arr.pluck(helpers.declIds(scope.params), 'name'))
-      .concat(lively_lang.arr.pluck(scope.catches, 'name'))
-      .concat(lively_lang.arr.pluck(helpers.varDeclIds(scope), 'name'))
-      .concat(lively_lang.chain(scope.classDecls).pluck('id').pluck('name').value())
-      .concat(lively_lang.arr.pluck(scope.importDecls, 'name'))
+    return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name')
       .concat(!useComments ? [] :
         _findJsLintGlobalDeclarations(
           scope.node.type === 'Program' ?
@@ -19348,22 +19352,12 @@ lp.lookAhead = function (n) {
     }
   }
 
-  // helper for findDeclarationClosestToIndex
-  function _declsOf(scope) {
-    return scope.params
-      .concat(scope.funcDecls.map(ea => ea.id))
-      .concat(helpers.varDeclIds(scope))
-      .concat(scope.importDecls)
-      .concat(scope.classDecls.map(ea => ea.id))
-      .concat(scope.catches);
-  }
-
   function findDeclarationClosestToIndex(parsed, name, index) {
     var found = null;
     lively_lang.arr.detect(
       scopesAtIndex(parsed, index).reverse(),
       (scope) => {
-        var decls = _declsOf(scope),
+        var decls = declarationsOfScope(scope, true),
             idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
         if (idx === -1) return false;
         found = decls[idx]; return true;
@@ -19387,6 +19381,7 @@ lp.lookAhead = function (n) {
     scopeAtIndex: scopeAtIndex,
     scopesAtPos: scopesAtPos,
     nodesInScopeOf: nodesInScopeOf,
+    declarationsOfScope: declarationsOfScope,
     _declaredVarNames: _declaredVarNames,
     _findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
     topLevelDeclsAndRefs: topLevelDeclsAndRefs,
@@ -19887,7 +19882,7 @@ lp.lookAhead = function (n) {
     // 4. make all references declared in the toplevel scope into property
     // reads of captureObj
     // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    rewritten = replaceRefs(parsed, options);
+    rewritten = replaceRefs(rewritten, options);
 
     // 5.a turn var declarations into assignments to captureObj
     // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
@@ -19939,7 +19934,8 @@ lp.lookAhead = function (n) {
 
   function replaceRefs(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed),
-        refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, options));
+        refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, topLevel, options));
+
     return replace$1(parsed, (node, path) =>
       refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node);
   }
@@ -19988,6 +19984,9 @@ lp.lookAhead = function (n) {
   }
 
   function additionalIgnoredRefs(parsed, options) {
+    // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
+    // decls, this should somehow be consolidated with this function and with the
+    // fact that naming based ignores aren't good enough...
     var topLevel = topLevelDeclsAndRefs(parsed),
         ignoreDecls = topLevel.scope.varDecls.reduce((result, decl, i) => {
           var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
@@ -20131,8 +20130,9 @@ lp.lookAhead = function (n) {
       && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
   }
 
-  function shouldRefBeCaptured(ref, options) {
-    return options.excludeRefs.indexOf(ref.name) === -1
+  function shouldRefBeCaptured(ref, toplevel, options) {
+    return !lively_lang.arr.include(toplevel.scope.importDecls, ref)
+      && options.excludeRefs.indexOf(ref.name) === -1
       && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
   }
 
