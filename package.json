@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "dist/lively.modules.js",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "doc-comments": "^0.1.4",
-    "mocha-es6": "^0.2.7"
+    "mocha-es6": "^0.2.7",
+    "rollup-plugin-babel": "^1.0.0"
   }
 }

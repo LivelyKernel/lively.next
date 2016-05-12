@@ -61,3 +61,7 @@ To bootstrap lively.modules please see the example in
 capable to "develop itself" and was done so from the beginning :)
 
 To build a new version yourself run `npm run build`.
+
+## LICENSE
+
+[MIT](LICENSE)
