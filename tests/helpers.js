@@ -119,7 +119,7 @@ function modifyJSON(file, changeObj) {
 
 function noTrailingSlash(path) { return path.replace(/\/$/, ""); }
 
-var inspect = !isNode && typeof lively !== "undefined" && lively.morphic.inspect ?
+var inspect = !isNode && typeof lively !== "undefined" && lively.morphic && lively.morphic.inspect ?
   lively.morphic.inspect : console.log.bind(console);
 
 function runInIframe(id, func) {
