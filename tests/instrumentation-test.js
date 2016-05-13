@@ -60,7 +60,6 @@ describe("instrumentation", () => {
       S.import(`${testProjectDir}file4.js`)
         .then(() => {
           var env = moduleEnv(S, `${testProjectDir}file4.js`);
-          inspect(env)
           expect(env).to.have.deep.property("recorder.Foo");
         }));
   });
