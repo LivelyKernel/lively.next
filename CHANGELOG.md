@@ -1,5 +1,10 @@
 # lively.modules changelog
 
+## 0.2.2
+
+* capturing improvements (computed prop in object literal, capturing of object
+  destructuring var decls, fixes export default class and function capturing)
+
 ## 0.2.1
 
 * notifications and logging of module changes and doits, see src/notify.js

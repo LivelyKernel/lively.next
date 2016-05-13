@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "dist/lively.modules.js",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "babel-core": "^5.8.38",
-    "lively.ast": "^0.6.0",
+    "lively.ast": "^0.6.7",
     "lively.lang": "^0.5.22",
     "lively.vm": "^0.5.1",
     "systemjs": "^0.19.24",

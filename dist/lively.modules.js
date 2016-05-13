@@ -16703,7 +16703,8 @@ lp.lookAhead = function (n) {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // no keys for scope
       // key is a node of type Literal
-      // retVal = this.accept(node.key, depth, state, path.concat(["key"]));
+      if (node.computed)
+        retVal = this.accept(node.key, depth, state, path.concat(["key"]));
 
       // value is a node of type Expression
       retVal = this.accept(node.value, depth, state, path.concat(["value"]));
@@ -16780,9 +16781,9 @@ lp.lookAhead = function (n) {
     visitImportSpecifier: function(node, depth, scope, path) {
       scope.importDecls.push(node.local);
       var retVal;
-      // retVal = this.accept(node.local, depth, scope, path.concat(["local"]));
-      retVal = this.accept(node.imported, depth, scope, path.concat(["imported"]));
-      var retVal;
+      retVal = this.accept(node.local, depth, scope, path.concat(["local"]));
+      // retVal = this.accept(node.imported, depth, scope, path.concat(["imported"]));
+      return retVal;
     },
 
     visitImportDefaultSpecifier: function(node, depth, scope, path) {
@@ -18763,6 +18764,7 @@ lp.lookAhead = function (n) {
   // Global.findNodeByAstIndex = findNodeByAstIndex;
 
   function findStatementOfNode(options, parsed, target) {
+    // DEPRECATED in favor of query.statementOf(parsed, node)
     // Can also be called with just ast and target. options can be {asPath: BOOLEAN}.
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
@@ -19179,7 +19181,7 @@ lp.lookAhead = function (n) {
 
   var knownGlobals = [
     "true", "false", "null", "undefined", "arguments",
-    "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp",
+    "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol",
     "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
     "Math", "NaN", "Infinity", "Intl", "JSON", "Promise",
     "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert",
@@ -19249,15 +19251,19 @@ lp.lookAhead = function (n) {
     }).result;
   }
 
+  function declarationsOfScope(scope, includeOuter) {
+    // returns Identifier nodes
+    return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : [])
+      .concat(helpers.declIds(scope.params))
+      .concat(scope.funcDecls.map(ea => ea.id))
+      .concat(helpers.varDeclIds(scope))
+      .concat(scope.catches)
+      .concat(scope.classDecls.map(ea => ea.id))
+      .concat(scope.importDecls)
+  }
+
   function _declaredVarNames(scope, useComments) {
-    return (scope.node.id && scope.node.id.name ?
-        [scope.node.id && scope.node.id.name] : [])
-      .concat(lively_lang.chain(scope.funcDecls).pluck('id').pluck('name').compact().value())
-      .concat(lively_lang.arr.pluck(helpers.declIds(scope.params), 'name'))
-      .concat(lively_lang.arr.pluck(scope.catches, 'name'))
-      .concat(lively_lang.arr.pluck(helpers.varDeclIds(scope), 'name'))
-      .concat(lively_lang.chain(scope.classDecls).pluck('id').pluck('name').value())
-      .concat(lively_lang.arr.pluck(scope.importDecls, 'name'))
+    return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name')
       .concat(!useComments ? [] :
         _findJsLintGlobalDeclarations(
           scope.node.type === 'Program' ?
@@ -19349,22 +19355,12 @@ lp.lookAhead = function (n) {
     }
   }
 
-  // helper for findDeclarationClosestToIndex
-  function _declsOf(scope) {
-    return scope.params
-      .concat(scope.funcDecls.map(ea => ea.id))
-      .concat(helpers.varDeclIds(scope))
-      .concat(scope.importDecls)
-      .concat(scope.classDecls.map(ea => ea.id))
-      .concat(scope.catches);
-  }
-
   function findDeclarationClosestToIndex(parsed, name, index) {
     var found = null;
     lively_lang.arr.detect(
       scopesAtIndex(parsed, index).reverse(),
       (scope) => {
-        var decls = _declsOf(scope),
+        var decls = declarationsOfScope(scope, true),
             idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
         if (idx === -1) return false;
         found = decls[idx]; return true;
@@ -19375,6 +19371,25 @@ lp.lookAhead = function (n) {
   function nodesAt$1(pos, ast) {
     ast = typeof ast === 'string' ? parse(ast) : ast;
     return acorn.walk.findNodesIncluding(ast, pos);
+  }
+
+  function statementOf(parsed, node) {
+    // Find the statement that a target node is in. Example:
+    // let source be "var x = 1; x + 1;" and we are looking for the
+    // Identifier "x" in "x+1;". The second statement is what will be found.
+    var nodes = nodesAt$1(node.start, parsed);
+    if (nodes.indexOf(node) === -1) return undefined;
+    return nodes.reverse().find((node, i) => {
+      if (!nodes[i+1]) return false;
+      var t = nodes[i+1].type;
+      if (["BlockStatement",
+           "Program",
+           "FunctionDeclaration",
+           "FunctionExpress",
+           "ArrowFunctionExpress",
+           "SwitchCase", "SwitchStatement"].indexOf(t) > -1) return true;
+      return false;
+    });
   }
 
 
@@ -19388,6 +19403,7 @@ lp.lookAhead = function (n) {
     scopeAtIndex: scopeAtIndex,
     scopesAtPos: scopesAtPos,
     nodesInScopeOf: nodesInScopeOf,
+    declarationsOfScope: declarationsOfScope,
     _declaredVarNames: _declaredVarNames,
     _findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
     topLevelDeclsAndRefs: topLevelDeclsAndRefs,
@@ -19395,7 +19411,8 @@ lp.lookAhead = function (n) {
     findNodesIncludingLines: findNodesIncludingLines,
     findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
     findDeclarationClosestToIndex: findDeclarationClosestToIndex,
-    nodesAt: nodesAt$1
+    nodesAt: nodesAt$1,
+    statementOf: statementOf
   });
 
   var helper = {
@@ -19822,6 +19839,9 @@ lp.lookAhead = function (n) {
     wrapInFunction: wrapInFunction
   });
 
+  var merge = Object.assign;
+
+
   function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
     /* replaces var and function declarations with assignment statements.
     * Example:
@@ -19858,7 +19878,7 @@ lp.lookAhead = function (n) {
       options.excludeRefs = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
       options.excludeDecls = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
     }
-    
+
     options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
     options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
 
@@ -19888,12 +19908,12 @@ lp.lookAhead = function (n) {
     // 4. make all references declared in the toplevel scope into property
     // reads of captureObj
     // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    rewritten = replaceRefs(parsed, options);
+    rewritten = replaceRefs(rewritten, options);
 
     // 5.a turn var declarations into assignments to captureObj
     // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
     rewritten = replaceVarDecls(rewritten, options);
-    
+
     // 5.b record class declarations
     // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
     rewritten = replaceClassDecls(rewritten, options);
@@ -19931,36 +19951,106 @@ lp.lookAhead = function (n) {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // replacing helpers
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  var replaceVisitor = (() => {
+    var v = new Visitor();
+    v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) =>
+      v.replacer(proceed(node, state, path), path));
+    return v;
+  })();
 
   function replace$1(parsed, replacer) {
-    var v = new Visitor();
-    v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => replacer(proceed(node, state, path), path));
-    return v.accept(parsed, null, []);
+    replaceVisitor.replacer = replacer;
+    return replaceVisitor.accept(parsed, null, []);
+  }
+
+  var replaceManyVisitor = (() => {
+    var v = new Visitor(),
+        canBeInlinedSym = Symbol("canBeInlined");
+    v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
+      var replaced = v.replacer(proceed(node, state, path), path);
+      return !Array.isArray(replaced) ?
+        replaced : replaced.length === 1 ?
+          replaced[0] : Object.assign(block(replaced), {[canBeInlinedSym]: true});
+    });
+    v.visitBlockStatement = lively_lang.fun.wrap(v.visitBlockStatement, blockInliner);
+    v.visitProgram = lively_lang.fun.wrap(v.visitProgram, blockInliner);
+    return v;
+
+    function blockInliner(proceed, node, state, path) {
+      var result = proceed(node, state, path);
+      // FIXME what about () => x kind of functions?
+      if (Array.isArray(result.body)) {
+        result.body = result.body.reduce((body, node) => {
+          if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
+            body.push(node);
+            return body
+          } else {
+            return body.concat(node.body)
+          }
+        }, []);
+      }
+      return result;
+    }
+  })();
+
+  function replaceWithMany(parsed, replacer) {
+    replaceManyVisitor.replacer = replacer;
+    return replaceManyVisitor.accept(parsed, null, []);
   }
 
   function replaceRefs(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed),
-        refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, options));
+        refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, topLevel, options));
+
     return replace$1(parsed, (node, path) =>
       refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node);
   }
 
   function replaceVarDecls(parsed, options) {
+    // rewrites var declarations so that they can be captured by
+    // `options.captureObj`.
+    // For normal vars we will do a transform like
+    //   "var x = 23;" => "_rec.x = 23";
+    // For patterns (destructuring assignments) we will create assignments for
+    // all properties that are being destructured, creating helper vars as needed
+    //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
+
     var topLevel = topLevelDeclsAndRefs(parsed);
-    return replace$1(parsed, node => {
-      if (topLevel.varDecls.indexOf(node) === -1) return node;
-      var decls = node.declarations.filter(decl => shouldDeclBeCaptured(decl, options));
-      if (!decls.length) return node;
-      return node.declarations.map(ea => {
-        var init = ea.init || {
+    return replaceWithMany(parsed, node => {
+      if (topLevel.varDecls.indexOf(node) === -1
+       || node.declarations.every(decl => !shouldDeclBeCaptured(decl, options)))
+         return node;
+
+      return lively_lang.arr.flatmap(node.declarations, decl => {
+        if (!shouldDeclBeCaptured(decl, options))
+          return [{type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl]}];
+
+        // Here we create the object pattern / destructuring replacements
+        if (decl.id.type.match(/Pattern/)) {
+          var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
+              declRoot = {type: "Identifier", name: declRootName},
+              state = {parent: declRoot, declaredNames: topLevel.declaredNames},
+              extractions = transformPattern(decl.id, state).map(decl =>
+                decl[annotationSym] && decl[annotationSym].capture ?
+                  assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) :
+                  decl);
+          topLevel.declaredNames.push(declRootName);
+          return [varDecl(declRoot, decl.init, node.kind)].concat(extractions);
+        }
+
+        // This is rewriting normal vars
+        var init = decl.init || {
           operator: "||",
           type: "LogicalExpression",
-          left: {computed: true, object: options.captureObj, property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
+          left: {computed: true, object: options.captureObj, property: {type: "Literal", value: decl.id.name},type: "MemberExpression"},
           right: {name: "undefined", type: "Identifier"}
         };
-        return shouldDeclBeCaptured(ea, options) ?
-          assignExpr(options.captureObj, ea.id, init, false) : ea;
+        return [assignExpr(options.captureObj, decl.id, init, false)];
       });
+
     });
   }
 
@@ -19972,6 +20062,25 @@ lp.lookAhead = function (n) {
         [stmt] : [stmt, assignExpr(options.captureObj, stmt.id, stmt.id, false)]), []);
     return parsed;
   }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // naming
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function generateUniqueName(declaredNames, hint) {
+    var unique = hint, n = 1;
+    while (declaredNames.indexOf(unique) > -1) {
+      if (n > 1000) throw new Error("Endless loop searching for unique variable " + unique);
+      unique = unique.replace(/_[0-9]+$|$/, "_" + (++n));
+    }
+    return unique;
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // exclude / include helpers
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function additionalIgnoredDecls(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed),
@@ -19989,6 +20098,9 @@ lp.lookAhead = function (n) {
   }
 
   function additionalIgnoredRefs(parsed, options) {
+    // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
+    // decls, this should somehow be consolidated with this function and with the
+    // fact that naming based ignores aren't good enough...
     var topLevel = topLevelDeclsAndRefs(parsed),
         ignoreDecls = topLevel.scope.varDecls.reduce((result, decl, i) => {
           var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
@@ -20014,9 +20126,25 @@ lp.lookAhead = function (n) {
       .concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
   }
 
+  function shouldDeclBeCaptured(decl, options) {
+    return options.excludeDecls.indexOf(decl.id.name) === -1
+      && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+  }
+
+  function shouldRefBeCaptured(ref, toplevel, options) {
+    return !lively_lang.arr.include(toplevel.scope.importDecls, ref)
+      && options.excludeRefs.indexOf(ref.name) === -1
+      && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // capturing specific code
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   function insertCapturesForExportDeclarations(parsed, options) {
     parsed.body = parsed.body.reduce((stmts, stmt) => {
-      if (stmt.type !== "ExportNamedDeclaration" || !stmt.declaration) return stmts.concat([stmt]);
+      if ((stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration") || !stmt.declaration) return stmts.concat([stmt]);
       var decls = stmt.declaration.declarations || [stmt.declaration];
       return stmts.concat([stmt]).concat(decls.map(decl => assignExpr(options.captureObj, decl.id, decl.id, false)))
     }, []);
@@ -20039,7 +20167,7 @@ lp.lookAhead = function (n) {
         stmt.specifiers.map(specifier =>
          topLevel.declaredNames.indexOf(specifier.local.name) > -1 ?
          null :
-          varDecl(parsed, {
+          varDeclOrAssignment(parsed, {
             type: "VariableDeclarator",
             id: specifier.local,
             init: member(specifier.local, options.captureObj)
@@ -20126,38 +20254,119 @@ lp.lookAhead = function (n) {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // capturing oobject patters / destructuring
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function shouldDeclBeCaptured(decl, options) {
-    return options.excludeDecls.indexOf(decl.id.name) === -1
-      && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+  var annotationSym = Symbol("lively.ast-destructuring-transform");
+
+  function transformPattern(pattern, transformState) {
+    // For transforming destructuring expressions into plain vars and member access.
+    // Takes a var or argument pattern node (of type ArrayPattern or
+    // ObjectPattern) and transforms it into a set of var declarations that will
+    // "pull out" the nested properties
+    // Example:
+    // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
+    // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
+    // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
+    // // => "var arg$0 = arg[0];\n"
+    // //  + "var arg$0$b = arg$0.b;\n"
+    // //  + "var arg$0$b$c = arg$0$b.c;\n"
+    // //  + "var a = arg$0$b$c[0];"
+    if (pattern.type === "ArrayPattern") {
+      return transformArrayPattern(pattern, transformState)
+    } else if (pattern.type === "ObjectPattern") {
+      return transformObjectPattern(pattern, transformState);
+    } else { return []; }
+
   }
 
-  function shouldRefBeCaptured(ref, options) {
-    return options.excludeRefs.indexOf(ref.name) === -1
-      && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
+  function transformArrayPattern(pattern, transformState) {
+    var declaredNames = transformState.declaredNames,
+        p = annotationSym;
+    return lively_lang.arr.flatmap(pattern.elements, (el, i) => {
+
+      // like [a]
+      if (el.type === "Identifier") {
+        return [merge(varDecl(el, member(id(i), transformState.parent, true)), {[p]: {capture: true}})]
+
+      // like [...foo]
+      } else if (el.type === "RestElement") {
+        return [
+          merge(
+            varDecl(el.argument, {
+              type: "CallExpression",
+              arguments: [{type: "Literal", value: i}],
+              callee: member(id("slice"), transformState.parent, false)}),
+            {[p]: {capture: true}})]
+
+      // like [{x}]
+      } else {
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+            helperVar = merge(varDecl(helperVarId, member(id(i), transformState.parent, true)), {[p]: {capture: true}});
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(el, {parent: helperVarId, declaredNames: declaredNames}));
+      }
+    })
   }
+
+  function transformObjectPattern(pattern, transformState) {
+    var declaredNames = transformState.declaredNames,
+        p = annotationSym;
+    return lively_lang.arr.flatmap(pattern.properties, prop => {
+
+      // like {x: y}
+      if (prop.value.type == "Identifier") {
+        return [merge(varDecl(prop.value, member(prop.key, transformState.parent, false)), {[p]: {capture: true}})];
+
+      // like {x: {z}} or {x: [a]}
+      } else {
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+            helperVar = merge(varDecl(helperVarId, member(prop.key, transformState.parent, false)), {[p]: {capture: false}});
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(prop.value, {parent: helperVarId, declaredNames: declaredNames}));
+      }
+    })
+  }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // code generation helpers
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function id(name) {
+    return {type: "Identifier", name: String(name)}
+  }
+
+  function block(nodes) {
+    return {type: "BlockStatement", body: nodes}
+  }
 
   function member(prop, obj, computed) {
     return {type: "MemberExpression", computed: computed || false, object: obj, property: prop}
   }
 
-  function varDecl(parsed, declarator) {
+  function varDecl(id, init, kind) {
+    return {
+     declarations: [{type: "VariableDeclarator", id: id, init: init}],
+     kind: kind || "var", type: "VariableDeclaration"
+    }
+  }
+
+  function varDeclOrAssignment(parsed, declarator, kind) {
     var topLevel = topLevelDeclsAndRefs(parsed),
         name = declarator.id.name
     return topLevel.declaredNames.indexOf(name) > -1 ?
-    // only create a new declaration if necessary
-    {
-     type: "ExpressionStatement", expression: {
-      type: "AssignmentExpression", operator: "=",
-      right: declarator.init,
-      left: declarator.id
-     }
-    } : {
-     declarations: [declarator],
-     kind: "var", type: "VariableDeclaration"
-    }
+      // only create a new declaration if necessary
+      {
+       type: "ExpressionStatement", expression: {
+        type: "AssignmentExpression", operator: "=",
+        right: declarator.init,
+        left: declarator.id
+       }
+      } : {
+       declarations: [declarator],
+       kind: kind || "var", type: "VariableDeclaration"
+      }
   }
 
   function assignExpr(assignee, propId, value, computed) {
@@ -20178,7 +20387,7 @@ lp.lookAhead = function (n) {
   }
 
   function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
-    return varDecl(parsed, {
+    return varDeclOrAssignment(parsed, {
       type: "VariableDeclarator",
       id: localId,
       init: importCall(imported, moduleSource, moduleImportFunc)
