@@ -1957,7 +1957,7 @@
           varRecorderName: recName,
           topLevelVarRecorder: rec,
           sourceURL: options.sourceURL || options.targetModule,
-          context: rec,
+          context: options.context || rec,
           es6ExportFuncId: "_moduleExport",
           es6ImportFuncId: "_moduleImport"
         });
