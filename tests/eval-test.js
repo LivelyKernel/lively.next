@@ -36,6 +36,10 @@ describe("eval", () => {
     runEval(System, "1 + z + x", {targetModule: module1})
       .then(result => expect(result.value).equals(6)));
 
+  it("sets this", () =>
+    runEval(System, "1 + this.x", {targetModule: module1, context: {x: 2}})
+      .then(result => expect(result.value).equals(3)));
+
   it("of export statement", () =>
     promise.chain([
       () => Promise.all([System.import(module1), System.import(module2)]),
