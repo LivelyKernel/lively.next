@@ -136,7 +136,7 @@ describe("ast.capturing", function() {
           expect(result.source).equals(expected);
         });
 
-      })
+      });
 
       // xit("transformTopLevelVarAndFuncDeclsForCapturing", function() {
       //   var code     = "var {y, z} = {y: 3, z: 4}; function foo() { var x = 5; }",
@@ -175,26 +175,48 @@ describe("ast.capturing", function() {
 
     });
 
-    xdescribe("patterns", () => {
+    describe("patterns", () => {
 
       testVarTfm("var {x} = {x: 3};",
-                 "???");
-// var _x = { x: 3 };
-// var x = _x.x;
+                 "var destructured_1 = { x: 3 };\n"
+               + "_rec.x = destructured_1.x;");
 
-      testVarTfm("var {x, x: {y: z}} = _",
-                 "???");
-// var _ref = _;
-// var x = _ref.x;
-// var z = _ref.x.y;
+      testVarTfm("var {x: [y]} = foo, z = 23;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "var destructured_1$x = destructured_1.x;\n"
+               + "_rec.y = destructured_1$x[0];\n"
+               + "_rec.z = 23;");
 
-      testVarTfm("var [a, b, ...x] = [];",
-                 "???");
-// var _ref = [];
-// var a = _ref[0];
-// var b = _ref[1];
-// var x = _ref.slice(2);
+      testVarTfm("var {x: y} = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "_rec.y = destructured_1.x;");
 
+      testVarTfm("var {x: {x: {x}}, y: {y: x}} = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "var destructured_1$x = destructured_1.x;\n"
+               + "var destructured_1$x$x = destructured_1$x.x;\n"
+               + "_rec.x = destructured_1$x$x.x;\n"
+               + "var destructured_1$y = destructured_1.y;\n"
+               + "_rec.x = destructured_1$y.y;");
+
+
+      testVarTfm("var [a, b, ...rest] = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "_rec.a = destructured_1[0];\n"
+               + "_rec.b = destructured_1[1];\n"
+               + "_rec.rest = destructured_1.slice(2);");
+
+      testVarTfm("var [{b}] = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "_rec.destructured_1$0 = destructured_1[0];\n"
+               + "_rec.b = destructured_1$0.b;");
+
+      testVarTfm("var [{b: {c: [a]}}] = foo;",
+                 "var destructured_1 = _rec.foo;\n"
+               + "_rec.destructured_1$0 = destructured_1[0];\n"
+               + "var destructured_1$0$b = destructured_1$0.b;\n"
+               + "var destructured_1$0$b$c = destructured_1$0$b.c;\n"
+               + "_rec.a = destructured_1$0$b$c[0];");
     });
 
     describe("import", () => {
