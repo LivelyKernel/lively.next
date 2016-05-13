@@ -165,6 +165,12 @@ describe("ast.capturing", function() {
                  "class Foo {\n  a() {\n    return 23;\n  }\n}",
                  'class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;');
 
+      testVarTfm("export class Foo {}",
+                 "export class Foo {\n}\n_rec.Foo = Foo;");
+
+      testVarTfm("export default class Foo {}",
+                 "export default class Foo {\n}\n_rec.Foo = Foo;");
+
     });
 
     describe("template strings", () => {
@@ -295,7 +301,7 @@ describe("ast.capturing", function() {
                + "_rec.a = 23;\n"
                + "export var x = _rec.a + 1, y = x + 2;\n"
                + "_rec.x = x;\n"
-               + "_rec.y = y;\nexport default function f() {\n}");
+               + "_rec.y = y;\nexport default function f() {\n}\n_rec.f = f;");
 
       testVarTfm("var x = 23; export { x as y };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x as y\n};");
