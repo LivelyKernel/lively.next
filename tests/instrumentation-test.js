@@ -11,6 +11,7 @@ var dir = System.normalizeSync("lively.modules/tests/"),
       "file1.js": "import { y } from './file2.js'; export var x = y + 2;",
       "file2.js": "export var y = 1;",
       "file3.js": "var zzz = 4; System.global.z = zzz / 2;",
+      "file4.js": "export default class Foo { static bar() {} }; Foo.bar();",
       "package.json": JSON.stringify({
                         "name": "test-project-1",
                         "main": "file1.js",
@@ -51,6 +52,17 @@ describe("instrumentation", () => {
           expect(S.get(testProjectDir + "file3.js")).to.have.property("z", 2);
         }))
 
+  });
+
+  describe("of export default", function() {
+
+    it("class export is recorded", () =>
+      S.import(`${testProjectDir}file4.js`)
+        .then(() => {
+          var env = moduleEnv(S, `${testProjectDir}file4.js`);
+          inspect(env)
+          expect(env).to.have.deep.property("recorder.Foo");
+        }));
   });
 
 });
