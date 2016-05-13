@@ -18763,6 +18763,7 @@ lp.lookAhead = function (n) {
   // Global.findNodeByAstIndex = findNodeByAstIndex;
 
   function findStatementOfNode(options, parsed, target) {
+    // DEPRECATED in favor of query.statementOf(parsed, node)
     // Can also be called with just ast and target. options can be {asPath: BOOLEAN}.
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
@@ -19179,7 +19180,7 @@ lp.lookAhead = function (n) {
 
   var knownGlobals = [
     "true", "false", "null", "undefined", "arguments",
-    "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp",
+    "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol",
     "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
     "Math", "NaN", "Infinity", "Intl", "JSON", "Promise",
     "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert",
@@ -19371,6 +19372,25 @@ lp.lookAhead = function (n) {
     return acorn.walk.findNodesIncluding(ast, pos);
   }
 
+  function statementOf(parsed, node) {
+    // Find the statement that a target node is in. Example:
+    // let source be "var x = 1; x + 1;" and we are looking for the
+    // Identifier "x" in "x+1;". The second statement is what will be found.
+    var nodes = nodesAt$1(node.start, parsed);
+    if (nodes.indexOf(node) === -1) return undefined;
+    return nodes.reverse().find((node, i) => {
+      if (!nodes[i+1]) return false;
+      var t = nodes[i+1].type;
+      if (["BlockStatement",
+           "Program",
+           "FunctionDeclaration",
+           "FunctionExpress",
+           "ArrowFunctionExpress",
+           "SwitchCase", "SwitchStatement"].indexOf(t) > -1) return true;
+      return false;
+    });
+  }
+
 
 
   var query = Object.freeze({
@@ -19390,7 +19410,8 @@ lp.lookAhead = function (n) {
     findNodesIncludingLines: findNodesIncludingLines,
     findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
     findDeclarationClosestToIndex: findDeclarationClosestToIndex,
-    nodesAt: nodesAt$1
+    nodesAt: nodesAt$1,
+    statementOf: statementOf
   });
 
   var helper = {
@@ -19819,6 +19840,7 @@ lp.lookAhead = function (n) {
 
   var merge = Object.assign;
 
+
   function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
     /* replaces var and function declarations with assignment statements.
     * Example:
@@ -20121,7 +20143,7 @@ lp.lookAhead = function (n) {
 
   function insertCapturesForExportDeclarations(parsed, options) {
     parsed.body = parsed.body.reduce((stmts, stmt) => {
-      if (stmt.type !== "ExportNamedDeclaration" || !stmt.declaration) return stmts.concat([stmt]);
+      if ((stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration") || !stmt.declaration) return stmts.concat([stmt]);
       var decls = stmt.declaration.declarations || [stmt.declaration];
       return stmts.concat([stmt]).concat(decls.map(decl => assignExpr(options.captureObj, decl.id, decl.id, false)))
     }, []);
