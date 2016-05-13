@@ -211,6 +211,59 @@ describe('query', function() {
 
   });
 
+  describe("statementOf", () => {
+
+    function itFindsTheStatment(src, getTarget, getExpected) {
+      return it(src, () => {
+        var parsed = parse(src),
+            found = query.statementOf(parsed, getTarget(parsed)),
+            expected = getExpected(parsed);
+        // expect(expected).to.equal(found, `node not found\nexpected: ${JSON.stringify(expected, null, 2)}\nactual: ${JSON.stringify(found, null, 2)}`);
+        expect(JSON.stringify(expected, null, 2)).to.equal(JSON.stringify(found, null, 2));
+      });
+    }
+
+    itFindsTheStatment(
+      'var x = 3; function foo() { var y = 3; return y + 2 }; x + foo();',
+      ast => ast.body[1].body.body[1].argument.left,
+      ast => ast.body[1].body.body[1]);
+
+    itFindsTheStatment(
+      'var x = 1; x;',
+      ast => ast.body[1],
+      ast => ast.body[1]);
+
+    itFindsTheStatment(
+      'switch (123) { case 123: debugger; }',
+      ast => ast.body[0].cases[0].consequent[0],
+      ast => ast.body[0].cases[0].consequent[0]);
+
+    itFindsTheStatment(
+      'if (true) { var a = 1; }',
+      ast => ast.body[0].consequent.body[0].declarations[0],
+      ast => ast.body[0].consequent.body[0]);
+
+    itFindsTheStatment(
+      'if (true) var a = 1;',
+      ast => ast.body[0].consequent.declarations[0],
+      ast => ast.body[0]);
+
+    itFindsTheStatment(
+      'if (true) var a = 1; else var a = 2;',
+      ast => ast.body[0].alternate.declarations[0],
+      ast => ast.body[0]);
+
+    itFindsTheStatment(
+      'export default class Foo {}',
+      ast => ast.body[0].declaration.id,
+      ast => ast.body[0]);
+
+    itFindsTheStatment(
+      'a;', // testing scenario where node is not found
+      ast => ({type: 'EmptyStatement'}),
+      ast => undefined);
+
+  });
 
   describe("es6 compat", () => {
 
