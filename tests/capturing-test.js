@@ -175,6 +175,12 @@ describe("ast.capturing", function() {
 
     });
 
+    describe("computed prop in object literal", () => {
+
+      testVarTfm("var x = {[x]: y};",
+                 "_rec.x = { [_rec.x]: _rec.y };");
+    });
+
     describe("patterns", () => {
 
       testVarTfm("var {x} = {x: 3};",

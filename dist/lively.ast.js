@@ -16702,7 +16702,8 @@ lp.lookAhead = function (n) {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // no keys for scope
       // key is a node of type Literal
-      // retVal = this.accept(node.key, depth, state, path.concat(["key"]));
+      if (node.computed)
+        retVal = this.accept(node.key, depth, state, path.concat(["key"]));
 
       // value is a node of type Expression
       retVal = this.accept(node.value, depth, state, path.concat(["value"]));
@@ -19943,8 +19944,8 @@ lp.lookAhead = function (n) {
   }
 
   var replaceManyVisitor = (() => {
-    var v = new Visitor();
-    var canBeInlinedSym = Symbol("canBeInlined");
+    var v = new Visitor(),
+        canBeInlinedSym = Symbol("canBeInlined");
     v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
       var replaced = v.replacer(proceed(node, state, path), path);
       return !Array.isArray(replaced) ?
@@ -19952,19 +19953,22 @@ lp.lookAhead = function (n) {
           replaced[0] : Object.assign(block(replaced), {[canBeInlinedSym]: true});
     });
     v.visitBlockStatement = lively_lang.fun.wrap(v.visitBlockStatement, blockInliner);
-    v.visitProgram = lively_lang.fun.wrap(v.visitProgram.wrap, blockInliner);
+    v.visitProgram = lively_lang.fun.wrap(v.visitProgram, blockInliner);
     return v;
 
     function blockInliner(proceed, node, state, path) {
       var result = proceed(node, state, path);
-      result.body = result.body.reduce((body, node) => {
-        if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
-          body.push(node);
-          return body
-        } else {
-          return body.concat(node.body)
-        }
-      }, []);
+      // FIXME what about () => x kind of functions?
+      if (Array.isArray(result.body)) {
+        result.body = result.body.reduce((body, node) => {
+          if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
+            body.push(node);
+            return body
+          } else {
+            return body.concat(node.body)
+          }
+        }, []);
+      }
       return result;
     }
   })();
