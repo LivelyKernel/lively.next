@@ -423,6 +423,17 @@ describe('query', function() {
 
     });
 
+    describe("async", function() {
+
+      it('recognizes async function', function() {
+        var code = "async function foo() { return 23 }\nvar x = await foo();",
+            parsed = parse(code),
+            toplevel = query.topLevelDeclsAndRefs(parsed);
+        expect(toplevel.declaredNames).deep.equals(["foo", "x"]);
+      });
+
+    });
+
   });
   
 

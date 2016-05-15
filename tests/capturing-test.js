@@ -231,6 +231,16 @@ describe("ast.capturing", function() {
                + "_rec.a = destructured_1$0$b$c[0];");
     });
 
+    describe("async", () => {
+      
+      testVarTfm("async function foo() { return 23 }",
+                 "_rec.foo = foo;\nasync function foo() {\n    return 23;\n}");
+
+      testVarTfm("var x = await foo();",
+                 "_rec.x = await _rec.foo();");
+
+    });
+
     describe("import", () => {
 
       testVarTfm("import x from './some-es6-module.js';",
