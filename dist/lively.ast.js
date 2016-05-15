@@ -10393,9 +10393,264 @@ lp.lookAhead = function (n) {
 
 },{"..":1,"./state":5}]},{},[3])(3)
 });
+  (function(acorn) {
+  var module = {exports: {}};
+  var NotAsync = {} ;
+var asyncExit = /^async[\t ]+(return|throw)/ ;
+var asyncFunction = /^async[\t ]+function/ ;
+var atomOrPropertyOrLabel = /^\s*[):;]/ ;
+var asyncAtEndOfLine = /^async[\t ]*\n/ ;
+
+/* Return the object holding the parser's 'State'. This is different between acorn ('this')
+ * and babylon ('this.state') */
+function state(p) {
+	if (('state' in p) && p.state.constructor && p.state.constructor.name==='State')
+		return p.state ; // Probably babylon
+	return p ; // Probably acorn
+}
+
+/* Create a new parser derived from the specified parser, so that in the
+ * event of an error we can back out and try again */
+function subParse(parser, pos, extensions) {
+	// NB: The Babylon constructor does NOT expect 'pos' as an argument, and so
+	// the input needs truncation at the start position, however at present
+	// this doesn't work nicely as all the node location/start/end values
+	// are therefore offset. Consequently, this plug-in is NOT currently working
+	// with the (undocumented) Babylon plug-in interface.
+	var p = new parser.constructor(parser.options, parser.input, pos);
+	if (extensions)
+		for (var k in extensions)
+			p[k] = extensions[k] ;
+
+	var src = state(parser) ;
+	var dest = state(p) ;
+	['inFunction','inAsyncFunction','inAsync','inGenerator','inModule'].forEach(function(k){
+		if (k in src)
+			dest[k] = src[k] ;
+	}) ;
+	p.nextToken();
+	return p;
+}
+
+function asyncAwaitPlugin (parser,options){
+	var es7check = function(){} ;
+
+	parser.extend("initialContext",function(base){
+		return function(){
+			if (this.options.ecmaVersion < 7) {
+				es7check = function(node) {
+					parser.raise(node.start,"async/await keywords only available when ecmaVersion>=7") ;
+				} ;
+			}
+      this.reservedWords = new RegExp(this.reservedWords.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
+      this.reservedWordsStrict = new RegExp(this.reservedWordsStrict.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
+      this.reservedWordsStrictBind = new RegExp(this.reservedWordsStrictBind.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
+			return base.apply(this,arguments);
+		}
+	}) ;
+
+	parser.extend("shouldParseExportStatement",function(base){
+	    return function(){
+	        if (this.type.label==='name' && this.value==='async' && asyncFunction.test(this.input.substr(this.start))) {
+	            return true ;
+	        }
+	        return base.apply(this,arguments) ;
+	    }
+	}) ;
+	
+	parser.extend("parseStatement",function(base){
+		return function (declaration, topLevel) {
+			var st = state(this) ;
+			var start = st.start;
+			var startLoc = st.startLoc;
+			if (st.type.label==='name') {
+				if (asyncFunction.test(st.input.slice(st.start))) {
+					var wasAsync = st.inAsyncFunction ;
+					try {
+						st.inAsyncFunction = true ;
+						this.next() ;
+						var r = this.parseStatement(declaration, topLevel) ;
+						r.async = true ;
+						r.start = start;
+						r.loc && (r.loc.start = startLoc);
+						return r ;
+					} finally {
+						st.inAsyncFunction = wasAsync ;
+					}
+				} else if ((typeof options==="object" && options.asyncExits) && asyncExit.test(st.input.slice(st.start))) {
+					// NON-STANDARD EXTENSION iff. options.asyncExits is set, the
+					// extensions 'async return <expr>?' and 'async throw <expr>?'
+					// are enabled. In each case they are the standard ESTree nodes
+					// with the flag 'async:true'
+					this.next() ;
+					var r = this.parseStatement(declaration, topLevel) ;
+					r.async = true ;
+					r.start = start;
+					r.loc && (r.loc.start = startLoc);
+					return r ;
+				}
+			}
+			return base.apply(this,arguments);
+		}
+	}) ;
+
+  parser.extend("parseIdent",function(base){
+		return function(liberal){
+				var id = base.apply(this,arguments);
+				var st = state(this) ;
+				if (st.inAsyncFunction && id.name==='await') {
+					if (arguments.length===0) {
+						this.raise(id.start,"'await' is reserved within async functions") ;
+					}
+				}
+				return id ;
+		}
+	}) ;
+
+	parser.extend("parseExprAtom",function(base){
+		return function(refShorthandDefaultPos){
+			var st = state(this) ;
+			var start = st.start ;
+			var startLoc = st.startLoc;
+			var rhs,r = base.apply(this,arguments);
+			if (r.type==='Identifier') {
+				if (r.name==='async' && !asyncAtEndOfLine.test(st.input.slice(start))) {
+					// Is this really an async function?
+					var isAsync = st.inAsyncFunction ;
+					try {
+						st.inAsyncFunction = true ;
+						var pp = this ;
+						var inBody = false ;
+
+						var parseHooks = {
+							parseFunctionBody:function(node,isArrowFunction){
+								try {
+									var wasInBody = inBody ;
+									inBody = true ;
+									return pp.parseFunctionBody.apply(this,arguments) ;
+								} finally {
+									inBody = wasInBody ;
+								}
+							},
+							raise:function(){
+								try {
+									return pp.raise.apply(this,arguments) ;
+								} catch(ex) {
+									throw inBody?ex:NotAsync ;
+								}
+							}
+						} ;
+
+						rhs = subParse(this,st.start,parseHooks).parseExpression() ;
+						if (rhs.type==='SequenceExpression')
+							rhs = rhs.expressions[0] ;
+						if (rhs.type==='FunctionExpression' || rhs.type==='FunctionDeclaration' || rhs.type==='ArrowFunctionExpression') {
+							rhs.async = true ;
+							rhs.start = start;
+							rhs.loc && (rhs.loc.start = startLoc);
+							st.pos = rhs.end;
+							this.next();
+							es7check(rhs) ;
+							return rhs ;
+						}
+					} catch (ex) {
+						if (ex!==NotAsync)
+							throw ex ;
+					}
+					finally {
+						st.inAsyncFunction = isAsync ;
+					}
+				}
+				else if (r.name==='await') {
+					var n = this.startNodeAt(r.start, r.loc && r.loc.start);
+					if (st.inAsyncFunction) {
+						rhs = this.parseExprSubscripts() ;
+						n.operator = 'await' ;
+						n.argument = rhs ;
+						n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
+						es7check(n) ;
+						return n ;
+					} else
+						// NON-STANDARD EXTENSION iff. options.awaitAnywhere is true,
+						// an 'AwaitExpression' is allowed anywhere the token 'await'
+						// could not be an identifier with the name 'await'.
+
+						// Look-ahead to see if this is really a property or label called async or await
+						if (st.input.slice(r.end).match(atomOrPropertyOrLabel))
+							return r ; // This is a valid property name or label
+
+						if (typeof options==="object" && options.awaitAnywhere) {
+							start = st.start ;
+							rhs = subParse(this,start-4).parseExprSubscripts() ;
+							if (rhs.end<=start) {
+								rhs = subParse(this,start).parseExprSubscripts() ;
+								n.operator = 'await' ;
+								n.argument = rhs ;
+								n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
+								st.pos = rhs.end;
+								this.next();
+								es7check(n) ;
+								return n ;
+							}
+						}
+				}
+			}
+			return r ;
+		}
+	}) ;
+
+	parser.extend('finishNodeAt',function(base){
+			return function(node,type,pos,loc) {
+				if (node.__asyncValue) {
+					delete node.__asyncValue ;
+					node.value.async = true ;
+				}
+				return base.apply(this,arguments) ;
+			}
+	}) ;
+
+	parser.extend('finishNode',function(base){
+			return function(node,type) {
+				if (node.__asyncValue) {
+					delete node.__asyncValue ;
+					node.value.async = true ;
+				}
+				return base.apply(this,arguments) ;
+			}
+	}) ;
+
+	parser.extend("parsePropertyName",function(base){
+		return function (prop) {
+			var st = state(this) ;
+			var key = base.apply(this,arguments) ;
+			if (key.type === "Identifier" && key.name === "async") {
+				// Look-ahead to see if this is really a property or label called async or await
+				if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
+					es7check(prop) ;
+					key = base.apply(this,arguments) ;
+					if (key.type==='Identifier') {
+						if (key.name==='constructor')
+							this.raise(key.start,"'constructor()' cannot be be async") ;
+						else if (key.name==='set')
+							this.raise(key.start,"'set <member>(value)' cannot be be async") ;
+					}
+					prop.__asyncValue = true ;
+				}
+			}
+			return key;
+		};
+	}) ;
+}
+
+module.exports = function(acorn) {
+	acorn.plugins.asyncawait = asyncAwaitPlugin ;
+	return acorn
+}
+
+  module.exports(acorn);
+})(this.acorn);
   return this.acorn;
-})();
-;
+})();;
 ;(function(GLOBAL) {
   // Generated by CommonJS Everywhere 0.9.7
 (function (global) {
@@ -15348,1481 +15603,8 @@ lp.lookAhead = function (n) {
 (function (exports,lively_lang,escodegen,acorn$1) {
   'use strict';
 
-  function BaseVisitor() {}
-
-  lively_lang.obj.extend(BaseVisitor.prototype,
-  "visiting", {
-    accept: function(node, depth, state, path) {
-      path = path || [];
-      return this['visit' + node.type](node, depth, state, path);
-    },
-
-    visitProgram: function(node, depth, state, path) {
-      var retVal;
-      node.body.forEach(function(ea, i) {
-        // ea is of type Statement
-        retVal = this.accept(ea, depth, state, path.concat(["body", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitFunction: function(node, depth, state, path) {
-      var retVal;
-      if (node.id) {
-        // id is a node of type Identifier
-        retVal = this.accept(node.id, depth, state, path.concat(["id"]));
-      }
-
-      node.params.forEach(function(ea, i) {
-        // ea is of type Pattern
-        retVal = this.accept(ea, depth, state, path.concat(["params", i]));
-      }, this);
-
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          // ea is of type Expression
-          retVal = this.accept(ea, depth, state, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        // rest is a node of type Identifier
-        retVal = this.accept(node.rest, depth, state, path.concat(["rest"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitStatement: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitEmptyStatement: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitBlockStatement: function(node, depth, state, path) {
-      var retVal;
-      node.body.forEach(function(ea, i) {
-        // ea is of type Statement
-        retVal = this.accept(ea, depth, state, path.concat(["body", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitExpressionStatement: function(node, depth, state, path) {
-      var retVal;
-      // expression is a node of type Expression
-      retVal = this.accept(node.expression, depth, state, path.concat(["expression"]));
-      return retVal;
-    },
-
-    visitIfStatement: function(node, depth, state, path) {
-      var retVal;
-      // test is a node of type Expression
-      retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-
-      // consequent is a node of type Statement
-      retVal = this.accept(node.consequent, depth, state, path.concat(["consequent"]));
-
-      if (node.alternate) {
-        // alternate is a node of type Statement
-        retVal = this.accept(node.alternate, depth, state, path.concat(["alternate"]));
-      }
-      return retVal;
-    },
-
-    visitLabeledStatement: function(node, depth, state, path) {
-      var retVal;
-      // label is a node of type Identifier
-      retVal = this.accept(node.label, depth, state, path.concat(["label"]));
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitBreakStatement: function(node, depth, state, path) {
-      var retVal;
-      if (node.label) {
-        // label is a node of type Identifier
-        retVal = this.accept(node.label, depth, state, path.concat(["label"]));
-      }
-      return retVal;
-    },
-
-    visitContinueStatement: function(node, depth, state, path) {
-      var retVal;
-      if (node.label) {
-        // label is a node of type Identifier
-        retVal = this.accept(node.label, depth, state, path.concat(["label"]));
-      }
-      return retVal;
-    },
-
-    visitWithStatement: function(node, depth, state, path) {
-      var retVal;
-      // object is a node of type Expression
-      retVal = this.accept(node.object, depth, state, path.concat(["object"]));
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitSwitchStatement: function(node, depth, state, path) {
-      var retVal;
-      // discriminant is a node of type Expression
-      retVal = this.accept(node.discriminant, depth, state, path.concat(["discriminant"]));
-
-      node.cases.forEach(function(ea, i) {
-        // ea is of type SwitchCase
-        retVal = this.accept(ea, depth, state, path.concat(["cases", i]));
-      }, this);
-
-      // node.lexical has a specific type that is boolean
-      if (node.lexical) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitReturnStatement: function(node, depth, state, path) {
-      var retVal;
-      if (node.argument) {
-        // argument is a node of type Expression
-        retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-      }
-      return retVal;
-    },
-
-    visitThrowStatement: function(node, depth, state, path) {
-      var retVal;
-      // argument is a node of type Expression
-      retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-      return retVal;
-    },
-
-    visitTryStatement: function(node, depth, state, path) {
-      var retVal;
-      // block is a node of type BlockStatement
-      retVal = this.accept(node.block, depth, state, path.concat(["block"]));
-
-      if (node.handler) {
-        // handler is a node of type CatchClause
-        retVal = this.accept(node.handler, depth, state, path.concat(["handler"]));
-      }
-
-      if (node.guardedHandlers) {
-        node.guardedHandlers.forEach(function(ea, i) {
-          // ea is of type CatchClause
-          retVal = this.accept(ea, depth, state, path.concat(["guardedHandlers", i]));
-        }, this);
-      }
-
-      if (node.finalizer) {
-        // finalizer is a node of type BlockStatement
-        retVal = this.accept(node.finalizer, depth, state, path.concat(["finalizer"]));
-      }
-      return retVal;
-    },
-
-    visitWhileStatement: function(node, depth, state, path) {
-      var retVal;
-      // test is a node of type Expression
-      retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitDoWhileStatement: function(node, depth, state, path) {
-      var retVal;
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // test is a node of type Expression
-      retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-      return retVal;
-    },
-
-    visitForStatement: function(node, depth, state, path) {
-      var retVal;
-      if (node.init) {
-        // init is a node of type VariableDeclaration
-        retVal = this.accept(node.init, depth, state, path.concat(["init"]));
-      }
-
-      if (node.test) {
-        // test is a node of type Expression
-        retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-      }
-
-      if (node.update) {
-        // update is a node of type Expression
-        retVal = this.accept(node.update, depth, state, path.concat(["update"]));
-      }
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitForInStatement: function(node, depth, state, path) {
-      var retVal;
-      // left is a node of type VariableDeclaration
-      retVal = this.accept(node.left, depth, state, path.concat(["left"]));
-
-      // right is a node of type Expression
-      retVal = this.accept(node.right, depth, state, path.concat(["right"]));
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // node.each has a specific type that is boolean
-      if (node.each) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitForOfStatement: function(node, depth, state, path) {
-      var retVal;
-      // left is a node of type VariableDeclaration
-      retVal = this.accept(node.left, depth, state, path.concat(["left"]));
-
-      // right is a node of type Expression
-      retVal = this.accept(node.right, depth, state, path.concat(["right"]));
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitLetStatement: function(node, depth, state, path) {
-      var retVal;
-      node.head.forEach(function(ea, i) {
-        // ea is of type VariableDeclarator
-        retVal = this.accept(ea, depth, state, path.concat(["head", i]));
-      }, this);
-
-      // body is a node of type Statement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitDebuggerStatement: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitDeclaration: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitFunctionDeclaration: function(node, depth, state, path) {
-      var retVal;
-      // id is a node of type Identifier
-      retVal = this.accept(node.id, depth, state, path.concat(["id"]));
-
-      node.params.forEach(function(ea, i) {
-        // ea is of type Pattern
-        retVal = this.accept(ea, depth, state, path.concat(["params", i]));
-      }, this);
-
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          // ea is of type Expression
-          retVal = this.accept(ea, depth, state, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        // rest is a node of type Identifier
-        retVal = this.accept(node.rest, depth, state, path.concat(["rest"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitVariableDeclaration: function(node, depth, state, path) {
-      var retVal;
-      node.declarations.forEach(function(ea, i) {
-        // ea is of type VariableDeclarator
-        retVal = this.accept(ea, depth, state, path.concat(["declarations", i]));
-      }, this);
-
-      // node.kind is "var" or "let" or "const"
-      return retVal;
-    },
-
-    visitVariableDeclarator: function(node, depth, state, path) {
-      var retVal;
-      // id is a node of type Pattern
-      retVal = this.accept(node.id, depth, state, path.concat(["id"]));
-
-      if (node.init) {
-        // init is a node of type Expression
-        retVal = this.accept(node.init, depth, state, path.concat(["init"]));
-      }
-      return retVal;
-    },
-
-    visitExpression: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitThisExpression: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitArrayExpression: function(node, depth, state, path) {
-      var retVal;
-      node.elements.forEach(function(ea, i) {
-        if (ea) {
-          // ea can be of type Expression or
-          retVal = this.accept(ea, depth, state, path.concat(["elements", i]));
-        }
-      }, this);
-      return retVal;
-    },
-
-    visitObjectExpression: function(node, depth, state, path) {
-      var retVal;
-      node.properties.forEach(function(ea, i) {
-        // ea is of type Property
-        retVal = this.accept(ea, depth, state, path.concat(["properties", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitProperty: function(node, depth, state, path) {
-      var retVal;
-      // key is a node of type Literal
-      retVal = this.accept(node.key, depth, state, path.concat(["key"]));
-
-      // value is a node of type Expression
-      retVal = this.accept(node.value, depth, state, path.concat(["value"]));
-
-      // node.kind is "init" or "get" or "set"
-      return retVal;
-    },
-
-    visitFunctionExpression: function(node, depth, state, path) {
-      var retVal;
-      if (node.id) {
-        // id is a node of type Identifier
-        retVal = this.accept(node.id, depth, state, path.concat(["id"]));
-      }
-
-      node.params.forEach(function(ea, i) {
-        // ea is of type Pattern
-        retVal = this.accept(ea, depth, state, path.concat(["params", i]));
-      }, this);
-
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          // ea is of type Expression
-          retVal = this.accept(ea, depth, state, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        // rest is a node of type Identifier
-        retVal = this.accept(node.rest, depth, state, path.concat(["rest"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitArrowExpression: function(node, depth, state, path) {
-      var retVal;
-      node.params.forEach(function(ea, i) {
-        // ea is of type Pattern
-        retVal = this.accept(ea, depth, state, path.concat(["params", i]));
-      }, this);
-
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          // ea is of type Expression
-          retVal = this.accept(ea, depth, state, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        // rest is a node of type Identifier
-        retVal = this.accept(node.rest, depth, state, path.concat(["rest"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitArrowFunctionExpression: function(node, depth, state, path) {
-      var retVal;
-      node.params.forEach(function(ea, i) {
-        // ea is of type Pattern
-        retVal = this.accept(ea, depth, state, path.concat(["params", i]));
-      }, this);
-
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          // ea is of type Expression
-          retVal = this.accept(ea, depth, state, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        // rest is a node of type Identifier
-        retVal = this.accept(node.rest, depth, state, path.concat(["rest"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitSequenceExpression: function(node, depth, state, path) {
-      var retVal;
-      node.expressions.forEach(function(ea, i) {
-        // ea is of type Expression
-        retVal = this.accept(ea, depth, state, path.concat(["expressions", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitUnaryExpression: function(node, depth, state, path) {
-      var retVal;
-      // node.operator is an UnaryOperator enum:
-      // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
-
-      // node.prefix has a specific type that is boolean
-      if (node.prefix) {/*do stuff*/}
-
-      // argument is a node of type Expression
-      retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-      return retVal;
-    },
-
-    visitBinaryExpression: function(node, depth, state, path) {
-      var retVal;
-      // node.operator is an BinaryOperator enum:
-      // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
-
-      // left is a node of type Expression
-      retVal = this.accept(node.left, depth, state, path.concat(["left"]));
-
-      // right is a node of type Expression
-      retVal = this.accept(node.right, depth, state, path.concat(["right"]));
-      return retVal;
-    },
-
-    visitAssignmentExpression: function(node, depth, state, path) {
-      var retVal;
-      // node.operator is an AssignmentOperator enum:
-      // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
-
-      // left is a node of type Pattern
-      retVal = this.accept(node.left, depth, state, path.concat(["left"]));
-
-      // right is a node of type Expression
-      retVal = this.accept(node.right, depth, state, path.concat(["right"]));
-      return retVal;
-    },
-
-    visitUpdateExpression: function(node, depth, state, path) {
-      var retVal;
-      // node.operator is an UpdateOperator enum:
-      // "++" | "--"
-
-      // argument is a node of type Expression
-      retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-
-      // node.prefix has a specific type that is boolean
-      if (node.prefix) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitLogicalExpression: function(node, depth, state, path) {
-      var retVal;
-      // node.operator is an LogicalOperator enum:
-      // "||" | "&&"
-
-      // left is a node of type Expression
-      retVal = this.accept(node.left, depth, state, path.concat(["left"]));
-
-      // right is a node of type Expression
-      retVal = this.accept(node.right, depth, state, path.concat(["right"]));
-      return retVal;
-    },
-
-    visitConditionalExpression: function(node, depth, state, path) {
-      var retVal;
-      // test is a node of type Expression
-      retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-
-      // alternate is a node of type Expression
-      retVal = this.accept(node.alternate, depth, state, path.concat(["alternate"]));
-
-      // consequent is a node of type Expression
-      retVal = this.accept(node.consequent, depth, state, path.concat(["consequent"]));
-      return retVal;
-    },
-
-    visitNewExpression: function(node, depth, state, path) {
-      var retVal;
-      // callee is a node of type Expression
-      retVal = this.accept(node.callee, depth, state, path.concat(["callee"]));
-
-      node.arguments.forEach(function(ea, i) {
-        // ea is of type Expression
-        retVal = this.accept(ea, depth, state, path.concat(["arguments", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitCallExpression: function(node, depth, state, path) {
-      var retVal;
-      // callee is a node of type Expression
-      retVal = this.accept(node.callee, depth, state, path.concat(["callee"]));
-
-      node.arguments.forEach(function(ea, i) {
-        // ea is of type Expression
-        retVal = this.accept(ea, depth, state, path.concat(["arguments", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitMemberExpression: function(node, depth, state, path) {
-      var retVal;
-      // object is a node of type Expression
-      retVal = this.accept(node.object, depth, state, path.concat(["object"]));
-
-      // property is a node of type Identifier
-      retVal = this.accept(node.property, depth, state, path.concat(["property"]));
-
-      // node.computed has a specific type that is boolean
-      if (node.computed) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitYieldExpression: function(node, depth, state, path) {
-      var retVal;
-      if (node.argument) {
-        // argument is a node of type Expression
-        retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-      }
-      return retVal;
-    },
-
-    visitComprehensionExpression: function(node, depth, state, path) {
-      var retVal;
-      // body is a node of type Expression
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      node.blocks.forEach(function(ea, i) {
-        // ea is of type ComprehensionBlock or ComprehensionIf
-        retVal = this.accept(ea, depth, state, path.concat(["blocks", i]));
-      }, this);
-
-      if (node.filter) {
-        // filter is a node of type Expression
-        retVal = this.accept(node.filter, depth, state, path.concat(["filter"]));
-      }
-      return retVal;
-    },
-
-    visitGeneratorExpression: function(node, depth, state, path) {
-      var retVal;
-      // body is a node of type Expression
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-
-      node.blocks.forEach(function(ea, i) {
-        // ea is of type ComprehensionBlock or ComprehensionIf
-        retVal = this.accept(ea, depth, state, path.concat(["blocks", i]));
-      }, this);
-
-      if (node.filter) {
-        // filter is a node of type Expression
-        retVal = this.accept(node.filter, depth, state, path.concat(["filter"]));
-      }
-      return retVal;
-    },
-
-    visitLetExpression: function(node, depth, state, path) {
-      var retVal;
-      node.head.forEach(function(ea, i) {
-        if (ea) {
-          // ea can be of type VariableDeclarator or
-          retVal = this.accept(ea, depth, state, path.concat(["head", i]));
-        }
-      }, this);
-
-      // body is a node of type Expression
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitPattern: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitObjectPattern: function(node, depth, state, path) {
-      var retVal;
-      node.properties.forEach(function(ea, i) {
-        // ea.key is of type node
-        retVal = this.accept(ea.key, depth, state, path.concat(["properties", i, "key"]));
-        // ea.value is of type node
-        retVal = this.accept(ea.value, depth, state, path.concat(["properties", i, "value"]));
-      }, this);
-      return retVal;
-    },
-
-    visitArrayPattern: function(node, depth, state, path) {
-      var retVal;
-      node.elements.forEach(function(ea, i) {
-        if (ea) {
-          // ea can be of type Pattern or
-          retVal = this.accept(ea, depth, state, path.concat(["elements", i]));
-        }
-      }, this);
-      return retVal;
-    },
-
-    // intermediate addition until this becomes part of the official Mozilla AST spec
-    // interface RestElement <: Pattern {
-    //     type: "RestElement";
-    //     argument: Pattern;
-    // }
-    visitRestElement: function(node, depth, state, path) {
-      var retVal;
-      // argument is a node of type Pattern
-      retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-      return retVal;
-    },
-
-    visitSwitchCase: function(node, depth, state, path) {
-      var retVal;
-      if (node.test) {
-        // test is a node of type Expression
-        retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-      }
-
-      node.consequent.forEach(function(ea, i) {
-        // ea is of type Statement
-        retVal = this.accept(ea, depth, state, path.concat(["consequent", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitCatchClause: function(node, depth, state, path) {
-      var retVal;
-      // param is a node of type Pattern
-      retVal = this.accept(node.param, depth, state, path.concat(["param"]));
-
-      if (node.guard) {
-        // guard is a node of type Expression
-        retVal = this.accept(node.guard, depth, state, path.concat(["guard"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitComprehensionBlock: function(node, depth, state, path) {
-      var retVal;
-      // left is a node of type Pattern
-      retVal = this.accept(node.left, depth, state, path.concat(["left"]));
-
-      // right is a node of type Expression
-      retVal = this.accept(node.right, depth, state, path.concat(["right"]));
-
-      // node.each has a specific type that is boolean
-      if (node.each) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitComprehensionIf: function(node, depth, state, path) {
-      var retVal;
-      // test is a node of type Expression
-      retVal = this.accept(node.test, depth, state, path.concat(["test"]));
-      return retVal;
-    },
-
-    visitIdentifier: function(node, depth, state, path) {
-      var retVal;
-      // node.name has a specific type that is string
-      return retVal;
-    },
-
-    visitLiteral: function(node, depth, state, path) {
-      var retVal;
-      if (node.value) {
-        // node.value has a specific type that is string or boolean or number or RegExp
-      }
-      return retVal;
-    },
-
-    visitClassDeclaration: function(node, depth, state, path) {
-      var retVal;
-      // id is a node of type Identifier
-      retVal = this.accept(node.id, depth, state, path.concat(["id"]));
-
-      if (node.superClass) {
-        // superClass is a node of type Identifier
-        retVal = this.accept(node.superClass, depth, state, path.concat(["superClass"]));
-      }
-
-      // body is a node of type ClassBody
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitClassExpression: function(node, depth, scope, path) {
-      scope.classDecls.push(node);
-
-      var retVal;
-
-      if (node.superClass) {
-        this.accept(node.superClass, depth, scope, path.concat(["superClass"]));
-      }
-
-      // body is a node of type ClassBody
-      retVal = this.accept(node.body, depth, scope, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitClassBody: function(node, depth, state, path) {
-      var retVal;
-      node.body.forEach(function(ea, i) {
-        // ea is of type MethodDefinition
-        retVal = this.accept(ea, depth, state, path.concat(["body", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitSuper: function(node, depth, state, path) {
-      var retVal;
-      // loc is of types SourceLocation
-      if (node["loc"]) {
-        retVal = this.accept(node["loc"], depth, state, path.concat(["loc"]));
-      }
-      return retVal;
-    },
-
-    visitMethodDefinition: function(node, depth, state, path) {
-      var retVal;
-      // node.static has a specific type that is boolean
-      if (node.static) {/*do stuff*/}
-
-      // node.computed has a specific type that is boolean
-      if (node.computed) {/*do stuff*/}
-
-      // node.kind is ""
-
-      // key is a node of type Identifier
-      retVal = this.accept(node.key, depth, state, path.concat(["key"]));
-
-      // value is a node of type FunctionExpression
-      retVal = this.accept(node.value, depth, state, path.concat(["value"]));
-      return retVal;
-    },
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // es6 modules
-
-    visitImportDeclaration: function(node, depth, state, path) {
-      var retVal;
-
-      node.specifiers.forEach(function(ea, i) {
-        retVal = this.accept(ea, depth, state, path.concat(["specifiers", i]));
-      }, this);
-
-      if (node.source) retVal = this.accept(node.source, depth, state, path.concat(["source"]));
-
-      return retVal;
-    },
-
-    visitImportSpecifier: function(node, depth, state, path) {
-      var retVal;
-      retVal = this.accept(node.local, depth, state, path.concat(["local"]));
-      retVal = this.accept(node.imported, depth, state, path.concat(["imported"]));
-      var retVal;
-    },
-
-    visitImportDefaultSpecifier: function(node, depth, state, path) {
-      return this.accept(node.local, depth, state, path.concat(["local"]));
-    },
-
-    visitImportNamespaceSpecifier: function(node, depth, state, path) {
-      return this.accept(node.local, depth, state, path.concat(["local"]));
-    },
-
-    visitExportNamedDeclaration: function(node, depth, state, path) {
-      var retVal;
-      if (node.declaration) retVal = this.accept(node.declaration, depth, state, path.concat(["declaration"]));
-
-      node.specifiers.forEach(function(ea, i) {
-        retVal = this.accept(ea, depth, state, path.concat(["specifiers", i]));
-      }, this);
-
-      if (node.source) retVal = this.accept(node.source, depth, state, path.concat(["source"]));
-
-      return retVal;
-    },
-
-    visitExportDefaultDeclaration: function(node, depth, state, path) {
-      return this.accept(node.declaration, depth, state, path.concat(["declaration"]));
-    },
-
-    visitExportAllDeclaration: function(node, depth, state, path) {
-      return this.accept(node.source, depth, state, path.concat(["source"]));
-    },
-
-    visitExportSpecifier: function(node, depth, state, path) {
-      var retVal;
-      retVal = this.accept(node.local, depth, state, path.concat(["local"]));
-      retVal = this.accept(node.exported, depth, state, path.concat(["exported"]));
-      var retVal;
-    },
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // jsx
-    visitJSXIdentifier: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitJSXMemberExpression: function(node, depth, state, path) {
-      var retVal;
-      // object is a node of type JSXMemberExpression
-      retVal = this.accept(node.object, depth, state, path.concat(["object"]));
-
-      // property is a node of type JSXIdentifier
-      retVal = this.accept(node.property, depth, state, path.concat(["property"]));
-      return retVal;
-    },
-
-    visitJSXNamespacedName: function(node, depth, state, path) {
-      var retVal;
-      // namespace is a node of type JSXIdentifier
-      retVal = this.accept(node.namespace, depth, state, path.concat(["namespace"]));
-
-      // name is a node of type JSXIdentifier
-      retVal = this.accept(node.name, depth, state, path.concat(["name"]));
-      return retVal;
-    },
-
-    visitJSXEmptyExpression: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitJSXBoundaryElement: function(node, depth, state, path) {
-      var retVal;
-      // name is a node of type JSXIdentifier
-      retVal = this.accept(node.name, depth, state, path.concat(["name"]));
-      return retVal;
-    },
-
-    visitJSXOpeningElement: function(node, depth, state, path) {
-      var retVal;
-      node.attributes.forEach(function(ea, i) {
-        // ea is of type JSXAttribute or JSXSpreadAttribute
-        retVal = this.accept(ea, depth, state, path.concat(["attributes", i]));
-      }, this);
-
-      // node.selfClosing has a specific type that is boolean
-      if (node.selfClosing) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitJSXClosingElement: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitJSXAttribute: function(node, depth, state, path) {
-      var retVal;
-      // name is a node of type JSXIdentifier
-      retVal = this.accept(node.name, depth, state, path.concat(["name"]));
-
-      if (node.value) {
-        // value is a node of type Literal
-        retVal = this.accept(node.value, depth, state, path.concat(["value"]));
-      }
-      return retVal;
-    },
-
-    visitSpreadElement: function(node, depth, state, path) {
-      var retVal;
-      // argument is a node of type Expression
-      retVal = this.accept(node.argument, depth, state, path.concat(["argument"]));
-      return retVal;
-    },
-
-    visitJSXSpreadAttribute: function(node, depth, state, path) {
-      var retVal;
-      return retVal;
-    },
-
-    visitJSXElement: function(node, depth, state, path) {
-      var retVal;
-      // openingElement is a node of type JSXOpeningElement
-      retVal = this.accept(node.openingElement, depth, state, path.concat(["openingElement"]));
-
-      node.children.forEach(function(ea, i) {
-        // ea is of type Literal or JSXExpressionContainer or JSXElement
-        retVal = this.accept(ea, depth, state, path.concat(["children", i]));
-      }, this);
-
-      if (node.closingElement) {
-        // closingElement is a node of type JSXClosingElement
-        retVal = this.accept(node.closingElement, depth, state, path.concat(["closingElement"]));
-      }
-      return retVal;
-    },
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // https://github.com/estree/estree
-    // rk 2015-10-31
-
-    visitTemplateLiteral: function(node, depth, state, path) {
-      var retVal;
-      node.quasis.forEach(function(ea, i) {
-        // ea is of type TemplateElement
-        retVal = this.accept(ea, depth, state, path.concat(["quasis", i]));
-      }, this);
-      node.expressions.forEach(function(ea, i) {
-        // ea is of type Expression
-        retVal = this.accept(ea, depth, state, path.concat(["expressions", i]));
-      }, this);
-      return retVal;
-    },
-
-    visitTaggedTemplateExpression: function(node, depth, state, path) {
-      var retVal;
-      // tag is of type Expression
-      retVal = this.accept(node.tag, depth, state, path.concat(["tag"]));
-      // quasi is of type TemplateLiteral
-      retVal = this.accept(node.quasi, depth, state, path.concat(["quasi"]));
-      return retVal;
-    },
-
-    visitTemplateElement: function(node, depth, state, path) {
-      // node.tail is of type boolean
-      // node.value is {cooked: string;raw: string;}
-    }
-
-  });
-
-  function PrinterVisitor() {}
-  PrinterVisitor.prototype = Object.create(BaseVisitor.prototype, {
-    constructor: {value: PrinterVisitor, enumerable: false, writable: true, configurable: true}
-  });
-  lively_lang.obj.extend(PrinterVisitor.prototype, {
-    accept: function(node, state, tree, path) {
-      var pathString = path.map(ea => typeof ea === 'string' ? '.' + ea : '[' + ea + ']').join('')
-      var myChildren = [];
-      BaseVisitor.prototype.accept.call(this, node, state, myChildren, path);
-      tree.push({
-        node: node,
-        path: pathString,
-        index: state.index++,
-        children: myChildren
-      });
-    }
-  });
-
-  function ComparisonVisitor() {};
-  ComparisonVisitor.prototype = Object.create(BaseVisitor.prototype, {
-    constructor: {value: ComparisonVisitor, enumerable: false, writable: true, configurable: true}
-  });
-  lively_lang.obj.extend(ComparisonVisitor.prototype,
-  "comparison", {
-
-    recordNotEqual: function(node1, node2, state, msg) {
-      state.comparisons.errors.push({
-        node1: node1, node2: node2,
-        path: state.completePath, msg: msg
-      });
-    },
-
-    compareType: function(node1, node2, state) {
-      return this.compareField('type', node1, node2, state);
-    },
-
-    compareField: function(field, node1, node2, state) {
-      node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
-      if (node1 && node2 && node1[field] === node2[field]) return true;
-      if ((node1 && node1[field] === '*') || (node2 && node2[field] === '*')) return true;
-      var fullPath = state.completePath.join('.') + '.' + field, msg;
-      if (!node1) msg = "node1 on " + fullPath + " not defined";
-      else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: '+ node1[field];
-      else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
-      this.recordNotEqual(node1, node2, state, msg);
-      return false;
-    }
-
-  },
-  "visiting", {
-
-    accept: function(node1, node2, state, path) {
-      var patternNode = lively.PropertyPath(path.join('.')).get(node2);
-      if (node1 === '*' || patternNode === '*') return;
-      var nextState = {
-        completePath: path,
-        comparisons: state.comparisons
-      };
-      if (this.compareType(node1, node2, nextState))
-        this['visit' + node1.type](node1, node2, nextState, path);
-    },
-
-    visitFunction: function(node1, node2, state, path) {
-      // node1.generator has a specific type that is boolean
-      if (node1.generator) { this.compareField("generator", node1, node2, state); }
-
-      // node1.expression has a specific type that is boolean
-      if (node1.expression) { this.compareField("expression", node1, node2, state); }
-
-      BaseVisitor.prototype.visitFunction.call(this, node1, node2, state, path);
-    },
-
-    visitSwitchStatement: function(node1, node2, state, path) {
-      // node1.lexical has a specific type that is boolean
-      if (node1.lexical) { this.compareField("lexical", node1, node2, state); }
-
-      BaseVisitor.prototype.visitSwitchStatement.call(this, node1, node2, state, path);
-    },
-
-    visitForInStatement: function(node1, node2, state, path) {
-      // node1.each has a specific type that is boolean
-      if (node1.each) { this.compareField("each", node1, node2, state); }
-
-      BaseVisitor.prototype.visitForInStatement.call(this, node1, node2, state, path);
-    },
-
-    visitFunctionDeclaration: function(node1, node2, state, path) {
-      // node1.generator has a specific type that is boolean
-      if (node1.generator) { this.compareField("generator", node1, node2, state); }
-
-      // node1.expression has a specific type that is boolean
-      if (node1.expression) { this.compareField("expression", node1, node2, state); }
-
-      BaseVisitor.prototype.visitFunctionDeclaration.call(this, node1, node2, state, path);
-    },
-
-    visitVariableDeclaration: function(node1, node2, state, path) {
-      // node1.kind is "var" or "let" or "const"
-      this.compareField("kind", node1, node2, state);
-      BaseVisitor.prototype.visitVariableDeclaration.call(this, node1, node2, state, path);
-    },
-
-    visitUnaryExpression: function(node1, node2, state, path) {
-      // node1.operator is an UnaryOperator enum:
-      // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
-      this.compareField("operator", node1, node2, state);
-
-      // node1.prefix has a specific type that is boolean
-      if (node1.prefix) { this.compareField("prefix", node1, node2, state); }
-
-      BaseVisitor.prototype.visitUnaryExpression.call(this, node1, node2, state, path);
-    },
-
-    visitBinaryExpression: function(node1, node2, state, path) {
-      // node1.operator is an BinaryOperator enum:
-      // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
-      this.compareField("operator", node1, node2, state);
-      BaseVisitor.prototype.visitBinaryExpression.call(this, node1, node2, state, path);
-    },
-
-    visitAssignmentExpression: function(node1, node2, state, path) {
-      // node1.operator is an AssignmentOperator enum:
-      // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
-      this.compareField("operator", node1, node2, state);
-      BaseVisitor.prototype.visitAssignmentExpression.call(this, node1, node2, state, path);
-    },
-
-    visitUpdateExpression: function(node1, node2, state, path) {
-      // node1.operator is an UpdateOperator enum:
-      // "++" | "--"
-      this.compareField("operator", node1, node2, state);
-      // node1.prefix has a specific type that is boolean
-      if (node1.prefix) { this.compareField("prefix", node1, node2, state); }
-      BaseVisitor.prototype.visitUpdateExpression.call(this, node1, node2, state, path);
-    },
-
-    visitLogicalExpression: function(node1, node2, state, path) {
-      // node1.operator is an LogicalOperator enum:
-      // "||" | "&&"
-      this.compareField("operator", node1, node2, state);
-      BaseVisitor.prototype.visitLogicalExpression.call(this, node1, node2, state, path);
-    },
-
-    visitMemberExpression: function(node1, node2, state, path) {
-      // node1.computed has a specific type that is boolean
-      if (node1.computed) { this.compareField("computed", node1, node2, state); }
-      BaseVisitor.prototype.visitMemberExpression.call(this, node1, node2, state, path);
-    },
-
-    visitComprehensionBlock: function(node1, node2, state, path) {
-      // node1.each has a specific type that is boolean
-      if (node1.each) { this.compareField("each", node1, node2, state); }
-      BaseVisitor.prototype.visitComprehensionBlock.call(this, node1, node2, state, path);
-    },
-
-    visitIdentifier: function(node1, node2, state, path) {
-      // node1.name has a specific type that is string
-      this.compareField("name", node1, node2, state);
-      BaseVisitor.prototype.visitIdentifier.call(this, node1, node2, state, path);
-    },
-
-    visitLiteral: function(node1, node2, state, path) {
-      this.compareField("value", node1, node2, state);
-      BaseVisitor.prototype.visitLiteral.call(this, node1, node2, state, path);
-    },
-
-    visitClassDeclaration: function(node1, node2, state, path) {
-      this.compareField("id", node1, node2, state);
-      if (node1.superClass) {
-        this.compareField("superClass", node1, node2, state);
-      }
-      this.compareField("body", node1, node2, state);
-      BaseVisitor.prototype.visitClassDeclaration.call(this, node1, node2, state, path);
-    },
-
-    visitClassBody: function(node1, node2, state, path) {
-      this.compareField("body", node1, node2, state);
-      BaseVisitor.prototype.visitClassBody.call(this, node1, node2, state, path);
-    },
-
-    visitMethodDefinition: function(node1, node2, state, path) {
-      this.compareField("static", node1, node2, state);
-      this.compareField("computed", node1, node2, state);
-      this.compareField("kind", node1, node2, state);
-      this.compareField("key", node1, node2, state);
-      this.compareField("value", node1, node2, state);
-      BaseVisitor.prototype.visitMethodDefinition.call(this, node1, node2, state, path);
-    }
-  });
-
-  function ScopeVisitor() {};
-  ScopeVisitor.prototype = Object.create(BaseVisitor.prototype, {
-    constructor: {value: ScopeVisitor, enumerable: false, writable: true, configurable: true}
-  });
-
-  lively_lang.obj.extend(ScopeVisitor.prototype,
-  'scope specific', {
-    newScope: function(scopeNode, parentScope) {
-      var scope = {
-        node: scopeNode,
-        varDecls: [],
-        varDeclPaths: [],
-        funcDecls: [],
-        classDecls: [],
-        methodDecls: [],
-        importDecls: [],
-        exportDecls: [],
-        refs: [],
-        thisRefs: [],
-        params: [],
-        catches: [],
-        subScopes: []
-      }
-      if (parentScope) parentScope.subScopes.push(scope);
-      return scope;
-    }
-  },
-  'visiting', {
-
-    accept: function (node, depth, scope, path) {
-      path = path || [];
-      if (!this['visit' + node.type]) throw new Error("No AST visit handler for type " + node.type);
-      return this['visit' + node.type](node, depth, scope, path);
-    },
-
-    visitVariableDeclaration: function (node, depth, scope, path) {
-      scope.varDecls.push(node);
-      scope.varDeclPaths.push(path);
-      return BaseVisitor.prototype.visitVariableDeclaration.call(this, node, depth, scope, path);
-    },
-
-    visitVariableDeclarator: function (node, depth, scope, path) {
-      var retVal;
-
-      // ignore id
-      // scope.varDeclPaths.push(path);
-      // if (node.id.type === "Identifier") {
-      //   scope.varDecls.push(node);
-      // }
-      // retVal = this.accept(node.id, depth, scope, path.concat(["id"]));
-
-      if (node.init) {
-        retVal = this.accept(node.init, depth, scope, path.concat(["init"]));
-      }
-      return retVal;
-    },
-
-    visitFunction: function (node, depth, scope, path) {
-      var newScope = this.newScope(node, scope);
-      newScope.params = Array.prototype.slice.call(node.params);
-      return newScope;
-    },
-
-    visitFunctionDeclaration: function (node, depth, scope, path) {
-      scope.funcDecls.push(node);
-      var newScope = this.visitFunction(node, depth, scope, path);
-
-      // don't visit id and params
-      var retVal;
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          retVal = this.accept(ea, depth, newScope, path.concat(["defaults", i]));
-        }, this);
-      }
-      if (node.rest) {
-        retVal = this.accept(node.rest, depth, newScope, path.concat(["rest"]));
-      }
-      retVal = this.accept(node.body, depth, newScope, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitFunctionExpression: function (node, depth, scope, path) {
-      var newScope = this.visitFunction(node, depth, scope, path);
-
-      // don't visit id and params
-      var retVal;
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          retVal = this.accept(ea, depth, newScope, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        retVal = this.accept(node.rest, depth, newScope, path.concat(["rest"]));
-      }
-      retVal = this.accept(node.body, depth, newScope, path.concat(["body"]));
-      return retVal;
-
-    },
-
-    visitArrowFunctionExpression: function(node, depth, scope, path) {
-      var newScope = this.visitFunction(node, depth, scope, path);
-
-      var retVal;
-      // ignore params
-      // node.params.forEach(function(ea, i) {
-      //   // ea is of type Pattern
-      //   retVal = this.accept(ea, depth, scope, path.concat(["params", i]));
-      // }, this);
-
-      if (node.defaults) {
-        node.defaults.forEach(function(ea, i) {
-          // ea is of type Expression
-          retVal = this.accept(ea, depth, newScope, path.concat(["defaults", i]));
-        }, this);
-      }
-
-      if (node.rest) {
-        // rest is a node of type Identifier
-        retVal = this.accept(node.rest, depth, newScope, path.concat(["rest"]));
-      }
-
-      // body is a node of type BlockStatement
-      retVal = this.accept(node.body, depth, newScope, path.concat(["body"]));
-
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return retVal;
-    },
-
-    visitIdentifier: function (node, depth, scope, path) {
-      scope.refs.push(node);
-      return BaseVisitor.prototype.visitIdentifier.call(this, node, depth, scope, path);
-    },
-
-    visitMemberExpression: function (node, depth, state, path) {
-      // only visit property part when prop is computed so we don't gather
-      // prop ids
-      var retVal;
-      retVal = this.accept(node.object, depth, state, path.concat(["object"]));
-      if (node.computed) {
-        retVal = this.accept(node.property, depth, state, path.concat(["property"]));
-      }
-      return retVal;
-    },
-
-    visitProperty: function(node, depth, state, path) {
-      var retVal;
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // no keys for scope
-      // key is a node of type Literal
-      if (node.computed)
-        retVal = this.accept(node.key, depth, state, path.concat(["key"]));
-
-      // value is a node of type Expression
-      retVal = this.accept(node.value, depth, state, path.concat(["value"]));
-
-      // node.kind is "init" or "get" or "set"
-      return retVal;
-    },
-
-    visitThisExpression: function(node, depth, scope, path) {
-      scope.thisRefs.push(node);
-      return undefined;
-    },
-
-    visitTryStatement: function (node, depth, scope, path) {
-      var retVal;
-      // block is a node of type Blockscopement
-      retVal = this.accept(node.block, depth, scope, path.concat(["block"]));
-
-      if (node.handler) {
-        // handler is a node of type CatchClause
-        retVal = this.accept(node.handler, depth, scope, path.concat(["handler"]));
-        scope.catches.push(node.handler.param);
-      }
-
-      node.guardedHandlers && node.guardedHandlers.forEach(function(ea, i) {
-        retVal = this.accept(ea, depth, scope, path.concat(["guardedHandlers", i]));
-      }, this);
-
-      if (node.finalizer) {
-        retVal = this.accept(node.finalizer, depth, scope, path.concat(["finalizer"]));
-      }
-      return retVal;
-    },
-
-    visitLabeledStatement: function (node, depth, state, path) {
-      var retVal;
-      // ignore label
-      retVal = this.accept(node.body, depth, state, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitClassDeclaration: function(node, depth, scope, path) {
-      scope.classDecls.push(node);
-
-      var retVal;
-      // id is a node of type Identifier
-      // retVal = this.accept(node.id, depth, state, path.concat(["id"]));
-
-      if (node.superClass) {
-        this.accept(node.superClass, depth, scope, path.concat(["superClass"]));
-      }
-
-      // body is a node of type ClassBody
-      retVal = this.accept(node.body, depth, scope, path.concat(["body"]));
-      return retVal;
-    },
-
-    visitMethodDefinition: function(node, depth, scope, path) {
-      var retVal;
-
-      // don't visit key Identifier for now
-      // retVal = this.accept(node.key, depth, scope, path.concat(["key"]));
-
-      // value is a node of type FunctionExpression
-      retVal = this.accept(node.value, depth, scope, path.concat(["value"]));
-      return retVal;
-    },
-
-    visitBreakStatement: function(node, depth, scope, path) { return null; },
-    visitContinueStatement: function(node, depth, scope, path) { return null; },
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // es6 modules
-    visitImportSpecifier: function(node, depth, scope, path) {
-      scope.importDecls.push(node.local);
-      var retVal;
-      retVal = this.accept(node.local, depth, scope, path.concat(["local"]));
-      // retVal = this.accept(node.imported, depth, scope, path.concat(["imported"]));
-      return retVal;
-    },
-
-    visitImportDefaultSpecifier: function(node, depth, scope, path) {
-      scope.importDecls.push(node.local);
-      // return this.accept(node.local, depth, scope, path.concat(["local"]));
-      return undefined;
-    },
-
-    visitImportNamespaceSpecifier: function(node, depth, scope, path) {
-      scope.importDecls.push(node.local);
-      // return this.accept(node.local, depth, scope, path.concat(["local"]));
-      return undefined;
-    },
-
-    visitExportSpecifier: function(node, depth, state, path) {
-      var retVal;
-      retVal = this.accept(node.local, depth, state, path.concat(["local"]));
-      // retVal = this.accept(node.exported, depth, state, path.concat(["exported"]));
-      var retVal;
-    },
-
-    visitExportNamedDeclaration: function(node, depth, scope, path) {
-      scope.exportDecls.push(node);
-      return BaseVisitor.prototype.visitExportNamedDeclaration.call(this, node, depth, scope, path);
-    },
-
-    visitExportDefaultDeclaration: function(node, depth, scope, path) {
-      scope.exportDecls.push(node);
-      return BaseVisitor.prototype.visitExportDefaultDeclaration.call(this, node, depth, scope, path);
-    },
-
-    visitExportAllDeclaration: function(node, depth, scope, path) {
-      scope.exportDecls.push(node);
-      return BaseVisitor.prototype.visitExportAllDeclaration.call(this, node, depth, scope, path);
-    }
-
-  });
-
   // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-  // Generated on 16-04-09 19:27 PDT
+  // Generated on 16-05-16 00:26 GMT+0200
   function Visitor() {}
   Visitor.prototype.accept = function accept(node, state, path) {
     if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -16900,6 +15682,7 @@ lp.lookAhead = function (n) {
       case "ExportSpecifier": return this.visitExportSpecifier(node, state, path);
       case "ExportDefaultDeclaration": return this.visitExportDefaultDeclaration(node, state, path);
       case "ExportAllDeclaration": return this.visitExportAllDeclaration(node, state, path);
+      case "AwaitExpression": return this.visitAwaitExpression(node, state, path);
       case "RegExpLiteral": return this.visitRegExpLiteral(node, state, path);
       case "FunctionDeclaration": return this.visitFunctionDeclaration(node, state, path);
       case "VariableDeclaration": return this.visitVariableDeclaration(node, state, path);
@@ -16911,10 +15694,6 @@ lp.lookAhead = function (n) {
   }
   Visitor.prototype.visitNode = function visitNode(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
@@ -16937,11 +15716,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
     var visitor = this;
@@ -16957,18 +15732,10 @@ lp.lookAhead = function (n) {
       return results;
     }, []);  // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
@@ -16983,11 +15750,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
     var visitor = this;
@@ -16995,10 +15758,6 @@ lp.lookAhead = function (n) {
     node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
     // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
@@ -17009,18 +15768,10 @@ lp.lookAhead = function (n) {
     if (node["init"]) {
       node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
     }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
@@ -17029,44 +15780,24 @@ lp.lookAhead = function (n) {
     node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
     // value is of types Expression
     node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitClass = function visitClass(node, state, path) {
@@ -17081,10 +15812,6 @@ lp.lookAhead = function (n) {
     }
     // body is of types ClassBody
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
@@ -17095,11 +15822,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
     var visitor = this;
@@ -17107,54 +15830,30 @@ lp.lookAhead = function (n) {
     node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
     // value is of types FunctionExpression
     node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
     var visitor = this;
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
     var visitor = this;
     // expression is of types Expression
     node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
@@ -17165,26 +15864,14 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
@@ -17193,10 +15880,6 @@ lp.lookAhead = function (n) {
     node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
@@ -17204,10 +15887,6 @@ lp.lookAhead = function (n) {
     // argument is of types Expression
     if (node["argument"]) {
       node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
     }
     return node;
   }
@@ -17217,10 +15896,6 @@ lp.lookAhead = function (n) {
     node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
@@ -17229,10 +15904,6 @@ lp.lookAhead = function (n) {
     if (node["label"]) {
       node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
     }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
@@ -17240,10 +15911,6 @@ lp.lookAhead = function (n) {
     // label is of types Identifier
     if (node["label"]) {
       node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
     }
     return node;
   }
@@ -17257,10 +15924,6 @@ lp.lookAhead = function (n) {
     if (node["alternate"]) {
       node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
     }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
@@ -17273,20 +15936,12 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
@@ -17301,10 +15956,6 @@ lp.lookAhead = function (n) {
     if (node["finalizer"]) {
       node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
     }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
@@ -17313,10 +15964,6 @@ lp.lookAhead = function (n) {
     node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
@@ -17325,10 +15972,6 @@ lp.lookAhead = function (n) {
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     // test is of types Expression
     node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
@@ -17347,10 +15990,6 @@ lp.lookAhead = function (n) {
     }
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
@@ -17361,26 +16000,14 @@ lp.lookAhead = function (n) {
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
@@ -17393,10 +16020,6 @@ lp.lookAhead = function (n) {
         else results.push(result);
         return results;
       }, []);  }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
@@ -17407,11 +16030,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
     var visitor = this;
@@ -17427,30 +16046,18 @@ lp.lookAhead = function (n) {
       return results;
     }, []);  // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
@@ -17459,10 +16066,6 @@ lp.lookAhead = function (n) {
     node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
@@ -17471,10 +16074,6 @@ lp.lookAhead = function (n) {
     node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
@@ -17483,10 +16082,6 @@ lp.lookAhead = function (n) {
     node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
@@ -17495,10 +16090,6 @@ lp.lookAhead = function (n) {
     node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
     // property is of types Expression
     node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
@@ -17509,10 +16100,6 @@ lp.lookAhead = function (n) {
     node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
     // consequent is of types Expression
     node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
@@ -17525,11 +16112,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
     var visitor = this;
@@ -17539,11 +16122,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
     var visitor = this;
@@ -17559,21 +16138,13 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     if (node["argument"]) {
       node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
     }
     return node;
   }
@@ -17591,11 +16162,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
     var visitor = this;
@@ -17603,10 +16170,6 @@ lp.lookAhead = function (n) {
     node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
     // quasi is of types TemplateLiteral
     node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
@@ -17615,10 +16178,6 @@ lp.lookAhead = function (n) {
     node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
     // key is of types Expression
     node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
@@ -17629,11 +16188,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
     var visitor = this;
@@ -17645,20 +16200,12 @@ lp.lookAhead = function (n) {
         else results.push(result);
         return results;
       }, []);  }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
     var visitor = this;
     // argument is of types Pattern
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
@@ -17667,10 +16214,6 @@ lp.lookAhead = function (n) {
     node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
@@ -17685,10 +16228,6 @@ lp.lookAhead = function (n) {
     }
     // body is of types ClassBody
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
@@ -17697,10 +16236,6 @@ lp.lookAhead = function (n) {
     node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
     // property is of types Identifier
     node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
@@ -17713,10 +16248,6 @@ lp.lookAhead = function (n) {
       return results;
     }, []);  // source is of types Literal
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
@@ -17725,30 +16256,18 @@ lp.lookAhead = function (n) {
     node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
     var visitor = this;
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
     var visitor = this;
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
@@ -17767,10 +16286,6 @@ lp.lookAhead = function (n) {
     if (node["source"]) {
       node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
     }
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
@@ -17779,38 +16294,30 @@ lp.lookAhead = function (n) {
     node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
     var visitor = this;
     // declaration is of types Declaration, Expression
     node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
     var visitor = this;
     // source is of types Literal
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
+    return node;
+  }
+  Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
+    var visitor = this;
+    // argument is of types Expression
+    if (node["argument"]) {
+      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     }
     return node;
   }
   Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
     var visitor = this;
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
@@ -17825,10 +16332,6 @@ lp.lookAhead = function (n) {
       return results;
     }, []);  // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
@@ -17839,11 +16342,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
     var visitor = this;
@@ -17855,11 +16354,7 @@ lp.lookAhead = function (n) {
       if (Array.isArray(result)) results.push.apply(results, result);
       else results.push(result);
       return results;
-    }, []);  // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
-    return node;
+    }, []);  return node;
   }
   Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
     var visitor = this;
@@ -17869,10 +16364,6 @@ lp.lookAhead = function (n) {
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
   }
   Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
@@ -17885,11 +16376,472 @@ lp.lookAhead = function (n) {
     }
     // body is of types ClassBody
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // loc is of types SourceLocation
-    if (node["loc"]) {
-      node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-    }
     return node;
+  }
+
+  class PrinterVisitor extends Visitor {
+
+    accept(node, state, tree, path) {
+      var pathString = path.map(ea => typeof ea === 'string' ? '.' + ea : '[' + ea + ']').join('')
+      var myChildren = [];
+      var result = super.accept(node, state, myChildren, path);
+      tree.push({
+        node: node,
+        path: pathString,
+        index: state.index++,
+        children: myChildren
+      });
+      return result;
+    }
+
+  }
+
+  class ComparisonVisitor extends Visitor {
+
+    recordNotEqual(node1, node2, state, msg) {
+      state.comparisons.errors.push({
+        node1: node1, node2: node2,
+        path: state.completePath, msg: msg
+      });
+    }
+
+    compareType(node1, node2, state) {
+      return this.compareField('type', node1, node2, state);
+    }
+
+    compareField(field, node1, node2, state) {
+      node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
+      if (node1 && node2 && node1[field] === node2[field]) return true;
+      if ((node1 && node1[field] === '*') || (node2 && node2[field] === '*')) return true;
+      var fullPath = state.completePath.join('.') + '.' + field, msg;
+      if (!node1) msg = "node1 on " + fullPath + " not defined";
+      else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: '+ node1[field];
+      else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
+      this.recordNotEqual(node1, node2, state, msg);
+      return false;
+    }
+
+    accept(node1, node2, state, path) {
+      var patternNode = lively.PropertyPath(path.join('.')).get(node2);
+      if (node1 === '*' || patternNode === '*') return;
+      var nextState = {
+        completePath: path,
+        comparisons: state.comparisons
+      };
+      if (this.compareType(node1, node2, nextState))
+        this['visit' + node1.type](node1, node2, nextState, path);
+    }
+
+    visitFunction(node1, node2, state, path) {
+      // node1.generator has a specific type that is boolean
+      if (node1.generator) { this.compareField("generator", node1, node2, state); }
+
+      // node1.expression has a specific type that is boolean
+      if (node1.expression) { this.compareField("expression", node1, node2, state); }
+
+      return super.visitFunction(node1, node2, state, path);
+    }
+
+    visitSwitchStatement(node1, node2, state, path) {
+      // node1.lexical has a specific type that is boolean
+      if (node1.lexical) { this.compareField("lexical", node1, node2, state); }
+
+      return super.visitSwitchStatement(node1, node2, state, path);
+    }
+
+    visitForInStatement(node1, node2, state, path) {
+      // node1.each has a specific type that is boolean
+      if (node1.each) { this.compareField("each", node1, node2, state); }
+
+      return super.visitForInStatement(node1, node2, state, path);
+    }
+
+    visitFunctionDeclaration(node1, node2, state, path) {
+      // node1.generator has a specific type that is boolean
+      if (node1.generator) { this.compareField("generator", node1, node2, state); }
+
+      // node1.expression has a specific type that is boolean
+      if (node1.expression) { this.compareField("expression", node1, node2, state); }
+
+      return super.visitFunctionDeclaration(node1, node2, state, path);
+    }
+
+    visitVariableDeclaration(node1, node2, state, path) {
+      // node1.kind is "var" or "let" or "const"
+      this.compareField("kind", node1, node2, state);
+      return super.visitVariableDeclaration(node1, node2, state, path);
+    }
+
+    visitUnaryExpression(node1, node2, state, path) {
+      // node1.operator is an UnaryOperator enum:
+      // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
+      this.compareField("operator", node1, node2, state);
+
+      // node1.prefix has a specific type that is boolean
+      if (node1.prefix) { this.compareField("prefix", node1, node2, state); }
+
+      return super.visitUnaryExpression(node1, node2, state, path);
+    }
+
+    visitBinaryExpression(node1, node2, state, path) {
+      // node1.operator is an BinaryOperator enum:
+      // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
+      this.compareField("operator", node1, node2, state);
+      return super.visitBinaryExpression(node1, node2, state, path);
+    }
+
+    visitAssignmentExpression(node1, node2, state, path) {
+      // node1.operator is an AssignmentOperator enum:
+      // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
+      this.compareField("operator", node1, node2, state);
+      return super.visitAssignmentExpression(node1, node2, state, path);
+    }
+
+    visitUpdateExpression(node1, node2, state, path) {
+      // node1.operator is an UpdateOperator enum:
+      // "++" | "--"
+      this.compareField("operator", node1, node2, state);
+      // node1.prefix has a specific type that is boolean
+      if (node1.prefix) { this.compareField("prefix", node1, node2, state); }
+      return super.visitUpdateExpression(node1, node2, state, path);
+    }
+
+    visitLogicalExpression(node1, node2, state, path) {
+      // node1.operator is an LogicalOperator enum:
+      // "||" | "&&"
+      this.compareField("operator", node1, node2, state);
+      return super.visitLogicalExpression(node1, node2, state, path);
+    }
+
+    visitMemberExpression(node1, node2, state, path) {
+      // node1.computed has a specific type that is boolean
+      if (node1.computed) { this.compareField("computed", node1, node2, state); }
+      return super.visitMemberExpression(node1, node2, state, path);
+    }
+
+    visitComprehensionBlock(node1, node2, state, path) {
+      // node1.each has a specific type that is boolean
+      if (node1.each) { this.compareField("each", node1, node2, state); }
+      return super.visitComprehensionBlock(node1, node2, state, path);
+    }
+
+    visitIdentifier(node1, node2, state, path) {
+      // node1.name has a specific type that is string
+      this.compareField("name", node1, node2, state);
+      return super.visitIdentifier(node1, node2, state, path);
+    }
+
+    visitLiteral(node1, node2, state, path) {
+      this.compareField("value", node1, node2, state);
+      return super.visitLiteral(node1, node2, state, path);
+    }
+
+    visitClassDeclaration(node1, node2, state, path) {
+      this.compareField("id", node1, node2, state);
+      if (node1.superClass) {
+        this.compareField("superClass", node1, node2, state);
+      }
+      this.compareField("body", node1, node2, state);
+      return super.visitClassDeclaration(node1, node2, state, path);
+    }
+
+    visitClassBody(node1, node2, state, path) {
+      this.compareField("body", node1, node2, state);
+      return super.visitClassBody(node1, node2, state, path);
+    }
+
+    visitMethodDefinition(node1, node2, state, path) {
+      this.compareField("static", node1, node2, state);
+      this.compareField("computed", node1, node2, state);
+      this.compareField("kind", node1, node2, state);
+      this.compareField("key", node1, node2, state);
+      this.compareField("value", node1, node2, state);
+      return super.visitMethodDefinition(node1, node2, state, path);
+    }
+  }
+
+  class ScopeVisitor extends Visitor {
+
+    newScope(scopeNode, parentScope) {
+      var scope = {
+        node: scopeNode,
+        varDecls: [],
+        varDeclPaths: [],
+        funcDecls: [],
+        classDecls: [],
+        methodDecls: [],
+        importDecls: [],
+        exportDecls: [],
+        refs: [],
+        thisRefs: [],
+        params: [],
+        catches: [],
+        subScopes: []
+      }
+      if (parentScope) parentScope.subScopes.push(scope);
+      return scope;
+    }
+
+    visitVariableDeclaration(node, scope, path) {
+      scope.varDecls.push(node);
+      scope.varDeclPaths.push(path);
+      return super.visitVariableDeclaration(node, scope, path);
+    }
+
+    visitVariableDeclarator(node, scope, path) {
+      var visitor = this;
+      // ignore id
+      // // id is of types Pattern
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // init is of types Expression
+      if (node["init"]) {
+        node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
+      }
+      return node;
+    }
+
+    visitFunction (node, scope, path) {
+      var newScope = this.newScope(node, scope);
+      newScope.params = Array.prototype.slice.call(node.params);
+      return newScope;
+    }
+
+    visitFunctionDeclaration (node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+      scope.funcDecls.push(node);
+
+      // don't visit id and params  
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function(results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);
+          else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      return node;
+    }
+
+    visitFunctionExpression (node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+
+      // don't visit id and params  
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function(results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);
+          else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      return node;
+
+    }
+
+    visitArrowFunctionExpression(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function(results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);
+          else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      // body is of types BlockStatement, Expression
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      // node.generator has a specific type that is boolean
+      if (node.generator) {/*do stuff*/}
+
+      // node.expression has a specific type that is boolean
+      if (node.expression) {/*do stuff*/}
+      return node;
+
+    }
+
+    visitIdentifier (node, scope, path) {
+      scope.refs.push(node);
+      return super.visitIdentifier(node, scope, path);
+    }
+
+    visitMemberExpression(node, scope, path) {
+      // only visit property part when prop is computed so we don't gather
+      // prop ids
+
+      var visitor = this;
+      // object is of types Expression, Super
+      node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
+      // property is of types Expression
+      if (node.computed) {
+        node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
+      }
+      return node;
+    }
+
+    visitProperty(node, scope, path) {
+      var visitor = this;
+      // key is of types Expression
+      if (node.computed)
+        node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+      // value is of types Expression
+      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+      return node;
+    }
+
+    visitThisExpression(node, scope, path) {
+      scope.thisRefs.push(node);
+      return super.visitThisExpression(node, scope, path);
+    }
+
+    visitTryStatement (node, scope, path) {
+      var visitor = this;
+      // block is of types BlockStatement
+      node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
+      // handler is of types CatchClause
+      if (node["handler"]) {
+        node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
+        scope.catches.push(node.handler.param);
+      }
+
+      // finalizer is of types BlockStatement
+      if (node["finalizer"]) {
+        node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
+      }
+      return node;
+    }
+
+    visitLabeledStatement (node, scope, path) {
+      var visitor = this;
+      // ignore label
+      // // label is of types Identifier
+      // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
+      // body is of types Statement
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+
+    visitClassDeclaration(node, scope, path) {
+      scope.classDecls.push(node);
+
+      var visitor = this;
+      // ignore id
+      // // id is of types Identifier
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // superClass is of types Expression
+      if (node["superClass"]) {
+        node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+      }
+      // body is of types ClassBody
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+
+    }
+
+    visitMethodDefinition(node, scope, path) {
+      var visitor = this;
+      // don't visit key Identifier for now
+      // // key is of types Expression
+      // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+      // value is of types FunctionExpression
+      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+      return node;
+
+    }
+
+    visitBreakStatement(node, scope, path) { return node; }
+    visitContinueStatement(node, scope, path) { return node; }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // es6 modules
+    visitImportSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+
+      var visitor = this;
+      // // imported is of types Identifier
+      // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
+      // local is of types Identifier
+      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+
+    visitImportDefaultSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      var visitor = this;
+      // // local is of types Identifier
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+
+    visitImportNamespaceSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      var visitor = this;
+      // // local is of types Identifier
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+
+    visitExportSpecifier(node, scope, path) {
+      var visitor = this;
+      // // exported is of types Identifier
+      // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
+      // local is of types Identifier
+      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+
+    visitExportNamedDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      return super.visitExportNamedDeclaration(node, scope, path);
+    }
+
+    visitExportDefaultDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      return super.visitExportDefaultDeclaration(node, scope, path);
+    }
+
+    visitExportAllDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      return super.visitExportAllDeclaration(node, scope, path);
+    }
+
   }
 
   var es = escodegen.escodegen || escodegen;
@@ -18011,11 +16963,12 @@ lp.lookAhead = function (n) {
   };
 
   function addSource(parsed, source, completeSrc, forceNewSource) {
-    var options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 6;
+    var options = {};
+    options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
+      options.plugins.asyncawait : {awaitAnywhere: true};
 
     source = typeof parsed === 'string' ? parsed : source;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -18028,14 +16981,15 @@ lp.lookAhead = function (n) {
   };
 
   function inspect(parsed, source) {
-    var options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 6;
+    var options = {};
+    options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
+      options.plugins.asyncawait : {awaitAnywhere: true};
 
     source = typeof parsed === 'string' ? parsed : null;
-    parsed = typeof parsed === 'string' ? acorn.parse(parsed) : parsed;
+    parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
     source && addSource(parsed, source);
     return lively_lang.obj.inspect(parsed);
   };
@@ -18782,7 +17736,7 @@ lp.lookAhead = function (n) {
           // ES2015:
           'ClassDeclaration'
         ];
-    withMozillaAstDo(parsed, {}, function(next, node, depth, state, path) {
+    withMozillaAstDo(parsed, {}, function(next, node, state, path) {
       if (targetReached || node.astIndex < target.astIndex) return;
       if (node === target || node.astIndex === target.astIndex) {
         targetReached = true;
@@ -18831,10 +17785,13 @@ lp.lookAhead = function (n) {
     // }
 
     options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 6;
+    options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
+      options.plugins.asyncawait : {awaitAnywhere: true};
+
     if (options.withComments) {
       // record comments
       delete options.withComments;
@@ -18923,14 +17880,8 @@ lp.lookAhead = function (n) {
   }
 
   function parseFunction(source, options) {
-    options = options || {};
-    options.ecmaVersion = 6;
-    options.sourceType = options.sourceType || "module";
-    options.plugins = options.plugins || {};
-    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-
     var src = '(' + source + ')',
-      ast = acorn.parse(src);
+      ast = parse(src, options);
     /*if (options.addSource) */addSource(ast, src);
     return ast.body[0].expression;
   }
@@ -18976,10 +17927,13 @@ lp.lookAhead = function (n) {
   function fuzzyParse(source, options) {
     // options: verbose, addSource, type
     options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 6;
+    options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
+      options.plugins.asyncawait : {awaitAnywhere: true};
+
 
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
@@ -19023,13 +17977,15 @@ lp.lookAhead = function (n) {
       // acceptNext, -- continue visiting
       // node, -- current node being visited
       // state -- state variable that is passed along
-      var vis = new BaseVisitor(),
+      var vis = new Visitor(),
           origAccept = vis.accept;
-      vis.accept = function(node, depth, st, path) {
-        var next = function() { origAccept.call(vis, node, depth, st, path); }
-        return func(next, node, st, depth, path);
+      vis.accept = function(node, st, path) {
+        var next = function() { origAccept.call(vis, node, st, path); }
+        state = func(next, node, st, path);
+        return node;
       }
-      return vis.accept(parsed, 0, state, []);
+      vis.accept(parsed, state, []);
+      return state;
     },
 
     printAst: function(astOrSource, options) {
@@ -19079,7 +18035,7 @@ lp.lookAhead = function (n) {
     pathToNode: function(parsed, index, options) {
       options = options || {};
       if (!parsed.astIndex) addAstIndex(parsed);
-      var vis = new BaseVisitor(), found = null;
+      var vis = new Visitor(), found = null;
       (vis.accept = function (node, pathToHere, state, path) {
         if (found) return;
         var fullPath = pathToHere.concat(path);
@@ -19097,10 +18053,10 @@ lp.lookAhead = function (n) {
     rematchAstWithSource: function(parsed, source, addLocations, subTreePath) {
       addLocations = !!addLocations;
       var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
-          visitor = new BaseVisitor();
+          visitor = new Visitor();
       if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
 
-      visitor.accept = function(node, depth, state, path) {
+      visitor.accept = function(node, state, path) {
         path = path || [];
         var node2 = path.reduce(function(node, pathElem) {
           return node[pathElem];
@@ -19108,7 +18064,7 @@ lp.lookAhead = function (n) {
         node2.start = node.start;
         node2.end = node.end;
         if (addLocations) node2.loc = node.loc;
-        return this['visit' + node.type](node, depth, state, path);
+        return this['visit' + node.type](node, state, path);
       }
 
       visitor.accept(parsed2);
@@ -19194,7 +18150,7 @@ lp.lookAhead = function (n) {
   function scopes(parsed) {
     var vis = new ScopeVisitor(),
         scope = vis.newScope(parsed, null);
-    vis.accept(parsed, 0, scope, []);
+    vis.accept(parsed, scope, []);
     return scope;
   }
 
@@ -19325,11 +18281,10 @@ lp.lookAhead = function (n) {
     if (!code && !parsed) throw new Error("Need at least ast or code");
     code = code ? code : stringify(parsed);
     parsed = parsed && parsed.loc ? parsed : parse(code, {locations: true});
-    return withMozillaAstDo(parsed, [], function(next, node, found) {
-    if (lines.every(function(line) {
-      return lively_lang.num.between(line, node.loc.start.line, node.loc.end.line); })) {
-      lively_lang.arr.pushIfNotIncluded(found, node); next(); }
-    return found;
+    return withMozillaAstDo(parsed, [], (next, node, found) => {
+      if (lines.every(line => lively_lang.num.between(line, node.loc.start.line, node.loc.end.line))) {
+        lively_lang.arr.pushIfNotIncluded(found, node); next(); }
+      return found;
     });
   }
 
@@ -19372,23 +18327,32 @@ lp.lookAhead = function (n) {
     return acorn.walk.findNodesIncluding(ast, pos);
   }
 
-  function statementOf(parsed, node) {
+  function statementOf(parsed, node, options) {
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
     var nodes = nodesAt$1(node.start, parsed);
     if (nodes.indexOf(node) === -1) return undefined;
-    return nodes.reverse().find((node, i) => {
+    var found = nodes.reverse().find((node, i) => {
       if (!nodes[i+1]) return false;
       var t = nodes[i+1].type;
-      if (["BlockStatement",
-           "Program",
-           "FunctionDeclaration",
-           "FunctionExpress",
-           "ArrowFunctionExpress",
-           "SwitchCase", "SwitchStatement"].indexOf(t) > -1) return true;
-      return false;
+      return ["BlockStatement",
+              "Program",
+              "FunctionDeclaration",
+              "FunctionExpress",
+              "ArrowFunctionExpress",
+              "SwitchCase", "SwitchStatement"].indexOf(t) > -1 ? true : false;
     });
+    if (options && options.asPath) {
+      var v = new Visitor(), foundPath;
+      v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
+        if (node === found) { foundPath = path; throw new Error("stop search"); };
+        return proceed(node, state, path);
+      });
+      try { v.accept(parsed, {}, []); } catch (e) {}
+      return foundPath;
+    }
+    return found;
   }
 
 
@@ -20424,7 +19388,7 @@ lp.lookAhead = function (n) {
   });
 
   function getCommentPrecedingNode(parsed, node) {
-    var statementPath = findStatementOfNode({asPath: true}, parsed, node),
+    var statementPath = statementOf(parsed, node, {asPath: true}),
         blockPath = statementPath.slice(0, -2),
         block = lively_lang.Path(blockPath).get(parsed);
 
@@ -20440,9 +19404,7 @@ lp.lookAhead = function (n) {
           parse(astOrCode, {withComments: true}) : astOrCode,
         code = optCode ? optCode : (typeof astOrCode === "string" ?
           astOrCode : stringify(astOrCode)),
-        parsedComments = lively_lang.arr.sortBy(
-          commentsWithPathsAndNodes(parsed),
-          function(c) { return c.comment.start; });
+        parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), c => c.comment.start);
 
     return parsedComments.map(function(c, i) {
 
@@ -20502,15 +19464,17 @@ lp.lookAhead = function (n) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function commentsWithPathsAndNodes(parsed) {
-      var comments = [];
-      withMozillaAstDo(parsed, comments, function(next, node, comments, depth, path) {
+      var comments = [],
+          v = new Visitor()
+      v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
         if (node.comments) {
           lively_lang.arr.pushAll(comments,
             node.comments.map(function(comment) {
               return {path: path, comment: comment, node: node}; }));
         }
-        next();
+        return proceed(node, state, path);
       });
+      v.accept(parsed, comments, []);
       return comments;
     }
 
@@ -20547,11 +19511,11 @@ lp.lookAhead = function (n) {
 
     function methodAttributesOf(comment) {
       var methodNode = lively_lang.Path(comment.path.slice(0, -2)).get(parsed),
-        name = methodNode.key ? methodNode.key.name : "<error: no name for method>";
+          name = methodNode.key ? methodNode.key.name : "<error: no name for method>";
 
       // if it's someting like "var obj = {foo: function() {...}};"
-      var p = comment.path.slice();
-      var objectName = "<error: no object found for method>";
+      var p = comment.path.slice(),
+          objectName = "<error: no object found for method>";
 
       while (p.length && lively_lang.arr.last(p) !== 'init') p.pop();
       if (p.length) {
@@ -20585,11 +19549,12 @@ lp.lookAhead = function (n) {
     }
 
     function methodAttributesOfAssignment(comment) {
+
       var node = lively_lang.Path(comment.path.slice(0,-1)).get(parsed)
       if (node.type !== "FunctionExpression"
        && node.type !== "FunctionDeclaration") return {};
 
-      var statement = findStatementOfNode(parsed, node);
+      var statement = statementOf(parsed, node);
       if (statement.type !== "ExpressionStatement"
        || statement.expression.type !== "AssignmentExpression") return {};
 
