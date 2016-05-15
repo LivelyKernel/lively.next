@@ -1,6 +1,6 @@
 "format esm";
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-05-15 23:07 GMT+0200
+// Generated on 16-05-16 00:26 GMT+0200
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -90,10 +90,6 @@ Visitor.prototype.accept = function accept(node, state, path) {
 }
 Visitor.prototype.visitNode = function visitNode(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
@@ -116,11 +112,7 @@ Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
   var visitor = this;
@@ -136,18 +128,10 @@ Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
     return results;
   }, []);  // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
@@ -162,11 +146,7 @@ Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) 
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
   var visitor = this;
@@ -174,10 +154,6 @@ Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path
   node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
   // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
@@ -188,18 +164,10 @@ Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(nod
   if (node["init"]) {
     node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
   }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
@@ -208,44 +176,24 @@ Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
   node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
   // value is of types Expression
   node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
   var visitor = this;
   // argument is of types Expression
   node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitClass = function visitClass(node, state, path) {
@@ -260,10 +208,6 @@ Visitor.prototype.visitClass = function visitClass(node, state, path) {
   }
   // body is of types ClassBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
@@ -274,11 +218,7 @@ Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
   var visitor = this;
@@ -286,54 +226,30 @@ Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, s
   node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
   // value is of types FunctionExpression
   node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
   var visitor = this;
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
   var visitor = this;
   // expression is of types Expression
   node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
@@ -344,26 +260,14 @@ Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
@@ -372,10 +276,6 @@ Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, 
   node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
   // body is of types Statement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
@@ -383,10 +283,6 @@ Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, sta
   // argument is of types Expression
   if (node["argument"]) {
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
   }
   return node;
 }
@@ -396,10 +292,6 @@ Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, s
   node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
   // body is of types Statement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
@@ -408,10 +300,6 @@ Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state
   if (node["label"]) {
     node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
   }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
@@ -419,10 +307,6 @@ Visitor.prototype.visitContinueStatement = function visitContinueStatement(node,
   // label is of types Identifier
   if (node["label"]) {
     node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-  }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
   }
   return node;
 }
@@ -436,10 +320,6 @@ Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path
   if (node["alternate"]) {
     node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
   }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
@@ -452,20 +332,12 @@ Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, sta
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
   var visitor = this;
   // argument is of types Expression
   node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
@@ -480,10 +352,6 @@ Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, pa
   if (node["finalizer"]) {
     node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
   }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
@@ -492,10 +360,6 @@ Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state
   node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
   // body is of types Statement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
@@ -504,10 +368,6 @@ Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, s
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   // test is of types Expression
   node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
@@ -526,10 +386,6 @@ Visitor.prototype.visitForStatement = function visitForStatement(node, state, pa
   }
   // body is of types Statement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
@@ -540,26 +396,14 @@ Visitor.prototype.visitForInStatement = function visitForInStatement(node, state
   node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
   // body is of types Statement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
@@ -572,10 +416,6 @@ Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, sta
       else results.push(result);
       return results;
     }, []);  }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
@@ -586,11 +426,7 @@ Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, s
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
   var visitor = this;
@@ -606,30 +442,18 @@ Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(nod
     return results;
   }, []);  // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
   var visitor = this;
   // argument is of types Expression
   node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
   var visitor = this;
   // argument is of types Expression
   node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
@@ -638,10 +462,6 @@ Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, s
   node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
   // right is of types Expression
   node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
@@ -650,10 +470,6 @@ Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression
   node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
   // right is of types Expression
   node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
@@ -662,10 +478,6 @@ Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node,
   node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
   // right is of types Expression
   node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
@@ -674,10 +486,6 @@ Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, s
   node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
   // property is of types Expression
   node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
@@ -688,10 +496,6 @@ Visitor.prototype.visitConditionalExpression = function visitConditionalExpressi
   node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
   // consequent is of types Expression
   node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
@@ -704,11 +508,7 @@ Visitor.prototype.visitCallExpression = function visitCallExpression(node, state
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
   var visitor = this;
@@ -718,11 +518,7 @@ Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(nod
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
   var visitor = this;
@@ -738,21 +534,13 @@ Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpr
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
   var visitor = this;
   // argument is of types Expression
   if (node["argument"]) {
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
   }
   return node;
 }
@@ -770,11 +558,7 @@ Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, sta
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
   var visitor = this;
@@ -782,10 +566,6 @@ Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateEx
   node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
   // quasi is of types TemplateLiteral
   node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
@@ -794,10 +574,6 @@ Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(nod
   node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
   // key is of types Expression
   node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
@@ -808,11 +584,7 @@ Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, 
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
   var visitor = this;
@@ -824,20 +596,12 @@ Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, pa
       else results.push(result);
       return results;
     }, []);  }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
   var visitor = this;
   // argument is of types Pattern
   node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
@@ -846,10 +610,6 @@ Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node,
   node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
   // right is of types Expression
   node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
@@ -864,10 +624,6 @@ Visitor.prototype.visitClassExpression = function visitClassExpression(node, sta
   }
   // body is of types ClassBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
@@ -876,10 +632,6 @@ Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, pa
   node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
   // property is of types Identifier
   node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
@@ -892,10 +644,6 @@ Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node,
     return results;
   }, []);  // source is of types Literal
   node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
@@ -904,30 +652,18 @@ Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, sta
   node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
   var visitor = this;
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
   var visitor = this;
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
@@ -946,10 +682,6 @@ Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclara
   if (node["source"]) {
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
   }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
@@ -958,30 +690,18 @@ Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, sta
   node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
   // local is of types Identifier
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
   var visitor = this;
   // declaration is of types Declaration, Expression
   node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
   var visitor = this;
   // source is of types Literal
   node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
@@ -990,18 +710,10 @@ Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, sta
   if (node["argument"]) {
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
   }
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
   var visitor = this;
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
@@ -1016,10 +728,6 @@ Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(n
     return results;
   }, []);  // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
@@ -1030,11 +738,7 @@ Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(n
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
   var visitor = this;
@@ -1046,11 +750,7 @@ Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, 
     if (Array.isArray(result)) results.push.apply(results, result);
     else results.push(result);
     return results;
-  }, []);  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
-  return node;
+  }, []);  return node;
 }
 Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
   var visitor = this;
@@ -1060,10 +760,6 @@ Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state
   node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
   // body is of types Statement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
@@ -1076,10 +772,6 @@ Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, s
   }
   // body is of types ClassBody
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-  // loc is of types SourceLocation
-  if (node["loc"]) {
-    node["loc"] = visitor.accept(node["loc"], state, path.concat(["loc"]));
-  }
   return node;
 }
 
