@@ -126,14 +126,13 @@ describe('query', function() {
   describe("finding stuff from a source location", () => {
 
     it("findNodesIncludingLines", function() {
-      var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n";
-
-      var expected1 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression","Property", "FunctionExpression","BlockStatement","ReturnStatement","Literal"],
-        nodes1 = query.findNodesIncludingLines(null, code, [3]);
+      var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n",
+          expected1 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression","Property", "FunctionExpression","BlockStatement","ReturnStatement","Literal"],
+          nodes1 = query.findNodesIncludingLines(null, code, [3]);
       expect(expected1).deep.equals(chain(nodes1).pluck("type").value());
 
       var expected2 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression"],
-        nodes2 = query.findNodesIncludingLines(null, code, [3,5]);
+          nodes2 = query.findNodesIncludingLines(null, code, [3,5]);
       expect(expected2).deep.equals(chain(nodes2).pluck("type").value());
     });
 
@@ -262,6 +261,13 @@ describe('query', function() {
       'a;', // testing scenario where node is not found
       ast => ({type: 'EmptyStatement'}),
       ast => undefined);
+
+    it("finds path to statement", () => {
+      var parsed = parse('var x = 3; function foo() { var y = 3; return y + 2 }; x + foo();'),
+          found = query.statementOf(parsed, parsed.body[1].body.body[1].argument.left, {asPath: true}),
+          expected = ["body", 1,"body", "body", 1];
+      expect(expected).to.deep.equal(found);
+    });
 
   });
 

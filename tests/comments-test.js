@@ -8,7 +8,7 @@ import { extractComments, getCommentPrecedingNode } from "../lib/comments.js";
 
 
 describe("parsing comments", function() {
-  
+
   it("extract comment from method", function() {
     var code = "var obj = {\n"
              + "  foo: function(arg1, arg2) {\n"
@@ -77,14 +77,14 @@ describe("parsing comments", function() {
   });
 
   it("extractCommentFromAssignedFunction", function() {
-    var code = "Group.foo = function(test) {\n// hello\n};\n";
-    var comments = extractComments(code);
-    var expected = [{comment: " hello",type: "method", name: "foo", objectName: "Group", args: ["test"]}]
+    var code = "Group.foo = function(test) {\n// hello\n};\n",
+        comments = extractComments(code),
+        expected = [{comment: " hello",type: "method", name: "foo", objectName: "Group", args: ["test"]}]
     expect(comments).to.containSubset(expected);
 
-    var code = "Group.bar.foo = function(test) {\n// hello\n};\n";
-    var comments = extractComments(code);
-    var expected = [{comment: " hello",type: "method", name: "foo", objectName: "Group.bar", args: ["test"]}]
+    var code = "Group.bar.foo = function(test) {\n// hello\n};\n",
+        comments = extractComments(code),
+        expected = [{comment: " hello",type: "method", name: "foo", objectName: "Group.bar", args: ["test"]}]
     expect(comments).to.containSubset(expected);
   });
 
