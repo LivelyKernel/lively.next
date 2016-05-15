@@ -12,6 +12,7 @@ var acornBundle = "dist/acorn.js";
 var langSource, escodegenSource, acornSource, astSource;
 
 // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
+
 module.exports = Promise.resolve()
   // 1. make sure deps are build
   .then(() => require("./build-acorn.js"))
@@ -23,7 +24,10 @@ module.exports = Promise.resolve()
   })
 
   // 2. bundle local esm modules
-  .then(() => rollup.rollup({entry: "index.js"}))
+  .then(() => rollup.rollup({
+    entry: "index.js",
+    external: [require.resolve('acorn-es7-plugin')]
+  }))
   .then(bundle =>
     bundle.generate({
       format: 'iife',

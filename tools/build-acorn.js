@@ -11,15 +11,20 @@ module.exports = new Promise((resolve, reject) => {
   var acornSrc = fs.readFileSync(path.join(acornDir, "dist/acorn.js")),
       walkSrc = fs.readFileSync(path.join(acornDir, "dist/walk.js")),
       looseSrc = fs.readFileSync(path.join(acornDir, "dist/acorn_loose.js")),
+      acornAsyncSrc = `(function(acorn) {
+  var module = {exports: {}};
+  ${fs.readFileSync(require.resolve("acorn-es7-plugin"))}
+  module.exports(acorn);
+})(this.acorn);`,
       targetFile = "dist/acorn.js",
       source = `(function() {
   var module = undefined, require = undefined;
   ${acornSrc};
   ${walkSrc}
   ${looseSrc}
+  ${acornAsyncSrc}
   return this.acorn;
-})();
-`;
+})();`;
   
   fs.writeFileSync(targetFile, source);
   console.log(`acorn bundled into ${process.cwd()}/${targetFile}`);
