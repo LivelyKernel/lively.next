@@ -132,7 +132,7 @@ describe("evaluation", function() {
 
   describe("promises", () => {
 
-    it("runEval returns promise", () => 
+    it("runEval returns promise", () =>
       vm.runEval("3+5").then(result => expect(result).property("value").to.equal(8)));
 
     var code = "new Promise(function(resolve, reject) { return setTimeout(resolve, 200, 23); });"
@@ -156,6 +156,18 @@ describe("evaluation", function() {
     it("prints promises", () =>
       vm.runEval("Promise.resolve(23)", {asString: true})
         .then(printed => expect(printed).to.containSubset({value: 'Promise({status: "fulfilled", value: 23})'})));
+
+  });
+
+  describe("transpiler", () => {
+
+    it("transforms code after lively rewriting", () =>
+      vm.runEval("x + 3", {
+        topLevelVarRecorder: {x: 2},
+        // ".x" will only appear in rewritten code
+        transpiler: (source, opts) => source.replace(/\.x/, ".x + 1")
+      })
+      .then(({value}) => expect(value).to.equal(6)));
 
   });
 });
