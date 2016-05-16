@@ -11038,11 +11038,12 @@ module.exports = function(acorn) {
 
   class PrinterVisitor extends Visitor {
 
-    accept(node, state, tree, path) {
-      var pathString = path.map(ea => typeof ea === 'string' ? '.' + ea : '[' + ea + ']').join('')
-      var myChildren = [];
-      var result = super.accept(node, state, myChildren, path);
-      tree.push({
+    accept(node, state, path) {
+      var pathString = path.map(ea =>
+            typeof ea === 'string' ? `.${ea}` : `[${ea}]`).join(''),
+          myChildren = [],
+          result = super.accept(node, {index: state.index, tree: myChildren}, path);
+      state.tree.push({
         node: node,
         path: pathString,
         index: state.index++,
@@ -12648,9 +12649,9 @@ module.exports = function(acorn) {
     printAst: function(astOrSource, options) {
       options = options || {};
       var printSource = options.printSource || false,
-        printPositions = options.printPositions || false,
-        printIndex = options.printIndex || false,
-        source, parsed, tree = [];
+          printPositions = options.printPositions || false,
+          printIndex = options.printIndex || false,
+          source, parsed, tree = [];
 
       if (typeof astOrSource === "string") {
         source = astOrSource;
@@ -12678,8 +12679,8 @@ module.exports = function(acorn) {
         return string;
       }
 
-      new PrinterVisitor().accept(parsed, {index: 0}, tree, []);
-      return lively_lang.string.printTree(tree[0], printFunc, function(ea) { return ea.children; }, '  ');
+      new PrinterVisitor().accept(parsed, {index: 0, tree: tree}, []);
+      return lively_lang.string.printTree(tree[0], printFunc, ea => ea.children, '  ');
     },
 
     compareAst: function(node1, node2) {
