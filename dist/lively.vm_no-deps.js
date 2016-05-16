@@ -3,7 +3,7 @@
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lang,ast) {
+(function (exports,lively_lang,lively_ast) {
   'use strict';
 
   // helper
@@ -136,109 +136,8 @@
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // helper
-
-  function _normalizeEvalOptions(opts) {
-    if (!opts) opts = {};
-    opts = lang.obj.merge({
-      targetModule: null,
-      sourceURL: opts.targetModule,
-      runtime: null,
-      context: getGlobal(),
-      varRecorderName: '__lvVarRecorder',
-      dontTransform: [], // blacklist vars
-      topLevelDefRangeRecorder: null, // object for var ranges
-      recordGlobals: null,
-      returnPromise: true,
-      promiseTimeout: 200,
-      waitForPromise: true
-    }, opts);
-
-    if (opts.targetModule) {
-      var moduleEnv = opts.runtime
-                   && opts.runtime.modules
-                   && opts.runtime.modules[opts.targetModule];
-      if (moduleEnv) opts = lang.obj.merge(opts, moduleEnv);
-    }
-
-    return opts;
-  }
-
-  function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/) {
-    return eval(__lvEvalStatement);
-  }
-
-  function tryToWaitForPromise(evalResult, timeoutMs) {
-    console.assert(evalResult.isPromise, "no promise in tryToWaitForPromise???");
-    var timeout = {},
-        timeoutP = new Promise(resolve => setTimeout(resolve, timeoutMs, timeout));
-    return Promise.race([timeoutP, evalResult.value])
-      .then(resolved => lang.obj.extend(evalResult, resolved !== timeout ?
-              {promiseStatus: "fulfilled", promisedValue: resolved} :
-              {promiseStatus: "pending"}))
-      .catch(rejected => lang.obj.extend(evalResult,
-              {promiseStatus: "rejected", promisedValue: rejected}))
-  }
-
+  // code transform / capturing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // evaluator interface
-
-  function EvalResult() {}
-  EvalResult.prototype.isEvalResult = true;
-  EvalResult.prototype.value = undefined;
-  EvalResult.prototype.warnings = [];
-  EvalResult.prototype.isError = false;
-  EvalResult.prototype.isPromise = false;
-  EvalResult.prototype.promisedValue = undefined;
-  EvalResult.prototype.promiseStatus = "unknown";
-
-  function print(value, options) {
-    if (options.isError || value instanceof Error) return value.stack || String(value);
-
-    if (options.isPromise) {
-      var status = lang.string.print(options.promiseStatus),
-          value = options.promiseStatus === "pending" ?
-            undefined : print(options.promisedValue, lang.obj.merge(options, {isPromise: false}));
-      return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + value)}})`;
-    }
-    
-    if (value instanceof Promise)
-      return 'Promise({status: "unknown"})';
-    if (options.inspect) {
-      var printDepth = options.printDepth || 2;
-      return lang.obj.inspect(value, {maxDepth: printDepth})
-    }
-
-    // options.asString
-    return String(value);
-  }
-
-  EvalResult.prototype.printed = function(options) {
-    this.value = print(this.value, lang.obj.merge(options, {
-      isError: this.isError,
-      isPromise: this.isPromise,
-      promisedValue: this.promisedValue,
-      promiseStatus: this.promiseStatus,
-    }));
-  }
-
-  EvalResult.prototype.processSync = function(options) {
-    if (options.inspect || options.asString) this.value = this.print(this.value, options);
-    return this;
-  }
-
-  EvalResult.prototype.process = function(options) {
-    var result = this;
-    if (result.isPromise && options.waitForPromise) {
-      return tryToWaitForPromise(result, options.promiseTimeout)
-        .then(() => {
-          if (options.inspect || options.asString) result.printed(options);
-          return result;
-        });
-    }
-    if (options.inspect || options.asString) result.printed(options);
-    return Promise.resolve(result);
-  }
 
   function transformForVarRecord(
     code,
@@ -257,15 +156,15 @@
     blacklist = blacklist || [];
     blacklist.push("arguments");
     var undeclaredToTransform = recordGlobals ?
-          null/*all*/ : lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-        transformed = ast.capturing.rewriteToCaptureTopLevelVariables(
+          null/*all*/ : lively_lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
+        transformed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(
           code, {name: varRecorderName, type: "Identifier"},
           {es6ImportFuncId: es6ImportFuncId,
            es6ExportFuncId: es6ExportFuncId,
            ignoreUndeclaredExcept: undeclaredToTransform,
            exclude: blacklist, recordDefRanges: !!defRangeRecorder});
     code = transformed.source;
-    if (defRangeRecorder) lang.obj.extend(defRangeRecorder, transformed.defRanges);
+    if (defRangeRecorder) lively_lang.obj.extend(defRangeRecorder, transformed.defRanges);
     return code;
   }
 
@@ -275,7 +174,7 @@
     // evaluated consists just out of a single expression we will wrap it in
     // parens to allow for those cases
     try {
-      var parsed = ast.fuzzyParse(code);
+      var parsed = lively_ast.fuzzyParse(code);
       if (parsed.body.length === 1 &&
          (parsed.body[0].type === 'FunctionDeclaration'
       || (parsed.body[0].type === 'BlockStatement'
@@ -307,11 +206,52 @@
     return code;
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // options
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function _normalizeEvalOptions(opts) {
+    if (!opts) opts = {};
+    opts = lively_lang.obj.merge({
+      targetModule: null,
+      sourceURL: opts.targetModule,
+      runtime: null,
+      context: getGlobal(),
+      varRecorderName: '__lvVarRecorder',
+      dontTransform: [], // blacklist vars
+      topLevelDefRangeRecorder: null, // object for var ranges
+      recordGlobals: null,
+      returnPromise: true,
+      promiseTimeout: 200,
+      waitForPromise: true
+    }, opts);
+
+    if (opts.targetModule) {
+      var moduleEnv = opts.runtime
+                   && opts.runtime.modules
+                   && opts.runtime.modules[opts.targetModule];
+      if (moduleEnv) opts = lively_lang.obj.merge(opts, moduleEnv);
+    }
+
+    return opts;
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // eval
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   function getGlobal() {
+    if (typeof System !== "undefined") return System.global;
     if (typeof window !== "undefined") return window;
     if (typeof global !== "undefined") return global;
     if (typeof Global !== "undefined") return Global;
     return (function() { return this; })();
+  }
+
+  function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/) {
+    return eval(__lvEvalStatement);
   }
 
   function runEval(code, options, thenDo) {
@@ -326,7 +266,8 @@
     //   topLevelVarRecorder: OBJECT,
     //   context: OBJECT,
     //   sourceURL: STRING,
-    //   recordGlobals: BOOLEAN // also transform free vars? default is false
+    //   recordGlobals: BOOLEAN, // also transform free vars? default is false
+    //   transpiler: FUNCTION(source, options) // for transforming the source after the lively xfm
     // }
 
     if (typeof options === 'function' && arguments.length === 2) {
@@ -341,6 +282,7 @@
       code = evalCodeTransform(code, options);
       if (options.header) code = options.header + code;
       if (options.footer) code = code + options.footer;
+      if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
       // console.log(code);
     } catch (e) {
       var warning = "lively.vm evalCodeTransform not working: " + (e.stack || e);
@@ -383,8 +325,94 @@
     // Although the defaul eval is synchronous we assume that the general
     // evaluation might not return immediatelly. This makes is possible to
     // change the evaluation backend, e.g. to be a remotely attached runtime
-    options = lang.obj.merge(options, {sync: true});
+    options = lively_lang.obj.merge(options, {sync: true});
     return runEval(string, options);
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // EvalResult
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  class EvalResult {
+
+    constructor() {
+      this.isEvalResult = true;
+      this.value = undefined;
+      this.warnings = [];
+      this.isError = false;
+      this.isPromise = false;
+      this.promisedValue = undefined;
+      this.promiseStatus = "unknown";
+    }
+
+    printed(options) {
+      this.value = print(this.value, lively_lang.obj.merge(options, {
+        isError: this.isError,
+        isPromise: this.isPromise,
+        promisedValue: this.promisedValue,
+        promiseStatus: this.promiseStatus,
+      }));
+    }
+
+    processSync(options) {
+      if (options.inspect || options.asString)
+        this.value = this.print(this.value, options);
+      return this;
+    }
+
+    process(options) {
+      var result = this;
+      if (result.isPromise && options.waitForPromise) {
+        return tryToWaitForPromise(result, options.promiseTimeout)
+          .then(() => {
+            if (options.inspect || options.asString) result.printed(options);
+            return result;
+          });
+      }
+      if (options.inspect || options.asString) result.printed(options);
+      return Promise.resolve(result);
+    }
+
+  }
+
+  function tryToWaitForPromise(evalResult, timeoutMs) {
+    console.assert(evalResult.isPromise, "no promise in tryToWaitForPromise???");
+    var timeout = {},
+        timeoutP = new Promise(resolve => setTimeout(resolve, timeoutMs, timeout));
+    return Promise.race([timeoutP, evalResult.value])
+      .then(resolved => lively_lang.obj.extend(evalResult, resolved !== timeout ?
+              {promiseStatus: "fulfilled", promisedValue: resolved} :
+              {promiseStatus: "pending"}))
+      .catch(rejected => lively_lang.obj.extend(evalResult,
+              {promiseStatus: "rejected", promisedValue: rejected}))
+  }
+
+  function print(value, options) {
+    if (options.isError || value instanceof Error) return String(value.stack || value);
+
+    if (options.isPromise) {
+      var status = lively_lang.string.print(options.promiseStatus),
+          printed = options.promiseStatus === "pending" ?
+            undefined : print(options.promisedValue, lively_lang.obj.merge(options, {isPromise: false}));
+      return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + printed)}})`;
+    }
+    
+    if (value instanceof Promise)
+      return 'Promise({status: "unknown"})';
+
+    if (options.inspect) return printInspect(value, options);
+
+    // options.asString
+    return String(value);
+  }
+
+  function printInspect(value, options) {
+    var printDepth = options.printDepth || 2,
+        customPrintInspect = lively_lang.Path("lively.morphic.printInspect").get(getGlobal()),
+        customPrinter = customPrintInspect ? (val, _) =>
+          customPrintInspect(val, printDepth): undefined;
+    return lively_lang.obj.inspect(value, {maxDepth: printDepth, customPrinter: customPrinter})
   }
 
   exports.completions = completions;
