@@ -28,7 +28,6 @@ describe("eval", () => {
   var System;
   beforeEach(() => {
     System = getSystem("test", {baseURL: dir});
-    System.debug = true;
     return createFiles(testProjectDir, testProjectSpec)
       .then(() => System.import(module1));
   });

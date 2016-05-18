@@ -3,10 +3,10 @@ import { obj, promise, arr } from "lively.lang";
 import { moduleRecordFor, moduleEnv } from "./system.js";
 import { runEval as realRunEval, EvalResult } from "lively.vm/lib/evaluator.js";
 import { recordDoitRequest, recordDoitResult } from "./notify.js";
-
 import "babel-regenerator-runtime";
 
-// export { runEval, runEvalWithAsyncSupport }
+var { exprStmt, member, funcCall, returnStmt, id, tryStmt, program } = ast.nodes;
+
 export { runEvalWithAsyncSupport as runEval }
 
 function ensureImportsAreLoaded(System, code, parentModule) {
@@ -125,13 +125,12 @@ function interactiveAsyncAwaitTranspile(babel, filename, env, source, options) {
       funcDecls = ast.query.topLevelFuncDecls(parsed),
       innerBody = parsed.body,
       outerBody = [],
-      startEval = member(id(env.recorderName), literal('lively.modules-start-eval'), true),
-      endEval = member(env.recorderName, literal('lively.modules-end-eval'), true),
-      initializer = expr(funcCall(startEval)),
+      startEval = member(env.recorderName, 'lively.modules-start-eval'),
+      endEval = member(env.recorderName, 'lively.modules-end-eval', true),
+      initializer = exprStmt(funcCall(startEval)),
       transformedSource;
-
   funcDecls.forEach(({node, path}) => {
-    lively.lang.Path(path).set(parsed, expr(node.id));
+    lively.lang.Path(path).set(parsed, exprStmt(node.id));
     // lively.lang.Path(path.slice(1)).set(innerBody, expr(node.id));
     outerBody.push(node);
   });
@@ -141,16 +140,14 @@ function interactiveAsyncAwaitTranspile(babel, filename, env, source, options) {
   if (last.type === "ExpressionStatement") {
     var finalizer = returnStmt(funcCall(endEval, last.expression));
     innerBody.splice(innerBody.length-1, 1, finalizer)
-  // } else if (last.type === "FunctionDeclaration") {
-  //   var finalizer = returnStmt(funcCall(endEval, last.id));
-  //   innerBody.push(finalizer);
   } else {
     var finalizer = returnStmt(funcCall(endEval, id("undefined")));
     innerBody.push(finalizer);
   }
 
-  outerBody.push(tryStmt("err", [returnStmt(funcCall(endEval, id("err")))], null, ...innerBody));
-  transformedSource = lively.ast.stringify(program(...outerBody));
+  outerBody.push(tryStmt("err", [returnStmt(funcCall(endEval, id("err")))], ...innerBody));
+
+  transformedSource = ast.stringify(program(...outerBody));
 
   // The function wrapper is needed b/c we need toplevel awaits and babel
   // converts "this" => "undefined" for modules
@@ -247,73 +244,4 @@ function runEvalWithAsyncSupport(System, code, options) {
           throw err;
         })
     });
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-
-function funcExpression(opts = {}, params = [], ...statements) {
-  return {
-    type: (opts.arrow ? "Arrow" : "") + "FunctionExpression",
-    id: opts.id || undefined, params: params,
-    body: {body: statements, type: "BlockStatement"},
-    expression: opts.expression || false,
-    generator: opts.generator || false
-  }
-}
-
-function funcCall(callee, ...args) {
-  if (typeof callee === "string") callee = id(callee);
-  return {
-    type: "CallExpression",
-    callee: callee,
-    arguments: args
-  }
-}
-
-function varDecl(id, init, kind) {
-  if (typeof id === "string") id = {name: id, type: "Identifier"};
-  return {
-    type: "VariableDeclaration", kind: kind || "var",
-    declarations: [{type: "VariableDeclarator", id: id, init: init}]
-  }
-}
-
-function expr(expression) { return {type: "ExpressionStatement", expression: expression}; }
-
-function literal(value) { return {type: "Literal", value: value}; }
-
-function id(name) { return name === "this" ? {type: "ThisExpression"} : {name: name, type: "Identifier"}; }
-
-function returnStmt(expr) { return { type: "ReturnStatement", argument: expr}; }
-
-function member(obj, prop, computed) {
-  if (typeof obj === "string") obj = id(obj);
-  if (typeof prop === "string") prop = id(prop);
-  return {
-    type: "MemberExpression",
-    computed: !!computed,
-    object: obj, property: prop
-  }
-}
-
-function block(...body) {
-  return {body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement"};
-}
-
-function program(...body) {
-  return Object.assign(block(...body), {sourceType: "module", type: "Program"})
-}
-
-function tryStmt(exName, handlerBody, finalizerBody, ...body) {
-  return {
-    block: block(body),
-    finalizer: finalizerBody ? block(finalizerBody) : null,
-    handler: {
-      body: block(handlerBody),
-      param: id(exName),
-      type: "CatchClause"
-    },
-    type: "TryStatement"
-  }
 }
