@@ -1,8 +1,9 @@
 /*global require, process*/
 
-var fs = require("fs");
-var path = require("path");
-var rollup = require('rollup');
+var fs = require("fs"),
+    path = require("path"),
+    rollup = require('rollup'),
+    babel = require('rollup-plugin-babel');
 
 var targetFile1 = "dist/lively.ast.js";
 var targetFile2 = "dist/lively.ast_no-deps.js";
@@ -26,7 +27,12 @@ module.exports = Promise.resolve()
   // 2. bundle local esm modules
   .then(() => rollup.rollup({
     entry: "index.js",
-    external: [require.resolve('acorn-es7-plugin')]
+    // external: [require.resolve('acorn-es7-plugin')],
+    plugins: [
+      babel({
+        exclude: 'node_modules/**',
+        sourceMap: false,
+        "presets": [ "es2015-rollup" ]})]
   }))
   .then(bundle =>
     bundle.generate({
