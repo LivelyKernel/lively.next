@@ -16,7 +16,7 @@ function ConsoleReporter(runner) {
 
   runner.on('fail', function(test, err){
     failures++;
-    console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
+    console.log('fail: %s -- error: %s', test.fullTitle(), err.stack || err.message || err);
   });
 
   runner.on('end', function(){
