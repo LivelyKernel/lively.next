@@ -5056,7 +5056,19 @@ lp.lookAhead = function (n) {
 var asyncExit = /^async[\t ]+(return|throw)/ ;
 var asyncFunction = /^async[\t ]+function/ ;
 var atomOrPropertyOrLabel = /^\s*[):;]/ ;
-var asyncAtEndOfLine = /^async[\t ]*\n/ ;
+var removeComments = /([^\n])\/\*(\*(?!\/)|[^\n*])*\*\/([^\n])/g ;
+
+function hasLineTerminatorBeforeNext(st, since) {
+	return st.lineStart >= since;
+}
+
+function test(regex,st,noComment) {
+	var src = st.input.slice(st.start) ;
+	if (noComment) {
+		src = src.replace(removeComments,"$1 $3") ;
+  }
+	return regex.test(src);
+}
 
 /* Return the object holding the parser's 'State'. This is different between acorn ('this')
  * and babylon ('this.state') */
@@ -5102,39 +5114,43 @@ function asyncAwaitPlugin (parser,options){
       this.reservedWords = new RegExp(this.reservedWords.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrict = new RegExp(this.reservedWordsStrict.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrictBind = new RegExp(this.reservedWordsStrictBind.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
+			this.inAsyncFunction = options.inAsyncFunction ;
+			if (options.awaitAnywhere && options.inAsyncFunction)
+				parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
+
 			return base.apply(this,arguments);
 		}
 	}) ;
 
 	parser.extend("shouldParseExportStatement",function(base){
 	    return function(){
-	        if (this.type.label==='name' && this.value==='async' && asyncFunction.test(this.input.substr(this.start))) {
+	        if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
 	            return true ;
 	        }
 	        return base.apply(this,arguments) ;
 	    }
 	}) ;
-	
+
 	parser.extend("parseStatement",function(base){
 		return function (declaration, topLevel) {
 			var st = state(this) ;
 			var start = st.start;
 			var startLoc = st.startLoc;
 			if (st.type.label==='name') {
-				if (asyncFunction.test(st.input.slice(st.start))) {
+				if (test(asyncFunction,st,true)) {
 					var wasAsync = st.inAsyncFunction ;
 					try {
 						st.inAsyncFunction = true ;
 						this.next() ;
 						var r = this.parseStatement(declaration, topLevel) ;
-						r.async = true ;
+ 						r.async = true ;
 						r.start = start;
 						r.loc && (r.loc.start = startLoc);
 						return r ;
 					} finally {
 						st.inAsyncFunction = wasAsync ;
 					}
-				} else if ((typeof options==="object" && options.asyncExits) && asyncExit.test(st.input.slice(st.start))) {
+				} else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
 					// NON-STANDARD EXTENSION iff. options.asyncExits is set, the
 					// extensions 'async return <expr>?' and 'async throw <expr>?'
 					// are enabled. In each case they are the standard ESTree nodes
@@ -5171,7 +5187,7 @@ function asyncAwaitPlugin (parser,options){
 			var startLoc = st.startLoc;
 			var rhs,r = base.apply(this,arguments);
 			if (r.type==='Identifier') {
-				if (r.name==='async' && !asyncAtEndOfLine.test(st.input.slice(start))) {
+				if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
 					// Is this really an async function?
 					var isAsync = st.inAsyncFunction ;
 					try {
@@ -5280,7 +5296,7 @@ function asyncAwaitPlugin (parser,options){
 		return function (prop) {
 			var st = state(this) ;
 			var key = base.apply(this,arguments) ;
-			if (key.type === "Identifier" && key.name === "async") {
+			if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
 				// Look-ahead to see if this is really a property or label called async or await
 				if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
 					es7check(prop) ;
@@ -11839,7 +11855,6 @@ module.exports = function(acorn) {
   walk.addSource = addSource;
   walk.inspect = inspect;
   walk.withParentInfo = withParentInfo;
-  walk.toLKObjects = toLKObjects;
   walk.copy = copy;
   walk.findSiblings = findSiblings;
 
@@ -11908,7 +11923,7 @@ module.exports = function(acorn) {
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     source = typeof parsed === 'string' ? parsed : source;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -11924,7 +11939,7 @@ module.exports = function(acorn) {
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     source = typeof parsed === 'string' ? parsed : null;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -11997,230 +12012,6 @@ module.exports = function(acorn) {
       nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
     });
     return result;
-  };
-
-  function toLKObjects(parsed) {
-    if (!!!parsed.type) throw new Error('Given AST is not an Acorn AST.');
-    function newUndefined(start, end) {
-      start = start || -1;
-      end = end || -1;
-      return new Variable([start, end], 'undefined');
-    }
-    var visitors = {
-      Program: function Program(n, c) {
-        return new Sequence([n.start, n.end], n.body.map(c));
-      },
-      FunctionDeclaration: function FunctionDeclaration(n, c) {
-        var args = n.params.map(function (param) {
-          return new Variable([param.start, param.end], param.name);
-        });
-        var fn = new Function([n.id.end, n.end], c(n.body), args);
-        return new VarDeclaration([n.start, n.end], n.id.name, fn);
-      },
-      BlockStatement: function BlockStatement(n, c) {
-        var children = n.body.map(c);
-        return new Sequence([n.start + 1, n.end], children);
-      },
-      ExpressionStatement: function ExpressionStatement(n, c) {
-        return c(n.expression); // just skip it
-      },
-      CallExpression: function CallExpression(n, c) {
-        if (n.callee.type == 'MemberExpression' && n.type != 'NewExpression') {
-          // reused in NewExpression
-          // Send
-          var property; // property
-          var r = n.callee.object; // reciever
-          if (n.callee.computed) {
-            // object[property] => Expression
-            property = c(n.callee.property);
-          } else {
-            // object.property => Identifier
-            property = new String([n.callee.property.start, n.callee.property.end], n.callee.property.name);
-          }
-          return new Send([n.start, n.end], property, c(r), n.arguments.map(c));
-        } else {
-          return new Call([n.start, n.end], c(n.callee), n.arguments.map(c));
-        }
-      },
-      MemberExpression: function MemberExpression(n, c) {
-        var slotName;
-        if (n.computed) {
-          // object[property] => Expression
-          slotName = c(n.property);
-        } else {
-          // object.property => Identifier
-          slotName = new String([n.property.start, n.property.end], n.property.name);
-        }
-        return new GetSlot([n.start, n.end], slotName, c(n.object));
-      },
-      NewExpression: function NewExpression(n, c) {
-        return new New([n.start, n.end], this.CallExpression(n, c));
-      },
-      VariableDeclaration: function VariableDeclaration(n, c) {
-        var start = n.declarations[0] ? n.declarations[0].start - 1 : n.start;
-        return new Sequence([start, n.end], n.declarations.map(c));
-      },
-      VariableDeclarator: function VariableDeclarator(n, c) {
-        var value = n.init ? c(n.init) : newUndefined(n.start - 1, n.start - 1);
-        return new VarDeclaration([n.start - 1, n.end], n.id.name, value);
-      },
-      FunctionExpression: function FunctionExpression(n, c) {
-        var args = n.params.map(function (param) {
-          return new Variable([param.start, param.end], param.name);
-        });
-        return new Function([n.start, n.end], c(n.body), args);
-      },
-      IfStatement: function IfStatement(n, c) {
-        return new If([n.start, n.end], c(n.test), c(n.consequent), n.alternate ? c(n.alternate) : newUndefined(n.consequent.end, n.consequent.end));
-      },
-      ConditionalExpression: function ConditionalExpression(n, c) {
-        return new Cond([n.start, n.end], c(n.test), c(n.consequent), c(n.alternate));
-      },
-      SwitchStatement: function SwitchStatement(n, c) {
-        return new Switch([n.start, n.end], c(n.discriminant), n.cases.map(c));
-      },
-      SwitchCase: function SwitchCase(n, c) {
-        var start = n.consequent.length > 0 ? n.consequent[0].start : n.end;
-        var end = n.consequent.length > 0 ? n.consequent[n.consequent.length - 1].end : n.end;
-        var seq = new Sequence([start, end], n.consequent.map(c));
-        if (n.test != null) {
-          return new Case([n.start, n.end], c(n.test), seq);
-        } else {
-          return new Default([n.start, n.end], seq);
-        }
-      },
-      BreakStatement: function BreakStatement(n, c) {
-        var label;
-        if (n.label == null) {
-          label = new Label([n.end, n.end], '');
-        } else {
-          label = new Label([n.label.start, n.label.end], n.label.name);
-        }
-        return new Break([n.start, n.end], label);
-      },
-      ContinueStatement: function ContinueStatement(n, c) {
-        var label;
-        if (n.label == null) {
-          label = new Label([n.end, n.end], '');
-        } else {
-          label = new Label([n.label.start, n.label.end], n.label.name);
-        }
-        return new Continue([n.start, n.end], label);
-      },
-      TryStatement: function TryStatement(n, c) {
-        var errVar, catchSeq;
-        if (n.handler) {
-          catchSeq = c(n.handler.body);
-          errVar = c(n.handler.param);
-        } else {
-          catchSeq = newUndefined(n.block.end + 1, n.block.end + 1);
-          errVar = newUndefined(n.block.end + 1, n.block.end + 1);
-        }
-        var finallySeq = n.finalizer ? c(n.finalizer) : newUndefined(n.end, n.end);
-        return new TryCatchFinally([n.start, n.end], c(n.block), errVar, catchSeq, finallySeq);
-      },
-      ThrowStatement: function ThrowStatement(n, c) {
-        return new Throw([n.start, n.end], c(n.argument));
-      },
-      ForStatement: function ForStatement(n, c) {
-        var init = n.init ? c(n.init) : newUndefined(4, 4);
-        var cond = n.test ? c(n.test) : newUndefined(init.pos[1] + 1, init.pos[1] + 1);
-        var upd = n.update ? c(n.update) : newUndefined(cond.pos[1] + 1, cond.pos[1] + 1);
-        return new For([n.start, n.end], init, cond, c(n.body), upd);
-      },
-      ForInStatement: function ForInStatement(n, c) {
-        var left = n.left.type == 'VariableDeclaration' ? c(n.left.declarations[0]) : c(n.left);
-        return new ForIn([n.start, n.end], left, c(n.right), c(n.body));
-      },
-      WhileStatement: function WhileStatement(n, c) {
-        return new While([n.start, n.end], c(n.test), c(n.body));
-      },
-      DoWhileStatement: function DoWhileStatement(n, c) {
-        return new DoWhile([n.start, n.end], c(n.body), c(n.test));
-      },
-      WithStatement: function WithStatement(n, c) {
-        return new With([n.start, n.end], c(n.object), c(n.body));
-      },
-      UnaryExpression: function UnaryExpression(n, c) {
-        return new UnaryOp([n.start, n.end], n.operator, c(n.argument));
-      },
-      BinaryExpression: function BinaryExpression(n, c) {
-        return new BinaryOp([n.start, n.end], n.operator, c(n.left), c(n.right));
-      },
-      AssignmentExpression: function AssignmentExpression(n, c) {
-        if (n.operator == '=') {
-          return new Set([n.start, n.end], c(n.left), c(n.right));
-        } else {
-          return new ModifyingSet([n.start, n.end], c(n.left), n.operator.substr(0, n.operator.length - 1), c(n.right));
-        }
-      },
-      UpdateExpression: function UpdateExpression(n, c) {
-        if (n.prefix) {
-          return new PreOp([n.start, n.end], n.operator, c(n.argument));
-        } else {
-          return new PostOp([n.start, n.end], n.operator, c(n.argument));
-        }
-      },
-      ReturnStatement: function ReturnStatement(n, c) {
-        return new Return([n.start, n.end], n.argument ? c(n.argument) : newUndefined(n.end, n.end));
-      },
-      Identifier: function Identifier(n, c) {
-        return new Variable([n.start, n.end], n.name);
-      },
-      Literal: function Literal(n, c) {
-        if (Object.isNumber(n.value)) {
-          return new Number([n.start, n.end], n.value);
-        } else if (Object.isBoolean(n.value)) {
-          return new Variable([n.start, n.end], n.value.toString());
-        } else if (typeof n.value === 'string') {
-          return new String([n.start, n.end], n.value);
-        } else if (Object.isRegExp(n.value)) {
-          var flags = n.raw.substr(n.raw.lastIndexOf('/') + 1);
-          return new Regex([n.start, n.end], n.value.source, flags);
-        } else if (n.value === null) {
-          return new Variable([n.start, n.end], 'null');
-        }
-        throw new Error('Case of Literal not handled!');
-      },
-      ObjectExpression: function ObjectExpression(n, c) {
-        var props = n.properties.map(function (prop) {
-          var propName = prop.key.type == 'Identifier' ? prop.key.name : prop.key.value;
-          if (prop.kind == 'init') {
-            return new ObjProperty([prop.key.start, prop.value.end], propName, c(prop.value));
-          } else if (prop.kind == 'get') {
-            return new ObjPropertyGet([prop.key.start, prop.value.end], propName, c(prop.value.body));
-          } else if (prop.kind == 'set') {
-            return new ObjPropertySet([prop.key.start, prop.value.end], propName, c(prop.value.body), c(prop.value.params[0]));
-          } else {
-            throw new Error('Case of ObjectExpression not handled!');
-          }
-        });
-        return new ObjectLiteral([n.start, n.end], props);
-      },
-      ArrayExpression: function ArrayExpression(n, c) {
-        return new ArrayLiteral([n.start, n.end], n.elements.map(c));
-      },
-      SequenceExpression: function SequenceExpression(n, c) {
-        return new Sequence([n.start, n.end], n.expressions.map(c));
-      },
-      EmptyStatement: function EmptyStatement(n, c) {
-        return newUndefined(n.start, n.end);
-      },
-      ThisExpression: function ThisExpression(n, c) {
-        return new This([n.start, n.end]);
-      },
-      DebuggerStatement: function DebuggerStatement(n, c) {
-        return new Debugger([n.start, n.end]);
-      },
-      LabeledStatement: function LabeledStatement(n, c) {
-        return new LabelDeclaration([n.start, n.end], n.label.name, c(n.body));
-      }
-    };
-    visitors.LogicalExpression = visitors.BinaryExpression;
-    function c(node) {
-      return visitors[node.type](node, c);
-    }
-    return c(parsed);
   };
 
   function copy(ast, override) {
@@ -12679,44 +12470,6 @@ module.exports = function(acorn) {
     return ast.body[0].expression;
   }
 
-  function parseLikeOMeta(src, rule) {
-    // only an approximation, _like_ OMeta
-    var self = this;
-    function parse(source) {
-      return toLKObjects(self.parse(source));
-    }
-
-    var ast;
-    switch (rule) {
-      case 'expr':
-      case 'stmt':
-      case 'functionDef':
-        ast = parse(src);
-        if (ast.isSequence && ast.children.length == 1) {
-          ast = ast.children[0];
-          ast.setParent(undefined);
-        }
-        break;
-      case 'memberFragment':
-        src = '({' + src + '})'; // to make it valid
-        ast = parse(src);
-        ast = ast.children[0].properties[0];
-        ast.setParent(undefined);
-        break;
-      case 'categoryFragment':
-      case 'traitFragment':
-        src = '[' + src + ']'; // to make it valid
-        ast = parse(src);
-        ast = ast.children[0];
-        ast.setParent(undefined);
-        break;
-      default:
-        ast = parse(src);
-    }
-    ast.source = src;
-    return ast;
-  }
-
   function fuzzyParse(source, options) {
     // options: verbose, addSource, type
     options = options || {};
@@ -12724,7 +12477,7 @@ module.exports = function(acorn) {
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') {
@@ -12761,59 +12514,6 @@ module.exports = function(acorn) {
     return ast;
   }
 
-  function acornParseAsyncAware(source, options) {
-    var asyncSource = "async () => {\n" + source + "\n}",
-        offset = "async () => {\n".length;
-
-    if (options.onComment) {
-      var orig = options.onComment;
-      options.onComment = function (isBlock, text, start, end, line, column) {
-        start -= offset;
-        end -= offset;
-        return orig.call(this, isBlock, text, start, end, line, column);
-      };
-    }
-
-    var parsed = acorn.parse(asyncSource, options);
-    if (parsed.loc) {
-      var SourceLocation = parsed.loc.constructor;
-    }
-
-    parsed = { body: parsed.body[0].expression.body.body, sourceType: "module", type: "Program" };
-
-    AllNodesVisitor.run(parsed, function (node, state, path) {
-      if (node._positionFixed) return;
-      node._offsetFixed = true;
-      if (node.start || node.start === 0) {
-        node.start -= offset;
-        node.end -= offset;
-      }
-      if (node.loc && SourceLocation) {
-        var _node$loc = node.loc;
-        var _node$loc$start = _node$loc.start;
-        var sc = _node$loc$start.column;
-        var sl = _node$loc$start.line;
-        var _node$loc$end = _node$loc.end;
-        var ec = _node$loc$end.column;
-        var el = _node$loc$end.line;
-
-        node.loc = new SourceLocation(options, { column: sc, line: sl - 1 }, { column: ec, line: el - 1 });
-      }
-      if (options.addSource && !node.source) {
-        node.source = source.slice(node.start, node.end);
-      }
-    });
-
-    parsed.start = parsed.body[0].start;
-    parsed.end = lively_lang.arr.last(parsed.body).end;
-    if (options.addSource) parsed.source = source;
-    if (parsed.body[0].loc && SourceLocation) {
-      parsed.loc = new SourceLocation(options, parsed.body[0].loc.start, lively_lang.arr.last(parsed.body).loc.end);
-    }
-
-    return parsed;
-  }
-
   function parse(source, options) {
     // proxy function to acorn.parse.
     // Note that we will implement useful functionality on top of the pure
@@ -12837,7 +12537,7 @@ module.exports = function(acorn) {
     options.sourceType = options.sourceType || "module";
     if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     if (options.withComments) {
       // record comments
@@ -12853,30 +12553,32 @@ module.exports = function(acorn) {
       };
     }
 
-    // for properly parsing toplevel awaits. The asyncawait plugin offers this
-    // option but fails with nested expressions
-    var ast = acornParseAsyncAware(source, options);
+    var parsed = acorn.parse(source, options);
 
-    if (options.addAstIndex && !ast.hasOwnProperty('astIndex')) addAstIndex(ast);
+    if (options.addSource) AllNodesVisitor.run(parsed, function (node, state, path) {
+      return !node.source && (node.source = source.slice(node.start, node.end));
+    });
 
-    if (ast && comments) attachCommentsToAST({ ast: ast, comments: comments, nodesWithComments: [] });
+    if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
 
-    return ast;
+    if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
+
+    return parsed;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function attachCommentsToAST(commentData) {
       // for each comment: assign the comment to a block-level AST node
       commentData = mergeComments(assignCommentsToBlockNodes(commentData));
-      ast.allComments = commentData.comments;
+      parsed.allComments = commentData.comments;
     }
 
     function assignCommentsToBlockNodes(commentData) {
       comments.forEach(function (comment) {
-        var node = lively_lang.arr.detect(nodesAt(comment.start, ast).reverse(), function (node) {
+        var node = lively_lang.arr.detect(nodesAt(comment.start, parsed).reverse(), function (node) {
           return node.type === 'BlockStatement' || node.type === 'Program';
         });
-        if (!node) node = ast;
+        if (!node) node = parsed;
         if (!node.comments) node.comments = [];
         node.comments.push(comment);
         commentData.nodesWithComments.push(node);
@@ -14920,7 +14622,6 @@ var categorizer = Object.freeze({
   exports.rematchAstWithSource = rematchAstWithSource;
   exports.parse = parse;
   exports.parseFunction = parseFunction;
-  exports.parseLikeOMeta = parseLikeOMeta;
   exports.fuzzyParse = fuzzyParse;
   exports.escodegen = es;
   exports.acorn = acorn;

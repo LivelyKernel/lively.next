@@ -5054,7 +5054,19 @@ lp.lookAhead = function (n) {
 var asyncExit = /^async[\t ]+(return|throw)/ ;
 var asyncFunction = /^async[\t ]+function/ ;
 var atomOrPropertyOrLabel = /^\s*[):;]/ ;
-var asyncAtEndOfLine = /^async[\t ]*\n/ ;
+var removeComments = /([^\n])\/\*(\*(?!\/)|[^\n*])*\*\/([^\n])/g ;
+
+function hasLineTerminatorBeforeNext(st, since) {
+	return st.lineStart >= since;
+}
+
+function test(regex,st,noComment) {
+	var src = st.input.slice(st.start) ;
+	if (noComment) {
+		src = src.replace(removeComments,"$1 $3") ;
+  }
+	return regex.test(src);
+}
 
 /* Return the object holding the parser's 'State'. This is different between acorn ('this')
  * and babylon ('this.state') */
@@ -5100,39 +5112,43 @@ function asyncAwaitPlugin (parser,options){
       this.reservedWords = new RegExp(this.reservedWords.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrict = new RegExp(this.reservedWordsStrict.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrictBind = new RegExp(this.reservedWordsStrictBind.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
+			this.inAsyncFunction = options.inAsyncFunction ;
+			if (options.awaitAnywhere && options.inAsyncFunction)
+				parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
+
 			return base.apply(this,arguments);
 		}
 	}) ;
 
 	parser.extend("shouldParseExportStatement",function(base){
 	    return function(){
-	        if (this.type.label==='name' && this.value==='async' && asyncFunction.test(this.input.substr(this.start))) {
+	        if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
 	            return true ;
 	        }
 	        return base.apply(this,arguments) ;
 	    }
 	}) ;
-	
+
 	parser.extend("parseStatement",function(base){
 		return function (declaration, topLevel) {
 			var st = state(this) ;
 			var start = st.start;
 			var startLoc = st.startLoc;
 			if (st.type.label==='name') {
-				if (asyncFunction.test(st.input.slice(st.start))) {
+				if (test(asyncFunction,st,true)) {
 					var wasAsync = st.inAsyncFunction ;
 					try {
 						st.inAsyncFunction = true ;
 						this.next() ;
 						var r = this.parseStatement(declaration, topLevel) ;
-						r.async = true ;
+ 						r.async = true ;
 						r.start = start;
 						r.loc && (r.loc.start = startLoc);
 						return r ;
 					} finally {
 						st.inAsyncFunction = wasAsync ;
 					}
-				} else if ((typeof options==="object" && options.asyncExits) && asyncExit.test(st.input.slice(st.start))) {
+				} else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
 					// NON-STANDARD EXTENSION iff. options.asyncExits is set, the
 					// extensions 'async return <expr>?' and 'async throw <expr>?'
 					// are enabled. In each case they are the standard ESTree nodes
@@ -5169,7 +5185,7 @@ function asyncAwaitPlugin (parser,options){
 			var startLoc = st.startLoc;
 			var rhs,r = base.apply(this,arguments);
 			if (r.type==='Identifier') {
-				if (r.name==='async' && !asyncAtEndOfLine.test(st.input.slice(start))) {
+				if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
 					// Is this really an async function?
 					var isAsync = st.inAsyncFunction ;
 					try {
@@ -5278,7 +5294,7 @@ function asyncAwaitPlugin (parser,options){
 		return function (prop) {
 			var st = state(this) ;
 			var key = base.apply(this,arguments) ;
-			if (key.type === "Identifier" && key.name === "async") {
+			if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
 				// Look-ahead to see if this is really a property or label called async or await
 				if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
 					es7check(prop) ;
