@@ -439,10 +439,20 @@
 
   }).call(GLOBAL);
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast,evaluator) {
+(function (exports,lively_lang,ast,lively_vm_lib_evaluator_js) {
   'use strict';
 
   var babelHelpers = {};
+
+  babelHelpers.toConsumableArray = function (arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+      return arr2;
+    } else {
+      return Array.from(arr);
+    }
+  };
 
   babelHelpers.defineProperty = function (obj, key, value) {
     if (key in obj) {
@@ -693,7 +703,7 @@
     }
 
     try {
-      var rewrittenSource = header + evaluator.evalCodeTransform(source, tfmOptions) + footer;
+      var rewrittenSource = header + lively_vm_lib_evaluator_js.evalCodeTransform(source, tfmOptions) + footer;
       if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
       return rewrittenSource;
     } catch (e) {
@@ -946,6 +956,8 @@
 
     if (!isHookInstalled$1(System, "normalizeSync", "normalizeSyncHook")) installHook$1(System, "normalizeSync", normalizeSyncHook);
 
+    if (!isHookInstalled$1(System, "fetch", "fetch_lively_protocol")) installHook$1(System, "fetch", fetch_lively_protocol);
+
     config = lively_lang.obj.merge({ transpiler: 'babel', babelOptions: {} }, config);
 
     if (isNode) {
@@ -1062,6 +1074,16 @@
       return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
     }).url : null;
     return pName ? System.packages[pName] : null;
+  }
+
+  function fetch_lively_protocol(proceed, load) {
+    if (load.name.startsWith("lively://")) {
+      var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
+          worldId = match[1],
+          localObjectName = match[2];
+      return typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + load.name + "*/";
+    }
+    return proceed(load);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1925,10 +1947,105 @@
     });
   }
 
-  function runEval$1(System, code, options) {
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function babelTranspile(babel, filename, env, source, options) {
+    options = Object.assign({
+      modules: 'ignore',
+      sourceMap: undefined, // 'inline' || true || false
+      inputSourceMap: undefined,
+      filename: filename,
+      code: true,
+      ast: false
+    }, options);
+    return babel.transform(source, options).code;
+  }
+
+  function interactiveAsyncAwaitTranspile(babel, filename, env, source, options) {
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Object.assign(env, {
+      currentEval: { status: "not running" } // promise holder
+    });
+
+    Object.assign(env.recorder, {
+      'lively.modules-start-eval': function livelyModulesStartEval() {
+        env.currentEval = lively_lang.promise.deferred();
+        env.currentEval.status = "running";
+      },
+      'lively.modules-end-eval': function livelyModulesEndEval(value) {
+        var result = new lively_vm_lib_evaluator_js.EvalResult();
+        result.value = value;
+        env.currentEval.status = "not running";
+        env.currentEval.resolve(result);
+      }
+    });
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // source is already rewritten for capturing
+    // await isn't allowed top level so we wrap the code in an async function...
+    // var src = "async () => { await (await foo()).bar(); }";
+
+    var parsed = ast.parse(source),
+        funcDecls = ast.query.topLevelFuncDecls(parsed),
+        innerBody = parsed.body,
+        outerBody = [],
+        startEval = member(id(env.recorderName), literal('lively.modules-start-eval'), true),
+        endEval = member(env.recorderName, literal('lively.modules-end-eval'), true),
+        initializer = expr(funcCall(startEval)),
+        transformedSource;
+
+    funcDecls.forEach(function (_ref) {
+      var node = _ref.node;
+      var path = _ref.path;
+
+      lively.lang.Path(path).set(parsed, expr(node.id));
+      // lively.lang.Path(path.slice(1)).set(innerBody, expr(node.id));
+      outerBody.push(node);
+    });
+
+    innerBody.unshift(initializer);
+    var last = lively_lang.arr.last(innerBody);
+    if (last.type === "ExpressionStatement") {
+      var finalizer = returnStmt(funcCall(endEval, last.expression));
+      innerBody.splice(innerBody.length - 1, 1, finalizer);
+      // } else if (last.type === "FunctionDeclaration") {
+      //   var finalizer = returnStmt(funcCall(endEval, last.id));
+      //   innerBody.push(finalizer);
+    } else {
+        var finalizer = returnStmt(funcCall(endEval, id("undefined")));
+        innerBody.push(finalizer);
+      }
+
+    outerBody.push(tryStmt.apply(undefined, ["err", [returnStmt(funcCall(endEval, id("err")))], null].concat(babelHelpers.toConsumableArray(innerBody))));
+    transformedSource = lively.ast.stringify(program.apply(undefined, outerBody));
+
+    // rk 2016-05-17 FIXME: In some nested awaits like "await (await
+    // foo()).bar();" await (...) is mistaken for a function call whe rewriting
+
+    console.log(transformedSource);
+
+    return babelTranspile(babel, filename, env, "(async function(__rec) {\n" + (transformedSource + "\n") + "}).call(this);", options).replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+  }
+
+  function ensureEs6Transpiler(System, moduleId, env) {
+    if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
+
+    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (transpiler) {
+      // if (System.transpiler === "babel") return babelTranspile.bind(System.global, transpiler, moduleId, env);
+      if (System.transpiler === "babel") return interactiveAsyncAwaitTranspile.bind(System.global, transpiler, moduleId, env);
+      return null;
+    });
+  }
+
+  function runEvalWithAsyncSupport(System, code, options) {
     options = lively_lang.obj.merge({
       targetModule: null, parentModule: null,
-      parentAddress: null
+      parentAddress: null,
+      es6Transpile: true,
+      transpiler: null, // function with params: source, options
+      transpilerOptions: null
     }, options);
 
     var originalCode = code;
@@ -1938,42 +2055,114 @@
       return System.normalize(targetModule, options.parentModule, options.parentAddress);
     }).then(function (targetModule) {
       var fullname = options.targetModule = targetModule;
-
-      // throw new Error(`Cannot load module ${options.targetModule} (tried as ${fullName})\noriginal load error: ${e.stack}`)
+      var env = moduleEnv$1(System, fullname);
+      var recorder = env.recorder;
+      var recorderName = env.recorderName;
+      var dontTransform = env.dontTransform;
 
       return System["import"](fullname).then(function () {
         return ensureImportsAreLoaded(System, code, fullname);
       }).then(function () {
-        var env = moduleEnv$1(System, fullname),
-            rec = env.recorder,
-            recName = env.recorderName,
-            header = "var _moduleExport = " + recName + "._moduleExport,\n" + ("    _moduleImport = " + recName + "._moduleImport;\n");
+        return options.transpiler ? options.transpiler : options.es6Transpile ? ensureEs6Transpiler(System, options.targetModule, env) : null;
+      }).then(function (transpiler) {
+        var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
         code = header + code;
-
         options = lively_lang.obj.merge({ waitForPromise: true }, options, {
           recordGlobals: true,
-          dontTransform: env.dontTransform,
-          varRecorderName: recName,
-          topLevelVarRecorder: rec,
+          dontTransform: dontTransform,
+          varRecorderName: recorderName,
+          topLevelVarRecorder: recorder,
           sourceURL: options.sourceURL || options.targetModule,
-          context: options.context || rec,
+          context: options.context || recorder,
           es6ExportFuncId: "_moduleExport",
-          es6ImportFuncId: "_moduleImport"
+          es6ImportFuncId: "_moduleImport",
+          transpiler: transpiler
         });
 
-        // clearPendingModuleExportChanges(fullname);
-        // header: header
         recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
 
-        return evaluator.runEval(code, options).then(function (result) {
+        return lively_vm_lib_evaluator_js.runEval(code, options).then(function (result) {
+          return result.isError || !env.currentEval.promise ? result : env.currentEval.promise.then(function (result) {
+            return result.process(options).then(function () {
+              return result;
+            });
+          });
+        }).then(function (result) {
           System["__lively.modules__"].evaluationDone(fullname);
           recordDoitResult(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, result, Date.now());
           return result;
         });
       });
-      // .catch(err => console.error(err) || err)
     });
+  }
+
+  function funcCall(callee) {
+    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      args[_key2 - 1] = arguments[_key2];
+    }
+
+    if (typeof callee === "string") callee = id(callee);
+    return {
+      type: "CallExpression",
+      callee: callee,
+      arguments: args
+    };
+  }
+
+  function expr(expression) {
+    return { type: "ExpressionStatement", expression: expression };
+  }
+
+  function literal(value) {
+    return { type: "Literal", value: value };
+  }
+
+  function id(name) {
+    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
+  }
+
+  function returnStmt(expr) {
+    return { type: "ReturnStatement", argument: expr };
+  }
+
+  function member(obj, prop, computed) {
+    if (typeof obj === "string") obj = id(obj);
+    if (typeof prop === "string") prop = id(prop);
+    return {
+      type: "MemberExpression",
+      computed: !!computed,
+      object: obj, property: prop
+    };
+  }
+
+  function block() {
+    for (var _len3 = arguments.length, body = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      body[_key3] = arguments[_key3];
+    }
+
+    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
+  }
+
+  function program() {
+    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
+  }
+
+  function tryStmt(exName, handlerBody, finalizerBody) {
+    for (var _len4 = arguments.length, body = Array(_len4 > 3 ? _len4 - 3 : 0), _key4 = 3; _key4 < _len4; _key4++) {
+      body[_key4 - 3] = arguments[_key4];
+    }
+
+    return {
+      block: block(body),
+      finalizer: finalizerBody ? block(finalizerBody) : null,
+      handler: {
+        body: block(handlerBody),
+        param: id(exName),
+        type: "CatchClause"
+      },
+      type: "TryStatement"
+    };
   }
 
   var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
@@ -2044,8 +2233,8 @@
   function unwrapModuleLoad() {
     unwrapModuleLoad$1(exports.System);
   }
-  function runEval(code, options) {
-    return runEval$1(exports.System, code, options);
+  function runEval$1(code, options) {
+    return runEvalWithAsyncSupport(exports.System, code, options);
   }
   function getNotifications() {
     return getNotifications$1(exports.System);
@@ -2080,7 +2269,7 @@
   exports.removeHook = removeHook;
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
-  exports.runEval = runEval;
+  exports.runEval = runEval$1;
   exports.getNotifications = getNotifications;
   exports.subscribe = subscribe;
   exports.unsubscribe = unsubscribe;

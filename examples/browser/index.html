@@ -5,6 +5,7 @@
   </head>
   <body>
     <script src="../../node_modules/babel-core/browser.js"></script>
+    <script src="../../node_modules/babel-regenerator-runtime/runtime.js"></script>
     <script src="../../node_modules/systemjs/dist/system.src.js"></script>
     <script src="../../dist/lively.modules.js"></script>
     
@@ -18,26 +19,6 @@
           logEl.insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
         }
       }
-    </script>
-
-    <script>
-      // 1. Load the package at examples/browser/test-package/
-      // and import its main file
-      lively.modules.importPackage("test-package")
-        .then(module => log("Successfully loaded test-package: " + JSON.stringify(module)))
-        .then(() => {
-          // 2. The package will be automatically instrumented, allowing to
-          // inspect the runtime state of its modules and evaluating stuff inside
-          // it:
-          var expr = "x + 3";
-          lively.modules.runEval(expr, {targetModule: "test-package"})
-            .then(result => log(`evaluating ${expr}, result: ${JSON.stringify(result, null, 2)}`))
-        })
-        .catch(err => {
-          if (err.originalErr) log(err.originalErr.stack);
-          log(err.stack || err);
-        })
-
       function systemConfPrint() {
         var S = System;
         var json = {
@@ -52,16 +33,42 @@
         }
         return JSON.stringify(json, null, 2);
       }
+    </script>
 
-      function log(msg) {
-        console.log(msg);
-        var logEl = document.querySelector("#log");
-        if (logEl) {
-          var stringified = typeof msg === "object" ? JSON.stringify(msg, null, 2) : String(msg);
-          logEl.insertAdjacentHTML("beforeend", '<li><pre>' + stringified + '</li>');
-        }
-      }
-
+    <script>
+      // 1. Load the package at examples/browser/test-package/
+      // and import its main file
+      lively.modules.importPackage("test-package")
+        .then(module => log("Successfully loaded test-package: " + JSON.stringify(module)))
+        .then(() =>
+          // 2. The package will be automatically instrumented, allowing to
+          // inspect the runtime state of its modules and evaluating stuff inside
+          // it:
+          Promise.all([
+            Promise.resolve().then(() => {
+              log("Testing runEval...")
+              var code = "x + 3";
+              lively.modules.runEval(code, {targetModule: "test-package"})
+                .then(result => {
+                  if (result.isError) throw result.value;
+                  log(`evaluating ${code}, result: ${JSON.stringify(result, null, 2)}`)
+                })
+            }),
+  
+            Promise.resolve().then(() => {
+              log("Testing async eval...")
+              var code = "async function foo() { return new Promise((resolve, reject) => setTimeout(resolve, 300, 23)); }; await foo();";
+              lively.modules.runEval(code, {targetModule: "test-package"})
+                .then(result => {
+                  if (result.isError) throw result.value;
+                  log(`evaluating ${code}, result: ${JSON.stringify(result, null, 2)}`);
+                });
+            })
+          ]))
+        .catch(err => {
+          if (err.originalErr) log(err.originalErr.stack);
+          log(err.stack || err);
+        });
     </script>
   </body>
 </html>
