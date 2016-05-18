@@ -289,12 +289,18 @@ describe('query', function() {
       describe("obj destructuring", function() {
 
         describe("params", function() {
-          it("simple", function() {
-            var code = "({x}) => x",
-                result = query.topLevelDeclsAndRefs(code),
-                expected = [];
-            expect(expected).deep.equals(result.undeclaredNames);
-          });
+
+          it("simple", () =>
+            expect(query.topLevelDeclsAndRefs("({x}) => { x }").undeclaredNames).deep.equals([]));
+
+          it("default init", () =>
+            expect(query.topLevelDeclsAndRefs("({x} = {}) => { x }").undeclaredNames).deep.equals([]));
+
+          it("array", () =>
+            expect(query.topLevelDeclsAndRefs("([a, b, ...rest]) => { (a + b).concat(rest); }").undeclaredNames).deep.equals([]));
+
+          it("default init array", () =>
+            expect(query.topLevelDeclsAndRefs("([a, b, ...rest] = []) => { (a + b).concat(rest); }").undeclaredNames).deep.equals([]));
 
           it("alias", function() {
             var code = "({x: y}) => y",
