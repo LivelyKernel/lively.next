@@ -439,7 +439,7 @@
 
   }).call(GLOBAL);
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast,lively_vm_lib_evaluator_js) {
+(function (exports,lively_lang,ast,lively_vm_lib_evaluator_js,babelRegeneratorRuntime) {
   'use strict';
 
   var babelHelpers = {};
@@ -1963,8 +1963,9 @@
   }
 
   function interactiveAsyncAwaitTranspile(babel, filename, env, source, options) {
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // FIXME this needs to go somehwere else
     Object.assign(env, {
       currentEval: { status: "not running" } // promise holder
     });
@@ -2021,12 +2022,10 @@
     outerBody.push(tryStmt.apply(undefined, ["err", [returnStmt(funcCall(endEval, id("err")))], null].concat(babelHelpers.toConsumableArray(innerBody))));
     transformedSource = lively.ast.stringify(program.apply(undefined, outerBody));
 
-    // rk 2016-05-17 FIXME: In some nested awaits like "await (await
-    // foo()).bar();" await (...) is mistaken for a function call whe rewriting
-
-    console.log(transformedSource);
-
-    return babelTranspile(babel, filename, env, "(async function(__rec) {\n" + (transformedSource + "\n") + "}).call(this);", options).replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    // The function wrapper is needed b/c we need toplevel awaits and babel
+    // converts "this" => "undefined" for modules
+    var sourceForBabel = "(async function(__rec) {\n" + transformedSource + "\n}).call(this);";
+    return babelTranspile(babel, filename, env, sourceForBabel, options).replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
   }
 
   function ensureEs6Transpiler(System, moduleId, env) {
@@ -2274,6 +2273,6 @@
   exports.subscribe = subscribe;
   exports.unsubscribe = unsubscribe;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.vm));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.vm,regeneratorRuntime));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();
