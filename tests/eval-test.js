@@ -157,7 +157,7 @@ describe("eval", () => {
     it("nests await", () =>
       System.import(module4)
         .then(() => runEval(System, "await ('a').toUpperCase()", {targetModule: module4})
-        .then(result => expect(result).property("value").to.equal(3))));
+        .then(result => expect(result).property("value").to.equal("A"))));
 
   });
 });
