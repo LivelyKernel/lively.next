@@ -139,7 +139,7 @@ describe('ast.transform', function() {
 
       it("replaceNodeKeepsSourceFormatting", function() {
         var code              = 'var x = 3\n+ foo();',
-            parsed               = parse(code, {addSource: true}),
+            parsed            = parse(code, {addSource: true}),
             toReplace         = parsed.body[0].declarations[0].init.left,
             replacement       = function() { return {type: "Literal", value: "baz"}; },
             result            = replace(parsed, toReplace, replacement),

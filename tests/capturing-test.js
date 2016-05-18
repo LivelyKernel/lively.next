@@ -313,6 +313,9 @@ describe("ast.capturing", function() {
                + "_rec.x = x;\n"
                + "_rec.y = y;\nexport default function f() {\n}\n_rec.f = f;");
 
+      testVarTfm("var x = 23; export { x };",
+                 "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x\n};");
+
       testVarTfm("var x = 23; export { x as y };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x as y\n};");
 
@@ -321,6 +324,15 @@ describe("ast.capturing", function() {
 
       testVarTfm("export function x() {};",
                  '_rec.x = x;\nexport function x() {\n}\n_rec.x = x;\n;'); // hmmm, could be better!
+
+      testVarTfm("export default function x() {};",
+                 '_rec.x = x;\nexport default function x() {\n}\n_rec.x = x;\n;'); // hmmm, could be better!
+
+      testVarTfm("export class Foo {};",
+                 'export class Foo {\n}\n_rec.Foo = Foo;\n;');
+
+      testVarTfm("export default class Foo {};",
+                 'export default class Foo {\n}\n_rec.Foo = Foo;\n;');
 
       testVarTfm('import * as completions from "./lib/completions.js";\n'
                + "export { completions }",
