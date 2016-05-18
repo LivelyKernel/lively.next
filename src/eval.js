@@ -4,6 +4,8 @@ import { moduleRecordFor, moduleEnv } from "./system.js";
 import { runEval as realRunEval, EvalResult } from "lively.vm/lib/evaluator.js";
 import { recordDoitRequest, recordDoitResult } from "./notify.js";
 
+import "babel-regenerator-runtime";
+
 // export { runEval, runEvalWithAsyncSupport }
 export { runEvalWithAsyncSupport as runEval }
 

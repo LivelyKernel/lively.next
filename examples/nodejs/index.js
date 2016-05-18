@@ -1,4 +1,3 @@
-require("babel-regenerator-runtime");
 var System = require("systemjs")
 var modules = require("../../dist/lively.modules.js")
 
