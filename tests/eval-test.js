@@ -14,7 +14,7 @@ var dir = System.normalizeSync("lively.modules/tests/"),
       "file1.js": "import { y } from './file2.js'; var z = 2; export var x = y + z;",
       "file2.js": "import { z } from './file3.js'; export var y = z;",
       "file3.js": "export var z = 1;",
-      // "file4.js": "export async function foo(arg) { return new Promise((resolve, reject) => setTimeout(resolve, 200, arg)); }",
+      "file4.js": "export async function foo(arg) { return new Promise((resolve, reject) => setTimeout(resolve, 200, arg)); }",
       "package.json": '{"name": "test-project-1", "main": "file1.js"}',
     },
 
