@@ -57,6 +57,18 @@ describe('query', function() {
 
   });
 
+  describe("toplevel func decls", () => {
+
+    it("tested-action", () => {
+      var code = "var baz = function zork() { function barf() {} }\nfunction foo() { function bar() {}; }",
+          parsed = parse(code),
+          funcDecls = query.topLevelFuncDecls(parsed);
+      expect(funcDecls).to.deep.equal([{node: parsed.body[1], path: ["body", 1]}]);
+    });
+
+  });
+
+
   describe("scoping", () => {
 
     it("scopes", function() {
