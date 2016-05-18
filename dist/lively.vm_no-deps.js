@@ -416,6 +416,7 @@
   }
 
   exports.completions = completions;
+  exports.EvalResult = EvalResult;
   exports.transformForVarRecord = transformForVarRecord;
   exports.transformSingleExpression = transformSingleExpression;
   exports.evalCodeTransform = evalCodeTransform;
