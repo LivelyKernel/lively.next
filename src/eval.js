@@ -26,6 +26,8 @@ function runEval(System, code, options) {
 
   var originalCode = code;
 
+  System.debug && console.log(`[lively.module] runEval: ${code.slice(0,100).replace(/\n/mg, " ")}...`);
+
   return Promise.resolve()
     .then(() => {
       var targetModule = options.targetModule || "*scratch*";
@@ -33,6 +35,8 @@ function runEval(System, code, options) {
     })
     .then((targetModule) => {
       var fullname = options.targetModule = targetModule;
+      System.debug && console.log(`[lively.module] runEval in module ${targetModule} started`);
+
       return System.import(fullname)
         .then(() => ensureImportsAreLoaded(System, code, fullname))
         .then(() => {
@@ -60,6 +64,7 @@ function runEval(System, code, options) {
             Date.now());
 
           return realRunEval(code, options).then(result => {
+            System.debug && console.log(`[lively.module] runEval in module ${targetModule} done`);
             System["__lively.modules__"].evaluationDone(fullname);
             recordDoitResult(
               System, originalCode,
@@ -178,6 +183,8 @@ function runEvalWithAsyncSupport(System, code, options) {
 
   var originalCode = code;
 
+  System.debug && console.log(`[lively.module] runEval: ${code.slice(0,100).replace(/\n/mg, " ")}...`);
+
   return Promise.resolve()
     .then(() => {
       var targetModule = options.targetModule || "*scratch*";
@@ -212,11 +219,12 @@ function runEvalWithAsyncSupport(System, code, options) {
               transpiler: transpiler
             });
 
+          System.debug && console.log(`[lively.module] runEval in module ${fullname} started`);
+
           recordDoitRequest(
             System, originalCode,
             {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
             Date.now());
-
           return realRunEval(code, options)
             .then(result =>
               result.isError || !env.currentEval.promise ?
@@ -226,12 +234,17 @@ function runEvalWithAsyncSupport(System, code, options) {
                 }))
             .then(result => {
               System["__lively.modules__"].evaluationDone(fullname);
+              System.debug && console.log(`[lively.module] runEval in module ${targetModule} done`);
               recordDoitResult(
                 System, originalCode,
                 {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
                 result, Date.now());
               return result;
             })
+        })
+        .catch(err => {
+          console.error(`Error in runEval: ${err.stack}`);
+          throw err;
         })
     });
 }

@@ -23253,6 +23253,8 @@ var categorizer = Object.freeze({
 
     var originalCode = code;
 
+    System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
+
     return Promise.resolve().then(function () {
       var targetModule = options.targetModule || "*scratch*";
       return System.normalize(targetModule, options.parentModule, options.parentAddress);
@@ -23283,8 +23285,9 @@ var categorizer = Object.freeze({
           transpiler: transpiler
         });
 
-        recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
+        System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
+        recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
         return lively_vm_lib_evaluator_js.runEval(code, options).then(function (result) {
           return result.isError || !env.currentEval.promise ? result : env.currentEval.promise.then(function (result) {
             return result.process(options).then(function () {
@@ -23293,9 +23296,13 @@ var categorizer = Object.freeze({
           });
         }).then(function (result) {
           System["__lively.modules__"].evaluationDone(fullname);
+          System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
           recordDoitResult(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, result, Date.now());
           return result;
         });
+      })["catch"](function (err) {
+        console.error("Error in runEval: " + err.stack);
+        throw err;
       });
     });
   }

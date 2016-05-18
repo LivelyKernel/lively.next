@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/lively.modules.js",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
@@ -40,14 +40,14 @@
     "babel-core": "^5.8.38",
     "babel-regenerator-runtime": "^6.5.0",
     "lively.ast": "^0.6.8",
-    "lively.lang": "^0.5.22",
-    "lively.vm": "^0.5.3",
+    "lively.lang": "^0.5.23",
+    "lively.vm": "^0.5.4",
     "systemjs": "^0.19.24",
     "whatwg-fetch": "^1.0.0"
   },
   "devDependencies": {
     "doc-comments": "^0.1.4",
-    "mocha-es6": "^0.2.7",
+    "mocha-es6": "^0.2.8",
     "rollup-plugin-babel": "^1.0.0"
   }
 }
