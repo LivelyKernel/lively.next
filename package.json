@@ -37,7 +37,8 @@
   },
   "dependencies": {
     "babel-core": "^5.8.38",
-    "lively.ast": "^0.6.7",
+    "babel-regenerator-runtime": "^6.5.0",
+    "lively.ast": "^0.6.8",
     "lively.lang": "^0.5.22",
     "lively.vm": "^0.5.3",
     "systemjs": "^0.19.24",

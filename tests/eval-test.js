@@ -14,12 +14,14 @@ var dir = System.normalizeSync("lively.modules/tests/"),
       "file1.js": "import { y } from './file2.js'; var z = 2; export var x = y + z;",
       "file2.js": "import { z } from './file3.js'; export var y = z;",
       "file3.js": "export var z = 1;",
+      "file4.js": "export async function foo(arg) { return new Promise((resolve, reject) => setTimeout(resolve, 200, arg)); }",
       "package.json": '{"name": "test-project-1", "main": "file1.js"}',
     },
+
     module1 = testProjectDir + "file1.js",
     module2 = testProjectDir + "file2.js",
-    module3 = testProjectDir + "file3.js";
-
+    module3 = testProjectDir + "file3.js",
+    module4 = testProjectDir + "file4.js";
 
 describe("eval", () => {
 
@@ -136,4 +138,26 @@ describe("eval", () => {
       .then(() => System.import(module1))
       .then(m => expect(m.x).to.equal(4)));
 
+  describe("es6 code", () => {
+
+    it("**", () =>
+      System.import(module1)
+        .then(() => runEval(System, "z ** 4", {targetModule: module1})
+        .then(result => expect(result).property("value").to.equal(16))));
+
+  });
+
+  describe("async", () => {
+
+    it("awaits async function", () =>
+      System.import(module4)
+        .then(() => runEval(System, "await foo(3)", {targetModule: module4})
+        .then(result => expect(result).property("value").to.equal(3))));
+
+    it("nests await", () =>
+      System.import(module4)
+        .then(() => runEval(System, "await ('a').toUpperCase()", {targetModule: module4})
+        .then(result => expect(result).property("value").to.equal(3))));
+
+  });
 });
