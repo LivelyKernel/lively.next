@@ -92,6 +92,10 @@ function prepareSystem(System, config) {
   if (!isHookInstalled(System, "normalizeSync", "normalizeSyncHook"))
     installHook(System, "normalizeSync", normalizeSyncHook);
 
+
+  if (!isHookInstalled(System, "fetch", "fetch_lively_protocol"))
+    installHook(System, "fetch", fetch_lively_protocol);
+
   config = obj.merge({transpiler: 'babel', babelOptions: {}}, config);
 
   if (isNode) {
@@ -216,6 +220,17 @@ function normalize_packageOfURL(url, System) {
   return pName ? System.packages[pName] : null;
 }
 
+function fetch_lively_protocol(proceed, load) {
+  if (load.name.startsWith("lively://")) {
+    var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
+        worldId = match[1], localObjectName = match[2];
+    return (typeof $morph !== "undefined"
+         && $morph(localObjectName)
+         && $morph(localObjectName).textString)
+        || `/*Could not locate ${load.name}*/`;
+  }
+  return proceed(load);
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // debugging
