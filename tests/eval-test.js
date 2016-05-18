@@ -35,7 +35,7 @@ describe("eval", () => {
 
   afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
 
-  it.only("inside of module", () =>
+  it("inside of module", () =>
     runEval(System, "1 + z + x", {targetModule: module1})
       .then(result => expect(result.value).equals(6)));
 
