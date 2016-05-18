@@ -2,6 +2,9 @@
   "name": "lively.modules",
   "version": "0.3.1",
   "main": "dist/lively.modules.js",
+  "repository": "https://github.com/LivelyKernel/lively.modules",
+  "author": "Robert Krahn <robert.krahn@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
     "build": "node tools/build.js"
@@ -47,7 +50,7 @@
   },
   "devDependencies": {
     "doc-comments": "^0.1.4",
-    "mocha-es6": "^0.2.8",
+    "mocha-es6": "^0.2.9",
     "rollup-plugin-babel": "^1.0.0"
   }
 }
