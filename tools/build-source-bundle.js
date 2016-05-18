@@ -16,13 +16,7 @@ var vmSource = fs.readFileSync(require.resolve("lively.vm/dist/lively.vm_no-deps
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
-    plugins: [
-      // builtins(),
-      babel({
-        exclude: 'node_modules/**',
-        sourceMap: true
-      })
-    ]
+    plugins: [babel({exclude: 'node_modules/**', sourceMap: true})]
   }))
   .then(bundle =>
     bundle.generate({
@@ -31,10 +25,7 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
-        "lively.vm/lib/evaluator.js": "lively.vm",
-        // "escodegen": "GLOBAL.escodegen",
-        // "module": "typeof module !== 'undefined' ? module.constructor : {}",
-        // "fs": "typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: () => { throw new Error('fs module not available'); }}"
+        "lively.vm/lib/evaluator.js": "lively.vm"
       },
     }))
 
@@ -58,5 +49,8 @@ module.exports = Promise.resolve()
     return {noDeps: noDeps, complete: complete};
   })
 
-  // 4. inject dependencies
-  .then(sources => { fs.writeFileSync(targetFile1, sources.noDeps); fs.writeFileSync(targetFile2, sources.complete); })
+  // 4. create files
+  .then(sources => {
+    fs.writeFileSync(targetFile1, sources.noDeps);
+    fs.writeFileSync(targetFile2, sources.complete);
+  });
