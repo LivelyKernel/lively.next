@@ -10260,99 +10260,286 @@ module.exports = function(acorn) {
 (function (exports,lively_lang,escodegen,acorn$1) {
   'use strict';
 
+  var babelHelpers = {};
+  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
+
+  babelHelpers.classCallCheck = function (instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  };
+
+  babelHelpers.createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  babelHelpers.defineProperty = function (obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  };
+
+  babelHelpers.get = function get(object, property, receiver) {
+    if (object === null) object = Function.prototype;
+    var desc = Object.getOwnPropertyDescriptor(object, property);
+
+    if (desc === undefined) {
+      var parent = Object.getPrototypeOf(object);
+
+      if (parent === null) {
+        return undefined;
+      } else {
+        return get(parent, property, receiver);
+      }
+    } else if ("value" in desc) {
+      return desc.value;
+    } else {
+      var getter = desc.get;
+
+      if (getter === undefined) {
+        return undefined;
+      }
+
+      return getter.call(receiver);
+    }
+  };
+
+  babelHelpers.inherits = function (subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  };
+
+  babelHelpers.possibleConstructorReturn = function (self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  };
+
+  babelHelpers.toConsumableArray = function (arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+      return arr2;
+    } else {
+      return Array.from(arr);
+    }
+  };
+
+  babelHelpers;
+
   // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
   // Generated on 16-05-16 00:26 GMT+0200
+
   function Visitor() {}
   Visitor.prototype.accept = function accept(node, state, path) {
     if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
     if (!node.type) throw new Error("Strangee AST node without type in Visitor.accept:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
-    switch(node.type) {
-      case "Node": return this.visitNode(node, state, path);
-      case "SourceLocation": return this.visitSourceLocation(node, state, path);
-      case "Position": return this.visitPosition(node, state, path);
-      case "Program": return this.visitProgram(node, state, path);
-      case "Function": return this.visitFunction(node, state, path);
-      case "Statement": return this.visitStatement(node, state, path);
-      case "SwitchCase": return this.visitSwitchCase(node, state, path);
-      case "CatchClause": return this.visitCatchClause(node, state, path);
-      case "VariableDeclarator": return this.visitVariableDeclarator(node, state, path);
-      case "Expression": return this.visitExpression(node, state, path);
-      case "Property": return this.visitProperty(node, state, path);
-      case "Pattern": return this.visitPattern(node, state, path);
-      case "Super": return this.visitSuper(node, state, path);
-      case "SpreadElement": return this.visitSpreadElement(node, state, path);
-      case "TemplateElement": return this.visitTemplateElement(node, state, path);
-      case "Class": return this.visitClass(node, state, path);
-      case "ClassBody": return this.visitClassBody(node, state, path);
-      case "MethodDefinition": return this.visitMethodDefinition(node, state, path);
-      case "ModuleDeclaration": return this.visitModuleDeclaration(node, state, path);
-      case "ModuleSpecifier": return this.visitModuleSpecifier(node, state, path);
-      case "Identifier": return this.visitIdentifier(node, state, path);
-      case "Literal": return this.visitLiteral(node, state, path);
-      case "ExpressionStatement": return this.visitExpressionStatement(node, state, path);
-      case "BlockStatement": return this.visitBlockStatement(node, state, path);
-      case "EmptyStatement": return this.visitEmptyStatement(node, state, path);
-      case "DebuggerStatement": return this.visitDebuggerStatement(node, state, path);
-      case "WithStatement": return this.visitWithStatement(node, state, path);
-      case "ReturnStatement": return this.visitReturnStatement(node, state, path);
-      case "LabeledStatement": return this.visitLabeledStatement(node, state, path);
-      case "BreakStatement": return this.visitBreakStatement(node, state, path);
-      case "ContinueStatement": return this.visitContinueStatement(node, state, path);
-      case "IfStatement": return this.visitIfStatement(node, state, path);
-      case "SwitchStatement": return this.visitSwitchStatement(node, state, path);
-      case "ThrowStatement": return this.visitThrowStatement(node, state, path);
-      case "TryStatement": return this.visitTryStatement(node, state, path);
-      case "WhileStatement": return this.visitWhileStatement(node, state, path);
-      case "DoWhileStatement": return this.visitDoWhileStatement(node, state, path);
-      case "ForStatement": return this.visitForStatement(node, state, path);
-      case "ForInStatement": return this.visitForInStatement(node, state, path);
-      case "Declaration": return this.visitDeclaration(node, state, path);
-      case "ThisExpression": return this.visitThisExpression(node, state, path);
-      case "ArrayExpression": return this.visitArrayExpression(node, state, path);
-      case "ObjectExpression": return this.visitObjectExpression(node, state, path);
-      case "FunctionExpression": return this.visitFunctionExpression(node, state, path);
-      case "UnaryExpression": return this.visitUnaryExpression(node, state, path);
-      case "UpdateExpression": return this.visitUpdateExpression(node, state, path);
-      case "BinaryExpression": return this.visitBinaryExpression(node, state, path);
-      case "AssignmentExpression": return this.visitAssignmentExpression(node, state, path);
-      case "LogicalExpression": return this.visitLogicalExpression(node, state, path);
-      case "MemberExpression": return this.visitMemberExpression(node, state, path);
-      case "ConditionalExpression": return this.visitConditionalExpression(node, state, path);
-      case "CallExpression": return this.visitCallExpression(node, state, path);
-      case "SequenceExpression": return this.visitSequenceExpression(node, state, path);
-      case "ArrowFunctionExpression": return this.visitArrowFunctionExpression(node, state, path);
-      case "YieldExpression": return this.visitYieldExpression(node, state, path);
-      case "TemplateLiteral": return this.visitTemplateLiteral(node, state, path);
-      case "TaggedTemplateExpression": return this.visitTaggedTemplateExpression(node, state, path);
-      case "AssignmentProperty": return this.visitAssignmentProperty(node, state, path);
-      case "ObjectPattern": return this.visitObjectPattern(node, state, path);
-      case "ArrayPattern": return this.visitArrayPattern(node, state, path);
-      case "RestElement": return this.visitRestElement(node, state, path);
-      case "AssignmentPattern": return this.visitAssignmentPattern(node, state, path);
-      case "ClassExpression": return this.visitClassExpression(node, state, path);
-      case "MetaProperty": return this.visitMetaProperty(node, state, path);
-      case "ImportDeclaration": return this.visitImportDeclaration(node, state, path);
-      case "ImportSpecifier": return this.visitImportSpecifier(node, state, path);
-      case "ImportDefaultSpecifier": return this.visitImportDefaultSpecifier(node, state, path);
-      case "ImportNamespaceSpecifier": return this.visitImportNamespaceSpecifier(node, state, path);
-      case "ExportNamedDeclaration": return this.visitExportNamedDeclaration(node, state, path);
-      case "ExportSpecifier": return this.visitExportSpecifier(node, state, path);
-      case "ExportDefaultDeclaration": return this.visitExportDefaultDeclaration(node, state, path);
-      case "ExportAllDeclaration": return this.visitExportAllDeclaration(node, state, path);
-      case "AwaitExpression": return this.visitAwaitExpression(node, state, path);
-      case "RegExpLiteral": return this.visitRegExpLiteral(node, state, path);
-      case "FunctionDeclaration": return this.visitFunctionDeclaration(node, state, path);
-      case "VariableDeclaration": return this.visitVariableDeclaration(node, state, path);
-      case "NewExpression": return this.visitNewExpression(node, state, path);
-      case "ForOfStatement": return this.visitForOfStatement(node, state, path);
-      case "ClassDeclaration": return this.visitClassDeclaration(node, state, path);
+    switch (node.type) {
+      case "Node":
+        return this.visitNode(node, state, path);
+      case "SourceLocation":
+        return this.visitSourceLocation(node, state, path);
+      case "Position":
+        return this.visitPosition(node, state, path);
+      case "Program":
+        return this.visitProgram(node, state, path);
+      case "Function":
+        return this.visitFunction(node, state, path);
+      case "Statement":
+        return this.visitStatement(node, state, path);
+      case "SwitchCase":
+        return this.visitSwitchCase(node, state, path);
+      case "CatchClause":
+        return this.visitCatchClause(node, state, path);
+      case "VariableDeclarator":
+        return this.visitVariableDeclarator(node, state, path);
+      case "Expression":
+        return this.visitExpression(node, state, path);
+      case "Property":
+        return this.visitProperty(node, state, path);
+      case "Pattern":
+        return this.visitPattern(node, state, path);
+      case "Super":
+        return this.visitSuper(node, state, path);
+      case "SpreadElement":
+        return this.visitSpreadElement(node, state, path);
+      case "TemplateElement":
+        return this.visitTemplateElement(node, state, path);
+      case "Class":
+        return this.visitClass(node, state, path);
+      case "ClassBody":
+        return this.visitClassBody(node, state, path);
+      case "MethodDefinition":
+        return this.visitMethodDefinition(node, state, path);
+      case "ModuleDeclaration":
+        return this.visitModuleDeclaration(node, state, path);
+      case "ModuleSpecifier":
+        return this.visitModuleSpecifier(node, state, path);
+      case "Identifier":
+        return this.visitIdentifier(node, state, path);
+      case "Literal":
+        return this.visitLiteral(node, state, path);
+      case "ExpressionStatement":
+        return this.visitExpressionStatement(node, state, path);
+      case "BlockStatement":
+        return this.visitBlockStatement(node, state, path);
+      case "EmptyStatement":
+        return this.visitEmptyStatement(node, state, path);
+      case "DebuggerStatement":
+        return this.visitDebuggerStatement(node, state, path);
+      case "WithStatement":
+        return this.visitWithStatement(node, state, path);
+      case "ReturnStatement":
+        return this.visitReturnStatement(node, state, path);
+      case "LabeledStatement":
+        return this.visitLabeledStatement(node, state, path);
+      case "BreakStatement":
+        return this.visitBreakStatement(node, state, path);
+      case "ContinueStatement":
+        return this.visitContinueStatement(node, state, path);
+      case "IfStatement":
+        return this.visitIfStatement(node, state, path);
+      case "SwitchStatement":
+        return this.visitSwitchStatement(node, state, path);
+      case "ThrowStatement":
+        return this.visitThrowStatement(node, state, path);
+      case "TryStatement":
+        return this.visitTryStatement(node, state, path);
+      case "WhileStatement":
+        return this.visitWhileStatement(node, state, path);
+      case "DoWhileStatement":
+        return this.visitDoWhileStatement(node, state, path);
+      case "ForStatement":
+        return this.visitForStatement(node, state, path);
+      case "ForInStatement":
+        return this.visitForInStatement(node, state, path);
+      case "Declaration":
+        return this.visitDeclaration(node, state, path);
+      case "ThisExpression":
+        return this.visitThisExpression(node, state, path);
+      case "ArrayExpression":
+        return this.visitArrayExpression(node, state, path);
+      case "ObjectExpression":
+        return this.visitObjectExpression(node, state, path);
+      case "FunctionExpression":
+        return this.visitFunctionExpression(node, state, path);
+      case "UnaryExpression":
+        return this.visitUnaryExpression(node, state, path);
+      case "UpdateExpression":
+        return this.visitUpdateExpression(node, state, path);
+      case "BinaryExpression":
+        return this.visitBinaryExpression(node, state, path);
+      case "AssignmentExpression":
+        return this.visitAssignmentExpression(node, state, path);
+      case "LogicalExpression":
+        return this.visitLogicalExpression(node, state, path);
+      case "MemberExpression":
+        return this.visitMemberExpression(node, state, path);
+      case "ConditionalExpression":
+        return this.visitConditionalExpression(node, state, path);
+      case "CallExpression":
+        return this.visitCallExpression(node, state, path);
+      case "SequenceExpression":
+        return this.visitSequenceExpression(node, state, path);
+      case "ArrowFunctionExpression":
+        return this.visitArrowFunctionExpression(node, state, path);
+      case "YieldExpression":
+        return this.visitYieldExpression(node, state, path);
+      case "TemplateLiteral":
+        return this.visitTemplateLiteral(node, state, path);
+      case "TaggedTemplateExpression":
+        return this.visitTaggedTemplateExpression(node, state, path);
+      case "AssignmentProperty":
+        return this.visitAssignmentProperty(node, state, path);
+      case "ObjectPattern":
+        return this.visitObjectPattern(node, state, path);
+      case "ArrayPattern":
+        return this.visitArrayPattern(node, state, path);
+      case "RestElement":
+        return this.visitRestElement(node, state, path);
+      case "AssignmentPattern":
+        return this.visitAssignmentPattern(node, state, path);
+      case "ClassExpression":
+        return this.visitClassExpression(node, state, path);
+      case "MetaProperty":
+        return this.visitMetaProperty(node, state, path);
+      case "ImportDeclaration":
+        return this.visitImportDeclaration(node, state, path);
+      case "ImportSpecifier":
+        return this.visitImportSpecifier(node, state, path);
+      case "ImportDefaultSpecifier":
+        return this.visitImportDefaultSpecifier(node, state, path);
+      case "ImportNamespaceSpecifier":
+        return this.visitImportNamespaceSpecifier(node, state, path);
+      case "ExportNamedDeclaration":
+        return this.visitExportNamedDeclaration(node, state, path);
+      case "ExportSpecifier":
+        return this.visitExportSpecifier(node, state, path);
+      case "ExportDefaultDeclaration":
+        return this.visitExportDefaultDeclaration(node, state, path);
+      case "ExportAllDeclaration":
+        return this.visitExportAllDeclaration(node, state, path);
+      case "AwaitExpression":
+        return this.visitAwaitExpression(node, state, path);
+      case "RegExpLiteral":
+        return this.visitRegExpLiteral(node, state, path);
+      case "FunctionDeclaration":
+        return this.visitFunctionDeclaration(node, state, path);
+      case "VariableDeclaration":
+        return this.visitVariableDeclaration(node, state, path);
+      case "NewExpression":
+        return this.visitNewExpression(node, state, path);
+      case "ForOfStatement":
+        return this.visitForOfStatement(node, state, path);
+      case "ClassDeclaration":
+        return this.visitClassDeclaration(node, state, path);
     }
     throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
-  }
+  };
   Visitor.prototype.visitNode = function visitNode(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
     var visitor = this;
     // start is of types Position
@@ -10360,21 +10547,20 @@ module.exports = function(acorn) {
     // end is of types Position
     node["end"] = visitor.accept(node["end"], state, path.concat(["end"]));
     return node;
-  }
+  };
   Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
     var visitor = this;
     // body is a list with types Statement, ModuleDeclaration
-    node["body"] = node["body"].reduce(function(results, ea, i) {
+    node["body"] = node["body"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["body", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
     var visitor = this;
     // id is of types Identifier
@@ -10382,19 +10568,18 @@ module.exports = function(acorn) {
       node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     }
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function(results, ea, i) {
+    node["params"] = node["params"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  // body is of types BlockStatement
+    }, []); // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
     var visitor = this;
     // test is of types Expression
@@ -10402,13 +10587,12 @@ module.exports = function(acorn) {
       node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
     }
     // consequent is a list with types Statement
-    node["consequent"] = node["consequent"].reduce(function(results, ea, i) {
+    node["consequent"] = node["consequent"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["consequent", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
     var visitor = this;
     // param is of types Pattern
@@ -10416,7 +10600,7 @@ module.exports = function(acorn) {
     // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
     var visitor = this;
     // id is of types Pattern
@@ -10426,11 +10610,11 @@ module.exports = function(acorn) {
       node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
     var visitor = this;
     // key is of types Expression
@@ -10438,25 +10622,25 @@ module.exports = function(acorn) {
     // value is of types Expression
     node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
     return node;
-  }
+  };
   Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     return node;
-  }
+  };
   Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitClass = function visitClass(node, state, path) {
     var visitor = this;
     // id is of types Identifier
@@ -10470,17 +10654,16 @@ module.exports = function(acorn) {
     // body is of types ClassBody
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
     var visitor = this;
     // body is a list with types MethodDefinition
-    node["body"] = node["body"].reduce(function(results, ea, i) {
+    node["body"] = node["body"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["body", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
     var visitor = this;
     // key is of types Expression
@@ -10488,49 +10671,48 @@ module.exports = function(acorn) {
     // value is of types FunctionExpression
     node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
     return node;
-  }
+  };
   Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
     var visitor = this;
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
     return node;
-  }
+  };
   Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
     var visitor = this;
     // expression is of types Expression
     node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
     return node;
-  }
+  };
   Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
     var visitor = this;
     // body is a list with types Statement
-    node["body"] = node["body"].reduce(function(results, ea, i) {
+    node["body"] = node["body"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["body", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
     var visitor = this;
     // object is of types Expression
@@ -10538,7 +10720,7 @@ module.exports = function(acorn) {
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
     var visitor = this;
     // argument is of types Expression
@@ -10546,7 +10728,7 @@ module.exports = function(acorn) {
       node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, state, path) {
     var visitor = this;
     // label is of types Identifier
@@ -10554,7 +10736,7 @@ module.exports = function(acorn) {
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
     var visitor = this;
     // label is of types Identifier
@@ -10562,7 +10744,7 @@ module.exports = function(acorn) {
       node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
     var visitor = this;
     // label is of types Identifier
@@ -10570,7 +10752,7 @@ module.exports = function(acorn) {
       node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path) {
     var visitor = this;
     // test is of types Expression
@@ -10582,25 +10764,24 @@ module.exports = function(acorn) {
       node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
     var visitor = this;
     // discriminant is of types Expression
     node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
     // cases is a list with types SwitchCase
-    node["cases"] = node["cases"].reduce(function(results, ea, i) {
+    node["cases"] = node["cases"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["cases", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     return node;
-  }
+  };
   Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
     var visitor = this;
     // block is of types BlockStatement
@@ -10614,7 +10795,7 @@ module.exports = function(acorn) {
       node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
     var visitor = this;
     // test is of types Expression
@@ -10622,7 +10803,7 @@ module.exports = function(acorn) {
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
     var visitor = this;
     // body is of types Statement
@@ -10630,7 +10811,7 @@ module.exports = function(acorn) {
     // test is of types Expression
     node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
     return node;
-  }
+  };
   Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
     var visitor = this;
     // init is of types VariableDeclaration, Expression
@@ -10648,7 +10829,7 @@ module.exports = function(acorn) {
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
     var visitor = this;
     // left is of types VariableDeclaration, Pattern
@@ -10658,37 +10839,36 @@ module.exports = function(acorn) {
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
     var visitor = this;
     // elements is a list with types Expression, SpreadElement
     if (node["elements"]) {
-      node["elements"] = node["elements"].reduce(function(results, ea, i) {
+      node["elements"] = node["elements"].reduce(function (results, ea, i) {
         var result = visitor.accept(ea, state, path.concat(["elements", i]));
-        if (Array.isArray(result)) results.push.apply(results, result);
-        else results.push(result);
+        if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
         return results;
-      }, []);  }
+      }, []);
+    }
     return node;
-  }
+  };
   Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
     var visitor = this;
     // properties is a list with types Property
-    node["properties"] = node["properties"].reduce(function(results, ea, i) {
+    node["properties"] = node["properties"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["properties", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
     var visitor = this;
     // id is of types Identifier
@@ -10696,27 +10876,26 @@ module.exports = function(acorn) {
       node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     }
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function(results, ea, i) {
+    node["params"] = node["params"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  // body is of types BlockStatement
+    }, []); // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     return node;
-  }
+  };
   Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     return node;
-  }
+  };
   Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
     var visitor = this;
     // left is of types Expression
@@ -10724,7 +10903,7 @@ module.exports = function(acorn) {
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
     return node;
-  }
+  };
   Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
     var visitor = this;
     // left is of types Pattern
@@ -10732,7 +10911,7 @@ module.exports = function(acorn) {
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
     return node;
-  }
+  };
   Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
     var visitor = this;
     // left is of types Expression
@@ -10740,7 +10919,7 @@ module.exports = function(acorn) {
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
     return node;
-  }
+  };
   Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
     var visitor = this;
     // object is of types Expression, Super
@@ -10748,7 +10927,7 @@ module.exports = function(acorn) {
     // property is of types Expression
     node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
     return node;
-  }
+  };
   Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
     var visitor = this;
     // test is of types Expression
@@ -10758,29 +10937,27 @@ module.exports = function(acorn) {
     // consequent is of types Expression
     node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
     return node;
-  }
+  };
   Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
     var visitor = this;
     // callee is of types Expression, Super
     node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
     // arguments is a list with types Expression, SpreadElement
-    node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
+    node["arguments"] = node["arguments"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["arguments", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
     var visitor = this;
     // expressions is a list with types Expression
-    node["expressions"] = node["expressions"].reduce(function(results, ea, i) {
+    node["expressions"] = node["expressions"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["expressions", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
     var visitor = this;
     // body is of types BlockStatement, Expression
@@ -10790,13 +10967,12 @@ module.exports = function(acorn) {
       node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     }
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function(results, ea, i) {
+    node["params"] = node["params"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
@@ -10804,23 +10980,21 @@ module.exports = function(acorn) {
       node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
     var visitor = this;
     // quasis is a list with types TemplateElement
-    node["quasis"] = node["quasis"].reduce(function(results, ea, i) {
+    node["quasis"] = node["quasis"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["quasis", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  // expressions is a list with types Expression
-    node["expressions"] = node["expressions"].reduce(function(results, ea, i) {
+    }, []); // expressions is a list with types Expression
+    node["expressions"] = node["expressions"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["expressions", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
     var visitor = this;
     // tag is of types Expression
@@ -10828,7 +11002,7 @@ module.exports = function(acorn) {
     // quasi is of types TemplateLiteral
     node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
     return node;
-  }
+  };
   Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
     var visitor = this;
     // value is of types Pattern, Expression
@@ -10836,35 +11010,34 @@ module.exports = function(acorn) {
     // key is of types Expression
     node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
     return node;
-  }
+  };
   Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
     var visitor = this;
     // properties is a list with types AssignmentProperty
-    node["properties"] = node["properties"].reduce(function(results, ea, i) {
+    node["properties"] = node["properties"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["properties", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
     var visitor = this;
     // elements is a list with types Pattern
     if (node["elements"]) {
-      node["elements"] = node["elements"].reduce(function(results, ea, i) {
+      node["elements"] = node["elements"].reduce(function (results, ea, i) {
         var result = visitor.accept(ea, state, path.concat(["elements", i]));
-        if (Array.isArray(result)) results.push.apply(results, result);
-        else results.push(result);
+        if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
         return results;
-      }, []);  }
+      }, []);
+    }
     return node;
-  }
+  };
   Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
     var visitor = this;
     // argument is of types Pattern
     node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     return node;
-  }
+  };
   Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
     var visitor = this;
     // left is of types Pattern
@@ -10872,7 +11045,7 @@ module.exports = function(acorn) {
     // right is of types Expression
     node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
     return node;
-  }
+  };
   Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
     var visitor = this;
     // id is of types Identifier
@@ -10886,7 +11059,7 @@ module.exports = function(acorn) {
     // body is of types ClassBody
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
     var visitor = this;
     // meta is of types Identifier
@@ -10894,19 +11067,18 @@ module.exports = function(acorn) {
     // property is of types Identifier
     node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
     return node;
-  }
+  };
   Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
     var visitor = this;
     // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
-    node["specifiers"] = node["specifiers"].reduce(function(results, ea, i) {
+    node["specifiers"] = node["specifiers"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  // source is of types Literal
+    }, []); // source is of types Literal
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
     return node;
-  }
+  };
   Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
     var visitor = this;
     // imported is of types Identifier
@@ -10914,19 +11086,19 @@ module.exports = function(acorn) {
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
     return node;
-  }
+  };
   Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
     var visitor = this;
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
     return node;
-  }
+  };
   Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
     var visitor = this;
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
     return node;
-  }
+  };
   Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
     var visitor = this;
     // declaration is of types Declaration
@@ -10934,17 +11106,16 @@ module.exports = function(acorn) {
       node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
     }
     // specifiers is a list with types ExportSpecifier
-    node["specifiers"] = node["specifiers"].reduce(function(results, ea, i) {
+    node["specifiers"] = node["specifiers"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  // source is of types Literal
+    }, []); // source is of types Literal
     if (node["source"]) {
       node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
     var visitor = this;
     // exported is of types Identifier
@@ -10952,19 +11123,19 @@ module.exports = function(acorn) {
     // local is of types Identifier
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
     return node;
-  }
+  };
   Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
     var visitor = this;
     // declaration is of types Declaration, Expression
     node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
     return node;
-  }
+  };
   Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
     var visitor = this;
     // source is of types Literal
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
     return node;
-  }
+  };
   Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
     var visitor = this;
     // argument is of types Expression
@@ -10972,47 +11143,44 @@ module.exports = function(acorn) {
       node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
     }
     return node;
-  }
+  };
   Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
     var visitor = this;
     return node;
-  }
+  };
   Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
     var visitor = this;
     // id is of types Identifier
     node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function(results, ea, i) {
+    node["params"] = node["params"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  // body is of types BlockStatement
+    }, []); // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
     var visitor = this;
     // declarations is a list with types VariableDeclarator
-    node["declarations"] = node["declarations"].reduce(function(results, ea, i) {
+    node["declarations"] = node["declarations"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["declarations", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
     var visitor = this;
     // callee is of types Expression, Super
     node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
     // arguments is a list with types Expression, SpreadElement
-    node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
+    node["arguments"] = node["arguments"].reduce(function (results, ea, i) {
       var result = visitor.accept(ea, state, path.concat(["arguments", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
+      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
       return results;
-    }, []);  return node;
-  }
+    }, []);return node;
+  };
   Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
     var visitor = this;
     // left is of types VariableDeclaration, Pattern
@@ -11022,7 +11190,7 @@ module.exports = function(acorn) {
     // body is of types Statement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
   Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
     var visitor = this;
     // id is of types Identifier
@@ -11034,473 +11202,562 @@ module.exports = function(acorn) {
     // body is of types ClassBody
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
-  }
+  };
 
-  class PrinterVisitor extends Visitor {
+  var PrinterVisitor = function (_Visitor) {
+    babelHelpers.inherits(PrinterVisitor, _Visitor);
 
-    accept(node, state, path) {
-      var pathString = path.map(ea =>
-            typeof ea === 'string' ? `.${ea}` : `[${ea}]`).join(''),
-          myChildren = [],
-          result = super.accept(node, {index: state.index, tree: myChildren}, path);
-      state.tree.push({
-        node: node,
-        path: pathString,
-        index: state.index++,
-        children: myChildren
-      });
-      return result;
+    function PrinterVisitor() {
+      babelHelpers.classCallCheck(this, PrinterVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(PrinterVisitor).apply(this, arguments));
     }
 
-  }
-
-  class ComparisonVisitor extends Visitor {
-
-    recordNotEqual(node1, node2, state, msg) {
-      state.comparisons.errors.push({
-        node1: node1, node2: node2,
-        path: state.completePath, msg: msg
-      });
-    }
-
-    compareType(node1, node2, state) {
-      return this.compareField('type', node1, node2, state);
-    }
-
-    compareField(field, node1, node2, state) {
-      node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
-      if (node1 && node2 && node1[field] === node2[field]) return true;
-      if ((node1 && node1[field] === '*') || (node2 && node2[field] === '*')) return true;
-      var fullPath = state.completePath.join('.') + '.' + field, msg;
-      if (!node1) msg = "node1 on " + fullPath + " not defined";
-      else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: '+ node1[field];
-      else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
-      this.recordNotEqual(node1, node2, state, msg);
-      return false;
-    }
-
-    accept(node1, node2, state, path) {
-      var patternNode = lively.PropertyPath(path.join('.')).get(node2);
-      if (node1 === '*' || patternNode === '*') return;
-      var nextState = {
-        completePath: path,
-        comparisons: state.comparisons
-      };
-      if (this.compareType(node1, node2, nextState))
-        this['visit' + node1.type](node1, node2, nextState, path);
-    }
-
-    visitFunction(node1, node2, state, path) {
-      // node1.generator has a specific type that is boolean
-      if (node1.generator) { this.compareField("generator", node1, node2, state); }
-
-      // node1.expression has a specific type that is boolean
-      if (node1.expression) { this.compareField("expression", node1, node2, state); }
-
-      return super.visitFunction(node1, node2, state, path);
-    }
-
-    visitSwitchStatement(node1, node2, state, path) {
-      // node1.lexical has a specific type that is boolean
-      if (node1.lexical) { this.compareField("lexical", node1, node2, state); }
-
-      return super.visitSwitchStatement(node1, node2, state, path);
-    }
-
-    visitForInStatement(node1, node2, state, path) {
-      // node1.each has a specific type that is boolean
-      if (node1.each) { this.compareField("each", node1, node2, state); }
-
-      return super.visitForInStatement(node1, node2, state, path);
-    }
-
-    visitFunctionDeclaration(node1, node2, state, path) {
-      // node1.generator has a specific type that is boolean
-      if (node1.generator) { this.compareField("generator", node1, node2, state); }
-
-      // node1.expression has a specific type that is boolean
-      if (node1.expression) { this.compareField("expression", node1, node2, state); }
-
-      return super.visitFunctionDeclaration(node1, node2, state, path);
-    }
-
-    visitVariableDeclaration(node1, node2, state, path) {
-      // node1.kind is "var" or "let" or "const"
-      this.compareField("kind", node1, node2, state);
-      return super.visitVariableDeclaration(node1, node2, state, path);
-    }
-
-    visitUnaryExpression(node1, node2, state, path) {
-      // node1.operator is an UnaryOperator enum:
-      // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
-      this.compareField("operator", node1, node2, state);
-
-      // node1.prefix has a specific type that is boolean
-      if (node1.prefix) { this.compareField("prefix", node1, node2, state); }
-
-      return super.visitUnaryExpression(node1, node2, state, path);
-    }
-
-    visitBinaryExpression(node1, node2, state, path) {
-      // node1.operator is an BinaryOperator enum:
-      // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
-      this.compareField("operator", node1, node2, state);
-      return super.visitBinaryExpression(node1, node2, state, path);
-    }
-
-    visitAssignmentExpression(node1, node2, state, path) {
-      // node1.operator is an AssignmentOperator enum:
-      // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
-      this.compareField("operator", node1, node2, state);
-      return super.visitAssignmentExpression(node1, node2, state, path);
-    }
-
-    visitUpdateExpression(node1, node2, state, path) {
-      // node1.operator is an UpdateOperator enum:
-      // "++" | "--"
-      this.compareField("operator", node1, node2, state);
-      // node1.prefix has a specific type that is boolean
-      if (node1.prefix) { this.compareField("prefix", node1, node2, state); }
-      return super.visitUpdateExpression(node1, node2, state, path);
-    }
-
-    visitLogicalExpression(node1, node2, state, path) {
-      // node1.operator is an LogicalOperator enum:
-      // "||" | "&&"
-      this.compareField("operator", node1, node2, state);
-      return super.visitLogicalExpression(node1, node2, state, path);
-    }
-
-    visitMemberExpression(node1, node2, state, path) {
-      // node1.computed has a specific type that is boolean
-      if (node1.computed) { this.compareField("computed", node1, node2, state); }
-      return super.visitMemberExpression(node1, node2, state, path);
-    }
-
-    visitComprehensionBlock(node1, node2, state, path) {
-      // node1.each has a specific type that is boolean
-      if (node1.each) { this.compareField("each", node1, node2, state); }
-      return super.visitComprehensionBlock(node1, node2, state, path);
-    }
-
-    visitIdentifier(node1, node2, state, path) {
-      // node1.name has a specific type that is string
-      this.compareField("name", node1, node2, state);
-      return super.visitIdentifier(node1, node2, state, path);
-    }
-
-    visitLiteral(node1, node2, state, path) {
-      this.compareField("value", node1, node2, state);
-      return super.visitLiteral(node1, node2, state, path);
-    }
-
-    visitClassDeclaration(node1, node2, state, path) {
-      this.compareField("id", node1, node2, state);
-      if (node1.superClass) {
-        this.compareField("superClass", node1, node2, state);
+    babelHelpers.createClass(PrinterVisitor, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        var pathString = path.map(function (ea) {
+          return typeof ea === 'string' ? "." + ea : "[" + ea + "]";
+        }).join(''),
+            myChildren = [],
+            result = babelHelpers.get(Object.getPrototypeOf(PrinterVisitor.prototype), "accept", this).call(this, node, { index: state.index, tree: myChildren }, path);
+        state.tree.push({
+          node: node,
+          path: pathString,
+          index: state.index++,
+          children: myChildren
+        });
+        return result;
       }
-      this.compareField("body", node1, node2, state);
-      return super.visitClassDeclaration(node1, node2, state, path);
+    }]);
+    return PrinterVisitor;
+  }(Visitor);
+
+  var ComparisonVisitor = function (_Visitor2) {
+    babelHelpers.inherits(ComparisonVisitor, _Visitor2);
+
+    function ComparisonVisitor() {
+      babelHelpers.classCallCheck(this, ComparisonVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ComparisonVisitor).apply(this, arguments));
     }
 
-    visitClassBody(node1, node2, state, path) {
-      this.compareField("body", node1, node2, state);
-      return super.visitClassBody(node1, node2, state, path);
-    }
-
-    visitMethodDefinition(node1, node2, state, path) {
-      this.compareField("static", node1, node2, state);
-      this.compareField("computed", node1, node2, state);
-      this.compareField("kind", node1, node2, state);
-      this.compareField("key", node1, node2, state);
-      this.compareField("value", node1, node2, state);
-      return super.visitMethodDefinition(node1, node2, state, path);
-    }
-  }
-
-  class ScopeVisitor extends Visitor {
-
-    newScope(scopeNode, parentScope) {
-      var scope = {
-        node: scopeNode,
-        varDecls: [],
-        varDeclPaths: [],
-        funcDecls: [],
-        classDecls: [],
-        methodDecls: [],
-        importDecls: [],
-        exportDecls: [],
-        refs: [],
-        thisRefs: [],
-        params: [],
-        catches: [],
-        subScopes: []
+    babelHelpers.createClass(ComparisonVisitor, [{
+      key: "recordNotEqual",
+      value: function recordNotEqual(node1, node2, state, msg) {
+        state.comparisons.errors.push({
+          node1: node1, node2: node2,
+          path: state.completePath, msg: msg
+        });
       }
-      if (parentScope) parentScope.subScopes.push(scope);
-      return scope;
-    }
-
-    visitVariableDeclaration(node, scope, path) {
-      scope.varDecls.push(node);
-      scope.varDeclPaths.push(path);
-      return super.visitVariableDeclaration(node, scope, path);
-    }
-
-    visitVariableDeclarator(node, scope, path) {
-      var visitor = this;
-      // ignore id
-      // // id is of types Pattern
-      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-      // init is of types Expression
-      if (node["init"]) {
-        node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
+    }, {
+      key: "compareType",
+      value: function compareType(node1, node2, state) {
+        return this.compareField('type', node1, node2, state);
       }
-      return node;
+    }, {
+      key: "compareField",
+      value: function compareField(field, node1, node2, state) {
+        node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
+        if (node1 && node2 && node1[field] === node2[field]) return true;
+        if (node1 && node1[field] === '*' || node2 && node2[field] === '*') return true;
+        var fullPath = state.completePath.join('.') + '.' + field,
+            msg;
+        if (!node1) msg = "node1 on " + fullPath + " not defined";else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: ' + node1[field];else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
+        this.recordNotEqual(node1, node2, state, msg);
+        return false;
+      }
+    }, {
+      key: "accept",
+      value: function accept(node1, node2, state, path) {
+        var patternNode = lively.PropertyPath(path.join('.')).get(node2);
+        if (node1 === '*' || patternNode === '*') return;
+        var nextState = {
+          completePath: path,
+          comparisons: state.comparisons
+        };
+        if (this.compareType(node1, node2, nextState)) this['visit' + node1.type](node1, node2, nextState, path);
+      }
+    }, {
+      key: "visitFunction",
+      value: function visitFunction(node1, node2, state, path) {
+        // node1.generator has a specific type that is boolean
+        if (node1.generator) {
+          this.compareField("generator", node1, node2, state);
+        }
+
+        // node1.expression has a specific type that is boolean
+        if (node1.expression) {
+          this.compareField("expression", node1, node2, state);
+        }
+
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunction", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitSwitchStatement",
+      value: function visitSwitchStatement(node1, node2, state, path) {
+        // node1.lexical has a specific type that is boolean
+        if (node1.lexical) {
+          this.compareField("lexical", node1, node2, state);
+        }
+
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitSwitchStatement", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitForInStatement",
+      value: function visitForInStatement(node1, node2, state, path) {
+        // node1.each has a specific type that is boolean
+        if (node1.each) {
+          this.compareField("each", node1, node2, state);
+        }
+
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitForInStatement", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitFunctionDeclaration",
+      value: function visitFunctionDeclaration(node1, node2, state, path) {
+        // node1.generator has a specific type that is boolean
+        if (node1.generator) {
+          this.compareField("generator", node1, node2, state);
+        }
+
+        // node1.expression has a specific type that is boolean
+        if (node1.expression) {
+          this.compareField("expression", node1, node2, state);
+        }
+
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunctionDeclaration", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitVariableDeclaration",
+      value: function visitVariableDeclaration(node1, node2, state, path) {
+        // node1.kind is "var" or "let" or "const"
+        this.compareField("kind", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitVariableDeclaration", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitUnaryExpression",
+      value: function visitUnaryExpression(node1, node2, state, path) {
+        // node1.operator is an UnaryOperator enum:
+        // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
+        this.compareField("operator", node1, node2, state);
+
+        // node1.prefix has a specific type that is boolean
+        if (node1.prefix) {
+          this.compareField("prefix", node1, node2, state);
+        }
+
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUnaryExpression", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitBinaryExpression",
+      value: function visitBinaryExpression(node1, node2, state, path) {
+        // node1.operator is an BinaryOperator enum:
+        // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
+        this.compareField("operator", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitBinaryExpression", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitAssignmentExpression",
+      value: function visitAssignmentExpression(node1, node2, state, path) {
+        // node1.operator is an AssignmentOperator enum:
+        // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
+        this.compareField("operator", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitAssignmentExpression", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitUpdateExpression",
+      value: function visitUpdateExpression(node1, node2, state, path) {
+        // node1.operator is an UpdateOperator enum:
+        // "++" | "--"
+        this.compareField("operator", node1, node2, state);
+        // node1.prefix has a specific type that is boolean
+        if (node1.prefix) {
+          this.compareField("prefix", node1, node2, state);
+        }
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUpdateExpression", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitLogicalExpression",
+      value: function visitLogicalExpression(node1, node2, state, path) {
+        // node1.operator is an LogicalOperator enum:
+        // "||" | "&&"
+        this.compareField("operator", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLogicalExpression", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitMemberExpression",
+      value: function visitMemberExpression(node1, node2, state, path) {
+        // node1.computed has a specific type that is boolean
+        if (node1.computed) {
+          this.compareField("computed", node1, node2, state);
+        }
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMemberExpression", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitComprehensionBlock",
+      value: function visitComprehensionBlock(node1, node2, state, path) {
+        // node1.each has a specific type that is boolean
+        if (node1.each) {
+          this.compareField("each", node1, node2, state);
+        }
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitComprehensionBlock", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitIdentifier",
+      value: function visitIdentifier(node1, node2, state, path) {
+        // node1.name has a specific type that is string
+        this.compareField("name", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitIdentifier", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitLiteral",
+      value: function visitLiteral(node1, node2, state, path) {
+        this.compareField("value", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLiteral", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitClassDeclaration",
+      value: function visitClassDeclaration(node1, node2, state, path) {
+        this.compareField("id", node1, node2, state);
+        if (node1.superClass) {
+          this.compareField("superClass", node1, node2, state);
+        }
+        this.compareField("body", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassDeclaration", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitClassBody",
+      value: function visitClassBody(node1, node2, state, path) {
+        this.compareField("body", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassBody", this).call(this, node1, node2, state, path);
+      }
+    }, {
+      key: "visitMethodDefinition",
+      value: function visitMethodDefinition(node1, node2, state, path) {
+        this.compareField("static", node1, node2, state);
+        this.compareField("computed", node1, node2, state);
+        this.compareField("kind", node1, node2, state);
+        this.compareField("key", node1, node2, state);
+        this.compareField("value", node1, node2, state);
+        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMethodDefinition", this).call(this, node1, node2, state, path);
+      }
+    }]);
+    return ComparisonVisitor;
+  }(Visitor);
+
+  var ScopeVisitor = function (_Visitor3) {
+    babelHelpers.inherits(ScopeVisitor, _Visitor3);
+
+    function ScopeVisitor() {
+      babelHelpers.classCallCheck(this, ScopeVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ScopeVisitor).apply(this, arguments));
     }
 
-    visitFunction (node, scope, path) {
-      var newScope = this.newScope(node, scope);
-      newScope.params = Array.prototype.slice.call(node.params);
-      return newScope;
-    }
+    babelHelpers.createClass(ScopeVisitor, [{
+      key: "newScope",
+      value: function newScope(scopeNode, parentScope) {
+        var scope = {
+          node: scopeNode,
+          varDecls: [],
+          varDeclPaths: [],
+          funcDecls: [],
+          classDecls: [],
+          methodDecls: [],
+          importDecls: [],
+          exportDecls: [],
+          refs: [],
+          thisRefs: [],
+          params: [],
+          catches: [],
+          subScopes: []
+        };
+        if (parentScope) parentScope.subScopes.push(scope);
+        return scope;
+      }
+    }, {
+      key: "visitVariableDeclaration",
+      value: function visitVariableDeclaration(node, scope, path) {
+        scope.varDecls.push(node);
+        scope.varDeclPaths.push(path);
+        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitVariableDeclaration", this).call(this, node, scope, path);
+      }
+    }, {
+      key: "visitVariableDeclarator",
+      value: function visitVariableDeclarator(node, scope, path) {
+        var visitor = this;
+        // ignore id
+        // // id is of types Pattern
+        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+        // init is of types Expression
+        if (node["init"]) {
+          node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
+        }
+        return node;
+      }
+    }, {
+      key: "visitFunction",
+      value: function visitFunction(node, scope, path) {
+        var newScope = this.newScope(node, scope);
+        newScope.params = Array.prototype.slice.call(node.params);
+        return newScope;
+      }
+    }, {
+      key: "visitFunctionDeclaration",
+      value: function visitFunctionDeclaration(node, scope, path) {
+        var newScope = this.visitFunction(node, scope, path);
+        scope.funcDecls.push(node);
 
-    visitFunctionDeclaration (node, scope, path) {
-      var newScope = this.visitFunction(node, scope, path);
-      scope.funcDecls.push(node);
+        // don't visit id and params 
+        var visitor = this;
 
-      // don't visit id and params  
-      var visitor = this;
+        if (node.defaults) {
+          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+            return results;
+          }, []);
+        }
 
-      if (node.defaults) {
-        node["defaults"] = node["defaults"].reduce(function(results, ea, i) {
-          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-          if (Array.isArray(result)) results.push.apply(results, result);
-          else results.push(result);
-          return results;
-        }, []);
+        if (node.rest) {
+          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+        }
+
+        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+        // loc is of types SourceLocation
+        if (node["loc"]) {
+          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+        }
+        return node;
+      }
+    }, {
+      key: "visitFunctionExpression",
+      value: function visitFunctionExpression(node, scope, path) {
+        var newScope = this.visitFunction(node, scope, path);
+
+        // don't visit id and params 
+        var visitor = this;
+
+        if (node.defaults) {
+          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+            return results;
+          }, []);
+        }
+
+        if (node.rest) {
+          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+        }
+
+        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+        // loc is of types SourceLocation
+        if (node["loc"]) {
+          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+        }
+        return node;
+      }
+    }, {
+      key: "visitArrowFunctionExpression",
+      value: function visitArrowFunctionExpression(node, scope, path) {
+        var newScope = this.visitFunction(node, scope, path);
+        var visitor = this;
+
+        if (node.defaults) {
+          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+            return results;
+          }, []);
+        }
+
+        if (node.rest) {
+          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+        }
+
+        // body is of types BlockStatement, Expression
+        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+        // loc is of types SourceLocation
+        if (node["loc"]) {
+          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+        }
+        // node.generator has a specific type that is boolean
+        if (node.generator) {} /*do stuff*/
+
+        // node.expression has a specific type that is boolean
+        if (node.expression) {/*do stuff*/}
+        return node;
+      }
+    }, {
+      key: "visitIdentifier",
+      value: function visitIdentifier(node, scope, path) {
+        scope.refs.push(node);
+        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitIdentifier", this).call(this, node, scope, path);
+      }
+    }, {
+      key: "visitMemberExpression",
+      value: function visitMemberExpression(node, scope, path) {
+        // only visit property part when prop is computed so we don't gather
+        // prop ids
+
+        var visitor = this;
+        // object is of types Expression, Super
+        node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
+        // property is of types Expression
+        if (node.computed) {
+          node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
+        }
+        return node;
+      }
+    }, {
+      key: "visitProperty",
+      value: function visitProperty(node, scope, path) {
+        var visitor = this;
+        // key is of types Expression
+        if (node.computed) node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+        // value is of types Expression
+        node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+        return node;
+      }
+    }, {
+      key: "visitThisExpression",
+      value: function visitThisExpression(node, scope, path) {
+        scope.thisRefs.push(node);
+        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitThisExpression", this).call(this, node, scope, path);
+      }
+    }, {
+      key: "visitTryStatement",
+      value: function visitTryStatement(node, scope, path) {
+        var visitor = this;
+        // block is of types BlockStatement
+        node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
+        // handler is of types CatchClause
+        if (node["handler"]) {
+          node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
+          scope.catches.push(node.handler.param);
+        }
+
+        // finalizer is of types BlockStatement
+        if (node["finalizer"]) {
+          node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
+        }
+        return node;
+      }
+    }, {
+      key: "visitLabeledStatement",
+      value: function visitLabeledStatement(node, scope, path) {
+        var visitor = this;
+        // ignore label
+        // // label is of types Identifier
+        // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
+        // body is of types Statement
+        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+        return node;
+      }
+    }, {
+      key: "visitClassDeclaration",
+      value: function visitClassDeclaration(node, scope, path) {
+        scope.classDecls.push(node);
+
+        var visitor = this;
+        // ignore id
+        // // id is of types Identifier
+        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+        // superClass is of types Expression
+        if (node["superClass"]) {
+          node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+        }
+        // body is of types ClassBody
+        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+        return node;
+      }
+    }, {
+      key: "visitMethodDefinition",
+      value: function visitMethodDefinition(node, scope, path) {
+        var visitor = this;
+        // don't visit key Identifier for now
+        // // key is of types Expression
+        // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+        // value is of types FunctionExpression
+        node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+        return node;
+      }
+    }, {
+      key: "visitBreakStatement",
+      value: function visitBreakStatement(node, scope, path) {
+        return node;
+      }
+    }, {
+      key: "visitContinueStatement",
+      value: function visitContinueStatement(node, scope, path) {
+        return node;
       }
 
-      if (node.rest) {
-        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // es6 modules
+
+    }, {
+      key: "visitImportSpecifier",
+      value: function visitImportSpecifier(node, scope, path) {
+        scope.importDecls.push(node.local);
+
+        var visitor = this;
+        // // imported is of types Identifier
+        // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
+        // local is of types Identifier
+        node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+        return node;
       }
-
-      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-      // loc is of types SourceLocation
-      if (node["loc"]) {
-        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+    }, {
+      key: "visitImportDefaultSpecifier",
+      value: function visitImportDefaultSpecifier(node, scope, path) {
+        scope.importDecls.push(node.local);
+        var visitor = this;
+        // // local is of types Identifier
+        // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+        return node;
       }
-      return node;
-    }
-
-    visitFunctionExpression (node, scope, path) {
-      var newScope = this.visitFunction(node, scope, path);
-
-      // don't visit id and params  
-      var visitor = this;
-
-      if (node.defaults) {
-        node["defaults"] = node["defaults"].reduce(function(results, ea, i) {
-          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-          if (Array.isArray(result)) results.push.apply(results, result);
-          else results.push(result);
-          return results;
-        }, []);
+    }, {
+      key: "visitImportNamespaceSpecifier",
+      value: function visitImportNamespaceSpecifier(node, scope, path) {
+        scope.importDecls.push(node.local);
+        var visitor = this;
+        // // local is of types Identifier
+        // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+        return node;
       }
-
-      if (node.rest) {
-        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+    }, {
+      key: "visitExportSpecifier",
+      value: function visitExportSpecifier(node, scope, path) {
+        var visitor = this;
+        // // exported is of types Identifier
+        // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
+        // local is of types Identifier
+        node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+        return node;
       }
-
-      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-      // loc is of types SourceLocation
-      if (node["loc"]) {
-        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+    }, {
+      key: "visitExportNamedDeclaration",
+      value: function visitExportNamedDeclaration(node, scope, path) {
+        scope.exportDecls.push(node);
+        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
       }
-      return node;
-
-    }
-
-    visitArrowFunctionExpression(node, scope, path) {
-      var newScope = this.visitFunction(node, scope, path);
-      var visitor = this;
-
-      if (node.defaults) {
-        node["defaults"] = node["defaults"].reduce(function(results, ea, i) {
-          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-          if (Array.isArray(result)) results.push.apply(results, result);
-          else results.push(result);
-          return results;
-        }, []);
+    }, {
+      key: "visitExportDefaultDeclaration",
+      value: function visitExportDefaultDeclaration(node, scope, path) {
+        scope.exportDecls.push(node);
+        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
       }
-
-      if (node.rest) {
-        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+    }, {
+      key: "visitExportAllDeclaration",
+      value: function visitExportAllDeclaration(node, scope, path) {
+        scope.exportDecls.push(node);
+        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
       }
-
-      // body is of types BlockStatement, Expression
-      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-      // loc is of types SourceLocation
-      if (node["loc"]) {
-        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-      }
-      // node.generator has a specific type that is boolean
-      if (node.generator) {/*do stuff*/}
-
-      // node.expression has a specific type that is boolean
-      if (node.expression) {/*do stuff*/}
-      return node;
-
-    }
-
-    visitIdentifier (node, scope, path) {
-      scope.refs.push(node);
-      return super.visitIdentifier(node, scope, path);
-    }
-
-    visitMemberExpression(node, scope, path) {
-      // only visit property part when prop is computed so we don't gather
-      // prop ids
-
-      var visitor = this;
-      // object is of types Expression, Super
-      node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
-      // property is of types Expression
-      if (node.computed) {
-        node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
-      }
-      return node;
-    }
-
-    visitProperty(node, scope, path) {
-      var visitor = this;
-      // key is of types Expression
-      if (node.computed)
-        node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
-      // value is of types Expression
-      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
-      return node;
-    }
-
-    visitThisExpression(node, scope, path) {
-      scope.thisRefs.push(node);
-      return super.visitThisExpression(node, scope, path);
-    }
-
-    visitTryStatement (node, scope, path) {
-      var visitor = this;
-      // block is of types BlockStatement
-      node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
-      // handler is of types CatchClause
-      if (node["handler"]) {
-        node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
-        scope.catches.push(node.handler.param);
-      }
-
-      // finalizer is of types BlockStatement
-      if (node["finalizer"]) {
-        node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
-      }
-      return node;
-    }
-
-    visitLabeledStatement (node, scope, path) {
-      var visitor = this;
-      // ignore label
-      // // label is of types Identifier
-      // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
-      // body is of types Statement
-      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-      return node;
-    }
-
-    visitClassDeclaration(node, scope, path) {
-      scope.classDecls.push(node);
-
-      var visitor = this;
-      // ignore id
-      // // id is of types Identifier
-      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-      // superClass is of types Expression
-      if (node["superClass"]) {
-        node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
-      }
-      // body is of types ClassBody
-      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-      return node;
-
-    }
-
-    visitMethodDefinition(node, scope, path) {
-      var visitor = this;
-      // don't visit key Identifier for now
-      // // key is of types Expression
-      // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
-      // value is of types FunctionExpression
-      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
-      return node;
-
-    }
-
-    visitBreakStatement(node, scope, path) { return node; }
-    visitContinueStatement(node, scope, path) { return node; }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // es6 modules
-    visitImportSpecifier(node, scope, path) {
-      scope.importDecls.push(node.local);
-
-      var visitor = this;
-      // // imported is of types Identifier
-      // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
-      // local is of types Identifier
-      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-      return node;
-    }
-
-    visitImportDefaultSpecifier(node, scope, path) {
-      scope.importDecls.push(node.local);
-      var visitor = this;
-      // // local is of types Identifier
-      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-      return node;
-    }
-
-    visitImportNamespaceSpecifier(node, scope, path) {
-      scope.importDecls.push(node.local);
-      var visitor = this;
-      // // local is of types Identifier
-      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-      return node;
-    }
-
-    visitExportSpecifier(node, scope, path) {
-      var visitor = this;
-      // // exported is of types Identifier
-      // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
-      // local is of types Identifier
-      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-      return node;
-    }
-
-    visitExportNamedDeclaration(node, scope, path) {
-      scope.exportDecls.push(node);
-      return super.visitExportNamedDeclaration(node, scope, path);
-    }
-
-    visitExportDefaultDeclaration(node, scope, path) {
-      scope.exportDecls.push(node);
-      return super.visitExportDefaultDeclaration(node, scope, path);
-    }
-
-    visitExportAllDeclaration(node, scope, path) {
-      scope.exportDecls.push(node);
-      return super.visitExportAllDeclaration(node, scope, path);
-    }
-
-  }
+    }]);
+    return ScopeVisitor;
+  }(Visitor);
 
   var es = escodegen.escodegen || escodegen;
 
@@ -11508,38 +11765,52 @@ module.exports = function(acorn) {
     return es.generate(fixParamDefaults(node), opts);
   }
 
-  class FixParamsForEscodegenVisitor extends Visitor {
-    
-    fixFunctionNode(node) {
-      node.defaults = node.params.map((p, i) => {
-        if (p.type === "AssignmentPattern") {
-          node.params[i] = p.left;
-          return p.right;
-        }
-        return undefined;
-      });
+  var FixParamsForEscodegenVisitor = function (_Visitor) {
+    babelHelpers.inherits(FixParamsForEscodegenVisitor, _Visitor);
+
+    function FixParamsForEscodegenVisitor() {
+      babelHelpers.classCallCheck(this, FixParamsForEscodegenVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(FixParamsForEscodegenVisitor).apply(this, arguments));
     }
 
-    visitFunction(node, state, path) {
-      this.fixFunctionNode(node);
-      return super.visitFunction(node, state, path);
-    }
-
-    visitArrowFunctionExpression(node, state, path) {
-      this.fixFunctionNode(node);
-      return super.visitArrowFunctionExpression(node, state, path);
-    }
-
-    visitFunctionExpression(node, state, path) {
-      this.fixFunctionNode(node);
-      return super.visitFunctionExpression(node, state, path);
-    }
-
-    visitFunctionDeclaration(node, state, path) {
-      this.fixFunctionNode(node);
-      return super.visitFunctionDeclaration(node, state, path);
-    }
-  }
+    babelHelpers.createClass(FixParamsForEscodegenVisitor, [{
+      key: "fixFunctionNode",
+      value: function fixFunctionNode(node) {
+        node.defaults = node.params.map(function (p, i) {
+          if (p.type === "AssignmentPattern") {
+            node.params[i] = p.left;
+            return p.right;
+          }
+          return undefined;
+        });
+      }
+    }, {
+      key: "visitFunction",
+      value: function visitFunction(node, state, path) {
+        this.fixFunctionNode(node);
+        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunction", this).call(this, node, state, path);
+      }
+    }, {
+      key: "visitArrowFunctionExpression",
+      value: function visitArrowFunctionExpression(node, state, path) {
+        this.fixFunctionNode(node);
+        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitArrowFunctionExpression", this).call(this, node, state, path);
+      }
+    }, {
+      key: "visitFunctionExpression",
+      value: function visitFunctionExpression(node, state, path) {
+        this.fixFunctionNode(node);
+        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionExpression", this).call(this, node, state, path);
+      }
+    }, {
+      key: "visitFunctionDeclaration",
+      value: function visitFunctionDeclaration(node, state, path) {
+        this.fixFunctionNode(node);
+        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionDeclaration", this).call(this, node, state, path);
+      }
+    }]);
+    return FixParamsForEscodegenVisitor;
+  }(Visitor);
 
   // debugger;
   // var node = lively.ast.parse("/^file:\\/\\//");
@@ -11548,11 +11819,19 @@ module.exports = function(acorn) {
   function fixParamDefaults(parsed) {
     parsed = lively_lang.obj.deepCopy(parsed);
     new FixParamsForEscodegenVisitor().accept(parsed, null, []);
-    return parsed
+    return parsed;
   }
 
   var walk = acorn.walk;
   var loose = acorn.loose;
+  // rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
+  // await. We patch the walker here until it does
+  if (!walk.base.AwaitExpression) {
+    walk.base.AwaitExpression = function (node, st, c) {
+      if (node.argument) c(node.argument, st, 'Expression');
+    };
+  }
+
   // FIXME, don't add to walk object, that's our own stuff!
   walk.forEachNode = forEachNode;
   walk.matchNodes = matchNodes;
@@ -11577,14 +11856,18 @@ module.exports = function(acorn) {
     // func args: node, state, depth, type
     options = options || {};
     var traversal = options.traversal || 'preorder'; // also: postorder
-    
+
     var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.visitors.withMemberExpression);
-    var iterator = traversal === 'preorder' ?
-      function(orig, type, node, depth, cont) { func(node, state, depth, type); return orig(node, depth+1, cont); } :
-      function(orig, type, node, depth, cont) { var result = orig(node, depth+1, cont); func(node, state, depth, type); return result; };
-    Object.keys(visitors).forEach(function(type) {
+    var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
+      func(node, state, depth, type);return orig(node, depth + 1, cont);
+    } : function (orig, type, node, depth, cont) {
+      var result = orig(node, depth + 1, cont);func(node, state, depth, type);return result;
+    };
+    Object.keys(visitors).forEach(function (type) {
       var orig = visitors[type];
-      visitors[type] = function(node, depth, cont) { return iterator(orig, type, node, depth, cont); };
+      visitors[type] = function (node, depth, cont) {
+        return iterator(orig, type, node, depth, cont);
+      };
     });
     walk.recursive(parsed, 0, null, visitors);
     return parsed;
@@ -11600,22 +11883,22 @@ module.exports = function(acorn) {
   function findNodesIncluding(parsed, pos, test, base) {
     var nodes = [];
     base = base || lively_lang.obj.clone(walk.visitors.withMemberExpression);
-    Object.keys(base).forEach(function(name) {
+    Object.keys(base).forEach(function (name) {
       var orig = base[name];
-      base[name] = function(node, state, cont) {
+      base[name] = function (node, state, cont) {
         lively_lang.arr.pushIfNotIncluded(nodes, node);
         return orig(node, state, cont);
-      }
+      };
     });
     base["Property"] = function (node, st, c) {
       lively_lang.arr.pushIfNotIncluded(nodes, node);
       c(node.key, st, "Expression");
       c(node.value, st, "Expression");
-    }
+    };
     base["LabeledStatement"] = function (node, st, c) {
       node.label && c(node.label, st, "Expression");
       c(node.body, st, "Statement");
-    }
+    };
     walk.findNodeAround(parsed, pos, test, base);
     return nodes;
   };
@@ -11625,16 +11908,14 @@ module.exports = function(acorn) {
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
-      options.plugins.asyncawait : {awaitAnywhere: true};
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
 
     source = typeof parsed === 'string' ? parsed : source;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
     completeSrc = !!completeSrc;
-    return forEachNode(parsed, function(node) {
+    return forEachNode(parsed, function (node) {
       if (node.source && !forceNewSource) return;
-      node.source = completeSrc ?
-        source : source.slice(node.start, node.end);
+      node.source = completeSrc ? source : source.slice(node.start, node.end);
     });
   };
 
@@ -11643,8 +11924,7 @@ module.exports = function(acorn) {
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
-      options.plugins.asyncawait : {awaitAnywhere: true};
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
 
     source = typeof parsed === 'string' ? parsed : null;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -11656,60 +11936,63 @@ module.exports = function(acorn) {
     // options = {visitAllNodes: BOOL}
     options = options || {};
     function makeScope(parentScope) {
-      var scope = {id: lively_lang.string.newUUID(), parentScope: parentScope, containingScopes: []};
+      var scope = { id: lively_lang.string.newUUID(), parentScope: parentScope, containingScopes: [] };
       parentScope && parentScope.containingScopes.push(scope);
       return scope;
     }
     var visitors = walk.make({
-      Function: function(node, st, c) {
+      Function: function Function(node, st, c) {
         if (st && st.scope) st.scope = makeScope(st.scope);
         c(node.body, st, "ScopeBody");
       },
-      VariableDeclarator: function(node, st, c) {
+      VariableDeclarator: function VariableDeclarator(node, st, c) {
         // node.id && c(node.id, st, 'Identifier');
         node.init && c(node.init, st, 'Expression');
       },
-      VariableDeclaration: function(node, st, c) {
+      VariableDeclaration: function VariableDeclaration(node, st, c) {
         for (var i = 0; i < node.declarations.length; ++i) {
           var decl = node.declarations[i];
           if (decl) c(decl, st, "VariableDeclarator");
         }
       },
-      ObjectExpression: function(node, st, c) {
+      ObjectExpression: function ObjectExpression(node, st, c) {
         for (var i = 0; i < node.properties.length; ++i) {
           var prop = node.properties[i];
           c(prop.key, st, "Expression");
           c(prop.value, st, "Expression");
         }
       },
-      MemberExpression: function(node, st, c) {
+      MemberExpression: function MemberExpression(node, st, c) {
         c(node.object, st, "Expression");
         c(node.property, st, "Expression");
       }
     }, walk.base);
-    var lastActiveProp, getters = [];
-    forEachNode(parsed, function(node) {
-      lively_lang.arr.withoutAll(Object.keys(node), ['end', 'start', 'type', 'source', 'raw']).forEach(function(propName) {
+    var lastActiveProp,
+        getters = [];
+    forEachNode(parsed, function (node) {
+      lively_lang.arr.withoutAll(Object.keys(node), ['end', 'start', 'type', 'source', 'raw']).forEach(function (propName) {
         if (node.__lookupGetter__(propName)) return; // already defined
         var val = node[propName];
-        node.__defineGetter__(propName, function() { lastActiveProp = propName; return val; });
+        node.__defineGetter__(propName, function () {
+          lastActiveProp = propName;return val;
+        });
         getters.push([node, propName, node[propName]]);
       });
-    }, null, {visitors: visitors});
+    }, null, { visitors: visitors });
     var result = [];
-    Object.keys(visitors).forEach(function(type) {
+    Object.keys(visitors).forEach(function (type) {
       var orig = visitors[type];
-      visitors[type] = function(node, state, cont) {
+      visitors[type] = function (node, state, cont) {
         if (type === node.type || options.visitAllNodes) {
-          result.push(iterator.call(null, node, {scope: state.scope, depth: state.depth, parent: state.parent, type: type, propertyInParent: lastActiveProp}));
-          return orig(node, {scope: state.scope, parent: node, depth: state.depth+1}, cont);
+          result.push(iterator.call(null, node, { scope: state.scope, depth: state.depth, parent: state.parent, type: type, propertyInParent: lastActiveProp }));
+          return orig(node, { scope: state.scope, parent: node, depth: state.depth + 1 }, cont);
         } else {
           return orig(node, state, cont);
         }
-      }
+      };
     });
-    walk.recursive(parsed, {scope: makeScope(), parent: null, propertyInParent: '', depth: 0}, null, visitors);
-    getters.forEach(function(nodeNameVal) {
+    walk.recursive(parsed, { scope: makeScope(), parent: null, propertyInParent: '', depth: 0 }, null, visitors);
+    getters.forEach(function (nodeNameVal) {
       delete nodeNameVal[0][nodeNameVal[1]];
       nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
     });
@@ -11724,118 +12007,79 @@ module.exports = function(acorn) {
       return new Variable([start, end], 'undefined');
     }
     var visitors = {
-      Program: function(n, c) {
-        return new Sequence([n.start, n.end], n.body.map(c))
+      Program: function Program(n, c) {
+        return new Sequence([n.start, n.end], n.body.map(c));
       },
-      FunctionDeclaration: function(n, c) {
-        var args = n.params.map(function(param) {
-          return new Variable(
-            [param.start, param.end], param.name
-          );
+      FunctionDeclaration: function FunctionDeclaration(n, c) {
+        var args = n.params.map(function (param) {
+          return new Variable([param.start, param.end], param.name);
         });
-        var fn = new Function(
-          [n.id.end, n.end], c(n.body), args
-        );
-        return new VarDeclaration(
-          [n.start, n.end], n.id.name, fn
-        );
+        var fn = new Function([n.id.end, n.end], c(n.body), args);
+        return new VarDeclaration([n.start, n.end], n.id.name, fn);
       },
-      BlockStatement: function(n, c) {
+      BlockStatement: function BlockStatement(n, c) {
         var children = n.body.map(c);
         return new Sequence([n.start + 1, n.end], children);
       },
-      ExpressionStatement: function(n, c) {
+      ExpressionStatement: function ExpressionStatement(n, c) {
         return c(n.expression); // just skip it
       },
-      CallExpression: function(n, c) {
-        if ((n.callee.type == 'MemberExpression') &&
-          (n.type != 'NewExpression')) { // reused in NewExpression
+      CallExpression: function CallExpression(n, c) {
+        if (n.callee.type == 'MemberExpression' && n.type != 'NewExpression') {
+          // reused in NewExpression
           // Send
           var property; // property
           var r = n.callee.object; // reciever
           if (n.callee.computed) {
             // object[property] => Expression
-            property = c(n.callee.property)
+            property = c(n.callee.property);
           } else {
             // object.property => Identifier
-            property = new String(
-              [n.callee.property.start, n.callee.property.end],
-              n.callee.property.name
-            );
+            property = new String([n.callee.property.start, n.callee.property.end], n.callee.property.name);
           }
-          return new Send(
-            [n.start, n.end], property, c(r), n.arguments.map(c)
-          );
+          return new Send([n.start, n.end], property, c(r), n.arguments.map(c));
         } else {
-          return new Call(
-            [n.start, n.end],
-            c(n.callee),
-            n.arguments.map(c)
-          );
+          return new Call([n.start, n.end], c(n.callee), n.arguments.map(c));
         }
       },
-      MemberExpression: function(n, c) {
+      MemberExpression: function MemberExpression(n, c) {
         var slotName;
         if (n.computed) {
           // object[property] => Expression
-          slotName = c(n.property)
+          slotName = c(n.property);
         } else {
           // object.property => Identifier
-          slotName = new String(
-            [n.property.start, n.property.end], n.property.name
-          );
+          slotName = new String([n.property.start, n.property.end], n.property.name);
         }
-        return new GetSlot(
-          [n.start, n.end], slotName, c(n.object)
-        );
+        return new GetSlot([n.start, n.end], slotName, c(n.object));
       },
-      NewExpression: function(n, c) {
-        return new New(
-          [n.start, n.end], this.CallExpression(n, c)
-        );
+      NewExpression: function NewExpression(n, c) {
+        return new New([n.start, n.end], this.CallExpression(n, c));
       },
-      VariableDeclaration: function(n, c) {
+      VariableDeclaration: function VariableDeclaration(n, c) {
         var start = n.declarations[0] ? n.declarations[0].start - 1 : n.start;
-        return new Sequence(
-          [start, n.end], n.declarations.map(c)
-        );
+        return new Sequence([start, n.end], n.declarations.map(c));
       },
-      VariableDeclarator: function(n, c) {
-        var value = n.init ? c(n.init) : newUndefined(n.start -1, n.start - 1);
-        return new VarDeclaration(
-          [n.start - 1, n.end], n.id.name, value
-        );
+      VariableDeclarator: function VariableDeclarator(n, c) {
+        var value = n.init ? c(n.init) : newUndefined(n.start - 1, n.start - 1);
+        return new VarDeclaration([n.start - 1, n.end], n.id.name, value);
       },
-      FunctionExpression: function(n, c) {
-        var args = n.params.map(function(param) {
-          return new Variable(
-            [param.start, param.end], param.name
-          );
+      FunctionExpression: function FunctionExpression(n, c) {
+        var args = n.params.map(function (param) {
+          return new Variable([param.start, param.end], param.name);
         });
-        return new Function(
-          [n.start, n.end], c(n.body), args
-        );
+        return new Function([n.start, n.end], c(n.body), args);
       },
-      IfStatement: function(n, c) {
-        return new If(
-          [n.start, n.end],
-          c(n.test),
-          c(n.consequent),
-          n.alternate ? c(n.alternate) :
-            newUndefined(n.consequent.end, n.consequent.end)
-        );
+      IfStatement: function IfStatement(n, c) {
+        return new If([n.start, n.end], c(n.test), c(n.consequent), n.alternate ? c(n.alternate) : newUndefined(n.consequent.end, n.consequent.end));
       },
-      ConditionalExpression: function(n, c) {
-        return new Cond(
-          [n.start, n.end], c(n.test), c(n.consequent), c(n.alternate)
-        );
+      ConditionalExpression: function ConditionalExpression(n, c) {
+        return new Cond([n.start, n.end], c(n.test), c(n.consequent), c(n.alternate));
       },
-      SwitchStatement: function(n, c) {
-        return new Switch(
-          [n.start, n.end], c(n.discriminant), n.cases.map(c)
-        );
+      SwitchStatement: function SwitchStatement(n, c) {
+        return new Switch([n.start, n.end], c(n.discriminant), n.cases.map(c));
       },
-      SwitchCase: function(n, c) {
+      SwitchCase: function SwitchCase(n, c) {
         var start = n.consequent.length > 0 ? n.consequent[0].start : n.end;
         var end = n.consequent.length > 0 ? n.consequent[n.consequent.length - 1].end : n.end;
         var seq = new Sequence([start, end], n.consequent.map(c));
@@ -11845,29 +12089,25 @@ module.exports = function(acorn) {
           return new Default([n.start, n.end], seq);
         }
       },
-      BreakStatement: function(n, c) {
+      BreakStatement: function BreakStatement(n, c) {
         var label;
         if (n.label == null) {
           label = new Label([n.end, n.end], '');
         } else {
-          label = new Label(
-            [n.label.start, n.label.end], n.label.name
-          );
+          label = new Label([n.label.start, n.label.end], n.label.name);
         }
         return new Break([n.start, n.end], label);
       },
-      ContinueStatement: function(n, c) {
+      ContinueStatement: function ContinueStatement(n, c) {
         var label;
         if (n.label == null) {
           label = new Label([n.end, n.end], '');
         } else {
-          label = new Label(
-            [n.label.start, n.label.end], n.label.name
-          );
+          label = new Label([n.label.start, n.label.end], n.label.name);
         }
         return new Continue([n.start, n.end], label);
       },
-      TryStatement: function(n, c) {
+      TryStatement: function TryStatement(n, c) {
         var errVar, catchSeq;
         if (n.handler) {
           catchSeq = c(n.handler.body);
@@ -11876,158 +12116,106 @@ module.exports = function(acorn) {
           catchSeq = newUndefined(n.block.end + 1, n.block.end + 1);
           errVar = newUndefined(n.block.end + 1, n.block.end + 1);
         }
-        var finallySeq = n.finalizer ?
-          c(n.finalizer) : newUndefined(n.end, n.end);
-        return new TryCatchFinally(
-          [n.start, n.end], c(n.block), errVar, catchSeq, finallySeq
-        );
+        var finallySeq = n.finalizer ? c(n.finalizer) : newUndefined(n.end, n.end);
+        return new TryCatchFinally([n.start, n.end], c(n.block), errVar, catchSeq, finallySeq);
       },
-      ThrowStatement: function(n, c) {
+      ThrowStatement: function ThrowStatement(n, c) {
         return new Throw([n.start, n.end], c(n.argument));
       },
-      ForStatement: function(n, c) {
+      ForStatement: function ForStatement(n, c) {
         var init = n.init ? c(n.init) : newUndefined(4, 4);
-        var cond = n.test ? c(n.test) :
-          newUndefined(init.pos[1] + 1, init.pos[1] + 1);
-        var upd = n.update ? c(n.update) :
-          newUndefined(cond.pos[1] + 1, cond.pos[1] + 1);
-        return new For(
-          [n.start, n.end], init, cond, c(n.body), upd
-        );
+        var cond = n.test ? c(n.test) : newUndefined(init.pos[1] + 1, init.pos[1] + 1);
+        var upd = n.update ? c(n.update) : newUndefined(cond.pos[1] + 1, cond.pos[1] + 1);
+        return new For([n.start, n.end], init, cond, c(n.body), upd);
       },
-      ForInStatement: function(n, c) {
-        var left = n.left.type == 'VariableDeclaration' ?
-          c(n.left.declarations[0]) : c(n.left);
-        return new ForIn(
-          [n.start, n.end], left, c(n.right), c(n.body)
-        );
+      ForInStatement: function ForInStatement(n, c) {
+        var left = n.left.type == 'VariableDeclaration' ? c(n.left.declarations[0]) : c(n.left);
+        return new ForIn([n.start, n.end], left, c(n.right), c(n.body));
       },
-      WhileStatement: function(n, c) {
-        return new While(
-          [n.start, n.end], c(n.test), c(n.body)
-        );
+      WhileStatement: function WhileStatement(n, c) {
+        return new While([n.start, n.end], c(n.test), c(n.body));
       },
-      DoWhileStatement: function(n, c) {
-        return new DoWhile(
-          [n.start, n.end], c(n.body), c(n.test)
-        );
+      DoWhileStatement: function DoWhileStatement(n, c) {
+        return new DoWhile([n.start, n.end], c(n.body), c(n.test));
       },
-      WithStatement: function(n ,c) {
+      WithStatement: function WithStatement(n, c) {
         return new With([n.start, n.end], c(n.object), c(n.body));
       },
-      UnaryExpression: function(n, c) {
-        return new UnaryOp(
-          [n.start, n.end], n.operator, c(n.argument)
-        );
+      UnaryExpression: function UnaryExpression(n, c) {
+        return new UnaryOp([n.start, n.end], n.operator, c(n.argument));
       },
-      BinaryExpression: function(n, c) {
-        return new BinaryOp(
-          [n.start, n.end], n.operator, c(n.left), c(n.right)
-        );
+      BinaryExpression: function BinaryExpression(n, c) {
+        return new BinaryOp([n.start, n.end], n.operator, c(n.left), c(n.right));
       },
-      AssignmentExpression: function(n, c) {
+      AssignmentExpression: function AssignmentExpression(n, c) {
         if (n.operator == '=') {
-          return new Set(
-            [n.start, n.end], c(n.left), c(n.right)
-          );
+          return new Set([n.start, n.end], c(n.left), c(n.right));
         } else {
-          return new ModifyingSet(
-            [n.start, n.end],
-            c(n.left), n.operator.substr(0, n.operator.length - 1), c(n.right)
-          );
+          return new ModifyingSet([n.start, n.end], c(n.left), n.operator.substr(0, n.operator.length - 1), c(n.right));
         }
       },
-      UpdateExpression: function(n, c) {
+      UpdateExpression: function UpdateExpression(n, c) {
         if (n.prefix) {
-          return new PreOp(
-            [n.start, n.end], n.operator, c(n.argument)
-          );
+          return new PreOp([n.start, n.end], n.operator, c(n.argument));
         } else {
-          return new PostOp(
-            [n.start, n.end], n.operator, c(n.argument)
-          );
+          return new PostOp([n.start, n.end], n.operator, c(n.argument));
         }
       },
-      ReturnStatement: function(n, c) {
-        return new Return(
-          [n.start, n.end],
-          n.argument ? c(n.argument) : newUndefined(n.end, n.end)
-        );
+      ReturnStatement: function ReturnStatement(n, c) {
+        return new Return([n.start, n.end], n.argument ? c(n.argument) : newUndefined(n.end, n.end));
       },
-      Identifier: function(n, c) {
+      Identifier: function Identifier(n, c) {
         return new Variable([n.start, n.end], n.name);
       },
-      Literal: function(n, c) {
+      Literal: function Literal(n, c) {
         if (Object.isNumber(n.value)) {
           return new Number([n.start, n.end], n.value);
         } else if (Object.isBoolean(n.value)) {
-          return new Variable(
-            [n.start, n.end], n.value.toString()
-          );
+          return new Variable([n.start, n.end], n.value.toString());
         } else if (typeof n.value === 'string') {
-          return new String(
-            [n.start, n.end], n.value
-          );
+          return new String([n.start, n.end], n.value);
         } else if (Object.isRegExp(n.value)) {
           var flags = n.raw.substr(n.raw.lastIndexOf('/') + 1);
-          return new Regex(
-            [n.start, n.end], n.value.source, flags
-          );
+          return new Regex([n.start, n.end], n.value.source, flags);
         } else if (n.value === null) {
           return new Variable([n.start, n.end], 'null');
         }
         throw new Error('Case of Literal not handled!');
       },
-      ObjectExpression: function(n, c) {
-        var props = n.properties.map(function(prop) {
-          var propName = prop.key.type == 'Identifier' ?
-            prop.key.name :
-            prop.key.value;
+      ObjectExpression: function ObjectExpression(n, c) {
+        var props = n.properties.map(function (prop) {
+          var propName = prop.key.type == 'Identifier' ? prop.key.name : prop.key.value;
           if (prop.kind == 'init') {
-            return new ObjProperty(
-              [prop.key.start, prop.value.end], propName, c(prop.value)
-            );
+            return new ObjProperty([prop.key.start, prop.value.end], propName, c(prop.value));
           } else if (prop.kind == 'get') {
-            return new ObjPropertyGet(
-              [prop.key.start, prop.value.end], propName,
-              c(prop.value.body)
-            );
+            return new ObjPropertyGet([prop.key.start, prop.value.end], propName, c(prop.value.body));
           } else if (prop.kind == 'set') {
-            return new ObjPropertySet(
-              [prop.key.start, prop.value.end], propName,
-              c(prop.value.body), c(prop.value.params[0])
-            );
+            return new ObjPropertySet([prop.key.start, prop.value.end], propName, c(prop.value.body), c(prop.value.params[0]));
           } else {
             throw new Error('Case of ObjectExpression not handled!');
           }
         });
-        return new ObjectLiteral(
-          [n.start, n.end], props
-        );
+        return new ObjectLiteral([n.start, n.end], props);
       },
-      ArrayExpression: function(n, c) {
+      ArrayExpression: function ArrayExpression(n, c) {
         return new ArrayLiteral([n.start, n.end], n.elements.map(c));
       },
-      SequenceExpression: function(n, c) {
-        return new Sequence(
-          [n.start, n.end], n.expressions.map(c)
-        );
+      SequenceExpression: function SequenceExpression(n, c) {
+        return new Sequence([n.start, n.end], n.expressions.map(c));
       },
-      EmptyStatement: function(n, c) {
+      EmptyStatement: function EmptyStatement(n, c) {
         return newUndefined(n.start, n.end);
       },
-      ThisExpression: function(n, c) {
+      ThisExpression: function ThisExpression(n, c) {
         return new This([n.start, n.end]);
       },
-      DebuggerStatement: function(n, c) {
+      DebuggerStatement: function DebuggerStatement(n, c) {
         return new Debugger([n.start, n.end]);
       },
-      LabeledStatement: function(n, c) {
-        return new LabelDeclaration(
-          [n.start, n.end], n.label.name, c(n.body)
-        );
+      LabeledStatement: function LabeledStatement(n, c) {
+        return new LabelDeclaration([n.start, n.end], n.label.name, c(n.body));
       }
-    }
+    };
     visitors.LogicalExpression = visitors.BinaryExpression;
     function c(node) {
       return visitors[node.type](node, c);
@@ -12037,77 +12225,77 @@ module.exports = function(acorn) {
 
   function copy(ast, override) {
     var visitors = lively_lang.obj.extend({
-      Program: function(n, c) {
+      Program: function Program(n, c) {
         return {
           start: n.start, end: n.end, type: 'Program',
           body: n.body.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      FunctionDeclaration: function(n, c) {
+      FunctionDeclaration: function FunctionDeclaration(n, c) {
         return {
           start: n.start, end: n.end, type: 'FunctionDeclaration',
           id: c(n.id), params: n.params.map(c), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      BlockStatement: function(n, c) {
+      BlockStatement: function BlockStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'BlockStatement',
           body: n.body.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      ExpressionStatement: function(n, c) {
+      ExpressionStatement: function ExpressionStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'ExpressionStatement',
           expression: c(n.expression),
           source: n.source, astIndex: n.astIndex
         };
       },
-      CallExpression: function(n, c) {
+      CallExpression: function CallExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'CallExpression',
           callee: c(n.callee), arguments: n.arguments.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      MemberExpression: function(n, c) {
+      MemberExpression: function MemberExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'MemberExpression',
           object: c(n.object), property: c(n.property), computed: n.computed,
           source: n.source, astIndex: n.astIndex
         };
       },
-      NewExpression: function(n, c) {
+      NewExpression: function NewExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'NewExpression',
           callee: c(n.callee), arguments: n.arguments.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      VariableDeclaration: function(n, c) {
+      VariableDeclaration: function VariableDeclaration(n, c) {
         return {
           start: n.start, end: n.end, type: 'VariableDeclaration',
           declarations: n.declarations.map(c), kind: n.kind,
           source: n.source, astIndex: n.astIndex
         };
       },
-      VariableDeclarator: function(n, c) {
+      VariableDeclarator: function VariableDeclarator(n, c) {
         return {
           start: n.start, end: n.end, type: 'VariableDeclarator',
           id: c(n.id), init: c(n.init),
           source: n.source, astIndex: n.astIndex
         };
       },
-      FunctionExpression: function(n, c) {
+      FunctionExpression: function FunctionExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'FunctionExpression',
           id: c(n.id), params: n.params.map(c), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      IfStatement: function(n, c) {
+      IfStatement: function IfStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'IfStatement',
           test: c(n.test), consequent: c(n.consequent),
@@ -12115,7 +12303,7 @@ module.exports = function(acorn) {
           source: n.source, astIndex: n.astIndex
         };
       },
-      ConditionalExpression: function(n, c) {
+      ConditionalExpression: function ConditionalExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'ConditionalExpression',
           test: c(n.test), consequent: c(n.consequent),
@@ -12123,35 +12311,35 @@ module.exports = function(acorn) {
           source: n.source, astIndex: n.astIndex
         };
       },
-      SwitchStatement: function(n, c) {
+      SwitchStatement: function SwitchStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'SwitchStatement',
           discriminant: c(n.discriminant), cases: n.cases.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      SwitchCase: function(n, c) {
+      SwitchCase: function SwitchCase(n, c) {
         return {
           start: n.start, end: n.end, type: 'SwitchCase',
           test: c(n.test), consequent: n.consequent.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      BreakStatement: function(n, c) {
+      BreakStatement: function BreakStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'BreakStatement',
           label: n.label,
           source: n.source, astIndex: n.astIndex
         };
       },
-      ContinueStatement: function(n, c) {
+      ContinueStatement: function ContinueStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'ContinueStatement',
           label: n.label,
           source: n.source, astIndex: n.astIndex
         };
       },
-      TryStatement: function(n, c) {
+      TryStatement: function TryStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'TryStatement',
           block: c(n.block), handler: c(n.handler), finalizer: c(n.finalizer),
@@ -12159,21 +12347,21 @@ module.exports = function(acorn) {
           source: n.source, astIndex: n.astIndex
         };
       },
-      CatchClause: function(n, c) {
+      CatchClause: function CatchClause(n, c) {
         return {
           start: n.start, end: n.end, type: 'CatchClause',
           param: c(n.param), guard: c(n.guard), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      ThrowStatement: function(n, c) {
+      ThrowStatement: function ThrowStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'ThrowStatement',
           argument: c(n.argument),
           source: n.source, astIndex: n.astIndex
         };
       },
-      ForStatement: function(n, c) {
+      ForStatement: function ForStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'ForStatement',
           init: c(n.init), test: c(n.test), update: c(n.update),
@@ -12181,94 +12369,94 @@ module.exports = function(acorn) {
           source: n.source, astIndex: n.astIndex
         };
       },
-      ForInStatement: function(n, c) {
+      ForInStatement: function ForInStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'ForInStatement',
           left: c(n.left), right: c(n.right), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      WhileStatement: function(n, c) {
+      WhileStatement: function WhileStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'WhileStatement',
           test: c(n.test), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      DoWhileStatement: function(n, c) {
+      DoWhileStatement: function DoWhileStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'DoWhileStatement',
           test: c(n.test), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      WithStatement: function(n ,c) {
+      WithStatement: function WithStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'WithStatement',
           object: c(n.object), body: c(n.body),
           source: n.source, astIndex: n.astIndex
         };
       },
-      UnaryExpression: function(n, c) {
+      UnaryExpression: function UnaryExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'UnaryExpression',
           argument: c(n.argument), operator: n.operator, prefix: n.prefix,
           source: n.source, astIndex: n.astIndex
         };
       },
-      BinaryExpression: function(n, c) {
+      BinaryExpression: function BinaryExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'BinaryExpression',
           left: c(n.left), operator: n.operator, right: c(n.right),
           source: n.source, astIndex: n.astIndex
         };
       },
-      LogicalExpression: function(n, c) {
+      LogicalExpression: function LogicalExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'LogicalExpression',
           left: c(n.left), operator: n.operator, right: c(n.right),
           source: n.source, astIndex: n.astIndex
         };
       },
-      AssignmentExpression: function(n, c) {
+      AssignmentExpression: function AssignmentExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'AssignmentExpression',
           left: c(n.left), operator: n.operator, right: c(n.right),
           source: n.source, astIndex: n.astIndex
         };
       },
-      UpdateExpression: function(n, c) {
+      UpdateExpression: function UpdateExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'UpdateExpression',
           argument: c(n.argument), operator: n.operator, prefix: n.prefix,
           source: n.source, astIndex: n.astIndex
         };
       },
-      ReturnStatement: function(n, c) {
+      ReturnStatement: function ReturnStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'ReturnStatement',
           argument: c(n.argument),
           source: n.source, astIndex: n.astIndex
         };
       },
-      Identifier: function(n, c) {
+      Identifier: function Identifier(n, c) {
         return {
           start: n.start, end: n.end, type: 'Identifier',
           name: n.name,
           source: n.source, astIndex: n.astIndex
         };
       },
-      Literal: function(n, c) {
+      Literal: function Literal(n, c) {
         return {
           start: n.start, end: n.end, type: 'Literal',
-          value: n.value, raw: n.raw /* Acorn-specific */,
-          source: n.source, astIndex: n.astIndex
+          value: n.value, raw: n.raw /* Acorn-specific */
+          , source: n.source, astIndex: n.astIndex
         };
       },
-      ObjectExpression: function(n, c) {
+      ObjectExpression: function ObjectExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'ObjectExpression',
-          properties: n.properties.map(function(prop) {
+          properties: n.properties.map(function (prop) {
             return {
               key: c(prop.key), value: c(prop.value), kind: prop.kind
             };
@@ -12276,39 +12464,39 @@ module.exports = function(acorn) {
           source: n.source, astIndex: n.astIndex
         };
       },
-      ArrayExpression: function(n, c) {
+      ArrayExpression: function ArrayExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'ArrayExpression',
           elements: n.elements.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      SequenceExpression: function(n, c) {
+      SequenceExpression: function SequenceExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'SequenceExpression',
           expressions: n.expressions.map(c),
           source: n.source, astIndex: n.astIndex
         };
       },
-      EmptyStatement: function(n, c) {
+      EmptyStatement: function EmptyStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'EmptyStatement',
           source: n.source, astIndex: n.astIndex
         };
       },
-      ThisExpression: function(n, c) {
+      ThisExpression: function ThisExpression(n, c) {
         return {
           start: n.start, end: n.end, type: 'ThisExpression',
           source: n.source, astIndex: n.astIndex
         };
       },
-      DebuggerStatement: function(n, c) {
+      DebuggerStatement: function DebuggerStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'DebuggerStatement',
           source: n.source, astIndex: n.astIndex
         };
       },
-      LabeledStatement: function(n, c) {
+      LabeledStatement: function LabeledStatement(n, c) {
         return {
           start: n.start, end: n.end, type: 'LabeledStatement',
           label: n.label, body: c(n.body),
@@ -12327,30 +12515,30 @@ module.exports = function(acorn) {
   function findSiblings(parsed, node, beforeOrAfter) {
     if (!node) return [];
     var nodes = findNodesIncluding(parsed, node.start),
-      idx = nodes.indexOf(node),
-      parents = nodes.slice(0, idx),
-      parentWithBody = lively_lang.arr.detect(parents.reverse(), function(p) { return Array.isArray(p.body); }),
-      siblingsWithNode = parentWithBody.body;
+        idx = nodes.indexOf(node),
+        parents = nodes.slice(0, idx),
+        parentWithBody = lively_lang.arr.detect(parents.reverse(), function (p) {
+      return Array.isArray(p.body);
+    }),
+        siblingsWithNode = parentWithBody.body;
     if (!beforeOrAfter) return lively_lang.arr.without(siblingsWithNode, node);
     var nodeIdxInSiblings = siblingsWithNode.indexOf(node);
-    return beforeOrAfter === 'before' ?
-      siblingsWithNode.slice(0, nodeIdxInSiblings) :
-      siblingsWithNode.slice(nodeIdxInSiblings + 1);
+    return beforeOrAfter === 'before' ? siblingsWithNode.slice(0, nodeIdxInSiblings) : siblingsWithNode.slice(nodeIdxInSiblings + 1);
   }
 
   // // cached visitors that are used often
   walk.visitors = {
     stopAtFunctions: walk.make({
-      'Function': function() { /* stop descent */ }
+      'Function': function Function() {/* stop descent */}
     }, walk.base),
 
     withMemberExpression: walk.make({
-      MemberExpression: function(node, st, c) {
+      MemberExpression: function MemberExpression(node, st, c) {
         c(node.object, st, "Expression");
         c(node.property, st, "Expression");
       }
     }, walk.base)
-  }
+  };
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-
   // from lively.ast.AstHelper
@@ -12361,11 +12549,13 @@ module.exports = function(acorn) {
     // we need to visit every node, forEachNode is highly
     // inefficient, the compilled Mozilla visitors are a better fit
     var found = null;
-    withMozillaAstDo(parsed, null, function(next, node, state) {
+    withMozillaAstDo(parsed, null, function (next, node, state) {
       if (found) return;
       var idx = node.astIndex;
       if (idx < astIndexToFind) return;
-      if (node.astIndex === astIndexToFind) { found = node; return; }
+      if (node.astIndex === astIndexToFind) {
+        found = node;return;
+      }
       next();
     });
     return found;
@@ -12380,32 +12570,28 @@ module.exports = function(acorn) {
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
-    if (!target) { target = parsed; parsed = options; options = null }
-    if (!options) options = {}
+    if (!target) {
+      target = parsed;parsed = options;options = null;
+    }
+    if (!options) options = {};
     if (!parsed.astIndex) addAstIndex(parsed);
-    var found, targetReached = false;
+    var found,
+        targetReached = false;
     var statements = [
-          // ES5
-          'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement',
-          'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement',
-          'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement',
-          'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration',
-          'VariableDeclaration',
-          // ES2015:
-          'ClassDeclaration'
-        ];
-    withMozillaAstDo(parsed, {}, function(next, node, state, path) {
+    // ES5
+    'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration', 'VariableDeclaration',
+    // ES2015:
+    'ClassDeclaration'];
+    withMozillaAstDo(parsed, {}, function (next, node, state, path) {
       if (targetReached || node.astIndex < target.astIndex) return;
       if (node === target || node.astIndex === target.astIndex) {
         targetReached = true;
-        if (options.asPath)
-          found = path;
-        else {
+        if (options.asPath) found = path;else {
           var p = lively_lang.Path(path);
           do {
             found = p.get(parsed);
             p = p.slice(0, p.size() - 1);
-          } while ((statements.indexOf(found.type) == -1) && (p.size() > 0));
+          } while (statements.indexOf(found.type) == -1 && p.size() > 0);
         }
       }
       !targetReached && next();
@@ -12416,13 +12602,217 @@ module.exports = function(acorn) {
   function addAstIndex(parsed) {
     // we need to visit every node, forEachNode is highly
     // inefficient, the compilled Mozilla visitors are a better fit
-    withMozillaAstDo(parsed, {index: 0}, function(next, node, state) {
-      next(); node.astIndex = state.index++;
+    withMozillaAstDo(parsed, { index: 0 }, function (next, node, state) {
+      next();node.astIndex = state.index++;
     });
     return parsed;
   };
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  var FindToplevelFuncDeclVisitor = function (_Visitor) {
+    babelHelpers.inherits(FindToplevelFuncDeclVisitor, _Visitor);
+
+    function FindToplevelFuncDeclVisitor() {
+      babelHelpers.classCallCheck(this, FindToplevelFuncDeclVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(FindToplevelFuncDeclVisitor).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(FindToplevelFuncDeclVisitor, [{
+      key: "accept",
+      value: function accept(node, funcDecls, path) {
+        switch (node.type) {
+          case "ArrowFunctionExpression":
+            return node;
+          case "FunctionExpression":
+            return node;
+          case "FunctionDeclaration":
+            funcDecls.unshift({ node: node, path: path });return node;
+          default:
+            return babelHelpers.get(Object.getPrototypeOf(FindToplevelFuncDeclVisitor.prototype), "accept", this).call(this, node, funcDecls, path);
+        }
+      }
+    }], [{
+      key: "run",
+      value: function run(parsed) {
+        var state = [];
+        new this().accept(parsed, state, []);
+        return state;
+      }
+    }]);
+    return FindToplevelFuncDeclVisitor;
+  }(Visitor);
+
+  var AllNodesVisitor = function (_Visitor2) {
+    babelHelpers.inherits(AllNodesVisitor, _Visitor2);
+
+    function AllNodesVisitor() {
+      babelHelpers.classCallCheck(this, AllNodesVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(AllNodesVisitor).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(AllNodesVisitor, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        this.doFunc(node, state, path);
+        return babelHelpers.get(Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
+      }
+    }], [{
+      key: "run",
+      value: function run(parsed, doFunc, state) {
+        var v = new this();
+        v.doFunc = doFunc;
+        v.accept(parsed, state, []);
+        return state;
+      }
+    }]);
+    return AllNodesVisitor;
+  }(Visitor);
+
+  function nodesAt(pos, ast) {
+    ast = typeof ast === 'string' ? this.parse(ast) : ast;
+    return findNodesIncluding(ast, pos);
+  }
+
+  function parseFunction(source, options) {
+    var src = '(' + source + ')',
+        ast = parse(src, options);
+    /*if (options.addSource) */addSource(ast, src);
+    return ast.body[0].expression;
+  }
+
+  function parseLikeOMeta(src, rule) {
+    // only an approximation, _like_ OMeta
+    var self = this;
+    function parse(source) {
+      return toLKObjects(self.parse(source));
+    }
+
+    var ast;
+    switch (rule) {
+      case 'expr':
+      case 'stmt':
+      case 'functionDef':
+        ast = parse(src);
+        if (ast.isSequence && ast.children.length == 1) {
+          ast = ast.children[0];
+          ast.setParent(undefined);
+        }
+        break;
+      case 'memberFragment':
+        src = '({' + src + '})'; // to make it valid
+        ast = parse(src);
+        ast = ast.children[0].properties[0];
+        ast.setParent(undefined);
+        break;
+      case 'categoryFragment':
+      case 'traitFragment':
+        src = '[' + src + ']'; // to make it valid
+        ast = parse(src);
+        ast = ast.children[0];
+        ast.setParent(undefined);
+        break;
+      default:
+        ast = parse(src);
+    }
+    ast.source = src;
+    return ast;
+  }
+
+  function fuzzyParse(source, options) {
+    // options: verbose, addSource, type
+    options = options || {};
+    options.ecmaVersion = options.ecmaVersion || 7;
+    options.sourceType = options.sourceType || "module";
+    options.plugins = options.plugins || {};
+    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+
+    var ast, safeSource, err;
+    if (options.type === 'LabeledStatement') {
+      safeSource = '$={' + source + '}';
+    }
+    try {
+      // we only parse to find errors
+      ast = parse(safeSource || source, options);
+      if (safeSource) ast = null; // we parsed only for finding errors
+      else if (options.addSource) addSource(ast, source);
+    } catch (e) {
+      err = e;
+    }
+    if (err && err.raisedAt !== undefined) {
+      if (safeSource) {
+        // fix error pos
+        err.pos -= 3;err.raisedAt -= 3;err.loc.column -= 3;
+      }
+      var parseErrorSource = '';
+      parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
+      parseErrorSource += '<-error->';
+      parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
+      options.verbose && show('parse error: ' + parseErrorSource);
+      err.parseErrorSource = parseErrorSource;
+    } else if (err && options.verbose) {
+      show('' + err + err.stack);
+    }
+    if (!ast) {
+      ast = loose.parse_dammit(source, options);
+      if (options.addSource) addSource(ast, source);
+      ast.isFuzzy = true;
+      ast.parseError = err;
+    }
+    return ast;
+  }
+
+  function acornParseAsyncAware(source, options) {
+    var asyncSource = "async () => {\n" + source + "\n}",
+        offset = "async () => {\n".length;
+
+    if (options.onComment) {
+      var orig = options.onComment;
+      options.onComment = function (isBlock, text, start, end, line, column) {
+        start -= offset;
+        end -= offset;
+        return orig.call(this, isBlock, text, start, end, line, column);
+      };
+    }
+
+    var parsed = acorn.parse(asyncSource, options);
+    if (parsed.loc) {
+      var SourceLocation = parsed.loc.constructor;
+    }
+
+    parsed = { body: parsed.body[0].expression.body.body, sourceType: "module", type: "Program" };
+
+    AllNodesVisitor.run(parsed, function (node, state, path) {
+      if (node._positionFixed) return;
+      node._offsetFixed = true;
+      if (node.start || node.start === 0) {
+        node.start -= offset;
+        node.end -= offset;
+      }
+      if (node.loc && SourceLocation) {
+        var _node$loc = node.loc;
+        var _node$loc$start = _node$loc.start;
+        var sc = _node$loc$start.column;
+        var sl = _node$loc$start.line;
+        var _node$loc$end = _node$loc.end;
+        var ec = _node$loc$end.column;
+        var el = _node$loc$end.line;
+
+        node.loc = new SourceLocation(options, { column: sc, line: sl - 1 }, { column: ec, line: el - 1 });
+      }
+      if (options.addSource && !node.source) {
+        node.source = source.slice(node.start, node.end);
+      }
+    });
+
+    parsed.start = parsed.body[0].start;
+    parsed.end = lively_lang.arr.last(parsed.body).end;
+    if (options.addSource) parsed.source = source;
+    if (parsed.body[0].loc && SourceLocation) {
+      parsed.loc = new SourceLocation(options, parsed.body[0].loc.start, lively_lang.arr.last(parsed.body).loc.end);
+    }
+
+    return parsed;
+  }
 
   function parse(source, options) {
     // proxy function to acorn.parse.
@@ -12445,16 +12835,15 @@ module.exports = function(acorn) {
     options = options || {};
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
+    if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
     options.plugins = options.plugins || {};
-    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
-      options.plugins.asyncawait : {awaitAnywhere: true};
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
 
     if (options.withComments) {
       // record comments
       delete options.withComments;
       var comments = [];
-      options.onComment = function(isBlock, text, start, end, line, column) {
+      options.onComment = function (isBlock, text, start, end, line, column) {
         comments.push({
           isBlock: isBlock,
           text: text, node: null,
@@ -12464,13 +12853,13 @@ module.exports = function(acorn) {
       };
     }
 
-    var ast = options.addSource ?
-      addSource(source, options) : // FIXME
-      acorn.parse(source, options);
+    // for properly parsing toplevel awaits. The asyncawait plugin offers this
+    // option but fails with nested expressions
+    var ast = acornParseAsyncAware(source, options);
 
     if (options.addAstIndex && !ast.hasOwnProperty('astIndex')) addAstIndex(ast);
 
-    if (ast && comments) attachCommentsToAST({ast: ast, comments: comments, nodesWithComments: []});
+    if (ast && comments) attachCommentsToAST({ ast: ast, comments: comments, nodesWithComments: [] });
 
     return ast;
 
@@ -12483,10 +12872,10 @@ module.exports = function(acorn) {
     }
 
     function assignCommentsToBlockNodes(commentData) {
-      comments.forEach(function(comment) {
-        var node = lively_lang.arr.detect(
-          nodesAt(comment.start, ast).reverse(),
-          function(node) { return node.type === 'BlockStatement' || node.type === 'Program'; });
+      comments.forEach(function (comment) {
+        var node = lively_lang.arr.detect(nodesAt(comment.start, ast).reverse(), function (node) {
+          return node.type === 'BlockStatement' || node.type === 'Program';
+        });
         if (!node) node = ast;
         if (!node.comments) node.comments = [];
         node.comments.push(comment);
@@ -12498,8 +12887,8 @@ module.exports = function(acorn) {
     function mergeComments(commentData) {
       // coalesce non-block comments (multiple following lines of "// ...") into one comment.
       // This only happens if line comments aren't seperated by newlines
-      commentData.nodesWithComments.forEach(function(blockNode) {
-        lively_lang.arr.clone(blockNode.comments).reduce(function(coalesceData, comment) {
+      commentData.nodesWithComments.forEach(function (blockNode) {
+        lively_lang.arr.clone(blockNode.comments).reduce(function (coalesceData, comment) {
           if (comment.isBlock) {
             coalesceData.lastComment = null;
             return coalesceData;
@@ -12512,7 +12901,9 @@ module.exports = function(acorn) {
 
           // if the comments are seperated by a statement, don't merge
           var last = coalesceData.lastComment;
-          var nodeInbetween = lively_lang.arr.detect(blockNode.body, function(node) { return node.start >= last.end && node.end <= comment.start; });
+          var nodeInbetween = lively_lang.arr.detect(blockNode.body, function (node) {
+            return node.start >= last.end && node.end <= comment.start;
+          });
           if (nodeInbetween) {
             coalesceData.lastComment = comment;
             return coalesceData;
@@ -12531,105 +12922,15 @@ module.exports = function(acorn) {
           lively_lang.arr.remove(blockNode.comments, comment);
           lively_lang.arr.remove(commentData.comments, comment);
           return coalesceData;
-        }, {lastComment: null});
+        }, { lastComment: null });
       });
       return commentData;
     }
   }
 
-  function parseFunction(source, options) {
-    var src = '(' + source + ')',
-      ast = parse(src, options);
-    /*if (options.addSource) */addSource(ast, src);
-    return ast.body[0].expression;
-  }
-
-  function parseLikeOMeta(src, rule) {
-    // only an approximation, _like_ OMeta
-    var self = this;
-    function parse(source) {
-      return toLKObjects(self.parse(source));
-    }
-
-    var ast;
-    switch (rule) {
-    case 'expr':
-    case 'stmt':
-    case 'functionDef':
-      ast = parse(src);
-      if (ast.isSequence && (ast.children.length == 1)) {
-        ast = ast.children[0];
-        ast.setParent(undefined);
-      }
-      break;
-    case 'memberFragment':
-      src = '({' + src + '})'; // to make it valid
-      ast = parse(src);
-      ast = ast.children[0].properties[0];
-      ast.setParent(undefined);
-      break;
-    case 'categoryFragment':
-    case 'traitFragment':
-      src = '[' + src + ']'; // to make it valid
-      ast = parse(src);
-      ast = ast.children[0];
-      ast.setParent(undefined);
-      break;
-    default:
-      ast = parse(src);
-    }
-    ast.source = src;
-    return ast;
-  }
-
-  function fuzzyParse(source, options) {
-    // options: verbose, addSource, type
-    options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 7;
-    options.sourceType = options.sourceType || "module";
-    options.plugins = options.plugins || {};
-    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ?
-      options.plugins.asyncawait : {awaitAnywhere: true};
-
-
-    var ast, safeSource, err;
-    if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
-    try {
-      // we only parse to find errors
-      ast = parse(safeSource || source, options);
-      if (safeSource) ast = null; // we parsed only for finding errors
-      else if (options.addSource) addSource(ast, source);
-    } catch (e) { err = e; }
-    if (err && err.raisedAt !== undefined) {
-      if (safeSource) { // fix error pos
-        err.pos -= 3; err.raisedAt -= 3; err.loc.column -= 3; }
-      var parseErrorSource = '';
-      parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
-      parseErrorSource += '<-error->';
-      parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
-      options.verbose && show('parse error: ' + parseErrorSource);
-      err.parseErrorSource = parseErrorSource;
-    } else if (err && options.verbose) {
-      show('' + err + err.stack);
-    }
-    if (!ast) {
-      ast = loose.parse_dammit(source, options);
-      if (options.addSource) addSource(ast, source);
-      ast.isFuzzy = true;
-      ast.parseError = err;
-    }
-    return ast;
-  }
-
-  function nodesAt(pos, ast) {
-    ast = typeof ast === 'string' ? this.parse(ast) : ast;
-    return findNodesIncluding(ast, pos);
-  }
-
   var methods = {
 
-    withMozillaAstDo: function(parsed, state, func) {
+    withMozillaAstDo: function withMozillaAstDo(parsed, state, func) {
       // simple interface to mozilla AST visitor. function gets passed three
       // arguments:
       // acceptNext, -- continue visiting
@@ -12637,28 +12938,35 @@ module.exports = function(acorn) {
       // state -- state variable that is passed along
       var vis = new Visitor(),
           origAccept = vis.accept;
-      vis.accept = function(node, st, path) {
-        var next = function() { origAccept.call(vis, node, st, path); }
+      vis.accept = function (node, st, path) {
+        var next = function next() {
+          origAccept.call(vis, node, st, path);
+        };
         state = func(next, node, st, path);
         return node;
-      }
+      };
       vis.accept(parsed, state, []);
       return state;
     },
 
-    printAst: function(astOrSource, options) {
+    printAst: function printAst(astOrSource, options) {
       options = options || {};
       var printSource = options.printSource || false,
           printPositions = options.printPositions || false,
           printIndex = options.printIndex || false,
-          source, parsed, tree = [];
+          source,
+          parsed,
+          tree = [];
 
       if (typeof astOrSource === "string") {
         source = astOrSource;
         parsed = parse(astOrSource);
-      } else { parsed = astOrSource; source = options.source || parsed.source; }
+      } else {
+        parsed = astOrSource;source = options.source || parsed.source;
+      }
 
-      if (printSource && !parsed.source) { // ensure that nodes have source attached
+      if (printSource && !parsed.source) {
+        // ensure that nodes have source attached
         if (!source) {
           source = stringify(parsed);
           parsed = parse(source);
@@ -12667,68 +12975,78 @@ module.exports = function(acorn) {
       }
 
       function printFunc(ea) {
-        var string = ea.path + ':' + ea.node.type, additional = [];
-        if (printIndex) { additional.push(ea.index); }
-        if (printPositions) { additional.push(ea.node.start + '-' + ea.node.end); }
+        var string = ea.path + ':' + ea.node.type,
+            additional = [];
+        if (printIndex) {
+          additional.push(ea.index);
+        }
+        if (printPositions) {
+          additional.push(ea.node.start + '-' + ea.node.end);
+        }
         if (printSource) {
           var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-            printed = string.print.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+              printed = string.print.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
           additional.push(printed);
         }
-        if (additional.length) { string += '(' + additional.join(',') + ')'; }
+        if (additional.length) {
+          string += '(' + additional.join(',') + ')';
+        }
         return string;
       }
 
-      new PrinterVisitor().accept(parsed, {index: 0, tree: tree}, []);
-      return lively_lang.string.printTree(tree[0], printFunc, ea => ea.children, '  ');
+      new PrinterVisitor().accept(parsed, { index: 0, tree: tree }, []);
+      return lively_lang.string.printTree(tree[0], printFunc, function (ea) {
+        return ea.children;
+      }, '  ');
     },
 
-    compareAst: function(node1, node2) {
+    compareAst: function compareAst(node1, node2) {
       if (!node1 || !node2) throw new Error('node' + (node1 ? '1' : '2') + ' not defined');
-      var state = {completePath: [], comparisons: {errors: []}};
+      var state = { completePath: [], comparisons: { errors: [] } };
       new ComparisonVisitor().accept(node1, node2, state, []);
       return !state.comparisons.errors.length ? null : state.comparisons.errors.pluck('msg');
     },
 
-    pathToNode: function(parsed, index, options) {
+    pathToNode: function pathToNode(parsed, index, options) {
       options = options || {};
       if (!parsed.astIndex) addAstIndex(parsed);
-      var vis = new Visitor(), found = null;
+      var vis = new Visitor(),
+          found = null;
       (vis.accept = function (node, pathToHere, state, path) {
         if (found) return;
         var fullPath = pathToHere.concat(path);
         if (node.astIndex === index) {
-          var pathString = fullPath
-            .map(function(ea) { return typeof ea === 'string' ? '.' + ea : '[' + ea + ']'})
-            .join('');
-          found = {pathString: pathString, path: fullPath, node: node};
+          var pathString = fullPath.map(function (ea) {
+            return typeof ea === 'string' ? '.' + ea : '[' + ea + ']';
+          }).join('');
+          found = { pathString: pathString, path: fullPath, node: node };
         }
         return this['visit' + node.type](node, fullPath, state, path);
-      }).call(vis,parsed, [], {}, []);
+      }).call(vis, parsed, [], {}, []);
       return found;
     },
 
-    rematchAstWithSource: function(parsed, source, addLocations, subTreePath) {
+    rematchAstWithSource: function rematchAstWithSource(parsed, source, addLocations, subTreePath) {
       addLocations = !!addLocations;
       var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
           visitor = new Visitor();
       if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
 
-      visitor.accept = function(node, state, path) {
+      visitor.accept = function (node, state, path) {
         path = path || [];
-        var node2 = path.reduce(function(node, pathElem) {
+        var node2 = path.reduce(function (node, pathElem) {
           return node[pathElem];
         }, parsed);
         node2.start = node.start;
         node2.end = node.end;
         if (addLocations) node2.loc = node.loc;
         return this['visit' + node.type](node, state, path);
-      }
+      };
 
       visitor.accept(parsed2);
     }
 
-  }
+  };
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -12742,68 +13060,52 @@ module.exports = function(acorn) {
 
   var helpers = {
 
-    declIds: function(nodes) {
-      return lively_lang.arr.flatmap(nodes, function(ea) {
+    declIds: function declIds(nodes) {
+      return lively_lang.arr.flatmap(nodes, function (ea) {
         if (!ea) return [];
         if (ea.type === "Identifier") return [ea];
         if (ea.type === "RestElement") return [ea.argument];
         if (ea.type === "AssignmentPattern") return [ea.left];
-        if (ea.type === "ObjectPattern")
-          return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
-        if (ea.type === "ArrayPattern")
-          return helpers.declIds(ea.elements);
+        if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
+        if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
         return [];
       });
     },
 
-    varDeclIds: function(scope) {
-      return helpers.declIds(
-        lively_lang.chain(scope.varDecls)
-          .pluck('declarations')
-          .flatten()
-          .pluck('id')
-          .value());
+    varDeclIds: function varDeclIds(scope) {
+      return helpers.declIds(lively_lang.chain(scope.varDecls).pluck('declarations').flatten().pluck('id').value());
     },
 
     objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
       // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
       // nodes as a list
-      return lively_lang.arr.flatmap(objExpr.properties, function(prop) {
-        var key = prop.key.name
+      return lively_lang.arr.flatmap(objExpr.properties, function (prop) {
+        var key = prop.key.name;
         // var result = [{key: path.concat([key]), value: prop.value}];
         var result = [];
-        var thisNode = {key: path.concat([key]), value: prop.value};
+        var thisNode = { key: path.concat([key]), value: prop.value };
         switch (prop.value.type) {
-          case "ArrayExpression": case "ArrayPattern":
+          case "ArrayExpression":case "ArrayPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function(el, i) {
-              return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs); }));
+            result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
+              return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
+            }));
             break;
-          case "ObjectExpression": case "ObjectPattern":
+          case "ObjectExpression":case "ObjectPattern":
             if (!onlyLeafs) result.push(thisNode);
             result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
             break;
-          default: result.push(thisNode);
+          default:
+            result.push(thisNode);
         }
         return result;
       });
     }
-  }
+  };
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var knownGlobals = [
-    "true", "false", "null", "undefined", "arguments",
-    "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol",
-    "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
-    "Math", "NaN", "Infinity", "Intl", "JSON", "Promise",
-    "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert",
-    "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent",
-    "navigator", "window", "document", "console",
-    "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame",
-    "Node", "HTMLCanvasElement", "Image", "Class",
-    "Global", "Functions", "Objects", "Strings",
-    "module", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"]
+  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "module", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
 
   function scopes(parsed) {
     var vis = new ScopeVisitor(),
@@ -12813,25 +13115,27 @@ module.exports = function(acorn) {
   }
 
   function nodesAtIndex(parsed, index) {
-    return withMozillaAstDo(parsed, [], function(next, node, found) {
-      if (node.start <= index && index <= node.end) { found.push(node); next(); }
+    return withMozillaAstDo(parsed, [], function (next, node, found) {
+      if (node.start <= index && index <= node.end) {
+        found.push(node);next();
+      }
       return found;
     });
   }
 
   function scopesAtIndex(parsed, index) {
-    return lively_lang.tree.filter(
-      scopes(parsed),
-      function(scope) {
-        var n = scope.node;
-        var start = n.start, end = n.end;
-        if (n.type === 'FunctionDeclaration') {
-          start = n.params.length ? n.params[0].start : n.body.start;
-          end = n.body.end;
-        }
-        return start <= index && index <= end;
-      },
-      function(s) { return s.subScopes; });
+    return lively_lang.tree.filter(scopes(parsed), function (scope) {
+      var n = scope.node;
+      var start = n.start,
+          end = n.end;
+      if (n.type === 'FunctionDeclaration') {
+        start = n.params.length ? n.params[0].start : n.body.start;
+        end = n.body.end;
+      }
+      return start <= index && index <= end;
+    }, function (s) {
+      return s.subScopes;
+    });
   }
 
   function scopeAtIndex(parsed, index) {
@@ -12842,10 +13146,8 @@ module.exports = function(acorn) {
     // DEPRECATED
     // FIXME "scopes" should actually not referer to a node but to a scope
     // object, see exports.scopes!
-    return nodesAt$1(pos, parsed).filter(function(node) {
-      return node.type === 'Program'
-        || node.type === 'FunctionDeclaration'
-        || node.type === 'FunctionExpression'
+    return nodesAt$1(pos, parsed).filter(function (node) {
+      return node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression';
     });
   }
 
@@ -12853,12 +13155,9 @@ module.exports = function(acorn) {
     // DEPRECATED
     // FIXME "scopes" should actually not referer to a node but to a scope
     // object, see exports.scopes!
-    return withMozillaAstDo(node, {root: node, result: []}, function(next, node, state) {
+    return withMozillaAstDo(node, { root: node, result: [] }, function (next, node, state) {
       state.result.push(node);
-      if (node !== state.root
-      && (node.type === 'Program'
-       || node.type === 'FunctionDeclaration'
-       || node.type === 'FunctionExpression')) return state;
+      if (node !== state.root && (node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) return state;
       next();
       return state;
     }).result;
@@ -12866,31 +13165,28 @@ module.exports = function(acorn) {
 
   function declarationsOfScope(scope, includeOuter) {
     // returns Identifier nodes
-    return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : [])
-      .concat(helpers.declIds(scope.params))
-      .concat(scope.funcDecls.map(ea => ea.id))
-      .concat(helpers.varDeclIds(scope))
-      .concat(scope.catches)
-      .concat(scope.classDecls.map(ea => ea.id))
-      .concat(scope.importDecls)
+    return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : []).concat(helpers.declIds(scope.params)).concat(scope.funcDecls.map(function (ea) {
+      return ea.id;
+    })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
+      return ea.id;
+    })).concat(scope.importDecls);
   }
 
   function _declaredVarNames(scope, useComments) {
-    return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name')
-      .concat(!useComments ? [] :
-        _findJsLintGlobalDeclarations(
-          scope.node.type === 'Program' ?
-            scope.node : scope.node.body));
+    return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
   }
 
   function _findJsLintGlobalDeclarations(node) {
     if (!node || !node.comments) return [];
-    return lively_lang.arr.flatten(
-      node.comments
-        .filter(function(ea) { return ea.text.trim().match(/^global/) })
-        .map(function(ea) {
-          return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
-        }));
+    return lively_lang.arr.flatten(node.comments.filter(function (ea) {
+      return ea.text.trim().match(/^global/);
+    }).map(function (ea) {
+      return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
+    }));
+  }
+
+  function topLevelFuncDecls(parsed) {
+    return FindToplevelFuncDeclVisitor.run(parsed);
   }
 
   function topLevelDeclsAndRefs(parsed, options) {
@@ -12899,84 +13195,84 @@ module.exports = function(acorn) {
 
     if (typeof parsed === "string") parsed = parse(parsed, options);
 
-    var scope       = scopes(parsed),
+    var scope = scopes(parsed),
         useComments = !!options.jslintGlobalComment,
-        declared    = _declaredVarNames(scope, useComments),
-        refs        = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
-        undeclared  = lively_lang.chain(refs).pluck('name').withoutAll(declared).value();
+        declared = _declaredVarNames(scope, useComments),
+        refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
+        undeclared = lively_lang.chain(refs).pluck('name').withoutAll(declared).value();
 
     return {
-      scope:           scope,
-      varDecls:        scope.varDecls,
-      funcDecls:       scope.funcDecls,
-      classDecls:      scope.classDecls,
-      declaredNames:   declared,
+      scope: scope,
+      varDecls: scope.varDecls,
+      funcDecls: scope.funcDecls,
+      classDecls: scope.classDecls,
+      declaredNames: declared,
       undeclaredNames: undeclared,
-      refs:            refs,
-      thisRefs:        scope.thisRefs
-    }
+      refs: refs,
+      thisRefs: scope.thisRefs
+    };
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function findUndeclaredReferences(scope) {
       var names = _declaredVarNames(scope, useComments);
-      return scope.subScopes
-        .map(findUndeclaredReferences)
-        .reduce(function(refs, ea) { return refs.concat(ea); }, scope.refs)
-        .filter(function(ref) { return names.indexOf(ref.name) === -1; });
+      return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
+        return refs.concat(ea);
+      }, scope.refs).filter(function (ref) {
+        return names.indexOf(ref.name) === -1;
+      });
     }
-
   }
 
   function findGlobalVarRefs(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed, options),
         noGlobals = topLevel.declaredNames.concat(knownGlobals);
-    return topLevel.refs.filter(function(ea) {
-      return noGlobals.indexOf(ea.name) === -1; })
+    return topLevel.refs.filter(function (ea) {
+      return noGlobals.indexOf(ea.name) === -1;
+    });
   }
 
   function findNodesIncludingLines(parsed, code, lines, options) {
     if (!code && !parsed) throw new Error("Need at least ast or code");
     code = code ? code : stringify(parsed);
-    parsed = parsed && parsed.loc ? parsed : parse(code, {locations: true});
-    return withMozillaAstDo(parsed, [], (next, node, found) => {
-      if (lines.every(line => lively_lang.num.between(line, node.loc.start.line, node.loc.end.line))) {
-        lively_lang.arr.pushIfNotIncluded(found, node); next(); }
+    parsed = parsed && parsed.loc ? parsed : parse(code, { locations: true });
+    return withMozillaAstDo(parsed, [], function (next, node, found) {
+      if (lines.every(function (line) {
+        return lively_lang.num.between(line, node.loc.start.line, node.loc.end.line);
+      })) {
+        lively_lang.arr.pushIfNotIncluded(found, node);next();
+      }
       return found;
     });
   }
 
   function findReferencesAndDeclsInScope(scope, name) {
     return lively_lang.arr.flatten( // all references
-      lively_lang.tree.map(
-        scope,
-        function(scope) {
-          return scope.refs.concat(varDeclIdsOf(scope))
-            .filter(function(ref) { return ref.name === name; });
-        },
-        function(s) {
-          return s.subScopes.filter(function(subScope) {
-            return varDeclIdsOf(subScope).every(function(id) {
-              return  id.name !== name; }); });
-        }));
+    lively_lang.tree.map(scope, function (scope) {
+      return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
+        return ref.name === name;
+      });
+    }, function (s) {
+      return s.subScopes.filter(function (subScope) {
+        return varDeclIdsOf(subScope).every(function (id) {
+          return id.name !== name;
+        });
+      });
+    }));
 
     function varDeclIdsOf(scope) {
-      return scope.params
-        .concat(lively_lang.arr.pluck(scope.funcDecls, 'id'))
-        .concat(helpers.varDeclIds(scope));
+      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(helpers.varDeclIds(scope));
     }
   }
 
   function findDeclarationClosestToIndex(parsed, name, index) {
     var found = null;
-    lively_lang.arr.detect(
-      scopesAtIndex(parsed, index).reverse(),
-      (scope) => {
-        var decls = declarationsOfScope(scope, true),
-            idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
-        if (idx === -1) return false;
-        found = decls[idx]; return true;
-      });
+    lively_lang.arr.detect(scopesAtIndex(parsed, index).reverse(), function (scope) {
+      var decls = declarationsOfScope(scope, true),
+          idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
+      if (idx === -1) return false;
+      found = decls[idx];return true;
+    });
     return found;
   }
 
@@ -12991,23 +13287,23 @@ module.exports = function(acorn) {
     // Identifier "x" in "x+1;". The second statement is what will be found.
     var nodes = nodesAt$1(node.start, parsed);
     if (nodes.indexOf(node) === -1) return undefined;
-    var found = nodes.reverse().find((node, i) => {
-      if (!nodes[i+1]) return false;
-      var t = nodes[i+1].type;
-      return ["BlockStatement",
-              "Program",
-              "FunctionDeclaration",
-              "FunctionExpress",
-              "ArrowFunctionExpress",
-              "SwitchCase", "SwitchStatement"].indexOf(t) > -1 ? true : false;
+    var found = nodes.reverse().find(function (node, i) {
+      if (!nodes[i + 1]) return false;
+      var t = nodes[i + 1].type;
+      return ["BlockStatement", "Program", "FunctionDeclaration", "FunctionExpress", "ArrowFunctionExpress", "SwitchCase", "SwitchStatement"].indexOf(t) > -1 ? true : false;
     });
     if (options && options.asPath) {
-      var v = new Visitor(), foundPath;
-      v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
-        if (node === found) { foundPath = path; throw new Error("stop search"); };
+      var v = new Visitor(),
+          foundPath;
+      v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
+        if (node === found) {
+          foundPath = path;throw new Error("stop search");
+        };
         return proceed(node, state, path);
       });
-      try { v.accept(parsed, {}, []); } catch (e) {}
+      try {
+        v.accept(parsed, {}, []);
+      } catch (e) {}
       return foundPath;
     }
     return found;
@@ -13028,6 +13324,7 @@ module.exports = function(acorn) {
     _declaredVarNames: _declaredVarNames,
     _findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
     topLevelDeclsAndRefs: topLevelDeclsAndRefs,
+    topLevelFuncDecls: topLevelFuncDecls,
     findGlobalVarRefs: findGlobalVarRefs,
     findNodesIncludingLines: findNodesIncludingLines,
     findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
@@ -13040,19 +13337,19 @@ module.exports = function(acorn) {
     // currently this is used by the replacement functions below but
     // I don't wan't to make it part of our AST API
 
-    _node2string: function(node) {
-      return node.source || stringify(node)
+    _node2string: function _node2string(node) {
+      return node.source || stringify(node);
     },
 
-    _findIndentAt: function(s, pos) {
+    _findIndentAt: function _findIndentAt(s, pos) {
       var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
           indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
       if (indent[0] === '\n') indent = indent.slice(1);
       return indent;
     },
 
-    _applyChanges: function(changes, source) {
-      return changes.reduce(function(source, change) {
+    _applyChanges: function _applyChanges(changes, source) {
+      return changes.reduce(function (source, change) {
         if (change.type === 'del') {
           return source.slice(0, change.pos) + source.slice(change.pos + change.length);
         } else if (change.type === 'add') {
@@ -13062,7 +13359,7 @@ module.exports = function(acorn) {
       }, source);
     },
 
-    _compareNodesForReplacement: function(nodeA, nodeB) {
+    _compareNodesForReplacement: function _compareNodesForReplacement(nodeA, nodeB) {
       // equals
       if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
       // a "left" of b
@@ -13076,17 +13373,17 @@ module.exports = function(acorn) {
       throw new Error('Comparing nodes');
     },
 
-    memberExpression: function(keys) {
+    memberExpression: function memberExpression(keys) {
       // var keys = ["foo", "bar", [0], "baz"];
       // stringify(this.ast.transform.helper.memberExpression(keys)); // => foo.bar[0].baz
-      var memberExpression = keys.slice(1).reduce(function(memberExpr, key) {
+      var memberExpression = keys.slice(1).reduce(function (memberExpr, key) {
         return {
           computed: typeof key !== "string",
           object: memberExpr,
           property: nodeForKey(key),
           type: "MemberExpression"
-        }
-      }, nodeForKey(keys[0]))
+        };
+      }, nodeForKey(keys[0]));
       return memberExpression;
       return {
         type: "ExpressionStatement",
@@ -13094,13 +13391,11 @@ module.exports = function(acorn) {
       };
 
       function nodeForKey(key) {
-        return typeof key === "string" ?
-          {name: key, type: "Identifier"} :
-          {raw: String(key), type: "Literal", value: key}
+        return typeof key === "string" ? { name: key, type: "Identifier" } : { raw: String(key), type: "Literal", value: key };
       }
     },
 
-    replaceNode: function(target, replacementFunc, sourceOrChanges) {
+    replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
       // parameters:
       //   - target: ast node
       //   - replacementFunc that gets this node and its source snippet
@@ -13108,39 +13403,34 @@ module.exports = function(acorn) {
       //   - sourceOrChanges: If its a string -- the source code to rewrite
       //                      If its and object -- {changes: ARRAY, source: STRING}
 
-      var sourceChanges = typeof sourceOrChanges === 'object' ?
-        sourceOrChanges : {changes: [], source: sourceOrChanges},
-        insideChangedBefore = false,
-        pos = sourceChanges.changes.reduce(function(pos, change) {
-          // fixup the start and end indices of target using the del/add
-          // changes already applied
-          if (pos.end < change.pos) return pos;
+      var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : babelHelpers.typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
+          insideChangedBefore = false,
+          pos = sourceChanges.changes.reduce(function (pos, change) {
+        // fixup the start and end indices of target using the del/add
+        // changes already applied
+        if (pos.end < change.pos) return pos;
 
-          var isInFront = change.pos < pos.start;
-          insideChangedBefore = insideChangedBefore
-                   || change.pos >= pos.start && change.pos <= pos.end;
+        var isInFront = change.pos < pos.start;
+        insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
 
-          if (change.type === 'add') return {
-            start: isInFront ? pos.start + change.string.length : pos.start,
-            end: pos.end + change.string.length
-          };
+        if (change.type === 'add') return {
+          start: isInFront ? pos.start + change.string.length : pos.start,
+          end: pos.end + change.string.length
+        };
 
-          if (change.type === 'del') return {
-            start: isInFront ? pos.start - change.length : pos.start,
-            end: pos.end - change.length
-          };
+        if (change.type === 'del') return {
+          start: isInFront ? pos.start - change.length : pos.start,
+          end: pos.end - change.length
+        };
 
-          throw new Error('Cannot deal with change ' + Objects.inspect(change));
-        }, {start: target.start, end: target.end});
+        throw new Error('Cannot deal with change ' + Objects.inspect(change));
+      }, { start: target.start, end: target.end });
 
       var source = sourceChanges.source,
           replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
-          replacementSource = Array.isArray(replacement) ?
-            replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)):
-            replacementSource = helper._node2string(replacement);
+          replacementSource = Array.isArray(replacement) ? replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)) : replacementSource = helper._node2string(replacement);
 
-      var changes = [{type: 'del', pos: pos.start, length: pos.end - pos.start},
-             {type: 'add', pos: pos.start, string: replacementSource}];
+      var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
 
       return {
         changes: sourceChanges.changes.concat(changes),
@@ -13148,19 +13438,18 @@ module.exports = function(acorn) {
       };
     },
 
-    replaceNodes: function(targetAndReplacementFuncs, sourceOrChanges) {
+    replaceNodes: function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
       // replace multiple AST nodes, order rewriting from inside out and
       // top to bottom so that nodes to rewrite can overlap or be contained
       // in each other
-      return targetAndReplacementFuncs.sort(function(a, b) {
+      return targetAndReplacementFuncs.sort(function (a, b) {
         return helper._compareNodesForReplacement(a.target, b.target);
-      }).reduce(function(sourceChanges, ea) {
+      }).reduce(function (sourceChanges, ea) {
         return helper.replaceNode(ea.target, ea.replacementFunc, sourceChanges);
-      }, typeof sourceOrChanges === 'object' ?
-        sourceOrChanges : {changes: [], source: sourceOrChanges});
+      }, (typeof sourceOrChanges === "undefined" ? "undefined" : babelHelpers.typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges });
     }
 
-  }
+  };
 
   function replace(astOrSource, targetNode, replacementFunc, options) {
     // replaces targetNode in astOrSource with what replacementFunc returns
@@ -13180,10 +13469,9 @@ module.exports = function(acorn) {
     //      changes: [{pos: 0,length: 16,type: "del"},{pos: 0,string: "hello('world')",type: "add"}]
     //    }
 
-    var parsed = typeof astOrSource === 'object' ? astOrSource : null,
-      source = typeof astOrSource === 'string' ?
-        astOrSource : (parsed.source || helper._node2string(parsed)),
-      result = helper.replaceNode(targetNode, replacementFunc, source);
+    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : null,
+        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+        result = helper.replaceNode(targetNode, replacementFunc, source);
 
     return result;
   }
@@ -13197,16 +13485,14 @@ module.exports = function(acorn) {
        // => "A.x = 3; A.y = 2; z = 4"
     */
 
-    var ignoreUndeclaredExcept = (options && options.ignoreUndeclaredExcept) || null
-    var whitelist = (options && options.include) || null;
-    var blacklist = (options && options.exclude) || [];
+    var ignoreUndeclaredExcept = options && options.ignoreUndeclaredExcept || null;
+    var whitelist = options && options.include || null;
+    var blacklist = options && options.exclude || [];
     var recordDefRanges = options && options.recordDefRanges;
 
-    var parsed = typeof astOrSource === 'object' ?
-        astOrSource : parse(astOrSource),
-      source = typeof astOrSource === 'string' ?
-        astOrSource : (parsed.source || helper._node2string(parsed)),
-      topLevel = topLevelDeclsAndRefs(parsed);
+    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+        topLevel = topLevelDeclsAndRefs(parsed);
 
     if (ignoreUndeclaredExcept) {
       blacklist = lively_lang.arr.withoutAll(topLevel.undeclaredNames, ignoreUndeclaredExcept).concat(blacklist);
@@ -13217,9 +13503,9 @@ module.exports = function(acorn) {
     // declaration in catch clauses
     var scope = topLevel.scope;
     lively_lang.arr.pushAll(blacklist, lively_lang.arr.pluck(scope.catches, "name"));
-    var forLoopDecls = scope.varDecls.filter(function(decl, i) {
+    var forLoopDecls = scope.varDecls.filter(function (decl, i) {
       var path = lively_lang.Path(scope.varDeclPaths[i]),
-          parent = path.slice(0,-1).get(parsed);
+          parent = path.slice(0, -1).get(parsed);
       return parent.type === "ForStatement" || parent.type === "ForInStatement";
     });
     lively_lang.arr.pushAll(blacklist, lively_lang.chain(forLoopDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
@@ -13227,72 +13513,62 @@ module.exports = function(acorn) {
     // 2. make all references declared in the toplevel scope into property
     // reads of assignToObj
     // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    var result = helper.replaceNodes(
-      topLevel.refs
-        .filter(shouldRefBeCaptured)
-        .map(function(ref) {
-         return {
-          target: ref,
-          replacementFunc: function(ref) { return member(ref, assignToObj); }
-         };
-        }), source);
+    var result = helper.replaceNodes(topLevel.refs.filter(shouldRefBeCaptured).map(function (ref) {
+      return {
+        target: ref,
+        replacementFunc: function replacementFunc(ref) {
+          return member(ref, assignToObj);
+        }
+      };
+    }), source);
 
     // 3. turn var declarations into assignments to assignToObj
     // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
-    result = helper.replaceNodes(
-      lively_lang.arr.withoutAll(topLevel.varDecls, forLoopDecls)
-        .map(function(decl) {
-          return {
-            target: decl,
-            replacementFunc: function(declNode, s, wasChanged) {
-              if (wasChanged) {
-                var scopes$$ = scopes(parse(s, {addSource: true}));
-                declNode = scopes$$.varDecls[0]
-              }
-
-              return declNode.declarations.map(function(ea) {
-                var init = {
-                 operator: "||",
-                 type: "LogicalExpression",
-                 left: {computed: true, object: assignToObj,property: {type: "Literal", value: ea.id.name},type: "MemberExpression"},
-                 right: {name: "undefined", type: "Identifier"}
-                }
-                return shouldDeclBeCaptured(ea) ?
-                  assign(ea.id, ea.init || init) : varDecl(ea); });
-            }
+    result = helper.replaceNodes(lively_lang.arr.withoutAll(topLevel.varDecls, forLoopDecls).map(function (decl) {
+      return {
+        target: decl,
+        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+          if (wasChanged) {
+            var scopes$$ = scopes(parse(s, { addSource: true }));
+            declNode = scopes$$.varDecls[0];
           }
-        }), result);
+
+          return declNode.declarations.map(function (ea) {
+            var init = {
+              operator: "||",
+              type: "LogicalExpression",
+              left: { computed: true, object: assignToObj, property: { type: "Literal", value: ea.id.name }, type: "MemberExpression" },
+              right: { name: "undefined", type: "Identifier" }
+            };
+            return shouldDeclBeCaptured(ea) ? assign(ea.id, ea.init || init) : varDecl(ea);
+          });
+        }
+      };
+    }), result);
 
     // 4. assignments for function declarations in the top level scope are
     // put in front of everything else:
     // "return bar(); function bar() { return 23 }" -> "Global.bar = bar; return bar(); function bar() { return 23 }"
     if (topLevel.funcDecls.length) {
-      var globalFuncs = topLevel.funcDecls
-        .filter(shouldDeclBeCaptured)
-        .map(function(decl) {
-          var funcId = {type: "Identifier", name: decl.id.name};
-          return helper._node2string(assign(funcId, funcId));
-        }).join('\n');
+      var globalFuncs = topLevel.funcDecls.filter(shouldDeclBeCaptured).map(function (decl) {
+        var funcId = { type: "Identifier", name: decl.id.name };
+        return helper._node2string(assign(funcId, funcId));
+      }).join('\n');
 
-
-      var change = {type: 'add', pos: 0, string: globalFuncs};
+      var change = { type: 'add', pos: 0, string: globalFuncs };
       result = {
         source: globalFuncs + '\n' + result.source,
         changes: result.changes.concat([change])
-      }
+      };
     }
 
     // 5. def ranges so that we know at which source code positions the
     // definitions are
-    if (recordDefRanges)
-      result.defRanges = lively_lang.chain(scope.varDecls)
-        .pluck("declarations").flatten().value()
-        .concat(scope.funcDecls)
-        .reduce(function(defs, decl) {
-          if (!defs[decl.id.name]) defs[decl.id.name] = []
-          defs[decl.id.name].push({type: decl.type, start: decl.start, end: decl.end});
-          return defs;
-        }, {});
+    if (recordDefRanges) result.defRanges = lively_lang.chain(scope.varDecls).pluck("declarations").flatten().value().concat(scope.funcDecls).reduce(function (defs, decl) {
+      if (!defs[decl.id.name]) defs[decl.id.name] = [];
+      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
+      return defs;
+    }, {});
 
     result.ast = parsed;
 
@@ -13301,37 +13577,38 @@ module.exports = function(acorn) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function shouldRefBeCaptured(ref) {
-      return blacklist.indexOf(ref.name) === -1
-        && (!whitelist || whitelist.indexOf(ref.name) > -1);
+      return blacklist.indexOf(ref.name) === -1 && (!whitelist || whitelist.indexOf(ref.name) > -1);
     }
 
-    function shouldDeclBeCaptured(decl) { return shouldRefBeCaptured(decl.id); }
+    function shouldDeclBeCaptured(decl) {
+      return shouldRefBeCaptured(decl.id);
+    }
 
     function assign(id, value) {
       return {
-       type: "ExpressionStatement", expression: {
-        type: "AssignmentExpression", operator: "=",
-        right: value || {type: "Identifier", name: 'undefined'},
-        left: {
-          type: "MemberExpression", computed: false,
-          object: assignToObj, property: id
+        type: "ExpressionStatement", expression: {
+          type: "AssignmentExpression", operator: "=",
+          right: value || { type: "Identifier", name: 'undefined' },
+          left: {
+            type: "MemberExpression", computed: false,
+            object: assignToObj, property: id
+          }
         }
-       }
-      }
+      };
     }
 
     function varDecl(declarator) {
       return {
-       declarations: [declarator],
-       kind: "var", type: "VariableDeclaration"
-      }
+        declarations: [declarator],
+        kind: "var", type: "VariableDeclaration"
+      };
     }
 
     function member(prop, obj) {
       return {
         type: "MemberExpression", computed: false,
         object: obj, property: prop
-      }
+      };
     }
   }
 
@@ -13339,81 +13616,75 @@ module.exports = function(acorn) {
     // exports.transform.oneDeclaratorPerVarDecl(
     //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
 
-    var parsed = typeof astOrSource === 'object' ?
-        astOrSource : parse(astOrSource),
-      source = typeof astOrSource === 'string' ?
-        astOrSource : (parsed.source || helper._node2string(parsed)),
-      scope = scopes(parsed),
-      varDecls = (function findVarDecls(scope) {
-        return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-      })(scope);
+    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+        scope = scopes(parsed),
+        varDecls = function findVarDecls(scope) {
+      return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
+    }(scope);
 
-    var targetsAndReplacements = varDecls.map(function(decl) {
+    var targetsAndReplacements = varDecls.map(function (decl) {
       return {
         target: decl,
-        replacementFunc: function(declNode, s, wasChanged) {
+        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
           if (wasChanged) {
             // reparse node if necessary, e.g. if init was changed before like in
             // var x = (function() { var y = ... })();
             declNode = parse(s).body[0];
           }
 
-          return declNode.declarations.map(function(ea) {
+          return declNode.declarations.map(function (ea) {
             return {
               type: "VariableDeclaration",
               kind: "var", declarations: [ea]
-            }
+            };
           });
         }
-      }
+      };
     });
 
     return helper.replaceNodes(targetsAndReplacements, source);
   }
 
   function oneDeclaratorForVarsInDestructoring(astOrSource) {
-    var parsed = typeof astOrSource === 'object' ?
-        astOrSource : parse(astOrSource),
-      source = typeof astOrSource === 'string' ?
-        astOrSource : (parsed.source || helper._node2string(parsed)),
-      scope = scopes(parsed),
-      varDecls = (function findVarDecls(scope) {
-        return lively_lang.arr.flatten(scope.varDecls
-          .concat(scope.subScopes.map(findVarDecls)));
-      })(scope);
+    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+        scope = scopes(parsed),
+        varDecls = function findVarDecls(scope) {
+      return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
+    }(scope);
 
-    var targetsAndReplacements = varDecls.map(function(decl) {
+    var targetsAndReplacements = varDecls.map(function (decl) {
       return {
         target: decl,
-        replacementFunc: function(declNode, s, wasChanged) {
+        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
           if (wasChanged) {
             // reparse node if necessary, e.g. if init was changed before like in
             // var x = (function() { var y = ... })();
             declNode = parse(s).body[0];
           }
 
-          return lively_lang.arr.flatmap(declNode.declarations, function(declNode) {
-            var extractedId = {type: "Identifier", name: "__temp"},
+          return lively_lang.arr.flatmap(declNode.declarations, function (declNode) {
+            var extractedId = { type: "Identifier", name: "__temp" },
                 extractedInit = {
-                  type: "VariableDeclaration", kind: "var",
-                  declarations: [{type: "VariableDeclarator", id: extractedId, init: declNode.init}]
-                }
+              type: "VariableDeclaration", kind: "var",
+              declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
+            };
 
-            var propDecls = lively_lang.arr.pluck(helpers.objPropertiesAsList(declNode.id, [], false), "key")
-              .map(function(keyPath) {
-                return {
-                  type: "VariableDeclaration", kind: "var",
-                  declarations: [{
-                    type: "VariableDeclarator", kind: "var",
-                    id: {type: "Identifier", name: lively_lang.arr.last(keyPath)},
-                    init: helper.memberExpression([extractedId.name].concat(keyPath))}]
-                }
-              });
+            var propDecls = lively_lang.arr.pluck(helpers.objPropertiesAsList(declNode.id, [], false), "key").map(function (keyPath) {
+              return {
+                type: "VariableDeclaration", kind: "var",
+                declarations: [{
+                  type: "VariableDeclarator", kind: "var",
+                  id: { type: "Identifier", name: lively_lang.arr.last(keyPath) },
+                  init: helper.memberExpression([extractedId.name].concat(keyPath)) }]
+              };
+            });
 
             return [extractedInit].concat(propDecls);
           });
         }
-      }
+      };
     });
 
     return helper.replaceNodes(targetsAndReplacements, source);
@@ -13421,12 +13692,12 @@ module.exports = function(acorn) {
 
   function returnLastStatement(source, opts) {
     opts = opts || {};
-    var parsed = parse(source, {ecmaVersion: 6}),
+    var parsed = parse(source, opts),
         last = parsed.body.pop(),
         newLastsource = 'return ' + source.slice(last.start, last.end);
     if (!opts.asAST) return source.slice(0, last.start) + newLastsource;
 
-    var newLast = parse(newLastsource, {allowReturnOutsideFunction: true, ecmaVersion: 6}).body.slice(-1)[0];
+    var newLast = parse(newLastsource, { allowReturnOutsideFunction: true }).body.slice(-1)[0];
     parsed.body.push(newLast);
     parsed.end += 'return '.length;
     return parsed;
@@ -13435,16 +13706,16 @@ module.exports = function(acorn) {
   function wrapInFunction(code, opts) {
     opts = opts || {};
     var transformed = returnLastStatement(code, opts);
-    return opts.asAST ?  {
-     type: "Program",
-     body: [{
-      type: "ExpressionStatement",
-      expression: {
-       body: {body: transformed.body, type: "BlockStatement"},
-       params: [],
-       type: "FunctionExpression"
-      },
-     }]
+    return opts.asAST ? {
+      type: "Program",
+      body: [{
+        type: "ExpressionStatement",
+        expression: {
+          body: { body: transformed.body, type: "BlockStatement" },
+          params: [],
+          type: "FunctionExpression"
+        }
+      }]
     } : "function() {\n" + transformed + "\n}";
   }
 
@@ -13462,7 +13733,6 @@ module.exports = function(acorn) {
 
   var merge = Object.assign;
 
-
   function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
     /* replaces var and function declarations with assignment statements.
     * Example:
@@ -13475,21 +13745,19 @@ module.exports = function(acorn) {
     options = lively_lang.obj.merge({
       ignoreUndeclaredExcept: null,
       includeRefs: null,
-      excludeRefs: (options && options.exclude) || [],
+      excludeRefs: options && options.exclude || [],
       includeDecls: null,
-      excludeDecls: (options && options.exclude) || [],
+      excludeDecls: options && options.exclude || [],
       recordDefRanges: false,
       es6ExportFuncId: null,
       es6ImportFuncId: null,
-      captureObj: assignToObj || {type: "Identifier", name: "__rec"},
-      moduleExportFunc: {name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier"},
-      moduleImportFunc: {name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier"},
+      captureObj: assignToObj || { type: "Identifier", name: "__rec" },
+      moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
+      moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" }
     }, options);
 
-    var parsed = typeof astOrSource === 'object' ?
-          astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ?
-          astOrSource : (parsed.source || stringify(parsed)),
+    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || stringify(parsed),
         rewritten = parsed;
 
     // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
@@ -13561,40 +13829,39 @@ module.exports = function(acorn) {
     //   "Global.bar = bar; return bar(); function bar() { return 23 }"
     rewritten = putFunctionDeclsInFront(rewritten, options);
 
-  // console.log(stringify(rewritten));
+    // console.log(stringify(rewritten));
     // console.log(require("util").inspect(rewritten.body, {depth: 10}));
 
     return {
       ast: rewritten,
       source: stringify(rewritten),
       defRanges: defRanges
-    }
+    };
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // replacing helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var replaceVisitor = (() => {
+  var replaceVisitor = function () {
     var v = new Visitor();
-    v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) =>
-      v.replacer(proceed(node, state, path), path));
+    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
+      return v.replacer(proceed(node, state, path), path);
+    });
     return v;
-  })();
+  }();
 
   function replace$1(parsed, replacer) {
     replaceVisitor.replacer = replacer;
     return replaceVisitor.accept(parsed, null, []);
   }
 
-  var replaceManyVisitor = (() => {
+  var replaceManyVisitor = function () {
     var v = new Visitor(),
         canBeInlinedSym = Symbol("canBeInlined");
-    v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
+    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
       var replaced = v.replacer(proceed(node, state, path), path);
-      return !Array.isArray(replaced) ?
-        replaced : replaced.length === 1 ?
-          replaced[0] : Object.assign(block(replaced), {[canBeInlinedSym]: true});
+      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
     });
     v.visitBlockStatement = lively_lang.fun.wrap(v.visitBlockStatement, blockInliner);
     v.visitProgram = lively_lang.fun.wrap(v.visitProgram, blockInliner);
@@ -13604,18 +13871,18 @@ module.exports = function(acorn) {
       var result = proceed(node, state, path);
       // FIXME what about () => x kind of functions?
       if (Array.isArray(result.body)) {
-        result.body = result.body.reduce((body, node) => {
+        result.body = result.body.reduce(function (body, node) {
           if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
             body.push(node);
-            return body
+            return body;
           } else {
-            return body.concat(node.body)
+            return body.concat(node.body);
           }
         }, []);
       }
       return result;
     }
-  })();
+  }();
 
   function replaceWithMany(parsed, replacer) {
     replaceManyVisitor.replacer = replacer;
@@ -13624,10 +13891,13 @@ module.exports = function(acorn) {
 
   function replaceRefs(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed),
-        refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, topLevel, options));
+        refsToReplace = topLevel.refs.filter(function (ref) {
+      return shouldRefBeCaptured(ref, topLevel, options);
+    });
 
-    return replace$1(parsed, (node, path) =>
-      refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node);
+    return replace$1(parsed, function (node, path) {
+      return refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node;
+    });
   }
 
   function replaceVarDecls(parsed, options) {
@@ -13640,24 +13910,22 @@ module.exports = function(acorn) {
     //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
 
     var topLevel = topLevelDeclsAndRefs(parsed);
-    return replaceWithMany(parsed, node => {
-      if (topLevel.varDecls.indexOf(node) === -1
-       || node.declarations.every(decl => !shouldDeclBeCaptured(decl, options)))
-         return node;
+    return replaceWithMany(parsed, function (node) {
+      if (topLevel.varDecls.indexOf(node) === -1 || node.declarations.every(function (decl) {
+        return !shouldDeclBeCaptured(decl, options);
+      })) return node;
 
-      return lively_lang.arr.flatmap(node.declarations, decl => {
-        if (!shouldDeclBeCaptured(decl, options))
-          return [{type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl]}];
+      return lively_lang.arr.flatmap(node.declarations, function (decl) {
+        if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
 
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
           var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
-              declRoot = {type: "Identifier", name: declRootName},
-              state = {parent: declRoot, declaredNames: topLevel.declaredNames},
-              extractions = transformPattern(decl.id, state).map(decl =>
-                decl[annotationSym] && decl[annotationSym].capture ?
-                  assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) :
-                  decl);
+              declRoot = { type: "Identifier", name: declRootName },
+              state = { parent: declRoot, declaredNames: topLevel.declaredNames },
+              extractions = transformPattern(decl.id, state).map(function (decl) {
+            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
+          });
           topLevel.declaredNames.push(declRootName);
           return [varDecl(declRoot, decl.init, node.kind)].concat(extractions);
         }
@@ -13666,38 +13934,36 @@ module.exports = function(acorn) {
         var init = decl.init || {
           operator: "||",
           type: "LogicalExpression",
-          left: {computed: true, object: options.captureObj, property: {type: "Literal", value: decl.id.name},type: "MemberExpression"},
-          right: {name: "undefined", type: "Identifier"}
+          left: { computed: true, object: options.captureObj, property: { type: "Literal", value: decl.id.name }, type: "MemberExpression" },
+          right: { name: "undefined", type: "Identifier" }
         };
         return [assignExpr(options.captureObj, decl.id, init, false)];
       });
-
     });
   }
 
   function replaceClassDecls(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
     if (!topLevel.classDecls.length) return parsed;
-    parsed.body = parsed.body.reduce((stmts, stmt) =>
-      stmts.concat(topLevel.classDecls.indexOf(stmt) === -1 ?
-        [stmt] : [stmt, assignExpr(options.captureObj, stmt.id, stmt.id, false)]), []);
+    parsed.body = parsed.body.reduce(function (stmts, stmt) {
+      return stmts.concat(topLevel.classDecls.indexOf(stmt) === -1 ? [stmt] : [stmt, assignExpr(options.captureObj, stmt.id, stmt.id, false)]);
+    }, []);
     return parsed;
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // naming
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function generateUniqueName(declaredNames, hint) {
-    var unique = hint, n = 1;
+    var unique = hint,
+        n = 1;
     while (declaredNames.indexOf(unique) > -1) {
       if (n > 1000) throw new Error("Endless loop searching for unique variable " + unique);
-      unique = unique.replace(/_[0-9]+$|$/, "_" + (++n));
+      unique = unique.replace(/_[0-9]+$|$/, "_" + ++n);
     }
     return unique;
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // exclude / include helpers
@@ -13705,17 +13971,15 @@ module.exports = function(acorn) {
 
   function additionalIgnoredDecls(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed),
-        ignoreDecls = topLevel.scope.varDecls.reduce((result, decl, i) => {
-          var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
-              parent = path.slice(0,-1).get(parsed);
-          if (parent.type === "ForStatement"
-           || parent.type === "ForInStatement"
-           || (parent.type === "ExportNamedDeclaration")) { result.push(decl); }
-          return result;
-        }, []);
-    return []
-      .concat(lively_lang.arr.pluck(topLevel.scope.catches, "name"))
-      .concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+        ignoreDecls = topLevel.scope.varDecls.reduce(function (result, decl, i) {
+      var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+          parent = path.slice(0, -1).get(parsed);
+      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ExportNamedDeclaration") {
+        result.push(decl);
+      }
+      return result;
+    }, []);
+    return [].concat(lively_lang.arr.pluck(topLevel.scope.catches, "name")).concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
   }
 
   function additionalIgnoredRefs(parsed, options) {
@@ -13723,125 +13987,124 @@ module.exports = function(acorn) {
     // decls, this should somehow be consolidated with this function and with the
     // fact that naming based ignores aren't good enough...
     var topLevel = topLevelDeclsAndRefs(parsed),
-        ignoreDecls = topLevel.scope.varDecls.reduce((result, decl, i) => {
-          var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
-              parent = path.slice(0,-1).get(parsed);
-          if (parent.type === "ForStatement"
-           || parent.type === "ForInStatement"
-           || (parent.type === "ExportNamedDeclaration")) { result.push(decl); }
-          return result;
-        }, []),
-        ignoredImportAndExportNames = parsed.body.reduce((ignored, stmt) => {
-          if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration")
-            return stmt.specifiers.reduce((ignored, specifier) =>
-              specifier.type === "ImportSpecifier" ?
-                ignored.concat([specifier.imported.name]) : ignored, ignored);
-          if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration"
-            || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers)
-            return ignored.concat(stmt.specifiers.map(specifier => specifier.local.name));
-          return ignored;
-        }, []);
-    return []
-      .concat(lively_lang.arr.pluck(topLevel.scope.catches, "name"))
-      .concat(ignoredImportAndExportNames)
-      .concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+        ignoreDecls = topLevel.scope.varDecls.reduce(function (result, decl, i) {
+      var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+          parent = path.slice(0, -1).get(parsed);
+      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ExportNamedDeclaration") {
+        result.push(decl);
+      }
+      return result;
+    }, []),
+        ignoredImportAndExportNames = parsed.body.reduce(function (ignored, stmt) {
+      if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") return stmt.specifiers.reduce(function (ignored, specifier) {
+        return specifier.type === "ImportSpecifier" ? ignored.concat([specifier.imported.name]) : ignored;
+      }, ignored);
+      if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) return ignored.concat(stmt.specifiers.map(function (specifier) {
+        return specifier.local.name;
+      }));
+      return ignored;
+    }, []);
+    return [].concat(lively_lang.arr.pluck(topLevel.scope.catches, "name")).concat(ignoredImportAndExportNames).concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
   }
 
   function shouldDeclBeCaptured(decl, options) {
-    return options.excludeDecls.indexOf(decl.id.name) === -1
-      && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+    return options.excludeDecls.indexOf(decl.id.name) === -1 && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
   }
 
   function shouldRefBeCaptured(ref, toplevel, options) {
-    return !lively_lang.arr.include(toplevel.scope.importDecls, ref)
-      && options.excludeRefs.indexOf(ref.name) === -1
-      && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
+    return !lively_lang.arr.include(toplevel.scope.importDecls, ref) && !lively_lang.arr.include(lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
+      return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
+    }), ref) && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // capturing specific code
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function insertCapturesForExportDeclarations(parsed, options) {
-    parsed.body = parsed.body.reduce((stmts, stmt) => {
-      if ((stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration") || !stmt.declaration) return stmts.concat([stmt]);
-      var decls = stmt.declaration.declarations || [stmt.declaration];
-      return stmts.concat([stmt]).concat(decls.map(decl => assignExpr(options.captureObj, decl.id, decl.id, false)))
+    parsed.body = parsed.body.reduce(function (stmts, stmt) {
+      stmts.push(stmt);
+      // ExportNamedDeclaration can have specifieres = refs, those should already
+      // be captured. Only focus on export declarations and only those
+      // declarations that are no refs, i.e.
+      // ignore: "export default x;"
+      // capture: "export default function foo () {};", "export var x = 23, y = 3;"
+      if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) return stmts;else if (stmt.declaration.declarations) {
+        stmts.push.apply(stmts, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+          return assignExpr(options.captureObj, decl.id, decl.id, false);
+        })));
+      } else if (stmt.declaration.type === "FunctionDeclaration" || stmt.declaration.type === "ClassDeclaration") {
+        stmts.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+      }
+      return stmts;
     }, []);
     return parsed;
   }
 
   function insertCapturesForImportDeclarations(parsed, options) {
-    parsed.body = parsed.body.reduce((stmts, stmt) =>
-      stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] :
-        [stmt].concat(stmt.specifiers.map(specifier =>
-          assignExpr(options.captureObj, specifier.local, specifier.local, false)))), []);
+    parsed.body = parsed.body.reduce(function (stmts, stmt) {
+      return stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] : [stmt].concat(stmt.specifiers.map(function (specifier) {
+        return assignExpr(options.captureObj, specifier.local, specifier.local, false);
+      })));
+    }, []);
     return parsed;
   }
 
   function insertDeclarationsForExports(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
-    parsed.body = parsed.body.reduce((stmts, stmt) =>
-      stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ?
-        [stmt] :
-        stmt.specifiers.map(specifier =>
-         topLevel.declaredNames.indexOf(specifier.local.name) > -1 ?
-         null :
-          varDeclOrAssignment(parsed, {
-            type: "VariableDeclarator",
-            id: specifier.local,
-            init: member(specifier.local, options.captureObj)
-          })).filter(Boolean).concat(stmt)), []);
+    parsed.body = parsed.body.reduce(function (stmts, stmt) {
+      return stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ? [stmt] : stmt.specifiers.map(function (specifier) {
+        return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+          type: "VariableDeclarator",
+          id: specifier.local,
+          init: member(specifier.local, options.captureObj)
+        });
+      }).filter(Boolean).concat(stmt));
+    }, []);
     return parsed;
   }
 
   function es6ModuleTransforms(parsed, options) {
-    parsed.body = parsed.body.reduce((stmts, stmt) => {
+    parsed.body = parsed.body.reduce(function (stmts, stmt) {
       var nodes;
       if (stmt.type === "ExportNamedDeclaration") {
         if (stmt.source) {
           var key = moduleId = stmt.source;
-          nodes = stmt.specifiers.map(specifier => ({
-            type: "ExpressionStatement",
-            expression: exportFromImport(
-              {type: "Literal", value: specifier.exported.name},
-              {type: "Literal", value: specifier.local.name},
-               moduleId, options.moduleExportFunc, options.moduleImportFunc)}));
+          nodes = stmt.specifiers.map(function (specifier) {
+            return {
+              type: "ExpressionStatement",
+              expression: exportFromImport({ type: "Literal", value: specifier.exported.name }, { type: "Literal", value: specifier.local.name }, moduleId, options.moduleExportFunc, options.moduleImportFunc) };
+          });
         } else if (stmt.declaration) {
           var decls = stmt.declaration.declarations || [stmt.declaration];
-          nodes = [stmt.declaration].concat(decls.map(decl => exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id)));
+          nodes = [stmt.declaration].concat(decls.map(function (decl) {
+            return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
+          }));
         } else {
-          nodes = stmt.specifiers.map(specifier =>
-          exportCallStmt(options.moduleExportFunc, specifier.exported.name,
-            shouldDeclBeCaptured({id: specifier.local}, options) ?
-              member(specifier.local, options.captureObj) :
-              specifier.local))
+          nodes = stmt.specifiers.map(function (specifier) {
+            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(specifier.local, options.captureObj) : specifier.local);
+          });
         }
       } else if (stmt.type === "ExportDefaultDeclaration") {
         // nodes = [assignExpr(options.moduleExportFunc, {type: "Literal", value: "default"}, stmt.declaration, true)];
         nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
       } else if (stmt.type === "ExportAllDeclaration") {
-        var key = {name: options.es6ExportFuncId + "__iterator__", type: "Identifier"}, moduleId = stmt.source;
-        nodes = [
-          {
-            type: "ForInStatement",
-            body: {type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc)},
-            left: {type: "VariableDeclaration", kind: "var", declarations: [{type: "VariableDeclarator", id: key, init: null}]},
-            right: importCall(null, moduleId, options.moduleImportFunc),
-          }
-        ];
+        var key = { name: options.es6ExportFuncId + "__iterator__", type: "Identifier" },
+            moduleId = stmt.source;
+        nodes = [{
+          type: "ForInStatement",
+          body: { type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc) },
+          left: { type: "VariableDeclaration", kind: "var", declarations: [{ type: "VariableDeclarator", id: key, init: null }] },
+          right: importCall(null, moduleId, options.moduleImportFunc)
+        }];
         options.excludeRefs.push(key.name);
         options.excludeDecls.push(key.name);
-      } else if (stmt.type ===  "ImportDeclaration") {
-        nodes = stmt.specifiers.length ?
-          stmt.specifiers.map(specifier => {
-            var local = specifier.local,
-                imported = (specifier.type === "ImportSpecifier" && specifier.imported.name)
-                        || (specifier.type === "ImportDefaultSpecifier" && "default")
-                        || null;
-            return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
-          }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
+      } else if (stmt.type === "ImportDeclaration") {
+        nodes = stmt.specifiers.length ? stmt.specifiers.map(function (specifier) {
+          var local = specifier.local,
+              imported = specifier.type === "ImportSpecifier" && specifier.imported.name || specifier.type === "ImportDefaultSpecifier" && "default" || null;
+          return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
+        }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
       } else nodes = [stmt];
       return stmts.concat(nodes);
     }, []);
@@ -13852,26 +14115,23 @@ module.exports = function(acorn) {
   function putFunctionDeclsInFront(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
     if (!topLevel.funcDecls.length) return parsed;
-    var globalFuncs = topLevel.funcDecls
-      .filter(ea => shouldDeclBeCaptured(ea, options))
-      .map((decl) => {
-        var funcId = {type: "Identifier", name: decl.id.name};
-        return assignExpr(options.captureObj, funcId, funcId, false);
-      });
+    var globalFuncs = topLevel.funcDecls.filter(function (ea) {
+      return shouldDeclBeCaptured(ea, options);
+    }).map(function (decl) {
+      var funcId = { type: "Identifier", name: decl.id.name };
+      return assignExpr(options.captureObj, funcId, funcId, false);
+    });
     parsed.body = globalFuncs.concat(parsed.body);
     return parsed;
   }
 
   function computeDefRanges(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
-    return lively_lang.chain(topLevel.scope.varDecls)
-      .pluck("declarations").flatten().value()
-      .concat(topLevel.scope.funcDecls)
-      .reduce((defs, decl) => {
-        if (!defs[decl.id.name]) defs[decl.id.name] = []
-        defs[decl.id.name].push({type: decl.type, start: decl.start, end: decl.end});
-        return defs;
-      }, {});
+    return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls).reduce(function (defs, decl) {
+      if (!defs[decl.id.name]) defs[decl.id.name] = [];
+      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
+      return defs;
+    }, {});
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -13894,113 +14154,110 @@ module.exports = function(acorn) {
     // //  + "var arg$0$b$c = arg$0$b.c;\n"
     // //  + "var a = arg$0$b$c[0];"
     if (pattern.type === "ArrayPattern") {
-      return transformArrayPattern(pattern, transformState)
+      return transformArrayPattern(pattern, transformState);
     } else if (pattern.type === "ObjectPattern") {
       return transformObjectPattern(pattern, transformState);
-    } else { return []; }
-
+    } else {
+      return [];
+    }
   }
 
   function transformArrayPattern(pattern, transformState) {
     var declaredNames = transformState.declaredNames,
         p = annotationSym;
-    return lively_lang.arr.flatmap(pattern.elements, (el, i) => {
+    return lively_lang.arr.flatmap(pattern.elements, function (el, i) {
 
       // like [a]
       if (el.type === "Identifier") {
-        return [merge(varDecl(el, member(id(i), transformState.parent, true)), {[p]: {capture: true}})]
+        return [merge(varDecl(el, member(id(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-      // like [...foo]
+        // like [...foo]
       } else if (el.type === "RestElement") {
-        return [
-          merge(
-            varDecl(el.argument, {
-              type: "CallExpression",
-              arguments: [{type: "Literal", value: i}],
-              callee: member(id("slice"), transformState.parent, false)}),
-            {[p]: {capture: true}})]
+          return [merge(varDecl(el.argument, {
+            type: "CallExpression",
+            arguments: [{ type: "Literal", value: i }],
+            callee: member(id("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-      // like [{x}]
-      } else {
-        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-            helperVar = merge(varDecl(helperVarId, member(id(i), transformState.parent, true)), {[p]: {capture: true}});
-        declaredNames.push(helperVarId.name);
-        return [helperVar].concat(transformPattern(el, {parent: helperVarId, declaredNames: declaredNames}));
-      }
-    })
+          // like [{x}]
+        } else {
+            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl(helperVarId, member(id(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
+            declaredNames.push(helperVarId.name);
+            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+          }
+    });
   }
 
   function transformObjectPattern(pattern, transformState) {
     var declaredNames = transformState.declaredNames,
         p = annotationSym;
-    return lively_lang.arr.flatmap(pattern.properties, prop => {
+    return lively_lang.arr.flatmap(pattern.properties, function (prop) {
 
       // like {x: y}
       if (prop.value.type == "Identifier") {
-        return [merge(varDecl(prop.value, member(prop.key, transformState.parent, false)), {[p]: {capture: true}})];
+        return [merge(varDecl(prop.value, member(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-      // like {x: {z}} or {x: [a]}
+        // like {x: {z}} or {x: [a]}
       } else {
-        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-            helperVar = merge(varDecl(helperVarId, member(prop.key, transformState.parent, false)), {[p]: {capture: false}});
-        declaredNames.push(helperVarId.name);
-        return [helperVar].concat(transformPattern(prop.value, {parent: helperVarId, declaredNames: declaredNames}));
-      }
-    })
+          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl(helperVarId, member(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
+          declaredNames.push(helperVarId.name);
+          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
+        }
+    });
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // code generation helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function id(name) {
-    return {type: "Identifier", name: String(name)}
+    return { type: "Identifier", name: String(name) };
   }
 
   function block(nodes) {
-    return {type: "BlockStatement", body: nodes}
+    return { type: "BlockStatement", body: nodes };
   }
 
   function member(prop, obj, computed) {
-    return {type: "MemberExpression", computed: computed || false, object: obj, property: prop}
+    return { type: "MemberExpression", computed: computed || false, object: obj, property: prop };
   }
 
   function varDecl(id, init, kind) {
     return {
-     declarations: [{type: "VariableDeclarator", id: id, init: init}],
-     kind: kind || "var", type: "VariableDeclaration"
-    }
+      declarations: [{ type: "VariableDeclarator", id: id, init: init }],
+      kind: kind || "var", type: "VariableDeclaration"
+    };
   }
 
   function varDeclOrAssignment(parsed, declarator, kind) {
     var topLevel = topLevelDeclsAndRefs(parsed),
-        name = declarator.id.name
+        name = declarator.id.name;
     return topLevel.declaredNames.indexOf(name) > -1 ?
-      // only create a new declaration if necessary
-      {
-       type: "ExpressionStatement", expression: {
+    // only create a new declaration if necessary
+    {
+      type: "ExpressionStatement", expression: {
         type: "AssignmentExpression", operator: "=",
         right: declarator.init,
         left: declarator.id
-       }
-      } : {
-       declarations: [declarator],
-       kind: kind || "var", type: "VariableDeclaration"
       }
+    } : {
+      declarations: [declarator],
+      kind: kind || "var", type: "VariableDeclaration"
+    };
   }
 
   function assignExpr(assignee, propId, value, computed) {
     return {
-     type: "ExpressionStatement", expression: {
-      type: "AssignmentExpression", operator: "=",
-      right: value || {type: "Identifier", name: 'undefined'},
-      left: {
-        type: "MemberExpression", computed: computed || false,
-        object: assignee, property: propId
+      type: "ExpressionStatement", expression: {
+        type: "AssignmentExpression", operator: "=",
+        right: value || { type: "Identifier", name: 'undefined' },
+        left: {
+          type: "MemberExpression", computed: computed || false,
+          object: assignee, property: propId
+        }
       }
-     }
-    }
+    };
   }
 
   function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
@@ -14016,7 +14273,7 @@ module.exports = function(acorn) {
   }
 
   function importCall(imported, moduleSource, moduleImportFunc) {
-    if (typeof imported === "string") imported = {type: "Literal", value: imported};
+    if (typeof imported === "string") imported = { type: "Literal", value: imported };
     return {
       arguments: [moduleSource].concat(imported || []),
       callee: moduleImportFunc, type: "CallExpression"
@@ -14031,104 +14288,88 @@ module.exports = function(acorn) {
   }
 
   function exportCall(exportFunc, local, exportedObj) {
-    if (typeof local === "string") local = {type: "Literal", value: local};
+    if (typeof local === "string") local = { type: "Literal", value: local };
     exportedObj = lively_lang.obj.deepCopy(exportedObj);
-    return {arguments: [local, exportedObj], callee: exportFunc, type: "CallExpression"};
+    return { arguments: [local, exportedObj], callee: exportFunc, type: "CallExpression" };
   }
 
   function exportCallStmt(exportFunc, local, exportedObj) {
-    return {type: "ExpressionStatement", expression: exportCall(exportFunc, local, exportedObj)};
+    return { type: "ExpressionStatement", expression: exportCall(exportFunc, local, exportedObj) };
   }
 
-
-  var capturing = Object.freeze({
+var capturing = Object.freeze({
     rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
   });
 
   function getCommentPrecedingNode(parsed, node) {
-    var statementPath = statementOf(parsed, node, {asPath: true}),
+    var statementPath = statementOf(parsed, node, { asPath: true }),
         blockPath = statementPath.slice(0, -2),
         block = lively_lang.Path(blockPath).get(parsed);
 
-    return !block.comments || !block.comments.length ? null :
-      lively_lang.chain(extractComments(parsed))
-        .reversed()
-        .detect(function(ea) { return ea.followingNode === node; })
-        .value();
+    return !block.comments || !block.comments.length ? null : lively_lang.chain(extractComments(parsed)).reversed().detect(function (ea) {
+      return ea.followingNode === node;
+    }).value();
   }
 
   function extractComments(astOrCode, optCode) {
-    var parsed = typeof astOrCode === "string" ?
-          parse(astOrCode, {withComments: true}) : astOrCode,
-        code = optCode ? optCode : (typeof astOrCode === "string" ?
-          astOrCode : stringify(astOrCode)),
-        parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), c => c.comment.start);
+    var parsed = typeof astOrCode === "string" ? parse(astOrCode, { withComments: true }) : astOrCode,
+        code = optCode ? optCode : typeof astOrCode === "string" ? astOrCode : stringify(astOrCode),
+        parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), function (c) {
+      return c.comment.start;
+    });
 
-    return parsedComments.map(function(c, i) {
+    return parsedComments.map(function (c, i) {
 
       // 1. a method comment like "x: function() {\n//foo\n ...}"?
       if (isInObjectMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment,
-          {type: 'method', comment: c.comment.text},
-          methodAttributesOf(c)]);
+        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOf(c)]);
       }
 
       if (isInComputedMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment,
-          {type: 'method', comment: c.comment.text},
-          computedMethodAttributesOf(c)]);
+        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, computedMethodAttributesOf(c)]);
       }
 
       // 2. function statement comment like "function foo() {\n//foo\n ...}"?
       if (isInFunctionStatement(c)) {
-        return lively_lang.obj.merge([c, c.comment,
-          {type: 'function', comment: c.comment.text},
-          functionAttributesOf(c)]);
+        return lively_lang.obj.merge([c, c.comment, { type: 'function', comment: c.comment.text }, functionAttributesOf(c)]);
       }
 
       // 3. assigned method like "foo.bar = function(x) {/*comment*/};"
       if (isInAssignedMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment,
-          {type: 'method', comment: c.comment.text},
-          methodAttributesOfAssignment(c)]);
+        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOfAssignment(c)]);
       }
 
       // 4. comment preceding another node?
       var followingNode = followingNodeOf(c);
-      if (!followingNode) return lively_lang.obj.merge([c, c.comment, {followingNode:followingNode}, unknownComment(c)]);
+      if (!followingNode) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
 
       // is there another comment in front of the node>
-      var followingComment = parsedComments[i+1];
-      if (followingComment && followingComment.comment.start <= followingNode.start)
-        return lively_lang.obj.merge([c, c.comment, {followingNode:followingNode}, unknownComment(c)]);
+      var followingComment = parsedComments[i + 1];
+      if (followingComment && followingComment.comment.start <= followingNode.start) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
 
       // 3. an obj var comment like "// foo\nvar obj = {...}"?
       if (isSingleObjVarDeclaration(followingNode)) {
-        return lively_lang.obj.merge([c, c.comment, {followingNode:followingNode},
-          {type: 'object',comment: c.comment.text},
-          objAttributesOf(followingNode)])
+        return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'object', comment: c.comment.text }, objAttributesOf(followingNode)]);
       }
 
       // 4. Is it a simple var declaration like "// foo\nvar obj = 23"?
       if (isSingleVarDeclaration(followingNode)) {
-        return lively_lang.obj.merge([c, c.comment, {followingNode:followingNode},
-          {type: 'var',comment: c.comment.text},
-          objAttributesOf(followingNode)])
+        return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'var', comment: c.comment.text }, objAttributesOf(followingNode)]);
       }
 
-      return lively_lang.obj.merge([c, c.comment, {followingNode:followingNode}, unknownComment(c)]);
+      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
     });
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function commentsWithPathsAndNodes(parsed) {
       var comments = [],
-          v = new Visitor()
-      v.accept = lively_lang.fun.wrap(v.accept, (proceed, node, state, path) => {
+          v = new Visitor();
+      v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
         if (node.comments) {
-          lively_lang.arr.pushAll(comments,
-            node.comments.map(function(comment) {
-              return {path: path, comment: comment, node: node}; }));
+          lively_lang.arr.pushAll(comments, node.comments.map(function (comment) {
+            return { path: path, comment: comment, node: node };
+          }));
         }
         return proceed(node, state, path);
       });
@@ -14137,30 +14378,31 @@ module.exports = function(acorn) {
     }
 
     function followingNodeOf(comment) {
-      return lively_lang.arr.detect(comment.node.body, function(node) {
-        return node.start > comment.comment.end; });
+      return lively_lang.arr.detect(comment.node.body, function (node) {
+        return node.start > comment.comment.end;
+      });
     }
 
     function unknownComment(comment) {
-      return {type: "unknown", comment: comment.comment.text}
+      return { type: "unknown", comment: comment.comment.text };
     }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function isInFunctionStatement(comment) {
-      var node = lively_lang.Path(comment.path.slice(0,-1)).get(parsed);
+      var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
       return node && node.type === "FunctionDeclaration";
     }
 
     function functionAttributesOf(comment) {
-      var funcNode = lively_lang.Path(comment.path.slice(0,-1)).get(parsed),
-        name = funcNode.id ? funcNode.id.name : "<error: no name for function>";
-      return {name: name, args: lively_lang.arr.pluck(funcNode.params, "name")};
+      var funcNode = lively_lang.Path(comment.path.slice(0, -1)).get(parsed),
+          name = funcNode.id ? funcNode.id.name : "<error: no name for function>";
+      return { name: name, args: lively_lang.arr.pluck(funcNode.params, "name") };
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function isInObjectMethod(comment) {
-      return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]) // obj expr
+      return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
     }
 
     function isInAssignedMethod(comment) {
@@ -14175,16 +14417,18 @@ module.exports = function(acorn) {
       var p = comment.path.slice(),
           objectName = "<error: no object found for method>";
 
-      while (p.length && lively_lang.arr.last(p) !== 'init') p.pop();
-      if (p.length) {
+      while (p.length && lively_lang.arr.last(p) !== 'init') {
+        p.pop();
+      }if (p.length) {
         objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
       }
 
       // if it's someting like "exports.obj = {foo: function() {...}};"
       if (lively_lang.string.startsWith(objectName, "<error")) {
         p = comment.path.slice();
-        while (p.length && lively_lang.arr.last(p) !== 'right') p.pop();
-        if (p.length) {
+        while (p.length && lively_lang.arr.last(p) !== 'right') {
+          p.pop();
+        }if (p.length) {
           var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
           objectName = code.slice(assignNode.start, assignNode.end);
         }
@@ -14194,8 +14438,8 @@ module.exports = function(acorn) {
       if (lively_lang.string.startsWith(objectName, "<error")) {
         p = comment.path.slice();
         var callExpr = lively_lang.Path(p.slice(0, -6)).get(parsed),
-          isCall = callExpr && callExpr.type === "CallExpression",
-          firstArg = isCall && callExpr.arguments[0];
+            isCall = callExpr && callExpr.type === "CallExpression",
+            firstArg = isCall && callExpr.arguments[0];
         if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
       }
 
@@ -14203,26 +14447,20 @@ module.exports = function(acorn) {
         name: name,
         args: lively_lang.arr.pluck(methodNode.value.params, "name"),
         objectName: objectName
-      }
+      };
     }
 
     function methodAttributesOfAssignment(comment) {
 
-      var node = lively_lang.Path(comment.path.slice(0,-1)).get(parsed)
-      if (node.type !== "FunctionExpression"
-       && node.type !== "FunctionDeclaration") return {};
+      var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
+      if (node.type !== "FunctionExpression" && node.type !== "FunctionDeclaration") return {};
 
       var statement = statementOf(parsed, node);
-      if (statement.type !== "ExpressionStatement"
-       || statement.expression.type !== "AssignmentExpression") return {};
+      if (statement.type !== "ExpressionStatement" || statement.expression.type !== "AssignmentExpression") return {};
 
-      var objName = code.slice(
-        statement.expression.left.object.start,
-        statement.expression.left.object.end);
+      var objName = code.slice(statement.expression.left.object.start, statement.expression.left.object.end);
 
-      var methodName = code.slice(
-        statement.expression.left.property.start,
-        statement.expression.left.property.end);
+      var methodName = code.slice(statement.expression.left.property.start, statement.expression.left.property.end);
 
       return {
         name: methodName,
@@ -14234,7 +14472,7 @@ module.exports = function(acorn) {
     function isInComputedMethod(comment) {
       var path = comment.path.slice(-5);
       lively_lang.arr.removeAt(path, 1);
-      return lively_lang.arr.equals(path, ["properties","value","callee","body"]);
+      return lively_lang.arr.equals(path, ["properties", "value", "callee", "body"]);
     }
 
     function computedMethodAttributesOf(comment) {
@@ -14253,31 +14491,33 @@ module.exports = function(acorn) {
         pathToProp = comment.path.slice(0, -2);
         propertyNode = lively_lang.Path(pathToProp).get(parsed);
         if (propertyNode && propertyNode.type === "Property") {
-        args = lively_lang.arr.pluck(propertyNode.value.params, "name");
-        name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
+          args = lively_lang.arr.pluck(propertyNode.value.params, "name");
+          name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
         }
       }
 
       if (!name) {
         name = "<error: no name for method>";
         args = [];
-        pathToProp = comment.path
+        pathToProp = comment.path;
       }
 
       // if it's someting like "var obj = {foo: function() {...}};"
       var p = lively_lang.arr.clone(pathToProp);
       var objectName = "<error: no object found for method>";
 
-      while (p.length && lively_lang.arr.last(p) !== 'init') p.pop();
-      if (p.length) {
+      while (p.length && lively_lang.arr.last(p) !== 'init') {
+        p.pop();
+      }if (p.length) {
         objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
       }
 
       // if it's someting like "exports.obj = {foo: function() {...}};"
       if (lively_lang.string.startsWith(objectName, "<error")) {
         var p = lively_lang.arr.clone(pathToProp);
-        while (p.length && lively_lang.arr.last(p) !== 'right') p.pop();
-        if (p.length) {
+        while (p.length && lively_lang.arr.last(p) !== 'right') {
+          p.pop();
+        }if (p.length) {
           var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
           objectName = code.slice(assignNode.start, assignNode.end);
         }
@@ -14287,12 +14527,12 @@ module.exports = function(acorn) {
       if (lively_lang.string.startsWith(objectName, "<error")) {
         var p = lively_lang.arr.clone(pathToProp);
         var callExpr = lively_lang.Path(p.slice(0, -4)).get(parsed),
-          isCall = callExpr && callExpr.type === "CallExpression",
-          firstArg = isCall && callExpr.arguments[0];
+            isCall = callExpr && callExpr.type === "CallExpression",
+            firstArg = isCall && callExpr.arguments[0];
         if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
       }
 
-      return {name: name, args: args, objectName: objectName}
+      return { name: name, args: args, objectName: objectName };
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -14301,18 +14541,15 @@ module.exports = function(acorn) {
     function isSingleObjVarDeclaration(node) {
       // should be a var declaration with one declarator with a value
       // being an JS object
-      return isSingleVarDeclaration(node)
-        && (node.declarations[0].init.type === "ObjectExpression"
-         || isObjectAssignment(node.declarations[0].init));
+      return isSingleVarDeclaration(node) && (node.declarations[0].init.type === "ObjectExpression" || isObjectAssignment(node.declarations[0].init));
     }
 
     function isSingleVarDeclaration(node) {
-      return node && node.type === 'VariableDeclaration'
-        && node.declarations.length === 1;
+      return node && node.type === 'VariableDeclaration' && node.declarations.length === 1;
     }
 
     function objAttributesOf(node) {
-      return {name: node.declarations[0].id.name};
+      return { name: node.declarations[0].id.name };
     };
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -14339,45 +14576,35 @@ module.exports = function(acorn) {
   function findDecls(parsed, options) {
     // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
 
-    options = options || lively_lang.obj.merge({hideOneLiners: false}, options);
+    options = options || lively_lang.obj.merge({ hideOneLiners: false }, options);
 
-    if (typeof parsed === "string")
-      parsed = parse(parsed, {addSource: true});
+    if (typeof parsed === "string") parsed = parse(parsed, { addSource: true });
 
     var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
-        defs = lively_lang.arr.flatmap(topLevelNodes,
-          function(n) {
-            return moduleDef(n, options)
-                || functionWrapper(n, options)
-                || varDefs(n)
-                || funcDef(n)
-                || classDef(n)
-                || extendDef(n)
-                || someObjectExpressionCall(n);
-          });
+        defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
+      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || extendDef(n) || someObjectExpressionCall(n);
+    });
 
     if (options.hideOneLiners && parsed.source) {
-      defs = defs.reduce(function(defs, def) {
-        if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def)
-        else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def)
+      defs = defs.reduce(function (defs, def) {
+        if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def);else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def);
         return defs;
       }, []);
     }
 
-    if (options.hideOneLiners && parsed.loc)
-      defs = defs.filter(function(def) {
-        return !def.node.loc || (def.node.loc.start.line !== def.node.loc.end.line);
-      parsed});
+    if (options.hideOneLiners && parsed.loc) defs = defs.filter(function (def) {
+      return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
+      parsed;
+    });
 
     return defs;
   }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // helpers
 
   function objectKeyValsAsDefs(objectExpression) {
-    return objectExpression.properties.map(function(prop) {
+    return objectExpression.properties.map(function (prop) {
       return {
         name: prop.key.name || prop.key.value,
         type: prop.value.type === "FunctionExpression" ? "method" : "property",
@@ -14393,59 +14620,56 @@ module.exports = function(acorn) {
       name: lively_lang.Path("expression.arguments.0.value").get(node),
       node: node
     };
-    var props = lively_lang.arr.flatmap(
-      node.expression.arguments,
-      function(argNode) {
-        if (argNode.type !== "ObjectExpression") return [];
-        return objectKeyValsAsDefs(argNode).map(function(ea) {
-          ea.type = "lively-class-instance-" + ea.type;
-          ea.parent = def;
-          return ea;
-        })
+    var props = lively_lang.arr.flatmap(node.expression.arguments, function (argNode) {
+      if (argNode.type !== "ObjectExpression") return [];
+      return objectKeyValsAsDefs(argNode).map(function (ea) {
+        ea.type = "lively-class-instance-" + ea.type;
+        ea.parent = def;
+        return ea;
       });
+    });
     return [def].concat(props);
   }
 
   function extendDef(node) {
-    if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend"
-     || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
+    if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend" || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
     var name = lively_lang.Path("expression.arguments.0.name").get(node);
     if (!name) return null;
     var def = {
       name: name, node: node,
       type: "lively-extend-definition"
     };
-    var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || [])
-      .map(function(d) { d.parent = def; return d; });
+    var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || []).map(function (d) {
+      d.parent = def;return d;
+    });
     return [def].concat(props);
   }
 
   function varDefs(node) {
     if (node.type !== "VariableDeclaration") return null;
-    return lively_lang.arr.flatmap(
-      withVarDeclIds(node),
-      function(ea) {
-        return lively_lang.arr.flatmap(
-          ea.ids,
-          function(id) {
-            var def = {name: id.name, node: ea.node, type: "var-decl"};
-            if (!def.node.init) return [def];
-            var node = def.node.init;
-            while (node.type === "AssignmentExpression") node = node.right;
-            if (node.type === "ObjectExpression") {
-              return [def].concat(objectKeyValsAsDefs(node).map(function(ea) {
-                ea.type = "object-" + ea.type; ea.parent = def; return ea; }));
-            }
-            var objDefs = someObjectExpressionCall(node);
-            if (objDefs) return [def].concat(objDefs.map(function(d) { d.parent = def; return d; }))
-            return [def];
-          });
-        });
+    return lively_lang.arr.flatmap(withVarDeclIds(node), function (ea) {
+      return lively_lang.arr.flatmap(ea.ids, function (id) {
+        var def = { name: id.name, node: ea.node, type: "var-decl" };
+        if (!def.node.init) return [def];
+        var node = def.node.init;
+        while (node.type === "AssignmentExpression") {
+          node = node.right;
+        }if (node.type === "ObjectExpression") {
+          return [def].concat(objectKeyValsAsDefs(node).map(function (ea) {
+            ea.type = "object-" + ea.type;ea.parent = def;return ea;
+          }));
+        }
+        var objDefs = someObjectExpressionCall(node);
+        if (objDefs) return [def].concat(objDefs.map(function (d) {
+          d.parent = def;return d;
+        }));
+        return [def];
+      });
+    });
   }
 
   function funcDef(node) {
-    if (node.type !== "FunctionStatement"
-     && node.type !== "FunctionDeclaration") return null;
+    if (node.type !== "FunctionStatement" && node.type !== "FunctionDeclaration") return null;
     return [{
       name: node.id.name,
       node: node,
@@ -14456,7 +14680,9 @@ module.exports = function(acorn) {
   function someObjectExpressionCall(node) {
     if (node.type === "ExpressionStatement") node = node.expression;
     if (node.type !== "CallExpression") return null;
-    var objArg = node.arguments.detect(function(a) { return a.type === "ObjectExpression"; });
+    var objArg = node.arguments.detect(function (a) {
+      return a.type === "ObjectExpression";
+    });
     if (!objArg) return null;
     return objectKeyValsAsDefs(objArg);
   }
@@ -14464,65 +14690,61 @@ module.exports = function(acorn) {
   function moduleDef(node, options) {
     if (!isModuleDeclaration(node)) return null;
     var decls = findDecls(lively_lang.Path("expression.arguments.0").get(node), options),
-        parent = {node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node)};
-    decls.forEach(function(decl) { return decl.parent = parent; });
+        parent = { node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node) };
+    decls.forEach(function (decl) {
+      return decl.parent = parent;
+    });
     return decls;
   }
 
   function functionWrapper(node, options) {
-    if (!isFunctionWrapper(node)) return null
+    if (!isFunctionWrapper(node)) return null;
     var decls;
     // Is it a function wrapper passed as arg?
-    // like ;(function(run) {... })(function(exports) {...})      
+    // like ;(function(run) {... })(function(exports) {...})     
     var argFunc = lively_lang.Path("expression.arguments.0").get(node);
-    if (argFunc
-     && argFunc.type === "FunctionExpression"
-     && lively_lang.string.lines(argFunc.source || "").length > 5) {
+    if (argFunc && argFunc.type === "FunctionExpression" && lively_lang.string.lines(argFunc.source || "").length > 5) {
       // lively.debugNextMethodCall(lively.ast.CodeCategorizer, "findDecls");
       decls = findDecls(argFunc, options);
     } else {
       decls = findDecls(lively_lang.Path("expression.callee").get(node), options);
     }
-    var parent = {node: node, name: lively_lang.Path("expression.callee.id.name").get(node)};
-    decls.forEach(function(decl) { return decl.parent || (decl.parent = parent) });
+    var parent = { node: node, name: lively_lang.Path("expression.callee.id.name").get(node) };
+    decls.forEach(function (decl) {
+      return decl.parent || (decl.parent = parent);
+    });
     return decls;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function isModuleDeclaration(node) {
-    return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module"
-        && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
+    return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module" && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
   }
 
   function isFunctionWrapper(node) {
-    return lively_lang.Path("expression.type").get(node) === "CallExpression"
-        && lively_lang.Path("expression.callee.type").get(node) === "FunctionExpression";
+    return lively_lang.Path("expression.type").get(node) === "CallExpression" && lively_lang.Path("expression.callee.type").get(node) === "FunctionExpression";
   }
 
   function declIds(idNodes) {
-    return lively_lang.arr.flatmap(idNodes, function(ea) {
+    return lively_lang.arr.flatmap(idNodes, function (ea) {
       if (!ea) return [];
       if (ea.type === "Identifier") return [ea];
       if (ea.type === "RestElement") return [ea.argument];
-      if (ea.type === "ObjectPattern")
-        return declIds(lively_lang.arr.pluck(ea.properties, "value"));
-      if (ea.type === "ArrayPattern")
-        return declIds(ea.elements);
+      if (ea.type === "ObjectPattern") return declIds(lively_lang.arr.pluck(ea.properties, "value"));
+      if (ea.type === "ArrayPattern") return declIds(ea.elements);
       return [];
     });
   }
 
   function withVarDeclIds(varNode) {
-    return varNode.declarations.map(function(declNode) {
-      if (!declNode.source && declNode.init)
-        declNode.source = declNode.id.name + " = " + declNode.init.source
-      return {node: declNode, ids: declIds([declNode.id])};
+    return varNode.declarations.map(function (declNode) {
+      if (!declNode.source && declNode.init) declNode.source = declNode.id.name + " = " + declNode.init.source;
+      return { node: declNode, ids: declIds([declNode.id]) };
     });
   }
 
-
-  var categorizer = Object.freeze({
+var categorizer = Object.freeze({
     findDecls: findDecls
   });
 
