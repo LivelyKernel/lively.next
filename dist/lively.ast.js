@@ -18399,6 +18399,193 @@ module.exports = function(acorn) {
   var pathToNode = methods.pathToNode;
   var rematchAstWithSource = methods.rematchAstWithSource;
 
+  var identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
+  function isIdentifier(string) {
+    // Note: It's not so easy...
+    // http://wiki.ecmascript.org/doku.php?id=strawman:identifier_identification
+    // https://mathiasbynens.be/notes/javascript-identifiers-es6
+    return identifierRe.test(string) && string.indexOf("-") === -1;
+  }
+
+  function id(name) {
+    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
+  }
+
+  function literal(value) {
+    return { type: "Literal", value: value };
+  }
+
+  function exprStmt(expression) {
+    return { type: "ExpressionStatement", expression: expression };
+  }
+
+  function returnStmt(expr) {
+    return { type: "ReturnStatement", argument: expr };
+  }
+
+  function empty() {
+    return { type: "EmptyStatement" };
+  }
+
+  function binaryExpr(left, op, right) {
+    return {
+      left: left, right: right, operator: op,
+      type: "BinaryExpression"
+    };
+  }
+
+  function funcExpr(_ref) {
+    for (var _len = arguments.length, statements = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      statements[_key - 2] = arguments[_key];
+    }
+
+    var arrow = _ref.arrow;
+    var funcId = _ref.id;
+    var expression = _ref.expression;
+    var generator = _ref.generator;
+    var params = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+
+    // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
+    // // => "function foo(a) { 3; }"
+    params = params.map(function (ea) {
+      return typeof ea === "string" ? id(ea) : ea;
+    });
+    return {
+      type: (arrow ? "Arrow" : "") + "FunctionExpression",
+      id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
+      params: params,
+      body: { body: statements, type: "BlockStatement" },
+      expression: expression || false,
+      generator: generator || false
+    };
+  }
+
+  function funcCall(callee) {
+    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      args[_key2 - 1] = arguments[_key2];
+    }
+
+    if (typeof callee === "string") callee = id(callee);
+    return {
+      type: "CallExpression",
+      callee: callee,
+      arguments: args
+    };
+  }
+
+  function varDecl(id, init, kind) {
+    if (typeof id === "string") id = { name: id, type: "Identifier" };
+    return {
+      type: "VariableDeclaration", kind: kind || "var",
+      declarations: [{ type: "VariableDeclarator", id: id, init: init }]
+    };
+  }
+
+  function member(obj, prop, computed) {
+    // Example:
+    // lively.ast.stringify(member("foo", "bar"))
+    // // => "foo.bar"
+    // lively.ast.stringify(member("foo", "b-a-r"))
+    // // => "foo['b-a-r']"
+    // lively.ast.stringify(member("foo", "zork", true))
+    // // => "foo['zork']"
+    // lively.ast.stringify(member("foo", 0))
+    // // => "foo[0]"
+    if (typeof obj === "string") obj = id(obj);
+    if (typeof prop === "string") {
+      if (!computed && !isIdentifier(prop)) computed = true;
+      prop = computed ? literal(prop) : id(prop);
+    } else if (typeof prop === "number") {
+      prop = literal(prop);
+      computed = true;
+    }
+    return {
+      type: "MemberExpression",
+      computed: !!computed,
+      object: obj, property: prop
+    };
+  }
+
+  function memberChain(first) {
+    for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+      rest[_key3 - 1] = arguments[_key3];
+    }
+
+    // lively.ast.stringify(memberChain("foo", "bar", 0, "baz-zork"));
+    // // => "foo.bar[0]['baz-zork']"
+    return rest.reduce(function (memberExpr, key) {
+      return member(memberExpr, key);
+    }, (typeof first === "undefined" ? "undefined" : babelHelpers.typeof(first)) === "object" ? first : id(first));
+  }
+
+  function assign(left, right) {
+    // lively.ast.stringify(assign("a", "x"))
+    // // => "a = x"
+    // lively.ast.stringify(assign(member("a", "x"), literal(23)))
+    // // => "a.x = 23"
+    return {
+      type: "AssignmentExpression", operator: "=",
+      right: right ? typeof right === "string" ? id(right) : right : id("undefined"),
+      left: typeof left === "string" ? id(left) : left
+    };
+  }
+
+  function block() {
+    for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      body[_key4] = arguments[_key4];
+    }
+
+    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
+  }
+
+  function program() {
+    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
+  }
+
+  function tryStmt(exName, handlerBody, finalizerBody) {
+    for (var _len5 = arguments.length, body = Array(_len5 > 3 ? _len5 - 3 : 0), _key5 = 3; _key5 < _len5; _key5++) {
+      body[_key5 - 3] = arguments[_key5];
+    }
+
+    // Example:
+    // var stmt = exprStmt(binaryExpr(literal(3), "+", literal(2)));
+    // lively.ast.stringify(tryStmt("err", [stmt], [stmt], stmt, stmt))
+    // // => "try { 3 + 2; 3 + 2; } catch (err) { 3 + 2; } finally { 3 + 2; }"
+    if (!Array.isArray(finalizerBody)) {
+      body.unshift(finalizerBody);
+      finalizerBody = null;
+    }
+    return {
+      block: block(body),
+      finalizer: finalizerBody ? block(finalizerBody) : null,
+      handler: {
+        body: block(handlerBody),
+        param: id(exName),
+        type: "CatchClause"
+      },
+      type: "TryStatement"
+    };
+  }
+
+var nodes = Object.freeze({
+    isIdentifier: isIdentifier,
+    id: id,
+    literal: literal,
+    exprStmt: exprStmt,
+    returnStmt: returnStmt,
+    empty: empty,
+    binaryExpr: binaryExpr,
+    funcExpr: funcExpr,
+    funcCall: funcCall,
+    varDecl: varDecl,
+    member: member,
+    memberChain: memberChain,
+    assign: assign,
+    block: block,
+    program: program,
+    tryStmt: tryStmt
+  });
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var helpers = {
@@ -18408,7 +18595,7 @@ module.exports = function(acorn) {
         if (!ea) return [];
         if (ea.type === "Identifier") return [ea];
         if (ea.type === "RestElement") return [ea.argument];
-        if (ea.type === "AssignmentPattern") return [ea.left];
+        if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
         if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
         if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
         return [];
@@ -18437,6 +18624,10 @@ module.exports = function(acorn) {
           case "ObjectExpression":case "ObjectPattern":
             if (!onlyLeafs) result.push(thisNode);
             result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+            break;
+          case "AssignmentPattern":
+            if (!onlyLeafs) result.push(thisNode);
+            result = result.concat(objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
             break;
           default:
             result.push(thisNode);
@@ -18716,28 +18907,6 @@ module.exports = function(acorn) {
       throw new Error('Comparing nodes');
     },
 
-    memberExpression: function memberExpression(keys) {
-      // var keys = ["foo", "bar", [0], "baz"];
-      // stringify(this.ast.transform.helper.memberExpression(keys)); // => foo.bar[0].baz
-      var memberExpression = keys.slice(1).reduce(function (memberExpr, key) {
-        return {
-          computed: typeof key !== "string",
-          object: memberExpr,
-          property: nodeForKey(key),
-          type: "MemberExpression"
-        };
-      }, nodeForKey(keys[0]));
-      return memberExpression;
-      return {
-        type: "ExpressionStatement",
-        expression: memberExpression
-      };
-
-      function nodeForKey(key) {
-        return typeof key === "string" ? { name: key, type: "Identifier" } : { raw: String(key), type: "Literal", value: key };
-      }
-    },
-
     replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
       // parameters:
       //   - target: ast node
@@ -18872,8 +19041,8 @@ module.exports = function(acorn) {
         target: decl,
         replacementFunc: function replacementFunc(declNode, s, wasChanged) {
           if (wasChanged) {
-            var scopes$$ = scopes(parse(s, { addSource: true }));
-            declNode = scopes$$.varDecls[0];
+            var scopes = scopes(parse(s, { addSource: true }));
+            declNode = scopes.varDecls[0];
           }
 
           return declNode.declarations.map(function (ea) {
@@ -19014,14 +19183,10 @@ module.exports = function(acorn) {
               declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
             };
 
-            var propDecls = lively_lang.arr.pluck(helpers.objPropertiesAsList(declNode.id, [], false), "key").map(function (keyPath) {
-              return {
-                type: "VariableDeclaration", kind: "var",
-                declarations: [{
-                  type: "VariableDeclarator", kind: "var",
-                  id: { type: "Identifier", name: lively_lang.arr.last(keyPath) },
-                  init: helper.memberExpression([extractedId.name].concat(keyPath)) }]
-              };
+            var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
+              return ea.key;
+            }).map(function (keyPath) {
+              return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(babelHelpers.toConsumableArray(keyPath))), "var");
             });
 
             return [extractedInit].concat(propDecls);
@@ -19204,7 +19369,7 @@ module.exports = function(acorn) {
         canBeInlinedSym = Symbol("canBeInlined");
     v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
       var replaced = v.replacer(proceed(node, state, path), path);
-      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
+      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
     });
     v.visitBlockStatement = lively_lang.fun.wrap(v.visitBlockStatement, blockInliner);
     v.visitProgram = lively_lang.fun.wrap(v.visitProgram, blockInliner);
@@ -19239,7 +19404,7 @@ module.exports = function(acorn) {
     });
 
     return replace$1(parsed, function (node, path) {
-      return refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node;
+      return refsToReplace.indexOf(node) > -1 ? member$1(node, options.captureObj) : node;
     });
   }
 
@@ -19270,7 +19435,7 @@ module.exports = function(acorn) {
             return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
-          return [varDecl(declRoot, decl.init, node.kind)].concat(extractions);
+          return [varDecl$1(declRoot, decl.init, node.kind)].concat(extractions);
         }
 
         // This is rewriting normal vars
@@ -19400,7 +19565,7 @@ module.exports = function(acorn) {
         return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
           id: specifier.local,
-          init: member(specifier.local, options.captureObj)
+          init: member$1(specifier.local, options.captureObj)
         });
       }).filter(Boolean).concat(stmt));
     }, []);
@@ -19425,7 +19590,7 @@ module.exports = function(acorn) {
           }));
         } else {
           nodes = stmt.specifiers.map(function (specifier) {
-            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(specifier.local, options.captureObj) : specifier.local);
+            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member$1(specifier.local, options.captureObj) : specifier.local);
           });
         }
       } else if (stmt.type === "ExportDefaultDeclaration") {
@@ -19512,19 +19677,19 @@ module.exports = function(acorn) {
 
       // like [a]
       if (el.type === "Identifier") {
-        return [merge(varDecl(el, member(id(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl$1(el, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
+          return [merge(varDecl$1(el.argument, {
             type: "CallExpression",
             arguments: [{ type: "Literal", value: i }],
-            callee: member(id("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+            callee: member$1(id$1("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
           // like [{x}]
         } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(id(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
+            var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl$1(helperVarId, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
             declaredNames.push(helperVarId.name);
             return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
           }
@@ -19538,12 +19703,12 @@ module.exports = function(acorn) {
 
       // like {x: y}
       if (prop.value.type == "Identifier") {
-        return [merge(varDecl(prop.value, member(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl$1(prop.value, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
+          var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl$1(helperVarId, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
           declaredNames.push(helperVarId.name);
           return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
         }
@@ -19554,19 +19719,19 @@ module.exports = function(acorn) {
   // code generation helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function id(name) {
+  function id$1(name) {
     return { type: "Identifier", name: String(name) };
   }
 
-  function block(nodes) {
+  function block$1(nodes) {
     return { type: "BlockStatement", body: nodes };
   }
 
-  function member(prop, obj, computed) {
+  function member$1(prop, obj, computed) {
     return { type: "MemberExpression", computed: computed || false, object: obj, property: prop };
   }
 
-  function varDecl(id, init, kind) {
+  function varDecl$1(id, init, kind) {
     return {
       declarations: [{ type: "VariableDeclarator", id: id, init: init }],
       kind: kind || "var", type: "VariableDeclaration"
@@ -20108,6 +20273,7 @@ var categorizer = Object.freeze({
   exports.comments = comments;
   exports.categorizer = categorizer;
   exports.stringify = stringify;
+  exports.nodes = nodes;
 
 }((this.lively.ast = this.lively.ast || {}),lively.lang,GLOBAL.escodegen,acorn));
   }).call(GLOBAL);
