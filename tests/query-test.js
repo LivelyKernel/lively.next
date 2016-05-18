@@ -117,7 +117,7 @@ describe('query', function() {
                       {start:182,end:185, name:"baz", type:"Identifier"},
                       {start:189,end:192, name:"foo", type:"Identifier"}];
 
-      expect(result).deep.equals(expected);
+      expect(result).to.containSubset(expected);
     });
 
   });
@@ -127,13 +127,13 @@ describe('query', function() {
 
     it("findNodesIncludingLines", function() {
       var code = "var x = {\n  f: function(a) {\n   return 23;\n  }\n}\n",
-          expected1 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression","Property", "FunctionExpression","BlockStatement","ReturnStatement","Literal"],
+          expected1 = ["Program", "VariableDeclaration", "VariableDeclarator", "ObjectExpression", "Property", "FunctionExpression", "BlockStatement", "ReturnStatement", "Literal"],
           nodes1 = query.findNodesIncludingLines(null, code, [3]);
-      expect(expected1).deep.equals(chain(nodes1).pluck("type").value());
+      expect(expected1).deep.equals(nodes1.map(n => n.type));
 
-      var expected2 = ["Program","VariableDeclaration","VariableDeclarator","ObjectExpression"],
+      var expected2 = ["Program", "VariableDeclaration", "VariableDeclarator", "ObjectExpression"],
           nodes2 = query.findNodesIncludingLines(null, code, [3,5]);
-      expect(expected2).deep.equals(chain(nodes2).pluck("type").value());
+      expect(expected2).deep.equals(nodes2.map(n => n.type));
     });
 
     describe("find scopes", function() {
@@ -186,24 +186,23 @@ describe('query', function() {
     describe("finding references and declarations", function() {
 
       it("findDeclarationClosestToIndex", function() {
-        var src = `var x = 3, yyy = 4;\nvar z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }`;
-
-        var index = 48; // second yyy of addition
-        // show(src.slice(index-1,index+1))
-        var parsed = parse(src);
-        var result = query.findDeclarationClosestToIndex(parsed, "yyy", index);
-        expect({end:14,name:"yyy",start:11,type:"Identifier"}).deep.equals(result);
+        var src = `var x = 3, yyy = 4;\nvar z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }`,
+            index = 48, // second yyy of addition
+            // show(src.slice(index-1,index+1))
+            parsed = parse(src),
+            result = query.findDeclarationClosestToIndex(parsed, "yyy", index);
+        expect(result).to.containSubset({end:14,name:"yyy",start:11,type:"Identifier"});
       });
 
       it("findReferencesAndDeclsInScope", function() {
-        var src = "var x = 3, y = 4;\nvar z = function() { y + y + (function(y) { y+1 })(); }";
-        var parsed = parse(src);
-        var scope = query.scopes(parsed);
-        var result = query.findReferencesAndDeclsInScope(scope, "y");
-        var expected = [{end:12,name:"y",start:11,type:"Identifier"},
+        var src = "var x = 3, y = 4;\nvar z = function() { y + y + (function(y) { y+1 })(); }",
+            parsed = parse(src),
+            scope = query.scopes(parsed),
+            result = query.findReferencesAndDeclsInScope(scope, "y"),
+            expected = [{end:12,name:"y",start:11,type:"Identifier"},
                         {end:40,name:"y",start:39,type:"Identifier"},
                         {end:44,name:"y",start:43,type:"Identifier"}];
-        expect(expected).deep.equals(result);
+        expect(result).to.containSubset(expected);
       });
 
     });

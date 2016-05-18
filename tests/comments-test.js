@@ -42,14 +42,12 @@ describe("parsing comments", function() {
              + "// I don't belong to someObject...!\n\n"
              + "// lalalala\n"
              + "// 'nother comment!\n"
-             + "var someObject = exports.foo = {foo: function(arg1, arg2) { return 123; }};";
-
-    var comments = extractComments(code);
-
-    var expected = [
-      {comment: " I don't belong to someObject...!"},
-      {comment: " lalalala\n 'nother comment!",
-       type: "object", name: "someObject"}]
+             + "var someObject = exports.foo = {foo: function(arg1, arg2) { return 123; }};",
+        comments = extractComments(code),
+        expected = [
+          {comment: " I don't belong to someObject...!"},
+          {comment: " lalalala\n 'nother comment!",
+           type: "object", name: "someObject"}]
     expect(comments).to.containSubset(expected);
   });
 

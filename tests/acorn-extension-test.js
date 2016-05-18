@@ -175,9 +175,9 @@ describe('walk extension', function() {
     // FIXME: sourceType should be copied too
     delete parsed.sourceType;
 
-    expect(parsed).to.eql(parsedCopy);
+    expect(parsed).to.containSubset(parsedCopy);
     parsed.body[0].declarations[0].init.value = 'foo';
-    expect(parsed).not.to.eql(parsedCopy);
+    expect(parsed).not.to.containSubset(parsedCopy);
   });
 
 });
