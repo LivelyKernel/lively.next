@@ -1,8 +1,8 @@
 import { withMozillaAstDo, printAst, compareAst, pathToNode, rematchAstWithSource } from "./lib/mozilla-ast-visitor-interface.js";
 export { withMozillaAstDo, printAst, compareAst, pathToNode, rematchAstWithSource };
 
-import { parse, parseFunction, parseLikeOMeta, fuzzyParse } from "./lib/parser.js";
-export { parse, parseFunction, parseLikeOMeta, fuzzyParse }
+import { parse, parseFunction, fuzzyParse } from "./lib/parser.js";
+export { parse, parseFunction, fuzzyParse }
 
 import { acorn } from "./lib/acorn-extension.js";
 import stringify, { escodegen } from "./lib/stringify.js";
