@@ -13347,142 +13347,6 @@ var nodes = Object.freeze({
     return result;
   }
 
-  function replaceTopLevelVarDeclAndUsageForCapturing(astOrSource, assignToObj, options) {
-    /* replaces var and function declarations with assignment statements.
-    * Example:
-       exports.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-         "var x = 3, y = 2, z = 4",
-         {name: "A", type: "Identifier"}, ['z']).source;
-       // => "A.x = 3; A.y = 2; z = 4"
-    */
-
-    var ignoreUndeclaredExcept = options && options.ignoreUndeclaredExcept || null;
-    var whitelist = options && options.include || null;
-    var blacklist = options && options.exclude || [];
-    var recordDefRanges = options && options.recordDefRanges;
-
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        topLevel = topLevelDeclsAndRefs(parsed);
-
-    if (ignoreUndeclaredExcept) {
-      blacklist = lively_lang.arr.withoutAll(topLevel.undeclaredNames, ignoreUndeclaredExcept).concat(blacklist);
-    }
-
-    // 1. find those var declarations that should not be rewritten. we
-    // currently ignore var declarations in for loops and the error parameter
-    // declaration in catch clauses
-    var scope = topLevel.scope;
-    lively_lang.arr.pushAll(blacklist, lively_lang.arr.pluck(scope.catches, "name"));
-    var forLoopDecls = scope.varDecls.filter(function (decl, i) {
-      var path = lively_lang.Path(scope.varDeclPaths[i]),
-          parent = path.slice(0, -1).get(parsed);
-      return parent.type === "ForStatement" || parent.type === "ForInStatement";
-    });
-    lively_lang.arr.pushAll(blacklist, lively_lang.chain(forLoopDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
-
-    // 2. make all references declared in the toplevel scope into property
-    // reads of assignToObj
-    // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    var result = helper.replaceNodes(topLevel.refs.filter(shouldRefBeCaptured).map(function (ref) {
-      return {
-        target: ref,
-        replacementFunc: function replacementFunc(ref) {
-          return member(ref, assignToObj);
-        }
-      };
-    }), source);
-
-    // 3. turn var declarations into assignments to assignToObj
-    // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
-    result = helper.replaceNodes(lively_lang.arr.withoutAll(topLevel.varDecls, forLoopDecls).map(function (decl) {
-      return {
-        target: decl,
-        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-          if (wasChanged) {
-            var scopes = scopes(parse(s, { addSource: true }));
-            declNode = scopes.varDecls[0];
-          }
-
-          return declNode.declarations.map(function (ea) {
-            var init = {
-              operator: "||",
-              type: "LogicalExpression",
-              left: { computed: true, object: assignToObj, property: { type: "Literal", value: ea.id.name }, type: "MemberExpression" },
-              right: { name: "undefined", type: "Identifier" }
-            };
-            return shouldDeclBeCaptured(ea) ? assign(ea.id, ea.init || init) : varDecl(ea);
-          });
-        }
-      };
-    }), result);
-
-    // 4. assignments for function declarations in the top level scope are
-    // put in front of everything else:
-    // "return bar(); function bar() { return 23 }" -> "Global.bar = bar; return bar(); function bar() { return 23 }"
-    if (topLevel.funcDecls.length) {
-      var globalFuncs = topLevel.funcDecls.filter(shouldDeclBeCaptured).map(function (decl) {
-        var funcId = { type: "Identifier", name: decl.id.name };
-        return helper._node2string(assign(funcId, funcId));
-      }).join('\n');
-
-      var change = { type: 'add', pos: 0, string: globalFuncs };
-      result = {
-        source: globalFuncs + '\n' + result.source,
-        changes: result.changes.concat([change])
-      };
-    }
-
-    // 5. def ranges so that we know at which source code positions the
-    // definitions are
-    if (recordDefRanges) result.defRanges = lively_lang.chain(scope.varDecls).pluck("declarations").flatten().value().concat(scope.funcDecls).reduce(function (defs, decl) {
-      if (!defs[decl.id.name]) defs[decl.id.name] = [];
-      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
-      return defs;
-    }, {});
-
-    result.ast = parsed;
-
-    return result;
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function shouldRefBeCaptured(ref) {
-      return blacklist.indexOf(ref.name) === -1 && (!whitelist || whitelist.indexOf(ref.name) > -1);
-    }
-
-    function shouldDeclBeCaptured(decl) {
-      return shouldRefBeCaptured(decl.id);
-    }
-
-    function assign(id, value) {
-      return {
-        type: "ExpressionStatement", expression: {
-          type: "AssignmentExpression", operator: "=",
-          right: value || { type: "Identifier", name: 'undefined' },
-          left: {
-            type: "MemberExpression", computed: false,
-            object: assignToObj, property: id
-          }
-        }
-      };
-    }
-
-    function varDecl(declarator) {
-      return {
-        declarations: [declarator],
-        kind: "var", type: "VariableDeclaration"
-      };
-    }
-
-    function member(prop, obj) {
-      return {
-        type: "MemberExpression", computed: false,
-        object: obj, property: prop
-      };
-    }
-  }
-
   function oneDeclaratorPerVarDecl(astOrSource) {
     // exports.transform.oneDeclaratorPerVarDecl(
     //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
@@ -13559,31 +13423,80 @@ var nodes = Object.freeze({
 
   function returnLastStatement(source, opts) {
     opts = opts || {};
-    var parsed = parse(source, opts),
-        last = parsed.body.pop(),
-        newLastsource = 'return ' + source.slice(last.start, last.end);
-    if (!opts.asAST) return source.slice(0, last.start) + newLastsource;
 
-    var newLast = parse(newLastsource, { allowReturnOutsideFunction: true }).body.slice(-1)[0];
-    parsed.body.push(newLast);
-    parsed.end += 'return '.length;
-    return parsed;
+    var parsed = parse(source, opts),
+        last = lively_lang.arr.last(parsed.body);
+    if (last.type === "ExpressionStatement") {
+      parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
+      return opts.asAST ? parsed : stringify(parsed);
+    } else {
+      return opts.asAST ? parsed : source;
+    }
   }
 
   function wrapInFunction(code, opts) {
     opts = opts || {};
     var transformed = returnLastStatement(code, opts);
-    return opts.asAST ? {
-      type: "Program",
-      body: [{
-        type: "ExpressionStatement",
-        expression: {
-          body: { body: transformed.body, type: "BlockStatement" },
-          params: [],
-          type: "FunctionExpression"
-        }
-      }]
-    } : "function() {\n" + transformed + "\n}";
+    return opts.asAST ? program(funcExpr.apply(undefined, [{ id: opts.id || undefined }, []].concat(babelHelpers.toConsumableArray(transformed.body)))) : "function" + (opts.id ? " " + opts.id : "") + "() {\n" + transformed + "\n}";
+  }
+
+  function wrapInStartEndCall(parsed, options) {
+    // Wraps a piece of code into two function calls: One before the first
+    // statement and one after the last. Also wraps the entire thing into a try /
+    // catch block. The end call gets the result of the last statement (if it is
+    // something that returns a value, i.e. an expression) passed as the second
+    // argument. If an error occurs the end function is called with an error as
+    // first parameter
+    // Why? This allows to easily track execution of code, especially for
+    // asynchronus / await code!
+    // Example:
+    // stringify(wrapInStartEndCall("var y = x + 23; y"))
+    // // generates code
+    // try {
+    //     __start_execution();
+    //     __lvVarRecorder.y = x + 23;
+    //     return __end_execution(null, __lvVarRecorder.y);
+    // } catch (err) {
+    //     return __end_execution(err, undefined);
+    // }
+
+    if (typeof parsed === "string") parsed = parse(parsed);
+    options = options || {};
+
+    var isProgram = parsed.type === "Program",
+        startFuncNode = options.startFuncNode || id("__start_execution"),
+        endFuncNode = options.endFuncNode || id("__end_execution"),
+        funcDecls = topLevelFuncDecls(parsed),
+        innerBody = parsed.body,
+        outerBody = [];
+
+    // 1. Hoist func decls outside the actual eval start - end code. The async /
+    // generator transforms require this!
+    funcDecls.forEach(function (_ref) {
+      var node = _ref.node;
+      var path = _ref.path;
+
+      lively.lang.Path(path).set(parsed, exprStmt(node.id));
+      outerBody.push(node);
+    });
+
+    // 2. add start-eval call
+    innerBody.unshift(exprStmt(funcCall(startFuncNode)));
+
+    // 3. if last statement is an expression, transform it so we can pass it to
+    // the end-eval call, replacing the original expression. If it's a
+    // non-expression we record undefined as the eval result
+    var last = lively_lang.arr.last(innerBody);
+    if (last.type === "ExpressionStatement") {
+      innerBody.splice(outerBody.length - 1, 1, exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+    } else {
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
+    }
+
+    // 4. Wrap that stuff in a try stmt
+    outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(babelHelpers.toConsumableArray(innerBody))));
+
+    return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
   }
 
 
@@ -13591,25 +13504,26 @@ var nodes = Object.freeze({
   var transform = Object.freeze({
     helper: helper,
     replace: replace,
-    replaceTopLevelVarDeclAndUsageForCapturing: replaceTopLevelVarDeclAndUsageForCapturing,
     oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
     oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
     returnLastStatement: returnLastStatement,
-    wrapInFunction: wrapInFunction
+    wrapInFunction: wrapInFunction,
+    wrapInStartEndCall: wrapInStartEndCall
   });
 
   var merge = Object.assign;
 
-  function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
+  function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
     /* replaces var and function declarations with assignment statements.
-    * Example:
-       exports.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-         "var x = 3, y = 2, z = 4",
-         {name: "A", type: "Identifier"}, ['z']).source;
+     * Example:
+       stringify(
+         rewriteToCaptureTopLevelVariables2(
+           parse("var x = 3, y = 2, z = 4"),
+           {name: "A", type: "Identifier"}, ['z']));
        // => "A.x = 3; A.y = 2; z = 4"
-    */
+     */
 
-    options = lively_lang.obj.merge({
+    options = merge({
       ignoreUndeclaredExcept: null,
       includeRefs: null,
       excludeRefs: options && options.exclude || [],
@@ -13623,9 +13537,7 @@ var nodes = Object.freeze({
       moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" }
     }, options);
 
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || stringify(parsed),
-        rewritten = parsed;
+    var rewritten = parsed;
 
     // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
     // if it is a list of names we will capture all refs with those names
@@ -13696,64 +13608,100 @@ var nodes = Object.freeze({
     //   "Global.bar = bar; return bar(); function bar() { return 23 }"
     rewritten = putFunctionDeclsInFront(rewritten, options);
 
-    // console.log(stringify(rewritten));
-    // console.log(require("util").inspect(rewritten.body, {depth: 10}));
-
-    return {
-      ast: rewritten,
-      source: stringify(rewritten),
-      defRanges: defRanges
-    };
+    return rewritten;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // replacing helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var replaceVisitor = function () {
-    var v = new Visitor();
-    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-      return v.replacer(proceed(node, state, path), path);
-    });
-    return v;
-  }();
+  // TODO move this stuff over into transform? Or separate replace.js?
+
+  var ReplaceVisitor = function (_Visitor) {
+    babelHelpers.inherits(ReplaceVisitor, _Visitor);
+
+    function ReplaceVisitor() {
+      babelHelpers.classCallCheck(this, ReplaceVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceVisitor).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(ReplaceVisitor, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+      }
+    }], [{
+      key: "run",
+      value: function run(parsed, replacer) {
+        var v = new this();
+        v.replacer = replacer;
+        return v.accept(parsed, null, []);
+      }
+    }]);
+    return ReplaceVisitor;
+  }(Visitor);
 
   function replace$1(parsed, replacer) {
-    replaceVisitor.replacer = replacer;
-    return replaceVisitor.accept(parsed, null, []);
+    return ReplaceVisitor.run(parsed, replacer);
   }
 
-  var replaceManyVisitor = function () {
-    var v = new Visitor(),
-        canBeInlinedSym = Symbol("canBeInlined");
-    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-      var replaced = v.replacer(proceed(node, state, path), path);
-      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
-    });
-    v.visitBlockStatement = lively_lang.fun.wrap(v.visitBlockStatement, blockInliner);
-    v.visitProgram = lively_lang.fun.wrap(v.visitProgram, blockInliner);
-    return v;
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    function blockInliner(proceed, node, state, path) {
-      var result = proceed(node, state, path);
-      // FIXME what about () => x kind of functions?
-      if (Array.isArray(result.body)) {
-        result.body = result.body.reduce(function (body, node) {
-          if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
-            body.push(node);
-            return body;
-          } else {
-            return body.concat(node.body);
-          }
-        }, []);
-      }
-      return result;
+  var canBeInlinedSym = Symbol("canBeInlined");
+
+  function blockInliner(node) {
+    // FIXME what about () => x kind of functions?
+    if (Array.isArray(node.body)) {
+      node.body = node.body.reduce(function (body, node) {
+        if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
+          body.push(node);
+          return body;
+        } else {
+          return body.concat(node.body);
+        }
+      }, []);
     }
-  }();
+    return node;
+  }
+
+  var ReplaceManyVisitor = function (_Visitor2) {
+    babelHelpers.inherits(ReplaceManyVisitor, _Visitor2);
+
+    function ReplaceManyVisitor() {
+      babelHelpers.classCallCheck(this, ReplaceManyVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceManyVisitor).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(ReplaceManyVisitor, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
+        var replaced = this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
+        return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
+      }
+    }, {
+      key: "visitBlockStatement",
+      value: function visitBlockStatement(node, state, path) {
+        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
+      }
+    }, {
+      key: "visitProgram",
+      value: function visitProgram(node, state, path) {
+        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
+      }
+    }], [{
+      key: "run",
+      value: function run(parsed, replacer) {
+        var v = new this();
+        v.replacer = replacer;
+        return v.accept(parsed, null, []);
+      }
+    }]);
+    return ReplaceManyVisitor;
+  }(Visitor);
 
   function replaceWithMany(parsed, replacer) {
-    replaceManyVisitor.replacer = replacer;
-    return replaceManyVisitor.accept(parsed, null, []);
+    return ReplaceManyVisitor.run(parsed, replacer);
   }
 
   function replaceRefs(parsed, options) {
