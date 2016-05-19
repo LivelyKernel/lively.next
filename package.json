@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -20,7 +20,8 @@
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
-      }
+      },
+      "babel-regenerator-runtime": "./node_modules/babel-regenerator-runtime/runtime.js"
     }
   },
   "lively": {
@@ -29,8 +30,7 @@
       "lively.lang": "./node_modules/lively.lang",
       "lively.ast": "./node_modules/lively.ast",
       "lively.vm": "./node_modules/lively.vm",
-      "mocha-es6": "./node_modules/mocha-es6",
-      "babel-regenerator-runtime": "./node_modules/babel-regenerator-runtime"
+      "mocha-es6": "./node_modules/mocha-es6"
     },
     "meta": {
       "./node_modules/whatwg-fetch/fetch.js": {

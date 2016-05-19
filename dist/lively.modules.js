@@ -10400,7 +10400,19 @@ lp.lookAhead = function (n) {
 var asyncExit = /^async[\t ]+(return|throw)/ ;
 var asyncFunction = /^async[\t ]+function/ ;
 var atomOrPropertyOrLabel = /^\s*[):;]/ ;
-var asyncAtEndOfLine = /^async[\t ]*\n/ ;
+var removeComments = /([^\n])\/\*(\*(?!\/)|[^\n*])*\*\/([^\n])/g ;
+
+function hasLineTerminatorBeforeNext(st, since) {
+	return st.lineStart >= since;
+}
+
+function test(regex,st,noComment) {
+	var src = st.input.slice(st.start) ;
+	if (noComment) {
+		src = src.replace(removeComments,"$1 $3") ;
+  }
+	return regex.test(src);
+}
 
 /* Return the object holding the parser's 'State'. This is different between acorn ('this')
  * and babylon ('this.state') */
@@ -10446,39 +10458,43 @@ function asyncAwaitPlugin (parser,options){
       this.reservedWords = new RegExp(this.reservedWords.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrict = new RegExp(this.reservedWordsStrict.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrictBind = new RegExp(this.reservedWordsStrictBind.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
+			this.inAsyncFunction = options.inAsyncFunction ;
+			if (options.awaitAnywhere && options.inAsyncFunction)
+				parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
+
 			return base.apply(this,arguments);
 		}
 	}) ;
 
 	parser.extend("shouldParseExportStatement",function(base){
 	    return function(){
-	        if (this.type.label==='name' && this.value==='async' && asyncFunction.test(this.input.substr(this.start))) {
+	        if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
 	            return true ;
 	        }
 	        return base.apply(this,arguments) ;
 	    }
 	}) ;
-	
+
 	parser.extend("parseStatement",function(base){
 		return function (declaration, topLevel) {
 			var st = state(this) ;
 			var start = st.start;
 			var startLoc = st.startLoc;
 			if (st.type.label==='name') {
-				if (asyncFunction.test(st.input.slice(st.start))) {
+				if (test(asyncFunction,st,true)) {
 					var wasAsync = st.inAsyncFunction ;
 					try {
 						st.inAsyncFunction = true ;
 						this.next() ;
 						var r = this.parseStatement(declaration, topLevel) ;
-						r.async = true ;
+ 						r.async = true ;
 						r.start = start;
 						r.loc && (r.loc.start = startLoc);
 						return r ;
 					} finally {
 						st.inAsyncFunction = wasAsync ;
 					}
-				} else if ((typeof options==="object" && options.asyncExits) && asyncExit.test(st.input.slice(st.start))) {
+				} else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
 					// NON-STANDARD EXTENSION iff. options.asyncExits is set, the
 					// extensions 'async return <expr>?' and 'async throw <expr>?'
 					// are enabled. In each case they are the standard ESTree nodes
@@ -10515,7 +10531,7 @@ function asyncAwaitPlugin (parser,options){
 			var startLoc = st.startLoc;
 			var rhs,r = base.apply(this,arguments);
 			if (r.type==='Identifier') {
-				if (r.name==='async' && !asyncAtEndOfLine.test(st.input.slice(start))) {
+				if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
 					// Is this really an async function?
 					var isAsync = st.inAsyncFunction ;
 					try {
@@ -10624,7 +10640,7 @@ function asyncAwaitPlugin (parser,options){
 		return function (prop) {
 			var st = state(this) ;
 			var key = base.apply(this,arguments) ;
-			if (key.type === "Identifier" && key.name === "async") {
+			if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
 				// Look-ahead to see if this is really a property or label called async or await
 				if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
 					es7check(prop) ;
@@ -17183,7 +17199,6 @@ module.exports = function(acorn) {
   walk.addSource = addSource;
   walk.inspect = inspect;
   walk.withParentInfo = withParentInfo;
-  walk.toLKObjects = toLKObjects;
   walk.copy = copy;
   walk.findSiblings = findSiblings;
 
@@ -17252,7 +17267,7 @@ module.exports = function(acorn) {
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     source = typeof parsed === 'string' ? parsed : source;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -17268,7 +17283,7 @@ module.exports = function(acorn) {
     options.ecmaVersion = options.ecmaVersion || 7;
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     source = typeof parsed === 'string' ? parsed : null;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -17341,230 +17356,6 @@ module.exports = function(acorn) {
       nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
     });
     return result;
-  };
-
-  function toLKObjects(parsed) {
-    if (!!!parsed.type) throw new Error('Given AST is not an Acorn AST.');
-    function newUndefined(start, end) {
-      start = start || -1;
-      end = end || -1;
-      return new Variable([start, end], 'undefined');
-    }
-    var visitors = {
-      Program: function Program(n, c) {
-        return new Sequence([n.start, n.end], n.body.map(c));
-      },
-      FunctionDeclaration: function FunctionDeclaration(n, c) {
-        var args = n.params.map(function (param) {
-          return new Variable([param.start, param.end], param.name);
-        });
-        var fn = new Function([n.id.end, n.end], c(n.body), args);
-        return new VarDeclaration([n.start, n.end], n.id.name, fn);
-      },
-      BlockStatement: function BlockStatement(n, c) {
-        var children = n.body.map(c);
-        return new Sequence([n.start + 1, n.end], children);
-      },
-      ExpressionStatement: function ExpressionStatement(n, c) {
-        return c(n.expression); // just skip it
-      },
-      CallExpression: function CallExpression(n, c) {
-        if (n.callee.type == 'MemberExpression' && n.type != 'NewExpression') {
-          // reused in NewExpression
-          // Send
-          var property; // property
-          var r = n.callee.object; // reciever
-          if (n.callee.computed) {
-            // object[property] => Expression
-            property = c(n.callee.property);
-          } else {
-            // object.property => Identifier
-            property = new String([n.callee.property.start, n.callee.property.end], n.callee.property.name);
-          }
-          return new Send([n.start, n.end], property, c(r), n.arguments.map(c));
-        } else {
-          return new Call([n.start, n.end], c(n.callee), n.arguments.map(c));
-        }
-      },
-      MemberExpression: function MemberExpression(n, c) {
-        var slotName;
-        if (n.computed) {
-          // object[property] => Expression
-          slotName = c(n.property);
-        } else {
-          // object.property => Identifier
-          slotName = new String([n.property.start, n.property.end], n.property.name);
-        }
-        return new GetSlot([n.start, n.end], slotName, c(n.object));
-      },
-      NewExpression: function NewExpression(n, c) {
-        return new New([n.start, n.end], this.CallExpression(n, c));
-      },
-      VariableDeclaration: function VariableDeclaration(n, c) {
-        var start = n.declarations[0] ? n.declarations[0].start - 1 : n.start;
-        return new Sequence([start, n.end], n.declarations.map(c));
-      },
-      VariableDeclarator: function VariableDeclarator(n, c) {
-        var value = n.init ? c(n.init) : newUndefined(n.start - 1, n.start - 1);
-        return new VarDeclaration([n.start - 1, n.end], n.id.name, value);
-      },
-      FunctionExpression: function FunctionExpression(n, c) {
-        var args = n.params.map(function (param) {
-          return new Variable([param.start, param.end], param.name);
-        });
-        return new Function([n.start, n.end], c(n.body), args);
-      },
-      IfStatement: function IfStatement(n, c) {
-        return new If([n.start, n.end], c(n.test), c(n.consequent), n.alternate ? c(n.alternate) : newUndefined(n.consequent.end, n.consequent.end));
-      },
-      ConditionalExpression: function ConditionalExpression(n, c) {
-        return new Cond([n.start, n.end], c(n.test), c(n.consequent), c(n.alternate));
-      },
-      SwitchStatement: function SwitchStatement(n, c) {
-        return new Switch([n.start, n.end], c(n.discriminant), n.cases.map(c));
-      },
-      SwitchCase: function SwitchCase(n, c) {
-        var start = n.consequent.length > 0 ? n.consequent[0].start : n.end;
-        var end = n.consequent.length > 0 ? n.consequent[n.consequent.length - 1].end : n.end;
-        var seq = new Sequence([start, end], n.consequent.map(c));
-        if (n.test != null) {
-          return new Case([n.start, n.end], c(n.test), seq);
-        } else {
-          return new Default([n.start, n.end], seq);
-        }
-      },
-      BreakStatement: function BreakStatement(n, c) {
-        var label;
-        if (n.label == null) {
-          label = new Label([n.end, n.end], '');
-        } else {
-          label = new Label([n.label.start, n.label.end], n.label.name);
-        }
-        return new Break([n.start, n.end], label);
-      },
-      ContinueStatement: function ContinueStatement(n, c) {
-        var label;
-        if (n.label == null) {
-          label = new Label([n.end, n.end], '');
-        } else {
-          label = new Label([n.label.start, n.label.end], n.label.name);
-        }
-        return new Continue([n.start, n.end], label);
-      },
-      TryStatement: function TryStatement(n, c) {
-        var errVar, catchSeq;
-        if (n.handler) {
-          catchSeq = c(n.handler.body);
-          errVar = c(n.handler.param);
-        } else {
-          catchSeq = newUndefined(n.block.end + 1, n.block.end + 1);
-          errVar = newUndefined(n.block.end + 1, n.block.end + 1);
-        }
-        var finallySeq = n.finalizer ? c(n.finalizer) : newUndefined(n.end, n.end);
-        return new TryCatchFinally([n.start, n.end], c(n.block), errVar, catchSeq, finallySeq);
-      },
-      ThrowStatement: function ThrowStatement(n, c) {
-        return new Throw([n.start, n.end], c(n.argument));
-      },
-      ForStatement: function ForStatement(n, c) {
-        var init = n.init ? c(n.init) : newUndefined(4, 4);
-        var cond = n.test ? c(n.test) : newUndefined(init.pos[1] + 1, init.pos[1] + 1);
-        var upd = n.update ? c(n.update) : newUndefined(cond.pos[1] + 1, cond.pos[1] + 1);
-        return new For([n.start, n.end], init, cond, c(n.body), upd);
-      },
-      ForInStatement: function ForInStatement(n, c) {
-        var left = n.left.type == 'VariableDeclaration' ? c(n.left.declarations[0]) : c(n.left);
-        return new ForIn([n.start, n.end], left, c(n.right), c(n.body));
-      },
-      WhileStatement: function WhileStatement(n, c) {
-        return new While([n.start, n.end], c(n.test), c(n.body));
-      },
-      DoWhileStatement: function DoWhileStatement(n, c) {
-        return new DoWhile([n.start, n.end], c(n.body), c(n.test));
-      },
-      WithStatement: function WithStatement(n, c) {
-        return new With([n.start, n.end], c(n.object), c(n.body));
-      },
-      UnaryExpression: function UnaryExpression(n, c) {
-        return new UnaryOp([n.start, n.end], n.operator, c(n.argument));
-      },
-      BinaryExpression: function BinaryExpression(n, c) {
-        return new BinaryOp([n.start, n.end], n.operator, c(n.left), c(n.right));
-      },
-      AssignmentExpression: function AssignmentExpression(n, c) {
-        if (n.operator == '=') {
-          return new Set([n.start, n.end], c(n.left), c(n.right));
-        } else {
-          return new ModifyingSet([n.start, n.end], c(n.left), n.operator.substr(0, n.operator.length - 1), c(n.right));
-        }
-      },
-      UpdateExpression: function UpdateExpression(n, c) {
-        if (n.prefix) {
-          return new PreOp([n.start, n.end], n.operator, c(n.argument));
-        } else {
-          return new PostOp([n.start, n.end], n.operator, c(n.argument));
-        }
-      },
-      ReturnStatement: function ReturnStatement(n, c) {
-        return new Return([n.start, n.end], n.argument ? c(n.argument) : newUndefined(n.end, n.end));
-      },
-      Identifier: function Identifier(n, c) {
-        return new Variable([n.start, n.end], n.name);
-      },
-      Literal: function Literal(n, c) {
-        if (Object.isNumber(n.value)) {
-          return new Number([n.start, n.end], n.value);
-        } else if (Object.isBoolean(n.value)) {
-          return new Variable([n.start, n.end], n.value.toString());
-        } else if (typeof n.value === 'string') {
-          return new String([n.start, n.end], n.value);
-        } else if (Object.isRegExp(n.value)) {
-          var flags = n.raw.substr(n.raw.lastIndexOf('/') + 1);
-          return new Regex([n.start, n.end], n.value.source, flags);
-        } else if (n.value === null) {
-          return new Variable([n.start, n.end], 'null');
-        }
-        throw new Error('Case of Literal not handled!');
-      },
-      ObjectExpression: function ObjectExpression(n, c) {
-        var props = n.properties.map(function (prop) {
-          var propName = prop.key.type == 'Identifier' ? prop.key.name : prop.key.value;
-          if (prop.kind == 'init') {
-            return new ObjProperty([prop.key.start, prop.value.end], propName, c(prop.value));
-          } else if (prop.kind == 'get') {
-            return new ObjPropertyGet([prop.key.start, prop.value.end], propName, c(prop.value.body));
-          } else if (prop.kind == 'set') {
-            return new ObjPropertySet([prop.key.start, prop.value.end], propName, c(prop.value.body), c(prop.value.params[0]));
-          } else {
-            throw new Error('Case of ObjectExpression not handled!');
-          }
-        });
-        return new ObjectLiteral([n.start, n.end], props);
-      },
-      ArrayExpression: function ArrayExpression(n, c) {
-        return new ArrayLiteral([n.start, n.end], n.elements.map(c));
-      },
-      SequenceExpression: function SequenceExpression(n, c) {
-        return new Sequence([n.start, n.end], n.expressions.map(c));
-      },
-      EmptyStatement: function EmptyStatement(n, c) {
-        return newUndefined(n.start, n.end);
-      },
-      ThisExpression: function ThisExpression(n, c) {
-        return new This([n.start, n.end]);
-      },
-      DebuggerStatement: function DebuggerStatement(n, c) {
-        return new Debugger([n.start, n.end]);
-      },
-      LabeledStatement: function LabeledStatement(n, c) {
-        return new LabelDeclaration([n.start, n.end], n.label.name, c(n.body));
-      }
-    };
-    visitors.LogicalExpression = visitors.BinaryExpression;
-    function c(node) {
-      return visitors[node.type](node, c);
-    }
-    return c(parsed);
   };
 
   function copy(ast, override) {
@@ -18023,44 +17814,6 @@ module.exports = function(acorn) {
     return ast.body[0].expression;
   }
 
-  function parseLikeOMeta(src, rule) {
-    // only an approximation, _like_ OMeta
-    var self = this;
-    function parse(source) {
-      return toLKObjects(self.parse(source));
-    }
-
-    var ast;
-    switch (rule) {
-      case 'expr':
-      case 'stmt':
-      case 'functionDef':
-        ast = parse(src);
-        if (ast.isSequence && ast.children.length == 1) {
-          ast = ast.children[0];
-          ast.setParent(undefined);
-        }
-        break;
-      case 'memberFragment':
-        src = '({' + src + '})'; // to make it valid
-        ast = parse(src);
-        ast = ast.children[0].properties[0];
-        ast.setParent(undefined);
-        break;
-      case 'categoryFragment':
-      case 'traitFragment':
-        src = '[' + src + ']'; // to make it valid
-        ast = parse(src);
-        ast = ast.children[0];
-        ast.setParent(undefined);
-        break;
-      default:
-        ast = parse(src);
-    }
-    ast.source = src;
-    return ast;
-  }
-
   function fuzzyParse(source, options) {
     // options: verbose, addSource, type
     options = options || {};
@@ -18068,7 +17821,7 @@ module.exports = function(acorn) {
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') {
@@ -18105,59 +17858,6 @@ module.exports = function(acorn) {
     return ast;
   }
 
-  function acornParseAsyncAware(source, options) {
-    var asyncSource = "async () => {\n" + source + "\n}",
-        offset = "async () => {\n".length;
-
-    if (options.onComment) {
-      var orig = options.onComment;
-      options.onComment = function (isBlock, text, start, end, line, column) {
-        start -= offset;
-        end -= offset;
-        return orig.call(this, isBlock, text, start, end, line, column);
-      };
-    }
-
-    var parsed = acorn.parse(asyncSource, options);
-    if (parsed.loc) {
-      var SourceLocation = parsed.loc.constructor;
-    }
-
-    parsed = { body: parsed.body[0].expression.body.body, sourceType: "module", type: "Program" };
-
-    AllNodesVisitor.run(parsed, function (node, state, path) {
-      if (node._positionFixed) return;
-      node._offsetFixed = true;
-      if (node.start || node.start === 0) {
-        node.start -= offset;
-        node.end -= offset;
-      }
-      if (node.loc && SourceLocation) {
-        var _node$loc = node.loc;
-        var _node$loc$start = _node$loc.start;
-        var sc = _node$loc$start.column;
-        var sl = _node$loc$start.line;
-        var _node$loc$end = _node$loc.end;
-        var ec = _node$loc$end.column;
-        var el = _node$loc$end.line;
-
-        node.loc = new SourceLocation(options, { column: sc, line: sl - 1 }, { column: ec, line: el - 1 });
-      }
-      if (options.addSource && !node.source) {
-        node.source = source.slice(node.start, node.end);
-      }
-    });
-
-    parsed.start = parsed.body[0].start;
-    parsed.end = lively_lang.arr.last(parsed.body).end;
-    if (options.addSource) parsed.source = source;
-    if (parsed.body[0].loc && SourceLocation) {
-      parsed.loc = new SourceLocation(options, parsed.body[0].loc.start, lively_lang.arr.last(parsed.body).loc.end);
-    }
-
-    return parsed;
-  }
-
   function parse(source, options) {
     // proxy function to acorn.parse.
     // Note that we will implement useful functionality on top of the pure
@@ -18181,7 +17881,7 @@ module.exports = function(acorn) {
     options.sourceType = options.sourceType || "module";
     if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
     options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { awaitAnywhere: true };
+    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
 
     if (options.withComments) {
       // record comments
@@ -18197,30 +17897,32 @@ module.exports = function(acorn) {
       };
     }
 
-    // for properly parsing toplevel awaits. The asyncawait plugin offers this
-    // option but fails with nested expressions
-    var ast = acornParseAsyncAware(source, options);
+    var parsed = acorn.parse(source, options);
 
-    if (options.addAstIndex && !ast.hasOwnProperty('astIndex')) addAstIndex(ast);
+    if (options.addSource) AllNodesVisitor.run(parsed, function (node, state, path) {
+      return !node.source && (node.source = source.slice(node.start, node.end));
+    });
 
-    if (ast && comments) attachCommentsToAST({ ast: ast, comments: comments, nodesWithComments: [] });
+    if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
 
-    return ast;
+    if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
+
+    return parsed;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function attachCommentsToAST(commentData) {
       // for each comment: assign the comment to a block-level AST node
       commentData = mergeComments(assignCommentsToBlockNodes(commentData));
-      ast.allComments = commentData.comments;
+      parsed.allComments = commentData.comments;
     }
 
     function assignCommentsToBlockNodes(commentData) {
       comments.forEach(function (comment) {
-        var node = lively_lang.arr.detect(nodesAt(comment.start, ast).reverse(), function (node) {
+        var node = lively_lang.arr.detect(nodesAt(comment.start, parsed).reverse(), function (node) {
           return node.type === 'BlockStatement' || node.type === 'Program';
         });
-        if (!node) node = ast;
+        if (!node) node = parsed;
         if (!node.comments) node.comments = [];
         node.comments.push(comment);
         commentData.nodesWithComments.push(node);
@@ -18400,6 +18102,193 @@ module.exports = function(acorn) {
   var pathToNode = methods.pathToNode;
   var rematchAstWithSource = methods.rematchAstWithSource;
 
+  var identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
+  function isIdentifier(string) {
+    // Note: It's not so easy...
+    // http://wiki.ecmascript.org/doku.php?id=strawman:identifier_identification
+    // https://mathiasbynens.be/notes/javascript-identifiers-es6
+    return identifierRe.test(string) && string.indexOf("-") === -1;
+  }
+
+  function id(name) {
+    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
+  }
+
+  function literal(value) {
+    return { type: "Literal", value: value };
+  }
+
+  function exprStmt(expression) {
+    return { type: "ExpressionStatement", expression: expression };
+  }
+
+  function returnStmt(expr) {
+    return { type: "ReturnStatement", argument: expr };
+  }
+
+  function empty() {
+    return { type: "EmptyStatement" };
+  }
+
+  function binaryExpr(left, op, right) {
+    return {
+      left: left, right: right, operator: op,
+      type: "BinaryExpression"
+    };
+  }
+
+  function funcExpr(_ref) {
+    for (var _len = arguments.length, statements = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      statements[_key - 2] = arguments[_key];
+    }
+
+    var arrow = _ref.arrow;
+    var funcId = _ref.id;
+    var expression = _ref.expression;
+    var generator = _ref.generator;
+    var params = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+
+    // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
+    // // => "function foo(a) { 3; }"
+    params = params.map(function (ea) {
+      return typeof ea === "string" ? id(ea) : ea;
+    });
+    return {
+      type: (arrow ? "Arrow" : "") + "FunctionExpression",
+      id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
+      params: params,
+      body: { body: statements, type: "BlockStatement" },
+      expression: expression || false,
+      generator: generator || false
+    };
+  }
+
+  function funcCall(callee) {
+    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      args[_key2 - 1] = arguments[_key2];
+    }
+
+    if (typeof callee === "string") callee = id(callee);
+    return {
+      type: "CallExpression",
+      callee: callee,
+      arguments: args
+    };
+  }
+
+  function varDecl(id, init, kind) {
+    if (typeof id === "string") id = { name: id, type: "Identifier" };
+    return {
+      type: "VariableDeclaration", kind: kind || "var",
+      declarations: [{ type: "VariableDeclarator", id: id, init: init }]
+    };
+  }
+
+  function member(obj, prop, computed) {
+    // Example:
+    // lively.ast.stringify(member("foo", "bar"))
+    // // => "foo.bar"
+    // lively.ast.stringify(member("foo", "b-a-r"))
+    // // => "foo['b-a-r']"
+    // lively.ast.stringify(member("foo", "zork", true))
+    // // => "foo['zork']"
+    // lively.ast.stringify(member("foo", 0))
+    // // => "foo[0]"
+    if (typeof obj === "string") obj = id(obj);
+    if (typeof prop === "string") {
+      if (!computed && !isIdentifier(prop)) computed = true;
+      prop = computed ? literal(prop) : id(prop);
+    } else if (typeof prop === "number") {
+      prop = literal(prop);
+      computed = true;
+    }
+    return {
+      type: "MemberExpression",
+      computed: !!computed,
+      object: obj, property: prop
+    };
+  }
+
+  function memberChain(first) {
+    for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+      rest[_key3 - 1] = arguments[_key3];
+    }
+
+    // lively.ast.stringify(memberChain("foo", "bar", 0, "baz-zork"));
+    // // => "foo.bar[0]['baz-zork']"
+    return rest.reduce(function (memberExpr, key) {
+      return member(memberExpr, key);
+    }, (typeof first === "undefined" ? "undefined" : babelHelpers.typeof(first)) === "object" ? first : id(first));
+  }
+
+  function assign(left, right) {
+    // lively.ast.stringify(assign("a", "x"))
+    // // => "a = x"
+    // lively.ast.stringify(assign(member("a", "x"), literal(23)))
+    // // => "a.x = 23"
+    return {
+      type: "AssignmentExpression", operator: "=",
+      right: right ? typeof right === "string" ? id(right) : right : id("undefined"),
+      left: typeof left === "string" ? id(left) : left
+    };
+  }
+
+  function block() {
+    for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      body[_key4] = arguments[_key4];
+    }
+
+    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
+  }
+
+  function program() {
+    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
+  }
+
+  function tryStmt(exName, handlerBody, finalizerBody) {
+    for (var _len5 = arguments.length, body = Array(_len5 > 3 ? _len5 - 3 : 0), _key5 = 3; _key5 < _len5; _key5++) {
+      body[_key5 - 3] = arguments[_key5];
+    }
+
+    // Example:
+    // var stmt = exprStmt(binaryExpr(literal(3), "+", literal(2)));
+    // lively.ast.stringify(tryStmt("err", [stmt], [stmt], stmt, stmt))
+    // // => "try { 3 + 2; 3 + 2; } catch (err) { 3 + 2; } finally { 3 + 2; }"
+    if (!Array.isArray(finalizerBody)) {
+      body.unshift(finalizerBody);
+      finalizerBody = null;
+    }
+    return {
+      block: block(body),
+      finalizer: finalizerBody ? block(finalizerBody) : null,
+      handler: {
+        body: block(handlerBody),
+        param: id(exName),
+        type: "CatchClause"
+      },
+      type: "TryStatement"
+    };
+  }
+
+var nodes = Object.freeze({
+    isIdentifier: isIdentifier,
+    id: id,
+    literal: literal,
+    exprStmt: exprStmt,
+    returnStmt: returnStmt,
+    empty: empty,
+    binaryExpr: binaryExpr,
+    funcExpr: funcExpr,
+    funcCall: funcCall,
+    varDecl: varDecl,
+    member: member,
+    memberChain: memberChain,
+    assign: assign,
+    block: block,
+    program: program,
+    tryStmt: tryStmt
+  });
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var helpers = {
@@ -18409,7 +18298,7 @@ module.exports = function(acorn) {
         if (!ea) return [];
         if (ea.type === "Identifier") return [ea];
         if (ea.type === "RestElement") return [ea.argument];
-        if (ea.type === "AssignmentPattern") return [ea.left];
+        if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
         if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
         if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
         return [];
@@ -18438,6 +18327,10 @@ module.exports = function(acorn) {
           case "ObjectExpression":case "ObjectPattern":
             if (!onlyLeafs) result.push(thisNode);
             result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+            break;
+          case "AssignmentPattern":
+            if (!onlyLeafs) result.push(thisNode);
+            result = result.concat(objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
             break;
           default:
             result.push(thisNode);
@@ -18717,28 +18610,6 @@ module.exports = function(acorn) {
       throw new Error('Comparing nodes');
     },
 
-    memberExpression: function memberExpression(keys) {
-      // var keys = ["foo", "bar", [0], "baz"];
-      // stringify(this.ast.transform.helper.memberExpression(keys)); // => foo.bar[0].baz
-      var memberExpression = keys.slice(1).reduce(function (memberExpr, key) {
-        return {
-          computed: typeof key !== "string",
-          object: memberExpr,
-          property: nodeForKey(key),
-          type: "MemberExpression"
-        };
-      }, nodeForKey(keys[0]));
-      return memberExpression;
-      return {
-        type: "ExpressionStatement",
-        expression: memberExpression
-      };
-
-      function nodeForKey(key) {
-        return typeof key === "string" ? { name: key, type: "Identifier" } : { raw: String(key), type: "Literal", value: key };
-      }
-    },
-
     replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
       // parameters:
       //   - target: ast node
@@ -18820,142 +18691,6 @@ module.exports = function(acorn) {
     return result;
   }
 
-  function replaceTopLevelVarDeclAndUsageForCapturing(astOrSource, assignToObj, options) {
-    /* replaces var and function declarations with assignment statements.
-    * Example:
-       exports.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-         "var x = 3, y = 2, z = 4",
-         {name: "A", type: "Identifier"}, ['z']).source;
-       // => "A.x = 3; A.y = 2; z = 4"
-    */
-
-    var ignoreUndeclaredExcept = options && options.ignoreUndeclaredExcept || null;
-    var whitelist = options && options.include || null;
-    var blacklist = options && options.exclude || [];
-    var recordDefRanges = options && options.recordDefRanges;
-
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        topLevel = topLevelDeclsAndRefs(parsed);
-
-    if (ignoreUndeclaredExcept) {
-      blacklist = lively_lang.arr.withoutAll(topLevel.undeclaredNames, ignoreUndeclaredExcept).concat(blacklist);
-    }
-
-    // 1. find those var declarations that should not be rewritten. we
-    // currently ignore var declarations in for loops and the error parameter
-    // declaration in catch clauses
-    var scope = topLevel.scope;
-    lively_lang.arr.pushAll(blacklist, lively_lang.arr.pluck(scope.catches, "name"));
-    var forLoopDecls = scope.varDecls.filter(function (decl, i) {
-      var path = lively_lang.Path(scope.varDeclPaths[i]),
-          parent = path.slice(0, -1).get(parsed);
-      return parent.type === "ForStatement" || parent.type === "ForInStatement";
-    });
-    lively_lang.arr.pushAll(blacklist, lively_lang.chain(forLoopDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
-
-    // 2. make all references declared in the toplevel scope into property
-    // reads of assignToObj
-    // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    var result = helper.replaceNodes(topLevel.refs.filter(shouldRefBeCaptured).map(function (ref) {
-      return {
-        target: ref,
-        replacementFunc: function replacementFunc(ref) {
-          return member(ref, assignToObj);
-        }
-      };
-    }), source);
-
-    // 3. turn var declarations into assignments to assignToObj
-    // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
-    result = helper.replaceNodes(lively_lang.arr.withoutAll(topLevel.varDecls, forLoopDecls).map(function (decl) {
-      return {
-        target: decl,
-        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-          if (wasChanged) {
-            var scopes$$ = scopes(parse(s, { addSource: true }));
-            declNode = scopes$$.varDecls[0];
-          }
-
-          return declNode.declarations.map(function (ea) {
-            var init = {
-              operator: "||",
-              type: "LogicalExpression",
-              left: { computed: true, object: assignToObj, property: { type: "Literal", value: ea.id.name }, type: "MemberExpression" },
-              right: { name: "undefined", type: "Identifier" }
-            };
-            return shouldDeclBeCaptured(ea) ? assign(ea.id, ea.init || init) : varDecl(ea);
-          });
-        }
-      };
-    }), result);
-
-    // 4. assignments for function declarations in the top level scope are
-    // put in front of everything else:
-    // "return bar(); function bar() { return 23 }" -> "Global.bar = bar; return bar(); function bar() { return 23 }"
-    if (topLevel.funcDecls.length) {
-      var globalFuncs = topLevel.funcDecls.filter(shouldDeclBeCaptured).map(function (decl) {
-        var funcId = { type: "Identifier", name: decl.id.name };
-        return helper._node2string(assign(funcId, funcId));
-      }).join('\n');
-
-      var change = { type: 'add', pos: 0, string: globalFuncs };
-      result = {
-        source: globalFuncs + '\n' + result.source,
-        changes: result.changes.concat([change])
-      };
-    }
-
-    // 5. def ranges so that we know at which source code positions the
-    // definitions are
-    if (recordDefRanges) result.defRanges = lively_lang.chain(scope.varDecls).pluck("declarations").flatten().value().concat(scope.funcDecls).reduce(function (defs, decl) {
-      if (!defs[decl.id.name]) defs[decl.id.name] = [];
-      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
-      return defs;
-    }, {});
-
-    result.ast = parsed;
-
-    return result;
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function shouldRefBeCaptured(ref) {
-      return blacklist.indexOf(ref.name) === -1 && (!whitelist || whitelist.indexOf(ref.name) > -1);
-    }
-
-    function shouldDeclBeCaptured(decl) {
-      return shouldRefBeCaptured(decl.id);
-    }
-
-    function assign(id, value) {
-      return {
-        type: "ExpressionStatement", expression: {
-          type: "AssignmentExpression", operator: "=",
-          right: value || { type: "Identifier", name: 'undefined' },
-          left: {
-            type: "MemberExpression", computed: false,
-            object: assignToObj, property: id
-          }
-        }
-      };
-    }
-
-    function varDecl(declarator) {
-      return {
-        declarations: [declarator],
-        kind: "var", type: "VariableDeclaration"
-      };
-    }
-
-    function member(prop, obj) {
-      return {
-        type: "MemberExpression", computed: false,
-        object: obj, property: prop
-      };
-    }
-  }
-
   function oneDeclaratorPerVarDecl(astOrSource) {
     // exports.transform.oneDeclaratorPerVarDecl(
     //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
@@ -19015,14 +18750,10 @@ module.exports = function(acorn) {
               declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
             };
 
-            var propDecls = lively_lang.arr.pluck(helpers.objPropertiesAsList(declNode.id, [], false), "key").map(function (keyPath) {
-              return {
-                type: "VariableDeclaration", kind: "var",
-                declarations: [{
-                  type: "VariableDeclarator", kind: "var",
-                  id: { type: "Identifier", name: lively_lang.arr.last(keyPath) },
-                  init: helper.memberExpression([extractedId.name].concat(keyPath)) }]
-              };
+            var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
+              return ea.key;
+            }).map(function (keyPath) {
+              return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(babelHelpers.toConsumableArray(keyPath))), "var");
             });
 
             return [extractedInit].concat(propDecls);
@@ -19036,31 +18767,81 @@ module.exports = function(acorn) {
 
   function returnLastStatement(source, opts) {
     opts = opts || {};
-    var parsed = parse(source, opts),
-        last = parsed.body.pop(),
-        newLastsource = 'return ' + source.slice(last.start, last.end);
-    if (!opts.asAST) return source.slice(0, last.start) + newLastsource;
 
-    var newLast = parse(newLastsource, { allowReturnOutsideFunction: true }).body.slice(-1)[0];
-    parsed.body.push(newLast);
-    parsed.end += 'return '.length;
-    return parsed;
+    var parsed = parse(source, opts),
+        last = lively_lang.arr.last(parsed.body);
+    if (last.type === "ExpressionStatement") {
+      parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
+      return opts.asAST ? parsed : stringify(parsed);
+    } else {
+      return opts.asAST ? parsed : source;
+    }
   }
 
   function wrapInFunction(code, opts) {
     opts = opts || {};
     var transformed = returnLastStatement(code, opts);
-    return opts.asAST ? {
-      type: "Program",
-      body: [{
-        type: "ExpressionStatement",
-        expression: {
-          body: { body: transformed.body, type: "BlockStatement" },
-          params: [],
-          type: "FunctionExpression"
-        }
-      }]
-    } : "function() {\n" + transformed + "\n}";
+    return opts.asAST ? program(funcExpr.apply(undefined, [{ id: opts.id || undefined }, []].concat(babelHelpers.toConsumableArray(transformed.body)))) : "function" + (opts.id ? " " + opts.id : "") + "() {\n" + transformed + "\n}";
+  }
+
+  function wrapInStartEndCall(parsed, options) {
+    // Wraps a piece of code into two function calls: One before the first
+    // statement and one after the last. Also wraps the entire thing into a try /
+    // catch block. The end call gets the result of the last statement (if it is
+    // something that returns a value, i.e. an expression) passed as the second
+    // argument. If an error occurs the end function is called with an error as
+    // first parameter
+    // Why? This allows to easily track execution of code, especially for
+    // asynchronus / await code!
+    // Example:
+    // stringify(wrapInStartEndCall("var y = x + 23; y"))
+    // // generates code
+    // try {
+    //     __start_execution();
+    //     __lvVarRecorder.y = x + 23;
+    //     return __end_execution(null, __lvVarRecorder.y);
+    // } catch (err) {
+    //     return __end_execution(err, undefined);
+    // }
+
+    if (typeof parsed === "string") parsed = parse(parsed);
+    options = options || {};
+
+    var isProgram = parsed.type === "Program",
+        startFuncNode = options.startFuncNode || id("__start_execution"),
+        endFuncNode = options.endFuncNode || id("__end_execution"),
+        funcDecls = topLevelFuncDecls(parsed),
+        innerBody = parsed.body,
+        outerBody = [];
+
+    // 1. Hoist func decls outside the actual eval start - end code. The async /
+    // generator transforms require this!
+    funcDecls.forEach(function (_ref) {
+      var node = _ref.node;
+      var path = _ref.path;
+
+      lively.lang.Path(path).set(parsed, exprStmt(node.id));
+      outerBody.push(node);
+    });
+
+    // 2. add start-eval call
+    innerBody.unshift(exprStmt(funcCall(startFuncNode)));
+
+    // 3. if last statement is an expression, transform it so we can pass it to
+    // the end-eval call, replacing the original expression. If it's a
+    // non-expression we record undefined as the eval result
+    var last = lively_lang.arr.last(innerBody);
+    if (last.type === "ExpressionStatement") {
+      innerBody.pop();
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+    } else {
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
+    }
+
+    // 4. Wrap that stuff in a try stmt
+    outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(babelHelpers.toConsumableArray(innerBody))));
+
+    return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
   }
 
 
@@ -19068,25 +18849,26 @@ module.exports = function(acorn) {
   var transform = Object.freeze({
     helper: helper,
     replace: replace,
-    replaceTopLevelVarDeclAndUsageForCapturing: replaceTopLevelVarDeclAndUsageForCapturing,
     oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
     oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
     returnLastStatement: returnLastStatement,
-    wrapInFunction: wrapInFunction
+    wrapInFunction: wrapInFunction,
+    wrapInStartEndCall: wrapInStartEndCall
   });
 
   var merge = Object.assign;
 
-  function rewriteToCaptureTopLevelVariables(astOrSource, assignToObj, options) {
+  function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
     /* replaces var and function declarations with assignment statements.
-    * Example:
-       exports.transform.replaceTopLevelVarDeclAndUsageForCapturing(
-         "var x = 3, y = 2, z = 4",
-         {name: "A", type: "Identifier"}, ['z']).source;
+     * Example:
+       stringify(
+         rewriteToCaptureTopLevelVariables2(
+           parse("var x = 3, y = 2, z = 4"),
+           {name: "A", type: "Identifier"}, ['z']));
        // => "A.x = 3; A.y = 2; z = 4"
-    */
+     */
 
-    options = lively_lang.obj.merge({
+    options = merge({
       ignoreUndeclaredExcept: null,
       includeRefs: null,
       excludeRefs: options && options.exclude || [],
@@ -19100,9 +18882,7 @@ module.exports = function(acorn) {
       moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" }
     }, options);
 
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || stringify(parsed),
-        rewritten = parsed;
+    var rewritten = parsed;
 
     // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
     // if it is a list of names we will capture all refs with those names
@@ -19173,64 +18953,100 @@ module.exports = function(acorn) {
     //   "Global.bar = bar; return bar(); function bar() { return 23 }"
     rewritten = putFunctionDeclsInFront(rewritten, options);
 
-    // console.log(stringify(rewritten));
-    // console.log(require("util").inspect(rewritten.body, {depth: 10}));
-
-    return {
-      ast: rewritten,
-      source: stringify(rewritten),
-      defRanges: defRanges
-    };
+    return rewritten;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // replacing helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var replaceVisitor = function () {
-    var v = new Visitor();
-    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-      return v.replacer(proceed(node, state, path), path);
-    });
-    return v;
-  }();
+  // TODO move this stuff over into transform? Or separate replace.js?
+
+  var ReplaceVisitor = function (_Visitor) {
+    babelHelpers.inherits(ReplaceVisitor, _Visitor);
+
+    function ReplaceVisitor() {
+      babelHelpers.classCallCheck(this, ReplaceVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceVisitor).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(ReplaceVisitor, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+      }
+    }], [{
+      key: "run",
+      value: function run(parsed, replacer) {
+        var v = new this();
+        v.replacer = replacer;
+        return v.accept(parsed, null, []);
+      }
+    }]);
+    return ReplaceVisitor;
+  }(Visitor);
 
   function replace$1(parsed, replacer) {
-    replaceVisitor.replacer = replacer;
-    return replaceVisitor.accept(parsed, null, []);
+    return ReplaceVisitor.run(parsed, replacer);
   }
 
-  var replaceManyVisitor = function () {
-    var v = new Visitor(),
-        canBeInlinedSym = Symbol("canBeInlined");
-    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-      var replaced = v.replacer(proceed(node, state, path), path);
-      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
-    });
-    v.visitBlockStatement = lively_lang.fun.wrap(v.visitBlockStatement, blockInliner);
-    v.visitProgram = lively_lang.fun.wrap(v.visitProgram, blockInliner);
-    return v;
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    function blockInliner(proceed, node, state, path) {
-      var result = proceed(node, state, path);
-      // FIXME what about () => x kind of functions?
-      if (Array.isArray(result.body)) {
-        result.body = result.body.reduce(function (body, node) {
-          if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
-            body.push(node);
-            return body;
-          } else {
-            return body.concat(node.body);
-          }
-        }, []);
-      }
-      return result;
+  var canBeInlinedSym = Symbol("canBeInlined");
+
+  function blockInliner(node) {
+    // FIXME what about () => x kind of functions?
+    if (Array.isArray(node.body)) {
+      node.body = node.body.reduce(function (body, node) {
+        if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
+          body.push(node);
+          return body;
+        } else {
+          return body.concat(node.body);
+        }
+      }, []);
     }
-  }();
+    return node;
+  }
+
+  var ReplaceManyVisitor = function (_Visitor2) {
+    babelHelpers.inherits(ReplaceManyVisitor, _Visitor2);
+
+    function ReplaceManyVisitor() {
+      babelHelpers.classCallCheck(this, ReplaceManyVisitor);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceManyVisitor).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(ReplaceManyVisitor, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
+        var replaced = this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
+        return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
+      }
+    }, {
+      key: "visitBlockStatement",
+      value: function visitBlockStatement(node, state, path) {
+        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
+      }
+    }, {
+      key: "visitProgram",
+      value: function visitProgram(node, state, path) {
+        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
+      }
+    }], [{
+      key: "run",
+      value: function run(parsed, replacer) {
+        var v = new this();
+        v.replacer = replacer;
+        return v.accept(parsed, null, []);
+      }
+    }]);
+    return ReplaceManyVisitor;
+  }(Visitor);
 
   function replaceWithMany(parsed, replacer) {
-    replaceManyVisitor.replacer = replacer;
-    return replaceManyVisitor.accept(parsed, null, []);
+    return ReplaceManyVisitor.run(parsed, replacer);
   }
 
   function replaceRefs(parsed, options) {
@@ -19240,7 +19056,7 @@ module.exports = function(acorn) {
     });
 
     return replace$1(parsed, function (node, path) {
-      return refsToReplace.indexOf(node) > -1 ? member(node, options.captureObj) : node;
+      return refsToReplace.indexOf(node) > -1 ? member$1(node, options.captureObj) : node;
     });
   }
 
@@ -19271,7 +19087,7 @@ module.exports = function(acorn) {
             return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
-          return [varDecl(declRoot, decl.init, node.kind)].concat(extractions);
+          return [varDecl$1(declRoot, decl.init, node.kind)].concat(extractions);
         }
 
         // This is rewriting normal vars
@@ -19401,7 +19217,7 @@ module.exports = function(acorn) {
         return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
           id: specifier.local,
-          init: member(specifier.local, options.captureObj)
+          init: member$1(specifier.local, options.captureObj)
         });
       }).filter(Boolean).concat(stmt));
     }, []);
@@ -19426,7 +19242,7 @@ module.exports = function(acorn) {
           }));
         } else {
           nodes = stmt.specifiers.map(function (specifier) {
-            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(specifier.local, options.captureObj) : specifier.local);
+            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member$1(specifier.local, options.captureObj) : specifier.local);
           });
         }
       } else if (stmt.type === "ExportDefaultDeclaration") {
@@ -19513,19 +19329,19 @@ module.exports = function(acorn) {
 
       // like [a]
       if (el.type === "Identifier") {
-        return [merge(varDecl(el, member(id(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl$1(el, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
+          return [merge(varDecl$1(el.argument, {
             type: "CallExpression",
             arguments: [{ type: "Literal", value: i }],
-            callee: member(id("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+            callee: member$1(id$1("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
           // like [{x}]
         } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(id(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
+            var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl$1(helperVarId, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
             declaredNames.push(helperVarId.name);
             return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
           }
@@ -19539,12 +19355,12 @@ module.exports = function(acorn) {
 
       // like {x: y}
       if (prop.value.type == "Identifier") {
-        return [merge(varDecl(prop.value, member(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl$1(prop.value, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
+          var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl$1(helperVarId, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
           declaredNames.push(helperVarId.name);
           return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
         }
@@ -19555,19 +19371,19 @@ module.exports = function(acorn) {
   // code generation helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function id(name) {
+  function id$1(name) {
     return { type: "Identifier", name: String(name) };
   }
 
-  function block(nodes) {
+  function block$1(nodes) {
     return { type: "BlockStatement", body: nodes };
   }
 
-  function member(prop, obj, computed) {
+  function member$1(prop, obj, computed) {
     return { type: "MemberExpression", computed: computed || false, object: obj, property: prop };
   }
 
-  function varDecl(id, init, kind) {
+  function varDecl$1(id, init, kind) {
     return {
       declarations: [{ type: "VariableDeclarator", id: id, init: init }],
       kind: kind || "var", type: "VariableDeclaration"
@@ -20099,7 +19915,6 @@ var categorizer = Object.freeze({
   exports.rematchAstWithSource = rematchAstWithSource;
   exports.parse = parse;
   exports.parseFunction = parseFunction;
-  exports.parseLikeOMeta = parseLikeOMeta;
   exports.fuzzyParse = fuzzyParse;
   exports.escodegen = es;
   exports.acorn = acorn;
@@ -20109,6 +19924,7 @@ var categorizer = Object.freeze({
   exports.comments = comments;
   exports.categorizer = categorizer;
   exports.stringify = stringify;
+  exports.nodes = nodes;
 
 }((this.lively.ast = this.lively.ast || {}),lively.lang,GLOBAL.escodegen,acorn));
   }).call(GLOBAL);
@@ -20253,49 +20069,73 @@ var categorizer = Object.freeze({
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // code transform / capturing
+  // using code transformers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function transformForVarRecord(
-    code,
-    varRecorder,
-    varRecorderName,
-    blacklist,
-    defRangeRecorder,
-    recordGlobals,
-    es6ExportFuncId,
-    es6ImportFuncId) {
+  function evalCodeTransform(code, options) {
     // variable declaration and references in the the source code get
     // transformed so that they are bound to `varRecorderName` aren't local
     // state. THis makes it possible to capture eval results, e.g. for
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
-    blacklist = blacklist || [];
-    blacklist.push("arguments");
-    var undeclaredToTransform = recordGlobals ?
-          null/*all*/ : lively_lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-        transformed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(
-          code, {name: varRecorderName, type: "Identifier"},
-          {es6ImportFuncId: es6ImportFuncId,
-           es6ExportFuncId: es6ExportFuncId,
-           ignoreUndeclaredExcept: undeclaredToTransform,
-           exclude: blacklist, recordDefRanges: !!defRangeRecorder});
-    code = transformed.source;
-    if (defRangeRecorder) lively_lang.obj.extend(defRangeRecorder, transformed.defRanges);
-    return code;
+
+
+    // 1. Allow evaluation of function expressions and object literals
+    code = transformSingleExpression(code);
+
+    var parsed = lively_ast.parse(code);
+
+    // 2. capture top level vars into topLevelVarRecorder "environment"
+    if (options.topLevelVarRecorder) {
+
+      var blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ?
+            null/*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(
+        parsed,
+        {name: options.varRecorderName || '__lvVarRecorder', type: "Identifier"},
+        {
+          es6ImportFuncId: options.es6ImportFuncId,
+          es6ExportFuncId: options.es6ExportFuncId,
+          ignoreUndeclaredExcept: undeclaredToTransform,
+          exclude: blacklist
+       });
+    }
+
+    if (options.wrapInStartEndCall) {
+      parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
+        startFuncNode: options.startFuncNode,
+        endFuncNode: options.endFuncNode
+      });
+    }
+
+    var result = lively_ast.stringify(parsed);
+
+
+    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+    return result;
   }
+
+  const isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
 
   function transformSingleExpression(code) {
     // evaling certain expressions such as single functions or object
     // literals will fail or not work as intended. When the code being
     // evaluated consists just out of a single expression we will wrap it in
     // parens to allow for those cases
+    // Example:
+    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
     try {
       var parsed = lively_ast.fuzzyParse(code);
       if (parsed.body.length === 1 &&
-         (parsed.body[0].type === 'FunctionDeclaration'
+        (parsed.body[0].type === 'FunctionDeclaration'
       || (parsed.body[0].type === 'BlockStatement'
-       && parsed.body[0].body[0].type === 'LabeledStatement'))) {
+      && parsed.body[0].body[0].type === 'LabeledStatement'))) {
         code = '(' + code.replace(/;\s*$/, '') + ')';
       }
     } catch(e) {
@@ -20305,50 +20145,53 @@ var categorizer = Object.freeze({
     return code;
   }
 
-  function evalCodeTransform(code, options) {
-    if (options.topLevelVarRecorder)
-      code = transformForVarRecord(
-        code,
-        options.topLevelVarRecorder,
-        options.varRecorderName || '__lvVarRecorder',
-        options.dontTransform,
-        options.topLevelDefRangeRecorder,
-        !!options.recordGlobals,
-        options.es6ExportFuncId,
-        options.es6ImportFuncId);
-    code = transformSingleExpression(code);
-
-    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-
-    return code;
-  }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // options
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  const defaultTopLevelVarRecorderName = '__lvVarRecorder';
+  const startEvalFunctionName = "lively.vm-on-eval-start";
+  const endEvalFunctionName = "lively.vm-on-eval-end";
   function _normalizeEvalOptions(opts) {
     if (!opts) opts = {};
-    opts = lively_lang.obj.merge({
+    opts = Object.assign({
       targetModule: null,
       sourceURL: opts.targetModule,
       runtime: null,
       context: getGlobal(),
-      varRecorderName: '__lvVarRecorder',
+      varRecorderName: defaultTopLevelVarRecorderName,
       dontTransform: [], // blacklist vars
-      topLevelDefRangeRecorder: null, // object for var ranges
       recordGlobals: null,
       returnPromise: true,
       promiseTimeout: 200,
-      waitForPromise: true
+      waitForPromise: true,
+      wrapInStartEndCall: false,
+      onStartEval: null,
+      onEndEval: null
     }, opts);
 
     if (opts.targetModule) {
       var moduleEnv = opts.runtime
                    && opts.runtime.modules
                    && opts.runtime.modules[opts.targetModule];
-      if (moduleEnv) opts = lively_lang.obj.merge(opts, moduleEnv);
+      if (moduleEnv) opts = Object.assign(opts, moduleEnv);
+    }
+
+    if (opts.wrapInStartEndCall) {
+      opts.startFuncNode = {
+        type: "MemberExpression",
+        object: {type: "Identifier", name: opts.varRecorderName},
+        property: {type: "Literal", value: startEvalFunctionName},
+        computed: true
+      }
+      opts.endFuncNode = {
+        type: "MemberExpression",
+        object: {type: "Identifier", name: opts.varRecorderName},
+        property: {type: "Literal", value: endEvalFunctionName},
+        computed: true
+      }
     }
 
     return opts;
@@ -20385,16 +20228,50 @@ var categorizer = Object.freeze({
     //   sourceURL: STRING,
     //   recordGlobals: BOOLEAN, // also transform free vars? default is false
     //   transpiler: FUNCTION(source, options) // for transforming the source after the lively xfm
+    //   wrapInStartEndCall: BOOLEAN
+    //   onStartEval: FUNCTION()?,
+    //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
     // }
 
     if (typeof options === 'function' && arguments.length === 2) {
       thenDo = options; options = null;
     }
 
+    var warnings = [],
+        result = new EvalResult(),
+        returnedError, returnedValue,
+        onEvalEndError, onEvalEndValue,
+        onEvalStartCalled = false, onEvalEndCalled = false;
     options = _normalizeEvalOptions(options);
 
-    var warnings = [];
+    // 1. In case we rewrite the code with on-start and on-end calls we prepare
+    // the environment with actual function handlers that will get called once
+    // the code is evaluated
 
+    var onEvalFunctionHolder, evalDone = lively_lang.promise.deferred();
+    if (options.wrapInStartEndCall) {
+      onEvalFunctionHolder = options.topLevelVarRecorder || getGlobal();
+
+      if (onEvalFunctionHolder[startEvalFunctionName])
+        console.warn(`startEvalFunctionName ${startEvalFunctionName} already exists in recorder!`)
+
+      if (onEvalFunctionHolder[endEvalFunctionName])
+        console.warn(`endEvalFunctionName ${endEvalFunctionName} already exists in recorder!`)
+
+      onEvalFunctionHolder[startEvalFunctionName] = function() {
+        if (onEvalStartCalled) { console.warn("onEvalStartCalled multiple times!"); return; }
+        onEvalStartCalled = true;
+        if (typeof options.onStartEval === "function") options.onStartEval();
+      }
+
+      onEvalFunctionHolder[endEvalFunctionName] = function(err, value) {
+        if (onEvalEndCalled) { console.warn("onEvalEndCalled multiple times!"); return; }
+        onEvalEndCalled = true;
+        finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo);
+      }
+    }
+
+    // 2. Transform the code to capture top-level variables, inject function calls, ...
     try {
       code = evalCodeTransform(code, options);
       if (options.header) code = options.header + code;
@@ -20407,42 +20284,64 @@ var categorizer = Object.freeze({
       warnings.push(warning);
     }
 
-    var result = new EvalResult();
+    // 3. Now really run eval!
     try {
       typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
-      result.value = _eval.call(options.context, code, options.topLevelVarRecorder);
-      if (result.value instanceof Promise) result.isPromise = true;
-    } catch (e) { result.isError = true; result.value = e; }
+      returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
+    } catch (e) { returnedError = e; }
 
-    if (options.sync) return result.processSync(options);
-    else {
-      return (typeof thenDo === "function") ? 
-        new Promise((resolve, reject) =>
-          result.process(options)
-            .then(() => { thenDo(null, result); resolve(result); })
-            .catch(err => { thenDo(err); reject(err); })) :
-        result.process(options);
+    // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
+    // wrap-up, otherwise we firectly call finishEval()
+    if (options.wrapInStartEndCall) {
+      if (returnedError && !onEvalEndCalled)
+        onEvalFunctionHolder[endEvalFunctionName](returnedError, undefined);
+    } else {
+      finishEval(returnedError, returnedError || returnedValue, result, options, onEvalFunctionHolder, evalDone, thenDo);
     }
 
-    // // tries to return as value
-    // try {
-    //   JSON.stringify(value);
-    //   return value;
-    // } catch (e) {
-    //   try {
-    //     var printDepth = options.printDepth || 2;
-    //     return lang.obj.inspect(value, {maxDepth: printDepth})
-    //   } catch (e) { return String(value); }
-    // }
-
+    return options.sync ? result : evalDone.promise;
   }
 
-  function syncEval(string, options) {
+  function finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo) {
+    // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
+    // use any Promise since promises always run on next tick. That's why we have
+    // to slightly duplicate the finish logic...
+
+    if (options.wrapInStartEndCall) {
+      delete onEvalFunctionHolder[startEvalFunctionName];
+      delete onEvalFunctionHolder[endEvalFunctionName];
+    }
+
+    if (err) { result.isError = true; result.value = err; }
+    else result.value = value;
+    if (result.value instanceof Promise) result.isPromise = true;
+
+    if (options.sync) {
+      result.processSync(options);
+      if (typeof options.onEndEval === "function") options.onEndEval(err, value);
+    } else {
+      result.process(options)
+        .then(() => {
+          typeof thenDo === "function" && thenDo(null, result);
+          typeof options.onEndEval === "function" && options.onEndEval(err, value);
+          return result;
+        },
+        (err) => {
+          typeof thenDo === "function" && thenDo(err, undefined);
+          typeof options.onEndEval === "function" && options.onEndEval(err, undefined);
+          return result;
+        })
+        .then(evalDone.resolve, evalDone.reject)
+    }
+  }
+
+
+  function syncEval(string, options = {}) {
     // See #runEval for options.
     // Although the defaul eval is synchronous we assume that the general
     // evaluation might not return immediatelly. This makes is possible to
     // change the evaluation backend, e.g. to be a remotely attached runtime
-    options = lively_lang.obj.merge(options, {sync: true});
+    options = Object.assign(options, {sync: true});
     return runEval(string, options);
   }
 
@@ -20463,8 +20362,8 @@ var categorizer = Object.freeze({
       this.promiseStatus = "unknown";
     }
 
-    printed(options) {
-      this.value = print(this.value, lively_lang.obj.merge(options, {
+    printed(options = {}) {
+      this.value = print(this.value, Object.assign(options, {
         isError: this.isError,
         isPromise: this.isPromise,
         promisedValue: this.promisedValue,
@@ -20498,23 +20397,23 @@ var categorizer = Object.freeze({
     var timeout = {},
         timeoutP = new Promise(resolve => setTimeout(resolve, timeoutMs, timeout));
     return Promise.race([timeoutP, evalResult.value])
-      .then(resolved => lively_lang.obj.extend(evalResult, resolved !== timeout ?
+      .then(resolved => Object.assign(evalResult, resolved !== timeout ?
               {promiseStatus: "fulfilled", promisedValue: resolved} :
               {promiseStatus: "pending"}))
-      .catch(rejected => lively_lang.obj.extend(evalResult,
+      .catch(rejected => Object.assign(evalResult,
               {promiseStatus: "rejected", promisedValue: rejected}))
   }
 
-  function print(value, options) {
+  function print(value, options = {}) {
     if (options.isError || value instanceof Error) return String(value.stack || value);
 
     if (options.isPromise) {
       var status = lively_lang.string.print(options.promiseStatus),
           printed = options.promiseStatus === "pending" ?
-            undefined : print(options.promisedValue, lively_lang.obj.merge(options, {isPromise: false}));
+            undefined : print(options.promisedValue, Object.assign(options, {isPromise: false}));
       return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + printed)}})`;
     }
-    
+
     if (value instanceof Promise)
       return 'Promise({status: "unknown"})';
 
@@ -20534,8 +20433,7 @@ var categorizer = Object.freeze({
 
   exports.completions = completions;
   exports.EvalResult = EvalResult;
-  exports.transformForVarRecord = transformForVarRecord;
-  exports.transformSingleExpression = transformSingleExpression;
+  exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
   exports.evalCodeTransform = evalCodeTransform;
   exports.getGlobal = getGlobal;
   exports.runEval = runEval;
@@ -21647,16 +21545,6 @@ var categorizer = Object.freeze({
   'use strict';
 
   var babelHelpers = {};
-
-  babelHelpers.toConsumableArray = function (arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-      return arr2;
-    } else {
-      return Array.from(arr);
-    }
-  };
 
   babelHelpers.defineProperty = function (obj, key, value) {
     if (key in obj) {
@@ -23137,7 +23025,12 @@ var categorizer = Object.freeze({
     return lively_lang.graph.hull(computeRequireMap(System), id);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // load support
+
   function ensureImportsAreLoaded(System, code, parentModule) {
+    // FIXME do we have to do a reparse? We should be able to get the ast from
+    // the rewriter...
     var body = ast.parse(code).body,
         imports = body.filter(function (node) {
       return node.type === "ImportDeclaration";
@@ -23152,97 +23045,39 @@ var categorizer = Object.freeze({
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // transpiler to make es next work
 
-  function babelTranspile(babel, filename, env, source, options) {
-    options = Object.assign({
-      modules: 'ignore',
-      sourceMap: undefined, // 'inline' || true || false
-      inputSourceMap: undefined,
-      filename: filename,
-      code: true,
-      ast: false
-    }, options);
-    return babel.transform(source, options).code;
-  }
-
-  function interactiveAsyncAwaitTranspile(babel, filename, env, source, options) {
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // FIXME this needs to go somehwere else
-    Object.assign(env, {
-      currentEval: { status: "not running" } // promise holder
-    });
-
-    Object.assign(env.recorder, {
-      'lively.modules-start-eval': function livelyModulesStartEval() {
-        env.currentEval = lively_lang.promise.deferred();
-        env.currentEval.status = "running";
-      },
-      'lively.modules-end-eval': function livelyModulesEndEval(value) {
-        var result = new lively_vm_lib_evaluator_js.EvalResult();
-        result.value = value;
-        env.currentEval.status = "not running";
-        env.currentEval.resolve(result);
-      }
-    });
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // source is already rewritten for capturing
-    // await isn't allowed top level so we wrap the code in an async function...
-    // var src = "async () => { await (await foo()).bar(); }";
-
-    var parsed = ast.parse(source),
-        funcDecls = ast.query.topLevelFuncDecls(parsed),
-        innerBody = parsed.body,
-        outerBody = [],
-        startEval = member(id(env.recorderName), literal('lively.modules-start-eval'), true),
-        endEval = member(env.recorderName, literal('lively.modules-end-eval'), true),
-        initializer = expr(funcCall(startEval)),
-        transformedSource;
-
-    funcDecls.forEach(function (_ref) {
-      var node = _ref.node;
-      var path = _ref.path;
-
-      lively.lang.Path(path).set(parsed, expr(node.id));
-      // lively.lang.Path(path.slice(1)).set(innerBody, expr(node.id));
-      outerBody.push(node);
-    });
-
-    innerBody.unshift(initializer);
-    var last = lively_lang.arr.last(innerBody);
-    if (last.type === "ExpressionStatement") {
-      var finalizer = returnStmt(funcCall(endEval, last.expression));
-      innerBody.splice(innerBody.length - 1, 1, finalizer);
-      // } else if (last.type === "FunctionDeclaration") {
-      //   var finalizer = returnStmt(funcCall(endEval, last.id));
-      //   innerBody.push(finalizer);
-    } else {
-        var finalizer = returnStmt(funcCall(endEval, id("undefined")));
-        innerBody.push(finalizer);
-      }
-
-    outerBody.push(tryStmt.apply(undefined, ["err", [returnStmt(funcCall(endEval, id("err")))], null].concat(babelHelpers.toConsumableArray(innerBody))));
-    transformedSource = lively.ast.stringify(program.apply(undefined, outerBody));
-
+  function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
     // The function wrapper is needed b/c we need toplevel awaits and babel
     // converts "this" => "undefined" for modules
-    var sourceForBabel = "(async function(__rec) {\n" + transformedSource + "\n}).call(this);";
-    return babelTranspile(babel, filename, env, sourceForBabel, options).replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    return function (source, options) {
+      options = Object.assign({
+        modules: 'ignore',
+        sourceMap: undefined, // 'inline' || true || false
+        inputSourceMap: undefined,
+        filename: filename,
+        code: true,
+        ast: false
+      }, options);
+      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
+          transpiled = babel.transform(sourceForBabel, options).code;
+      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+      return transpiled;
+    };
   }
 
-  function ensureEs6Transpiler(System, moduleId, env) {
+  function getEs6Transpiler(System, options, env) {
+    if (options.transpiler) return Promise.resolve(options.transpiler);
+    if (!options.es6Transpile) return Promise.resolve(null);
+
     if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
 
-    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (transpiler) {
-      // if (System.transpiler === "babel") return babelTranspile.bind(System.global, transpiler, moduleId, env);
-      if (System.transpiler === "babel") return interactiveAsyncAwaitTranspile.bind(System.global, transpiler, moduleId, env);
-      return null;
+    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (babel) {
+      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
     });
   }
 
-  function runEvalWithAsyncSupport(System, code, options) {
+  function runEval$2(System, code, options) {
     options = lively_lang.obj.merge({
       targetModule: null, parentModule: null,
       parentAddress: null,
@@ -23268,7 +23103,7 @@ var categorizer = Object.freeze({
       return System["import"](fullname).then(function () {
         return ensureImportsAreLoaded(System, code, fullname);
       }).then(function () {
-        return options.transpiler ? options.transpiler : options.es6Transpile ? ensureEs6Transpiler(System, options.targetModule, env) : null;
+        return getEs6Transpiler(System, options, env);
       }).then(function (transpiler) {
         var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
@@ -23280,6 +23115,7 @@ var categorizer = Object.freeze({
           topLevelVarRecorder: recorder,
           sourceURL: options.sourceURL || options.targetModule,
           context: options.context || recorder,
+          wrapInStartEndCall: true, // for async / await eval support
           es6ExportFuncId: "_moduleExport",
           es6ImportFuncId: "_moduleImport",
           transpiler: transpiler
@@ -23288,13 +23124,8 @@ var categorizer = Object.freeze({
         System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
         recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
+
         return lively_vm_lib_evaluator_js.runEval(code, options).then(function (result) {
-          return result.isError || !env.currentEval.promise ? result : env.currentEval.promise.then(function (result) {
-            return result.process(options).then(function () {
-              return result;
-            });
-          });
-        }).then(function (result) {
           System["__lively.modules__"].evaluationDone(fullname);
           System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
           recordDoitResult(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, result, Date.now());
@@ -23305,74 +23136,6 @@ var categorizer = Object.freeze({
         throw err;
       });
     });
-  }
-
-  function funcCall(callee) {
-    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-      args[_key2 - 1] = arguments[_key2];
-    }
-
-    if (typeof callee === "string") callee = id(callee);
-    return {
-      type: "CallExpression",
-      callee: callee,
-      arguments: args
-    };
-  }
-
-  function expr(expression) {
-    return { type: "ExpressionStatement", expression: expression };
-  }
-
-  function literal(value) {
-    return { type: "Literal", value: value };
-  }
-
-  function id(name) {
-    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
-  }
-
-  function returnStmt(expr) {
-    return { type: "ReturnStatement", argument: expr };
-  }
-
-  function member(obj, prop, computed) {
-    if (typeof obj === "string") obj = id(obj);
-    if (typeof prop === "string") prop = id(prop);
-    return {
-      type: "MemberExpression",
-      computed: !!computed,
-      object: obj, property: prop
-    };
-  }
-
-  function block() {
-    for (var _len3 = arguments.length, body = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      body[_key3] = arguments[_key3];
-    }
-
-    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
-  }
-
-  function program() {
-    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
-  }
-
-  function tryStmt(exName, handlerBody, finalizerBody) {
-    for (var _len4 = arguments.length, body = Array(_len4 > 3 ? _len4 - 3 : 0), _key4 = 3; _key4 < _len4; _key4++) {
-      body[_key4 - 3] = arguments[_key4];
-    }
-
-    return {
-      block: block(body),
-      finalizer: finalizerBody ? block(finalizerBody) : null,
-      handler: {
-        body: block(handlerBody),
-        param: id(exName),
-        type: "CatchClause"
-      },
-      type: "TryStatement"
-    };
   }
 
   var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
@@ -23444,7 +23207,7 @@ var categorizer = Object.freeze({
     unwrapModuleLoad$1(exports.System);
   }
   function runEval$1(code, options) {
-    return runEvalWithAsyncSupport(exports.System, code, options);
+    return runEval$2(exports.System, code, options);
   }
   function getNotifications() {
     return getNotifications$1(exports.System);

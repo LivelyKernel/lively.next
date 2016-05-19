@@ -444,16 +444,6 @@
 
   var babelHelpers = {};
 
-  babelHelpers.toConsumableArray = function (arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-      return arr2;
-    } else {
-      return Array.from(arr);
-    }
-  };
-
   babelHelpers.defineProperty = function (obj, key, value) {
     if (key in obj) {
       Object.defineProperty(obj, key, {
@@ -1933,7 +1923,12 @@
     return lively_lang.graph.hull(computeRequireMap(System), id);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // load support
+
   function ensureImportsAreLoaded(System, code, parentModule) {
+    // FIXME do we have to do a reparse? We should be able to get the ast from
+    // the rewriter...
     var body = ast.parse(code).body,
         imports = body.filter(function (node) {
       return node.type === "ImportDeclaration";
@@ -1948,97 +1943,39 @@
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // transpiler to make es next work
 
-  function babelTranspile(babel, filename, env, source, options) {
-    options = Object.assign({
-      modules: 'ignore',
-      sourceMap: undefined, // 'inline' || true || false
-      inputSourceMap: undefined,
-      filename: filename,
-      code: true,
-      ast: false
-    }, options);
-    return babel.transform(source, options).code;
-  }
-
-  function interactiveAsyncAwaitTranspile(babel, filename, env, source, options) {
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // FIXME this needs to go somehwere else
-    Object.assign(env, {
-      currentEval: { status: "not running" } // promise holder
-    });
-
-    Object.assign(env.recorder, {
-      'lively.modules-start-eval': function livelyModulesStartEval() {
-        env.currentEval = lively_lang.promise.deferred();
-        env.currentEval.status = "running";
-      },
-      'lively.modules-end-eval': function livelyModulesEndEval(value) {
-        var result = new lively_vm_lib_evaluator_js.EvalResult();
-        result.value = value;
-        env.currentEval.status = "not running";
-        env.currentEval.resolve(result);
-      }
-    });
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // source is already rewritten for capturing
-    // await isn't allowed top level so we wrap the code in an async function...
-    // var src = "async () => { await (await foo()).bar(); }";
-
-    var parsed = ast.parse(source),
-        funcDecls = ast.query.topLevelFuncDecls(parsed),
-        innerBody = parsed.body,
-        outerBody = [],
-        startEval = member(id(env.recorderName), literal('lively.modules-start-eval'), true),
-        endEval = member(env.recorderName, literal('lively.modules-end-eval'), true),
-        initializer = expr(funcCall(startEval)),
-        transformedSource;
-
-    funcDecls.forEach(function (_ref) {
-      var node = _ref.node;
-      var path = _ref.path;
-
-      lively.lang.Path(path).set(parsed, expr(node.id));
-      // lively.lang.Path(path.slice(1)).set(innerBody, expr(node.id));
-      outerBody.push(node);
-    });
-
-    innerBody.unshift(initializer);
-    var last = lively_lang.arr.last(innerBody);
-    if (last.type === "ExpressionStatement") {
-      var finalizer = returnStmt(funcCall(endEval, last.expression));
-      innerBody.splice(innerBody.length - 1, 1, finalizer);
-      // } else if (last.type === "FunctionDeclaration") {
-      //   var finalizer = returnStmt(funcCall(endEval, last.id));
-      //   innerBody.push(finalizer);
-    } else {
-        var finalizer = returnStmt(funcCall(endEval, id("undefined")));
-        innerBody.push(finalizer);
-      }
-
-    outerBody.push(tryStmt.apply(undefined, ["err", [returnStmt(funcCall(endEval, id("err")))], null].concat(babelHelpers.toConsumableArray(innerBody))));
-    transformedSource = lively.ast.stringify(program.apply(undefined, outerBody));
-
+  function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
     // The function wrapper is needed b/c we need toplevel awaits and babel
     // converts "this" => "undefined" for modules
-    var sourceForBabel = "(async function(__rec) {\n" + transformedSource + "\n}).call(this);";
-    return babelTranspile(babel, filename, env, sourceForBabel, options).replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    return function (source, options) {
+      options = Object.assign({
+        modules: 'ignore',
+        sourceMap: undefined, // 'inline' || true || false
+        inputSourceMap: undefined,
+        filename: filename,
+        code: true,
+        ast: false
+      }, options);
+      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
+          transpiled = babel.transform(sourceForBabel, options).code;
+      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+      return transpiled;
+    };
   }
 
-  function ensureEs6Transpiler(System, moduleId, env) {
+  function getEs6Transpiler(System, options, env) {
+    if (options.transpiler) return Promise.resolve(options.transpiler);
+    if (!options.es6Transpile) return Promise.resolve(null);
+
     if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
 
-    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (transpiler) {
-      // if (System.transpiler === "babel") return babelTranspile.bind(System.global, transpiler, moduleId, env);
-      if (System.transpiler === "babel") return interactiveAsyncAwaitTranspile.bind(System.global, transpiler, moduleId, env);
-      return null;
+    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (babel) {
+      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
     });
   }
 
-  function runEvalWithAsyncSupport(System, code, options) {
+  function runEval$2(System, code, options) {
     options = lively_lang.obj.merge({
       targetModule: null, parentModule: null,
       parentAddress: null,
@@ -2064,7 +2001,7 @@
       return System["import"](fullname).then(function () {
         return ensureImportsAreLoaded(System, code, fullname);
       }).then(function () {
-        return options.transpiler ? options.transpiler : options.es6Transpile ? ensureEs6Transpiler(System, options.targetModule, env) : null;
+        return getEs6Transpiler(System, options, env);
       }).then(function (transpiler) {
         var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
@@ -2076,6 +2013,7 @@
           topLevelVarRecorder: recorder,
           sourceURL: options.sourceURL || options.targetModule,
           context: options.context || recorder,
+          wrapInStartEndCall: true, // for async / await eval support
           es6ExportFuncId: "_moduleExport",
           es6ImportFuncId: "_moduleImport",
           transpiler: transpiler
@@ -2084,13 +2022,8 @@
         System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
         recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
+
         return lively_vm_lib_evaluator_js.runEval(code, options).then(function (result) {
-          return result.isError || !env.currentEval.promise ? result : env.currentEval.promise.then(function (result) {
-            return result.process(options).then(function () {
-              return result;
-            });
-          });
-        }).then(function (result) {
           System["__lively.modules__"].evaluationDone(fullname);
           System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
           recordDoitResult(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, result, Date.now());
@@ -2101,74 +2034,6 @@
         throw err;
       });
     });
-  }
-
-  function funcCall(callee) {
-    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-      args[_key2 - 1] = arguments[_key2];
-    }
-
-    if (typeof callee === "string") callee = id(callee);
-    return {
-      type: "CallExpression",
-      callee: callee,
-      arguments: args
-    };
-  }
-
-  function expr(expression) {
-    return { type: "ExpressionStatement", expression: expression };
-  }
-
-  function literal(value) {
-    return { type: "Literal", value: value };
-  }
-
-  function id(name) {
-    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
-  }
-
-  function returnStmt(expr) {
-    return { type: "ReturnStatement", argument: expr };
-  }
-
-  function member(obj, prop, computed) {
-    if (typeof obj === "string") obj = id(obj);
-    if (typeof prop === "string") prop = id(prop);
-    return {
-      type: "MemberExpression",
-      computed: !!computed,
-      object: obj, property: prop
-    };
-  }
-
-  function block() {
-    for (var _len3 = arguments.length, body = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      body[_key3] = arguments[_key3];
-    }
-
-    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
-  }
-
-  function program() {
-    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
-  }
-
-  function tryStmt(exName, handlerBody, finalizerBody) {
-    for (var _len4 = arguments.length, body = Array(_len4 > 3 ? _len4 - 3 : 0), _key4 = 3; _key4 < _len4; _key4++) {
-      body[_key4 - 3] = arguments[_key4];
-    }
-
-    return {
-      block: block(body),
-      finalizer: finalizerBody ? block(finalizerBody) : null,
-      handler: {
-        body: block(handlerBody),
-        param: id(exName),
-        type: "CatchClause"
-      },
-      type: "TryStatement"
-    };
   }
 
   var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
@@ -2240,7 +2105,7 @@
     unwrapModuleLoad$1(exports.System);
   }
   function runEval$1(code, options) {
-    return runEvalWithAsyncSupport(exports.System, code, options);
+    return runEval$2(exports.System, code, options);
   }
   function getNotifications() {
     return getNotifications$1(exports.System);
