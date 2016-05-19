@@ -18831,7 +18831,8 @@ var nodes = Object.freeze({
     // non-expression we record undefined as the eval result
     var last = lively_lang.arr.last(innerBody);
     if (last.type === "ExpressionStatement") {
-      innerBody.splice(outerBody.length - 1, 1, exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+      innerBody.pop();
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
     } else {
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
     }
