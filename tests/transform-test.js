@@ -2,9 +2,18 @@
 
 import { expect } from "mocha-es6";
 
-import { helper, replace, oneDeclaratorPerVarDecl, returnLastStatement, wrapInFunction } from "../lib/transform.js";
-import { parse } from "../lib/parser.js";
 import { arr } from "lively.lang";
+import {
+  helper,
+  replace,
+  oneDeclaratorPerVarDecl,
+  returnLastStatement,
+  wrapInFunction,
+  wrapInStartEndCall
+} from "../lib/transform.js";
+import * as nodes from "../lib/nodes.js";
+import { parse } from "../lib/parser.js";
+import stringify from "../lib/stringify.js";
 
 describe('ast.transform', function() {
 
@@ -196,9 +205,15 @@ describe('ast.transform', function() {
   });
 
   describe("return last statement", () => {
+
     it("transforms last statement into return", () =>
       expect(returnLastStatement("var z = foo + bar; baz.foo(z, 3)"))
-        .equals("var z = foo + bar; return baz.foo(z, 3)"));
+        .equals("var z = foo + bar;\nreturn baz.foo(z, 3);"));
+
+    it("ignores non-value statements", () =>
+      expect(returnLastStatement("var x = 3; while(x > 0) foo(x--)"))
+        .equals("var x = 3; while(x > 0) foo(x--)"));
+
   });
 
   describe("wrapInFunction", () => {
