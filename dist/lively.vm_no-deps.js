@@ -403,12 +403,12 @@
   }
 
 
-  function syncEval(string, options = {}) {
+  function syncEval(string, options) {
     // See #runEval for options.
     // Although the defaul eval is synchronous we assume that the general
     // evaluation might not return immediatelly. This makes is possible to
     // change the evaluation backend, e.g. to be a remotely attached runtime
-    options = Object.assign(options, {sync: true});
+    options = Object.assign(options || {}, {sync: true});
     return runEval(string, options);
   }
 
@@ -429,8 +429,8 @@
       this.promiseStatus = "unknown";
     }
 
-    printed(options = {}) {
-      this.value = print(this.value, Object.assign(options, {
+    printed(options) {
+      this.value = print(this.value, Object.assign(options || {}, {
         isError: this.isError,
         isPromise: this.isPromise,
         promisedValue: this.promisedValue,
@@ -471,13 +471,13 @@
               {promiseStatus: "rejected", promisedValue: rejected}))
   }
 
-  function print(value, options = {}) {
+  function print(value, options) {
     if (options.isError || value instanceof Error) return String(value.stack || value);
 
     if (options.isPromise) {
       var status = lively_lang.string.print(options.promiseStatus),
           printed = options.promiseStatus === "pending" ?
-            undefined : print(options.promisedValue, Object.assign(options, {isPromise: false}));
+            undefined : print(options.promisedValue, Object.assign(options || {}, {isPromise: false}));
       return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + printed)}})`;
     }
 
