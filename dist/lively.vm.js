@@ -18832,7 +18832,8 @@ var nodes = Object.freeze({
     // non-expression we record undefined as the eval result
     var last = lively_lang.arr.last(innerBody);
     if (last.type === "ExpressionStatement") {
-      innerBody.splice(outerBody.length - 1, 1, exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+      innerBody.pop();
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
     } else {
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
     }
@@ -20155,7 +20156,7 @@ var categorizer = Object.freeze({
   const endEvalFunctionName = "lively.vm-on-eval-end";
   function _normalizeEvalOptions(opts) {
     if (!opts) opts = {};
-    opts = lively_lang.obj.merge({
+    opts = Object.assign({
       targetModule: null,
       sourceURL: opts.targetModule,
       runtime: null,
@@ -20175,7 +20176,7 @@ var categorizer = Object.freeze({
       var moduleEnv = opts.runtime
                    && opts.runtime.modules
                    && opts.runtime.modules[opts.targetModule];
-      if (moduleEnv) opts = lively_lang.obj.merge(opts, moduleEnv);
+      if (moduleEnv) opts = Object.assign(opts, moduleEnv);
     }
 
     if (opts.wrapInStartEndCall) {
@@ -20335,12 +20336,12 @@ var categorizer = Object.freeze({
   }
 
 
-  function syncEval(string, options) {
+  function syncEval(string, options = {}) {
     // See #runEval for options.
     // Although the defaul eval is synchronous we assume that the general
     // evaluation might not return immediatelly. This makes is possible to
     // change the evaluation backend, e.g. to be a remotely attached runtime
-    options = lively_lang.obj.merge(options, {sync: true});
+    options = Object.assign(options, {sync: true});
     return runEval(string, options);
   }
 
@@ -20361,8 +20362,8 @@ var categorizer = Object.freeze({
       this.promiseStatus = "unknown";
     }
 
-    printed(options) {
-      this.value = print(this.value, lively_lang.obj.merge(options, {
+    printed(options = {}) {
+      this.value = print(this.value, Object.assign(options, {
         isError: this.isError,
         isPromise: this.isPromise,
         promisedValue: this.promisedValue,
@@ -20396,20 +20397,20 @@ var categorizer = Object.freeze({
     var timeout = {},
         timeoutP = new Promise(resolve => setTimeout(resolve, timeoutMs, timeout));
     return Promise.race([timeoutP, evalResult.value])
-      .then(resolved => lively_lang.obj.extend(evalResult, resolved !== timeout ?
+      .then(resolved => Object.assign(evalResult, resolved !== timeout ?
               {promiseStatus: "fulfilled", promisedValue: resolved} :
               {promiseStatus: "pending"}))
-      .catch(rejected => lively_lang.obj.extend(evalResult,
+      .catch(rejected => Object.assign(evalResult,
               {promiseStatus: "rejected", promisedValue: rejected}))
   }
 
-  function print(value, options) {
+  function print(value, options = {}) {
     if (options.isError || value instanceof Error) return String(value.stack || value);
 
     if (options.isPromise) {
       var status = lively_lang.string.print(options.promiseStatus),
           printed = options.promiseStatus === "pending" ?
-            undefined : print(options.promisedValue, lively_lang.obj.merge(options, {isPromise: false}));
+            undefined : print(options.promisedValue, Object.assign(options, {isPromise: false}));
       return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + printed)}})`;
     }
 

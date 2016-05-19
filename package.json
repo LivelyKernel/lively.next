@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "index-node.js",
   "systemjs": {
@@ -49,7 +49,7 @@
     "lively.lang": "^0.5.23"
   },
   "devDependencies": {
-    "mocha-es6": "^0.2.7",
+    "mocha-es6": "^0.2.9",
     "rollup": "^0.26.1",
     "rollup-plugin-node-builtins": "^1.0.4"
   }
