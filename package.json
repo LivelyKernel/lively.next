@@ -45,7 +45,7 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
-    "lively.ast": "^0.6.3",
+    "lively.ast": "^0.7.0",
     "lively.lang": "^0.5.23"
   },
   "devDependencies": {
