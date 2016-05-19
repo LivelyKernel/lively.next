@@ -217,9 +217,41 @@ describe('ast.transform', function() {
   });
 
   describe("wrapInFunction", () => {
+
     it("wraps statements into a function", () =>
       expect(wrapInFunction("var z = foo + bar; baz.foo(z, 3);"))
-        .equals("function() {\nvar z = foo + bar; return baz.foo(z, 3);\n}"));
+        .equals("function() {\nvar z = foo + bar;\nreturn baz.foo(z, 3);\n}"));
+
+    it("returns ast", () =>
+      expect(stringify(wrapInFunction("3 + 4;", {asAST: true, id: "foo"})))
+        .equals("function foo() {\n    return 3 + 4;\n}"));
+
   });
 
+  describe("wrapInStartEndCall", () => {
+    
+    it("calls with last expression", () =>
+      expect(stringify(wrapInStartEndCall("var y = x + 23; y"))).to.equal(
+        "try {\n"
+      + "    __start_execution();\n"
+      + "    var y = x + 23;\n"
+      + "    __end_execution(null, y);\n"
+      + "} catch (err) {\n"
+      + "    __end_execution(err, undefined);\n"
+      + "}"));
+
+    it("allows customization of calls", () =>
+      expect(stringify(wrapInStartEndCall("var y = x + 23; y", {
+        startFuncNode: nodes.member("foo", "start"),
+        endFuncNode: nodes.member("foo", "end")
+      }))).to.equal(
+        "try {\n"
+      + "    foo.start();\n"
+      + "    var y = x + 23;\n"
+      + "    foo.end(null, y);\n"
+      + "} catch (err) {\n"
+      + "    foo.end(err, undefined);\n"
+      + "}"));
+
+  });
 });
