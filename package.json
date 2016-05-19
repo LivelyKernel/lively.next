@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -42,9 +42,9 @@
   "dependencies": {
     "babel-core": "^5.8.38",
     "babel-regenerator-runtime": "^6.5.0",
-    "lively.ast": "^0.6.8",
+    "lively.ast": "^0.7.1",
     "lively.lang": "^0.5.23",
-    "lively.vm": "^0.5.4",
+    "lively.vm": "^0.6.2",
     "systemjs": "^0.19.24",
     "whatwg-fetch": "^1.0.0"
   },
