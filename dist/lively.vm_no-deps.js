@@ -136,49 +136,73 @@
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // code transform / capturing
+  // using code transformers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function transformForVarRecord(
-    code,
-    varRecorder,
-    varRecorderName,
-    blacklist,
-    defRangeRecorder,
-    recordGlobals,
-    es6ExportFuncId,
-    es6ImportFuncId) {
+  function evalCodeTransform(code, options) {
     // variable declaration and references in the the source code get
     // transformed so that they are bound to `varRecorderName` aren't local
     // state. THis makes it possible to capture eval results, e.g. for
     // inspection, watching and recording changes, workspace vars, and
     // incrementally evaluating var declarations and having values bound later.
-    blacklist = blacklist || [];
-    blacklist.push("arguments");
-    var undeclaredToTransform = recordGlobals ?
-          null/*all*/ : lively_lang.arr.withoutAll(Object.keys(varRecorder), blacklist),
-        transformed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(
-          code, {name: varRecorderName, type: "Identifier"},
-          {es6ImportFuncId: es6ImportFuncId,
-           es6ExportFuncId: es6ExportFuncId,
-           ignoreUndeclaredExcept: undeclaredToTransform,
-           exclude: blacklist, recordDefRanges: !!defRangeRecorder});
-    code = transformed.source;
-    if (defRangeRecorder) lively_lang.obj.extend(defRangeRecorder, transformed.defRanges);
-    return code;
+
+
+    // 1. Allow evaluation of function expressions and object literals
+    code = transformSingleExpression(code);
+
+    var parsed = lively_ast.parse(code);
+
+    // 2. capture top level vars into topLevelVarRecorder "environment"
+    if (options.topLevelVarRecorder) {
+
+      var blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ?
+            null/*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(
+        parsed,
+        {name: options.varRecorderName || '__lvVarRecorder', type: "Identifier"},
+        {
+          es6ImportFuncId: options.es6ImportFuncId,
+          es6ExportFuncId: options.es6ExportFuncId,
+          ignoreUndeclaredExcept: undeclaredToTransform,
+          exclude: blacklist
+       });
+    }
+
+    if (options.wrapInStartEndCall) {
+      parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
+        startFuncNode: options.startFuncNode,
+        endFuncNode: options.endFuncNode
+      });
+    }
+
+    var result = lively_ast.stringify(parsed);
+
+
+    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+    return result;
   }
+
+  const isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
 
   function transformSingleExpression(code) {
     // evaling certain expressions such as single functions or object
     // literals will fail or not work as intended. When the code being
     // evaluated consists just out of a single expression we will wrap it in
     // parens to allow for those cases
+    // Example:
+    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
     try {
       var parsed = lively_ast.fuzzyParse(code);
       if (parsed.body.length === 1 &&
-         (parsed.body[0].type === 'FunctionDeclaration'
+        (parsed.body[0].type === 'FunctionDeclaration'
       || (parsed.body[0].type === 'BlockStatement'
-       && parsed.body[0].body[0].type === 'LabeledStatement'))) {
+      && parsed.body[0].body[0].type === 'LabeledStatement'))) {
         code = '(' + code.replace(/;\s*$/, '') + ')';
       }
     } catch(e) {
@@ -188,29 +212,15 @@
     return code;
   }
 
-  function evalCodeTransform(code, options) {
-    if (options.topLevelVarRecorder)
-      code = transformForVarRecord(
-        code,
-        options.topLevelVarRecorder,
-        options.varRecorderName || '__lvVarRecorder',
-        options.dontTransform,
-        options.topLevelDefRangeRecorder,
-        !!options.recordGlobals,
-        options.es6ExportFuncId,
-        options.es6ImportFuncId);
-    code = transformSingleExpression(code);
-
-    if (options.sourceURL) code += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-
-    return code;
-  }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // options
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  const defaultTopLevelVarRecorderName = '__lvVarRecorder';
+  const startEvalFunctionName = "lively.vm-on-eval-start";
+  const endEvalFunctionName = "lively.vm-on-eval-end";
   function _normalizeEvalOptions(opts) {
     if (!opts) opts = {};
     opts = lively_lang.obj.merge({
@@ -218,13 +228,15 @@
       sourceURL: opts.targetModule,
       runtime: null,
       context: getGlobal(),
-      varRecorderName: '__lvVarRecorder',
+      varRecorderName: defaultTopLevelVarRecorderName,
       dontTransform: [], // blacklist vars
-      topLevelDefRangeRecorder: null, // object for var ranges
       recordGlobals: null,
       returnPromise: true,
       promiseTimeout: 200,
-      waitForPromise: true
+      waitForPromise: true,
+      wrapInStartEndCall: false,
+      onStartEval: null,
+      onEndEval: null
     }, opts);
 
     if (opts.targetModule) {
@@ -232,6 +244,21 @@
                    && opts.runtime.modules
                    && opts.runtime.modules[opts.targetModule];
       if (moduleEnv) opts = lively_lang.obj.merge(opts, moduleEnv);
+    }
+
+    if (opts.wrapInStartEndCall) {
+      opts.startFuncNode = {
+        type: "MemberExpression",
+        object: {type: "Identifier", name: opts.varRecorderName},
+        property: {type: "Literal", value: startEvalFunctionName},
+        computed: true
+      }
+      opts.endFuncNode = {
+        type: "MemberExpression",
+        object: {type: "Identifier", name: opts.varRecorderName},
+        property: {type: "Literal", value: endEvalFunctionName},
+        computed: true
+      }
     }
 
     return opts;
@@ -268,16 +295,50 @@
     //   sourceURL: STRING,
     //   recordGlobals: BOOLEAN, // also transform free vars? default is false
     //   transpiler: FUNCTION(source, options) // for transforming the source after the lively xfm
+    //   wrapInStartEndCall: BOOLEAN
+    //   onStartEval: FUNCTION()?,
+    //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
     // }
 
     if (typeof options === 'function' && arguments.length === 2) {
       thenDo = options; options = null;
     }
 
+    var warnings = [],
+        result = new EvalResult(),
+        returnedError, returnedValue,
+        onEvalEndError, onEvalEndValue,
+        onEvalStartCalled = false, onEvalEndCalled = false;
     options = _normalizeEvalOptions(options);
 
-    var warnings = [];
+    // 1. In case we rewrite the code with on-start and on-end calls we prepare
+    // the environment with actual function handlers that will get called once
+    // the code is evaluated
 
+    var onEvalFunctionHolder, evalDone = lively_lang.promise.deferred();
+    if (options.wrapInStartEndCall) {
+      onEvalFunctionHolder = options.topLevelVarRecorder || getGlobal();
+
+      if (onEvalFunctionHolder[startEvalFunctionName])
+        console.warn(`startEvalFunctionName ${startEvalFunctionName} already exists in recorder!`)
+
+      if (onEvalFunctionHolder[endEvalFunctionName])
+        console.warn(`endEvalFunctionName ${endEvalFunctionName} already exists in recorder!`)
+
+      onEvalFunctionHolder[startEvalFunctionName] = function() {
+        if (onEvalStartCalled) { console.warn("onEvalStartCalled multiple times!"); return; }
+        onEvalStartCalled = true;
+        if (typeof options.onStartEval === "function") options.onStartEval();
+      }
+
+      onEvalFunctionHolder[endEvalFunctionName] = function(err, value) {
+        if (onEvalEndCalled) { console.warn("onEvalEndCalled multiple times!"); return; }
+        onEvalEndCalled = true;
+        finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo);
+      }
+    }
+
+    // 2. Transform the code to capture top-level variables, inject function calls, ...
     try {
       code = evalCodeTransform(code, options);
       if (options.header) code = options.header + code;
@@ -290,35 +351,57 @@
       warnings.push(warning);
     }
 
-    var result = new EvalResult();
+    // 3. Now really run eval!
     try {
       typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
-      result.value = _eval.call(options.context, code, options.topLevelVarRecorder);
-      if (result.value instanceof Promise) result.isPromise = true;
-    } catch (e) { result.isError = true; result.value = e; }
+      returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
+    } catch (e) { returnedError = e; }
 
-    if (options.sync) return result.processSync(options);
-    else {
-      return (typeof thenDo === "function") ? 
-        new Promise((resolve, reject) =>
-          result.process(options)
-            .then(() => { thenDo(null, result); resolve(result); })
-            .catch(err => { thenDo(err); reject(err); })) :
-        result.process(options);
+    // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
+    // wrap-up, otherwise we firectly call finishEval()
+    if (options.wrapInStartEndCall) {
+      if (returnedError && !onEvalEndCalled)
+        onEvalFunctionHolder[endEvalFunctionName](returnedError, undefined);
+    } else {
+      finishEval(returnedError, returnedError || returnedValue, result, options, onEvalFunctionHolder, evalDone, thenDo);
     }
 
-    // // tries to return as value
-    // try {
-    //   JSON.stringify(value);
-    //   return value;
-    // } catch (e) {
-    //   try {
-    //     var printDepth = options.printDepth || 2;
-    //     return lang.obj.inspect(value, {maxDepth: printDepth})
-    //   } catch (e) { return String(value); }
-    // }
-
+    return options.sync ? result : evalDone.promise;
   }
+
+  function finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo) {
+    // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
+    // use any Promise since promises always run on next tick. That's why we have
+    // to slightly duplicate the finish logic...
+
+    if (options.wrapInStartEndCall) {
+      delete onEvalFunctionHolder[startEvalFunctionName];
+      delete onEvalFunctionHolder[endEvalFunctionName];
+    }
+
+    if (err) { result.isError = true; result.value = err; }
+    else result.value = value;
+    if (result.value instanceof Promise) result.isPromise = true;
+
+    if (options.sync) {
+      result.processSync(options);
+      if (typeof options.onEndEval === "function") options.onEndEval(err, value);
+    } else {
+      result.process(options)
+        .then(() => {
+          typeof thenDo === "function" && thenDo(null, result);
+          typeof options.onEndEval === "function" && options.onEndEval(err, value);
+          return result;
+        },
+        (err) => {
+          typeof thenDo === "function" && thenDo(err, undefined);
+          typeof options.onEndEval === "function" && options.onEndEval(err, undefined);
+          return result;
+        })
+        .then(evalDone.resolve, evalDone.reject)
+    }
+  }
+
 
   function syncEval(string, options) {
     // See #runEval for options.
@@ -397,7 +480,7 @@
             undefined : print(options.promisedValue, lively_lang.obj.merge(options, {isPromise: false}));
       return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + printed)}})`;
     }
-    
+
     if (value instanceof Promise)
       return 'Promise({status: "unknown"})';
 
@@ -417,8 +500,7 @@
 
   exports.completions = completions;
   exports.EvalResult = EvalResult;
-  exports.transformForVarRecord = transformForVarRecord;
-  exports.transformSingleExpression = transformSingleExpression;
+  exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
   exports.evalCodeTransform = evalCodeTransform;
   exports.getGlobal = getGlobal;
   exports.runEval = runEval;
