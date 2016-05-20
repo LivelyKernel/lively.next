@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -45,7 +45,7 @@
     "lively.ast": "^0.7.1",
     "lively.lang": "^0.5.23",
     "lively.vm": "^0.6.2",
-    "systemjs": "^0.19.24",
+    "systemjs": "=0.19.27",
     "whatwg-fetch": "^1.0.0"
   },
   "devDependencies": {
