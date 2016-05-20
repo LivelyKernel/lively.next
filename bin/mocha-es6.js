@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 
 require("systemjs")
+
 global.babel  = require("babel-core")
 var parseArgs = require('minimist');
 var glob      = require('glob');
