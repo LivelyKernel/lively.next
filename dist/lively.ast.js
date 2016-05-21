@@ -18305,7 +18305,11 @@ var nodes = Object.freeze({
     },
 
     varDeclIds: function varDeclIds(scope) {
-      return helpers.declIds(lively_lang.chain(scope.varDecls).pluck('declarations').flatten().pluck('id').value());
+      return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
+        all.push.apply(all, ea.declarations);return all;
+      }, []).map(function (ea) {
+        return ea.id;
+      }));
     },
 
     objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
@@ -18435,7 +18439,9 @@ var nodes = Object.freeze({
         useComments = !!options.jslintGlobalComment,
         declared = _declaredVarNames(scope, useComments),
         refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
-        undeclared = lively_lang.chain(refs).pluck('name').withoutAll(declared).value();
+        undeclared = lively_lang.arr.withoutAll(refs.map(function (ea) {
+      return ea.name;
+    }), declared);
 
     return {
       scope: scope,
@@ -19138,7 +19144,13 @@ var nodes = Object.freeze({
       }
       return result;
     }, []);
-    return [].concat(lively_lang.arr.pluck(topLevel.scope.catches, "name")).concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+    return [].concat(topLevel.scope.catches.map(function (ea) {
+      return ea.name;
+    })).concat(ignoreDecls.reduce(function (all, ea) {
+      all.push.apply(all, ea.declarations);return all;
+    }, []).map(function (ea) {
+      return ea.id.name;
+    }));
   }
 
   function additionalIgnoredRefs(parsed, options) {
@@ -19163,7 +19175,13 @@ var nodes = Object.freeze({
       }));
       return ignored;
     }, []);
-    return [].concat(lively_lang.arr.pluck(topLevel.scope.catches, "name")).concat(ignoredImportAndExportNames).concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+    return [].concat(topLevel.scope.catches.map(function (ea) {
+      return ea.name;
+    })).concat(ignoredImportAndExportNames).concat(ignoreDecls.reduce(function (all, ea) {
+      all.push.apply(all, ea.declarations);return all;
+    }, []).map(function (ea) {
+      return ea.id.name;
+    }));
   }
 
   function shouldDeclBeCaptured(decl, options) {
