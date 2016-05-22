@@ -23,7 +23,8 @@
   "lively": {
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
-      "lively.ast": "./node_modules/lively.ast"
+      "lively.ast": "./node_modules/lively.ast",
+      "lively.modules": "./node_modules/lively.modules"
     }
   },
   "scripts": {
@@ -49,8 +50,11 @@
     "lively.lang": "^0.5.23"
   },
   "devDependencies": {
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "lively.modules": "^0.4.0",
     "mocha-es6": "^0.2.9",
     "rollup": "^0.26.1",
+    "rollup-plugin-babel": "^2.4.0",
     "rollup-plugin-node-builtins": "^1.0.4"
   }
 }

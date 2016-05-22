@@ -3,6 +3,7 @@
 var fs = require("fs");
 var path = require("path");
 var rollup = require('rollup');
+var babel = require('rollup-plugin-babel');
 var builtins = require('rollup-plugin-node-builtins');
 
 var targetFile1 = "dist/lively.vm_no-deps.js";
@@ -16,7 +17,11 @@ module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
     plugins: [
-      builtins(),
+      babel({
+        exclude: 'node_modules/**',
+        sourceMap: false,
+        "presets": [ "es2015-rollup" ]}),
+      builtins()
     ]
   }))
   .then(bundle =>
