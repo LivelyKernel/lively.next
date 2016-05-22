@@ -1,7 +1,7 @@
 /*global beforeEach, afterEach, describe, it, global*/
 
 import { expect } from "mocha-es6";
-import { runEval, syncEval, defaultTopLevelVarRecorderName } from "lively.vm/lib/evaluator.js";
+import { runEval, syncEval, defaultTopLevelVarRecorderName } from "../lib/eval.js";
 import lang from "lively.lang";
 
 var Global = typeof global !== "undefined" ? global : window;
