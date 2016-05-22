@@ -13506,6 +13506,29 @@ var nodes = Object.freeze({
     return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
   }
 
+  var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
+
+  function transformSingleExpression(code) {
+    // evaling certain expressions such as single functions or object
+    // literals will fail or not work as intended. When the code being
+    // evaluated consists just out of a single expression we will wrap it in
+    // parens to allow for those cases
+    // Example:
+    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
+    try {
+      var parsed = fuzzyParse(code);
+      if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
+        code = '(' + code.replace(/;\s*$/, '') + ')';
+      }
+    } catch (e) {
+      if ((typeof lively === "undefined" ? "undefined" : babelHelpers.typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
+    }
+    return code;
+  }
+
 
 
   var transform = Object.freeze({
@@ -13515,7 +13538,8 @@ var nodes = Object.freeze({
     oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
     returnLastStatement: returnLastStatement,
     wrapInFunction: wrapInFunction,
-    wrapInStartEndCall: wrapInStartEndCall
+    wrapInStartEndCall: wrapInStartEndCall,
+    transformSingleExpression: transformSingleExpression
   });
 
   var merge = Object.assign;
@@ -14135,6 +14159,50 @@ var capturing = Object.freeze({
     rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
   });
 
+  function evalCodeTransform(code, options) {
+    // variable declaration and references in the the source code get
+    // transformed so that they are bound to `varRecorderName` aren't local
+    // state. THis makes it possible to capture eval results, e.g. for
+    // inspection, watching and recording changes, workspace vars, and
+    // incrementally evaluating var declarations and having values bound later.
+
+    // 1. Allow evaluation of function expressions and object literals
+    code = transformSingleExpression(code);
+
+    var parsed = parse(code);
+
+    // 2. capture top level vars into topLevelVarRecorder "environment"
+    if (options.topLevelVarRecorder) {
+
+      var blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      parsed = rewriteToCaptureTopLevelVariables(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
+        es6ImportFuncId: options.es6ImportFuncId,
+        es6ExportFuncId: options.es6ExportFuncId,
+        ignoreUndeclaredExcept: undeclaredToTransform,
+        exclude: blacklist
+      });
+    }
+
+    if (options.wrapInStartEndCall) {
+      parsed = wrapInStartEndCall(parsed, {
+        startFuncNode: options.startFuncNode,
+        endFuncNode: options.endFuncNode
+      });
+    }
+
+    var result = stringify(parsed);
+
+    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+    return result;
+  }
+
+var evalSupport = Object.freeze({
+    evalCodeTransform: evalCodeTransform
+  });
+
   function getCommentPrecedingNode(parsed, node) {
     var statementPath = statementOf(parsed, node, { asPath: true }),
         blockPath = statementPath.slice(0, -2),
@@ -14595,6 +14663,7 @@ var categorizer = Object.freeze({
   exports.query = query;
   exports.transform = transform;
   exports.capturing = capturing;
+  exports.evalSupport = evalSupport;
   exports.comments = comments;
   exports.categorizer = categorizer;
   exports.stringify = stringify;

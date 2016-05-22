@@ -43,7 +43,7 @@
 
   var livelyLang = createLivelyLangObject();
   if (isNode) { module.exports = livelyLang; if (!Global.lively) return; }
-  
+
   livelyLang._prevLivelyGlobal = Global.lively;
   if (!Global.lively) Global.lively = {};
   if (!Global.lively.lang) Global.lively.lang = livelyLang;
@@ -181,8 +181,23 @@
     // We need to redefine Function.evalJS here b/c the original definition is
     // in a JS 'use strict' block. However, not all function sources we pass in
     // #evalJS from Lively adhere to the strictness rules. To allow those
-    // functions for now we define the creator again outside of a strictness block.
-    Function.evalJS = livelyLang.fun.evalJS = function(src) { return eval(src); }
+      // functions for now we define the creator again outside of a strictness block.
+
+    // rk 2016-05-22: !!! in order to not capture objects in the lexical scope of
+    // eval as they were defined while THIS files WAS loaded, we need to inject
+    // globals / context, i.e. local lively here might be != Global.lively!
+
+    Function.evalJS = livelyLang.fun.evalJS = function(src) {
+        var fixVars = ""
+            + "var Global = typeof System !== 'undefined' ? System.global :\n"
+            + "    typeof window !== 'undefined' ? window :\n"
+            + "    typeof global!=='undefined' ? global :\n"
+            + "    typeof self!=='undefined' ? self : this;\n";
+        if (Global.lively && Global.lively != lively)
+            fixVars += "var lively = Global.lively;\n";
+        return eval(fixVars + src);
+    }
+
     livelyLang.Path.type = livelyLang.PropertyPath;
     livelyLang.Path.prototype.serializeExpr = function () {
       // ignore-in-doc
@@ -4332,6 +4347,33 @@
                 var done = false;
                 setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
                 promise.then(val => !done && (done = true) && resolve(val)).catch(err => !done && (done = true) && reject(err));
+            });
+        },
+        waitFor: function (ms, tester) {
+            return new Promise((resolve, reject) => {
+                if (typeof ms === 'function') {
+                    tester = ms;
+                    ms = undefined;
+                }
+                var stopped = false, error = null, value = undefined, i = setInterval(() => {
+                        if (stopped) {
+                            clearInterval(i);
+                            return;
+                        }
+                        try {
+                            value = tester();
+                        } catch (e) {
+                            error = e;
+                        }
+                        if (value || error) {
+                            stopped = true;
+                            clearInterval(i);
+                            error ? reject(error) : resolve(value);
+                        }
+                    }, 10);
+                if (typeof ms === 'number') {
+                    setTimeout(() => error = new Error('timeout'), ms);
+                }
             });
         },
         deferred: function () {
@@ -18849,6 +18891,29 @@ var nodes = Object.freeze({
     return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
   }
 
+  var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
+
+  function transformSingleExpression(code) {
+    // evaling certain expressions such as single functions or object
+    // literals will fail or not work as intended. When the code being
+    // evaluated consists just out of a single expression we will wrap it in
+    // parens to allow for those cases
+    // Example:
+    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
+    try {
+      var parsed = fuzzyParse(code);
+      if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
+        code = '(' + code.replace(/;\s*$/, '') + ')';
+      }
+    } catch (e) {
+      if ((typeof lively === "undefined" ? "undefined" : babelHelpers.typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
+    }
+    return code;
+  }
+
 
 
   var transform = Object.freeze({
@@ -18858,7 +18923,8 @@ var nodes = Object.freeze({
     oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
     returnLastStatement: returnLastStatement,
     wrapInFunction: wrapInFunction,
-    wrapInStartEndCall: wrapInStartEndCall
+    wrapInStartEndCall: wrapInStartEndCall,
+    transformSingleExpression: transformSingleExpression
   });
 
   var merge = Object.assign;
@@ -19478,6 +19544,50 @@ var capturing = Object.freeze({
     rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
   });
 
+  function evalCodeTransform(code, options) {
+    // variable declaration and references in the the source code get
+    // transformed so that they are bound to `varRecorderName` aren't local
+    // state. THis makes it possible to capture eval results, e.g. for
+    // inspection, watching and recording changes, workspace vars, and
+    // incrementally evaluating var declarations and having values bound later.
+
+    // 1. Allow evaluation of function expressions and object literals
+    code = transformSingleExpression(code);
+
+    var parsed = parse(code);
+
+    // 2. capture top level vars into topLevelVarRecorder "environment"
+    if (options.topLevelVarRecorder) {
+
+      var blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      parsed = rewriteToCaptureTopLevelVariables(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
+        es6ImportFuncId: options.es6ImportFuncId,
+        es6ExportFuncId: options.es6ExportFuncId,
+        ignoreUndeclaredExcept: undeclaredToTransform,
+        exclude: blacklist
+      });
+    }
+
+    if (options.wrapInStartEndCall) {
+      parsed = wrapInStartEndCall(parsed, {
+        startFuncNode: options.startFuncNode,
+        endFuncNode: options.endFuncNode
+      });
+    }
+
+    var result = stringify(parsed);
+
+    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+    return result;
+  }
+
+var evalSupport = Object.freeze({
+    evalCodeTransform: evalCodeTransform
+  });
+
   function getCommentPrecedingNode(parsed, node) {
     var statementPath = statementOf(parsed, node, { asPath: true }),
         blockPath = statementPath.slice(0, -2),
@@ -19938,6 +20048,7 @@ var categorizer = Object.freeze({
   exports.query = query;
   exports.transform = transform;
   exports.capturing = capturing;
+  exports.evalSupport = evalSupport;
   exports.comments = comments;
   exports.categorizer = categorizer;
   exports.stringify = stringify;
