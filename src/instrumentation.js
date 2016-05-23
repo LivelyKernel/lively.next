@@ -1,8 +1,10 @@
-import * as ast from "lively.ast";
+import { parse, evalSupport } from "lively.ast";
 import { arr, string, properties, classHelper } from "lively.lang";
 import { moduleEnv } from "./system.js";
-import { evalCodeTransform } from "lively.vm/lib/evaluator.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
+import "babel-regenerator-runtime";
+
+var evalCodeTransform = evalSupport.evalCodeTransform;
 
 export {
   wrapModuleLoad, unwrapModuleLoad,
@@ -202,7 +204,7 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
     //   };
     // });
 
-    var parsed            = ast.parse(translated),
+    var parsed            = parse(translated),
         call              = parsed.body[0].expression,
         moduleName        = call.arguments[0].value,
         registerCall      = call.callee.body.body[0].expression,

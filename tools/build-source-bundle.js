@@ -11,7 +11,6 @@ var targetFile2 = "dist/lively.modules.js";
 
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
-var vmSource = fs.readFileSync(require.resolve("lively.vm/dist/lively.vm_no-deps.js"));
 var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runtime/runtime.js"));
 
 module.exports = Promise.resolve()
@@ -26,7 +25,6 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
-        "lively.vm/lib/evaluator.js": "lively.vm",
         "babel-regenerator-runtime": "regeneratorRuntime"
       }
     }))
@@ -47,7 +45,7 @@ module.exports = Promise.resolve()
   ${source}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();`;
-    var complete = `${langSource}\n${astSource}\n${vmSource}\n${regeneratorSource}\n${noDeps}`;
+    var complete = `${langSource}\n${astSource}\n${regeneratorSource}\n${noDeps}`;
     return {noDeps: noDeps, complete: complete};
   })
 

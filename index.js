@@ -1,9 +1,9 @@
 import { obj, arr } from "lively.lang";
 
 /*
-  
+
   ### `lively.modules.importPackage(packageName)`
-  
+
   To load a project into your runtime you will typically use
   `lively.modules.importPackage('some-package-name')`. `'some-package-name'`
   should resolve to a directory with a JSON package config file (typically
@@ -14,9 +14,9 @@ import { obj, arr } from "lively.lang";
   of the package config file.
 
   The result of the importPackage call is the promise for loading the main module.
-  
+
   #### Specifics of the lively package format
-  
+
   The main purpose of the lively package format is to make it easy to integrate
   dependent packages in the lively.module and es6 module systems. It allows you
   to define a `"lively"` field in the main JSON that allows to set a separate
@@ -25,7 +25,7 @@ import { obj, arr } from "lively.lang";
   discovered while importing a package, those are recursively imported as well.
 
   Here is an example how a config inside a package.json file could look like.
-  
+
   ```json
   {
     "name": "some-package",
@@ -49,13 +49,13 @@ import { obj, arr } from "lively.lang";
   that has some improvements added, e.g.   the name normalization respects the
   lively package conventions, translate is   used to instrument code by
   default, etc.
-  
+
   By default the loader instance is the same as the global loader (e.g.
   window.System). Note: *The System instance can be easily changed* to support
   multiple, isolated environnments.
-  
+
   Example:
-  
+
   ```js
   var testSystem = lively.modules.getSystem("my-test-system");
   lively.modules.changeSystem(testSystem, true); // true: make the System global
@@ -78,19 +78,19 @@ import { obj, arr } from "lively.lang";
 
   - `lively.modules.sourceOf(moduleId)`: Returns the original source code of the module identified by `moduleId`.
 
-  - `lively.modules.moduleEnv(moduleId)`: Returns the evaluation environment of the module behind `moduleId`. 
+  - `lively.modules.moduleEnv(moduleId)`: Returns the evaluation environment of the module behind `moduleId`.
 
   A "moduleEnv" is the object used for recording the evaluation state. Each
   module that is loaded with source instrumentation enabled as an according
   moduleEnv It is populated when the module is imported and then used and
-  modified when users run evaluations using `runEval()` or change the module's
+  modified when users run evaluations using `lively.vm.esm.runEval()` or change the module's
   code with `moduleSourceChange()`. You can get access to the internal module
   state via `moduleEnv('some-module').recorder` the recorder is a map of
   variable and function names.
-  
+
   Example: When lively.modules is bootstrapped you can access the state of its
   main module via:
-  
+
   ```js
   var id = System.normalizeSync("lively.modules/index.js");
   Object.keys(lively.modules.moduleEnv(id).recorder);
@@ -101,28 +101,30 @@ import { obj, arr } from "lively.lang";
 
 
   ### instrumentation
-  
+
   By default lively.modules will hook into the `System.translate` process so that source code of modules get transformed to allow recording of their internal evaluation state (that is then captured in `moduleEnv`s). You can enable and disable this behavior via
-  
+
   - `lively.modules.wrapModuleLoad()`
   - `lively.modules.unwrapModuleLoad()`
 
   ### evaluation
 
-  #### `runEval(sourceString, options)`
+  *Please note: This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
+
+  #### `lively.vm.esm.runEval(System, sourceString, options)`
 
   To evaluate an expression in the context of a module (to access and modify
   its internal state) you can use the `runEval` method.
-  
+
   Example: If you have a module `a.js` with the source code
-  
+
   ```js
   var x = 23;
   export x;
   ```
 
   you can evaluate an expression like `x + 2` via
-  `lively.modules.runEval("x + 2", {targetModule: "a.js"})`.
+  `lively.vm.esm.runEval(lively.modules.System, "x + 2", {targetModule: "a.js"})`.
   This will return a promise that resolves to an `EvalResult` object. The eval
   result will have a field `value` which is the actual return value of the last
   expression evaluated. In this example it is the number 25.
@@ -137,7 +139,7 @@ import { obj, arr } from "lively.lang";
 
 
   #### `moduleSourceChange(moduleName, newSource, options)`
-  
+
   To redefine a module's source code at runtime you can use the
   moduleSourceChange method. Given `a.js` from the previous example you can run
   `lively.modules.moduleSourceChange('a.js', 'var x = 24;\nexport x;')`.
@@ -149,7 +151,7 @@ import { obj, arr } from "lively.lang";
   ### module dependencies
 
   #### `lively.modules.findDependentsOf(moduleName)`
-  
+
   Which modules (module ids) are (in)directly import module with id.
 
   Let's say you have
@@ -173,26 +175,26 @@ import { obj, arr } from "lively.lang";
   `findRequirementsOf("module3")` will report ["module2", "module1"]
 
   #### reloadModule(moduleName, options)
-  
+
   Will re-import the module identified by `moduleName`. By default this will
   also reload all direct and indirect dependencies of that module. You can
   control that behavior via `options`, the default value of it is
   `{reloadDeps: true, resetEnv: true}`.
 
   #### `forgetModule(moduleName, options)`
-  
+
   Will remove the module from the loaded module set of lively.modules.System.
   `options` are by default `{forgetDeps: true, forgetEnv: true}`.
 
   #### `requireMap()`
-  
+
   Will return a JS object whose keys are module ids and the corresponding
   values are lists of module ids of those modules that dependent on the key
   module (including the key module itself). I.e. the importers of that module.
 
 
   ### `importsAndExportsOf(moduleId)`
-  
+
   Returns a promise that resolves to an object with fields `exports` and
   `imports`. The values referenced by those fields are lists with objects about
   the exact import and export information of variables in that module. For
@@ -201,7 +203,7 @@ import { obj, arr } from "lively.lang";
   name, the module from where it was imported etc.
 
   Example:
-  
+
   ```js
   lively.module.importsAndExportsOf("lively.modules/index.js");
     // =>
@@ -228,7 +230,7 @@ import { obj, arr } from "lively.lang";
   ```
 
   ### hooks
-  
+
   lively.modules provides an easy way to customize the behavior of the System
   loader object via `installHook` and `removeHook`. To extend the behavior of
   of `lively.modules.System.fetch` you can for example do
@@ -331,13 +333,6 @@ import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoa
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad }
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// eval
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { runEval as _runEval } from './src/eval.js';
-function runEval(code, options) { return _runEval(defaultSystem, code, options); }
-export { runEval };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // notifications
