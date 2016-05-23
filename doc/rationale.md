@@ -18,7 +18,7 @@ dependencies are updated accordingly.
 ## Packages
 
 Since the EcmaScript standard does not define a package concept (package = set
-of modules belonging togeter), lively.modules adds a very lightweight
+of modules belonging together), lively.modules adds a very lightweight
 convention for identifying and loading packages that is mostly based on
 the [npm package conventions](https://docs.npmjs.com/how-npm-works/packages).
 
@@ -40,8 +40,8 @@ define how a resource like `some-package` can be found.
 
 A flexible and lightweight notion of packages can help us to make Lively more
 "approachable", meaning that the system can be broken into clearly defined
-sub-systems thus reducing the complexity of an otherwise monolothic syste,
-Also, those package can be re-used outside the main Lively system.
+sub-systems thus reducing the complexity of an otherwise monolithic system,
+Also, those package can be reused outside the main Lively system.
 
 ## Debugging
 
@@ -49,7 +49,7 @@ The main problem we faced when implementing the source-transformation-based
 debugging approach was code management: Once the number of modules approaches
 non-trivial numbers it becomes a resource intensive task to manage rewritten
 and original code in a way that is performant enough for convenient interactive
-development. This especially posed a problem b/c the semnatics of JavaScript
+development. This especially posed a problem b/c the semantics of JavaScript
 allow lexical scoping and with that "hiding" internal module state. Once a
 not-transformed conventional JS "module" is defined there is no generic way to
 instrument it later.
@@ -72,3 +72,4 @@ just JS statements, we can mix code and serialized objects in our package
 concept. This would allow to combine both approaches from the ground up.
 
 ...
+
