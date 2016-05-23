@@ -25,7 +25,7 @@ function generateDoc(options, thenDo) {
   //   projectPath: "/foo/bar", files: files},
   //   function(err, markup, fileData) { /*...*/ })/
 
-  options = obj.deepMerge({
+  options = obj.merge({
     dryRun: false,
     projectPath: "./",
     files: null,
@@ -196,7 +196,7 @@ function step2_extractCommentsFromFileData(fileData, thenDo) {
       comments.forEach(function(ea) { ea.file = fn; });
       fileData[fn].comments = arr.flatmap(comments, processComment.bind(null, comments));
       var topLevelComment = arr.detect(comments, function(ea) { return !string.startsWith(ea.comment, "global") && !ea.path.length; });
-      var comment =  topLevelComment.comment || "";
+      var comment =  (topLevelComment && topLevelComment.comment) || "";
       var lines = string.lines(comment);
       var commonIndent = lines.reduce((commonIndent, line) =>
         line.match(/^\s*$/) ?
@@ -320,13 +320,11 @@ function step5_markdownTocFromFileData(fileData, thenDo) {
 
 function step6_markdownDocumentationFromFileData(fileData, thenDo) {
   // ignore-in-doc
-  var markupToc = "### Contents\n\n"
-                + lang.chain(fileData).values().pluck('markdownToc')
+  var markupToc = lang.chain(fileData).values().pluck('markdownToc')
                     .invoke("trim").compact().value().join("\n\n");
 
   var markup = markupToc + "\n\n"
     + lang.chain(fileData).values().pluck('markdown').value().join('\n\n')
-
   thenDo(null, markup, fileData)
 }
 
@@ -363,19 +361,25 @@ function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function putOutlineIntoReadme() {
-    var content = [];
-    Object.keys(fileData).forEach(function(fn) {
+  function docFromFiles() {
+    return Object.keys(fileData).map(function(fn) {
+      if (!options.introIntoReadme || !fileData[fn].topLevelComment) return null;
       var s = string.format(
         "### [%s](%s)\n\n%s\n\n",
-        (options.alias && options.alias[fn]) || fn, docFileForSourceFile(fn),
+        (options.alias && options.alias[fn]) || fn,
+        options.intoFiles ? docFileForSourceFile(fn) : fn,
         options.introIntoReadme ? fileData[fn].topLevelComment : "");
-      content.push(s);
-    });
-    updateReadme(content.join("\n\n"));
+      return s;
+    }).filter(ea => !!ea);
   }
 
-  function putEntireDocIntoReadme() { updateReadme(markup); }
+  function putOutlineIntoReadme() {
+    updateReadme(docFromFiles().join("\n\n"));
+  }
+
+  function putEntireDocIntoReadme() {
+    updateReadme([markup].concat(docFromFiles()).join("\n\n"));
+  }
 
   function updateReadme(content) {
     fun.composeAsync(
@@ -384,10 +388,10 @@ function step8_markdownTocFromFileData(options, markup, fileData, thenDo) {
       },
       function(readmeContent, next) {
         var startIdx = readmeContent.indexOf(startMarker) + startMarker.length,
-            endIdx = readmeContent.indexOf(endMarker),
+            endIdx = readmeContent.lastIndexOf(endMarker),
             start = readmeContent.slice(0, startIdx),
             end = readmeContent.slice(endIdx);
-        next(null, start + "\n" + content + "\n" + end);
+        next(null, start + "\n\n" + content + "\n\n" + end);
       },
       function(updatedReadmeContent, next) {
         writeFile(options, path.join(options.projectPath, "README.md"),

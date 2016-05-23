@@ -19,9 +19,6 @@ into your package.json and run `npm run doc`.
 ## API
 
 <!---DOC_GENERATED_START--->
-### Contents
-
-
 
 #### <a name="generateDoc"></a>generateDoc(options, thenDo)
 
@@ -41,4 +38,5 @@ require("doc-comments")({
   projectPath: "/foo/bar", files: files},
   function(err, markup, fileData) { /*...*/ })/
 ```
-<!---DOC_GENERATED_END--->
+
+<!---DOC_GENERATED_END--->`.
