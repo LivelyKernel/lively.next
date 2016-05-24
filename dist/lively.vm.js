@@ -19297,13 +19297,23 @@ var nodes = Object.freeze({
   function insertDeclarationsForExports(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
     parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      return stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ? [stmt] : stmt.specifiers.map(function (specifier) {
-        return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
+        return stmts.concat([varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
-          id: specifier.local,
-          init: member$1(specifier.local, options.captureObj)
-        });
-      }).filter(Boolean).concat(stmt));
+          id: stmt.declaration,
+          init: member$1(stmt.declaration, options.captureObj)
+        }), stmt]);
+      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
+        return stmts.concat([stmt]);
+      } else {
+        return stmts.concat(stmt.specifiers.map(function (specifier) {
+          return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+            type: "VariableDeclarator",
+            id: specifier.local,
+            init: member$1(specifier.local, options.captureObj)
+          });
+        }).filter(Boolean)).concat(stmt);
+      }
     }, []);
     return parsed;
   }
