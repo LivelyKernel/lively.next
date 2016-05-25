@@ -1,5 +1,6 @@
 /*global System,global*/
 
+import * as modules from "lively.modules";
 import mocha from "mocha";
 import chai, { expect } from "chai";
 
@@ -9,23 +10,19 @@ function ConsoleReporter(runner) {
   var passes = 0;
   var failures = 0;
 
-  runner.on('pass', function(test){
+  runner.on('pass', function(test) {
     passes++;
     console.log('pass: %s', test.fullTitle());
   });
 
-  runner.on('fail', function(test, err){
+  runner.on('fail', function(test, err) {
     failures++;
     console.log('fail: %s -- error: %s', test.fullTitle(), err.stack || err.message || err);
   });
 
-  runner.on('end', function(){
+  runner.on('end', function() {
     console.log('end: %d/%d', passes, passes + failures);
   });
-}
-
-function mochaForFile(fileName, optMocha) {
-  return loadTestFile(fileName, null/*parent*/, optMocha);
 }
 
 function gatherTests(suite, depth) {
@@ -34,37 +31,38 @@ function gatherTests(suite, depth) {
     .concat(suite.suites.reduce((tests, suite) => tests.concat(gatherTests(suite, depth + 1)), []));
 }
 
-function loadTestFiles(files, optMocha, optGLOBAL, reporter) {
-  var m = optMocha || new (mocha.constructor)({reporter: reporter || ConsoleReporter}),
-      testState = {mocha: m, files: [], tests: []};
-  return files.reduce((nextP, f) =>
-    nextP
-      .then(() => loadTestFile(f, null, m, optGLOBAL)
-      .then(_testState => {
-        testState.files.push(_testState.file);
-        testState.tests = testState.tests.concat(_testState.tests);
-        return testState;
-      })), Promise.resolve());
+async function loadTestFiles(files, options) {
+  options = Object.assign({
+    global: System.global,
+    mocha: new (mocha.constructor)({reporter: options.reporter}),
+    reporter: ConsoleReporter}, options);
+
+  var testState = {mocha: options.mocha, files: [], tests: []};
+  for (var file of files) {
+    var _testState = await loadTestFile(file, options);
+    testState.files.push(_testState.file);
+    testState.tests = testState.tests.concat(_testState.tests);
+  }
+
+  return testState;
 }
 
-function loadTestFile(file, parent, optMocha, optGLOBAL, reporter) {
-  var GLOBAL = optGLOBAL || (typeof window !== "undefined" ? window : global);
-  return System.normalize(file, parent)
-    .then((file) => {
-      System.delete(file);
-      // if (System.__lively_vm__) delete System.__lively_vm__.loadedModules[file]
-    })
-    .then(() =>
-      prepareMocha(optMocha || new (mocha.constructor)({reporter: reporter || ConsoleReporter}), GLOBAL)
-        .then(mocha => {
-          mocha.suite.emit('pre-require', GLOBAL, file, mocha);
-          return System.import(file)
-            .then(imported => {
-              mocha.suite.emit('require', imported, file, mocha)
-              mocha.suite.emit('post-require', GLOBAL, file, mocha)
-              return {mocha: mocha, file: file, tests: gatherTests(mocha.suite, 0)};
-            })
-        }));
+async function loadTestFile(file, options) {
+  options = Object.assign({
+    global: System.global,
+    mocha: new (mocha.constructor)({reporter: options.reporter}),
+    reporter: ConsoleReporter}, options);
+
+  (options.logger || console).log("[mocha-es6] loading test module %s", file);
+  var file = await System.normalize(file)
+  System.delete(file);
+  var m = options.mocha;
+  prepareMocha(m, options.global);
+  m.suite.emit('pre-require', options.global, file, m);
+  var imported = await System.import(file)
+  m.suite.emit('require', imported, file, m)
+  m.suite.emit('post-require', options.global, file, m)
+  return {mocha: m, file: file, tests: gatherTests(m.suite, 0)};
 }
 
 function prepareMocha(mocha, GLOBAL) {
@@ -84,17 +82,43 @@ function prepareMocha(mocha, GLOBAL) {
     GLOBAL.run           = context.run;
   });
   mocha.ui("bdd");
-  return Promise.resolve(mocha);
 }
 
-function runTestFiles(files, options) {
+async function runTestFiles(files, options) {
   if (!options) options = {};
-  return loadTestFiles(files, options.mocha, options.global, options.reporter)
-    .then(testState => new Promise((resolve, reject) => {
-      var mocha = testState.mocha;
-      if (options.grep) mocha = mocha.grep(options.grep);
-      return mocha.run(failures => resolve(failures));
-    }));
+  
+  if (options.package) {
+    (options.logger || console).log("[mocha-es6] importing package %s", options.package);
+    await lively.modules.importPackage(options.package);
+    files = files.map(f =>
+      f.match(/^(\/|[a-z-A-Z]:\\|[^:]+:\/\/)/) ?
+        f : join(options.package, f))
+  }
+
+  var testState = await loadTestFiles(files, options),
+      mocha = testState.mocha,
+      grep = options.grep || mocha.options.grep || /.*/;
+
+  mocha.grep(grep);
+  options.invert && mocha.invert();
+
+  (options.logger || console).log("[mocha-es6] start running tests");  
+  return new Promise((resolve, reject) => mocha.run(failures => resolve(failures)))
+    .catch(err => {
+      (options.logger || console).log("[mocha-es6] error running tests!\n" + err.stack);  
+      console.error(err);
+      throw err;
+    });
 }
 
-// runTestFiles(["http://localhost:9001/lively.ast-es6/tests/capturing-test.js"], {}).catch(show.curry("%s")).then(show.curry("%s"))
+function join(pathA, pathB) {
+  if (pathA[pathA.length] === "/") pathA = pathA.slice(0,-1);
+  if (pathB[0] === "/") pathB = pathB.slice(1);
+  return `${pathA}/${pathB}`;
+}
+
+async function test() {
+  var file = "tests/eval-support-test.js";
+  var file = "http://localhost:9001/node_modules/lively.ast/tests/eval-support-test.js";
+  await runTestFiles([file], {package: "http://localhost:9001/node_modules/lively.ast"})
+}
