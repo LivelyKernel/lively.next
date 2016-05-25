@@ -221,7 +221,7 @@ function normalize_packageOfURL(url, System) {
 }
 
 function fetch_lively_protocol(proceed, load) {
-  if (load.name.startsWith("lively://")) {
+  if (load.name.match(/^lively:\/\//)) {
     var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
         worldId = match[1], localObjectName = match[2];
     return (typeof $morph !== "undefined"
