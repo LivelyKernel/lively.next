@@ -256,12 +256,6 @@ describe("ast.capturing", function() {
 
     describe("export", () => {
 
-      beforeEach(() => {
-        window.x=true
-      });
-      afterEach(() => {
-        delete window.x;
-      });
       testVarTfm("var x = {x: 23}; export default x;",
                  "_rec.x = { x: 23 };\nvar x = _rec.x;\nexport default x;");
 

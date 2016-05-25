@@ -1,42 +1,37 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
     <title>Tests</title>
-    <link type="text/css" rel="stylesheet" href="../node_modules/mocha/mocha.css" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="pragma" content="no-cache" />
   </head>
   <body>
-    <div id="scratch"></div>
     <div id="mocha"></div>
-    <script type="text/javascript" src="helper.js"></script>
-    <script type="text/javascript" src="mocha-bundle.js"></script>
-    <script type="text/javascript" src="../node_modules/lively.lang/dist/lively.lang.es5.js"></script>
+    <script src="../node_modules/mocha-es6/node_modules/babel-core/browser.js"></script>
+    <script src="../node_modules/mocha-es6/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../node_modules/mocha-es6/node_modules/lively.modules/dist/lively.modules.js"></script>
+    <script src="../node_modules/mocha-es6/mocha-es6-browser.js"></script>
 
     <script type="text/javascript">
-      if (typeof initMochaPhantomJS === 'function') initMochaPhantomJS();
-      mocha.setup("bdd");
-      mocha.globals(["script*"]);
-      var urls = [
-        // "../lively.ast.dev-bundle.js",
-        "../dist/lively.ast.bundle.js",
 
-        "acorn-extension-test.js",
-        "capturing-test.js",
-        "code-categorizer-test.js",
-        "comments-test.js",
-        "es6-test.js",
-        "interface-test.js",
-        "loading-test.js",
-        "query-test.js",
-        "transform-test.js",
+    var tests = [
+        "tests/acorn-extension-test.js",
+        "tests/async-transform-test.js",
+        "tests/browser-helper.js",
+        "tests/capturing-test.js",
+        "tests/code-categorizer-test.js",
+        "tests/code-generation-test.js",
+        "tests/comments-test.js",
+        "tests/es6-test.js",
+        "tests/eval-support-test.js",
+        "tests/loading-test.js",
+        "tests/nodes-test.js",
+        "tests/parser-test.js",
+        "tests/query-test.js",
+        "tests/transform-test.js",
+    ]
+     mochaEs6RunBrowserTests(tests, {package: ".."});
 
-      ];
-      loadUncached(urls, function() {
-        mocha.checkLeaks();
-        mocha.run();
-      });
     </script>
 
   </body>
