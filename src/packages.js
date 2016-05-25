@@ -46,30 +46,40 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 
 function importPackage(System, packageURL) {
   return System.normalize(packageURL)
-    .then(resolvedURL => {
-      // ensure it's a directory
-      if (!resolvedURL.match(/\.js/))
-        return resolvedURL;
-      else if (resolvedURL.indexOf(packageURL + ".js") > -1)
-        return resolvedURL.replace(/\.js$/, "");
-      else
-        return resolvedURL.split("/").slice(0,-1).join("/");
-    })
     .then(url => registerPackage(System, url))
     .then(() => System.normalize(packageURL))
     .then(entry => System.import(entry));
 }
 
-function registerPackage(System, packageURL) {
+function registerPackage(System, packageURL, packageLoadStack) {
   if (!isURL(packageURL)) {
     return Promise.reject(new Error(`Error registering package: ${packageURL} is not a valid URL`));
   }
+
+  // ensure it's a directory
+  if (!packageURL.match(/\.js/))
+    packageURL = packageURL;
+  else if (packageURL.indexOf(packageURL + ".js") > -1)
+    packageURL = packageURL.replace(/\.js$/, "");
+  else
+    packageURL = packageURL.split("/").slice(0,-1).join("/");
 
   if (packageURL.match(/\.js$/)) {
     return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + packageURL));
   }
 
   packageURL = String(packageURL).replace(/\/$/, "");
+
+  packageLoadStack = packageLoadStack || [];
+  var registerSubPackages = true;
+  // stop here to support circular deps
+  if (packageLoadStack.indexOf(packageURL) !== -1) {
+    registerSubPackages = false;
+    System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", packageURL);
+  }
+  else {
+    packageLoadStack.push(packageURL);
+  }
 
   System.debug && console.log("[lively.modules package register] %s", packageURL);
 
@@ -79,9 +89,11 @@ function registerPackage(System, packageURL) {
     .then(cfg =>
       Promise.resolve(applyConfig(System, cfg, packageURL))
         .then(packageConfigResult =>
-          Promise.all(packageConfigResult.subPackages.map(subp =>
-            registerPackage(System, subp.address))))
-        .then(() => cfg.name));
+          registerSubPackages ?
+            Promise.all(packageConfigResult.subPackages.map(subp =>
+              registerPackage(System, subp.address, packageLoadStack))) :
+            Promise.resolve())
+        .then(() => cfg.name))
 }
 
 function tryToLoadPackageConfig(System, packageURL) {

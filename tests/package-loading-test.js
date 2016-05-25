@@ -160,3 +160,37 @@ describe("package configuration test", () => {
       .then(() => S.normalize("..", testDir + "foo/bar.js"))
       .then((result) => expect(result).to.equal(testDir + "index.js")));
 });
+
+describe("mutual dependent packages", () => {
+  
+  var p1Dir = testDir + "p1/",
+      p2Dir = testDir + "p2/",
+      p1 = {
+        "index.js": "export var x = 3; import { y } from 'p2';",
+        "package.json": '{"name": "p1", "lively": {"packageMap": {"p2": "../p2"}}}'
+      },
+      p2 = {
+        "index.js": "export var y = 2; import { x } from 'p1';",
+        "package.json": '{"name": "p2", "lively": {"packageMap": {"p1": "../p1"}}}'
+      };
+
+  var System;
+
+  beforeEach(() => {
+    System = getSystem("test", {baseURL: testDir});
+    System.debug = true;
+    return Promise.all([createFiles(p1Dir, p1),createFiles(p2Dir, p2)]);
+  });
+
+
+  afterEach(() => { removeSystem("test"); return Promise.all([removeDir(p1Dir),removeDir(p2Dir)]); });
+
+  
+  it("can be imported", () =>
+    importPackage(System, p1Dir)
+      .then(() => {
+        expect(moduleEnv(System, `${p1Dir}index.js`).recorder).property("y").equals(2);
+        // FIXME! see https://github.com/LivelyKernel/lively.modules/issues/6
+        // expect(moduleEnv(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
+      }))
+});
