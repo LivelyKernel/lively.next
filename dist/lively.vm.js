@@ -20439,7 +20439,7 @@ var categorizer = Object.freeze({
     }
   }
 
-  function syncEval(string, options) {
+  function syncEval$1(string, options) {
     // See #runEval for options.
     // Although the defaul eval is synchronous we assume that the general
     // evaluation might not return immediatelly. This makes is possible to
@@ -20589,7 +20589,7 @@ var categorizer = Object.freeze({
     });
   }
 
-  function runEval(System, code, options) {
+  function runEval$1(System, code, options) {
     options = lively_lang.obj.merge({
       targetModule: null, parentModule: null,
       parentAddress: null,
@@ -20659,16 +20659,29 @@ var categorizer = Object.freeze({
     });
   }
 
-var esm = Object.freeze({
-    runEval: runEval
-  });
+  function runEval(code, options) {
+    options = Object.assign({
+      format: "global",
+      System: null,
+      targetModule: null
+    }, options);
+
+    var S = options.System || typeof System !== "undefined" && System;
+    if (!S && options.targetModule) {
+      return Promise.reject(new Error("options to runEval have targetModule but cannot find system loader!"));
+    }
+
+    return options.targetModule ? runEval$1(options.System || System, code, options) : vmRunEval(code, options);
+  }
+
+  function syncEval(code, options) {
+    return syncEval$1(code, options);
+  }
 
   exports.completions = completions;
-  exports.esm = esm;
-  exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
-  exports.getGlobal = getGlobal;
-  exports.runEval = vmRunEval;
+  exports.runEval = runEval;
   exports.syncEval = syncEval;
+  exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
 
 }((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
