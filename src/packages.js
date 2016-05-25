@@ -1,7 +1,9 @@
-import { arr, string } from "lively.lang";
+import { arr, string, promise } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-export { importPackage, registerPackage, applyConfig, knownPackages, groupIntoPackages };
+import { computeRequireMap as requireMap } from './dependencies.js'
+
+export { importPackage, registerPackage, applyConfig, getPackages };
 
 // helper
 function isJsFile(url) { return /\.js/i.test(url); }
@@ -224,7 +226,12 @@ function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageU
   return {name: subPackageName, address: subpackageURL};
 }
 
-function knownPackages(System) {
+function packageNamesAndAddresses(System) {
+  // returns a name - address map like
+  // {
+  //   lively.modules: "http://localhost:9001/node_modules/lively.modules",
+  //   // ...
+  // }
   return Object.keys(System.packages).reduce((nameMap, packageURL) => {
     var pkg = System.packages[packageURL];
     if (pkg.names) pkg.names.forEach(name => nameMap[name] = packageURL);
@@ -243,4 +250,42 @@ function groupIntoPackages(System, moduleNames, packageNames) {
       matching.reduce((specific, ea) => ea.length > specific.length ? ea : specific) :
       "no group";
   }
+}
+
+function getPackages(System) {
+  // returns a map like
+  // ```
+  // {
+  // package-address: {
+  //   address: package-address,
+  //   modules: [module-name-1, module-name-2, ...],
+  //   name: package-name,
+  //   names: [package-name, ...]
+  // }, ...
+  // ```
+
+  var map = requireMap(System),
+      modules = Object.keys(map),
+      packages = Object.keys(System.packages),
+      result = {};
+
+  groupIntoPackages(System, modules, packages).mapGroups((packageAddress, moduleNames) => {
+    var p = System.packages[packageAddress],
+        names = p ? p.names : [];
+    if (!names || !names.length) names = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
+
+    moduleNames = moduleNames.filter(name => name !== packageAddress && name !== packageAddress + "/")
+
+    result[packageAddress] = {
+      address: packageAddress,
+      name: names[0],
+      names: names,
+      modules: moduleNames.map(name => ({
+        name: name,
+        deps: map[name]
+      }))
+    }
+  });
+
+  return result;
 }

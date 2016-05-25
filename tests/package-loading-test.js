@@ -4,8 +4,8 @@ import { expect } from "mocha-es6";
 import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
 
 import { obj } from "lively.lang";
-import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
-import { registerPackage, applyConfig } from "../src/packages.js";
+import { getSystem, removeSystem, printSystemConfig, loadedModules, moduleEnv } from "../src/system.js";
+import { registerPackage, importPackage, applyConfig, getPackages } from "../src/packages.js";
 
 var testDir = System.normalizeSync("lively.modules/tests/");
 
@@ -73,6 +73,25 @@ describe("package loading", function() {
         registerPackage(System, project2Dir)])
         .then(_ => System.import("dependent-project"))
         .then(mod => expect(mod).to.have.property("x", 23)));
+
+    it("enumerates packages", () => 
+      importPackage(System, project2Dir).then(() =>
+        expect(getPackages(System)).to.containSubset({
+          [project2Dir.replace(/\/$/, "")]: {
+            address: project2Dir.replace(/\/$/, ""),
+            name: `dependent-project`, names: [`dependent-project`],
+            modules: [
+              {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
+              { deps: [], name: `${project2Dir}package.json`}],
+          },
+          [project1aDir.replace(/\/$/, "")]: {
+            address: project1aDir.replace(/\/$/, ""),
+            name: `some-project`, names: [`some-project`],
+            modules: [
+              {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-a.js`},
+              {deps: [],name: `${project1aDir}other.js`},
+              {deps: [],name: `${project1aDir}package.json`}]
+          }})))
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

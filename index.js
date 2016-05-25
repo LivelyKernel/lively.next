@@ -285,11 +285,15 @@ export {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { importPackage as _importPackage, registerPackage as _registerPackage, groupIntoPackages as _groupIntoPackages } from './src/packages.js'
+import {
+  importPackage as _importPackage,
+  registerPackage as _registerPackage,
+  getPackages as _getPackages
+} from './src/packages.js'
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
-function groupIntoPackages(moduleNames, packageNames) { return _groupIntoPackages(defaultSystem, moduleNames, packageNames); }
-export { importPackage, registerPackage, groupIntoPackages }
+function getPackages(moduleNames) { return _getPackages(defaultSystem); }
+export { importPackage, registerPackage, getPackages }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
