@@ -18,7 +18,7 @@ function isURL(string) { return /^[^:\\]+:\/\//.test(string); }
 function urlResolve(url) {
   var urlMatch = url.match(/^([^:]+:\/\/)(.*)/);
   if (!urlMatch) return url;
-  
+
   var protocol = urlMatch[1],
       path = urlMatch[2],
       result = path;
@@ -44,56 +44,50 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function importPackage(System, packageURL) {
-  return System.normalize(packageURL)
-    .then(url => registerPackage(System, url))
-    .then(() => System.normalize(packageURL))
-    .then(entry => System.import(entry));
+async function importPackage(System, packageURL) {
+  await registerPackage(System, packageURL);
+  // *after* the package is registered the normalize call should resolve to the
+  // package's main module
+  return System.import(await System.normalize(packageURL));
 }
 
-function registerPackage(System, packageURL, packageLoadStack) {
-  if (!isURL(packageURL)) {
-    return Promise.reject(new Error(`Error registering package: ${packageURL} is not a valid URL`));
-  }
+async function registerPackage(System, packageURL, packageLoadStack) {
+  var url = await System.normalize(packageURL);
+
+  if (!isURL(url))
+    return Promise.reject(new Error(`Error registering package: ${url} is not a valid URL`));
+
 
   // ensure it's a directory
-  if (!packageURL.match(/\.js/))
-    packageURL = packageURL;
-  else if (packageURL.indexOf(packageURL + ".js") > -1)
-    packageURL = packageURL.replace(/\.js$/, "");
-  else
-    packageURL = packageURL.split("/").slice(0,-1).join("/");
+  if (!url.match(/\.js/)) url = url;
+  else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");
+  else url = url.split("/").slice(0,-1).join("/");
 
-  if (packageURL.match(/\.js$/)) {
-    return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + packageURL));
-  }
+  if (url.match(/\.js$/))
+    return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + url));
 
-  packageURL = String(packageURL).replace(/\/$/, "");
+  url = String(url).replace(/\/$/, "");
 
   packageLoadStack = packageLoadStack || [];
   var registerSubPackages = true;
   // stop here to support circular deps
-  if (packageLoadStack.indexOf(packageURL) !== -1) {
+  if (packageLoadStack.indexOf(url) !== -1) {
     registerSubPackages = false;
-    System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", packageURL);
+    System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", url);
+  } else packageLoadStack.push(url)
+
+  System.debug && console.log("[lively.modules package register] %s", url);
+
+  var packageInSystem = System.packages[url] || (System.packages[url] = {}),
+      cfg = await tryToLoadPackageConfig(System, url),
+      packageConfigResult = await applyConfig(System, cfg, url)
+
+  if (registerSubPackages) {
+    for (let subp of packageConfigResult.subPackages)
+      await registerPackage(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
   }
-  else {
-    packageLoadStack.push(packageURL);
-  }
 
-  System.debug && console.log("[lively.modules package register] %s", packageURL);
-
-  var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
-
-  return tryToLoadPackageConfig(System, packageURL)
-    .then(cfg =>
-      Promise.resolve(applyConfig(System, cfg, packageURL))
-        .then(packageConfigResult =>
-          registerSubPackages ?
-            Promise.all(packageConfigResult.subPackages.map(subp =>
-              registerPackage(System, subp.address, packageLoadStack))) :
-            Promise.resolve())
-        .then(() => cfg.name))
+  return cfg.name;
 }
 
 function tryToLoadPackageConfig(System, packageURL) {
