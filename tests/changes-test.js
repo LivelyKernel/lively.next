@@ -6,7 +6,6 @@ import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem, moduleRecordFor, moduleEnv, sourceOf } from "../src/system.js";
 import { moduleSourceChange, moduleSourceChangeAction } from "../src/change.js";
 import { forgetModuleDeps } from "../src/dependencies.js";
-import { runEval } from "../src/eval.js";
 
 describe("code changes of esm format module", () => {
 
@@ -68,8 +67,8 @@ describe("code changes of esm format module", () => {
   it("affects eval state", () =>
     S.import(module2)
       .then(m => changeModule2Source())
-      .then(() => runEval(S, "[internal, y]", {targetModule: module2}))
-      .then(result => expect(result.value).to.deep.equal([2, 2])));
+      .then(result => expect(moduleEnv(S, module2).recorder).property("y").equal(2))
+      .then(result => expect(moduleEnv(S, module2).recorder).property("internal").equal(2)));
 
 });
 
@@ -119,7 +118,7 @@ describe("code changes of global format module", () => {
   it("affects eval state", () =>
     S.import(module1)
       .then(m => moduleSourceChangeAction(S, module1, s => s.replace(/zzz = 4/, "zzz = 6")))
-      .then(() => runEval(S, "[zzz, z]", {targetModule: module1}))
-      .then(result => expect(result.value).to.deep.equal([6, 3])));
+      .then(result => expect(moduleEnv(S, module1).recorder).property("zzz").equal(6))
+      .then(result => expect(moduleEnv(S, module1).recorder).property("z").equal(3)));
 
 });
