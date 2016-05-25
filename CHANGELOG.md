@@ -1,5 +1,23 @@
 # lively.modules changelog
 
+## 0.4.1
+
+* removing runEval (!) – es6 aware eval resides now in lively.vm also removing
+  lively.vm dependency, evalCodeTrasnform() that is needed for code
+  instrumentation lives now in lively.ast and is loaded from there
+* adding lively.modules.getPackages
+* removing lively.modules.knownPackages
+* fetch_lively_protocol fix
+* adding tests/run-tests.html for browser-based testing outside of Lively
+* adding dist/lively.modules-with-lively.vm.js
+
+## 0.3.5
+
+* async / await support!
+* requiring babel-regenerator-runtime
+* fetch lively:// protocol for lively workspaces ("virtual modules", not backed by files)
+* runEval fix for setting this (via options.context)
+
 ## 0.2.2
 
 * capturing improvements (computed prop in object literal, capturing of object
