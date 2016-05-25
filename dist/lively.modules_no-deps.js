@@ -1115,7 +1115,8 @@
     var env = {
       loadError: undefined,
       recorderName: "__lvVarRecorder",
-      dontTransform: ["__rec__", "__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport"].concat(ast.query.knownGlobals),
+      dontTransform: ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+      ].concat(ast.query.knownGlobals),
       recorder: Object.create(GLOBAL$1, {
         _moduleExport: {
           get: function get() {
@@ -1345,52 +1346,154 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function importPackage$1(System, packageURL) {
-    return System.normalize(packageURL).then(function (url) {
-      return registerPackage$1(System, url);
-    }).then(function () {
-      return System.normalize(packageURL);
-    }).then(function (entry) {
-      return System["import"](entry);
-    });
+    return regeneratorRuntime.async(function importPackage$(context$1$0) {
+      while (1) switch (context$1$0.prev = context$1$0.next) {
+        case 0:
+          context$1$0.next = 2;
+          return regeneratorRuntime.awrap(registerPackage$1(System, packageURL));
+
+        case 2:
+          context$1$0.t0 = System;
+          context$1$0.next = 5;
+          return regeneratorRuntime.awrap(System.normalize(packageURL));
+
+        case 5:
+          context$1$0.t1 = context$1$0.sent;
+          return context$1$0.abrupt("return", context$1$0.t0["import"].call(context$1$0.t0, context$1$0.t1));
+
+        case 7:
+        case "end":
+          return context$1$0.stop();
+      }
+    }, null, this);
   }
 
   function registerPackage$1(System, packageURL, packageLoadStack) {
-    if (!isURL(packageURL)) {
-      return Promise.reject(new Error("Error registering package: " + packageURL + " is not a valid URL"));
-    }
+    var url, registerSubPackages, packageInSystem, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
 
-    // ensure it's a directory
-    if (!packageURL.match(/\.js/)) packageURL = packageURL;else if (packageURL.indexOf(packageURL + ".js") > -1) packageURL = packageURL.replace(/\.js$/, "");else packageURL = packageURL.split("/").slice(0, -1).join("/");
+    return regeneratorRuntime.async(function registerPackage$(context$1$0) {
+      while (1) switch (context$1$0.prev = context$1$0.next) {
+        case 0:
+          context$1$0.next = 2;
+          return regeneratorRuntime.awrap(System.normalize(packageURL));
 
-    if (packageURL.match(/\.js$/)) {
-      return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + packageURL));
-    }
+        case 2:
+          url = context$1$0.sent;
 
-    packageURL = String(packageURL).replace(/\/$/, "");
+          if (isURL(url)) {
+            context$1$0.next = 5;
+            break;
+          }
 
-    packageLoadStack = packageLoadStack || [];
-    var registerSubPackages = true;
-    // stop here to support circular deps
-    if (packageLoadStack.indexOf(packageURL) !== -1) {
-      registerSubPackages = false;
-      System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", packageURL);
-    } else {
-      packageLoadStack.push(packageURL);
-    }
+          return context$1$0.abrupt("return", Promise.reject(new Error("Error registering package: " + url + " is not a valid URL")));
 
-    System.debug && console.log("[lively.modules package register] %s", packageURL);
+        case 5:
 
-    var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
+          // ensure it's a directory
+          if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
 
-    return tryToLoadPackageConfig(System, packageURL).then(function (cfg) {
-      return Promise.resolve(applyConfig(System, cfg, packageURL)).then(function (packageConfigResult) {
-        return registerSubPackages ? Promise.all(packageConfigResult.subPackages.map(function (subp) {
-          return registerPackage$1(System, subp.address, packageLoadStack);
-        })) : Promise.resolve();
-      }).then(function () {
-        return cfg.name;
-      });
-    });
+          if (!url.match(/\.js$/)) {
+            context$1$0.next = 8;
+            break;
+          }
+
+          return context$1$0.abrupt("return", Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + url)));
+
+        case 8:
+
+          url = String(url).replace(/\/$/, "");
+
+          packageLoadStack = packageLoadStack || [];
+          registerSubPackages = true;
+
+          // stop here to support circular deps
+          if (packageLoadStack.indexOf(url) !== -1) {
+            registerSubPackages = false;
+            System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", url);
+          } else packageLoadStack.push(url);
+
+          System.debug && console.log("[lively.modules package register] %s", url);
+
+          packageInSystem = System.packages[url] || (System.packages[url] = {});
+          context$1$0.next = 16;
+          return regeneratorRuntime.awrap(tryToLoadPackageConfig(System, url));
+
+        case 16:
+          cfg = context$1$0.sent;
+          context$1$0.next = 19;
+          return regeneratorRuntime.awrap(applyConfig(System, cfg, url));
+
+        case 19:
+          packageConfigResult = context$1$0.sent;
+
+          if (!registerSubPackages) {
+            context$1$0.next = 47;
+            break;
+          }
+
+          _iteratorNormalCompletion = true;
+          _didIteratorError = false;
+          _iteratorError = undefined;
+          context$1$0.prev = 24;
+          _iterator = packageConfigResult.subPackages[Symbol.iterator]();
+
+        case 26:
+          if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+            context$1$0.next = 33;
+            break;
+          }
+
+          subp = _step.value;
+          context$1$0.next = 30;
+          return regeneratorRuntime.awrap(registerPackage$1(System, subp.address.replace(/\/?$/, "/"), packageLoadStack));
+
+        case 30:
+          _iteratorNormalCompletion = true;
+          context$1$0.next = 26;
+          break;
+
+        case 33:
+          context$1$0.next = 39;
+          break;
+
+        case 35:
+          context$1$0.prev = 35;
+          context$1$0.t0 = context$1$0["catch"](24);
+          _didIteratorError = true;
+          _iteratorError = context$1$0.t0;
+
+        case 39:
+          context$1$0.prev = 39;
+          context$1$0.prev = 40;
+
+          if (!_iteratorNormalCompletion && _iterator["return"]) {
+            _iterator["return"]();
+          }
+
+        case 42:
+          context$1$0.prev = 42;
+
+          if (!_didIteratorError) {
+            context$1$0.next = 45;
+            break;
+          }
+
+          throw _iteratorError;
+
+        case 45:
+          return context$1$0.finish(42);
+
+        case 46:
+          return context$1$0.finish(39);
+
+        case 47:
+          return context$1$0.abrupt("return", cfg.name);
+
+        case 48:
+        case "end":
+          return context$1$0.stop();
+      }
+    }, null, this, [[24, 35, 39, 47], [40,, 42, 46]]);
   }
 
   function tryToLoadPackageConfig(System, packageURL) {
@@ -1584,6 +1687,9 @@
 
     return result;
   }
+
+  // *after* the package is registered the normalize call should resolve to the
+  // package's main module
 
   var eventTypes = ["modulechange", "doitrequest", "doitresult"];
 

@@ -57,4 +57,4 @@ module.exports = Promise.resolve()
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
     fs.writeFileSync(targetFile3, sources.withVM);
-  });
+  })
