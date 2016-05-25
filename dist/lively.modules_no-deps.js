@@ -439,7 +439,7 @@
 
   }).call(GLOBAL);
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast,lively_vm_lib_evaluator_js,babelRegeneratorRuntime) {
+(function (exports,lively_lang,ast,babelRegeneratorRuntime) {
   'use strict';
 
   var babelHelpers = {};
@@ -651,6 +651,8 @@
     return false;
   }
 
+  var evalCodeTransform = ast.evalSupport.evalCodeTransform;
+
   var isNode$1 = System.get("@system-env").node;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -693,7 +695,7 @@
     }
 
     try {
-      var rewrittenSource = header + lively_vm_lib_evaluator_js.evalCodeTransform(source, tfmOptions) + footer;
+      var rewrittenSource = header + evalCodeTransform(source, tfmOptions) + footer;
       if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
       return rewrittenSource;
     } catch (e) {
@@ -1067,7 +1069,7 @@
   }
 
   function fetch_lively_protocol(proceed, load) {
-    if (load.name.startsWith("lively://")) {
+    if (load.name.match(/^lively:\/\//)) {
       var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
           worldId = match[1],
           localObjectName = match[2];
@@ -1210,6 +1212,103 @@
     }
   }
 
+  function forgetEnvOf(System, fullname) {
+    delete System["__lively.modules__"].loadedModules[fullname];
+  }
+
+  function forgetModuleDeps(System, moduleName, opts) {
+    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
+    var id = System.normalizeSync(moduleName),
+        deps = findDependentsOf$1(System, id);
+    deps.forEach(function (ea) {
+      System["delete"](ea);
+      if (System.loads) delete System.loads[ea];
+      opts.forgetEnv && forgetEnvOf(System, ea);
+    });
+    return id;
+  }
+
+  function forgetModule$1(System, moduleName, opts) {
+    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
+    var id = opts.forgetDeps ? forgetModuleDeps(System, moduleName, opts) : System.normalizeSync(moduleName);
+    System["delete"](moduleName);
+    System["delete"](id);
+    if (System.loads) {
+      delete System.loads[moduleName];
+      delete System.loads[id];
+    }
+    if (opts.forgetEnv) {
+      forgetEnvOf(System, id);
+      forgetEnvOf(System, moduleName);
+    }
+  }
+
+  function reloadModule$1(System, moduleName, opts) {
+    opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
+    var id = System.normalizeSync(moduleName),
+        toBeReloaded = [id];
+    if (opts.reloadDeps) toBeReloaded = findDependentsOf$1(System, id).concat(toBeReloaded);
+    forgetModule$1(System, id, { forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
+    return Promise.all(toBeReloaded.map(function (ea) {
+      return ea !== id && System["import"](ea);
+    })).then(function () {
+      return System["import"](id);
+    });
+  }
+
+  // function computeRequireMap() {
+  //   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
+  //     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
+  //     return requireMap;
+  //   }, {});
+  // }
+
+  function computeRequireMap(System) {
+    if (System.loads) {
+      var store = System.loads,
+          modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
+      return modNames.reduce(function (requireMap, k) {
+        var depMap = store[k] ? store[k].depMap : {};
+        requireMap[k] = Object.keys(depMap).map(function (localName) {
+          var resolvedName = depMap[localName];
+          if (resolvedName === "@empty") return resolvedName + "/" + localName;
+          return resolvedName;
+        });
+        return requireMap;
+      }, {});
+    }
+
+    return Object.keys(System._loader.moduleRecords).reduce(function (requireMap, k) {
+      requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(function (ea) {
+        return ea.name;
+      });
+      return requireMap;
+    }, {});
+  }
+
+  function findDependentsOf$1(System, name) {
+    // which modules (module ids) are (in)directly import module with id
+    // Let's say you have
+    // module1: export var x = 23;
+    // module2: import {x} from "module1.js"; export var y = x + 1;
+    // module3: import {y} from "module2.js"; export var z = y + 1;
+    // `findDependentsOf` gives you an answer what modules are "stale" when you
+    // change module1 = module2 + module3
+    var id = System.normalizeSync(name);
+    return lively_lang.graph.hull(lively_lang.graph.invert(computeRequireMap(System)), id);
+  }
+
+  function findRequirementsOf$1(System, name) {
+    // which modules (module ids) are (in)directly required by module with id
+    // Let's say you have
+    // module1: export var x = 23;
+    // module2: import {x} from "module1.js"; export var y = x + 1;
+    // module3: import {y} from "module2.js"; export var z = y + 1;
+    // `findRequirementsOf("./module3")` will report ./module2 and ./module1
+    var id = System.normalizeSync(name);
+    return lively_lang.graph.hull(computeRequireMap(System), id);
+  }
+
   var join = lively_lang.string.joinPath;
 
   function isURL(string) {
@@ -1246,10 +1345,7 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function importPackage$1(System, packageURL) {
-    return System.normalize(packageURL).then(function (resolvedURL) {
-      // ensure it's a directory
-      if (!resolvedURL.match(/\.js/)) return resolvedURL;else if (resolvedURL.indexOf(packageURL + ".js") > -1) return resolvedURL.replace(/\.js$/, "");else return resolvedURL.split("/").slice(0, -1).join("/");
-    }).then(function (url) {
+    return System.normalize(packageURL).then(function (url) {
       return registerPackage$1(System, url);
     }).then(function () {
       return System.normalize(packageURL);
@@ -1258,10 +1354,13 @@
     });
   }
 
-  function registerPackage$1(System, packageURL) {
+  function registerPackage$1(System, packageURL, packageLoadStack) {
     if (!isURL(packageURL)) {
       return Promise.reject(new Error("Error registering package: " + packageURL + " is not a valid URL"));
     }
+
+    // ensure it's a directory
+    if (!packageURL.match(/\.js/)) packageURL = packageURL;else if (packageURL.indexOf(packageURL + ".js") > -1) packageURL = packageURL.replace(/\.js$/, "");else packageURL = packageURL.split("/").slice(0, -1).join("/");
 
     if (packageURL.match(/\.js$/)) {
       return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + packageURL));
@@ -1269,15 +1368,25 @@
 
     packageURL = String(packageURL).replace(/\/$/, "");
 
+    packageLoadStack = packageLoadStack || [];
+    var registerSubPackages = true;
+    // stop here to support circular deps
+    if (packageLoadStack.indexOf(packageURL) !== -1) {
+      registerSubPackages = false;
+      System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", packageURL);
+    } else {
+      packageLoadStack.push(packageURL);
+    }
+
     System.debug && console.log("[lively.modules package register] %s", packageURL);
 
     var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
 
     return tryToLoadPackageConfig(System, packageURL).then(function (cfg) {
       return Promise.resolve(applyConfig(System, cfg, packageURL)).then(function (packageConfigResult) {
-        return Promise.all(packageConfigResult.subPackages.map(function (subp) {
-          return registerPackage$1(System, subp.address);
-        }));
+        return registerSubPackages ? Promise.all(packageConfigResult.subPackages.map(function (subp) {
+          return registerPackage$1(System, subp.address, packageLoadStack);
+        })) : Promise.resolve();
       }).then(function () {
         return cfg.name;
       });
@@ -1419,7 +1528,7 @@
     return { name: subPackageName, address: subpackageURL };
   }
 
-  function groupIntoPackages$1(System, moduleNames, packageNames) {
+  function groupIntoPackages(System, moduleNames, packageNames) {
 
     return lively_lang.arr.groupBy(moduleNames, groupFor);
 
@@ -1432,6 +1541,48 @@
         return ea.length > specific.length ? ea : specific;
       }) : "no group";
     }
+  }
+
+  function getPackages$1(System) {
+    // returns a map like
+    // ```
+    // {
+    // package-address: {
+    //   address: package-address,
+    //   modules: [module-name-1, module-name-2, ...],
+    //   name: package-name,
+    //   names: [package-name, ...]
+    // }, ...
+    // ```
+
+    var map = computeRequireMap(System),
+        modules = Object.keys(map),
+        packages = Object.keys(System.packages),
+        result = {};
+
+    groupIntoPackages(System, modules, packages).mapGroups(function (packageAddress, moduleNames) {
+      var p = System.packages[packageAddress],
+          names = p ? p.names : [];
+      if (!names || !names.length) names = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
+
+      moduleNames = moduleNames.filter(function (name) {
+        return name !== packageAddress && name !== packageAddress + "/";
+      });
+
+      result[packageAddress] = {
+        address: packageAddress,
+        name: names[0],
+        names: names,
+        modules: moduleNames.map(function (name) {
+          return {
+            name: name,
+            deps: map[name]
+          };
+        })
+      };
+    });
+
+    return result;
   }
 
   var eventTypes = ["modulechange", "doitrequest", "doitresult"];
@@ -1457,26 +1608,6 @@
     truncateNotifications(System);
     notifySubscriber(System, event.type, event);
     return event;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // doits
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function recordDoitRequest(System, code, options, time) {
-    return record(System, {
-      type: "doitrequest",
-      code: code, options: options,
-      time: time || Date.now()
-    });
-  }
-
-  function recordDoitResult(System, code, options, result, time) {
-    return record(System, {
-      type: "doitresult",
-      code: code, options: options, result: result,
-      time: time || Date.now()
-    });
   }
 
   function recordModuleChange(System, moduleId, oldSource, newSource, error, options, time) {
@@ -1826,216 +1957,6 @@
     return entry;
   }
 
-  function forgetEnvOf(System, fullname) {
-    delete System["__lively.modules__"].loadedModules[fullname];
-  }
-
-  function forgetModuleDeps(System, moduleName, opts) {
-    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
-    var id = System.normalizeSync(moduleName),
-        deps = findDependentsOf$1(System, id);
-    deps.forEach(function (ea) {
-      System["delete"](ea);
-      if (System.loads) delete System.loads[ea];
-      opts.forgetEnv && forgetEnvOf(System, ea);
-    });
-    return id;
-  }
-
-  function forgetModule$1(System, moduleName, opts) {
-    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
-    var id = opts.forgetDeps ? forgetModuleDeps(System, moduleName, opts) : System.normalizeSync(moduleName);
-    System["delete"](moduleName);
-    System["delete"](id);
-    if (System.loads) {
-      delete System.loads[moduleName];
-      delete System.loads[id];
-    }
-    if (opts.forgetEnv) {
-      forgetEnvOf(System, id);
-      forgetEnvOf(System, moduleName);
-    }
-  }
-
-  function reloadModule$1(System, moduleName, opts) {
-    opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
-    var id = System.normalizeSync(moduleName),
-        toBeReloaded = [id];
-    if (opts.reloadDeps) toBeReloaded = findDependentsOf$1(System, id).concat(toBeReloaded);
-    forgetModule$1(System, id, { forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
-    return Promise.all(toBeReloaded.map(function (ea) {
-      return ea !== id && System["import"](ea);
-    })).then(function () {
-      return System["import"](id);
-    });
-  }
-
-  // function computeRequireMap() {
-  //   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
-  //     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
-  //     return requireMap;
-  //   }, {});
-  // }
-
-  function computeRequireMap(System) {
-    if (System.loads) {
-      var store = System.loads,
-          modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
-      return modNames.reduce(function (requireMap, k) {
-        var depMap = store[k] ? store[k].depMap : {};
-        requireMap[k] = Object.keys(depMap).map(function (localName) {
-          var resolvedName = depMap[localName];
-          if (resolvedName === "@empty") return resolvedName + "/" + localName;
-          return resolvedName;
-        });
-        return requireMap;
-      }, {});
-    }
-
-    return Object.keys(System._loader.moduleRecords).reduce(function (requireMap, k) {
-      requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(function (ea) {
-        return ea.name;
-      });
-      return requireMap;
-    }, {});
-  }
-
-  function findDependentsOf$1(System, name) {
-    // which modules (module ids) are (in)directly import module with id
-    // Let's say you have
-    // module1: export var x = 23;
-    // module2: import {x} from "module1.js"; export var y = x + 1;
-    // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `findDependentsOf` gives you an answer what modules are "stale" when you
-    // change module1 = module2 + module3
-    var id = System.normalizeSync(name);
-    return lively_lang.graph.hull(lively_lang.graph.invert(computeRequireMap(System)), id);
-  }
-
-  function findRequirementsOf$1(System, name) {
-    // which modules (module ids) are (in)directly required by module with id
-    // Let's say you have
-    // module1: export var x = 23;
-    // module2: import {x} from "module1.js"; export var y = x + 1;
-    // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `findRequirementsOf("./module3")` will report ./module2 and ./module1
-    var id = System.normalizeSync(name);
-    return lively_lang.graph.hull(computeRequireMap(System), id);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // load support
-
-  function ensureImportsAreLoaded(System, code, parentModule) {
-    // FIXME do we have to do a reparse? We should be able to get the ast from
-    // the rewriter...
-    var body = ast.parse(code).body,
-        imports = body.filter(function (node) {
-      return node.type === "ImportDeclaration";
-    });
-    return Promise.all(imports.map(function (node) {
-      return System.normalize(node.source.value, parentModule).then(function (fullName) {
-        return moduleRecordFor$1(System, fullName) ? undefined : System["import"](fullName);
-      });
-    }))["catch"](function (err) {
-      console.error("Error ensuring imports: " + err.message);throw err;
-    });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // transpiler to make es next work
-
-  function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
-    // The function wrapper is needed b/c we need toplevel awaits and babel
-    // converts "this" => "undefined" for modules
-    return function (source, options) {
-      options = Object.assign({
-        modules: 'ignore',
-        sourceMap: undefined, // 'inline' || true || false
-        inputSourceMap: undefined,
-        filename: filename,
-        code: true,
-        ast: false
-      }, options);
-      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
-          transpiled = babel.transform(sourceForBabel, options).code;
-      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
-      return transpiled;
-    };
-  }
-
-  function getEs6Transpiler(System, options, env) {
-    if (options.transpiler) return Promise.resolve(options.transpiler);
-    if (!options.es6Transpile) return Promise.resolve(null);
-
-    if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
-
-    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (babel) {
-      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
-    });
-  }
-
-  function runEval$2(System, code, options) {
-    options = lively_lang.obj.merge({
-      targetModule: null, parentModule: null,
-      parentAddress: null,
-      es6Transpile: true,
-      transpiler: null, // function with params: source, options
-      transpilerOptions: null
-    }, options);
-
-    var originalCode = code;
-
-    System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
-
-    return Promise.resolve().then(function () {
-      var targetModule = options.targetModule || "*scratch*";
-      return System.normalize(targetModule, options.parentModule, options.parentAddress);
-    }).then(function (targetModule) {
-      var fullname = options.targetModule = targetModule;
-      var env = moduleEnv$1(System, fullname);
-      var recorder = env.recorder;
-      var recorderName = env.recorderName;
-      var dontTransform = env.dontTransform;
-
-      return System["import"](fullname).then(function () {
-        return ensureImportsAreLoaded(System, code, fullname);
-      }).then(function () {
-        return getEs6Transpiler(System, options, env);
-      }).then(function (transpiler) {
-        var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
-
-        code = header + code;
-        options = lively_lang.obj.merge({ waitForPromise: true }, options, {
-          recordGlobals: true,
-          dontTransform: dontTransform,
-          varRecorderName: recorderName,
-          topLevelVarRecorder: recorder,
-          sourceURL: options.sourceURL || options.targetModule,
-          context: options.context || recorder,
-          wrapInStartEndCall: true, // for async / await eval support
-          es6ExportFuncId: "_moduleExport",
-          es6ImportFuncId: "_moduleImport",
-          transpiler: transpiler
-        });
-
-        System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
-
-        recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
-
-        return lively_vm_lib_evaluator_js.runEval(code, options).then(function (result) {
-          System["__lively.modules__"].evaluationDone(fullname);
-          System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
-          recordDoitResult(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, result, Date.now());
-          return result;
-        });
-      })["catch"](function (err) {
-        console.error("Error in runEval: " + err.stack);
-        throw err;
-      });
-    });
-  }
-
   var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
 
   exports.System = exports.System || prepareSystem(GLOBAL.System);
@@ -2065,8 +1986,8 @@
   function registerPackage(packageURL) {
     return registerPackage$1(exports.System, packageURL);
   }
-  function groupIntoPackages(moduleNames, packageNames) {
-    return groupIntoPackages$1(exports.System, moduleNames, packageNames);
+  function getPackages(moduleNames) {
+    return getPackages$1(exports.System);
   }
   function moduleSourceChange(moduleName, newSource, options) {
     return moduleSourceChange$1(exports.System, moduleName, newSource, options);
@@ -2104,9 +2025,6 @@
   function unwrapModuleLoad() {
     unwrapModuleLoad$1(exports.System);
   }
-  function runEval$1(code, options) {
-    return runEval$2(exports.System, code, options);
-  }
   function getNotifications() {
     return getNotifications$1(exports.System);
   }
@@ -2127,7 +2045,7 @@
   exports.moduleRecordFor = moduleRecordFor;
   exports.importPackage = importPackage;
   exports.registerPackage = registerPackage;
-  exports.groupIntoPackages = groupIntoPackages;
+  exports.getPackages = getPackages;
   exports.moduleSourceChange = moduleSourceChange;
   exports.findDependentsOf = findDependentsOf;
   exports.findRequirementsOf = findRequirementsOf;
@@ -2140,11 +2058,10 @@
   exports.removeHook = removeHook;
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
-  exports.runEval = runEval$1;
   exports.getNotifications = getNotifications;
   exports.subscribe = subscribe;
   exports.unsubscribe = unsubscribe;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.vm,regeneratorRuntime));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,regeneratorRuntime));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

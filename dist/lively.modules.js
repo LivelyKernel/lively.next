@@ -42,7 +42,7 @@
 
   var livelyLang = createLivelyLangObject();
   if (isNode) { module.exports = livelyLang; if (!Global.lively) return; }
-  
+
   livelyLang._prevLivelyGlobal = Global.lively;
   if (!Global.lively) Global.lively = {};
   if (!Global.lively.lang) Global.lively.lang = livelyLang;
@@ -180,8 +180,23 @@
     // We need to redefine Function.evalJS here b/c the original definition is
     // in a JS 'use strict' block. However, not all function sources we pass in
     // #evalJS from Lively adhere to the strictness rules. To allow those
-    // functions for now we define the creator again outside of a strictness block.
-    Function.evalJS = livelyLang.fun.evalJS = function(src) { return eval(src); }
+      // functions for now we define the creator again outside of a strictness block.
+
+    // rk 2016-05-22: !!! in order to not capture objects in the lexical scope of
+    // eval as they were defined while THIS files WAS loaded, we need to inject
+    // globals / context, i.e. local lively here might be != Global.lively!
+
+    Function.evalJS = livelyLang.fun.evalJS = function(src) {
+        var fixVars = ""
+            + "var Global = typeof System !== 'undefined' ? System.global :\n"
+            + "    typeof window !== 'undefined' ? window :\n"
+            + "    typeof global!=='undefined' ? global :\n"
+            + "    typeof self!=='undefined' ? self : this;\n";
+        if (Global.lively && Global.lively != lively)
+            fixVars += "var lively = Global.lively;\n";
+        return eval(fixVars + src);
+    }
+
     livelyLang.Path.type = livelyLang.PropertyPath;
     livelyLang.Path.prototype.serializeExpr = function () {
       // ignore-in-doc
@@ -4331,6 +4346,33 @@
                 var done = false;
                 setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
                 promise.then(val => !done && (done = true) && resolve(val)).catch(err => !done && (done = true) && reject(err));
+            });
+        },
+        waitFor: function (ms, tester) {
+            return new Promise((resolve, reject) => {
+                if (typeof ms === 'function') {
+                    tester = ms;
+                    ms = undefined;
+                }
+                var stopped = false, error = null, value = undefined, i = setInterval(() => {
+                        if (stopped) {
+                            clearInterval(i);
+                            return;
+                        }
+                        try {
+                            value = tester();
+                        } catch (e) {
+                            error = e;
+                        }
+                        if (value || error) {
+                            stopped = true;
+                            clearInterval(i);
+                            error ? reject(error) : resolve(value);
+                        }
+                    }, 10);
+                if (typeof ms === 'number') {
+                    setTimeout(() => error = new Error('timeout'), ms);
+                }
             });
         },
         deferred: function () {
@@ -18306,7 +18348,11 @@ var nodes = Object.freeze({
     },
 
     varDeclIds: function varDeclIds(scope) {
-      return helpers.declIds(lively_lang.chain(scope.varDecls).pluck('declarations').flatten().pluck('id').value());
+      return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
+        all.push.apply(all, ea.declarations);return all;
+      }, []).map(function (ea) {
+        return ea.id;
+      }));
     },
 
     objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
@@ -18436,7 +18482,9 @@ var nodes = Object.freeze({
         useComments = !!options.jslintGlobalComment,
         declared = _declaredVarNames(scope, useComments),
         refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
-        undeclared = lively_lang.chain(refs).pluck('name').withoutAll(declared).value();
+        undeclared = lively_lang.arr.withoutAll(refs.map(function (ea) {
+      return ea.name;
+    }), declared);
 
     return {
       scope: scope,
@@ -18844,6 +18892,29 @@ var nodes = Object.freeze({
     return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
   }
 
+  var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
+
+  function transformSingleExpression(code) {
+    // evaling certain expressions such as single functions or object
+    // literals will fail or not work as intended. When the code being
+    // evaluated consists just out of a single expression we will wrap it in
+    // parens to allow for those cases
+    // Example:
+    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
+    try {
+      var parsed = fuzzyParse(code);
+      if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
+        code = '(' + code.replace(/;\s*$/, '') + ')';
+      }
+    } catch (e) {
+      if ((typeof lively === "undefined" ? "undefined" : babelHelpers.typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
+    }
+    return code;
+  }
+
 
 
   var transform = Object.freeze({
@@ -18853,7 +18924,8 @@ var nodes = Object.freeze({
     oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
     returnLastStatement: returnLastStatement,
     wrapInFunction: wrapInFunction,
-    wrapInStartEndCall: wrapInStartEndCall
+    wrapInStartEndCall: wrapInStartEndCall,
+    transformSingleExpression: transformSingleExpression
   });
 
   var merge = Object.assign;
@@ -19139,7 +19211,13 @@ var nodes = Object.freeze({
       }
       return result;
     }, []);
-    return [].concat(lively_lang.arr.pluck(topLevel.scope.catches, "name")).concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+    return [].concat(topLevel.scope.catches.map(function (ea) {
+      return ea.name;
+    })).concat(ignoreDecls.reduce(function (all, ea) {
+      all.push.apply(all, ea.declarations);return all;
+    }, []).map(function (ea) {
+      return ea.id.name;
+    }));
   }
 
   function additionalIgnoredRefs(parsed, options) {
@@ -19164,7 +19242,13 @@ var nodes = Object.freeze({
       }));
       return ignored;
     }, []);
-    return [].concat(lively_lang.arr.pluck(topLevel.scope.catches, "name")).concat(ignoredImportAndExportNames).concat(lively_lang.chain(ignoreDecls).pluck("declarations").flatten().pluck("id").pluck("name").value());
+    return [].concat(topLevel.scope.catches.map(function (ea) {
+      return ea.name;
+    })).concat(ignoredImportAndExportNames).concat(ignoreDecls.reduce(function (all, ea) {
+      all.push.apply(all, ea.declarations);return all;
+    }, []).map(function (ea) {
+      return ea.id.name;
+    }));
   }
 
   function shouldDeclBeCaptured(decl, options) {
@@ -19213,13 +19297,23 @@ var nodes = Object.freeze({
   function insertDeclarationsForExports(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
     parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      return stmts.concat(stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length ? [stmt] : stmt.specifiers.map(function (specifier) {
-        return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
+        return stmts.concat([varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
-          id: specifier.local,
-          init: member$1(specifier.local, options.captureObj)
-        });
-      }).filter(Boolean).concat(stmt));
+          id: stmt.declaration,
+          init: member$1(stmt.declaration, options.captureObj)
+        }), stmt]);
+      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
+        return stmts.concat([stmt]);
+      } else {
+        return stmts.concat(stmt.specifiers.map(function (specifier) {
+          return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+            type: "VariableDeclarator",
+            id: specifier.local,
+            init: member$1(specifier.local, options.captureObj)
+          });
+        }).filter(Boolean)).concat(stmt);
+      }
     }, []);
     return parsed;
   }
@@ -19459,6 +19553,50 @@ var nodes = Object.freeze({
 
 var capturing = Object.freeze({
     rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
+  });
+
+  function evalCodeTransform(code, options) {
+    // variable declaration and references in the the source code get
+    // transformed so that they are bound to `varRecorderName` aren't local
+    // state. THis makes it possible to capture eval results, e.g. for
+    // inspection, watching and recording changes, workspace vars, and
+    // incrementally evaluating var declarations and having values bound later.
+
+    // 1. Allow evaluation of function expressions and object literals
+    code = transformSingleExpression(code);
+
+    var parsed = parse(code);
+
+    // 2. capture top level vars into topLevelVarRecorder "environment"
+    if (options.topLevelVarRecorder) {
+
+      var blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      parsed = rewriteToCaptureTopLevelVariables(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
+        es6ImportFuncId: options.es6ImportFuncId,
+        es6ExportFuncId: options.es6ExportFuncId,
+        ignoreUndeclaredExcept: undeclaredToTransform,
+        exclude: blacklist
+      });
+    }
+
+    if (options.wrapInStartEndCall) {
+      parsed = wrapInStartEndCall(parsed, {
+        startFuncNode: options.startFuncNode,
+        endFuncNode: options.endFuncNode
+      });
+    }
+
+    var result = stringify(parsed);
+
+    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+    return result;
+  }
+
+var evalSupport = Object.freeze({
+    evalCodeTransform: evalCodeTransform
   });
 
   function getCommentPrecedingNode(parsed, node) {
@@ -19921,6 +20059,7 @@ var categorizer = Object.freeze({
   exports.query = query;
   exports.transform = transform;
   exports.capturing = capturing;
+  exports.evalSupport = evalSupport;
   exports.comments = comments;
   exports.categorizer = categorizer;
   exports.stringify = stringify;
@@ -19931,517 +20070,6 @@ var categorizer = Object.freeze({
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
 
-(function() {
-  var GLOBAL = typeof window !== "undefined" ? window :
-      typeof global!=="undefined" ? global :
-        typeof self!=="undefined" ? self : this;
-  this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast) {
-  'use strict';
-
-  // helper
-  function signatureOf(name, func) {
-    var source = String(func),
-        match = source.match(/function\s*[a-zA-Z0-9_$]*\s*\(([^\)]*)\)/),
-        params = (match && match[1]) || '';
-    return name + '(' + params + ')';
-  }
-
-  function pluck(list, prop) { return list.map(function(ea) { return ea[prop]; }); }
-
-  function getObjectForCompletion(evalFunc, stringToEval) {
-    var startLetters = '';
-    return Promise.resolve().then(() => {
-      // thenDo = function(err, obj, startLetters)
-      var idx = stringToEval.lastIndexOf('.');
-      if (idx >= 0) {
-        startLetters = stringToEval.slice(idx+1);
-        stringToEval = stringToEval.slice(0,idx);
-      } else {
-        startLetters = stringToEval;
-        stringToEval = '(typeof window === "undefined" ? global : window)';
-      }
-      return evalFunc(stringToEval);
-    })
-    .then(evalResult => ({
-      evalResult: evalResult,
-      startLetters: startLetters,
-      code: stringToEval
-    }));
-  }
-
-  function propertyExtract(excludes, obj, extractor) {
-    return Object.getOwnPropertyNames(obj)
-      .filter(key => excludes.indexOf(key) === -1)
-      .map(extractor)
-      .filter(ea => !!ea)
-      .sort((a,b) => a.name < b.name ? -1 : (a.name > b.name ? 1 : 0));
-  }
-
-  function getMethodsOf(excludes, obj) {
-    return propertyExtract(excludes, obj, function(key) {
-      if ((obj.__lookupGetter__ && obj.__lookupGetter__(key)) || typeof obj[key] !== 'function') return null;
-      return {name: key, completion: signatureOf(key, obj[key])}; })
-  }
-
-  function getAttributesOf(excludes, obj) {
-    return propertyExtract(excludes, obj, function(key) {
-      if ((obj.__lookupGetter__ && !obj.__lookupGetter__(key)) && typeof obj[key] === 'function') return null;
-      return {name: key, completion: key}; })
-  }
-
-  function getProtoChain(obj) {
-    var protos = [], proto = obj;
-    while (obj) { protos.push(obj); obj = obj.__proto__ }
-    return protos;
-  }
-
-  function getDescriptorOf(originalObj, proto) {
-    function shorten(s, len) {
-      if (s.length > len) s = s.slice(0,len) + '...';
-      return s.replace(/\n/g, '').replace(/\s+/g, ' ');
-    }
-
-    if (originalObj === proto) {
-      if (typeof originalObj !== 'function') return shorten(originalObj.toString ? originalObj.toString() : "[some object]", 50);
-      var funcString = originalObj.toString(),
-          body = shorten(funcString.slice(funcString.indexOf('{')+1, funcString.lastIndexOf('}')), 50);
-      return signatureOf(originalObj.displayName || originalObj.name || 'function', originalObj) + ' {' + body + '}';
-    }
-
-    var klass = proto.hasOwnProperty('constructor') && proto.constructor;
-    if (!klass) return 'prototype';
-    if (typeof klass.type === 'string' && klass.type.length) return shorten(klass.type, 50);
-    if (typeof klass.name === 'string' && klass.name.length) return shorten(klass.name, 50);
-    return "anonymous class";
-  }
-
-  function descriptorsOfObjAndProtoProperties(obj) {
-    var excludes = [],
-        completions = getProtoChain(obj)
-          .map(function(proto) {
-            var descr = getDescriptorOf(obj, proto),
-                methodsAndAttributes = getMethodsOf(excludes, proto)
-                  .concat(getAttributesOf(excludes, proto));
-            excludes = excludes.concat(pluck(methodsAndAttributes, 'name'));
-            return [descr, pluck(methodsAndAttributes, 'completion')];
-          });
-    return completions;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // the main deal
-  function getCompletions(evalFunc, string, thenDo) {
-    // thendo = function(err, completions/*ARRAY*/)
-    // eval string and for the resulting object find attributes and methods,
-    // grouped by its prototype / class chain
-    // if string is something like "foo().bar.baz" then treat "baz" as start
-    // letters = filter for properties of foo().bar
-    // ("foo().bar.baz." for props of the result of the complete string)
-    var promise = getObjectForCompletion(evalFunc, string)
-      .then(evalResultAndStartLetters => {
-        var evalResult = evalResultAndStartLetters.evalResult,
-            value = evalResult && evalResult.isEvalResult ? evalResult.value : evalResult,
-            result = {
-              completions: descriptorsOfObjAndProtoProperties(value),
-              startLetters: evalResultAndStartLetters.startLetters,
-              code: evalResultAndStartLetters.code
-            };
-
-        if (evalResult && evalResult.isPromise) {
-          if (evalResult.promiseStatus === "fulfilled")
-            result.promiseResolvedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue)
-          else if (evalResult.promiseStatus === "rejected")
-            result.promiseRejectedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue)
-        }
-        return result;
-    });
-    if (typeof thenDo === "function") {
-      promise.then(result => thenDo(null, result)).catch(err => thenDo(err));
-    }
-    return promise;
-  }
-
-
-
-  var completions = Object.freeze({
-    getCompletions: getCompletions
-  });
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // using code transformers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function evalCodeTransform(code, options) {
-    // variable declaration and references in the the source code get
-    // transformed so that they are bound to `varRecorderName` aren't local
-    // state. THis makes it possible to capture eval results, e.g. for
-    // inspection, watching and recording changes, workspace vars, and
-    // incrementally evaluating var declarations and having values bound later.
-
-
-    // 1. Allow evaluation of function expressions and object literals
-    code = transformSingleExpression(code);
-
-    var parsed = lively_ast.parse(code);
-
-    // 2. capture top level vars into topLevelVarRecorder "environment"
-    if (options.topLevelVarRecorder) {
-
-      var blacklist = (options.dontTransform || []).concat(["arguments"]),
-          undeclaredToTransform = !!options.recordGlobals ?
-            null/*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
-
-      parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(
-        parsed,
-        {name: options.varRecorderName || '__lvVarRecorder', type: "Identifier"},
-        {
-          es6ImportFuncId: options.es6ImportFuncId,
-          es6ExportFuncId: options.es6ExportFuncId,
-          ignoreUndeclaredExcept: undeclaredToTransform,
-          exclude: blacklist
-       });
-    }
-
-    if (options.wrapInStartEndCall) {
-      parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
-        startFuncNode: options.startFuncNode,
-        endFuncNode: options.endFuncNode
-      });
-    }
-
-    var result = lively_ast.stringify(parsed);
-
-
-    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-
-    return result;
-  }
-
-  const isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
-
-  function transformSingleExpression(code) {
-    // evaling certain expressions such as single functions or object
-    // literals will fail or not work as intended. When the code being
-    // evaluated consists just out of a single expression we will wrap it in
-    // parens to allow for those cases
-    // Example:
-    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
-
-    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
-
-    try {
-      var parsed = lively_ast.fuzzyParse(code);
-      if (parsed.body.length === 1 &&
-        (parsed.body[0].type === 'FunctionDeclaration'
-      || (parsed.body[0].type === 'BlockStatement'
-      && parsed.body[0].body[0].type === 'LabeledStatement'))) {
-        code = '(' + code.replace(/;\s*$/, '') + ')';
-      }
-    } catch(e) {
-      if (typeof lively && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e)
-      else console.error("Eval preprocess error: %s", e.stack || e);
-    }
-    return code;
-  }
-
-
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // options
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  const defaultTopLevelVarRecorderName = '__lvVarRecorder';
-  const startEvalFunctionName = "lively.vm-on-eval-start";
-  const endEvalFunctionName = "lively.vm-on-eval-end";
-  function _normalizeEvalOptions(opts) {
-    if (!opts) opts = {};
-    opts = Object.assign({
-      targetModule: null,
-      sourceURL: opts.targetModule,
-      runtime: null,
-      context: getGlobal(),
-      varRecorderName: defaultTopLevelVarRecorderName,
-      dontTransform: [], // blacklist vars
-      recordGlobals: null,
-      returnPromise: true,
-      promiseTimeout: 200,
-      waitForPromise: true,
-      wrapInStartEndCall: false,
-      onStartEval: null,
-      onEndEval: null
-    }, opts);
-
-    if (opts.targetModule) {
-      var moduleEnv = opts.runtime
-                   && opts.runtime.modules
-                   && opts.runtime.modules[opts.targetModule];
-      if (moduleEnv) opts = Object.assign(opts, moduleEnv);
-    }
-
-    if (opts.wrapInStartEndCall) {
-      opts.startFuncNode = {
-        type: "MemberExpression",
-        object: {type: "Identifier", name: opts.varRecorderName},
-        property: {type: "Literal", value: startEvalFunctionName},
-        computed: true
-      }
-      opts.endFuncNode = {
-        type: "MemberExpression",
-        object: {type: "Identifier", name: opts.varRecorderName},
-        property: {type: "Literal", value: endEvalFunctionName},
-        computed: true
-      }
-    }
-
-    return opts;
-  }
-
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // eval
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function getGlobal() {
-    if (typeof System !== "undefined") return System.global;
-    if (typeof window !== "undefined") return window;
-    if (typeof global !== "undefined") return global;
-    if (typeof Global !== "undefined") return Global;
-    return (function() { return this; })();
-  }
-
-  function _eval(__lvEvalStatement, __lvVarRecorder/*needed as arg for capturing*/) {
-    return eval(__lvEvalStatement);
-  }
-
-  function runEval(code, options, thenDo) {
-    // The main function where all eval options are configured.
-    // options can be: {
-    //   runtime: {
-    //     modules: {[MODULENAME: PerModuleOptions]}
-    //   }
-    // }
-    // or directly, PerModuleOptions = {
-    //   varRecorderName: STRING, // default is '__lvVarRecorder'
-    //   topLevelVarRecorder: OBJECT,
-    //   context: OBJECT,
-    //   sourceURL: STRING,
-    //   recordGlobals: BOOLEAN, // also transform free vars? default is false
-    //   transpiler: FUNCTION(source, options) // for transforming the source after the lively xfm
-    //   wrapInStartEndCall: BOOLEAN
-    //   onStartEval: FUNCTION()?,
-    //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
-    // }
-
-    if (typeof options === 'function' && arguments.length === 2) {
-      thenDo = options; options = null;
-    }
-
-    var warnings = [],
-        result = new EvalResult(),
-        returnedError, returnedValue,
-        onEvalEndError, onEvalEndValue,
-        onEvalStartCalled = false, onEvalEndCalled = false;
-    options = _normalizeEvalOptions(options);
-
-    // 1. In case we rewrite the code with on-start and on-end calls we prepare
-    // the environment with actual function handlers that will get called once
-    // the code is evaluated
-
-    var onEvalFunctionHolder, evalDone = lively_lang.promise.deferred();
-    if (options.wrapInStartEndCall) {
-      onEvalFunctionHolder = options.topLevelVarRecorder || getGlobal();
-
-      if (onEvalFunctionHolder[startEvalFunctionName])
-        console.warn(`startEvalFunctionName ${startEvalFunctionName} already exists in recorder!`)
-
-      if (onEvalFunctionHolder[endEvalFunctionName])
-        console.warn(`endEvalFunctionName ${endEvalFunctionName} already exists in recorder!`)
-
-      onEvalFunctionHolder[startEvalFunctionName] = function() {
-        if (onEvalStartCalled) { console.warn("onEvalStartCalled multiple times!"); return; }
-        onEvalStartCalled = true;
-        if (typeof options.onStartEval === "function") options.onStartEval();
-      }
-
-      onEvalFunctionHolder[endEvalFunctionName] = function(err, value) {
-        if (onEvalEndCalled) { console.warn("onEvalEndCalled multiple times!"); return; }
-        onEvalEndCalled = true;
-        finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo);
-      }
-    }
-
-    // 2. Transform the code to capture top-level variables, inject function calls, ...
-    try {
-      code = evalCodeTransform(code, options);
-      if (options.header) code = options.header + code;
-      if (options.footer) code = code + options.footer;
-      if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
-      // console.log(code);
-    } catch (e) {
-      var warning = "lively.vm evalCodeTransform not working: " + (e.stack || e);
-      console.warn(warning);
-      warnings.push(warning);
-    }
-
-    // 3. Now really run eval!
-    try {
-      typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
-      returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
-    } catch (e) { returnedError = e; }
-
-    // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
-    // wrap-up, otherwise we firectly call finishEval()
-    if (options.wrapInStartEndCall) {
-      if (returnedError && !onEvalEndCalled)
-        onEvalFunctionHolder[endEvalFunctionName](returnedError, undefined);
-    } else {
-      finishEval(returnedError, returnedError || returnedValue, result, options, onEvalFunctionHolder, evalDone, thenDo);
-    }
-
-    return options.sync ? result : evalDone.promise;
-  }
-
-  function finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo) {
-    // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
-    // use any Promise since promises always run on next tick. That's why we have
-    // to slightly duplicate the finish logic...
-
-    if (options.wrapInStartEndCall) {
-      delete onEvalFunctionHolder[startEvalFunctionName];
-      delete onEvalFunctionHolder[endEvalFunctionName];
-    }
-
-    if (err) { result.isError = true; result.value = err; }
-    else result.value = value;
-    if (result.value instanceof Promise) result.isPromise = true;
-
-    if (options.sync) {
-      result.processSync(options);
-      if (typeof options.onEndEval === "function") options.onEndEval(err, value);
-    } else {
-      result.process(options)
-        .then(() => {
-          typeof thenDo === "function" && thenDo(null, result);
-          typeof options.onEndEval === "function" && options.onEndEval(err, value);
-          return result;
-        },
-        (err) => {
-          typeof thenDo === "function" && thenDo(err, undefined);
-          typeof options.onEndEval === "function" && options.onEndEval(err, undefined);
-          return result;
-        })
-        .then(evalDone.resolve, evalDone.reject)
-    }
-  }
-
-
-  function syncEval(string, options) {
-    // See #runEval for options.
-    // Although the defaul eval is synchronous we assume that the general
-    // evaluation might not return immediatelly. This makes is possible to
-    // change the evaluation backend, e.g. to be a remotely attached runtime
-    options = Object.assign(options || {}, {sync: true});
-    return runEval(string, options);
-  }
-
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // EvalResult
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  class EvalResult {
-
-    constructor() {
-      this.isEvalResult = true;
-      this.value = undefined;
-      this.warnings = [];
-      this.isError = false;
-      this.isPromise = false;
-      this.promisedValue = undefined;
-      this.promiseStatus = "unknown";
-    }
-
-    printed(options) {
-      this.value = print(this.value, Object.assign(options || {}, {
-        isError: this.isError,
-        isPromise: this.isPromise,
-        promisedValue: this.promisedValue,
-        promiseStatus: this.promiseStatus,
-      }));
-    }
-
-    processSync(options) {
-      if (options.inspect || options.asString)
-        this.value = this.print(this.value, options);
-      return this;
-    }
-
-    process(options) {
-      var result = this;
-      if (result.isPromise && options.waitForPromise) {
-        return tryToWaitForPromise(result, options.promiseTimeout)
-          .then(() => {
-            if (options.inspect || options.asString) result.printed(options);
-            return result;
-          });
-      }
-      if (options.inspect || options.asString) result.printed(options);
-      return Promise.resolve(result);
-    }
-
-  }
-
-  function tryToWaitForPromise(evalResult, timeoutMs) {
-    console.assert(evalResult.isPromise, "no promise in tryToWaitForPromise???");
-    var timeout = {},
-        timeoutP = new Promise(resolve => setTimeout(resolve, timeoutMs, timeout));
-    return Promise.race([timeoutP, evalResult.value])
-      .then(resolved => Object.assign(evalResult, resolved !== timeout ?
-              {promiseStatus: "fulfilled", promisedValue: resolved} :
-              {promiseStatus: "pending"}))
-      .catch(rejected => Object.assign(evalResult,
-              {promiseStatus: "rejected", promisedValue: rejected}))
-  }
-
-  function print(value, options) {
-    if (options.isError || value instanceof Error) return String(value.stack || value);
-
-    if (options.isPromise) {
-      var status = lively_lang.string.print(options.promiseStatus),
-          printed = options.promiseStatus === "pending" ?
-            undefined : print(options.promisedValue, Object.assign(options || {}, {isPromise: false}));
-      return `Promise({status: ${status}, ${(value === undefined ? "" : "value: " + printed)}})`;
-    }
-
-    if (value instanceof Promise)
-      return 'Promise({status: "unknown"})';
-
-    if (options.inspect) return printInspect(value, options);
-
-    // options.asString
-    return String(value);
-  }
-
-  function printInspect(value, options) {
-    var printDepth = options.printDepth || 2,
-        customPrintInspect = lively_lang.Path("lively.morphic.printInspect").get(getGlobal()),
-        customPrinter = customPrintInspect ? (val, _) =>
-          customPrintInspect(val, printDepth): undefined;
-    return lively_lang.obj.inspect(value, {maxDepth: printDepth, customPrinter: customPrinter})
-  }
-
-  exports.completions = completions;
-  exports.EvalResult = EvalResult;
-  exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
-  exports.evalCodeTransform = evalCodeTransform;
-  exports.getGlobal = getGlobal;
-  exports.runEval = runEval;
-  exports.syncEval = syncEval;
-
-}((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));
-  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
-})();
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -21541,7 +21169,7 @@ var categorizer = Object.freeze({
 
   }).call(GLOBAL);
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast,lively_vm_lib_evaluator_js,babelRegeneratorRuntime) {
+(function (exports,lively_lang,ast,babelRegeneratorRuntime) {
   'use strict';
 
   var babelHelpers = {};
@@ -21753,6 +21381,8 @@ var categorizer = Object.freeze({
     return false;
   }
 
+  var evalCodeTransform = ast.evalSupport.evalCodeTransform;
+
   var isNode$1 = System.get("@system-env").node;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -21795,7 +21425,7 @@ var categorizer = Object.freeze({
     }
 
     try {
-      var rewrittenSource = header + lively_vm_lib_evaluator_js.evalCodeTransform(source, tfmOptions) + footer;
+      var rewrittenSource = header + evalCodeTransform(source, tfmOptions) + footer;
       if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
       return rewrittenSource;
     } catch (e) {
@@ -22169,7 +21799,7 @@ var categorizer = Object.freeze({
   }
 
   function fetch_lively_protocol(proceed, load) {
-    if (load.name.startsWith("lively://")) {
+    if (load.name.match(/^lively:\/\//)) {
       var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
           worldId = match[1],
           localObjectName = match[2];
@@ -22312,6 +21942,103 @@ var categorizer = Object.freeze({
     }
   }
 
+  function forgetEnvOf(System, fullname) {
+    delete System["__lively.modules__"].loadedModules[fullname];
+  }
+
+  function forgetModuleDeps(System, moduleName, opts) {
+    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
+    var id = System.normalizeSync(moduleName),
+        deps = findDependentsOf$1(System, id);
+    deps.forEach(function (ea) {
+      System["delete"](ea);
+      if (System.loads) delete System.loads[ea];
+      opts.forgetEnv && forgetEnvOf(System, ea);
+    });
+    return id;
+  }
+
+  function forgetModule$1(System, moduleName, opts) {
+    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
+    var id = opts.forgetDeps ? forgetModuleDeps(System, moduleName, opts) : System.normalizeSync(moduleName);
+    System["delete"](moduleName);
+    System["delete"](id);
+    if (System.loads) {
+      delete System.loads[moduleName];
+      delete System.loads[id];
+    }
+    if (opts.forgetEnv) {
+      forgetEnvOf(System, id);
+      forgetEnvOf(System, moduleName);
+    }
+  }
+
+  function reloadModule$1(System, moduleName, opts) {
+    opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
+    var id = System.normalizeSync(moduleName),
+        toBeReloaded = [id];
+    if (opts.reloadDeps) toBeReloaded = findDependentsOf$1(System, id).concat(toBeReloaded);
+    forgetModule$1(System, id, { forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
+    return Promise.all(toBeReloaded.map(function (ea) {
+      return ea !== id && System["import"](ea);
+    })).then(function () {
+      return System["import"](id);
+    });
+  }
+
+  // function computeRequireMap() {
+  //   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
+  //     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
+  //     return requireMap;
+  //   }, {});
+  // }
+
+  function computeRequireMap(System) {
+    if (System.loads) {
+      var store = System.loads,
+          modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
+      return modNames.reduce(function (requireMap, k) {
+        var depMap = store[k] ? store[k].depMap : {};
+        requireMap[k] = Object.keys(depMap).map(function (localName) {
+          var resolvedName = depMap[localName];
+          if (resolvedName === "@empty") return resolvedName + "/" + localName;
+          return resolvedName;
+        });
+        return requireMap;
+      }, {});
+    }
+
+    return Object.keys(System._loader.moduleRecords).reduce(function (requireMap, k) {
+      requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(function (ea) {
+        return ea.name;
+      });
+      return requireMap;
+    }, {});
+  }
+
+  function findDependentsOf$1(System, name) {
+    // which modules (module ids) are (in)directly import module with id
+    // Let's say you have
+    // module1: export var x = 23;
+    // module2: import {x} from "module1.js"; export var y = x + 1;
+    // module3: import {y} from "module2.js"; export var z = y + 1;
+    // `findDependentsOf` gives you an answer what modules are "stale" when you
+    // change module1 = module2 + module3
+    var id = System.normalizeSync(name);
+    return lively_lang.graph.hull(lively_lang.graph.invert(computeRequireMap(System)), id);
+  }
+
+  function findRequirementsOf$1(System, name) {
+    // which modules (module ids) are (in)directly required by module with id
+    // Let's say you have
+    // module1: export var x = 23;
+    // module2: import {x} from "module1.js"; export var y = x + 1;
+    // module3: import {y} from "module2.js"; export var z = y + 1;
+    // `findRequirementsOf("./module3")` will report ./module2 and ./module1
+    var id = System.normalizeSync(name);
+    return lively_lang.graph.hull(computeRequireMap(System), id);
+  }
+
   var join = lively_lang.string.joinPath;
 
   function isURL(string) {
@@ -22348,10 +22075,7 @@ var categorizer = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function importPackage$1(System, packageURL) {
-    return System.normalize(packageURL).then(function (resolvedURL) {
-      // ensure it's a directory
-      if (!resolvedURL.match(/\.js/)) return resolvedURL;else if (resolvedURL.indexOf(packageURL + ".js") > -1) return resolvedURL.replace(/\.js$/, "");else return resolvedURL.split("/").slice(0, -1).join("/");
-    }).then(function (url) {
+    return System.normalize(packageURL).then(function (url) {
       return registerPackage$1(System, url);
     }).then(function () {
       return System.normalize(packageURL);
@@ -22360,10 +22084,13 @@ var categorizer = Object.freeze({
     });
   }
 
-  function registerPackage$1(System, packageURL) {
+  function registerPackage$1(System, packageURL, packageLoadStack) {
     if (!isURL(packageURL)) {
       return Promise.reject(new Error("Error registering package: " + packageURL + " is not a valid URL"));
     }
+
+    // ensure it's a directory
+    if (!packageURL.match(/\.js/)) packageURL = packageURL;else if (packageURL.indexOf(packageURL + ".js") > -1) packageURL = packageURL.replace(/\.js$/, "");else packageURL = packageURL.split("/").slice(0, -1).join("/");
 
     if (packageURL.match(/\.js$/)) {
       return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + packageURL));
@@ -22371,15 +22098,25 @@ var categorizer = Object.freeze({
 
     packageURL = String(packageURL).replace(/\/$/, "");
 
+    packageLoadStack = packageLoadStack || [];
+    var registerSubPackages = true;
+    // stop here to support circular deps
+    if (packageLoadStack.indexOf(packageURL) !== -1) {
+      registerSubPackages = false;
+      System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", packageURL);
+    } else {
+      packageLoadStack.push(packageURL);
+    }
+
     System.debug && console.log("[lively.modules package register] %s", packageURL);
 
     var packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {});
 
     return tryToLoadPackageConfig(System, packageURL).then(function (cfg) {
       return Promise.resolve(applyConfig(System, cfg, packageURL)).then(function (packageConfigResult) {
-        return Promise.all(packageConfigResult.subPackages.map(function (subp) {
-          return registerPackage$1(System, subp.address);
-        }));
+        return registerSubPackages ? Promise.all(packageConfigResult.subPackages.map(function (subp) {
+          return registerPackage$1(System, subp.address, packageLoadStack);
+        })) : Promise.resolve();
       }).then(function () {
         return cfg.name;
       });
@@ -22521,7 +22258,7 @@ var categorizer = Object.freeze({
     return { name: subPackageName, address: subpackageURL };
   }
 
-  function groupIntoPackages$1(System, moduleNames, packageNames) {
+  function groupIntoPackages(System, moduleNames, packageNames) {
 
     return lively_lang.arr.groupBy(moduleNames, groupFor);
 
@@ -22534,6 +22271,48 @@ var categorizer = Object.freeze({
         return ea.length > specific.length ? ea : specific;
       }) : "no group";
     }
+  }
+
+  function getPackages$1(System) {
+    // returns a map like
+    // ```
+    // {
+    // package-address: {
+    //   address: package-address,
+    //   modules: [module-name-1, module-name-2, ...],
+    //   name: package-name,
+    //   names: [package-name, ...]
+    // }, ...
+    // ```
+
+    var map = computeRequireMap(System),
+        modules = Object.keys(map),
+        packages = Object.keys(System.packages),
+        result = {};
+
+    groupIntoPackages(System, modules, packages).mapGroups(function (packageAddress, moduleNames) {
+      var p = System.packages[packageAddress],
+          names = p ? p.names : [];
+      if (!names || !names.length) names = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
+
+      moduleNames = moduleNames.filter(function (name) {
+        return name !== packageAddress && name !== packageAddress + "/";
+      });
+
+      result[packageAddress] = {
+        address: packageAddress,
+        name: names[0],
+        names: names,
+        modules: moduleNames.map(function (name) {
+          return {
+            name: name,
+            deps: map[name]
+          };
+        })
+      };
+    });
+
+    return result;
   }
 
   var eventTypes = ["modulechange", "doitrequest", "doitresult"];
@@ -22559,26 +22338,6 @@ var categorizer = Object.freeze({
     truncateNotifications(System);
     notifySubscriber(System, event.type, event);
     return event;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // doits
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function recordDoitRequest(System, code, options, time) {
-    return record(System, {
-      type: "doitrequest",
-      code: code, options: options,
-      time: time || Date.now()
-    });
-  }
-
-  function recordDoitResult(System, code, options, result, time) {
-    return record(System, {
-      type: "doitresult",
-      code: code, options: options, result: result,
-      time: time || Date.now()
-    });
   }
 
   function recordModuleChange(System, moduleId, oldSource, newSource, error, options, time) {
@@ -22928,216 +22687,6 @@ var categorizer = Object.freeze({
     return entry;
   }
 
-  function forgetEnvOf(System, fullname) {
-    delete System["__lively.modules__"].loadedModules[fullname];
-  }
-
-  function forgetModuleDeps(System, moduleName, opts) {
-    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
-    var id = System.normalizeSync(moduleName),
-        deps = findDependentsOf$1(System, id);
-    deps.forEach(function (ea) {
-      System["delete"](ea);
-      if (System.loads) delete System.loads[ea];
-      opts.forgetEnv && forgetEnvOf(System, ea);
-    });
-    return id;
-  }
-
-  function forgetModule$1(System, moduleName, opts) {
-    opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
-    var id = opts.forgetDeps ? forgetModuleDeps(System, moduleName, opts) : System.normalizeSync(moduleName);
-    System["delete"](moduleName);
-    System["delete"](id);
-    if (System.loads) {
-      delete System.loads[moduleName];
-      delete System.loads[id];
-    }
-    if (opts.forgetEnv) {
-      forgetEnvOf(System, id);
-      forgetEnvOf(System, moduleName);
-    }
-  }
-
-  function reloadModule$1(System, moduleName, opts) {
-    opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
-    var id = System.normalizeSync(moduleName),
-        toBeReloaded = [id];
-    if (opts.reloadDeps) toBeReloaded = findDependentsOf$1(System, id).concat(toBeReloaded);
-    forgetModule$1(System, id, { forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
-    return Promise.all(toBeReloaded.map(function (ea) {
-      return ea !== id && System["import"](ea);
-    })).then(function () {
-      return System["import"](id);
-    });
-  }
-
-  // function computeRequireMap() {
-  //   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
-  //     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
-  //     return requireMap;
-  //   }, {});
-  // }
-
-  function computeRequireMap(System) {
-    if (System.loads) {
-      var store = System.loads,
-          modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
-      return modNames.reduce(function (requireMap, k) {
-        var depMap = store[k] ? store[k].depMap : {};
-        requireMap[k] = Object.keys(depMap).map(function (localName) {
-          var resolvedName = depMap[localName];
-          if (resolvedName === "@empty") return resolvedName + "/" + localName;
-          return resolvedName;
-        });
-        return requireMap;
-      }, {});
-    }
-
-    return Object.keys(System._loader.moduleRecords).reduce(function (requireMap, k) {
-      requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(function (ea) {
-        return ea.name;
-      });
-      return requireMap;
-    }, {});
-  }
-
-  function findDependentsOf$1(System, name) {
-    // which modules (module ids) are (in)directly import module with id
-    // Let's say you have
-    // module1: export var x = 23;
-    // module2: import {x} from "module1.js"; export var y = x + 1;
-    // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `findDependentsOf` gives you an answer what modules are "stale" when you
-    // change module1 = module2 + module3
-    var id = System.normalizeSync(name);
-    return lively_lang.graph.hull(lively_lang.graph.invert(computeRequireMap(System)), id);
-  }
-
-  function findRequirementsOf$1(System, name) {
-    // which modules (module ids) are (in)directly required by module with id
-    // Let's say you have
-    // module1: export var x = 23;
-    // module2: import {x} from "module1.js"; export var y = x + 1;
-    // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `findRequirementsOf("./module3")` will report ./module2 and ./module1
-    var id = System.normalizeSync(name);
-    return lively_lang.graph.hull(computeRequireMap(System), id);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // load support
-
-  function ensureImportsAreLoaded(System, code, parentModule) {
-    // FIXME do we have to do a reparse? We should be able to get the ast from
-    // the rewriter...
-    var body = ast.parse(code).body,
-        imports = body.filter(function (node) {
-      return node.type === "ImportDeclaration";
-    });
-    return Promise.all(imports.map(function (node) {
-      return System.normalize(node.source.value, parentModule).then(function (fullName) {
-        return moduleRecordFor$1(System, fullName) ? undefined : System["import"](fullName);
-      });
-    }))["catch"](function (err) {
-      console.error("Error ensuring imports: " + err.message);throw err;
-    });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // transpiler to make es next work
-
-  function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
-    // The function wrapper is needed b/c we need toplevel awaits and babel
-    // converts "this" => "undefined" for modules
-    return function (source, options) {
-      options = Object.assign({
-        modules: 'ignore',
-        sourceMap: undefined, // 'inline' || true || false
-        inputSourceMap: undefined,
-        filename: filename,
-        code: true,
-        ast: false
-      }, options);
-      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
-          transpiled = babel.transform(sourceForBabel, options).code;
-      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
-      return transpiled;
-    };
-  }
-
-  function getEs6Transpiler(System, options, env) {
-    if (options.transpiler) return Promise.resolve(options.transpiler);
-    if (!options.es6Transpile) return Promise.resolve(null);
-
-    if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
-
-    return Promise.resolve(System.global[System.transpiler] || System["import"](System.transpiler)).then(function (babel) {
-      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
-    });
-  }
-
-  function runEval$2(System, code, options) {
-    options = lively_lang.obj.merge({
-      targetModule: null, parentModule: null,
-      parentAddress: null,
-      es6Transpile: true,
-      transpiler: null, // function with params: source, options
-      transpilerOptions: null
-    }, options);
-
-    var originalCode = code;
-
-    System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
-
-    return Promise.resolve().then(function () {
-      var targetModule = options.targetModule || "*scratch*";
-      return System.normalize(targetModule, options.parentModule, options.parentAddress);
-    }).then(function (targetModule) {
-      var fullname = options.targetModule = targetModule;
-      var env = moduleEnv$1(System, fullname);
-      var recorder = env.recorder;
-      var recorderName = env.recorderName;
-      var dontTransform = env.dontTransform;
-
-      return System["import"](fullname).then(function () {
-        return ensureImportsAreLoaded(System, code, fullname);
-      }).then(function () {
-        return getEs6Transpiler(System, options, env);
-      }).then(function (transpiler) {
-        var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
-
-        code = header + code;
-        options = lively_lang.obj.merge({ waitForPromise: true }, options, {
-          recordGlobals: true,
-          dontTransform: dontTransform,
-          varRecorderName: recorderName,
-          topLevelVarRecorder: recorder,
-          sourceURL: options.sourceURL || options.targetModule,
-          context: options.context || recorder,
-          wrapInStartEndCall: true, // for async / await eval support
-          es6ExportFuncId: "_moduleExport",
-          es6ImportFuncId: "_moduleImport",
-          transpiler: transpiler
-        });
-
-        System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
-
-        recordDoitRequest(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, Date.now());
-
-        return lively_vm_lib_evaluator_js.runEval(code, options).then(function (result) {
-          System["__lively.modules__"].evaluationDone(fullname);
-          System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
-          recordDoitResult(System, originalCode, { waitForPromise: options.waitForPromise, targetModule: options.targetModule }, result, Date.now());
-          return result;
-        });
-      })["catch"](function (err) {
-        console.error("Error in runEval: " + err.stack);
-        throw err;
-      });
-    });
-  }
-
   var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
 
   exports.System = exports.System || prepareSystem(GLOBAL.System);
@@ -23167,8 +22716,8 @@ var categorizer = Object.freeze({
   function registerPackage(packageURL) {
     return registerPackage$1(exports.System, packageURL);
   }
-  function groupIntoPackages(moduleNames, packageNames) {
-    return groupIntoPackages$1(exports.System, moduleNames, packageNames);
+  function getPackages(moduleNames) {
+    return getPackages$1(exports.System);
   }
   function moduleSourceChange(moduleName, newSource, options) {
     return moduleSourceChange$1(exports.System, moduleName, newSource, options);
@@ -23206,9 +22755,6 @@ var categorizer = Object.freeze({
   function unwrapModuleLoad() {
     unwrapModuleLoad$1(exports.System);
   }
-  function runEval$1(code, options) {
-    return runEval$2(exports.System, code, options);
-  }
   function getNotifications() {
     return getNotifications$1(exports.System);
   }
@@ -23229,7 +22775,7 @@ var categorizer = Object.freeze({
   exports.moduleRecordFor = moduleRecordFor;
   exports.importPackage = importPackage;
   exports.registerPackage = registerPackage;
-  exports.groupIntoPackages = groupIntoPackages;
+  exports.getPackages = getPackages;
   exports.moduleSourceChange = moduleSourceChange;
   exports.findDependentsOf = findDependentsOf;
   exports.findRequirementsOf = findRequirementsOf;
@@ -23242,11 +22788,10 @@ var categorizer = Object.freeze({
   exports.removeHook = removeHook;
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
-  exports.runEval = runEval$1;
   exports.getNotifications = getNotifications;
   exports.subscribe = subscribe;
   exports.unsubscribe = unsubscribe;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.vm,regeneratorRuntime));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,regeneratorRuntime));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

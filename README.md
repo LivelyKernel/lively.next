@@ -138,7 +138,7 @@ implementation is loader independent.
 
 - `lively.modules.sourceOf(moduleId)`: Returns the original source code of the module identified by `moduleId`.
 
-- `lively.modules.moduleEnv(moduleId)`: Returns the evaluation environment of the module behind `moduleId`. 
+- `lively.modules.moduleEnv(moduleId)`: Returns the evaluation environment of the module behind `moduleId`.
 
 A "moduleEnv" is the object used for recording the evaluation state. Each
 module that is loaded with source instrumentation enabled as an according
@@ -184,7 +184,7 @@ export x;
 ```
 
 you can evaluate an expression like `x + 2` via
-`lively.modules.runEval("x + 2", {targetModule: "a.js"})`.
+`lively.vm.esm.runEval(lively.modules.System, "x + 2", {targetModule: "a.js"})`.
 This will return a promise that resolves to an `EvalResult` object. The eval
 result will have a field `value` which is the actual return value of the last
 expression evaluated. In this example it is the number 25.
