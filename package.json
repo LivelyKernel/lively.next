@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "doc-comments": "^0.1.4",
-    "mocha-es6": "^0.2.9",
+    "mocha-es6": "^0.3.0",
     "rollup-plugin-babel": "^1.0.0"
   }
 }
