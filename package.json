@@ -1,7 +1,7 @@
 {
   "name": "mocha-es6",
   "main": "index.js",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "dependencies": {
     "glob": "^7.0.3",
     "minimist": "^1.2.0",
