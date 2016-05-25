@@ -65,11 +65,10 @@
   }
 
   function cacheMocha(mochaDirURL) {
-    var mochaURL = mochaDirURL;
-    if (typeof System !== "undefined" && !System.get(mochaURL + "/mocha-es6.js")) {
-      System.config({map: {"mocha-es6": mochaURL}});
-      System.set(mochaURL + "index.js", System.newModule(mochaEs6));
-      System.set(mochaURL + "mocha-es6.js", System.newModule(mochaEs6));
+    if (typeof System !== "undefined" && !System.get(mochaDirURL + "/mocha-es6.js")) {
+      System.config({map: {"mocha-es6": mochaDirURL}});
+      System.set(mochaDirURL + "index.js", System.newModule(mochaEs6));
+      System.set(mochaDirURL + "mocha-es6.js", System.newModule(mochaEs6));
     }
   }
 
