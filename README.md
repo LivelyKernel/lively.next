@@ -42,13 +42,22 @@ For more please see [doc/rationale.md](doc/rationale.md).
 
 ## Usage
 
-To load lively.modules you can use the pre-build `dist/lively.modules.js` file.
-Once that happens the `lively.modules` global will provide an interface for
-loading packages, modifying modules, evaluating source code in module contexts
-etc.
 
-See the examples in [examples/browser/](examples/browser/) and
-[examples/nodejs/](examples/nodejs/) for more details.
+To load lively.modules you can use the pre-build
+`dist/lively.modules-with-lively.vm.js` file. Once that happens the
+`lively.modules` global will provide an interface for loading packages,
+modifying modules, evaluating source code in module contexts etc.
+
+So on a webpage you would typically link via
+
+```html
+<script src="../node_modules/lively.modules/dist/lively.modules-with-lively.vm.js"></script>
+```
+
+See the examples in
+[lively-system-examples](https://github.com/LivelyKernel/lively-system-examples)
+for more details.
+
 
 ## API
 
@@ -143,7 +152,7 @@ implementation is loader independent.
 A "moduleEnv" is the object used for recording the evaluation state. Each
 module that is loaded with source instrumentation enabled as an according
 moduleEnv It is populated when the module is imported and then used and
-modified when users run evaluations using `lively.vm.esm.runEval()` or change the module's
+modified when users run evaluations using `lively.vm.runEval()` or change the module's
 code with `moduleSourceChange()`. You can get access to the internal module
 state via `moduleEnv('some-module').recorder` the recorder is a map of
 variable and function names.
@@ -170,33 +179,6 @@ By default lively.modules will hook into the `System.translate` process so that 
 ### evaluation
 
 *Please note: This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
-
-#### `lively.vm.esm.runEval(System, sourceString, options)`
-
-To evaluate an expression in the context of a module (to access and modify
-its internal state) you can use the `runEval` method.
-
-Example: If you have a module `a.js` with the source code
-
-```js
-var x = 23;
-export x;
-```
-
-you can evaluate an expression like `x + 2` via
-`lively.vm.esm.runEval(lively.modules.System, "x + 2", {targetModule: "a.js"})`.
-This will return a promise that resolves to an `EvalResult` object. The eval
-result will have a field `value` which is the actual return value of the last
-expression evaluated. In this example it is the number 25.
-
-Note: Since variable `x` is exported by `a.js` the evaluation will also
-affect the exported value of the module. Dependent modules will automatically
-have access to the new exported value x.
-
-*Caveat in the current version*: When evaluating new exports (exports that
-didn't exist when the module was first imported) you need to run
-`reloadModule` (see below) to properly update dependent modules!
-
 
 #### `moduleSourceChange(moduleName, newSource, options)`
 

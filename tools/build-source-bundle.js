@@ -8,9 +8,11 @@ var babel = require('rollup-plugin-babel');
 var fetchFile = require.resolve("whatwg-fetch/fetch.js");
 var targetFile1 = "dist/lively.modules_no-deps.js";
 var targetFile2 = "dist/lively.modules.js";
+var targetFile3 = "dist/lively.modules-with-lively.vm.js";
 
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
+var vmSource = fs.readFileSync(require.resolve("lively.vm/dist/lively.vm_no-deps.js"));
 var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runtime/runtime.js"));
 
 module.exports = Promise.resolve()
@@ -46,11 +48,13 @@ module.exports = Promise.resolve()
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();`;
     var complete = `${langSource}\n${astSource}\n${regeneratorSource}\n${noDeps}`;
-    return {noDeps: noDeps, complete: complete};
+    var withVM = `${complete}\n${vmSource}`;
+    return {noDeps: noDeps, complete: complete, withVM: withVM};
   })
 
   // 4. create files
   .then(sources => {
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
+    fs.writeFileSync(targetFile3, sources.withVM);
   });
