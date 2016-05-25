@@ -10,10 +10,9 @@ module.exports = new Promise((resolve, reject) =>
   docComments({
       projectPath: projectPath,
       files: files,
-      intoFiles: true,
+      intoFiles: false,
       dryRun: false,
-      alias: {"index.js": "main interface"},
-      introIntoReadme: false
+      alias: {"index.js": "main interface"}
     },
     (err, markup, fileData) =>
       err ? reject(err) : resolve()));
