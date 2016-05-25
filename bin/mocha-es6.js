@@ -6,6 +6,7 @@ global.babel  = require("babel-core")
 var parseArgs = require('minimist');
 var glob      = require('glob');
 var modules   = require("lively.modules")
+var mochaEs6  = require("../mocha-es6")
 var path      = require("path");
 var fs        = require("fs");
 var dir       = process.cwd();
@@ -18,16 +19,13 @@ lively.lang.promise.chain([
     modules.unwrapModuleLoad();
     readProcessArgs();
   },
-  () => console.log("1. Loading lively.mocha"),
-  (_, state) => modules.importPackage(path.join(__dirname, "..")),
-  (mochaEs6, state) => state.mochaEs6 = mochaEs6,
-  () => console.log("2. Importing project at " + dir),
+  () => console.log("1. Importing project at " + dir),
   () => modules.importPackage("file://" + dir),
-  () => console.log("3. Looking for test files via globs " + args.files.join(", ")),
+  () => console.log("2. Looking for test files via globs " + args.files.join(", ")),
   () => findTestFiles(args.files),
   (files, state) => state.testFiles = files,
-  (_, state) => console.log("4. Running tests in\n  " + state.testFiles.join("\n  ")),
-  (_, state) => state.mochaEs6.runTestFiles(state.testFiles),
+  (_, state) => console.log("3. Running tests in\n  " + state.testFiles.join("\n  ")),
+  (_, state) => mochaEs6.runTestFiles(state.testFiles),
   failureCount => process.exit(failureCount)
 ]).catch(err => {
   console.error(err.stack || err);
