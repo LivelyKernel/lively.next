@@ -1,6 +1,6 @@
 {
   "name": "lively.ast",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "dist/lively.ast.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "babel-core": "^5.8.35",
     "babel-preset-es2015-rollup": "^1.1.1",
     "estree-to-js": "^0.1.4",
-    "mocha-es6": "^0.3.0",
+    "mocha-es6": "^0.3.1",
     "rollup": "^0.26.1",
     "rollup-plugin-babel": "^2.4.0"
   },
