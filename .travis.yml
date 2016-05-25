@@ -8,7 +8,7 @@ before_install:
   - phantomjs --version
 
 node_js:
-  - "5"
+  - "4"
 
 notifications:
   slack: cdglabs:DHnjngxzOUybEggU2lAYdP9R
