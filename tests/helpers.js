@@ -1,4 +1,4 @@
-/*global System*/
+/*global System, fetch*/
 
 import {
   existsSync as node_existsSync,
@@ -14,20 +14,16 @@ import {
 } from "fs";
 
 import { obj } from "lively.lang";
-import fetch from "fetch";
 
 var isNode = System.get("@system-env").node;
 
-// FIXME: __rec__.fetch(...) doesnt work, arg..>!
-var f = !isNode && fetch.bind(System.global);
-
 function createFilesWeb(baseDir, fileSpec) {
-  return f(baseDir, {method: "MKCOL"})
+  return fetch(baseDir, {method: "MKCOL"})
     .then(arg =>
       Promise.all(Object.keys(fileSpec).map(fileName =>
         typeof fileSpec[fileName] === "object" ?
           createFilesWeb(baseDir + "/" + fileName, fileSpec[fileName]) :
-          f(baseDir + "/" + fileName, {method: "PUT", body: String(fileSpec[fileName])}))));
+          fetch(baseDir + "/" + fileName, {method: "PUT", body: String(fileSpec[fileName])}))));
 }
 
 function createFilesNode(baseDir, fileSpec) {
@@ -46,7 +42,7 @@ var createFiles = isNode ? createFilesNode : createFilesWeb;
 
 
 function readFileWeb(file) {
-  return f(file, {method: "GET"})
+  return fetch(file, {method: "GET"})
     .then(res => res.text());
 }
 
@@ -58,7 +54,7 @@ function readFileNode(file) {
 var readFile = isNode ? readFileNode : readFileWeb;
 
 
-function removeDirWeb(dir) { return f(dir, {method: "DELETE"}); }
+function removeDirWeb(dir) { return fetch(dir, {method: "DELETE"}); }
 
 function removeDirNode(path) {
   if (!node_existsSync(path)) return Promise.resolve();
@@ -85,7 +81,7 @@ var removeFile = isNode ? removeFileNode : removeDirWeb
 function modifyFileWeb(file, modifyFunc) {
   return readFileWeb(file)
     .then(content => modifyFunc(content))
-    .then(modified => f(file, {method: "PUT", body: String(modified)}));
+    .then(modified => fetch(file, {method: "PUT", body: String(modified)}));
 }
 
 function modifyFileNode(file, modifyFunc) {
@@ -100,7 +96,7 @@ var modifyFile = isNode ? modifyFileNode : modifyFileWeb;
 
 
 function writeFileWeb(file, content) {
-  return f(file, {method: "PUT", body: String(content)});
+  return fetch(file, {method: "PUT", body: String(content)});
 }
 
 function writeFileNode(file, content) {

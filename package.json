@@ -13,10 +13,6 @@
     "main": "./index.js",
     "map": {
       "lively.modules": ".",
-      "fetch": {
-        "node": "@empty",
-        "~node": "./node_modules/whatwg-fetch/fetch.js"
-      },
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
@@ -30,12 +26,6 @@
       "lively.lang": "./node_modules/lively.lang",
       "lively.ast": "./node_modules/lively.ast",
       "mocha-es6": "./node_modules/mocha-es6"
-    },
-    "meta": {
-      "./node_modules/whatwg-fetch/fetch.js": {
-        "format": "global",
-        "exports": "fetch"
-      }
     }
   },
   "dependencies": {
@@ -43,8 +33,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "lively.ast": "^0.7.3",
     "lively.lang": "^0.5.23",
-    "systemjs": "=0.19.27",
-    "whatwg-fetch": "^1.0.0"
+    "systemjs": "=0.19.27"
   },
   "devDependencies": {
     "doc-comments": "^0.1.4",
