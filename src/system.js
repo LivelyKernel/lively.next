@@ -16,10 +16,8 @@ var defaultOptions = {
   notificationLimit: null
 }
 
-SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
-  var System = this;
+function livelySystemEnv(System) {
   return {
-
     moduleEnv: function(id) { return moduleEnv(System, id); },
 
     // TODO this is just a test, won't work in all cases...
@@ -50,8 +48,7 @@ SystemClass.prototype.__defineGetter__("__lively.modules__", function() {
     notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
     options: System["__lively.modules__options"]                                 || (System["__lively.modules__options"] = obj.deepCopy(defaultOptions))
   }
-
-});
+}
 
 function systems() { return SystemClass.systems }
 
@@ -83,6 +80,8 @@ function makeSystem(cfg) {
 
 function prepareSystem(System, config) {
   System.trace = true;
+
+  System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
   wrapModuleLoad(System);
 
@@ -258,10 +257,10 @@ function printSystemConfig(System) {
 // module state
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function loadedModules(System) { return System["__lively.modules__"].loadedModules; }
+function loadedModules(System) { return System.get("@lively-env").loadedModules; }
 
 function moduleEnv(System, moduleId) {
-  var ext = System["__lively.modules__"];
+  var ext = System.get("@lively-env");
 
   if (ext.loadedModules[moduleId]) return ext.loadedModules[moduleId];
 

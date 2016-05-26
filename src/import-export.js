@@ -5,7 +5,7 @@ import { moduleRecordFor, updateModuleRecordOf, sourceOf } from "./system.js"
 export { runScheduledExportChanges, scheduleModuleExportsChange, importsAndExportsOf };
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
-  var pendingExportChanges = System["__lively.modules__"].pendingExportChanges,
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = moduleRecordFor(System, moduleId);
   if (rec && (name in rec.exports || addNewExport)) {
     var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
@@ -14,7 +14,7 @@ function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport
 }
 
 function runScheduledExportChanges(System, moduleId) {
-  var pendingExportChanges = System["__lively.modules__"].pendingExportChanges,
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       keysAndValues = pendingExportChanges[moduleId];
   if (!keysAndValues) return;
   clearPendingModuleExportChanges(System, moduleId);
@@ -22,12 +22,12 @@ function runScheduledExportChanges(System, moduleId) {
 }
 
 function clearPendingModuleExportChanges(System, moduleId) {
-  var pendingExportChanges = System["__lively.modules__"].pendingExportChanges;
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges;
   delete pendingExportChanges[moduleId];
 }
 
 function updateModuleExports(System, moduleId, keysAndValues) {
-  var debug = System["__lively.modules__"].debug;
+  var debug = System.debug;
   updateModuleRecordOf(System, moduleId, (record) => {
 
     var newExports = [], existingExports = [];

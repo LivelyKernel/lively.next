@@ -23,7 +23,7 @@
     return obj;
   };
   function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
-    var pendingExportChanges = System["__lively.modules__"].pendingExportChanges,
+    var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
         rec = moduleRecordFor$1(System, moduleId);
     if (rec && (name in rec.exports || addNewExport)) {
       var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
@@ -32,7 +32,7 @@
   }
 
   function runScheduledExportChanges(System, moduleId) {
-    var pendingExportChanges = System["__lively.modules__"].pendingExportChanges,
+    var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
         keysAndValues = pendingExportChanges[moduleId];
     if (!keysAndValues) return;
     clearPendingModuleExportChanges(System, moduleId);
@@ -40,12 +40,12 @@
   }
 
   function clearPendingModuleExportChanges(System, moduleId) {
-    var pendingExportChanges = System["__lively.modules__"].pendingExportChanges;
+    var pendingExportChanges = System.get("@lively-env").pendingExportChanges;
     delete pendingExportChanges[moduleId];
   }
 
   function updateModuleExports(System, moduleId, keysAndValues) {
-    var debug = System["__lively.modules__"].debug;
+    var debug = System.debug;
     updateModuleRecordOf(System, moduleId, function (record) {
 
       var newExports = [],
@@ -268,8 +268,8 @@
 
     // FIXME how to update exports in that case?
     if (!isGlobal) {
-      header += "var __lively_modules__ = System[\"__lively.modules__\"],\n    " + env.recorderName + " = __lively_modules__.moduleEnv(\"" + fullname + "\").recorder;";
-      footer += "\n__lively_modules__.evaluationDone(\"" + fullname + "\");";
+      header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
+      footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
     }
 
     try {
@@ -447,10 +447,8 @@
     notificationLimit: null
   };
 
-  SystemClass.prototype.__defineGetter__("__lively.modules__", function () {
-    var System = this;
+  function livelySystemEnv(System) {
     return Object.defineProperties({
-
       moduleEnv: function moduleEnv(id) {
         return moduleEnv$1(System, id);
       },
@@ -489,7 +487,7 @@
         enumerable: true
       }
     });
-  });
+  }
 
   function systems() {
     return SystemClass.systems;
@@ -519,6 +517,8 @@
 
   function prepareSystem(System, config) {
     System.trace = true;
+
+    System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
     wrapModuleLoad$1(System);
 
@@ -682,11 +682,11 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function loadedModules$1(System) {
-    return System["__lively.modules__"].loadedModules;
+    return System.get("@lively-env").loadedModules;
   }
 
   function moduleEnv$1(System, moduleId) {
-    var ext = System["__lively.modules__"];
+    var ext = System.get("@lively-env");
 
     if (ext.loadedModules[moduleId]) return ext.loadedModules[moduleId];
 
@@ -1394,7 +1394,7 @@
     return regeneratorRuntime.async(function moduleSourceChangeEsm$(context$1$0) {
       while (1) switch (context$1$0.prev = context$1$0.next) {
         case 0:
-          debug = System["__lively.modules__"].debug, load = {
+          debug = System.debug, load = {
             status: 'loading',
             source: newSource,
             name: moduleId,
@@ -1422,7 +1422,7 @@
             return scheduleModuleExportsChange(System, load.name, name, val);
           }, declared = updateData.declare(_exports);
 
-          System["__lively.modules__"].evaluationDone(load.name);
+          System.get("@lively-env").evaluationDone(load.name);
 
           debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
 

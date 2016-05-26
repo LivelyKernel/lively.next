@@ -42,7 +42,7 @@ function moduleSourceChange(System, moduleName, newSource, options) {
 }
 
 async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
-  var debug = System["__lively.modules__"].debug,
+  var debug = System.debug,
       load = {
         status: 'loading',
         source: newSource,
@@ -62,7 +62,7 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
   // evaluate the module source
   var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
       declared = updateData.declare(_exports);
-  System["__lively.modules__"].evaluationDone(load.name);
+  System.get("@lively-env").evaluationDone(load.name);
 
   debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
 

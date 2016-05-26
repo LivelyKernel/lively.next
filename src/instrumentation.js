@@ -66,8 +66,8 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
 
   // FIXME how to update exports in that case?
   if (!isGlobal) {
-    header += `var __lively_modules__ = System["__lively.modules__"],\n    ${env.recorderName} = __lively_modules__.moduleEnv("${fullname}").recorder;`;
-    footer += `\n__lively_modules__.evaluationDone("${fullname}");`
+    header += `var ${env.recorderName} = System.get("@lively-env").moduleEnv("${fullname}").recorder;`;
+    footer += `\nSystem.get("@lively-env").evaluationDone("${fullname}");`
   }
 
   try {
