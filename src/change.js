@@ -41,7 +41,7 @@ function moduleSourceChange(System, moduleName, newSource, options) {
     });
 }
 
-function moduleSourceChangeEsm(System, moduleId, newSource, options) {
+async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
   var debug = System["__lively.modules__"].debug,
       load = {
         status: 'loading',
@@ -53,62 +53,63 @@ function moduleSourceChangeEsm(System, moduleId, newSource, options) {
         metadata: {format: "esm"}
       };
 
-  return (System.get(moduleId) ? Promise.resolve() : System.import(moduleId))
+  if (!System.get(moduleId)) await System.import(moduleId);
+  
+  // translate the source and produce a {declare: FUNCTION, localDeps:
+  // [STRING]} object
+  var updateData = await instrumentSourceOfEsmModuleLoad(System, load);
 
-    // translate the source and produce a {declare: FUNCTION, localDeps:
-    // [STRING]} object
-    .then((_) => instrumentSourceOfEsmModuleLoad(System, load))
+  // evaluate the module source
+  var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
+      declared = updateData.declare(_exports);
+  System["__lively.modules__"].evaluationDone(load.name);
 
-    .then(updateData => {
-      // evaluate the module source
-      var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
-          declared = updateData.declare(_exports);
-      System["__lively.modules__"].evaluationDone(load.name);
+  debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
 
-      debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
 
-      // ensure dependencies are loaded
-      return Promise.all(
-        // gather the data we need for the update, this includes looking up the
-        // imported modules and getting the module record and module object as
-        // a fallback (module records only exist for esm modules)
-        updateData.localDeps.map(depName =>
-          System.normalize(depName, load.name)
-            .then(depFullname => {
-                var depModule = System.get(depFullname),
-                    record = moduleRecordFor(System, depFullname);
-                return depModule && record ?
-                  {name: depName, fullname: depFullname, module: depModule, record: record} :
-                  System.import(depFullname).then((module) => ({
-                    name: depName,
-                    fullname: depFullname,
-                    module: System.get(depFullname) || module,
-                    record: moduleRecordFor(System, depFullname)
-                  }));
-            })))
-
-      .then(deps => {
-        // 1. update dependencies
-        var record = moduleRecordFor(System, load.name);
-        if (record) record.dependencies = deps.map(ea => ea.record);
-
-        // hmm... for house keeping... not really needed right now, though
-        var prevLoad = System.loads && System.loads[load.name];
-        if (prevLoad) {
-          prevLoad.deps = deps.map(ea => ea.name);
-          prevLoad.depMap = deps.reduce((map, dep) => { map[dep.name] = dep.fullname; return map; }, {});
-          if (prevLoad.metadata && prevLoad.metadata.entry) {
-            prevLoad.metadata.entry.deps = prevLoad.deps;
-            prevLoad.metadata.entry.normalizedDeps = deps.map(ea => ea.fullname);
-            prevLoad.metadata.entry.declare = updateData.declare;
-          }
-        }
-        // 2. run setters to populate imports
-        deps.forEach((d,i) => declared.setters[i](d.module));
-        // 3. execute module body
-        return declared.execute();
-      });
+  // ensure dependencies are loaded
+  var deps = [];
+  for (let depName of updateData.localDeps) {
+    // gather the data we need for the update, this includes looking up the
+    // imported modules and getting the module record and module object as
+    // a fallback (module records only exist for esm modules)
+    var fullname = await System.normalize(depName, load.name),
+        depModule = System.get(fullname) || await System.import(fullname),
+        record = moduleRecordFor(System, fullname);
+    deps.push({
+      name: depName,
+      fullname: fullname,
+      module: depModule,
+      record: moduleRecordFor(System, fullname)
     });
+  }
+
+  // 1. update the record so that when its dependencies change and cause a
+  // re-execute, the correct code (new version) is run
+  var record = moduleRecordFor(System, load.name);
+  if (record) {
+    record.dependencies = deps.map(ea => ea.record);
+    record.execute = declared.execute;
+    record.setters = declared.setters;
+  }
+
+  // hmm... for house keeping... not really needed right now, though
+  var prevLoad = System.loads && System.loads[load.name];
+  if (prevLoad) {
+    prevLoad.deps = deps.map(ea => ea.name);
+    prevLoad.depMap = deps.reduce((map, dep) => { map[dep.name] = dep.fullname; return map; }, {});
+    if (prevLoad.metadata && prevLoad.metadata.entry) {
+      prevLoad.metadata.entry.deps = prevLoad.deps;
+      prevLoad.metadata.entry.normalizedDeps = deps.map(ea => ea.fullname);
+      prevLoad.metadata.entry.declare = updateData.declare;
+    }
+  }
+
+  // 2. run setters to populate imports
+  deps.forEach((d,i) => declared.setters[i](d.module));
+
+  // 3. execute module body
+  return declared.execute();
 }
 
 function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
