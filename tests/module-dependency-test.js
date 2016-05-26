@@ -29,30 +29,29 @@ describe("dependencies", () => {
 
   afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
 
-  it("computes required modules of some module", () =>
-    System.import("file1.js")
-    .then(() => findRequirementsOf(System, "file1.js"))
-    .then(result =>
-      expect(result).to.deep.equal([testProjectDir + "file2.js", testProjectDir + "sub-dir/file3.js"])));
+  it("computes required modules of some module", async () => {
+    await System.import("file1.js");
+    var reqs = findRequirementsOf(System, "file1.js");
+    expect(reqs).to.deep.equal([testProjectDir + "file2.js", testProjectDir + "sub-dir/file3.js"]);
+  });
 
-  it("computes dependent modules of some module", () =>
-    System.import("file1.js")
-      .then(() => findDependentsOf(System, "file2.js"))
-      .then(result =>
-        expect(result).to.deep.equal([testProjectDir + "file1.js"])));
+  it("computes dependent modules of some module", async () => {
+    await System.import("file1.js");
+    var deps = findDependentsOf(System, "file2.js");
+    expect(deps).to.deep.equal([testProjectDir + "file1.js"]);
+  });
 
 
   describe("unload module", () => {
     
-    it("forgets module and recordings", () =>
-      System.import(module1)
-        .then(() => forgetModule(System, module2))
-        .then(_ => {
-          expect(moduleRecordFor(System, module1)).to.equal(null);
-          expect(moduleRecordFor(System, module2)).to.equal(null);
-          expect(moduleEnv(System, module1).recorder).to.not.have.property("x");
-          expect(moduleEnv(System, module2).recorder).to.not.have.property("y");
-        }));
+    it("forgets module and recordings", async () => {
+      await System.import(module1);
+      forgetModule(System, module2);
+      expect(moduleRecordFor(System, module1)).to.equal(null);
+      expect(moduleRecordFor(System, module2)).to.equal(null);
+      expect(moduleEnv(System, module1).recorder).to.not.have.property("x");
+      expect(moduleEnv(System, module2).recorder).to.not.have.property("y");
+    });
   
   });
 

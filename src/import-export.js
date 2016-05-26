@@ -83,76 +83,73 @@ function updateModuleExports(System, moduleId, keysAndValues) {
 }
 
 
-function importsAndExportsOf(System, moduleName, parent) {
-  return System.normalize(moduleName, parent)
-  .then(id =>
-    Promise.resolve(sourceOf(System, id))
-      .then(source => {
-        var parsed = ast.parse(source),
-            scope = ast.query.scopes(parsed);
+async function importsAndExportsOf(System, moduleName, parent) {
+  var id = await System.normalize(moduleName, parent),
+      source = await sourceOf(System, id),
+      parsed = ast.parse(source),
+      scope = ast.query.scopes(parsed);
 
-        // compute imports
-        var imports = scope.importDecls.reduce((imports, node) => {
-          var nodes = ast.query.nodesAtIndex(parsed, node.start);
-          var importStmt = arr.without(nodes, scope.node)[0];
-          if (!importStmt) return imports;
+  // compute imports
+  var imports = scope.importDecls.reduce((imports, node) => {
+    var nodes = ast.query.nodesAtIndex(parsed, node.start);
+    var importStmt = arr.without(nodes, scope.node)[0];
+    if (!importStmt) return imports;
 
-          var from = importStmt.source ? importStmt.source.value : "unknown module";
-          if (!importStmt.specifiers.length) // no imported vars
-            return imports.concat([{
-              localModule:     id,
-              local:           null,
-              imported:        null,
-              fromModule:      from,
-              importStatement: importStmt
-            }]);
+    var from = importStmt.source ? importStmt.source.value : "unknown module";
+    if (!importStmt.specifiers.length) // no imported vars
+      return imports.concat([{
+        localModule:     id,
+        local:           null,
+        imported:        null,
+        fromModule:      from,
+        importStatement: importStmt
+      }]);
 
-          return imports.concat(importStmt.specifiers.map(importSpec => {
-            var imported;
-            if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
-            else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";
-            else if (importStmt.source) imported = importStmt.source.name;
-            else imported = null;
-            return {
-              localModule:     id,
-              local:           importSpec.local ? importSpec.local.name : null,
-              imported:        imported,
-              fromModule:      from,
-              importStatement: importStmt
-            }
-          }))
-        }, []);
+    return imports.concat(importStmt.specifiers.map(importSpec => {
+      var imported;
+      if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
+      else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";
+      else if (importStmt.source) imported = importStmt.source.name;
+      else imported = null;
+      return {
+        localModule:     id,
+        local:           importSpec.local ? importSpec.local.name : null,
+        imported:        imported,
+        fromModule:      from,
+        importStatement: importStmt
+      }
+    }))
+  }, []);
 
-        var exports = scope.exportDecls.reduce((exports, node) => {
-          var nodes = ast.query.nodesAtIndex(parsed, node.start);
-          var exportsStmt = arr.without(nodes, scope.node)[0];
-          if (!exportsStmt) return exports;
+  var exports = scope.exportDecls.reduce((exports, node) => {
+    var nodes = ast.query.nodesAtIndex(parsed, node.start);
+    var exportsStmt = arr.without(nodes, scope.node)[0];
+    if (!exportsStmt) return exports;
 
-          if (exportsStmt.type === "ExportAllDeclaration") {
-            var from = exportsStmt.source ? exportsStmt.source.value : null;
-            return exports.concat([{
-              localModule:     id,
-              local:           null,
-              exported:        "*",
-              fromModule:      from,
-              exportStatement: exportsStmt
-            }])
-          }
+    if (exportsStmt.type === "ExportAllDeclaration") {
+      var from = exportsStmt.source ? exportsStmt.source.value : null;
+      return exports.concat([{
+        localModule:     id,
+        local:           null,
+        exported:        "*",
+        fromModule:      from,
+        exportStatement: exportsStmt
+      }])
+    }
 
-          return exports.concat(exportsStmt.specifiers.map(exportSpec => {
-            return {
-              localModule:     id,
-              local:           exportSpec.local ? exportSpec.local.name : null,
-              exported:        exportSpec.exported ? exportSpec.exported.name : null,
-              fromModule:      id,
-              exportStatement: exportsStmt
-            }
-          }))
-        }, []);
+    return exports.concat(exportsStmt.specifiers.map(exportSpec => {
+      return {
+        localModule:     id,
+        local:           exportSpec.local ? exportSpec.local.name : null,
+        exported:        exportSpec.exported ? exportSpec.exported.name : null,
+        fromModule:      id,
+        exportStatement: exportsStmt
+      }
+    }))
+  }, []);
 
-        return {
-          imports: arr.uniqBy(imports, (a, b) => a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule),
-          exports: arr.uniqBy(exports, (a, b) => a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule)
-        }
-      }))
+  return {
+    imports: arr.uniqBy(imports, (a, b) => a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule),
+    exports: arr.uniqBy(exports, (a, b) => a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule)
+  }
 }
