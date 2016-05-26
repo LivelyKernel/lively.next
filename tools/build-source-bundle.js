@@ -5,7 +5,6 @@ var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 
-var fetchFile = require.resolve("whatwg-fetch/fetch.js");
 var targetFile1 = "dist/lively.modules_no-deps.js";
 var targetFile2 = "dist/lively.modules.js";
 var targetFile3 = "dist/lively.modules-with-lively.vm.js";
@@ -41,9 +40,6 @@ module.exports = Promise.resolve()
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
-  (function() {
-    ${fs.readFileSync(fetchFile)}
-  }).call(GLOBAL);
   ${source}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();`;

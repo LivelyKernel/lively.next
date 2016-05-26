@@ -20732,442 +20732,6 @@ var categorizer = Object.freeze({
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
-  (function() {
-    (function(self) {
-  'use strict';
-
-  if (self.fetch) {
-    return
-  }
-
-  var support = {
-    searchParams: 'URLSearchParams' in self,
-    iterable: 'Symbol' in self && 'iterator' in Symbol,
-    blob: 'FileReader' in self && 'Blob' in self && (function() {
-      try {
-        new Blob()
-        return true
-      } catch(e) {
-        return false
-      }
-    })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name)
-    }
-    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value)
-    }
-    return value
-  }
-
-  // Build a destructive iterator for the value list
-  function iteratorFor(items) {
-    var iterator = {
-      next: function() {
-        var value = items.shift()
-        return {done: value === undefined, value: value}
-      }
-    }
-
-    if (support.iterable) {
-      iterator[Symbol.iterator] = function() {
-        return iterator
-      }
-    }
-
-    return iterator
-  }
-
-  function Headers(headers) {
-    this.map = {}
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value)
-      }, this)
-
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name])
-      }, this)
-    }
-  }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name)
-    value = normalizeValue(value)
-    var list = this.map[name]
-    if (!list) {
-      list = []
-      this.map[name] = list
-    }
-    list.push(value)
-  }
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)]
-  }
-
-  Headers.prototype.get = function(name) {
-    var values = this.map[normalizeName(name)]
-    return values ? values[0] : null
-  }
-
-  Headers.prototype.getAll = function(name) {
-    return this.map[normalizeName(name)] || []
-  }
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  }
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = [normalizeValue(value)]
-  }
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    Object.getOwnPropertyNames(this.map).forEach(function(name) {
-      this.map[name].forEach(function(value) {
-        callback.call(thisArg, value, name, this)
-      }, this)
-    }, this)
-  }
-
-  Headers.prototype.keys = function() {
-    var items = []
-    this.forEach(function(value, name) { items.push(name) })
-    return iteratorFor(items)
-  }
-
-  Headers.prototype.values = function() {
-    var items = []
-    this.forEach(function(value) { items.push(value) })
-    return iteratorFor(items)
-  }
-
-  Headers.prototype.entries = function() {
-    var items = []
-    this.forEach(function(value, name) { items.push([name, value]) })
-    return iteratorFor(items)
-  }
-
-  if (support.iterable) {
-    Headers.prototype[Symbol.iterator] = Headers.prototype.entries
-  }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
-    }
-    body.bodyUsed = true
-  }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result)
-      }
-      reader.onerror = function() {
-        reject(reader.error)
-      }
-    })
-  }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader()
-    reader.readAsArrayBuffer(blob)
-    return fileReaderReady(reader)
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader()
-    reader.readAsText(blob)
-    return fileReaderReady(reader)
-  }
-
-  function Body() {
-    this.bodyUsed = false
-
-    this._initBody = function(body) {
-      this._bodyInit = body
-      if (typeof body === 'string') {
-        this._bodyText = body
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body
-      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-        this._bodyText = body.toString()
-      } else if (!body) {
-        this._bodyText = ''
-      } else if (support.arrayBuffer && ArrayBuffer.prototype.isPrototypeOf(body)) {
-        // Only support ArrayBuffers for POST method.
-        // Receiving ArrayBuffers happens via Blobs, instead.
-      } else {
-        throw new Error('unsupported BodyInit type')
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8')
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type)
-        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
-        }
-      }
-    }
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this)
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      }
-
-      this.arrayBuffer = function() {
-        return this.blob().then(readBlobAsArrayBuffer)
-      }
-
-      this.text = function() {
-        var rejected = consumed(this)
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return readBlobAsText(this._bodyBlob)
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as text')
-        } else {
-          return Promise.resolve(this._bodyText)
-        }
-      }
-    } else {
-      this.text = function() {
-        var rejected = consumed(this)
-        return rejected ? rejected : Promise.resolve(this._bodyText)
-      }
-    }
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      }
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    }
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase()
-    return (methods.indexOf(upcased) > -1) ? upcased : method
-  }
-
-  function Request(input, options) {
-    options = options || {}
-    var body = options.body
-    if (Request.prototype.isPrototypeOf(input)) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url
-      this.credentials = input.credentials
-      if (!options.headers) {
-        this.headers = new Headers(input.headers)
-      }
-      this.method = input.method
-      this.mode = input.mode
-      if (!body) {
-        body = input._bodyInit
-        input.bodyUsed = true
-      }
-    } else {
-      this.url = input
-    }
-
-    this.credentials = options.credentials || this.credentials || 'omit'
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers)
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET')
-    this.mode = options.mode || this.mode || null
-    this.referrer = null
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body)
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this)
-  }
-
-  function decode(body) {
-    var form = new FormData()
-    body.trim().split('&').forEach(function(bytes) {
-      if (bytes) {
-        var split = bytes.split('=')
-        var name = split.shift().replace(/\+/g, ' ')
-        var value = split.join('=').replace(/\+/g, ' ')
-        form.append(decodeURIComponent(name), decodeURIComponent(value))
-      }
-    })
-    return form
-  }
-
-  function headers(xhr) {
-    var head = new Headers()
-    var pairs = (xhr.getAllResponseHeaders() || '').trim().split('\n')
-    pairs.forEach(function(header) {
-      var split = header.trim().split(':')
-      var key = split.shift().trim()
-      var value = split.join(':').trim()
-      head.append(key, value)
-    })
-    return head
-  }
-
-  Body.call(Request.prototype)
-
-  function Response(bodyInit, options) {
-    if (!options) {
-      options = {}
-    }
-
-    this.type = 'default'
-    this.status = options.status
-    this.ok = this.status >= 200 && this.status < 300
-    this.statusText = options.statusText
-    this.headers = options.headers instanceof Headers ? options.headers : new Headers(options.headers)
-    this.url = options.url || ''
-    this._initBody(bodyInit)
-  }
-
-  Body.call(Response.prototype)
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
-    })
-  }
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''})
-    response.type = 'error'
-    return response
-  }
-
-  var redirectStatuses = [301, 302, 303, 307, 308]
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  }
-
-  self.Headers = Headers
-  self.Request = Request
-  self.Response = Response
-
-  self.fetch = function(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request
-      if (Request.prototype.isPrototypeOf(input) && !init) {
-        request = input
-      } else {
-        request = new Request(input, init)
-      }
-
-      var xhr = new XMLHttpRequest()
-
-      function responseURL() {
-        if ('responseURL' in xhr) {
-          return xhr.responseURL
-        }
-
-        // Avoid security warnings on getResponseHeader when not allowed by CORS
-        if (/^X-Request-URL:/m.test(xhr.getAllResponseHeaders())) {
-          return xhr.getResponseHeader('X-Request-URL')
-        }
-
-        return
-      }
-
-      xhr.onload = function() {
-        var options = {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: headers(xhr),
-          url: responseURL()
-        }
-        var body = 'response' in xhr ? xhr.response : xhr.responseText
-        resolve(new Response(body, options))
-      }
-
-      xhr.onerror = function() {
-        reject(new TypeError('Network request failed'))
-      }
-
-      xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'))
-      }
-
-      xhr.open(request.method, request.url, true)
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true
-      }
-
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob'
-      }
-
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value)
-      })
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
-    })
-  }
-  self.fetch.polyfill = true
-})(typeof self !== 'undefined' ? self : this);
-
-  }).call(GLOBAL);
   this.lively = this.lively || {};
 (function (exports,lively_lang,ast,babelRegeneratorRuntime) {
   'use strict';
@@ -21267,78 +20831,92 @@ var categorizer = Object.freeze({
   }
 
   function importsAndExportsOf$1(System, moduleName, parent) {
-    return System.normalize(moduleName, parent).then(function (id) {
-      return Promise.resolve(sourceOf$1(System, id)).then(function (source) {
-        var parsed = ast.parse(source),
-            scope = ast.query.scopes(parsed);
+    var id, source, parsed, scope, imports, exports;
+    return regeneratorRuntime.async(function importsAndExportsOf$(context$1$0) {
+      while (1) switch (context$1$0.prev = context$1$0.next) {
+        case 0:
+          context$1$0.next = 2;
+          return regeneratorRuntime.awrap(System.normalize(moduleName, parent));
 
-        // compute imports
-        var imports = scope.importDecls.reduce(function (imports, node) {
-          var nodes = ast.query.nodesAtIndex(parsed, node.start);
-          var importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-          if (!importStmt) return imports;
+        case 2:
+          id = context$1$0.sent;
+          context$1$0.next = 5;
+          return regeneratorRuntime.awrap(sourceOf$1(System, id));
 
-          var from = importStmt.source ? importStmt.source.value : "unknown module";
-          if (!importStmt.specifiers.length) // no imported vars
-            return imports.concat([{
-              localModule: id,
-              local: null,
-              imported: null,
-              fromModule: from,
-              importStatement: importStmt
-            }]);
+        case 5:
+          source = context$1$0.sent;
+          parsed = ast.parse(source);
+          scope = ast.query.scopes(parsed);
+          imports = scope.importDecls.reduce(function (imports, node) {
+            var nodes = ast.query.nodesAtIndex(parsed, node.start);
+            var importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+            if (!importStmt) return imports;
 
-          return imports.concat(importStmt.specifiers.map(function (importSpec) {
-            var imported;
-            if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importStmt.source) imported = importStmt.source.name;else imported = null;
-            return {
-              localModule: id,
-              local: importSpec.local ? importSpec.local.name : null,
-              imported: imported,
-              fromModule: from,
-              importStatement: importStmt
-            };
-          }));
-        }, []);
+            var from = importStmt.source ? importStmt.source.value : "unknown module";
+            if (!importStmt.specifiers.length) // no imported vars
+              return imports.concat([{
+                localModule: id,
+                local: null,
+                imported: null,
+                fromModule: from,
+                importStatement: importStmt
+              }]);
 
-        var exports = scope.exportDecls.reduce(function (exports, node) {
-          var nodes = ast.query.nodesAtIndex(parsed, node.start);
-          var exportsStmt = lively_lang.arr.without(nodes, scope.node)[0];
-          if (!exportsStmt) return exports;
+            return imports.concat(importStmt.specifiers.map(function (importSpec) {
+              var imported;
+              if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+              return {
+                localModule: id,
+                local: importSpec.local ? importSpec.local.name : null,
+                imported: imported,
+                fromModule: from,
+                importStatement: importStmt
+              };
+            }));
+          }, []);
+          exports = scope.exportDecls.reduce(function (exports, node) {
+            var nodes = ast.query.nodesAtIndex(parsed, node.start);
+            var exportsStmt = lively_lang.arr.without(nodes, scope.node)[0];
+            if (!exportsStmt) return exports;
 
-          if (exportsStmt.type === "ExportAllDeclaration") {
-            var from = exportsStmt.source ? exportsStmt.source.value : null;
-            return exports.concat([{
-              localModule: id,
-              local: null,
-              exported: "*",
-              fromModule: from,
-              exportStatement: exportsStmt
-            }]);
-          }
+            if (exportsStmt.type === "ExportAllDeclaration") {
+              var from = exportsStmt.source ? exportsStmt.source.value : null;
+              return exports.concat([{
+                localModule: id,
+                local: null,
+                exported: "*",
+                fromModule: from,
+                exportStatement: exportsStmt
+              }]);
+            }
 
-          return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
-            return {
-              localModule: id,
-              local: exportSpec.local ? exportSpec.local.name : null,
-              exported: exportSpec.exported ? exportSpec.exported.name : null,
-              fromModule: id,
-              exportStatement: exportsStmt
-            };
-          }));
-        }, []);
+            return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+              return {
+                localModule: id,
+                local: exportSpec.local ? exportSpec.local.name : null,
+                exported: exportSpec.exported ? exportSpec.exported.name : null,
+                fromModule: id,
+                exportStatement: exportsStmt
+              };
+            }));
+          }, []);
+          return context$1$0.abrupt("return", {
+            imports: lively_lang.arr.uniqBy(imports, function (a, b) {
+              return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+            }),
+            exports: lively_lang.arr.uniqBy(exports, function (a, b) {
+              return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+            })
+          });
 
-        return {
-          imports: lively_lang.arr.uniqBy(imports, function (a, b) {
-            return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
-          }),
-          exports: lively_lang.arr.uniqBy(exports, function (a, b) {
-            return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
-          })
-        };
-      });
-    });
+        case 11:
+        case "end":
+          return context$1$0.stop();
+      }
+    }, null, this);
   }
+
+  // compute imports
 
   function installHook$1(System, hookName, hook) {
     System[hookName] = lively_lang.fun.wrap(System[hookName], hook);
@@ -22541,83 +22119,169 @@ var categorizer = Object.freeze({
   }
 
   function moduleSourceChangeEsm(System, moduleId, newSource, options) {
-    var debug = System["__lively.modules__"].debug,
-        load = {
-      status: 'loading',
-      source: newSource,
-      name: moduleId,
-      address: moduleId,
-      linkSets: [],
-      dependencies: [],
-      metadata: { format: "esm" }
-    };
+    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, fullname, depModule, record, prevLoad;
 
-    return (System.get(moduleId) ? Promise.resolve() : System["import"](moduleId)).
+    return regeneratorRuntime.async(function moduleSourceChangeEsm$(context$1$0) {
+      while (1) switch (context$1$0.prev = context$1$0.next) {
+        case 0:
+          debug = System["__lively.modules__"].debug, load = {
+            status: 'loading',
+            source: newSource,
+            name: moduleId,
+            address: moduleId,
+            linkSets: [],
+            dependencies: [],
+            metadata: { format: "esm" }
+          };
 
-    // translate the source and produce a {declare: FUNCTION, localDeps:
-    // [STRING]} object
-    then(function (_) {
-      return instrumentSourceOfEsmModuleLoad(System, load);
-    }).then(function (updateData) {
-      // evaluate the module source
-      var _exports = function _exports(name, val) {
-        return scheduleModuleExportsChange(System, load.name, name, val);
-      },
-          declared = updateData.declare(_exports);
-      System["__lively.modules__"].evaluationDone(load.name);
-
-      debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
-
-      // ensure dependencies are loaded
-      return Promise.all(
-      // gather the data we need for the update, this includes looking up the
-      // imported modules and getting the module record and module object as
-      // a fallback (module records only exist for esm modules)
-      updateData.localDeps.map(function (depName) {
-        return System.normalize(depName, load.name).then(function (depFullname) {
-          var depModule = System.get(depFullname),
-              record = moduleRecordFor$1(System, depFullname);
-          return depModule && record ? { name: depName, fullname: depFullname, module: depModule, record: record } : System["import"](depFullname).then(function (module) {
-            return {
-              name: depName,
-              fullname: depFullname,
-              module: System.get(depFullname) || module,
-              record: moduleRecordFor$1(System, depFullname)
-            };
-          });
-        });
-      })).then(function (deps) {
-        // 1. update dependencies
-        var record = moduleRecordFor$1(System, load.name);
-        if (record) record.dependencies = deps.map(function (ea) {
-          return ea.record;
-        });
-
-        // hmm... for house keeping... not really needed right now, though
-        var prevLoad = System.loads && System.loads[load.name];
-        if (prevLoad) {
-          prevLoad.deps = deps.map(function (ea) {
-            return ea.name;
-          });
-          prevLoad.depMap = deps.reduce(function (map, dep) {
-            map[dep.name] = dep.fullname;return map;
-          }, {});
-          if (prevLoad.metadata && prevLoad.metadata.entry) {
-            prevLoad.metadata.entry.deps = prevLoad.deps;
-            prevLoad.metadata.entry.normalizedDeps = deps.map(function (ea) {
-              return ea.fullname;
-            });
-            prevLoad.metadata.entry.declare = updateData.declare;
+          if (System.get(moduleId)) {
+            context$1$0.next = 4;
+            break;
           }
-        }
-        // 2. run setters to populate imports
-        deps.forEach(function (d, i) {
-          return declared.setters[i](d.module);
-        });
-        // 3. execute module body
-        return declared.execute();
-      });
-    });
+
+          context$1$0.next = 4;
+          return regeneratorRuntime.awrap(System["import"](moduleId));
+
+        case 4:
+          context$1$0.next = 6;
+          return regeneratorRuntime.awrap(instrumentSourceOfEsmModuleLoad(System, load));
+
+        case 6:
+          updateData = context$1$0.sent;
+          _exports = function _exports(name, val) {
+            return scheduleModuleExportsChange(System, load.name, name, val);
+          }, declared = updateData.declare(_exports);
+
+          System["__lively.modules__"].evaluationDone(load.name);
+
+          debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
+
+          // ensure dependencies are loaded
+          deps = [];
+          _iteratorNormalCompletion = true;
+          _didIteratorError = false;
+          _iteratorError = undefined;
+          context$1$0.prev = 14;
+          _iterator = updateData.localDeps[Symbol.iterator]();
+
+        case 16:
+          if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+            context$1$0.next = 32;
+            break;
+          }
+
+          depName = _step.value;
+          context$1$0.next = 20;
+          return regeneratorRuntime.awrap(System.normalize(depName, load.name));
+
+        case 20:
+          fullname = context$1$0.sent;
+          context$1$0.t0 = System.get(fullname);
+
+          if (context$1$0.t0) {
+            context$1$0.next = 26;
+            break;
+          }
+
+          context$1$0.next = 25;
+          return regeneratorRuntime.awrap(System["import"](fullname));
+
+        case 25:
+          context$1$0.t0 = context$1$0.sent;
+
+        case 26:
+          depModule = context$1$0.t0;
+          record = moduleRecordFor$1(System, fullname);
+
+          deps.push({
+            name: depName,
+            fullname: fullname,
+            module: depModule,
+            record: moduleRecordFor$1(System, fullname)
+          });
+
+        case 29:
+          _iteratorNormalCompletion = true;
+          context$1$0.next = 16;
+          break;
+
+        case 32:
+          context$1$0.next = 38;
+          break;
+
+        case 34:
+          context$1$0.prev = 34;
+          context$1$0.t1 = context$1$0["catch"](14);
+          _didIteratorError = true;
+          _iteratorError = context$1$0.t1;
+
+        case 38:
+          context$1$0.prev = 38;
+          context$1$0.prev = 39;
+
+          if (!_iteratorNormalCompletion && _iterator["return"]) {
+            _iterator["return"]();
+          }
+
+        case 41:
+          context$1$0.prev = 41;
+
+          if (!_didIteratorError) {
+            context$1$0.next = 44;
+            break;
+          }
+
+          throw _iteratorError;
+
+        case 44:
+          return context$1$0.finish(41);
+
+        case 45:
+          return context$1$0.finish(38);
+
+        case 46:
+          record = moduleRecordFor$1(System, load.name);
+
+          if (record) {
+            record.dependencies = deps.map(function (ea) {
+              return ea.record;
+            });
+            record.execute = declared.execute;
+            record.setters = declared.setters;
+          }
+
+          // hmm... for house keeping... not really needed right now, though
+          prevLoad = System.loads && System.loads[load.name];
+
+          if (prevLoad) {
+            prevLoad.deps = deps.map(function (ea) {
+              return ea.name;
+            });
+            prevLoad.depMap = deps.reduce(function (map, dep) {
+              map[dep.name] = dep.fullname;return map;
+            }, {});
+            if (prevLoad.metadata && prevLoad.metadata.entry) {
+              prevLoad.metadata.entry.deps = prevLoad.deps;
+              prevLoad.metadata.entry.normalizedDeps = deps.map(function (ea) {
+                return ea.fullname;
+              });
+              prevLoad.metadata.entry.declare = updateData.declare;
+            }
+          }
+
+          // 2. run setters to populate imports
+          deps.forEach(function (d, i) {
+            return declared.setters[i](d.module);
+          });
+
+          // 3. execute module body
+          return context$1$0.abrupt("return", declared.execute());
+
+        case 52:
+        case "end":
+          return context$1$0.stop();
+      }
+    }, null, this, [[14, 34, 38, 46], [39,, 41, 45]]);
   }
 
   function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
@@ -22792,6 +22456,18 @@ var categorizer = Object.freeze({
 
     return entry;
   }
+
+  // translate the source and produce a {declare: FUNCTION, localDeps:
+  // [STRING]} object
+
+  // evaluate the module source
+
+  // gather the data we need for the update, this includes looking up the
+  // imported modules and getting the module record and module object as
+  // a fallback (module records only exist for esm modules)
+
+  // 1. update the record so that when its dependencies change and cause a
+  // re-execute, the correct code (new version) is run
 
   var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
 
