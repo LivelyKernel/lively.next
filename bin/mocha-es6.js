@@ -57,8 +57,18 @@ function findTestFiles(files) {
 
 function cacheMocha(mochaDirURL) {
   if (typeof System !== "undefined" && !System.get(mochaDirURL + "/mocha-es6.js")) {
-    System.config({map: {"mocha-es6": mochaDirURL}});
+    System.config({
+      map: {
+        "mocha-es6": mochaDirURL,
+        "lively.modules": mochaDirURL + "/node_modules/lively.modules/dist/lively.modules.js",
+        "mocha": mochaDirURL + "/dist/mocha.js",
+        "chai": mochaDirURL + "/dist/chai.js"
+      }
+    });
+    System.set(mochaDirURL + "/node_modules/lively.modules/dist/lively.modules.js", System.newModule(modules));
     System.set(mochaDirURL + "index.js", System.newModule(mochaEs6));
     System.set(mochaDirURL + "mocha-es6.js", System.newModule(mochaEs6));
+    System.set(mochaDirURL + "/dist/mocha.js", System.newModule(mochaEs6.mocha));
+    System.set(mochaDirURL + "/dist/chai.js", System.newModule(mochaEs6.chai));
   }
 }
