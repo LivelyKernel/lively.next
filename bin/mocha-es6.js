@@ -22,13 +22,14 @@ lively.lang.promise.chain([
   },
   () => console.log("1. Linking node_modules to local projects"),
   () => require("./link-node_modules-into-packages.js")(dir),
-  () => console.log("1. Importing project at " + dir),
-  () => modules.importPackage("file://" + dir),
   () => console.log("2. Looking for test files via globs " + args.files.join(", ")),
   () => findTestFiles(args.files),
   (files, state) => state.testFiles = files,
   (_, state) => console.log("3. Running tests in\n  " + state.testFiles.join("\n  ")),
-  (_, state) => mochaEs6.runTestFiles(state.testFiles),
+  (_, state) => {
+    lively.modules.changeSystem(lively.modules.getSystem("system-for-test"), true);
+    return mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir});
+  },
   failureCount => process.exit(failureCount)
 ]).catch(err => {
   console.error(err.stack || err);
