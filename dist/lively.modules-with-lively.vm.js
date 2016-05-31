@@ -23114,7 +23114,7 @@ var categorizer = Object.freeze({
       return System.normalize(targetModule, options.parentModule, options.parentAddress);
     }).then(function (targetModule) {
       var fullname = options.targetModule = targetModule;
-      var env = System["__lively.modules__"].moduleEnv(fullname);
+      var env = System.get("@lively-env").moduleEnv(fullname);
       var recorder = env.recorder;
       var recorderName = env.recorderName;
       var dontTransform = env.dontTransform;
@@ -23150,7 +23150,7 @@ var categorizer = Object.freeze({
         //   Date.now());
 
         return vmRunEval(code, options).then(function (result) {
-          System["__lively.modules__"].evaluationDone(fullname);
+          System.get("@lively-env").evaluationDone(fullname);
           System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
           console.warn("FIX recordDoitResult");
           // recordDoitResult(
