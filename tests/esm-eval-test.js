@@ -28,9 +28,10 @@ describe("eval", () => {
     runEval("1 + z + x", {System: S, targetModule: module1})
       .then(result => expect(result.value).equals(6)));
 
-  it("sets this", () =>
-    runEval("1 + this.x", {System: S, targetModule: module1, context: {x: 2}})
-      .then(result => expect(result.value).equals(3)));
+  it("sets this", async () => {
+    var result = await runEval("1 + this.x", {System: S, targetModule: module1, context: {x: 2}});
+    expect(result.value).equals(3);
+  })
 
   it("of export statement", () =>
     promise.chain([
@@ -114,18 +115,19 @@ describe("eval", () => {
       }]));
 
 
-  it("reload module dependencies", () =>
-    S.import(module1)
-      .then(m => expect(m.x).to.equal(3))
-      // we change module3 and check that the value of module1 that indirectly
-      // depends on module3 has changed as well
-      .then(() => S.fetch({status: 'loading', address: module3, name: module3, linkSets: [], dependencies: [], metadata: {}}))
-      .then(s => s.replace(/(z = )([0-9]+)/, "$12"))
-      .then(s => runEval(s, {asString: true, System: S, targetModule: module3}))
-      .then(result => expect(result.value).to.not.match(/error/i))
-      .then(() => forgetModuleDeps(S, module3))
-      .then(() => S.import(module1))
-      .then(m => expect(m.x).to.equal(4)));
+  it("reload module dependencies", async () => {
+    var m = await S.import(module1);
+    expect(m.x).to.equal(3);
+    // we change module3 and check that the value of module1 that indirectly
+    // depends on module3 has changed as well
+    var source = await S.fetch({status: 'loading', address: module3, name: module3, linkSets: [], dependencies: [], metadata: {}});
+    source = source.replace(/(z = )([0-9]+)/, "$12");
+    var result = await runEval(source, {asString: true, System: S, targetModule: module3});
+    expect(result.value).to.not.match(/error/i);
+    forgetModuleDeps(S, module3);
+    var m = await S.import(module1);
+    expect(m.x).to.equal(4);
+  });
 
   describe("es6 code", () => {
 
