@@ -792,7 +792,7 @@
   }
 
   function forgetEnvOf(System, fullname) {
-    delete System["__lively.modules__"].loadedModules[fullname];
+    delete System.get("@lively-env").loadedModules[fullname];
   }
 
   function forgetModuleDeps(System, moduleName, opts) {
@@ -1276,11 +1276,11 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function getNotifications$1(System) {
-    return System["__lively.modules__"].notifications;
+    return System.get("@lively-env").notifications;
   }
 
   function truncateNotifications(System) {
-    var limit = System["__lively.modules__"].options.notificationLimit;
+    var limit = System.get("@lively-env").options.notificationLimit;
     if (limit) {
       var notifications = getNotifications$1(System);
       notifications.splice(0, notifications.length - limit);
@@ -1322,7 +1322,7 @@
   }
 
   function subsribersForType(System, type) {
-    var subscribers = System["__lively.modules__"].notificationSubscribers;
+    var subscribers = System.get("@lively-env").notificationSubscribers;
     return subscribers[type] || (subscribers[type] = []);
   }
 

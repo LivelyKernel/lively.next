@@ -8,7 +8,7 @@ export {
 };
 
 function forgetEnvOf(System, fullname) {
-  delete System["__lively.modules__"].loadedModules[fullname];
+  delete System.get("@lively-env").loadedModules[fullname];
 }
 
 function forgetModuleDeps(System, moduleName, opts) {

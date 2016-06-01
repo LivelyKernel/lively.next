@@ -14,11 +14,11 @@ export {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function getNotifications(System) {
-  return System["__lively.modules__"].notifications;
+  return System.get("@lively-env").notifications;
 }
 
 function truncateNotifications(System) {
-  var limit = System["__lively.modules__"].options.notificationLimit;
+  var limit = System.get("@lively-env").options.notificationLimit;
   if (limit) {
     var notifications = getNotifications(System);
     notifications.splice(0, notifications.length - limit)
@@ -77,7 +77,7 @@ function notifySubscriber(System, type, data) {
 }
 
 function subsribersForType(System, type) {
-  var subscribers = System["__lively.modules__"].notificationSubscribers;
+  var subscribers = System.get("@lively-env").notificationSubscribers;
   return subscribers[type] || (subscribers[type] = []);
 }
 
