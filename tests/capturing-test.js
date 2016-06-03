@@ -125,6 +125,10 @@ describe("ast.capturing", function() {
       testVarTfm("export default class Foo {}",
                  "export default class Foo {\n}\n_rec.Foo = Foo;");
 
+      testVarTfm("does not capture class expr",
+                 "var bar = class Foo {}",
+                 "_rec.bar = class Foo {\n};");
+
     });
 
     describe("template strings", () => {
