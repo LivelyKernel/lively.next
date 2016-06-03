@@ -16863,6 +16863,7 @@ module.exports = function(acorn) {
           varDeclPaths: [],
           funcDecls: [],
           classDecls: [],
+          classExprs: [],
           methodDecls: [],
           importDecls: [],
           exportDecls: [],
@@ -17061,6 +17062,23 @@ module.exports = function(acorn) {
       key: "visitClassDeclaration",
       value: function visitClassDeclaration(node, scope, path) {
         scope.classDecls.push(node);
+
+        var visitor = this;
+        // ignore id
+        // // id is of types Identifier
+        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+        // superClass is of types Expression
+        if (node["superClass"]) {
+          node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+        }
+        // body is of types ClassBody
+        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+        return node;
+      }
+    }, {
+      key: "visitClassExpression",
+      value: function visitClassExpression(node, scope, path) {
+        scope.classExprs.push(node);
 
         var visitor = this;
         // ignore id
@@ -18988,6 +19006,8 @@ var nodes = Object.freeze({
       options.excludeRefs.push(options.es6ExportFuncId);
       options.excludeRefs.push(options.es6ImportFuncId);
       rewritten = es6ModuleTransforms(rewritten, options);
+    } else {
+      rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
     }
 
     // 4. make all references declared in the toplevel scope into property
@@ -19069,14 +19089,12 @@ var nodes = Object.freeze({
   function blockInliner(node) {
     // FIXME what about () => x kind of functions?
     if (Array.isArray(node.body)) {
-      node.body = node.body.reduce(function (body, node) {
-        if (node.type !== "BlockStatement" || !node[canBeInlinedSym]) {
-          body.push(node);
-          return body;
-        } else {
-          return body.concat(node.body);
+      for (var i = node.body.length - 1; i >= 0; i--) {
+        var stmt = node.body[i];
+        if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
+          node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
         }
-      }, []);
+      }
     }
     return node;
   }
@@ -19177,9 +19195,10 @@ var nodes = Object.freeze({
   function replaceClassDecls(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed);
     if (!topLevel.classDecls.length) return parsed;
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      return stmts.concat(topLevel.classDecls.indexOf(stmt) === -1 ? [stmt] : [stmt, assignExpr(options.captureObj, stmt.id, stmt.id, false)]);
-    }, []);
+    for (var i = parsed.body.length - 1; i >= 0; i--) {
+      var stmt = parsed.body[i];
+      if (topLevel.classDecls.includes(stmt)) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+    }
     return parsed;
   }
 
@@ -19203,19 +19222,18 @@ var nodes = Object.freeze({
 
   function additionalIgnoredDecls(parsed, options) {
     var topLevel = topLevelDeclsAndRefs(parsed),
-        ignoreDecls = topLevel.scope.varDecls.reduce(function (result, decl, i) {
-      var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+        ignoreDecls = [];
+    for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
+      var decl = topLevel.scope.varDecls[i],
+          path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
           parent = path.slice(0, -1).get(parsed);
-      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ExportNamedDeclaration") {
-        result.push(decl);
+      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
+        ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
       }
-      return result;
-    }, []);
-    return [].concat(topLevel.scope.catches.map(function (ea) {
+    }
+    return topLevel.scope.catches.map(function (ea) {
       return ea.name;
-    })).concat(ignoreDecls.reduce(function (all, ea) {
-      all.push.apply(all, ea.declarations);return all;
-    }, []).map(function (ea) {
+    }).concat(ignoreDecls.map(function (ea) {
       return ea.id.name;
     }));
   }
@@ -19224,29 +19242,40 @@ var nodes = Object.freeze({
     // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
     // decls, this should somehow be consolidated with this function and with the
     // fact that naming based ignores aren't good enough...
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        ignoreDecls = topLevel.scope.varDecls.reduce(function (result, decl, i) {
-      var path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+    var topLevel = topLevelDeclsAndRefs(parsed);
+
+    var ignoreDecls = [];
+    for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
+      var decl = topLevel.scope.varDecls[i],
+          path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
           parent = path.slice(0, -1).get(parsed);
-      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ExportNamedDeclaration") {
-        result.push(decl);
+      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
+        ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
       }
-      return result;
-    }, []),
-        ignoredImportAndExportNames = parsed.body.reduce(function (ignored, stmt) {
-      if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") return stmt.specifiers.reduce(function (ignored, specifier) {
-        return specifier.type === "ImportSpecifier" ? ignored.concat([specifier.imported.name]) : ignored;
-      }, ignored);
-      if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) return ignored.concat(stmt.specifiers.map(function (specifier) {
-        return specifier.local.name;
-      }));
-      return ignored;
-    }, []);
+    }
+
+    // ignore stuff like var bar = class Foo {}
+    ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(topLevel.scope.classExprs));
+
+    var ignoredImportAndExportNames = [];
+    for (var i = 0; i < parsed.body.length; i++) {
+      var stmt = parsed.body[i];
+      if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") {
+        ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, babelHelpers.toConsumableArray(stmt.specifiers.filter(function (ea) {
+          return ea.type === "ImportSpecifier";
+        }).map(function (ea) {
+          return ea.imported.name;
+        })));
+      } else if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) {
+        ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, babelHelpers.toConsumableArray(stmt.specifiers.map(function (specifier) {
+          return specifier.local.name;
+        })));
+      }
+    }
+
     return [].concat(topLevel.scope.catches.map(function (ea) {
       return ea.name;
-    })).concat(ignoredImportAndExportNames).concat(ignoreDecls.reduce(function (all, ea) {
-      all.push.apply(all, ea.declarations);return all;
-    }, []).map(function (ea) {
+    })).concat(ignoredImportAndExportNames).concat(ignoreDecls.map(function (ea) {
       return ea.id.name;
     }));
   }
@@ -19256,9 +19285,9 @@ var nodes = Object.freeze({
   }
 
   function shouldRefBeCaptured(ref, toplevel, options) {
-    return !lively_lang.arr.include(toplevel.scope.importDecls, ref) && !lively_lang.arr.include(lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
+    return !toplevel.scope.importDecls.includes(ref) && !lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
       return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
-    }), ref) && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) > -1);
+    }).includes(ref) && !options.excludeRefs.includes(ref.name) && (!options.includeRefs || options.includeRefs.includes(ref.name));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -19266,22 +19295,28 @@ var nodes = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function insertCapturesForExportDeclarations(parsed, options) {
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      stmts.push(stmt);
+    var body = [];
+    for (var i = 0; i < parsed.body.length; i++) {
+      var stmt = parsed.body[i];
+      body.push(stmt);
       // ExportNamedDeclaration can have specifieres = refs, those should already
       // be captured. Only focus on export declarations and only those
       // declarations that are no refs, i.e.
       // ignore: "export default x;"
       // capture: "export default function foo () {};", "export var x = 23, y = 3;"
-      if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) return stmts;else if (stmt.declaration.declarations) {
-        stmts.push.apply(stmts, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-          return assignExpr(options.captureObj, decl.id, decl.id, false);
-        })));
-      } else if (stmt.declaration.type === "FunctionDeclaration" || stmt.declaration.type === "ClassDeclaration") {
-        stmts.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-      }
-      return stmts;
-    }, []);
+      if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
+        /*...*/
+      } else if (stmt.declaration.declarations) {
+          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+            return assignExpr(options.captureObj, decl.id, decl.id, false);
+          })));
+        } else if (stmt.declaration.type === "FunctionDeclaration") {
+          /*handled by function rewriter as last step*/
+        } else if (stmt.declaration.type === "ClassDeclaration") {
+            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+          }
+    }
+    parsed.body = body;
     return parsed;
   }
 
@@ -19295,18 +19330,20 @@ var nodes = Object.freeze({
   }
 
   function insertDeclarationsForExports(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
+    var topLevel = topLevelDeclsAndRefs(parsed),
+        body = [];
+    for (var i = 0; i < parsed.body.length; i++) {
+      var stmt = parsed.body[i];
       if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
-        return stmts.concat([varDeclOrAssignment(parsed, {
+        body = body.concat([varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
           id: stmt.declaration,
           init: member$1(stmt.declaration, options.captureObj)
         }), stmt]);
       } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
-        return stmts.concat([stmt]);
+        body.push(stmt);
       } else {
-        return stmts.concat(stmt.specifiers.map(function (specifier) {
+        body = body.concat(stmt.specifiers.map(function (specifier) {
           return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
             type: "VariableDeclarator",
             id: specifier.local,
@@ -19314,7 +19351,25 @@ var nodes = Object.freeze({
           });
         }).filter(Boolean)).concat(stmt);
       }
-    }, []);
+    }
+
+    parsed.body = body;
+    return parsed;
+  }
+
+  function fixDefaultAsyncFunctionExportForRegeneratorBug(parsed, options) {
+    // rk 2016-06-02: see https://github.com/LivelyKernel/lively.modules/issues/9
+    // FIXME this needs to be removed as soon as the cause for the issue is fixed
+    var body = [];
+    for (var i = 0; i < parsed.body.length; i++) {
+      var stmt = parsed.body[i];
+      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
+        body.push(stmt.declaration);
+        stmt.declaration = stmt.declaration.id;
+      }
+      body.push(stmt);
+    }
+    parsed.body = body;
     return parsed;
   }
 
@@ -19340,8 +19395,11 @@ var nodes = Object.freeze({
           });
         }
       } else if (stmt.type === "ExportDefaultDeclaration") {
-        // nodes = [assignExpr(options.moduleExportFunc, {type: "Literal", value: "default"}, stmt.declaration, true)];
-        nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
+        if (stmt.declaration && stmt.declaration.id) {
+          nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, "default", stmt.declaration.id));
+        } else {
+          nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
+        }
       } else if (stmt.type === "ExportAllDeclaration") {
         var key = { name: options.es6ExportFuncId + "__iterator__", type: "Identifier" },
             moduleId = stmt.source;
