@@ -99,11 +99,12 @@ function addNodejsWrapperSource(System, load) {
   // twice we have this little hack...
   var m = getCachedNodejsModule(System, load);
   if (m) {
-    load.source = `export default System._nodeRequire('${m.id}');\n`;
-    load.source += properties.allOwnPropertiesOrFunctions(m.exports).map(k =>
-      classHelper.isValidIdentifier(k) ?
-        `export var ${k} = System._nodeRequire('${m.id}')['${k}'];` :
-        `/*ignoring export "${k}" b/c it is not a valid identifier*/`).join("\n")
+    load.metadata.format = 'esm';
+    load.source = `var exports = System._nodeRequire('${m.id}'); export default exports;\n`
+                + properties.allOwnPropertiesOrFunctions(m.exports).map(k =>
+                    classHelper.isValidIdentifier(k) ?
+                      `export var ${k} = exports['${k}'];` :
+                      `/*ignoring export "${k}" b/c it is not a valid identifier*/`).join("\n");
     System.debug && console.log("[lively.modules customTranslate] loading %s from nodejs module cache", load.name);
     return true;
   }
