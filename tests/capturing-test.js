@@ -193,8 +193,14 @@ describe("ast.capturing", function() {
       testVarTfm("var x = await foo();",
                  "_rec.x = await _rec.foo();");
 
+      testVarTfm("export async function foo() { return 23; }",
+                 "_rec.foo = foo;\nexport async function foo() {\n    return 23;\n}");
+
       testVarTfm("export default async function foo() { return 23; }",
-                 "_rec.foo = foo;\nexport default async function foo() {\n    return 23;\n}");
+                "_rec.foo = foo;\nasync function foo() {\n    return 23;\n}\nfoo = _rec.foo;\nexport default foo;");
+
+      // testVarTfm("export default async function foo() { return 23; }",
+      //           "_rec.foo = foo;\nexport default async function foo() {\n    return 23;\n}");
     });
 
     describe("import", () => {
