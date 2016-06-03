@@ -19197,7 +19197,7 @@ var nodes = Object.freeze({
     if (!topLevel.classDecls.length) return parsed;
     for (var i = parsed.body.length - 1; i >= 0; i--) {
       var stmt = parsed.body[i];
-      if (topLevel.classDecls.includes(stmt)) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+      if (topLevel.classDecls.indexOf(stmt) !== -1) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
     }
     return parsed;
   }
@@ -19285,9 +19285,9 @@ var nodes = Object.freeze({
   }
 
   function shouldRefBeCaptured(ref, toplevel, options) {
-    return !toplevel.scope.importDecls.includes(ref) && !lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
+    return toplevel.scope.importDecls.indexOf(ref) === -1 && lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
       return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
-    }).includes(ref) && !options.excludeRefs.includes(ref.name) && (!options.includeRefs || options.includeRefs.includes(ref.name));
+    }).indexOf(ref) === -1 && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) !== -1);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
