@@ -55,6 +55,10 @@
       }
     },
     "meta": {
+      "node_modules/mocha-es6/mocha-es6.js": {
+        "format": "global",
+        "exports": "mochaEs6"
+      },
       "dist/escodegen.browser.js": {
         "format": "global"
       },
