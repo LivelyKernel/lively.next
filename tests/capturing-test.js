@@ -28,8 +28,9 @@ function _testModuleTfm(descr, code, expected, only) {
   }
   return (only ? it.only : it)(descr, () => {
     var result = stringify(
-        rewriteToCaptureTopLevelVariables(
-        parse(code), {name: "_rec", type: "Identifier"}, {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"}));
+          rewriteToCaptureTopLevelVariables(
+            parse(code), {name: "_rec", type: "Identifier"},
+            {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"}));
     expect(result).equals(expected);
   });
 }
@@ -185,13 +186,15 @@ describe("ast.capturing", function() {
     });
 
     describe("async", () => {
-      
+
       testVarTfm("async function foo() { return 23 }",
                  "_rec.foo = foo;\nasync function foo() {\n    return 23;\n}");
 
       testVarTfm("var x = await foo();",
                  "_rec.x = await _rec.foo();");
 
+      testVarTfm("export default async function foo() { return 23; }",
+                 "_rec.foo = foo;\nexport default async function foo() {\n    return 23;\n}");
     });
 
     describe("import", () => {
@@ -267,7 +270,7 @@ describe("ast.capturing", function() {
                + "_rec.a = 23;\n"
                + "export var x = _rec.a + 1, y = x + 2;\n"
                + "_rec.x = x;\n"
-               + "_rec.y = y;\nexport default function f() {\n}\n_rec.f = f;");
+               + "_rec.y = y;\nexport default function f() {\n}");
 
       testVarTfm("var x = 23; export { x };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x\n};");
@@ -279,10 +282,10 @@ describe("ast.capturing", function() {
                  "export const x = 23;\n_rec.x = x;");
 
       testVarTfm("export function x() {};",
-                 '_rec.x = x;\nexport function x() {\n}\n_rec.x = x;\n;'); // hmmm, could be better!
+                 '_rec.x = x;\nexport function x() {\n}\n;');
 
       testVarTfm("export default function x() {};",
-                 '_rec.x = x;\nexport default function x() {\n}\n_rec.x = x;\n;'); // hmmm, could be better!
+                 '_rec.x = x;\nexport default function x() {\n}\n;');
 
       testVarTfm("export class Foo {};",
                  'export class Foo {\n}\n_rec.Foo = Foo;\n;');
@@ -309,8 +312,14 @@ describe("ast.capturing", function() {
       testModuleTfm("export default function* () {};",
                     "_moduleExport('default', function* () {\n});\n;");
 
+      testModuleTfm("export default function foo() {};",
+                    "_rec.foo = foo;\nfunction foo() {\n}\n_moduleExport('default', _rec.foo);\n;");
+
+      testModuleTfm("export default async function foo() {};",
+                    "_rec.foo = foo;\nasync function foo() {\n}\n_moduleExport('default', _rec.foo);\n;");
+
       testModuleTfm("export default class Foo {a() { return 23; }};",
-                    "_moduleExport('default', class Foo {\n    a() {\n        return 23;\n    }\n});\n;");
+                    "class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;\n_moduleExport('default', _rec.Foo);\n;");
 
       testModuleTfm("export { name1, name2 };",
                     "_moduleExport('name1', _rec.name1);\n_moduleExport('name2', _rec.name2);");
