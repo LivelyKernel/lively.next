@@ -7,8 +7,8 @@ var babel = require('rollup-plugin-babel');
 var mochaSrc = fs.readFileSync(require.resolve("mocha/mocha.js"));
 
 var chaiSrc = (function() {
-  var chaiCode = fs.readFileSync(require.resolve("chai/chai.js"))
-  var chaiSubsetCode = fs.readFileSync(require.resolve("chai-subset"))
+  var chaiCode = fs.readFileSync(require.resolve("chai/chai.js")),
+      chaiSubsetCode = fs.readFileSync(require.resolve("chai-subset"));
   return `
 ;(function() {
   var GLOBAL = typeof window !== "undefined" ? window :

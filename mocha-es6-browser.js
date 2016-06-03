@@ -65,8 +65,9 @@
   }
 
   function cacheMocha(mochaDirURL) {
-    if (typeof System !== "undefined" && !System.get(mochaDirURL + "/mocha-es6.js")) {
-      System.config({map: {"mocha-es6": mochaDirURL}});
+    var mochaBundleURL = mochaDirURL.replace(/\/$/, "") + "/mocha-es6.js";
+    if (typeof System !== "undefined" && !System.get(mochaBundleURL)) {
+      System.config({map: {"mocha-es6": mochaBundleURL}});
       System.set(mochaDirURL + "index.js", System.newModule(mochaEs6));
       System.set(mochaDirURL + "mocha-es6.js", System.newModule(mochaEs6));
     }
