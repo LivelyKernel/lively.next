@@ -42,6 +42,7 @@ function livelySystemEnv(System) {
     },
 
     // this is where the canonical state of the module system is held...
+    packages: System["__lively.modules__packages"]                               || (System["__lively.modules__packages"] = {}),
     loadedModules: System["__lively.modules__loadedModules"]                     || (System["__lively.modules__loadedModules"] = {}),
     pendingExportChanges: System["__lively.modules__pendingExportChanges"]       || (System["__lively.modules__pendingExportChanges"] = {}),
     notifications: System["__lively.modules__notifications"]                     || (System["__lively.modules__notifications"] = []),

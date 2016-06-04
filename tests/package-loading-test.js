@@ -56,42 +56,45 @@ describe("package loading", function() {
 
   describe("basics", () => {
     
-    it("registers and loads a package", () =>
-      registerPackage(System, project1aDir)
-        .then(_ => System.import("some-project"))
-        .then(mod => expect(mod).to.have.property("x", 2))
-        .then(m => expect(System.packages).to.containSubset({
-            [noTrailingSlash(project1aDir)]: {
-              main: "entry-a.js",
-              meta: {"package.json": {format: "json"}},
-              map: {},
-              names: ["some-project"]}})));
+    it("registers and loads a package", async () => {
+      await registerPackage(System, project1aDir);
+      var mod = await System.import("some-project");
+      expect(mod).to.have.property("x", 2)
+      expect(System.get("@lively-env").packages).to.containSubset({
+        [noTrailingSlash(project1aDir)]: {
+          main: "entry-a.js",
+          meta: {"package.json": {format: "json"}},
+          map: {},
+          names: ["some-project"]}})
+    });
 
-    it("registers and loads dependent packages", () =>
-      Promise.all([
+    it("registers and loads dependent packages", async () => {
+      await Promise.all([
         registerPackage(System, project1bDir),
-        registerPackage(System, project2Dir)])
-        .then(_ => System.import("dependent-project"))
-        .then(mod => expect(mod).to.have.property("x", 23)));
+        registerPackage(System, project2Dir)]);
+      var mod = await System.import("dependent-project")
+      expect(mod).to.have.property("x", 23);
+    });
 
-    it("enumerates packages", () => 
-      importPackage(System, project2Dir).then(() =>
-        expect(getPackages(System)).to.containSubset({
-          [project2Dir.replace(/\/$/, "")]: {
-            address: project2Dir.replace(/\/$/, ""),
-            name: `dependent-project`, names: [`dependent-project`],
-            modules: [
-              {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
-              { deps: [], name: `${project2Dir}package.json`}],
-          },
-          [project1aDir.replace(/\/$/, "")]: {
-            address: project1aDir.replace(/\/$/, ""),
-            name: `some-project`, names: [`some-project`],
-            modules: [
-              {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-a.js`},
-              {deps: [],name: `${project1aDir}other.js`},
-              {deps: [],name: `${project1aDir}package.json`}]
-          }})))
+    it("enumerates packages", async () => {
+      await importPackage(System, project2Dir);
+      expect(getPackages(System)).to.containSubset({
+        [noTrailingSlash(project2Dir)]: {
+          address: noTrailingSlash(project2Dir),
+          name: `dependent-project`, names: [`dependent-project`],
+          modules: [
+            {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
+            { deps: [], name: `${project2Dir}package.json`}],
+        },
+        [noTrailingSlash(project1aDir)]: {
+          address: noTrailingSlash(project1aDir),
+          name: `some-project`, names: [`some-project`],
+          modules: [
+            {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-a.js`},
+            {deps: [],name: `${project1aDir}other.js`},
+            {deps: [],name: `${project1aDir}package.json`}]
+        }})
+    })
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -118,7 +121,7 @@ describe("package loading", function() {
     it("deals with package map relative entry", () =>
       modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}})
         .then(() => registerPackage(System, project2Dir))
-        .then(m => expect(System.packages).to.containSubset({
+        .then(() => expect(System.packages).to.containSubset({
           [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, names: ["some-project"]},
           [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}, names: ["dependent-project"]}
         }))

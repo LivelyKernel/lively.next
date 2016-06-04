@@ -472,6 +472,7 @@
       },
 
       // this is where the canonical state of the module system is held...
+      packages: System["__lively.modules__packages"] || (System["__lively.modules__packages"] = {}),
       loadedModules: System["__lively.modules__loadedModules"] || (System["__lively.modules__loadedModules"] = {}),
       pendingExportChanges: System["__lively.modules__pendingExportChanges"] || (System["__lively.modules__pendingExportChanges"] = {}),
       notifications: System["__lively.modules__notifications"] || (System["__lively.modules__notifications"] = []),
@@ -947,7 +948,7 @@
   }
 
   function registerPackage$1(System, packageURL, packageLoadStack) {
-    var url, registerSubPackages, packageInSystem, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
+    var url, registerSubPackages, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
 
     return regeneratorRuntime.async(function registerPackage$(context$1$0) {
       while (1) switch (context$1$0.prev = context$1$0.next) {
@@ -992,109 +993,138 @@
 
           System.debug && console.log("[lively.modules package register] %s", url);
 
-          packageInSystem = System.packages[url] || (System.packages[url] = {});
-          context$1$0.next = 16;
+          context$1$0.next = 15;
           return regeneratorRuntime.awrap(tryToLoadPackageConfig(System, url));
 
-        case 16:
+        case 15:
           cfg = context$1$0.sent;
-          context$1$0.next = 19;
+          context$1$0.next = 18;
           return regeneratorRuntime.awrap(applyConfig(System, cfg, url));
 
-        case 19:
+        case 18:
           packageConfigResult = context$1$0.sent;
 
           if (!registerSubPackages) {
-            context$1$0.next = 47;
+            context$1$0.next = 46;
             break;
           }
 
           _iteratorNormalCompletion = true;
           _didIteratorError = false;
           _iteratorError = undefined;
-          context$1$0.prev = 24;
+          context$1$0.prev = 23;
           _iterator = packageConfigResult.subPackages[Symbol.iterator]();
 
-        case 26:
+        case 25:
           if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-            context$1$0.next = 33;
+            context$1$0.next = 32;
             break;
           }
 
           subp = _step.value;
-          context$1$0.next = 30;
+          context$1$0.next = 29;
           return regeneratorRuntime.awrap(registerPackage$1(System, subp.address.replace(/\/?$/, "/"), packageLoadStack));
 
-        case 30:
+        case 29:
           _iteratorNormalCompletion = true;
-          context$1$0.next = 26;
+          context$1$0.next = 25;
           break;
 
-        case 33:
-          context$1$0.next = 39;
+        case 32:
+          context$1$0.next = 38;
           break;
 
-        case 35:
-          context$1$0.prev = 35;
-          context$1$0.t0 = context$1$0["catch"](24);
+        case 34:
+          context$1$0.prev = 34;
+          context$1$0.t0 = context$1$0["catch"](23);
           _didIteratorError = true;
           _iteratorError = context$1$0.t0;
 
-        case 39:
+        case 38:
+          context$1$0.prev = 38;
           context$1$0.prev = 39;
-          context$1$0.prev = 40;
 
           if (!_iteratorNormalCompletion && _iterator["return"]) {
             _iterator["return"]();
           }
 
-        case 42:
-          context$1$0.prev = 42;
+        case 41:
+          context$1$0.prev = 41;
 
           if (!_didIteratorError) {
-            context$1$0.next = 45;
+            context$1$0.next = 44;
             break;
           }
 
           throw _iteratorError;
 
+        case 44:
+          return context$1$0.finish(41);
+
         case 45:
-          return context$1$0.finish(42);
+          return context$1$0.finish(38);
 
         case 46:
-          return context$1$0.finish(39);
+          return context$1$0.abrupt("return", cfg);
 
         case 47:
-          return context$1$0.abrupt("return", cfg.name);
-
-        case 48:
         case "end":
           return context$1$0.stop();
       }
-    }, null, this, [[24, 35, 39, 47], [40,, 42, 46]]);
+    }, null, this, [[23, 34, 38, 46], [39,, 41, 45]]);
   }
 
   function tryToLoadPackageConfig(System, packageURL) {
-    var packageConfigURL = packageURL + "/package.json";
+    var packageConfigURL, config, name;
+    return regeneratorRuntime.async(function tryToLoadPackageConfig$(context$1$0) {
+      while (1) switch (context$1$0.prev = context$1$0.next) {
+        case 0:
+          packageConfigURL = packageURL + "/package.json";
 
-    System.config({
-      meta: babelHelpers.defineProperty({}, packageConfigURL, { format: "json" }),
-      packages: babelHelpers.defineProperty({}, packageURL, { meta: { "package.json": { format: "json" } } })
-    });
+          System.config({
+            meta: babelHelpers.defineProperty({}, packageConfigURL, { format: "json" }),
+            packages: babelHelpers.defineProperty({}, packageURL, { meta: { "package.json": { format: "json" } } })
+          });
 
-    System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
+          System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
 
-    return Promise.resolve(System.get(packageConfigURL) || System["import"](packageConfigURL)).then(function (config) {
-      lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL);
-      return config;
-    })["catch"](function (err) {
-      console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
-      delete System.meta[packageConfigURL];
-      var name = packageURL.split("/").slice(-1)[0];
-      return { name: name }; // "pseudo-config"
-    });
+          context$1$0.prev = 3;
+          context$1$0.t0 = System.get(packageConfigURL);
+
+          if (context$1$0.t0) {
+            context$1$0.next = 9;
+            break;
+          }
+
+          context$1$0.next = 8;
+          return regeneratorRuntime.awrap(System["import"](packageConfigURL));
+
+        case 8:
+          context$1$0.t0 = context$1$0.sent;
+
+        case 9:
+          config = context$1$0.t0;
+
+          lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL);
+          return context$1$0.abrupt("return", config);
+
+        case 14:
+          context$1$0.prev = 14;
+          context$1$0.t1 = context$1$0["catch"](3);
+
+          console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, context$1$0.t1);
+          delete System.meta[packageConfigURL];
+          name = packageURL.split("/").slice(-1)[0];
+          return context$1$0.abrupt("return", { name: name });
+
+        case 20:
+        case "end":
+          return context$1$0.stop();
+      }
+    }, null, this, [[3, 14]]);
   }
 
+  // "pseudo-config"
   function applyConfig(System, packageConfig, packageURL) {
     // takes a config json object (typically read from a package.json file but
     // can be used standalone) and changes the System configuration to what it finds
@@ -1121,8 +1151,12 @@
 
     packageInSystem.names = packageInSystem.names || [];
     lively_lang.arr.pushIfNotIncluded(packageInSystem.names, name);
+
     if (!main.match(/\.[^\/\.]+/)) main += ".js";
     packageInSystem.main = main;
+
+    // System.packages doesn't allow us to store our own properties
+    System.get("@lively-env").packages[packageURL] = packageInSystem;
 
     return packageApplyResult;
   }
@@ -1238,11 +1272,15 @@
 
     var map = computeRequireMap(System),
         modules = Object.keys(map),
-        packages = Object.keys(System.packages),
+        sysPackages = System.packages,
+        livelyPackages = System.get("@lively-env").packages,
+        packageNames = lively.lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
         result = {};
 
-    groupIntoPackages(System, modules, packages).mapGroups(function (packageAddress, moduleNames) {
-      var p = System.packages[packageAddress],
+    groupIntoPackages(System, modules, packageNames).mapGroups(function (packageAddress, moduleNames) {
+      var systemP = sysPackages[packageAddress],
+          livelyP = livelyPackages[packageAddress],
+          p = livelyP && systemP ? Object.assign(livelyP, systemP) : livelyP || systemP,
           names = p ? p.names : [];
       if (!names || !names.length) names = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
 

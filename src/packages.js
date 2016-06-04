@@ -78,8 +78,7 @@ async function registerPackage(System, packageURL, packageLoadStack) {
 
   System.debug && console.log("[lively.modules package register] %s", url);
 
-  var packageInSystem = System.packages[url] || (System.packages[url] = {}),
-      cfg = await tryToLoadPackageConfig(System, url),
+  var cfg = await tryToLoadPackageConfig(System, url),
       packageConfigResult = await applyConfig(System, cfg, url)
 
   if (registerSubPackages) {
@@ -87,10 +86,10 @@ async function registerPackage(System, packageURL, packageLoadStack) {
       await registerPackage(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
   }
 
-  return cfg.name;
+  return cfg;
 }
 
-function tryToLoadPackageConfig(System, packageURL) {
+async function tryToLoadPackageConfig(System, packageURL) {
   var packageConfigURL = packageURL + "/package.json";
 
   System.config({
@@ -100,17 +99,16 @@ function tryToLoadPackageConfig(System, packageURL) {
 
   System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL)
 
-  return Promise.resolve(System.get(packageConfigURL) || System.import(packageConfigURL))
-    .then(config => {
-      arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL)
-      return config;
-    })
-    .catch((err) => {
-      console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
-      delete System.meta[packageConfigURL];
-      var name = packageURL.split("/").slice(-1)[0];
-      return {name: name}; // "pseudo-config"
-    });
+  try {
+    var config = System.get(packageConfigURL) || await System.import(packageConfigURL);
+    arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL)
+    return config;
+  } catch (err) {
+    console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, err);
+    delete System.meta[packageConfigURL];
+    var name = packageURL.split("/").slice(-1)[0];
+    return {name: name}; // "pseudo-config"
+  }
 }
 
 function applyConfig(System, packageConfig, packageURL) {
@@ -142,8 +140,12 @@ function applyConfig(System, packageConfig, packageURL) {
 
   packageInSystem.names = packageInSystem.names || [];
   arr.pushIfNotIncluded(packageInSystem.names, name);
+
   if (!main.match(/\.[^\/\.]+/)) main += ".js";
   packageInSystem.main = main;
+
+  // System.packages doesn't allow us to store our own properties
+  System.get("@lively-env").packages[packageURL] = packageInSystem;
 
   return packageApplyResult;
 }
@@ -272,11 +274,15 @@ function getPackages(System) {
 
   var map = requireMap(System),
       modules = Object.keys(map),
-      packages = Object.keys(System.packages),
+      sysPackages = System.packages,
+      livelyPackages = System.get("@lively-env").packages,
+      packageNames = lively.lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
       result = {};
 
-  groupIntoPackages(System, modules, packages).mapGroups((packageAddress, moduleNames) => {
-    var p = System.packages[packageAddress],
+  groupIntoPackages(System, modules, packageNames).mapGroups((packageAddress, moduleNames) => {
+    var systemP = sysPackages[packageAddress],
+        livelyP = livelyPackages[packageAddress],
+        p = livelyP && systemP ? Object.assign(livelyP, systemP) : livelyP || systemP,
         names = p ? p.names : [];
     if (!names || !names.length) names = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
 
