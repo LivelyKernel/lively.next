@@ -1,6 +1,6 @@
 "format esm";
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-05-16 00:26 GMT+0200
+// Generated on 16-06-07 00:29 PDT
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -107,12 +107,15 @@ Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
 Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
   var visitor = this;
   // body is a list with types Statement, ModuleDeclaration
-  node["body"] = node["body"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["body", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
 }
 Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
   var visitor = this;
@@ -121,12 +124,15 @@ Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
     node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
   }
   // params is a list with types Pattern
-  node["params"] = node["params"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["params", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  // body is of types BlockStatement
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   return node;
 }
@@ -141,12 +147,15 @@ Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) 
     node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
   }
   // consequent is a list with types Statement
-  node["consequent"] = node["consequent"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["consequent", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["consequent"].length; i++) {
+    var ea = node["consequent"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["consequent", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["consequent"] = newElements;
+  return node;
 }
 Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
   var visitor = this;
@@ -213,12 +222,15 @@ Visitor.prototype.visitClass = function visitClass(node, state, path) {
 Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
   var visitor = this;
   // body is a list with types MethodDefinition
-  node["body"] = node["body"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["body", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
 }
 Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
   var visitor = this;
@@ -255,12 +267,15 @@ Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(n
 Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
   var visitor = this;
   // body is a list with types Statement
-  node["body"] = node["body"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["body", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
 }
 Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
   var visitor = this;
@@ -327,12 +342,15 @@ Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, sta
   // discriminant is of types Expression
   node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
   // cases is a list with types SwitchCase
-  node["cases"] = node["cases"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["cases", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["cases"].length; i++) {
+    var ea = node["cases"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["cases", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["cases"] = newElements;
+  return node;
 }
 Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
   var visitor = this;
@@ -410,23 +428,29 @@ Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, sta
   var visitor = this;
   // elements is a list with types Expression, SpreadElement
   if (node["elements"]) {
-    node["elements"] = node["elements"].reduce(function(results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["elements", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
-      return results;
-    }, []);  }
+    var newElements = [];
+    for (var i = 0; i < node["elements"].length; i++) {
+      var ea = node["elements"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node["elements"] = newElements;
+  }
   return node;
 }
 Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
   var visitor = this;
   // properties is a list with types Property
-  node["properties"] = node["properties"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["properties", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["properties"].length; i++) {
+    var ea = node["properties"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["properties"] = newElements;
+  return node;
 }
 Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
   var visitor = this;
@@ -435,12 +459,15 @@ Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(nod
     node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
   }
   // params is a list with types Pattern
-  node["params"] = node["params"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["params", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  // body is of types BlockStatement
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   return node;
 }
@@ -503,22 +530,28 @@ Visitor.prototype.visitCallExpression = function visitCallExpression(node, state
   // callee is of types Expression, Super
   node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
   // arguments is a list with types Expression, SpreadElement
-  node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["arguments", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
 }
 Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
   var visitor = this;
   // expressions is a list with types Expression
-  node["expressions"] = node["expressions"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["expressions", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["expressions"].length; i++) {
+    var ea = node["expressions"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["expressions"] = newElements;
+  return node;
 }
 Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
   var visitor = this;
@@ -529,12 +562,15 @@ Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpr
     node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
   }
   // params is a list with types Pattern
-  node["params"] = node["params"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["params", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  return node;
 }
 Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
   var visitor = this;
@@ -547,18 +583,24 @@ Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, sta
 Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
   var visitor = this;
   // quasis is a list with types TemplateElement
-  node["quasis"] = node["quasis"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["quasis", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  // expressions is a list with types Expression
-  node["expressions"] = node["expressions"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["expressions", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["quasis"].length; i++) {
+    var ea = node["quasis"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["quasis", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["quasis"] = newElements;
+  // expressions is a list with types Expression
+  var newElements = [];
+  for (var i = 0; i < node["expressions"].length; i++) {
+    var ea = node["expressions"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["expressions"] = newElements;
+  return node;
 }
 Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
   var visitor = this;
@@ -579,23 +621,29 @@ Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(nod
 Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
   var visitor = this;
   // properties is a list with types AssignmentProperty
-  node["properties"] = node["properties"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["properties", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["properties"].length; i++) {
+    var ea = node["properties"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["properties"] = newElements;
+  return node;
 }
 Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
   var visitor = this;
   // elements is a list with types Pattern
   if (node["elements"]) {
-    node["elements"] = node["elements"].reduce(function(results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["elements", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);
-      else results.push(result);
-      return results;
-    }, []);  }
+    var newElements = [];
+    for (var i = 0; i < node["elements"].length; i++) {
+      var ea = node["elements"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node["elements"] = newElements;
+  }
   return node;
 }
 Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
@@ -637,12 +685,15 @@ Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, pa
 Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
   var visitor = this;
   // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
-  node["specifiers"] = node["specifiers"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  // source is of types Literal
+  var newElements = [];
+  for (var i = 0; i < node["specifiers"].length; i++) {
+    var ea = node["specifiers"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["specifiers"] = newElements;
+  // source is of types Literal
   node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
   return node;
 }
@@ -673,12 +724,15 @@ Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclara
     node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
   }
   // specifiers is a list with types ExportSpecifier
-  node["specifiers"] = node["specifiers"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  // source is of types Literal
+  var newElements = [];
+  for (var i = 0; i < node["specifiers"].length; i++) {
+    var ea = node["specifiers"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["specifiers"] = newElements;
+  // source is of types Literal
   if (node["source"]) {
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
   }
@@ -721,36 +775,45 @@ Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(n
   // id is of types Identifier
   node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
   // params is a list with types Pattern
-  node["params"] = node["params"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["params", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  // body is of types BlockStatement
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
   node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
   return node;
 }
 Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
   var visitor = this;
   // declarations is a list with types VariableDeclarator
-  node["declarations"] = node["declarations"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["declarations", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["declarations"].length; i++) {
+    var ea = node["declarations"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["declarations", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["declarations"] = newElements;
+  return node;
 }
 Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
   var visitor = this;
   // callee is of types Expression, Super
   node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
   // arguments is a list with types Expression, SpreadElement
-  node["arguments"] = node["arguments"].reduce(function(results, ea, i) {
-    var result = visitor.accept(ea, state, path.concat(["arguments", i]));
-    if (Array.isArray(result)) results.push.apply(results, result);
-    else results.push(result);
-    return results;
-  }, []);  return node;
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+    else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
 }
 Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
   var visitor = this;
