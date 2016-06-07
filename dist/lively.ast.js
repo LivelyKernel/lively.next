@@ -19108,6 +19108,8 @@ var nodes = Object.freeze({
     // put in front of everything else to mirror the func hoisting:
     // "return bar(); function bar() { return 23 }" ->
     //   "Global.bar = bar; return bar(); function bar() { return 23 }"
+    // if declarationWrapper is requested:
+    //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
     rewritten = putFunctionDeclsInFront(rewritten, options);
 
     return rewritten;
@@ -19234,7 +19236,7 @@ var nodes = Object.freeze({
         if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
 
         var init = options.declarationWrapper ? {
-          arguments: [decl.init, { type: "Literal", value: decl.id.name }, options.captureObj, { type: "Literal", value: node.kind }],
+          arguments: [{ type: "Literal", value: decl.id.name }, { type: "Literal", value: node.kind }, decl.init, options.captureObj],
           callee: options.declarationWrapper, type: "CallExpression"
         } : decl.init;
 
@@ -19251,12 +19253,6 @@ var nodes = Object.freeze({
         }
 
         // This is rewriting normal vars
-        // var init = decl.init || {
-        //   operator: "||",
-        //   type: "LogicalExpression",
-        //   left: {computed: true, object: options.captureObj, property: {type: "Literal", value: decl.id.name},type: "MemberExpression"},
-        //   right: {name: "undefined", type: "Identifier"}
-        // };
         return [assignExpr(options.captureObj, decl.id, init, false)];
       });
     });
@@ -19270,7 +19266,7 @@ var nodes = Object.freeze({
       if (topLevel.classDecls.indexOf(stmt) !== -1) {
         if (options.declarationWrapper) {
           parsed.body.splice(i, 1, assignExpr(options.captureObj, stmt.id, {
-            arguments: [stmt, { type: "Literal", value: stmt.id.name }, options.captureObj, { type: "Literal", value: "class" }],
+            arguments: [{ type: "Literal", value: stmt.id.name }, { type: "Literal", value: "class" }, stmt, options.captureObj],
             callee: options.declarationWrapper, type: "CallExpression"
           }, false));
         } else {
@@ -19509,8 +19505,13 @@ var nodes = Object.freeze({
     var globalFuncs = topLevel.funcDecls.filter(function (ea) {
       return shouldDeclBeCaptured(ea, options);
     }).map(function (decl) {
-      var funcId = { type: "Identifier", name: decl.id.name };
-      return assignExpr(options.captureObj, funcId, funcId, false);
+      var funcId = { type: "Identifier", name: decl.id.name },
+          init = options.declarationWrapper ? {
+        arguments: [{ type: "Literal", value: funcId.name }, { type: "Literal", value: "function" }, funcId, options.captureObj],
+        callee: options.declarationWrapper, type: "CallExpression"
+      } : funcId;
+
+      return assignExpr(options.captureObj, funcId, init, false);
     });
     parsed.body = globalFuncs.concat(parsed.body);
     return parsed;
