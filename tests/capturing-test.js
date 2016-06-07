@@ -41,7 +41,7 @@ describe("ast.capturing", function() {
 
   testVarTfm("transformTopLevelVarDeclsForCapturing",
              "var y, z = foo + bar; baz.foo(z, 3)",
-             "_rec.y = _rec['y'] || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);");
+             "_rec.y = undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);");
 
   testVarTfm("transformTopLevelVarAndFuncDeclsForCapturing",
              "var z = 3, y = 4; function foo() { var x = 5; }",
@@ -355,6 +355,34 @@ describe("ast.capturing", function() {
 
     });
 
+  });
+
+});
+
+describe("declarations", () => {
+
+  it("can be wrapped in define call", () => {
+    expect(stringify(
+          rewriteToCaptureTopLevelVariables(
+            parse("var x = 23;"), {name: "_rec", type: "Identifier"},
+            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+      .equals("_rec.x = _define('x', 'var', 23, _rec);");
+  });
+
+  it("wraps class decls", () => {
+    expect(stringify(
+          rewriteToCaptureTopLevelVariables(
+            parse("class Foo {}"), {name: "_rec", type: "Identifier"},
+            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+      .equals("_rec.Foo = _define('Foo', 'class', class Foo {\n}, _rec);");
+  });
+
+  it("wraps function decls", () => {
+    expect(stringify(
+          rewriteToCaptureTopLevelVariables(
+            parse("function bar() {}"), {name: "_rec", type: "Identifier"},
+            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+      .equals("_rec.bar = _define('bar', 'function', bar, _rec);\nfunction bar() {\n}");
   });
 
 });
