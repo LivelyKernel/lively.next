@@ -19235,10 +19235,17 @@ var nodes = Object.freeze({
       return lively_lang.arr.flatmap(node.declarations, function (decl) {
         if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
 
-        var init = options.declarationWrapper ? {
-          arguments: [{ type: "Literal", value: decl.id.name }, { type: "Literal", value: node.kind }, decl.init, options.captureObj],
+        var init = decl.init || {
+          operator: "||",
+          type: "LogicalExpression",
+          left: { computed: false, object: options.captureObj, property: decl.id, type: "MemberExpression" },
+          right: { name: "undefined", type: "Identifier" }
+        };
+
+        var initWrapped = options.declarationWrapper ? {
+          arguments: [{ type: "Literal", value: decl.id.name }, { type: "Literal", value: node.kind }, init, options.captureObj],
           callee: options.declarationWrapper, type: "CallExpression"
-        } : decl.init;
+        } : init;
 
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
@@ -19249,11 +19256,11 @@ var nodes = Object.freeze({
             return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
-          return [varDecl$1(declRoot, init, node.kind)].concat(extractions);
+          return [varDecl$1(declRoot, initWrapped, node.kind)].concat(extractions);
         }
 
         // This is rewriting normal vars
-        return [assignExpr(options.captureObj, decl.id, init, false)];
+        return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
       });
     });
   }

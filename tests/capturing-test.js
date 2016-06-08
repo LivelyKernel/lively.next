@@ -41,7 +41,7 @@ describe("ast.capturing", function() {
 
   testVarTfm("transformTopLevelVarDeclsForCapturing",
              "var y, z = foo + bar; baz.foo(z, 3)",
-             "_rec.y = undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);");
+             "_rec.y = _rec.y || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);");
 
   testVarTfm("transformTopLevelVarAndFuncDeclsForCapturing",
              "var z = 3, y = 4; function foo() { var x = 5; }",
