@@ -253,3 +253,100 @@ describe("runtime", () => {
   });
 
 });
+
+describe("persistent definitions", () => {
+
+  var varMapper, opts;
+  beforeEach(() => {
+    varMapper = {};
+    opts = {topLevelVarRecorder: varMapper, keepPreviouslyDeclaredValues: true}
+  });
+
+  describe("primitives", () => {
+
+    it("redefines number, strings, regexp", async () => {
+      await runEval("var a = 1, b = '2', c = /foo/", opts);
+      await runEval("var a = 2, b = '3', c = /bar/", opts);
+      expect(varMapper.a).equals(2, "number");
+      expect(varMapper.b).equals('3', "string");
+      expect(varMapper.c.test("bar")).equals(true, "regexp");
+    });
+
+  });
+
+  describe("objects", () => {
+
+    it("keeps identy", async () => {
+      var result1 = await runEval("var x = {y: 23}", opts),
+          x1 = varMapper.x;
+      expect(result1.value).deep.equals({y: 23});
+      expect(x1).deep.equals({y: 23});
+      var result2 = await runEval("var x = {y: 24}", opts),
+          x2 = varMapper.x;
+      expect(result2.value).deep.equals({y: 24});
+      expect(x2).deep.equals({y: 24});
+      expect(x1).equals(x2);
+    });
+
+    it("keeps symbols", async () => {
+      var sym = Symbol.for('y'),
+          result1 = await runEval("var x = {[Symbol.for('y')]: 23}", opts),
+          x1 = varMapper.x;
+      expect(result1.value).deep.equals({[sym]: 23});
+      expect(x1).deep.equals({[sym]: 23});
+      var result2 = await runEval("var x = {[Symbol.for('y')]: 24}", opts),
+          x2 = varMapper.x;
+      expect(result2.value).deep.equals({[sym]: 24});
+      expect(x2).deep.equals({[sym]: 24});
+      expect(x1).equals(x2);
+    });
+
+    it("keeps identity of generated object", async () => {
+      await runEval("var a = (function() { return {x: 23}; })();", opts);
+      var a1 = varMapper.a;
+      await runEval("var a = (function() { return {x: 24}; })();", opts);
+      var a2 = varMapper.a;
+      expect(a2).deep.equals({x: 24});
+      expect(a2).equals(a1);
+    });
+
+    it("copies getters and setters", async () => {
+      await runEval("var a = {get x() { return this._x; }, set x(v) { this._x = v; }}; a.x = 3;", opts);
+      var a1 = varMapper.a;
+      expect(a1.x).equals(3);
+      await runEval("var a = {get x() { return this._x; }, set x(v) { this._x = v + 1; }};", opts);
+      var a2 = varMapper.a;
+      expect(a1).equals(a2);
+      expect(a2.x).equals(3);
+      a2.x = 4;
+      expect(a2.x).equals(5);
+    });
+  });
+
+
+  describe("class", () => {
+
+    beforeEach(() =>
+      runEval("class Foo {a() { return 1 } get b() { return 2 } static c() { return 3; }}", opts))
+
+    it("keeps identity", async () => {
+      var Foo1 = varMapper.Foo;
+      await runEval("class Foo {a() { return 2 }}", opts);
+      var Foo2 = varMapper.Foo;
+      expect(new Foo2().a()).equals(2);
+      expect(Foo1).equals(Foo2);
+    });
+
+    it("redefines props", async () => {
+      await runEval("class Foo {get b() { return 3 }}", opts);
+      expect(new varMapper.Foo().b).equals(3);
+    });
+
+    it("redefines class side", async () => {
+      await runEval("class Foo {static c() { return 4 }}", opts);
+      expect(varMapper.Foo.c()).equals(4);
+    });
+
+  });
+
+});
