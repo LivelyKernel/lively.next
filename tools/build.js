@@ -18,9 +18,10 @@ module.exports = Promise.resolve()
     entry: "index.js",
     plugins: [
       babel({
-        exclude: 'node_modules/**',
-        sourceMap: false,
-        "presets": [ "es2015-rollup" ]}),
+        exclude: 'node_modules/**', sourceMap: false,
+        "presets": ["es2015-rollup"],
+        babelrc: false,
+        plugins: ['transform-async-to-generator']}),
       builtins()
     ]
   }))
