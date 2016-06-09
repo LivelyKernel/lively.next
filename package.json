@@ -47,7 +47,7 @@
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
     "lively.ast": "^0.7.6",
-    "lively.lang": "^0.5.23"
+    "lively.lang": "^0.6.0"
   },
   "devDependencies": {
     "babel-plugin-transform-async-to-generator": "^6.8.0",
