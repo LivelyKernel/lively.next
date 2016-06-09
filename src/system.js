@@ -5,9 +5,8 @@ import { install as installHook, isInstalled as isHookInstalled } from "./hooks.
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var GLOBAL = typeof window !== "undefined" ? window : (typeof Global !== "undefined" ? Global : global);
 var isNode = System.get("@system-env").node;
-
+var initialSystem = initialSystem || System;
 
 var SystemClass = System.constructor;
 if (!SystemClass.systems) SystemClass.systems = {};
@@ -81,6 +80,7 @@ function makeSystem(cfg) {
 
 function prepareSystem(System, config) {
   System.trace = true;
+  config = config || {};
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
@@ -96,8 +96,6 @@ function prepareSystem(System, config) {
   if (!isHookInstalled(System, "fetch", "fetch_lively_protocol"))
     installHook(System, "fetch", fetch_lively_protocol);
 
-  config = obj.merge({transpiler: 'babel', babelOptions: {}}, config);
-
   if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
         "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs",
@@ -111,7 +109,19 @@ function prepareSystem(System, config) {
   }
 
   config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
+  if (!config.transpiler && System.transpiler === "traceur") {
+    System.config({
+      map: {
+        'plugin-babel': initialSystem.map["plugin-babel"],
+        'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
+      },
+      transpiler: initialSystem.transpiler,
+      babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
+    });
+  }
+
   // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
+
 
   System.config(config);
 

@@ -2,7 +2,6 @@ import { parse, evalSupport } from "lively.ast";
 import { arr, string, properties, classHelper } from "lively.lang";
 import { moduleEnv } from "./system.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
-import "babel-regenerator-runtime";
 
 var evalCodeTransform = evalSupport.evalCodeTransform;
 
@@ -33,7 +32,7 @@ var exceptions = [
       // id => id.indexOf(resolve("node_modules/")) > -1,
       // id => canonicalURL(id).indexOf(node_modulesDir) > -1,
       id => string.include(id, "acorn/src"),
-      id => string.include(id, "babel-core/browser.js") || string.include(id, "system.src.js"),
+      id => string.include(id, "babel-core/browser.js") || string.include(id, "system.src.js") || string.include(id, "systemjs-plugin-babel"),
       // id => lang.string.include(id, "lively.ast.es6.bundle.js"),
       id => id.slice(-3) !== ".js"
     ],
@@ -181,6 +180,39 @@ function customTranslate(proceed, load) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function instrumentSourceOfEsmModuleLoad(System, load) {
+  // brittle!
+  // The result of System.translate is source code for a call to
+  // System.register that can't be run standalone. We parse the necessary
+  // details from it that we will use to re-define the module
+  // (dependencies, setters, execute)
+  // Note: this only works for esm modules!
+
+  return System.translate(load).then(translated => {
+    // translated looks like
+    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
+    //   "use strict";
+    //   var x, z, y;
+    //   return {
+    //     setters: [function (_someEs6ModuleJs) { ... }],
+    //     execute: function () {...}
+    //   };
+    // });
+
+    var parsed            = parse(translated),
+        registerCall      = parsed.body[0].expression,
+        depNames          = arr.pluck(registerCall["arguments"][0].elements, "value"),
+        declareFuncNode   = registerCall["arguments"][1],
+        declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
+        declare           = eval(`var __moduleName = "${load.name}";(${declareFuncSource});\n//@ sourceURL=${load.name}\n`);
+
+    if (System.debug && typeof $morph !== "undefined" && $morph("log"))
+      $morph("log").textString = declare;
+
+    return {localDeps: depNames, declare: declare};
+  });
+}
+
+function old_instrumentSourceOfEsmModuleLoad(System, load) {
   // brittle!
   // The result of System.translate is source code for a call to
   // System.register that can't be run standalone. We parse the necessary

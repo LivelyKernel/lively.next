@@ -12,12 +12,19 @@ var targetFile3 = "dist/lively.modules-with-lively.vm.js";
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
 var vmSource = fs.readFileSync(require.resolve("lively.vm/dist/lively.vm_no-deps.js"));
+var initSource = fs.readFileSync(path.join(__dirname, "../systemjs-init.js"));
 var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runtime/runtime.js"));
 
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
-    plugins: [babel({exclude: 'node_modules/**', sourceMap: true})]
+    plugins: [babel({
+      exclude: 'node_modules/**',
+      sourceMap: true,
+      babelrc: false,
+      plugins: ['transform-async-to-generator'],
+      presets: ["es2015-rollup"]
+    })]
   }))
   .then(bundle =>
     bundle.generate({
@@ -25,8 +32,7 @@ module.exports = Promise.resolve()
       moduleName: 'lively.modules',
       globals: {
         "lively.lang": "lively.lang",
-        "lively.ast": "lively.ast",
-        "babel-regenerator-runtime": "regeneratorRuntime"
+        "lively.ast": "lively.ast"
       }
     }))
 
@@ -36,7 +42,9 @@ module.exports = Promise.resolve()
     // FIXME rollup inlines our optional assignment that we need for self-dev
 
     source = source.replace('defaultSystem || prepareSystem(GLOBAL.System)', 'exports.System || prepareSystem(GLOBAL.System)');
-    var noDeps = `(function() {
+    var noDeps = `
+${initSource}\n
+(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
