@@ -6,39 +6,33 @@ import {
 import { scheduleModuleExportsChange } from "./import-export.js";
 import { recordModuleChange } from "./notify.js";
 
-export { moduleSourceChange, moduleSourceChangeAction }
-
-function moduleSourceChangeAction(System, moduleName, changeFunc) {
-  return sourceOf(System, moduleName)
-          .then(changeFunc)
-          .then(newSource => moduleSourceChange(System, moduleName, newSource, {evaluate: true}));
+async function moduleSourceChangeAction(System, moduleName, changeFunc) {
+  var source = await sourceOf(System, moduleName),
+      newSource = await changeFunc(source);
+  return moduleSourceChange(System, moduleName, newSource, {evaluate: true});
 }
 
-function moduleSourceChange(System, moduleName, newSource, options) {
-  var oldSource, moduleId;
-  return System.normalize(moduleName)
-    .then(id => moduleId = id)
-    .then(() => sourceOf(System, moduleId).then(source => oldSource = source))
-    .then(() => {
-      var meta = metadata(System, moduleId);
-      switch (meta ? meta.format : undefined) {
-        case 'es6': case 'esm': case undefined:
-          return moduleSourceChangeEsm(System, moduleId, newSource, options);
+async function moduleSourceChange(System, moduleName, newSource, options) {
+  var moduleId = await System.normalize(moduleName),
+      oldSource = await sourceOf(System, moduleId),
+      meta = metadata(System, moduleId);
 
-        case 'global':
-          return moduleSourceChangeGlobal(System, moduleId, newSource, options);
+  try {
+    var format = meta.format || undefined, changeResult;
+    if (!format || format === "es6" || format === "esm" || format === "register") {
+      changeResult = await moduleSourceChangeEsm(System, moduleId, newSource, options);
+    } else if (format === "global") {
+      changeResult = await moduleSourceChangeGlobal(System, moduleId, newSource, options);
+    } else {
+      throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format ${format}`);
+    }
 
-        default:
-          throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format `)
-      }
-    })
-    .then(result => {
-      recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
-      return result;
-    }, error => {
-      recordModuleChange(System, moduleId, oldSource, newSource, error, options, Date.now());
-      throw error;
-    });
+    recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
+    return changeResult;
+  } catch (err) {
+    recordModuleChange(System, moduleId, oldSource, newSource, err, options, Date.now());    
+    throw err;
+  }
 }
 
 async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
@@ -112,7 +106,7 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
   return declared.execute();
 }
 
-function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
+async function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
   var load = {
     status: 'loading',
     source: newSource,
@@ -123,19 +117,16 @@ function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
     metadata: {format: "global"}
   };
 
-  return (System.get(moduleId) ? Promise.resolve() : System.import(moduleId))
+  if (!System.get(moduleId)) await System["import"](moduleId);
 
-    // translate the source and produce a {declare: FUNCTION, localDeps:
-    // [STRING]} object
-    .then((_) => instrumentSourceOfGlobalModuleLoad(System, load))
+  // translate the source and produce a {declare: FUNCTION, localDeps: [STRING]} object
+  var updateData = await instrumentSourceOfGlobalModuleLoad(System, load);
 
-    .then(updateData => {
-      load.source = updateData.translated;
-      var entry = doInstantiateGlobalModule(System, load);
-      System.delete(moduleId);
-      System.set(entry.name, entry.esModule)
-      return entry.module;
-    });
+  load.source = updateData.translated;
+  var entry = doInstantiateGlobalModule(System, load);
+  System.delete(moduleId);
+  System.set(entry.name, entry.esModule)
+  return entry.module;
 }
 
 function doInstantiateGlobalModule(System, load) {
@@ -291,3 +282,5 @@ function runExecuteOfGlobalModule(System, entry) {
 
   return entry;
 }
+
+export { moduleSourceChange, moduleSourceChangeAction }
