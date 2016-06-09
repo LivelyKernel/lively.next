@@ -45,12 +45,13 @@ describe("ast.capturing", function() {
 
   testVarTfm("transformTopLevelVarAndFuncDeclsForCapturing",
              "var z = 3, y = 4; function foo() { var x = 5; }",
-             "_rec.foo = foo;\n_rec.z = 3;\n_rec.y = 4;\nfunction foo() {\n    var x = 5;\n}")
+             "function foo() {\n    var x = 5;\n}\n_rec.foo = foo;\n_rec.z = 3;\n_rec.y = 4;")
 
   testVarTfm("transformTopLevelVarDeclsAndVarUsageForCapturing",
              "var z = 3, y = 42, obj = {a: '123', b: function b(n) { return 23 + n; }};\n"
            + "function foo(y) { var x = 5 + y.b(z); }\n",
-             "_rec.foo = foo;\n"
+             "function foo(y) {\n    var x = 5 + y.b(_rec.z);\n}\n"
+           + "_rec.foo = foo;\n"
            + "_rec.z = 3;\n"
            + "_rec.y = 42;\n"
            + "_rec.obj = {\n"
@@ -58,8 +59,7 @@ describe("ast.capturing", function() {
            + "    b: function b(n) {\n"
            + "        return 23 + n;\n"
            + "    }\n"
-           + "};\n"
-           + "function foo(y) {\n    var x = 5 + y.b(_rec.z);\n}");
+           + "};");
 
   it("don't capture excludes / globals", function() {
     var code     = "var x = 2; y = 3; z = 4; baz(x, y, z)",
@@ -192,16 +192,16 @@ describe("ast.capturing", function() {
     describe("async", () => {
 
       testVarTfm("async function foo() { return 23 }",
-                 "_rec.foo = foo;\nasync function foo() {\n    return 23;\n}");
+                 "async function foo() {\n    return 23;\n}\n_rec.foo = foo;");
 
       testVarTfm("var x = await foo();",
                  "_rec.x = await _rec.foo();");
 
       testVarTfm("export async function foo() { return 23; }",
-                 "_rec.foo = foo;\nexport async function foo() {\n    return 23;\n}");
+                 "async function foo() {\n    return 23;\n}\n_rec.foo = foo;\nexport {\n    foo\n};");
 
       testVarTfm("export default async function foo() { return 23; }",
-                "_rec.foo = foo;\nasync function foo() {\n    return 23;\n}\nfoo = _rec.foo;\nexport default foo;");
+                "async function foo() {\n    return 23;\n}\n_rec.foo = foo;\nfoo = _rec.foo;\nexport default foo;");
 
       // testVarTfm("export default async function foo() { return 23; }",
       //           "_rec.foo = foo;\nexport default async function foo() {\n    return 23;\n}");
@@ -276,11 +276,12 @@ describe("ast.capturing", function() {
                  "var a = 23;\n"
                + "export var x = a + 1, y = x + 2;"
                + "export default function f() {}\n",
-                 "_rec.f = f;\n"
+                 "function f() {\n}\n"
+               + "_rec.f = f;\n"
                + "_rec.a = 23;\n"
                + "export var x = _rec.a + 1, y = x + 2;\n"
                + "_rec.x = x;\n"
-               + "_rec.y = y;\nexport default function f() {\n}");
+               + "_rec.y = y;\nexport default f;");
 
       testVarTfm("var x = 23; export { x };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x\n};");
@@ -292,10 +293,10 @@ describe("ast.capturing", function() {
                  "export const x = 23;\n_rec.x = x;");
 
       testVarTfm("export function x() {};",
-                 '_rec.x = x;\nexport function x() {\n}\n;');
+                 'function x() {\n}\n_rec.x = x;\nexport {\n    x\n};\n;');
 
       testVarTfm("export default function x() {};",
-                 '_rec.x = x;\nexport default function x() {\n}\n;');
+                 'function x() {\n}\n_rec.x = x;\nexport default x;\n;');
 
       testVarTfm("export class Foo {};",
                  'export class Foo {\n}\n_rec.Foo = Foo;\n;');
@@ -314,7 +315,7 @@ describe("ast.capturing", function() {
     describe("export obj", () => {
 
       testModuleTfm("export function foo(a) { return a + 3; };",
-                    "_rec.foo = foo;\nfunction foo(a) {\n    return a + 3;\n}\n_moduleExport('foo', _rec.foo);\n;");
+                    "function foo(a) {\n    return a + 3;\n}\n_rec.foo = foo;\n_moduleExport('foo', _rec.foo);\n;");
 
       testModuleTfm("export default function () {};",
                     "_moduleExport('default', function () {\n});\n;");
@@ -323,10 +324,10 @@ describe("ast.capturing", function() {
                     "_moduleExport('default', function* () {\n});\n;");
 
       testModuleTfm("export default function foo() {};",
-                    "_rec.foo = foo;\nfunction foo() {\n}\n_moduleExport('default', _rec.foo);\n;");
+                    "function foo() {\n}\n_rec.foo = foo;\n_moduleExport('default', _rec.foo);\n;");
 
       testModuleTfm("export default async function foo() {};",
-                    "_rec.foo = foo;\nasync function foo() {\n}\n_moduleExport('default', _rec.foo);\n;");
+                    "async function foo() {\n}\n_rec.foo = foo;\n_moduleExport('default', _rec.foo);\n;");
 
       testModuleTfm("export default class Foo {a() { return 23; }};",
                     "class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;\n_moduleExport('default', _rec.Foo);\n;");
@@ -382,7 +383,7 @@ describe("declarations", () => {
           rewriteToCaptureTopLevelVariables(
             parse("function bar() {}"), {name: "_rec", type: "Identifier"},
             {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("_rec.bar = _define('bar', 'function', bar, _rec);\nfunction bar() {\n}");
+      .equals("function bar() {\n}\n_rec.bar = _define('bar', 'function', bar, _rec);");
   });
 
 });
