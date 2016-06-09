@@ -2,11 +2,10 @@
 
 require("systemjs")
 
-global.babel  = require("babel-core")
+var modules   = require("lively.modules")
 var parseArgs = require('minimist');
 var glob      = require('glob');
-var modules   = require("lively.modules")
-var mochaEs6  = require("../mocha-es6")
+var mochaEs6  = require("../mocha-es6.js")
 var path      = require("path");
 var fs        = require("fs");
 var dir       = process.cwd();
