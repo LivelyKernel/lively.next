@@ -274,7 +274,7 @@ function moduleEnv(System, moduleId) {
         "_moduleExport", "_moduleImport",
         "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
       ].concat(ast.query.knownGlobals),
-    recorder: Object.create(GLOBAL, {
+    recorder: Object.create(System.global, {
       _moduleExport: {
         get() { return (name, val) => scheduleModuleExportsChange(System, moduleId, name, val, true/*add export*/); }
       },

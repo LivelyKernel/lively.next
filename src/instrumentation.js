@@ -6,12 +6,6 @@ import "babel-regenerator-runtime";
 
 var evalCodeTransform = evalSupport.evalCodeTransform;
 
-export {
-  wrapModuleLoad, unwrapModuleLoad,
-  getExceptions, setExceptions,
-  instrumentSourceOfEsmModuleLoad, instrumentSourceOfGlobalModuleLoad
-}
-
 var isNode = System.get("@system-env").node;
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -238,4 +232,10 @@ function wrapModuleLoad(System) {
 
 function unwrapModuleLoad(System) {
   removeHook(System, "translate", "lively_modules_translate_hook");
+}
+
+export {
+  wrapModuleLoad, unwrapModuleLoad,
+  getExceptions, setExceptions,
+  instrumentSourceOfEsmModuleLoad, instrumentSourceOfGlobalModuleLoad
 }

@@ -3,8 +3,6 @@ import { install as installHook, isInstalled as isHookInstalled } from "./hooks.
 
 import { computeRequireMap as requireMap } from './dependencies.js'
 
-export { importPackage, registerPackage, applyConfig, getPackages };
-
 // helper
 function isJsFile(url) { return /\.js/i.test(url); }
 function asDir(url) {
@@ -301,3 +299,5 @@ function getPackages(System) {
 
   return result;
 }
+
+export { importPackage, registerPackage, applyConfig, getPackages };

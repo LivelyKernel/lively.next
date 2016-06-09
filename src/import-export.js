@@ -2,8 +2,6 @@ import * as ast from "lively.ast";
 import { arr } from "lively.lang"
 import { moduleRecordFor, updateModuleRecordOf, sourceOf } from "./system.js"
 
-export { runScheduledExportChanges, scheduleModuleExportsChange, importsAndExportsOf };
-
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = moduleRecordFor(System, moduleId);
@@ -153,3 +151,5 @@ async function importsAndExportsOf(System, moduleName, parent) {
     exports: arr.uniqBy(exports, (a, b) => a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule)
   }
 }
+
+export { runScheduledExportChanges, scheduleModuleExportsChange, importsAndExportsOf };
