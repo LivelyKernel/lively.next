@@ -47,8 +47,9 @@ describe("dependencies", () => {
     it("forgets module and recordings", async () => {
       await System.import(module1);
       forgetModule(System, module2);
-      expect(moduleRecordFor(System, module1)).to.equal(null);
-      expect(moduleRecordFor(System, module2)).to.equal(null);
+      expect(moduleRecordFor(System, module1)).to.equal(null, "record for module1 still exists");
+      expect(moduleRecordFor(System, module2)).to.equal(null, "record for module2 still exists");
+      debugger;
       expect(moduleEnv(System, module1).recorder).to.not.have.property("x");
       expect(moduleEnv(System, module2).recorder).to.not.have.property("y");
     });

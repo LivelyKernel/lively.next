@@ -96,6 +96,9 @@ function prepareSystem(System, config) {
   if (!isHookInstalled(System, "fetch", "fetch_lively_protocol"))
     installHook(System, "fetch", fetch_lively_protocol);
 
+  if (!isHookInstalled(System, "newModule", "newModule_volatile"))
+    installHook(System, "newModule", newModule_volatile);
+
   if (isNode) {
     var nodejsCoreModules = ["addons", "assert", "buffer", "child_process",
         "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs",
@@ -240,6 +243,14 @@ function fetch_lively_protocol(proceed, load) {
         || `/*Could not locate ${load.name}*/`;
   }
   return proceed(load);
+}
+
+function newModule_volatile(proceed, exports) {
+  var freeze = Object.freeze;
+  Object.freeze = x => x;
+  var m = proceed(exports);
+  Object.freeze = freeze;
+  return m;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

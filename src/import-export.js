@@ -43,25 +43,25 @@ function updateModuleExports(System, moduleId, keysAndValues) {
       else existingExports.push(name);
     });
 
-
     // if it's a new export we don't need to update dependencies, just the
     // module itself since no depends know about the export...
     // HMM... what about *-imports?
-    newExports.forEach(name => {
-      var oldM = System._loader.modules[moduleId].module,
-          m = System._loader.modules[moduleId].module = new oldM.constructor(),
-          pNames = Object.getOwnPropertyNames(record.exports);
-      for (var i = 0; i < pNames.length; i++) (function(key) {
-        Object.defineProperty(m, key, {
-          configurable: false, enumerable: true,
-          get() { return record.exports[key]; }
+    if (newExports.length) {
+      var m = System.get(moduleId);
+      if (Object.isFrozen(m)) {
+        console.warn("[lively.vm es6 updateModuleExports] Since module %s is frozen a new module object was installed in the system. Note that only(!) exisiting module bindings are updated. New exports that were added will only be available in already loaded modules after those are reloaded!", moduleId);
+        System.set(moduleId, System.newModule(record.exports))
+      } else {
+        debug && console.log("[lively.vm es6 updateModuleExports] adding new exports to %s", moduleId);
+        newExports.forEach(name => {
+          Object.defineProperty(m, name, {
+            configurable: false, enumerable: true,
+            get() { return record.exports[name]; },
+            set() { throw new Error("exports cannot be changed from the outside") }
+          });
         });
-      })(pNames[i]);
-      // Object.defineProperty(System._loader.modules[fullname].module, name, {
-      //   configurable: false, enumerable: true,
-      //   get() { return record.exports[name]; }
-      // });
-    });
+      }
+    }
 
     // For exising exports we find the execution func of each dependent module and run that
     // FIXME this means we run the entire modules again, side effects and all!!!

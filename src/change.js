@@ -30,7 +30,7 @@ async function moduleSourceChange(System, moduleName, newSource, options) {
     recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
     return changeResult;
   } catch (err) {
-    recordModuleChange(System, moduleId, oldSource, newSource, err, options, Date.now());    
+    recordModuleChange(System, moduleId, oldSource, newSource, err, options, Date.now());
     throw err;
   }
 }
@@ -48,15 +48,15 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
       };
 
   if (!System.get(moduleId)) await System.import(moduleId);
-  
+
   // translate the source and produce a {declare: FUNCTION, localDeps:
   // [STRING]} object
   var updateData = await instrumentSourceOfEsmModuleLoad(System, load);
 
-  // evaluate the module source
-  var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val),
+  // evaluate the module source, to get the register module object with execute
+  // and setters fields
+  var _exports = (name, val) => scheduleModuleExportsChange(System, load.name, name, val, true),
       declared = updateData.declare(_exports);
-  System.get("@lively-env").evaluationDone(load.name);
 
   debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
 
@@ -103,7 +103,13 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
   deps.forEach((d,i) => declared.setters[i](d.module));
 
   // 3. execute module body
-  return declared.execute();
+  var result = declared.execute();
+
+  // for updating records, modules, etc
+  // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
+  System.get("@lively-env").evaluationDone(load.name);
+
+  return result;
 }
 
 async function moduleSourceChangeGlobal(System, moduleId, newSource, options) {

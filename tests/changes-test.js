@@ -36,17 +36,22 @@ describe("code changes of esm format module", () => {
 
 
   it("modifies module and its exports", async () => {
-    var m = await S.import(module1);
+    var m1 = await S.import(module1);
+    var m2 = await S.import(module2);
     expect(moduleEnv(S, module2).recorder.internal).to.equal(1, "internal state of module2 before change");
-    expect(m.x).to.equal(3, "computed state in module1 before change");
-    expect(m.y).to.equal(1, "re-exported state in module1 before change");
+    expect(m1.x).to.equal(3, "computed state in module1 before change");
+    expect(m1.y).to.equal(1, "re-exported state in module1 before change");
     await changeModule2Source();
     expect(moduleEnv(S, module2).recorder.internal).to.equal(2, "internal state of module2 after change");
     expect(moduleEnv(S, module1).recorder.y).to.equal(2, "internal state of module1 after change");
-    expect(m.y).to.equal(2, "re-exported state in module1 after change");
+    expect(m1.y).to.equal(2, "re-exported state in module1 after change");
     // We expect to still have the same internal computed state b/c module 1
     // won't get re-run!
-    expect(m.x).to.equal(3, "computed state in module1 after change");
+    expect(m1.x).to.equal(3, "computed state in module1 after change");
+    var m1_reimported = await S.import(module1);
+    expect(m1).to.equal(m1_reimported, "module1 identity changed");
+    var m2_reimported = await S.import(module2);
+    expect(m2).to.equal(m2_reimported, "module2 identity changed");
   });
 
   it("modifies module declaration", async () => {
@@ -91,6 +96,22 @@ describe("code changes of esm format module", () => {
     await changeModule2Source();
     expect(moduleEnv(S, module2).recorder).property("y").equal(2);
     expect(moduleEnv(S, module2).recorder).property("internal").equal(2);
+  });
+
+  it("adds new exports", async () => {
+    var m = await S.import(module2)
+    expect(m).to.not.have.property("foo");
+    await moduleSourceChange(S, module2,
+      "import { z as x } from './sub-dir/file3.js'; export var y = 3; debugger; export var foo = 4;",
+      {evaluate: true});
+    expect(moduleEnv(S, module2).recorder).property("y").equal(3);
+    expect(moduleEnv(S, module2).recorder).property("foo").equal(4);
+    expect(m).property("y").equal(3);
+    expect(moduleRecordFor(S, module2)).property("exports").deep.equal({foo: 4, y: 3}, "module record");
+    expect(m).property("foo").equal(4, "module not changes");
+    var m_reimported = await S.import(module2)
+    expect(m_reimported).property("foo").equal(4, "when re-importing, new export missing?");
+    expect(m).equal(m_reimported, "module identity has changed");
   });
 
 });
