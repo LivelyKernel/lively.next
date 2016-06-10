@@ -40,23 +40,28 @@
     // walks the script tags
     var scripts = [].slice.call(document.getElementsByTagName("script")),
         pluginBabelPath;
+
     for (var i = 0; i < scripts.length; i++) {
       var src = scripts[i].src;
   
       // is lively.modules loaded? Use it's node_modules folder
       var index1 = src.indexOf("lively.modules/dist");
       if (index1 > -1) {
-        pluginBabelPath = src.slice(0, index1) + "node_modules/systemjs-plugin-babel";
-        break;
-      }
-  
-      // is systemjs loaded? Assume that systemjs-plugin-babel sits in the same folder...
-      var index2 = src.indexOf("systemjs/dist/system");
-      if (index2 > -1) {
-        pluginBabelPath = src.slice(0, index2) + "systemjs-plugin-babel";
+        pluginBabelPath = src.slice(0, index1) + "lively.modules/node_modules/systemjs-plugin-babel";
         break;
       }
     }
+    
+    if (!pluginBabelPath)
+      for (var i = 0; i < scripts.length; i++) {
+        // is systemjs loaded? Assume that systemjs-plugin-babel sits in the same folder...
+        var index2 = src.indexOf("systemjs/dist/system");
+        if (index2 > -1) {
+          pluginBabelPath = src.slice(0, index2) + "systemjs-plugin-babel";
+          break;
+        }
+      }
+
     return pluginBabelPath;
   }
   
