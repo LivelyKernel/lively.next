@@ -1,14 +1,131 @@
+
+(function configure() {
+
+  if (System.map['plugin-babel'] && System.map['systemjs-plugin-babel']) {
+    console.log("[lively.modules] System seems already to be configured");
+    return;
+  }
+
+  var pluginBabelPath = System.get("@system-env").browser ?
+    findSystemJSPluginBabel_browser() : findSystemJSPluginBabel_node();
+
+  var babel = System.global.babel;
+
+  if (!pluginBabelPath && !babel) {
+    console.error("[lively.modules] Could not find path to systemjs-plugin-babel nor a babel global! This will likely break lively.modules!");
+    return;
+  }
+
+  if (!pluginBabelPath) {
+    console.warn("[lively.modules] Could not find path to systemjs-plugin-babel but babel! Will fallback but there might be features in lively.modules that won't work!");
+    System.config({transpiler: 'babel'});
+
+  } else {
+
+    console.log("[lively.modules] SystemJS configured with systemjs-plugin-babel transpiler");
+    System.config({
+      map: {
+        'plugin-babel': pluginBabelPath + '/plugin-babel.js',
+        'systemjs-babel-build': pluginBabelPath + '/systemjs-babel-browser.js'
+      },
+      transpiler: 'plugin-babel',
+      babelOptions: Object.assign(
+        {stage3: true, es2015: true, modularRuntime: true},
+        System.babelOptions)
+    });
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  function findSystemJSPluginBabel_browser() {
+    // walks the script tags
+    var scripts = [].slice.call(document.getElementsByTagName("script")),
+        pluginBabelPath;
+
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src;
+  
+      // is lively.modules loaded? Use it's node_modules folder
+      var index1 = src.indexOf("lively.modules/");
+      if (index1 > -1) {
+        pluginBabelPath = src.slice(0, index1) + "lively.modules/node_modules/systemjs-plugin-babel";
+        break;
+      }
+    }
+    
+    if (!pluginBabelPath)
+      for (var i = 0; i < scripts.length; i++) {
+        // is systemjs loaded? Assume that systemjs-plugin-babel sits in the same folder...
+        var index2 = src.indexOf("systemjs/dist/system");
+        if (index2 > -1) {
+          pluginBabelPath = src.slice(0, index2) + "systemjs-plugin-babel";
+          break;
+        }
+      }
+
+    return pluginBabelPath;
+  }
+  
+  function findSystemJSPluginBabel_node() {
+    try {
+      var parent = require.cache[require.resolve("lively.modules")];
+      pluginBabelPath = require("module").Module._resolveFilename("systemjs-plugin-babel", parent)
+      if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
+    } catch (e) {}
+    try {
+      var pluginBabelPath = require.resolve("systemjs-plugin-babel");
+      if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
+    } catch (e) {}
+    
+    return null;
+  }  
+
+})();
+
 (function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast,babelRegeneratorRuntime) {
+(function (exports,lively_lang,ast) {
   'use strict';
 
-  var babelHelpers = {};
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
 
-  babelHelpers.defineProperty = function (obj, key, value) {
+  var asyncToGenerator = function (fn) {
+    return function () {
+      var gen = fn.apply(this, arguments);
+      return new Promise(function (resolve, reject) {
+        function step(key, arg) {
+          try {
+            var info = gen[key](arg);
+            var value = info.value;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+
+          if (info.done) {
+            resolve(value);
+          } else {
+            return Promise.resolve(value).then(function (value) {
+              return step("next", value);
+            }, function (err) {
+              return step("throw", err);
+            });
+          }
+        }
+
+        return step("next");
+      });
+    };
+  };
+
+  var defineProperty = function (obj, key, value) {
     if (key in obj) {
       Object.defineProperty(obj, key, {
         value: value,
@@ -22,6 +139,103 @@
 
     return obj;
   };
+
+  var importsAndExportsOf$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleName, parent) {
+      var id, source, parsed, scope, imports, exports;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return System.normalize(moduleName, parent);
+
+            case 2:
+              id = _context.sent;
+              _context.next = 5;
+              return sourceOf$1(System, id);
+
+            case 5:
+              source = _context.sent;
+              parsed = ast.parse(source);
+              scope = ast.query.scopes(parsed);
+
+
+              // compute imports
+              imports = scope.importDecls.reduce(function (imports, node) {
+                var nodes = ast.query.nodesAtIndex(parsed, node.start);
+                var importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+                if (!importStmt) return imports;
+
+                var from = importStmt.source ? importStmt.source.value : "unknown module";
+                if (!importStmt.specifiers.length) // no imported vars
+                  return imports.concat([{
+                    localModule: id,
+                    local: null,
+                    imported: null,
+                    fromModule: from,
+                    importStatement: importStmt
+                  }]);
+
+                return imports.concat(importStmt.specifiers.map(function (importSpec) {
+                  var imported;
+                  if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+                  return {
+                    localModule: id,
+                    local: importSpec.local ? importSpec.local.name : null,
+                    imported: imported,
+                    fromModule: from,
+                    importStatement: importStmt
+                  };
+                }));
+              }, []);
+              exports = scope.exportDecls.reduce(function (exports, node) {
+                var nodes = ast.query.nodesAtIndex(parsed, node.start);
+                var exportsStmt = lively_lang.arr.without(nodes, scope.node)[0];
+                if (!exportsStmt) return exports;
+
+                if (exportsStmt.type === "ExportAllDeclaration") {
+                  var from = exportsStmt.source ? exportsStmt.source.value : null;
+                  return exports.concat([{
+                    localModule: id,
+                    local: null,
+                    exported: "*",
+                    fromModule: from,
+                    exportStatement: exportsStmt
+                  }]);
+                }
+
+                return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+                  return {
+                    localModule: id,
+                    local: exportSpec.local ? exportSpec.local.name : null,
+                    exported: exportSpec.exported ? exportSpec.exported.name : null,
+                    fromModule: id,
+                    exportStatement: exportsStmt
+                  };
+                }));
+              }, []);
+              return _context.abrupt("return", {
+                imports: lively_lang.arr.uniqBy(imports, function (a, b) {
+                  return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+                }),
+                exports: lively_lang.arr.uniqBy(exports, function (a, b) {
+                  return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+                })
+              });
+
+            case 11:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+    return function importsAndExportsOf(_x, _x2, _x3) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
   function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
     var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
         rec = moduleRecordFor$1(System, moduleId);
@@ -66,23 +280,26 @@
       // if it's a new export we don't need to update dependencies, just the
       // module itself since no depends know about the export...
       // HMM... what about *-imports?
-      newExports.forEach(function (name) {
-        var oldM = System._loader.modules[moduleId].module,
-            m = System._loader.modules[moduleId].module = new oldM.constructor(),
-            pNames = Object.getOwnPropertyNames(record.exports);
-        for (var i = 0; i < pNames.length; i++) (function (key) {
-          Object.defineProperty(m, key, {
-            configurable: false, enumerable: true,
-            get: function get() {
-              return record.exports[key];
-            }
+      if (newExports.length) {
+        var m = System.get(moduleId);
+        if (Object.isFrozen(m)) {
+          console.warn("[lively.vm es6 updateModuleExports] Since module %s is frozen a new module object was installed in the system. Note that only(!) exisiting module bindings are updated. New exports that were added will only be available in already loaded modules after those are reloaded!", moduleId);
+          System.set(moduleId, System.newModule(record.exports));
+        } else {
+          debug && console.log("[lively.vm es6 updateModuleExports] adding new exports to %s", moduleId);
+          newExports.forEach(function (name) {
+            Object.defineProperty(m, name, {
+              configurable: false, enumerable: true,
+              get: function get() {
+                return record.exports[name];
+              },
+              set: function set() {
+                throw new Error("exports cannot be changed from the outside");
+              }
+            });
           });
-        })(pNames[i]);
-        // Object.defineProperty(System._loader.modules[fullname].module, name, {
-        //   configurable: false, enumerable: true,
-        //   get() { return record.exports[name]; }
-        // });
-      });
+        }
+      }
 
       // For exising exports we find the execution func of each dependent module and run that
       // FIXME this means we run the entire modules again, side effects and all!!!
@@ -93,100 +310,16 @@
           if (!importerModule.locked) {
             var importerIndex = importerModule.dependencies.indexOf(record);
             importerModule.setters[importerIndex](record.exports);
-            importerModule.execute();
+            // rk 2016-06-09: for now don't re-execute dependent modules on save,
+            // just update module bindings
+            if (false) {} else {
+              runScheduledExportChanges(System, importerModule.name);
+            }
           }
         }
       }
     });
   }
-
-  function importsAndExportsOf$1(System, moduleName, parent) {
-    var id, source, parsed, scope, imports, exports;
-    return regeneratorRuntime.async(function importsAndExportsOf$(context$1$0) {
-      while (1) switch (context$1$0.prev = context$1$0.next) {
-        case 0:
-          context$1$0.next = 2;
-          return regeneratorRuntime.awrap(System.normalize(moduleName, parent));
-
-        case 2:
-          id = context$1$0.sent;
-          context$1$0.next = 5;
-          return regeneratorRuntime.awrap(sourceOf$1(System, id));
-
-        case 5:
-          source = context$1$0.sent;
-          parsed = ast.parse(source);
-          scope = ast.query.scopes(parsed);
-          imports = scope.importDecls.reduce(function (imports, node) {
-            var nodes = ast.query.nodesAtIndex(parsed, node.start);
-            var importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-            if (!importStmt) return imports;
-
-            var from = importStmt.source ? importStmt.source.value : "unknown module";
-            if (!importStmt.specifiers.length) // no imported vars
-              return imports.concat([{
-                localModule: id,
-                local: null,
-                imported: null,
-                fromModule: from,
-                importStatement: importStmt
-              }]);
-
-            return imports.concat(importStmt.specifiers.map(function (importSpec) {
-              var imported;
-              if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importStmt.source) imported = importStmt.source.name;else imported = null;
-              return {
-                localModule: id,
-                local: importSpec.local ? importSpec.local.name : null,
-                imported: imported,
-                fromModule: from,
-                importStatement: importStmt
-              };
-            }));
-          }, []);
-          exports = scope.exportDecls.reduce(function (exports, node) {
-            var nodes = ast.query.nodesAtIndex(parsed, node.start);
-            var exportsStmt = lively_lang.arr.without(nodes, scope.node)[0];
-            if (!exportsStmt) return exports;
-
-            if (exportsStmt.type === "ExportAllDeclaration") {
-              var from = exportsStmt.source ? exportsStmt.source.value : null;
-              return exports.concat([{
-                localModule: id,
-                local: null,
-                exported: "*",
-                fromModule: from,
-                exportStatement: exportsStmt
-              }]);
-            }
-
-            return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
-              return {
-                localModule: id,
-                local: exportSpec.local ? exportSpec.local.name : null,
-                exported: exportSpec.exported ? exportSpec.exported.name : null,
-                fromModule: id,
-                exportStatement: exportsStmt
-              };
-            }));
-          }, []);
-          return context$1$0.abrupt("return", {
-            imports: lively_lang.arr.uniqBy(imports, function (a, b) {
-              return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
-            }),
-            exports: lively_lang.arr.uniqBy(exports, function (a, b) {
-              return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
-            })
-          });
-
-        case 11:
-        case "end":
-          return context$1$0.stop();
-      }
-    }, null, this);
-  }
-
-  // compute imports
 
   function installHook$1(System, hookName, hook) {
     System[hookName] = lively_lang.fun.wrap(System[hookName], hook);
@@ -230,6 +363,7 @@
   }
 
   var evalCodeTransform = ast.evalSupport.evalCodeTransform;
+  var evalCodeTransformOfSystemRegisterSetters = ast.evalSupport.evalCodeTransformOfSystemRegisterSetters;
 
   var isNode$1 = System.get("@system-env").node;
 
@@ -245,7 +379,7 @@
   function (id) {
     return lively_lang.string.include(id, "acorn/src");
   }, function (id) {
-    return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js");
+    return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js") || lively_lang.string.include(id, "systemjs-plugin-babel");
   },
   // id => lang.string.include(id, "lively.ast.es6.bundle.js"),
   function (id) {
@@ -278,6 +412,26 @@
       return rewrittenSource;
     } catch (e) {
       console.error("Error in prepareCodeForCustomCompile", e.stack);
+      return source;
+    }
+  }
+
+  function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
+    source = String(source);
+    var tfmOptions = {
+      topLevelVarRecorder: env.recorder,
+      varRecorderName: env.recorderName,
+      dontTransform: env.dontTransform,
+      recordGlobals: true
+    },
+        isGlobal = env.recorderName === "System.global";
+
+    try {
+      var rewrittenSource = evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
+      if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
+      return rewrittenSource;
+    } catch (e) {
+      console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
       return source;
     }
   }
@@ -372,8 +526,14 @@
       debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
     }
 
-    debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
-    return proceed(load);
+    return proceed(load).then(function (translated) {
+      if (translated.indexOf("System.register(") === 0) {
+        debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
+        translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
+      }
+      debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
+      return translated;
+    });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -404,13 +564,11 @@
       // });
 
       var parsed = ast.parse(translated),
-          call = parsed.body[0].expression,
-          moduleName = call.arguments[0].value,
-          registerCall = call.callee.body.body[0].expression,
+          registerCall = parsed.body[0].expression,
           depNames = lively_lang.arr.pluck(registerCall["arguments"][0].elements, "value"),
-          declareFuncNode = call.callee.body.body[0].expression["arguments"][1],
+          declareFuncNode = registerCall["arguments"][1],
           declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
-          declare = eval("var __moduleName = \"" + moduleName + "\";(" + declareFuncSource + ");\n//@ sourceURL=" + moduleName + "\n");
+          declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//@ sourceURL=" + load.name + "\n");
 
       if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
 
@@ -437,8 +595,10 @@
     removeHook$1(System, "translate", "lively_modules_translate_hook");
   }
 
-  var GLOBAL$1 = typeof window !== "undefined" ? window : typeof Global !== "undefined" ? Global : global;
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   var isNode = System.get("@system-env").node;
+  var initialSystem = initialSystem || System;
 
   var SystemClass = System.constructor;
   if (!SystemClass.systems) SystemClass.systems = {};
@@ -448,9 +608,14 @@
   };
 
   function livelySystemEnv(System) {
-    return Object.defineProperties({
+    return {
       moduleEnv: function moduleEnv(id) {
         return moduleEnv$1(System, id);
+      },
+
+      // TODO this is just a test, won't work in all cases...
+      get itself() {
+        return System.get(System.normalizeSync("lively.modules/index.js"));
       },
 
       evaluationDone: function evaluationDone(moduleId) {
@@ -478,16 +643,7 @@
       notifications: System["__lively.modules__notifications"] || (System["__lively.modules__notifications"] = []),
       notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
       options: System["__lively.modules__options"] || (System["__lively.modules__options"] = lively_lang.obj.deepCopy(defaultOptions))
-    }, {
-      itself: { // TODO this is just a test, won't work in all cases...
-
-        get: function get() {
-          return System.get(System.normalizeSync("lively.modules/index.js"));
-        },
-        configurable: true,
-        enumerable: true
-      }
-    });
+    };
   }
 
   function systems() {
@@ -512,12 +668,15 @@
     // FIXME "unload" code...???
     var name = nameOrSystem && typeof nameOrSystem !== "string" ? nameOfSystem(nameOrSystem) : nameOrSystem;
     delete systems()[name];
-  }function makeSystem(cfg) {
+  }
+
+  function makeSystem(cfg) {
     return prepareSystem(new SystemClass(), cfg);
   }
 
   function prepareSystem(System, config) {
     System.trace = true;
+    config = config || {};
 
     System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
@@ -529,7 +688,7 @@
 
     if (!isHookInstalled$1(System, "fetch", "fetch_lively_protocol")) installHook$1(System, "fetch", fetch_lively_protocol);
 
-    config = lively_lang.obj.merge({ transpiler: 'babel', babelOptions: {} }, config);
+    if (!isHookInstalled$1(System, "newModule", "newModule_volatile")) installHook$1(System, "newModule", newModule_volatile);
 
     if (isNode) {
       var nodejsCoreModules = ["addons", "assert", "buffer", "child_process", "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs", "http", "https", "module", "net", "os", "path", "punycode", "querystring", "readline", "repl", "stream", "stringdecoder", "timers", "tls", "tty", "url", "util", "v8", "vm", "zlib"],
@@ -542,6 +701,17 @@
     }
 
     config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
+    if (!config.transpiler && System.transpiler === "traceur") {
+      System.config({
+        map: {
+          'plugin-babel': initialSystem.map["plugin-babel"],
+          'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
+        },
+        transpiler: initialSystem.transpiler,
+        babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
+      });
+    }
+
     // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
 
     System.config(config);
@@ -579,7 +749,7 @@
     var pkg = parent && normalize_packageOfURL(parent, System);
     if (pkg) {
       var mappedObject = pkg.map && pkg.map[name] || System.map[name];
-      if (typeof mappedObject === "object") {
+      if ((typeof mappedObject === "undefined" ? "undefined" : _typeof(mappedObject)) === "object") {
         name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
       }
     }
@@ -626,8 +796,9 @@
 
     function normalize_readMemberExpression(p, value) {
       var pParts = p.split('.');
-      while (pParts.length) value = value[pParts.shift()];
-      return value;
+      while (pParts.length) {
+        value = value[pParts.shift()];
+      }return value;
     }
   }
 
@@ -655,6 +826,16 @@
       return typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + load.name + "*/";
     }
     return proceed(load);
+  }
+
+  function newModule_volatile(proceed, exports) {
+    var freeze = Object.freeze;
+    Object.freeze = function (x) {
+      return x;
+    };
+    var m = proceed(exports);
+    Object.freeze = freeze;
+    return m;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -696,7 +877,7 @@
       recorderName: "__lvVarRecorder",
       dontTransform: ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
       ].concat(ast.query.knownGlobals),
-      recorder: Object.create(GLOBAL$1, {
+      recorder: Object.create(System.global, {
         _moduleExport: {
           get: function get() {
             return function (name, val) {
@@ -801,7 +982,7 @@
     var id = System.normalizeSync(moduleName),
         deps = findDependentsOf$1(System, id);
     deps.forEach(function (ea) {
-      System["delete"](ea);
+      System.delete(ea);
       if (System.loads) delete System.loads[ea];
       opts.forgetEnv && forgetEnvOf(System, ea);
     });
@@ -811,8 +992,8 @@
   function forgetModule$1(System, moduleName, opts) {
     opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
     var id = opts.forgetDeps ? forgetModuleDeps(System, moduleName, opts) : System.normalizeSync(moduleName);
-    System["delete"](moduleName);
-    System["delete"](id);
+    System.delete(moduleName);
+    System.delete(id);
     if (System.loads) {
       delete System.loads[moduleName];
       delete System.loads[id];
@@ -830,9 +1011,9 @@
     if (opts.reloadDeps) toBeReloaded = findDependentsOf$1(System, id).concat(toBeReloaded);
     forgetModule$1(System, id, { forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
     return Promise.all(toBeReloaded.map(function (ea) {
-      return ea !== id && System["import"](ea);
+      return ea !== id && System.import(ea);
     })).then(function () {
-      return System["import"](id);
+      return System.import(id);
     });
   }
 
@@ -889,6 +1070,234 @@
     return lively_lang.graph.hull(computeRequireMap(System), id);
   }
 
+  // relative to either the package or the system:
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // packages
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  var importPackage$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return registerPackage$1(System, packageURL);
+
+            case 2:
+              _context.t0 = System;
+              _context.next = 5;
+              return System.normalize(packageURL);
+
+            case 5:
+              _context.t1 = _context.sent;
+              return _context.abrupt("return", _context.t0.import.call(_context.t0, _context.t1));
+
+            case 7:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+    return function importPackage(_x, _x2) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var registerPackage$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, packageURL, packageLoadStack) {
+      var url, registerSubPackages, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
+
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              _context2.next = 2;
+              return System.normalize(packageURL);
+
+            case 2:
+              url = _context2.sent;
+
+              if (isURL(url)) {
+                _context2.next = 5;
+                break;
+              }
+
+              return _context2.abrupt("return", Promise.reject(new Error("Error registering package: " + url + " is not a valid URL")));
+
+            case 5:
+
+              // ensure it's a directory
+              if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
+
+              if (!url.match(/\.js$/)) {
+                _context2.next = 8;
+                break;
+              }
+
+              return _context2.abrupt("return", Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + url)));
+
+            case 8:
+
+              url = String(url).replace(/\/$/, "");
+
+              packageLoadStack = packageLoadStack || [];
+              registerSubPackages = true;
+              // stop here to support circular deps
+
+              if (packageLoadStack.indexOf(url) !== -1) {
+                registerSubPackages = false;
+                System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", url);
+              } else packageLoadStack.push(url);
+
+              System.debug && console.log("[lively.modules package register] %s", url);
+
+              _context2.next = 15;
+              return tryToLoadPackageConfig(System, url);
+
+            case 15:
+              cfg = _context2.sent;
+              _context2.next = 18;
+              return applyConfig(System, cfg, url);
+
+            case 18:
+              packageConfigResult = _context2.sent;
+
+              if (!registerSubPackages) {
+                _context2.next = 46;
+                break;
+              }
+
+              _iteratorNormalCompletion = true;
+              _didIteratorError = false;
+              _iteratorError = undefined;
+              _context2.prev = 23;
+              _iterator = packageConfigResult.subPackages[Symbol.iterator]();
+
+            case 25:
+              if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                _context2.next = 32;
+                break;
+              }
+
+              subp = _step.value;
+              _context2.next = 29;
+              return registerPackage$1(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
+
+            case 29:
+              _iteratorNormalCompletion = true;
+              _context2.next = 25;
+              break;
+
+            case 32:
+              _context2.next = 38;
+              break;
+
+            case 34:
+              _context2.prev = 34;
+              _context2.t0 = _context2["catch"](23);
+              _didIteratorError = true;
+              _iteratorError = _context2.t0;
+
+            case 38:
+              _context2.prev = 38;
+              _context2.prev = 39;
+
+              if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+              }
+
+            case 41:
+              _context2.prev = 41;
+
+              if (!_didIteratorError) {
+                _context2.next = 44;
+                break;
+              }
+
+              throw _iteratorError;
+
+            case 44:
+              return _context2.finish(41);
+
+            case 45:
+              return _context2.finish(38);
+
+            case 46:
+              return _context2.abrupt("return", cfg);
+
+            case 47:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this, [[23, 34, 38, 46], [39,, 41, 45]]);
+    }));
+    return function registerPackage(_x3, _x4, _x5) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var tryToLoadPackageConfig = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, packageURL) {
+      var packageConfigURL, config, name;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              packageConfigURL = packageURL + "/package.json";
+
+
+              System.config({
+                meta: defineProperty({}, packageConfigURL, { format: "json" }),
+                packages: defineProperty({}, packageURL, { meta: { "package.json": { format: "json" } } })
+              });
+
+              System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
+
+              _context3.prev = 3;
+              _context3.t0 = System.get(packageConfigURL);
+
+              if (_context3.t0) {
+                _context3.next = 9;
+                break;
+              }
+
+              _context3.next = 8;
+              return System.import(packageConfigURL);
+
+            case 8:
+              _context3.t0 = _context3.sent;
+
+            case 9:
+              config = _context3.t0;
+
+              lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL);
+              return _context3.abrupt("return", config);
+
+            case 14:
+              _context3.prev = 14;
+              _context3.t1 = _context3["catch"](3);
+
+              console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, _context3.t1);
+              delete System.meta[packageConfigURL];
+              name = packageURL.split("/").slice(-1)[0];
+              return _context3.abrupt("return", { name: name });
+
+            case 20:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this, [[3, 14]]);
+    }));
+    return function tryToLoadPackageConfig(_x6, _x7) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
   var join = lively_lang.string.joinPath;
 
   function isURL(string) {
@@ -917,214 +1326,10 @@
 
   function normalizeInsidePackage(System, urlOrName, packageURL) {
     return isURL(urlOrName) ? urlOrName : // absolute
-    urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
-  }
+    urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName));
+  } // "pseudo-config"
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // packages
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function importPackage$1(System, packageURL) {
-    return regeneratorRuntime.async(function importPackage$(context$1$0) {
-      while (1) switch (context$1$0.prev = context$1$0.next) {
-        case 0:
-          context$1$0.next = 2;
-          return regeneratorRuntime.awrap(registerPackage$1(System, packageURL));
-
-        case 2:
-          context$1$0.t0 = System;
-          context$1$0.next = 5;
-          return regeneratorRuntime.awrap(System.normalize(packageURL));
-
-        case 5:
-          context$1$0.t1 = context$1$0.sent;
-          return context$1$0.abrupt("return", context$1$0.t0["import"].call(context$1$0.t0, context$1$0.t1));
-
-        case 7:
-        case "end":
-          return context$1$0.stop();
-      }
-    }, null, this);
-  }
-
-  function registerPackage$1(System, packageURL, packageLoadStack) {
-    var url, registerSubPackages, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
-
-    return regeneratorRuntime.async(function registerPackage$(context$1$0) {
-      while (1) switch (context$1$0.prev = context$1$0.next) {
-        case 0:
-          context$1$0.next = 2;
-          return regeneratorRuntime.awrap(System.normalize(packageURL));
-
-        case 2:
-          url = context$1$0.sent;
-
-          if (isURL(url)) {
-            context$1$0.next = 5;
-            break;
-          }
-
-          return context$1$0.abrupt("return", Promise.reject(new Error("Error registering package: " + url + " is not a valid URL")));
-
-        case 5:
-
-          // ensure it's a directory
-          if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
-
-          if (!url.match(/\.js$/)) {
-            context$1$0.next = 8;
-            break;
-          }
-
-          return context$1$0.abrupt("return", Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + url)));
-
-        case 8:
-
-          url = String(url).replace(/\/$/, "");
-
-          packageLoadStack = packageLoadStack || [];
-          registerSubPackages = true;
-
-          // stop here to support circular deps
-          if (packageLoadStack.indexOf(url) !== -1) {
-            registerSubPackages = false;
-            System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", url);
-          } else packageLoadStack.push(url);
-
-          System.debug && console.log("[lively.modules package register] %s", url);
-
-          context$1$0.next = 15;
-          return regeneratorRuntime.awrap(tryToLoadPackageConfig(System, url));
-
-        case 15:
-          cfg = context$1$0.sent;
-          context$1$0.next = 18;
-          return regeneratorRuntime.awrap(applyConfig(System, cfg, url));
-
-        case 18:
-          packageConfigResult = context$1$0.sent;
-
-          if (!registerSubPackages) {
-            context$1$0.next = 46;
-            break;
-          }
-
-          _iteratorNormalCompletion = true;
-          _didIteratorError = false;
-          _iteratorError = undefined;
-          context$1$0.prev = 23;
-          _iterator = packageConfigResult.subPackages[Symbol.iterator]();
-
-        case 25:
-          if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-            context$1$0.next = 32;
-            break;
-          }
-
-          subp = _step.value;
-          context$1$0.next = 29;
-          return regeneratorRuntime.awrap(registerPackage$1(System, subp.address.replace(/\/?$/, "/"), packageLoadStack));
-
-        case 29:
-          _iteratorNormalCompletion = true;
-          context$1$0.next = 25;
-          break;
-
-        case 32:
-          context$1$0.next = 38;
-          break;
-
-        case 34:
-          context$1$0.prev = 34;
-          context$1$0.t0 = context$1$0["catch"](23);
-          _didIteratorError = true;
-          _iteratorError = context$1$0.t0;
-
-        case 38:
-          context$1$0.prev = 38;
-          context$1$0.prev = 39;
-
-          if (!_iteratorNormalCompletion && _iterator["return"]) {
-            _iterator["return"]();
-          }
-
-        case 41:
-          context$1$0.prev = 41;
-
-          if (!_didIteratorError) {
-            context$1$0.next = 44;
-            break;
-          }
-
-          throw _iteratorError;
-
-        case 44:
-          return context$1$0.finish(41);
-
-        case 45:
-          return context$1$0.finish(38);
-
-        case 46:
-          return context$1$0.abrupt("return", cfg);
-
-        case 47:
-        case "end":
-          return context$1$0.stop();
-      }
-    }, null, this, [[23, 34, 38, 46], [39,, 41, 45]]);
-  }
-
-  function tryToLoadPackageConfig(System, packageURL) {
-    var packageConfigURL, config, name;
-    return regeneratorRuntime.async(function tryToLoadPackageConfig$(context$1$0) {
-      while (1) switch (context$1$0.prev = context$1$0.next) {
-        case 0:
-          packageConfigURL = packageURL + "/package.json";
-
-          System.config({
-            meta: babelHelpers.defineProperty({}, packageConfigURL, { format: "json" }),
-            packages: babelHelpers.defineProperty({}, packageURL, { meta: { "package.json": { format: "json" } } })
-          });
-
-          System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
-
-          context$1$0.prev = 3;
-          context$1$0.t0 = System.get(packageConfigURL);
-
-          if (context$1$0.t0) {
-            context$1$0.next = 9;
-            break;
-          }
-
-          context$1$0.next = 8;
-          return regeneratorRuntime.awrap(System["import"](packageConfigURL));
-
-        case 8:
-          context$1$0.t0 = context$1$0.sent;
-
-        case 9:
-          config = context$1$0.t0;
-
-          lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL);
-          return context$1$0.abrupt("return", config);
-
-        case 14:
-          context$1$0.prev = 14;
-          context$1$0.t1 = context$1$0["catch"](3);
-
-          console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, context$1$0.t1);
-          delete System.meta[packageConfigURL];
-          name = packageURL.split("/").slice(-1)[0];
-          return context$1$0.abrupt("return", { name: name });
-
-        case 20:
-        case "end":
-          return context$1$0.stop();
-      }
-    }, null, this, [[3, 14]]);
-  }
-
-  // "pseudo-config"
   function applyConfig(System, packageConfig, packageURL) {
     // takes a config json object (typically read from a package.json file but
     // can be used standalone) and changes the System configuration to what it finds
@@ -1137,7 +1342,7 @@
         sysConfig = packageConfig.systemjs,
         livelyConfig = packageConfig.lively,
         main = packageConfig.main || "index.js";
-    System.config({ map: babelHelpers.defineProperty({}, name, packageURL) });
+    System.config({ map: defineProperty({}, name, packageURL) });
 
     if (!packageInSystem.map) packageInSystem.map = {};
 
@@ -1225,12 +1430,13 @@
 
   function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageURL) {
     var pConf = System.packages[packageURL],
-        preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ? livelyConfig.preferLoadedPackages : true;
+        preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ? livelyConfig.preferLoadedPackages : true,
+        normalized = System.normalizeSync(subPackageName, packageURL + "/");
 
-    var normalized = System.normalizeSync(subPackageName, packageURL + "/");
     if (preferLoadedPackages && (pConf.map[subPackageName] || System.map[subPackageName] || System.get(normalized))) {
       var subpackageURL;
       if (pConf.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, pConf.map[subPackageName], packageURL);else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], packageURL);else subpackageURL = normalized;
+      if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
       System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, packageURL, subpackageURL);
       return { name: subPackageName, address: subpackageURL };
     }
@@ -1303,9 +1509,6 @@
 
     return result;
   }
-
-  // *after* the package is registered the normalize call should resolve to the
-  // package's main module
 
   var eventTypes = ["modulechange", "doitrequest", "doitresult"];
 
@@ -1397,226 +1600,349 @@
     });
   }
 
-  function moduleSourceChange$1(System, moduleName, newSource, options) {
-    var oldSource, moduleId;
-    return System.normalize(moduleName).then(function (id) {
-      return moduleId = id;
-    }).then(function () {
-      return sourceOf$1(System, moduleId).then(function (source) {
-        return oldSource = source;
-      });
-    }).then(function () {
-      var meta = metadata(System, moduleId);
-      switch (meta ? meta.format : undefined) {
-        case 'es6':case 'esm':case undefined:
-          return moduleSourceChangeEsm(System, moduleId, newSource, options);
+  var moduleSourceChangeAction = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleName, changeFunc) {
+      var source, newSource;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return sourceOf$1(System, moduleName);
 
-        case 'global':
-          return moduleSourceChangeGlobal(System, moduleId, newSource, options);
+            case 2:
+              source = _context.sent;
+              _context.next = 5;
+              return changeFunc(source);
 
-        default:
-          throw new Error("moduleSourceChange is not supported for module " + moduleId + " with format ");
-      }
-    }).then(function (result) {
-      recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
-      return result;
-    }, function (error) {
-      recordModuleChange(System, moduleId, oldSource, newSource, error, options, Date.now());
-      throw error;
-    });
-  }
+            case 5:
+              newSource = _context.sent;
+              return _context.abrupt("return", moduleSourceChange$1(System, moduleName, newSource, { evaluate: true }));
 
-  function moduleSourceChangeEsm(System, moduleId, newSource, options) {
-    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, fullname, depModule, record, prevLoad;
-
-    return regeneratorRuntime.async(function moduleSourceChangeEsm$(context$1$0) {
-      while (1) switch (context$1$0.prev = context$1$0.next) {
-        case 0:
-          debug = System.debug, load = {
-            status: 'loading',
-            source: newSource,
-            name: moduleId,
-            address: moduleId,
-            linkSets: [],
-            dependencies: [],
-            metadata: { format: "esm" }
-          };
-
-          if (System.get(moduleId)) {
-            context$1$0.next = 4;
-            break;
+            case 7:
+            case "end":
+              return _context.stop();
           }
-
-          context$1$0.next = 4;
-          return regeneratorRuntime.awrap(System["import"](moduleId));
-
-        case 4:
-          context$1$0.next = 6;
-          return regeneratorRuntime.awrap(instrumentSourceOfEsmModuleLoad(System, load));
-
-        case 6:
-          updateData = context$1$0.sent;
-          _exports = function _exports(name, val) {
-            return scheduleModuleExportsChange(System, load.name, name, val);
-          }, declared = updateData.declare(_exports);
-
-          System.get("@lively-env").evaluationDone(load.name);
-
-          debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
-
-          // ensure dependencies are loaded
-          deps = [];
-          _iteratorNormalCompletion = true;
-          _didIteratorError = false;
-          _iteratorError = undefined;
-          context$1$0.prev = 14;
-          _iterator = updateData.localDeps[Symbol.iterator]();
-
-        case 16:
-          if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-            context$1$0.next = 32;
-            break;
-          }
-
-          depName = _step.value;
-          context$1$0.next = 20;
-          return regeneratorRuntime.awrap(System.normalize(depName, load.name));
-
-        case 20:
-          fullname = context$1$0.sent;
-          context$1$0.t0 = System.get(fullname);
-
-          if (context$1$0.t0) {
-            context$1$0.next = 26;
-            break;
-          }
-
-          context$1$0.next = 25;
-          return regeneratorRuntime.awrap(System["import"](fullname));
-
-        case 25:
-          context$1$0.t0 = context$1$0.sent;
-
-        case 26:
-          depModule = context$1$0.t0;
-          record = moduleRecordFor$1(System, fullname);
-
-          deps.push({
-            name: depName,
-            fullname: fullname,
-            module: depModule,
-            record: moduleRecordFor$1(System, fullname)
-          });
-
-        case 29:
-          _iteratorNormalCompletion = true;
-          context$1$0.next = 16;
-          break;
-
-        case 32:
-          context$1$0.next = 38;
-          break;
-
-        case 34:
-          context$1$0.prev = 34;
-          context$1$0.t1 = context$1$0["catch"](14);
-          _didIteratorError = true;
-          _iteratorError = context$1$0.t1;
-
-        case 38:
-          context$1$0.prev = 38;
-          context$1$0.prev = 39;
-
-          if (!_iteratorNormalCompletion && _iterator["return"]) {
-            _iterator["return"]();
-          }
-
-        case 41:
-          context$1$0.prev = 41;
-
-          if (!_didIteratorError) {
-            context$1$0.next = 44;
-            break;
-          }
-
-          throw _iteratorError;
-
-        case 44:
-          return context$1$0.finish(41);
-
-        case 45:
-          return context$1$0.finish(38);
-
-        case 46:
-          record = moduleRecordFor$1(System, load.name);
-
-          if (record) {
-            record.dependencies = deps.map(function (ea) {
-              return ea.record;
-            });
-            record.execute = declared.execute;
-            record.setters = declared.setters;
-          }
-
-          // hmm... for house keeping... not really needed right now, though
-          prevLoad = System.loads && System.loads[load.name];
-
-          if (prevLoad) {
-            prevLoad.deps = deps.map(function (ea) {
-              return ea.name;
-            });
-            prevLoad.depMap = deps.reduce(function (map, dep) {
-              map[dep.name] = dep.fullname;return map;
-            }, {});
-            if (prevLoad.metadata && prevLoad.metadata.entry) {
-              prevLoad.metadata.entry.deps = prevLoad.deps;
-              prevLoad.metadata.entry.normalizedDeps = deps.map(function (ea) {
-                return ea.fullname;
-              });
-              prevLoad.metadata.entry.declare = updateData.declare;
-            }
-          }
-
-          // 2. run setters to populate imports
-          deps.forEach(function (d, i) {
-            return declared.setters[i](d.module);
-          });
-
-          // 3. execute module body
-          return context$1$0.abrupt("return", declared.execute());
-
-        case 52:
-        case "end":
-          return context$1$0.stop();
-      }
-    }, null, this, [[14, 34, 38, 46], [39,, 41, 45]]);
-  }
-
-  function moduleSourceChangeGlobal(System, moduleId, newSource, options) {
-    var load = {
-      status: 'loading',
-      source: newSource,
-      name: moduleId,
-      address: moduleId,
-      linkSets: [],
-      dependencies: [],
-      metadata: { format: "global" }
+        }
+      }, _callee, this);
+    }));
+    return function moduleSourceChangeAction(_x, _x2, _x3) {
+      return ref.apply(this, arguments);
     };
+  }();
 
-    return (System.get(moduleId) ? Promise.resolve() : System["import"](moduleId)).
+  var moduleSourceChange$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleName, newSource, options) {
+      var moduleId, oldSource, meta, format, changeResult;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              _context2.next = 2;
+              return System.normalize(moduleName);
 
-    // translate the source and produce a {declare: FUNCTION, localDeps:
-    // [STRING]} object
-    then(function (_) {
-      return instrumentSourceOfGlobalModuleLoad(System, load);
-    }).then(function (updateData) {
-      load.source = updateData.translated;
-      var entry = doInstantiateGlobalModule(System, load);
-      System["delete"](moduleId);
-      System.set(entry.name, entry.esModule);
-      return entry.module;
-    });
-  }
+            case 2:
+              moduleId = _context2.sent;
+              _context2.next = 5;
+              return sourceOf$1(System, moduleId);
+
+            case 5:
+              oldSource = _context2.sent;
+              meta = metadata(System, moduleId);
+              _context2.prev = 7;
+              format = meta.format || undefined;
+
+              if (!(!format || format === "es6" || format === "esm" || format === "register")) {
+                _context2.next = 15;
+                break;
+              }
+
+              _context2.next = 12;
+              return moduleSourceChangeEsm(System, moduleId, newSource, options);
+
+            case 12:
+              changeResult = _context2.sent;
+              _context2.next = 22;
+              break;
+
+            case 15:
+              if (!(format === "global")) {
+                _context2.next = 21;
+                break;
+              }
+
+              _context2.next = 18;
+              return moduleSourceChangeGlobal(System, moduleId, newSource, options);
+
+            case 18:
+              changeResult = _context2.sent;
+              _context2.next = 22;
+              break;
+
+            case 21:
+              throw new Error("moduleSourceChange is not supported for module " + moduleId + " with format " + format);
+
+            case 22:
+
+              recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
+              return _context2.abrupt("return", changeResult);
+
+            case 26:
+              _context2.prev = 26;
+              _context2.t0 = _context2["catch"](7);
+
+              recordModuleChange(System, moduleId, oldSource, newSource, _context2.t0, options, Date.now());
+              throw _context2.t0;
+
+            case 30:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this, [[7, 26]]);
+    }));
+    return function moduleSourceChange(_x4, _x5, _x6, _x7) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var moduleSourceChangeEsm = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
+      var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, fullname, depModule, record, prevLoad, result;
+
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              debug = System.debug, load = {
+                status: 'loading',
+                source: newSource,
+                name: moduleId,
+                address: moduleId,
+                linkSets: [],
+                dependencies: [],
+                metadata: { format: "esm" }
+              };
+
+              if (System.get(moduleId)) {
+                _context3.next = 4;
+                break;
+              }
+
+              _context3.next = 4;
+              return System.import(moduleId);
+
+            case 4:
+              _context3.next = 6;
+              return instrumentSourceOfEsmModuleLoad(System, load);
+
+            case 6:
+              updateData = _context3.sent;
+
+
+              // evaluate the module source, to get the register module object with execute
+              // and setters fields
+              _exports = function _exports(name, val) {
+                return scheduleModuleExportsChange(System, load.name, name, val, true);
+              }, declared = updateData.declare(_exports);
+
+
+              debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
+
+              // ensure dependencies are loaded
+              deps = [];
+              _iteratorNormalCompletion = true;
+              _didIteratorError = false;
+              _iteratorError = undefined;
+              _context3.prev = 13;
+              _iterator = updateData.localDeps[Symbol.iterator]();
+
+            case 15:
+              if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                _context3.next = 31;
+                break;
+              }
+
+              depName = _step.value;
+              _context3.next = 19;
+              return System.normalize(depName, load.name);
+
+            case 19:
+              fullname = _context3.sent;
+              _context3.t0 = System.get(fullname);
+
+              if (_context3.t0) {
+                _context3.next = 25;
+                break;
+              }
+
+              _context3.next = 24;
+              return System.import(fullname);
+
+            case 24:
+              _context3.t0 = _context3.sent;
+
+            case 25:
+              depModule = _context3.t0;
+              record = moduleRecordFor$1(System, fullname);
+
+              deps.push({
+                name: depName,
+                fullname: fullname,
+                module: depModule,
+                record: moduleRecordFor$1(System, fullname)
+              });
+
+            case 28:
+              _iteratorNormalCompletion = true;
+              _context3.next = 15;
+              break;
+
+            case 31:
+              _context3.next = 37;
+              break;
+
+            case 33:
+              _context3.prev = 33;
+              _context3.t1 = _context3["catch"](13);
+              _didIteratorError = true;
+              _iteratorError = _context3.t1;
+
+            case 37:
+              _context3.prev = 37;
+              _context3.prev = 38;
+
+              if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+              }
+
+            case 40:
+              _context3.prev = 40;
+
+              if (!_didIteratorError) {
+                _context3.next = 43;
+                break;
+              }
+
+              throw _iteratorError;
+
+            case 43:
+              return _context3.finish(40);
+
+            case 44:
+              return _context3.finish(37);
+
+            case 45:
+
+              // 1. update the record so that when its dependencies change and cause a
+              // re-execute, the correct code (new version) is run
+              record = moduleRecordFor$1(System, load.name);
+
+              if (record) {
+                record.dependencies = deps.map(function (ea) {
+                  return ea.record;
+                });
+                record.execute = declared.execute;
+                record.setters = declared.setters;
+              }
+
+              // hmm... for house keeping... not really needed right now, though
+              prevLoad = System.loads && System.loads[load.name];
+
+              if (prevLoad) {
+                prevLoad.deps = deps.map(function (ea) {
+                  return ea.name;
+                });
+                prevLoad.depMap = deps.reduce(function (map, dep) {
+                  map[dep.name] = dep.fullname;return map;
+                }, {});
+                if (prevLoad.metadata && prevLoad.metadata.entry) {
+                  prevLoad.metadata.entry.deps = prevLoad.deps;
+                  prevLoad.metadata.entry.normalizedDeps = deps.map(function (ea) {
+                    return ea.fullname;
+                  });
+                  prevLoad.metadata.entry.declare = updateData.declare;
+                }
+              }
+
+              // 2. run setters to populate imports
+              deps.forEach(function (d, i) {
+                return declared.setters[i](d.module);
+              });
+
+              // 3. execute module body
+              result = declared.execute();
+
+              // for updating records, modules, etc
+              // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
+
+              System.get("@lively-env").evaluationDone(load.name);
+
+              return _context3.abrupt("return", result);
+
+            case 53:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this, [[13, 33, 37, 45], [38,, 40, 44]]);
+    }));
+    return function moduleSourceChangeEsm(_x8, _x9, _x10, _x11) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var moduleSourceChangeGlobal = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(System, moduleId, newSource, options) {
+      var load, updateData, entry;
+      return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
+              load = {
+                status: 'loading',
+                source: newSource,
+                name: moduleId,
+                address: moduleId,
+                linkSets: [],
+                dependencies: [],
+                metadata: { format: "global" }
+              };
+
+              if (System.get(moduleId)) {
+                _context4.next = 4;
+                break;
+              }
+
+              _context4.next = 4;
+              return System["import"](moduleId);
+
+            case 4:
+              _context4.next = 6;
+              return instrumentSourceOfGlobalModuleLoad(System, load);
+
+            case 6:
+              updateData = _context4.sent;
+
+
+              load.source = updateData.translated;
+              entry = doInstantiateGlobalModule(System, load);
+
+              System.delete(moduleId);
+              System.set(entry.name, entry.esModule);
+              return _context4.abrupt("return", entry.module);
+
+            case 12:
+            case "end":
+              return _context4.stop();
+          }
+        }
+      }, _callee4, this);
+    }));
+    return function moduleSourceChangeGlobal(_x12, _x13, _x14, _x15) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
   function doInstantiateGlobalModule(System, load) {
 
@@ -1650,7 +1976,9 @@
       var globals;
       if (load.metadata.globals) {
         globals = {};
-        for (var g in load.metadata.globals) if (load.metadata.globals[g]) globals[g] = require(load.metadata.globals[g]);
+        for (var g in load.metadata.globals) {
+          if (load.metadata.globals[g]) globals[g] = require(load.metadata.globals[g]);
+        }
       }
 
       var exportName = load.metadata.exports;
@@ -1765,19 +2093,7 @@
     return entry;
   }
 
-  // translate the source and produce a {declare: FUNCTION, localDeps:
-  // [STRING]} object
-
-  // evaluate the module source
-
-  // gather the data we need for the update, this includes looking up the
-  // imported modules and getting the module record and module object as
-  // a fallback (module records only exist for esm modules)
-
-  // 1. update the record so that when its dependencies change and cause a
-  // re-execute, the correct code (new version) is run
-
-  var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
+  var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : this;
 
   exports.System = exports.System || prepareSystem(GLOBAL.System);
   function changeSystem(newSystem, makeGlobal) {
@@ -1882,6 +2198,6 @@
   exports.subscribe = subscribe;
   exports.unsubscribe = unsubscribe;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,regeneratorRuntime));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();
