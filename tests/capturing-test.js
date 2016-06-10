@@ -375,7 +375,7 @@ describe("declarations", () => {
           rewriteToCaptureTopLevelVariables(
             parse("class Foo {}"), {name: "_rec", type: "Identifier"},
             {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("_rec.Foo = _define('Foo', 'class', class Foo {\n}, _rec);");
+      .equals("var Foo = _rec.Foo = _define('Foo', 'class', class Foo {\n}, _rec);;");
   });
 
   it("wraps function decls", () => {
