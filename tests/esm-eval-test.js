@@ -7,6 +7,18 @@ import { getSystem, removeSystem, moduleEnv, moduleRecordFor } from "lively.modu
 import { forgetModuleDeps } from "lively.modules/src/dependencies.js";
 import { runEval } from "../index.js";
 
+function read(file) {
+  if (file.match(/^http/) && System.global.fetch) {
+    return System.global.fetch(file).then(res => res.text())
+  }
+  if (file.match(/^file:/) && System.get("@system-env").node) {
+    return new Promise((resolve, reject) =>
+      System._nodeRequire("fs").readFile(file.replace(/^file:\/\//, ""), (err, content) =>
+        err ? reject(err) : resolve(String(content))))
+  }
+  return Promise.reject(new Error(`Cannot retrieve source for ${file}`));
+}
+
 var dir = System.normalizeSync("lively.vm/tests/test-resources/"),
     testProjectDir = dir + "test-project-dir-1/",
     module1 = testProjectDir + "file1.js",
@@ -116,7 +128,7 @@ describe("eval", () => {
     expect(m.x).to.equal(3);
     // we change module3 and check that the value of module1 that indirectly
     // depends on module3 has changed as well
-    var source = await S.fetch({status: 'loading', address: module3, name: module3, linkSets: [], dependencies: [], metadata: {}});
+    var source = await read(module3);
     source = source.replace(/(z = )([0-9]+)/, "$12");
     var result = await runEval(source, {asString: true, System: S, targetModule: module3});
     expect(result.value).to.not.match(/error/i);
