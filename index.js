@@ -27,3 +27,5 @@ function syncEval(code, options) {
   return globalEval.syncEval(code, options);
 }
 
+import * as evalStrategies from "./lib/eval-strategies.js";
+export { evalStrategies }

@@ -4332,29 +4332,35 @@
     };
     obj.extend(exports.promise, {
         delay: function (ms, resolveVal) {
-            return new Promise(resolve => {
+            return new Promise(function (resolve) {
                 setTimeout(resolve, ms, resolveVal);
             });
         },
         delayReject: function (ms, rejectVal) {
-            return new Promise((_, reject) => {
+            return new Promise(function (_, reject) {
                 setTimeout(reject, ms, rejectVal);
             });
         },
         timeout: function (ms, promise) {
-            return new Promise((resolve, reject) => {
+            return new Promise(function (resolve, reject) {
                 var done = false;
-                setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
-                promise.then(val => !done && (done = true) && resolve(val)).catch(err => !done && (done = true) && reject(err));
+                setTimeout(function () {
+                    return !done && (done = true) && reject(new Error('Promise timed out'));
+                }, ms);
+                promise.then(function (val) {
+                    return !done && (done = true) && resolve(val);
+                }, function (err) {
+                    return !done && (done = true) && reject(err);
+                });
             });
         },
         waitFor: function (ms, tester) {
-            return new Promise((resolve, reject) => {
+            return new Promise(function (resolve, reject) {
                 if (typeof ms === 'function') {
                     tester = ms;
                     ms = undefined;
                 }
-                var stopped = false, error = null, value = undefined, i = setInterval(() => {
+                var stopped = false, error = null, value = undefined, i = setInterval(function () {
                         if (stopped) {
                             clearInterval(i);
                             return;
@@ -4371,12 +4377,14 @@
                         }
                     }, 10);
                 if (typeof ms === 'number') {
-                    setTimeout(() => error = new Error('timeout'), ms);
+                    setTimeout(function () {
+                        error = new Error('timeout');
+                    }, ms);
                 }
             });
         },
         deferred: function () {
-            var resolve, reject, promise = new Promise((_resolve, _reject) => {
+            var resolve, reject, promise = new Promise(function (_resolve, _reject) {
                     resolve = _resolve;
                     reject = _reject;
                 });
@@ -4388,22 +4396,24 @@
         },
         convertCallbackFun: function (func) {
             return function promiseGenerator() {
-                var args = arr.from(arguments);
-                return new Promise((resolve, reject) => {
-                    args.push((err, result) => err ? reject(err) : resolve(result));
-                    func.apply(this, args);
+                var args = arr.from(arguments), self = this;
+                return new Promise(function (resolve, reject) {
+                    args.push(function (err, result) {
+                        return err ? reject(err) : resolve(result);
+                    });
+                    func.apply(self, args);
                 });
             };
         },
         convertCallbackFunWithManyArgs: function (func) {
             return function promiseGenerator() {
-                var args = arr.from(arguments);
-                return new Promise((resolve, reject) => {
+                var args = arr.from(arguments), self = this;
+                return new Promise(function (resolve, reject) {
                     args.push(function () {
                         var args = arr.from(arguments), err = args.shift();
                         return err ? reject(err) : resolve(args);
                     });
-                    func.apply(this, args);
+                    func.apply(self, args);
                 });
             };
         },
@@ -4413,16 +4423,18 @@
                 resolve(prevResult);
             else {
                 try {
-                    Promise.resolve(next(prevResult, akku)).then(result => {
+                    Promise.resolve(next(prevResult, akku)).then(function (result) {
                         resolveNext(promiseFuncs, result, akku, resolve, reject);
-                    }).catch(err => reject(err));
+                    }).catch(function (err) {
+                        reject(err);
+                    });
                 } catch (err) {
                     reject(err);
                 }
             }
         },
         chain: function (promiseFuncs) {
-            return new Promise((resolve, reject) => {
+            return new Promise(function (resolve, reject) {
                 exports.promise._chainResolveNext(promiseFuncs.slice(), undefined, {}, resolve, reject);
             });
         }
@@ -4531,8 +4543,8 @@
             return subgraph;
         },
         invert: function (g) {
-            return Object.keys(g).reduce((inverted, k) => {
-                g[k].forEach(k2 => {
+            return Object.keys(g).reduce(function (inverted, k) {
+                g[k].forEach(function (k2) {
                     if (!inverted[k2])
                         inverted[k2] = [k];
                     else
@@ -4544,12 +4556,16 @@
         sortByReference: function (depGraph, startNode) {
             var all = [startNode].concat(graph.hull(depGraph, startNode)), seen = [], groups = [];
             while (seen.length !== all.length) {
-                var depsRemaining = arr.withoutAll(all, seen).reduce((depsRemaining, node) => {
+                var depsRemaining = arr.withoutAll(all, seen).reduce(function (depsRemaining, node) {
                         depsRemaining[node] = arr.withoutAll(depGraph[node] || [], seen).length;
                         return depsRemaining;
-                    }, {}), min = arr.withoutAll(all, seen).reduce((minNode, node) => depsRemaining[node] <= depsRemaining[minNode] ? node : minNode);
+                    }, {}), min = arr.withoutAll(all, seen).reduce(function (minNode, node) {
+                        return depsRemaining[node] <= depsRemaining[minNode] ? node : minNode;
+                    });
                 if (depsRemaining[min] === 0) {
-                    groups.push(Object.keys(depsRemaining).filter(key => depsRemaining[key] === 0));
+                    groups.push(Object.keys(depsRemaining).filter(function (key) {
+                        return depsRemaining[key] === 0;
+                    }));
                 } else {
                     groups.push([min]);
                 }
@@ -4567,7 +4583,9 @@
                 carryOver = doFunc.call(context, carryOver, currentNode, index++);
                 visitedNodes = visitedNodes.concat([currentNode]);
                 var next = arr.withoutAll(graph[currentNode] || [], visitedNodes);
-                next.forEach(ea => iterator(ea));
+                next.forEach(function (ea) {
+                    return iterator(ea);
+                });
             }
         }
     };
@@ -15770,7 +15788,7 @@ module.exports = function(acorn) {
   babelHelpers;
 
   // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-  // Generated on 16-05-16 00:26 GMT+0200
+  // Generated on 16-06-07 00:29 PDT
 
   function Visitor() {}
   Visitor.prototype.accept = function accept(node, state, path) {
@@ -15957,11 +15975,14 @@ module.exports = function(acorn) {
   Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
     var visitor = this;
     // body is a list with types Statement, ModuleDeclaration
-    node["body"] = node["body"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["body", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["body"].length; i++) {
+      var ea = node["body"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["body"] = newElements;
+    return node;
   };
   Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
     var visitor = this;
@@ -15970,11 +15991,14 @@ module.exports = function(acorn) {
       node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     }
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []); // body is of types BlockStatement
+    var newElements = [];
+    for (var i = 0; i < node["params"].length; i++) {
+      var ea = node["params"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["params"] = newElements;
+    // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
   };
@@ -15989,11 +16013,14 @@ module.exports = function(acorn) {
       node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
     }
     // consequent is a list with types Statement
-    node["consequent"] = node["consequent"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["consequent", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["consequent"].length; i++) {
+      var ea = node["consequent"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["consequent", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["consequent"] = newElements;
+    return node;
   };
   Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
     var visitor = this;
@@ -16060,11 +16087,14 @@ module.exports = function(acorn) {
   Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
     var visitor = this;
     // body is a list with types MethodDefinition
-    node["body"] = node["body"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["body", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["body"].length; i++) {
+      var ea = node["body"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["body"] = newElements;
+    return node;
   };
   Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
     var visitor = this;
@@ -16101,11 +16131,14 @@ module.exports = function(acorn) {
   Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
     var visitor = this;
     // body is a list with types Statement
-    node["body"] = node["body"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["body", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["body"].length; i++) {
+      var ea = node["body"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["body"] = newElements;
+    return node;
   };
   Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
     var visitor = this;
@@ -16172,11 +16205,14 @@ module.exports = function(acorn) {
     // discriminant is of types Expression
     node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
     // cases is a list with types SwitchCase
-    node["cases"] = node["cases"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["cases", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["cases"].length; i++) {
+      var ea = node["cases"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["cases", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["cases"] = newElements;
+    return node;
   };
   Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
     var visitor = this;
@@ -16254,22 +16290,27 @@ module.exports = function(acorn) {
     var visitor = this;
     // elements is a list with types Expression, SpreadElement
     if (node["elements"]) {
-      node["elements"] = node["elements"].reduce(function (results, ea, i) {
-        var result = visitor.accept(ea, state, path.concat(["elements", i]));
-        if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-        return results;
-      }, []);
+      var newElements = [];
+      for (var i = 0; i < node["elements"].length; i++) {
+        var ea = node["elements"][i];
+        var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+        if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+      }
+      node["elements"] = newElements;
     }
     return node;
   };
   Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
     var visitor = this;
     // properties is a list with types Property
-    node["properties"] = node["properties"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["properties", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["properties"].length; i++) {
+      var ea = node["properties"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["properties"] = newElements;
+    return node;
   };
   Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
     var visitor = this;
@@ -16278,11 +16319,14 @@ module.exports = function(acorn) {
       node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     }
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []); // body is of types BlockStatement
+    var newElements = [];
+    for (var i = 0; i < node["params"].length; i++) {
+      var ea = node["params"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["params"] = newElements;
+    // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
   };
@@ -16345,20 +16389,26 @@ module.exports = function(acorn) {
     // callee is of types Expression, Super
     node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
     // arguments is a list with types Expression, SpreadElement
-    node["arguments"] = node["arguments"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["arguments", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["arguments"].length; i++) {
+      var ea = node["arguments"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["arguments"] = newElements;
+    return node;
   };
   Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
     var visitor = this;
     // expressions is a list with types Expression
-    node["expressions"] = node["expressions"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["expressions", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["expressions"].length; i++) {
+      var ea = node["expressions"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["expressions"] = newElements;
+    return node;
   };
   Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
     var visitor = this;
@@ -16369,11 +16419,14 @@ module.exports = function(acorn) {
       node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     }
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["params"].length; i++) {
+      var ea = node["params"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["params"] = newElements;
+    return node;
   };
   Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
     var visitor = this;
@@ -16386,16 +16439,22 @@ module.exports = function(acorn) {
   Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
     var visitor = this;
     // quasis is a list with types TemplateElement
-    node["quasis"] = node["quasis"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["quasis", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []); // expressions is a list with types Expression
-    node["expressions"] = node["expressions"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["expressions", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["quasis"].length; i++) {
+      var ea = node["quasis"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["quasis", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["quasis"] = newElements;
+    // expressions is a list with types Expression
+    var newElements = [];
+    for (var i = 0; i < node["expressions"].length; i++) {
+      var ea = node["expressions"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["expressions"] = newElements;
+    return node;
   };
   Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
     var visitor = this;
@@ -16416,21 +16475,26 @@ module.exports = function(acorn) {
   Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
     var visitor = this;
     // properties is a list with types AssignmentProperty
-    node["properties"] = node["properties"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["properties", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["properties"].length; i++) {
+      var ea = node["properties"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["properties"] = newElements;
+    return node;
   };
   Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
     var visitor = this;
     // elements is a list with types Pattern
     if (node["elements"]) {
-      node["elements"] = node["elements"].reduce(function (results, ea, i) {
-        var result = visitor.accept(ea, state, path.concat(["elements", i]));
-        if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-        return results;
-      }, []);
+      var newElements = [];
+      for (var i = 0; i < node["elements"].length; i++) {
+        var ea = node["elements"][i];
+        var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+        if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+      }
+      node["elements"] = newElements;
     }
     return node;
   };
@@ -16473,11 +16537,14 @@ module.exports = function(acorn) {
   Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
     var visitor = this;
     // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
-    node["specifiers"] = node["specifiers"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []); // source is of types Literal
+    var newElements = [];
+    for (var i = 0; i < node["specifiers"].length; i++) {
+      var ea = node["specifiers"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["specifiers"] = newElements;
+    // source is of types Literal
     node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
     return node;
   };
@@ -16508,11 +16575,14 @@ module.exports = function(acorn) {
       node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
     }
     // specifiers is a list with types ExportSpecifier
-    node["specifiers"] = node["specifiers"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["specifiers", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []); // source is of types Literal
+    var newElements = [];
+    for (var i = 0; i < node["specifiers"].length; i++) {
+      var ea = node["specifiers"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["specifiers"] = newElements;
+    // source is of types Literal
     if (node["source"]) {
       node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
     }
@@ -16555,33 +16625,42 @@ module.exports = function(acorn) {
     // id is of types Identifier
     node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
     // params is a list with types Pattern
-    node["params"] = node["params"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["params", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []); // body is of types BlockStatement
+    var newElements = [];
+    for (var i = 0; i < node["params"].length; i++) {
+      var ea = node["params"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["params"] = newElements;
+    // body is of types BlockStatement
     node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
     return node;
   };
   Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
     var visitor = this;
     // declarations is a list with types VariableDeclarator
-    node["declarations"] = node["declarations"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["declarations", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["declarations"].length; i++) {
+      var ea = node["declarations"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["declarations", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["declarations"] = newElements;
+    return node;
   };
   Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
     var visitor = this;
     // callee is of types Expression, Super
     node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
     // arguments is a list with types Expression, SpreadElement
-    node["arguments"] = node["arguments"].reduce(function (results, ea, i) {
-      var result = visitor.accept(ea, state, path.concat(["arguments", i]));
-      if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-      return results;
-    }, []);return node;
+    var newElements = [];
+    for (var i = 0; i < node["arguments"].length; i++) {
+      var ea = node["arguments"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+    }
+    node["arguments"] = newElements;
+    return node;
   };
   Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
     var visitor = this;
@@ -16862,11 +16941,17 @@ module.exports = function(acorn) {
           varDecls: [],
           varDeclPaths: [],
           funcDecls: [],
+          funcDeclPaths: [],
           classDecls: [],
+          classDeclPaths: [],
           classExprs: [],
+          classExprPaths: [],
           methodDecls: [],
+          methodDeclPaths: [],
           importDecls: [],
+          importDeclPaths: [],
           exportDecls: [],
+          exportDeclPaths: [],
           refs: [],
           thisRefs: [],
           params: [],
@@ -16908,6 +16993,7 @@ module.exports = function(acorn) {
       value: function visitFunctionDeclaration(node, scope, path) {
         var newScope = this.visitFunction(node, scope, path);
         scope.funcDecls.push(node);
+        scope.funcDeclPaths.push(path);
 
         // don't visit id and params 
         var visitor = this;
@@ -17062,6 +17148,7 @@ module.exports = function(acorn) {
       key: "visitClassDeclaration",
       value: function visitClassDeclaration(node, scope, path) {
         scope.classDecls.push(node);
+        scope.classDeclPaths.push(path);
 
         var visitor = this;
         // ignore id
@@ -17078,7 +17165,10 @@ module.exports = function(acorn) {
     }, {
       key: "visitClassExpression",
       value: function visitClassExpression(node, scope, path) {
-        scope.classExprs.push(node);
+        if (node.id) {
+          scope.classExprs.push(node);
+          scope.classExprPaths.push(path);
+        }
 
         var visitor = this;
         // ignore id
@@ -17121,6 +17211,7 @@ module.exports = function(acorn) {
       key: "visitImportSpecifier",
       value: function visitImportSpecifier(node, scope, path) {
         scope.importDecls.push(node.local);
+        scope.importDeclPaths.push(path);
 
         var visitor = this;
         // // imported is of types Identifier
@@ -17133,6 +17224,7 @@ module.exports = function(acorn) {
       key: "visitImportDefaultSpecifier",
       value: function visitImportDefaultSpecifier(node, scope, path) {
         scope.importDecls.push(node.local);
+        scope.importDeclPaths.push(path);
         var visitor = this;
         // // local is of types Identifier
         // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
@@ -17142,6 +17234,7 @@ module.exports = function(acorn) {
       key: "visitImportNamespaceSpecifier",
       value: function visitImportNamespaceSpecifier(node, scope, path) {
         scope.importDecls.push(node.local);
+        scope.importDeclPaths.push(path);
         var visitor = this;
         // // local is of types Identifier
         // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
@@ -17161,18 +17254,21 @@ module.exports = function(acorn) {
       key: "visitExportNamedDeclaration",
       value: function visitExportNamedDeclaration(node, scope, path) {
         scope.exportDecls.push(node);
+        scope.exportDeclPaths.push(path);
         return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
       }
     }, {
       key: "visitExportDefaultDeclaration",
       value: function visitExportDefaultDeclaration(node, scope, path) {
         scope.exportDecls.push(node);
+        scope.exportDeclPaths.push(path);
         return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
       }
     }, {
       key: "visitExportAllDeclaration",
       value: function visitExportAllDeclaration(node, scope, path) {
         scope.exportDecls.push(node);
+        scope.exportDeclPaths.push(path);
         return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
       }
     }]);
@@ -18081,7 +18177,7 @@ module.exports = function(acorn) {
       }
 
       function printFunc(ea) {
-        var string = ea.path + ':' + ea.node.type,
+        var line = ea.path + ':' + ea.node.type,
             additional = [];
         if (printIndex) {
           additional.push(ea.index);
@@ -18091,13 +18187,13 @@ module.exports = function(acorn) {
         }
         if (printSource) {
           var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-              printed = string.print.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+              printed = lively_lang.string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
           additional.push(printed);
         }
         if (additional.length) {
-          string += '(' + additional.join(',') + ')';
+          line += '(' + additional.join(',') + ')';
         }
-        return string;
+        return line;
       }
 
       new PrinterVisitor().accept(parsed, { index: 0, tree: tree }, []);
@@ -18171,7 +18267,7 @@ module.exports = function(acorn) {
   }
 
   function id(name) {
-    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
+    return name === "this" ? { type: "ThisExpression" } : { name: String(name), type: "Identifier" };
   }
 
   function literal(value) {
@@ -18260,6 +18356,8 @@ module.exports = function(acorn) {
       prop = computed ? literal(prop) : id(prop);
     } else if (typeof prop === "number") {
       prop = literal(prop);
+      computed = true;
+    } else if (prop.type === "Literal") {
       computed = true;
     }
     return {
@@ -18886,7 +18984,7 @@ var nodes = Object.freeze({
       var node = _ref.node;
       var path = _ref.path;
 
-      lively.lang.Path(path).set(parsed, exprStmt(node.id));
+      lively_lang.Path(path).set(parsed, exprStmt(node.id));
       outerBody.push(node);
     });
 
@@ -18969,7 +19067,8 @@ var nodes = Object.freeze({
       es6ImportFuncId: null,
       captureObj: assignToObj || { type: "Identifier", name: "__rec" },
       moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
-      moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" }
+      moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
+      declarationWrapper: undefined
     }, options);
 
     var rewritten = parsed;
@@ -18999,6 +19098,8 @@ var nodes = Object.freeze({
     options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
     options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
 
+    rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
+
     // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
     // obj assignment, converting es6 code to es5 using the extra
     // options.moduleExportFunc and options.moduleImportFunc as capture / sources
@@ -19006,8 +19107,6 @@ var nodes = Object.freeze({
       options.excludeRefs.push(options.es6ExportFuncId);
       options.excludeRefs.push(options.es6ImportFuncId);
       rewritten = es6ModuleTransforms(rewritten, options);
-    } else {
-      rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
     }
 
     // 4. make all references declared in the toplevel scope into property
@@ -19017,10 +19116,14 @@ var nodes = Object.freeze({
 
     // 5.a turn var declarations into assignments to captureObj
     // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
+    // if declarationWrapper is requested:
+    //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
     rewritten = replaceVarDecls(rewritten, options);
 
     // 5.b record class declarations
     // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
+    // if declarationWrapper is requested:
+    //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
     rewritten = replaceClassDecls(rewritten, options);
 
     // 6. es6 export declaration are left untouched but a capturing assignment
@@ -19043,9 +19146,67 @@ var nodes = Object.freeze({
     // put in front of everything else to mirror the func hoisting:
     // "return bar(); function bar() { return 23 }" ->
     //   "Global.bar = bar; return bar(); function bar() { return 23 }"
+    // if declarationWrapper is requested:
+    //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
     rewritten = putFunctionDeclsInFront(rewritten, options);
 
     return rewritten;
+  }
+
+  function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
+    // for rewriting the setters part in code like
+    // ```js
+    //   System.register(["a.js"], function (_export, _context) {
+    //     var a, _rec;
+    //     return {
+    //       setters: [function(foo_a_js) { a = foo_a_js.x }],
+    //       execute: function () { _rec.x = 23 + _rec.a; }
+    //     };
+    //   });
+    // ```
+    // This allows us to capture (and potentially re-export) imports and their
+    // changes without actively running the module again.
+
+    options = merge({
+      captureObj: assignToObj || { type: "Identifier", name: "__rec" },
+      exclude: [],
+      declarationWrapper: undefined
+    }, options);
+
+    var registerCall = lively_lang.Path("body.0.expression").get(parsed);
+    if (registerCall.callee.object.name !== "System") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+    if (registerCall.callee.property.name !== "register") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+    var registerBody = lively_lang.Path("arguments.1.body.body").get(registerCall),
+        registerReturn = lively_lang.arr.last(registerBody);
+    if (registerReturn.type !== "ReturnStatement") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: " + stringify(parsed).slice(0, 300) + "...");
+    var setters = registerReturn.argument.properties.find(function (prop) {
+      return prop.key.name === "setters";
+    });
+    if (!setters) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding setters: " + stringify(parsed).slice(0, 300) + "...");
+    var execute = registerReturn.argument.properties.find(function (prop) {
+      return prop.key.name === "execute";
+    });
+    if (!execute) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: " + stringify(parsed).slice(0, 300) + "...");
+
+    // in each setter function: intercept the assignments to local vars and inject capture object
+    setters.value.elements.forEach(function (funcExpr) {
+      return funcExpr.body.body = funcExpr.body.body.map(function (stmt) {
+        if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
+
+        var id = stmt.expression.left,
+            rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
+        return exprStmt(assign(member(options.captureObj, id), rhs));
+      });
+    });
+
+    var captureInitialize = execute.value.body.body.find(function (stmt) {
+      return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
+    });
+    if (captureInitialize) {
+      lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
+    }
+
+    return parsed;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -19146,7 +19307,7 @@ var nodes = Object.freeze({
     });
 
     return replace$1(parsed, function (node, path) {
-      return refsToReplace.indexOf(node) > -1 ? member$1(node, options.captureObj) : node;
+      return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
     });
   }
 
@@ -19168,6 +19329,15 @@ var nodes = Object.freeze({
       return lively_lang.arr.flatmap(node.declarations, function (decl) {
         if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
 
+        var init = decl.init || {
+          operator: "||",
+          type: "LogicalExpression",
+          left: { computed: false, object: options.captureObj, property: decl.id, type: "MemberExpression" },
+          right: { name: "undefined", type: "Identifier" }
+        };
+
+        var initWrapped = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
           var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
@@ -19177,17 +19347,11 @@ var nodes = Object.freeze({
             return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
-          return [varDecl$1(declRoot, decl.init, node.kind)].concat(extractions);
+          return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
         }
 
         // This is rewriting normal vars
-        var init = decl.init || {
-          operator: "||",
-          type: "LogicalExpression",
-          left: { computed: true, object: options.captureObj, property: { type: "Literal", value: decl.id.name }, type: "MemberExpression" },
-          right: { name: "undefined", type: "Identifier" }
-        };
-        return [assignExpr(options.captureObj, decl.id, init, false)];
+        return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
       });
     });
   }
@@ -19197,7 +19361,13 @@ var nodes = Object.freeze({
     if (!topLevel.classDecls.length) return parsed;
     for (var i = parsed.body.length - 1; i >= 0; i--) {
       var stmt = parsed.body[i];
-      if (topLevel.classDecls.indexOf(stmt) !== -1) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+      if (topLevel.classDecls.indexOf(stmt) !== -1) {
+        if (options.declarationWrapper) {
+          parsed.body.splice(i, 1, varDecl(stmt.id, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false), "var"));
+        } else {
+          parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+        }
+      }
     }
     return parsed;
   }
@@ -19338,16 +19508,16 @@ var nodes = Object.freeze({
         body = body.concat([varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
           id: stmt.declaration,
-          init: member$1(stmt.declaration, options.captureObj)
+          init: member(options.captureObj, stmt.declaration)
         }), stmt]);
       } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
         body.push(stmt);
       } else {
         body = body.concat(stmt.specifiers.map(function (specifier) {
-          return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+          return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
             type: "VariableDeclarator",
             id: specifier.local,
-            init: member$1(specifier.local, options.captureObj)
+            init: member(options.captureObj, specifier.local)
           });
         }).filter(Boolean)).concat(stmt);
       }
@@ -19391,7 +19561,7 @@ var nodes = Object.freeze({
           }));
         } else {
           nodes = stmt.specifiers.map(function (specifier) {
-            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member$1(specifier.local, options.captureObj) : specifier.local);
+            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
           });
         }
       } else if (stmt.type === "ExportDefaultDeclaration") {
@@ -19425,15 +19595,42 @@ var nodes = Object.freeze({
   }
 
   function putFunctionDeclsInFront(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    if (!topLevel.funcDecls.length) return parsed;
-    var globalFuncs = topLevel.funcDecls.filter(function (ea) {
-      return shouldDeclBeCaptured(ea, options);
-    }).map(function (decl) {
-      var funcId = { type: "Identifier", name: decl.id.name };
-      return assignExpr(options.captureObj, funcId, funcId, false);
-    });
-    parsed.body = globalFuncs.concat(parsed.body);
+    var scope = topLevelDeclsAndRefs(parsed).scope,
+        funcDecls = scope.funcDecls;
+    if (!funcDecls.length) return parsed;
+
+    for (var i = 0; i < funcDecls.length; i++) {
+      var decl = funcDecls[i];
+      if (!shouldDeclBeCaptured(decl, options)) continue;
+
+      var parentPath = scope.funcDeclPaths[i].slice(0, -1),
+
+      // ge the parent so we can replace the original function:
+      parent = lively_lang.Path(parentPath).get(scope.node),
+          funcId = { type: "Identifier", name: decl.id.name },
+
+      // what we capture:
+      init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
+          declFront = Object.assign({}, decl);
+
+      // If the parent is a body array we remove the original func decl from it
+      if (Array.isArray(parent)) {
+        parent.splice(parent.indexOf(decl), 1);
+      } else if (parent.type === "ExportNamedDeclaration") {
+        parent.declaration = null;parent.source = null;
+        parent.specifiers = [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }];
+      } else if (parent.type === "ExportDefaultDeclaration") {
+        parent.declaration = decl.id;
+      } else {}
+      // ??? just leave it alone...
+      // decl.type = "EmptyStatement";
+
+
+      // hoist the function to the front, also it's capture
+      parsed.body.unshift(assignExpr(options.captureObj, funcId, init, false));
+      parsed.body.unshift(declFront);
+    }
+
     return parsed;
   }
 
@@ -19481,19 +19678,19 @@ var nodes = Object.freeze({
 
       // like [a]
       if (el.type === "Identifier") {
-        return [merge(varDecl$1(el, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(el, member(transformState.parent, id(i), true)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl$1(el.argument, {
+          return [merge(varDecl(el.argument, {
             type: "CallExpression",
             arguments: [{ type: "Literal", value: i }],
-            callee: member$1(id$1("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
           // like [{x}]
         } else {
-            var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl$1(helperVarId, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
+            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
             declaredNames.push(helperVarId.name);
             return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
           }
@@ -19507,12 +19704,12 @@ var nodes = Object.freeze({
 
       // like {x: y}
       if (prop.value.type == "Identifier") {
-        return [merge(varDecl$1(prop.value, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(prop.value, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl$1(helperVarId, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
+          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
           declaredNames.push(helperVarId.name);
           return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
         }
@@ -19523,23 +19720,8 @@ var nodes = Object.freeze({
   // code generation helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function id$1(name) {
-    return { type: "Identifier", name: String(name) };
-  }
-
   function block$1(nodes) {
     return { type: "BlockStatement", body: nodes };
-  }
-
-  function member$1(prop, obj, computed) {
-    return { type: "MemberExpression", computed: computed || false, object: obj, property: prop };
-  }
-
-  function varDecl$1(id, init, kind) {
-    return {
-      declarations: [{ type: "VariableDeclarator", id: id, init: init }],
-      kind: kind || "var", type: "VariableDeclaration"
-    };
   }
 
   function varDeclOrAssignment(parsed, declarator, kind) {
@@ -19547,29 +19729,14 @@ var nodes = Object.freeze({
         name = declarator.id.name;
     return topLevel.declaredNames.indexOf(name) > -1 ?
     // only create a new declaration if necessary
-    {
-      type: "ExpressionStatement", expression: {
-        type: "AssignmentExpression", operator: "=",
-        right: declarator.init,
-        left: declarator.id
-      }
-    } : {
+    exprStmt(assign(declarator.id, declarator.init)) : {
       declarations: [declarator],
       kind: kind || "var", type: "VariableDeclaration"
     };
   }
 
   function assignExpr(assignee, propId, value, computed) {
-    return {
-      type: "ExpressionStatement", expression: {
-        type: "AssignmentExpression", operator: "=",
-        right: value || { type: "Identifier", name: 'undefined' },
-        left: {
-          type: "MemberExpression", computed: computed || false,
-          object: assignee, property: propId
-        }
-      }
-    };
+    return exprStmt(assign(member(assignee, propId, computed), value || id("undefined")));
   }
 
   function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
@@ -19585,7 +19752,7 @@ var nodes = Object.freeze({
   }
 
   function importCall(imported, moduleSource, moduleImportFunc) {
-    if (typeof imported === "string") imported = { type: "Literal", value: imported };
+    if (typeof imported === "string") imported = literal(imported);
     return {
       arguments: [moduleSource].concat(imported || []),
       callee: moduleImportFunc, type: "CallExpression"
@@ -19593,25 +19760,25 @@ var nodes = Object.freeze({
   }
 
   function importCallStmt(imported, moduleSource, moduleImportFunc) {
-    return {
-      type: "ExpressionStatement",
-      expression: importCall(imported, moduleSource, moduleImportFunc)
-    };
+    return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
   }
 
   function exportCall(exportFunc, local, exportedObj) {
-    if (typeof local === "string") local = { type: "Literal", value: local };
+    if (typeof local === "string") local = literal(local);
     exportedObj = lively_lang.obj.deepCopy(exportedObj);
-    return { arguments: [local, exportedObj], callee: exportFunc, type: "CallExpression" };
+    return funcCall(exportFunc, local, exportedObj);
   }
 
   function exportCallStmt(exportFunc, local, exportedObj) {
-    return { type: "ExpressionStatement", expression: exportCall(exportFunc, local, exportedObj) };
+    return exprStmt(exportCall(exportFunc, local, exportedObj));
   }
 
 var capturing = Object.freeze({
-    rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
+    rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
+    rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
   });
+
+  var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
 
   function evalCodeTransform(code, options) {
     // variable declaration and references in the the source code get
@@ -19628,6 +19795,25 @@ var capturing = Object.freeze({
     // 2. capture top level vars into topLevelVarRecorder "environment"
     if (options.topLevelVarRecorder) {
 
+      // 2.1 declare a function that should wrap all definitions, i.e. all var
+      // decls, functions, classes etc that get captured will be wrapped in this
+      // function. When using this with the option.keepPreviouslyDeclaredValues
+      // we will use a wrapping function that keeps the identity of prevously
+      // defined objects
+
+      var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
+      if (options.keepPreviouslyDeclaredValues) {
+        options.declarationWrapper = {
+          type: "MemberExpression",
+          object: { type: "Identifier", name: options.varRecorderName },
+          property: { type: "Literal", value: declarationWrapperName },
+          computed: true
+        };
+        options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
+      }
+
+      // 2.2 Here we call out to the actual code transformation that installs the
+      // capture and wrap logic
       var blacklist = (options.dontTransform || []).concat(["arguments"]),
           undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
 
@@ -19635,7 +19821,8 @@ var capturing = Object.freeze({
         es6ImportFuncId: options.es6ImportFuncId,
         es6ExportFuncId: options.es6ExportFuncId,
         ignoreUndeclaredExcept: undeclaredToTransform,
-        exclude: blacklist
+        exclude: blacklist,
+        declarationWrapper: options.declarationWrapper || undefined
       });
     }
 
@@ -19653,8 +19840,57 @@ var capturing = Object.freeze({
     return result;
   }
 
+  function evalCodeTransformOfSystemRegisterSetters(code, options) {
+    if (options.topLevelVarRecorder) {
+
+      var parsed = parse(code),
+          blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      var result = rewriteToRegisterModuleToCaptureSetters(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
+        exclude: blacklist,
+        declarationWrapper: options.declarationWrapper || undefined
+      });
+    }
+
+    return result ? stringify(result) : code;
+  }
+
+  function copyProperties(source, target) {
+    var exceptions = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+
+    Object.getOwnPropertyNames(source).concat(Object.getOwnPropertySymbols(source)).forEach(function (name) {
+      return exceptions.indexOf(name) === -1 && Object.defineProperty(target, name, Object.getOwnPropertyDescriptor(source, name));
+    });
+  }
+
+  function declarationWrapperForKeepingValues(name, kind, value, recorder) {
+    if (kind === "function") return value;
+
+    if (kind === "class") {
+      var existingClass = recorder[name];
+      if (typeof existingClass === "function") {
+        copyProperties(value, existingClass, ["name", "length", "prototype"]);
+        copyProperties(value.prototype, existingClass.prototype);
+        return existingClass;
+      }
+      return value;
+    }
+
+    if (!value || (typeof value === "undefined" ? "undefined" : babelHelpers.typeof(value)) !== "object" || Array.isArray(value) || value.constructor === RegExp) return value;
+
+    if (recorder.hasOwnProperty(name)) {
+      copyProperties(value, recorder[name]);
+      return recorder[name];
+    }
+
+    return value;
+  }
+
 var evalSupport = Object.freeze({
-    evalCodeTransform: evalCodeTransform
+    defaultDeclarationWrapperName: defaultDeclarationWrapperName,
+    evalCodeTransform: evalCodeTransform,
+    evalCodeTransformOfSystemRegisterSetters: evalCodeTransformOfSystemRegisterSetters
   });
 
   function getCommentPrecedingNode(parsed, node) {
@@ -20138,6 +20374,35 @@ var categorizer = Object.freeze({
 
   var babelHelpers = {};
 
+  babelHelpers.asyncToGenerator = function (fn) {
+    return function () {
+      var gen = fn.apply(this, arguments);
+      return new Promise(function (resolve, reject) {
+        function step(key, arg) {
+          try {
+            var info = gen[key](arg);
+            var value = info.value;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+
+          if (info.done) {
+            resolve(value);
+          } else {
+            return Promise.resolve(value).then(function (value) {
+              return step("next", value);
+            }, function (err) {
+              return step("throw", err);
+            });
+          }
+        }
+
+        return step("next");
+      });
+    };
+  };
+
   babelHelpers.classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -20161,6 +20426,45 @@ var categorizer = Object.freeze({
       return Constructor;
     };
   }();
+
+  babelHelpers.defineProperty = function (obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  };
+
+  babelHelpers.inherits = function (subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  };
+
+  babelHelpers.possibleConstructorReturn = function (self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  };
 
   babelHelpers;
 
@@ -20388,6 +20692,7 @@ var categorizer = Object.freeze({
     //   wrapInStartEndCall: BOOLEAN
     //   onStartEval: FUNCTION()?,
     //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
+    //   keepPreviouslyDeclaredValues: BOOLEAN // maintain the identity of objects that were declared before
     // }
 
     if (typeof options === 'function' && arguments.length === 2) {
@@ -20408,16 +20713,14 @@ var categorizer = Object.freeze({
     // the environment with actual function handlers that will get called once
     // the code is evaluated
 
-    var onEvalFunctionHolder,
-        evalDone = lively_lang.promise.deferred();
+    var evalDone = lively_lang.promise.deferred(),
+        recorder = options.topLevelVarRecorder || getGlobal();
     if (options.wrapInStartEndCall) {
-      onEvalFunctionHolder = options.topLevelVarRecorder || getGlobal();
+      if (recorder[startEvalFunctionName]) console.warn("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!");
 
-      if (onEvalFunctionHolder[startEvalFunctionName]) console.warn("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!");
+      if (recorder[endEvalFunctionName]) console.warn("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!");
 
-      if (onEvalFunctionHolder[endEvalFunctionName]) console.warn("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!");
-
-      onEvalFunctionHolder[startEvalFunctionName] = function () {
+      recorder[startEvalFunctionName] = function () {
         if (onEvalStartCalled) {
           console.warn("onEvalStartCalled multiple times!");return;
         }
@@ -20425,12 +20728,12 @@ var categorizer = Object.freeze({
         if (typeof options.onStartEval === "function") options.onStartEval();
       };
 
-      onEvalFunctionHolder[endEvalFunctionName] = function (err, value) {
+      recorder[endEvalFunctionName] = function (err, value) {
         if (onEvalEndCalled) {
           console.warn("onEvalEndCalled multiple times!");return;
         }
         onEvalEndCalled = true;
-        finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo);
+        finishEval(err, value, result, options, recorder, evalDone, thenDo);
       };
     }
 
@@ -20458,22 +20761,22 @@ var categorizer = Object.freeze({
     // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
     // wrap-up, otherwise we firectly call finishEval()
     if (options.wrapInStartEndCall) {
-      if (returnedError && !onEvalEndCalled) onEvalFunctionHolder[endEvalFunctionName](returnedError, undefined);
+      if (returnedError && !onEvalEndCalled) recorder[endEvalFunctionName](returnedError, undefined);
     } else {
-      finishEval(returnedError, returnedError || returnedValue, result, options, onEvalFunctionHolder, evalDone, thenDo);
+      finishEval(returnedError, returnedError || returnedValue, result, options, recorder, evalDone, thenDo);
     }
 
     return options.sync ? result : evalDone.promise;
   }
 
-  function finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo) {
+  function finishEval(err, value, result, options, recorder, evalDone, thenDo) {
     // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
     // use any Promise since promises always run on next tick. That's why we have
     // to slightly duplicate the finish logic...
 
     if (options.wrapInStartEndCall) {
-      delete onEvalFunctionHolder[startEvalFunctionName];
-      delete onEvalFunctionHolder[endEvalFunctionName];
+      delete recorder[startEvalFunctionName];
+      delete recorder[endEvalFunctionName];
     }
 
     if (err) {
@@ -20595,34 +20898,131 @@ var categorizer = Object.freeze({
     return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
   }
 
+  // import { moduleEnv } from "lively.modules/src/system.js";
+  // import { recordDoitRequest, recordDoitResult } from "lively.modules/src/notify.js";
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // load support
 
-  function ensureImportsAreLoaded(System, code, parentModule) {
-    // FIXME do we have to do a reparse? We should be able to get the ast from
-    // the rewriter...
-    var body = ast.parse(code).body,
-        imports = body.filter(function (node) {
-      return node.type === "ImportDeclaration";
-    });
-    return Promise.all(imports.map(function (node) {
-      return System.normalize(node.source.value, parentModule).then(function (fullName) {
-        return System.get(fullName) || System.import(fullName);
-      });
-    })).catch(function (err) {
-      console.error("Error ensuring imports: " + err.message);throw err;
-    });
-  }
+  var ensureImportsAreLoaded = function () {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+      var body, imports;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              // FIXME do we have to do a reparse? We should be able to get the ast from
+              // the rewriter...
+              body = ast.parse(code).body, imports = body.filter(function (node) {
+                return node.type === "ImportDeclaration";
+              });
+              return _context.abrupt("return", Promise.all(imports.map(function (node) {
+                return System.normalize(node.source.value, parentModule).then(function (fullName) {
+                  return System.get(fullName) || System.import(fullName);
+                });
+              })).catch(function (err) {
+                console.error("Error ensuring imports: " + err.message);throw err;
+              }));
+
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+    return function ensureImportsAreLoaded(_x, _x2, _x3) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // transpiler to make es next work
+
+  var getEs6Transpiler = function () {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+      var babel, babelPluginPath, babelPath, babelPlugin;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              if (!options.transpiler) {
+                _context2.next = 2;
+                break;
+              }
+
+              return _context2.abrupt("return", Promise.resolve(options.transpiler));
+
+            case 2:
+              if (options.es6Transpile) {
+                _context2.next = 4;
+                break;
+              }
+
+              return _context2.abrupt("return", Promise.resolve(null));
+
+            case 4:
+              if (!(System.transpiler === "babel")) {
+                _context2.next = 12;
+                break;
+              }
+
+              _context2.t0 = System.global[System.transpiler];
+
+              if (_context2.t0) {
+                _context2.next = 10;
+                break;
+              }
+
+              _context2.next = 9;
+              return System.import(System.transpiler);
+
+            case 9:
+              _context2.t0 = _context2.sent;
+
+            case 10:
+              babel = _context2.t0;
+              return _context2.abrupt("return", babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env));
+
+            case 12:
+              if (!(System.transpiler === "plugin-babel")) {
+                _context2.next = 21;
+                break;
+              }
+
+              _context2.next = 15;
+              return System.normalize("plugin-babel");
+
+            case 15:
+              babelPluginPath = _context2.sent;
+              babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/");
+              _context2.next = 19;
+              return System.import(babelPath);
+
+            case 19:
+              babelPlugin = _context2.sent;
+              return _context2.abrupt("return", babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
+
+            case 21:
+              throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
+
+            case 22:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+    return function getEs6Transpiler(_x4, _x5, _x6) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
   function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
     // The function wrapper is needed b/c we need toplevel awaits and babel
     // converts "this" => "undefined" for modules
     return function (source, options) {
       options = Object.assign({
-        modules: 'ignore',
         sourceMap: undefined, // 'inline' || true || false
         inputSourceMap: undefined,
         filename: filename,
@@ -20636,86 +21036,598 @@ var categorizer = Object.freeze({
     };
   }
 
-  function getEs6Transpiler(System, options, env) {
-    if (options.transpiler) return Promise.resolve(options.transpiler);
-    if (!options.es6Transpile) return Promise.resolve(null);
+  function babelPluginTranspilerForAsyncAwaitCode(System, babelWrapper, filename, env) {
 
-    if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
+    // The function wrapper is needed b/c we need toplevel awaits and babel
+    // converts "this" => "undefined" for modules
+    return function (source, options) {
+      var babelOptions = System.babelOptions || {},
+          presets = [];
+      presets.push(babelWrapper.presetES2015);
+      if (babelOptions.stage3) presets.push({ plugins: babelWrapper.pluginsStage3 });
+      if (babelOptions.stage2) presets.push({ plugins: babelWrapper.pluginsStage2 });
+      if (babelOptions.stage1) presets.push({ plugins: babelWrapper.pluginsStage1 });
 
-    return Promise.resolve(System.global[System.transpiler] || System.import(System.transpiler)).then(function (babel) {
-      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
-    });
+      options = Object.assign({
+        sourceMap: undefined, // 'inline' || true || false
+        inputSourceMap: undefined,
+        filename: filename,
+        babelrc: false,
+        // plugins: plugins,
+        presets: presets,
+        moduleIds: false,
+        code: true,
+        ast: false
+      }, options);
+      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
+          transpiled = babelWrapper.babel.transform(sourceForBabel, options).code;
+      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+      return transpiled;
+    };
   }
 
-  function runEval$1(System, code, options) {
-    options = lively_lang.obj.merge({
-      targetModule: null, parentModule: null,
-      parentAddress: null,
-      es6Transpile: true,
-      transpiler: null, // function with params: source, options
-      transpilerOptions: null
-    }, options);
+  var runEval$1 = function () {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+      var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              options = lively_lang.obj.merge({
+                targetModule: null, parentModule: null,
+                parentAddress: null,
+                es6Transpile: true,
+                transpiler: null, // function with params: source, options
+                transpilerOptions: null
+              }, options);
 
-    var originalCode = code;
-
-    System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
-
-    return Promise.resolve().then(function () {
-      var targetModule = options.targetModule || "*scratch*";
-      return System.normalize(targetModule, options.parentModule, options.parentAddress);
-    }).then(function (targetModule) {
-      var fullname = options.targetModule = targetModule;
-      var env = System.get("@lively-env").moduleEnv(fullname);
-      var recorder = env.recorder;
-      var recorderName = env.recorderName;
-      var dontTransform = env.dontTransform;
+              originalCode = code;
 
 
-      return System.import(fullname).then(function () {
-        return ensureImportsAreLoaded(System, code, fullname);
-      }).then(function () {
-        return getEs6Transpiler(System, options, env);
-      }).then(function (transpiler) {
-        var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
+              System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
 
-        code = header + code;
-        options = lively_lang.obj.merge({ waitForPromise: true }, options, {
-          recordGlobals: true,
-          dontTransform: dontTransform,
-          varRecorderName: recorderName,
-          topLevelVarRecorder: recorder,
-          sourceURL: options.sourceURL || options.targetModule,
-          context: options.context || recorder,
-          wrapInStartEndCall: true, // for async / await eval support
-          es6ExportFuncId: "_moduleExport",
-          es6ImportFuncId: "_moduleImport",
-          transpiler: transpiler
+              _context3.next = 5;
+              return System.normalize(options.targetModule || "*scratch*", options.parentModule, options.parentAddress);
+
+            case 5:
+              fullname = _context3.sent;
+
+              options.targetModule = fullname;
+
+              _context3.next = 9;
+              return System.import(fullname);
+
+            case 9:
+              _context3.next = 11;
+              return ensureImportsAreLoaded(System, code, fullname);
+
+            case 11:
+              env = System.get("@lively-env").moduleEnv(fullname);
+              recorder = env.recorder;
+              recorderName = env.recorderName;
+              dontTransform = env.dontTransform;
+              _context3.next = 17;
+              return getEs6Transpiler(System, options, env);
+
+            case 17:
+              transpiler = _context3.sent;
+              header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
+
+
+              code = header + code;
+              options = lively_lang.obj.merge({ waitForPromise: true }, options, {
+                recordGlobals: true,
+                dontTransform: dontTransform,
+                varRecorderName: recorderName,
+                topLevelVarRecorder: recorder,
+                sourceURL: options.sourceURL || options.targetModule,
+                context: options.context || recorder,
+                wrapInStartEndCall: true, // for async / await eval support
+                es6ExportFuncId: "_moduleExport",
+                es6ImportFuncId: "_moduleImport",
+                transpiler: transpiler
+              });
+
+              System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
+
+              console.warn("FIX recordDoitRequest");
+              // recordDoitRequest(
+              //   System, originalCode,
+              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
+              //   Date.now());
+
+              _context3.next = 25;
+              return vmRunEval(code, options);
+
+            case 25:
+              result = _context3.sent;
+
+
+              System.get("@lively-env").evaluationDone(fullname);
+              System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
+              console.warn("FIX recordDoitResult");
+
+              // recordDoitResult(
+              //   System, originalCode,
+              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
+              //   result, Date.now());
+              return _context3.abrupt("return", result);
+
+            case 30:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
+    return function runEval(_x7, _x8, _x9) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var _EvalableTextMorphTra;
+
+  var EvalStrategy = function () {
+    function EvalStrategy() {
+      babelHelpers.classCallCheck(this, EvalStrategy);
+    }
+
+    babelHelpers.createClass(EvalStrategy, [{
+      key: "runEval",
+      value: function runEval(source, options) {
+        return Promise.reject("runEval(source, options) not yet implemented for " + this.constructor.name);
+      }
+    }, {
+      key: "keysOfObject",
+      value: function keysOfObject(prefix, options) {
+        return Promise.reject("keysOfObject(prefix, options) not yet implemented for " + this.constructor.name);
+      }
+    }]);
+    return EvalStrategy;
+  }();
+
+  var SimpleEvalStrategy = function (_EvalStrategy) {
+    babelHelpers.inherits(SimpleEvalStrategy, _EvalStrategy);
+
+    function SimpleEvalStrategy() {
+      babelHelpers.classCallCheck(this, SimpleEvalStrategy);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(SimpleEvalStrategy, [{
+      key: "runEval",
+      value: function runEval(source, options) {
+        return Promise.resolve().then(function () {
+          try {
+            return { value: eval(source) };
+          } catch (err) {
+            return { isError: true, value: err };
+          }
         });
+      }
+    }, {
+      key: "keysOfObject",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(prefix, options) {
+          var _this2 = this;
 
-        System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
+          var result;
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.next = 2;
+                  return lively.vm.completions.getCompletions(function (code) {
+                    return _this2.runEval(code, options);
+                  }, prefix);
 
-        console.warn("FIX recordDoitRequest");
-        // recordDoitRequest(
-        //   System, originalCode,
-        //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-        //   Date.now());
+                case 2:
+                  result = _context.sent;
+                  return _context.abrupt("return", { completions: result.completions, prefix: result.startLetters });
 
-        return vmRunEval(code, options).then(function (result) {
-          System.get("@lively-env").evaluationDone(fullname);
-          System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
-          console.warn("FIX recordDoitResult");
-          // recordDoitResult(
-          //   System, originalCode,
-          //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-          //   result, Date.now());
-          return result;
+                case 4:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, this);
+        }));
+
+        function keysOfObject(_x, _x2) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
+    }]);
+    return SimpleEvalStrategy;
+  }(EvalStrategy);
+
+  var LivelyVmEvalStrategy = function (_EvalStrategy2) {
+    babelHelpers.inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+
+    function LivelyVmEvalStrategy() {
+      babelHelpers.classCallCheck(this, LivelyVmEvalStrategy);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(LivelyVmEvalStrategy, [{
+      key: "runEval",
+      value: function runEval(source, options) {
+        // lively.modules.System.config({meta: {[options.targetModule]: {format: "esm"}}});
+        var conf = { meta: {} };conf.meta[options.targetModule] = { format: "esm" };
+        lively.modules.System.config(conf);
+
+        options = lively.lang.obj.merge({
+          sourceURL: options.targetModule + "_doit_" + Date.now()
+        }, options);
+
+        return lively.vm.runEval(source, options);
+      }
+    }, {
+      key: "keysOfObject",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+          var result;
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  _context2.next = 2;
+                  return lively.vm.completions.getCompletions(function (code) {
+                    return lively.vm.runEval(code, options);
+                  }, prefix);
+
+                case 2:
+                  result = _context2.sent;
+                  return _context2.abrupt("return", { completions: result.completions, prefix: result.startLetters });
+
+                case 4:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function keysOfObject(_x3, _x4) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
+    }]);
+    return LivelyVmEvalStrategy;
+  }(EvalStrategy);
+
+  var HttpEvalStrategy = function (_EvalStrategy3) {
+    babelHelpers.inherits(HttpEvalStrategy, _EvalStrategy3);
+    babelHelpers.createClass(HttpEvalStrategy, null, [{
+      key: "defaultURL",
+      get: function get() {
+        return "https://localhost:3000/eval";
+      }
+    }]);
+
+    function HttpEvalStrategy(url) {
+      babelHelpers.classCallCheck(this, HttpEvalStrategy);
+
+      var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
+
+      _this4.url = url;
+      return _this4;
+    }
+
+    babelHelpers.createClass(HttpEvalStrategy, [{
+      key: "runEval",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+          var url, sourceForServer, stringValue;
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  _context3.prev = 0;
+
+                  options = Object.assign({ serverEvalURL: this.url || this.constructor.defaultURL }, options);
+                  url = options.serverEvalURL;
+                  sourceForServer = "var source = " + JSON.stringify(source) + "\n" + ("var options = " + JSON.stringify(options) + "\n") + (LivelyVmEvalStrategy.prototype.runEval + "\n") + "runEval(source, options)\n";
+                  _context3.next = 6;
+                  return window.fetch(url, { method: "POST", body: sourceForServer });
+
+                case 6:
+                  _context3.next = 8;
+                  return _context3.sent.text();
+
+                case 8:
+                  stringValue = _context3.sent;
+                  return _context3.abrupt("return", JSON.parse(stringValue));
+
+                case 12:
+                  _context3.prev = 12;
+                  _context3.t0 = _context3["catch"](0);
+                  return _context3.abrupt("return", { isError: true, value: String(_context3.t0.stack || _context3.t0) });
+
+                case 15:
+                case "end":
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, this, [[0, 12]]);
+        }));
+
+        function runEval(_x5, _x6) {
+          return ref.apply(this, arguments);
+        }
+
+        return runEval;
+      }()
+    }, {
+      key: "keysOfObject",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+          var url, sourceForServer, stringValue, result;
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            while (1) {
+              switch (_context4.prev = _context4.next) {
+                case 0:
+                  options = Object.assign({ serverEvalURL: this.url || this.constructor.defaultURL }, options);
+                  url = options.serverEvalURL;
+                  sourceForServer = "var prefix = " + JSON.stringify(prefix) + ";\n" + ("var options = " + JSON.stringify(options) + ";\n") + (LivelyVmEvalStrategy.prototype.keysOfObject + "\n") + "vmCompletions(prefix, options);\n";
+                  _context4.next = 5;
+                  return window.fetch(url, { method: "POST", body: sourceForServer });
+
+                case 5:
+                  _context4.next = 7;
+                  return _context4.sent.text();
+
+                case 7:
+                  stringValue = _context4.sent;
+                  result = JSON.parse(stringValue);
+
+                  if (!result.isError) {
+                    _context4.next = 11;
+                    break;
+                  }
+
+                  throw new Error(result.value);
+
+                case 11:
+                  return _context4.abrupt("return", result);
+
+                case 12:
+                case "end":
+                  return _context4.stop();
+              }
+            }
+          }, _callee4, this);
+        }));
+
+        function keysOfObject(_x7, _x8) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
+    }]);
+    return HttpEvalStrategy;
+  }(EvalStrategy);
+
+  function evalStrategy(morph) {
+    return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
+  }
+
+  var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
+    applyTo: function applyTo(obj) {
+      var overrides = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+
+      var trait = this,
+          dontCopy = ["applyTo"].concat(lively.lang.arr.withoutAll(lively.lang.properties.allProperties(obj), overrides));
+      Object.keys(trait).filter(function (key) {
+        return !dontCopy.includes(key);
+      }).forEach(function (key) {
+        return Object.defineProperty(obj, key, { configurable: true, get: function get() {
+            return trait[key];
+          }
         });
-      }).catch(function (err) {
-        console.error("Error in runEval: " + err.stack);
-        throw err;
       });
-    });
-  }
+      return obj;
+    },
+    doit: function doit(printResult, editor, options) {
+      var _this5 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        var result;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.prev = 0;
+
+                options = Object.assign({
+                  inspect: !printResult,
+                  printDepth: _this5.printInspectMaxDepth,
+                  targetModule: _this5.moduleId(),
+                  context: _this5
+                }, options);
+                _context5.next = 4;
+                return evalStrategy(_this5).runEval(_this5.getCodeForEval(), options);
+
+              case 4:
+                result = _context5.sent;
+
+                if (printResult) {
+                  _this5.printObject(editor, result.value, false, _this5.getPrintItAsComment());
+                } else {
+                  _this5.setStatusMessage(result.value);
+                }
+                _this5.onDoitDone(result);
+                return _context5.abrupt("return", result);
+
+              case 10:
+                _context5.prev = 10;
+                _context5.t0 = _context5["catch"](0);
+                _this5.showError(_context5.t0);throw _context5.t0;
+
+              case 14:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, _this5, [[0, 10]]);
+      }))();
+    },
+    evalSelection: function evalSelection(printIt) {
+      var _this6 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+        var options, result;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                options = { context: _this6, targetModule: _this6.moduleId(), asString: !!printIt };
+                _context6.next = 3;
+                return evalStrategy(_this6).runEval(_this6.getCodeForEval(), options);
+
+              case 3:
+                result = _context6.sent;
+
+                if (printIt) _this6.insertAtCursor(result.value, true);
+                return _context6.abrupt("return", result);
+
+              case 6:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, _this6);
+      }))();
+    },
+    doListProtocol: function doListProtocol() {
+      var _this7 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+        var m, prefix, completions, lister;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _context7.prev = 0;
+                m = lively.module("lively.ide.codeeditor.Completions");
+
+                if (m.isLoaded()) {
+                  _context7.next = 5;
+                  break;
+                }
+
+                _context7.next = 5;
+                return m.load();
+
+              case 5:
+                prefix = _this7.getCodeForCompletions();
+                _context7.next = 8;
+                return evalStrategy(_this7).keysOfObject(prefix, { context: _this7, targetModule: _this7.moduleId() });
+
+              case 8:
+                completions = _context7.sent;
+                lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this7);
+
+                lister.openNarrower(completions);
+                return _context7.abrupt("return", lister);
+
+              case 14:
+                _context7.prev = 14;
+                _context7.t0 = _context7["catch"](0);
+                _this7.showError(_context7.t0);
+              case 17:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, _this7, [[0, 14]]);
+      }))();
+    },
+    doSave: function doSave() {
+      var _this8 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _this8.savedTextString = _this8.textString;
+
+                if (!_this8.getEvalOnSave()) {
+                  _context8.next = 10;
+                  break;
+                }
+
+                _context8.prev = 2;
+                _context8.next = 5;
+                return lively.modules.moduleSourceChange(_this8.moduleId(), _this8.textString);
+
+              case 5:
+                _context8.next = 10;
+                break;
+
+              case 7:
+                _context8.prev = 7;
+                _context8.t0 = _context8["catch"](2);
+                return _context8.abrupt("return", _this8.showError(_context8.t0));
+
+              case 10:
+                _this8.onSaveDone();
+
+              case 11:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, _this8, [[2, 7]]);
+      }))();
+    },
+    onDoitDone: function onDoitDone(result) {},
+    onSaveDone: function onSaveDone() {},
+    getAllCode: function getAllCode() {
+      throw new Error("getAllCode() not yet implemented for " + this.constructor.name);
+    },
+    getCodeForEval: function getCodeForEval() {
+      throw new Error("getCodeForEval() not yet implemented for " + this.constructor.name);
+    },
+    getCodeForCompletions: function getCodeForCompletions() {
+      throw new Error("getCodeForCompletions() not yet implemented for " + this.constructor.name);
+    },
+    moduleId: function moduleId() {
+      throw new Error("moduleId() not yet implemented for " + this.constructor.name);
+    },
+    printObject: function printObject() {
+      throw new Error("printObject() not yet implemented for " + this.constructor.name);
+    },
+    getPrintItAsComment: function getPrintItAsComment() {
+      throw new Error("getPrintItAsComment() not yet implemented for " + this.constructor.name);
+    },
+    insertAtCursor: function insertAtCursor() {
+      throw new Error("insertAtCursor() not yet implemented for " + this.constructor.name);
+    },
+    setStatusMessage: function setStatusMessage() {
+      throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
+    }
+  }, babelHelpers.defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+    throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
+  }), babelHelpers.defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+    throw new Error("showError() not yet implemented for " + this.constructor.name);
+  }), _EvalableTextMorphTra);
+
+
+
+  var evalStrategies = Object.freeze({
+    EvalStrategy: EvalStrategy,
+    SimpleEvalStrategy: SimpleEvalStrategy,
+    LivelyVmEvalStrategy: LivelyVmEvalStrategy,
+    HttpEvalStrategy: HttpEvalStrategy,
+    EvalableTextMorphTrait: EvalableTextMorphTrait
+  });
 
   function runEval(code, options) {
     options = Object.assign({
@@ -20739,6 +21651,7 @@ var categorizer = Object.freeze({
   exports.completions = completions;
   exports.runEval = runEval;
   exports.syncEval = syncEval;
+  exports.evalStrategies = evalStrategies;
   exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
 
 }((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));

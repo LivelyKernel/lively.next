@@ -8,6 +8,35 @@
 
   var babelHelpers = {};
 
+  babelHelpers.asyncToGenerator = function (fn) {
+    return function () {
+      var gen = fn.apply(this, arguments);
+      return new Promise(function (resolve, reject) {
+        function step(key, arg) {
+          try {
+            var info = gen[key](arg);
+            var value = info.value;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+
+          if (info.done) {
+            resolve(value);
+          } else {
+            return Promise.resolve(value).then(function (value) {
+              return step("next", value);
+            }, function (err) {
+              return step("throw", err);
+            });
+          }
+        }
+
+        return step("next");
+      });
+    };
+  };
+
   babelHelpers.classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -31,6 +60,45 @@
       return Constructor;
     };
   }();
+
+  babelHelpers.defineProperty = function (obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  };
+
+  babelHelpers.inherits = function (subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  };
+
+  babelHelpers.possibleConstructorReturn = function (self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  };
 
   babelHelpers;
 
@@ -258,6 +326,7 @@
     //   wrapInStartEndCall: BOOLEAN
     //   onStartEval: FUNCTION()?,
     //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
+    //   keepPreviouslyDeclaredValues: BOOLEAN // maintain the identity of objects that were declared before
     // }
 
     if (typeof options === 'function' && arguments.length === 2) {
@@ -278,16 +347,14 @@
     // the environment with actual function handlers that will get called once
     // the code is evaluated
 
-    var onEvalFunctionHolder,
-        evalDone = lively_lang.promise.deferred();
+    var evalDone = lively_lang.promise.deferred(),
+        recorder = options.topLevelVarRecorder || getGlobal();
     if (options.wrapInStartEndCall) {
-      onEvalFunctionHolder = options.topLevelVarRecorder || getGlobal();
+      if (recorder[startEvalFunctionName]) console.warn("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!");
 
-      if (onEvalFunctionHolder[startEvalFunctionName]) console.warn("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!");
+      if (recorder[endEvalFunctionName]) console.warn("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!");
 
-      if (onEvalFunctionHolder[endEvalFunctionName]) console.warn("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!");
-
-      onEvalFunctionHolder[startEvalFunctionName] = function () {
+      recorder[startEvalFunctionName] = function () {
         if (onEvalStartCalled) {
           console.warn("onEvalStartCalled multiple times!");return;
         }
@@ -295,12 +362,12 @@
         if (typeof options.onStartEval === "function") options.onStartEval();
       };
 
-      onEvalFunctionHolder[endEvalFunctionName] = function (err, value) {
+      recorder[endEvalFunctionName] = function (err, value) {
         if (onEvalEndCalled) {
           console.warn("onEvalEndCalled multiple times!");return;
         }
         onEvalEndCalled = true;
-        finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo);
+        finishEval(err, value, result, options, recorder, evalDone, thenDo);
       };
     }
 
@@ -328,22 +395,22 @@
     // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
     // wrap-up, otherwise we firectly call finishEval()
     if (options.wrapInStartEndCall) {
-      if (returnedError && !onEvalEndCalled) onEvalFunctionHolder[endEvalFunctionName](returnedError, undefined);
+      if (returnedError && !onEvalEndCalled) recorder[endEvalFunctionName](returnedError, undefined);
     } else {
-      finishEval(returnedError, returnedError || returnedValue, result, options, onEvalFunctionHolder, evalDone, thenDo);
+      finishEval(returnedError, returnedError || returnedValue, result, options, recorder, evalDone, thenDo);
     }
 
     return options.sync ? result : evalDone.promise;
   }
 
-  function finishEval(err, value, result, options, onEvalFunctionHolder, evalDone, thenDo) {
+  function finishEval(err, value, result, options, recorder, evalDone, thenDo) {
     // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
     // use any Promise since promises always run on next tick. That's why we have
     // to slightly duplicate the finish logic...
 
     if (options.wrapInStartEndCall) {
-      delete onEvalFunctionHolder[startEvalFunctionName];
-      delete onEvalFunctionHolder[endEvalFunctionName];
+      delete recorder[startEvalFunctionName];
+      delete recorder[endEvalFunctionName];
     }
 
     if (err) {
@@ -465,34 +532,131 @@
     return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
   }
 
+  // import { moduleEnv } from "lively.modules/src/system.js";
+  // import { recordDoitRequest, recordDoitResult } from "lively.modules/src/notify.js";
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // load support
 
-  function ensureImportsAreLoaded(System, code, parentModule) {
-    // FIXME do we have to do a reparse? We should be able to get the ast from
-    // the rewriter...
-    var body = ast.parse(code).body,
-        imports = body.filter(function (node) {
-      return node.type === "ImportDeclaration";
-    });
-    return Promise.all(imports.map(function (node) {
-      return System.normalize(node.source.value, parentModule).then(function (fullName) {
-        return System.get(fullName) || System.import(fullName);
-      });
-    })).catch(function (err) {
-      console.error("Error ensuring imports: " + err.message);throw err;
-    });
-  }
+  var ensureImportsAreLoaded = function () {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+      var body, imports;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              // FIXME do we have to do a reparse? We should be able to get the ast from
+              // the rewriter...
+              body = ast.parse(code).body, imports = body.filter(function (node) {
+                return node.type === "ImportDeclaration";
+              });
+              return _context.abrupt("return", Promise.all(imports.map(function (node) {
+                return System.normalize(node.source.value, parentModule).then(function (fullName) {
+                  return System.get(fullName) || System.import(fullName);
+                });
+              })).catch(function (err) {
+                console.error("Error ensuring imports: " + err.message);throw err;
+              }));
+
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+    return function ensureImportsAreLoaded(_x, _x2, _x3) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // transpiler to make es next work
+
+  var getEs6Transpiler = function () {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+      var babel, babelPluginPath, babelPath, babelPlugin;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              if (!options.transpiler) {
+                _context2.next = 2;
+                break;
+              }
+
+              return _context2.abrupt("return", Promise.resolve(options.transpiler));
+
+            case 2:
+              if (options.es6Transpile) {
+                _context2.next = 4;
+                break;
+              }
+
+              return _context2.abrupt("return", Promise.resolve(null));
+
+            case 4:
+              if (!(System.transpiler === "babel")) {
+                _context2.next = 12;
+                break;
+              }
+
+              _context2.t0 = System.global[System.transpiler];
+
+              if (_context2.t0) {
+                _context2.next = 10;
+                break;
+              }
+
+              _context2.next = 9;
+              return System.import(System.transpiler);
+
+            case 9:
+              _context2.t0 = _context2.sent;
+
+            case 10:
+              babel = _context2.t0;
+              return _context2.abrupt("return", babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env));
+
+            case 12:
+              if (!(System.transpiler === "plugin-babel")) {
+                _context2.next = 21;
+                break;
+              }
+
+              _context2.next = 15;
+              return System.normalize("plugin-babel");
+
+            case 15:
+              babelPluginPath = _context2.sent;
+              babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/");
+              _context2.next = 19;
+              return System.import(babelPath);
+
+            case 19:
+              babelPlugin = _context2.sent;
+              return _context2.abrupt("return", babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
+
+            case 21:
+              throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
+
+            case 22:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+    return function getEs6Transpiler(_x4, _x5, _x6) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
   function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
     // The function wrapper is needed b/c we need toplevel awaits and babel
     // converts "this" => "undefined" for modules
     return function (source, options) {
       options = Object.assign({
-        modules: 'ignore',
         sourceMap: undefined, // 'inline' || true || false
         inputSourceMap: undefined,
         filename: filename,
@@ -506,86 +670,598 @@
     };
   }
 
-  function getEs6Transpiler(System, options, env) {
-    if (options.transpiler) return Promise.resolve(options.transpiler);
-    if (!options.es6Transpile) return Promise.resolve(null);
+  function babelPluginTranspilerForAsyncAwaitCode(System, babelWrapper, filename, env) {
 
-    if (System.transpiler !== "babel") return Promise.reject(new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!"));
+    // The function wrapper is needed b/c we need toplevel awaits and babel
+    // converts "this" => "undefined" for modules
+    return function (source, options) {
+      var babelOptions = System.babelOptions || {},
+          presets = [];
+      presets.push(babelWrapper.presetES2015);
+      if (babelOptions.stage3) presets.push({ plugins: babelWrapper.pluginsStage3 });
+      if (babelOptions.stage2) presets.push({ plugins: babelWrapper.pluginsStage2 });
+      if (babelOptions.stage1) presets.push({ plugins: babelWrapper.pluginsStage1 });
 
-    return Promise.resolve(System.global[System.transpiler] || System.import(System.transpiler)).then(function (babel) {
-      return babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env);
-    });
+      options = Object.assign({
+        sourceMap: undefined, // 'inline' || true || false
+        inputSourceMap: undefined,
+        filename: filename,
+        babelrc: false,
+        // plugins: plugins,
+        presets: presets,
+        moduleIds: false,
+        code: true,
+        ast: false
+      }, options);
+      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
+          transpiled = babelWrapper.babel.transform(sourceForBabel, options).code;
+      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+      return transpiled;
+    };
   }
 
-  function runEval$1(System, code, options) {
-    options = lively_lang.obj.merge({
-      targetModule: null, parentModule: null,
-      parentAddress: null,
-      es6Transpile: true,
-      transpiler: null, // function with params: source, options
-      transpilerOptions: null
-    }, options);
+  var runEval$1 = function () {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+      var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              options = lively_lang.obj.merge({
+                targetModule: null, parentModule: null,
+                parentAddress: null,
+                es6Transpile: true,
+                transpiler: null, // function with params: source, options
+                transpilerOptions: null
+              }, options);
 
-    var originalCode = code;
-
-    System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
-
-    return Promise.resolve().then(function () {
-      var targetModule = options.targetModule || "*scratch*";
-      return System.normalize(targetModule, options.parentModule, options.parentAddress);
-    }).then(function (targetModule) {
-      var fullname = options.targetModule = targetModule;
-      var env = System.get("@lively-env").moduleEnv(fullname);
-      var recorder = env.recorder;
-      var recorderName = env.recorderName;
-      var dontTransform = env.dontTransform;
+              originalCode = code;
 
 
-      return System.import(fullname).then(function () {
-        return ensureImportsAreLoaded(System, code, fullname);
-      }).then(function () {
-        return getEs6Transpiler(System, options, env);
-      }).then(function (transpiler) {
-        var header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
+              System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
 
-        code = header + code;
-        options = lively_lang.obj.merge({ waitForPromise: true }, options, {
-          recordGlobals: true,
-          dontTransform: dontTransform,
-          varRecorderName: recorderName,
-          topLevelVarRecorder: recorder,
-          sourceURL: options.sourceURL || options.targetModule,
-          context: options.context || recorder,
-          wrapInStartEndCall: true, // for async / await eval support
-          es6ExportFuncId: "_moduleExport",
-          es6ImportFuncId: "_moduleImport",
-          transpiler: transpiler
+              _context3.next = 5;
+              return System.normalize(options.targetModule || "*scratch*", options.parentModule, options.parentAddress);
+
+            case 5:
+              fullname = _context3.sent;
+
+              options.targetModule = fullname;
+
+              _context3.next = 9;
+              return System.import(fullname);
+
+            case 9:
+              _context3.next = 11;
+              return ensureImportsAreLoaded(System, code, fullname);
+
+            case 11:
+              env = System.get("@lively-env").moduleEnv(fullname);
+              recorder = env.recorder;
+              recorderName = env.recorderName;
+              dontTransform = env.dontTransform;
+              _context3.next = 17;
+              return getEs6Transpiler(System, options, env);
+
+            case 17:
+              transpiler = _context3.sent;
+              header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
+
+
+              code = header + code;
+              options = lively_lang.obj.merge({ waitForPromise: true }, options, {
+                recordGlobals: true,
+                dontTransform: dontTransform,
+                varRecorderName: recorderName,
+                topLevelVarRecorder: recorder,
+                sourceURL: options.sourceURL || options.targetModule,
+                context: options.context || recorder,
+                wrapInStartEndCall: true, // for async / await eval support
+                es6ExportFuncId: "_moduleExport",
+                es6ImportFuncId: "_moduleImport",
+                transpiler: transpiler
+              });
+
+              System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
+
+              console.warn("FIX recordDoitRequest");
+              // recordDoitRequest(
+              //   System, originalCode,
+              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
+              //   Date.now());
+
+              _context3.next = 25;
+              return vmRunEval(code, options);
+
+            case 25:
+              result = _context3.sent;
+
+
+              System.get("@lively-env").evaluationDone(fullname);
+              System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
+              console.warn("FIX recordDoitResult");
+
+              // recordDoitResult(
+              //   System, originalCode,
+              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
+              //   result, Date.now());
+              return _context3.abrupt("return", result);
+
+            case 30:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
+    return function runEval(_x7, _x8, _x9) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var _EvalableTextMorphTra;
+
+  var EvalStrategy = function () {
+    function EvalStrategy() {
+      babelHelpers.classCallCheck(this, EvalStrategy);
+    }
+
+    babelHelpers.createClass(EvalStrategy, [{
+      key: "runEval",
+      value: function runEval(source, options) {
+        return Promise.reject("runEval(source, options) not yet implemented for " + this.constructor.name);
+      }
+    }, {
+      key: "keysOfObject",
+      value: function keysOfObject(prefix, options) {
+        return Promise.reject("keysOfObject(prefix, options) not yet implemented for " + this.constructor.name);
+      }
+    }]);
+    return EvalStrategy;
+  }();
+
+  var SimpleEvalStrategy = function (_EvalStrategy) {
+    babelHelpers.inherits(SimpleEvalStrategy, _EvalStrategy);
+
+    function SimpleEvalStrategy() {
+      babelHelpers.classCallCheck(this, SimpleEvalStrategy);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(SimpleEvalStrategy, [{
+      key: "runEval",
+      value: function runEval(source, options) {
+        return Promise.resolve().then(function () {
+          try {
+            return { value: eval(source) };
+          } catch (err) {
+            return { isError: true, value: err };
+          }
         });
+      }
+    }, {
+      key: "keysOfObject",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(prefix, options) {
+          var _this2 = this;
 
-        System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
+          var result;
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.next = 2;
+                  return lively.vm.completions.getCompletions(function (code) {
+                    return _this2.runEval(code, options);
+                  }, prefix);
 
-        console.warn("FIX recordDoitRequest");
-        // recordDoitRequest(
-        //   System, originalCode,
-        //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-        //   Date.now());
+                case 2:
+                  result = _context.sent;
+                  return _context.abrupt("return", { completions: result.completions, prefix: result.startLetters });
 
-        return vmRunEval(code, options).then(function (result) {
-          System.get("@lively-env").evaluationDone(fullname);
-          System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
-          console.warn("FIX recordDoitResult");
-          // recordDoitResult(
-          //   System, originalCode,
-          //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-          //   result, Date.now());
-          return result;
+                case 4:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, this);
+        }));
+
+        function keysOfObject(_x, _x2) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
+    }]);
+    return SimpleEvalStrategy;
+  }(EvalStrategy);
+
+  var LivelyVmEvalStrategy = function (_EvalStrategy2) {
+    babelHelpers.inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+
+    function LivelyVmEvalStrategy() {
+      babelHelpers.classCallCheck(this, LivelyVmEvalStrategy);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(LivelyVmEvalStrategy, [{
+      key: "runEval",
+      value: function runEval(source, options) {
+        // lively.modules.System.config({meta: {[options.targetModule]: {format: "esm"}}});
+        var conf = { meta: {} };conf.meta[options.targetModule] = { format: "esm" };
+        lively.modules.System.config(conf);
+
+        options = lively.lang.obj.merge({
+          sourceURL: options.targetModule + "_doit_" + Date.now()
+        }, options);
+
+        return lively.vm.runEval(source, options);
+      }
+    }, {
+      key: "keysOfObject",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+          var result;
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  _context2.next = 2;
+                  return lively.vm.completions.getCompletions(function (code) {
+                    return lively.vm.runEval(code, options);
+                  }, prefix);
+
+                case 2:
+                  result = _context2.sent;
+                  return _context2.abrupt("return", { completions: result.completions, prefix: result.startLetters });
+
+                case 4:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function keysOfObject(_x3, _x4) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
+    }]);
+    return LivelyVmEvalStrategy;
+  }(EvalStrategy);
+
+  var HttpEvalStrategy = function (_EvalStrategy3) {
+    babelHelpers.inherits(HttpEvalStrategy, _EvalStrategy3);
+    babelHelpers.createClass(HttpEvalStrategy, null, [{
+      key: "defaultURL",
+      get: function get() {
+        return "https://localhost:3000/eval";
+      }
+    }]);
+
+    function HttpEvalStrategy(url) {
+      babelHelpers.classCallCheck(this, HttpEvalStrategy);
+
+      var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
+
+      _this4.url = url;
+      return _this4;
+    }
+
+    babelHelpers.createClass(HttpEvalStrategy, [{
+      key: "runEval",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+          var url, sourceForServer, stringValue;
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  _context3.prev = 0;
+
+                  options = Object.assign({ serverEvalURL: this.url || this.constructor.defaultURL }, options);
+                  url = options.serverEvalURL;
+                  sourceForServer = "var source = " + JSON.stringify(source) + "\n" + ("var options = " + JSON.stringify(options) + "\n") + (LivelyVmEvalStrategy.prototype.runEval + "\n") + "runEval(source, options)\n";
+                  _context3.next = 6;
+                  return window.fetch(url, { method: "POST", body: sourceForServer });
+
+                case 6:
+                  _context3.next = 8;
+                  return _context3.sent.text();
+
+                case 8:
+                  stringValue = _context3.sent;
+                  return _context3.abrupt("return", JSON.parse(stringValue));
+
+                case 12:
+                  _context3.prev = 12;
+                  _context3.t0 = _context3["catch"](0);
+                  return _context3.abrupt("return", { isError: true, value: String(_context3.t0.stack || _context3.t0) });
+
+                case 15:
+                case "end":
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, this, [[0, 12]]);
+        }));
+
+        function runEval(_x5, _x6) {
+          return ref.apply(this, arguments);
+        }
+
+        return runEval;
+      }()
+    }, {
+      key: "keysOfObject",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+          var url, sourceForServer, stringValue, result;
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            while (1) {
+              switch (_context4.prev = _context4.next) {
+                case 0:
+                  options = Object.assign({ serverEvalURL: this.url || this.constructor.defaultURL }, options);
+                  url = options.serverEvalURL;
+                  sourceForServer = "var prefix = " + JSON.stringify(prefix) + ";\n" + ("var options = " + JSON.stringify(options) + ";\n") + (LivelyVmEvalStrategy.prototype.keysOfObject + "\n") + "vmCompletions(prefix, options);\n";
+                  _context4.next = 5;
+                  return window.fetch(url, { method: "POST", body: sourceForServer });
+
+                case 5:
+                  _context4.next = 7;
+                  return _context4.sent.text();
+
+                case 7:
+                  stringValue = _context4.sent;
+                  result = JSON.parse(stringValue);
+
+                  if (!result.isError) {
+                    _context4.next = 11;
+                    break;
+                  }
+
+                  throw new Error(result.value);
+
+                case 11:
+                  return _context4.abrupt("return", result);
+
+                case 12:
+                case "end":
+                  return _context4.stop();
+              }
+            }
+          }, _callee4, this);
+        }));
+
+        function keysOfObject(_x7, _x8) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
+    }]);
+    return HttpEvalStrategy;
+  }(EvalStrategy);
+
+  function evalStrategy(morph) {
+    return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
+  }
+
+  var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
+    applyTo: function applyTo(obj) {
+      var overrides = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+
+      var trait = this,
+          dontCopy = ["applyTo"].concat(lively.lang.arr.withoutAll(lively.lang.properties.allProperties(obj), overrides));
+      Object.keys(trait).filter(function (key) {
+        return !dontCopy.includes(key);
+      }).forEach(function (key) {
+        return Object.defineProperty(obj, key, { configurable: true, get: function get() {
+            return trait[key];
+          }
         });
-      }).catch(function (err) {
-        console.error("Error in runEval: " + err.stack);
-        throw err;
       });
-    });
-  }
+      return obj;
+    },
+    doit: function doit(printResult, editor, options) {
+      var _this5 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        var result;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.prev = 0;
+
+                options = Object.assign({
+                  inspect: !printResult,
+                  printDepth: _this5.printInspectMaxDepth,
+                  targetModule: _this5.moduleId(),
+                  context: _this5
+                }, options);
+                _context5.next = 4;
+                return evalStrategy(_this5).runEval(_this5.getCodeForEval(), options);
+
+              case 4:
+                result = _context5.sent;
+
+                if (printResult) {
+                  _this5.printObject(editor, result.value, false, _this5.getPrintItAsComment());
+                } else {
+                  _this5.setStatusMessage(result.value);
+                }
+                _this5.onDoitDone(result);
+                return _context5.abrupt("return", result);
+
+              case 10:
+                _context5.prev = 10;
+                _context5.t0 = _context5["catch"](0);
+                _this5.showError(_context5.t0);throw _context5.t0;
+
+              case 14:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, _this5, [[0, 10]]);
+      }))();
+    },
+    evalSelection: function evalSelection(printIt) {
+      var _this6 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+        var options, result;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                options = { context: _this6, targetModule: _this6.moduleId(), asString: !!printIt };
+                _context6.next = 3;
+                return evalStrategy(_this6).runEval(_this6.getCodeForEval(), options);
+
+              case 3:
+                result = _context6.sent;
+
+                if (printIt) _this6.insertAtCursor(result.value, true);
+                return _context6.abrupt("return", result);
+
+              case 6:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, _this6);
+      }))();
+    },
+    doListProtocol: function doListProtocol() {
+      var _this7 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+        var m, prefix, completions, lister;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _context7.prev = 0;
+                m = lively.module("lively.ide.codeeditor.Completions");
+
+                if (m.isLoaded()) {
+                  _context7.next = 5;
+                  break;
+                }
+
+                _context7.next = 5;
+                return m.load();
+
+              case 5:
+                prefix = _this7.getCodeForCompletions();
+                _context7.next = 8;
+                return evalStrategy(_this7).keysOfObject(prefix, { context: _this7, targetModule: _this7.moduleId() });
+
+              case 8:
+                completions = _context7.sent;
+                lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this7);
+
+                lister.openNarrower(completions);
+                return _context7.abrupt("return", lister);
+
+              case 14:
+                _context7.prev = 14;
+                _context7.t0 = _context7["catch"](0);
+                _this7.showError(_context7.t0);
+              case 17:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, _this7, [[0, 14]]);
+      }))();
+    },
+    doSave: function doSave() {
+      var _this8 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _this8.savedTextString = _this8.textString;
+
+                if (!_this8.getEvalOnSave()) {
+                  _context8.next = 10;
+                  break;
+                }
+
+                _context8.prev = 2;
+                _context8.next = 5;
+                return lively.modules.moduleSourceChange(_this8.moduleId(), _this8.textString);
+
+              case 5:
+                _context8.next = 10;
+                break;
+
+              case 7:
+                _context8.prev = 7;
+                _context8.t0 = _context8["catch"](2);
+                return _context8.abrupt("return", _this8.showError(_context8.t0));
+
+              case 10:
+                _this8.onSaveDone();
+
+              case 11:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, _this8, [[2, 7]]);
+      }))();
+    },
+    onDoitDone: function onDoitDone(result) {},
+    onSaveDone: function onSaveDone() {},
+    getAllCode: function getAllCode() {
+      throw new Error("getAllCode() not yet implemented for " + this.constructor.name);
+    },
+    getCodeForEval: function getCodeForEval() {
+      throw new Error("getCodeForEval() not yet implemented for " + this.constructor.name);
+    },
+    getCodeForCompletions: function getCodeForCompletions() {
+      throw new Error("getCodeForCompletions() not yet implemented for " + this.constructor.name);
+    },
+    moduleId: function moduleId() {
+      throw new Error("moduleId() not yet implemented for " + this.constructor.name);
+    },
+    printObject: function printObject() {
+      throw new Error("printObject() not yet implemented for " + this.constructor.name);
+    },
+    getPrintItAsComment: function getPrintItAsComment() {
+      throw new Error("getPrintItAsComment() not yet implemented for " + this.constructor.name);
+    },
+    insertAtCursor: function insertAtCursor() {
+      throw new Error("insertAtCursor() not yet implemented for " + this.constructor.name);
+    },
+    setStatusMessage: function setStatusMessage() {
+      throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
+    }
+  }, babelHelpers.defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+    throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
+  }), babelHelpers.defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+    throw new Error("showError() not yet implemented for " + this.constructor.name);
+  }), _EvalableTextMorphTra);
+
+
+
+  var evalStrategies = Object.freeze({
+    EvalStrategy: EvalStrategy,
+    SimpleEvalStrategy: SimpleEvalStrategy,
+    LivelyVmEvalStrategy: LivelyVmEvalStrategy,
+    HttpEvalStrategy: HttpEvalStrategy,
+    EvalableTextMorphTrait: EvalableTextMorphTrait
+  });
 
   function runEval(code, options) {
     options = Object.assign({
@@ -609,6 +1285,7 @@
   exports.completions = completions;
   exports.runEval = runEval;
   exports.syncEval = syncEval;
+  exports.evalStrategies = evalStrategies;
   exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
 
 }((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));

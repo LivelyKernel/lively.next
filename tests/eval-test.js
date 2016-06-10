@@ -283,9 +283,9 @@ describe("persistent definitions", () => {
       expect(x1).deep.equals({y: 23});
       var result2 = await runEval("var x = {y: 24}", opts),
           x2 = varMapper.x;
-      expect(result2.value).deep.equals({y: 24});
-      expect(x2).deep.equals({y: 24});
-      expect(x1).equals(x2);
+      expect(result2.value).deep.equals({y: 24}, "eval result");
+      expect(x2).deep.equals({y: 24}, "var mapper value");
+      expect(x1).equals(x2, "identity");
     });
 
     it("keeps symbols", async () => {
