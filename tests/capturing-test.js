@@ -4,7 +4,7 @@ import { expect } from "mocha-es6";
 
 import stringify from "../lib/stringify.js";
 import { parse } from "../lib/parser.js";
-import { rewriteToCaptureTopLevelVariables } from "../lib/capturing.js";
+import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from "../lib/capturing.js";
 
 
 function _testVarTfm(descr, code, expected, only) {
@@ -386,4 +386,88 @@ describe("declarations", () => {
       .equals("function bar() {\n}\n_rec.bar = _define('bar', 'function', bar, _rec);");
   });
 
+});
+
+describe("System.register", () => {
+  
+  describe("setters", () => {
+    var input = 
+`System.register(["foo:a.js", "http://zork/b.js"], function (_export, _context) {
+"use strict";
+var x, y, z, _rec;
+return {
+  setters: [
+    function(foo_a_js) { x = foo_a_js.x },
+    function (_zork_b_js) { y = _zork_b_js.default; z = _zork_b_js.z; }],
+  execute: function () {
+    _rec = System.get("@lively-env").moduleEnv("c.js").recorder;
+    _rec.x = 23;
+  }
+};
+});`
+
+    it("captures setters of registered module", () => {
+      expect(stringify(
+          rewriteToRegisterModuleToCaptureSetters(
+            parse(input),
+            {name: "_rec", type: "Identifier"},
+            {exclude: ["z"]})))
+        .equals(`System.register([
+    'foo:a.js',
+    'http://zork/b.js'
+], function (_export, _context) {
+    'use strict';
+    var x, y, z, _rec;
+    _rec = System.get('@lively-env').moduleEnv('c.js').recorder;
+    return {
+        setters: [
+            function (foo_a_js) {
+                _rec.x = x = foo_a_js.x;
+            },
+            function (_zork_b_js) {
+                _rec.y = y = _zork_b_js.default;
+                z = _zork_b_js.z;
+            }
+        ],
+        execute: function () {
+            _rec = System.get('@lively-env').moduleEnv('c.js').recorder;
+            _rec.x = 23;
+        }
+    };
+});`);
+    });
+
+    it("captures setters of registered module with declarationWrapper", () => {
+      expect(stringify(
+          rewriteToRegisterModuleToCaptureSetters(
+            parse(input),
+            {name: "_rec", type: "Identifier"},
+            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+        .equals(`System.register([
+    'foo:a.js',
+    'http://zork/b.js'
+], function (_export, _context) {
+    'use strict';
+    var x, y, z, _rec;
+    _rec = System.get('@lively-env').moduleEnv('c.js').recorder;
+    return {
+        setters: [
+            function (foo_a_js) {
+                _rec.x = _define('x', 'var', x = foo_a_js.x, _rec);
+            },
+            function (_zork_b_js) {
+                _rec.y = _define('y', 'var', y = _zork_b_js.default, _rec);
+                _rec.z = _define('z', 'var', z = _zork_b_js.z, _rec);
+            }
+        ],
+        execute: function () {
+            _rec = System.get('@lively-env').moduleEnv('c.js').recorder;
+            _rec.x = 23;
+        }
+    };
+});`);
+
+    });
+
+  });
 });

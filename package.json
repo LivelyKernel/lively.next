@@ -1,6 +1,6 @@
 {
   "name": "lively.ast",
-  "version": "0.7.10",
+  "version": "0.7.11",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
   "main": "dist/lively.ast.js",
   "scripts": {
@@ -27,7 +27,7 @@
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
     "acorn-es7-plugin": "^1.0.14",
-    "lively.lang": "^0.5.17"
+    "lively.lang": "^0.6.0"
   },
   "devDependencies": {
     "acorn": "^2.7.0",

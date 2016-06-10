@@ -11537,11 +11537,17 @@ module.exports = function(acorn) {
           varDecls: [],
           varDeclPaths: [],
           funcDecls: [],
+          funcDeclPaths: [],
           classDecls: [],
+          classDeclPaths: [],
           classExprs: [],
+          classExprPaths: [],
           methodDecls: [],
+          methodDeclPaths: [],
           importDecls: [],
+          importDeclPaths: [],
           exportDecls: [],
+          exportDeclPaths: [],
           refs: [],
           thisRefs: [],
           params: [],
@@ -11583,6 +11589,7 @@ module.exports = function(acorn) {
       value: function visitFunctionDeclaration(node, scope, path) {
         var newScope = this.visitFunction(node, scope, path);
         scope.funcDecls.push(node);
+        scope.funcDeclPaths.push(path);
 
         // don't visit id and params 
         var visitor = this;
@@ -11737,6 +11744,7 @@ module.exports = function(acorn) {
       key: "visitClassDeclaration",
       value: function visitClassDeclaration(node, scope, path) {
         scope.classDecls.push(node);
+        scope.classDeclPaths.push(path);
 
         var visitor = this;
         // ignore id
@@ -11754,6 +11762,7 @@ module.exports = function(acorn) {
       key: "visitClassExpression",
       value: function visitClassExpression(node, scope, path) {
         scope.classExprs.push(node);
+        scope.classExprPaths.push(path);
 
         var visitor = this;
         // ignore id
@@ -11796,6 +11805,7 @@ module.exports = function(acorn) {
       key: "visitImportSpecifier",
       value: function visitImportSpecifier(node, scope, path) {
         scope.importDecls.push(node.local);
+        scope.importDeclPaths.push(path);
 
         var visitor = this;
         // // imported is of types Identifier
@@ -11808,6 +11818,7 @@ module.exports = function(acorn) {
       key: "visitImportDefaultSpecifier",
       value: function visitImportDefaultSpecifier(node, scope, path) {
         scope.importDecls.push(node.local);
+        scope.importDeclPaths.push(path);
         var visitor = this;
         // // local is of types Identifier
         // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
@@ -11817,6 +11828,7 @@ module.exports = function(acorn) {
       key: "visitImportNamespaceSpecifier",
       value: function visitImportNamespaceSpecifier(node, scope, path) {
         scope.importDecls.push(node.local);
+        scope.importDeclPaths.push(path);
         var visitor = this;
         // // local is of types Identifier
         // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
@@ -11836,18 +11848,21 @@ module.exports = function(acorn) {
       key: "visitExportNamedDeclaration",
       value: function visitExportNamedDeclaration(node, scope, path) {
         scope.exportDecls.push(node);
+        scope.exportDeclPaths.push(path);
         return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
       }
     }, {
       key: "visitExportDefaultDeclaration",
       value: function visitExportDefaultDeclaration(node, scope, path) {
         scope.exportDecls.push(node);
+        scope.exportDeclPaths.push(path);
         return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
       }
     }, {
       key: "visitExportAllDeclaration",
       value: function visitExportAllDeclaration(node, scope, path) {
         scope.exportDecls.push(node);
+        scope.exportDeclPaths.push(path);
         return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
       }
     }]);
@@ -12756,7 +12771,7 @@ module.exports = function(acorn) {
       }
 
       function printFunc(ea) {
-        var string = ea.path + ':' + ea.node.type,
+        var line = ea.path + ':' + ea.node.type,
             additional = [];
         if (printIndex) {
           additional.push(ea.index);
@@ -12766,13 +12781,13 @@ module.exports = function(acorn) {
         }
         if (printSource) {
           var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-              printed = string.print.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+              printed = lively_lang.string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
           additional.push(printed);
         }
         if (additional.length) {
-          string += '(' + additional.join(',') + ')';
+          line += '(' + additional.join(',') + ')';
         }
-        return string;
+        return line;
       }
 
       new PrinterVisitor().accept(parsed, { index: 0, tree: tree }, []);
@@ -12846,7 +12861,7 @@ module.exports = function(acorn) {
   }
 
   function id(name) {
-    return name === "this" ? { type: "ThisExpression" } : { name: name, type: "Identifier" };
+    return name === "this" ? { type: "ThisExpression" } : { name: String(name), type: "Identifier" };
   }
 
   function literal(value) {
@@ -12935,6 +12950,8 @@ module.exports = function(acorn) {
       prop = computed ? literal(prop) : id(prop);
     } else if (typeof prop === "number") {
       prop = literal(prop);
+      computed = true;
+    } else if (prop.type === "Literal") {
       computed = true;
     }
     return {
@@ -13561,7 +13578,7 @@ var nodes = Object.freeze({
       var node = _ref.node;
       var path = _ref.path;
 
-      lively.lang.Path(path).set(parsed, exprStmt(node.id));
+      lively_lang.Path(path).set(parsed, exprStmt(node.id));
       outerBody.push(node);
     });
 
@@ -13675,6 +13692,8 @@ var nodes = Object.freeze({
     options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
     options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
 
+    rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
+
     // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
     // obj assignment, converting es6 code to es5 using the extra
     // options.moduleExportFunc and options.moduleImportFunc as capture / sources
@@ -13682,8 +13701,6 @@ var nodes = Object.freeze({
       options.excludeRefs.push(options.es6ExportFuncId);
       options.excludeRefs.push(options.es6ImportFuncId);
       rewritten = es6ModuleTransforms(rewritten, options);
-    } else {
-      rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
     }
 
     // 4. make all references declared in the toplevel scope into property
@@ -13728,6 +13745,62 @@ var nodes = Object.freeze({
     rewritten = putFunctionDeclsInFront(rewritten, options);
 
     return rewritten;
+  }
+
+  function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
+    // for rewriting the setters part in code like
+    // ```js
+    //   System.register(["a.js"], function (_export, _context) {
+    //     var a, _rec;
+    //     return {
+    //       setters: [function(foo_a_js) { a = foo_a_js.x }],
+    //       execute: function () { _rec.x = 23 + _rec.a; }
+    //     };
+    //   });
+    // ```
+    // This allows us to capture (and potentially re-export) imports and their
+    // changes without actively running the module again.
+
+    options = merge({
+      captureObj: assignToObj || { type: "Identifier", name: "__rec" },
+      exclude: [],
+      declarationWrapper: undefined
+    }, options);
+
+    var registerCall = lively_lang.Path("body.0.expression").get(parsed);
+    if (registerCall.callee.object.name !== "System") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+    if (registerCall.callee.property.name !== "register") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+    var registerBody = lively_lang.Path("arguments.1.body.body").get(registerCall),
+        registerReturn = lively_lang.arr.last(registerBody);
+    if (registerReturn.type !== "ReturnStatement") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: " + stringify(parsed).slice(0, 300) + "...");
+    var setters = registerReturn.argument.properties.find(function (prop) {
+      return prop.key.name === "setters";
+    });
+    if (!setters) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding setters: " + stringify(parsed).slice(0, 300) + "...");
+    var execute = registerReturn.argument.properties.find(function (prop) {
+      return prop.key.name === "execute";
+    });
+    if (!execute) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: " + stringify(parsed).slice(0, 300) + "...");
+
+    // in each setter function: intercept the assignments to local vars and inject capture object
+    setters.value.elements.forEach(function (funcExpr) {
+      return funcExpr.body.body = funcExpr.body.body.map(function (stmt) {
+        if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
+
+        var id = stmt.expression.left,
+            rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
+        return exprStmt(assign(member(options.captureObj, id), rhs));
+      });
+    });
+
+    var captureInitialize = execute.value.body.body.find(function (stmt) {
+      return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
+    });
+    if (captureInitialize) {
+      lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
+    }
+
+    return parsed;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -13828,7 +13901,7 @@ var nodes = Object.freeze({
     });
 
     return replace$1(parsed, function (node, path) {
-      return refsToReplace.indexOf(node) > -1 ? member$1(node, options.captureObj) : node;
+      return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
     });
   }
 
@@ -13857,10 +13930,7 @@ var nodes = Object.freeze({
           right: { name: "undefined", type: "Identifier" }
         };
 
-        var initWrapped = options.declarationWrapper ? {
-          arguments: [{ type: "Literal", value: decl.id.name }, { type: "Literal", value: node.kind }, init, options.captureObj],
-          callee: options.declarationWrapper, type: "CallExpression"
-        } : init;
+        var initWrapped = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
 
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
@@ -13871,7 +13941,7 @@ var nodes = Object.freeze({
             return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
-          return [varDecl$1(declRoot, initWrapped, node.kind)].concat(extractions);
+          return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
         }
 
         // This is rewriting normal vars
@@ -13887,10 +13957,7 @@ var nodes = Object.freeze({
       var stmt = parsed.body[i];
       if (topLevel.classDecls.indexOf(stmt) !== -1) {
         if (options.declarationWrapper) {
-          parsed.body.splice(i, 1, assignExpr(options.captureObj, stmt.id, {
-            arguments: [{ type: "Literal", value: stmt.id.name }, { type: "Literal", value: "class" }, stmt, options.captureObj],
-            callee: options.declarationWrapper, type: "CallExpression"
-          }, false));
+          parsed.body.splice(i, 1, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false));
         } else {
           parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
         }
@@ -14035,7 +14102,7 @@ var nodes = Object.freeze({
         body = body.concat([varDeclOrAssignment(parsed, {
           type: "VariableDeclarator",
           id: stmt.declaration,
-          init: member$1(stmt.declaration, options.captureObj)
+          init: member(options.captureObj, stmt.declaration)
         }), stmt]);
       } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
         body.push(stmt);
@@ -14044,7 +14111,7 @@ var nodes = Object.freeze({
           return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
             type: "VariableDeclarator",
             id: specifier.local,
-            init: member$1(specifier.local, options.captureObj)
+            init: member(options.captureObj, specifier.local)
           });
         }).filter(Boolean)).concat(stmt);
       }
@@ -14088,7 +14155,7 @@ var nodes = Object.freeze({
           }));
         } else {
           nodes = stmt.specifiers.map(function (specifier) {
-            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member$1(specifier.local, options.captureObj) : specifier.local);
+            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
           });
         }
       } else if (stmt.type === "ExportDefaultDeclaration") {
@@ -14122,20 +14189,42 @@ var nodes = Object.freeze({
   }
 
   function putFunctionDeclsInFront(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    if (!topLevel.funcDecls.length) return parsed;
-    var globalFuncs = topLevel.funcDecls.filter(function (ea) {
-      return shouldDeclBeCaptured(ea, options);
-    }).map(function (decl) {
-      var funcId = { type: "Identifier", name: decl.id.name },
-          init = options.declarationWrapper ? {
-        arguments: [{ type: "Literal", value: funcId.name }, { type: "Literal", value: "function" }, funcId, options.captureObj],
-        callee: options.declarationWrapper, type: "CallExpression"
-      } : funcId;
+    var scope = topLevelDeclsAndRefs(parsed).scope,
+        funcDecls = scope.funcDecls;
+    if (!funcDecls.length) return parsed;
 
-      return assignExpr(options.captureObj, funcId, init, false);
-    });
-    parsed.body = globalFuncs.concat(parsed.body);
+    for (var i = 0; i < funcDecls.length; i++) {
+      var decl = funcDecls[i];
+      if (!shouldDeclBeCaptured(decl, options)) continue;
+
+      var parentPath = scope.funcDeclPaths[i].slice(0, -1),
+
+      // ge the parent so we can replace the original function:
+      parent = lively_lang.Path(parentPath).get(scope.node),
+          funcId = { type: "Identifier", name: decl.id.name },
+
+      // what we capture:
+      init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
+          declFront = Object.assign({}, decl);
+
+      // If the parent is a body array we remove the original func decl from it
+      if (Array.isArray(parent)) {
+        parent.splice(parent.indexOf(decl), 1);
+      } else if (parent.type === "ExportNamedDeclaration") {
+        parent.declaration = null;parent.source = null;
+        parent.specifiers = [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }];
+      } else if (parent.type === "ExportDefaultDeclaration") {
+        parent.declaration = decl.id;
+      } else {}
+      // ??? just leave it alone...
+      // decl.type = "EmptyStatement";
+
+
+      // hoist the function to the front, also it's capture
+      parsed.body.unshift(assignExpr(options.captureObj, funcId, init, false));
+      parsed.body.unshift(declFront);
+    }
+
     return parsed;
   }
 
@@ -14183,19 +14272,19 @@ var nodes = Object.freeze({
 
       // like [a]
       if (el.type === "Identifier") {
-        return [merge(varDecl$1(el, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(el, member(transformState.parent, id(i), true)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl$1(el.argument, {
+          return [merge(varDecl(el.argument, {
             type: "CallExpression",
             arguments: [{ type: "Literal", value: i }],
-            callee: member$1(id$1("slice"), transformState.parent, false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
           // like [{x}]
         } else {
-            var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl$1(helperVarId, member$1(id$1(i), transformState.parent, true)), babelHelpers.defineProperty({}, p, { capture: true }));
+            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
             declaredNames.push(helperVarId.name);
             return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
           }
@@ -14209,12 +14298,12 @@ var nodes = Object.freeze({
 
       // like {x: y}
       if (prop.value.type == "Identifier") {
-        return [merge(varDecl$1(prop.value, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(prop.value, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: true }))];
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id$1(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl$1(helperVarId, member$1(prop.key, transformState.parent, false)), babelHelpers.defineProperty({}, p, { capture: false }));
+          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
           declaredNames.push(helperVarId.name);
           return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
         }
@@ -14225,23 +14314,8 @@ var nodes = Object.freeze({
   // code generation helpers
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function id$1(name) {
-    return { type: "Identifier", name: String(name) };
-  }
-
   function block$1(nodes) {
     return { type: "BlockStatement", body: nodes };
-  }
-
-  function member$1(prop, obj, computed) {
-    return { type: "MemberExpression", computed: computed || false, object: obj, property: prop };
-  }
-
-  function varDecl$1(id, init, kind) {
-    return {
-      declarations: [{ type: "VariableDeclarator", id: id, init: init }],
-      kind: kind || "var", type: "VariableDeclaration"
-    };
   }
 
   function varDeclOrAssignment(parsed, declarator, kind) {
@@ -14249,29 +14323,14 @@ var nodes = Object.freeze({
         name = declarator.id.name;
     return topLevel.declaredNames.indexOf(name) > -1 ?
     // only create a new declaration if necessary
-    {
-      type: "ExpressionStatement", expression: {
-        type: "AssignmentExpression", operator: "=",
-        right: declarator.init,
-        left: declarator.id
-      }
-    } : {
+    exprStmt(assign(declarator.id, declarator.init)) : {
       declarations: [declarator],
       kind: kind || "var", type: "VariableDeclaration"
     };
   }
 
   function assignExpr(assignee, propId, value, computed) {
-    return {
-      type: "ExpressionStatement", expression: {
-        type: "AssignmentExpression", operator: "=",
-        right: value || { type: "Identifier", name: 'undefined' },
-        left: {
-          type: "MemberExpression", computed: computed || false,
-          object: assignee, property: propId
-        }
-      }
-    };
+    return exprStmt(assign(member(assignee, propId, computed), value || id("undefined")));
   }
 
   function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
@@ -14287,7 +14346,7 @@ var nodes = Object.freeze({
   }
 
   function importCall(imported, moduleSource, moduleImportFunc) {
-    if (typeof imported === "string") imported = { type: "Literal", value: imported };
+    if (typeof imported === "string") imported = literal(imported);
     return {
       arguments: [moduleSource].concat(imported || []),
       callee: moduleImportFunc, type: "CallExpression"
@@ -14295,24 +14354,22 @@ var nodes = Object.freeze({
   }
 
   function importCallStmt(imported, moduleSource, moduleImportFunc) {
-    return {
-      type: "ExpressionStatement",
-      expression: importCall(imported, moduleSource, moduleImportFunc)
-    };
+    return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
   }
 
   function exportCall(exportFunc, local, exportedObj) {
-    if (typeof local === "string") local = { type: "Literal", value: local };
+    if (typeof local === "string") local = literal(local);
     exportedObj = lively_lang.obj.deepCopy(exportedObj);
-    return { arguments: [local, exportedObj], callee: exportFunc, type: "CallExpression" };
+    return funcCall(exportFunc, local, exportedObj);
   }
 
   function exportCallStmt(exportFunc, local, exportedObj) {
-    return { type: "ExpressionStatement", expression: exportCall(exportFunc, local, exportedObj) };
+    return exprStmt(exportCall(exportFunc, local, exportedObj));
   }
 
 var capturing = Object.freeze({
-    rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables
+    rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
+    rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
   });
 
   function evalCodeTransform(code, options) {
@@ -14337,7 +14394,8 @@ var capturing = Object.freeze({
         es6ImportFuncId: options.es6ImportFuncId,
         es6ExportFuncId: options.es6ExportFuncId,
         ignoreUndeclaredExcept: undeclaredToTransform,
-        exclude: blacklist
+        exclude: blacklist,
+        declarationWrapper: options.declarationWrapper || undefined
       });
     }
 
@@ -14355,8 +14413,25 @@ var capturing = Object.freeze({
     return result;
   }
 
+  function evalCodeTransformOfSystemRegisterSetters(code, options) {
+    if (options.topLevelVarRecorder) {
+
+      var parsed = parse(code),
+          blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+
+      var result = rewriteToRegisterModuleToCaptureSetters(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
+        exclude: blacklist,
+        declarationWrapper: options.declarationWrapper || undefined
+      });
+    }
+
+    return result ? stringify(result) : code;
+  }
+
 var evalSupport = Object.freeze({
-    evalCodeTransform: evalCodeTransform
+    evalCodeTransform: evalCodeTransform,
+    evalCodeTransformOfSystemRegisterSetters: evalCodeTransformOfSystemRegisterSetters
   });
 
   function getCommentPrecedingNode(parsed, node) {
