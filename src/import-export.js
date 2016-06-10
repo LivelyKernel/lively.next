@@ -72,7 +72,13 @@ function updateModuleExports(System, moduleId, keysAndValues) {
         if (!importerModule.locked) {
           var importerIndex = importerModule.dependencies.indexOf(record);
           importerModule.setters[importerIndex](record.exports);
-          importerModule.execute();
+          // rk 2016-06-09: for now don't re-execute dependent modules on save,
+          // just update module bindings
+          if (false) {
+            importerModule.execute();
+          } else {
+            runScheduledExportChanges(System, importerModule.name);
+          }
         }
       }
     }
