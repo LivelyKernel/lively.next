@@ -80,8 +80,9 @@ async function registerPackage(System, packageURL, packageLoadStack) {
       packageConfigResult = await applyConfig(System, cfg, url)
 
   if (registerSubPackages) {
-    for (let subp of packageConfigResult.subPackages)
+    for (let subp of packageConfigResult.subPackages) {
       await registerPackage(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
+    }
   }
 
   return cfg;
@@ -212,14 +213,15 @@ function applyLivelyConfigPackageMap(System, livelyConfig, packageURL) {
 function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageURL) {
   var pConf = System.packages[packageURL],
       preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
-        livelyConfig.preferLoadedPackages : true;
+        livelyConfig.preferLoadedPackages : true,
+      normalized = System.normalizeSync(subPackageName, packageURL + "/");
 
-  var normalized = System.normalizeSync(subPackageName, packageURL + "/");
   if (preferLoadedPackages && (pConf.map[subPackageName] || System.map[subPackageName] || System.get(normalized))) {
     var subpackageURL;
     if (pConf.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, pConf.map[subPackageName], packageURL);
     else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], packageURL);
     else subpackageURL = normalized;
+    if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0,-1).join("/"); // force to be dir
     System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, packageURL, subpackageURL);
     return {name: subPackageName, address: subpackageURL};
   }
