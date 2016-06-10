@@ -20631,7 +20631,8 @@ var categorizer = Object.freeze({
       waitForPromise: true,
       wrapInStartEndCall: false,
       onStartEval: null,
-      onEndEval: null
+      onEndEval: null,
+      keepPreviouslyDeclaredValues: true
     }, opts);
 
     if (opts.targetModule) {
@@ -21255,11 +21256,14 @@ var categorizer = Object.freeze({
       key: "runEval",
       value: function runEval(source, options) {
         // lively.modules.System.config({meta: {[options.targetModule]: {format: "esm"}}});
+        if (!options.targetModule) return Promise.reject(new Error("runEval called but options.targetModule not specified!"));
+
         var conf = { meta: {} };conf.meta[options.targetModule] = { format: "esm" };
         lively.modules.System.config(conf);
 
         options = lively.lang.obj.merge({
-          sourceURL: options.targetModule + "_doit_" + Date.now()
+          sourceURL: options.targetModule + "_doit_" + Date.now(),
+          keepPreviouslyDeclaredValues: true
         }, options);
 
         return lively.vm.runEval(source, options);
@@ -21314,46 +21318,55 @@ var categorizer = Object.freeze({
 
       var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
 
-      _this4.url = url;
+      _this4.url = url || _this4.constructor.defaultURL;
       return _this4;
     }
 
     babelHelpers.createClass(HttpEvalStrategy, [{
+      key: "normalizeOptions",
+      value: function normalizeOptions(options) {
+        options = Object.assign({ serverEvalURL: this.url }, options, { context: null });
+      }
+    }, {
+      key: "runEvalSource",
+      value: function runEvalSource(source, options) {
+        var sourceForServer = "var source = " + JSON.stringify(source) + "\n" + ("var options = " + JSON.stringify(options) + "\n") + "options.context = " + (LivelyVmEvalStrategy.prototype.runEval + "\n") + "runEval(source, options)\n";
+        return sourceForServer;
+      }
+    }, {
       key: "runEval",
       value: function () {
         var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
-          var url, sourceForServer, stringValue;
+          var payLoad, stringValue;
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
                 case 0:
-                  _context3.prev = 0;
+                  options = this.normalizeOptions(options);
+                  _context3.prev = 1;
+                  payLoad = { method: "POST", body: this.runEvalSource(source, options) };
+                  _context3.next = 5;
+                  return window.fetch(options.serverEvalURL, payLoad);
 
-                  options = Object.assign({ serverEvalURL: this.url || this.constructor.defaultURL }, options);
-                  url = options.serverEvalURL;
-                  sourceForServer = "var source = " + JSON.stringify(source) + "\n" + ("var options = " + JSON.stringify(options) + "\n") + (LivelyVmEvalStrategy.prototype.runEval + "\n") + "runEval(source, options)\n";
-                  _context3.next = 6;
-                  return window.fetch(url, { method: "POST", body: sourceForServer });
-
-                case 6:
-                  _context3.next = 8;
+                case 5:
+                  _context3.next = 7;
                   return _context3.sent.text();
 
-                case 8:
+                case 7:
                   stringValue = _context3.sent;
                   return _context3.abrupt("return", JSON.parse(stringValue));
 
-                case 12:
-                  _context3.prev = 12;
-                  _context3.t0 = _context3["catch"](0);
+                case 11:
+                  _context3.prev = 11;
+                  _context3.t0 = _context3["catch"](1);
                   return _context3.abrupt("return", { isError: true, value: String(_context3.t0.stack || _context3.t0) });
 
-                case 15:
+                case 14:
                 case "end":
                   return _context3.stop();
               }
             }
-          }, _callee3, this, [[0, 12]]);
+          }, _callee3, this, [[1, 11]]);
         }));
 
         function runEval(_x5, _x6) {
