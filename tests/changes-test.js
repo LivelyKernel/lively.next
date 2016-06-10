@@ -12,7 +12,7 @@ describe("code changes of esm format module", () => {
   var dir = System.normalizeSync("lively.modules/tests/"),
       testProjectDir = dir + "test-project-1-dir/",
       testProjectSpec = {
-        "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z;",
+        "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
         "file2.js": "var internal = 1; export var y = internal;",
         "package.json": '{"name": "test-project-1", "main": "file1.js"}',
         "sub-dir": {"file3.js": "export var z = 2;"}
@@ -23,7 +23,7 @@ describe("code changes of esm format module", () => {
 
   function changeModule2Source() {
     // "internal = 1" => "internal = 2"
-    return moduleSourceChangeAction(S, module2, s => s.replace(/(internal = )([0-9]+)/, "$12"));
+    return moduleSourceChangeAction(S, module2, s => s.replace(/(internal = )([0-9]+;)/, "$12;debugger;"));
   }
 
   var S;
@@ -37,11 +37,16 @@ describe("code changes of esm format module", () => {
 
   it("modifies module and its exports", async () => {
     var m = await S.import(module1);
-    expect(moduleEnv(S, module2).recorder.internal).to.equal(1, "internal state before change");
-    expect(m.x).to.equal(3, "export state before change");
+    expect(moduleEnv(S, module2).recorder.internal).to.equal(1, "internal state of module2 before change");
+    expect(m.x).to.equal(3, "computed state in module1 before change");
+    expect(m.y).to.equal(1, "re-exported state in module1 before change");
     await changeModule2Source();
-    expect(moduleEnv(S, module2).recorder.internal).to.equal(2, "internal state after change");
-    expect(m.x).to.equal(4, "export state after change");
+    expect(moduleEnv(S, module2).recorder.internal).to.equal(2, "internal state of module2 after change");
+    expect(moduleEnv(S, module1).recorder.y).to.equal(2, "internal state of module1 after change");
+    expect(m.y).to.equal(2, "re-exported state in module1 after change");
+    // We expect to still have the same internal computed state b/c module 1
+    // won't get re-run!
+    expect(m.x).to.equal(3, "computed state in module1 after change");
   });
 
   it("modifies module declaration", async () => {
@@ -52,7 +57,9 @@ describe("code changes of esm format module", () => {
       {evaluate: true});
     expect(m.x).to.equal(-1, "x after changing module1");
     await changeModule2Source();
-    expect(m.x).to.equal(0, "x after changing module2, changing module2 is expected to update module1 as well – with module1's new definition!");
+    // We expect to still have the same internal computed state b/c module 1
+    // won't get re-run!
+    expect(m.x).to.equal(-1);
     expect(moduleRecordFor(S, module2).importers[0]).equals(moduleRecordFor(S, module1), "imported module recorded in file2.js is not the record of file1.js");
   });
 
@@ -74,7 +81,9 @@ describe("code changes of esm format module", () => {
     expect(m1.x).to.equal(3, "before change");
     await changeModule2Source();
     expect(m1Env).deep.property("recorder.y").to.equal(2, "internal state after change");
-    expect(m1.x).to.equal(4, "state after change");
+    // We expect to still have the same internal computed state b/c module 1
+    // won't get re-run!
+    expect(m1.x).to.equal(3, "state after change");
   });
 
   it("affects eval state", async () => {

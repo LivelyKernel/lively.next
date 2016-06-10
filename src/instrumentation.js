@@ -4,6 +4,7 @@ import { moduleEnv } from "./system.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
 var evalCodeTransform = evalSupport.evalCodeTransform;
+var evalCodeTransformOfSystemRegisterSetters = evalSupport.evalCodeTransformOfSystemRegisterSetters;
 
 var isNode = System.get("@system-env").node;
 
@@ -69,6 +70,26 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
     return rewrittenSource;
   } catch (e) {
     console.error("Error in prepareCodeForCustomCompile", e.stack);
+    return source;
+  }
+}
+
+function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
+  source = String(source);
+  var tfmOptions = {
+        topLevelVarRecorder: env.recorder,
+        varRecorderName: env.recorderName,
+        dontTransform: env.dontTransform,
+        recordGlobals: true
+      },
+      isGlobal = env.recorderName === "System.global";
+
+  try {
+    var rewrittenSource = evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
+    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
+    return rewrittenSource;
+  } catch (e) {
+    console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
     return source;
   }
 }
@@ -166,8 +187,14 @@ function customTranslate(proceed, load) {
     debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
   }
 
-  debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now()-start);
-  return proceed(load);
+  return proceed(load).then(translated => {
+    if (translated.indexOf("System.register(") === 0) {
+      debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
+      translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
+    }
+    debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now()-start);
+    return translated;
+  });
 }
 
 
