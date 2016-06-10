@@ -34,39 +34,40 @@ describe("eval", () => {
   })
 
   it("of export statement", async () => {
-    var [m1, m2] = await Promise.all([S.import(module1), S.import(module2)]);
+    var m1 = await S.import(module1),
+        m2 = await S.import(module2);
     expect(m1.x).to.equal(3, "module1 initial x");
     expect(m2.y).to.equal(1, "module2 initial y");
-      // Modify module1
     var result = await runEval("export var y = 2;", {asString: true, System: S, targetModule: module2});
     expect(result.value).to.not.match(/error/i);
     expect(m2.y).to.equal(2, "file2.js not updated");
-    expect(m1.x).to.equal(4, "file1.js not updated after its dependency changed");
-    var m1Reloaded = await S.import(module1);
-    expect(m1Reloaded.x).to.equal(4, "module1 x");
-    var m2Reloaded = await S.import(module2);
-    expect(m2Reloaded.y).to.equal(2, "module2 y");
+    var result2 = await runEval("y;", {System: S, targetModule: module1});
+    expect(result2.value).to.equal(2);
+    // expect(m1.x).to.equal(4, "file1.js not updated after its dependency changed");
   });
 
-  it("of var being exported", () =>
-    promise.chain([
-      () => Promise.all([S.import(module1), S.import(module2)]),
-      ([m1, m2], state) => {
-        state.m1 = m1; state.m2 = m2;
-        expect(m1.x).to.equal(3);
-        expect(m2.y).to.equal(1);
-      },
-        // Modify module1
-      () => runEval("var y = 2;", {asString: true, System: S, targetModule: module2}),
-      (result, {m1, m2}) => {
-        expect(result.value).to.not.match(/error/i);
-        expect(m2.y).to.equal(2, "file2.js not updated");
-        expect(m1.x).to.equal(4, "file1.js not updated after its dependency changed");
-        return Promise.all([
-          S.import(module1).then(m => expect(m.x).to.equal(4)),
-          S.import(module2).then(m => expect(m.y).to.equal(2)),
-        ]);
-      }]));
+  it("of var being exported", async () => {
+    var m1 = await S.import(module1),
+        m2 = await S.import(module2);
+    expect(m1.x).to.equal(3);
+    expect(m2.y).to.equal(1);
+
+    var result = await runEval("var y = 2;", {asString: true, System: S, targetModule: module2});
+    expect(result.value).to.not.match(/error/i);
+    expect(m2.y).to.equal(2, "file2.js not updated");
+    var result2 = await runEval("y;", {System: S, targetModule: module1});
+    expect(result2.value).to.equal(2);
+  });
+
+  it("of new export", async () => {
+    var m1 = await S.import(module1),
+        m2 = await S.import(module2),
+        result = await runEval("export var xxx = 99;", {asString: true, System: S, targetModule: module2});
+    expect(result.value).to.not.match(/error/i);
+    expect(m2.xxx).to.equal(99, "file2.js not updated");
+    var result2 = await runEval("import { xxx } from './file2.js';", {System: S, targetModule: module1});
+    expect(result2.value).to.equal(99, "new export not available in another module");
+  });
 
   it("of new var that is exported and then changes", () =>
     S.import(module1)
