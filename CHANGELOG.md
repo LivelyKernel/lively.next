@@ -1,5 +1,18 @@
 # lively.modules changelog
 
+## 0.5.1
+
+* don't re-execute modules once a dependant changes, just update the module bindings(!)
+* instrument System.register setters to capture (and update) module bindings
+* don't freeze modules by default to allow adding new exports without reloading dependent modules
+* export fixes for async transformation. babel async transformer is
+  surprisingly fragile as to where async functions are placed, in lively.ast and
+  lively.modules we have some manual "hoisting" now to work around these issues
+* support systemjs 0.19.30 + systemjs-babel-plugin for using babel@6
+* fix wrapping nodejs modules as es6 modules
+* replacing System["__lively.modules__"] with System.get("@lively-env")
+* - dont rewrite "fetch" as it is a function that apparently cannot be called as a method from a dereived global
+
 ## 0.4.1
 
 * removing runEval (!) – es6 aware eval resides now in lively.vm also removing
