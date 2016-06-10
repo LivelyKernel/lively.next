@@ -19,7 +19,7 @@ async function moduleSourceChange(System, moduleName, newSource, options) {
 
   try {
     var format = meta.format || undefined, changeResult;
-    if (!format || format === "es6" || format === "esm" || format === "register") {
+    if (!format || format === "es6" || format === "esm" || format === "register" || format === "defined") {
       changeResult = await moduleSourceChangeEsm(System, moduleId, newSource, options);
     } else if (format === "global") {
       changeResult = await moduleSourceChangeGlobal(System, moduleId, newSource, options);

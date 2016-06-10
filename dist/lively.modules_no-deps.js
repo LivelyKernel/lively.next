@@ -939,10 +939,19 @@
 
   function sourceOf$1(System, moduleName, parent) {
     return System.normalize(moduleName, parent).then(function (id) {
-      var load = System.loads && System.loads[id] || {
-        status: 'loading', address: id, name: id,
-        linkSets: [], dependencies: [], metadata: {} };
-      return System.fetch(load);
+      if (id.match(/^http/) && System.global.fetch) {
+        return System.global.fetch(id).then(function (res) {
+          return res.text();
+        });
+      }
+      if (id.match(/^file:/) && System.get("@system-env").node) {
+        return new Promise(function (resolve, reject) {
+          return System._nodeRequire("fs").readFile(id.replace(/^file:\/\//, ""), function (err, content) {
+            return err ? reject(err) : resolve(String(content));
+          });
+        });
+      }
+      return Promise.reject(new Error("Cannot retrieve source for " + id));
     });
   }
 
@@ -1652,7 +1661,7 @@
               _context2.prev = 7;
               format = meta.format || undefined;
 
-              if (!(!format || format === "es6" || format === "esm" || format === "register")) {
+              if (!(!format || format === "es6" || format === "esm" || format === "register" || format === "defined")) {
                 _context2.next = 15;
                 break;
               }

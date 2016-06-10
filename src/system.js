@@ -353,10 +353,15 @@ function addGetterSettersForNewVars(System, moduleId) {
 function sourceOf(System, moduleName, parent) {
   return System.normalize(moduleName, parent)
     .then(id => {
-      var load = (System.loads && System.loads[id]) || {
-        status: 'loading', address: id, name: id,
-        linkSets: [], dependencies: [], metadata: {}};
-      return System.fetch(load);
+      if (id.match(/^http/) && System.global.fetch) {
+        return System.global.fetch(id).then(res => res.text())
+      }
+      if (id.match(/^file:/) && System.get("@system-env").node) {
+        return new Promise((resolve, reject) =>
+          System._nodeRequire("fs").readFile(id.replace(/^file:\/\//, ""), (err, content) =>
+            err ? reject(err) : resolve(String(content))))
+      }
+      return Promise.reject(new Error(`Cannot retrieve source for ${id}`));
     });
 }
 
