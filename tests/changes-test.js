@@ -164,3 +164,46 @@ describe("code changes of global format module", () => {
     expect(moduleEnv(S, module1).recorder).property("z").equal(3);
   });
 });
+
+describe("persistent definitions", () => {
+
+  var dir = System.normalizeSync("lively.modules/tests/"),
+      testProjectDir = dir + "test-project-2-dir/",
+      testProjectSpec = {
+        "file1.js": "'format esm'; class Foo { m() { return 23 }}\nvar x = {bar: 123, foo() { return this.bar + 42 }}\n",
+        "package.json": '{"name": "test-project-2", "main": "file1.js"}'
+      },
+      module1 = testProjectDir + "file1.js";
+
+  var S;
+  beforeEach(async () => {
+    S = getSystem("test", {baseURL: testProjectDir});
+    await createFiles(testProjectDir, testProjectSpec);
+  });
+
+  afterEach(async () => {
+    removeSystem("test");
+    await removeDir(testProjectDir);
+  });
+
+  it("keeps identity of class", async () => {
+    await S.import(module1);
+    var class1 = moduleEnv(S, module1).recorder.Foo;
+    expect(new class1().m()).equals(23, "Foo class not working");
+    await moduleSourceChangeAction(S, module1, s => "'format esm'; class Foo { m() { return 24 }}\n")
+    var class2 = moduleEnv(S, module1).recorder.Foo;
+    expect(new class2().m()).equals(24, "Foo class not changed");
+    expect(class1).equals(class2, "Foo class identity changed");
+  });
+
+  it("doesn't keep identity of anonymous class", async () => {
+    await S.import(module1);
+    var class1 = moduleEnv(S, module1).recorder.Foo;
+    expect(new class1().m()).equals(23, "Foo class not working");
+    await moduleSourceChangeAction(S, module1, s => "let Foo = class { m() { return 24 }}\n")
+    var class2 = moduleEnv(S, module1).recorder.Foo;
+    expect(new class2().m()).equals(24, "Foo class not changed");
+    expect(class1).not.equals(class2, "Foo class identity the same");
+  });
+
+})

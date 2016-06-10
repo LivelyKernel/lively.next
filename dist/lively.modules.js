@@ -17165,8 +17165,10 @@ module.exports = function(acorn) {
     }, {
       key: "visitClassExpression",
       value: function visitClassExpression(node, scope, path) {
-        scope.classExprs.push(node);
-        scope.classExprPaths.push(path);
+        if (node.id) {
+          scope.classExprs.push(node);
+          scope.classExprPaths.push(path);
+        }
 
         var visitor = this;
         // ignore id
@@ -19361,7 +19363,7 @@ var nodes = Object.freeze({
       var stmt = parsed.body[i];
       if (topLevel.classDecls.indexOf(stmt) !== -1) {
         if (options.declarationWrapper) {
-          parsed.body.splice(i, 1, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false));
+          parsed.body.splice(i, 1, varDecl(stmt.id, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false), "var"));
         } else {
           parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
         }
@@ -19512,7 +19514,7 @@ var nodes = Object.freeze({
         body.push(stmt);
       } else {
         body = body.concat(stmt.specifiers.map(function (specifier) {
-          return topLevel.declaredNames.indexOf(specifier.local.name) > -1 ? null : varDeclOrAssignment(parsed, {
+          return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
             type: "VariableDeclarator",
             id: specifier.local,
             init: member(options.captureObj, specifier.local)
@@ -19776,6 +19778,8 @@ var capturing = Object.freeze({
     rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
   });
 
+  var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
+
   function evalCodeTransform(code, options) {
     // variable declaration and references in the the source code get
     // transformed so that they are bound to `varRecorderName` aren't local
@@ -19791,6 +19795,25 @@ var capturing = Object.freeze({
     // 2. capture top level vars into topLevelVarRecorder "environment"
     if (options.topLevelVarRecorder) {
 
+      // 2.1 declare a function that should wrap all definitions, i.e. all var
+      // decls, functions, classes etc that get captured will be wrapped in this
+      // function. When using this with the option.keepPreviouslyDeclaredValues
+      // we will use a wrapping function that keeps the identity of prevously
+      // defined objects
+
+      var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
+      if (options.keepPreviouslyDeclaredValues) {
+        options.declarationWrapper = {
+          type: "MemberExpression",
+          object: { type: "Identifier", name: options.varRecorderName },
+          property: { type: "Literal", value: declarationWrapperName },
+          computed: true
+        };
+        options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
+      }
+
+      // 2.2 Here we call out to the actual code transformation that installs the
+      // capture and wrap logic
       var blacklist = (options.dontTransform || []).concat(["arguments"]),
           undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
 
@@ -19833,7 +19856,39 @@ var capturing = Object.freeze({
     return result ? stringify(result) : code;
   }
 
+  function copyProperties(source, target) {
+    var exceptions = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+
+    Object.getOwnPropertyNames(source).concat(Object.getOwnPropertySymbols(source)).forEach(function (name) {
+      return exceptions.indexOf(name) === -1 && Object.defineProperty(target, name, Object.getOwnPropertyDescriptor(source, name));
+    });
+  }
+
+  function declarationWrapperForKeepingValues(name, kind, value, recorder) {
+    if (kind === "function") return value;
+
+    if (kind === "class") {
+      var existingClass = recorder[name];
+      if (typeof existingClass === "function") {
+        copyProperties(value, existingClass, ["name", "length", "prototype"]);
+        copyProperties(value.prototype, existingClass.prototype);
+        return existingClass;
+      }
+      return value;
+    }
+
+    if (!value || (typeof value === "undefined" ? "undefined" : babelHelpers.typeof(value)) !== "object" || Array.isArray(value) || value.constructor === RegExp) return value;
+
+    if (recorder.hasOwnProperty(name)) {
+      copyProperties(value, recorder[name]);
+      return recorder[name];
+    }
+
+    return value;
+  }
+
 var evalSupport = Object.freeze({
+    defaultDeclarationWrapperName: defaultDeclarationWrapperName,
     evalCodeTransform: evalCodeTransform,
     evalCodeTransformOfSystemRegisterSetters: evalCodeTransformOfSystemRegisterSetters
   });
@@ -21363,7 +21418,8 @@ var categorizer = Object.freeze({
       topLevelVarRecorder: env.recorder,
       varRecorderName: env.recorderName,
       dontTransform: env.dontTransform,
-      recordGlobals: true
+      recordGlobals: true,
+      keepPreviouslyDeclaredValues: true
     },
         isGlobal = env.recorderName === "System.global",
         header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
@@ -21500,6 +21556,7 @@ var categorizer = Object.freeze({
         debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
         translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
       }
+
       debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
       return translated;
     });
@@ -21546,7 +21603,6 @@ var categorizer = Object.freeze({
   }
 
   function instrumentSourceOfGlobalModuleLoad(System, load) {
-
     return System.translate(load).then(function (translated) {
       // return {localDeps: depNames, declare: declare};
       return { translated: translated };

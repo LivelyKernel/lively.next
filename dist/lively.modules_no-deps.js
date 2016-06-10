@@ -394,7 +394,8 @@
       topLevelVarRecorder: env.recorder,
       varRecorderName: env.recorderName,
       dontTransform: env.dontTransform,
-      recordGlobals: true
+      recordGlobals: true,
+      keepPreviouslyDeclaredValues: true
     },
         isGlobal = env.recorderName === "System.global",
         header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
@@ -531,6 +532,7 @@
         debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
         translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
       }
+
       debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
       return translated;
     });
@@ -577,7 +579,6 @@
   }
 
   function instrumentSourceOfGlobalModuleLoad(System, load) {
-
     return System.translate(load).then(function (translated) {
       // return {localDeps: depNames, declare: declare};
       return { translated: translated };
