@@ -253,5 +253,31 @@ describe('ast.transform', function() {
       + "    foo.end(err, undefined);\n"
       + "}"));
 
+    it("passes last var decl into function", () =>
+      expect(stringify(wrapInStartEndCall("var x = 2, y = x + 23;", {
+        startFuncNode: nodes.member("foo", "start"),
+        endFuncNode: nodes.member("foo", "end")
+      }))).to.equal(
+        "try {\n"
+      + "    foo.start();\n"
+      + "    var x = 2, y = x + 23;\n"
+      + "    foo.end(null, y);\n"
+      + "} catch (err) {\n"
+      + "    foo.end(err, undefined);\n"
+      + "}"));
+
+    it("passes function statement into call", () =>
+      expect(stringify(wrapInStartEndCall("function x() {}", {
+        startFuncNode: nodes.member("foo", "start"),
+        endFuncNode: nodes.member("foo", "end")
+      }))).to.equal(
+        "function x() {\n}\n"
+      + "try {\n"
+      + "    foo.start();\n"
+      + "    foo.end(null, x);\n"
+      + "} catch (err) {\n"
+      + "    foo.end(err, undefined);\n"
+      + "}"));
+
   });
 });
