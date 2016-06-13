@@ -86,7 +86,7 @@ function prepareMocha(mocha, GLOBAL) {
 
 async function runTestFiles(files, options) {
   if (!options) options = {};
-  
+
   if (options.package) {
     (options.logger || console).log("[mocha-es6] importing package %s", options.package);
     await lively.modules.importPackage(options.package);
@@ -103,12 +103,13 @@ async function runTestFiles(files, options) {
   options.invert && mocha.invert();
 
   (options.logger || console).log("[mocha-es6] start running tests");  
-  return new Promise((resolve, reject) => mocha.run(failures => resolve(failures)))
-    .catch(err => {
+  try {
+    return new Promise((resolve, reject) => mocha.run(failures => resolve(failures)))
+  } catch (err) {
       (options.logger || console).log("[mocha-es6] error running tests!\n" + err.stack);  
       console.error(err);
       throw err;
-    });
+  }
 }
 
 function join(pathA, pathB) {

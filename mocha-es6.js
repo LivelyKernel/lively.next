@@ -19141,22 +19141,27 @@ var GLOBAL = typeof window !== "undefined" ? window :
               options.invert && mocha.invert();
 
               (options.logger || console).log("[mocha-es6] start running tests");
+              _context3.prev = 14;
               return _context3.abrupt("return", new Promise(function (resolve, reject) {
                 return mocha.run(function (failures) {
                   return resolve(failures);
                 });
-              }).catch(function (err) {
-                (options.logger || console).log("[mocha-es6] error running tests!\n" + err.stack);
-                console.error(err);
-                throw err;
               }));
 
-            case 15:
+            case 18:
+              _context3.prev = 18;
+              _context3.t0 = _context3["catch"](14);
+
+              (options.logger || console).log("[mocha-es6] error running tests!\n" + _context3.t0.stack);
+              console.error(_context3.t0);
+              throw _context3.t0;
+
+            case 23:
             case "end":
               return _context3.stop();
           }
         }
-      }, _callee3, this);
+      }, _callee3, this, [[14, 18]]);
     }));
     return function runTestFiles(_x5, _x6) {
       return ref.apply(this, arguments);
