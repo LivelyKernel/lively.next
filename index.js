@@ -9,6 +9,7 @@ var isNode = System.get("@system-env").node;
 export function resource(url) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
   if (url.isResource) return url;
+  url = String(url);
   if (url.match(/^http/i)) return new WebDAVResource(url);
   if (url.match(/^file/i) && isNode) return new NodeJSFileResource(url);
   throw new Error(`Cannot find resource type for url ${url}`);

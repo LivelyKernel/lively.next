@@ -14,7 +14,7 @@ export class WebDAVResource extends Resource {
     return this;
   }
 
-  async mkdir(content) {
+  async mkdir() {
     if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
     await fetch(this.url, {method: "MKCOL"});
     return this;
