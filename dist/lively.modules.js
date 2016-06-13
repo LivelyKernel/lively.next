@@ -18998,6 +18998,8 @@ var nodes = Object.freeze({
     if (last.type === "ExpressionStatement") {
       innerBody.pop();
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+    } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
     } else {
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
     }
@@ -19336,7 +19338,7 @@ var nodes = Object.freeze({
           right: { name: "undefined", type: "Identifier" }
         };
 
-        var initWrapped = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+        var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
 
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
@@ -19344,7 +19346,7 @@ var nodes = Object.freeze({
               declRoot = { type: "Identifier", name: declRootName },
               state = { parent: declRoot, declaredNames: topLevel.declaredNames },
               extractions = transformPattern(decl.id, state).map(function (decl) {
-            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
+            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
           return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
@@ -19510,7 +19512,7 @@ var nodes = Object.freeze({
           id: stmt.declaration,
           init: member(options.captureObj, stmt.declaration)
         }), stmt]);
-      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
+      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
         body.push(stmt);
       } else {
         body = body.concat(stmt.specifiers.map(function (specifier) {
@@ -19599,7 +19601,9 @@ var nodes = Object.freeze({
         funcDecls = scope.funcDecls;
     if (!funcDecls.length) return parsed;
 
-    for (var i = 0; i < funcDecls.length; i++) {
+    var putInFront = [];
+
+    for (var i = funcDecls.length; i--;) {
       var decl = funcDecls[i];
       if (!shouldDeclBeCaptured(decl, options)) continue;
 
@@ -19613,12 +19617,16 @@ var nodes = Object.freeze({
       init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
           declFront = Object.assign({}, decl);
 
-      // If the parent is a body array we remove the original func decl from it
       if (Array.isArray(parent)) {
-        parent.splice(parent.indexOf(decl), 1);
+        // If the parent is a body array we remove the original func decl from it
+        // and replace it with a reference to the function
+        parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
       } else if (parent.type === "ExportNamedDeclaration") {
-        parent.declaration = null;parent.source = null;
-        parent.specifiers = [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }];
+        // If the function is exported we change the export declaration into a reference
+        var parentIndexInBody = scope.node.body.indexOf(parent);
+        if (parentIndexInBody > -1) {
+          scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
+        }
       } else if (parent.type === "ExportDefaultDeclaration") {
         parent.declaration = decl.id;
       } else {}
@@ -19627,10 +19635,10 @@ var nodes = Object.freeze({
 
 
       // hoist the function to the front, also it's capture
-      parsed.body.unshift(assignExpr(options.captureObj, funcId, init, false));
-      parsed.body.unshift(declFront);
+      putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
+      putInFront.unshift(declFront);
     }
-
+    parsed.body = putInFront.concat(parsed.body);
     return parsed;
   }
 
@@ -19789,7 +19797,6 @@ var capturing = Object.freeze({
 
     // 1. Allow evaluation of function expressions and object literals
     code = transformSingleExpression(code);
-
     var parsed = parse(code);
 
     // 2. capture top level vars into topLevelVarRecorder "environment"
@@ -19867,7 +19874,7 @@ var capturing = Object.freeze({
   function declarationWrapperForKeepingValues(name, kind, value, recorder) {
     if (kind === "function") return value;
 
-    if (kind === "class") {
+    if (kind === "class" && recorder.hasOwnProperty(name)) {
       var existingClass = recorder[name];
       if (typeof existingClass === "function") {
         copyProperties(value, existingClass, ["name", "length", "prototype"]);
@@ -19877,12 +19884,19 @@ var capturing = Object.freeze({
       return value;
     }
 
-    if (!value || (typeof value === "undefined" ? "undefined" : babelHelpers.typeof(value)) !== "object" || Array.isArray(value) || value.constructor === RegExp) return value;
+    // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
+    //   return value;
 
-    if (recorder.hasOwnProperty(name)) {
-      copyProperties(value, recorder[name]);
-      return recorder[name];
-    }
+    // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
+    //   if (Object.isFrozen(recorder[name])) return value;
+    //   try {
+    //     copyProperties(value, recorder[name]);
+    //     return recorder[name];
+    //   } catch (e) {
+    //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
+    //     return value;
+    //   }
+    // }
 
     return value;
   }
@@ -21114,152 +21128,6 @@ var categorizer = Object.freeze({
 (function (exports,lively_lang,ast) {
   'use strict';
 
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-  };
-
-  var asyncToGenerator = function (fn) {
-    return function () {
-      var gen = fn.apply(this, arguments);
-      return new Promise(function (resolve, reject) {
-        function step(key, arg) {
-          try {
-            var info = gen[key](arg);
-            var value = info.value;
-          } catch (error) {
-            reject(error);
-            return;
-          }
-
-          if (info.done) {
-            resolve(value);
-          } else {
-            return Promise.resolve(value).then(function (value) {
-              return step("next", value);
-            }, function (err) {
-              return step("throw", err);
-            });
-          }
-        }
-
-        return step("next");
-      });
-    };
-  };
-
-  var defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-
-    return obj;
-  };
-
-  var importsAndExportsOf$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleName, parent) {
-      var id, source, parsed, scope, imports, exports;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              _context.next = 2;
-              return System.normalize(moduleName, parent);
-
-            case 2:
-              id = _context.sent;
-              _context.next = 5;
-              return sourceOf$1(System, id);
-
-            case 5:
-              source = _context.sent;
-              parsed = ast.parse(source);
-              scope = ast.query.scopes(parsed);
-
-
-              // compute imports
-              imports = scope.importDecls.reduce(function (imports, node) {
-                var nodes = ast.query.nodesAtIndex(parsed, node.start);
-                var importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-                if (!importStmt) return imports;
-
-                var from = importStmt.source ? importStmt.source.value : "unknown module";
-                if (!importStmt.specifiers.length) // no imported vars
-                  return imports.concat([{
-                    localModule: id,
-                    local: null,
-                    imported: null,
-                    fromModule: from,
-                    importStatement: importStmt
-                  }]);
-
-                return imports.concat(importStmt.specifiers.map(function (importSpec) {
-                  var imported;
-                  if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importStmt.source) imported = importStmt.source.name;else imported = null;
-                  return {
-                    localModule: id,
-                    local: importSpec.local ? importSpec.local.name : null,
-                    imported: imported,
-                    fromModule: from,
-                    importStatement: importStmt
-                  };
-                }));
-              }, []);
-              exports = scope.exportDecls.reduce(function (exports, node) {
-                var nodes = ast.query.nodesAtIndex(parsed, node.start);
-                var exportsStmt = lively_lang.arr.without(nodes, scope.node)[0];
-                if (!exportsStmt) return exports;
-
-                if (exportsStmt.type === "ExportAllDeclaration") {
-                  var from = exportsStmt.source ? exportsStmt.source.value : null;
-                  return exports.concat([{
-                    localModule: id,
-                    local: null,
-                    exported: "*",
-                    fromModule: from,
-                    exportStatement: exportsStmt
-                  }]);
-                }
-
-                return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
-                  return {
-                    localModule: id,
-                    local: exportSpec.local ? exportSpec.local.name : null,
-                    exported: exportSpec.exported ? exportSpec.exported.name : null,
-                    fromModule: id,
-                    exportStatement: exportsStmt
-                  };
-                }));
-              }, []);
-              return _context.abrupt("return", {
-                imports: lively_lang.arr.uniqBy(imports, function (a, b) {
-                  return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
-                }),
-                exports: lively_lang.arr.uniqBy(exports, function (a, b) {
-                  return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
-                })
-              });
-
-            case 11:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this);
-    }));
-    return function importsAndExportsOf(_x, _x2, _x3) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
   function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
     var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
         rec = moduleRecordFor$1(System, moduleId);
@@ -21343,6 +21211,93 @@ var categorizer = Object.freeze({
         }
       }
     });
+  }
+
+  function importsAndExportsOf$1(System, moduleId, sourceOrAst) {
+    var parsed = typeof sourceOrAst === "string" ? ast.parse(sourceOrAst) : sourceOrAst,
+        scope = ast.query.scopes(parsed);
+
+    // compute imports
+    var imports = scope.importDecls.reduce(function (imports, node) {
+      var nodes = ast.query.nodesAtIndex(parsed, node.start);
+      var importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+      if (!importStmt) return imports;
+
+      var from = importStmt.source ? importStmt.source.value : "unknown module";
+      if (!importStmt.specifiers.length) // no imported vars
+        return imports.concat([{
+          local: null,
+          imported: null,
+          fromModule: from
+        }]);
+
+      return imports.concat(importStmt.specifiers.map(function (importSpec) {
+        var imported;
+        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+        return {
+          local: importSpec.local ? importSpec.local.name : null,
+          imported: imported,
+          fromModule: from
+        };
+      }));
+    }, []);
+
+    var exports = scope.exportDecls.reduce(function (exports, node) {
+
+      var exportsStmt = ast.query.statementOf(scope.node, node);
+      if (!exportsStmt) return exports;
+
+      var from = exportsStmt.source ? exportsStmt.source.value : null;
+
+      if (exportsStmt.type === "ExportAllDeclaration") {
+        return exports.concat([{
+          local: null,
+          exported: "*",
+          fromModule: from
+        }]);
+      }
+
+      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+        return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+          return {
+            local: from ? null : exportSpec.local ? exportSpec.local.name : null,
+            exported: exportSpec.exported ? exportSpec.exported.name : null,
+            fromModule: from
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+        return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
+          return {
+            local: decl.id.name,
+            exported: decl.id.name,
+            type: exportsStmt.declaration.kind,
+            fromModule: null
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration) {
+        return exports.concat({
+          local: exportsStmt.declaration.id.name,
+          exported: exportsStmt.declaration.id.name,
+          type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+          fromModule: null
+        });
+      }
+
+      return exports;
+    }, []);
+
+    return {
+      imports: lively_lang.arr.uniqBy(imports, function (a, b) {
+        return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+      }),
+      exports: lively_lang.arr.uniqBy(exports, function (a, b) {
+        return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+      })
+    };
   }
 
   function installHook$1(System, hookName, hook) {
@@ -21619,6 +21574,56 @@ var categorizer = Object.freeze({
   function unwrapModuleLoad$1(System) {
     removeHook$1(System, "translate", "lively_modules_translate_hook");
   }
+
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
+
+  var asyncToGenerator = function (fn) {
+    return function () {
+      var gen = fn.apply(this, arguments);
+      return new Promise(function (resolve, reject) {
+        function step(key, arg) {
+          try {
+            var info = gen[key](arg);
+            var value = info.value;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+
+          if (info.done) {
+            resolve(value);
+          } else {
+            return Promise.resolve(value).then(function (value) {
+              return step("next", value);
+            }, function (err) {
+              return step("throw", err);
+            });
+          }
+        }
+
+        return step("next");
+      });
+    };
+  };
+
+  var defineProperty = function (obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  };
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -22032,6 +22037,10 @@ var categorizer = Object.freeze({
       delete System.loads[moduleName];
       delete System.loads[id];
     }
+    if (System.meta) {
+      delete System.meta[moduleName];
+      delete System.meta[id];
+    }
     if (opts.forgetEnv) {
       forgetEnvOf(System, id);
       forgetEnvOf(System, moduleName);
@@ -22105,77 +22114,141 @@ var categorizer = Object.freeze({
   }
 
   // relative to either the package or the system:
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // packages
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var importPackage$1 = function () {
+  var normalizePackageURL = function () {
     var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+      var url;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              _context.next = 2;
-              return registerPackage$1(System, packageURL);
+              if (!Object.keys(getPackages$1(System)).some(function (ea) {
+                return ea === packageURL;
+              })) {
+                _context.next = 2;
+                break;
+              }
+
+              return _context.abrupt("return", packageURL);
 
             case 2:
-              _context.t0 = System;
-              _context.next = 5;
+              _context.next = 4;
               return System.normalize(packageURL);
 
-            case 5:
-              _context.t1 = _context.sent;
-              return _context.abrupt("return", _context.t0.import.call(_context.t0, _context.t1));
+            case 4:
+              url = _context.sent;
+
+              if (isURL(url)) {
+                _context.next = 7;
+                break;
+              }
+
+              throw new Error("Strange package URL: " + url + " is not a valid URL");
 
             case 7:
+
+              // ensure it's a directory
+              if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
+
+              if (!url.match(/\.js$/)) {
+                _context.next = 10;
+                break;
+              }
+
+              throw new Error("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+
+            case 10:
+              return _context.abrupt("return", String(url).replace(/\/$/, ""));
+
+            case 11:
             case "end":
               return _context.stop();
           }
         }
       }, _callee, this);
     }));
-    return function importPackage(_x, _x2) {
+    return function normalizePackageURL(_x, _x2) {
       return ref.apply(this, arguments);
     };
   }();
 
-  var registerPackage$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, packageURL, packageLoadStack) {
-      var url, registerSubPackages, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // packages
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  var importPackage$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, packageURL) {
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
               _context2.next = 2;
-              return System.normalize(packageURL);
+              return registerPackage$1(System, packageURL);
 
             case 2:
-              url = _context2.sent;
-
-              if (isURL(url)) {
-                _context2.next = 5;
-                break;
-              }
-
-              return _context2.abrupt("return", Promise.reject(new Error("Error registering package: " + url + " is not a valid URL")));
+              _context2.t0 = System;
+              _context2.next = 5;
+              return System.normalize(packageURL);
 
             case 5:
+              _context2.t1 = _context2.sent;
+              return _context2.abrupt("return", _context2.t0.import.call(_context2.t0, _context2.t1));
 
-              // ensure it's a directory
-              if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
+            case 7:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2, this);
+    }));
+    return function importPackage(_x3, _x4) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
-              if (!url.match(/\.js$/)) {
-                _context2.next = 8;
-                break;
-              }
+  var reloadPackage$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, packageURL) {
+      var url;
+      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              _context3.next = 2;
+              return normalizePackageURL(System, packageURL);
 
-              return _context2.abrupt("return", Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + url)));
+            case 2:
+              url = _context3.sent;
+              _context3.next = 5;
+              return removePackage$1(System, url);
 
-            case 8:
+            case 5:
+              return _context3.abrupt("return", importPackage$1(System, url));
 
-              url = String(url).replace(/\/$/, "");
+            case 6:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, this);
+    }));
+    return function reloadPackage(_x5, _x6) {
+      return ref.apply(this, arguments);
+    };
+  }();
+
+  var registerPackage$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(System, packageURL, packageLoadStack) {
+      var url, registerSubPackages, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, subp;
+
+      return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
+              _context4.next = 2;
+              return normalizePackageURL(System, packageURL);
+
+            case 2:
+              url = _context4.sent;
+
 
               packageLoadStack = packageLoadStack || [];
               registerSubPackages = true;
@@ -22187,102 +22260,100 @@ var categorizer = Object.freeze({
               } else packageLoadStack.push(url);
 
               System.debug && console.log("[lively.modules package register] %s", url);
-
-              _context2.next = 15;
+              _context4.next = 9;
               return tryToLoadPackageConfig(System, url);
 
-            case 15:
-              cfg = _context2.sent;
-              _context2.next = 18;
+            case 9:
+              cfg = _context4.sent;
+              _context4.next = 12;
               return applyConfig(System, cfg, url);
 
-            case 18:
-              packageConfigResult = _context2.sent;
+            case 12:
+              packageConfigResult = _context4.sent;
 
               if (!registerSubPackages) {
-                _context2.next = 46;
+                _context4.next = 40;
                 break;
               }
 
               _iteratorNormalCompletion = true;
               _didIteratorError = false;
               _iteratorError = undefined;
-              _context2.prev = 23;
+              _context4.prev = 17;
               _iterator = packageConfigResult.subPackages[Symbol.iterator]();
 
-            case 25:
+            case 19:
               if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                _context2.next = 32;
+                _context4.next = 26;
                 break;
               }
 
               subp = _step.value;
-              _context2.next = 29;
+              _context4.next = 23;
               return registerPackage$1(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
 
-            case 29:
+            case 23:
               _iteratorNormalCompletion = true;
-              _context2.next = 25;
+              _context4.next = 19;
               break;
+
+            case 26:
+              _context4.next = 32;
+              break;
+
+            case 28:
+              _context4.prev = 28;
+              _context4.t0 = _context4["catch"](17);
+              _didIteratorError = true;
+              _iteratorError = _context4.t0;
 
             case 32:
-              _context2.next = 38;
-              break;
-
-            case 34:
-              _context2.prev = 34;
-              _context2.t0 = _context2["catch"](23);
-              _didIteratorError = true;
-              _iteratorError = _context2.t0;
-
-            case 38:
-              _context2.prev = 38;
-              _context2.prev = 39;
+              _context4.prev = 32;
+              _context4.prev = 33;
 
               if (!_iteratorNormalCompletion && _iterator.return) {
                 _iterator.return();
               }
 
-            case 41:
-              _context2.prev = 41;
+            case 35:
+              _context4.prev = 35;
 
               if (!_didIteratorError) {
-                _context2.next = 44;
+                _context4.next = 38;
                 break;
               }
 
               throw _iteratorError;
 
-            case 44:
-              return _context2.finish(41);
+            case 38:
+              return _context4.finish(35);
 
-            case 45:
-              return _context2.finish(38);
+            case 39:
+              return _context4.finish(32);
 
-            case 46:
-              return _context2.abrupt("return", cfg);
+            case 40:
+              return _context4.abrupt("return", cfg);
 
-            case 47:
+            case 41:
             case "end":
-              return _context2.stop();
+              return _context4.stop();
           }
         }
-      }, _callee2, this, [[23, 34, 38, 46], [39,, 41, 45]]);
+      }, _callee4, this, [[17, 28, 32, 40], [33,, 35, 39]]);
     }));
-    return function registerPackage(_x3, _x4, _x5) {
+    return function registerPackage(_x7, _x8, _x9) {
       return ref.apply(this, arguments);
     };
   }();
 
   var tryToLoadPackageConfig = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, packageURL) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(System, packageURL) {
       var packageConfigURL, config, name;
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      return regeneratorRuntime.wrap(function _callee5$(_context5) {
         while (1) {
-          switch (_context3.prev = _context3.next) {
+          switch (_context5.prev = _context5.next) {
             case 0:
               packageConfigURL = packageURL + "/package.json";
-
 
               System.config({
                 meta: defineProperty({}, packageConfigURL, { format: "json" }),
@@ -22291,43 +22362,43 @@ var categorizer = Object.freeze({
 
               System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
 
-              _context3.prev = 3;
-              _context3.t0 = System.get(packageConfigURL);
+              _context5.prev = 3;
+              _context5.t0 = System.get(packageConfigURL);
 
-              if (_context3.t0) {
-                _context3.next = 9;
+              if (_context5.t0) {
+                _context5.next = 9;
                 break;
               }
 
-              _context3.next = 8;
+              _context5.next = 8;
               return System.import(packageConfigURL);
 
             case 8:
-              _context3.t0 = _context3.sent;
+              _context5.t0 = _context5.sent;
 
             case 9:
-              config = _context3.t0;
+              config = _context5.t0;
 
               lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL);
-              return _context3.abrupt("return", config);
+              return _context5.abrupt("return", config);
 
             case 14:
-              _context3.prev = 14;
-              _context3.t1 = _context3["catch"](3);
+              _context5.prev = 14;
+              _context5.t1 = _context5["catch"](3);
 
-              console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, _context3.t1);
+              console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, _context5.t1);
               delete System.meta[packageConfigURL];
               name = packageURL.split("/").slice(-1)[0];
-              return _context3.abrupt("return", { name: name });
+              return _context5.abrupt("return", { name: name });
 
             case 20:
             case "end":
-              return _context3.stop();
+              return _context5.stop();
           }
         }
-      }, _callee3, this, [[3, 14]]);
+      }, _callee5, this, [[3, 14]]);
     }));
-    return function tryToLoadPackageConfig(_x6, _x7) {
+    return function tryToLoadPackageConfig(_x10, _x11) {
       return ref.apply(this, arguments);
     };
   }();
@@ -22361,7 +22432,24 @@ var categorizer = Object.freeze({
   function normalizeInsidePackage(System, urlOrName, packageURL) {
     return isURL(urlOrName) ? urlOrName : // absolute
     urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName));
-  } // "pseudo-config"
+  }
+
+  function removePackage$1(System, packageURL) {
+    packageURL = packageURL.replace(/\/$/, "");
+    var packageConfigURL = packageURL + "/package.json";
+    System.delete(String(packageConfigURL));
+    lively_lang.arr.remove(System.packageConfigPaths, packageConfigURL);
+    delete System.meta[packageConfigURL];
+
+    var p = getPackages$1(System)[packageURL];
+    if (p) p.modules.forEach(function (mod) {
+      return forgetModule$1(System, mod.name, { forgetEnv: true, forgetDeps: false });
+    });
+
+    delete System.packages[packageURL];
+  }
+
+  // "pseudo-config"
 
 
   function applyConfig(System, packageConfig, packageURL) {
@@ -22372,12 +22460,16 @@ var categorizer = Object.freeze({
     // and uses the "lively" section as described in `applyLivelyConfig`
 
     var name = packageConfig.name || packageURL.split("/").slice(-1)[0],
-        packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {}),
         sysConfig = packageConfig.systemjs,
         livelyConfig = packageConfig.lively,
         main = packageConfig.main || "index.js";
-    System.config({ map: defineProperty({}, name, packageURL) });
 
+    System.config({
+      map: defineProperty({}, name, packageURL),
+      packages: defineProperty({}, packageURL, sysConfig)
+    });
+
+    var packageInSystem = System.getConfig().packages[packageURL] || {};
     if (!packageInSystem.map) packageInSystem.map = {};
 
     if (sysConfig) {
@@ -23156,8 +23248,17 @@ var categorizer = Object.freeze({
   function registerPackage(packageURL) {
     return registerPackage$1(exports.System, packageURL);
   }
+  function removePackage(packageURL) {
+    return removePackage$1(exports.System, packageURL);
+  }
+  function reloadPackage(packageURL) {
+    return reloadPackage$1(exports.System, packageURL);
+  }
   function getPackages(moduleNames) {
     return getPackages$1(exports.System);
+  }
+  function applyPackageConfig(packageConfig, packageURL) {
+    return applyConfig(exports.System, packageConfig, packageURL);
   }
   function moduleSourceChange(moduleName, newSource, options) {
     return moduleSourceChange$1(exports.System, moduleName, newSource, options);
@@ -23177,8 +23278,8 @@ var categorizer = Object.freeze({
   function requireMap() {
     return computeRequireMap(exports.System);
   }
-  function importsAndExportsOf(moduleName) {
-    return importsAndExportsOf$1(exports.System, moduleName);
+  function importsAndExportsOf(moduleId, sourceOrAst) {
+    return importsAndExportsOf$1(exports.System, moduleId, sourceOrAst);
   }
   function isHookInstalled(methodName, hookOrName) {
     return isHookInstalled$1(exports.System, methodName, hookOrName);
@@ -23215,7 +23316,10 @@ var categorizer = Object.freeze({
   exports.moduleRecordFor = moduleRecordFor;
   exports.importPackage = importPackage;
   exports.registerPackage = registerPackage;
+  exports.removePackage = removePackage;
+  exports.reloadPackage = reloadPackage;
   exports.getPackages = getPackages;
+  exports.applyPackageConfig = applyPackageConfig;
   exports.moduleSourceChange = moduleSourceChange;
   exports.findDependentsOf = findDependentsOf;
   exports.findRequirementsOf = findRequirementsOf;
