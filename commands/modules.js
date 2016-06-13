@@ -1,12 +1,6 @@
-import { getPackage, getPackageForModule } from "./index.js";
-
-import * as modules from "lively.modules";
 import { obj } from "lively.lang";
 
-import { resource, createFiles } from "lively.resources";
-
-
-export function shortModuleName(moduleId, itsPackage) {
+export function shortModuleName(system, moduleId, itsPackage) {
   var packageAddress = itsPackage && itsPackage.address,
       shortName = packageAddress && moduleId.indexOf(packageAddress) === 0 ?
               moduleId.slice(packageAddress.length).replace(/^\//, "") :
@@ -15,81 +9,85 @@ export function shortModuleName(moduleId, itsPackage) {
 
   function relative(name) {
     try {
-      return String(new URL(name).relativePathFrom(new URL(lively.modules.System.baseURL)))
+      return String(new URL(name).relativePathFrom(new URL(system.getConfig().baseURL)))
     } catch (e) {}
     return name;
   }
 }
 
-export async function moduleChange(vmEditor, moduleName, newSource, options) {
+export async function interactivelyChangeModule(system, vmEditor, moduleName, newSource, options) {
   // options.write, options.eval, ..
   options = obj.merge({targetModule: moduleName}, options);
-  moduleName = await modules.System.normalize(moduleName);
-  await resource(moduleName).write(newSource);
-  await modules.moduleSourceChange(moduleName, newSource, options);
+  moduleName = await system.normalize(moduleName);
+  await system.moduleWrite(moduleName, newSource);
+  await system.moduleSourceChange(moduleName, newSource, options);
   await vmEditor.updateModuleList();
   return moduleName;
 }
 
-export async function vmReload(vmEditor, moduleName) {
+export async function interactivelyReloadModule(system, vmEditor, moduleName) {
+  vmEditor.setStatusMessage("Reloading " + moduleName);
   try {
-    await modules.reloadModule(moduleName, {reloadDeps: true, resetEnv: true});
-    await vmEditor.updateModuleList()
+    await system.reloadModule(moduleName, {reloadDeps: true, resetEnv: true});
+    await vmEditor.updateModuleList();
+    vmEditor.setStatusMessage("Reloded " + moduleName)
   } catch (err) {
     try {
       await vmEditor.updateEditorWithSourceOf(moduleName);
     } catch (e) {}
-    vmEditor.get("editor").showError(err); throw err;
+    vmEditor.showError(err); throw err;
   }
 }
 
-export async function unload(vmEditor, moduleName) {
-  await modules.forgetModule(moduleName, {forgetEnv: true, forgetDeps: true});
+export async function interactivelyUnloadModule(system, vmEditor, moduleName) {
+  await system.forgetModule(moduleName, {forgetEnv: true, forgetDeps: true});
   await vmEditor.updateModuleList();
 }
 
-export async function interactivelyRemoveModule(vmEditor, moduleName) {
+
+export async function interactivelyRemoveModule(system, vmEditor, moduleName) {
   // var moduleName = this.state.selection.name
-  var fullname = modules.System.normalizeSync(moduleName),
+  var fullname = await system.normalize(moduleName),
       really = await $world.confirm(`Remove file ${fullname}?`)
   if (!really) throw "Canceled";
-  await unload(vmEditor, moduleName);
-  await resource(fullname).remove();
-  var p = getPackageForModule(fullname);
+  await system.forgetModule(moduleName);
+  await vmEditor.updateModuleList()
+  await system.resourceRemove(fullname);
+  var p = system.getPackageForModule(fullname);
   await vmEditor.uiSelect(p ? p.address : null);
 }
 
-export async function interactivelyAddModule(vmEditor, relatedPackageOrModule) {
+export async function interactivelyAddModule(system, vmEditor, relatedPackageOrModule) {
 
-  var root = new URL(modules.System.baseURL);
+  var root = new URL(system.getConfig().baseURL);
   if (relatedPackageOrModule) {
-    var p = getPackage(relatedPackageOrModule) || getPackageForModule(relatedPackageOrModule)
+    var p = system.getPackage(relatedPackageOrModule) || system.getPackageForModule(relatedPackageOrModule)
     root = new URL(p.address);
   }
 
   var candidates = await _searchForExistingFiles(vmEditor, root, p);
 
   if (candidates.include("[create new module]")) {
-    var fullname = await _askForModuleName(String(root))
+    var fullname = await _askForModuleName(system, String(root))
     candidates = [fullname];
   }
 
-  var namesAndErrors = await _createAndLoadModules(candidates),
+  var namesAndErrors = await _createAndLoadModules(system, candidates),
       errors = namesAndErrors.map(ea => ea.error).compact(),
       hasError = !!errors.length;
 
   await vmEditor.updateModuleList();
   await vmEditor.uiSelect(namesAndErrors.first().name);
-  vmEditor.get("editor").focus();
+  vmEditor.focus();
   if (hasError) throw errors[0];
 }
 
-async function _askForModuleName(input) {
+async function _askForModuleName(system, input) {
   var input = await $world.prompt(
     "Enter module name",
     {input: input, historyId: "lively.vm-editor-add-module-name"});
   if (!input) throw "Canceled";
-  var fullname = await modules.System.normalize(input),
+  var fullname = await system.normalize(input),
       really = await $world.confirm("Create module " + fullname + "?");
   if (!really) throw "Canceled";
   return fullname;
@@ -128,18 +126,18 @@ async function _searchForExistingFiles(vmEditor, rootURL, p) {
   return answer.selected;
 }
 
-async function _createAndLoadModules(fullnames) {
+async function _createAndLoadModules(system, fullnames) {
   if (!Array.isArray(fullnames)) fullnames = [fullnames];
   var results = [];
   for (let fullname of fullnames) {
-    modules.forgetModule(fullname, {forgetDeps: false, forgetEnv: false});
+    system.forgetModule(fullname, {forgetDeps: false, forgetEnv: false});
     // ensure file record is created to display file in graph even if load
     // error occurs:
-    await modules.System.import(fullname).catch(err => "...")
-    await resource(fullname).ensureExistance('"format esm";\n');
+    await system.importModule(fullname).catch(err => "...");
+    await system.resourceEnsureExistance(fullname, '"format esm";\n');
 
     try {
-      await lively.modules.System.import(fullname)
+      await system.importModule(fullname)
       results.push({name: fullname});
     } catch (err) {
       results.push({name: fullname, error: err});

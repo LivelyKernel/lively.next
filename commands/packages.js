@@ -1,28 +1,23 @@
 /*global System*/
 
-import { getPackage, getPackageForModule, parseJsonLikeObj } from "./index.js";
+import { parseJsonLikeObj } from "../helpers.js";
+import { resource } from "lively.resources";
 
-import * as modules from "lively.modules";
-
-import { resource, createFiles } from "lively.resources";
-
-// createPackageWithVmEditor($morph("lively.vm-editor").targetMorph);
-
-export async function loadPackage(vmEditor, packageSpec) {
-  await modules.importPackage(packageSpec.address);
-  if (packageSpec.main) await modules.System.import(packageSpec.main.toString());
-  if (packageSpec.test) await modules.System.import(packageSpec.test.toString());
+async function loadPackage(system, vmEditor, packageSpec) {
+  await system.importPackage(packageSpec.address);
+  if (packageSpec.main) await system.importModule(packageSpec.main.toString());
+  if (packageSpec.test) await system.importModule(packageSpec.test.toString());
   await vmEditor.updateModuleList();
   await vmEditor.uiSelect(packageSpec);
   vmEditor.focus();
 }
 
-export async function interactivelyCreatePackage(vmEditor) {
+export async function interactivelyCreatePackage(system, vmEditor) {
   var name = await $world.prompt("Enter package name", {input: "", historyId: "lively.vm-editor-add-package-name", useLastInput: true});
   if (!name) throw "Canceled";
 
-  var guessedAddress = modules.System.normalizeSync(
-    resource(modules.System.baseURL).join(name).asDirectory().url).replace(/\/\.js$/, "/");
+  var guessedAddress = await system.normalize(
+    resource(system.getConfig().baseURL).join(name).asDirectory().url).replace(/\/\.js$/, "/");
 
   if (guessedAddress.endsWith(".js"))
     guessedAddress = resource(guessedAddress).parent().url;
@@ -34,9 +29,9 @@ export async function interactivelyCreatePackage(vmEditor) {
   var url = resource(loc).asDirectory(),
       address = url.asFile().url
 
-  await modules.removePackage(address);
+  await system.removePackage(address);
 
-  await createFiles(address, {
+  await system.resourceCreateFiles(address, {
     "index.js": "'format esm';\n",
     "package.json": `{\n  "name": "${name}",\n  "version": "0.1.0"\n}`,
     ".gitignore": "node_modules/",
@@ -46,10 +41,9 @@ export async function interactivelyCreatePackage(vmEditor) {
     }
   });
 
-  return loadPackage(vmEditor, {
+  return loadPackage(system, vmEditor, {
     name: name,
     address: address,
-    url: url,
     configFile: url.join("package.json").url,
     main: url.join("index.js").url,
     test: url.join("tests/test.js").url,
@@ -58,7 +52,7 @@ export async function interactivelyCreatePackage(vmEditor) {
 
 }
 
-export async function interactivelyLoadPackage(vmEditor) {
+export async function interactivelyLoadPackage(system, vmEditor) {
 
   var spec = {name: "", address: "", type: "package"}
 
@@ -94,59 +88,48 @@ export async function interactivelyLoadPackage(vmEditor) {
   }
 
   var config = resource(spec.address).join("package.json");
-  config.ensureExistance(`{\n  "name": "${spec.name}",\n  "version": "0.1.0"\n}`);
+  system.resourceEnsureExistance(config.url, `{\n  "name": "${spec.name}",\n  "version": "0.1.0"\n}`);
   spec.configFile = config.url;
 
-  return loadPackage(vmEditor, spec);
+  return loadPackage(system, vmEditor, spec);
 }
 
-export async function interactivelyReloadPackage(vmEditor, packageURL) {
+export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
   var name = resource(await System.normalize(packageURL)).asFile().url;
-  var p = getPackage(name) || getPackageForModule(name);
+  var p = system.getPackage(name) || system.getPackageForModule(name);
   if (!p) throw new Error("Cannot find package for " + name);
 
-  await modules.reloadPackage(name);
+  await system.reloadPackage(name);
   await vmEditor.updateModuleList();
   return await vmEditor.uiSelect(name, false);
 }
 
-export async function interactivelyUnloadPackage(vmEditor, packageURL) {
-  var p = getPackage(packageURL);
+export async function interactivelyUnloadPackage(system, vmEditor, packageURL) {
+  var p = system.getPackage(packageURL);
   var really = await $world.confirm(`Unload package ${p.name}??`);
   if (!really) throw "Canceled";
-  modules.removePackage(packageURL)
-  await vmEditor.updateModuleList()
+  await system.removePackage(packageURL);
+  await vmEditor.updateModuleList();
   await vmEditor.uiSelect(null);
 }
 
-export async function interactivelyRemovePackage(vmEditor, packageURL) {
-  var p = getPackage(packageURL);
-  modules.removePackage(packageURL)
-  var really = await $world.confirm(`Also remove directory ${p.name} including ${p.modules.length} modules?`);
-  if (really) {
-    var really2 = await $world.confirm(`REALLY *remove* directory ${p.name}? No undo possible...`);
-    if (really2) await resource(p.address).remove();
+export async function interactivelyRemovePackage(system, vmEditor, packageURL) {
+  var p = system.getPackage(packageURL);
+  var really = await $world.confirm(`Really remove package ${p.name}??`);
+  if (!really) throw "Cancelled";
+  system.removePackage(packageURL);
+  var really2 = await $world.confirm(`Also remove directory ${p.name} including ${p.modules.length} modules?`);
+  if (really2) {
+    var really3 = await $world.confirm(`REALLY *remove* directory ${p.name}? No undo possible...`);
+    if (really3) await system.resourceRemove(p.address);
   }
   await vmEditor.updateModuleList()
   await vmEditor.uiSelect(null);
 }
 
-export async function packageConfChange(vmEditor, source, confFile) {
-
-  var S = modules.System;
-  var config = parseJsonLikeObj(source);
-  await resource(confFile).write(JSON.stringify(config, null, 2));
-
-  var p = getPackageForModule(confFile);
-  S.set(confFile, S.newModule(config));
-  if (p && config.systemjs) S.packages[p.address] = config.systemjs;
-  if (p && config.systemjs) S.config({packages: {[p.address]: config.systemjs}})
-  if (p) lively.modules.applyPackageConfig(config, p.address);
-}
-
 // showExportsAndImportsOf("http://localhost:9001/packages/lively-system-interface/")
-export async function showExportsAndImportsOf(packageAddress) {
-  var p = getPackage(packageAddress);
+export async function showExportsAndImportsOf(system, packageAddress) {
+  var p = system.getPackage(packageAddress);
 
   if (!p)
     throw new Error("Cannot find package " + packageAddress)
