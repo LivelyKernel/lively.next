@@ -71,16 +71,23 @@ async function importPackage(System, packageURL) {
 
 function removePackage(System, packageURL) {
   packageURL = packageURL.replace(/\/$/, "");
-  var packageConfigURL = packageURL + "/package.json";
+  var conf = System.getConfig(),
+      packageConfigURL = packageURL + "/package.json";
+
   System.delete(String(packageConfigURL));
-  arr.remove(System.packageConfigPaths, packageConfigURL);
-  delete System.meta[packageConfigURL];
+  arr.remove(conf.packageConfigPaths || [], packageConfigURL);
 
   var p = getPackages(System)[packageURL]
   if (p)
     p.modules.forEach(mod =>
       forgetModule(System, mod.name, {forgetEnv: true, forgetDeps: false}));
 
+  System.config({
+    meta: {[packageConfigURL]: {}},
+    packages: {[packageURL]: {}},
+    packageConfigPaths: conf.packageConfigPaths
+  });
+  delete System.meta[packageConfigURL];
   delete System.packages[packageURL];
 }
 
@@ -143,7 +150,7 @@ function applyConfig(System, packageConfig, packageURL) {
   // and uses the "lively" section as described in `applyLivelyConfig`
 
   var name            = packageConfig.name || packageURL.split("/").slice(-1)[0],
-      sysConfig       = packageConfig.systemjs,
+      sysConfig       = packageConfig.systemjs || {},
       livelyConfig    = packageConfig.lively,
       main            = packageConfig.main || "index.js";
   
@@ -220,16 +227,18 @@ function applyLivelyConfigBundles(System, livelyConfig, packageURL) {
 
 function applyLivelyConfigMeta(System, livelyConfig, packageURL) {
   if (!livelyConfig.meta) return;
-  var pConf = System.packages[packageURL];
+  var pConf = System.getConfig().packages[packageURL] || {},
+      c = {meta: {}, packages: {[packageURL]: pConf}};
   Object.keys(livelyConfig.meta).forEach(key => {
     var val = livelyConfig.meta[key];
     if (isURL(key)) {
-      System.meta[key] = val;
+      c.meta[key] = val;
     } else {
       if (!pConf.meta) pConf.meta = {};
       pConf.meta[key] = val;
     }
   });
+  System.config(c);
 }
 
 function applyLivelyConfigPackageMap(System, livelyConfig, packageURL) {

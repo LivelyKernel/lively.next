@@ -55,7 +55,7 @@ describe("package loading", function() {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   describe("basics", () => {
-    
+
     it("registers and loads a package", async () => {
       await registerPackage(System, project1aDir);
       var mod = await System.import("some-project");
@@ -133,28 +133,27 @@ describe("package loading", function() {
 });
 
 describe("package configuration test", () => {
-  
+
   var S;
   beforeEach(() => S = getSystem("test", {baseURL: testDir}));
   afterEach(() => removeSystem("test"));
-  
+
   it("installs hooks", () =>
     Promise.resolve()
       .then(() => applyConfig(S, {lively: {hooks: [{target: "normalize", source: "(proceed, name, parent, parentAddress) => proceed(name + 'x', parent, parentAddress)"}]}}, "barr"))
       .then(_ => (S.defaultJSExtensions = true) && S.normalize("foo"))
       .then(n => expect(n).to.match(/foox.js$/)));
 
-  it("installs meta data in package", () =>
-    Promise.resolve()
-      .then(() => applyConfig(S, {lively: {meta: {"foo": {format: "global"}}}}, "some-project-url"))
-      .then(n => expect(S.packages["some-project-url"].meta).to.deep.equal({"foo": {format: "global"}})));
+  it("installs meta data in package", async () => {
+    await applyConfig(S, {lively: {meta: {"foo": {format: "global"}}}}, "some-project-url");
+    expect(S.getConfig().packages[S.decanonicalize("some-project-url")].meta).to.deep.equal({"foo": {format: "global"}});
+  });
 
-  it("installs absolute addressed meta data in System.meta", () => {
+  it("installs absolute addressed meta data in System.meta", async () => {
     var testName = testDir + "foo";
-    return Promise.resolve()
-      .then(() => applyConfig(S, {lively: {meta: {[testName]: {format: "global"}}}}, "some-project-url"))
-      .then(n => expect(S.packages["some-project-url"]).to.not.have.property("meta"))
-      .then(n => expect(S.meta).to.deep.equal({[testName]: {format: "global"}}));
+    await applyConfig(S, {lively: {meta: {[testName]: {format: "global"}}}}, "some-project-url");
+    expect(S.getConfig().packages).to.not.have.property("some-project-url")
+    expect(S.getConfig().meta).property(testName).deep.equals({format: "global"});
   });
 
   it("can resolve .. in url", () =>
@@ -165,7 +164,7 @@ describe("package configuration test", () => {
 });
 
 describe("mutual dependent packages", () => {
-  
+
   var p1Dir = testDir + "p1/",
       p2Dir = testDir + "p2/",
       p1 = {
@@ -188,7 +187,7 @@ describe("mutual dependent packages", () => {
 
   afterEach(() => { removeSystem("test"); return Promise.all([removeDir(p1Dir),removeDir(p2Dir)]); });
 
-  
+
   it("can be imported", () =>
     importPackage(System, p1Dir)
       .then(() => {
