@@ -291,7 +291,7 @@ function findRequirementsOf(module) { return _findRequirementsOf(defaultSystem, 
 function forgetModule(module, opts) { return _forgetModule(defaultSystem, module, opts); }
 function reloadModule(module, opts) { return _reloadModule(defaultSystem, module, opts); }
 function requireMap() { return computeRequireMap(defaultSystem); }
-function importsAndExportsOf(moduleName) { return _importsAndExportsOf(defaultSystem, moduleName); }
+function importsAndExportsOf(moduleId, sourceOrAst) { return _importsAndExportsOf(defaultSystem, moduleId, sourceOrAst); }
 export { findDependentsOf, findRequirementsOf, forgetModule, reloadModule, requireMap, importsAndExportsOf }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -87,10 +87,9 @@ function updateModuleExports(System, moduleId, keysAndValues) {
 }
 
 
-async function importsAndExportsOf(System, moduleName, parent) {
-  var id = await System.normalize(moduleName, parent),
-      source = await sourceOf(System, id),
-      parsed = ast.parse(source),
+function importsAndExportsOf(System, moduleId, sourceOrAst) {
+  var parsed = typeof sourceOrAst === "string" ?
+        ast.parse(sourceOrAst) : sourceOrAst,
       scope = ast.query.scopes(parsed);
 
   // compute imports
@@ -102,54 +101,75 @@ async function importsAndExportsOf(System, moduleName, parent) {
     var from = importStmt.source ? importStmt.source.value : "unknown module";
     if (!importStmt.specifiers.length) // no imported vars
       return imports.concat([{
-        localModule:     id,
         local:           null,
         imported:        null,
-        fromModule:      from,
-        importStatement: importStmt
+        fromModule:      from
       }]);
 
     return imports.concat(importStmt.specifiers.map(importSpec => {
       var imported;
       if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
-      else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";
+      else if (importSpec.type === "ImportDefaultSpecifier" ) imported = "default";
+      else if (importSpec.type === "ImportSpecifier" ) imported = importSpec.imported.name;
       else if (importStmt.source) imported = importStmt.source.name;
       else imported = null;
       return {
-        localModule:     id,
         local:           importSpec.local ? importSpec.local.name : null,
         imported:        imported,
-        fromModule:      from,
-        importStatement: importStmt
+        fromModule:      from
       }
     }))
   }, []);
 
   var exports = scope.exportDecls.reduce((exports, node) => {
-    var nodes = ast.query.nodesAtIndex(parsed, node.start);
-    var exportsStmt = arr.without(nodes, scope.node)[0];
+
+    var exportsStmt = ast.query.statementOf(scope.node, node);
     if (!exportsStmt) return exports;
 
+    var from = exportsStmt.source ? exportsStmt.source.value : null;
+
     if (exportsStmt.type === "ExportAllDeclaration") {
-      var from = exportsStmt.source ? exportsStmt.source.value : null;
       return exports.concat([{
-        localModule:     id,
         local:           null,
         exported:        "*",
-        fromModule:      from,
-        exportStatement: exportsStmt
+        fromModule:      from
       }])
     }
 
-    return exports.concat(exportsStmt.specifiers.map(exportSpec => {
-      return {
-        localModule:     id,
-        local:           exportSpec.local ? exportSpec.local.name : null,
-        exported:        exportSpec.exported ? exportSpec.exported.name : null,
-        fromModule:      id,
-        exportStatement: exportsStmt
-      }
-    }))
+    if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+      return exports.concat(exportsStmt.specifiers.map(exportSpec => {
+        return {
+          local:           from ? null : exportSpec.local ? exportSpec.local.name : null,
+          exported:        exportSpec.exported ? exportSpec.exported.name : null,
+          fromModule:      from
+        }
+      }))
+    }
+
+    if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+      return exports.concat(exportsStmt.declaration.declarations.map(decl => {
+        return {
+          local:           decl.id.name,
+          exported:        decl.id.name,
+          type:            exportsStmt.declaration.kind,
+          fromModule:      null
+        }
+      }))
+    }
+
+    if (exportsStmt.declaration) {
+      return exports.concat({
+        local:           exportsStmt.declaration.id.name,
+        exported:        exportsStmt.declaration.id.name,
+        type:            exportsStmt.declaration.type === "FunctionDeclaration" ?
+                          "function" : exportsStmt.declaration.type === "ClassDeclaration" ?
+                            "class" : null,
+        fromModule:      null
+      })
+    }
+
+    return exports;
+
   }, []);
 
   return {
