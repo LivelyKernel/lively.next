@@ -261,12 +261,25 @@ export {
 import {
   importPackage as _importPackage,
   registerPackage as _registerPackage,
+  removePackage as _removePackage,
+  reloadPackage as _reloadPackage,
+  applyConfig as _applyPackageConfig,
   getPackages as _getPackages
 } from './src/packages.js'
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
+function removePackage(packageURL) { return _removePackage(defaultSystem, packageURL); }
+function reloadPackage(packageURL) { return _reloadPackage(defaultSystem, packageURL); }
 function getPackages(moduleNames) { return _getPackages(defaultSystem); }
-export { importPackage, registerPackage, getPackages }
+function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
+export {
+  importPackage,
+  registerPackage,
+  removePackage,
+  reloadPackage,
+  getPackages,
+  applyPackageConfig
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules

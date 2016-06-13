@@ -1,7 +1,7 @@
 import { arr, string, promise } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 
-import { computeRequireMap as requireMap } from './dependencies.js'
+import { computeRequireMap as requireMap, forgetModule } from './dependencies.js'
 
 // helper
 function isJsFile(url) { return /\.js/i.test(url); }
@@ -38,6 +38,26 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
     urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
 }
 
+async function normalizePackageURL(System, packageURL) {
+  if (Object.keys(getPackages(System)).some(ea => ea === packageURL))
+    return packageURL;
+
+  var url = await System.normalize(packageURL);
+
+  if (!isURL(url))
+    throw new Error(`Strange package URL: ${url} is not a valid URL`)
+
+  // ensure it's a directory
+  if (!url.match(/\.js/)) url = url;
+  else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");
+  else url = url.split("/").slice(0,-1).join("/");
+
+  if (url.match(/\.js$/))
+    throw new Error("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+
+  return String(url).replace(/\/$/, "");
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // packages
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -49,22 +69,29 @@ async function importPackage(System, packageURL) {
   return System.import(await System.normalize(packageURL));
 }
 
+function removePackage(System, packageURL) {
+  packageURL = packageURL.replace(/\/$/, "");
+  var packageConfigURL = packageURL + "/package.json";
+  System.delete(String(packageConfigURL));
+  arr.remove(System.packageConfigPaths, packageConfigURL);
+  delete System.meta[packageConfigURL];
+
+  var p = getPackages(System)[packageURL]
+  if (p)
+    p.modules.forEach(mod =>
+      forgetModule(System, mod.name, {forgetEnv: true, forgetDeps: false}));
+
+  delete System.packages[packageURL];
+}
+
+async function reloadPackage(System, packageURL) {
+  var url = await normalizePackageURL(System, packageURL);
+  await removePackage(System, url);
+  return importPackage(System, url);
+}
+
 async function registerPackage(System, packageURL, packageLoadStack) {
-  var url = await System.normalize(packageURL);
-
-  if (!isURL(url))
-    return Promise.reject(new Error(`Error registering package: ${url} is not a valid URL`));
-
-
-  // ensure it's a directory
-  if (!url.match(/\.js/)) url = url;
-  else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");
-  else url = url.split("/").slice(0,-1).join("/");
-
-  if (url.match(/\.js$/))
-    return Promise.reject(new Error("[registerPackage] packageURL is expected to point to a directory but seems to be a .js file: " + url));
-
-  url = String(url).replace(/\/$/, "");
+  var url = await normalizePackageURL(System, packageURL);
 
   packageLoadStack = packageLoadStack || [];
   var registerSubPackages = true;
@@ -75,7 +102,6 @@ async function registerPackage(System, packageURL, packageLoadStack) {
   } else packageLoadStack.push(url)
 
   System.debug && console.log("[lively.modules package register] %s", url);
-
   var cfg = await tryToLoadPackageConfig(System, url),
       packageConfigResult = await applyConfig(System, cfg, url)
 
@@ -90,7 +116,6 @@ async function registerPackage(System, packageURL, packageLoadStack) {
 
 async function tryToLoadPackageConfig(System, packageURL) {
   var packageConfigURL = packageURL + "/package.json";
-
   System.config({
     meta: {[packageConfigURL]: {format: "json"}},
     packages: {[packageURL]: {meta: {"package.json": {format: "json"}}}}
@@ -118,12 +143,16 @@ function applyConfig(System, packageConfig, packageURL) {
   // and uses the "lively" section as described in `applyLivelyConfig`
 
   var name            = packageConfig.name || packageURL.split("/").slice(-1)[0],
-      packageInSystem = System.packages[packageURL] || (System.packages[packageURL] = {}),
       sysConfig       = packageConfig.systemjs,
       livelyConfig    = packageConfig.lively,
       main            = packageConfig.main || "index.js";
-  System.config({map: {[name]: packageURL}});
+  
+  System.config({
+    map: {[name]: packageURL},
+    packages: {[packageURL]: sysConfig}
+  });
 
+  var packageInSystem = System.getConfig().packages[packageURL] || {};
   if (!packageInSystem.map) packageInSystem.map = {};
 
   if (sysConfig) {
@@ -302,4 +331,4 @@ function getPackages(System) {
   return result;
 }
 
-export { importPackage, registerPackage, applyConfig, getPackages };
+export { importPackage, registerPackage, removePackage, reloadPackage, applyConfig, getPackages };
