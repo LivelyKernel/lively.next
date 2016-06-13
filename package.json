@@ -4,21 +4,7 @@
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "dist/lively.vm.js",
   "systemjs": {
-    "main": "index.js",
-    "map": {
-      "path": {
-        "node": "@node/path",
-        "~node": "@empty"
-      },
-      "module": {
-        "node": "@node/module",
-        "~node": "@empty"
-      },
-      "fs": {
-        "node": "@node/fs",
-        "~node": "@empty"
-      }
-    }
+    "main": "index.js"
   },
   "lively": {
     "packageMap": {
@@ -55,7 +41,6 @@
     "lively.modules": "^0.5.0",
     "mocha-es6": "^0.3.1",
     "rollup": "^0.26.1",
-    "rollup-plugin-babel": "^2.4.0",
-    "rollup-plugin-node-builtins": "^1.0.4"
+    "rollup-plugin-babel": "^2.4.0"
   }
 }
