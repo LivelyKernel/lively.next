@@ -18997,6 +18997,8 @@ var nodes = Object.freeze({
     if (last.type === "ExpressionStatement") {
       innerBody.pop();
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+    } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
     } else {
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
     }
@@ -19335,7 +19337,7 @@ var nodes = Object.freeze({
           right: { name: "undefined", type: "Identifier" }
         };
 
-        var initWrapped = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+        var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
 
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
@@ -19343,7 +19345,7 @@ var nodes = Object.freeze({
               declRoot = { type: "Identifier", name: declRootName },
               state = { parent: declRoot, declaredNames: topLevel.declaredNames },
               extractions = transformPattern(decl.id, state).map(function (decl) {
-            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
+            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
           return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
@@ -19509,7 +19511,7 @@ var nodes = Object.freeze({
           id: stmt.declaration,
           init: member(options.captureObj, stmt.declaration)
         }), stmt]);
-      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
+      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
         body.push(stmt);
       } else {
         body = body.concat(stmt.specifiers.map(function (specifier) {
@@ -19598,7 +19600,9 @@ var nodes = Object.freeze({
         funcDecls = scope.funcDecls;
     if (!funcDecls.length) return parsed;
 
-    for (var i = 0; i < funcDecls.length; i++) {
+    var putInFront = [];
+
+    for (var i = funcDecls.length; i--;) {
       var decl = funcDecls[i];
       if (!shouldDeclBeCaptured(decl, options)) continue;
 
@@ -19612,12 +19616,16 @@ var nodes = Object.freeze({
       init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
           declFront = Object.assign({}, decl);
 
-      // If the parent is a body array we remove the original func decl from it
       if (Array.isArray(parent)) {
-        parent.splice(parent.indexOf(decl), 1);
+        // If the parent is a body array we remove the original func decl from it
+        // and replace it with a reference to the function
+        parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
       } else if (parent.type === "ExportNamedDeclaration") {
-        parent.declaration = null;parent.source = null;
-        parent.specifiers = [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }];
+        // If the function is exported we change the export declaration into a reference
+        var parentIndexInBody = scope.node.body.indexOf(parent);
+        if (parentIndexInBody > -1) {
+          scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
+        }
       } else if (parent.type === "ExportDefaultDeclaration") {
         parent.declaration = decl.id;
       } else {}
@@ -19626,10 +19634,10 @@ var nodes = Object.freeze({
 
 
       // hoist the function to the front, also it's capture
-      parsed.body.unshift(assignExpr(options.captureObj, funcId, init, false));
-      parsed.body.unshift(declFront);
+      putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
+      putInFront.unshift(declFront);
     }
-
+    parsed.body = putInFront.concat(parsed.body);
     return parsed;
   }
 
@@ -19788,7 +19796,6 @@ var capturing = Object.freeze({
 
     // 1. Allow evaluation of function expressions and object literals
     code = transformSingleExpression(code);
-
     var parsed = parse(code);
 
     // 2. capture top level vars into topLevelVarRecorder "environment"
@@ -19866,7 +19873,7 @@ var capturing = Object.freeze({
   function declarationWrapperForKeepingValues(name, kind, value, recorder) {
     if (kind === "function") return value;
 
-    if (kind === "class") {
+    if (kind === "class" && recorder.hasOwnProperty(name)) {
       var existingClass = recorder[name];
       if (typeof existingClass === "function") {
         copyProperties(value, existingClass, ["name", "length", "prototype"]);
@@ -19876,12 +19883,19 @@ var capturing = Object.freeze({
       return value;
     }
 
-    if (!value || (typeof value === "undefined" ? "undefined" : babelHelpers.typeof(value)) !== "object" || Array.isArray(value) || value.constructor === RegExp) return value;
+    // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
+    //   return value;
 
-    if (recorder.hasOwnProperty(name)) {
-      copyProperties(value, recorder[name]);
-      return recorder[name];
-    }
+    // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
+    //   if (Object.isFrozen(recorder[name])) return value;
+    //   try {
+    //     copyProperties(value, recorder[name]);
+    //     return recorder[name];
+    //   } catch (e) {
+    //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
+    //     return value;
+    //   }
+    // }
 
     return value;
   }
