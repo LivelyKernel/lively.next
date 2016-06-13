@@ -1,5 +1,3 @@
-/*global System*/
-
 import { parseJsonLikeObj } from "../helpers.js";
 import { resource } from "lively.resources";
 
@@ -16,8 +14,8 @@ export async function interactivelyCreatePackage(system, vmEditor) {
   var name = await $world.prompt("Enter package name", {input: "", historyId: "lively.vm-editor-add-package-name", useLastInput: true});
   if (!name) throw "Canceled";
 
-  var guessedAddress = await system.normalize(
-    resource(system.getConfig().baseURL).join(name).asDirectory().url).replace(/\/\.js$/, "/");
+  var guessedAddress = (await system.normalize(
+    resource(system.getConfig().baseURL).join(name).asDirectory().url)).replace(/\/\.js$/, "/");
 
   if (guessedAddress.endsWith(".js"))
     guessedAddress = resource(guessedAddress).parent().url;
@@ -35,7 +33,7 @@ export async function interactivelyCreatePackage(system, vmEditor) {
     "index.js": "'format esm';\n",
     "package.json": `{\n  "name": "${name}",\n  "version": "0.1.0"\n}`,
     ".gitignore": "node_modules/",
-    "README.md": `#${name}\n\nNo description for ${name} yet.\n`,
+    "README.md": `# ${name}\n\nNo description for package ${name} yet.\n`,
     "tests": {
       "test.js": `import { expect } from "mocha-es6";\ndescribe("${name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
     }
@@ -80,8 +78,7 @@ export async function interactivelyLoadPackage(system, vmEditor) {
 
   // get the package name
   try {
-    var {output} = await lively.shell.cat(
-          lively.lang.string.joinPath(path, "package.json"))
+    var {output} = await lively.shell.cat(path + "/package.json")
     JSON.parse(output).name
   } catch (e) {
     spec.name = asURL.filename().replace(/\/$/, "");
@@ -95,7 +92,7 @@ export async function interactivelyLoadPackage(system, vmEditor) {
 }
 
 export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
-  var name = resource(await System.normalize(packageURL)).asFile().url;
+  var name = resource(await system.normalize(packageURL)).asFile().url;
   var p = system.getPackage(name) || system.getPackageForModule(name);
   if (!p) throw new Error("Cannot find package for " + name);
 
@@ -138,7 +135,7 @@ export async function showExportsAndImportsOf(system, packageAddress) {
   for (let mod of p.modules) {
     if (!mod.name.match(/\.js$/)) continue;
     
-    var importsExports = await lively.modules.importsAndExportsOf(mod.name);
+    var importsExports = await system.importsAndExportsOf(mod.name, await system.moduleRead(mod.name));
     var report = `${mod.name}`;
         
     if (!importsExports.imports.length && !importsExports.exports.length)
