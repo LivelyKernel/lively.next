@@ -18998,6 +18998,8 @@ var nodes = Object.freeze({
     if (last.type === "ExpressionStatement") {
       innerBody.pop();
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+    } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
+      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
     } else {
       innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
     }
@@ -19336,7 +19338,7 @@ var nodes = Object.freeze({
           right: { name: "undefined", type: "Identifier" }
         };
 
-        var initWrapped = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+        var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
 
         // Here we create the object pattern / destructuring replacements
         if (decl.id.type.match(/Pattern/)) {
@@ -19344,7 +19346,7 @@ var nodes = Object.freeze({
               declRoot = { type: "Identifier", name: declRootName },
               state = { parent: declRoot, declaredNames: topLevel.declaredNames },
               extractions = transformPattern(decl.id, state).map(function (decl) {
-            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, decl.declarations[0].init, false) : decl;
+            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
           });
           topLevel.declaredNames.push(declRootName);
           return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
@@ -19510,7 +19512,7 @@ var nodes = Object.freeze({
           id: stmt.declaration,
           init: member(options.captureObj, stmt.declaration)
         }), stmt]);
-      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length) {
+      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
         body.push(stmt);
       } else {
         body = body.concat(stmt.specifiers.map(function (specifier) {
@@ -19599,7 +19601,9 @@ var nodes = Object.freeze({
         funcDecls = scope.funcDecls;
     if (!funcDecls.length) return parsed;
 
-    for (var i = 0; i < funcDecls.length; i++) {
+    var putInFront = [];
+
+    for (var i = funcDecls.length; i--;) {
       var decl = funcDecls[i];
       if (!shouldDeclBeCaptured(decl, options)) continue;
 
@@ -19613,12 +19617,16 @@ var nodes = Object.freeze({
       init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
           declFront = Object.assign({}, decl);
 
-      // If the parent is a body array we remove the original func decl from it
       if (Array.isArray(parent)) {
-        parent.splice(parent.indexOf(decl), 1);
+        // If the parent is a body array we remove the original func decl from it
+        // and replace it with a reference to the function
+        parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
       } else if (parent.type === "ExportNamedDeclaration") {
-        parent.declaration = null;parent.source = null;
-        parent.specifiers = [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }];
+        // If the function is exported we change the export declaration into a reference
+        var parentIndexInBody = scope.node.body.indexOf(parent);
+        if (parentIndexInBody > -1) {
+          scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
+        }
       } else if (parent.type === "ExportDefaultDeclaration") {
         parent.declaration = decl.id;
       } else {}
@@ -19627,10 +19635,10 @@ var nodes = Object.freeze({
 
 
       // hoist the function to the front, also it's capture
-      parsed.body.unshift(assignExpr(options.captureObj, funcId, init, false));
-      parsed.body.unshift(declFront);
+      putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
+      putInFront.unshift(declFront);
     }
-
+    parsed.body = putInFront.concat(parsed.body);
     return parsed;
   }
 
@@ -19789,7 +19797,6 @@ var capturing = Object.freeze({
 
     // 1. Allow evaluation of function expressions and object literals
     code = transformSingleExpression(code);
-
     var parsed = parse(code);
 
     // 2. capture top level vars into topLevelVarRecorder "environment"
@@ -19867,7 +19874,7 @@ var capturing = Object.freeze({
   function declarationWrapperForKeepingValues(name, kind, value, recorder) {
     if (kind === "function") return value;
 
-    if (kind === "class") {
+    if (kind === "class" && recorder.hasOwnProperty(name)) {
       var existingClass = recorder[name];
       if (typeof existingClass === "function") {
         copyProperties(value, existingClass, ["name", "length", "prototype"]);
@@ -19877,12 +19884,19 @@ var capturing = Object.freeze({
       return value;
     }
 
-    if (!value || (typeof value === "undefined" ? "undefined" : babelHelpers.typeof(value)) !== "object" || Array.isArray(value) || value.constructor === RegExp) return value;
+    // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
+    //   return value;
 
-    if (recorder.hasOwnProperty(name)) {
-      copyProperties(value, recorder[name]);
-      return recorder[name];
-    }
+    // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
+    //   if (Object.isFrozen(recorder[name])) return value;
+    //   try {
+    //     copyProperties(value, recorder[name]);
+    //     return recorder[name];
+    //   } catch (e) {
+    //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
+    //     return value;
+    //   }
+    // }
 
     return value;
   }
@@ -20442,6 +20456,31 @@ var categorizer = Object.freeze({
     return obj;
   };
 
+  babelHelpers.get = function get(object, property, receiver) {
+    if (object === null) object = Function.prototype;
+    var desc = Object.getOwnPropertyDescriptor(object, property);
+
+    if (desc === undefined) {
+      var parent = Object.getPrototypeOf(object);
+
+      if (parent === null) {
+        return undefined;
+      } else {
+        return get(parent, property, receiver);
+      }
+    } else if ("value" in desc) {
+      return desc.value;
+    } else {
+      var getter = desc.get;
+
+      if (getter === undefined) {
+        return undefined;
+      }
+
+      return getter.call(receiver);
+    }
+  };
+
   babelHelpers.inherits = function (subClass, superClass) {
     if (typeof superClass !== "function" && superClass !== null) {
       throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
@@ -20607,12 +20646,6 @@ var categorizer = Object.freeze({
     getCompletions: getCompletions
   });
 
-  var evalCodeTransform = ast.evalSupport.evalCodeTransform;
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // options
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
   var defaultTopLevelVarRecorderName = '__lvVarRecorder';
   var startEvalFunctionName = "lively.vm-on-eval-start";
   var endEvalFunctionName = "lively.vm-on-eval-end";
@@ -20740,7 +20773,7 @@ var categorizer = Object.freeze({
 
     // 2. Transform the code to capture top-level variables, inject function calls, ...
     try {
-      code = evalCodeTransform(code, options);
+      code = ast.evalSupport.evalCodeTransform(code, options);
       if (options.header) code = options.header + code;
       if (options.footer) code = code + options.footer;
       if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
@@ -21175,14 +21208,52 @@ var categorizer = Object.freeze({
 
     babelHelpers.createClass(EvalStrategy, [{
       key: "runEval",
-      value: function runEval(source, options) {
-        return Promise.reject("runEval(source, options) not yet implemented for " + this.constructor.name);
-      }
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  return _context.abrupt("return", Promise.reject("runEval(source, options) not yet implemented for " + this.constructor.name));
+
+                case 1:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, this);
+        }));
+
+        function runEval(_x, _x2) {
+          return ref.apply(this, arguments);
+        }
+
+        return runEval;
+      }()
     }, {
       key: "keysOfObject",
-      value: function keysOfObject(prefix, options) {
-        return Promise.reject("keysOfObject(prefix, options) not yet implemented for " + this.constructor.name);
-      }
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  return _context2.abrupt("return", Promise.reject("keysOfObject(prefix, options) not yet implemented for " + this.constructor.name));
+
+                case 1:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function keysOfObject(_x3, _x4) {
+          return ref.apply(this, arguments);
+        }
+
+        return keysOfObject;
+      }()
     }]);
     return EvalStrategy;
   }();
@@ -21197,44 +21268,63 @@ var categorizer = Object.freeze({
 
     babelHelpers.createClass(SimpleEvalStrategy, [{
       key: "runEval",
-      value: function runEval(source, options) {
-        return Promise.resolve().then(function () {
-          try {
-            return { value: eval(source) };
-          } catch (err) {
-            return { isError: true, value: err };
-          }
-        });
-      }
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  return _context3.abrupt("return", Promise.resolve().then(function () {
+                    try {
+                      return Promise.resolve({ value: eval(source) });
+                    } catch (err) {
+                      return { isError: true, value: err };
+                    }
+                  }));
+
+                case 1:
+                case "end":
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, this);
+        }));
+
+        function runEval(_x5, _x6) {
+          return ref.apply(this, arguments);
+        }
+
+        return runEval;
+      }()
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(prefix, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
-          return regeneratorRuntime.wrap(function _callee$(_context) {
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
-              switch (_context.prev = _context.next) {
+              switch (_context4.prev = _context4.next) {
                 case 0:
-                  _context.next = 2;
+                  _context4.next = 2;
                   return lively.vm.completions.getCompletions(function (code) {
                     return _this2.runEval(code, options);
                   }, prefix);
 
                 case 2:
-                  result = _context.sent;
-                  return _context.abrupt("return", { completions: result.completions, prefix: result.startLetters });
+                  result = _context4.sent;
+                  return _context4.abrupt("return", { completions: result.completions, prefix: result.startLetters });
 
                 case 4:
                 case "end":
-                  return _context.stop();
+                  return _context4.stop();
               }
             }
-          }, _callee, this);
+          }, _callee4, this);
         }));
 
-        function keysOfObject(_x, _x2) {
+        function keysOfObject(_x7, _x8) {
           return ref.apply(this, arguments);
         }
 
@@ -21253,48 +21343,71 @@ var categorizer = Object.freeze({
     }
 
     babelHelpers.createClass(LivelyVmEvalStrategy, [{
-      key: "runEval",
-      value: function runEval(source, options) {
-        // lively.modules.System.config({meta: {[options.targetModule]: {format: "esm"}}});
-        if (!options.targetModule) return Promise.reject(new Error("runEval called but options.targetModule not specified!"));
+      key: "normalizeOptions",
+      value: function normalizeOptions(options) {
+        if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
 
-        var conf = { meta: {} };conf.meta[options.targetModule] = { format: "esm" };
-        lively.modules.System.config(conf);
-
-        options = lively.lang.obj.merge({
+        return Object.assign({
           sourceURL: options.targetModule + "_doit_" + Date.now(),
           keepPreviouslyDeclaredValues: true
         }, options);
-
-        return lively.vm.runEval(source, options);
       }
+    }, {
+      key: "runEval",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+          var conf;
+          return regeneratorRuntime.wrap(function _callee5$(_context5) {
+            while (1) {
+              switch (_context5.prev = _context5.next) {
+                case 0:
+                  options = this.normalizeOptions(options);
+                  conf = { meta: {} };
+                  conf.meta[options.targetModule] = { format: "esm" };
+                  lively.modules.System.config(conf);
+                  return _context5.abrupt("return", lively.vm.runEval(source, options));
+
+                case 5:
+                case "end":
+                  return _context5.stop();
+              }
+            }
+          }, _callee5, this);
+        }));
+
+        function runEval(_x9, _x10) {
+          return ref.apply(this, arguments);
+        }
+
+        return runEval;
+      }()
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
-              switch (_context2.prev = _context2.next) {
+              switch (_context6.prev = _context6.next) {
                 case 0:
-                  _context2.next = 2;
+                  _context6.next = 2;
                   return lively.vm.completions.getCompletions(function (code) {
                     return lively.vm.runEval(code, options);
                   }, prefix);
 
                 case 2:
-                  result = _context2.sent;
-                  return _context2.abrupt("return", { completions: result.completions, prefix: result.startLetters });
+                  result = _context6.sent;
+                  return _context6.abrupt("return", { completions: result.completions, prefix: result.startLetters });
 
                 case 4:
                 case "end":
-                  return _context2.stop();
+                  return _context6.stop();
               }
             }
-          }, _callee2, this);
+          }, _callee6, this);
         }));
 
-        function keysOfObject(_x3, _x4) {
+        function keysOfObject(_x11, _x12) {
           return ref.apply(this, arguments);
         }
 
@@ -21304,8 +21417,8 @@ var categorizer = Object.freeze({
     return LivelyVmEvalStrategy;
   }(EvalStrategy);
 
-  var HttpEvalStrategy = function (_EvalStrategy3) {
-    babelHelpers.inherits(HttpEvalStrategy, _EvalStrategy3);
+  var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
+    babelHelpers.inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
     babelHelpers.createClass(HttpEvalStrategy, null, [{
       key: "defaultURL",
       get: function get() {
@@ -21325,51 +21438,101 @@ var categorizer = Object.freeze({
     babelHelpers.createClass(HttpEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
-        options = Object.assign({ serverEvalURL: this.url }, options, { context: null });
+        options = babelHelpers.get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
+        return Object.assign({ serverEvalURL: this.url }, options, { context: null });
       }
     }, {
-      key: "runEvalSource",
-      value: function runEvalSource(source, options) {
-        var sourceForServer = "var source = " + JSON.stringify(source) + "\n" + ("var options = " + JSON.stringify(options) + "\n") + "options.context = " + (LivelyVmEvalStrategy.prototype.runEval + "\n") + "runEval(source, options)\n";
-        return sourceForServer;
+      key: "sourceForServer",
+      value: function sourceForServer(action, arg, options) {
+        return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  options.context = System.global;\n  function evalFunction(source, options) {\n    var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n    lively.modules.System.config(conf);\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: err}));\n})();\n";
       }
+    }, {
+      key: "sendRequest",
+      value: function () {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+          var res;
+          return regeneratorRuntime.wrap(function _callee7$(_context7) {
+            while (1) {
+              switch (_context7.prev = _context7.next) {
+                case 0:
+                  _context7.prev = 0;
+                  _context7.next = 3;
+                  return window.fetch(url, payload);
+
+                case 3:
+                  res = _context7.sent;
+                  _context7.next = 9;
+                  break;
+
+                case 6:
+                  _context7.prev = 6;
+                  _context7.t0 = _context7["catch"](0);
+                  throw new Error("Cannot reach server at " + url + ": " + _context7.t0.message);
+
+                case 9:
+                  _context7.prev = 9;
+                  _context7.t1 = JSON;
+                  _context7.next = 13;
+                  return res.text();
+
+                case 13:
+                  _context7.t2 = _context7.sent;
+                  return _context7.abrupt("return", _context7.t1.parse.call(_context7.t1, _context7.t2));
+
+                case 17:
+                  _context7.prev = 17;
+                  _context7.t3 = _context7["catch"](9);
+                  _context7.next = 21;
+                  return res.text();
+
+                case 21:
+                  _context7.t4 = _context7.sent;
+                  _context7.t5 = "Server eval failed: " + _context7.t4;
+                  _context7.t6 = _context7.t5 + " (";
+                  _context7.t7 = res.status;
+                  _context7.t8 = _context7.t6 + _context7.t7;
+                  _context7.t9 = _context7.t8 + ")";
+                  return _context7.abrupt("return", {
+                    isError: true,
+                    value: _context7.t9
+                  });
+
+                case 28:
+                case "end":
+                  return _context7.stop();
+              }
+            }
+          }, _callee7, this, [[0, 6], [9, 17]]);
+        }));
+
+        function sendRequest(_x13, _x14) {
+          return ref.apply(this, arguments);
+        }
+
+        return sendRequest;
+      }()
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
-          var payLoad, stringValue;
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
+          var payLoad;
+          return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
-              switch (_context3.prev = _context3.next) {
+              switch (_context8.prev = _context8.next) {
                 case 0:
                   options = this.normalizeOptions(options);
-                  _context3.prev = 1;
-                  payLoad = { method: "POST", body: this.runEvalSource(source, options) };
-                  _context3.next = 5;
-                  return window.fetch(options.serverEvalURL, payLoad);
+                  payLoad = { method: "POST", body: this.sourceForServer("eval", source, options) };
+                  return _context8.abrupt("return", this.sendRequest(payLoad, options.serverEvalURL));
 
-                case 5:
-                  _context3.next = 7;
-                  return _context3.sent.text();
-
-                case 7:
-                  stringValue = _context3.sent;
-                  return _context3.abrupt("return", JSON.parse(stringValue));
-
-                case 11:
-                  _context3.prev = 11;
-                  _context3.t0 = _context3["catch"](1);
-                  return _context3.abrupt("return", { isError: true, value: String(_context3.t0.stack || _context3.t0) });
-
-                case 14:
+                case 3:
                 case "end":
-                  return _context3.stop();
+                  return _context8.stop();
               }
             }
-          }, _callee3, this, [[1, 11]]);
+          }, _callee8, this);
         }));
 
-        function runEval(_x5, _x6) {
+        function runEval(_x15, _x16) {
           return ref.apply(this, arguments);
         }
 
@@ -21378,45 +21541,39 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
-          var url, sourceForServer, stringValue, result;
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
+          var payLoad, result;
+          return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
-              switch (_context4.prev = _context4.next) {
+              switch (_context9.prev = _context9.next) {
                 case 0:
-                  options = Object.assign({ serverEvalURL: this.url || this.constructor.defaultURL }, options);
-                  url = options.serverEvalURL;
-                  sourceForServer = "var prefix = " + JSON.stringify(prefix) + ";\n" + ("var options = " + JSON.stringify(options) + ";\n") + (LivelyVmEvalStrategy.prototype.keysOfObject + "\n") + "vmCompletions(prefix, options);\n";
-                  _context4.next = 5;
-                  return window.fetch(url, { method: "POST", body: sourceForServer });
+                  options = this.normalizeOptions(options);
+                  payLoad = { method: "POST", body: this.sourceForServer("keysOfObject", prefix, options) };
+                  _context9.next = 4;
+                  return this.sendRequest(payLoad, options.serverEvalURL);
 
-                case 5:
-                  _context4.next = 7;
-                  return _context4.sent.text();
-
-                case 7:
-                  stringValue = _context4.sent;
-                  result = JSON.parse(stringValue);
+                case 4:
+                  result = _context9.sent;
 
                   if (!result.isError) {
-                    _context4.next = 11;
+                    _context9.next = 7;
                     break;
                   }
 
                   throw new Error(result.value);
 
-                case 11:
-                  return _context4.abrupt("return", result);
+                case 7:
+                  return _context9.abrupt("return", result);
 
-                case 12:
+                case 8:
                 case "end":
-                  return _context4.stop();
+                  return _context9.stop();
               }
             }
-          }, _callee4, this);
+          }, _callee9, this);
         }));
 
-        function keysOfObject(_x7, _x8) {
+        function keysOfObject(_x17, _x18) {
           return ref.apply(this, arguments);
         }
 
@@ -21424,7 +21581,7 @@ var categorizer = Object.freeze({
       }()
     }]);
     return HttpEvalStrategy;
-  }(EvalStrategy);
+  }(LivelyVmEvalStrategy);
 
   function evalStrategy(morph) {
     return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
@@ -21449,13 +21606,13 @@ var categorizer = Object.freeze({
     doit: function doit(printResult, editor, options) {
       var _this5 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         var result;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
-                _context5.prev = 0;
+                _context10.prev = 0;
 
                 options = Object.assign({
                   inspect: !printResult,
@@ -21463,11 +21620,11 @@ var categorizer = Object.freeze({
                   targetModule: _this5.moduleId(),
                   context: _this5
                 }, options);
-                _context5.next = 4;
+                _context10.next = 4;
                 return evalStrategy(_this5).runEval(_this5.getCodeForEval(), options);
 
               case 4:
-                result = _context5.sent;
+                result = _context10.sent;
 
                 if (printResult) {
                   _this5.printObject(editor, result.value, false, _this5.getPrintItAsComment());
@@ -21475,129 +21632,166 @@ var categorizer = Object.freeze({
                   _this5.setStatusMessage(result.value);
                 }
                 _this5.onDoitDone(result);
-                return _context5.abrupt("return", result);
+                return _context10.abrupt("return", result);
 
               case 10:
-                _context5.prev = 10;
-                _context5.t0 = _context5["catch"](0);
-                _this5.showError(_context5.t0);throw _context5.t0;
+                _context10.prev = 10;
+                _context10.t0 = _context10["catch"](0);
+                _this5.showError(_context10.t0);throw _context10.t0;
 
               case 14:
               case "end":
-                return _context5.stop();
+                return _context10.stop();
             }
           }
-        }, _callee5, _this5, [[0, 10]]);
+        }, _callee10, _this5, [[0, 10]]);
+      }))();
+    },
+    printInspect: function printInspect(options) {
+      var _this6 = this;
+
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+        var msgMorph, ed;
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                options = options || {};
+                msgMorph = _this6._statusMorph;
+                _context11.next = 4;
+                return new Promise(function (resolve, reject) {
+                  return _this6.withAceDo(resolve);
+                });
+
+              case 4:
+                ed = _context11.sent;
+
+                if (!(msgMorph && msgMorph.world())) {
+                  _context11.next = 7;
+                  break;
+                }
+
+                return _context11.abrupt("return", ed.execCommand('insertEvalResult'));
+
+              case 7:
+                return _context11.abrupt("return", _this6.doit(true, ed, { inspect: true, printDepth: options.depth || _this6.printInspectMaxDepth }));
+
+              case 8:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, _this6);
       }))();
     },
     evalSelection: function evalSelection(printIt) {
-      var _this6 = this;
+      var _this7 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options, result;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
-                options = { context: _this6, targetModule: _this6.moduleId(), asString: !!printIt };
-                _context6.next = 3;
-                return evalStrategy(_this6).runEval(_this6.getCodeForEval(), options);
+                options = { context: _this7, targetModule: _this7.moduleId(), asString: !!printIt };
+                _context12.next = 3;
+                return evalStrategy(_this7).runEval(_this7.getCodeForEval(), options);
 
               case 3:
-                result = _context6.sent;
+                result = _context12.sent;
 
-                if (printIt) _this6.insertAtCursor(result.value, true);
-                return _context6.abrupt("return", result);
+                if (printIt) _this7.insertAtCursor(result.value, true);
+                return _context12.abrupt("return", result);
 
               case 6:
               case "end":
-                return _context6.stop();
+                return _context12.stop();
             }
           }
-        }, _callee6, _this6);
+        }, _callee12, _this7);
       }))();
     },
     doListProtocol: function doListProtocol() {
-      var _this7 = this;
+      var _this8 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
         var m, prefix, completions, lister;
-        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context13.prev = _context13.next) {
               case 0:
-                _context7.prev = 0;
+                _context13.prev = 0;
                 m = lively.module("lively.ide.codeeditor.Completions");
 
                 if (m.isLoaded()) {
-                  _context7.next = 5;
+                  _context13.next = 5;
                   break;
                 }
 
-                _context7.next = 5;
+                _context13.next = 5;
                 return m.load();
 
               case 5:
-                prefix = _this7.getCodeForCompletions();
-                _context7.next = 8;
-                return evalStrategy(_this7).keysOfObject(prefix, { context: _this7, targetModule: _this7.moduleId() });
+                prefix = _this8.getCodeForCompletions();
+                _context13.next = 8;
+                return evalStrategy(_this8).keysOfObject(prefix, { context: _this8, targetModule: _this8.moduleId() });
 
               case 8:
-                completions = _context7.sent;
-                lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this7);
+                completions = _context13.sent;
+                lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this8);
 
                 lister.openNarrower(completions);
-                return _context7.abrupt("return", lister);
+                return _context13.abrupt("return", lister);
 
               case 14:
-                _context7.prev = 14;
-                _context7.t0 = _context7["catch"](0);
-                _this7.showError(_context7.t0);
+                _context13.prev = 14;
+                _context13.t0 = _context13["catch"](0);
+                _this8.showError(_context13.t0);
               case 17:
               case "end":
-                return _context7.stop();
+                return _context13.stop();
             }
           }
-        }, _callee7, _this7, [[0, 14]]);
+        }, _callee13, _this8, [[0, 14]]);
       }))();
     },
     doSave: function doSave() {
-      var _this8 = this;
+      var _this9 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
-                _this8.savedTextString = _this8.textString;
+                _this9.savedTextString = _this9.textString;
 
-                if (!_this8.getEvalOnSave()) {
-                  _context8.next = 10;
+                if (!_this9.getEvalOnSave()) {
+                  _context14.next = 10;
                   break;
                 }
 
-                _context8.prev = 2;
-                _context8.next = 5;
-                return lively.modules.moduleSourceChange(_this8.moduleId(), _this8.textString);
+                _context14.prev = 2;
+                _context14.next = 5;
+                return lively.modules.moduleSourceChange(_this9.moduleId(), _this9.textString);
 
               case 5:
-                _context8.next = 10;
+                _context14.next = 10;
                 break;
 
               case 7:
-                _context8.prev = 7;
-                _context8.t0 = _context8["catch"](2);
-                return _context8.abrupt("return", _this8.showError(_context8.t0));
+                _context14.prev = 7;
+                _context14.t0 = _context14["catch"](2);
+                return _context14.abrupt("return", _this9.showError(_context14.t0));
 
               case 10:
-                _this8.onSaveDone();
+                _this9.onSaveDone();
 
               case 11:
               case "end":
-                return _context8.stop();
+                return _context14.stop();
             }
           }
-        }, _callee8, _this8, [[2, 7]]);
+        }, _callee14, _this9, [[2, 7]]);
       }))();
     },
     onDoitDone: function onDoitDone(result) {},
