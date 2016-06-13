@@ -387,6 +387,18 @@ describe("declarations", () => {
       .equals("function bar() {\n}\n_rec.bar = _define('bar', 'function', bar, _rec);\nbar;");
   });
 
+  it("wraps destructuring", () => {
+    expect(stringify(
+          rewriteToCaptureTopLevelVariables(
+            parse("var [{x}, y] = foo"), {name: "_rec", type: "Identifier"},
+            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+      .equals(
+`var destructured_1 = _rec.foo;
+_rec.destructured_1$0 = _define('destructured_1$0', 'var', destructured_1[0], _rec);
+_rec.x = _define('x', 'var', destructured_1$0.x, _rec);
+_rec.y = _define('y', 'var', destructured_1[1], _rec);`);
+  });
+
 });
 
 describe("System.register", () => {
