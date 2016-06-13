@@ -26,7 +26,7 @@ describe("eval code transform", function() {
       .equals("try {\n"
             + "    __start_execution();\n"
             + "    var x = 23;\n"
-            + "    __end_execution(null, undefined);\n"
+            + "    __end_execution(null, x);\n"
             + "} catch (err) {\n"
             + "    __end_execution(err, undefined);\n"
             + "}"));
