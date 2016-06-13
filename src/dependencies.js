@@ -34,6 +34,10 @@ function forgetModule(System, moduleName, opts) {
     delete System.loads[moduleName];
     delete System.loads[id];
   }
+  if (System.meta) {
+    delete System.meta[moduleName];
+    delete System.meta[id];
+  }
   if (opts.forgetEnv) {
     forgetEnvOf(System, id);
     forgetEnvOf(System, moduleName);
