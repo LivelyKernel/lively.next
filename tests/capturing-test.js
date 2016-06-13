@@ -311,6 +311,28 @@ describe("ast.capturing", function() {
                + "_rec.completions = completions;\n"
                + "export {\n    completions\n};");
 
+      testVarTfm("re-export named",
+                 "export { name1, name2 } from 'foo';",
+                 "export {\n    name1,\n    name2\n} from 'foo';");
+
+      testVarTfm("export { name1 as foo1, name2 as bar2 } from 'foo';",
+                 "export {\n    name1 as foo1,\n    name2 as bar2\n} from 'foo';");
+
+      testVarTfm("export bug 1",
+                 "foo();\nexport function a() {}\nexport function b() {}",
+                 "function a() {\n}\n_rec.a = a;\nfunction b() {\n}\n_rec.b = b;\n_rec.foo();\nexport {\n    a\n};\nexport {\n    b\n};");
+
+      testVarTfm("export bug 2",
+                 "export { a } from \"./package-commands.js\";\n"
+               + "export function b() {}\n"
+               + "export function c() {}\n",
+                 "function b() {\n}\n"
+               + "_rec.b = b;\n"
+               + "function c() {\n}\n"
+               + "_rec.c = c;\n"
+               + "export {\n    a\n} from './package-commands.js';\n"
+               + "export {\n    b\n};\n"
+               + "export {\n    c\n};");
     });
 
     describe("export obj", () => {
