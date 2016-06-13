@@ -3,7 +3,7 @@
 import { expect } from "mocha-es6";
 import { removeDir, createFiles } from "./helpers.js";
 
-import { getSystem, removeSystem, moduleRecordFor, moduleEnv } from "../src/system.js";
+import { getSystem, removeSystem, sourceOf } from "../src/system.js";
 import { importsAndExportsOf } from "../src/import-export.js";
 
 var dir = System.normalizeSync("lively.modules/tests/"),
@@ -33,50 +33,50 @@ describe("imports and exports", () => {
   afterEach(() => removeDir(testProjectDir));
 
   it("exports of var decls", async () => {
-    var result = await importsAndExportsOf(S, module1);
+    var result = await importsAndExportsOf(S, module1, await sourceOf(S,module1));
     expect(result.exports).to.have.length(1);
     expect(result.exports[0]).to.containSubset({exported: "x", local: "x", type: "var"});
   });
 
   it("exports * from", async () => {
-    var result = await importsAndExportsOf(S, module4);
+    var result = await importsAndExportsOf(S, module4, await sourceOf(S,module4));
     expect(result.exports).to.have.length(1);
     expect(result.exports[0]).to.containSubset({exported: "*", fromModule: "./file1.js", local: null});
   });
 
   it("exports named from", async () => {
-    var result = await importsAndExportsOf(S, module3);
+    var result = await importsAndExportsOf(S, module3, await sourceOf(S,module3));
     expect(result.exports).to.have.length(1);
     expect(result.exports[0]).to.containSubset({exported: "x", fromModule: "./file1.js", local: null});
   });
 
   it("exports functions", async () => {
-    var result = await importsAndExportsOf(S, module6);
+    var result = await importsAndExportsOf(S, module6, await sourceOf(S,module6));
     expect(result.exports).to.have.length(1);
     expect(result.exports[0]).to.containSubset({exported: "bar", local: "bar", type: "function"});
   });
 
   it("exports default function", async () => {
-    var result = await importsAndExportsOf(S, module5);
+    var result = await importsAndExportsOf(S, module5, await sourceOf(S,module5));
     expect(result.exports).to.have.length(1);
     expect(result.exports[0]).to.containSubset({exported: "foo", local: "foo", type: "function"});
   });
 
   it("exports class", async () => {
-    var result = await importsAndExportsOf(S, module7);
+    var result = await importsAndExportsOf(S, module7, await sourceOf(S,module7));
     expect(result.exports).to.have.length(1);
     expect(result.exports[0]).to.containSubset({exported: "Baz", local: "Baz", type: "class"});
   });
 
   it("imports of named vars", async () => {
-    var result = await importsAndExportsOf(S, module1);
+    var result = await importsAndExportsOf(S, module1, await sourceOf(S,module1));
     expect(result.imports).to.have.length(1);
     expect(result.imports[0]).to.containSubset({fromModule: "./file2.js", imported: 'y', local: "yyy"});
   });
 
 
   it("imports *", async () => {
-    var result = await importsAndExportsOf(S, module4);
+    var result = await importsAndExportsOf(S, module4, await sourceOf(S,module4));
     expect(result.imports).to.have.length(1);
     expect(result.imports[0]).to.containSubset({fromModule: "./file2.js", imported: "*", local: "file2"});
   });

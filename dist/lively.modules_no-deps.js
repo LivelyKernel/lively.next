@@ -1398,16 +1398,23 @@
 
   function removePackage$1(System, packageURL) {
     packageURL = packageURL.replace(/\/$/, "");
-    var packageConfigURL = packageURL + "/package.json";
+    var conf = System.getConfig(),
+        packageConfigURL = packageURL + "/package.json";
+
     System.delete(String(packageConfigURL));
-    lively_lang.arr.remove(System.packageConfigPaths, packageConfigURL);
-    delete System.meta[packageConfigURL];
+    lively_lang.arr.remove(conf.packageConfigPaths || [], packageConfigURL);
 
     var p = getPackages$1(System)[packageURL];
     if (p) p.modules.forEach(function (mod) {
       return forgetModule$1(System, mod.name, { forgetEnv: true, forgetDeps: false });
     });
 
+    System.config({
+      meta: defineProperty({}, packageConfigURL, {}),
+      packages: defineProperty({}, packageURL, {}),
+      packageConfigPaths: conf.packageConfigPaths
+    });
+    delete System.meta[packageConfigURL];
     delete System.packages[packageURL];
   }
 
@@ -1422,7 +1429,7 @@
     // and uses the "lively" section as described in `applyLivelyConfig`
 
     var name = packageConfig.name || packageURL.split("/").slice(-1)[0],
-        sysConfig = packageConfig.systemjs,
+        sysConfig = packageConfig.systemjs || {},
         livelyConfig = packageConfig.lively,
         main = packageConfig.main || "index.js";
 
@@ -1497,16 +1504,18 @@
 
   function applyLivelyConfigMeta(System, livelyConfig, packageURL) {
     if (!livelyConfig.meta) return;
-    var pConf = System.packages[packageURL];
+    var pConf = System.getConfig().packages[packageURL] || {},
+        c = { meta: {}, packages: defineProperty({}, packageURL, pConf) };
     Object.keys(livelyConfig.meta).forEach(function (key) {
       var val = livelyConfig.meta[key];
       if (isURL(key)) {
-        System.meta[key] = val;
+        c.meta[key] = val;
       } else {
         if (!pConf.meta) pConf.meta = {};
         pConf.meta[key] = val;
       }
     });
+    System.config(c);
   }
 
   function applyLivelyConfigPackageMap(System, livelyConfig, packageURL) {
