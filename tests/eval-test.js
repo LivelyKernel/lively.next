@@ -347,6 +347,16 @@ describe("persistent definitions", () => {
       expect(varMapper.Foo.c()).equals(4);
     });
 
+    it("class identical to instance constructor", async () => {
+      var isIdentical = (await runEval("class Bar {}; Bar === new Bar().constructor", opts)).value;
+      expect(isIdentical).equals(true);
+    });
+
+    it("redefines class twice and keeps identity", async () => {
+      var isIdentical = (await runEval("class Bar {}; class Bar {}; Bar === new Bar().constructor", opts)).value;
+      expect(isIdentical).equals(true);
+    });
+
   });
 
 });
