@@ -8,10 +8,10 @@ import * as ast from "lively.ast";
 // await s.runEval("1 + 2", {targetModule: moduleId()})
 // livelySystem.localInterface.dynamicCompletionsForPrefix(moduleName, prefix, options)
 
-// var server2 = new HTTPCoreInterface("http://localhost:3000/eval")
+// var server = new HTTPCoreInterface("http://localhost:3000/eval")
 // server.constructor === HTTPCoreInterface
 // server.dynamicCompletionsForPrefix("lively://remote-lively-system/", "proces", {targetModule: "lively://remote-lively-system/"})
-// server.runEval("var x = {foo: 23}; console.log(x)", {targetModule: moduleId()})
+// server.runEval("var x = {foo: 23}; x", {targetModule: m})
 
 
 // var m = "file:///Users/robert/Lively/LivelyKernel2/packages/lively-system-interface/index.js"
@@ -19,7 +19,7 @@ import * as ast from "lively.ast";
 // await server.importsAndExportsOf(m, source)
 // await server.importModule(m)
 // await server.keyValueListOfVariablesInModule(m, source)
-// var result = await server.resourceWrite("file:///Users/robert/Lively/LivelyKernel2/test.js", "bar")
+// var result = await server.resourceWrite("file:///Users/robert/Lively/LivelyKernel2/test.js", "bar2")
 // var result = await server.resourceRead("file:///Users/robert/Lively/LivelyKernel2/test.js")
 // var result = await server.normalizeSync("lively.modules")
 // var result = await server.normalize("lively.modules")
@@ -27,9 +27,12 @@ import * as ast from "lively.ast";
 // var result = await server.getConfig()
 // var result = await server.moduleFormat("file:///Users/robert/Lively/LivelyKernel2/packages/lively-system-interface/index.js")
 // var result = await server.moduleFormat("file:///Users/robert/Lively/LivelyKernel2/test.js")
+// var result = await server.getPackages()
+// result
+// var result = await server.getModules()
 // System.getConfig
 
-class HTTPCoreInterface extends AbstractCoreInterface {
+export class HTTPCoreInterface extends AbstractCoreInterface {
 
   constructor(url) {
     super();
@@ -41,8 +44,8 @@ class HTTPCoreInterface extends AbstractCoreInterface {
   // lively.vm
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  dynamicCompletionsForPrefix(moduleName, prefix, options) {
-    return this.runEvalAndStringify(`await livelySystem.localInterface.dynamicCompletionsForPrefix("${moduleName}", '${prefix}', ${JSON.stringify(options)})`);
+  async dynamicCompletionsForPrefix(moduleName, prefix, options) {
+    return this.runEvalAndStringify(`await livelySystem.localInterface.dynamicCompletionsForPrefix(${JSON.stringify(moduleName)}, ${JSON.stringify(prefix)}, ${JSON.stringify(options)})`);
   }
 
   async runEvalAndStringify(source, opts) {
@@ -51,13 +54,20 @@ var result;
 try {
   result = JSON.stringify(await (async ${ast.transform.wrapInFunction(source)})());
 } catch (e) { result = {isError: true, value: e}; }
-typeof result === "string" ?
+!result || typeof result === "string" ?
   result :
   JSON.stringify(result.isError ? {isError: true, value: result.value.stack || String(result.value)} : result)
 ;
 `, Object.assign({targetModule: "lively://remote-lively-system/runEvalAndStringify"}, opts));
 
-    if (result.isError) return Promise.reject(result.value);
+    if (result && result.isError) return Promise.reject(result.value);
+
+    if (!result || !result.value) return null;
+    
+    if (result.value === "undefined") return undefined;
+    if (result.value === "null") return null;
+    if (result.value === "true") return true;
+    if (result.value === "false") return false;
 
     try {
       return JSON.parse(result.value);
@@ -121,19 +131,19 @@ typeof result === "string" ?
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async importPackage(packageURL) {
-    return this.runEvalAndStringify(`lively.modules.importPackage(${packageURL})`);
+    return this.runEvalAndStringify(`lively.modules.importPackage(${JSON.stringify(packageURL)})`);
   }
 
   async removePackage(packageURL) {
-    return this.runEvalAndStringify(`lively.modules.removePackage(${packageURL})`);
+    return this.runEvalAndStringify(`lively.modules.removePackage(${JSON.stringify(packageURL)})`);
   }
 
   async reloadPackage(packageURL) {
-    return this.runEvalAndStringify(`lively.modules.reloadPackage(${packageURL})`);
+    return this.runEvalAndStringify(`lively.modules.reloadPackage(${JSON.stringify(packageURL)})`);
   }
 
   packageConfChange(source, confFile) {
-    return this.runEvalAndStringify(`await livelySystem.localInterface.packageConfChange(${source}, ${confFile})`);
+    return this.runEvalAndStringify(`await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
 
@@ -162,15 +172,15 @@ typeof result === "string" ?
   }
 
   moduleSourceChange(moduleName, newSource, options) {
-    return this.runEvalAndStringify(`lively.modules.moduleSourceChange(${moduleName}, ${newSource}, ${options})`);
+    return this.runEvalAndStringify(`lively.modules.moduleSourceChange(${JSON.stringify(moduleName)}, ${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
   }
 
   importsAndExportsOf(modId, sourceOrAst) {
-    return this.runEvalAndStringify(`lively.modules.importsAndExportsOf(${modId}, ${sourceOrAst})`);
+    return this.runEvalAndStringify(`lively.modules.importsAndExportsOf(${JSON.stringify(modId)}, ${JSON.stringify(sourceOrAst)})`);
   }
 
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
-    return this.runEvalAndStringify(`await livelySystem.localInterface.keyValueListOfVariablesInModule(${moduleName}, ${sourceOrAst})`);
+    return this.runEvalAndStringify(`await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
   }
 
 }

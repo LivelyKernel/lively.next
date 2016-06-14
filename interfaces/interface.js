@@ -39,27 +39,28 @@ export class AbstractCoreInterface {
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
-  getModules() {
-    return arr.flatmap(this.getPackages(), ea => ea.modules);
+  async getModules() {
+    return arr.flatmap(await this.getPackages(), ea => ea.modules);
   }
   
-  getModule(name) {
-    return this.getModules().find(ea => ea.name === name);
+  async getModule(name) {
+    return (await this.getModules()).find(ea => ea.name === name);
   }
   
-  getPackage(name) {
+  async getPackage(name) {
     name = name.replace(/\/+$/, "");
-    return this.getPackages().find(ea => ea.address === name || ea.name === name);
+    return (await this.getPackages()).find(ea => ea.address === name || ea.name === name);
   }
   
-  getPackageForModule(name) {
+  async getPackageForModule(name) {
     // name = "http://localhost:9001/lively.resources/package.json"
     // this.getPackageForModule("http://localhost:9001/lively.resources/package.json")
-    var p = this.getPackages().find(ea => ea.modules.some(mod => mod.name === name));
+    var p = (await this.getPackages()).find(ea => ea.modules.some(mod => mod.name === name));
     if (p) return p;
   
+    var packages = await this.getPackages();
     return arr.sortBy(
-              this.getPackages().filter(ea => name.indexOf(ea.address) === 0),
+              packages.filter(ea => name.indexOf(ea.address) === 0),
               ea => ea.address.length);
   }
   
@@ -68,7 +69,7 @@ export class AbstractCoreInterface {
         exceptions = ["baseURL"];
     exceptions.forEach(ea => delete jso[ea]);
     // Object.keys(jso).forEach(k => modules.System[k] = jso[k]);
-    this.setConfig(jso);
+    return this.setConfig(jso);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  

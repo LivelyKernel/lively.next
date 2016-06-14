@@ -53,7 +53,7 @@ export async function interactivelyRemoveModule(system, vmEditor, moduleName) {
   await system.forgetModule(moduleName);
   await vmEditor.updateModuleList()
   await system.resourceRemove(fullname);
-  var p = system.getPackageForModule(fullname);
+  var p = await system.getPackageForModule(fullname);
   await vmEditor.uiSelect(p ? p.address : null);
 }
 
@@ -61,7 +61,7 @@ export async function interactivelyAddModule(system, vmEditor, relatedPackageOrM
 
   var root = new URL(system.getConfig().baseURL);
   if (relatedPackageOrModule) {
-    var p = system.getPackage(relatedPackageOrModule) || system.getPackageForModule(relatedPackageOrModule)
+    var p = (await system.getPackage(relatedPackageOrModule)) || (await system.getPackageForModule(relatedPackageOrModule))
     root = new URL(p.address);
   }
 
@@ -130,7 +130,7 @@ async function _createAndLoadModules(system, fullnames) {
   if (!Array.isArray(fullnames)) fullnames = [fullnames];
   var results = [];
   for (let fullname of fullnames) {
-    system.forgetModule(fullname, {forgetDeps: false, forgetEnv: false});
+    await system.forgetModule(fullname, {forgetDeps: false, forgetEnv: false});
     // ensure file record is created to display file in graph even if load
     // error occurs:
     await system.importModule(fullname).catch(err => "...");

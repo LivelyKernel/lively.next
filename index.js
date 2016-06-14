@@ -3,12 +3,12 @@ import {
   interactivelyLoadPackage,
   interactivelyReloadPackage,
   interactivelyUnloadPackage,
-  interactivelyRemovePackage
+  interactivelyRemovePackage,
+  showExportsAndImportsOf
 } from "./commands/packages.js";
 
 import {
   shortModuleName,
-  showExportsAndImportsOf,
   interactivelyChangeModule,
   interactivelyReloadModule,
   interactivelyUnloadModule,
@@ -17,6 +17,7 @@ import {
 } from "./commands/modules.js";
 
 import { LocalCoreInterface } from "./interfaces/local-system.js";
+import { HTTPCoreInterface } from "./interfaces/http-interface.js";
 
 export class Interface {
 
@@ -65,3 +66,4 @@ export class Interface {
 }
 
 export var localInterface = new Interface(new LocalCoreInterface());
+export var serverInterface = new Interface(new HTTPCoreInterface("http://localhost:3000/eval"));

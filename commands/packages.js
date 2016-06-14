@@ -14,8 +14,7 @@ export async function interactivelyCreatePackage(system, vmEditor) {
   var name = await $world.prompt("Enter package name", {input: "", historyId: "lively.vm-editor-add-package-name", useLastInput: true});
   if (!name) throw "Canceled";
 
-  var guessedAddress = (await system.normalize(
-    resource(system.getConfig().baseURL).join(name).asDirectory().url)).replace(/\/\.js$/, "/");
+  var guessedAddress = (await system.normalize(resource((await system.getConfig()).baseURL).join(name).asDirectory().url)).replace(/\/\.js$/, "/");
 
   if (guessedAddress.endsWith(".js"))
     guessedAddress = resource(guessedAddress).parent().url;
@@ -72,7 +71,8 @@ export async function interactivelyLoadPackage(system, vmEditor) {
     throw new Error(`The package path ${relative} is not inside the Lively directory (${lively.shell.WORKSPACE_LK})`)
   }
 
-  var address = URL.root.withFilename(relative);
+  var config = await system.getConfig();
+  var address = new URL(config.basURL).withFilename(relative);
   spec.address = address.toString().replace(/\/$/, "");
   spec.url = new URL(spec.address + "/");
 
@@ -93,7 +93,7 @@ export async function interactivelyLoadPackage(system, vmEditor) {
 
 export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
   var name = resource(await system.normalize(packageURL)).asFile().url;
-  var p = system.getPackage(name) || system.getPackageForModule(name);
+  var p =  (await system.getPackage(name)) || (await system.getPackageForModule(name));
   if (!p) throw new Error("Cannot find package for " + name);
 
   await system.reloadPackage(name);
@@ -102,7 +102,7 @@ export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
 }
 
 export async function interactivelyUnloadPackage(system, vmEditor, packageURL) {
-  var p = system.getPackage(packageURL);
+  var p = await system.getPackage(packageURL);
   var really = await $world.confirm(`Unload package ${p.name}??`);
   if (!really) throw "Canceled";
   await system.removePackage(packageURL);
@@ -111,7 +111,7 @@ export async function interactivelyUnloadPackage(system, vmEditor, packageURL) {
 }
 
 export async function interactivelyRemovePackage(system, vmEditor, packageURL) {
-  var p = system.getPackage(packageURL);
+  var p = await system.getPackage(packageURL);
   var really = await $world.confirm(`Really remove package ${p.name}??`);
   if (!really) throw "Cancelled";
   system.removePackage(packageURL);
@@ -126,7 +126,7 @@ export async function interactivelyRemovePackage(system, vmEditor, packageURL) {
 
 // showExportsAndImportsOf("http://localhost:9001/packages/lively-system-interface/")
 export async function showExportsAndImportsOf(system, packageAddress) {
-  var p = system.getPackage(packageAddress);
+  var p = await system.getPackage(packageAddress);
 
   if (!p)
     throw new Error("Cannot find package " + packageAddress)

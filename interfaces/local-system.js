@@ -3,7 +3,7 @@ import * as ast from "lively.ast";
 import * as vm from "lively.vm";
 import { resource, createFiles } from "lively.resources";
 import { parseJsonLikeObj } from "../helpers.js";
-import { obj, string } from "lively.lang";
+import { obj, string, arr } from "lively.lang";
 
 import { AbstractCoreInterface } from "./interface";
 
@@ -89,7 +89,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     var config = parseJsonLikeObj(source);
     await this.resourceWrite(confFile, JSON.stringify(config, null, 2));
   
-    var p = this.getPackageForModule(confFile);
+    var p = await this.getPackageForModule(confFile);
     S.set(confFile, S.newModule(config));
     if (p && config.systemjs) S.packages[p.address] = config.systemjs;
     if (p && config.systemjs) S.config({packages: {[p.address]: config.systemjs}})
@@ -136,15 +136,15 @@ export class LocalCoreInterface extends AbstractCoreInterface {
         importsExports = this.importsAndExportsOf(id, parsed),
   
         toplevel = ast.query.topLevelDeclsAndRefs(parsed),
-        decls = ast.query.declarationsOfScope(toplevel.scope, true).sortByKey("start"),
-        imports = toplevel.scope.importDecls.pluck("name"),
+        decls = arr.sortByKey(ast.query.declarationsOfScope(toplevel.scope, true), "start"),
+        imports = arr.pluck(toplevel.scope.importDecls, "name"),
   
         col1Width = 0;
   
     return decls.map(v => {
       var nameLength = v.name.length,
           isExport = importsExports.exports.find(ea => ea.local === v.name),
-          isImport = imports.include(v.name);
+          isImport = arr.include(imports, v.name);
       if (isExport) nameLength += " [export]".length;
       if (isImport) nameLength += " [import]".length;
       col1Width = Math.max(col1Width, nameLength);
