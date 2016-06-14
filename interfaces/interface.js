@@ -5,7 +5,7 @@ function todo(methodName) {
   throw new Error(`${methodName} is not yet implemented!`);
 }
 
-export class AbstractSystemInterface {
+export class AbstractCoreInterface {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // lively.vm

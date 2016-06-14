@@ -5,9 +5,9 @@ import { resource, createFiles } from "lively.resources";
 import { parseJsonLikeObj } from "../helpers.js";
 import { obj, string } from "lively.lang";
 
-import { AbstractSystemInterface } from "./interface";
+import { AbstractCoreInterface } from "./interface";
 
-export class LocalSystemInterface extends AbstractSystemInterface {
+export class LocalCoreInterface extends AbstractCoreInterface {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // lively.vm
