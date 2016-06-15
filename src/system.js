@@ -392,6 +392,28 @@ function updateModuleRecordOf(System, fullname, doFunc) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// search
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+async function searchModule(System, moduleName, searchStr) {
+  const src = await sourceOf(System, moduleName);
+  const id = await System.normalize(moduleName);
+  const re = new RegExp(searchStr, "g");
+  let match, res = [];
+  while ((match = re.exec(src)) !== null) {
+    res.push(match.index);
+  }
+  for (let i = 0, j = 0, line = 1; i < src.length && j < res.length; i++) {
+    if (src[i] == '\n') line++;
+    if (i == res[j]) {
+      res[j] = id + ":" + line;
+      j++;
+    }
+  }
+  return res;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // exports
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -400,5 +422,5 @@ export {
   printSystemConfig,
   moduleRecordFor, updateModuleRecordOf,
   loadedModules, moduleEnv, metadata,
-  sourceOf
+  sourceOf, searchModule
 };

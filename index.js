@@ -225,6 +225,7 @@ import {
   moduleEnv as _moduleEnv,
   moduleRecordFor as _moduleRecordFor,
   sourceOf as _sourceOf,
+  searchModule as _searchModule,
   printSystemConfig as _printSystemConfig
 } from "./src/system.js";
 
@@ -240,6 +241,7 @@ function changeSystem(newSystem, makeGlobal) {
 }
 function loadedModules() { return Object.keys(lively.modules.requireMap()); }
 function sourceOf(id) { return _sourceOf(defaultSystem, id); }
+function searchModule(id, str) { return _searchModule(defaultSystem, id, str); }
 function moduleEnv(id) { return _moduleEnv(defaultSystem, id); }
 function moduleRecordFor(id) { return _moduleRecordFor(defaultSystem, id); }
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
@@ -251,6 +253,7 @@ export {
   printSystemConfig,
   changeSystem,
   sourceOf,
+  searchModule,
   moduleEnv,
   moduleRecordFor
 }
