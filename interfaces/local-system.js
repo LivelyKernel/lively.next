@@ -126,10 +126,11 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     return modules.importsAndExportsOf(modId, sourceOrAst);
   }
 
-  keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
-  
-    var parsed = typeof sourceOrAst === "string" ?
-          ast.parse(sourceOrAst) : sourceOrAst,
+  async keyValueListOfVariablesInModule(moduleName, sourceOrAstOrNothing) {
+    if (!sourceOrAstOrNothing) sourceOrAstOrNothing = await this.resourceRead(moduleName);
+
+    var parsed = typeof sourceOrAstOrNothing === "string" ?
+          ast.parse(sourceOrAstOrNothing) : sourceOrAstOrNothing,
         id = this.normalizeSync(moduleName),
         format = this.moduleFormat(id),
         scope = modules.moduleEnv(id).recorder,

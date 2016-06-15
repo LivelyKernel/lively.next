@@ -1,13 +1,14 @@
 import { parseJsonLikeObj } from "../helpers.js";
 import { resource } from "lively.resources";
 
-async function loadPackage(system, vmEditor, packageSpec) {
-  await system.importPackage(packageSpec.address);
-  if (packageSpec.main) await system.importModule(packageSpec.main.toString());
-  if (packageSpec.test) await system.importModule(packageSpec.test.toString());
+async function loadPackage(system, vmEditor, spec) {
+  await system.importPackage(spec.address + "/");
+  if (spec.main) await system.importModule(spec.main.toString());
+  if (spec.test) await system.importModule(spec.test.toString());
   await vmEditor.updateModuleList();
-  await vmEditor.uiSelect(packageSpec);
+  await vmEditor.uiSelect(spec);
   vmEditor.focus();
+  return system.getPackage(spec.address);
 }
 
 export async function interactivelyCreatePackage(system, vmEditor) {
@@ -51,42 +52,40 @@ export async function interactivelyCreatePackage(system, vmEditor) {
 
 export async function interactivelyLoadPackage(system, vmEditor) {
 
+  // var vmEditor = that.owner;
+  // var system = vmEditor.systemInterface()
+
   var spec = {name: "", address: "", type: "package"}
 
-  var candidate = await new Promise((resolve, reject) => {
-    lively.ide.CommandLineSearch.interactivelyChooseFileSystemItem(
-      'choose package directory: ',
-      lively.shell.WORKSPACE_LK,
-      files => files.filterByKey('isDirectory'),
-      "lively.vm-load-package-chooser",
-      [resolve]);
+  var config = await system.getConfig();
+  var related = vmEditor.state.selection && vmEditor.state.selection.name;
+  var relatedPackage = related && (await system.getPackage(related) || await system.getPackageForModule(related));
+
+  var dir = await $world.prompt("What is the package directory?", {
+    input: (relatedPackage && relatedPackage.address) || config.baseURL,
+    historyId: "lively.vm-editor-package-load-history",
+    useLastInput: false
   })
 
-  var path = candidate.path,
-      asURL = new URL("file://" + path),
-      base = new URL("file://" + lively.shell.WORKSPACE_LK),
-      relative = asURL.relativePathFrom(base);
+  if (!dir) throw "Canceled";
 
-  if (relative.include("..")) {
-    throw new Error(`The package path ${relative} is not inside the Lively directory (${lively.shell.WORKSPACE_LK})`)
+  if (dir.indexOf(URL.root.protocol) === 0) {
+    var relative = new URL(dir).relativePathFrom(URL.root);
+    if (relative.include("..")) {
+      throw new Error(`The package path ${relative} is not inside the Lively directory (${URL.root})`)
+    }
   }
-
-  var config = await system.getConfig();
-  var address = new URL(config.basURL).withFilename(relative);
-  spec.address = address.toString().replace(/\/$/, "");
+  
+  spec.address = dir.replace(/\/$/, "");
   spec.url = new URL(spec.address + "/");
+  spec.configFile = spec.url.withFilename("package.json").toString();
 
-  // get the package name
   try {
-    var {output} = await lively.shell.cat(path + "/package.json")
-    JSON.parse(output).name
+    JSON.parse(await system.moduleRead(spec.configFile)).name
   } catch (e) {
-    spec.name = asURL.filename().replace(/\/$/, "");
+    spec.name = spec.url.filename().replace(/\/$/, "");
+    system.resourceEnsureExistance(spec.configFile, `{\n  "name": "${spec.name}",\n  "version": "0.1.0"\n}`);
   }
-
-  var config = resource(spec.address).join("package.json");
-  system.resourceEnsureExistance(config.url, `{\n  "name": "${spec.name}",\n  "version": "0.1.0"\n}`);
-  spec.configFile = config.url;
 
   return loadPackage(system, vmEditor, spec);
 }

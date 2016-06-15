@@ -1,6 +1,7 @@
 import { HttpEvalStrategy } from "lively.vm/lib/eval-strategies.js";
 import { AbstractCoreInterface } from "./interface";
 import * as ast from "lively.ast";
+import { promise } from "lively.lang";
 
 // ast.transform.wrapInFunction("var x = 23; x + foo + bar; class Foo {}; Foo")
 // var s = new HttpEvalStrategy("http://localhost:3000/eval")
@@ -36,6 +37,7 @@ export class HTTPCoreInterface extends AbstractCoreInterface {
 
   constructor(url) {
     super();
+    this.currentEval = null;
     this.url = url;
     this.server = new HttpEvalStrategy(url);
   }
@@ -48,32 +50,39 @@ export class HTTPCoreInterface extends AbstractCoreInterface {
     return this.runEvalAndStringify(`await livelySystem.localInterface.dynamicCompletionsForPrefix(${JSON.stringify(moduleName)}, ${JSON.stringify(prefix)}, ${JSON.stringify(options)})`);
   }
 
-  async runEvalAndStringify(source, opts) {
-    var result = await this.runEval(`
+  runEvalAndStringify(source, opts) {
+    if (this.currentEval) return this.currentEval.then(() => this.runEvalAndStringify(source, opts));
+    return this.currentEval = Promise.resolve().then(async () => {
+      var result = await this.runEval(`
 var result;
 try {
   result = JSON.stringify(await (async ${ast.transform.wrapInFunction(source)})());
 } catch (e) { result = {isError: true, value: e}; }
 !result || typeof result === "string" ?
   result :
-  JSON.stringify(result.isError ? {isError: true, value: result.value.stack || String(result.value)} : result)
+  JSON.stringify(result.isError ?
+    {isError: true, value: result.value.stack || String(result.value)} :
+    result)
 ;
-`, Object.assign({targetModule: "lively://remote-lively-system/runEvalAndStringify"}, opts));
-
-    if (result && result.isError) return Promise.reject(result.value);
-
-    if (!result || !result.value) return null;
-    
-    if (result.value === "undefined") return undefined;
-    if (result.value === "null") return null;
-    if (result.value === "true") return true;
-    if (result.value === "false") return false;
-
-    try {
-      return JSON.parse(result.value);
-    } catch (e) {
-      throw new Error(`Could not JSON.parse the result of runEvalAndStringify: ${result.value}\n(Evaluated expression:\n ${source})`);
-    }
+  `, Object.assign({targetModule: "lively://remote-lively-system/runEvalAndStringify"}, opts));
+  
+      if (result && result.isError) return Promise.reject(result.value);
+  
+      if (!result || !result.value) return null;
+      
+      if (result.value === "undefined") return undefined;
+      if (result.value === "null") return null;
+      if (result.value === "true") return true;
+      if (result.value === "false") return false;
+  
+      try {
+        return JSON.parse(result.value);
+      } catch (e) {
+        throw new Error(`Could not JSON.parse the result of runEvalAndStringify: ${result.value}\n(Evaluated expression:\n ${source})`);
+      }
+    }).then(
+      result => { delete this.currentEval; return result; },
+      err => { delete this.currentEval; return Promise.reject(err); });
   }
 
   runEval(source, options) {

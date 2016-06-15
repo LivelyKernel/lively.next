@@ -8,8 +8,10 @@ export function shortModuleName(system, moduleId, itsPackage) {
   return shortName;
 
   function relative(name) {
+    var conf = system.getConfig();
+    if (conf && conf.constructor === Promise) return name;
     try {
-      return String(new URL(name).relativePathFrom(new URL(system.getConfig().baseURL)))
+      return String(new URL(name).relativePathFrom(new URL((system.getConfig()).baseURL)))
     } catch (e) {}
     return name;
   }
@@ -59,10 +61,10 @@ export async function interactivelyRemoveModule(system, vmEditor, moduleName) {
 
 export async function interactivelyAddModule(system, vmEditor, relatedPackageOrModule) {
 
-  var root = new URL(system.getConfig().baseURL);
+  var root = new URL((await system.getConfig()).baseURL);
   if (relatedPackageOrModule) {
     var p = (await system.getPackage(relatedPackageOrModule)) || (await system.getPackageForModule(relatedPackageOrModule))
-    root = new URL(p.address);
+    if (p) root = new URL(p.address);
   }
 
   var candidates = await _searchForExistingFiles(vmEditor, root, p);
@@ -94,6 +96,21 @@ async function _askForModuleName(system, input) {
 }
 
 async function _searchForExistingFiles(vmEditor, rootURL, p) {
+  if (String(rootURL).match(/^http/)) {
+    return _searchForExistingFilesWeb(vmEditor, rootURL, p)
+  } else {
+    return _searchForExistingFilesManually(vmEditor, rootURL, p);
+  }
+}
+
+async function _searchForExistingFilesManually(vmEditor, rootURL, p) {
+  var createOrLoad = await $world.confirm("Create new module or load an existing one?", ["create", "load"]);
+  if (createOrLoad === 0) return ["[create new module]"];
+  if (createOrLoad === 1) return [await $world.prompt("URL of module?", {input: rootURL, historyId: "lively.vm._searchForExistingFilesManually.url-of-module"})];
+  throw "Canceled"
+}
+
+async function _searchForExistingFilesWeb(vmEditor, rootURL, p) {
   function exclude(webR) {
     var url = webR.getURL();
     if ([".git/", "node_modules/", ".optimized-loading-cache/"].include(url.filename()))
