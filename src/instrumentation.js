@@ -1,6 +1,6 @@
 import { parse, evalSupport } from "lively.ast";
 import { arr, string, properties, classHelper } from "lively.lang";
-import { moduleEnv } from "./system.js";
+import { module } from "./system.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
 var evalCodeTransform = evalSupport.evalCodeTransform;
@@ -154,7 +154,7 @@ function customTranslate(proceed, load) {
            || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
       isCjs = load.metadata.format == 'cjs',
       isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-      env = moduleEnv(System, load.name),
+      env = module(System, load.name).env,
       instrumented = false;
 
   if (isEsm) {

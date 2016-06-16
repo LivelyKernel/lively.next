@@ -21,7 +21,7 @@ describe("code changes of esm format module", () => {
 
   function changeModule2Source() {
     // "internal = 1" => "internal = 2"
-    return module2.sourceChangeAction(s => s.replace(/(internal = )([0-9]+;)/, "$12;debugger;"));
+    return module2.changeSourceAction(s => s.replace(/(internal = )([0-9]+;)/, "$12;debugger;"));
   }
 
   let S, module1, module2, module3;
@@ -70,7 +70,7 @@ describe("code changes of esm format module", () => {
   });
 
   it("modifies imports", async () => {
-    await S.import(module2);
+    await S.import(file2m);
     expect(module2.record.dependencies.map(ea => ea.name))
       .to.deep.equal([], "deps before");
     await module2.changeSource(
@@ -81,7 +81,7 @@ describe("code changes of esm format module", () => {
   });
 
   it("affects dependent modules", async () => {
-    var m1 = await S.import(module1);
+    var m1 = await S.import(file1m);
     expect(module1.env).deep.property("recorder.y").equal(1, "internal state before change");
     expect(m1.x).to.equal(3, "before change");
     await changeModule2Source();
@@ -101,7 +101,7 @@ describe("code changes of esm format module", () => {
   it("adds new exports", async () => {
     var m = await S.import(file2m)
     expect(m).to.not.have.property("foo");
-    await module2.sourceChange(
+    await module2.changeSource(
       "import { z as x } from './sub-dir/file3.js'; export var y = 3; debugger; export var foo = 4;",
       {evaluate: true});
     expect(module2.env.recorder).property("y").equal(3);
@@ -109,7 +109,7 @@ describe("code changes of esm format module", () => {
     expect(m).property("y").equal(3);
     expect(module2.record).property("exports").deep.equal({foo: 4, y: 3}, "module record");
     expect(m).property("foo").equal(4, "module not changes");
-    var m_reimported = await S.import(module2)
+    var m_reimported = await S.import(file2m)
     expect(m_reimported).property("foo").equal(4, "when re-importing, new export missing?");
     expect(m).equal(m_reimported, "module identity has changed");
   });
@@ -150,7 +150,7 @@ describe("code changes of global format module", () => {
     var m = await S.import(file1m);
     expect(module1.env.recorder.zzz).to.equal(4, "zzz state before change");
     expect(m.z).to.equal(2, "export state before change");
-    await module1.sourceChangeAction(s => s.replace(/zzz = 4;/, "zzz = 6;"))
+    await module1.changeSourceAction(s => s.replace(/zzz = 4;/, "zzz = 6;"))
     expect(module1.env.recorder.zzz).to.equal(6, "zzz state after change");
     // expect(m.z).to.equal(3, "export state after change");
     var m = await S.import(file1m)
@@ -160,7 +160,7 @@ describe("code changes of global format module", () => {
 
   it("affects eval state", async () =>{
     await S.import(file1m);
-    await module1.sourceChangeAction(s => s.replace(/zzz = 4/, "zzz = 6"));
+    await module1.changeSourceAction(s => s.replace(/zzz = 4/, "zzz = 6"));
     expect(module1.env.recorder).property("zzz").equal(6)
     expect(module1.env.recorder).property("z").equal(3);
   });
@@ -188,21 +188,21 @@ describe("persistent definitions", () => {
     await removeDir(testProjectDir);
   });
 
-  it("keeps identity of class", async () => {
+  it("keep identity of class", async () => {
     await S.import(file1m);
     var class1 = module1.env.recorder.Foo;
     expect(new class1().m()).equals(23, "Foo class not working");
-    await module1.sourceChangeAction(s => "'format esm'; class Foo { m() { return 24 }}\n")
+    await module1.changeSourceAction(s => "'format esm'; class Foo { m() { return 24 }}\n")
     var class2 = module1.env.recorder.Foo;
     expect(new class2().m()).equals(24, "Foo class not changed");
     expect(class1).equals(class2, "Foo class identity changed");
   });
 
-  it("doesn't keep identity of anonymous class", async () => {
-    await S.import(module1);
+  it("don't keep identity of anonymous class", async () => {
+    await S.import(file1m);
     var class1 = module1.env.recorder.Foo;
     expect(new class1().m()).equals(23, "Foo class not working");
-    await module1.sourceChangeAction(s => "let Foo = class { m() { return 24 }}\n")
+    await module1.changeSourceAction(s => "let Foo = class { m() { return 24 }}\n")
     var class2 = module1.env.recorder.Foo;
     expect(new class2().m()).equals(24, "Foo class not changed");
     expect(class1).not.equals(class2, "Foo class identity the same");

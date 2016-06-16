@@ -18,7 +18,7 @@ var defaultOptions = {
 
 function livelySystemEnv(System) {
   return {
-    moduleEnv: function(id) { return moduleEnv(System, id); },
+    moduleEnv: function(id) { return module(System, id).env; },
 
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.normalizeSync("lively.modules/index.js")); },
@@ -286,7 +286,7 @@ function addGetterSettersForNewVars(System, moduleId) {
   // after eval we modify the env so that all captures vars are wrapped in
   // getter/setter to be notified of changes
   // FIXME: better to not capture via assignments but use func calls...!
-  var rec = moduleEnv(System, moduleId).recorder,
+  var rec = module(System, moduleId).env.recorder,
       prefix = "__lively.modules__";
 
   if (rec === System.global) {
@@ -312,10 +312,8 @@ function addGetterSettersForNewVars(System, moduleId) {
   });
 }
 
-function module(System, moduleName) {
-  const m = new Module(System, moduleName);
-  Object.freeze(m);
-  return m;
+function module(System, moduleName, parent) {
+  return new Module(System, System.normalizeSync(moduleName, parent));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

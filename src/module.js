@@ -1,14 +1,27 @@
-import { graph } from "lively.lang";
-import { computeRequireMap } from './dependencies.js';
+import * as ast from "lively.ast";
+import { arr, obj, graph } from "lively.lang";
+import { computeRequireMap } from  "./dependencies.js";
+import { moduleSourceChange } from "./change.js";
+import { scheduleModuleExportsChange } from "./import-export.js";
+import { module } from "./system.js";
 
 // Module class is primarily used to provide a nice API
 // It does not hold any mutable state
 export default class Module {
+  
   constructor(System, id) {
     this.System = System;
     this.id = id;
   }
   
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // properties
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  // returns Promise<string>
+  fullName() { return this.System.normalize(this.id); }
+  
+  // returns Promise<string>
   source(parent) {
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
@@ -22,9 +35,85 @@ export default class Module {
     return Promise.reject(new Error(`Cannot retrieve source for ${this.id}`));
   }
   
+  async ast() {
+    const source = await this.source();
+    return ast.parse(source);
+  }
+  
   get metadata() {
     var load = this.System.loads ? this.System.loads[this.id] : null;
     return load ? load.metadata : null;
+  }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // loading
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async load() {
+    const fullname = await this.fullName();
+    return this.System.get(fullname) || await this.System.import(fullname);
+  }
+  
+  async isLoaded() {
+    const fullname = await this.fullName();
+    return !!this.System.get(fullname);
+  }
+  
+  async unloadEnv() {
+    const fullname = await this.fullName();
+    delete this.System.get("@lively-env").loadedModules[fullname];
+  }
+
+  unloadDeps(opts) {
+    opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
+    return Promise.all(this.dependents.map(ea => {
+      this.System.delete(ea.id);
+      if (this.System.loads) delete this.System.loads[ea.id];
+      return opts.forgetEnv ? ea.unloadEnv() : Promise.resolve();
+    }));
+  }
+  
+  async unload(opts) {
+    opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
+    if (opts.forgetDeps) await this.unloadDeps(opts);
+    //System.delete(moduleName);
+    this.System.delete(this.id);
+    if (this.System.loads) {
+      //delete this.System.loads[moduleName];
+      delete this.System.loads[this.id];
+    }
+    if (this.System.meta) {
+      //delete System.meta[moduleName];
+      delete this.System.meta[this.id];
+    }
+    if (opts.forgetEnv) {
+      //forgetEnvOf(System, moduleName);
+      await this.unloadEnv();
+    }
+  }
+  
+  async reload(opts) {
+    opts = obj.merge({reloadDeps: true, resetEnv: true}, opts);
+    var toBeReloaded = [this];
+    if (opts.reloadDeps) toBeReloaded = this.dependents.concat(toBeReloaded);
+    await this.unload({forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
+    await Promise.all(toBeReloaded.map(ea => ea.id !== this.id && ea.load()));
+    await this.load();
+  }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // change
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  async changeSourceAction(changeFunc) {
+    const source = await this.source();
+    const newSource = await changeFunc(source);
+    return this.changeSource(newSource, {evaluate: true});
+  }
+
+  async changeSource(newSource, options) {
+    const oldSource = await this.source();
+    return moduleSourceChange(this.System, this.id, oldSource, newSource, this.metadata.format, options);
   }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -37,19 +126,21 @@ export default class Module {
     // module1: export var x = 23;
     // module2: import {x} from "module1.js"; export var y = x + 1;
     // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `findDependentsOf` gives you an answer what modules are "stale" when you
+    // `dependents` gives you an answer what modules are "stale" when you
     // change module1 = module2 + module3
-    return graph.hull(graph.invert(computeRequireMap(this.System)), this.id);
+    return graph.hull(graph.invert(computeRequireMap(this.System)), this.id)
+                .map(mid => module(this.System, mid));
   }
 
-  get requirementsOf() {
+  get requirements() {
     // which modules (module ids) are (in)directly required by module with id
     // Let's say you have
     // module1: export var x = 23;
     // module2: import {x} from "module1.js"; export var y = x + 1;
     // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `findRequirementsOf("./module3")` will report ./module2 and ./module1
-    return graph.hull(computeRequireMap(this.System), this.id);
+    // `module("./module3").requirements` will report ./module2 and ./module1
+    return graph.hull(computeRequireMap(this.System), this.id)
+                .map(mid => module(this.System, mid));
   }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -98,6 +189,100 @@ export default class Module {
   }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // imports and exports
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  async imports() {
+    const parsed = await this.ast();
+    const scope = ast.query.scopes(parsed);
+    const imports = scope.importDecls.reduce((imports, node) => {
+      var nodes = ast.query.nodesAtIndex(parsed, node.start);
+      var importStmt = arr.without(nodes, scope.node)[0];
+      if (!importStmt) return imports;
+  
+      var from = importStmt.source ? importStmt.source.value : "unknown module";
+      if (!importStmt.specifiers.length) // no imported vars
+        return imports.concat([{
+          local:      null,
+          imported:   null,
+          fromModule: from
+        }]);
+  
+      return imports.concat(importStmt.specifiers.map(importSpec => {
+        var imported;
+        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
+        else if (importSpec.type === "ImportDefaultSpecifier" ) imported = "default";
+        else if (importSpec.type === "ImportSpecifier" ) imported = importSpec.imported.name;
+        else if (importStmt.source) imported = importStmt.source.name;
+        else imported = null;
+        return {
+          local:      importSpec.local ? importSpec.local.name : null,
+          imported:   imported,
+          fromModule: from
+        }
+      }))
+    }, []);
+    return arr.uniqBy(imports, (a, b) =>
+      a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule);
+  }
+  
+  async exports() {
+    const parsed = await this.ast();
+    const scope = ast.query.scopes(parsed);
+    const exports = scope.exportDecls.reduce((exports, node) => {
+  
+      var exportsStmt = ast.query.statementOf(scope.node, node);
+      if (!exportsStmt) return exports;
+  
+      var from = exportsStmt.source ? exportsStmt.source.value : null;
+  
+      if (exportsStmt.type === "ExportAllDeclaration") {
+        return exports.concat([{
+          local:           null,
+          exported:        "*",
+          fromModule:      from
+        }])
+      }
+  
+      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+        return exports.concat(exportsStmt.specifiers.map(exportSpec => {
+          return {
+            local:           from ? null : exportSpec.local ? exportSpec.local.name : null,
+            exported:        exportSpec.exported ? exportSpec.exported.name : null,
+            fromModule:      from
+          }
+        }))
+      }
+  
+      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+        return exports.concat(exportsStmt.declaration.declarations.map(decl => {
+          return {
+            local:           decl.id.name,
+            exported:        decl.id.name,
+            type:            exportsStmt.declaration.kind,
+            fromModule:      null
+          }
+        }))
+      }
+  
+      if (exportsStmt.declaration) {
+        return exports.concat({
+          local:           exportsStmt.declaration.id.name,
+          exported:        exportsStmt.declaration.id.name,
+          type:            exportsStmt.declaration.type === "FunctionDeclaration" ?
+                            "function" : exportsStmt.declaration.type === "ClassDeclaration" ?
+                              "class" : null,
+          fromModule:      null
+        })
+      }
+      return exports;
+    }, []);
+  
+    return arr.uniqBy(exports, (a, b) =>
+      a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module records
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
@@ -109,7 +294,7 @@ export default class Module {
     return record;
   }
   
-  updateModuleRecordOf(doFunc) {
+  updateRecord(doFunc) {
     var record = this.record;
     if (!record) throw new Error(`es6 environment global of ${this.id}: module not loaded, cannot get export object!`);
     record.locked = true;

@@ -33,19 +33,19 @@ describe("dependencies", () => {
 
   it("computes required modules of some module", async () => {
     await S.import("file1.js");
-    expect(module1.requirements).to.deep.equal([file2m, file3m]);
+    expect(module1.requirements).to.deep.equal([module2, module3]);
   });
 
   it("computes dependent modules of some module", async () => {
     await S.import("file1.js");
-    expect(module2.dependents).to.deep.equal([file1m]);
+    expect(module2.dependents).to.deep.equal([module1]);
   });
 
   describe("unload module", () => {
     
     it("forgets module and recordings", async () => {
-      await S.import(module1);
-      module2.forget();
+      await S.import("file1.js");
+      await module2.unload();
       expect(module1.record).to.equal(null, "record for module1 still exists");
       expect(module2.record).to.equal(null, "record for module2 still exists");
       expect(module1.env.recorder).to.not.have.property("x");

@@ -1,4 +1,4 @@
-import { moduleRecordFor, metadata, sourceOf } from "./system.js";
+import { module } from "./system.js";
 import {
   instrumentSourceOfEsmModuleLoad,
   instrumentSourceOfGlobalModuleLoad
@@ -6,19 +6,9 @@ import {
 import { scheduleModuleExportsChange } from "./import-export.js";
 import { recordModuleChange } from "./notify.js";
 
-async function moduleSourceChangeAction(System, moduleName, changeFunc) {
-  var source = await sourceOf(System, moduleName),
-      newSource = await changeFunc(source);
-  return moduleSourceChange(System, moduleName, newSource, {evaluate: true});
-}
-
-async function moduleSourceChange(System, moduleName, newSource, options) {
-  var moduleId = await System.normalize(moduleName),
-      oldSource = await sourceOf(System, moduleId),
-      meta = metadata(System, moduleId);
-
+async function moduleSourceChange(System, moduleId, oldSource, newSource, format, options) {
   try {
-    var format = meta.format || undefined, changeResult;
+    var changeResult;
     if (!format || format === "es6" || format === "esm" || format === "register" || format === "defined") {
       changeResult = await moduleSourceChangeEsm(System, moduleId, newSource, options);
     } else if (format === "global") {
@@ -67,20 +57,18 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     // gather the data we need for the update, this includes looking up the
     // imported modules and getting the module record and module object as
     // a fallback (module records only exist for esm modules)
-    var fullname = await System.normalize(depName, load.name),
-        depModule = System.get(fullname) || await System.import(fullname),
-        record = moduleRecordFor(System, fullname);
+    let depModule = module(System, depName, moduleId);
     deps.push({
       name: depName,
-      fullname: fullname,
-      module: depModule,
-      record: moduleRecordFor(System, fullname)
+      fullname: await depModule.fullName(),
+      module: await depModule.load(),
+      record: depModule.record
     });
   }
 
   // 1. update the record so that when its dependencies change and cause a
   // re-execute, the correct code (new version) is run
-  var record = moduleRecordFor(System, load.name);
+  var record = module(System, load.name).record;
   if (record) {
     record.dependencies = deps.map(ea => ea.record);
     record.execute = declared.execute;
@@ -150,12 +138,12 @@ function doInstantiateGlobalModule(System, load) {
       entry.deps.push(gl);
   }
 
-  entry.execute = function executeGlobalModule(require, exports, module) {
+  entry.execute = function executeGlobalModule(require, exports, m) {
 
     // SystemJS exports detection for global modules is based in new props
     // added to the global. In order to allow re-load we remove previously
     // "exported" values
-    var prevMeta = metadata(System, module.id),
+    var prevMeta = module(System, m.id).metadata,
         exports = prevMeta && prevMeta.entry
                && prevMeta.entry.module && prevMeta.entry.module.exports;
     if (exports)
@@ -289,4 +277,4 @@ function runExecuteOfGlobalModule(System, entry) {
   return entry;
 }
 
-export { moduleSourceChange, moduleSourceChangeAction }
+export { moduleSourceChange };

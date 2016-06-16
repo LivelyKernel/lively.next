@@ -61,6 +61,7 @@ describe("package loading", function() {
       var mod = await System.import("some-project");
       expect(mod).to.have.property("x", 2);
       expect(getPackages(System)).to.containSubset([{
+        address: noTrailingSlash(project1aDir),
         main: "entry-a.js",
         meta: {"package.json": {format: "json"}},
         map: {},
