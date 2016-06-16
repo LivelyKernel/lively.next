@@ -6,6 +6,127 @@
 (function (exports,lively_lang,ast) {
   'use strict';
 
+  var babelHelpers = {};
+
+  babelHelpers.asyncToGenerator = function (fn) {
+    return function () {
+      var gen = fn.apply(this, arguments);
+      return new Promise(function (resolve, reject) {
+        function step(key, arg) {
+          try {
+            var info = gen[key](arg);
+            var value = info.value;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+
+          if (info.done) {
+            resolve(value);
+          } else {
+            return Promise.resolve(value).then(function (value) {
+              return step("next", value);
+            }, function (err) {
+              return step("throw", err);
+            });
+          }
+        }
+
+        return step("next");
+      });
+    };
+  };
+
+  babelHelpers.classCallCheck = function (instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  };
+
+  babelHelpers.createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  babelHelpers.defineProperty = function (obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  };
+
+  babelHelpers.get = function get(object, property, receiver) {
+    if (object === null) object = Function.prototype;
+    var desc = Object.getOwnPropertyDescriptor(object, property);
+
+    if (desc === undefined) {
+      var parent = Object.getPrototypeOf(object);
+
+      if (parent === null) {
+        return undefined;
+      } else {
+        return get(parent, property, receiver);
+      }
+    } else if ("value" in desc) {
+      return desc.value;
+    } else {
+      var getter = desc.get;
+
+      if (getter === undefined) {
+        return undefined;
+      }
+
+      return getter.call(receiver);
+    }
+  };
+
+  babelHelpers.inherits = function (subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  };
+
+  babelHelpers.possibleConstructorReturn = function (self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  };
+
+  babelHelpers;
+
   // helper
   function signatureOf(name, func) {
     var source = String(func),
@@ -144,123 +265,6 @@
   var completions = Object.freeze({
     getCompletions: getCompletions
   });
-
-  var asyncToGenerator = function (fn) {
-    return function () {
-      var gen = fn.apply(this, arguments);
-      return new Promise(function (resolve, reject) {
-        function step(key, arg) {
-          try {
-            var info = gen[key](arg);
-            var value = info.value;
-          } catch (error) {
-            reject(error);
-            return;
-          }
-
-          if (info.done) {
-            resolve(value);
-          } else {
-            return Promise.resolve(value).then(function (value) {
-              return step("next", value);
-            }, function (err) {
-              return step("throw", err);
-            });
-          }
-        }
-
-        return step("next");
-      });
-    };
-  };
-
-  var classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  };
-
-  var createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
-
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-
-  var defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-
-    return obj;
-  };
-
-  var get = function get(object, property, receiver) {
-    if (object === null) object = Function.prototype;
-    var desc = Object.getOwnPropertyDescriptor(object, property);
-
-    if (desc === undefined) {
-      var parent = Object.getPrototypeOf(object);
-
-      if (parent === null) {
-        return undefined;
-      } else {
-        return get(parent, property, receiver);
-      }
-    } else if ("value" in desc) {
-      return desc.value;
-    } else {
-      var getter = desc.get;
-
-      if (getter === undefined) {
-        return undefined;
-      }
-
-      return getter.call(receiver);
-    }
-  };
-
-  var inherits = function (subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-    }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  };
-
-  var possibleConstructorReturn = function (self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  };
 
   var defaultTopLevelVarRecorderName = '__lvVarRecorder';
   var startEvalFunctionName = "lively.vm-on-eval-start";
@@ -465,7 +469,7 @@
 
   var EvalResult = function () {
     function EvalResult() {
-      classCallCheck(this, EvalResult);
+      babelHelpers.classCallCheck(this, EvalResult);
 
       this.isEvalResult = true;
       this.value = undefined;
@@ -476,7 +480,7 @@
       this.promiseStatus = "unknown";
     }
 
-    createClass(EvalResult, [{
+    babelHelpers.createClass(EvalResult, [{
       key: "printed",
       value: function printed(options) {
         this.value = print(this.value, Object.assign(options || {}, {
@@ -555,7 +559,7 @@
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -590,7 +594,7 @@
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -717,7 +721,7 @@
   }
 
   var runEval$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -780,22 +784,22 @@
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
-              console.warn("FIX recordDoitRequest");
+              // console.warn("FIX recordDoitRequest")
               // recordDoitRequest(
               //   System, originalCode,
               //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
               //   Date.now());
 
-              _context3.next = 25;
+              _context3.next = 24;
               return vmRunEval(code, options);
 
-            case 25:
+            case 24:
               result = _context3.sent;
 
 
               System.get("@lively-env").evaluationDone(fullname);
               System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
-              console.warn("FIX recordDoitResult");
+              // console.warn("FIX recordDoitResult")
 
               // recordDoitResult(
               //   System, originalCode,
@@ -803,7 +807,7 @@
               //   result, Date.now());
               return _context3.abrupt("return", result);
 
-            case 30:
+            case 28:
             case "end":
               return _context3.stop();
           }
@@ -819,13 +823,13 @@
 
   var EvalStrategy = function () {
     function EvalStrategy() {
-      classCallCheck(this, EvalStrategy);
+      babelHelpers.classCallCheck(this, EvalStrategy);
     }
 
-    createClass(EvalStrategy, [{
+    babelHelpers.createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -849,7 +853,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -875,17 +879,17 @@
   }();
 
   var SimpleEvalStrategy = function (_EvalStrategy) {
-    inherits(SimpleEvalStrategy, _EvalStrategy);
+    babelHelpers.inherits(SimpleEvalStrategy, _EvalStrategy);
 
     function SimpleEvalStrategy() {
-      classCallCheck(this, SimpleEvalStrategy);
-      return possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
+      babelHelpers.classCallCheck(this, SimpleEvalStrategy);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
     }
 
-    createClass(SimpleEvalStrategy, [{
+    babelHelpers.createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -915,7 +919,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -951,14 +955,14 @@
   }(EvalStrategy);
 
   var LivelyVmEvalStrategy = function (_EvalStrategy2) {
-    inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+    babelHelpers.inherits(LivelyVmEvalStrategy, _EvalStrategy2);
 
     function LivelyVmEvalStrategy() {
-      classCallCheck(this, LivelyVmEvalStrategy);
-      return possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
+      babelHelpers.classCallCheck(this, LivelyVmEvalStrategy);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
     }
 
-    createClass(LivelyVmEvalStrategy, [{
+    babelHelpers.createClass(LivelyVmEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
         if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
@@ -971,7 +975,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -1000,7 +1004,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -1034,8 +1038,8 @@
   }(EvalStrategy);
 
   var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
-    inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
-    createClass(HttpEvalStrategy, null, [{
+    babelHelpers.inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
+    babelHelpers.createClass(HttpEvalStrategy, null, [{
       key: "defaultURL",
       get: function get() {
         return "https://localhost:3000/eval";
@@ -1043,29 +1047,29 @@
     }]);
 
     function HttpEvalStrategy(url) {
-      classCallCheck(this, HttpEvalStrategy);
+      babelHelpers.classCallCheck(this, HttpEvalStrategy);
 
-      var _this4 = possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
+      var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
 
       _this4.url = url || _this4.constructor.defaultURL;
       return _this4;
     }
 
-    createClass(HttpEvalStrategy, [{
+    babelHelpers.createClass(HttpEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
-        options = get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
+        options = babelHelpers.get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
         return Object.assign({ serverEvalURL: this.url }, options, { context: null });
       }
     }, {
       key: "sourceForServer",
       value: function sourceForServer(action, arg, options) {
-        return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  options.context = System.global;\n  function evalFunction(source, options) {\n    var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n    lively.modules.System.config(conf);\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: err}));\n})();\n";
+        return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  options.context = System.global;\n  function evalFunction(source, options) {\n    var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n    lively.modules.System.config(conf);\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: String(err.stack || err)}));\n})();\n";
       }
     }, {
       key: "sendRequest",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
           var res;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -1130,7 +1134,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -1157,7 +1161,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
+        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -1222,7 +1226,7 @@
     doit: function doit(printResult, editor, options) {
       var _this5 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         var result;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -1266,7 +1270,7 @@
     printInspect: function printInspect(options) {
       var _this6 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
         var msgMorph, ed;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -1303,7 +1307,7 @@
     evalSelection: function evalSelection(printIt) {
       var _this7 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options, result;
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
@@ -1330,7 +1334,7 @@
     doListProtocol: function doListProtocol() {
       var _this8 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
         var m, prefix, completions, lister;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -1374,7 +1378,7 @@
     doSave: function doSave() {
       var _this9 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
@@ -1436,9 +1440,9 @@
     setStatusMessage: function setStatusMessage() {
       throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
     }
-  }, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+  }, babelHelpers.defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
     throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-  }), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+  }), babelHelpers.defineProperty(_EvalableTextMorphTra, "showError", function showError() {
     throw new Error("showError() not yet implemented for " + this.constructor.name);
   }), _EvalableTextMorphTra);
 
