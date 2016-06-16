@@ -30,12 +30,29 @@ export class AbstractCoreInterface {
   // system related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  normalizeSync(name, parentName, isPlugin) { todo("normalizeSync") }
-  normalize(name, parent, parentAddress)    { todo("normalize") }
-  printSystemConfig()                       { todo("printSystemConfig") }
-  getConfig()                               { todo("getConfig") }
-  setConfig(conf)                           { todo("setConfig") }
-  getPackages()                             { todo("getPackages") }
+  normalizeSync(name, parentName, isPlugin) {
+    return modules.System.decanonicalize(name, parentName, isPlugin);
+  }
+  
+  normalize(name, parent, parentAddress) {
+    return modules.System.normalize(name, parent, parentAddress);
+  }
+  
+  printSystemConfig() {
+    return modules.printSystemConfig();
+  }
+  
+  getConfig() {
+    return modules.System.getConfig();
+  }
+  
+  setConfig(conf) {
+    modules.System.config(conf);
+  }
+  
+  getPackages() {
+    return modules.getPackages();
+  }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
@@ -79,14 +96,23 @@ export class AbstractCoreInterface {
   // module related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  importModule(name)                                       { todo("importModule") }
-  forgetModule(name, opts)                                 { todo("forgetModule") }
-  reloadModule(name, opts)                                 { todo("reloadModule") }
-  moduleFormat(moduleName)                                 { todo("moduleFormat") }
-  moduleSourceChange(moduleName, newSource, options)       { todo("moduleSourceChange") }
-  importsAndExportsOf(modId, sourceOrAst)                  { todo("importsAndExportsOf") }
-  keyValueListOfVariablesInModule(moduleName, sourceOrAst) { todo("keyValueListOfVariablesInModule") }
+  importModule(name) {
+    return modules.System.import(name);
+  }
+  
+  forgetModule(name, opts) {
+    return modules.module(name).unload(opts);
+  }
 
+  reloadModule(name, opts) {
+    return modules.module(name).reload(opts);
+  }
+  
+  moduleFormat(moduleName) {
+    var loads = modules.System.loads;
+    return loads && loads[moduleName] && loads[moduleName].metadata && loads[moduleName].metadata.format;
+  }
+  
   async moduleRead(moduleName) {
     return this.resourceRead(await this.normalize(moduleName));
   }
@@ -95,4 +121,47 @@ export class AbstractCoreInterface {
     return this.resourceWrite(await this.normalize(moduleName), source);
   }
 
+  moduleSourceChange(moduleName, newSource, options) {
+    return modules.module(moduleName).changeSource(newSource, options);
+  }
+
+  keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
+  
+    var ast = typeof sourceOrAst === "string" ?
+          lively.ast.parse(sourceOrAst) : sourceOrAst,
+        mod = modules.module(moduleName),
+        format = mod.metadata.format,
+        scope = mod.env.recorder,
+  
+        toplevel = lively.ast.query.topLevelDeclsAndRefs(ast),
+        decls = lively.ast.query.declarationsOfScope(toplevel.scope, true).sortByKey("start"),
+        imports = toplevel.scope.importDecls.pluck("name"),
+  
+        col1Width = 0;
+
+    return mod.exports().then(exports => {
+        decls.map(v => {
+        var nameLength = v.name.length,
+            isExport = exports.find(ea => ea.local === v.name),
+            isImport = imports.include(v.name);
+        if (isExport) nameLength += " [export]".length;
+        if (isImport) nameLength += " [import]".length;
+        col1Width = Math.max(col1Width, nameLength);
+        return {
+            isExport: isExport,
+            isImport: isImport,
+            name: v.name,
+            value: scope[v.name],
+            node: v,
+            printedName: v.name + (isExport ? " [export]" : "") + (isImport ? " [import]" : ""),
+            printedValue: lively.lang.obj.inspect(scope[v.name], {maxDepth: 1}).replace(/\n/g, "")
+        }
+        })
+        .map(val => ({
+        isListItem: true,
+        value: val,
+        string: val.printedName + lively.lang.string.indent(" = " + val.printedValue, " ", col1Width-val.printedName.length)
+        }));
+      });
+    }
 }
