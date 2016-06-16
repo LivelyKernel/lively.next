@@ -222,10 +222,7 @@ import { obj, arr } from "lively.lang";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
   getSystem, removeSystem, prepareSystem,
-  moduleEnv as _moduleEnv,
-  moduleRecordFor as _moduleRecordFor,
-  sourceOf as _sourceOf,
-  searchModule as _searchModule,
+  module as _module,
   printSystemConfig as _printSystemConfig
 } from "./src/system.js";
 
@@ -240,10 +237,7 @@ function changeSystem(newSystem, makeGlobal) {
   return newSystem;
 }
 function loadedModules() { return Object.keys(lively.modules.requireMap()); }
-function sourceOf(id) { return _sourceOf(defaultSystem, id); }
-function searchModule(id, str) { return _searchModule(defaultSystem, id, str); }
-function moduleEnv(id) { return _moduleEnv(defaultSystem, id); }
-function moduleRecordFor(id) { return _moduleRecordFor(defaultSystem, id); }
+function module(id) { return _module(defaultSystem, id); }
 function printSystemConfig() { return _printSystemConfig(defaultSystem); }
 export {
   defaultSystem as System,
@@ -252,10 +246,7 @@ export {
   loadedModules,
   printSystemConfig,
   changeSystem,
-  sourceOf,
-  searchModule,
-  moduleEnv,
-  moduleRecordFor
+  module
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -295,20 +286,10 @@ export { moduleSourceChange };
 // dependencies
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
-  findDependentsOf as _findDependentsOf,
-  findRequirementsOf as _findRequirementsOf,
-  forgetModule as _forgetModule,
-  reloadModule as _reloadModule,
   computeRequireMap
 } from './src/dependencies.js'
-import { importsAndExportsOf as _importsAndExportsOf } from './src/import-export.js';
-function findDependentsOf(module) { return _findDependentsOf(defaultSystem, module); }
-function findRequirementsOf(module) { return _findRequirementsOf(defaultSystem, module); }
-function forgetModule(module, opts) { return _forgetModule(defaultSystem, module, opts); }
-function reloadModule(module, opts) { return _reloadModule(defaultSystem, module, opts); }
 function requireMap() { return computeRequireMap(defaultSystem); }
-function importsAndExportsOf(moduleId, sourceOrAst) { return _importsAndExportsOf(defaultSystem, moduleId, sourceOrAst); }
-export { findDependentsOf, findRequirementsOf, forgetModule, reloadModule, requireMap, importsAndExportsOf }
+export { requireMap }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // hooks

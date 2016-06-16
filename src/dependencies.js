@@ -1,11 +1,7 @@
 import { graph, arr, obj } from "lively.lang";
 import { loadedModules } from "./system.js";
 
-export {
-  findDependentsOf, findRequirementsOf, computeRequireMap,
-  forgetModuleDeps, forgetModule,
-  reloadModule
-};
+export { computeRequireMap };
 
 function forgetEnvOf(System, fullname) {
   delete System.get("@lively-env").loadedModules[fullname];
@@ -80,27 +76,4 @@ function computeRequireMap(System) {
     requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(ea => ea.name);
     return requireMap;
   }, {});
-}
-
-function findDependentsOf(System, name) {
-  // which modules (module ids) are (in)directly import module with id
-  // Let's say you have
-  // module1: export var x = 23;
-  // module2: import {x} from "module1.js"; export var y = x + 1;
-  // module3: import {y} from "module2.js"; export var z = y + 1;
-  // `findDependentsOf` gives you an answer what modules are "stale" when you
-  // change module1 = module2 + module3
-  var id = System.normalizeSync(name);
-  return graph.hull(graph.invert(computeRequireMap(System)), id);
-}
-
-function findRequirementsOf(System, name) {
-  // which modules (module ids) are (in)directly required by module with id
-  // Let's say you have
-  // module1: export var x = 23;
-  // module2: import {x} from "module1.js"; export var y = x + 1;
-  // module3: import {y} from "module2.js"; export var z = y + 1;
-  // `findRequirementsOf("./module3")` will report ./module2 and ./module1
-  var id = System.normalizeSync(name);
-  return graph.hull(computeRequireMap(System), id);
 }

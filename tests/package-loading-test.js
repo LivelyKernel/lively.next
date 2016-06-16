@@ -4,7 +4,7 @@ import { expect } from "mocha-es6";
 import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
 
 import { obj } from "lively.lang";
-import { getSystem, removeSystem, printSystemConfig, loadedModules, moduleEnv } from "../src/system.js";
+import { getSystem, removeSystem, printSystemConfig, loadedModules, module } from "../src/system.js";
 import { registerPackage, importPackage, applyConfig, getPackages } from "../src/packages.js";
 
 var testDir = System.normalizeSync("lively.modules/tests/");
@@ -59,13 +59,13 @@ describe("package loading", function() {
     it("registers and loads a package", async () => {
       await registerPackage(System, project1aDir);
       var mod = await System.import("some-project");
-      expect(mod).to.have.property("x", 2)
-      expect(System.get("@lively-env").packages).to.containSubset({
-        [noTrailingSlash(project1aDir)]: {
-          main: "entry-a.js",
-          meta: {"package.json": {format: "json"}},
-          map: {},
-          names: ["some-project"]}})
+      expect(mod).to.have.property("x", 2);
+      expect(getPackages(System)).to.containSubset([{
+        main: "entry-a.js",
+        meta: {"package.json": {format: "json"}},
+        map: {},
+        names: ["some-project"]
+      }]);
     });
 
     it("registers and loads dependent packages", async () => {
@@ -78,22 +78,22 @@ describe("package loading", function() {
 
     it("enumerates packages", async () => {
       await importPackage(System, project2Dir);
-      expect(getPackages(System)).to.containSubset({
-        [noTrailingSlash(project2Dir)]: {
+      expect(getPackages(System)).to.containSubset([
+        {
           address: noTrailingSlash(project2Dir),
           name: `dependent-project`, names: [`dependent-project`],
           modules: [
             {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
-            { deps: [], name: `${project2Dir}package.json`}],
+            {deps: [], name: `${project2Dir}package.json`}],
         },
-        [noTrailingSlash(project1aDir)]: {
+        {
           address: noTrailingSlash(project1aDir),
           name: `some-project`, names: [`some-project`],
           modules: [
             {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-a.js`},
             {deps: [],name: `${project1aDir}other.js`},
             {deps: [],name: `${project1aDir}package.json`}]
-        }})
+        }])
     })
   });
 
@@ -191,7 +191,7 @@ describe("mutual dependent packages", () => {
   it("can be imported", () =>
     importPackage(System, p1Dir)
       .then(() => {
-        expect(moduleEnv(System, `${p1Dir}index.js`).recorder).property("y").equals(2);
+        expect(module(System, `${p1Dir}index.js`).env.recorder).property("y").equals(2);
         // FIXME! see https://github.com/LivelyKernel/lively.modules/issues/6
         // expect(moduleEnv(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
       }))

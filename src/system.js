@@ -2,6 +2,7 @@ import * as ast from "lively.ast";
 import { obj, properties } from "lively.lang";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
+import Module from "./module.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -281,45 +282,6 @@ function printSystemConfig(System) {
 
 function loadedModules(System) { return System.get("@lively-env").loadedModules; }
 
-function moduleEnv(System, moduleId) {
-  var ext = System.get("@lively-env");
-
-  if (ext.loadedModules[moduleId]) return ext.loadedModules[moduleId];
-
-  var env = {
-    loadError: undefined,
-    recorderName: "__lvVarRecorder",
-    dontTransform: [
-        "__lvVarRecorder",
-        "global", "self",
-        "_moduleExport", "_moduleImport",
-        "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-      ].concat(ast.query.knownGlobals),
-    recorder: Object.create(System.global, {
-      _moduleExport: {
-        get() { return (name, val) => scheduleModuleExportsChange(System, moduleId, name, val, true/*add export*/); }
-      },
-      _moduleImport: {
-        get: function() {
-          return (imported, name) => {
-            var id = System.normalizeSync(imported, moduleId),
-                imported = System._loader.modules[id];
-            if (!imported) throw new Error(`import of ${name} failed: ${imported} (tried as ${id}) is not loaded!`);
-            if (name == undefined) return imported.module;
-            if (!imported.module.hasOwnProperty(name))
-              console.warn(`import from ${imported}: Has no export ${name}!`);
-            return imported.module[name];
-          }
-        }
-      }
-    })
-  }
-
-  env.recorder.System = System;
-
-  return ext.loadedModules[moduleId] = env;
-}
-
 function addGetterSettersForNewVars(System, moduleId) {
   // after eval we modify the env so that all captures vars are wrapped in
   // getter/setter to be notified of changes
@@ -350,67 +312,10 @@ function addGetterSettersForNewVars(System, moduleId) {
   });
 }
 
-function sourceOf(System, moduleName, parent) {
-  return System.normalize(moduleName, parent)
-    .then(id => {
-      if (id.match(/^http/) && System.global.fetch) {
-        return System.global.fetch(id).then(res => res.text())
-      }
-      if (id.match(/^file:/) && System.get("@system-env").node) {
-        return new Promise((resolve, reject) =>
-          System._nodeRequire("fs").readFile(id.replace(/^file:\/\//, ""), (err, content) =>
-            err ? reject(err) : resolve(String(content))))
-      }
-      return Promise.reject(new Error(`Cannot retrieve source for ${id}`));
-    });
-}
-
-function metadata(System, moduleId) {
-  var load = System.loads ? System.loads[moduleId] : null;
-  return load ? load.metadata : null;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// module records
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function moduleRecordFor(System, fullname) {
-  var record = System._loader.moduleRecords[fullname];
-  if (!record) return null;
-  if (!record.hasOwnProperty("__lively_modules__"))
-    record.__lively_modules__ = {evalOnlyExport: {}};
-  return record;
-}
-
-function updateModuleRecordOf(System, fullname, doFunc) {
-  var record = moduleRecordFor(System, fullname);
-  if (!record) throw new Error(`es6 environment global of ${fullname}: module not loaded, cannot get export object!`);
-  record.locked = true;
-  try {
-    return doFunc(record);
-  } finally { record.locked = false; }
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// search
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-async function searchModule(System, moduleName, searchStr) {
-  const src = await sourceOf(System, moduleName);
-  const id = await System.normalize(moduleName);
-  const re = new RegExp(searchStr, "g");
-  let match, res = [];
-  while ((match = re.exec(src)) !== null) {
-    res.push(match.index);
-  }
-  for (let i = 0, j = 0, line = 1; i < src.length && j < res.length; i++) {
-    if (src[i] == '\n') line++;
-    if (i == res[j]) {
-      res[j] = id + ":" + line;
-      j++;
-    }
-  }
-  return res;
+function module(System, moduleName) {
+  const m = new Module(System, moduleName);
+  Object.freeze(m);
+  return m;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -420,7 +325,5 @@ async function searchModule(System, moduleName, searchStr) {
 export {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig,
-  moduleRecordFor, updateModuleRecordOf,
-  loadedModules, moduleEnv, metadata,
-  sourceOf, searchModule
+  loadedModules, module
 };
