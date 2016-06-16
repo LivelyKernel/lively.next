@@ -274,7 +274,7 @@ describe("persistent definitions", () => {
 
   });
 
-  describe("objects", () => {
+  xdescribe("objects", () => {
 
     it("keeps identy", async () => {
       var result1 = await runEval("var x = {y: 23}", opts),
@@ -324,7 +324,7 @@ describe("persistent definitions", () => {
   });
 
 
-  describe("class", () => {
+  xdescribe("class", () => {
 
     beforeEach(() =>
       runEval("class Foo {a() { return 1 } get b() { return 2 } static c() { return 3; }}", opts))
