@@ -18427,10 +18427,30 @@ module.exports = function(acorn) {
     };
   }
 
+  function objectLiteral(keysAndValues) {
+    var props = [];
+    for (var i = 0; i < keysAndValues.length; i += 2) {
+      var key = keysAndValues[i];
+      if (typeof key === "string") key = id(key);
+      props.push({
+        type: "Property",
+        key: key,
+        computed: key.type !== "Identifier",
+        shorthand: false,
+        value: keysAndValues[i + 1]
+      });
+    }
+    return {
+      properties: props,
+      type: "ObjectExpression"
+    };
+  }
+
 var nodes = Object.freeze({
     isIdentifier: isIdentifier,
     id: id,
     literal: literal,
+    objectLiteral: objectLiteral,
     exprStmt: exprStmt,
     returnStmt: returnStmt,
     empty: empty,
@@ -19363,9 +19383,7 @@ var nodes = Object.freeze({
     for (var i = parsed.body.length - 1; i >= 0; i--) {
       var stmt = parsed.body[i];
       if (topLevel.classDecls.indexOf(stmt) !== -1) {
-        if (options.declarationWrapper) {
-          parsed.body.splice(i, 1, varDecl(stmt.id, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false), "var"));
-        } else {
+        if (false && options.declarationWrapper) {} else {
           parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
         }
       }
@@ -19402,6 +19420,7 @@ var nodes = Object.freeze({
         ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
       }
     }
+
     return topLevel.scope.catches.map(function (ea) {
       return ea.name;
     }).concat(ignoreDecls.map(function (ea) {
@@ -19424,9 +19443,6 @@ var nodes = Object.freeze({
         ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
       }
     }
-
-    // ignore stuff like var bar = class Foo {}
-    ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(topLevel.scope.classExprs));
 
     var ignoredImportAndExportNames = [];
     for (var i = 0; i < parsed.body.length; i++) {
@@ -19871,6 +19887,8 @@ var capturing = Object.freeze({
   }
 
   function declarationWrapperForKeepingValues(name, kind, value, recorder) {
+    // show(`declaring ${name}, a ${kind}, value ${value}`);
+
     if (kind === "function") return value;
 
     if (kind === "class" && recorder.hasOwnProperty(name)) {

@@ -397,7 +397,7 @@ describe("declarations", () => {
       .equals("_rec.x = _define('x', 'var', 23, _rec);");
   });
 
-  it("wraps class decls", () => {
+  xit("wraps class decls", () => {
     expect(stringify(
           rewriteToCaptureTopLevelVariables(
             parse("class Foo {}"), {name: "_rec", type: "Identifier"},
