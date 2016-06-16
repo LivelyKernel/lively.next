@@ -130,6 +130,10 @@ describe("ast.capturing", function() {
                  "var bar = class Foo {}",
                  "_rec.bar = class Foo {\n};");
 
+      testVarTfm("captures var that has same name as class expr",
+                 "var Foo = class Foo {}; new Foo();",
+                 "_rec.Foo = class Foo {\n};\nnew _rec.Foo();");
+
     });
 
     describe("template strings", () => {
