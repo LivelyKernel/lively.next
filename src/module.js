@@ -314,10 +314,13 @@ export default class Module {
     while ((match = re.exec(src)) !== null) {
       res.push(match.index);
     }
-    for (let i = 0, j = 0, line = 1; i < src.length && j < res.length; i++) {
-      if (src[i] == '\n') line++;
+    for (let i = 0, j = 0, line = 1, start = 0; i < src.length && j < res.length; i++) {
+      if (src[i] == '\n') {
+        line++;
+        start = i + 1;
+      }
       if (i == res[j]) {
-        res[j] = this.id + ":" + line;
+        res[j] = { file: this.id, line, column: i - start };
         j++;
       }
     }

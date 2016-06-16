@@ -23,7 +23,7 @@ describe("search", () => {
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     await createFiles(testProjectDir, testProjectSpec);
-  })
+  });
 
   after(async () => {
     await removeDir(testProjectDir);
@@ -33,12 +33,20 @@ describe("search", () => {
     
     it("finds string constants", async () => {
       const res = await module1.search("hello");
-      expect(res).to.be.deep.eql([file1m + ":2"]);
-    })
+      expect(res).to.be.deep.eql([{
+        file: file1m,
+        line: 2,
+        column: 16
+      }]);
+    });
     
     it("finds comments", async () => {
       const res = await module2.search("comment");
-      expect(res).to.be.deep.eql([file2m + ":1"]);
+      expect(res).to.be.deep.eql([{
+        file: file2m,
+        line: 1,
+        column: 27
+      }]);
     })
   });
 
