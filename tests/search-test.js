@@ -36,7 +36,8 @@ describe("search", () => {
       expect(res).to.be.deep.eql([{
         file: file1m,
         line: 2,
-        column: 16
+        column: 16,
+        length: 5
       }]);
     });
     
@@ -45,9 +46,27 @@ describe("search", () => {
       expect(res).to.be.deep.eql([{
         file: file2m,
         line: 1,
-        column: 27
+        column: 27,
+        length: 7
       }]);
-    })
+    });
+    
+    describe("by regex", () => {
+      it("finds comments", async () => {
+        const res = await module1.search(/(im|ex)port/);
+        expect(res).to.be.deep.eql([{
+          file: file1m,
+          line: 1,
+          column: 0,
+          length: 6
+        }, {
+          file: file1m,
+          line: 2,
+          column: 0,
+          length: 6
+        }]);
+      });
+    });
   });
   
   describe("in all loaded modules", () => {
@@ -63,7 +82,8 @@ describe("search", () => {
       expect(res).to.be.deep.eql([{
         file: file1m,
         line: 2,
-        column: 16
+        column: 16,
+        length: 5
       }]);
     });
     
@@ -73,7 +93,8 @@ describe("search", () => {
       expect(res).to.be.deep.eql([{
         file: file2m,
         line: 1,
-        column: 27
+        column: 27,
+        length: 7
       }]);
     });
     
@@ -84,12 +105,36 @@ describe("search", () => {
       expect(res).to.be.deep.eql([{
         file: file1m,
         line: 2,
-        column: 0
+        column: 0,
+        length: 6
       },{
         file: file2m,
         line: 1,
-        column: 0
+        column: 0,
+        length: 6
       }]);
+    });
+    
+    describe("by regex", () => {
+      it("finds comments", async () => {
+        const res = await searchLoadedModules(S, /(im|ex)port/);
+        expect(res).to.be.deep.eql([{
+          file: file1m,
+          line: 1,
+          column: 0,
+          length: 6
+        }, {
+          file: file1m,
+          line: 2,
+          column: 0,
+          length: 6
+        }, {
+          file: file2m,
+          line: 1,
+          column: 0,
+          length: 6
+        }]);
+      });
     });
   });
 
