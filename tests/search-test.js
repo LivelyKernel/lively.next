@@ -3,7 +3,8 @@
 import { expect } from "mocha-es6";
 
 import { removeDir, createFiles } from "./helpers.js";
-import { getSystem, searchModule } from "../src/system.js";
+import { getSystem } from "../src/system.js";
+import module from "../src/module.js";
 
 const dir = System.normalizeSync("lively.modules/tests/"),
       testProjectDir = dir + "test-project-dir/",
@@ -17,9 +18,11 @@ const dir = System.normalizeSync("lively.modules/tests/"),
 
 describe("search", () => {
 
-  let S;
+  let S, module1, module2;
   before(async () => {
     S = getSystem("test", {baseURL: dir});
+    module1 = module(S, file1m);
+    module2 = module(S, file2m);
     await createFiles(testProjectDir, testProjectSpec);
   })
 
@@ -30,12 +33,12 @@ describe("search", () => {
   describe("in modules", () => {
     
     it("finds string constants", async () => {
-      const res = await searchModule(S, file1m, "hello");
+      const res = await module1.search("hello");
       expect(res).to.be.deep.eql([file1m + ":2"]);
     })
     
     it("finds comments", async () => {
-      const res = await searchModule(S, file2m, "comment");
+      const res = await module2.search("comment");
       expect(res).to.be.deep.eql([file2m + ":1"]);
     })
   });

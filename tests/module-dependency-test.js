@@ -3,8 +3,8 @@
 import { expect } from "mocha-es6";
 import { removeDir, createFiles } from "./helpers.js";
 
-import { getSystem, removeSystem, moduleRecordFor, moduleEnv } from "../src/system.js";
-import { findRequirementsOf, findDependentsOf, forgetModule } from "../src/dependencies.js";
+import { getSystem, removeSystem } from "../src/system.js";
+import module from "../src/module.js";
 
 var dir = System.normalizeSync("lively.modules/tests/"),
     testProjectDir = dir + "test-project-1-dir/",
@@ -14,44 +14,43 @@ var dir = System.normalizeSync("lively.modules/tests/"),
       "package.json": '{"name": "test-project-1", "main": "file1.js", "systemjs": {"main": "file1.js"}}',
       "sub-dir": {"file3.js": "export var z = 2;"}
     },
-    module1 = testProjectDir + "file1.js",
-    module2 = testProjectDir + "file2.js",
-    module3 = testProjectDir + "sub-dir/file3.js";
+    file1m = testProjectDir + "file1.js",
+    file2m = testProjectDir + "file2.js",
+    file3m = testProjectDir + "sub-dir/file3.js";
 
 
 describe("dependencies", () => {
 
-  var System;
+  let S, module1, module2, module3;
   beforeEach(() => {
-    System = getSystem("test", {baseURL: testProjectDir});
+    S = getSystem("test", {baseURL: testProjectDir});
+    module1 = module(S, file1m);
+    module2 = module(S, file2m);
+    module3 = module(S, file3m);
     return createFiles(testProjectDir, testProjectSpec);
   });
 
   afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
 
   it("computes required modules of some module", async () => {
-    await System.import("file1.js");
-    var reqs = findRequirementsOf(System, "file1.js");
-    expect(reqs).to.deep.equal([testProjectDir + "file2.js", testProjectDir + "sub-dir/file3.js"]);
+    await S.import("file1.js");
+    expect(module1.requirements()).to.deep.equal([module2, module3]);
   });
 
   it("computes dependent modules of some module", async () => {
-    await System.import("file1.js");
-    var deps = findDependentsOf(System, "file2.js");
-    expect(deps).to.deep.equal([testProjectDir + "file1.js"]);
+    await S.import("file1.js");
+    expect(module2.dependents()).to.deep.equal([module1]);
   });
-
 
   describe("unload module", () => {
     
     it("forgets module and recordings", async () => {
-      await System.import(module1);
-      forgetModule(System, module2);
-      expect(moduleRecordFor(System, module1)).to.equal(null, "record for module1 still exists");
-      expect(moduleRecordFor(System, module2)).to.equal(null, "record for module2 still exists");
-      debugger;
-      expect(moduleEnv(System, module1).recorder).to.not.have.property("x");
-      expect(moduleEnv(System, module2).recorder).to.not.have.property("y");
+      await S.import("file1.js");
+      await module2.unload();
+      expect(module1.record).to.equal(null, "record for module1 still exists");
+      expect(module2.record).to.equal(null, "record for module2 still exists");
+      expect(module1.env.recorder).to.not.have.property("x");
+      expect(module2.env.recorder).to.not.have.property("y");
     });
   
   });

@@ -1,7 +1,7 @@
 import { parse } from "lively.ast";
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";
 import { arr, string, properties, classHelper } from "lively.lang";
-import { moduleEnv } from "./system.js";
+import module from "./module.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
 var isNode = System.get("@system-env").node;
@@ -153,7 +153,7 @@ function customTranslate(proceed, load) {
            || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
       isCjs = load.metadata.format == 'cjs',
       isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-      env = moduleEnv(System, load.name),
+      env = module(System, load.name).env(),
       instrumented = false;
 
   if (isEsm) {

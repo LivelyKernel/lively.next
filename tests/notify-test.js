@@ -5,7 +5,6 @@ import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem } from "../src/system.js";
 // import { runEval } from "../src/eval.js";
-import { moduleSourceChangeAction } from "../src/change.js";
 import { getNotifications, subscribe, unsubscribe } from "../src/notify.js";
 
 var dir = System.normalizeSync("lively.modules/tests/"),

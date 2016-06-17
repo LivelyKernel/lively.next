@@ -1,7 +1,7 @@
 import { arr, string, promise } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
-
-import { computeRequireMap as requireMap, forgetModule } from './dependencies.js'
+import module from "../src/module.js";
+import { computeRequireMap as requireMap } from './dependencies.js'
 
 // helper
 function isJsFile(url) { return /\.js/i.test(url); }
@@ -80,7 +80,7 @@ function removePackage(System, packageURL) {
   var p = getPackages(System)[packageURL]
   if (p)
     p.modules.forEach(mod =>
-      forgetModule(System, mod.name, {forgetEnv: true, forgetDeps: false}));
+      module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
 
   System.config({
     meta: {[packageConfigURL]: {}},
@@ -299,15 +299,14 @@ function groupIntoPackages(System, moduleNames, packageNames) {
 }
 
 function getPackages(System) {
-  // returns a map like
+  // returns a list like
   // ```
-  // {
-  // package-address: {
+  // [{
   //   address: package-address,
   //   modules: [module-name-1, module-name-2, ...],
   //   name: package-name,
   //   names: [package-name, ...]
-  // }, ...
+  // }, ... ]
   // ```
 
   var map = requireMap(System),
@@ -315,7 +314,7 @@ function getPackages(System) {
       sysPackages = System.packages,
       livelyPackages = System.get("@lively-env").packages,
       packageNames = lively.lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
-      result = {};
+      result = [];
 
   groupIntoPackages(System, modules, packageNames).mapGroups((packageAddress, moduleNames) => {
     var systemP = sysPackages[packageAddress],
@@ -326,7 +325,7 @@ function getPackages(System) {
 
     moduleNames = moduleNames.filter(name => name !== packageAddress && name !== packageAddress + "/")
 
-    result[packageAddress] = {
+    result.push(Object.assign(p || {}, {
       address: packageAddress,
       name: names[0],
       names: names,
@@ -334,7 +333,7 @@ function getPackages(System) {
         name: name,
         deps: map[name]
       }))
-    }
+    }));
   });
 
   return result;
