@@ -63,10 +63,14 @@ try {
   JSON.stringify(result.isError ?
     {isError: true, value: result.value.stack || String(result.value)} :
     result)
-;
-  `, Object.assign({targetModule: "lively://remote-lively-system/runEvalAndStringify"}, opts));
-  
-      if (result && result.isError) return Promise.reject(result.value);
+;`, Object.assign({
+      targetModule: "lively://remote-lively-system/runEvalAndStringify",
+      promiseTimeout: 2000,
+      waitForPromise: true,
+    }, opts));
+
+      if (result && result.isError)
+        throw new Error(String(result.value));
   
       if (!result || !result.value) return null;
       
@@ -165,27 +169,25 @@ try {
   }
 
   forgetModule(name, opts) {
-    return this.runEvalAndStringify(`lively.modules.forgetModule(${JSON.stringify(name)}, ${JSON.stringify(opts)})`);
+    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(name)}).unload(${JSON.stringify(opts)})`);
   }
 
   reloadModule(name, opts) {
-    return this.runEvalAndStringify(`lively.modules.reloadModule(${JSON.stringify(name)}, ${JSON.stringify(opts)})`);
+    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(name)}).reload(${JSON.stringify(opts)})`);
   }
 
   moduleFormat(moduleName) {
-    return this.runEvalAndStringify(`
-    var loads = lively.modules.System.loads;
-    var moduleName = ${JSON.stringify(moduleName)};
-    loads && loads[moduleName] && loads[moduleName].metadata && loads[moduleName].metadata.format;
-  `);
+    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).format();`);
   }
 
   moduleSourceChange(moduleName, newSource, options) {
-    return this.runEvalAndStringify(`lively.modules.moduleSourceChange(${JSON.stringify(moduleName)}, ${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
+    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).changeSource(${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
   }
 
   importsAndExportsOf(modId, sourceOrAst) {
-    return this.runEvalAndStringify(`lively.modules.importsAndExportsOf(${JSON.stringify(modId)}, ${JSON.stringify(sourceOrAst)})`);
+    return this.runEvalAndStringify(`({
+      imports: await lively.modules.module(${JSON.stringify(modId)}).imports(),
+      exports: await lively.modules.module(${JSON.stringify(modId)}).exports()})`);
   }
 
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
