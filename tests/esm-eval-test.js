@@ -148,15 +148,17 @@ describe("eval", () => {
 
   describe("async", () => {
 
-    it("awaits async function", () =>
-      S.import(module4)
-        .then(() => runEval("await foo(3)", {System: S, targetModule: module4})
-        .then(result => expect(result).property("value").to.equal(3))));
+    it("awaits async function", async () => {
+      await S.import(module4);
+      var result = await runEval("await foo(3)", {System: S, targetModule: module4});
+      await expect(result).property("value").to.equal(3);
+    })
 
-    it("nests await", () =>
-      S.import(module4)
-        .then(() => runEval("await ('a').toUpperCase()", {System: S, targetModule: module4})
-        .then(result => expect(result).property("value").to.equal("A"))));
+    it("nests await", async () => {
+      await S.import(module4)
+      var result = await runEval("await ('a').toUpperCase()", {System: S, targetModule: module4});
+      expect(result).property("value").to.equal("A")
+    })
 
   });
 });
