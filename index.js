@@ -18,14 +18,12 @@ import * as nodes from "./lib/nodes.js";
 import * as query from "./lib/query.js";
 import * as transform from "./lib/transform.js";
 import * as capturing from "./lib/capturing.js";
-import * as evalSupport from "./lib/eval-support.js";
 import * as comments from "./lib/comments.js";
 import * as categorizer from "./lib/code-categorizer.js";
 export {
   query,
   transform,
   capturing,
-  evalSupport,
   comments,
   categorizer,
   stringify,
