@@ -47,10 +47,10 @@ describe("dependencies", () => {
     it("forgets module and recordings", async () => {
       await S.import("file1.js");
       await module2.unload();
-      expect(module1.record).to.equal(null, "record for module1 still exists");
-      expect(module2.record).to.equal(null, "record for module2 still exists");
-      expect(module1.env.recorder).to.not.have.property("x");
-      expect(module2.env.recorder).to.not.have.property("y");
+      expect(module1.record()).to.equal(null, "record for module1 still exists");
+      expect(module2.record()).to.equal(null, "record for module2 still exists");
+      expect(module1.env().recorder).to.not.have.property("x");
+      expect(module2.env().recorder).to.not.have.property("y");
     });
   
   });

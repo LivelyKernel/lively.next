@@ -42,8 +42,8 @@ describe("instrumentation", () => {
   });
 
   it("gets access to internal module state", () => {
-    expect(module1.env).to.have.deep.property("recorder.y", 1);
-    expect(module1.env).to.have.deep.property("recorder.x", 3);
+    expect(module1.env()).to.have.deep.property("recorder.y", 1);
+    expect(module1.env()).to.have.deep.property("recorder.x", 3);
   });
 
   describe("of global modules", () => {
@@ -51,7 +51,7 @@ describe("instrumentation", () => {
     it("can access local state", () => 
       S.import(`${testProjectDir}file3.js`)
         .then(() => {
-          expect(module3.env).to.have.deep.property("recorder.zzz", 4);
+          expect(module3.env()).to.have.deep.property("recorder.zzz", 4);
           expect(S.get(testProjectDir + "file3.js")).to.have.property("z", 2);
         }))
 

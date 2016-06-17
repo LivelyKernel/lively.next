@@ -154,10 +154,11 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   env() {
-    const ext = this.System.get("@lively-env");
-    if (ext.loadedModules[this.id]) return ext.loadedModules[this.id];
+    const id = this.id, S = this.System,
+          ext = S.get("@lively-env");
+    if (ext.loadedModules[id]) return ext.loadedModules[id];
 
-    const env = {
+    const e = {
       loadError: undefined,
       recorderName: "__lvVarRecorder",
       dontTransform: [
@@ -166,19 +167,19 @@ class ModuleInterface {
         "_moduleExport", "_moduleImport",
         "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
       ].concat(ast.query.knownGlobals),
-      recorder: Object.create(this.System.global, {
+      recorder: Object.create(S.global, {
         _moduleExport: {
           get() {
             return (name, val) => {
-              scheduleModuleExportsChange(this.System, this.id, name, val, true/*add export*/);
+              scheduleModuleExportsChange(S, id, name, val, true/*add export*/);
             }
           }
         },
         _moduleImport: {
           get: function() {
             return (imported, name) => {
-              var id = this.System.normalizeSync(imported, this.id),
-                  imported = this.System._loader.modules[id];
+              var id = S.normalizeSync(imported, id),
+                  imported = S._loader.modules[id];
               if (!imported) throw new Error(`import of ${name} failed: ${imported} (tried as ${id}) is not loaded!`);
               if (name == undefined) return imported.module;
               if (!imported.module.hasOwnProperty(name))
@@ -190,8 +191,8 @@ class ModuleInterface {
       })
     }
 
-    env.recorder.System = this.System;
-    return ext.loadedModules[this.id] = env;
+    e.recorder.System = S;
+    return ext.loadedModules[id] = e;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -293,11 +294,11 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   record() {
-    const record = this.System._loader.moduleRecords[this.id];
-    if (!record) return null;
-    if (!record.hasOwnProperty("__lively_modules__"))
-      record.__lively_modules__ = {evalOnlyExport: {}};
-    return record;
+    const rec = this.System._loader.moduleRecords[this.id];
+    if (!rec) return null;
+    if (!rec.hasOwnProperty("__lively_modules__"))
+      rec.__lively_modules__ = {evalOnlyExport: {}};
+    return rec;
   }
 
   updateRecord(doFunc) {

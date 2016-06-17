@@ -190,11 +190,11 @@ describe("mutual dependent packages", () => {
   afterEach(() => { removeSystem("test"); return Promise.all([removeDir(p1Dir),removeDir(p2Dir)]); });
 
 
-  it("can be imported", () =>
-    importPackage(System, p1Dir)
-      .then(() => {
-        expect(module(System, `${p1Dir}index.js`).env.recorder).property("y").equals(2);
-        // FIXME! see https://github.com/LivelyKernel/lively.modules/issues/6
-        // expect(moduleEnv(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
-      }))
+  it("can be imported", async () => {
+    await importPackage(System, p1Dir)
+    expect(module(System, `${p1Dir}index.js`).env().recorder).property("y").equals(2);
+    // FIXME! see https://github.com/LivelyKernel/lively.modules/issues/6
+    // expect(moduleEnv(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
+  });
+
 });
