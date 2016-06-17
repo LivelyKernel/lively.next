@@ -7,35 +7,23 @@ import { parse } from "../lib/parser.js";
 import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from "../lib/capturing.js";
 
 
-function _testVarTfm(descr, code, expected, only) {
-  if (typeof expected === "undefined") {
-    expected = code; code = descr;
+function _testVarTfm(descr, options, code, expected, only) {
+  if (typeof options === "string") {
+    only = expected;
+    expected = code;
+    code = options;
+    options = null;
   }
   return (only ? it.only : it)(descr, () => {
     var result = stringify(
       rewriteToCaptureTopLevelVariables(
-        parse(code), {name: "_rec", type: "Identifier"}));
+        parse(code), {name: "_rec", type: "Identifier"}, options));
     expect(result).equals(expected);
   });
 }
 
-function testVarTfm(descr, code, expected) { return _testVarTfm(descr, code, expected, false); }
-function only_testVarTfm(descr, code, expected) { return _testVarTfm(descr, code, expected, true); }
-
-function _testModuleTfm(descr, code, expected, only) {
-  if (typeof expected === "undefined") {
-    expected = code; code = descr;
-  }
-  return (only ? it.only : it)(descr, () => {
-    var result = stringify(
-          rewriteToCaptureTopLevelVariables(
-            parse(code), {name: "_rec", type: "Identifier"},
-            {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"}));
-    expect(result).equals(expected);
-  });
-}
-function testModuleTfm(descr, code, expected) { return _testModuleTfm(descr, code, expected, false); }
-function only_testModuleTfm(descr, code, expected) { return _testModuleTfm(descr, code, expected, true); }
+function testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, false); }
+function only_testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, true); }
 
 describe("ast.capturing", function() {
 
@@ -73,7 +61,8 @@ describe("ast.capturing", function() {
 
   describe("try-catch", () => {
 
-    testVarTfm("try { throw {} } catch (e) { e }\n",
+    testVarTfm("isn't transformed",
+               "try { throw {} } catch (e) { e }\n",
                "try {\n    throw {};\n} catch (e) {\n    e;\n}");
 
   });
@@ -116,23 +105,64 @@ describe("ast.capturing", function() {
 
     describe("class", () => {
 
-      testVarTfm("captures class def",
-                 "class Foo {\n  a() {\n    return 23;\n  }\n}",
-                 'class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;');
+      describe("with class-to-func transform", () => {
 
-      testVarTfm("export class Foo {}",
-                 "export class Foo {\n}\n_rec.Foo = Foo;");
+        testVarTfm("normal def",
+                   "class Foo {\n  a() {\n    return 23;\n  }\n}",
+                   "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', [{\n"
+                 + "        key: 'a',\n"
+                 + "        value: function a() {\n"
+                 + "            return 23;\n"
+                 + "        }\n"
+                 + "    }], undefined);");
+  
+        testVarTfm("exported def",
+                   "export class Foo {}",
+                   "export var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\n_rec.Foo = Foo;");
+  
+        testVarTfm("exported default def",
+                   "export default class Foo {}",
+                   "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nFoo = _rec.Foo;\nexport default Foo;");
+  
+        testVarTfm("does not capture class expr",
+                   "var bar = class Foo {}",
+                   "_rec.bar = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);");
+  
+        testVarTfm("captures var that has same name as class expr",
+                   "var Foo = class Foo {}; new Foo();",
+                   "_rec.Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nnew _rec.Foo();");
 
-      testVarTfm("export default class Foo {}",
-                 "export default class Foo {\n}\n_rec.Foo = Foo;");
+      });
 
-      testVarTfm("does not capture class expr",
-                 "var bar = class Foo {}",
-                 "_rec.bar = class Foo {\n};");
+      describe("without class-to-func transform", () => {
 
-      testVarTfm("captures var that has same name as class expr",
-                 "var Foo = class Foo {}; new Foo();",
-                 "_rec.Foo = class Foo {\n};\nnew _rec.Foo();");
+        var opts = {classToFunction: null}
+
+        testVarTfm("class def",
+                   opts,
+                   "class Foo {\n  a() {\n    return 23;\n  }\n}",
+                   'class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;');
+  
+        testVarTfm("exported def",
+                   opts,
+                   "export class Foo {}",
+                   "export class Foo {\n}\n_rec.Foo = Foo;");
+  
+        testVarTfm("exported default def",
+                   opts,
+                   "export default class Foo {}",
+                   "export default class Foo {\n}\n_rec.Foo = Foo;");
+  
+        testVarTfm("does not capture class expr",
+                   opts,
+                   "var bar = class Foo {}",
+                   "_rec.bar = class Foo {\n};");
+  
+        testVarTfm("captures var that has same name as class expr",
+                   opts,
+                   "var Foo = class Foo {}; new Foo();",
+                   "_rec.Foo = class Foo {\n};\nnew _rec.Foo();");
+      });
 
     });
 
@@ -146,27 +176,32 @@ describe("ast.capturing", function() {
 
     describe("computed prop in object literal", () => {
 
-      testVarTfm("var x = {[x]: y};",
+      testVarTfm("is dereferenced via var recorder",
+                 "var x = {[x]: y};",
                  "_rec.x = { [_rec.x]: _rec.y };");
     });
 
     describe("patterns", () => {
 
-      testVarTfm("var {x} = {x: 3};",
+      testVarTfm("captures destructured obj var",
+                 "var {x} = {x: 3};",
                  "var destructured_1 = { x: 3 };\n"
                + "_rec.x = destructured_1.x;");
 
-      testVarTfm("var {x: [y]} = foo, z = 23;",
+      testVarTfm("captures destructured obj var with list",
+                 "var {x: [y]} = foo, z = 23;",
                  "var destructured_1 = _rec.foo;\n"
                + "var destructured_1$x = destructured_1.x;\n"
                + "_rec.y = destructured_1$x[0];\n"
                + "_rec.z = 23;");
 
-      testVarTfm("var {x: y} = foo;",
+      testVarTfm("captures destructured var with alias",
+                 "var {x: y} = foo;",
                  "var destructured_1 = _rec.foo;\n"
                + "_rec.y = destructured_1.x;");
 
-      testVarTfm("var {x: {x: {x}}, y: {y: x}} = foo;",
+      testVarTfm("captures destructured deep",
+                 "var {x: {x: {x}}, y: {y: x}} = foo;",
                  "var destructured_1 = _rec.foo;\n"
                + "var destructured_1$x = destructured_1.x;\n"
                + "var destructured_1$x$x = destructured_1$x.x;\n"
@@ -175,18 +210,21 @@ describe("ast.capturing", function() {
                + "_rec.x = destructured_1$y.y;");
 
 
-      testVarTfm("var [a, b, ...rest] = foo;",
+      testVarTfm("captures destructured list with spread",
+                 "var [a, b, ...rest] = foo;",
                  "var destructured_1 = _rec.foo;\n"
                + "_rec.a = destructured_1[0];\n"
                + "_rec.b = destructured_1[1];\n"
                + "_rec.rest = destructured_1.slice(2);");
 
-      testVarTfm("var [{b}] = foo;",
+      testVarTfm("captures destructured list with obj",
+                 "var [{b}] = foo;",
                  "var destructured_1 = _rec.foo;\n"
                + "_rec.destructured_1$0 = destructured_1[0];\n"
                + "_rec.b = destructured_1$0.b;");
 
-      testVarTfm("var [{b: {c: [a]}}] = foo;",
+      testVarTfm("captures destructured list with obj deep",
+                 "var [{b: {c: [a]}}] = foo;",
                  "var destructured_1 = _rec.foo;\n"
                + "_rec.destructured_1$0 = destructured_1[0];\n"
                + "var destructured_1$0$b = destructured_1$0.b;\n"
@@ -196,17 +234,21 @@ describe("ast.capturing", function() {
 
     describe("async", () => {
 
-      testVarTfm("async function foo() { return 23 }",
+      testVarTfm("function",
+                 "async function foo() { return 23 }",
                  "async function foo() {\n    return 23;\n}\n_rec.foo = foo;\nfoo;");
 
-      testVarTfm("var x = await foo();",
+      testVarTfm("await",
+                 "var x = await foo();",
                  "_rec.x = await _rec.foo();");
 
-      testVarTfm("export async function foo() { return 23; }",
+      testVarTfm("exported function",
+                 "export async function foo() { return 23; }",
                  "async function foo() {\n    return 23;\n}\n_rec.foo = foo;\nexport {\n    foo\n};");
 
-      testVarTfm("export default async function foo() { return 23; }",
-                "async function foo() {\n    return 23;\n}\n_rec.foo = foo;\nfoo;\nfoo = _rec.foo;\nexport default foo;");
+      testVarTfm("exported default",
+                 "export default async function foo() { return 23; }",
+                 "async function foo() {\n    return 23;\n}\n_rec.foo = foo;\nfoo;\nfoo = _rec.foo;\nexport default foo;");
 
       // testVarTfm("export default async function foo() { return 23; }",
       //           "_rec.foo = foo;\nexport default async function foo() {\n    return 23;\n}");
@@ -214,67 +256,97 @@ describe("ast.capturing", function() {
 
     describe("import", () => {
 
-      testVarTfm("import x from './some-es6-module.js';",
+      testVarTfm("default",
+                 "import x from './some-es6-module.js';",
                  "import x from './some-es6-module.js';\n_rec.x = x;");
 
-      testVarTfm("import * as name from 'module-name';",
+      testVarTfm("*",
+                 "import * as name from 'module-name';",
                  "import * as name from 'module-name';\n_rec.name = name;");
 
-      testVarTfm("import { member } from 'module-name';",
+      testVarTfm("member",
+                 "import { member } from 'module-name';",
                  "import { member } from 'module-name';\n_rec.member = member;");
 
-      testVarTfm("import { member as alias } from 'module-name';",
+      testVarTfm("member with alias",
+                 "import { member as alias } from 'module-name';",
                  "import { member as alias } from 'module-name';\n_rec.alias = alias;");
 
-      testVarTfm("import { member1 , member2 } from 'module-name';",
+      testVarTfm("multiple members",
+                 "import { member1 , member2 } from 'module-name';",
                  "import {\n    member1,\n    member2\n} from 'module-name';\n_rec.member1 = member1;\n_rec.member2 = member2;");
 
-      testVarTfm("import { member1 , member2 as alias} from 'module-name';",
+      testVarTfm("multiple members with alias",
+                 "import { member1 , member2 as alias} from 'module-name';",
                  "import {\n    member1,\n    member2 as alias\n} from 'module-name';\n_rec.member1 = member1;\n_rec.alias = alias;");
 
-      testVarTfm("import defaultMember, { member } from 'module-name';",
+      testVarTfm("default and member",
+                 "import defaultMember, { member } from 'module-name';",
                  "import defaultMember, { member } from 'module-name';\n_rec.defaultMember = defaultMember;\n_rec.member = member;");
 
-      testVarTfm("import defaultMember, * as name from 'module-name';",
+      testVarTfm("default and *",
+                 "import defaultMember, * as name from 'module-name';",
                  "import defaultMember, * as name from 'module-name';\n_rec.defaultMember = defaultMember;\n_rec.name = name;");
 
-      testVarTfm("import 'module-name';",
+      testVarTfm("without binding",
+                 "import 'module-name';",
                  "import 'module-name';");
     });
 
     describe("manual import", () => {
 
-      testModuleTfm("import x from './some-es6-module.js';",
-                    "_rec.x = _moduleImport('./some-es6-module.js', 'default');");
+      var opts = {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"};
 
-      testModuleTfm("import * as name from 'module-name';",
-                    "_rec.name = _moduleImport('module-name');");
+      testVarTfm("default",
+                opts,
+                "import x from './some-es6-module.js';",
+                "_rec.x = _moduleImport('./some-es6-module.js', 'default');");
 
-      testModuleTfm("import { member } from 'module-name';",
-                    "_rec.member = _moduleImport('module-name', 'member');");
+      testVarTfm("*",
+                opts,
+                "import * as name from 'module-name';",
+                "_rec.name = _moduleImport('module-name');");
 
-      testModuleTfm("import { member as alias } from 'module-name';",
-                    "_rec.alias = _moduleImport('module-name', 'member');");
+      testVarTfm("member",
+                opts,
+                "import { member } from 'module-name';",
+                "_rec.member = _moduleImport('module-name', 'member');");
 
-      testModuleTfm("import { member1 , member2 } from 'module-name';",
-                    "_rec.member1 = _moduleImport('module-name', 'member1');\n_rec.member2 = _moduleImport('module-name', 'member2');");
+      testVarTfm("member with alias",
+                opts,
+                "import { member as alias } from 'module-name';",
+                "_rec.alias = _moduleImport('module-name', 'member');");
 
-      testModuleTfm("import { member1 , member2 as alias} from 'module-name';",
-                    "_rec.member1 = _moduleImport('module-name', 'member1');\n_rec.alias = _moduleImport('module-name', 'member2');");
+      testVarTfm("multiple members",
+                opts,
+                "import { member1 , member2 } from 'module-name';",
+                "_rec.member1 = _moduleImport('module-name', 'member1');\n_rec.member2 = _moduleImport('module-name', 'member2');");
 
-      testModuleTfm("import defaultMember, { member } from 'module-name';",
-                    "_rec.defaultMember = _moduleImport('module-name', 'default');\n_rec.member = _moduleImport('module-name', 'member');");
+      testVarTfm("multiple members with alias",
+                opts,
+                "import { member1 , member2 as alias} from 'module-name';",
+                "_rec.member1 = _moduleImport('module-name', 'member1');\n_rec.alias = _moduleImport('module-name', 'member2');");
 
-      testModuleTfm("import defaultMember, * as name from 'module-name';",
-                    "_rec.defaultMember = _moduleImport('module-name', 'default');\n_rec.name = _moduleImport('module-name');");
+      testVarTfm("default and member",
+                opts,
+                "import defaultMember, { member } from 'module-name';",
+                "_rec.defaultMember = _moduleImport('module-name', 'default');\n_rec.member = _moduleImport('module-name', 'member');");
 
-      testModuleTfm("import 'module-name';",
-                    "_moduleImport('module-name');");
+      testVarTfm("default and *",
+                opts,
+                "import defaultMember, * as name from 'module-name';",
+                "_rec.defaultMember = _moduleImport('module-name', 'default');\n_rec.name = _moduleImport('module-name');");
+
+      testVarTfm("without binding",
+                opts,
+                "import 'module-name';",
+                "_moduleImport('module-name');");
     });
 
     describe("export", () => {
 
-      testVarTfm("var x = {x: 23}; export default x;",
+      testVarTfm("default named",
+                 "var x = {x: 23}; export default x;",
                  "_rec.x = { x: 23 };\nvar x = _rec.x;\nexport default x;");
 
       testVarTfm("does not rewrite exports but adds capturing statement",
@@ -288,28 +360,46 @@ describe("ast.capturing", function() {
                + "_rec.x = x;\n"
                + "_rec.y = y;\nexport default f;");
 
-      testVarTfm("var x = 23; export { x };",
+      testVarTfm("var",
+                 "var x = 23; export { x };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x\n};");
 
-      testVarTfm("var x = 23; export { x as y };",
+      testVarTfm("aliased var",
+                 "var x = 23; export { x as y };",
                  "_rec.x = 23;\nvar x = _rec.x;\nexport {\n    x as y\n};");
 
-      testVarTfm("export const x = 23;",
+      testVarTfm("const",
+                 "export const x = 23;",
                  "export const x = 23;\n_rec.x = x;");
 
-      testVarTfm("export function x() {};",
+      testVarTfm("function decl",
+                 "export function x() {};",
                  'function x() {\n}\n_rec.x = x;\nexport {\n    x\n};\n;');
 
-      testVarTfm("export default function x() {};",
+      testVarTfm("default function decl",
+                 "export default function x() {};",
                  'function x() {\n}\n_rec.x = x;\nexport default x;\n;');
 
-      testVarTfm("export class Foo {};",
+      testVarTfm("class decl",
+                 "export class Foo {};",
+                 "export var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\n_rec.Foo = Foo;\n;");
+
+      testVarTfm("default class decl",
+                 "export default class Foo {};",
+                 "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nFoo = _rec.Foo;\nexport default Foo;\n;");
+
+      testVarTfm("class decl without classToFunction",
+                 {classToFunction: null},
+                 "export class Foo {};",
                  'export class Foo {\n}\n_rec.Foo = Foo;\n;');
 
-      testVarTfm("export default class Foo {};",
+      testVarTfm("default class decl without classToFunction",
+                 {classToFunction: null},
+                 "export default class Foo {};",
                  'export default class Foo {\n}\n_rec.Foo = Foo;\n;');
 
-      testVarTfm('import * as completions from "./lib/completions.js";\n'
+      testVarTfm("re-export * import",
+                 'import * as completions from "./lib/completions.js";\n'
                + "export { completions }",
                  "import * as completions from './lib/completions.js';\n"
                + "_rec.completions = completions;\n"
@@ -319,7 +409,8 @@ describe("ast.capturing", function() {
                  "export { name1, name2 } from 'foo';",
                  "export {\n    name1,\n    name2\n} from 'foo';");
 
-      testVarTfm("export { name1 as foo1, name2 as bar2 } from 'foo';",
+      testVarTfm("export from named",
+                 "export { name1 as foo1, name2 as bar2 } from 'foo';",
                  "export {\n    name1 as foo1,\n    name2 as bar2\n} from 'foo';");
 
       testVarTfm("export bug 1",
@@ -341,45 +432,80 @@ describe("ast.capturing", function() {
 
     describe("export obj", () => {
 
-      testModuleTfm("export function foo(a) { return a + 3; };",
-                    "function foo(a) {\n    return a + 3;\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('foo', _rec.foo);\n;");
+      var opts = {es6ExportFuncId: "_moduleExport", es6ImportFuncId: "_moduleImport"};
 
-      testModuleTfm("export default function () {};",
-                    "_moduleExport('default', function () {\n});\n;");
+      testVarTfm("func decl",
+                opts,
+                "export function foo(a) { return a + 3; };",
+                "function foo(a) {\n    return a + 3;\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('foo', _rec.foo);\n;");
 
-      testModuleTfm("export default function* () {};",
-                    "_moduleExport('default', function* () {\n});\n;");
+      testVarTfm("default anonym func decl",
+                opts,
+                "export default function () {};",
+                "_moduleExport('default', function () {\n});\n;");
 
-      testModuleTfm("export default function foo() {};",
-                    "function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
+      testVarTfm("default func* decl",
+                opts,
+                "export default function* () {};",
+                "_moduleExport('default', function* () {\n});\n;");
 
-      testModuleTfm("export default async function foo() {};",
-                    "async function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
+      testVarTfm("",
+                opts,
+                "export default function foo() {};",
+                "function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
 
-      testModuleTfm("export default class Foo {a() { return 23; }};",
-                    "class Foo {\n    a() {\n        return 23;\n    }\n}\n_rec.Foo = Foo;\n_moduleExport('default', _rec.Foo);\n;");
+      testVarTfm("default func decl",
+                opts,
+                "export default async function foo() {};",
+                "async function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
 
-      testModuleTfm("export { name1, name2 };",
-                    "_moduleExport('name1', _rec.name1);\n_moduleExport('name2', _rec.name2);");
+      testVarTfm("default class decl",
+                opts,
+                "export default class Foo {a() { return 23; }};",
+                "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', [{\n"
+                + "        key: 'a',\n"
+                + "        value: function a() {\n"
+                + "            return 23;\n"
+                + "        }\n"
+                + "    }], undefined);\n"
+                + "_moduleExport('default', _rec.Foo);\n;");
 
-      testModuleTfm("export var x = 34, y = x + 3;",
-                    "var x = 34, y = x + 3;\n_moduleExport('x', x);\n_moduleExport('y', y);");
 
-      testModuleTfm("export let x = 34;",
-                    "let x = 34;\n_moduleExport('x', x);");
+      testVarTfm("named",
+                opts,
+                "export { name1, name2 };",
+                "_moduleExport('name1', _rec.name1);\n_moduleExport('name2', _rec.name2);");
 
-      testModuleTfm("export { name1 as default };",
-                    "_moduleExport('default', _rec.name1);");
+      testVarTfm("var decl",
+                opts,
+                "export var x = 34, y = x + 3;",
+                "var x = 34, y = x + 3;\n_moduleExport('x', x);\n_moduleExport('y', y);");
 
-      testModuleTfm("export * from 'foo';",
-                    "for (var _moduleExport__iterator__ in _moduleImport('foo'))\n"
-                  + "    _moduleExport(_moduleExport__iterator__, _moduleImport('foo', _moduleExport__iterator__));");
+      testVarTfm("let decl",
+                opts,
+                "export let x = 34;",
+                "let x = 34;\n_moduleExport('x', x);");
 
-      testModuleTfm("export { name1, name2 } from 'foo'",
-                    "_moduleExport('name1', _moduleImport('foo', 'name1'));\n_moduleExport('name2', _moduleImport('foo', 'name2'));");
+      testVarTfm("name aliased",
+                opts,
+                "export { name1 as default };",
+                "_moduleExport('default', _rec.name1);");
 
-      testModuleTfm("export { name1 as foo1, name2 as bar2 } from 'foo';",
-                    "_moduleExport('foo1', _moduleImport('foo', 'name1'));\n_moduleExport('bar2', _moduleImport('foo', 'name2'));");
+      testVarTfm("* from",
+                opts,
+                "export * from 'foo';",
+                "for (var _moduleExport__iterator__ in _moduleImport('foo'))\n"
+              + "    _moduleExport(_moduleExport__iterator__, _moduleImport('foo', _moduleExport__iterator__));");
+
+      testVarTfm("named from",
+                opts,
+                "export { name1, name2 } from 'foo'",
+                "_moduleExport('name1', _moduleImport('foo', 'name1'));\n_moduleExport('name2', _moduleImport('foo', 'name2'));");
+
+      testVarTfm("named from aliased",
+                opts,
+                "export { name1 as foo1, name2 as bar2 } from 'foo';",
+                "_moduleExport('foo1', _moduleImport('foo', 'name1'));\n_moduleExport('bar2', _moduleImport('foo', 'name2'));");
 
     });
 
@@ -397,12 +523,12 @@ describe("declarations", () => {
       .equals("_rec.x = _define('x', 'var', 23, _rec);");
   });
 
-  xit("wraps class decls", () => {
+  it("wraps class decls", () => {
     expect(stringify(
           rewriteToCaptureTopLevelVariables(
             parse("class Foo {}"), {name: "_rec", type: "Identifier"},
             {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("var Foo = _rec.Foo = _define('Foo', 'class', class Foo {\n}, _rec);;");
+      .equals("var Foo = _define('Foo', 'class', _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined), _rec);");
   });
 
   it("wraps function decls", () => {
