@@ -19183,11 +19183,11 @@ var nodes = Object.freeze({
         }
 
         if (kind === "method") {
-          decl = objectLiteral(["key", literal(key.name || key.value), "value", Object.assign({}, value, key.type === "Identifier" ? { id: key } : null)]);
+          decl = objectLiteral(["key", literal(key.name || key.value), "value", Object.assign({}, value, { id: null })]);
         } else if (kind === "get" || kind === "set") {
           decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, { id: id(kind) })]);
         } else if (kind === "constructor") {
-          decl = objectLiteral(["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", Object.assign({}, value, { id: id("initialize") })]);
+          decl = objectLiteral(["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", Object.assign({}, value, { id: null })]);
         } else {
           console.warn("classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
         }

@@ -357,6 +357,11 @@ describe("persistent definitions", () => {
       expect(isIdentical).equals(true);
     });
 
+    it("class methods don't shadow similar named functions in lexical scope", async () => {
+      expect(await runEval("function m() {return 3}; class Bar {m() { return m() }}; new Bar().m()", opts))
+        .property("value").equals(3);
+    });
+
   });
 
 });
