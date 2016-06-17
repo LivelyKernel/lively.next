@@ -286,11 +286,15 @@ describe('ast.transform', function() {
 
 describe("class transform", () => {
   
-  var opts = {classHolder: {type: "Identifier", name: "_rec"}, functionNode: {type: "Identifier", name: "createOrExtendClass"}};
+  var opts = {
+    classHolder: {type: "Identifier", name: "_rec"},
+    functionNode: {type: "Identifier", name: "createOrExtendClass"},
+    addDeclarations: false
+  };
 
   it("is translated into createOrExtendClass function", () =>
       expect(stringify(classToFunctionTransform("class Foo {}", opts))).to.equal(
-        "createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);"));
+        "var Foo = createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);"));
 
   it("with class expressions", () =>
       expect(stringify(classToFunctionTransform("var x = class Foo {}", opts))).to.equal(
@@ -302,7 +306,7 @@ describe("class transform", () => {
 
   it("with methods", () =>
       expect(stringify(classToFunctionTransform("class Foo {m() { return 23; }}", opts))).to.equal(
-        `createOrExtendClass(_rec, undefined, 'Foo', [{
+        `var Foo = createOrExtendClass(_rec, undefined, 'Foo', [{
         key: 'm',
         value: function m() {
             return 23;
@@ -311,7 +315,7 @@ describe("class transform", () => {
 
   it("with class side methods", () =>
       expect(stringify(classToFunctionTransform("class Foo {static m() { return 23; }}", opts))).to.equal(
-        `createOrExtendClass(_rec, undefined, 'Foo', undefined, [{
+        `var Foo = createOrExtendClass(_rec, undefined, 'Foo', undefined, [{
         key: 'm',
         value: function m() {
             return 23;
@@ -320,11 +324,11 @@ describe("class transform", () => {
 
   it("with superclass", () =>
       expect(stringify(classToFunctionTransform("class Foo extends Bar {}", opts))).to.equal(
-        `createOrExtendClass(_rec, Bar, 'Foo', undefined, undefined);`));
+        `var Foo = createOrExtendClass(_rec, Bar, 'Foo', undefined, undefined);`));
 
   it("with supercall", () =>
       expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, b, c); }}", opts))).to.equal(
-        `createOrExtendClass(_rec, Bar, 'Foo', [{
+        `var Foo = createOrExtendClass(_rec, Bar, 'Foo', [{
         key: 'm',
         value: function m() {
             this.constructor[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, b, c);
@@ -333,7 +337,7 @@ describe("class transform", () => {
   
   it("constructor is converted to initialize", () =>
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { this.x = arg; }}", opts))).to.equal(
-        `createOrExtendClass(_rec, undefined, 'Foo', [{
+        `var Foo = createOrExtendClass(_rec, undefined, 'Foo', [{
         key: Symbol.for('lively-instance-initialize'),
         value: function initialize(arg) {
             this.x = arg;
@@ -342,11 +346,15 @@ describe("class transform", () => {
 
   it("super call in constructor is converted to initialize call", () =>
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { super(arg, 23); }}", opts))).to.equal(
-        `createOrExtendClass(_rec, undefined, 'Foo', [{
+        `var Foo = createOrExtendClass(_rec, undefined, 'Foo', [{
         key: Symbol.for('lively-instance-initialize'),
         value: function initialize(arg) {
             this.constructor[Symbol.for('lively-instance-superclass')].prototype[Symbol.for('lively-instance-initialize')].call(this, arg, 23);
         }
     }], undefined);`));
+
+  it("with export default", () =>
+      expect(stringify(classToFunctionTransform("export default class Foo {}", opts))).to.equal(
+        "var Foo = createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nexport default Foo;"));
 
 });
