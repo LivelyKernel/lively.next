@@ -3,8 +3,8 @@
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
 
-import { getSystem, removeSystem, moduleEnv, moduleRecordFor } from "lively.modules/src/system.js";
-import { forgetModuleDeps } from "lively.modules/src/dependencies.js";
+import { getSystem, removeSystem } from "lively.modules/src/system.js";
+import mod from "lively.modules/src/module.js";
 import { runEval } from "../index.js";
 
 function read(file) {
@@ -36,9 +36,10 @@ describe("eval", () => {
 
   afterEach(() => removeSystem("test"));
 
-  it("inside of module", () =>
-    runEval("1 + z + x", {System: S, targetModule: module1})
-      .then(result => expect(result.value).equals(6)));
+  it("inside of module", async () => {
+    var result = await runEval("1 + z + x", {System: S, targetModule: module1});
+    expect(result.value).equals(6)
+  });
 
   it("sets this", async () => {
     var result = await runEval("1 + this.x", {System: S, targetModule: module1, context: {x: 2}});
@@ -75,23 +76,27 @@ describe("eval", () => {
     var m1 = await S.import(module1),
         m2 = await S.import(module2),
         result = await runEval("export var xxx = 99;", {asString: true, System: S, targetModule: module2});
+        // result = await runEval("var xxx = 99; export { xxx }", {asString: true, System: S, targetModule: module2});
     expect(result.value).to.not.match(/error/i);
     expect(m2.xxx).to.equal(99, "file2.js not updated");
-    var result2 = await runEval("import { xxx } from './file2.js';", {System: S, targetModule: module1});
+    var result2 = await runEval("import { xxx } from './file2.js'; xxx", {System: S, targetModule: module1});
     expect(result2.value).to.equal(99, "new export not available in another module");
   });
 
-  it("of new var that is exported and then changes", () =>
-    S.import(module1)
-      // define a new var that is exported
-      .then(_ => runEval("var zork = 1; export { zork }", {asString: true, System: S, targetModule: module1}))
-      .then(() => expect(moduleRecordFor(S, module1).exports).to.have.property("zork", 1, "of record"))
-      .then(() => S.import(module1).then(m1 => expect(m1).to.have.property("zork", 1, "of module")))
-      // now change that var and see if the export is updated
-      .then(() => runEval("var zork = 2;", {asString: true, System: S, targetModule: module1}))
-      .then(() => expect(moduleRecordFor(S, module1).exports).to.have.property("zork", 2, "of record after change"))
-      .then(() => S.import(module1).then(m1 => expect(m1).to.have.property("zork", 2, "of module after change")))
-      );
+  it("of new var that is exported and then changes", async () => {
+    await S.import(module1)
+    // define a new var that is exported
+    await runEval("var zork = 1; export { zork }", {asString: true, System: S, targetModule: module1});
+    expect(mod(S, module1).record().exports).to.have.property("zork", 1, "of record");
+    var m1 = await S.import(module1);
+    expect(m1).to.have.property("zork", 1, "of module")
+
+    // now change that var and see if the export is updated
+    await runEval("var zork = 2;", {asString: true, System: S, targetModule: module1});
+    expect(mod(S, module1).record().exports).to.have.property("zork", 2, "of record after change");
+    var m1 = await S.import(module1);
+    expect(m1).to.have.property("zork", 2, "of module after change");
+  });
 
   it("of export statement with new export", () =>
     promise.chain([
@@ -132,7 +137,7 @@ describe("eval", () => {
     source = source.replace(/(z = )([0-9]+)/, "$12");
     var result = await runEval(source, {asString: true, System: S, targetModule: module3});
     expect(result.value).to.not.match(/error/i);
-    forgetModuleDeps(S, module3);
+    mod(S, module3).unloadDeps();
     var m = await S.import(module1);
     expect(m.x).to.equal(4);
   });
