@@ -32,7 +32,8 @@ module.exports = Promise.resolve()
       moduleName: 'lively.modules',
       globals: {
         "lively.lang": "lively.lang",
-        "lively.ast": "lively.ast"
+        "lively.ast": "lively.ast",
+        "lively.vm": "lively.vm"
       }
     }))
 
@@ -51,14 +52,13 @@ ${initSource}\n
   ${source}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();`;
-    var complete = `${langSource}\n${astSource}\n${regeneratorSource}\n${noDeps}`;
-    var withVM = `${complete}\n${vmSource}`;
-    return {noDeps: noDeps, complete: complete, withVM: withVM};
+    var complete = `${regeneratorSource}\n${langSource}\n${astSource}\n${vmSource}\n${noDeps}`;
+    return {noDeps: noDeps, complete: complete};
   })
 
   // 4. create files
   .then(sources => {
     fs.writeFileSync(targetFile1, sources.noDeps);
     fs.writeFileSync(targetFile2, sources.complete);
-    fs.writeFileSync(targetFile3, sources.withVM);
+    fs.writeFileSync(targetFile3, sources.complete);
   })

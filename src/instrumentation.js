@@ -1,10 +1,8 @@
-import { parse, evalSupport } from "lively.ast";
+import { parse } from "lively.ast";
+import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";
 import { arr, string, properties, classHelper } from "lively.lang";
 import { moduleEnv } from "./system.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
-
-var evalCodeTransform = evalSupport.evalCodeTransform;
-var evalCodeTransformOfSystemRegisterSetters = evalSupport.evalCodeTransformOfSystemRegisterSetters;
 
 var isNode = System.get("@system-env").node;
 
@@ -45,6 +43,7 @@ var exceptions = [
 
 function getExceptions() { return exceptions; }
 function setExceptions(v) { return exceptions = v; }
+
 
 function prepareCodeForCustomCompile(source, fullname, env, debug) {
   source = String(source);

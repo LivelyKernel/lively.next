@@ -87,7 +87,7 @@
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast) {
+(function (exports,lively_lang,ast,lively_vm) {
   'use strict';
 
   function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
@@ -303,9 +303,6 @@
     return false;
   }
 
-  var evalCodeTransform = ast.evalSupport.evalCodeTransform;
-  var evalCodeTransformOfSystemRegisterSetters = ast.evalSupport.evalCodeTransformOfSystemRegisterSetters;
-
   var isNode$1 = System.get("@system-env").node;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -349,7 +346,7 @@
     }
 
     try {
-      var rewrittenSource = header + evalCodeTransform(source, tfmOptions) + footer;
+      var rewrittenSource = header + lively_vm.evalCodeTransform(source, tfmOptions) + footer;
       if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
       return rewrittenSource;
     } catch (e) {
@@ -369,7 +366,7 @@
         isGlobal = env.recorderName === "System.global";
 
     try {
-      var rewrittenSource = evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
+      var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
       if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
       return rewrittenSource;
     } catch (e) {
@@ -586,6 +583,54 @@
 
     return obj;
   };
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // search
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  var searchModule$1 = function () {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleName, searchStr) {
+      var src, id, re, match, res, i, j, line;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return sourceOf$1(System, moduleName);
+
+            case 2:
+              src = _context.sent;
+              _context.next = 5;
+              return System.normalize(moduleName);
+
+            case 5:
+              id = _context.sent;
+              re = new RegExp(searchStr, "g");
+              match = void 0, res = [];
+
+              while ((match = re.exec(src)) !== null) {
+                res.push(match.index);
+              }
+              for (i = 0, j = 0, line = 1; i < src.length && j < res.length; i++) {
+                if (src[i] == '\n') line++;
+                if (i == res[j]) {
+                  res[j] = id + ":" + line;
+                  j++;
+                }
+              }
+              return _context.abrupt("return", res);
+
+            case 11:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+    return function searchModule(_x, _x2, _x3) {
+      return ref.apply(this, arguments);
+    };
+  }();
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -2204,6 +2249,9 @@
   function sourceOf(id) {
     return sourceOf$1(exports.System, id);
   }
+  function searchModule(id, str) {
+    return searchModule$1(exports.System, id, str);
+  }
   function moduleEnv(id) {
     return moduleEnv$1(exports.System, id);
   }
@@ -2283,6 +2331,7 @@
   exports.printSystemConfig = printSystemConfig;
   exports.changeSystem = changeSystem;
   exports.sourceOf = sourceOf;
+  exports.searchModule = searchModule;
   exports.moduleEnv = moduleEnv;
   exports.moduleRecordFor = moduleRecordFor;
   exports.importPackage = importPackage;
@@ -2307,6 +2356,6 @@
   exports.subscribe = subscribe;
   exports.unsubscribe = unsubscribe;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.vm));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

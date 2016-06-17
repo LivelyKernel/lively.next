@@ -56,12 +56,11 @@ describe("instrumentation", () => {
 
   describe("of export default", function() {
 
-    it("class export is recorded", () =>
-      S.import(`${testProjectDir}file4.js`)
-        .then(() => {
-          var env = moduleEnv(S, `${testProjectDir}file4.js`);
-          expect(env).to.have.deep.property("recorder.Foo");
-        }));
+    it("class export is recorded", async () => {
+      await S.import(`${testProjectDir}file4.js`);
+      expect(moduleEnv(S, `${testProjectDir}file4.js`))
+        .to.have.deep.property("recorder.Foo");
+    });
   });
 
 });
