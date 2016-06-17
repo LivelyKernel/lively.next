@@ -1,5 +1,3 @@
-import * as ast from "lively.ast";
-import { arr } from "lively.lang"
 import module from "./module.js"
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {

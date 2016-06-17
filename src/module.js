@@ -1,4 +1,4 @@
-import * as ast from "lively.ast";
+import { parse, query } from "lively.ast";
 import { arr, obj, graph } from "lively.lang";
 import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
@@ -48,7 +48,7 @@ class ModuleInterface {
   }
 
   async ast() {
-    return ast.parse(await this.source());
+    return parse(await this.source());
   }
 
   metadata() {
@@ -166,7 +166,7 @@ class ModuleInterface {
         "global", "self",
         "_moduleExport", "_moduleImport",
         "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-      ].concat(ast.query.knownGlobals),
+      ].concat(query.knownGlobals),
       recorder: Object.create(S.global, {
         _moduleExport: {
           get() {
@@ -199,11 +199,14 @@ class ModuleInterface {
   // imports and exports
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async imports() {
-    const parsed = await this.ast(),
-          scope = ast.query.scopes(parsed),
+  async imports(optAstOrSource) {
+    const parsed = optAstOrSource ?
+            (typeof optAstOrSource === "string" ?
+              parse(optAstOrSource) : optAstOrSource) :
+            await this.ast(),
+          scope = query.scopes(parsed),
           imports = scope.importDecls.reduce((imports, node) => {
-            var nodes = ast.query.nodesAtIndex(parsed, node.start),
+            var nodes = query.nodesAtIndex(parsed, node.start),
                 importStmt = arr.without(nodes, scope.node)[0];
             if (!importStmt) return imports;
       
@@ -229,16 +232,22 @@ class ModuleInterface {
               }
             }))
           }, []);
+
     return arr.uniqBy(imports, (a, b) =>
       a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule);
+
   }
 
-  async exports() {
-    const parsed = await this.ast(),
-          scope = ast.query.scopes(parsed),
+  async exports(optAstOrSource) {
+
+    const parsed = optAstOrSource ?
+            (typeof optAstOrSource === "string" ?
+              parse(optAstOrSource) : optAstOrSource) :
+            await this.ast(),
+          scope = query.scopes(parsed),
           exports = scope.exportDecls.reduce((exports, node) => {
 
-      var exportsStmt = ast.query.statementOf(scope.node, node);
+      var exportsStmt = query.statementOf(scope.node, node);
       if (!exportsStmt) return exports;
 
       var from = exportsStmt.source ? exportsStmt.source.value : null;
