@@ -1,5 +1,5 @@
 import * as ast from "lively.ast";
-import { obj, properties } from "lively.lang";
+import { arr, obj, properties } from "lively.lang";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import Module from "./module.js";
@@ -316,6 +316,12 @@ function module(System, moduleName, parent) {
   return new Module(System, System.normalizeSync(moduleName, parent));
 }
 
+function searchLoadedModules(System, searchStr) {
+  const moduleIds = obj.keys(loadedModules(System));
+  return Promise.all(moduleIds.map(m => module(System, m).search(searchStr)))
+                .then(res => arr.flatten(res, 1));
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // exports
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -323,5 +329,5 @@ function module(System, moduleName, parent) {
 export {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig,
-  loadedModules, module
+  loadedModules, module, searchLoadedModules
 };
