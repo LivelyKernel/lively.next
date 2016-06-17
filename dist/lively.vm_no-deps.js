@@ -266,11 +266,184 @@
     getCompletions: getCompletions
   });
 
+  var initializerTemplate = "(function CLASS(){\n  var firstArg = arguments[0];\n  if (firstArg && firstArg[Symbol.for(\"lively-instance-restorer\")]) {\n    // for deserializing instances just do nothing\n  } else {\n    // automatically call the initialize method\n    this[Symbol.for(\"lively-instance-initialize\")].apply(this, arguments);\n  }\n})";
+
+  var initializeSymbol = Symbol.for("lively-instance-initialize");
+  var superclassSymbol = Symbol.for("lively-instance-superclass");
+  var defaultPropertyDescriptorForClass = {
+    enumerable: false,
+    configurable: true
+  };
+
+  function createClass(name) {
+    var constructor = eval(initializerTemplate.replace(/CLASS/, name));
+    constructor.displayName = "class " + name;
+    return constructor;
+  }
+
+  function createOrExtend(classHolder, superclass, name, instanceMethods, staticMethods) {
+    // Given a `classHolder` object as "environment", will try to find a "class"
+    // (JS constructor function) inside it. If no class is found it will create a
+    // new costructor function object and will attach the methods to it. If a class
+    // is found it will be modified.
+    // This is being used as the compile target for es6 class syntax by the
+    // lively.ast capturing / transform logic
+    // Example:
+    // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
+    // new Foo().m() // => 23
+
+    var klass = classHolder.hasOwnProperty(name) && classHolder[name],
+        existingSuperclass = klass && klass[superclassSymbol];
+
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
+
+    if (!existingSuperclass || existingSuperclass !== superclass) {
+      klass[superclassSymbol] = superclass = superclass || Object;
+      klass.prototype = Object.create(superclass.prototype);
+      klass.prototype.constructor = klass;
+    }
+
+    staticMethods && staticMethods.forEach(function (ea) {
+      return Object.defineProperty(klass, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
+    });
+
+    instanceMethods && instanceMethods.forEach(function (ea) {
+      Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
+    });
+
+    // initializer method
+    if (!klass.prototype[initializeSymbol]) {
+      Object.defineProperty(klass.prototype, initializeSymbol, {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value: function value() {}
+      });
+    }
+
+    return klass;
+  }
+
+  var id = ast.nodes.id;
+  var literal = ast.nodes.literal;
+  var member = ast.nodes.member;
+
+
+  var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
+  var defaultClassToFunctionConverterName = "createOrExtendES6ClassForLively";
+  function evalCodeTransform(code, options) {
+    // variable declaration and references in the the source code get
+    // transformed so that they are bound to `varRecorderName` aren't local
+    // state. THis makes it possible to capture eval results, e.g. for
+    // inspection, watching and recording changes, workspace vars, and
+    // incrementally evaluating var declarations and having values bound later.
+
+    // 1. Allow evaluation of function expressions and object literals
+    code = ast.transform.transformSingleExpression(code);
+    var parsed = ast.parse(code);
+
+    // 2. capture top level vars into topLevelVarRecorder "environment"
+
+    if (options.topLevelVarRecorder) {
+
+      // capture and wrap logic
+      var blacklist = (options.dontTransform || []).concat(["arguments"]),
+          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
+          varRecorder = id(options.varRecorderName || '__lvVarRecorder'),
+          es6ClassToFunctionOptions = undefined,
+          declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
+      if (options.keepPreviouslyDeclaredValues) {
+
+        // 2.1 declare a function that should wrap all definitions, i.e. all var
+        // decls, functions, classes etc that get captured will be wrapped in this
+        // function. When using this with the option.keepPreviouslyDeclaredValues
+        // we will use a wrapping function that keeps the identity of prevously
+        // defined objects
+        options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
+        options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
+
+        // Class declarations and expressions are converted into a function call
+        // to `createOrExtendClass`, a helper that will produce (or extend an
+        // existing) constructor function in a way that allows us to redefine
+        // methods and properties of the class while keeping the class object
+        // identical
+        options.topLevelVarRecorder[defaultClassToFunctionConverterName] = createOrExtend;
+        es6ClassToFunctionOptions = {
+          classHolder: varRecorder,
+          functionNode: member(varRecorder, defaultClassToFunctionConverterName),
+          declarationWrapper: options.declarationWrapper
+        };
+      }
+
+      // 2.2 Here we call out to the actual code transformation that installs the
+
+      parsed = ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
+        es6ImportFuncId: options.es6ImportFuncId,
+        es6ExportFuncId: options.es6ExportFuncId,
+        ignoreUndeclaredExcept: undeclaredToTransform,
+        exclude: blacklist,
+        declarationWrapper: options.declarationWrapper || undefined,
+        classToFunction: es6ClassToFunctionOptions
+      });
+    }
+
+    if (options.wrapInStartEndCall) {
+      parsed = ast.transform.wrapInStartEndCall(parsed, {
+        startFuncNode: options.startFuncNode,
+        endFuncNode: options.endFuncNode
+      });
+    }
+
+    var result = ast.stringify(parsed);
+
+    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+    return result;
+  }
+
+  function evalCodeTransformOfSystemRegisterSetters(code, options) {
+    if (!options.topLevelVarRecorder) return code;
+
+    var parsed = ast.parse(code),
+        blacklist = (options.dontTransform || []).concat(["arguments"]),
+        undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
+        result = ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
+
+    return ast.stringify(result);
+  }
+
+  function declarationWrapperForKeepingValues(name, kind, value, recorder) {
+    // show(`declaring ${name}, a ${kind}, value ${value}`);
+
+    if (kind === "function") return value;
+    if (kind === "class") {
+      recorder[name] = value;
+      return value;
+    }
+
+    // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
+    //   return value;
+
+    // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
+    //   if (Object.isFrozen(recorder[name])) return value;
+    //   try {
+    //     copyProperties(value, recorder[name]);
+    //     return recorder[name];
+    //   } catch (e) {
+    //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
+    //     return value;
+    //   }
+    // }
+
+    return value;
+  }
+
   var defaultTopLevelVarRecorderName = '__lvVarRecorder';
   var startEvalFunctionName = "lively.vm-on-eval-start";
   var endEvalFunctionName = "lively.vm-on-eval-end";
   function _normalizeEvalOptions(opts) {
     if (!opts) opts = {};
+
     opts = Object.assign({
       targetModule: null,
       sourceURL: opts.targetModule,
@@ -369,6 +542,7 @@
 
     var evalDone = lively_lang.promise.deferred(),
         recorder = options.topLevelVarRecorder || getGlobal();
+
     if (options.wrapInStartEndCall) {
       if (recorder[startEvalFunctionName]) console.warn("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!");
 
@@ -393,7 +567,7 @@
 
     // 2. Transform the code to capture top-level variables, inject function calls, ...
     try {
-      code = ast.evalSupport.evalCodeTransform(code, options);
+      code = evalCodeTransform(code, options);
       if (options.header) code = options.header + code;
       if (options.footer) code = code + options.footer;
       if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
@@ -734,7 +908,6 @@
                 transpiler: null, // function with params: source, options
                 transpilerOptions: null
               }, options);
-
               originalCode = code;
 
 
@@ -769,7 +942,7 @@
 
 
               code = header + code;
-              options = lively_lang.obj.merge({ waitForPromise: true }, options, {
+              options = Object.assign({ waitForPromise: true }, options, {
                 recordGlobals: true,
                 dontTransform: dontTransform,
                 varRecorderName: recorderName,
@@ -1480,6 +1653,8 @@
   exports.syncEval = syncEval;
   exports.evalStrategies = evalStrategies;
   exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
+  exports.evalCodeTransform = evalCodeTransform;
+  exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
 
 }((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
