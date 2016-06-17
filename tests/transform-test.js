@@ -308,7 +308,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {m() { return 23; }}", opts))).to.equal(
         `var Foo = createOrExtendClass(_rec, undefined, 'Foo', [{
         key: 'm',
-        value: function m() {
+        value: function () {
             return 23;
         }
     }], undefined);`));
@@ -317,7 +317,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {static m() { return 23; }}", opts))).to.equal(
         `var Foo = createOrExtendClass(_rec, undefined, 'Foo', undefined, [{
         key: 'm',
-        value: function m() {
+        value: function () {
             return 23;
         }
     }]);`));
@@ -330,7 +330,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, b, c); }}", opts))).to.equal(
         `var Foo = createOrExtendClass(_rec, Bar, 'Foo', [{
         key: 'm',
-        value: function m() {
+        value: function () {
             this.constructor[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, b, c);
         }
     }], undefined);`));
@@ -339,7 +339,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { this.x = arg; }}", opts))).to.equal(
         `var Foo = createOrExtendClass(_rec, undefined, 'Foo', [{
         key: Symbol.for('lively-instance-initialize'),
-        value: function initialize(arg) {
+        value: function (arg) {
             this.x = arg;
         }
     }], undefined);`));
@@ -348,7 +348,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { super(arg, 23); }}", opts))).to.equal(
         `var Foo = createOrExtendClass(_rec, undefined, 'Foo', [{
         key: Symbol.for('lively-instance-initialize'),
-        value: function initialize(arg) {
+        value: function (arg) {
             this.constructor[Symbol.for('lively-instance-superclass')].prototype[Symbol.for('lively-instance-initialize')].call(this, arg, 23);
         }
     }], undefined);`));
