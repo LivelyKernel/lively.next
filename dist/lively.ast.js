@@ -15774,6 +15774,44 @@ module.exports = function(acorn) {
     return call && (typeof call === "object" || typeof call === "function") ? call : self;
   };
 
+  babelHelpers.slicedToArray = function () {
+    function sliceIterator(arr, i) {
+      var _arr = [];
+      var _n = true;
+      var _d = false;
+      var _e = undefined;
+
+      try {
+        for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+          _arr.push(_s.value);
+
+          if (i && _arr.length === i) break;
+        }
+      } catch (err) {
+        _d = true;
+        _e = err;
+      } finally {
+        try {
+          if (!_n && _i["return"]) _i["return"]();
+        } finally {
+          if (_d) throw _e;
+        }
+      }
+
+      return _arr;
+    }
+
+    return function (arr, i) {
+      if (Array.isArray(arr)) {
+        return arr;
+      } else if (Symbol.iterator in Object(arr)) {
+        return sliceIterator(arr, i);
+      } else {
+        throw new TypeError("Invalid attempt to destructure non-iterable instance");
+      }
+    };
+  }();
+
   babelHelpers.toConsumableArray = function (arr) {
     if (Array.isArray(arr)) {
       for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
@@ -19065,6 +19103,160 @@ var nodes = Object.freeze({
     transformSingleExpression: transformSingleExpression
   });
 
+  var isTransformedClassVarDeclSymbol = Symbol();
+
+  var simpleReplace = function () {
+    var ReplaceVisitor = function (_Visitor) {
+      babelHelpers.inherits(ReplaceVisitor, _Visitor);
+
+      function ReplaceVisitor() {
+        babelHelpers.classCallCheck(this, ReplaceVisitor);
+        return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceVisitor).apply(this, arguments));
+      }
+
+      babelHelpers.createClass(ReplaceVisitor, [{
+        key: "accept",
+        value: function accept(node, state, path) {
+          return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+        }
+      }], [{
+        key: "run",
+        value: function run(parsed, replacer) {
+          var v = new this();
+          v.replacer = replacer;
+          return v.accept(parsed, null, []);
+        }
+      }]);
+      return ReplaceVisitor;
+    }(Visitor);
+
+    return function simpleReplace(parsed, replacer) {
+      return ReplaceVisitor.run(parsed, replacer);
+    };
+  }();
+
+  function replaceSuper(node, path, options) {
+    console.assert(node.type === "Super");
+
+    var _path$slice = path.slice(-2);
+
+    var _path$slice2 = babelHelpers.slicedToArray(_path$slice, 2);
+
+    var parentReferencedAs = _path$slice2[0];
+    var referencedAs = _path$slice2[1];
+
+    if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
+
+    return member(member(member("this", "constructor"), funcCall(member("Symbol", "for"), literal("lively-instance-superclass")), true), "prototype");
+  }
+
+  function replaceSuperMethodCall(node, path, options) {
+    // like super.foo()
+    console.assert(node.type === "CallExpression");
+    console.assert(node.callee.object.type === "Super");
+    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee.object, [], options), node.callee.property), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+  }
+
+  function replaceDirectSuperCall(node, path, options) {
+    // like super.foo()
+    console.assert(node.type === "CallExpression");
+    console.assert(node.callee.type === "Super");
+    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+  }
+
+  function replaceClass(node, path, options) {
+    console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
+    var instanceProps = id("undefined"),
+        classProps = id("undefined");
+
+    if (node.body.body.length) {
+      var _node$body$body$reduc = node.body.body.reduce(function (props, propNode) {
+        var decl;var key = propNode.key;
+        var kind = propNode.kind;
+        var value = propNode.value;
+        var classSide = propNode.static;
+
+        if (key.type !== "Literal" && key.type !== "Identifier") {
+          debugger;
+          console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
+        }
+
+        if (kind === "method") {
+          decl = objectLiteral(["key", literal(key.name || key.value), "value", Object.assign({}, value, { id: null })]);
+        } else if (kind === "get" || kind === "set") {
+          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, { id: id(kind) })]);
+        } else if (kind === "constructor") {
+          decl = objectLiteral(["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", Object.assign({}, value, { id: null })]);
+        } else {
+          console.warn("classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
+        }
+        (classSide ? props.clazz : props.inst).push(decl);
+        return props;
+      }, { inst: [], clazz: [] });
+
+      var inst = _node$body$body$reduc.inst;
+      var clazz = _node$body$body$reduc.clazz;
+
+
+      if (inst.length) instanceProps = { type: "ArrayExpression", elements: inst };
+      if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
+    }
+
+    var classCreator = funcCall(options.functionNode, options.classHolder, node.superClass || id("undefined"), node.id ? literal(node.id.name) : id("undefined"), instanceProps, classProps);
+
+    if (node.type === "ClassExpression") return classCreator;
+
+    var result = classCreator;
+
+    if (options.declarationWrapper) result = funcCall(options.declarationWrapper, literal(node.id.name), literal("class"), result, options.classHolder);
+    // since it is a declaration and we removed the class construct we need to add a var-decl
+    result = varDecl(node.id, result, "var");
+    result[isTransformedClassVarDeclSymbol] = true;
+
+    return result;
+  }
+
+  function splitExportDefaultWithClass(node, path, options) {
+    return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
+      declaration: node.declaration.declarations[0].id,
+      type: "ExportDefaultDeclaration"
+    }];
+  }
+
+  // var opts = {classHolder: {type: "Identifier", name: "_rec"}, functionNode: {type: "Identifier", name: "createOrExtendClass"}};
+  // stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(); }}"), opts))
+  // stringify(classToFunctionTransform(parse("class Foo {constructor() {}}"), opts))
+
+  function classToFunctionTransform(sourceOrAst, options) {
+    // required: options = {functionNode, classHolder}
+    // From
+    //   class Foo extends SuperFoo { m() { return 2 + super.m() }}
+    // produces something like
+    //   createOrExtend({}, SuperFoo, "Foo2", [{
+    //     key: "m",
+    //     value: function m() {
+    //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
+    //     }
+    //   }])
+
+    var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
+    return simpleReplace(parsed, function (node, path) {
+      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, path, options);
+
+      if (node.type === "Super") return replaceSuper(node, path, options);
+
+      if (node.type === "CallExpression" && node.callee.type === "Super") return replaceDirectSuperCall(node, path, options);
+
+      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") return replaceSuperMethodCall(node, path, options);
+
+      if (node.type === "ExportDefaultDeclaration") {
+        return splitExportDefaultWithClass(node, path, options);
+      }
+
+      return node;
+    });
+  }
+
   var merge = Object.assign;
 
   function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
@@ -19077,7 +19269,9 @@ var nodes = Object.freeze({
        // => "A.x = 3; A.y = 2; z = 4"
      */
 
-    options = merge({
+    if (!assignToObj) assignToObj = { type: "Identifier", name: "__rec" };
+
+    options = Object.assign({
       ignoreUndeclaredExcept: null,
       includeRefs: null,
       excludeRefs: options && options.exclude || [],
@@ -19086,10 +19280,15 @@ var nodes = Object.freeze({
       recordDefRanges: false,
       es6ExportFuncId: null,
       es6ImportFuncId: null,
-      captureObj: assignToObj || { type: "Identifier", name: "__rec" },
+      captureObj: assignToObj,
       moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
       moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
-      declarationWrapper: undefined
+      declarationWrapper: undefined,
+      classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : Object.assign({
+        classHolder: assignToObj,
+        functionNode: { type: "Identifier", name: "_createOrExtendClass" },
+        declarationWrapper: options && options.declarationWrapper
+      })
     }, options);
 
     var rewritten = parsed;
@@ -19378,6 +19577,9 @@ var nodes = Object.freeze({
   }
 
   function replaceClassDecls(parsed, options) {
+
+    if (options.classToFunction) return classToFunctionTransform(parsed, options.classToFunction);
+
     var topLevel = topLevelDeclsAndRefs(parsed);
     if (!topLevel.classDecls.length) return parsed;
     for (var i = parsed.body.length - 1; i >= 0; i--) {
@@ -19799,129 +20001,6 @@ var nodes = Object.freeze({
 var capturing = Object.freeze({
     rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
     rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
-  });
-
-  var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
-
-  function evalCodeTransform(code, options) {
-    // variable declaration and references in the the source code get
-    // transformed so that they are bound to `varRecorderName` aren't local
-    // state. THis makes it possible to capture eval results, e.g. for
-    // inspection, watching and recording changes, workspace vars, and
-    // incrementally evaluating var declarations and having values bound later.
-
-    // 1. Allow evaluation of function expressions and object literals
-    code = transformSingleExpression(code);
-    var parsed = parse(code);
-
-    // 2. capture top level vars into topLevelVarRecorder "environment"
-    if (options.topLevelVarRecorder) {
-
-      // 2.1 declare a function that should wrap all definitions, i.e. all var
-      // decls, functions, classes etc that get captured will be wrapped in this
-      // function. When using this with the option.keepPreviouslyDeclaredValues
-      // we will use a wrapping function that keeps the identity of prevously
-      // defined objects
-
-      var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
-      if (options.keepPreviouslyDeclaredValues) {
-        options.declarationWrapper = {
-          type: "MemberExpression",
-          object: { type: "Identifier", name: options.varRecorderName },
-          property: { type: "Literal", value: declarationWrapperName },
-          computed: true
-        };
-        options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
-      }
-
-      // 2.2 Here we call out to the actual code transformation that installs the
-      // capture and wrap logic
-      var blacklist = (options.dontTransform || []).concat(["arguments"]),
-          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
-
-      parsed = rewriteToCaptureTopLevelVariables(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
-        es6ImportFuncId: options.es6ImportFuncId,
-        es6ExportFuncId: options.es6ExportFuncId,
-        ignoreUndeclaredExcept: undeclaredToTransform,
-        exclude: blacklist,
-        declarationWrapper: options.declarationWrapper || undefined
-      });
-    }
-
-    if (options.wrapInStartEndCall) {
-      parsed = wrapInStartEndCall(parsed, {
-        startFuncNode: options.startFuncNode,
-        endFuncNode: options.endFuncNode
-      });
-    }
-
-    var result = stringify(parsed);
-
-    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-
-    return result;
-  }
-
-  function evalCodeTransformOfSystemRegisterSetters(code, options) {
-    if (options.topLevelVarRecorder) {
-
-      var parsed = parse(code),
-          blacklist = (options.dontTransform || []).concat(["arguments"]),
-          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
-
-      var result = rewriteToRegisterModuleToCaptureSetters(parsed, { name: options.varRecorderName || '__lvVarRecorder', type: "Identifier" }, {
-        exclude: blacklist,
-        declarationWrapper: options.declarationWrapper || undefined
-      });
-    }
-
-    return result ? stringify(result) : code;
-  }
-
-  function copyProperties(source, target) {
-    var exceptions = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
-
-    Object.getOwnPropertyNames(source).concat(Object.getOwnPropertySymbols(source)).forEach(function (name) {
-      return exceptions.indexOf(name) === -1 && Object.defineProperty(target, name, Object.getOwnPropertyDescriptor(source, name));
-    });
-  }
-
-  function declarationWrapperForKeepingValues(name, kind, value, recorder) {
-    // show(`declaring ${name}, a ${kind}, value ${value}`);
-
-    if (kind === "function") return value;
-
-    if (kind === "class" && recorder.hasOwnProperty(name)) {
-      var existingClass = recorder[name];
-      if (typeof existingClass === "function") {
-        copyProperties(value, existingClass, ["name", "length", "prototype"]);
-        copyProperties(value.prototype, existingClass.prototype);
-        return existingClass;
-      }
-      return value;
-    }
-
-    // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
-    //   return value;
-
-    // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
-    //   if (Object.isFrozen(recorder[name])) return value;
-    //   try {
-    //     copyProperties(value, recorder[name]);
-    //     return recorder[name];
-    //   } catch (e) {
-    //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
-    //     return value;
-    //   }
-    // }
-
-    return value;
-  }
-
-var evalSupport = Object.freeze({
-    defaultDeclarationWrapperName: defaultDeclarationWrapperName,
-    evalCodeTransform: evalCodeTransform,
-    evalCodeTransformOfSystemRegisterSetters: evalCodeTransformOfSystemRegisterSetters
   });
 
   function getCommentPrecedingNode(parsed, node) {
@@ -20384,7 +20463,6 @@ var categorizer = Object.freeze({
   exports.query = query;
   exports.transform = transform;
   exports.capturing = capturing;
-  exports.evalSupport = evalSupport;
   exports.comments = comments;
   exports.categorizer = categorizer;
   exports.stringify = stringify;
