@@ -6,7 +6,7 @@ import {
   initializeSymbol,
   instanceRestorerSymbol,
   superclassSymbol
-} from "../class-helpers.js";
+} from "../lib/class-helpers.js";
 
 describe("create or extend classes", function() {
 
@@ -22,6 +22,15 @@ describe("create or extend classes", function() {
         ]);
     expect(Foo.name).equals("Foo");
     expect(new Foo().m()).equals(23);
+  });
+
+  it("is not stored in classHolder by default", function() {
+    var classHolder = {}
+    var Foo = createOrExtend(classHolder, null, "Foo", [
+          {key: "m", value: function m() { return 23 }}
+        ]);
+    expect(Foo.name).equals("Foo");
+    expect(classHolder).to.not.have.property("Foo");
   });
 
   it("is initialized with arguments from constructor call", function() {
@@ -51,11 +60,16 @@ describe("create or extend classes", function() {
   });
 
   it("inherits", function() {
-    var Foo = createOrExtend({}, null, "Foo", [{key: "m", value: function m() { return this.x + 23 }}]),
-        Foo2 = createOrExtend({}, Foo, "Foo2", [{key: "m", value: function m() { return 2 + this.constructor[superclassSymbol].prototype.m.call(this); }}]),
+    var Foo = createOrExtend({}, null, "Foo",
+          [{key: "m", value: function m() { return this.x + 23 }},
+           {key: "n", value: function n() { return 123 }}]),
+        Foo2 = createOrExtend({}, Foo, "Foo2",
+          [{key: "m", value: function m() {
+            return 2 + this.constructor[superclassSymbol].prototype.m.call(this); }}]),
         foo = new Foo2();
     foo.x = 1;
     expect(foo.m()).equals(26);
+    expect(foo.n()).equals(123);
     expect(Foo2[superclassSymbol]).equals(Foo);
   });
 

@@ -324,7 +324,7 @@ describe("persistent definitions", () => {
   });
 
 
-  xdescribe("class", () => {
+  describe("class", () => {
 
     beforeEach(() =>
       runEval("class Foo {a() { return 1 } get b() { return 2 } static c() { return 3; }}", opts))
