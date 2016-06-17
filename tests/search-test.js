@@ -4,6 +4,7 @@ import { expect } from "mocha-es6";
 
 import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, module, searchLoadedModules } from "../src/system.js";
+import { registerPackage, searchPackage } from "../src/packages.js";
 
 const dir = System.normalizeSync("lively.modules/tests/"),
       testProjectDir = dir + "test-project-dir/",
@@ -137,6 +138,55 @@ describe("search", () => {
       });
     });
   });
-
+  
+  describe("in packages", () => {
+    
+    before(async () => {
+      await registerPackage(S, testProjectDir);
+      await S.import("test-project-1");
+    });
+    
+    it("finds string constants", async () => {
+      const res = await searchPackage(S, testProjectDir, "hello");
+      expect(res).to.be.deep.eql([{
+        file: file1m,
+        line: 2,
+        column: 16,
+        length: 5
+      }]);
+    });
+    
+    it("finds comments", async () => {
+      const res = await searchPackage(S, testProjectDir, "comment");
+      expect(res).to.be.deep.eql([{
+        file: file2m,
+        line: 1,
+        column: 27,
+        length: 7
+      }]);
+    });
+    
+    describe("by regex", () => {
+      it("finds comments", async () => {
+        const res = await searchPackage(S, testProjectDir, /(im|ex)port/);
+        expect(res).to.be.deep.eql([{
+          file: file1m,
+          line: 1,
+          column: 0,
+          length: 6
+        }, {
+          file: file1m,
+          line: 2,
+          column: 0,
+          length: 6
+        }, {
+          file: file2m,
+          line: 1,
+          column: 0,
+          length: 6
+        }]);
+      });
+    });
+  });
 
 });
