@@ -5,22 +5,32 @@ import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
 import { module } from "./system.js";
 
-// Module class is primarily used to provide a nice API
-// It does not hold any mutable state
+const urlTester = /[a-z][a-z0-9\+\-\.]/i;
+
+function isURL(id) {
+  return urlTester.test(id);
+}
+
+// Module class is primarily used to provide an API that integrates the System
+// loader state with lively.modules extensions.
+// It does not hold any mutable state.
 export default class Module {
-  
+
   constructor(System, id) {
+    // We assume module ids to be a URL with a scheme
+    if (!isURL(id))
+      throw new Error(`Module constructor called with ${id} that does not seem to be a fully normalized module id.`);
     this.System = System;
     this.id = id;
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // properties
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   // returns Promise<string>
-  fullName() { return this.System.normalize(this.id); }
-  
+  fullName() { return this.id; }
+
   // returns Promise<string>
   source(parent) {
     if (this.id.match(/^http/) && this.System.global.fetch) {
@@ -34,12 +44,11 @@ export default class Module {
     }
     return Promise.reject(new Error(`Cannot retrieve source for ${this.id}`));
   }
-  
+
   async ast() {
-    const source = await this.source();
-    return ast.parse(source);
+    return ast.parse(await this.source());
   }
-  
+
   metadata() {
     var load = this.System.loads ? this.System.loads[this.id] : null;
     return load ? load.metadata : null;
@@ -56,64 +65,53 @@ export default class Module {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async load() {
-    const fullname = await this.fullName();
-    return this.System.get(fullname) || await this.System.import(fullname);
+    return this.System.get(this.id) || await this.System.import(this.id);
   }
-  
-  async isLoaded() {
-    const fullname = await this.fullName();
-    return !!this.System.get(fullname);
-  }
-  
-  async unloadEnv() {
-    const fullname = await this.fullName();
-    delete this.System.get("@lively-env").loadedModules[fullname];
+
+  isLoaded() { return !!this.System.get(this.id); }
+
+  unloadEnv() {
+    delete this.System.get("@lively-env").loadedModules[this.id];
   }
 
   unloadDeps(opts) {
     opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
-    return Promise.all(this.dependents().map(ea => {
+    this.dependents().forEach(ea => {
       this.System.delete(ea.id);
       if (this.System.loads) delete this.System.loads[ea.id];
-      return opts.forgetEnv ? ea.unloadEnv() : Promise.resolve();
-    }));
+      if (opts.forgetEnv) ea.unloadEnv();
+    });
   }
-  
-  async unload(opts) {
+
+  unload(opts) {
     opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
-    if (opts.forgetDeps) await this.unloadDeps(opts);
-    //System.delete(moduleName);
+    if (opts.forgetDeps) this.unloadDeps(opts);
     this.System.delete(this.id);
     if (this.System.loads) {
-      //delete this.System.loads[moduleName];
       delete this.System.loads[this.id];
     }
-    if (this.System.meta) {
-      //delete System.meta[moduleName];
+    if (this.System.meta)
       delete this.System.meta[this.id];
-    }
-    if (opts.forgetEnv) {
-      //forgetEnvOf(System, moduleName);
-      await this.unloadEnv();
-    }
+    if (opts.forgetEnv)
+      this.unloadEnv();
   }
-  
+
   async reload(opts) {
     opts = obj.merge({reloadDeps: true, resetEnv: true}, opts);
     var toBeReloaded = [this];
     if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
-    await this.unload({forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
+    this.unload({forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
     await Promise.all(toBeReloaded.map(ea => ea.id !== this.id && ea.load()));
     await this.load();
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // change
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   async changeSourceAction(changeFunc) {
-    const source = await this.source();
-    const newSource = await changeFunc(source);
+    const source = await this.source(),
+          newSource = await changeFunc(source);
     return this.changeSource(newSource, {evaluate: true});
   }
 
@@ -121,11 +119,11 @@ export default class Module {
     const oldSource = await this.source();
     return moduleSourceChange(this.System, this.id, oldSource, newSource, this.format(), options);
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dependencies
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   dependents() {
     // which modules (module ids) are (in)directly import module with id
     // Let's say you have
@@ -135,7 +133,7 @@ export default class Module {
     // `dependents` gives you an answer what modules are "stale" when you
     // change module1 = module2 + module3
     return graph.hull(graph.invert(computeRequireMap(this.System)), this.id)
-                .map(mid => module(this.System, mid));
+            .map(mid => module(this.System, mid));
   }
 
   requirements() {
@@ -146,9 +144,9 @@ export default class Module {
     // module3: import {y} from "module2.js"; export var z = y + 1;
     // `module("./module3").requirements()` will report ./module2 and ./module1
     return graph.hull(computeRequireMap(this.System), this.id)
-                .map(mid => module(this.System, mid));
+            .map(mid => module(this.System, mid));
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module environment
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -156,7 +154,7 @@ export default class Module {
   env() {
     const ext = this.System.get("@lively-env");
     if (ext.loadedModules[this.id]) return ext.loadedModules[this.id];
-  
+
     const env = {
       loadError: undefined,
       recorderName: "__lvVarRecorder",
@@ -189,59 +187,59 @@ export default class Module {
         }
       })
     }
-  
+
     env.recorder.System = this.System;
     return ext.loadedModules[this.id] = env;
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // imports and exports
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   async imports() {
-    const parsed = await this.ast();
-    const scope = ast.query.scopes(parsed);
-    const imports = scope.importDecls.reduce((imports, node) => {
-      var nodes = ast.query.nodesAtIndex(parsed, node.start);
-      var importStmt = arr.without(nodes, scope.node)[0];
-      if (!importStmt) return imports;
-  
-      var from = importStmt.source ? importStmt.source.value : "unknown module";
-      if (!importStmt.specifiers.length) // no imported vars
-        return imports.concat([{
-          local:      null,
-          imported:   null,
-          fromModule: from
-        }]);
-  
-      return imports.concat(importStmt.specifiers.map(importSpec => {
-        var imported;
-        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
-        else if (importSpec.type === "ImportDefaultSpecifier" ) imported = "default";
-        else if (importSpec.type === "ImportSpecifier" ) imported = importSpec.imported.name;
-        else if (importStmt.source) imported = importStmt.source.name;
-        else imported = null;
-        return {
-          local:      importSpec.local ? importSpec.local.name : null,
-          imported:   imported,
-          fromModule: from
-        }
-      }))
-    }, []);
+    const parsed = await this.ast(),
+          scope = ast.query.scopes(parsed),
+          imports = scope.importDecls.reduce((imports, node) => {
+            var nodes = ast.query.nodesAtIndex(parsed, node.start),
+                importStmt = arr.without(nodes, scope.node)[0];
+            if (!importStmt) return imports;
+      
+            var from = importStmt.source ? importStmt.source.value : "unknown module";
+            if (!importStmt.specifiers.length) // no imported vars
+              return imports.concat([{
+                local:      null,
+                imported:   null,
+                fromModule: from
+              }]);
+      
+            return imports.concat(importStmt.specifiers.map(importSpec => {
+              var imported;
+              if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
+              else if (importSpec.type === "ImportDefaultSpecifier" ) imported = "default";
+              else if (importSpec.type === "ImportSpecifier" ) imported = importSpec.imported.name;
+              else if (importStmt.source) imported = importStmt.source.name;
+              else imported = null;
+              return {
+                local:      importSpec.local ? importSpec.local.name : null,
+                imported:   imported,
+                fromModule: from
+              }
+            }))
+          }, []);
     return arr.uniqBy(imports, (a, b) =>
       a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule);
   }
-  
+
   async exports() {
-    const parsed = await this.ast();
-    const scope = ast.query.scopes(parsed);
-    const exports = scope.exportDecls.reduce((exports, node) => {
-  
+    const parsed = await this.ast(),
+          scope = ast.query.scopes(parsed),
+          exports = scope.exportDecls.reduce((exports, node) => {
+
       var exportsStmt = ast.query.statementOf(scope.node, node);
       if (!exportsStmt) return exports;
-  
+
       var from = exportsStmt.source ? exportsStmt.source.value : null;
-  
+
       if (exportsStmt.type === "ExportAllDeclaration") {
         return exports.concat([{
           local:           null,
@@ -249,7 +247,7 @@ export default class Module {
           fromModule:      from
         }])
       }
-  
+
       if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
         return exports.concat(exportsStmt.specifiers.map(exportSpec => {
           return {
@@ -259,7 +257,7 @@ export default class Module {
           }
         }))
       }
-  
+
       if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
         return exports.concat(exportsStmt.declaration.declarations.map(decl => {
           return {
@@ -270,7 +268,7 @@ export default class Module {
           }
         }))
       }
-  
+
       if (exportsStmt.declaration) {
         return exports.concat({
           local:           exportsStmt.declaration.id.name,
@@ -283,7 +281,7 @@ export default class Module {
       }
       return exports;
     }, []);
-  
+
     return arr.uniqBy(exports, (a, b) =>
       a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule);
   }
@@ -291,7 +289,7 @@ export default class Module {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module records
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   record() {
     const record = this.System._loader.moduleRecords[this.id];
     if (!record) return null;
@@ -299,7 +297,7 @@ export default class Module {
       record.__lively_modules__ = {evalOnlyExport: {}};
     return record;
   }
-  
+
   updateRecord(doFunc) {
     var record = this.record();
     if (!record) throw new Error(`es6 environment global of ${this.id}: module not loaded, cannot get export object!`);
@@ -308,14 +306,14 @@ export default class Module {
       return doFunc(record);
     } finally { record.locked = false; }
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // search
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   async search(searchStr) {
-    const src = await this.source();
-    const re = new RegExp(searchStr, "g");
+    const src = await this.source(),
+          re = new RegExp(searchStr, "g");
     let match, res = [];
     while ((match = re.exec(src)) !== null) {
       res.push(match.index);

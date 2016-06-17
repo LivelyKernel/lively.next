@@ -57,13 +57,10 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     // gather the data we need for the update, this includes looking up the
     // imported modules and getting the module record and module object as
     // a fallback (module records only exist for esm modules)
-    let depModule = module(System, depName, moduleId);
-    deps.push({
-      name: depName,
-      fullname: await depModule.fullName(),
-      module: await depModule.load(),
-      record: depModule.record()
-    });
+    let depId = await System.normalize(depName, load.name),
+        depModule = module(System, depId),
+        loaded = await depModule.load();
+    deps.push({name: depName, fullname: depId, module: loaded, record: depModule.record()});
   }
 
   // 1. update the record so that when its dependencies change and cause a
