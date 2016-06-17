@@ -53,15 +53,8 @@ export class AbstractCoreInterface {
   }
   
   async getPackageForModule(name) {
-    // name = "http://localhost:9001/lively.resources/package.json"
-    // this.getPackageForModule("http://localhost:9001/lively.resources/package.json")
-    var p = (await this.getPackages()).find(ea => ea.modules.some(mod => mod.name === name));
-    if (p) return p;
-  
-    var packages = await this.getPackages();
-    return arr.sortBy(
-              packages.filter(ea => name.indexOf(ea.address) === 0),
-              ea => ea.address.length);
+    return (await this.getPackages())
+      .find(ea => ea.modules.some(mod => mod.name === name));
   }
   
   systemConfChange(source) {
