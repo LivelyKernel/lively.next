@@ -177,13 +177,14 @@ class ModuleInterface {
         },
         _moduleImport: {
           get: function() {
-            return (imported, name) => {
-              var imported = S._loader.modules[id];
-              if (!imported) throw new Error(`import of ${name} failed: ${imported} (tried as ${id}) is not loaded!`);
-              if (name == undefined) return imported.module;
-              if (!imported.module.hasOwnProperty(name))
-                console.warn(`import from ${imported}: Has no export ${name}!`);
-              return imported.module[name];
+            return (depName, key) => {
+              var depId = S.normalizeSync(depName, id),
+                  depExports = S._loader.modules[depId];
+              if (!depExports) throw new Error(`import of ${key} failed: ${depName} (tried as ${id}) is not loaded!`);
+              if (key == undefined) return depExports.module;
+              if (!depExports.module.hasOwnProperty(key))
+                console.warn(`import from ${depExports}: Has no export ${key}!`);
+              return depExports.module[key];
             }
           }
         }
