@@ -1,4 +1,4 @@
-import { module } from "./system.js";
+import module from "./module.js";
 import {
   instrumentSourceOfEsmModuleLoad,
   instrumentSourceOfGlobalModuleLoad

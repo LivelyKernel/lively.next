@@ -109,21 +109,15 @@ import { obj, arr } from "lively.lang";
 
   ### evaluation
 
-  *Please note: This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
+  * This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
 
-  #### `moduleSourceChange(moduleName, newSource, options)`
+  ### ModuleInterface
 
-  To redefine a module's source code at runtime you can use the
-  moduleSourceChange method. Given `a.js` from the previous example you can run
-  `lively.modules.moduleSourceChange('a.js', 'var x = 24;\nexport x;')`.
-  This will a) evaluate the changed code and b) try to modify the actual file
-  behind the module. In browser environments this is done via a `PUT` request,
-  in node.js `fs.writeFile` is used.
+  #### `lively.modules.module(moduleId)`
 
+  Returns an instance of ModuleInterface with the following methods:
 
-  ### module dependencies
-
-  #### `lively.modules.findDependentsOf(moduleName)`
+  - `dependents()`
 
   Which modules (module ids) are (in)directly import module with id.
 
@@ -133,9 +127,9 @@ import { obj, arr } from "lively.lang";
   - module2.js: `import {x} from "module1.js"; export var y = x + 1;`
   - module3.js: `import {y} from "module2.js"; export var z = y + 1;`
 
-  `findDependentsOf("module1.js")` returns ["module2", "module3"]
+  `module("module1.js").dependents()` returns [module("module2"), module("module3")]
 
-  #### `findRequirementsOf(moduleName)`
+  - `requirements()`
 
   which modules (module ids) are (in)directly required by module with id?
 
@@ -145,62 +139,66 @@ import { obj, arr } from "lively.lang";
   - module2: `import {x} from "module1.js"; export var y = x + 1;`
   - module3: `import {y} from "module2.js"; export var z = y + 1;`
 
-  `findRequirementsOf("module3")` will report ["module2", "module1"]
+  `module("module3").requirements()` will report [module("module2"), module("module1")]
 
-  #### reloadModule(moduleName, options)
+  - `async changeSource(newSource, options)`
+
+  To redefine a module's source code at runtime you can use the
+  changeSource method. Given `a.js` from the previous example you can run
+  `module('a.js').changeSource('var x = 24;\nexport x;')`.
+  This will a) evaluate the changed code and b) try to modify the actual file
+  behind the module. In browser environments this is done via a `PUT` request,
+  in node.js `fs.writeFile` is used.
+
+  - `async reload(options)``
 
   Will re-import the module identified by `moduleName`. By default this will
   also reload all direct and indirect dependencies of that module. You can
   control that behavior via `options`, the default value of it is
   `{reloadDeps: true, resetEnv: true}`.
 
-  #### `forgetModule(moduleName, options)`
+  - `unload(options)`
 
   Will remove the module from the loaded module set of lively.modules.System.
   `options` are by default `{forgetDeps: true, forgetEnv: true}`.
 
-  #### `requireMap()`
+  - `async imports()` and `async exports()`
 
-  Will return a JS object whose keys are module ids and the corresponding
-  values are lists of module ids of those modules that dependent on the key
-  module (including the key module itself). I.e. the importers of that module.
-
-
-  ### `importsAndExportsOf(moduleId)`
-
-  Returns a promise that resolves to an object with fields `exports` and
-  `imports`. The values referenced by those fields are lists with objects about
-  the exact import and export information of variables in that module. For
-  exports this includes the export AST node, the local name of the exported
-  variable, its export name, etc. For imports it includes the imported variable
-  name, the module from where it was imported etc.
+  Import and export state. For exports this includes the local name of the
+  exported variable, its export name, etc. For imports it includes the imported
+  variable name, the module from where it was imported etc.
 
   Example:
 
   ```js
-  lively.module.importsAndExportsOf("lively.modules/index.js");
+  await module("lively.modules/index.js").exports();
     // =>
-    // Promise({
-    //   exports: [{
-    //       exportStatement: {},
+    //   [{
     //       exported: "getSystem",
     //       local: "getSystem",
     //       fromModule: "http://localhost:9001/node_modules/lively.modules/index.js",
-    //       localModule: "http://localhost:9001/node_modules/lively.modules/index.js"
-    //     }, ...],
-    //   imports: [{
+    //     }, ...]
+
+  await module("lively.modules/index.js").imports();
+    //   [{
     //       fromModule: "lively.lang",
-    //       importStatement: {...}, // AST node
     //       local: "obj",
     //       localModule: "http://localhost:9001/node_modules/lively.modules/index.js"
     //     }, {
     //       fromModule: "./src/system.js",
-    //       importStatement: {...}, // AST node
     //       local: "getSystem",
     //       localModule: "http://localhost:9001/node_modules/lively.modules/index.js"
     //     }, ...]
     //   })
   ```
+
+
+  #### `lively.modules.requireMap()`
+
+  Will return a JS object whose keys are module ids and the corresponding
+  values are lists of module ids of those modules that dependent on the key
+  module (including the key module itself). I.e. the importers of that module.
+
 
   ### hooks
 
@@ -222,9 +220,9 @@ import { obj, arr } from "lively.lang";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import {
   getSystem, removeSystem, prepareSystem,
-  module as _module,
   printSystemConfig as _printSystemConfig
 } from "./src/system.js";
+import _module from "./src/module.js";
 
 var GLOBAL = typeof window !== "undefined" ? window :
               (typeof global !== "undefined" ? global :

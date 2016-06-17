@@ -1,6 +1,6 @@
 import * as ast from "lively.ast";
 import { arr } from "lively.lang"
-import { module } from "./system.js"
+import module from "./module.js"
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,

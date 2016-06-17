@@ -1,6 +1,6 @@
 import { arr, string, promise } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
-import { module } from './system.js';
+import module from "../src/module.js";
 import { computeRequireMap as requireMap } from './dependencies.js'
 
 // helper

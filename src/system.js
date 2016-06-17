@@ -2,7 +2,7 @@ import * as ast from "lively.ast";
 import { obj, properties } from "lively.lang";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
-import Module from "./module.js";
+import module from "./module.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -21,7 +21,7 @@ function livelySystemEnv(System) {
     moduleEnv: function(id) { return module(System, id).env(); },
 
     // TODO this is just a test, won't work in all cases...
-    get itself() { return System.get(System.normalizeSync("lively.modules/index.js")); },
+    get itself() { return System.get(System.decanonicalize("lively.modules/index.js")); },
 
     evaluationDone: function(moduleId) {
       addGetterSettersForNewVars(System, moduleId);
@@ -90,8 +90,8 @@ function prepareSystem(System, config) {
   if (!isHookInstalled(System, "normalizeHook"))
     installHook(System, "normalize", normalizeHook);
 
-  if (!isHookInstalled(System, "normalizeSync", "normalizeSyncHook"))
-    installHook(System, "normalizeSync", normalizeSyncHook);
+  if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
+    installHook(System, "decanonicalize", decanonicalizeHook);
 
 
   if (!isHookInstalled(System, "fetch", "fetch_lively_protocol"))
@@ -154,11 +154,11 @@ function normalizeHook(proceed, name, parent, parentAddress) {
     })
 }
 
-function normalizeSyncHook(proceed, name, parent, isPlugin) {
+function decanonicalizeHook(proceed, name, parent, isPlugin) {
   var System = this;
   if (name === "..") name = '../index.js'; // Fix ".."
 
-  // systemjs' normalizeSync has by default not the fancy
+  // systemjs' decanonicalize has by default not the fancy
   // '{node: "events", "~node": "@mepty"}' mapping but we need it
   var pkg = parent && normalize_packageOfURL(parent, System);
   if (pkg) {
@@ -189,7 +189,7 @@ function normalize_doMapWithObject(mappedObject, pkg, loader) {
   // SystemJS allows stuff like {events: {"node": "@node/events", "~node": "@empty"}}
   // for conditional name lookups based on the environment. The resolution
   // process in SystemJS is asynchronous, this one here synch. to support
-  // normalizeSync and a one-step-load
+  // decanonicalize and a one-step-load
   var env = loader.get(pkg.map['@env'] || '@system-env');
   // first map condition to match is used
   var resolved;
@@ -312,10 +312,6 @@ function addGetterSettersForNewVars(System, moduleId) {
   });
 }
 
-function module(System, moduleName, parent) {
-  return new Module(System, System.normalizeSync(moduleName, parent));
-}
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // exports
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -323,5 +319,5 @@ function module(System, moduleName, parent) {
 export {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig,
-  loadedModules, module
+  loadedModules
 };

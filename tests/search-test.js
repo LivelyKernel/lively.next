@@ -3,7 +3,8 @@
 import { expect } from "mocha-es6";
 
 import { removeDir, createFiles } from "./helpers.js";
-import { getSystem, module } from "../src/system.js";
+import { getSystem } from "../src/system.js";
+import module from "../src/module.js";
 
 const dir = System.normalizeSync("lively.modules/tests/"),
       testProjectDir = dir + "test-project-dir/",

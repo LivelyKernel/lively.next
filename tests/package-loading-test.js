@@ -4,8 +4,9 @@ import { expect } from "mocha-es6";
 import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
 
 import { obj } from "lively.lang";
-import { getSystem, removeSystem, printSystemConfig, loadedModules, module } from "../src/system.js";
+import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
 import { registerPackage, importPackage, applyConfig, getPackages } from "../src/packages.js";
+import module from "../src/module.js";
 
 var testDir = System.normalizeSync("lively.modules/tests/");
 

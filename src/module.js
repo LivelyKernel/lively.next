@@ -3,23 +3,25 @@ import { arr, obj, graph } from "lively.lang";
 import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
-import { module } from "./system.js";
 
 const urlTester = /[a-z][a-z0-9\+\-\.]/i;
 
-function isURL(id) {
-  return urlTester.test(id);
+function isURL(id) { return urlTester.test(id); }
+
+export default function module(System, moduleName, parent) {
+  return new ModuleInterface(System, System.decanonicalize(moduleName, parent));
 }
 
-// Module class is primarily used to provide an API that integrates the System
+
+// ModuleInterface is primarily used to provide an API that integrates the System
 // loader state with lively.modules extensions.
 // It does not hold any mutable state.
-export default class Module {
+class ModuleInterface {
 
   constructor(System, id) {
     // We assume module ids to be a URL with a scheme
     if (!isURL(id))
-      throw new Error(`Module constructor called with ${id} that does not seem to be a fully normalized module id.`);
+      throw new Error(`ModuleInterface constructor called with ${id} that does not seem to be a fully normalized module id.`);
     this.System = System;
     this.id = id;
   }
@@ -32,7 +34,7 @@ export default class Module {
   fullName() { return this.id; }
 
   // returns Promise<string>
-  source(parent) {
+  source() {
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
     }
