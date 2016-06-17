@@ -106,35 +106,37 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
   
   forgetModule(name, opts) {
-    return modules.forgetModule(name, opts);
+    return modules.module(name).unload(opts);
   }
 
   reloadModule(name, opts) {
-    return modules.reloadModule(name, opts);
+    return modules.module(name).reload(opts);
   }
   
   moduleFormat(moduleName) {
-    var loads = modules.System.loads;
-    return loads && loads[moduleName] && loads[moduleName].metadata && loads[moduleName].metadata.format;
+    return modules.module(moduleName).format();
   }
 
   moduleSourceChange(moduleName, newSource, options) {
-    return modules.moduleSourceChange(moduleName, newSource, options);
+    return modules.module(moduleName).changeSource(newSource, options);
   }
 
-  importsAndExportsOf(modId, sourceOrAst) {
-    return modules.importsAndExportsOf(modId, sourceOrAst);
+  async importsAndExportsOf(modId, sourceOrAst) {
+    return {
+      imports: await modules.module(modId).imports(sourceOrAst),
+      exports: await modules.module(modId).exports(sourceOrAst)}
   }
 
   async keyValueListOfVariablesInModule(moduleName, sourceOrAstOrNothing) {
-    if (!sourceOrAstOrNothing) sourceOrAstOrNothing = await this.resourceRead(moduleName);
+    if (!sourceOrAstOrNothing)
+      sourceOrAstOrNothing = await this.resourceRead(moduleName);
 
     var parsed = typeof sourceOrAstOrNothing === "string" ?
           ast.parse(sourceOrAstOrNothing) : sourceOrAstOrNothing,
         id = this.normalizeSync(moduleName),
         format = this.moduleFormat(id),
-        scope = modules.moduleEnv(id).recorder,
-        importsExports = this.importsAndExportsOf(id, parsed),
+        scope = modules.module(id).env().recorder,
+        importsExports = await this.importsAndExportsOf(id, parsed),
   
         toplevel = ast.query.topLevelDeclsAndRefs(parsed),
         decls = arr.sortByKey(ast.query.declarationsOfScope(toplevel.scope, true), "start"),
