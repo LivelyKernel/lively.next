@@ -207,7 +207,7 @@ import { obj, arr } from "lively.lang";
   main module via:
 
   ```js
-  var id = System.normalizeSync("lively.modules/index.js");
+  var id = System.decanonicalize("lively.modules/index.js");
   Object.keys(lively.modules.moduleEnv("lively.modules/index.js").recorder);
     // => ["defaultSystem", "changeSystem", "loadedModules", "sourceOf", "moduleEnv", ...]
   lively.modules.moduleEnv("lively.modules/index.js").recorder.changeSystem

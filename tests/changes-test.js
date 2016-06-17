@@ -8,7 +8,7 @@ import module from "../src/module.js";
 
 describe("code changes of esm format module", () => {
 
-  const dir = System.normalizeSync("lively.modules/tests/"),
+  const dir = System.decanonicalize("lively.modules/tests/"),
         testProjectDir = dir + "test-project-1-dir/",
         testProjectSpec = {
           "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
@@ -120,7 +120,7 @@ describe("code changes of esm format module", () => {
 
 describe("code changes of global format module", () => {
 
-  var dir = System.normalizeSync("lively.modules/tests/"),
+  var dir = System.decanonicalize("lively.modules/tests/"),
       testProjectDir = dir + "test-project-dir/",
       file1m = `${testProjectDir}file1.js`,
       testProjectSpec = {
@@ -169,7 +169,7 @@ describe("code changes of global format module", () => {
 
 describe("persistent definitions", () => {
 
-  var dir = System.normalizeSync("lively.modules/tests/"),
+  var dir = System.decanonicalize("lively.modules/tests/"),
       testProjectDir = dir + "test-project-2-dir/",
       testProjectSpec = {
         "file1.js": "'format esm'; class Foo { m() { return 23 }}\nvar x = {bar: 123, foo() { return this.bar + 42 }}\n",

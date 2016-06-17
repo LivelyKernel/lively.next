@@ -5,7 +5,7 @@ import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem, moduleRecordFor, moduleEnv } from "../src/system.js";
 
-var dir = System.normalizeSync("lively.modules/tests/"),
+var dir = System.decanonicalize("lively.modules/tests/"),
     testDir = dir + "test-project/";
 
 describe("module loading", () => {

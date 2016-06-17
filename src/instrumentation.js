@@ -25,7 +25,7 @@ function canonicalURL(url) {
 // code instrumentation
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var node_modulesDir = System.normalizeSync("lively.modules/node_modules/");
+var node_modulesDir = System.decanonicalize("lively.modules/node_modules/");
 
 var exceptions = [
       // id => id.indexOf(resolve("node_modules/")) > -1,

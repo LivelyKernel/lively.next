@@ -249,7 +249,7 @@ function runExecuteOfGlobalModule(System, entry) {
   var output = entry.execute.call(System.global, function(name) {
     var dep = entry.deps.find(dep => dep === name),
         loadedDep = (dep && System.get(entry.normalizedDeps[entry.deps.indexOf(dep)]))
-                 || System.get(System.normalizeSync(name, entry.name));
+                 || System.get(System.decanonicalize(name, entry.name));
     if (loadedDep) return loadedDep;
     throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
   }, exports, module);

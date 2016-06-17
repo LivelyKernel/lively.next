@@ -8,7 +8,7 @@ import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../sr
 import { registerPackage, importPackage, applyConfig, getPackages } from "../src/packages.js";
 import module from "../src/module.js";
 
-var testDir = System.normalizeSync("lively.modules/tests/");
+var testDir = System.decanonicalize("lively.modules/tests/");
 
 
 describe("package loading", function() {
@@ -158,11 +158,11 @@ describe("package configuration test", () => {
     expect(S.getConfig().meta).property(testName).deep.equals({format: "global"});
   });
 
-  it("can resolve .. in url", () =>
-    Promise.resolve()
-      .then(() => expect(S.normalizeSync("..", testDir + "foo/bar.js")).to.equal(testDir + "index.js"))
-      .then(() => S.normalize("..", testDir + "foo/bar.js"))
-      .then((result) => expect(result).to.equal(testDir + "index.js")));
+  it("can resolve .. in url", async () => {
+    expect(S.decanonicalize("..", testDir + "foo/bar.js")).to.equal(testDir + "index.js")
+    var result = await S.normalize("..", testDir + "foo/bar.js")
+    expect(result).to.equal(testDir + "index.js");
+  })
 });
 
 describe("mutual dependent packages", () => {

@@ -217,7 +217,7 @@ function applyLivelyConfigBundles(System, livelyConfig, packageURL) {
   if (!livelyConfig.bundles) return Promise.resolve();
   var normalized = Object.keys(livelyConfig.bundles).reduce((bundles, name) => {
     var absName = packageURL.replace(/\/$/, "") + "/" + name;
-    var files = livelyConfig.bundles[name].map(f => System.normalizeSync(f, packageURL + "/"));
+    var files = livelyConfig.bundles[name].map(f => System.decanonicalize(f, packageURL + "/"));
     bundles[absName] = files;
     return bundles;
   }, {});
@@ -252,7 +252,7 @@ function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageU
   var pConf = System.packages[packageURL],
       preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ?
         livelyConfig.preferLoadedPackages : true,
-      normalized = System.normalizeSync(subPackageName, packageURL + "/");
+      normalized = System.decanonicalize(subPackageName, packageURL + "/");
 
   if (preferLoadedPackages && (pConf.map[subPackageName] || System.map[subPackageName] || System.get(normalized))) {
     var subpackageURL;
@@ -290,7 +290,7 @@ function groupIntoPackages(System, moduleNames, packageNames) {
   return arr.groupBy(moduleNames, groupFor);
 
   function groupFor(moduleName) {
-    var fullname = System.normalizeSync(moduleName),
+    var fullname = System.decanonicalize(moduleName),
         matching = packageNames.filter(p => fullname.indexOf(p) === 0);
     return matching.length ?
       matching.reduce((specific, ea) => ea.length > specific.length ? ea : specific) :

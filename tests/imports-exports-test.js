@@ -6,7 +6,7 @@ import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 
-var dir = System.normalizeSync("lively.modules/tests/"),
+var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-dir-imports-exports/",
     testProjectSpec = {
       "file1.js": "import { y as yyy } from './file2.js'; export var x = yyy + z;",

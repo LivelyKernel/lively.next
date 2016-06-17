@@ -7,7 +7,7 @@ import { getSystem, removeSystem } from "../src/system.js";
 // import { runEval } from "../src/eval.js";
 import { getNotifications, subscribe, unsubscribe } from "../src/notify.js";
 
-var dir = System.normalizeSync("lively.modules/tests/"),
+var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-project-dir/",
     testProjectSpec = {
       "file1.js": "import { y } from './file2.js'; var z = 2; export var x = y + z;",
