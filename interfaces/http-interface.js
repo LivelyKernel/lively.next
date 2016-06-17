@@ -63,10 +63,14 @@ try {
   JSON.stringify(result.isError ?
     {isError: true, value: result.value.stack || String(result.value)} :
     result)
-;
-  `, Object.assign({targetModule: "lively://remote-lively-system/runEvalAndStringify"}, opts));
-  
-      if (result && result.isError) return Promise.reject(result.value);
+;`, Object.assign({
+      targetModule: "lively://remote-lively-system/runEvalAndStringify",
+      promiseTimeout: 2000,
+      waitForPromise: true,
+    }, opts));
+
+      if (result && result.isError)
+        throw new Error(String(result.value));
   
       if (!result || !result.value) return null;
       
