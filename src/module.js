@@ -178,8 +178,7 @@ class ModuleInterface {
         _moduleImport: {
           get: function() {
             return (imported, name) => {
-              var id = S.decanonicalize(imported, id),
-                  imported = S._loader.modules[id];
+              var imported = S._loader.modules[id];
               if (!imported) throw new Error(`import of ${name} failed: ${imported} (tried as ${id}) is not loaded!`);
               if (name == undefined) return imported.module;
               if (!imported.module.hasOwnProperty(name))
