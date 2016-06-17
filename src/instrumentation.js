@@ -154,7 +154,7 @@ function customTranslate(proceed, load) {
            || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
       isCjs = load.metadata.format == 'cjs',
       isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-      env = module(System, load.name).env,
+      env = module(System, load.name).env(),
       instrumented = false;
 
   if (isEsm) {

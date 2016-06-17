@@ -62,13 +62,13 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
       name: depName,
       fullname: await depModule.fullName(),
       module: await depModule.load(),
-      record: depModule.record
+      record: depModule.record()
     });
   }
 
   // 1. update the record so that when its dependencies change and cause a
   // re-execute, the correct code (new version) is run
-  var record = module(System, load.name).record;
+  var record = module(System, load.name).record();
   if (record) {
     record.dependencies = deps.map(ea => ea.record);
     record.execute = declared.execute;
@@ -143,7 +143,7 @@ function doInstantiateGlobalModule(System, load) {
     // SystemJS exports detection for global modules is based in new props
     // added to the global. In order to allow re-load we remove previously
     // "exported" values
-    var prevMeta = module(System, m.id).metadata,
+    var prevMeta = module(System, m.id).metadata(),
         exports = prevMeta && prevMeta.entry
                && prevMeta.entry.module && prevMeta.entry.module.exports;
     if (exports)

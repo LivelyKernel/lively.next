@@ -33,12 +33,12 @@ describe("dependencies", () => {
 
   it("computes required modules of some module", async () => {
     await S.import("file1.js");
-    expect(module1.requirements).to.deep.equal([module2, module3]);
+    expect(module1.requirements()).to.deep.equal([module2, module3]);
   });
 
   it("computes dependent modules of some module", async () => {
     await S.import("file1.js");
-    expect(module2.dependents).to.deep.equal([module1]);
+    expect(module2.dependents()).to.deep.equal([module1]);
   });
 
   describe("unload module", () => {

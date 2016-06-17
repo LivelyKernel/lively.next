@@ -4,7 +4,7 @@ import { module } from "./system.js"
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
-      rec = module(System, moduleId).record;
+      rec = module(System, moduleId).record();
   if (rec && (name in rec.exports || addNewExport)) {
     var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
     pending[name] = value;

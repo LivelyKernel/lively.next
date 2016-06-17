@@ -40,11 +40,17 @@ export default class Module {
     return ast.parse(source);
   }
   
-  get metadata() {
+  metadata() {
     var load = this.System.loads ? this.System.loads[this.id] : null;
     return load ? load.metadata : null;
   }
-  
+
+  format() {
+    // assume esm by default
+    var meta = this.metadata();
+    return meta ? meta.format : "esm";
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // loading
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -66,7 +72,7 @@ export default class Module {
 
   unloadDeps(opts) {
     opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
-    return Promise.all(this.dependents.map(ea => {
+    return Promise.all(this.dependents().map(ea => {
       this.System.delete(ea.id);
       if (this.System.loads) delete this.System.loads[ea.id];
       return opts.forgetEnv ? ea.unloadEnv() : Promise.resolve();
@@ -95,7 +101,7 @@ export default class Module {
   async reload(opts) {
     opts = obj.merge({reloadDeps: true, resetEnv: true}, opts);
     var toBeReloaded = [this];
-    if (opts.reloadDeps) toBeReloaded = this.dependents.concat(toBeReloaded);
+    if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
     await this.unload({forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv});
     await Promise.all(toBeReloaded.map(ea => ea.id !== this.id && ea.load()));
     await this.load();
@@ -113,14 +119,14 @@ export default class Module {
 
   async changeSource(newSource, options) {
     const oldSource = await this.source();
-    return moduleSourceChange(this.System, this.id, oldSource, newSource, this.metadata.format, options);
+    return moduleSourceChange(this.System, this.id, oldSource, newSource, this.format(), options);
   }
   
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dependencies
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
-  get dependents() {
+  dependents() {
     // which modules (module ids) are (in)directly import module with id
     // Let's say you have
     // module1: export var x = 23;
@@ -132,13 +138,13 @@ export default class Module {
                 .map(mid => module(this.System, mid));
   }
 
-  get requirements() {
+  requirements() {
     // which modules (module ids) are (in)directly required by module with id
     // Let's say you have
     // module1: export var x = 23;
     // module2: import {x} from "module1.js"; export var y = x + 1;
     // module3: import {y} from "module2.js"; export var z = y + 1;
-    // `module("./module3").requirements` will report ./module2 and ./module1
+    // `module("./module3").requirements()` will report ./module2 and ./module1
     return graph.hull(computeRequireMap(this.System), this.id)
                 .map(mid => module(this.System, mid));
   }
@@ -147,7 +153,7 @@ export default class Module {
   // module environment
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get env() {
+  env() {
     const ext = this.System.get("@lively-env");
     if (ext.loadedModules[this.id]) return ext.loadedModules[this.id];
   
@@ -286,7 +292,7 @@ export default class Module {
   // module records
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
-  get record() {
+  record() {
     const record = this.System._loader.moduleRecords[this.id];
     if (!record) return null;
     if (!record.hasOwnProperty("__lively_modules__"))
@@ -295,7 +301,7 @@ export default class Module {
   }
   
   updateRecord(doFunc) {
-    var record = this.record;
+    var record = this.record();
     if (!record) throw new Error(`es6 environment global of ${this.id}: module not loaded, cannot get export object!`);
     record.locked = true;
     try {
