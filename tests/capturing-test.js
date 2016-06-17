@@ -302,6 +302,11 @@ describe("ast.capturing", function() {
                 "import x from './some-es6-module.js';",
                 "_rec.x = _moduleImport('./some-es6-module.js', 'default');");
 
+      testVarTfm("default, declarationWrapper",
+                Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
+                "import x from './some-es6-module.js';",
+                "_rec.x = _define('x', 'var', _moduleImport('./some-es6-module.js', 'default'), _rec);");
+
       testVarTfm("*",
                 opts,
                 "import * as name from 'module-name';",
@@ -449,12 +454,12 @@ describe("ast.capturing", function() {
                 "export default function* () {};",
                 "_moduleExport('default', function* () {\n});\n;");
 
-      testVarTfm("",
+      testVarTfm("default function",
                 opts,
                 "export default function foo() {};",
                 "function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
 
-      testVarTfm("default func decl",
+      testVarTfm("default async func decl",
                 opts,
                 "export default async function foo() {};",
                 "async function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport('default', _rec.foo);\n;");
@@ -470,21 +475,36 @@ describe("ast.capturing", function() {
                 + "    }], undefined);\n"
                 + "_moduleExport('default', _rec.Foo);\n;");
 
+      testVarTfm("class decl, declarationWrapper",
+                Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
+                "export class Foo {a() { return 23; }};",
+                "var Foo = _define('Foo', 'class', _createOrExtendClass(_rec, undefined, 'Foo', [{\n"
+                + "        key: 'a',\n"
+                + "        value: function () {\n"
+                + "            return 23;\n"
+                + "        }\n"
+                + "    }], undefined), _rec);\n"
+                + "_moduleExport('Foo', _rec.Foo);\n;");
 
       testVarTfm("named",
                 opts,
                 "export { name1, name2 };",
                 "_moduleExport('name1', _rec.name1);\n_moduleExport('name2', _rec.name2);");
 
-      testVarTfm("var decl",
+      testVarTfm("var decl, double",
                 opts,
                 "export var x = 34, y = x + 3;",
-                "var x = 34, y = x + 3;\n_moduleExport('x', x);\n_moduleExport('y', y);");
+                "var x = _rec.x = 34;;\nvar y = _rec.y = x + 3;;\n_moduleExport('x', x);\n_moduleExport('y', y);");
 
       testVarTfm("let decl",
                 opts,
                 "export let x = 34;",
-                "let x = 34;\n_moduleExport('x', x);");
+                "let x = _rec.x = 34;;\n_moduleExport('x', x);");
+
+      testVarTfm("let decl, declarationWrapper",
+                Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
+                "export let x = 34;",
+                "let x = _rec.x = _rec._define('x', 'let', x = 34, _rec);;\n_moduleExport('x', x);");
 
       testVarTfm("name aliased",
                 opts,

@@ -14363,6 +14363,7 @@ var nodes = Object.freeze({
     parsed.body = parsed.body.reduce(function (stmts, stmt) {
       var nodes;
       if (stmt.type === "ExportNamedDeclaration") {
+
         if (stmt.source) {
           var key = moduleId = stmt.source;
           nodes = stmt.specifiers.map(function (specifier) {
@@ -14371,10 +14372,19 @@ var nodes = Object.freeze({
               expression: exportFromImport({ type: "Literal", value: specifier.exported.name }, { type: "Literal", value: specifier.local.name }, moduleId, options.moduleExportFunc, options.moduleImportFunc) };
           });
         } else if (stmt.declaration) {
-          var decls = stmt.declaration.declarations || [stmt.declaration];
-          nodes = [stmt.declaration].concat(decls.map(function (decl) {
-            return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
-          }));
+          var decls = stmt.declaration.declarations;
+          if (!decls) {
+            // func decl or class
+            nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id));
+          } else {
+            nodes = decls.map(function (decl) {
+              options.excludeRefs.push(decl.id);
+              options.excludeDecls.push(decl.id);
+              return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
+            }).concat(decls.map(function (decl) {
+              return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
+            }));
+          }
         } else {
           nodes = stmt.specifiers.map(function (specifier) {
             return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
@@ -14566,11 +14576,12 @@ var nodes = Object.freeze({
   }
 
   function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
-    return varDeclOrAssignment(parsed, {
-      type: "VariableDeclarator",
-      id: localId,
-      init: importCall(imported, moduleSource, moduleImportFunc)
-    });
+    // return varDeclOrAssignment(parsed, {
+    //   type: "VariableDeclarator",
+    //   id: localId,
+    //   init: importCall(imported, moduleSource, moduleImportFunc)
+    // });
+    return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
   }
 
   function importCall(imported, moduleSource, moduleImportFunc) {
