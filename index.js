@@ -15,6 +15,8 @@ import { obj, arr } from "lively.lang";
 
   The result of the importPackage call is the promise for loading the main module.
 
+
+
   #### Specifics of the lively package format
 
   The main purpose of the lively package format is to make it easy to integrate
@@ -41,6 +43,8 @@ import { obj, arr } from "lively.lang";
   ```
 
   For more examples, see [lively.modules/package.json](https://github.com/LivelyKernel/lively.modules/package.json), or [lively.ast/package.json](https://github.com/LivelyKernel/lively.ast/package.json).
+
+
 
   ### `lively.modules.System`
 
@@ -70,34 +74,20 @@ import { obj, arr } from "lively.lang";
   modules in src/ will take a System loader object as first parameter, the
   implementation is loader independent.
 
+
+
   ### Loader state / module state
 
   - `lively.modules.loadedModules()`: Returns a list of ids of the currently loaded modules.
 
   - lively.modules.printSystemConfig(): Returns a stringified version of the [SystemJS config](https://github.com/systemjs/systemjs/blob/master/docs/config-api.md). Useful for debugging SystemJS issues
 
-  - `lively.modules.sourceOf(moduleId)`: Returns the original source code of the module identified by `moduleId`.
+  #### `lively.modules.requireMap()`
 
-  - `lively.modules.moduleEnv(moduleId)`: Returns the evaluation environment of the module behind `moduleId`.
+  Will return a JS object whose keys are module ids and the corresponding
+  values are lists of module ids of those modules that dependent on the key
+  module (including the key module itself). I.e. the importers of that module.
 
-  A "moduleEnv" is the object used for recording the evaluation state. Each
-  module that is loaded with source instrumentation enabled as an according
-  moduleEnv It is populated when the module is imported and then used and
-  modified when users run evaluations using `lively.vm.runEval()` or change the module's
-  code with `moduleSourceChange()`. You can get access to the internal module
-  state via `moduleEnv('some-module').recorder` the recorder is a map of
-  variable and function names.
-
-  Example: When lively.modules is bootstrapped you can access the state of its
-  main module via:
-
-  ```js
-  var id = System.normalizeSync("lively.modules/index.js");
-  Object.keys(lively.modules.moduleEnv(id).recorder);
-    // => ["defaultSystem", "changeSystem", "loadedModules", "sourceOf", "moduleEnv", ...]
-  lively.modules.moduleEnv(id).recorder.changeSystem
-    // => function() {...} The actual object defined in the module scope
-  ```
 
 
   ### instrumentation
@@ -107,9 +97,13 @@ import { obj, arr } from "lively.lang";
   - `lively.modules.wrapModuleLoad()`
   - `lively.modules.unwrapModuleLoad()`
 
+
+
   ### evaluation
 
   * This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
+
+
 
   ### ModuleInterface
 
@@ -117,7 +111,7 @@ import { obj, arr } from "lively.lang";
 
   Returns an instance of ModuleInterface with the following methods:
 
-  - `dependents()`
+  ##### `ModuleInterface>>dependents()`
 
   Which modules (module ids) are (in)directly import module with id.
 
@@ -129,7 +123,7 @@ import { obj, arr } from "lively.lang";
 
   `module("module1.js").dependents()` returns [module("module2"), module("module3")]
 
-  - `requirements()`
+  ##### `ModuleInterface>>requirements()`
 
   which modules (module ids) are (in)directly required by module with id?
 
@@ -141,7 +135,7 @@ import { obj, arr } from "lively.lang";
 
   `module("module3").requirements()` will report [module("module2"), module("module1")]
 
-  - `async changeSource(newSource, options)`
+  ##### `async ModuleInterface>>changeSource(newSource, options)`
 
   To redefine a module's source code at runtime you can use the
   changeSource method. Given `a.js` from the previous example you can run
@@ -150,19 +144,19 @@ import { obj, arr } from "lively.lang";
   behind the module. In browser environments this is done via a `PUT` request,
   in node.js `fs.writeFile` is used.
 
-  - `async reload(options)``
+  ##### `async ModuleInterface>>reload(options)``
 
   Will re-import the module identified by `moduleName`. By default this will
   also reload all direct and indirect dependencies of that module. You can
   control that behavior via `options`, the default value of it is
   `{reloadDeps: true, resetEnv: true}`.
 
-  - `unload(options)`
+  ##### `ModuleInterface>>unload(options)`
 
   Will remove the module from the loaded module set of lively.modules.System.
   `options` are by default `{forgetDeps: true, forgetEnv: true}`.
 
-  - `async imports()` and `async exports()`
+  ##### `async ModuleInterface>>imports()` and `async ModuleInterface>>exports()`
 
   Import and export state. For exports this includes the local name of the
   exported variable, its export name, etc. For imports it includes the imported
@@ -193,11 +187,33 @@ import { obj, arr } from "lively.lang";
   ```
 
 
-  #### `lively.modules.requireMap()`
+  ##### `async ModuleInterface>>source()`
 
-  Will return a JS object whose keys are module ids and the corresponding
-  values are lists of module ids of those modules that dependent on the key
-  module (including the key module itself). I.e. the importers of that module.
+  Returns the source code of the module.
+
+  ##### `async ModuleInterface>>env()`
+
+  Returns the evaluation environment of the module.
+
+  A "module env" is the object used for recording the evaluation state. Each
+  module that is loaded with source instrumentation enabled as an according
+  moduleEnv It is populated when the module is imported and then used and
+  modified when users run evaluations using `lively.vm.runEval()` or change the module's
+  code with `ModuleInterface>>changeSource()`. You can get access to the internal module
+  state via `module(...).env().recorder` the recorder is a map of
+  variable and function names.
+
+  Example: When lively.modules is bootstrapped you can access the state of its
+  main module via:
+
+  ```js
+  var id = System.normalizeSync("lively.modules/index.js");
+  Object.keys(lively.modules.moduleEnv("lively.modules/index.js").recorder);
+    // => ["defaultSystem", "changeSystem", "loadedModules", "sourceOf", "moduleEnv", ...]
+  lively.modules.moduleEnv("lively.modules/index.js").recorder.changeSystem
+    // => function() {...} The actual object defined in the module scope
+  ```
+
 
 
   ### hooks
