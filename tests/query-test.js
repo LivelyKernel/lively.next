@@ -206,15 +206,20 @@ describe('query', function() {
         expect(result).to.containSubset({end:14,name:"yyy",start:11,type:"Identifier"});
       });
 
-      it("findReferencesAndDeclsInScope", function() {
-        var src = "var x = 3, y = 4;\nvar z = function() { y + y + (function(y) { y+1 })(); }",
-            parsed = parse(src),
-            scope = query.scopes(parsed),
-            result = query.findReferencesAndDeclsInScope(scope, "y"),
-            expected = [{end:12,name:"y",start:11,type:"Identifier"},
-                        {end:40,name:"y",start:39,type:"Identifier"},
-                        {end:44,name:"y",start:43,type:"Identifier"}];
-        expect(result).to.containSubset(expected);
+      it("findReferencesAndDeclsInScope find vars", function() {
+        var parsed = parse("var x = 3, y = 4;\nvar z = function() { y + y + (function(y) { y+1 })(); }");
+        expect(query.findReferencesAndDeclsInScope(query.scopes(parsed), "y"))
+          .to.containSubset([{end:12,name:"y",start:11,type:"Identifier"},
+                             {end:40,name:"y",start:39,type:"Identifier"},
+                             {end:44,name:"y",start:43,type:"Identifier"}]);
+      });
+
+      it("findReferencesAndDeclsInScope finds this", function() {
+        var parsed = parse("this.bar = 23; var x = function() { this.foo(this.zork, function() { this.bark }); };"),
+            scope = query.scopes(parsed).subScopes[0];
+        expect(query.findReferencesAndDeclsInScope(scope, "this"))
+          .to.containSubset([{end: 40,start: 36, type: "ThisExpression"},
+                             {end: 49,start: 45, type: "ThisExpression"}]);
       });
 
     });
