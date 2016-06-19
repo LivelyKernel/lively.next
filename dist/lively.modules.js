@@ -19364,6 +19364,12 @@ var nodes = Object.freeze({
   }
 
   function findReferencesAndDeclsInScope(scope, name) {
+    if (name === "this") {
+      return scope.thisRefs;
+      scopes(parse("var x = this.foo")).refs;
+      scopes(parse("var x = this.foo")).thisRefs;
+    }
+
     return lively_lang.arr.flatten( // all references
     lively_lang.tree.map(scope, function (scope) {
       return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
@@ -19378,7 +19384,7 @@ var nodes = Object.freeze({
     }));
 
     function varDeclIdsOf(scope) {
-      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(helpers.varDeclIds(scope));
+      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
     }
   }
 
@@ -21421,12 +21427,16 @@ var categorizer = Object.freeze({
   };
 
   function createClass(name) {
+    if (!name) name = "anonymous_class";
     var constructor = eval(initializerTemplate.replace(/CLASS/, name));
     constructor.displayName = "class " + name;
     return constructor;
   }
 
-  function createOrExtend(classHolder, superclass, name, instanceMethods, staticMethods) {
+  function createOrExtend(classHolder, superclass, name) {
+    var instanceMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var staticMethods = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
+
     // Given a `classHolder` object as "environment", will try to find a "class"
     // (JS constructor function) inside it. If no class is found it will create a
     // new costructor function object and will attach the methods to it. If a class
@@ -21437,13 +21447,17 @@ var categorizer = Object.freeze({
     // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
     // new Foo().m() // => 23
 
-    var klass = classHolder.hasOwnProperty(name) && classHolder[name],
+    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
         existingSuperclass = klass && klass[superclassSymbol];
 
     if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
 
+    if (!superclass) superclass = Object;
     if (!existingSuperclass || existingSuperclass !== superclass) {
-      klass[superclassSymbol] = superclass = superclass || Object;
+      if (existingSuperclass) {
+        console.warn("Changing superclass of class " + name + " from " + (existingSuperclass.name + " to " + superclass.name + ": This will leave ") + ("existing instances of " + name + " orphaned, i.e. " + name + " is practically not ") + ("their class anymore and they will not get new behaviors when " + name + " is ") + "changed!!!");
+      }
+      klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
     }
@@ -23003,11 +23017,12 @@ var categorizer = Object.freeze({
         header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
         footer = "";
 
-    // FIXME how to update exports in that case?
-    if (!isGlobal) {
-      header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
-      footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
-    }
+    if (isGlobal) {
+      // FIXME how to update exports in that case?
+    } else {
+        header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
+        footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
+      }
 
     try {
       var rewrittenSource = header + lively_vm.evalCodeTransform(source, tfmOptions) + footer;
@@ -23797,6 +23812,7 @@ var categorizer = Object.freeze({
     return entry;
   }
 
+  // FIXME use lively.resources helper for that
   var urlTester = /[a-z][a-z0-9\+\-\.]/i;
 
   function isURL(id) {
@@ -23804,7 +23820,9 @@ var categorizer = Object.freeze({
   }
 
   function module$2(System, moduleName, parent) {
-    return new ModuleInterface(System, System.decanonicalize(moduleName, parent));
+    var sysEnv = livelySystemEnv(System),
+        id = System.decanonicalize(moduleName, parent);
+    return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
   }
 
   // ModuleInterface is primarily used to provide an API that integrates the System
@@ -23819,6 +23837,11 @@ var categorizer = Object.freeze({
       if (!isURL(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
       this.System = System;
       this.id = id;
+
+      // Under what variable name the recorder becomes available during module
+      // execution and eval
+      this.recorderName = "__lvVarRecorder";
+      this._recorder = null;
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -23955,7 +23978,9 @@ var categorizer = Object.freeze({
     }, {
       key: "unloadEnv",
       value: function unloadEnv() {
-        delete this.System.get("@lively-env").loadedModules[this.id];
+        this._recorder = null;
+        // FIXME this shouldn't be necessary anymore....
+        delete livelySystemEnv(this.System).loadedModules[this.id];
       }
     }, {
       key: "unloadDeps",
@@ -24131,44 +24156,13 @@ var categorizer = Object.freeze({
       // module environment
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+      // What variables to not transform during execution, i.e. what variables
+      // should not be accessed as properties of recorder
+
     }, {
       key: "env",
       value: function env() {
-        var id = this.id,
-            S = this.System,
-            ext = S.get("@lively-env");
-        if (ext.loadedModules[id]) return ext.loadedModules[id];
-
-        var e = {
-          loadError: undefined,
-          recorderName: "__lvVarRecorder",
-          dontTransform: ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-          ].concat(lively_ast.query.knownGlobals),
-          recorder: Object.create(S.global, {
-            _moduleExport: {
-              get: function get() {
-                return function (name, val) {
-                  scheduleModuleExportsChange(S, id, name, val, true /*add export*/);
-                };
-              }
-            },
-            _moduleImport: {
-              get: function get() {
-                return function (depName, key) {
-                  var depId = S.normalizeSync(depName, id),
-                      depExports = S._loader.modules[depId];
-                  if (!depExports) throw new Error("import of " + key + " failed: " + depName + " (tried as " + id + ") is not loaded!");
-                  if (key == undefined) return depExports.module;
-                  if (!depExports.module.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
-                  return depExports.module[key];
-                };
-              }
-            }
-          })
-        };
-
-        e.recorder.System = S;
-        return ext.loadedModules[id] = e;
+        return this;
       }
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -24409,6 +24403,50 @@ var categorizer = Object.freeze({
 
         return search;
       }()
+    }, {
+      key: "dontTransform",
+      get: function get() {
+        return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+        ].concat(lively_ast.query.knownGlobals);
+      }
+
+      // FIXME... better to make this read-only, currently needed for loading
+      // global modules, from instrumentation.js
+
+    }, {
+      key: "recorder",
+      set: function set(v) {
+        return this._recorder = v;
+      },
+      get: function get() {
+        var _this6 = this;
+
+        if (this._recorder) return this._recorder;
+
+        var S = this.System;
+        return this._recorder = Object.create(S.global, {
+
+          System: { configurable: true, writable: true, value: S },
+
+          _moduleExport: {
+            value: function value(name, val) {
+              scheduleModuleExportsChange(S, _this6.id, name, val, true /*add export*/);
+            }
+          },
+
+          _moduleImport: {
+            value: function value(depName, key) {
+              var depId = S.normalizeSync(depName, _this6.id),
+                  depExports = S._loader.modules[depId];
+              if (!depExports) throw new Error("import of " + key + " failed: " + depName + " (tried as " + _this6.id + ") is not loaded!");
+              if (key == undefined) return depExports.module;
+              if (!depExports.module.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
+              return depExports.module[key];
+            }
+          }
+
+        });
+      }
     }]);
     return ModuleInterface;
   }();
@@ -24513,7 +24551,7 @@ var categorizer = Object.freeze({
   function livelySystemEnv(System) {
     return {
       moduleEnv: function moduleEnv(id) {
-        return module$2(System, id).env();
+        return this.loadedModules[id] || module$2(System, id);
       },
 
       // TODO this is just a test, won't work in all cases...

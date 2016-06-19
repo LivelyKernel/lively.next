@@ -18,7 +18,7 @@ var defaultOptions = {
 
 function livelySystemEnv(System) {
   return {
-    moduleEnv: function(id) { return module(System, id).env(); },
+    moduleEnv: function(id) { return this.loadedModules[id] || module(System, id); },
 
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.decanonicalize("lively.modules/index.js")); },
@@ -319,5 +319,6 @@ function addGetterSettersForNewVars(System, moduleId) {
 export {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig,
+  livelySystemEnv,
   loadedModules
 };

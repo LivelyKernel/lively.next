@@ -3,13 +3,17 @@ import { arr, obj, graph } from "lively.lang";
 import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
+import { livelySystemEnv } from "./system.js";
 
+// FIXME use lively.resources helper for that
 const urlTester = /[a-z][a-z0-9\+\-\.]/i;
 
 function isURL(id) { return urlTester.test(id); }
 
 export default function module(System, moduleName, parent) {
-  return new ModuleInterface(System, System.decanonicalize(moduleName, parent));
+  var sysEnv = livelySystemEnv(System),
+      id = System.decanonicalize(moduleName, parent);
+  return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
 }
 
 
@@ -24,6 +28,11 @@ class ModuleInterface {
       throw new Error(`ModuleInterface constructor called with ${id} that does not seem to be a fully normalized module id.`);
     this.System = System;
     this.id = id;
+
+    // Under what variable name the recorder becomes available during module
+    // execution and eval
+    this.recorderName = "__lvVarRecorder";
+    this._recorder = null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -73,7 +82,9 @@ class ModuleInterface {
   isLoaded() { return !!this.System.get(this.id); }
 
   unloadEnv() {
-    delete this.System.get("@lively-env").loadedModules[this.id];
+    this._recorder = null;
+    // FIXME this shouldn't be necessary anymore....
+    delete livelySystemEnv(this.System).loadedModules[this.id];
   }
 
   unloadDeps(opts) {
@@ -153,47 +164,53 @@ class ModuleInterface {
   // module environment
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  env() {
-    const id = this.id, S = this.System,
-          ext = S.get("@lively-env");
-    if (ext.loadedModules[id]) return ext.loadedModules[id];
-
-    const e = {
-      loadError: undefined,
-      recorderName: "__lvVarRecorder",
-      dontTransform: [
-        "__lvVarRecorder",
-        "global", "self",
-        "_moduleExport", "_moduleImport",
-        "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-      ].concat(query.knownGlobals),
-      recorder: Object.create(S.global, {
-        _moduleExport: {
-          get() {
-            return (name, val) => {
-              scheduleModuleExportsChange(S, id, name, val, true/*add export*/);
-            }
-          }
-        },
-        _moduleImport: {
-          get: function() {
-            return (depName, key) => {
-              var depId = S.normalizeSync(depName, id),
-                  depExports = S._loader.modules[depId];
-              if (!depExports) throw new Error(`import of ${key} failed: ${depName} (tried as ${id}) is not loaded!`);
-              if (key == undefined) return depExports.module;
-              if (!depExports.module.hasOwnProperty(key))
-                console.warn(`import from ${depExports}: Has no export ${key}!`);
-              return depExports.module[key];
-            }
-          }
-        }
-      })
-    }
-
-    e.recorder.System = S;
-    return ext.loadedModules[id] = e;
+  // What variables to not transform during execution, i.e. what variables
+  // should not be accessed as properties of recorder
+  get dontTransform() {
+    return [
+      "__lvVarRecorder",
+      "global", "self",
+      "_moduleExport", "_moduleImport",
+      "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+    ].concat(query.knownGlobals);
   }
+
+  // FIXME... better to make this read-only, currently needed for loading
+  // global modules, from instrumentation.js
+  set recorder(v) { return this._recorder = v; }
+
+  get recorder() {
+    if (this._recorder) return this._recorder;
+
+    const S = this.System;
+    return this._recorder = Object.create(S.global, {
+
+      System: {configurable: true, writable: true, value: S},
+
+      _moduleExport: {
+        value: (name, val) => {
+          scheduleModuleExportsChange(S, this.id, name, val, true/*add export*/);
+        }
+      },
+
+      _moduleImport: {
+        value: (depName, key) => {
+          var depId = S.normalizeSync(depName, this.id),
+              depExports = S._loader.modules[depId];
+          if (!depExports)
+            throw new Error(`import of ${key} failed: ${depName} (tried as ${this.id}) is not loaded!`);
+          if (key == undefined)
+            return depExports.module;
+          if (!depExports.module.hasOwnProperty(key))
+            console.warn(`import from ${depExports}: Has no export ${key}!`);
+          return depExports.module[key];
+        }
+      }
+
+    });
+  }
+
+  env() { return this; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // imports and exports
@@ -209,7 +226,7 @@ class ModuleInterface {
             var nodes = query.nodesAtIndex(parsed, node.start),
                 importStmt = arr.without(nodes, scope.node)[0];
             if (!importStmt) return imports;
-      
+
             var from = importStmt.source ? importStmt.source.value : "unknown module";
             if (!importStmt.specifiers.length) // no imported vars
               return imports.concat([{
@@ -217,7 +234,7 @@ class ModuleInterface {
                 imported:   null,
                 fromModule: from
               }]);
-      
+
             return imports.concat(importStmt.specifiers.map(importSpec => {
               var imported;
               if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
