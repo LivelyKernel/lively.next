@@ -341,16 +341,29 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async search(searchStr) {
-    const src = await this.source(),
-          re = new RegExp(searchStr, "g");
+    const src = await this.source();
+    let re;
+    if (searchStr instanceof RegExp) {
+      let flags = 'g'; // add 'g' flag
+      if (searchStr.ignoreCase) flags += 'i';
+      if (searchStr.multiline) flags += 'm';
+      re = RegExp(searchStr.source, flags);
+    } else {
+      re = RegExp(searchStr, 'g');
+    }
+
     let match, res = [];
     while ((match = re.exec(src)) !== null) {
-      res.push(match.index);
+      res.push([match.index, match[0].length]);
     }
-    for (let i = 0, j = 0, line = 1; i < src.length && j < res.length; i++) {
-      if (src[i] == '\n') line++;
-      if (i == res[j]) {
-        res[j] = this.id + ":" + line;
+    for (let i = 0, j = 0, line = 1, start = 0; i < src.length && j < res.length; i++) {
+      if (src[i] == '\n') {
+        line++;
+        start = i + 1;
+      }
+      const [idx, length] = res[j];
+      if (i == idx) {
+        res[j] = { file: this.id, line, column: i - start, length };
         j++;
       }
     }

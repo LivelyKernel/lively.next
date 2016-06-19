@@ -557,6 +557,44 @@
     return obj;
   };
 
+  var slicedToArray = function () {
+    function sliceIterator(arr, i) {
+      var _arr = [];
+      var _n = true;
+      var _d = false;
+      var _e = undefined;
+
+      try {
+        for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+          _arr.push(_s.value);
+
+          if (i && _arr.length === i) break;
+        }
+      } catch (err) {
+        _d = true;
+        _e = err;
+      } finally {
+        try {
+          if (!_n && _i["return"]) _i["return"]();
+        } finally {
+          if (_d) throw _e;
+        }
+      }
+
+      return _arr;
+    }
+
+    return function (arr, i) {
+      if (Array.isArray(arr)) {
+        return arr;
+      } else if (Symbol.iterator in Object(arr)) {
+        return sliceIterator(arr, i);
+      } else {
+        throw new TypeError("Invalid attempt to destructure non-iterable instance");
+      }
+    };
+  }();
+
   var moduleSourceChange$1 = function () {
     var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
       var changeResult;
@@ -1544,7 +1582,8 @@
       key: "search",
       value: function () {
         var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(searchStr) {
-          var src, re, match, res, i, j, line;
+          var src, re, flags, match, res, i, j, line, start, _res$j, idx, length;
+
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
               switch (_context8.prev = _context8.next) {
@@ -1554,22 +1593,40 @@
 
                 case 2:
                   src = _context8.sent;
-                  re = new RegExp(searchStr, "g");
+                  re = void 0;
+
+                  if (searchStr instanceof RegExp) {
+                    flags = 'g'; // add 'g' flag
+
+                    if (searchStr.ignoreCase) flags += 'i';
+                    if (searchStr.multiline) flags += 'm';
+                    re = RegExp(searchStr.source, flags);
+                  } else {
+                    re = RegExp(searchStr, 'g');
+                  }
+
                   match = void 0, res = [];
 
                   while ((match = re.exec(src)) !== null) {
-                    res.push(match.index);
+                    res.push([match.index, match[0].length]);
                   }
-                  for (i = 0, j = 0, line = 1; i < src.length && j < res.length; i++) {
-                    if (src[i] == '\n') line++;
-                    if (i == res[j]) {
-                      res[j] = this.id + ":" + line;
+                  for (i = 0, j = 0, line = 1, start = 0; i < src.length && j < res.length; i++) {
+                    if (src[i] == '\n') {
+                      line++;
+                      start = i + 1;
+                    }
+                    _res$j = slicedToArray(res[j], 2);
+                    idx = _res$j[0];
+                    length = _res$j[1];
+
+                    if (i == idx) {
+                      res[j] = { file: this.id, line: line, column: i - start, length: length };
                       j++;
                     }
                   }
                   return _context8.abrupt("return", res);
 
-                case 8:
+                case 9:
                 case "end":
                   return _context8.stop();
               }
@@ -1731,7 +1788,7 @@
   function livelySystemEnv(System) {
     return {
       moduleEnv: function moduleEnv(id) {
-        return this.loadedModules[id] || module$2(System, id);
+        return module$2(System, id);
       },
 
       // TODO this is just a test, won't work in all cases...
@@ -1992,7 +2049,7 @@
     // after eval we modify the env so that all captures vars are wrapped in
     // getter/setter to be notified of changes
     // FIXME: better to not capture via assignments but use func calls...!
-    var rec = module$2(System, moduleId).env().recorder,
+    var rec = module$2(System, moduleId).recorder,
         prefix = "__lively.modules__";
 
     if (rec === System.global) {
