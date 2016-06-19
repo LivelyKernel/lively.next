@@ -80,4 +80,27 @@ describe("create or extend classes", function() {
     expect(new Foo2(2,3).y).equals(2);
   });
 
+  it("modifying the superclass affects the subclass and its instances", function() {
+    var Foo = createOrExtend({}, null, "Foo"),
+        Foo2 = createOrExtend({}, Foo, "Foo2"),
+        foo = new Foo2();
+    createOrExtend({Foo: Foo}, null, "Foo", [{key: "m", value: function m() { return 23 }}])
+    expect(foo.m()).equals(23);
+  });
+
+  it("changing the superclass will leave existing instances stale", function() {
+    var Foo = createOrExtend({}, null, "Foo", [{key: "m", value: function m() { return 23 }}]),
+        Foo2 = createOrExtend({}, Object, "Foo2"),
+        foo = new Foo2();
+    expect(foo).to.not.have.property("m");
+    createOrExtend({Foo2: Foo2}, Foo, "Foo2");
+    // Changing the superclass currently means changing the prototype, the
+    // thing that instances have in  common with their class. When that's replaced
+    // the instances are orphaned. That's not a feature but to change that we
+    // would have to a) add another prototype indirection or b) track all
+    // instances. Neither option seems to be worthwhile...
+    expect(foo).to.not.have.property("m");
+    var anotherFoo = new Foo2();
+    expect(anotherFoo).to.have.property("m");
+  });
 });
