@@ -207,6 +207,9 @@ class ModuleInterface {
     });
   }
 
+  define(varName, value) { return this.recorder[varName] = value; }
+  undefine(varName) { delete this.recorder[varName]; }
+
   env() { return this; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
