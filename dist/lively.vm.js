@@ -18562,7 +18562,7 @@ var nodes = Object.freeze({
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "module", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
 
   function scopes(parsed) {
     var vis = new ScopeVisitor(),
@@ -18706,6 +18706,12 @@ var nodes = Object.freeze({
   }
 
   function findReferencesAndDeclsInScope(scope, name) {
+    if (name === "this") {
+      return scope.thisRefs;
+      scopes(parse("var x = this.foo")).refs;
+      scopes(parse("var x = this.foo")).thisRefs;
+    }
+
     return lively_lang.arr.flatten( // all references
     lively_lang.tree.map(scope, function (scope) {
       return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
@@ -18720,7 +18726,7 @@ var nodes = Object.freeze({
     }));
 
     function varDeclIdsOf(scope) {
-      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(helpers.varDeclIds(scope));
+      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
     }
   }
 
@@ -19106,6 +19112,10 @@ var nodes = Object.freeze({
 
   var isTransformedClassVarDeclSymbol = Symbol();
 
+  function createsNewScope(node) {
+    return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
+  }
+
   var simpleReplace = function () {
     var ReplaceVisitor = function (_Visitor) {
       babelHelpers.inherits(ReplaceVisitor, _Visitor);
@@ -19117,26 +19127,27 @@ var nodes = Object.freeze({
 
       babelHelpers.createClass(ReplaceVisitor, [{
         key: "accept",
-        value: function accept(node, state, path) {
-          return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+        value: function accept(node, classHolder, path) {
+          if (createsNewScope(node)) classHolder = objectLiteral([]);
+          return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, classHolder, path), classHolder, path);
         }
       }], [{
         key: "run",
-        value: function run(parsed, replacer) {
+        value: function run(parsed, classHolder, replacer) {
           var v = new this();
           v.replacer = replacer;
-          return v.accept(parsed, null, []);
+          return v.accept(parsed, classHolder, []);
         }
       }]);
       return ReplaceVisitor;
     }(Visitor);
 
-    return function simpleReplace(parsed, replacer) {
-      return ReplaceVisitor.run(parsed, replacer);
+    return function simpleReplace(parsed, classHolder, replacer) {
+      return ReplaceVisitor.run(parsed, classHolder, replacer);
     };
   }();
 
-  function replaceSuper(node, path, options) {
+  function replaceSuper(node, classHolder, path, options) {
     console.assert(node.type === "Super");
 
     var _path$slice = path.slice(-2);
@@ -19151,21 +19162,21 @@ var nodes = Object.freeze({
     return member(member(member("this", "constructor"), funcCall(member("Symbol", "for"), literal("lively-instance-superclass")), true), "prototype");
   }
 
-  function replaceSuperMethodCall(node, path, options) {
+  function replaceSuperMethodCall(node, classHolder, path, options) {
     // like super.foo()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.object.type === "Super");
-    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee.object, [], options), node.callee.property), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee.object, classHolder, [], options), node.callee.property), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
-  function replaceDirectSuperCall(node, path, options) {
+  function replaceDirectSuperCall(node, classHolder, path, options) {
     // like super.foo()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.type === "Super");
-    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee, classHolder, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
-  function replaceClass(node, path, options) {
+  function replaceClass(node, classHolder, path, options) {
     console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
     var instanceProps = id("undefined"),
         classProps = id("undefined");
@@ -19178,7 +19189,6 @@ var nodes = Object.freeze({
         var classSide = propNode.static;
 
         if (key.type !== "Literal" && key.type !== "Identifier") {
-          debugger;
           console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
         }
 
@@ -19203,13 +19213,14 @@ var nodes = Object.freeze({
       if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
     }
 
-    var classCreator = funcCall(options.functionNode, options.classHolder, node.superClass || id("undefined"), node.id ? literal(node.id.name) : id("undefined"), instanceProps, classProps);
+    var classCreator = funcCall(options.functionNode, node.id ? literal(node.id.name) : id("undefined"), node.superClass || id("undefined"), instanceProps, classProps, classHolder, options.currentModuleAccessor || id("undefined"));
 
     if (node.type === "ClassExpression") return classCreator;
 
     var result = classCreator;
 
-    if (options.declarationWrapper) result = funcCall(options.declarationWrapper, literal(node.id.name), literal("class"), result, options.classHolder);
+    if (options.declarationWrapper && classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(node.id.name), literal("class"), result, options.classHolder);
+
     // since it is a declaration and we removed the class construct we need to add a var-decl
     result = varDecl(node.id, result, "var");
     result[isTransformedClassVarDeclSymbol] = true;
@@ -19217,7 +19228,7 @@ var nodes = Object.freeze({
     return result;
   }
 
-  function splitExportDefaultWithClass(node, path, options) {
+  function splitExportDefaultWithClass(node, classHolder, path, options) {
     return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
       declaration: node.declaration.declarations[0].id,
       type: "ExportDefaultDeclaration"
@@ -19241,17 +19252,18 @@ var nodes = Object.freeze({
     //   }])
 
     var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
-    return simpleReplace(parsed, function (node, path) {
-      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, path, options);
+    return simpleReplace(parsed, options.classHolder, function (node, classHolder, path) {
 
-      if (node.type === "Super") return replaceSuper(node, path, options);
+      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, classHolder, path, options);
 
-      if (node.type === "CallExpression" && node.callee.type === "Super") return replaceDirectSuperCall(node, path, options);
+      if (node.type === "Super") return replaceSuper(node, classHolder, path, options);
 
-      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") return replaceSuperMethodCall(node, path, options);
+      if (node.type === "CallExpression" && node.callee.type === "Super") return replaceDirectSuperCall(node, classHolder, path, options);
+
+      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") return replaceSuperMethodCall(node, classHolder, path, options);
 
       if (node.type === "ExportDefaultDeclaration") {
-        return splitExportDefaultWithClass(node, path, options);
+        return splitExportDefaultWithClass(node, classHolder, path, options);
       }
 
       return node;
@@ -20490,10 +20502,15 @@ var categorizer = Object.freeze({
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast) {
+(function (exports,lively_lang,lively_ast) {
   'use strict';
 
   var babelHelpers = {};
+  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
 
   babelHelpers.asyncToGenerator = function (fn) {
     return function () {
@@ -20650,8 +20667,24 @@ var categorizer = Object.freeze({
     });
   }
 
+  var knownSymbols = function () {
+    return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
+      return babelHelpers.typeof(Symbol[ea]) === "symbol";
+    }).reduce(function (map, ea) {
+      return map.set(Symbol[ea], "Symbol." + ea);
+    }, new Map());
+  }();
+
+  var symMatcher = /^Symbol\((.*)\)$/;
+
+  function printSymbolForCompletion(sym) {
+    if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
+    if (knownSymbols.get(sym)) return knownSymbols.get(sym);
+    var matched = String(sym).match(symMatcher);
+    return String(sym);
+  }
   function propertyExtract(excludes, obj, extractor) {
-    return Object.getOwnPropertyNames(obj).filter(function (key) {
+    return Object.getOwnPropertyNames(obj).concat(Object.getOwnPropertySymbols(obj).map(printSymbolForCompletion)).filter(function (key) {
       return excludes.indexOf(key) === -1;
     }).map(extractor).filter(function (ea) {
       return !!ea;
@@ -20757,18 +20790,25 @@ var categorizer = Object.freeze({
 
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
+  var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
   var defaultPropertyDescriptorForClass = {
     enumerable: false,
     configurable: true
   };
 
   function createClass(name) {
+    if (!name) name = "anonymous_class";
     var constructor = eval(initializerTemplate.replace(/CLASS/, name));
     constructor.displayName = "class " + name;
     return constructor;
   }
 
-  function createOrExtend(classHolder, superclass, name, instanceMethods, staticMethods) {
+  function createOrExtend(name, superclass) {
+    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+    var staticMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var classHolder = arguments[4];
+    var currentModule = arguments[5];
+
     // Given a `classHolder` object as "environment", will try to find a "class"
     // (JS constructor function) inside it. If no class is found it will create a
     // new costructor function object and will attach the methods to it. If a class
@@ -20779,17 +20819,24 @@ var categorizer = Object.freeze({
     // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
     // new Foo().m() // => 23
 
-    var klass = classHolder.hasOwnProperty(name) && classHolder[name],
+    // 1. create a new constructor function if necessary, re-use an exisiting if the
+    // classHolder object has it
+    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
         existingSuperclass = klass && klass[superclassSymbol];
-
     if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
 
+    // 2. set the superclass if necessary and set prototype
+    if (!superclass) superclass = Object;
     if (!existingSuperclass || existingSuperclass !== superclass) {
-      klass[superclassSymbol] = superclass = superclass || Object;
+      if (existingSuperclass) {
+        console.warn("Changing superclass of class " + name + " from " + (existingSuperclass.name + " to " + superclass.name + ": This will leave ") + ("existing instances of " + name + " orphaned, i.e. " + name + " is practically not ") + ("their class anymore and they will not get new behaviors when " + name + " is ") + "changed!!!");
+      }
+      klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
     }
 
+    // 3. define methods
     staticMethods && staticMethods.forEach(function (ea) {
       return Object.defineProperty(klass, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
     });
@@ -20798,7 +20845,10 @@ var categorizer = Object.freeze({
       Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
     });
 
-    // initializer method
+    // 4. define initializer method, in our class system the constructor is always
+    // as defined in initializerTemplate and re-directs to the initializer method.
+    // This way we can change the constructor without loosing the identity of the
+    // class
     if (!klass.prototype[initializeSymbol]) {
       Object.defineProperty(klass.prototype, initializeSymbol, {
         enumerable: false,
@@ -20808,14 +20858,23 @@ var categorizer = Object.freeze({
       });
     }
 
+    // 5. If we have a `currentModule` instance (from lively.modules/src/module.js)
+    // then we also store some meta data about the module. This allows us to
+    // (de)serialize class instances in lively.serializer
+    if (currentModule) {
+      var p = currentModule.package();
+      klass[moduleMetaSymbol] = {
+        package: p ? { name: p.name, version: p.version } : {},
+        pathInPackage: currentModule.pathInPackage()
+      };
+    }
+
     return klass;
   }
 
-  var id = ast.nodes.id;
-  var literal = ast.nodes.literal;
-  var member = ast.nodes.member;
-
-
+  var id = lively_ast.nodes.id;
+  var literal = lively_ast.nodes.literal;
+  var member = lively_ast.nodes.member;
   var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
   var defaultClassToFunctionConverterName = "createOrExtendES6ClassForLively";
   function evalCodeTransform(code, options) {
@@ -20826,8 +20885,8 @@ var categorizer = Object.freeze({
     // incrementally evaluating var declarations and having values bound later.
 
     // 1. Allow evaluation of function expressions and object literals
-    code = ast.transform.transformSingleExpression(code);
-    var parsed = ast.parse(code);
+    code = lively_ast.transform.transformSingleExpression(code);
+    var parsed = lively_ast.parse(code);
 
     // 2. capture top level vars into topLevelVarRecorder "environment"
 
@@ -20839,8 +20898,8 @@ var categorizer = Object.freeze({
           varRecorder = id(options.varRecorderName || '__lvVarRecorder'),
           es6ClassToFunctionOptions = undefined,
           declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
-      if (options.keepPreviouslyDeclaredValues) {
 
+      if (options.keepPreviouslyDeclaredValues) {
         // 2.1 declare a function that should wrap all definitions, i.e. all var
         // decls, functions, classes etc that get captured will be wrapped in this
         // function. When using this with the option.keepPreviouslyDeclaredValues
@@ -20856,6 +20915,7 @@ var categorizer = Object.freeze({
         // identical
         options.topLevelVarRecorder[defaultClassToFunctionConverterName] = createOrExtend;
         es6ClassToFunctionOptions = {
+          currentModuleAccessor: options.currentModuleAccessor,
           classHolder: varRecorder,
           functionNode: member(varRecorder, defaultClassToFunctionConverterName),
           declarationWrapper: options.declarationWrapper
@@ -20864,7 +20924,7 @@ var categorizer = Object.freeze({
 
       // 2.2 Here we call out to the actual code transformation that installs the
 
-      parsed = ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
+      parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
         es6ImportFuncId: options.es6ImportFuncId,
         es6ExportFuncId: options.es6ExportFuncId,
         ignoreUndeclaredExcept: undeclaredToTransform,
@@ -20875,13 +20935,13 @@ var categorizer = Object.freeze({
     }
 
     if (options.wrapInStartEndCall) {
-      parsed = ast.transform.wrapInStartEndCall(parsed, {
+      parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
         startFuncNode: options.startFuncNode,
         endFuncNode: options.endFuncNode
       });
     }
 
-    var result = ast.stringify(parsed);
+    var result = lively_ast.stringify(parsed);
 
     if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
 
@@ -20891,12 +20951,12 @@ var categorizer = Object.freeze({
   function evalCodeTransformOfSystemRegisterSetters(code, options) {
     if (!options.topLevelVarRecorder) return code;
 
-    var parsed = ast.parse(code),
+    var parsed = lively_ast.parse(code),
         blacklist = (options.dontTransform || []).concat(["arguments"]),
         undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
-        result = ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
+        result = lively_ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
 
-    return ast.stringify(result);
+    return lively_ast.stringify(result);
   }
 
   function declarationWrapperForKeepingValues(name, kind, value, recorder) {
@@ -21228,7 +21288,7 @@ var categorizer = Object.freeze({
             case 0:
               // FIXME do we have to do a reparse? We should be able to get the ast from
               // the rewriter...
-              body = ast.parse(code).body, imports = body.filter(function (node) {
+              body = lively_ast.parse(code).body, imports = body.filter(function (node) {
                 return node.type === "ImportDeclaration";
               });
               return _context.abrupt("return", Promise.all(imports.map(function (node) {
@@ -21332,6 +21392,11 @@ var categorizer = Object.freeze({
       return ref.apply(this, arguments);
     };
   }();
+
+  var funcCall = lively_ast.nodes.funcCall;
+  var member$1 = lively_ast.nodes.member;
+  var literal$1 = lively_ast.nodes.literal;
+
 
   function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
     // The function wrapper is needed b/c we need toplevel awaits and babel
@@ -21439,7 +21504,8 @@ var categorizer = Object.freeze({
                 wrapInStartEndCall: true, // for async / await eval support
                 es6ExportFuncId: "_moduleExport",
                 es6ImportFuncId: "_moduleImport",
-                transpiler: transpiler
+                transpiler: transpiler,
+                currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
               });
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");

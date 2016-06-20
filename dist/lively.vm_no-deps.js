@@ -3,10 +3,15 @@
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,ast) {
+(function (exports,lively_lang,lively_ast) {
   'use strict';
 
   var babelHelpers = {};
+  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
 
   babelHelpers.asyncToGenerator = function (fn) {
     return function () {
@@ -163,8 +168,24 @@
     });
   }
 
+  var knownSymbols = function () {
+    return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
+      return babelHelpers.typeof(Symbol[ea]) === "symbol";
+    }).reduce(function (map, ea) {
+      return map.set(Symbol[ea], "Symbol." + ea);
+    }, new Map());
+  }();
+
+  var symMatcher = /^Symbol\((.*)\)$/;
+
+  function printSymbolForCompletion(sym) {
+    if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
+    if (knownSymbols.get(sym)) return knownSymbols.get(sym);
+    var matched = String(sym).match(symMatcher);
+    return String(sym);
+  }
   function propertyExtract(excludes, obj, extractor) {
-    return Object.getOwnPropertyNames(obj).filter(function (key) {
+    return Object.getOwnPropertyNames(obj).concat(Object.getOwnPropertySymbols(obj).map(printSymbolForCompletion)).filter(function (key) {
       return excludes.indexOf(key) === -1;
     }).map(extractor).filter(function (ea) {
       return !!ea;
@@ -270,18 +291,25 @@
 
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
+  var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
   var defaultPropertyDescriptorForClass = {
     enumerable: false,
     configurable: true
   };
 
   function createClass(name) {
+    if (!name) name = "anonymous_class";
     var constructor = eval(initializerTemplate.replace(/CLASS/, name));
     constructor.displayName = "class " + name;
     return constructor;
   }
 
-  function createOrExtend(classHolder, superclass, name, instanceMethods, staticMethods) {
+  function createOrExtend(name, superclass) {
+    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+    var staticMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var classHolder = arguments[4];
+    var currentModule = arguments[5];
+
     // Given a `classHolder` object as "environment", will try to find a "class"
     // (JS constructor function) inside it. If no class is found it will create a
     // new costructor function object and will attach the methods to it. If a class
@@ -292,17 +320,24 @@
     // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
     // new Foo().m() // => 23
 
-    var klass = classHolder.hasOwnProperty(name) && classHolder[name],
+    // 1. create a new constructor function if necessary, re-use an exisiting if the
+    // classHolder object has it
+    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
         existingSuperclass = klass && klass[superclassSymbol];
-
     if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
 
+    // 2. set the superclass if necessary and set prototype
+    if (!superclass) superclass = Object;
     if (!existingSuperclass || existingSuperclass !== superclass) {
-      klass[superclassSymbol] = superclass = superclass || Object;
+      if (existingSuperclass) {
+        console.warn("Changing superclass of class " + name + " from " + (existingSuperclass.name + " to " + superclass.name + ": This will leave ") + ("existing instances of " + name + " orphaned, i.e. " + name + " is practically not ") + ("their class anymore and they will not get new behaviors when " + name + " is ") + "changed!!!");
+      }
+      klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
     }
 
+    // 3. define methods
     staticMethods && staticMethods.forEach(function (ea) {
       return Object.defineProperty(klass, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
     });
@@ -311,7 +346,10 @@
       Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
     });
 
-    // initializer method
+    // 4. define initializer method, in our class system the constructor is always
+    // as defined in initializerTemplate and re-directs to the initializer method.
+    // This way we can change the constructor without loosing the identity of the
+    // class
     if (!klass.prototype[initializeSymbol]) {
       Object.defineProperty(klass.prototype, initializeSymbol, {
         enumerable: false,
@@ -321,14 +359,23 @@
       });
     }
 
+    // 5. If we have a `currentModule` instance (from lively.modules/src/module.js)
+    // then we also store some meta data about the module. This allows us to
+    // (de)serialize class instances in lively.serializer
+    if (currentModule) {
+      var p = currentModule.package();
+      klass[moduleMetaSymbol] = {
+        package: p ? { name: p.name, version: p.version } : {},
+        pathInPackage: currentModule.pathInPackage()
+      };
+    }
+
     return klass;
   }
 
-  var id = ast.nodes.id;
-  var literal = ast.nodes.literal;
-  var member = ast.nodes.member;
-
-
+  var id = lively_ast.nodes.id;
+  var literal = lively_ast.nodes.literal;
+  var member = lively_ast.nodes.member;
   var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
   var defaultClassToFunctionConverterName = "createOrExtendES6ClassForLively";
   function evalCodeTransform(code, options) {
@@ -339,8 +386,8 @@
     // incrementally evaluating var declarations and having values bound later.
 
     // 1. Allow evaluation of function expressions and object literals
-    code = ast.transform.transformSingleExpression(code);
-    var parsed = ast.parse(code);
+    code = lively_ast.transform.transformSingleExpression(code);
+    var parsed = lively_ast.parse(code);
 
     // 2. capture top level vars into topLevelVarRecorder "environment"
 
@@ -352,8 +399,8 @@
           varRecorder = id(options.varRecorderName || '__lvVarRecorder'),
           es6ClassToFunctionOptions = undefined,
           declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
-      if (options.keepPreviouslyDeclaredValues) {
 
+      if (options.keepPreviouslyDeclaredValues) {
         // 2.1 declare a function that should wrap all definitions, i.e. all var
         // decls, functions, classes etc that get captured will be wrapped in this
         // function. When using this with the option.keepPreviouslyDeclaredValues
@@ -369,6 +416,7 @@
         // identical
         options.topLevelVarRecorder[defaultClassToFunctionConverterName] = createOrExtend;
         es6ClassToFunctionOptions = {
+          currentModuleAccessor: options.currentModuleAccessor,
           classHolder: varRecorder,
           functionNode: member(varRecorder, defaultClassToFunctionConverterName),
           declarationWrapper: options.declarationWrapper
@@ -377,7 +425,7 @@
 
       // 2.2 Here we call out to the actual code transformation that installs the
 
-      parsed = ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
+      parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
         es6ImportFuncId: options.es6ImportFuncId,
         es6ExportFuncId: options.es6ExportFuncId,
         ignoreUndeclaredExcept: undeclaredToTransform,
@@ -388,13 +436,13 @@
     }
 
     if (options.wrapInStartEndCall) {
-      parsed = ast.transform.wrapInStartEndCall(parsed, {
+      parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
         startFuncNode: options.startFuncNode,
         endFuncNode: options.endFuncNode
       });
     }
 
-    var result = ast.stringify(parsed);
+    var result = lively_ast.stringify(parsed);
 
     if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
 
@@ -404,12 +452,12 @@
   function evalCodeTransformOfSystemRegisterSetters(code, options) {
     if (!options.topLevelVarRecorder) return code;
 
-    var parsed = ast.parse(code),
+    var parsed = lively_ast.parse(code),
         blacklist = (options.dontTransform || []).concat(["arguments"]),
         undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
-        result = ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
+        result = lively_ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
 
-    return ast.stringify(result);
+    return lively_ast.stringify(result);
   }
 
   function declarationWrapperForKeepingValues(name, kind, value, recorder) {
@@ -741,7 +789,7 @@
             case 0:
               // FIXME do we have to do a reparse? We should be able to get the ast from
               // the rewriter...
-              body = ast.parse(code).body, imports = body.filter(function (node) {
+              body = lively_ast.parse(code).body, imports = body.filter(function (node) {
                 return node.type === "ImportDeclaration";
               });
               return _context.abrupt("return", Promise.all(imports.map(function (node) {
@@ -845,6 +893,11 @@
       return ref.apply(this, arguments);
     };
   }();
+
+  var funcCall = lively_ast.nodes.funcCall;
+  var member$1 = lively_ast.nodes.member;
+  var literal$1 = lively_ast.nodes.literal;
+
 
   function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
     // The function wrapper is needed b/c we need toplevel awaits and babel
@@ -952,7 +1005,8 @@
                 wrapInStartEndCall: true, // for async / await eval support
                 es6ExportFuncId: "_moduleExport",
                 es6ImportFuncId: "_moduleImport",
-                transpiler: transpiler
+                transpiler: transpiler,
+                currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
               });
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
