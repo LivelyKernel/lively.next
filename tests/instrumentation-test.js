@@ -57,13 +57,27 @@ describe("instrumentation", () => {
 
   });
 
-  describe("of export default", function() {
+  describe("classes", function() {
 
     it("class export is recorded", async () => {
-      await S.import(`${testProjectDir}file4.js`);
-      expect(module4.env()).to.have.deep.property("recorder.Foo");
+      var exports = await S.import(`${testProjectDir}file4.js`);
+      expect(exports.default).is.a("function");
+      expect(module4).to.have.deep.property("recorder.Foo");
+      expect(exports.default).to.equal(module4.recorder.Foo);
     });
 
+    it("classes have module meta data", async () => {
+      var exports = await S.import(`${testProjectDir}file4.js`);
+      var Foo = module4.recorder.Foo;
+      expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Object)
+      expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals({
+        package: {
+          name: "lively.modules",
+          version: undefined
+        },
+        pathInPackage: "./tests/test-project-dir/file4.js"
+      });
+    });
   });
 
 });

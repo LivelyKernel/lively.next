@@ -1,4 +1,5 @@
-import { parse } from "lively.ast";
+import { parse, nodes } from "lively.ast";
+var {funcCall, member, literal} = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";
 import { arr, string, properties, classHelper } from "lively.lang";
 import module from "./module.js";
@@ -52,7 +53,13 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
         varRecorderName: env.recorderName,
         dontTransform: env.dontTransform,
         recordGlobals: true,
-        keepPreviouslyDeclaredValues: true
+        keepPreviouslyDeclaredValues: true,
+        currentModuleAccessor: funcCall(
+                                member(
+                                  funcCall(member("System", "get"), literal("@lively-env")),
+                                  "moduleEnv"),
+                                literal(fullname))
+
       },
       isGlobal = env.recorderName === "System.global",
       header = (debug ? `console.log("[lively.modules] executing module ${fullname}");\n` : ""),
@@ -81,7 +88,12 @@ function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
         topLevelVarRecorder: env.recorder,
         varRecorderName: env.recorderName,
         dontTransform: env.dontTransform,
-        recordGlobals: true
+        recordGlobals: true,
+        currentModuleAccessor: funcCall(
+                                member(
+                                  funcCall(member("System", "get"), literal("@lively-env")),
+                                  "moduleEnv"),
+                                literal(fullname))
       },
       isGlobal = env.recorderName === "System.global";
 
