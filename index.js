@@ -11,7 +11,7 @@ export function resource(url) {
   if (url.isResource) return url;
   url = String(url);
   if (url.match(/^http/i)) return new WebDAVResource(url);
-  if (url.match(/^file/i) && isNode) return new NodeJSFileResource(url);
+  if (url.match(/^file/i)/* && isNode*/) return new NodeJSFileResource(url);
   throw new Error(`Cannot find resource type for url ${url}`);
 }
 

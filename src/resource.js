@@ -5,11 +5,19 @@ const slashEndRe = /\/+$/,
 
 import { resource } from "../index.js";
 
+function nyi(obj, name) {
+  throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
+}
+
 export class Resource {
 
   constructor(url) {
     this.isResource = true;
     this.url = String(url);
+  }
+
+  toString() {
+    return `${this.constructor.name}("${this.url}")`;
   }
 
   path() {
@@ -60,8 +68,10 @@ export class Resource {
     return this;
   }
 
-  async read() { throw new Error(`read for ${this.constructor.name} not yet implemented`); }
-  async write() { throw new Error(`write for ${this.constructor.name} not yet implemented`); }
-  async exists() { throw new Error(`exists for ${this.constructor.name} not yet implemented`); }
-  async remove() { throw new Error(`remove for ${this.constructor.name} not yet implemented`); }
+  async read()    { nyi(this, "read"); }
+  async write()   { nyi(this, "write"); }
+  async exists()  { nyi(this, "exists"); }
+  async remove()  { nyi(this, "remove"); }
+  async dirList() { nyi(this, "dirList"); }
+
 }
