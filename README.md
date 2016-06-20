@@ -1,3 +1,9 @@
 # lively.installer
 
-No description for package lively.installer yet.
+## Usage
+
+To install a new development version of Lively run
+
+```sh
+$ node new-install.js path/to/Lively
+```
