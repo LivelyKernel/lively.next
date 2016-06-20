@@ -8,7 +8,9 @@ function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 }
 
-function pullDir(targetDirectory, gitRepo, projectName, branch = "master") {
+function pullDir(targetDirectory, gitRepo, projectName, branch) {
+  if (branch === undefined)
+    branch = "master";
   var projDir = join(targetDirectory, projectName);
   if (!fs.existsSync(projDir)) {
     execSync(`git clone -b ${branch} ${gitRepo} ${projectName}`, {cwd: targetDirectory});
