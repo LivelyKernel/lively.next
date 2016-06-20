@@ -362,6 +362,11 @@ describe("persistent definitions", () => {
         .property("value").equals(3);
     });
 
+    it("class is only captured in toplevel scope", async () => {
+      await runEval("(function() { class InnerClass {a() { return 2 }} })()", opts);
+      expect(varMapper).to.not.have.property("InnerClass");
+    });
+
   });
 
 });
