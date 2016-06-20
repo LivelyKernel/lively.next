@@ -5,6 +5,7 @@ import { removeDir, createFiles, inspect as i } from "./helpers.js";
 
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
+import { registerPackage } from "../src/packages.js";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-project-dir/",
@@ -80,15 +81,16 @@ describe("instrumentation", () => {
     });
 
     it("classes have module meta data", async () => {
-      var exports = await S.import(`${testProjectDir}file4.js`);
-      var Foo = module4.recorder.Foo;
+      await registerPackage(S, testProjectDir);
+      var exports = await S.import(`${testProjectDir}file4.js`),
+          Foo = module4.recorder.Foo;
       expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Object)
       expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals({
         package: {
-          name: "lively.modules",
+          name: "test-project-1",
           version: undefined
         },
-        pathInPackage: "./tests/test-project-dir/file4.js"
+        pathInPackage: "./file4.js"
       });
     });
   });

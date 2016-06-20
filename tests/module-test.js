@@ -6,7 +6,7 @@ import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem, loadedModules } from "../src/system.js";
 import { registerPackage } from "../src/packages.js";
 
-var dir = Global.System.decanonicalize("lively.modules/tests/"),
+var dir = System.decanonicalize("lively.modules/tests/"),
     testDir = dir + "test-project/",
     module1 = `${testDir}file1.js`;
 
