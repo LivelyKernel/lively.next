@@ -3,14 +3,19 @@
 var execSync = require("child_process").execSync,
     fs = require("fs"),
     join = require("path").join;
+var https = require("https");
+var join = require("path").join;
+var fs = require("fs");
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helpers:
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 }
 
 function pullDir(targetDirectory, gitRepo, projectName, branch) {
-  if (branch === undefined)
-    branch = "master";
+  if (!branch) branch = "master";
   var projDir = join(targetDirectory, projectName);
   if (!fs.existsSync(projDir)) {
     execSync(`git clone -b ${branch} ${gitRepo} ${projectName}`, {cwd: targetDirectory});
@@ -18,6 +23,49 @@ function pullDir(targetDirectory, gitRepo, projectName, branch) {
   }
 }
 
+function copyLivelyWorld(livelyURL, pathOfWorld, livelyDir) {
+  return GET(livelyURL + pathOfWorld)
+    .then(content => fs.writeFileSync(join(livelyDir, pathOfWorld)))
+    .catch(err => console.error(`Error downloading lively world ${pathOfWorld}: ${err}`));
+}
+
+function copyPartsBinItem(livelyURL, partsSpace, name, livelyDir) {
+  // partsbinURL sth like "https://dev.lively-web.org/"
+  // partsSpace sth like "PartsBin/lively.modules"
+  // name like "lively.modules-browser-preferences"
+  var metainfo = livelyURL + join(partsSpace, name + ".metainfo"),
+      json = livelyURL + join(partsSpace, name + ".json"),
+      html = livelyURL + join(partsSpace, name + ".html");
+  return Promise.all([
+    GET(metainfo), GET(json), GET(html)
+  ]).then((contents) => {
+    var metainfoContent = contents[0],
+        jsonContent = contents[1],
+        htmlContent = contents[2];
+    fs.writeFileSync(join(livelyDir, partsSpace, name + ".metainfo"), metainfoContent);
+    fs.writeFileSync(join(livelyDir, partsSpace, name + ".json"), jsonContent);
+    fs.writeFileSync(join(livelyDir, partsSpace, name + ".html"), htmlContent);
+  })
+  .catch(err => console.error(`Error copying part ${name}: ${err}`));
+}
+
+function GET(url) {
+  console.log(url)
+  return new Promise((resolve, reject) => {
+    var req = https.request(url, (res) => {
+      res.setEncoding('utf8');
+      var data = ""
+      res.on('data', (chunk) => data += String(chunk));
+      res.on('end', () => resolve(data))
+      res.on('error', (err) => reject(err))
+    })
+    req.on('error', (e) => reject(e));
+    req.end();
+  })
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// the actual program starts here:
 
 var args = process.argv.slice(2);
 
@@ -26,6 +74,7 @@ if (!args.length) {
   process.exit(1);
 }
 
+// read the target directory from the commandline
 var targetDirectory = args[0]
 // execSync("rm -rf " + targetDirectory)
 
@@ -97,7 +146,9 @@ pullDir(
   "https://github.com/LivelyKernel/lively.serializer",
   "lively.serializer");
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+console.log("Finished pulling packages from git")
 
 var currentDir = join(targetDirectory, "lively-loader/node_modules");
 execSync("rm -rf lively.lang; ln -s ../../lively.lang lively.lang", {cwd: currentDir});
@@ -146,4 +197,39 @@ execSync("rm -rf lively.lang;      ln -s ../../../../lively.lang", {cwd: current
 execSync("rm -rf lively.ast;       ln -s ../../../../lively.ast", {cwd: currentDir})
 execSync("rm -rf mocha-es6;        ln -s ../../../../mocha-es6 mocha-es6", {cwd: currentDir})
 
-console.log("Everything installed!");
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+console.log("Finished linking projects")
+
+process.env.WORKSPACE_LK = livelyDir
+
+new Promise((resolve, reject) => require(join(livelyDir, "bin/helper/download-partsbin.js"))((err) => err ? reject(err) : resolve()))
+.then(() => ensureDir(join(livelyDir, "PartsBin/lively.modules")))
+.then(() => 
+  Promise.all([
+    copyPartsBinItem(
+      "https://dev.lively-web.org/",
+      "PartsBin/lively.modules",
+      "lively.modules-browser-preferences",
+      livelyDir),
+  
+    copyPartsBinItem(
+      "https://dev.lively-web.org/",
+      "PartsBin/lively.modules",
+      "lively.vm-editor",
+      livelyDir),
+  
+    copyPartsBinItem(
+      "https://dev.lively-web.org/",
+      "PartsBin/lively.modules",
+      "mocha-test-runner",
+      livelyDir),
+  
+    copyLivelyWorld(
+      "https://dev.lively-web.org/",
+      "development.html",
+      livelyDir),
+  ])
+  .then(() => console.log("Everything installed!"))
+  .catch(err => console.error(err)));
