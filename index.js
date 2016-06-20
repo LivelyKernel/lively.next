@@ -16,7 +16,15 @@ function pullDir(targetDirectory, gitRepo, projectName, branch = "master") {
   }
 }
 
-var targetDirectory = "/Users/robert/Lively/LivelyKernel2/test-dir"
+
+var args = process.argv.slice(2);
+
+if (!args.length) {
+  console.error("Please specify the directory to install stuff to");
+  process.exit(1);
+}
+
+var targetDirectory = args[0]
 // execSync("rm -rf " + targetDirectory)
 
 ensureDir(targetDirectory);
@@ -125,3 +133,5 @@ execSync("rm -rf lively.resources; ln -s ../../../../lively.resources", {cwd: cu
 execSync("rm -rf lively.lang;      ln -s ../../../../lively.lang", {cwd: currentDir})
 execSync("rm -rf lively.ast;       ln -s ../../../../lively.ast", {cwd: currentDir})
 execSync("rm -rf mocha-es6;        ln -s ../../../../mocha-es6 mocha-es6", {cwd: currentDir})
+
+console.log("Everything installed!");
