@@ -109,28 +109,28 @@ describe("ast.capturing", function() {
 
         testVarTfm("normal def",
                    "class Foo {\n  a() {\n    return 23;\n  }\n}",
-                   "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', [{\n"
+                   "var Foo = _createOrExtendClass('Foo', undefined, [{\n"
                  + "        key: 'a',\n"
                  + "        value: function () {\n"
                  + "            return 23;\n"
                  + "        }\n"
-                 + "    }], undefined);");
+                 + "    }], undefined, _rec, undefined);");
   
         testVarTfm("exported def",
                    "export class Foo {}",
-                   "export var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\n_rec.Foo = Foo;");
+                   "export var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\n_rec.Foo = Foo;");
   
         testVarTfm("exported default def",
                    "export default class Foo {}",
-                   "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nFoo = _rec.Foo;\nexport default Foo;");
+                   "var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nFoo = _rec.Foo;\nexport default Foo;");
   
         testVarTfm("does not capture class expr",
                    "var bar = class Foo {}",
-                   "_rec.bar = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);");
+                   "_rec.bar = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);");
   
         testVarTfm("captures var that has same name as class expr",
                    "var Foo = class Foo {}; new Foo();",
-                   "_rec.Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nnew _rec.Foo();");
+                   "_rec.Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nnew _rec.Foo();");
 
       });
 
@@ -387,11 +387,11 @@ describe("ast.capturing", function() {
 
       testVarTfm("class decl",
                  "export class Foo {};",
-                 "export var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\n_rec.Foo = Foo;\n;");
+                 "export var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\n_rec.Foo = Foo;\n;");
 
       testVarTfm("default class decl",
                  "export default class Foo {};",
-                 "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined);\nFoo = _rec.Foo;\nexport default Foo;\n;");
+                 "var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nFoo = _rec.Foo;\nexport default Foo;\n;");
 
       testVarTfm("class decl without classToFunction",
                  {classToFunction: null},
@@ -467,23 +467,23 @@ describe("ast.capturing", function() {
       testVarTfm("default class decl",
                 opts,
                 "export default class Foo {a() { return 23; }};",
-                "var Foo = _createOrExtendClass(_rec, undefined, 'Foo', [{\n"
+                "var Foo = _createOrExtendClass('Foo', undefined, [{\n"
                 + "        key: 'a',\n"
                 + "        value: function () {\n"
                 + "            return 23;\n"
                 + "        }\n"
-                + "    }], undefined);\n"
+                + "    }], undefined, _rec, undefined);\n"
                 + "_moduleExport('default', _rec.Foo);\n;");
 
       testVarTfm("class decl, declarationWrapper",
                 Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
                 "export class Foo {a() { return 23; }};",
-                "var Foo = _define('Foo', 'class', _createOrExtendClass(_rec, undefined, 'Foo', [{\n"
+                "var Foo = _define('Foo', 'class', _createOrExtendClass('Foo', undefined, [{\n"
                 + "        key: 'a',\n"
                 + "        value: function () {\n"
                 + "            return 23;\n"
                 + "        }\n"
-                + "    }], undefined), _rec);\n"
+                + "    }], undefined, _rec, undefined), _rec);\n"
                 + "_moduleExport('Foo', _rec.Foo);\n;");
 
       testVarTfm("named",
@@ -548,7 +548,7 @@ describe("declarations", () => {
           rewriteToCaptureTopLevelVariables(
             parse("class Foo {}"), {name: "_rec", type: "Identifier"},
             {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("var Foo = _define('Foo', 'class', _createOrExtendClass(_rec, undefined, 'Foo', undefined, undefined), _rec);");
+      .equals("var Foo = _define('Foo', 'class', _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined), _rec);");
   });
 
   it("wraps function decls", () => {
