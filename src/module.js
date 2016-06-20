@@ -223,7 +223,9 @@ class ModuleInterface {
 
   pathInPackage() {
     var p = this.package();
-    return p ? join("./", this.id.slice(p.address.length)) : this.id;
+    return p && this.id.indexOf(p.address) === 0 ?
+      join("./", this.id.slice(p.address.length)) :
+      this.id;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
