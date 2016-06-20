@@ -4,11 +4,8 @@ import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
 import { livelySystemEnv } from "./system.js";
-
-// FIXME use lively.resources helper for that
-const urlTester = /[a-z][a-z0-9\+\-\.]/i;
-
-function isURL(id) { return urlTester.test(id); }
+import { getPackages } from "./packages.js";
+import { isURL, join } from "./url-helpers.js";
 
 export default function module(System, moduleName, parent) {
   var sysEnv = livelySystemEnv(System),
@@ -211,6 +208,20 @@ class ModuleInterface {
   }
 
   env() { return this; }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // package related
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  package() {
+    return getPackages(this.System).find(ea =>
+      ea.modules.some(mod => mod.name === this.id));
+  }
+
+  pathInPackage() {
+    var p = this.package();
+    return p ? join("./", this.id.slice(p.address.length)) : this.id;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // imports and exports

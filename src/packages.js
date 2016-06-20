@@ -1,36 +1,9 @@
-import { arr, string, promise } from "lively.lang";
+import { arr, promise } from "lively.lang";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "../src/module.js";
 import { computeRequireMap as requireMap } from './dependencies.js'
+import { isJsFile, asDir, isURL, urlResolve, join } from "./url-helpers.js";
 
-// helper
-function isJsFile(url) { return /\.js/i.test(url); }
-function asDir(url) {
-  return isJsFile(url) ? url.replace(/\/[^\/]*$/, "") : url.replace(/\/$/, "");
-}
-
-var join = string.joinPath;
-
-function isURL(string) { return /^[^:\\]+:\/\//.test(string); }
-
-function urlResolve(url) {
-  var urlMatch = url.match(/^([^:]+:\/\/)(.*)/);
-  if (!urlMatch) return url;
-
-  var protocol = urlMatch[1],
-      path = urlMatch[2],
-      result = path;
-  // /foo/../bar --> /bar
-  do {
-      path = result;
-      result = path.replace(/\/[^\/]+\/\.\./, '');
-  } while (result != path);
-  // foo//bar --> foo/bar
-  result = result.replace(/(^|[^:])[\/]+/g, '$1/');
-  // foo/./bar --> foo/bar
-  result = result.replace(/\/\.\//g, '/');
-  return protocol + result;
-}
 
 function normalizeInsidePackage(System, urlOrName, packageURL) {
   return isURL(urlOrName) ?
@@ -347,4 +320,12 @@ function searchPackage(System, packageURL, searchStr) {
                 .then(res => arr.flatten(res, 1));
 }
 
-export { importPackage, registerPackage, removePackage, reloadPackage, applyConfig, getPackages, searchPackage };
+export {
+  importPackage,
+  registerPackage,
+  removePackage,
+  reloadPackage,
+  applyConfig,
+  getPackages,
+  searchPackage
+};
