@@ -18561,7 +18561,7 @@ var nodes = Object.freeze({
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "module", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
 
   function scopes(parsed) {
     var vis = new ScopeVisitor(),
@@ -18705,6 +18705,12 @@ var nodes = Object.freeze({
   }
 
   function findReferencesAndDeclsInScope(scope, name) {
+    if (name === "this") {
+      return scope.thisRefs;
+      scopes(parse("var x = this.foo")).refs;
+      scopes(parse("var x = this.foo")).thisRefs;
+    }
+
     return lively_lang.arr.flatten( // all references
     lively_lang.tree.map(scope, function (scope) {
       return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
@@ -18719,7 +18725,7 @@ var nodes = Object.freeze({
     }));
 
     function varDeclIdsOf(scope) {
-      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(helpers.varDeclIds(scope));
+      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
     }
   }
 
@@ -19105,6 +19111,10 @@ var nodes = Object.freeze({
 
   var isTransformedClassVarDeclSymbol = Symbol();
 
+  function createsNewScope(node) {
+    return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
+  }
+
   var simpleReplace = function () {
     var ReplaceVisitor = function (_Visitor) {
       babelHelpers.inherits(ReplaceVisitor, _Visitor);
@@ -19116,26 +19126,27 @@ var nodes = Object.freeze({
 
       babelHelpers.createClass(ReplaceVisitor, [{
         key: "accept",
-        value: function accept(node, state, path) {
-          return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+        value: function accept(node, classHolder, path) {
+          if (createsNewScope(node)) classHolder = objectLiteral([]);
+          return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, classHolder, path), classHolder, path);
         }
       }], [{
         key: "run",
-        value: function run(parsed, replacer) {
+        value: function run(parsed, classHolder, replacer) {
           var v = new this();
           v.replacer = replacer;
-          return v.accept(parsed, null, []);
+          return v.accept(parsed, classHolder, []);
         }
       }]);
       return ReplaceVisitor;
     }(Visitor);
 
-    return function simpleReplace(parsed, replacer) {
-      return ReplaceVisitor.run(parsed, replacer);
+    return function simpleReplace(parsed, classHolder, replacer) {
+      return ReplaceVisitor.run(parsed, classHolder, replacer);
     };
   }();
 
-  function replaceSuper(node, path, options) {
+  function replaceSuper(node, classHolder, path, options) {
     console.assert(node.type === "Super");
 
     var _path$slice = path.slice(-2);
@@ -19150,21 +19161,21 @@ var nodes = Object.freeze({
     return member(member(member("this", "constructor"), funcCall(member("Symbol", "for"), literal("lively-instance-superclass")), true), "prototype");
   }
 
-  function replaceSuperMethodCall(node, path, options) {
+  function replaceSuperMethodCall(node, classHolder, path, options) {
     // like super.foo()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.object.type === "Super");
-    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee.object, [], options), node.callee.property), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee.object, classHolder, [], options), node.callee.property), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
-  function replaceDirectSuperCall(node, path, options) {
+  function replaceDirectSuperCall(node, classHolder, path, options) {
     // like super.foo()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.type === "Super");
-    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee, classHolder, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
-  function replaceClass(node, path, options) {
+  function replaceClass(node, classHolder, path, options) {
     console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
     var instanceProps = id("undefined"),
         classProps = id("undefined");
@@ -19177,7 +19188,6 @@ var nodes = Object.freeze({
         var classSide = propNode.static;
 
         if (key.type !== "Literal" && key.type !== "Identifier") {
-          debugger;
           console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
         }
 
@@ -19202,13 +19212,14 @@ var nodes = Object.freeze({
       if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
     }
 
-    var classCreator = funcCall(options.functionNode, options.classHolder, node.superClass || id("undefined"), node.id ? literal(node.id.name) : id("undefined"), instanceProps, classProps);
+    var classCreator = funcCall(options.functionNode, node.id ? literal(node.id.name) : id("undefined"), node.superClass || id("undefined"), instanceProps, classProps, classHolder, options.currentModuleAccessor || id("undefined"));
 
     if (node.type === "ClassExpression") return classCreator;
 
     var result = classCreator;
 
-    if (options.declarationWrapper) result = funcCall(options.declarationWrapper, literal(node.id.name), literal("class"), result, options.classHolder);
+    if (options.declarationWrapper && classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(node.id.name), literal("class"), result, options.classHolder);
+
     // since it is a declaration and we removed the class construct we need to add a var-decl
     result = varDecl(node.id, result, "var");
     result[isTransformedClassVarDeclSymbol] = true;
@@ -19216,7 +19227,7 @@ var nodes = Object.freeze({
     return result;
   }
 
-  function splitExportDefaultWithClass(node, path, options) {
+  function splitExportDefaultWithClass(node, classHolder, path, options) {
     return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
       declaration: node.declaration.declarations[0].id,
       type: "ExportDefaultDeclaration"
@@ -19240,17 +19251,18 @@ var nodes = Object.freeze({
     //   }])
 
     var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
-    return simpleReplace(parsed, function (node, path) {
-      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, path, options);
+    return simpleReplace(parsed, options.classHolder, function (node, classHolder, path) {
 
-      if (node.type === "Super") return replaceSuper(node, path, options);
+      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, classHolder, path, options);
 
-      if (node.type === "CallExpression" && node.callee.type === "Super") return replaceDirectSuperCall(node, path, options);
+      if (node.type === "Super") return replaceSuper(node, classHolder, path, options);
 
-      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") return replaceSuperMethodCall(node, path, options);
+      if (node.type === "CallExpression" && node.callee.type === "Super") return replaceDirectSuperCall(node, classHolder, path, options);
+
+      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") return replaceSuperMethodCall(node, classHolder, path, options);
 
       if (node.type === "ExportDefaultDeclaration") {
-        return splitExportDefaultWithClass(node, path, options);
+        return splitExportDefaultWithClass(node, classHolder, path, options);
       }
 
       return node;
