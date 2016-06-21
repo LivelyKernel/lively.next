@@ -74,7 +74,7 @@ class ModuleInterface {
   async ast() {
     return parse(await this.source());
   }
-
+  
   metadata() {
     var load = this.System.loads ? this.System.loads[this.id] : null;
     return load ? load.metadata : null;
@@ -84,6 +84,48 @@ class ModuleInterface {
     // assume esm by default
     var meta = this.metadata();
     return meta ? meta.format : "esm";
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // references and declarations
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  async localDeclarationForExport(name) {
+    const ast = await this.ast(),
+          exports = await this.exports(ast),
+          ex = exports.find(e => e.exported == name);
+    if (ex && ex.node.decl) ex.node.decl.module = this;
+    return ex && ex.node.decl;
+  }
+  
+  async localDeclarationForRefAt(pos) {
+    const ast = await this.ast(),
+          nodes = query.nodesAt(pos, ast),
+          ex = nodes.find(n => !!n.decl);
+    if (ex && ex.decl) ex.decl.module = this;
+    return ex && ex.decl;
+  }
+
+  async declarationsForNode(decl) {
+    if (!decl) return;
+    const ast = await this.ast(),
+          imports = await this.imports(ast),
+          im = imports.find(i => i.node == decl);
+    if (im) {
+      return [decl].concat(module(this.System, im.from, this.id).declarationsForExport(im.imported));
+    }
+    return [decl];
+  }
+
+  async declarationsForExport(name) {
+    const decl = await this.localDeclarationForExport(name);
+    return this.declarationsForNode(decl);
+  }
+
+  async declarationsForRefAt(pos) {
+    const decl = await this.localDeclarationForRefAt(pos);
+    return this.declarationsForNode(decl);
+
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -268,7 +310,8 @@ class ModuleInterface {
               return imports.concat([{
                 local:      null,
                 imported:   null,
-                fromModule: from
+                fromModule: from,
+                node:       node
               }]);
 
             return imports.concat(importStmt.specifiers.map(importSpec => {
@@ -281,7 +324,8 @@ class ModuleInterface {
               return {
                 local:      importSpec.local ? importSpec.local.name : null,
                 imported:   imported,
-                fromModule: from
+                fromModule: from,
+                node:       node
               }
             }))
           }, []);
@@ -309,7 +353,8 @@ class ModuleInterface {
         return exports.concat([{
           local:           null,
           exported:        "*",
-          fromModule:      from
+          fromModule:      from,
+          node:            node
         }])
       }
 
@@ -318,7 +363,8 @@ class ModuleInterface {
           return {
             local:           from ? null : exportSpec.local ? exportSpec.local.name : null,
             exported:        exportSpec.exported ? exportSpec.exported.name : null,
-            fromModule:      from
+            fromModule:      from,
+            node:            node
           }
         }))
       }
@@ -329,7 +375,8 @@ class ModuleInterface {
             local:           decl.id.name,
             exported:        decl.id.name,
             type:            exportsStmt.declaration.kind,
-            fromModule:      null
+            fromModule:      null,
+            node:            node
           }
         }))
       }
@@ -341,7 +388,8 @@ class ModuleInterface {
           type:            exportsStmt.declaration.type === "FunctionDeclaration" ?
                             "function" : exportsStmt.declaration.type === "ClassDeclaration" ?
                               "class" : null,
-          fromModule:      null
+          fromModule:      null,
+          node:            node
         })
       }
       return exports;
