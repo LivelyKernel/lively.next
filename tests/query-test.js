@@ -472,4 +472,197 @@ describe('query', function() {
     expect(arr.pluck(query.helpers.objPropertiesAsList(objExpr, [], false), "key"))
       .eql([["x"], ["y"], ["y", 0, "z"]]);
   });
+
+  describe("imports", () => {
+    
+    function im(src) {
+      const scope = query.scopes(parse(src));
+      return query.imports(scope);
+    }
+
+    it("of named vars", async () => {
+      const result = im("import { y as yyy } from './file2.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        fromModule: "./file2.js",
+        imported: 'y',
+        local: "yyy"
+      });
+    });
+
+    it("default", async () => {
+      const result = im("import z from './file2.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        fromModule: "./file2.js",
+        imported: 'default',
+        local: 'z'
+      });
+    });
+
+    it("*", async () => {
+      const result = im("import * as file2 from './file2.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        fromModule: "./file2.js",
+        imported: "*",
+        local: "file2"
+      });
+    });
+  });
+
+  describe("exports", () => {
+
+    function ex(src) {
+      const scope = query.scopes(parse(src));
+      return query.exports(scope);
+    }
+
+    it("of ids", async () => {
+      const result = ex("var x = 23; export { x }");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        local: "x",
+        type: "id",
+        decl: {type: "VariableDeclarator", start: 4, end: 10},
+        declId: {type: "Identifier", start: 4, end: 5, name: "x"}
+      });
+    });
+
+    it("of referenced function", async () => {
+      const result = ex("function x() {}; export { x }");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        local: "x",
+        type: "id",
+        decl: {type: "FunctionDeclaration", start: 0, end: 15},
+        declId: {type: "Identifier", start: 9, end: 10, name: "x"}
+      });
+    });
+
+    it("of var decls", async () => {
+      const result = ex("export var x = 23;");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        local: "x",
+        type: "var",
+        decl: {type: "VariableDeclarator", start: 11, end: 17},
+        declId: {type: "Identifier", start: 11, end: 12, name: "x"}
+      });
+    });
+
+    it("of multiple var decls", async () => {
+      const result = ex("export var x = 23, y = 42;");
+      expect(result).to.have.length(2);
+      expect(result).to.containSubset([{
+        exported: "x",
+        local: "x",
+        type: "var",
+        decl: {type: "VariableDeclarator", start: 11, end: 17},
+        declId: {type: "Identifier", start: 11, end: 12, name: "x"}
+      },{
+        exported: "y",
+        local: "y",
+        type: "var",
+        decl: {type: "VariableDeclarator", start: 19, end: 25},
+        declId: {type: "Identifier", start: 19, end: 20, name: "y"}
+      }]);
+    });
+
+    it("* from", async () => {
+      const result = ex("export * from './file1.js'");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "*",
+        local: null,
+        fromModule: "./file1.js"
+      });
+    });
+
+    it("named from", async () => {
+      const result = ex("export { x } from './file1.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        fromModule: "./file1.js",
+        local: null
+      });
+    });
+
+    it("functions", async () => {
+      const result = ex("export function bar() {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "bar",
+        local: "bar",
+        type: "function",
+        decl: {type: "FunctionDeclaration", start: 7, end: 24},
+        declId: {type: "Identifier", start: 16, end: 19, name: "bar"}
+      });
+    });
+
+    it("default function", async () => {
+      const result = ex("export default async function foo() {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        local: "foo",
+        type: "function",
+        decl: {type: "FunctionDeclaration", start: 15, end: 38},
+        declId: {type: "Identifier", start: 30, end: 33, name: "foo"}
+      });
+    });
+
+    it("default id", async () => {
+      const result = ex("var x = 23; export default x;");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        local: "x",
+        type: "id",
+        decl: {type: "VariableDeclarator", start: 4, end: 10},
+        declId: {type: "Identifier", start: 4, end: 5, name: "x"}
+      });
+    });
+
+    it("default expr", async () => {
+      const result = ex("export default 12;");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        type: "expr",
+        decl: {type: "Literal", start: 15, end: 17},
+        declId: {type: "Literal", start: 15, end: 17, value: 12}
+      });
+    });
+
+    it("class", async () => {
+      const result = ex("export class Baz {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "Baz",
+        local: "Baz",
+        type: "class",
+        decl: {type: "ClassDeclaration", start: 7, end: 19},
+        declId: {type: "Identifier", start: 13, end: 16, name: "Baz"}
+      });
+    });
+    
+    it("default class", async () => {
+      const result = ex("export default class Baz {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        local: "Baz",
+        type: "class",
+        decl: {type: "ClassDeclaration", start: 15, end: 27},
+        declId: {type: "Identifier", start: 21, end: 24, name: "Baz"}
+      });
+    });
+    
+  });
+
 });
