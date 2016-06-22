@@ -525,7 +525,7 @@ describe('query', function() {
         exported: "x",
         local: "x",
         type: "id",
-        decl: {type: "VariableDeclarator", start: 4, end: 11},
+        decl: {type: "VariableDeclarator", start: 4, end: 10},
         declId: {type: "Identifier", start: 4, end: 5, name: "x"}
       });
     });
@@ -537,8 +537,8 @@ describe('query', function() {
         exported: "x",
         local: "x",
         type: "id",
-        decl: {type: "FunctionDeclaration", start: 0, end: 16},
-        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
+        decl: {type: "FunctionDeclaration", start: 0, end: 15},
+        declId: {type: "Identifier", start: 9, end: 10, name: "x"}
       });
     });
 
@@ -549,26 +549,26 @@ describe('query', function() {
         exported: "x",
         local: "x",
         type: "var",
-        decl: {type: "VariableDeclarator", start: 10, end: 25},
-        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
+        decl: {type: "VariableDeclarator", start: 11, end: 17},
+        declId: {type: "Identifier", start: 11, end: 12, name: "x"}
       });
     });
 
-    it("of var decls", async () => {
+    it("of multiple var decls", async () => {
       const result = ex("export var x = 23, y = 42;");
       expect(result).to.have.length(2);
       expect(result).to.containSubset([{
         exported: "x",
         local: "x",
         type: "var",
-        decl: {type: "VariableDeclarator", start: 10, end: 25},
-        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
+        decl: {type: "VariableDeclarator", start: 11, end: 17},
+        declId: {type: "Identifier", start: 11, end: 12, name: "x"}
       },{
         exported: "y",
         local: "y",
         type: "var",
-        decl: {type: "VariableDeclarator", start: 10, end: 25},
-        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
+        decl: {type: "VariableDeclarator", start: 19, end: 25},
+        declId: {type: "Identifier", start: 19, end: 20, name: "y"}
       }]);
     });
 
@@ -599,8 +599,8 @@ describe('query', function() {
         exported: "bar",
         local: "bar",
         type: "function",
-        decl: {type: "FunctionDeclaration", start: 8, end: 25},
-        declId: {type: "Identifier", start: 17, end: 20, name: "bar"}
+        decl: {type: "FunctionDeclaration", start: 7, end: 24},
+        declId: {type: "Identifier", start: 16, end: 19, name: "bar"}
       });
     });
 
@@ -611,8 +611,8 @@ describe('query', function() {
         exported: "foo",
         local: "foo",
         type: "function",
-        decl: {type: "FunctionDeclaration", start: 22, end: 39},
-        declId: {type: "Identifier", start: 13, end: 16, name: "foo"}
+        decl: {type: "FunctionDeclaration", start: 15, end: 38},
+        declId: {type: "Identifier", start: 30, end: 33, name: "foo"}
       });
     });
 
@@ -623,7 +623,7 @@ describe('query', function() {
         exported: "Baz",
         local: "Baz",
         type: "class",
-        decl: {type: "ClassDeclaration", start: 8, end: 19},
+        decl: {type: "ClassDeclaration", start: 7, end: 19},
         declId: {type: "Identifier", start: 13, end: 16, name: "Baz"}
       });
     });
