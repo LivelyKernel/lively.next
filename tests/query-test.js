@@ -608,11 +608,34 @@ describe('query', function() {
       const result = ex("export default async function foo() {}");
       expect(result).to.have.length(1);
       expect(result[0]).to.containSubset({
-        exported: "foo",
+        exported: "default",
         local: "foo",
         type: "function",
         decl: {type: "FunctionDeclaration", start: 15, end: 38},
         declId: {type: "Identifier", start: 30, end: 33, name: "foo"}
+      });
+    });
+
+    it("default id", async () => {
+      const result = ex("var x = 23; export default x;");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        local: "x",
+        type: "id",
+        decl: {type: "VariableDeclarator", start: 4, end: 10},
+        declId: {type: "Identifier", start: 4, end: 5, name: "x"}
+      });
+    });
+
+    it("default expr", async () => {
+      const result = ex("export default 12;");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        type: "expr",
+        decl: {type: "Literal", start: 15, end: 17},
+        declId: {type: "Literal", start: 15, end: 17, value: 12}
       });
     });
 
@@ -627,6 +650,19 @@ describe('query', function() {
         declId: {type: "Identifier", start: 13, end: 16, name: "Baz"}
       });
     });
+    
+    it("default class", async () => {
+      const result = ex("export default class Baz {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "default",
+        local: "Baz",
+        type: "class",
+        decl: {type: "ClassDeclaration", start: 15, end: 27},
+        declId: {type: "Identifier", start: 21, end: 24, name: "Baz"}
+      });
+    });
+    
   });
 
 });
