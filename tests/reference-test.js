@@ -12,7 +12,7 @@ function getRefs(pos, source) {
   return refAt(pos, scope);
 }
 
-describe.only('references', () => {
+describe('references', () => {
 
   describe("are resolved", () => {
 
