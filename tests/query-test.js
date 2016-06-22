@@ -472,4 +472,121 @@ describe('query', function() {
     expect(arr.pluck(query.helpers.objPropertiesAsList(objExpr, [], false), "key"))
       .eql([["x"], ["y"], ["y", 0, "z"]]);
   });
+
+  describe("imports", () => {
+    
+    function im(src) {
+      const scope = query.scopes(parse(src));
+      return query.imports(scope);
+    }
+
+    it("of named vars", async () => {
+      const result = im("import { y as yyy } from './file2.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        fromModule: "./file2.js",
+        imported: 'y',
+        local: "yyy"
+      });
+    });
+
+    it("default", async () => {
+      const result = im("import z from './file2.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        fromModule: "./file2.js",
+        imported: 'default',
+        local: 'z'
+      });
+    });
+
+    it("*", async () => {
+      const result = im("import * as file2 from './file2.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        fromModule: "./file2.js",
+        imported: "*",
+        local: "file2"
+      });
+    });
+  });
+
+  describe("exports", () => {
+
+    function ex(src) {
+      const scope = query.scopes(parse(src));
+      return query.exports(scope);
+    }
+
+    it("of ids", async () => {
+      const result = ex("var x = 23; export { x }");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        local: "x",
+        type: "id"
+      });
+    });
+
+    it("of var decls", async () => {
+      const result = ex("export var x = 23;");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        local: "x",
+        type: "var"
+      });
+    });
+
+    it("* from", async () => {
+      const result = ex("export * from './file1.js'");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "*",
+        local: null,
+        fromModule: "./file1.js"
+      });
+    });
+
+    it("named from", async () => {
+      const result = ex("export { x } from './file1.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        fromModule: "./file1.js",
+        local: null
+      });
+    });
+
+    it("functions", async () => {
+      const result = ex("export function bar() {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "bar",
+        local: "bar",
+        type: "function"
+      });
+    });
+
+    it("default function", async () => {
+      const result = ex("export default async function foo() {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "foo",
+        local: "foo",
+        type: "function"
+      });
+    });
+
+    it("class", async () => {
+      const result = ex("export class Baz {}");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "Baz",
+        local: "Baz",
+        type: "class"
+      });
+    });
+  });
+
 });
