@@ -5,6 +5,7 @@ import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
+import { registerPackage } from "../src/packages.js";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-dir-imports-exports/",
@@ -38,7 +39,9 @@ var dir = System.decanonicalize("lively.modules/tests/"),
       "file18.js": "import { bar } from './file17.js'; bar();",
       
       "file19.js": "import { x } from './file2.js'; export { x };",
-      "file20.js": "import { x } from './file19.js'; var y = x;"
+      "file20.js": "import { x } from './file19.js'; var y = x;",
+      
+      "file21.js": "import { x } from 'imports-exports-test-project'; var y = x;"
 
     };
 
@@ -215,6 +218,22 @@ describe("imports and exports", () => {
       end: 24,
       type: "FunctionDeclaration",
       module: {id: testProjectDir + "file17.js"}
+    }]);
+  });
+  
+  it("export named declaration from package", async () => {
+    await registerPackage(S, testProjectDir);
+    const decls = await modules[21].declarationsForRefAt(59);
+    expect(decls).to.containSubset([{
+      start: 9,
+      end: 10,
+      name: "x",
+      module: {id: testProjectDir + "file21.js"}
+    },{
+      start: 11,
+      end: 16,
+      id: {start: 11, end: 12, name: "x"},
+      module: {id: testProjectDir + "file2.js"}
     }]);
   });
 });
