@@ -31,6 +31,11 @@ class ModuleInterface {
     // execution and eval
     this.recorderName = "__lvVarRecorder";
     this._recorder = null;
+    
+    // cached values (TODO: invalidate cache when source changes)
+    this._source = null;
+    this._ast = null;
+    this._scope = null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -50,6 +55,7 @@ class ModuleInterface {
 
     if (this.id === "@empty") return Promise.resolve("")
 
+    if (this._source) return Promise.resolve(this._source);
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
     }
@@ -58,7 +64,7 @@ class ModuleInterface {
       const path = this.id.replace(/^file:\/\//, "");
       return new Promise((resolve, reject) =>
         this.System._nodeRequire("fs").readFile(path, (err, content) =>
-          err ? reject(err) : resolve(String(content))));
+          err ? reject(err) : resolve(this._source = String(content))));
     }
 
     if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
@@ -72,7 +78,15 @@ class ModuleInterface {
   }
 
   async ast() {
-    return parse(await this.source());
+    if (this._ast) return this._ast;
+    return this._ast = parse(await this.source());
+  }
+  
+  async scope() {
+    if (this._scope) return this._scope;
+    const ast = await this.ast(),
+          scope = query.topLevelDeclsAndRefs(ast).scope;
+    return this._scope = query.resolveReferences(scope);
   }
   
   metadata() {
@@ -84,48 +98,6 @@ class ModuleInterface {
     // assume esm by default
     var meta = this.metadata();
     return meta ? meta.format : "esm";
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // references and declarations
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
-  async localDeclarationForExport(name) {
-    const ast = await this.ast(),
-          exports = await this.exports(ast),
-          ex = exports.find(e => e.exported == name);
-    if (ex && ex.node.decl) ex.node.decl.module = this;
-    return ex && ex.node.decl;
-  }
-  
-  async localDeclarationForRefAt(pos) {
-    const ast = await this.ast(),
-          nodes = query.nodesAt(pos, ast),
-          ex = nodes.find(n => !!n.decl);
-    if (ex && ex.decl) ex.decl.module = this;
-    return ex && ex.decl;
-  }
-
-  async declarationsForNode(decl) {
-    if (!decl) return;
-    const ast = await this.ast(),
-          imports = await this.imports(ast),
-          im = imports.find(i => i.node == decl);
-    if (im) {
-      return [decl].concat(module(this.System, im.from, this.id).declarationsForExport(im.imported));
-    }
-    return [decl];
-  }
-
-  async declarationsForExport(name) {
-    const decl = await this.localDeclarationForExport(name);
-    return this.declarationsForNode(decl);
-  }
-
-  async declarationsForRefAt(pos) {
-    const decl = await this.localDeclarationForRefAt(pos);
-    return this.declarationsForNode(decl);
-
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -294,109 +266,54 @@ class ModuleInterface {
   // imports and exports
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async imports(optAstOrSource) {
-    const parsed = optAstOrSource ?
-            (typeof optAstOrSource === "string" ?
-              parse(optAstOrSource) : optAstOrSource) :
-            await this.ast(),
-          scope = query.scopes(parsed),
-          imports = scope.importDecls.reduce((imports, node) => {
-            var nodes = query.nodesAtIndex(parsed, node.start),
-                importStmt = arr.without(nodes, scope.node)[0];
-            if (!importStmt) return imports;
-
-            var from = importStmt.source ? importStmt.source.value : "unknown module";
-            if (!importStmt.specifiers.length) // no imported vars
-              return imports.concat([{
-                local:      null,
-                imported:   null,
-                fromModule: from,
-                node:       node
-              }]);
-
-            return imports.concat(importStmt.specifiers.map(importSpec => {
-              var imported;
-              if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
-              else if (importSpec.type === "ImportDefaultSpecifier" ) imported = "default";
-              else if (importSpec.type === "ImportSpecifier" ) imported = importSpec.imported.name;
-              else if (importStmt.source) imported = importStmt.source.name;
-              else imported = null;
-              return {
-                local:      importSpec.local ? importSpec.local.name : null,
-                imported:   imported,
-                fromModule: from,
-                node:       node
-              }
-            }))
-          }, []);
-
-    return arr.uniqBy(imports, (a, b) =>
-      a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule);
-
+  async imports() {
+    const parsed = await this.ast(),
+          scope = await this.scope();
+    return query.imports(scope);
   }
 
-  async exports(optAstOrSource) {
+  async exports() {
+    const parsed = await this.ast(),
+          scope = await this.scope();
+    return query.exports(scope);
+  }
+  
+  async localDeclarationForRefAt(pos) {
+    const scope = await this.scope(),
+          ref = query.refAt(pos, scope);
+    if (ref && ref.decl) ref.decl.module = this;
+    return ref && ref.decl;
+  }
 
-    const parsed = optAstOrSource ?
-            (typeof optAstOrSource === "string" ?
-              parse(optAstOrSource) : optAstOrSource) :
-            await this.ast(),
-          scope = query.scopes(parsed),
-          exports = scope.exportDecls.reduce((exports, node) => {
+  async declarationsForNode(decl) {
+    if (!decl) return;
+    const imports = await this.imports(),
+          im = imports.find(i => i.node.start == decl.start && // can't rely on
+                                 i.node.name == decl.name &&   // object identity
+                                 i.node.type == decl.type);
+    if (im) {
+      const imM = module(this.System, im.fromModule, this.id);
+      return [decl].concat(await imM.declarationsForExport(im.imported));
+    }
+    return [decl];
+  }
 
-      var exportsStmt = query.statementOf(scope.node, node);
-      if (!exportsStmt) return exports;
+  async declarationsForExport(name) {
+    //TODO handle '*'
+    const exports = await this.exports(),
+          ex = exports.find(e => e.exported === name);
+    if (ex.fromModule) {
+      const imM = module(this.System, ex.fromModule, this.id);
+      return await imM.declarationsForExport(ex.imported);
+    } else {
+      if (ex && ex.decl) ex.decl.module = this;
+      return this.declarationsForNode(ex.decl);
+    }
+  }
 
-      var from = exportsStmt.source ? exportsStmt.source.value : null;
-
-      if (exportsStmt.type === "ExportAllDeclaration") {
-        return exports.concat([{
-          local:           null,
-          exported:        "*",
-          fromModule:      from,
-          node:            node
-        }])
-      }
-
-      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
-        return exports.concat(exportsStmt.specifiers.map(exportSpec => {
-          return {
-            local:           from ? null : exportSpec.local ? exportSpec.local.name : null,
-            exported:        exportSpec.exported ? exportSpec.exported.name : null,
-            fromModule:      from,
-            node:            node
-          }
-        }))
-      }
-
-      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
-        return exports.concat(exportsStmt.declaration.declarations.map(decl => {
-          return {
-            local:           decl.id.name,
-            exported:        decl.id.name,
-            type:            exportsStmt.declaration.kind,
-            fromModule:      null,
-            node:            node
-          }
-        }))
-      }
-
-      if (exportsStmt.declaration) {
-        return exports.concat({
-          local:           exportsStmt.declaration.id.name,
-          exported:        exportsStmt.declaration.id.name,
-          type:            exportsStmt.declaration.type === "FunctionDeclaration" ?
-                            "function" : exportsStmt.declaration.type === "ClassDeclaration" ?
-                              "class" : null,
-          fromModule:      null,
-          node:            node
-        })
-      }
-      return exports;
-    }, []);
-
-    return arr.uniqBy(exports, (a, b) =>
-      a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule);
+  async declarationsForRefAt(pos) {
+    const decl = await this.localDeclarationForRefAt(pos);
+    return await this.declarationsForNode(decl);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
