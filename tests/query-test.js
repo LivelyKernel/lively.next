@@ -524,7 +524,21 @@ describe('query', function() {
       expect(result[0]).to.containSubset({
         exported: "x",
         local: "x",
-        type: "id"
+        type: "id",
+        decl: {type: "VariableDeclarator", start: 4, end: 11},
+        declId: {type: "Identifier", start: 4, end: 5, name: "x"}
+      });
+    });
+
+    it("of referenced function", async () => {
+      const result = ex("function x() {}; export { x }");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "x",
+        local: "x",
+        type: "id",
+        decl: {type: "FunctionDeclaration", start: 0, end: 16},
+        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
       });
     });
 
@@ -534,8 +548,28 @@ describe('query', function() {
       expect(result[0]).to.containSubset({
         exported: "x",
         local: "x",
-        type: "var"
+        type: "var",
+        decl: {type: "VariableDeclarator", start: 10, end: 25},
+        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
       });
+    });
+
+    it("of var decls", async () => {
+      const result = ex("export var x = 23, y = 42;");
+      expect(result).to.have.length(2);
+      expect(result).to.containSubset([{
+        exported: "x",
+        local: "x",
+        type: "var",
+        decl: {type: "VariableDeclarator", start: 10, end: 25},
+        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
+      },{
+        exported: "y",
+        local: "y",
+        type: "var",
+        decl: {type: "VariableDeclarator", start: 10, end: 25},
+        declId: {type: "Identifier", start: 10, end: 21, name: "x"}
+      }]);
     });
 
     it("* from", async () => {
@@ -564,7 +598,9 @@ describe('query', function() {
       expect(result[0]).to.containSubset({
         exported: "bar",
         local: "bar",
-        type: "function"
+        type: "function",
+        decl: {type: "FunctionDeclaration", start: 8, end: 25},
+        declId: {type: "Identifier", start: 17, end: 20, name: "bar"}
       });
     });
 
@@ -574,7 +610,9 @@ describe('query', function() {
       expect(result[0]).to.containSubset({
         exported: "foo",
         local: "foo",
-        type: "function"
+        type: "function",
+        decl: {type: "FunctionDeclaration", start: 22, end: 39},
+        declId: {type: "Identifier", start: 13, end: 16, name: "foo"}
       });
     });
 
@@ -584,7 +622,9 @@ describe('query', function() {
       expect(result[0]).to.containSubset({
         exported: "Baz",
         local: "Baz",
-        type: "class"
+        type: "class",
+        decl: {type: "ClassDeclaration", start: 8, end: 19},
+        declId: {type: "Identifier", start: 13, end: 16, name: "Baz"}
       });
     });
   });
