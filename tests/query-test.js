@@ -530,6 +530,18 @@ describe('query', function() {
       });
     });
 
+    it("as of ids", async () => {
+      const result = ex("var x = 23; export { x as y }");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "y",
+        local: "x",
+        type: "id",
+        decl: {type: "VariableDeclarator", start: 4, end: 10},
+        declId: {type: "Identifier", start: 4, end: 5, name: "x"}
+      });
+    });
+
     it("of referenced function", async () => {
       const result = ex("function x() {}; export { x }");
       expect(result).to.have.length(1);
@@ -587,6 +599,17 @@ describe('query', function() {
       expect(result).to.have.length(1);
       expect(result[0]).to.containSubset({
         exported: "x",
+        fromModule: "./file1.js",
+        local: null
+      });
+    });
+    
+    it("named as from", async () => {
+      const result = ex("export { x as y } from './file1.js';");
+      expect(result).to.have.length(1);
+      expect(result[0]).to.containSubset({
+        exported: "y",
+        imported: "x",
         fromModule: "./file1.js",
         local: null
       });
