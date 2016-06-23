@@ -6,6 +6,7 @@ import { scheduleModuleExportsChange } from "./import-export.js";
 import { livelySystemEnv } from "./system.js";
 import { getPackages } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
+import { subscribe } from "./notify.js";
 
 export default function module(System, moduleName, parent) {
   var sysEnv = livelySystemEnv(System),
@@ -32,10 +33,14 @@ class ModuleInterface {
     this.recorderName = "__lvVarRecorder";
     this._recorder = null;
     
-    // cached values (TODO: invalidate cache when source changes)
+    // cached values
     this._source = null;
     this._ast = null;
     this._scope = null;
+    
+    subscribe(System, "modulechange", (data) => {
+      if (data.module === this.id) this.reset();
+    });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -99,6 +104,13 @@ class ModuleInterface {
     var meta = this.metadata();
     return meta ? meta.format : "esm";
   }
+  
+  reset() {
+    this._recorder = null;
+    this._source = null;
+    this._ast = null;
+    this._scope = null;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // loading
@@ -126,7 +138,8 @@ class ModuleInterface {
   }
 
   unload(opts) {
-    opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
+    opts = obj.merge({reset: true, forgetDeps: true, forgetEnv: true}, opts);
+    if (opts.reset) this.reset();
     if (opts.forgetDeps) this.unloadDeps(opts);
     this.System.delete(this.id);
     if (this.System.loads) {
@@ -278,42 +291,85 @@ class ModuleInterface {
     return query.exports(scope);
   }
   
-  async localDeclarationForRefAt(pos) {
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // bindings
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async _localDeclForRefAt(pos) {
     const scope = await this.scope(),
           ref = query.refAt(pos, scope);
     if (ref && ref.decl) ref.decl.module = this;
-    return ref && ref.decl;
+    return ref && {decl: ref.decl, id: ref.declId};
+  }
+  
+  async _importForNSRefAt(pos) {
+    // if pos points to "x" of a property "m.x" with an import * as "m"
+    // then this returns [<importStmt>, <m>, "x"]
+    const scope = await this.scope(),
+          ast = scope.node,
+          nodes = query.nodesAt(pos, ast);
+    if (nodes.length < 2) return [null, null];
+    const id = nodes[nodes.length - 1],
+          member = nodes[nodes.length - 2];
+    if (id.type != "Identifier" ||
+        member.type != "MemberExpression" ||
+        member.type.computed ||
+        member.object.type !== "Identifier" ||
+        !member.object.decl ||
+        member.object.decl.type !== "ImportDeclaration") {
+      return [null, null];
+    }
+    const name = member.object.name,
+          spec = member.object.decl.specifiers.find(s => s.local.name === name);
+    if (spec.type !== "ImportNamespaceSpecifier") return [null, null];
+    return [member.object.decl, spec.local, id.name];
   }
 
-  async declarationsForNode(decl) {
-    if (!decl) return;
+  async _resolveImportedDecl(decl) {
+    if (!decl) return [];
+    const {start, name, type} = decl.id;
     const imports = await this.imports(),
-          im = imports.find(i => i.node.start == decl.start && // can't rely on
-                                 i.node.name == decl.name &&   // object identity
-                                 i.node.type == decl.type);
+          im = imports.find(i => i.node.start == start && // can't rely on
+                                 i.node.name == name &&   // object identity
+                                 i.node.type == type);
     if (im) {
       const imM = module(this.System, im.fromModule, this.id);
-      return [decl].concat(await imM.declarationsForExport(im.imported));
+      return [decl].concat(await imM.bindingPathForExport(im.imported));
     }
     return [decl];
   }
 
-  async declarationsForExport(name) {
-    //TODO handle '*'
+  async bindingPathForExport(name) {
     const exports = await this.exports(),
           ex = exports.find(e => e.exported === name);
     if (ex.fromModule) {
       const imM = module(this.System, ex.fromModule, this.id);
-      return await imM.declarationsForExport(ex.imported);
+      const decl = {decl: ex.node, id: ex.declId};
+      decl.decl.module = this;
+      return [decl].concat(await imM.bindingPathForExport(ex.imported));
     } else {
       if (ex && ex.decl) ex.decl.module = this;
-      return this.declarationsForNode(ex.decl);
+      return this._resolveImportedDecl({decl: ex.decl, id: ex.declId});
     }
   }
 
-  async declarationsForRefAt(pos) {
-    const decl = await this.localDeclarationForRefAt(pos);
-    return await this.declarationsForNode(decl);
+  async bindingPathForRefAt(pos) {
+    const decl = await this._localDeclForRefAt(pos);
+    if (decl) {
+      return await this._resolveImportedDecl(decl);
+    } else {
+      const [imDecl, id, name] = await this._importForNSRefAt(pos);
+      if (!imDecl) return [];
+      imDecl.module = this;
+      const imM = module(this.System, imDecl.source.value, this.id);
+      return [{decl: imDecl, id}].concat(await imM.bindingPathForExport(name));
+    }
+  }
+  
+  async definitionForRefAt(pos) {
+    const path = await this.bindingPathForRefAt(pos);
+    if (path.length < 1) return null;
+    return path[path.length - 1].decl;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -388,4 +444,6 @@ class ModuleInterface {
 
     return res;
   }
+  
+  toString() { return `module(${this.id})`; }
 }
