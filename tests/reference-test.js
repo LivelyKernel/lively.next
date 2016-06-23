@@ -58,8 +58,8 @@ describe('references', () => {
     it("can be referenced", () => {
       const refs = getRefs(22, "import {x} from 'm'; x + 1");
       expect(refs).to.containSubset({
-        decl: {start: 8, end: 9},
-        declId: {start: 8, end: 9}
+        decl: {start: 0, end: 20, type: "ImportDeclaration"},
+        declId: {start: 8, end: 9, type: "Identifier", name: "x"}
       });
     });
   });

@@ -260,23 +260,23 @@ describe('query', function() {
 
     itFindsTheStatment(
       'if (true) var a = 1;',
-      ast => ast.body[0].consequent.declarations[0],
-      ast => ast.body[0]);
+      ast => ast.body[0].consequent.declarations[0].id,
+      ast => ast.body[0].consequent);
 
     itFindsTheStatment(
-      'if (true) var a = 1; else var a = 2;',
-      ast => ast.body[0].alternate.declarations[0],
+      'if (true) var a = 2;',
+      ast => ast.body[0].test,
       ast => ast.body[0]);
 
     itFindsTheStatment(
       'export default class Foo {}',
       ast => ast.body[0].declaration.id,
-      ast => ast.body[0]);
+      ast => ast.body[0].declaration);
 
     itFindsTheStatment(
-      'a;', // testing scenario where node is not found
-      ast => ({type: 'EmptyStatement'}),
-      ast => undefined);
+      'a;',
+      ast => ast.body[0].expression,
+      ast => ast.body[0]);
 
     it("finds path to statement", () => {
       var parsed = parse('var x = 3; function foo() { var y = 3; return y + 2 }; x + foo();'),
