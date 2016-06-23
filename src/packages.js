@@ -47,13 +47,13 @@ function removePackage(System, packageURL) {
   var conf = System.getConfig(),
       packageConfigURL = packageURL + "/package.json";
 
-  System.delete(String(packageConfigURL));
-  arr.remove(conf.packageConfigPaths || [], packageConfigURL);
-
-  var p = getPackages(System)[packageURL]
+  var p = getPackages(System).find(ea => ea.address === packageURL)
   if (p)
     p.modules.forEach(mod =>
       module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
+
+  System.delete(String(packageConfigURL));
+  arr.remove(conf.packageConfigPaths || [], packageConfigURL);
 
   System.config({
     meta: {[packageConfigURL]: {}},
