@@ -8,7 +8,13 @@ var dir = System.normalizeSync("lively.resources/tests/"),
     testProjectDir = dir + "temp-for-tests/",
     testProjectSpec = {
       "file1.js": "foo bar",
-      "sub-dir": {"file2.js": "zork"}
+      "sub-dir": {
+        "file2.js": "zork",
+        "sub-sub-dir": {
+          "file3.js": "1234",
+          "file4.txt": "6789"
+        }
+      }
     };
 
 describe('http', function() {
@@ -39,6 +45,14 @@ describe('http', function() {
     await r.write("hello world")
     expect(await r.exists()).equals(true, "exists after");
     expect(await r.read()).equals("hello world");
+  });
+
+  it("can list files in a directory", async () => {
+    var r = resource(testProjectDir);
+    expect((await r.dirList()).map(ea => ea.url)).deep.equals([
+      r.join("file1.js").url,
+      r.join("sub-dir/").url
+    ]);
   });
 
   it("cannot write a dir", async () => {
