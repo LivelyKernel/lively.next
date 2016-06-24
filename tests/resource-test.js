@@ -8,7 +8,17 @@ var dir = System.normalizeSync("lively.resources/tests/"),
     testProjectDir = dir + "temp-for-tests/",
     testProjectSpec = {
       "file1.js": "foo bar",
-      "sub-dir": {"file2.js": "zork"}
+      "sub-dir": {
+        "file2.js": "zork",
+        "sub-sub-dir": {
+          "file3.js": "1234",
+          "file4.txt": "6789",
+          "sub-sub-sub-dir": {
+            "file5.js": "zxxxx",
+            "file6.txt": "yyyy"
+          }
+        }
+      }
     };
 
 describe('http', function() {
@@ -39,6 +49,39 @@ describe('http', function() {
     await r.write("hello world")
     expect(await r.exists()).equals(true, "exists after");
     expect(await r.read()).equals("hello world");
+  });
+
+  it("can list files in a directory", async () => {
+    var r = resource(testProjectDir);
+    expect((await r.dirList()).map(ea => ea.url)).deep.equals([
+      r.join("file1.js").url,
+      r.join("sub-dir/").url
+    ]);
+  });
+
+  it("can list files in a directory recursively", async () => {
+    var r = resource(testProjectDir);
+    expect((await r.dirList('infinity')).map(ea => ea.url)).deep.equals([
+      r.join("file1.js").url,
+      r.join("sub-dir/").url,
+      r.join("sub-dir/file2.js").url,
+      r.join("sub-dir/sub-sub-dir/").url,
+      r.join("sub-dir/sub-sub-dir/file3.js").url,
+      r.join("sub-dir/sub-sub-dir/file4.txt").url,
+      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/").url,
+      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file5.js").url,
+      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file6.txt").url
+    ]);
+  });
+
+  it("can list files in a directory recursively upt to a depth", async () => {
+    var r = resource(testProjectDir);
+    expect((await r.dirList(2)).map(ea => ea.url)).deep.equals([
+      r.join("file1.js").url,
+      r.join("sub-dir/").url,
+      r.join("sub-dir/file2.js").url,
+      r.join("sub-dir/sub-sub-dir/").url
+    ]);
   });
 
   it("cannot write a dir", async () => {

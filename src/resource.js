@@ -56,6 +56,11 @@ export class Resource {
     return resource(this.url.replace(slashEndRe, "") + "/");
   }
 
+  root() {
+    var toplevel = this.url.slice(0, -this.path().length);
+    return resource(toplevel + "/");
+  }
+
   asFile() {
     return resource(this.url.replace(slashEndRe, ""));
   }
@@ -68,10 +73,10 @@ export class Resource {
     return this;
   }
 
-  async read()    { nyi(this, "read"); }
-  async write()   { nyi(this, "write"); }
-  async exists()  { nyi(this, "exists"); }
-  async remove()  { nyi(this, "remove"); }
-  async dirList() { nyi(this, "dirList"); }
+  async read()         { nyi(this, "read"); }
+  async write()        { nyi(this, "write"); }
+  async exists()       { nyi(this, "exists"); }
+  async remove()       { nyi(this, "remove"); }
+  async dirList(depth) { nyi(this, "dirList"); }
 
 }

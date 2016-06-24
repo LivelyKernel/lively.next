@@ -5,7 +5,7 @@ import { Resource } from "./resource.js";
 import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat } from "fs";
 
 function wrapInPromise(func) {
-  return (...args) => 
+  return (...args) =>
     new Promise((resolve, reject) =>
       func.apply(System.global, args.concat((err, result) => err ? reject(err) : resolve(result))))
 }
@@ -45,17 +45,34 @@ export class NodeJSFileResource extends Resource {
     return this.isRoot() ? true : existsP(this.path());
   }
 
-  async dirList() {
+  async dirList(depth = 1) {
     if (!this.isDirectory())
       throw new Error(`dirList called on non-directory: ${this.path()}`)
-    var subResources = [];
-    for (let name of await readdirP(this.path())) {
-      var subResource = this.join(name);
-      subResources.push(
-        (await subResource.stat()).isDirectory() ?
-          subResource.asDirectory() : subResource);
+
+    if (typeof depth !== "number" && depth !== 'infinity')
+      throw new Error(`dirList – invalid depth argument: ${depth}`);
+
+    if (depth <= 0) depth = 1;
+
+    if (depth === 1) {
+      var subResources = [];
+      for (let name of await readdirP(this.path())) {
+        var subResource = this.join(name);
+        subResources.push(
+          (await subResource.stat()).isDirectory() ?
+            subResource.asDirectory() : subResource);
+      }
+      return subResources;
+
+    } else {
+      var subResources = await this.dirList(1),
+          subCollections = subResources.filter(ea => ea.isDirectory());
+      return Promise.all(subCollections.map(col =>
+            col.dirList(typeof depth === "number" ? depth - 1 : depth)))
+              .then(recursiveResult =>
+                recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
     }
-    return subResources;
+
   }
 
   async isEmptyDirectory() {
