@@ -1,8 +1,8 @@
 "format esm";
 
-var remoteLively = "https://dev.lively-web.org/";
-var category = "PartsBin/lively.modules";
-await updatePartsBin(remoteLively, category);
+// var remoteLively = "https://dev.lively-web.org/";
+// var category = "PartsBin/lively.modules";
+// await updatePartsBin(remoteLively, category);
 
 export async function updatePartsBin(livelyURL, partSpace) {
   livelyURL = new URL(livelyURL);  
@@ -37,7 +37,7 @@ export async function updatePartsBin(livelyURL, partSpace) {
     }
   }
   if (upToDatePartMsg !== "") {
-    $world.openDialog(new lively.morphic.InformDialog(upToDatePartMsg));
+    $world.alertOK(upToDatePartMsg);
   }
 }
 
