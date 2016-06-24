@@ -1,7 +1,7 @@
-var dir = "/Users/tvsmith/Documents/HARC/InstallerTest/LivelyKernel"
+var dir = "/Users/tvsmith/Documents/HARC/InstallerTest/LivelyKernel";
 var branch = "new-module-system";
 
-await updateDirectoryFromGit(dir, branch)
+await updateDirectoryFromGit(dir, branch);
 
 // var output = `Updating 3573567..9d7264d
 // From file:///Users/robert/Lively/LivelyKernel2/test-git-2
@@ -11,45 +11,6 @@ await updateDirectoryFromGit(dir, branch)
 // 	bar2.txt
 // Please move or remove them before you can merge.
 // Aborting`
-
-
-var remoteLively = "https://dev.lively-web.org/";
-var category = "PartsBin/lively.modules";
-
-await updatePartsBin(remoteLively, category);
-
-
-async function updatePartsBin(livelyURL, partSpace) {
-  livelyURL = "https://dev.lively-web.org/";
-  partSpace = "PartsBin/lively.modules";
-  
-  livelyURL = new URL(livelyURL);
-  var remotePartSpace = lively.PartsBin.partsSpaceWithURL(livelyURL.join(partSpace))
-  var localPartSpace = lively.PartsBin.partsSpaceNamed(partSpace)
-  remotePartSpace.load()
-  localPartSpace.load()
-  remotePartSpace.getPartItems().forEach(async function(remoteItem) {
-    var remoteItemName = remoteItem.name;
-    var localItem = localPartSpace.partItems[remoteItemName];
-    var confirmed = false;
-    if (localItem) {
-      var remoteDate = remoteItem.fetchLastModifiedDate();
-      var localDate = localItem.fetchLastModifiedDate();
-      if (localDate < remoteDate) {
-        confirmed = await confirmPartItem("update", remoteItemName);
-      }
-    } else {
-        confirmed = await confirmPartItem("install new", remoteItemName);
-    }
-    if (!confirmed) return;
-    lively.PartsBin.copyRemotePart(remoteItem.name, partSpace, livelyURL);
-  });
-}
-
-
-function confirmPartItem(action, name) {
-  return $world.confirm(`Do you want to ${action} part "${name}"?`);
-}
 
 
 async function tryPullWithoutUntrackedFiles(originalPullOutput, dir, branch) {
