@@ -142,6 +142,15 @@ describe("search", () => {
         }]);
       });
     });
+
+    describe("can exclude modules", () => {
+      it("finds comments", async () => {
+        const res = await searchLoadedModules(S, /(im|ex)port/, {excludes: [file1m]});
+        expect(res).to.have.length(1);
+        expect(res).to.containSubset([
+          {module: {id: file2m}, line: 1, column: 0, length: 6}]);
+      });
+    });
   });
 
   describe("in packages", () => {
@@ -190,6 +199,16 @@ describe("search", () => {
         }]);
       });
     });
+
+    describe("can exclude modules", () => {
+      it("finds comments", async () => {
+        const res = await searchPackage(S, testProjectDir, /(im|ex)port/, {excludes: [file1m]});
+        expect(res).to.have.length(1);
+        expect(res).to.containSubset([
+          {module: {id: file2m}, line: 1, column: 0, length: 6}]);
+      });
+    });
+
   });
 
 });

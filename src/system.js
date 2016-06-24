@@ -313,9 +313,13 @@ function addGetterSettersForNewVars(System, moduleId) {
   });
 }
 
-function searchLoadedModules(System, searchStr) {
-  return Promise.all(obj.values(loadedModules(System)).map(m => m.search(searchStr)))
-                .then(res => arr.flatten(res, 1));
+function searchLoadedModules(System, searchStr, options) {
+  options = Object.assign({excludes: []}, options);
+  return Promise.all(
+    obj.values(loadedModules(System))
+      .filter(m => !arr.include(options.excludes, m.id))
+      .map(m => m.search(searchStr)))
+        .then(res => arr.flatten(res, 1));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
