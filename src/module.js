@@ -371,7 +371,15 @@ class ModuleInterface {
   // search
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async search(searchStr) {
+  async search(searchStr, options) {
+    options = Object.assign({excludedModules: []}, options);
+
+    if (options.excludedModules.some(ex => {
+        if (typeof ex === "string") return ex === this.id;
+        if (ex instanceof RegExp) return ex.test(this.id);
+        return false;
+      })) return [];
+
     const src = await this.source();
     let re;
     if (searchStr instanceof RegExp) {

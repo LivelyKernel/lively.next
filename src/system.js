@@ -314,11 +314,9 @@ function addGetterSettersForNewVars(System, moduleId) {
 }
 
 function searchLoadedModules(System, searchStr, options) {
-  options = Object.assign({excludes: []}, options);
   return Promise.all(
     obj.values(loadedModules(System))
-      .filter(m => !arr.include(options.excludes, m.id))
-      .map(m => m.search(searchStr)))
+      .map(m => m.search(searchStr, options)))
         .then(res => arr.flatten(res, 1));
 }
 
