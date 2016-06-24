@@ -35,7 +35,7 @@
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   function findSystemJSPluginBabel_browser() {
     // walks the script tags
     var scripts = [].slice.call(document.getElementsByTagName("script")),
@@ -43,28 +43,31 @@
 
     for (var i = 0; i < scripts.length; i++) {
       var src = scripts[i].src;
-  
       // is lively.modules loaded? Use it's node_modules folder
       var index1 = src.indexOf("lively.modules/");
       if (index1 > -1) {
         pluginBabelPath = src.slice(0, index1) + "lively.modules/node_modules/systemjs-plugin-babel";
         break;
       }
-    }
-    
-    if (!pluginBabelPath)
-      for (var i = 0; i < scripts.length; i++) {
-        // is systemjs loaded? Assume that systemjs-plugin-babel sits in the same folder...
-        var index2 = src.indexOf("systemjs/dist/system");
-        if (index2 > -1) {
-          pluginBabelPath = src.slice(0, index2) + "systemjs-plugin-babel";
-          break;
-        }
+
+      // is systemjs loaded? Assume that systemjs-plugin-babel sits in the same folder...
+      var index2 = src.indexOf("systemjs/dist/system");
+      if (index2 > -1) {
+        pluginBabelPath = src.slice(0, index2) + "systemjs-plugin-babel";
+        break;
       }
+
+      // for LivelyKernel environments
+      var index3 = src.indexOf("core/lively/bootstrap.js");
+      if (index3 > -1) {
+        pluginBabelPath = src.slice(0, index3) + "node_modules/lively.modules/node_modules/systemjs-plugin-babel";
+        break;
+      }
+    }
 
     return pluginBabelPath;
   }
-  
+
   function findSystemJSPluginBabel_node() {
     try {
       var parent = require.cache[require.resolve("lively.modules")];
@@ -75,8 +78,8 @@
       var pluginBabelPath = require.resolve("systemjs-plugin-babel");
       if (pluginBabelPath) return require('path').dirname(pluginBabelPath);
     } catch (e) {}
-    
+
     return null;
-  }  
+  }
 
 })();
