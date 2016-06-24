@@ -36,8 +36,9 @@ describe("search", () => {
 
     it("finds string constants", async () => {
       const res = await module1.search("hello");
-      expect(res).to.be.deep.eql([{
-        file: file1m,
+      expect(res).to.containSubset([{
+        module: {id: file1m},
+        lineString: "export var x = 'hello';",
         line: 2,
         column: 16,
         length: 5
@@ -46,8 +47,9 @@ describe("search", () => {
 
     it("finds comments", async () => {
       const res = await module2.search("comment");
-      expect(res).to.be.deep.eql([{
-        file: file2m,
+      expect(res).to.containSubset([{
+        module: {id: file2m},
+        lineString: "export var y = 'world'; // comment",
         line: 1,
         column: 27,
         length: 7
@@ -57,13 +59,13 @@ describe("search", () => {
     describe("by regex", () => {
       it("finds comments", async () => {
         const res = await module1.search(/(im|ex)port/);
-        expect(res).to.be.deep.eql([{
-          file: file1m,
+        expect(res).to.containSubset([{
+          module: {id: file1m},
           line: 1,
           column: 0,
           length: 6
         }, {
-          file: file1m,
+          module: {id: file1m},
           line: 2,
           column: 0,
           length: 6
@@ -77,14 +79,14 @@ describe("search", () => {
     it("does not find unloaded string constants", async () => {
       module1.unload(); module2.unload();
       const res = await searchLoadedModules(S, "hello");
-      expect(res).to.be.deep.eql([]);
+      expect(res).to.containSubset([]);
     });
 
     it("finds string constants", async () => {
       await S.import(file1m);
       const res = await searchLoadedModules(S, "hello");
-      expect(res).to.be.deep.eql([{
-        file: file1m,
+      expect(res).to.containSubset([{
+        module: {id: file1m},
         line: 2,
         column: 16,
         length: 5
@@ -94,8 +96,8 @@ describe("search", () => {
     it("finds comments", async () => {
       await S.import(file1m);
       const res = await searchLoadedModules(S, "comment");
-      expect(res).to.be.deep.eql([{
-        file: file2m,
+      expect(res).to.containSubset([{
+        module: {id: file2m},
         line: 1,
         column: 27,
         length: 7
@@ -106,13 +108,13 @@ describe("search", () => {
       await S.import(file1m);
       await S.import(file2m);
       const res = await searchLoadedModules(S, "export");
-      expect(res).to.be.deep.eql([{
-        file: file1m,
+      expect(res).to.containSubset([{
+        module: {id: file1m},
         line: 2,
         column: 0,
         length: 6
       },{
-        file: file2m,
+        module: {id: file2m},
         line: 1,
         column: 0,
         length: 6
@@ -122,18 +124,18 @@ describe("search", () => {
     describe("by regex", () => {
       it("finds comments", async () => {
         const res = await searchLoadedModules(S, /(im|ex)port/);
-        expect(res).to.be.deep.eql([{
-          file: file1m,
+        expect(res).to.containSubset([{
+          module: {id: file1m},
           line: 1,
           column: 0,
           length: 6
         }, {
-          file: file1m,
+          module: {id: file1m},
           line: 2,
           column: 0,
           length: 6
         }, {
-          file: file2m,
+          module: {id: file2m},
           line: 1,
           column: 0,
           length: 6
@@ -149,8 +151,8 @@ describe("search", () => {
 
     it("finds string constants", async () => {
       const res = await searchPackage(S, testProjectDir, "hello");
-      expect(res).to.be.deep.eql([{
-        file: file1m,
+      expect(res).to.containSubset([{
+        module: {id: file1m},
         line: 2,
         column: 16,
         length: 5
@@ -159,8 +161,8 @@ describe("search", () => {
 
     it("finds comments", async () => {
       const res = await searchPackage(S, testProjectDir, "comment");
-      expect(res).to.be.deep.eql([{
-        file: file2m,
+      expect(res).to.containSubset([{
+        module: {id: file2m},
         line: 1,
         column: 27,
         length: 7
@@ -170,18 +172,18 @@ describe("search", () => {
     describe("by regex", () => {
       it("finds comments", async () => {
         const res = await searchPackage(S, testProjectDir, /(im|ex)port/);
-        expect(res).to.be.deep.eql([{
-          file: file1m,
+        expect(res).to.containSubset([{
+          module: {id: file1m},
           line: 1,
           column: 0,
           length: 6
         }, {
-          file: file1m,
+          module: {id: file1m},
           line: 2,
           column: 0,
           length: 6
         }, {
-          file: file2m,
+          module: {id: file2m},
           line: 1,
           column: 0,
           length: 6

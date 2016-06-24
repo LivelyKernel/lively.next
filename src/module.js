@@ -384,20 +384,30 @@ class ModuleInterface {
     }
 
     let match, res = [];
-    while ((match = re.exec(src)) !== null) {
+    while ((match = re.exec(src)) !== null)
       res.push([match.index, match[0].length]);
-    }
-    for (let i = 0, j = 0, line = 1, start = 0; i < src.length && j < res.length; i++) {
+
+    for (let i = 0, j = 0, line = 1, lineStart = 0;
+         i < src.length && j < res.length;
+         i++) {
       if (src[i] == '\n') {
         line++;
-        start = i + 1;
+        lineStart = i + 1;
       }
       const [idx, length] = res[j];
-      if (i == idx) {
-        res[j] = { file: this.id, line, column: i - start, length };
-        j++;
-      }
+      if (i !== idx) continue;
+      var lineEnd = src.slice(lineStart).indexOf("\n");
+      if (lineEnd === -1) lineEnd = src.length;
+      else lineEnd += lineStart;
+      res[j] = {
+        module: this,
+        length,
+        line, column: i - lineStart,
+        lineString: src.slice(lineStart, lineEnd)
+      };
+      j++;
     }
+
     return res;
   }
 }
