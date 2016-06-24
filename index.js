@@ -13,7 +13,8 @@ import {
   interactivelyReloadModule,
   interactivelyUnloadModule,
   interactivelyRemoveModule,
-  interactivelyAddModule
+  interactivelyAddModule,
+  modulesInPackage
 } from "./commands/modules.js";
 
 import { LocalCoreInterface } from "./interfaces/local-system.js";
@@ -54,7 +55,8 @@ export class Interface {
   moduleFormat(name)         { return this.coreInterface.moduleFormat(name); }
   moduleRead(name)           { return this.coreInterface.moduleRead(name); }
   moduleWrite(name, content) { return this.coreInterface.moduleWrite(name, content); }
-
+  getModulesInPackage(name)  { return modulesInPackage(this.coreInterface, name); }
+  
   shortModuleName(moduleId, itsPackage)                               { return shortModuleName(this.coreInterface, moduleId, itsPackage); }
   showExportsAndImportsOf(a, b)                                       { return showExportsAndImportsOf(this.coreInterface, a, b); }
   interactivelyChangeModule(vmEditor, moduleName, newSource, options) { return interactivelyChangeModule(this.coreInterface, vmEditor, moduleName, newSource, options); }
