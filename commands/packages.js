@@ -4,7 +4,19 @@ import { resource } from "lively.resources";
 async function loadPackage(system, vmEditor, spec) {
   await system.importPackage(spec.address + "/");
   if (spec.main) await system.importModule(spec.main.toString());
-  if (spec.test) await system.importModule(spec.test.toString());
+  if (spec.test) {
+    try {
+      // FIXME: system should have an interface for test runs...!
+      await system.importPackage("mocha-es6");
+      var testLoad = `
+        var mochaEs6 = System.get(System.decanonicalize("mocha-es6"))
+        await mochaEs6.loadTestFiles([${spec.test.toString()}], {})`
+      system.runEval(testLoad, {targetModule: system.normalizeSync("mocha-es6")})
+      await system.importModule(spec.test.toString());
+    } catch (e) {
+      console.warn(`Cannot load test of new package: ${e}`);
+    }
+  }
   await vmEditor.updateModuleList();
   await vmEditor.uiSelect(spec);
   vmEditor.focus();
