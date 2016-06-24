@@ -12,7 +12,11 @@ var dir = System.normalizeSync("lively.resources/tests/"),
         "file2.js": "zork",
         "sub-sub-dir": {
           "file3.js": "1234",
-          "file4.txt": "6789"
+          "file4.txt": "6789",
+          "sub-sub-sub-dir": {
+            "file5.js": "zxxxx",
+            "file6.txt": "yyyy"
+          }
         }
       }
     };
@@ -52,6 +56,31 @@ describe('http', function() {
     expect((await r.dirList()).map(ea => ea.url)).deep.equals([
       r.join("file1.js").url,
       r.join("sub-dir/").url
+    ]);
+  });
+
+  it("can list files in a directory recursively", async () => {
+    var r = resource(testProjectDir);
+    expect((await r.dirList('infinity')).map(ea => ea.url)).deep.equals([
+      r.join("file1.js").url,
+      r.join("sub-dir/").url,
+      r.join("sub-dir/file2.js").url,
+      r.join("sub-dir/sub-sub-dir/").url,
+      r.join("sub-dir/sub-sub-dir/file3.js").url,
+      r.join("sub-dir/sub-sub-dir/file4.txt").url,
+      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/").url,
+      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file5.js").url,
+      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file6.txt").url
+    ]);
+  });
+
+  it("can list files in a directory recursively upt to a depth", async () => {
+    var r = resource(testProjectDir);
+    expect((await r.dirList(2)).map(ea => ea.url)).deep.equals([
+      r.join("file1.js").url,
+      r.join("sub-dir/").url,
+      r.join("sub-dir/file2.js").url,
+      r.join("sub-dir/sub-sub-dir/").url
     ]);
   });
 

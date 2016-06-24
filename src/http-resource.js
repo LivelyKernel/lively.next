@@ -1,4 +1,4 @@
-/*global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace*/
+/*global fetch, Headers, DOMParser, XPathEvaluator, XPathResult, Namespace*/
 
 import { Resource } from "./resource.js";
 
@@ -80,40 +80,63 @@ function urlListFromPropfindDocument(xmlString) {
 export class WebDAVResource extends Resource {
 
   async read() {
-    return (await fetch(this.url)).text();
+    return (await fetch(this.url, {mode: 'cors'})).text();
   }
 
   async write(content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
-    await fetch(this.url, {method: "PUT", body: content});
+    await fetch(this.url, {mode: 'cors', method: "PUT", body: content});
     return this;
   }
 
   async mkdir() {
     if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
-    await fetch(this.url, {method: "MKCOL"});
+    await fetch(this.url, {mode: 'cors', method: "MKCOL"});
     return this;
   }
 
   async exists() {
-    return this.isRoot() ? true : !!(await fetch(this.url, {method: "HEAD"})).ok;
+    return this.isRoot() ? true : !!(await fetch(this.url, {mode: 'cors', method: "HEAD"})).ok;
   }
 
   async remove() {
-    await fetch(this.url, {method: "DELETE"})
+    await fetch(this.url, {mode: 'cors', method: "DELETE"})
     return this;
   }
 
   async dirList(depth = 1) {
-    // depth
-    var res = await fetch(this.url, {
-      contentType: "text/xml",
-      depth: depth,
-      method: "PROPFIND"
-    })
-    if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
-    var xmlString = await res.text(),
-        root = this.root();
-    return urlListFromPropfindDocument(xmlString).map(path => root.join(path));
+    // depth = number >= 1 or 'infinity'
+    if (depth <= 0) depth = 1;
+    if (typeof depth !== "number" && depth !== 'infinity')
+      throw new Error(`dirList – invalid depth argument: ${depth}`);
+
+    if (depth === 1) {
+      if (!this.isDirectory())
+        throw new Error(`dirList called on non-directory: ${this.path()}`)
+      var res = await fetch(this.url, {
+        method: "PROPFIND",
+      	mode: 'cors',
+      	redirect: 'follow',
+      	headers: new Headers({
+      		'Content-Type': 'text/xml',
+      		// rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
+      		// 'Depth': String(depth)
+      	})
+      })
+      if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
+      var xmlString = await res.text(),
+          root = this.root();
+      return urlListFromPropfindDocument(xmlString).map(path => root.join(path));
+
+    } else {
+      var subResources = await this.dirList(1),
+          subCollections = subResources.filter(ea => ea.isDirectory());
+      return Promise.all(subCollections.map(col =>
+            col.dirList(typeof depth === "number" ? depth - 1 : depth)))
+              .then(recursiveResult =>
+                recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
+    }
+
   }
+
 }
