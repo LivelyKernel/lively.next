@@ -103,11 +103,25 @@ async function _searchForExistingFiles(vmEditor, rootURL, p) {
   }
 }
 
-async function _searchForExistingFilesManually(vmEditor, rootURL, p) {
-  var createOrLoad = await $world.confirm("Create new module or load an existing one?", ["create", "load"]);
-  if (createOrLoad === 0) return ["[create new module]"];
-  if (createOrLoad === 1) return [await $world.prompt("URL of module?", {input: rootURL, historyId: "lively.vm._searchForExistingFilesManually.url-of-module"})];
-  throw "Canceled"
+function _searchForExistingFilesManually(vmEditor, rootURL, p) {
+  return new Promise((resolve, reject) => {
+    var m = lively.morphic.Menu.openAtHand(
+      "Create new module or load an existing one?", [
+      ["create", () => { m.triggered = true; resolve("[create new module]"); }],
+      ["load", async () => {
+        m.triggered = true;
+        var result = await $world.prompt("URL of module?", {input: rootURL, historyId: "lively.vm._searchForExistingFilesManually.url-of-module"})
+        if (!result) reject("Canceled");
+        else resolve([result]);
+      }]]);
+    m.reject = reject;
+    m.addScript(function remove() {
+      $super();
+      (() => {
+        if (!this.triggered) this.reject("Canceled");
+      }).delay(.2);
+    });
+  })
 }
 
 async function _searchForExistingFilesWeb(vmEditor, rootURL, p) {
