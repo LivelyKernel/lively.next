@@ -23,7 +23,7 @@ export async function updatePartsBin(livelyURL, partSpace) {
       let localMeta = localItem.getMetaInfo(), remoteMeta = remoteItem.getMetaInfo();
       let { localModified, remoteModified } = getBranchInfo(localMeta.changes, remoteMeta.changes);
       if (remoteModified) {
-        let postMsg = "\n" + getAgeMsg(localMeta.date.valueOf(), remoteMeta.date.valueOf());
+        postMsg = "\n" + getAgeMsg(localMeta.date.valueOf(), remoteMeta.date.valueOf());
         if (localModified) {
           postMsg += "WARNING: This part has been modified locally!"
         }
