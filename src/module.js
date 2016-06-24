@@ -41,15 +41,30 @@ class ModuleInterface {
 
   // returns Promise<string>
   source() {
+    // rk 2016-06-24:
+    // We should consider using lively.resource here. Unfortunately
+    // System.fetch (at least with the current systemjs release) will not work in
+    // all cases b/c modules once loaded by the loaded get cached and System.fetch
+    // returns "" in those cases
+
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
     }
+
     if (this.id.match(/^file:/) && this.System.get("@system-env").node) {
       const path = this.id.replace(/^file:\/\//, "");
       return new Promise((resolve, reject) =>
         this.System._nodeRequire("fs").readFile(path, (err, content) =>
           err ? reject(err) : resolve(String(content))));
     }
+
+    if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
+      // This needs to go into a separate place for "virtual" lively modules
+      var morphId = this.id.split("/").last();
+      var m = $world.getMorphById(morphId);
+      return Promise.resolve(m ? m.textContent : "");
+    }
+
     return Promise.reject(new Error(`Cannot retrieve source for ${this.id}`));
   }
 
