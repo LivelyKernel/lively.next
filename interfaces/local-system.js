@@ -101,6 +101,10 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   // module related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  getModule(name) {
+    return modules.module(name);
+  }
+
   importModule(name) {
     return modules.System.import(name);
   }

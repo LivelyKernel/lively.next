@@ -183,3 +183,22 @@ function _recursiveFileListWeb(webR, exclude, depth, maxDepth) {
     });
   });
 }
+
+export async function modulesInPackage(system, packageName) {
+  const p = await system.getPackage(packageName);
+  if (!p || !p.address.match(/^http/)) {
+    throw new Error(`Cannot load package ${packageName}`);
+  }
+  function exclude(webR) {
+    const file = webR.getURL().filename();
+    if ([".git/", "node_modules/", ".optimized-loading-cache/"].includes(file)) {
+      return true;
+    }
+    return false;
+  }
+
+  const webR = new URL(p.address).asWebResource(),
+        found = await _recursiveFileListWeb(webR, exclude, 0, 2);
+  return found.filter(f => f.match(/\.js$/))
+              .map(m => system.getModule(m));
+}
