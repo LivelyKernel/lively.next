@@ -52,6 +52,8 @@ export class NodeJSFileResource extends Resource {
     if (typeof depth !== "number" && depth !== 'infinity')
       throw new Error(`dirList – invalid depth argument: ${depth}`);
 
+    if (depth <= 0) depth = 1;
+
     if (depth === 1) {
       var subResources = [];
       for (let name of await readdirP(this.path())) {

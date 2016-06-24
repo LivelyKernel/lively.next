@@ -106,13 +106,15 @@ export class WebDAVResource extends Resource {
 
   async dirList(depth = 1) {
     // depth = number >= 1 or 'infinity'
-    if (depth <= 0) depth = 1;
+    if (!this.isDirectory())
+      throw new Error(`dirList called on non-directory: ${this.path()}`)
+
     if (typeof depth !== "number" && depth !== 'infinity')
       throw new Error(`dirList – invalid depth argument: ${depth}`);
 
+    if (depth <= 0) depth = 1;
+
     if (depth === 1) {
-      if (!this.isDirectory())
-        throw new Error(`dirList called on non-directory: ${this.path()}`)
       var res = await fetch(this.url, {
         method: "PROPFIND",
       	mode: 'cors',
