@@ -5,42 +5,58 @@
 // await updatePartsBin(remoteLively, category);
 
 export async function updatePartsBin(livelyURL, partSpace) {
-  livelyURL = new URL(livelyURL);  
+  // Load parts in partSpace on local and remote servers
+  livelyURL = new URL(livelyURL);
   var localPartSpace = lively.PartsBin.partsSpaceNamed(partSpace);
   var remotePartSpace = lively.PartsBin.partsSpaceWithURL(livelyURL.join(partSpace));
   localPartSpace.load();
   remotePartSpace.load();
-  var upToDatePartMsg = "";
+  var summary = "";
+  // For each remote part...
   for (let remoteItem of remotePartSpace.getPartItems()) {
     let remoteItemName = remoteItem.name;
     let localItem = localPartSpace.partItems[remoteItemName];
-    let confirmed = false;
+    let action, postMsg;
+    summary += `'${remoteItemName}' `;
+    // Find out if we need to update or install the part locally
     if (localItem) {
       let localMeta = localItem.getMetaInfo(), remoteMeta = remoteItem.getMetaInfo();
       let { localModified, remoteModified } = getBranchInfo(localMeta.changes, remoteMeta.changes);
       if (remoteModified) {
         let postMsg = "\n" + getAgeMsg(localMeta.date.valueOf(), remoteMeta.date.valueOf());
         if (localModified) {
-          postMsg += "WARNING: This part has been modified locally."
+          postMsg += "WARNING: This part has been modified locally!"
         }
-        confirmed = await confirmPartItem("update", remoteItemName, postMsg);
-      } else if (localModified) {
-        upToDatePartMsg += `${localItem.name} has been modified locally.\n`;
-      } else {
-        upToDatePartMsg += `"${localItem.name}" is up to date.\n`;
+        action = "update";
+      }
+      if (localModified) {
+        summary += "locally modified --";
       }
     } else {
-        confirmed = await confirmPartItem("install new", remoteItemName);
+      action = "install";
     }
-    if (confirmed) {
-      lively.PartsBin.copyRemotePart(remoteItemName, partSpace, livelyURL);
+    // Actually update or install the part if needed and confirmed by user
+    if (action) {
+      summary += `${action} `;
+      if (await confirmPartItem(action, remoteItemName, postMsg)) {
+        lively.PartsBin.copyRemotePart(remoteItemName, partSpace, livelyURL);
+        summary += "completed\n";
+      } else {
+        summary += "SKIPPED\n";
+      }
+    } else {
+       summary += "up-to-date\n";
     }
   }
-  if (upToDatePartMsg !== "") {
-    $world.alertOK(upToDatePartMsg);
+  // Show summary message
+  if (summary !== "") {
+    $world.alertOK(summary);
+  } else {
+    $world.alertOK(`No parts found in ${partSpace} (?!)`);
   }
 }
 
+// Locates branchpoint and returns whether we have local and/or remote changes
 function getBranchInfo(localChanges, remoteChanges) {
   let branchPoint;
   let localModified = false, remoteModified = false;
