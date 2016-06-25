@@ -33,10 +33,9 @@ var project1aDir = testDir + "dep1/",
       "dep1": project1a,
       "dep2": project1b,
       "project2": project2
-    }
+    };
 
 describe("package loading", function() {
-
 
   var System;
 
@@ -49,6 +48,7 @@ describe("package loading", function() {
   afterEach(() => {
     removeSystem("test")
     // show(printSystemConfig(System)) &&
+    console.log("CLEAN")
     return removeDir(testDir);;
   });
 
@@ -109,6 +109,7 @@ describe("package loading", function() {
     });
 
     it("uses specified dependency when preferLoaded is false", async () => {
+console.log("TEST")
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false}});
       await registerPackage(System, project2Dir);
       var m = await System.import("project2");
@@ -134,20 +135,13 @@ describe("package loading", function() {
     });
 
     it("Concurrent loading will not load multiple versions", async () => {
-      var project3Dir = testDir + "project3/",
-          project3 = {
+console.log("TEST")
+      var project2bDir = testDir + "project2b/",
+          project2b = {
             "index.js": "export { x, version } from 'some-project';",
             "package.json": JSON.stringify({
               name: "project2", dependencies: {"some-project": "*"},
               lively: {packageMap: {"some-project": project1aDir}}
-            })
-          },
-          project4Dir = testDir + "project4/",
-          project4 = {
-            "index.js": "export { version } from 'some-project';",
-            "package.json": JSON.stringify({
-              name: "project2", dependencies: {"some-project": "*"},
-              lively: {packageMap: {"some-project": project1cDir}}
             })
           },
           project5Dir = testDir + "project5/",
@@ -155,19 +149,15 @@ describe("package loading", function() {
             "index.js": "export { version } from 'project2';",
             "package.json": JSON.stringify({
               name: "project5", dependencies: {"project2": "*"},
-              lively: {packageMap: {"project2": project4Dir}}
+              lively: {packageMap: {"project2": project2bDir}}
             })
-          },
-          project1cDir = testDir + "project1c/",
-          project1c = {"entry-c.js": "var version = 'c';\n", "package.json": '{"name": "some-project", "main": "entry-c.js"}'}
-      await createFiles(project1cDir, project1c);
-      await createFiles(project3Dir, project3);
-      await createFiles(project4Dir, project4);
+          };
+      await createFiles(project2bDir, project2b);
       await createFiles(project5Dir, project5);
       await Promise.all([
         importPackage(System, project2Dir),
-        importPackage(System, project3Dir),
-        importPackage(System, project5Dir)]);
+        importPackage(System, project5Dir)
+        ]);
       console.log(getPackages(System).map(ea => ea.address).join("\n"))
     });
 
