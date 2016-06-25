@@ -1,8 +1,8 @@
 "format esm";
 
-// var remoteLively = "https://dev.lively-web.org/";
-// var category = "PartsBin/lively.modules";
-// await updatePartsBin(remoteLively, category);
+var remoteLively = "https://dev.lively-web.org/";
+var category = "PartsBin/lively.modules";
+await updatePartsBin(remoteLively, category);
 
 export async function updatePartsBin(livelyURL, partSpace) {
   // Load parts in partSpace on local and remote servers
@@ -25,9 +25,9 @@ export async function updatePartsBin(livelyURL, partSpace) {
       let remoteChangesSorted = remoteMeta.changes.sortByKey("date");
       let { localModified, remoteModified } = getBranchInfo(localChangesSorted, remoteChangesSorted);
       if (remoteModified) {
-        postMsg = "\n" + getAgeMsg(localMeta.date.valueOf(), remoteMeta.date.valueOf());
+        postMsg = "\n" + getAgeMsg(localMeta.lastModifiedDate.valueOf(), remoteMeta.lastModifiedDate.valueOf());
         if (localModified) {
-          postMsg += "WARNING: This part has been modified locally!"
+          postMsg += "\nWARNING: This part has been modified locally!"
         }
         action = "update";
       }
