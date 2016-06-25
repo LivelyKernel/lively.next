@@ -37,12 +37,12 @@ var project1aDir = testDir + "dep1/",
 
 describe("package loading", function() {
 
-  var System;
+  var S;
 
   beforeEach(async () => {
-    System = getSystem("test", {baseURL: testDir});
+    S = getSystem("test", {baseURL: testDir});
     await createFiles(testDir, testResources)
-    await registerPackage(System, project1aDir);
+    await registerPackage(S, project1aDir);
   });
 
   afterEach(() => {
@@ -57,10 +57,13 @@ describe("package loading", function() {
   describe("basics", () => {
 
     it("registers and loads a package", async () => {
-      await registerPackage(System, project1aDir);
-      var mod = await System.import("some-project");
+      await registerPackage(S, project1aDir);
+      var mod = await S.import("some-project");
       expect(mod).to.have.property("x", 2);
-      expect(getPackages(System)).to.containSubset([{
+
+      expect(getPackages(S)[0]).property("address", noTrailingSlash(project1aDir))
+
+      expect(getPackages(S)).to.containSubset([{
         address: noTrailingSlash(project1aDir),
         main: "entry-a.js",
         meta: {"package.json": {format: "json"}},
@@ -71,15 +74,15 @@ describe("package loading", function() {
 
     it("registers and loads dependent packages", async () => {
       await Promise.all([
-        registerPackage(System, project1bDir),
-        registerPackage(System, project2Dir)]);
-      var mod = await System.import("project2")
+        registerPackage(S, project1bDir),
+        registerPackage(S, project2Dir)]);
+      var mod = await S.import("project2")
       expect(mod).to.have.property("x", 23);
     });
 
     it("enumerates packages", async () => {
-      await importPackage(System, project2Dir);
-      expect(getPackages(System)).to.containSubset([
+      await importPackage(S, project2Dir);
+      expect(getPackages(S)).to.containSubset([
         {
           address: noTrailingSlash(project2Dir),
           name: `project2`, names: [`project2`],
@@ -103,34 +106,34 @@ describe("package loading", function() {
   describe("with pre-loaded dependent packages", function() {
 
     it("uses existing dependency by default", async () => {
-      await registerPackage(System, project2Dir);
-      var m = await System.import("project2");
+      await registerPackage(S, project2Dir);
+      var m = await S.import("project2");
       expect(m.version).to.equal("a");
     });
 
     it("uses specified dependency when preferLoaded is false", async () => {
 console.log("TEST")
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false}});
-      await registerPackage(System, project2Dir);
-      var m = await System.import("project2");
+      await registerPackage(S, project2Dir);
+      var m = await S.import("project2");
       expect(m.version).to.equal("b");
     });
 
     it("deals with package map directory entry", async () => {
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": project1bDir}}});
-      await registerPackage(System, project2Dir);
-      var m = await System.import("project2");
+      await registerPackage(S, project2Dir);
+      var m = await S.import("project2");
       expect(m.version).to.equal("b")
     });
 
     it("deals with package map relative entry", async () => {
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}});
-      await registerPackage(System, project2Dir);
-      expect(System.packages).to.containSubset({
+      await registerPackage(S, project2Dir);
+      expect(S.packages).to.containSubset({
         [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, names: ["some-project"]},
         [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}, names: ["project2"]}
       });
-      var m = await System.import("project2");
+      var m = await S.import("project2");
       expect(m.version).to.equal("b");
     });
 
@@ -155,10 +158,10 @@ console.log("TEST")
       await createFiles(project2bDir, project2b);
       await createFiles(project5Dir, project5);
       await Promise.all([
-        importPackage(System, project2Dir),
-        importPackage(System, project5Dir)
+        importPackage(S, project2Dir),
+        importPackage(S, project5Dir)
         ]);
-      console.log(getPackages(System).map(ea => ea.address).join("\n"))
+      console.log(getPackages(S).map(ea => ea.address).join("\n"))
     });
 
   });

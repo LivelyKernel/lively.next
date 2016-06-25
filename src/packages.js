@@ -7,17 +7,18 @@ import { isJsFile, asDir, isURL, urlResolve, join } from "./url-helpers.js";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // internal
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 function normalizeInsidePackage(System, urlOrName, packageURL) {
   return isURL(urlOrName) ?
     urlOrName : // absolute
     urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
 }
 
-async function normalizePackageURL(System, packageURL) {
+function normalizePackageURL(System, packageURL) {
   if (Object.keys(getPackages(System)).some(ea => ea === packageURL))
     return packageURL;
 
-  var url = await System.normalize(packageURL);
+  var url = System.decanonicalize(packageURL.replace(/[\/]+$/, "") + "/");
 
   if (!isURL(url))
     throw new Error(`Strange package URL: ${url} is not a valid URL`)
@@ -37,15 +38,15 @@ function packageStore(System) {
   return System.get("@lively-env").packages;
 }
 
-function addToPackageStore(System, packageURL, packageData) {
+function addToPackageStore(System, p) {
   var store = packageStore(System);
-  if (!store[packageURL]) store[packageURL] = packageData;
-  else Object.assign(store[packageURL], packageData);
+  store[p.url] = p;
+  return p;
 }
 
-function removeFromPackageStore(System, packageURL) {
+function removeFromPackageStore(System, o) {
   var store = packageStore(System);
-  delete store[packageURL];
+  delete store[o.url];
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -84,7 +85,7 @@ function applyConfig(System, packageConfig, packageURL) {
       sysConfig       = packageConfig.systemjs || {},
       livelyConfig    = packageConfig.lively,
       main            = packageConfig.main || "index.js";
-  
+
   System.config({
     map: {[name]: packageURL},
     packages: {[packageURL]: sysConfig}
@@ -111,7 +112,8 @@ function applyConfig(System, packageConfig, packageURL) {
   packageInSystem.main = main;
 
   // System.packages doesn't allow us to store our own properties
-  addToPackageStore(System, packageURL, packageInSystem);
+  var p = getPackage(System, packageURL);
+  Object.assign(p, packageInSystem);
 
   return packageApplyResult;
 }
@@ -204,69 +206,99 @@ function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageU
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// package object
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+class Package {
+
+  constructor(System, packageURL) {
+    this.url = packageURL;
+    this.System = System;
+  }
+
+  async import() {
+    await this.register();
+    // *after* the package is registered the normalize call should resolve to the
+    // package's main module
+    return this.System.import(await this.System.normalize(this.url));
+  }
+
+  async register(packageLoadStack) {
+
+    var {System, url} = this;
+    this.url = url = normalizePackageURL(System, url);
+
+    console.log(`REGISTERING ${url} while loading `, packageLoadStack);
+
+    packageLoadStack = packageLoadStack || [];
+    var registerSubPackages = true;
+    // stop here to support circular deps
+    if (packageLoadStack.indexOf(url) !== -1) {
+      registerSubPackages = false;
+      System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", url);
+    } else packageLoadStack.push(url)
+
+    System.debug && console.log("[lively.modules package register] %s", url);
+    var cfg = await tryToLoadPackageConfig(System, url),
+        packageConfigResult = await applyConfig(System, cfg, url)
+
+    if (registerSubPackages) {
+      for (let subp of packageConfigResult.subPackages) {
+        await registerPackage(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
+      }
+    }
+
+    return cfg;
+
+  }
+
+  remove() {
+    var {System, url} = this;
+
+    url = url.replace(/\/$/, "");
+    var conf = System.getConfig(),
+        packageConfigURL = url + "/package.json";
+
+    var p = getPackages(System).find(ea => ea.address === url)
+    if (p)
+      p.modules.forEach(mod =>
+        module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
+
+    System.delete(String(packageConfigURL));
+    arr.remove(conf.packageConfigPaths || [], packageConfigURL);
+
+    System.config({
+      meta: {[packageConfigURL]: {}},
+      packages: {[url]: {}},
+      packageConfigPaths: conf.packageConfigPaths
+    });
+    delete System.meta[packageConfigURL];
+    delete System.packages[url];
+  }
+
+  reload() { return this.remove().then(() => this.import()); }
+
+  search(needle, options) { return searchPackage(this.System, this.packageURL, needle, options); }
+
+}
+
+function getPackage(System, packageURL) {
+  var url = normalizePackageURL(System, packageURL);
+  console.log(`getPackage ${url}`)
+  return packageStore(System).hasOwnProperty(url) ?
+    packageStore(System)[url] :
+    addToPackageStore(System, new Package(System, url));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // interface
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-async function importPackage(System, packageURL) {
-  await registerPackage(System, packageURL);
-  // *after* the package is registered the normalize call should resolve to the
-  // package's main module
-  return System.import(await System.normalize(packageURL));
-}
+function importPackage(System, packageURL) { return getPackage(System, packageURL).import(); }
+function registerPackage(System, packageURL, packageLoadStack) { return getPackage(System, packageURL).register(packageLoadStack); }
+function removePackage(System, packageURL) { return getPackage(System, packageURL).remove(); }
+function reloadPackage(System, packageURL) { return getPackage(System, packageURL).reload(); }
 
-function removePackage(System, packageURL) {
-  packageURL = packageURL.replace(/\/$/, "");
-  var conf = System.getConfig(),
-      packageConfigURL = packageURL + "/package.json";
-
-  var p = getPackages(System).find(ea => ea.address === packageURL)
-  if (p)
-    p.modules.forEach(mod =>
-      module(System, mod.name).unload({forgetEnv: true, forgetDeps: false}));
-
-  System.delete(String(packageConfigURL));
-  arr.remove(conf.packageConfigPaths || [], packageConfigURL);
-
-  System.config({
-    meta: {[packageConfigURL]: {}},
-    packages: {[packageURL]: {}},
-    packageConfigPaths: conf.packageConfigPaths
-  });
-  delete System.meta[packageConfigURL];
-  delete System.packages[packageURL];
-}
-
-async function reloadPackage(System, packageURL) {
-  var url = await normalizePackageURL(System, packageURL);
-  await removePackage(System, url);
-  return importPackage(System, url);
-}
-
-async function registerPackage(System, packageURL, packageLoadStack) {
-  console.log(`REGISTERING ${packageURL} while loading `, packageLoadStack);
-
-  var url = await normalizePackageURL(System, packageURL);
-
-  packageLoadStack = packageLoadStack || [];
-  var registerSubPackages = true;
-  // stop here to support circular deps
-  if (packageLoadStack.indexOf(url) !== -1) {
-    registerSubPackages = false;
-    System.debug && console.log("[lively.modules package register] %s is a circular dependency, stopping registerign subpackages", url);
-  } else packageLoadStack.push(url)
-
-  System.debug && console.log("[lively.modules package register] %s", url);
-  var cfg = await tryToLoadPackageConfig(System, url),
-      packageConfigResult = await applyConfig(System, cfg, url)
-
-  if (registerSubPackages) {
-    for (let subp of packageConfigResult.subPackages) {
-      await registerPackage(System, subp.address.replace(/\/?$/, "/"), packageLoadStack);
-    }
-  }
-
-  return cfg;
-}
 
 function groupIntoPackages(System, moduleNames, packageNames) {
 
@@ -296,7 +328,7 @@ function getPackages(System) {
       modules = Object.keys(map),
       sysPackages = System.packages,
       livelyPackages = packageStore(System),
-      packageNames = lively.lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
+      packageNames = arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
       result = [];
 
   groupIntoPackages(System, modules, packageNames).mapGroups((packageAddress, moduleNames) => {
