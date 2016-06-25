@@ -281,7 +281,7 @@ function removePackage(packageURL) { return _removePackage(defaultSystem, packag
 function reloadPackage(packageURL) { return _reloadPackage(defaultSystem, packageURL); }
 function getPackages(moduleNames) { return _getPackages(defaultSystem); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
-function searchPackage(packageURL, searchString) { return _searchPackage(defaultSystem, packageURL, searchString); }
+function searchPackage(packageURL, searchString, options) { return _searchPackage(defaultSystem, packageURL, searchString, options); }
 export {
   importPackage,
   registerPackage,
