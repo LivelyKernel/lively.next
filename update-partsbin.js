@@ -21,7 +21,9 @@ export async function updatePartsBin(livelyURL, partSpace) {
     // Find out if we need to update or install the part locally
     if (localItem) {
       let localMeta = localItem.getMetaInfo(), remoteMeta = remoteItem.getMetaInfo();
-      let { localModified, remoteModified } = getBranchInfo(localMeta.changes, remoteMeta.changes);
+      let localChangesSorted = localMeta.changes.sortByKey("date");
+      let remoteChangesSorted = remoteMeta.changes.sortByKey("date");
+      let { localModified, remoteModified } = getBranchInfo(localChangesSorted, remoteChangesSorted);
       if (remoteModified) {
         postMsg = "\n" + getAgeMsg(localMeta.date.valueOf(), remoteMeta.date.valueOf());
         if (localModified) {
@@ -61,18 +63,18 @@ function getBranchInfo(localChanges, remoteChanges) {
   let branchPoint;
   let localModified = false, remoteModified = false;
   while (!branchPoint) {
-    let localHead = localChanges[0];
-    let remoteHead = remoteChanges[0];
+    let localHead = localChanges[localChanges.length-1];
+    let remoteHead = remoteChanges[remoteChanges.length-1];
     let localHeadID = localHead.id;
     let remoteHeadID = remoteHead.id;
     let localHeadTime = localHead.date.valueOf();
     let remoteHeadTime = remoteHead.date.valueOf();
     if (localHeadTime > remoteHeadTime) {
       localModified = true;
-      localChanges.shift();
+      localChanges.pop();
     } else if (localHeadTime < remoteHeadTime) {
       remoteModified = true;
-      remoteChanges.shift();
+      remoteChanges.pop();
     } else if (localHeadID === remoteHeadID) {
       branchPoint = localHead;
     } else {
