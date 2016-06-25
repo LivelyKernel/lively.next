@@ -368,6 +368,7 @@ function searchPackage(System, packageURL, searchStr, options) {
 }
 
 export {
+  getPackage,
   importPackage,
   registerPackage,
   removePackage,

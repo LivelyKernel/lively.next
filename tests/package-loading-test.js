@@ -5,7 +5,7 @@ import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } fro
 
 import { obj } from "lively.lang";
 import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
-import { registerPackage, importPackage, applyConfig, getPackages } from "../src/packages.js";
+import { getPackage, applyConfig, getPackages } from "../src/packages.js";
 import module from "../src/module.js";
 
 var testDir = System.decanonicalize("lively.modules/tests/package-tests-temp/");
@@ -42,14 +42,12 @@ describe("package loading", function() {
   beforeEach(async () => {
     S = getSystem("test", {baseURL: testDir});
     await createFiles(testDir, testResources)
-    await registerPackage(S, project1aDir);
+    await getPackage(S, project1aDir).register();
   });
 
   afterEach(() => {
     removeSystem("test")
-    // show(printSystemConfig(System)) &&
-    console.log("CLEAN")
-    return removeDir(testDir);;
+    return removeDir(testDir);
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -57,12 +55,9 @@ describe("package loading", function() {
   describe("basics", () => {
 
     it("registers and loads a package", async () => {
-      await registerPackage(S, project1aDir);
+      await getPackage(S, project1aDir).register();
       var mod = await S.import("some-project");
       expect(mod).to.have.property("x", 2);
-
-      expect(getPackages(S)[0]).property("address", noTrailingSlash(project1aDir))
-
       expect(getPackages(S)).to.containSubset([{
         address: noTrailingSlash(project1aDir),
         main: "entry-a.js",
@@ -74,14 +69,14 @@ describe("package loading", function() {
 
     it("registers and loads dependent packages", async () => {
       await Promise.all([
-        registerPackage(S, project1bDir),
-        registerPackage(S, project2Dir)]);
+        getPackage(S, project1bDir).register(),
+        getPackage(S, project2Dir).register()]);
       var mod = await S.import("project2")
       expect(mod).to.have.property("x", 23);
     });
 
     it("enumerates packages", async () => {
-      await importPackage(S, project2Dir);
+      await getPackage(S, project2Dir).import();
       expect(getPackages(S)).to.containSubset([
         {
           address: noTrailingSlash(project2Dir),
@@ -106,29 +101,28 @@ describe("package loading", function() {
   describe("with pre-loaded dependent packages", function() {
 
     it("uses existing dependency by default", async () => {
-      await registerPackage(S, project2Dir);
+      await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
       expect(m.version).to.equal("a");
     });
 
     it("uses specified dependency when preferLoaded is false", async () => {
-console.log("TEST")
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false}});
-      await registerPackage(S, project2Dir);
+      await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
       expect(m.version).to.equal("b");
     });
 
     it("deals with package map directory entry", async () => {
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": project1bDir}}});
-      await registerPackage(S, project2Dir);
+      await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
       expect(m.version).to.equal("b")
     });
 
     it("deals with package map relative entry", async () => {
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}});
-      await registerPackage(S, project2Dir);
+      await getPackage(S, project2Dir).register();
       expect(S.packages).to.containSubset({
         [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, names: ["some-project"]},
         [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}, names: ["project2"]}
@@ -138,7 +132,6 @@ console.log("TEST")
     });
 
     it("Concurrent loading will not load multiple versions", async () => {
-console.log("TEST")
       var project2bDir = testDir + "project2b/",
           project2b = {
             "index.js": "export { x, version } from 'some-project';",
@@ -229,7 +222,7 @@ describe("mutual dependent packages", () => {
 
 
   it("can be imported", async () => {
-    await importPackage(System, p1Dir)
+    await getPackage(System, p1Dir).import()
     expect(module(System, `${p1Dir}index.js`).env().recorder).property("y").equals(2);
     // FIXME! see https://github.com/LivelyKernel/lively.modules/issues/6
     // expect(moduleEnv(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
