@@ -276,9 +276,9 @@ class Package {
     delete System.packages[url];
   }
 
-  reload() { return this.remove().then(() => this.import()); }
+  reload() { this.remove(); return this.import(); }
 
-  search(needle, options) { return searchPackage(this.System, this.packageURL, needle, options); }
+  search(needle, options) { return searchPackage(this.System, this.url, needle, options); }
 
 }
 
