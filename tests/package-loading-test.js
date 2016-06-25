@@ -151,10 +151,12 @@ describe("package loading", function() {
       await createFiles(project2bDir, project2b);
       await createFiles(project5Dir, project5);
       await Promise.all([
-        importPackage(S, project2Dir),
-        importPackage(S, project5Dir)
-        ]);
-      console.log(getPackages(S).map(ea => ea.address).join("\n"))
+        getPackage(S, project2Dir).import(),
+        getPackage(S, project5Dir).import()
+      ]);
+      var packageCounts = getPackages(S).groupByKey("name").count();
+      Object.keys(packageCounts).forEach(name =>
+        expect(packageCounts[name]).equals(1, `package ${name} loaded mutiple times`));
     });
 
   });
