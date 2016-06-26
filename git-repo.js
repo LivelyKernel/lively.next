@@ -180,6 +180,10 @@ export class Repository {
       if (code !== 0) throw new Error("Error in stash: " + output);
     }
     
+    // in case we are switching to a new branch that isn't local yet we need to
+    // fetch before checkout!
+    await this.cmd(`git fetch ${remote}`)
+
     if (current.branch !== branch) await this.checkout(branch);
 
     var {code, output: pullOutput} = await this.pullSavingUntrackedFiles(branch, remote);
