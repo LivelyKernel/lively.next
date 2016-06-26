@@ -86,15 +86,15 @@ export async function install(baseDir) {
     var livelyDir = join(baseDir, "LivelyKernel")
 
     console.log("=> Downloading PartsBin...\n")
-    var {output} = await downloadPartsBin(livelyDir);
+    var {output} = await downloadPartsBin(livelyDir, {log: log});
 
     console.log("=> Downloading lively.system part items...\n")
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir);
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir);
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir);
+    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, {log: log});
+    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, {log: log});
+    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, {log: log});
 
     console.log("=> Downloading lively.system worlds...\n")
-    var {output} = await copyLivelyWorld("https://dev.lively-web.org/", "development.html", livelyDir);
+    var {output} = await copyLivelyWorld("https://dev.lively-web.org/", "development.html", livelyDir, {log: log});
 
     indicator && indicator.remove();
 

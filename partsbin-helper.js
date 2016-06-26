@@ -64,7 +64,7 @@ function copyPartsBinItem(livelyURL, partsSpace, name, livelyDir) {
   .catch(err => { console.error("Error copying part %s: %s", name, err); throw err; });
 }`
 
-export function downloadPartsBin(livelyDir, log) {
+export function downloadPartsBin(livelyDir, opts = {log: []}) {
   var nodeCode = `node -e '
 process.env.WORKSPACE_LK = "${livelyDir}";
 new Promise((resolve, reject) => require("./bin/helper/download-partsbin.js")(err => err ? reject(err) : resolve()))
@@ -72,10 +72,10 @@ new Promise((resolve, reject) => require("./bin/helper/download-partsbin.js")(er
     () => console.log("PartsBin installed"),
     (err) => { console.error("PartsBin installation falure: " + err); process.exit(1); });
 '`
-  return exec(nodeCode, {cwd: livelyDir, log});
+  return exec(nodeCode, {cwd: livelyDir, log: opts.log});
 }
 
-export function copyPartsBinItem(fromURL, partSpace, partName, livelyDir, log) {
+export function copyPartsBinItem(fromURL, partSpace, partName, livelyDir, opts = {log: []}) {
   // "https://dev.lively-web.org/",
   // "PartsBin/lively.modules",
   // "lively.modules-browser-preferences",
@@ -84,13 +84,13 @@ ${copyPBItem_code}
 ensureDir(join("${livelyDir}", "${partSpace}"));
 copyPartsBinItem("${fromURL}", "${partSpace}", "${partName}", "${livelyDir}").catch(_ => process.exit(1));
 '`;
-  return exec(nodeCode, {cwd: livelyDir, log});
+  return exec(nodeCode, {cwd: livelyDir, log: opts.log});
 }
 
-export function copyLivelyWorld(fromURL, pathToWorld, livelyDir, log) {
+export function copyLivelyWorld(fromURL, pathToWorld, livelyDir, opts = {log: []}) {
   var nodeCode = `node -e '
 ${copyLivelyWorld_code}
 copyLivelyWorld("${fromURL}", "${pathToWorld}", "${livelyDir}").catch(_ => process.exit(1))
 '`;
-  return exec(nodeCode, {cwd: livelyDir, log});
+  return exec(nodeCode, {cwd: livelyDir, log: opts.log});
 }
