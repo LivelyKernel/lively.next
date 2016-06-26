@@ -105,15 +105,15 @@ function applyConfig(System, packageConfig, packageURL) {
     applyLivelyConfig(System, livelyConfig, packageURL) :
     {subPackages: []};
 
-  packageInSystem.names = packageInSystem.names || [];
-  arr.pushIfNotIncluded(packageInSystem.names, name);
+  packageInSystem.referencedAs = packageInSystem.referencedAs || [];
+  arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
 
   if (!main.match(/\.[^\/\.]+/)) main += ".js";
   packageInSystem.main = main;
 
   // System.packages doesn't allow us to store our own properties
   var p = getPackage(System, packageURL);
-  Object.assign(p, packageInSystem);
+  p.mergeWithConfig(packageInSystem);
 
   return packageApplyResult;
 }
@@ -123,7 +123,7 @@ function applySystemJSConfig(System, systemjsConfig, packageURL) {}
 function applyLivelyConfig(System, livelyConfig, packageURL) {
   // configures System object from lively config JSON object.
   // - adds System.package entry for packageURL
-  // - adds name to System.package[packageURL].names
+  // - adds name to System.package[packageURL].referencedAs
   // - installs hook from {hooks: [{name, source}]}
   // - merges livelyConfig.packageMap into System.package[packageURL].map
   //   entries in packageMap are specifically meant to be sub-packages!
@@ -212,9 +212,18 @@ function subpackageNameAndAddress(System, livelyConfig, subPackageName, packageU
 class Package {
 
   constructor(System, packageURL) {
+    // the name from the packages config, set once the config is loaded
+    this._name = undefined;
+    // The names under which the package is referenced by other packages
+    this.referencedAs = [];
     this.url = packageURL;
     this.System = System;
+    this.registerProcess = promise.deferred();
   }
+
+  get name() { return this._name || this.url.replace(/^(?:.+\/)?([^\/]+)[\/]+$/, "$1"); }
+
+  set name(v) { return this._name = v; }
 
   async import() {
     await this.register();
@@ -280,6 +289,24 @@ class Package {
 
   search(needle, options) { return searchPackage(this.System, this.url, needle, options); }
 
+  mergeWithConfig(config) {
+    var copy = Object.assign({}, config);
+    var {name, referencedAs} = copy;
+
+    if (referencedAs) {
+      delete copy.referencedAs
+      this.referencedAs = arr.uniq(this.referencedAs.concat(referencedAs))
+    }
+
+    if (name) {
+      delete copy.name;
+      this._name = name;
+    }
+
+    Object.assign(this, copy);
+    return this;
+  }
+
 }
 
 function getPackage(System, packageURL) {
@@ -334,8 +361,8 @@ function getPackages(System) {
   groupIntoPackages(System, modules, packageNames).mapGroups((packageAddress, moduleNames) => {
     var systemP = sysPackages[packageAddress],
         livelyP = livelyPackages[packageAddress],
-        p = livelyP && systemP ? Object.assign(livelyP, systemP) : livelyP || systemP,
-        names = p ? p.names : [];
+        p = livelyP && systemP ? livelyP.mergeWithConfig(systemP) : livelyP || systemP,
+        names = p ? p.referencedAs : [];
     if (!names || !names.length) names = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
 
     moduleNames = moduleNames.filter(name => name !== packageAddress && name !== packageAddress + "/")

@@ -63,7 +63,7 @@ describe("package loading", function() {
         main: "entry-a.js",
         meta: {"package.json": {format: "json"}},
         map: {},
-        names: ["some-project"]
+        referencedAs: ["some-project"]
       }]);
     });
 
@@ -80,14 +80,14 @@ describe("package loading", function() {
       expect(getPackages(S)).to.containSubset([
         {
           address: noTrailingSlash(project2Dir),
-          name: `project2`, names: [`project2`],
+          name: `project2`, referencedAs: [`project2`],
           modules: [
             {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
             {deps: [], name: `${project2Dir}package.json`}],
         },
         {
           address: noTrailingSlash(project1aDir),
-          name: `some-project`, names: [`some-project`],
+          name: `some-project`, referencedAs: [`some-project`],
           modules: [
             {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-a.js`},
             {deps: [],name: `${project1aDir}other.js`},
@@ -124,8 +124,8 @@ describe("package loading", function() {
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}});
       await getPackage(S, project2Dir).register();
       expect(S.packages).to.containSubset({
-        [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, names: ["some-project"]},
-        [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}, names: ["project2"]}
+        [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, referencedAs: ["some-project"]},
+        [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}, referencedAs: ["project2"]}
       });
       var m = await S.import("project2");
       expect(m.version).to.equal("b");
