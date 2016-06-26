@@ -21,7 +21,8 @@ class ModuleInterface {
 
   constructor(System, id) {
     // We assume module ids to be a URL with a scheme
-    if (!isURL(id))
+
+    if (!isURL(id) && !/^@/.test(id))
       throw new Error(`ModuleInterface constructor called with ${id} that does not seem to be a fully normalized module id.`);
     this.System = System;
     this.id = id;
@@ -41,6 +42,8 @@ class ModuleInterface {
 
   // returns Promise<string>
   source() {
+    if (this.id === "@empty") return Promise.resolve("")
+
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
     }
@@ -194,8 +197,10 @@ class ModuleInterface {
         value: (depName, key) => {
           var depId = S.normalizeSync(depName, this.id),
               depExports = S._loader.modules[depId];
-          if (!depExports)
-            throw new Error(`import of ${key} failed: ${depName} (tried as ${this.id}) is not loaded!`);
+          if (!depExports) {
+            console.warn(`import of ${key} failed: ${depName} (tried as ${this.id}) is not loaded!`);
+            return undefined;
+          }
           if (key == undefined)
             return depExports.module;
           if (!depExports.module.hasOwnProperty(key))
