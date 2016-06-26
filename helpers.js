@@ -7,9 +7,9 @@ export function ensureDir(dir) {
 
 export async function read(path) {
   if (System.get("@system-env").node) {
-    return String(readFileSync(path.replace(/file:\/\//, "")))
-    // try {
-    // } catch (e) { return ""; }
+    try {
+      return String(readFileSync(path.replace(/file:\/\//, "")))
+    } catch (e) { return ""; }
   } else {
     var {output, code} = await lively.shell.readFile(path);
     return code ? "" : output;
