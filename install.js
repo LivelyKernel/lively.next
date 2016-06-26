@@ -27,9 +27,9 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // reading package spec + init base dir
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    logger.push("Initializing ensuring existance of " + baseDir);
+    logger.push("=> Initializing ensuring existance of " + baseDir);
     await ensureDir(baseDir);
-    logger.push("Reading package specs from " + packageSpecFile);
+    logger.push("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(),
         packages = await Promise.all(knownProjects.map(spec =>
           new Package(join(baseDir, spec.name), spec).readConfig()))
@@ -39,7 +39,7 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     var pBar = hasUI && $world.addProgressBar(), i;
 
-    logger.push(`Installing and updating ${packages.length} packages`);
+    logger.push(`=> Installing and updating ${packages.length} packages`);
     i = 0; for (let p of packages) {
       var exists = await p.exists();
       if (!exists) {
@@ -55,7 +55,7 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // linking modules among themselves
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    logger.push(`Linking packages...`);
+    logger.push(`=> Linking packages`);
     await Promise.all(packages.map(ea => ea.readConfig()));
     for (let p of packages) {
       var deps = await p.findDependenciesIn(packages);
@@ -67,7 +67,7 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // npm install
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    logger.push(`Running npm install`);
+    logger.push(`=> npm install`);
 
     i = 0; for (let p of packages) {
       logger.push(`npm install of ${p.name}...`);
@@ -83,21 +83,21 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     var livelyDir = join(baseDir, "LivelyKernel")
 
-    logger.push("Downloading PartsBin...\n")
+    logger.push("=> Downloading PartsBin...\n")
     var {output} = await downloadPartsBin(livelyDir, logger);
 
-    logger.push("Downloading lively.system part items...\n")
+    logger.push("=> Downloading lively.system part items...\n")
     var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, logger);
     var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, logger);
     var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, logger);
 
-    logger.push("Downloading lively.system worlds...\n")
+    logger.push("=> Downloading lively.system worlds...\n")
     var {output} = await copyLivelyWorld("https://dev.lively-web.org/", "development.html", livelyDir, logger);
 
     indicator && indicator.remove();
 
     if (hasUI) $world.inform("lively.system successfully installed!");
-    else console.log(`lively.system installed! You can start a lively server by running 'npm start' inside ${livelyDir}. Afterwards your lively.system development world is running at http://localhost:9001/development.html`)
+    else console.log(`=> Done!\nlively.system installed! You can start a lively server by running 'npm start' inside ${livelyDir}. Afterwards your lively.system development world is running at http://localhost:9001/development.html`)
   } catch (e) {
     console.error("Error occurred during installation: " + e);
     throw e

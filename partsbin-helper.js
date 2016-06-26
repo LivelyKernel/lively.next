@@ -31,7 +31,7 @@ ${GET_code}
 var fs = require("fs"), join = require("path").join;
 function copyLivelyWorld(livelyURL, pathOfWorld, livelyDir) {
   return GET(livelyURL + pathOfWorld)
-    .then(content => fs.writeFileSync(join(livelyDir, pathOfWorld)))
+    .then(content => fs.writeFileSync(join(livelyDir, pathOfWorld), content))
     .then(() => console.log("Copied %s into %s", pathOfWorld, livelyDir))
     .catch(err => { console.error("Error downloading lively world %s: %s", pathOfWorld, err); throw err; });
 }
