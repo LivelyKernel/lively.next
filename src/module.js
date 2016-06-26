@@ -60,7 +60,7 @@ class ModuleInterface {
 
     if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
       // This needs to go into a separate place for "virtual" lively modules
-      var morphId = this.id.split("/").last();
+      var morphId = arr.last(this.id.split("/"));
       var m = $world.getMorphById(morphId);
       return Promise.resolve(m ? m.textContent : "");
     }
