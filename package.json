@@ -1,4 +1,20 @@
 {
   "name": "lively.installer",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "systemjs": {
+    "map": {
+      "child_process": {
+        "node": "@node/child_process",
+        "~node": "@empty"
+      },
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      }
+    }
+  },
+  "dependencies": {
+    "lively.modules": "^0.5.11",
+    "systemjs": "^0.19.31"
+  }
 }
