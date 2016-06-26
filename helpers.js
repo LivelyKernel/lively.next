@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { exec } from "./shell-exec.js";
 
 export function ensureDir(dir) {
@@ -13,6 +13,16 @@ export async function read(path) {
   } else {
     var {output, code} = await lively.shell.readFile(path);
     return code ? "" : output;
+  }
+}
+
+export async function write(path, content) {
+  if (System.get("@system-env").node) {
+    try {
+      String(writeFileSync(path.replace(/file:\/\//, ""), content))
+    } catch (e) { console.warn(`error writing ${path}: ${e}`)}
+  } else {
+    var {code} = await lively.shell.writeFile("test.txt", "fooo barrr")
   }
 }
 

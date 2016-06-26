@@ -1,12 +1,8 @@
 import { exec } from "lively.installer/shell-exec.js";
-import { join, read, ensureDir } from "lively.installer/helpers.js";
+import { join, read, write, ensureDir } from "lively.installer/helpers.js";
 import { Package } from "lively.installer/package.js";
 import { copyLivelyWorld, copyPartsBinItem, downloadPartItem, downloadPartsBin } from "lively.installer/partsbin-helper.js";
 
-
-var _show = typeof show !== "undefined" ? show : function() { console.log.apply(console, arguments) };
-var logger = {push: msg => msg.match(/^\s*\$/) ? undefined : _show(msg)};
-var silentLogger = {push: function(msg) {}}
 
 var packageSpecFile = System.decanonicalize("lively.installer/packages-config.json");
 
@@ -16,10 +12,10 @@ async function readPackageSpec() {
     await read(packageSpecFile));
 }
 
-
 export async function install(baseDir) {
 
   try {
+    var log = [];
 
     var hasUI = typeof $world !== "undefined";
 
@@ -33,27 +29,27 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // reading package spec + init base dir
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    logger.push("=> Initializing ensuring existance of " + baseDir);
+    console.log("=> Initializing ensuring existance of " + baseDir);
     await ensureDir(baseDir);
-    logger.push("=> Reading package specs from " + packageSpecFile);
+    console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(),
         packages = await Promise.all(knownProjects.map(spec =>
-          new Package(join(baseDir, spec.name), spec).readConfig()))
+          new Package(join(baseDir, spec.name), spec, log).readConfig()))
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // creating packages
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     var pBar = hasUI && $world.addProgressBar(), i;
 
-    logger.push(`=> Installing and updating ${packages.length} packages`);
+    console.log(`=> Installing and updating ${packages.length} packages`);
     i = 0; for (let p of packages) {
       var exists = await p.exists();
       if (!exists) {
         pBar && pBar.setLabel(`git clone – ${p.directory}`)
-        await p.ensure(logger);
+        await p.ensure();
       } else {
         pBar && pBar.setLabel(`git pull – ${p.directory}`)
-        await p.update(logger);
+        await p.update();
       }
       pBar && pBar.setValue(++i / packages.length)
     }
@@ -61,7 +57,7 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // linking modules among themselves
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    logger.push(`=> Linking packages`);
+    console.log(`=> Linking packages`);
     await Promise.all(packages.map(ea => ea.readConfig()));
     for (let p of packages) {
       var deps = await p.findDependenciesIn(packages);
@@ -73,12 +69,12 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // npm install
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    logger.push(`=> npm install`);
+    console.log(`=> npm install`);
 
     i = 0; for (let p of packages) {
-      logger.push(`npm install of ${p.name}...`);
+      console.log(`npm install of ${p.name}...`);
       pBar && pBar.setLabel(`npm install ${p.name}`)
-      await p.npmInstall(logger)
+      await p.npmInstall()
       pBar && pBar.setValue(++i / packages.length)
     }
 
@@ -89,16 +85,16 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     var livelyDir = join(baseDir, "LivelyKernel")
 
-    logger.push("=> Downloading PartsBin...\n")
-    var {output} = await downloadPartsBin(livelyDir, logger);
+    console.log("=> Downloading PartsBin...\n")
+    var {output} = await downloadPartsBin(livelyDir);
 
-    logger.push("=> Downloading lively.system part items...\n")
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, logger);
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, logger);
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, logger);
+    console.log("=> Downloading lively.system part items...\n")
+    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir);
+    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir);
+    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir);
 
-    logger.push("=> Downloading lively.system worlds...\n")
-    var {output} = await copyLivelyWorld("https://dev.lively-web.org/", "development.html", livelyDir, logger);
+    console.log("=> Downloading lively.system worlds...\n")
+    var {output} = await copyLivelyWorld("https://dev.lively-web.org/", "development.html", livelyDir);
 
     indicator && indicator.remove();
 
@@ -107,5 +103,7 @@ export async function install(baseDir) {
   } catch (e) {
     console.error("Error occurred during installation: " + e);
     throw e
+  } finally {
+    write(join(baseDir, "lively.installer.log"), log.join(""));
   }
 }

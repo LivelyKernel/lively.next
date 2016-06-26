@@ -17,16 +17,14 @@ async function printSummaryFor(p, packages) {
   report += "\n  => dependencies:";
   if (!deps.length) report += " none";
   else report += "\n    " + deps.map(ea => ea.name).join("\n    ")
-  
-  var r = p.repo();
 
   report += "\n  => git status:\n";
-  var branch = await r.currentBranch();
+  var branch = await p.repo.currentBranch();
   if (!branch) report += "    not on a branch\n"
   else report += `    on branch ${branch}\n`;
   
-  report += `    local changes? ${(await r.hasLocalChanges()) ? "yes" : "no"}\n`;
-  report += `    remote changes? ${(await r.hasRemoteChanges(p.config.branch)) ? "yes" : "no"}\n`;
+  report += `    local changes? ${(await p.repo.hasLocalChanges()) ? "yes" : "no"}\n`;
+  report += `    remote changes? ${(await p.repo.hasRemoteChanges(p.config.branch)) ? "yes" : "no"}\n`;
   
   return report;
 }

@@ -12,10 +12,10 @@ async function test() {
 
 export class Repository {
 
-  constructor(directory, options = {dryRun: false}) {
+  constructor(directory, options = {dryRun: false, log: []}) {
     this.directory = directory;
     this.dryRun = options.dryRun;
-    this._log = [];
+    this._log = options.log || [];
   }
 
   cmd(cmdString, opts) {
@@ -144,18 +144,18 @@ export class Repository {
   // local commit state
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  stash(log) { return this.cmd("git stash", {log: log}); }
-  stashPop(log) { return this.cmd("git stash pop", {log: log}); }
+  stash() { return this.cmd("git stash"); }
+  stashPop() { return this.cmd("git stash pop"); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // pull / fetch
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  pull(branch = "master", remote = "origin", log) {
-    return this.cmd(`git pull ${remote} ${branch}`, {log: log});
+  pull(branch = "master", remote = "origin") {
+    return this.cmd(`git pull ${remote} ${branch}`);
   }
 
-  async interactivelyUpdate(branch = "master", remote = "origin", log = []) {
+  async interactivelyUpdate(branch = "master", remote = "origin") {
     var current = await this.localBranchInfo();
     var trackedRemote = await this.remoteOfBranch(branch);
     if (trackedRemote) remote = trackedRemote;
@@ -245,14 +245,14 @@ export class Repository {
   // clone
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async clone(repoURL, branch = "master", log) {
+  async clone(repoURL, branch = "master") {
     var pathParts = this.directory.split("/"),
         parentDir = pathParts.slice(0,-1).join("/"),
         name = pathParts[pathParts.length-1];
     if ((await this.cmd(`test -d "${this.directory}"`)).code === 0) {
       throw new Error(`Cannot clone into ${this.directory}: exists already`);
     }
-    var {code, output} = await this.cmd(`git clone -b ${branch} ${repoURL} ${name}`, {cwd: parentDir, log: log});
+    var {code, output} = await this.cmd(`git clone -b ${branch} ${repoURL} ${name}`, {cwd: parentDir});
     if (code) throw new Error(`Failure cloning repo: ${output}`);
   }
 

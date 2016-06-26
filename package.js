@@ -4,11 +4,15 @@ import { Repository } from "./git-repo.js";
 
 export class Package {
 
-  constructor(dir, config = {}) {
+  constructor(dir, config = {}, log = []) {
     config = Object.assign({name: "", repoURL: "", branch: "master"}, config);
+    this._log = log;
     this.directory = dir;
     this.config = config;
+    this.repo = new Repository(this.directory, {log: this._log});
   }
+
+  printLog() { return this._log.join(""); }
 
   get version() { return this.config.version || null; }
   get name() { return this.config.name || ""; }
@@ -30,21 +34,17 @@ export class Package {
     return (await exec(`node -e 'process.exit(require("fs").existsSync("${this.directory}") ? 0 : 1);'`)).code === 0;
   }
 
-  async ensure(log = []) {
+  async ensure() {
     if (!(await this.exists()))
-      await this.repo().clone(this.config.repoURL, this.config.branch, log);
+      await this.repo.clone(this.config.repoURL, this.config.branch);
     return this;
   }
 
-  async update(log = []) {
+  async update() {
     if (await this.exists())
-      await this.repo().interactivelyUpdate(this.config.branch, undefined, log);
+      await this.repo.interactivelyUpdate(this.config.branch, undefined);
     return this;
   }
-
-  repo() {
-    return new Repository(this.directory)
-  }  
 
   findDependenciesIn(packages) {
     var deps = Object.keys(this.dependencies);
@@ -66,19 +66,11 @@ function rm(path) {
     fs.rmdirSync(path);
     } else fs.unlinkSync(path);
 }
-'`, {cwd: toPackage.directory});
+'`, {cwd: toPackage.directory, log: this._log});
     return cmd;
   }
 
-  async npmInstall(log = []) {
-    return exec("npm install", {log: log, cwd: this.directory});
+  async npmInstall() {
+    return exec("npm install", {log: this._log, cwd: this.directory});
   }
-}
-
-
-function test() {
-  var p = new Package("/Users/robert/Lively/LivelyKernel2/packages/lively.installer")
-  p.readConfig()
-  p.version
-  p.repo()
 }
