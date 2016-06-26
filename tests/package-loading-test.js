@@ -3,7 +3,7 @@
 import { expect } from "mocha-es6";
 import { removeDir, createFiles, modifyJSON, noTrailingSlash, inspect as i } from "./helpers.js";
 
-import { obj } from "lively.lang";
+import { obj, arr } from "lively.lang";
 import { getSystem, removeSystem, printSystemConfig, loadedModules } from "../src/system.js";
 import { getPackage, applyConfig, getPackages } from "../src/packages.js";
 import module from "../src/module.js";
@@ -42,7 +42,6 @@ describe("package loading", function() {
   beforeEach(async () => {
     S = getSystem("test", {baseURL: testDir});
     await createFiles(testDir, testResources)
-    await getPackage(S, project1aDir).register();
   });
 
   afterEach(() => {
@@ -76,6 +75,7 @@ describe("package loading", function() {
     });
 
     it("enumerates packages", async () => {
+      await getPackage(S, project1aDir).register();
       await getPackage(S, project2Dir).import();
       expect(getPackages(S)).to.containSubset([
         {
@@ -101,12 +101,14 @@ describe("package loading", function() {
   describe("with pre-loaded dependent packages", function() {
 
     it("uses existing dependency by default", async () => {
+      await getPackage(S, project1aDir).register();
       await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
       expect(m.version).to.equal("a");
     });
 
     it("uses specified dependency when preferLoaded is false", async () => {
+      await getPackage(S, project1aDir).register();
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false}});
       await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
@@ -114,6 +116,7 @@ describe("package loading", function() {
     });
 
     it("deals with package map directory entry", async () => {
+      await getPackage(S, project1aDir).register();
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": project1bDir}}});
       await getPackage(S, project2Dir).register();
       var m = await S.import("project2");
@@ -121,11 +124,12 @@ describe("package loading", function() {
     });
 
     it("deals with package map relative entry", async () => {
+      await getPackage(S, project1aDir).register();
       await modifyJSON(project2Dir + "package.json", {lively: {preferLoadedPackages: false, packageMap: {"some-project": "../dep2/"}}});
       await getPackage(S, project2Dir).register();
       expect(S.packages).to.containSubset({
         [noTrailingSlash(project1bDir)]: {main: "entry-b.js", map: {}, referencedAs: ["some-project"]},
-        [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}, referencedAs: ["project2"]}
+        [noTrailingSlash(project2Dir)]: {map: {"some-project": "../dep2/"}}
       });
       var m = await S.import("project2");
       expect(m.version).to.equal("b");
@@ -154,7 +158,7 @@ describe("package loading", function() {
         getPackage(S, project2Dir).import(),
         getPackage(S, project5Dir).import()
       ]);
-      var packageCounts = getPackages(S).groupByKey("name").count();
+      var packageCounts = arr.groupByKey(getPackages(S), "name").count();
       Object.keys(packageCounts).forEach(name =>
         expect(packageCounts[name]).equals(1, `package ${name} loaded mutiple times`));
     });
@@ -212,7 +216,6 @@ describe("mutual dependent packages", () => {
 
   beforeEach(async () => {
     System = getSystem("test", {baseURL: testDir});
-    System.debug = true;
     await createFiles(testDir, testResources);
   });
 
