@@ -1,0 +1,52 @@
+[
+  {
+    "name": "lively-loader",
+    "repoURL": "https://github.com/LivelyKernel/node-lively-loader"
+  },
+  {
+    "name": "lively.lang",
+    "repoURL": "https://github.com/LivelyKernel/lively.lang"
+  },
+  {
+    "name": "lively.ast",
+    "repoURL": "https://github.com/LivelyKernel/lively.ast"
+  },
+  {
+    "name": "lively.vm",
+    "repoURL": "https://github.com/LivelyKernel/lively.vm"
+  },
+  {
+    "name": "lively.modules",
+    "repoURL": "https://github.com/LivelyKernel/lively.modules",
+    "branch": "concurrent-package-loading"
+  },
+  {
+    "name": "lively-system-examples",
+    "repoURL": "https://github.com/LivelyKernel/lively-system-examples"
+  },
+  {
+    "name": "mocha-es6",
+    "repoURL": "https://github.com/rksm/mocha-es6"
+  },
+  {
+    "name": "LivelyKernel",
+    "repoURL": "https://github.com/LivelyKernel/LivelyKernel",
+    "branch": "new-module-system"
+  },
+  {
+    "name": "lively.resources",
+    "repoURL": "https://github.com/LivelyKernel/lively.resources"
+  },
+  {
+    "name": "lively-system-interface",
+    "repoURL": "https://github.com/LivelyKernel/lively-system-interface"
+  },
+  {
+    "name": "lively.installer",
+    "repoURL": "https://github.com/LivelyKernel/lively.installer"
+  },
+  {
+    "name": "lively.serializer",
+    "repoURL": "https://github.com/LivelyKernel/lively.serializer"
+  }
+]
