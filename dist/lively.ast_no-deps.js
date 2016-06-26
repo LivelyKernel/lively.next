@@ -10446,6 +10446,10 @@ module.exports = function(acorn) {
     };
   }();
 
+  babelHelpers.toArray = function (arr) {
+    return Array.isArray(arr) ? arr : Array.from(arr);
+  };
+
   babelHelpers.toConsumableArray = function (arr) {
     if (Array.isArray(arr)) {
       for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
@@ -13155,7 +13159,6 @@ var nodes = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var helpers = {
-
     declIds: function declIds(nodes) {
       return lively_lang.arr.flatmap(nodes, function (ea) {
         if (!ea) return [];
@@ -13167,7 +13170,15 @@ var nodes = Object.freeze({
         return [];
       });
     },
-
+    varDecls: function varDecls(scope) {
+      return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
+        return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
+          return helpers.declIds([decl.id]).map(function (id) {
+            return [decl, id];
+          });
+        });
+      });
+    },
     varDeclIds: function varDeclIds(scope) {
       return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
         all.push.apply(all, ea.declarations);return all;
@@ -13175,7 +13186,6 @@ var nodes = Object.freeze({
         return ea.id;
       }));
     },
-
     objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
       // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
       // nodes as a list
@@ -13188,22 +13198,25 @@ var nodes = Object.freeze({
           case "ArrayExpression":case "ArrayPattern":
             if (!onlyLeafs) result.push(thisNode);
             result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
-              return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
+              return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
             }));
             break;
           case "ObjectExpression":case "ObjectPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+            result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
             break;
           case "AssignmentPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
+            result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
             break;
           default:
             result.push(thisNode);
         }
         return result;
       });
+    },
+    isDeclaration: function isDeclaration(node) {
+      return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
     }
   };
 
@@ -13276,6 +13289,19 @@ var nodes = Object.freeze({
     })).concat(scope.importDecls);
   }
 
+  function declarationsWithIdsOfScope(scope) {
+    // returns a list of pairs [(DeclarationNode,IdentifierNode)]
+    var bareIds = helpers.declIds(scope.params).concat(scope.catches);
+    var declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+    return bareIds.map(function (ea) {
+      return [ea, ea];
+    }).concat(declNodes.map(function (ea) {
+      return [ea, ea.id];
+    })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
+      return [statementOf(scope.node, im), im];
+    }));
+  }
+
   function _declaredVarNames(scope, useComments) {
     return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
   }
@@ -13291,6 +13317,60 @@ var nodes = Object.freeze({
 
   function topLevelFuncDecls(parsed) {
     return FindToplevelFuncDeclVisitor.run(parsed);
+  }
+
+  function resolveReference(ref, scopePath) {
+    if (scopePath.length == 0) return [null, null];
+
+    var _scopePath = babelHelpers.toArray(scopePath);
+
+    var scope = _scopePath[0];
+
+    var outer = _scopePath.slice(1);
+
+    var decls = scope.decls || declarationsWithIdsOfScope(scope);
+    scope.decls = decls;
+    var decl = decls.find(function (_ref) {
+      var _ref2 = babelHelpers.slicedToArray(_ref, 2);
+
+      var _ = _ref2[0];
+      var id = _ref2[1];
+      return id.name == ref;
+    });
+    return decl || resolveReference(ref, outer);
+  }
+
+  function resolveReferences(scope) {
+    function rec(scope, outerScopes) {
+      var path = [scope].concat(outerScopes);
+      scope.refs.forEach(function (ref) {
+        var _resolveReference = resolveReference(ref.name, path);
+
+        var _resolveReference2 = babelHelpers.slicedToArray(_resolveReference, 2);
+
+        var decl = _resolveReference2[0];
+        var id = _resolveReference2[1];
+
+        if (decl) ref.decl = lively_lang.obj.deepCopy(decl);
+        if (id) ref.declId = lively_lang.obj.deepCopy(id);
+      });
+      scope.subScopes.forEach(function (s) {
+        return rec(s, path);
+      });
+    }
+    if (scope.referencesResolved) return scope;
+    rec(scope, []);
+    scope.referencesResolved = true;
+    return scope;
+  }
+
+  function refAt(pos, scope) {
+    var ref = scope.refs.find(function (r) {
+      return r.start <= pos && pos <= r.end;
+    });
+    return ref || scope.subScopes.reduce(function (p, s) {
+      return p || refAt(pos, s);
+    }, null);
   }
 
   function topLevelDeclsAndRefs(parsed, options) {
@@ -13355,8 +13435,6 @@ var nodes = Object.freeze({
   function findReferencesAndDeclsInScope(scope, name) {
     if (name === "this") {
       return scope.thisRefs;
-      scopes(parse("var x = this.foo")).refs;
-      scopes(parse("var x = this.foo")).thisRefs;
     }
 
     return lively_lang.arr.flatten( // all references
@@ -13393,20 +13471,19 @@ var nodes = Object.freeze({
     return acorn.walk.findNodesIncluding(ast, pos);
   }
 
+  var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
+
   function statementOf(parsed, node, options) {
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
     var nodes = nodesAt$1(node.start, parsed);
-    if (nodes.indexOf(node) === -1) return undefined;
-    var found = nodes.reverse().find(function (node, i) {
-      if (!nodes[i + 1]) return false;
-      var t = nodes[i + 1].type;
-      return ["BlockStatement", "Program", "FunctionDeclaration", "FunctionExpress", "ArrowFunctionExpress", "SwitchCase", "SwitchStatement"].indexOf(t) > -1 ? true : false;
+    var found = nodes.reverse().find(function (node) {
+      return _stmtTypes.includes(node.type);
     });
     if (options && options.asPath) {
       var v = new Visitor(),
-          foundPath;
+          foundPath = void 0;
       v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
         if (node === found) {
           foundPath = path;throw new Error("stop search");
@@ -13419,6 +13496,145 @@ var nodes = Object.freeze({
       return foundPath;
     }
     return found;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // imports and exports
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function imports(scope) {
+    var imports = scope.importDecls.reduce(function (imports, node) {
+      var nodes = nodesAtIndex(scope.node, node.start),
+          importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+      if (!importStmt) return imports;
+
+      var from = importStmt.source ? importStmt.source.value : "unknown module";
+      if (!importStmt.specifiers.length) // no imported vars
+        return imports.concat([{
+          local: null,
+          imported: null,
+          fromModule: from,
+          node: node
+        }]);
+
+      return imports.concat(importStmt.specifiers.map(function (importSpec) {
+        var imported;
+        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+        return {
+          local: importSpec.local ? importSpec.local.name : null,
+          imported: imported,
+          fromModule: from,
+          node: node
+        };
+      }));
+    }, []);
+
+    return lively_lang.arr.uniqBy(imports, function (a, b) {
+      return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+    });
+  }
+
+  function exports$1(scope) {
+    resolveReferences(scope);
+    var exports = scope.exportDecls.reduce(function (exports, node) {
+
+      var exportsStmt = statementOf(scope.node, node);
+      if (!exportsStmt) return exports;
+
+      var from = exportsStmt.source ? exportsStmt.source.value : null;
+
+      if (exportsStmt.type === "ExportAllDeclaration") {
+        return exports.concat([{
+          local: null,
+          exported: "*",
+          imported: "*",
+          fromModule: from,
+          node: node,
+          type: "all"
+        }]);
+      }
+
+      if (exportsStmt.type === "ExportDefaultDeclaration") {
+        if (helpers.isDeclaration(exportsStmt.declaration)) {
+          return exports.concat({
+            local: exportsStmt.declaration.id.name,
+            exported: "default",
+            type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+            fromModule: null,
+            node: node,
+            decl: exportsStmt.declaration,
+            declId: exportsStmt.declaration.id
+          });
+        } else if (exportsStmt.declaration.type === "Identifier") {
+          return exports.concat([{
+            local: exportsStmt.declaration.name,
+            exported: "default",
+            fromModule: null,
+            node: node,
+            type: "id",
+            decl: exportsStmt.declaration.decl,
+            declId: exportsStmt.declaration.declId
+          }]);
+        } else {
+          // exportsStmt.declaration is an expression
+          return exports.concat([{
+            local: null,
+            exported: "default",
+            fromModule: null,
+            node: node,
+            type: "expr",
+            decl: exportsStmt.declaration,
+            declId: exportsStmt.declaration
+          }]);
+        }
+      }
+
+      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+        return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+          return {
+            local: !from && exportSpec.local ? exportSpec.local.name : null,
+            exported: exportSpec.exported ? exportSpec.exported.name : null,
+            imported: from && exportSpec.local ? exportSpec.local.name : null,
+            fromModule: from || null,
+            node: node,
+            type: "id",
+            decl: from ? node : exportSpec.local && exportSpec.local.decl,
+            declId: from ? exportSpec.exported : exportSpec.local && exportSpec.local.declId
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+        return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
+          return {
+            local: decl.id.name,
+            exported: decl.id.name,
+            type: exportsStmt.declaration.kind,
+            fromModule: null,
+            node: node,
+            decl: decl,
+            declId: decl.id
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration) {
+        return exports.concat({
+          local: exportsStmt.declaration.id.name,
+          exported: exportsStmt.declaration.id.name,
+          type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+          fromModule: null,
+          node: node,
+          decl: exportsStmt.declaration,
+          declId: exportsStmt.declaration.id
+        });
+      }
+      return exports;
+    }, []);
+
+    return lively_lang.arr.uniqBy(exports, function (a, b) {
+      return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+    });
   }
 
 
@@ -13442,7 +13658,11 @@ var nodes = Object.freeze({
     findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
     findDeclarationClosestToIndex: findDeclarationClosestToIndex,
     nodesAt: nodesAt$1,
-    statementOf: statementOf
+    statementOf: statementOf,
+    resolveReferences: resolveReferences,
+    refAt: refAt,
+    imports: imports,
+    exports: exports$1
   });
 
   var helper = {
@@ -14356,14 +14576,14 @@ var nodes = Object.freeze({
       if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
         /*...*/
       } else if (stmt.declaration.declarations) {
-          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-            return assignExpr(options.captureObj, decl.id, decl.id, false);
-          })));
-        } else if (stmt.declaration.type === "FunctionDeclaration") {
-          /*handled by function rewriter as last step*/
-        } else if (stmt.declaration.type === "ClassDeclaration") {
-            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-          }
+        body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+          return assignExpr(options.captureObj, decl.id, decl.id, false);
+        })));
+      } else if (stmt.declaration.type === "FunctionDeclaration") {
+        /*handled by function rewriter as last step*/
+      } else if (stmt.declaration.type === "ClassDeclaration") {
+        body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+      }
     }
     parsed.body = body;
     return parsed;
@@ -14414,7 +14634,7 @@ var nodes = Object.freeze({
       var stmt = parsed.body[i];
       if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
         body.push(stmt.declaration);
-        stmt.declaration = stmt.declaration.id;
+        stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
       }
       body.push(stmt);
     }
@@ -14577,18 +14797,18 @@ var nodes = Object.freeze({
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
-            type: "CallExpression",
-            arguments: [{ type: "Literal", value: i }],
-            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(el.argument, {
+          type: "CallExpression",
+          arguments: [{ type: "Literal", value: i }],
+          callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-          // like [{x}]
-        } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-            declaredNames.push(helperVarId.name);
-            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-          }
+        // like [{x}]
+      } else {
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+            helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+      }
     });
   }
 
@@ -14603,11 +14823,11 @@ var nodes = Object.freeze({
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-          declaredNames.push(helperVarId.name);
-          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-        }
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+            helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
+      }
     });
   }
 

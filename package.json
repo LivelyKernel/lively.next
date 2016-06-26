@@ -36,7 +36,7 @@
     "estree-to-js": "^0.1.4",
     "mocha-es6": "^0.3.1",
     "rollup": "^0.26.1",
-    "rollup-plugin-babel": "^2.4.0"
+    "rollup-plugin-babel": "~2.4.0"
   },
   "systemjs": {
     "main": "index.js",
