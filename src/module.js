@@ -42,17 +42,32 @@ class ModuleInterface {
 
   // returns Promise<string>
   source() {
+    // rk 2016-06-24:
+    // We should consider using lively.resource here. Unfortunately
+    // System.fetch (at least with the current systemjs release) will not work in
+    // all cases b/c modules once loaded by the loaded get cached and System.fetch
+    // returns "" in those cases
+
     if (this.id === "@empty") return Promise.resolve("")
 
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
     }
+
     if (this.id.match(/^file:/) && this.System.get("@system-env").node) {
       const path = this.id.replace(/^file:\/\//, "");
       return new Promise((resolve, reject) =>
         this.System._nodeRequire("fs").readFile(path, (err, content) =>
           err ? reject(err) : resolve(String(content))));
     }
+
+    if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
+      // This needs to go into a separate place for "virtual" lively modules
+      var morphId = arr.last(this.id.split("/"));
+      var m = $world.getMorphById(morphId);
+      return Promise.resolve(m ? m.textContent : "");
+    }
+
     return Promise.reject(new Error(`Cannot retrieve source for ${this.id}`));
   }
 
@@ -361,7 +376,15 @@ class ModuleInterface {
   // search
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async search(searchStr) {
+  async search(searchStr, options) {
+    options = Object.assign({excludedModules: []}, options);
+
+    if (options.excludedModules.some(ex => {
+        if (typeof ex === "string") return ex === this.id;
+        if (ex instanceof RegExp) return ex.test(this.id);
+        return false;
+      })) return [];
+
     const src = await this.source();
     let re;
     if (searchStr instanceof RegExp) {
@@ -374,20 +397,30 @@ class ModuleInterface {
     }
 
     let match, res = [];
-    while ((match = re.exec(src)) !== null) {
+    while ((match = re.exec(src)) !== null)
       res.push([match.index, match[0].length]);
-    }
-    for (let i = 0, j = 0, line = 1, start = 0; i < src.length && j < res.length; i++) {
+
+    for (let i = 0, j = 0, line = 1, lineStart = 0;
+         i < src.length && j < res.length;
+         i++) {
       if (src[i] == '\n') {
         line++;
-        start = i + 1;
+        lineStart = i + 1;
       }
       const [idx, length] = res[j];
-      if (i == idx) {
-        res[j] = { file: this.id, line, column: i - start, length };
-        j++;
-      }
+      if (i !== idx) continue;
+      var lineEnd = src.slice(lineStart).indexOf("\n");
+      if (lineEnd === -1) lineEnd = src.length;
+      else lineEnd += lineStart;
+      res[j] = {
+        module: this,
+        length,
+        line, column: i - lineStart,
+        lineString: src.slice(lineStart, lineEnd)
+      };
+      j++;
     }
+
     return res;
   }
 }

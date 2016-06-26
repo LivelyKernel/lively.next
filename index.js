@@ -272,7 +272,8 @@ import {
   removePackage as _removePackage,
   reloadPackage as _reloadPackage,
   applyConfig as _applyPackageConfig,
-  getPackages as _getPackages
+  getPackages as _getPackages,
+  searchPackage as _searchPackage
 } from './src/packages.js'
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
@@ -280,13 +281,15 @@ function removePackage(packageURL) { return _removePackage(defaultSystem, packag
 function reloadPackage(packageURL) { return _reloadPackage(defaultSystem, packageURL); }
 function getPackages(moduleNames) { return _getPackages(defaultSystem); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
+function searchPackage(packageURL, searchString, options) { return _searchPackage(defaultSystem, packageURL, searchString, options); }
 export {
   importPackage,
   registerPackage,
   removePackage,
   reloadPackage,
   getPackages,
-  applyPackageConfig
+  applyPackageConfig,
+  searchPackage
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
