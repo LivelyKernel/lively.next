@@ -5,7 +5,8 @@
     "lively.modules": "*",
     "lively.resources": "*",
     "lively.lang": "*",
-    "lively.ast": "*"
+    "lively.ast": "*",
+    "lively.vm": "*"
   },
   "devDependencies": {
     "mocha-es6": "^0.3.5"
