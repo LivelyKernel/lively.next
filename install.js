@@ -53,6 +53,18 @@ export async function install(baseDir) {
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // linking modules among themselves
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    logger.push(`Linking packages...`);
+    await Promise.all(packages.map(ea => ea.readConfig()));
+    for (let p of packages) {
+      var deps = await p.findDependenciesIn(packages);
+      for (let dep of deps) {
+        await dep.symlinkTo("node_modules", p)
+      }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // npm install
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     logger.push(`Running npm install`);

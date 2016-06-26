@@ -52,6 +52,7 @@ export class Package {
   }
 
   async symlinkTo(localDir, toPackage) {
+    // creates a link from this.directory -> toPackage.directory/localDir/this.name
     var fromPackage = this;
     var cmd = await exec(`node -e '
 var j = require("path").join, fs = require("fs"), localDir = "${localDir}", linkedDir = j(localDir, "${fromPackage.name}");
