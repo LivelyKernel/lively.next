@@ -16,13 +16,19 @@ async function readPackageSpec() {
     await read(packageSpecFile));
 }
 
-var hasUI = typeof $world !== "undefined";
 
 export async function install(baseDir) {
 
   try {
 
-    var indicator = hasUI && await lively.ide.withLoadingIndicatorDo("lively install");
+    var hasUI = typeof $world !== "undefined";
+
+    if (hasUI) {
+      $world.openSystemConsole()
+      await lively.lang.promise.delay(300)
+      $world.get("LogMessages").targetMorph.clear();
+      var indicator = hasUI && await lively.ide.withLoadingIndicatorDo("lively install");
+    }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // reading package spec + init base dir
@@ -96,8 +102,8 @@ export async function install(baseDir) {
 
     indicator && indicator.remove();
 
-    if (hasUI) $world.inform("lively.system successfully installed!");
-    else console.log(`=> Done!\nlively.system installed! You can start a lively server by running 'npm start' inside ${livelyDir}. Afterwards your lively.system development world is running at http://localhost:9001/development.html`)
+    if (hasUI) $world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
+    else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running 'npm start' inside ${livelyDir}. Afterwards your lively.system development world is running at http://localhost:9001/development.html`)
   } catch (e) {
     console.error("Error occurred during installation: " + e);
     throw e
