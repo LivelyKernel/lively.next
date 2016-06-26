@@ -17,8 +17,7 @@
   },
   {
     "name": "lively.modules",
-    "repoURL": "https://github.com/LivelyKernel/lively.modules",
-    "branch": "concurrent-package-loading"
+    "repoURL": "https://github.com/LivelyKernel/lively.modules"
   },
   {
     "name": "lively-system-examples",
