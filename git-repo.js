@@ -160,10 +160,8 @@ export class Repository {
     var trackedRemote = await this.remoteOfBranch(branch);
     if (trackedRemote) remote = trackedRemote;
 
-    console.log(`On branch: ${current.branch || `head is at ${current.hash}`}`);
-
     if (!await this.hasRemoteChanges(branch)) {
-      console.log(`No remote changes, ${this.directory} is up-tp-date.`)
+      false && console.log(`No remote changes, ${this.directory} is up-tp-date.`)
       return "up-to-date";
     }
 
@@ -172,6 +170,7 @@ export class Repository {
       if (!answer) throw "Canceled";
     }
 
+    console.log(`Updating ${this.directory} from git ${remote}/${branch}`)
     var stashed = false;
     if (await this.hasLocalChanges()) {
       console.log(`Stashing local changes...`);
@@ -194,7 +193,7 @@ export class Repository {
     if (stashed) {
       let {code, output} = await this.stashPop();
       if (code !== 0) throw new Error("Error in stash pop: " + output);
-      console.log(`Local from stash applied...`);
+      console.log(`Local changes from stash restored...`);
     }
 
     return pullOutput;
