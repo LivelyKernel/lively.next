@@ -1,0 +1,255 @@
+import { exec } from "./shell-exec.js";
+
+async function test() {
+
+  var repo = new Repository("/Users/robert/Lively/lively-dev/lively.modules")
+  repo.currentBranch()
+  repo.hasLocalChanges();
+  repo.localBranchInfo()
+  await repo.hasRemoteChanges();
+  
+}
+
+export class Repository {
+
+  constructor(directory, options = {dryRun: false}) {
+    this.directory = directory;
+    this.dryRun = options.dryRun;
+    this._log = [];
+  }
+
+  cmd(cmdString, opts) {
+    opts = Object.assign({cwd: this.directory, log: this._log}, opts);
+    opts.log = opts.log || this._log;
+    return exec(cmdString, opts);
+  }
+
+  log() { return this._log.join(""); }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // status
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async currentBranch() {
+    var {output} = await this.cmd('git branch -q | grep "*"');
+    return output.trim().replace(/^\*\s*/, "");
+  }
+
+  async hasLocalChanges() {
+    var {output, code} = await this.cmd(`git status --short -uno`);
+    return !!output.trim().length;
+  }
+
+  async diff(opts = []) {
+    var {output} = await this.cmd(`git diff ${opts.join(" ")}`);
+    return output.trim();
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // branches
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async localBranchInfo() {
+    // await new Repository().localBranchInfo()
+    // var i = new Repository()
+    // i.localBranchInfo()
+    // i.log()
+    // Returns {branch, remote}
+    var {output: ref, code} = await this.cmd("git symbolic-ref HEAD");
+    var branch = code ? undefined : ref.trim().slice(ref.lastIndexOf('/')+1);
+    return {
+      branch: branch,
+      remote: branch ? await this.remoteOfBranch(branch) : undefined,
+      hash: (await this.cmd("git rev-parse HEAD")).output.trim()
+    }
+  }
+
+  async remoteOfBranch(branch) {
+    var {output} = await this.cmd(`git config branch.${branch}.remote`);
+    return output.trim();
+  }
+
+  async checkout(branchOrHash) {
+    var {output, code} = this.cmd(`git checkout ${branchOrHash}`);
+    if (code) throw new Error(`Failed to checkout ${branchOrHash}: ${output}`);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // remote
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async getListOfRemotes() {
+    var {output: remotesString} = await this.cmd("git remote -v");
+    return remotesString.split('\n').map(string => {
+      string = string.trim();
+      if (!string.length || string.match(/\(fetch\)$/)) return null;
+      var parts = string.split(/\s+/);
+      return {name: parts[0], url: parts[1]};
+    }).filter(ea => !!ea);
+  }
+
+  async interactivelyChooseRemote() {
+    // await new Repository().getListOfRemotes()
+    // await new Repository().interactivelyChooseRemote()
+    var remotes = await this.getListOfRemotes(),
+        choice = await $world.listPrompt(
+          `Please select a git remote repository.`,
+          remotes.map(function(remote) {
+            return {
+              isListItem: true,
+              string: remote.name + ' (' + remote.url + ')',
+              value: remote
+            };
+          }), 'origin', pt(350, 140));
+
+    if (!choice || choice.length === 0 || !choice.name)
+      return undefined;
+
+    // {name, url}
+    return choice;
+  }
+
+  async hasRemoteChanges(branch = "master") {
+    var {local, remote} = await this.getRemoteAndLocalHeadRef(branch);
+    return local !== remote;
+  }
+  
+  async getRemoteAndLocalHeadRef(branch = "master", remote = "origin") {
+    var cmdString =
+        `remote=$(git ls-remote "${remote}" ${branch});\n`
+      + `local=$(git show-ref --hash ${branch} | head -n 1);\n`
+      + `echo "{\\"remote\\": \\"$remote\\", \\"local\\": \\"$local\\"}";`;
+
+    var {output} = await this.cmd(cmdString);
+
+    if (output.match(/does not exist/)) {
+      return {remote: '', local: this.directory + ' does not exist'};
+    }
+
+    var out;
+    try {
+      out = JSON.parse(output.replace(/\s/g, ' '));
+    } catch (e) {
+      throw new Error(output)
+    }
+
+    return {
+      remote: (out.remote || '').trim().split(' ')[0],
+      local: (out.local || '').trim().split(' ')[0]};
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // local commit state
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  stash(log) { return this.cmd("git stash", {log: log}); }
+  stashPop(log) { return this.cmd("git stash pop", {log: log}); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // pull / fetch
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  pull(branch = "master", remote = "origin", log) {
+    return this.cmd(`git pull ${remote} ${branch}`, {log: log});
+  }
+
+  async interactivelyUpdate(branch = "master", remote = "origin", log = []) {
+    var current = await this.localBranchInfo();
+    var trackedRemote = await this.remoteOfBranch(branch);
+    if (trackedRemote) remote = trackedRemote;
+
+    console.log(`On branch: ${current.branch || `head is at ${current.hash}`}`);
+
+    if (!await this.hasRemoteChanges(branch)) {
+      console.log(`No remote changes, ${this.directory} is up-tp-date.`)
+      return "up-to-date";
+    }
+
+    if (typeof $world !== "undefined") {
+      var answer = await $world.confirm(`Do you want to update the package in ${this.directory}?`);
+      if (!answer) throw "Canceled";
+    }
+
+    var stashed = false;
+    if (await this.hasLocalChanges()) {
+      console.log(`Stashing local changes...`);
+      stashed = true;
+      let {code, output} = await this.stash();
+      if (code !== 0) throw new Error("Error in stash: " + output);
+    }
+    
+    if (current.branch !== branch) await this.checkout(branch);
+
+    var {code, output: pullOutput} = await this.pullSavingUntrackedFiles(branch, remote);
+    if (code !== 0) throw new Error("Error in pull: " + pullOutput);
+
+    if (current.branch !== branch) await this.checkout(current.branch || current.hash);
+
+    if (stashed) {
+      let {code, output} = await this.stashPop();
+      if (code !== 0) throw new Error("Error in stash pop: " + output);
+      console.log(`Local from stash applied...`);
+    }
+
+    return pullOutput;
+  }
+
+  async moveFilesElsewhereWhile(files, func) {
+    var fileObjs = files.map(f => {
+      var parts = f.split("/"),
+          dir = parts.slice(0, -1).join("/"),
+          name = parts[parts.length-1];
+      return {path: f, name, dir}
+    });
+    
+    for (let f of fileObjs)
+      await this.cmd(`mkdir -p .lively-git-helper/${f.dir}; mv ${f.path} .lively-git-helper/${f.path};`)
+
+    try {
+      return await func();
+    } finally {
+
+      for (let f of fileObjs)
+        await this.cmd(`mv .lively-git-helper/${f.path} ${f.path};`)
+    }
+
+  }
+
+  async pullSavingUntrackedFiles(branch, remote) {
+    var initialPull = await this.pull(branch, remote);
+    if (!initialPull.code) return initialPull;
+
+    // if the pull doesn't succeed check if we have files that would be overridden
+    var untrackedRe = /untracked working tree files would be overwritten/;
+    if (!initialPull.output.match(untrackedRe)) return initialPull;
+
+    var lines = initialPull.output.trim().split("\n"),
+        index = lines.findIndex((line) => line.match(untrackedRe)),
+        overwrittenFiles = lines.slice(index+1)
+                            .filter(line => line.match(/^\s/))
+                            .map(line => line.trim())
+
+    var pullCmd = this.moveFilesElsewhereWhile(overwrittenFiles, async () => await this.pull(branch, remote));
+    if (pullCmd.code !== 0) throw new Error("Error in pull:" + pullCmd.output);
+    return pullCmd;
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // clone
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async clone(repoURL, branch = "master", log) {
+    var pathParts = this.directory.split("/"),
+        parentDir = pathParts.slice(0,-1).join("/"),
+        name = pathParts[pathParts.length-1];
+    if ((await this.cmd(`test -d "${this.directory}"`)).code === 0) {
+      throw new Error(`Cannot clone into ${this.directory}: exists already`);
+    }
+    var {code, output} = await this.cmd(`git clone -b ${branch} ${repoURL} ${name}`, {cwd: parentDir, log: log});
+    if (code) throw new Error(`Failure cloning repo: ${output}`);
+  }
+
+}
