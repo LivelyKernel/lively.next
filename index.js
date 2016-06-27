@@ -279,9 +279,9 @@ function importPackage(packageURL) { return _importPackage(defaultSystem, packag
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
 function removePackage(packageURL) { return _removePackage(defaultSystem, packageURL); }
 function reloadPackage(packageURL) { return _reloadPackage(defaultSystem, packageURL); }
-function getPackages(moduleNames) { return _getPackages(defaultSystem); }
+function getPackages() { return _getPackages(defaultSystem); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
-function searchPackage(packageURL, searchString, options) { return _searchPackage(defaultSystem, packageURL, searchString, options); }
+function searchInPackage(packageURL, searchString, options) { return _searchPackage(defaultSystem, packageURL, searchString, options); }
 export {
   importPackage,
   registerPackage,
@@ -289,7 +289,7 @@ export {
   reloadPackage,
   getPackages,
   applyPackageConfig,
-  searchPackage
+  searchInPackage
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
