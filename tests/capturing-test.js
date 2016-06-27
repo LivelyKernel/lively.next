@@ -103,6 +103,13 @@ describe("ast.capturing", function() {
                  "_rec.x = 23;\n_rec.y = _rec.x + 1;");
     });
 
+    describe("enhanced object literals", () => {
+
+      testVarTfm("captures shorthand properties",
+                 "var x = 23, y = {x};",
+                 "_rec.x = 23;\n_rec.y = { x: _rec.x };");
+    });
+
     describe("class", () => {
 
       describe("with class-to-func transform", () => {
