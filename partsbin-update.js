@@ -1,0 +1,116 @@
+
+export function createPartSpaceUpdate(partSpaceName, fromURL, toURL) {
+  // var updates = createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
+  fromURL = new URL(fromURL);
+  toURL = new URL(toURL);
+  var fromPartSpace = lively.PartsBin.partsSpaceWithURL(fromURL.join(partSpaceName)),
+      toPartSpace = lively.PartsBin.partsSpaceWithURL(toURL.join(partSpaceName)),
+      update = new PartSpaceUpdate(fromPartSpace, toPartSpace),
+      updates = update.computeUpdates()
+  
+  return updates;
+}
+
+class PartSpaceUpdate {
+
+  constructor(fromSpace, toSpace) {
+    this.fromSpace = fromSpace;
+    this.toSpace = toSpace;
+  }
+
+  computeUpdates() {
+    var f = this.fromSpace, t = this.toSpace;
+    f.load();
+    t.load();
+
+    var fromItems = lively.lang.obj.values(f.partItems),
+        toItems = lively.lang.obj.values(t.partItems),
+        missingInTo = fromItems.pluck("name").withoutAll(toItems.pluck("name")).map(ea => f.partItems[ea]),
+        missingInFrom = toItems.pluck("name").withoutAll(fromItems.pluck("name")).map(ea => t.partItems[ea]),
+        updates = []
+          .concat(missingInTo.map(item => new PartItemUpdate(f, t, item, null, "to-missing")))
+          .concat(missingInFrom.map(item => new PartItemUpdate(f, t, null, item, "from-missing")))
+          .concat(fromItems.withoutAll(missingInTo)
+            .map(ea => {
+              var upd = new PartItemUpdate(f, t, ea, t.partItems[ea.name], "unknown")
+              upd.determineStatus();
+              return upd;
+            }));
+
+    return updates;
+  }
+
+}
+
+class PartItemUpdate {
+  // status one of
+  // unknown
+  // to-missing
+  // from-missing
+  // up-to-date
+  // from-changed
+  // to-changed
+  // both-changed
+
+  constructor(fromSpace, toSpace, fromItem, toItem, status = "unknown") {
+    this.fromSpace = fromSpace;
+    this.toSpace = toSpace;
+    this.fromItem = fromItem;
+    this.toItem = toItem;
+    this.status = status;
+  }
+
+  determineStatus() {
+    if (this.status !== "unknown") return this.status;
+
+    let toMeta = this.toItem.getMetaInfo(), fromMeta = this.fromItem.getMetaInfo(),
+        toSorted = toMeta.changes.sortByKey("date"),
+        fromSorted = fromMeta.changes.sortByKey("date"),
+        {toModified, fromModified} = getBranchInfo(toSorted, fromSorted);
+        
+    if (!toModified && !fromModified) this.status = "up-to-date"
+    else if (toModified && !fromModified) this.status = "to-changed"
+    else if (!toModified && fromModified) this.status = "from-changed"
+    else this.status = "both-changed"
+    return this.status;
+  }
+  
+  async runUpdate(livelyDir, log) {
+    // var category = this.fromSpace.getName(),
+    //     fromURL = this.fromSpace.getURL().toString().replace(/\/$/, "").slice(0, -category.length),
+    //     {output, code} = await copyPartsBinItem(fromURL, category, this.fromItem.name, livelyDir, {log: log});
+  }
+}
+
+
+
+// Locates branchpoint and returns whether we have local and/or remote changes
+function getBranchInfo(localChanges, remoteChanges) {
+  let branchPoint,
+      localModified = false,
+      remoteModified = false;
+  while (!branchPoint) {
+    let localHead = localChanges[localChanges.length-1],
+        remoteHead = remoteChanges[remoteChanges.length-1],
+        localHeadID = localHead.id,
+        remoteHeadID = remoteHead.id,
+        localHeadTime = localHead.date.valueOf(),
+        remoteHeadTime = remoteHead.date.valueOf();
+    if (localHeadTime > remoteHeadTime) {
+      localModified = true;
+      localChanges.pop();
+    } else if (localHeadTime < remoteHeadTime) {
+      remoteModified = true;
+      remoteChanges.pop();
+    } else if (localHeadID === remoteHeadID) {
+      branchPoint = localHead;
+    } else {
+     /* Times are equal but IDs are not (!)... 
+     /* This is theoretically possible (changes occured during the same second?),
+      * but presumably rare enough that we shouldn't need to handle it...
+      */
+      throw new Error("Unhandled condition: two part changes have the same time, but different IDs");
+    }
+  }
+  return { localModified: localModified, remoteModified: remoteModified };
+}
