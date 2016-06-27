@@ -1,7 +1,7 @@
 import { exec } from "lively.installer/shell-exec.js";
 import { join, read, write, ensureDir } from "lively.installer/helpers.js";
 import { Package } from "lively.installer/package.js";
-import { copyLivelyWorld, copyPartsBinItem, downloadPartItem, downloadPartsBin } from "lively.installer/partsbin-helper.js";
+import { copyLivelyWorldIfMissing, copyPartsBinItemIfMissing, downloadPartItem, downloadPartsBin } from "lively.installer/partsbin-helper.js";
 
 
 var packageSpecFile = System.decanonicalize("lively.installer/packages-config.json");
@@ -83,18 +83,23 @@ export async function install(baseDir) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // Installing tools into old Lively
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    
     var livelyDir = join(baseDir, "LivelyKernel")
-
+  
     console.log("=> Downloading PartsBin...\n")
     var {output} = await downloadPartsBin(livelyDir, {log: log});
 
     console.log("=> Downloading lively.system part items...\n")
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, {log: log});
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, {log: log});
-    var {output} = await copyPartsBinItem("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, {log: log});
+    var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, {log: log});
+    console.log(output);
+    var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, {log: log});
+    console.log(output);
+    var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, {log: log});
+    console.log(output);
 
     console.log("=> Downloading lively.system worlds...\n")
-    var {output} = await copyLivelyWorld("https://dev.lively-web.org/", "development.html", livelyDir, {log: log});
+    var {output} = await copyLivelyWorldIfMissing("https://dev.lively-web.org/", "development.html", livelyDir, {log: log});
+    console.log(output);
 
     indicator && indicator.remove();
 

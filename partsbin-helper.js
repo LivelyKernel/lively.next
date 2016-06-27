@@ -1,4 +1,5 @@
 import { exec } from "./shell-exec.js";
+import { join } from "./helpers.js";
 
 // node new-install.js path/to/Lively
 
@@ -75,6 +76,16 @@ new Promise((resolve, reject) => require("./bin/helper/download-partsbin.js")(er
   return exec(nodeCode, {cwd: livelyDir, log: opts.log});
 }
 
+export async function copyPartsBinItemIfMissing(fromURL, partSpace, partName, livelyDir, opts = {log: []}) {
+  var options = {cwd: livelyDir, log: opts.log},
+      file = join(partSpace, partName + ".json"),
+      nodeCode = `node -e 'process.exit(require("fs").existsSync("${file}") ? 0 : 1);'`,
+      exists = (await exec(nodeCode, options)).code === 0;
+  return exists ?
+    {code: 0, output: `skipping ${partName} b/c it exists in ${livelyDir}`} :
+    copyPartsBinItem(fromURL, partSpace, partName, livelyDir, opts)
+}
+
 export function copyPartsBinItem(fromURL, partSpace, partName, livelyDir, opts = {log: []}) {
   // "https://dev.lively-web.org/",
   // "PartsBin/lively.modules",
@@ -85,6 +96,15 @@ ensureDir(join("${livelyDir}", "${partSpace}"));
 copyPartsBinItem("${fromURL}", "${partSpace}", "${partName}", "${livelyDir}").catch(_ => process.exit(1));
 '`;
   return exec(nodeCode, {cwd: livelyDir, log: opts.log});
+}
+
+export async function copyLivelyWorldIfMissing(fromURL, pathToWorld, livelyDir, opts = {log: []}) {
+  var options = {cwd: livelyDir, log: opts.log},
+      nodeCode = `node -e 'process.exit(require("fs").existsSync("${pathToWorld}") ? 0 : 1);'`,
+      exists = (await exec(nodeCode, options)).code === 0;
+  return exists ?
+    {code: 0, output: `skipping ${pathToWorld} b/c it exists in ${livelyDir}`} :
+    copyLivelyWorld(fromURL, pathToWorld, livelyDir, opts)
 }
 
 export function copyLivelyWorld(fromURL, pathToWorld, livelyDir, opts = {log: []}) {
