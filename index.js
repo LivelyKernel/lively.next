@@ -30,7 +30,7 @@ export class Interface {
   runEval(source, options)                       { return this.coreInterface.runEval(source, options); }
   printSystemConfig(a, b, c)                     { return this.coreInterface.printSystemConfig(a, b, c); }
   getConfig(a, b, c)                             { return this.coreInterface.getConfig(a, b, c); }
-  getPackages(a, b, c)                           { return this.coreInterface.getPackages(a, b, c); }
+  getPackages()                                  { return this.coreInterface.getPackages(); }
   getModules(a, b, c)                            { return this.coreInterface.getModules(a, b, c); }
   getModule(a, b, c)                             { return this.coreInterface.getModule(a, b, c); }
   getPackage(a, b, c)                            { return this.coreInterface.getPackage(a, b, c); }
@@ -56,7 +56,7 @@ export class Interface {
   moduleRead(name)           { return this.coreInterface.moduleRead(name); }
   moduleWrite(name, content) { return this.coreInterface.moduleWrite(name, content); }
   getModulesInPackage(name)  { return modulesInPackage(this.coreInterface, name); }
-  
+
   shortModuleName(moduleId, itsPackage)                               { return shortModuleName(this.coreInterface, moduleId, itsPackage); }
   showExportsAndImportsOf(a, b)                                       { return showExportsAndImportsOf(this.coreInterface, a, b); }
   interactivelyChangeModule(vmEditor, moduleName, newSource, options) { return interactivelyChangeModule(this.coreInterface, vmEditor, moduleName, newSource, options); }
@@ -65,6 +65,15 @@ export class Interface {
   interactivelyRemoveModule(vmEditor, moduleName)                     { return interactivelyRemoveModule(this.coreInterface, vmEditor, moduleName); }
   interactivelyAddModule(vmEditor, relatedPackageOrModule)            { return interactivelyAddModule(this.coreInterface, vmEditor, relatedPackageOrModule); }
 
+  searchInPackage(packageURL, searchTerm, options) { return this.coreInterface.searchInPackage(packageURL, searchTerm, options); }
+  async searchInAllPackages(searchTerm, options) {
+    var packages = this.coreInterface.getPackages(), results = [];
+    for (let {url} of packages) {
+      if (url)
+        results = results.concat(await this.coreInterface.searchInPackage(url, searchTerm, options));
+    }
+    return results;
+  }
 }
 
 export var localInterface = new Interface(new LocalCoreInterface());
