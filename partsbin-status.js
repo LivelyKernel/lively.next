@@ -2,31 +2,15 @@
 
 import { createPartSpaceUpdate } from "./partsbin-update.js";
 
-export async function openPartsBinSummary(partSpaceName, fromURL, toURL) {
-  // openPartsBinSummary("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
-  try {
-    var i = await lively.ide.withLoadingIndicatorDo("computing summary...");
-    var updates = createPartSpaceUpdate(partSpaceName, fromURL, toURL)
-    var summary = await summaryForPartsBin(updates);
-    
-    return $world.addCodeEditor({
-      title: "part status summary",
-      textMode: "text",
-      content: summary,
-      extent: pt(600, 800)
-    }).getWindow().comeForward();
-
-  } finally { i.remove(); }
-}
-
-
-async function summaryForPartsBin(updates) {
-  var summaries = await Promise.all(updates.map(ea => printSummaryFor(ea)));
+export async function summaryForPartsBin(partSpaceName, fromURL, toURL) {
+  // getPartsBinSummary("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
+  var updates = createPartSpaceUpdate(partSpaceName, fromURL, toURL)
+  var summaries = await Promise.all(updates.map(ea => getSummaryFor(ea)));
   return summaries.join("\n")
 }
 
 
-function printSummaryFor(update) {
+function getSummaryFor(update) {
   var {fromItem, status} = update;
   var report = `Part '${fromItem.name}'\n  => `;
   if (status === 'to-missing') {
