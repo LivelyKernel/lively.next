@@ -3,33 +3,23 @@ import { summaryForPackages } from "./package-status.js"
 
 export async function openPackageSummary(baseDir) {
   // openPackageSummary("/Users/robert/Lively/lively-dev-2")
-  try {
-    var i = await lively.ide.withLoadingIndicatorDo("computing summary...");
-    var packages = await Promise.all((await readPackageSpec()).map(spec =>
-      new Package(join(baseDir, spec.name), spec).readConfig()))
-    var summary = await summaryForPackages(packages);
-    
-    return $world.addCodeEditor({
-      title: "package status summary",
-      textMode: "text",
-      content: summary,
-      extent: pt(600, 800)
-    }).getWindow().comeForward();
-
-  } finally { i.remove(); }
+  return await openSummary("package status summary", () => summaryForPackages(baseDir));
 }
 
 export async function openPartsBinSummary(partSpaceName, fromURL, toURL) {
   // openPartsBinSummary("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
+  return await openSummary("part status summary", () => summaryForPartsBin(partSpaceName, fromURL, toURL));
+}
+
+async function openSummary(title, contentFn) {
   try {
     var i = await lively.ide.withLoadingIndicatorDo("computing summary...");
-    var summary = await summaryForPartsBin(partSpaceName, fromURL, toURL);
-    
+    var content = await contentFn();
     return $world.addCodeEditor({
-      title: "part status summary",
+      title: title,
       textMode: "text",
-      content: summary,
-      extent: pt(600, 400)
+      content: content,
+      extent: pt(600, 800)
     }).getWindow().comeForward();
 
   } finally { i.remove(); }

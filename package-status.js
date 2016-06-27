@@ -31,7 +31,9 @@ async function printSummaryFor(p, packages) {
   return report;
 }
 
-async function summaryForPackages(packages) {
+export async function summaryForPackages(baseDir) {
+  var packages = await Promise.all((await readPackageSpec()).map(spec =>
+       new Package(join(baseDir, spec.name), spec).readConfig()))
   var summaries = await Promise.all(packages.map(ea => printSummaryFor(ea, packages)));
   return summaries.join("\n")
 }
