@@ -106,7 +106,6 @@ class ModuleInterface {
   }
   
   reset() {
-    this._recorder = null;
     this._source = null;
     this._ast = null;
     this._scope = null;
@@ -307,13 +306,13 @@ class ModuleInterface {
     // then this returns [<importStmt>, <m>, "x"]
     const scope = await this.scope(),
           ast = scope.node,
-          nodes = query.nodesAt(pos, ast);
+          nodes = query.nodesAtIndex(ast, pos);
     if (nodes.length < 2) return [null, null];
     const id = nodes[nodes.length - 1],
           member = nodes[nodes.length - 2];
     if (id.type != "Identifier" ||
         member.type != "MemberExpression" ||
-        member.type.computed ||
+        member.computed ||
         member.object.type !== "Identifier" ||
         !member.object.decl ||
         member.object.decl.type !== "ImportDeclaration") {
