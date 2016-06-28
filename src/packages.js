@@ -311,7 +311,7 @@ class Package {
 
   reload() { this.remove(); return this.import(); }
 
-  search(needle, options) { return searchPackage(this.System, this.url, needle, options); }
+  search(needle, options) { return searchInPackage(this.System, this.url, needle, options); }
 
   mergeWithConfig(config) {
     var copy = Object.assign({}, config);
@@ -418,7 +418,7 @@ function getPackages(System) {
 // search
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function searchPackage(System, packageURL, searchStr, options) {
+function searchInPackage(System, packageURL, searchStr, options) {
   packageURL = packageURL.replace(/\/$/, "");
   var p = getPackages(System).find(p => p.address == packageURL);
   return p ? Promise.all(
@@ -435,5 +435,5 @@ export {
   reloadPackage,
   applyConfig,
   getPackages,
-  searchPackage
+  searchInPackage
 };

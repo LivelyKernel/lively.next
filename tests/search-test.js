@@ -6,7 +6,7 @@ import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, searchLoadedModules, loadedModules } from "../src/system.js";
 import mod from "../src/module.js";
-import { importPackage, removePackage, searchPackage } from "../src/packages.js";
+import { importPackage, removePackage, searchInPackage } from "../src/packages.js";
 
 const dir = System.decanonicalize("lively.modules/tests/"),
       testProjectDir = dir + "search-test-project/",
@@ -159,7 +159,7 @@ describe("search", () => {
     afterEach(async () => await removePackage(S, testProjectDir));
 
     it("finds string constants", async () => {
-      const res = await searchPackage(S, testProjectDir, "hello");
+      const res = await searchInPackage(S, testProjectDir, "hello");
       expect(res).to.containSubset([{
         module: {id: file1m},
         line: 2,
@@ -169,7 +169,7 @@ describe("search", () => {
     });
 
     it("finds comments", async () => {
-      const res = await searchPackage(S, testProjectDir, "comment");
+      const res = await searchInPackage(S, testProjectDir, "comment");
       expect(res).to.containSubset([{
         module: {id: file2m},
         line: 1,
@@ -180,7 +180,7 @@ describe("search", () => {
 
     describe("by regex", () => {
       it("finds comments", async () => {
-        const res = await searchPackage(S, testProjectDir, /(im|ex)port/);
+        const res = await searchInPackage(S, testProjectDir, /(im|ex)port/);
         expect(res).to.containSubset([{
           module: {id: file1m},
           line: 1,
@@ -201,14 +201,14 @@ describe("search", () => {
     });
 
     it("can exclude modules", async () => {
-      const res = await searchPackage(S, testProjectDir, /(im|ex)port/, {excludedModules: [file1m]});
+      const res = await searchInPackage(S, testProjectDir, /(im|ex)port/, {excludedModules: [file1m]});
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
         {module: {id: file2m}, line: 1, column: 0, length: 6}]);
     });
 
     it("can exclude modules via regex matches", async () => {
-      const res = await searchPackage(S, testProjectDir, /(im|ex)port/, {excludedModules: [/file1.js/]});
+      const res = await searchInPackage(S, testProjectDir, /(im|ex)port/, {excludedModules: [/file1.js/]});
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
         {module: {id: file2m}, line: 1, column: 0, length: 6}]);

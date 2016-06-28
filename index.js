@@ -273,7 +273,7 @@ import {
   reloadPackage as _reloadPackage,
   applyConfig as _applyPackageConfig,
   getPackages as _getPackages,
-  searchPackage as _searchPackage
+  searchInPackage as _searchInPackage
 } from './src/packages.js'
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
@@ -281,7 +281,7 @@ function removePackage(packageURL) { return _removePackage(defaultSystem, packag
 function reloadPackage(packageURL) { return _reloadPackage(defaultSystem, packageURL); }
 function getPackages() { return _getPackages(defaultSystem); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
-function searchInPackage(packageURL, searchString, options) { return _searchPackage(defaultSystem, packageURL, searchString, options); }
+function searchInPackage(packageURL, searchString, options) { return _searchInPackage(defaultSystem, packageURL, searchString, options); }
 export {
   importPackage,
   registerPackage,
