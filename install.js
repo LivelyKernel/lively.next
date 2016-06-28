@@ -1,16 +1,10 @@
-import { exec } from "lively.installer/shell-exec.js";
-import { join, read, write, ensureDir } from "lively.installer/helpers.js";
-import { Package } from "lively.installer/package.js";
+import { exec } from "./shell-exec.js";
+import { join, read, write, ensureDir, getPackageSpec, readPackageSpec } from "lively.installer/helpers.js";
+import { Package } from "./package.js";
 import { copyLivelyWorldIfMissing, copyPartsBinItemIfMissing, downloadPartItem, downloadPartsBin } from "lively.installer/partsbin-helper.js";
 
 
-var packageSpecFile = System.decanonicalize("lively.installer/packages-config.json");
-
-async function readPackageSpec() {
-  return JSON.parse(System.get("@system-env").browser ?
-    await (await fetch(packageSpecFile)).text() :
-    await read(packageSpecFile));
-}
+var packageSpecFile = getPackageSpec();
 
 export async function install(baseDir) {
 
@@ -32,7 +26,7 @@ export async function install(baseDir) {
     console.log("=> Initializing ensuring existance of " + baseDir);
     await ensureDir(baseDir);
     console.log("=> Reading package specs from " + packageSpecFile);
-    var knownProjects = await readPackageSpec(),
+    var knownProjects = await readPackageSpec(packageSpecFile),
         packages = await Promise.all(knownProjects.map(spec =>
           new Package(join(baseDir, spec.name), spec, log).readConfig()))
 
