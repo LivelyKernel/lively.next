@@ -147,8 +147,8 @@ describe("eval", () => {
     it("exports and imports", async () => {
       var m1 = S.get("@lively-env").moduleEnv("lively://foo/mod1"),
           m2 = S.get("@lively-env").moduleEnv("lively://foo/mod2");
-      await runEval("export var z = 23; show(z)", {targetModule: m1.id, System: S});
-      await runEval(`import { z } from '${m1.id}'; show(z);`, {targetModule: m2.id, System: S});
+      await runEval("export var z = 23;", {targetModule: m1.id, System: S});
+      await runEval(`import { z } from '${m1.id}';`, {targetModule: m2.id, System: S});
       expect(m2).to.have.deep.property("recorder.z", 23);
     });
 
