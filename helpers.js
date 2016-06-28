@@ -38,3 +38,13 @@ export function normalizeProjectSpec(spec) {
     dir: spec.dir || join(spec.parentDir, spec.name)
   });
 }
+
+export function getPackageSpec() {
+  return System.decanonicalize("lively.installer/packages-config.json");
+}
+
+export async function readPackageSpec(pkgSpec) {
+    return JSON.parse(System.get("@system-env").browser ?
+      await (await fetch(pkgSpec)).text() :
+      await read(pkgSpec));
+}
