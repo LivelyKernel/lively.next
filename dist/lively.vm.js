@@ -327,6 +327,12 @@
                 return object[k];
             }) : [];
         },
+        select: function (obj, keys) {
+            var selected = {};
+            for (var i = 0; i < keys.length; i++)
+                selected[keys[i]] = obj[keys[i]];
+            return selected;
+        },
         addScript: function (object, funcOrString, optName, optMapping) {
             var func = exports.fun.fromString(funcOrString);
             return exports.fun.asScriptOf(func, object, optName, optMapping);
@@ -5431,6 +5437,8 @@ var _tokentype = _dereq_("./tokentype");
 
 var _state = _dereq_("./state");
 
+var _parseutil = _dereq_("./parseutil");
+
 var pp = _state.Parser.prototype;
 
 // Check if property name clashes with already added.
@@ -5507,10 +5515,10 @@ pp.parseExpression = function (noIn, refDestructuringErrors) {
 pp.parseMaybeAssign = function (noIn, refDestructuringErrors, afterLeftParse) {
   if (this.inGenerator && this.isContextual("yield")) return this.parseYield();
 
-  var validateDestructuring = false;
+  var ownDestructuringErrors = false;
   if (!refDestructuringErrors) {
-    refDestructuringErrors = { shorthandAssign: 0, trailingComma: 0 };
-    validateDestructuring = true;
+    refDestructuringErrors = new _parseutil.DestructuringErrors();
+    ownDestructuringErrors = true;
   }
   var startPos = this.start,
       startLoc = this.startLoc;
@@ -5518,7 +5526,8 @@ pp.parseMaybeAssign = function (noIn, refDestructuringErrors, afterLeftParse) {
   var left = this.parseMaybeConditional(noIn, refDestructuringErrors);
   if (afterLeftParse) left = afterLeftParse.call(this, left, startPos, startLoc);
   if (this.type.isAssign) {
-    if (validateDestructuring) this.checkPatternErrors(refDestructuringErrors, true);
+    this.checkPatternErrors(refDestructuringErrors, true);
+    if (!ownDestructuringErrors) _parseutil.DestructuringErrors.call(refDestructuringErrors);
     var node = this.startNodeAt(startPos, startLoc);
     node.operator = this.value;
     node.left = this.type === _tokentype.types.eq ? this.toAssignable(left) : left;
@@ -5528,7 +5537,7 @@ pp.parseMaybeAssign = function (noIn, refDestructuringErrors, afterLeftParse) {
     node.right = this.parseMaybeAssign(noIn);
     return this.finishNode(node, "AssignmentExpression");
   } else {
-    if (validateDestructuring) this.checkExpressionErrors(refDestructuringErrors, true);
+    if (ownDestructuringErrors) this.checkExpressionErrors(refDestructuringErrors, true);
   }
   return left;
 };
@@ -5765,7 +5774,7 @@ pp.parseParenAndDistinguishExpression = function (canBeArrow) {
         innerStartLoc = this.startLoc;
     var exprList = [],
         first = true;
-    var refDestructuringErrors = { shorthandAssign: 0, trailingComma: 0 },
+    var refDestructuringErrors = new _parseutil.DestructuringErrors(),
         spreadStart = undefined,
         innerParenStart = undefined;
     while (this.type !== _tokentype.types.parenR) {
@@ -5933,9 +5942,9 @@ pp.parsePropertyValue = function (prop, isPattern, isGenerator, startPos, startL
     }
     if (prop.kind === "set" && prop.value.params[0].type === "RestElement") this.raiseRecoverable(prop.value.params[0].start, "Setter cannot use rest params");
   } else if (this.options.ecmaVersion >= 6 && !prop.computed && prop.key.type === "Identifier") {
+    if (this.keywords.test(prop.key.name) || (this.strict ? this.reservedWordsStrictBind : this.reservedWords).test(prop.key.name) || this.inGenerator && prop.key.name == "yield") this.raiseRecoverable(prop.key.start, "'" + prop.key.name + "' can not be used as shorthand property");
     prop.kind = "init";
     if (isPattern) {
-      if (this.keywords.test(prop.key.name) || (this.strict ? this.reservedWordsStrictBind : this.reservedWords).test(prop.key.name) || this.inGenerator && prop.key.name == "yield") this.raiseRecoverable(prop.key.start, "Binding " + prop.key.name);
       prop.value = this.parseMaybeDefault(startPos, startLoc, prop.key);
     } else if (this.type === _tokentype.types.eq && refDestructuringErrors) {
       if (!refDestructuringErrors.shorthandAssign) refDestructuringErrors.shorthandAssign = this.start;
@@ -6053,14 +6062,16 @@ pp.parseExprList = function (close, allowTrailingComma, allowEmpty, refDestructu
   while (!this.eat(close)) {
     if (!first) {
       this.expect(_tokentype.types.comma);
-      if (this.type === close && refDestructuringErrors && !refDestructuringErrors.trailingComma) {
-        refDestructuringErrors.trailingComma = this.lastTokStart;
-      }
       if (allowTrailingComma && this.afterTrailingComma(close)) break;
     } else first = false;
 
     var elt = undefined;
-    if (allowEmpty && this.type === _tokentype.types.comma) elt = null;else if (this.type === _tokentype.types.ellipsis) elt = this.parseSpread(refDestructuringErrors);else elt = this.parseMaybeAssign(false, refDestructuringErrors);
+    if (allowEmpty && this.type === _tokentype.types.comma) elt = null;else if (this.type === _tokentype.types.ellipsis) {
+      elt = this.parseSpread(refDestructuringErrors);
+      if (this.type === _tokentype.types.comma && refDestructuringErrors && !refDestructuringErrors.trailingComma) {
+        refDestructuringErrors.trailingComma = this.lastTokStart;
+      }
+    } else elt = this.parseMaybeAssign(false, refDestructuringErrors);
     elts.push(elt);
   }
   return elts;
@@ -6101,7 +6112,7 @@ pp.parseYield = function () {
   return this.finishNode(node, "YieldExpression");
 };
 
-},{"./state":10,"./tokentype":14}],2:[function(_dereq_,module,exports){
+},{"./parseutil":9,"./state":10,"./tokentype":14}],2:[function(_dereq_,module,exports){
 // Reserved word lists for various dialects of the language
 
 "use strict";
@@ -6274,7 +6285,7 @@ var _whitespace = _dereq_("./whitespace");
 exports.isNewLine = _whitespace.isNewLine;
 exports.lineBreak = _whitespace.lineBreak;
 exports.lineBreakG = _whitespace.lineBreakG;
-var version = "3.0.4";
+var version = "3.1.0";
 
 exports.version = version;
 // The main exported interface (under `self.acorn` when in the
@@ -6540,6 +6551,7 @@ pp.parseBindingList = function (close, allowEmpty, allowTrailingComma, allowNonI
       var rest = this.parseRest(allowNonIdent);
       this.parseBindingListItem(rest);
       elts.push(rest);
+      if (this.type === _tokentype.types.comma) this.raise(this.start, "Comma is not permitted after the rest element");
       this.expect(close);
       break;
     } else {
@@ -6801,6 +6813,10 @@ function pushComment(options, array) {
 },{"./locutil":5,"./util":15}],9:[function(_dereq_,module,exports){
 "use strict";
 
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var _tokentype = _dereq_("./tokentype");
 
 var _state = _dereq_("./state");
@@ -6888,10 +6904,19 @@ pp.unexpected = function (pos) {
   this.raise(pos != null ? pos : this.start, "Unexpected token");
 };
 
+var DestructuringErrors = function DestructuringErrors() {
+  _classCallCheck(this, DestructuringErrors);
+
+  this.shorthandAssign = 0;
+  this.trailingComma = 0;
+};
+
+exports.DestructuringErrors = DestructuringErrors;
+
 pp.checkPatternErrors = function (refDestructuringErrors, andThrow) {
-  var pos = refDestructuringErrors && refDestructuringErrors.trailingComma;
-  if (!andThrow) return !!pos;
-  if (pos) this.raise(pos, "Trailing comma is not permitted in destructuring patterns");
+  var trailing = refDestructuringErrors && refDestructuringErrors.trailingComma;
+  if (!andThrow) return !!trailing;
+  if (trailing) this.raise(trailing, "Comma is not permitted after the rest element");
 };
 
 pp.checkExpressionErrors = function (refDestructuringErrors, andThrow) {
@@ -7036,6 +7061,8 @@ var _state = _dereq_("./state");
 var _whitespace = _dereq_("./whitespace");
 
 var _identifier = _dereq_("./identifier");
+
+var _parseutil = _dereq_("./parseutil");
 
 var pp = _state.Parser.prototype;
 
@@ -7221,7 +7248,7 @@ pp.parseForStatement = function (node) {
     if ((this.type === _tokentype.types._in || this.options.ecmaVersion >= 6 && this.isContextual("of")) && _init.declarations.length === 1 && !(kind !== "var" && _init.declarations[0].init)) return this.parseForIn(node, _init);
     return this.parseFor(node, _init);
   }
-  var refDestructuringErrors = { shorthandAssign: 0, trailingComma: 0 };
+  var refDestructuringErrors = new _parseutil.DestructuringErrors();
   var init = this.parseExpression(true, refDestructuringErrors);
   if (this.type === _tokentype.types._in || this.options.ecmaVersion >= 6 && this.isContextual("of")) {
     this.checkPatternErrors(refDestructuringErrors, true);
@@ -7689,7 +7716,7 @@ pp.parseImportSpecifiers = function () {
   return nodes;
 };
 
-},{"./identifier":2,"./state":10,"./tokentype":14,"./whitespace":16}],12:[function(_dereq_,module,exports){
+},{"./identifier":2,"./parseutil":9,"./state":10,"./tokentype":14,"./whitespace":16}],12:[function(_dereq_,module,exports){
 // The algorithm used to determine whether a regexp can appear at a
 // given point in the program is loosely based on sweet.js' approach.
 // See https://github.com/mozilla/sweet.js/wiki/design
@@ -7790,8 +7817,8 @@ _tokentype.types.incDec.updateContext = function () {
   // tokExprAllowed stays unchanged
 };
 
-_tokentype.types._function.updateContext = function () {
-  if (this.curContext() !== types.b_stat) this.context.push(types.f_expr);
+_tokentype.types._function.updateContext = function (prevType) {
+  if (prevType.beforeExpr && prevType !== _tokentype.types.semi && prevType !== _tokentype.types._else && (prevType !== _tokentype.types.colon || this.curContext() !== types.b_stat)) this.context.push(types.f_expr);
   this.exprAllowed = false;
 };
 
@@ -8261,26 +8288,32 @@ pp.readRegexp = function () {
   // Need to use `readWord1` because '\uXXXX' sequences are allowed
   // here (don't ask).
   var mods = this.readWord1();
-  var tmp = content;
+  var tmp = content,
+      tmpFlags = "";
   if (mods) {
     var validFlags = /^[gim]*$/;
     if (this.options.ecmaVersion >= 6) validFlags = /^[gimuy]*$/;
     if (!validFlags.test(mods)) this.raise(start, "Invalid regular expression flag");
-    if (mods.indexOf('u') >= 0 && !regexpUnicodeSupport) {
-      // Replace each astral symbol and every Unicode escape sequence that
-      // possibly represents an astral symbol or a paired surrogate with a
-      // single ASCII symbol to avoid throwing on regular expressions that
-      // are only valid in combination with the `/u` flag.
-      // Note: replacing with the ASCII symbol `x` might cause false
-      // negatives in unlikely scenarios. For example, `[\u{61}-b]` is a
-      // perfectly valid pattern that is equivalent to `[a-b]`, but it would
-      // be replaced by `[x-b]` which throws an error.
-      tmp = tmp.replace(/\\u\{([0-9a-fA-F]+)\}/g, function (_match, code, offset) {
-        code = Number("0x" + code);
-        if (code > 0x10FFFF) _this.raise(start + offset + 3, "Code point out of bounds");
-        return "x";
-      });
-      tmp = tmp.replace(/\\u([a-fA-F0-9]{4})|[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "x");
+    if (mods.indexOf("u") >= 0) {
+      if (regexpUnicodeSupport) {
+        tmpFlags = "u";
+      } else {
+        // Replace each astral symbol and every Unicode escape sequence that
+        // possibly represents an astral symbol or a paired surrogate with a
+        // single ASCII symbol to avoid throwing on regular expressions that
+        // are only valid in combination with the `/u` flag.
+        // Note: replacing with the ASCII symbol `x` might cause false
+        // negatives in unlikely scenarios. For example, `[\u{61}-b]` is a
+        // perfectly valid pattern that is equivalent to `[a-b]`, but it would
+        // be replaced by `[x-b]` which throws an error.
+        tmp = tmp.replace(/\\u\{([0-9a-fA-F]+)\}/g, function (_match, code, offset) {
+          code = Number("0x" + code);
+          if (code > 0x10FFFF) _this.raise(start + offset + 3, "Code point out of bounds");
+          return "x";
+        });
+        tmp = tmp.replace(/\\u([a-fA-F0-9]{4})|[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "x");
+        tmpFlags = tmpFlags.replace("u", "");
+      }
     }
   }
   // Detect invalid regular expressions.
@@ -8288,7 +8321,7 @@ pp.readRegexp = function () {
   // Rhino's regular expression parser is flaky and throws uncatchable exceptions,
   // so don't do detection if we are running under Rhino
   if (!isRhino) {
-    tryCreateRegexp(tmp, undefined, start, this);
+    tryCreateRegexp(tmp, tmpFlags, start, this);
     // Get a regular expression object for this pattern-flag pair, or `null` in
     // case the current environment doesn't support the flags it uses.
     value = tryCreateRegexp(content, mods);
@@ -8805,20 +8838,20 @@ function simple(node, visitors, base, state, override) {
   })(node, state, override);
 }
 
-// An ancestor walk builds up an array of ancestor nodes (including
-// the current node) and passes them to the callback as the state parameter.
+// An ancestor walk keeps an array of ancestor nodes (including the
+// current node) and passes them to the callback as third parameter
+// (and also as state parameter when no other state is present).
 
 function ancestor(node, visitors, base, state) {
   if (!base) base = exports.base;
-  if (!state) state = [];(function c(node, st, override) {
+  var ancestors = [];(function c(node, st, override) {
     var type = override || node.type,
         found = visitors[type];
-    if (node != st[st.length - 1]) {
-      st = st.slice();
-      st.push(node);
-    }
+    var isNew = node != ancestors[ancestors.length - 1];
+    if (isNew) ancestors.push(node);
     base[type](node, st, c);
-    if (found) found(node, st);
+    if (found) found(node, st || ancestors, ancestors);
+    if (isNew) ancestors.pop();
   })(node, state);
 }
 
@@ -8919,13 +8952,19 @@ function findNodeBefore(node, pos, test, base, state) {
   return max;
 }
 
+// Fallback to an Object.create polyfill for older environments.
+var create = Object.create || function (proto) {
+  function Ctor() {}
+  Ctor.prototype = proto;
+  return new Ctor();
+};
+
 // Used to create a custom walker. Will fill in all missing node
 // type properties with the defaults.
 
 function make(funcs, base) {
   if (!base) base = exports.base;
-  var visitor = {};
-  for (var type in base) visitor[type] = base[type];
+  var visitor = create(base);
   for (var type in funcs) visitor[type] = funcs[type];
   return visitor;
 }
@@ -8981,11 +9020,12 @@ base.ThrowStatement = base.SpreadElement = function (node, st, c) {
 };
 base.TryStatement = function (node, st, c) {
   c(node.block, st, "Statement");
-  if (node.handler) {
-    c(node.handler.param, st, "Pattern");
-    c(node.handler.body, st, "ScopeBody");
-  }
+  if (node.handler) c(node.handler, st);
   if (node.finalizer) c(node.finalizer, st, "Statement");
+};
+base.CatchClause = function (node, st, c) {
+  c(node.param, st, "Pattern");
+  c(node.body, st, "ScopeBody");
 };
 base.WhileStatement = base.DoWhileStatement = function (node, st, c) {
   c(node.test, st, "Expression");
@@ -9467,6 +9507,7 @@ lp.parseTemplate = function () {
       curElt = this.startNode();
       curElt.value = { cooked: '', raw: '' };
       curElt.tail = true;
+      this.finishNode(curElt, "TemplateElement");
     }
     node.quasis.push(curElt);
   }
@@ -9757,7 +9798,9 @@ var pluginsLoose = {};
 exports.pluginsLoose = pluginsLoose;
 
 var LooseParser = (function () {
-  function LooseParser(input, options) {
+  function LooseParser(input) {
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
     _classCallCheck(this, LooseParser);
 
     this.toks = _.tokenizer(input, options);
@@ -10236,7 +10279,7 @@ lp.parseExport = function () {
   var node = this.startNode();
   this.next();
   if (this.eat(_.tokTypes.star)) {
-    node.source = this.eatContextual("from") ? this.parseExprAtom() : null;
+    node.source = this.eatContextual("from") ? this.parseExprAtom() : this.dummyString();
     return this.finishNode(node, "ExportAllDeclaration");
   }
   if (this.eat(_.tokTypes._default)) {
@@ -10294,7 +10337,7 @@ lp.parseImportSpecifierList = function () {
   if (this.tok.type === _.tokTypes.star) {
     var elt = this.startNode();
     this.next();
-    if (this.eatContextual("as")) elt.local = this.parseIdent();
+    elt.local = this.eatContextual("as") ? this.parseIdent() : this.dummyIdent();
     elts.push(this.finishNode(elt, "ImportNamespaceSpecifier"));
   } else {
     var indent = this.curIndent,
@@ -15813,6 +15856,10 @@ module.exports = function(acorn) {
     };
   }();
 
+  babelHelpers.toArray = function (arr) {
+    return Array.isArray(arr) ? arr : Array.from(arr);
+  };
+
   babelHelpers.toConsumableArray = function (arr) {
     if (Array.isArray(arr)) {
       for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
@@ -17433,10 +17480,24 @@ module.exports = function(acorn) {
     return forEachNode(parsed, visit, state, options);
   };
 
+  // findNodesIncluding: function(ast, pos, test, base) {
+  //   var nodes = [];
+  //   base = base || acorn.walk.make({});
+  //   Object.keys(base).forEach(function(name) {
+  //       var orig = base[name];
+  //       base[name] = function(node, state, cont) {
+  //           nodes.pushIfNotIncluded(node);
+  //           return orig(node, state, cont);
+  //       }
+  //   });
+  //   acorn.walk.findNodeAround(ast, pos, test, base);
+  //   return nodes;
+  // }
+
   function findNodesIncluding(parsed, pos, test, base) {
     var nodes = [];
-    base = base || lively_lang.obj.clone(walk.visitors.withMemberExpression);
-    Object.keys(base).forEach(function (name) {
+    base = base || acorn.walk.make({});
+    Object.keys(acorn.walk.base).forEach(function (name) {
       var orig = base[name];
       base[name] = function (node, state, cont) {
         lively_lang.arr.pushIfNotIncluded(nodes, node);
@@ -18508,7 +18569,6 @@ var nodes = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var helpers = {
-
     declIds: function declIds(nodes) {
       return lively_lang.arr.flatmap(nodes, function (ea) {
         if (!ea) return [];
@@ -18520,7 +18580,15 @@ var nodes = Object.freeze({
         return [];
       });
     },
-
+    varDecls: function varDecls(scope) {
+      return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
+        return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
+          return helpers.declIds([decl.id]).map(function (id) {
+            return [decl, id];
+          });
+        });
+      });
+    },
     varDeclIds: function varDeclIds(scope) {
       return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
         all.push.apply(all, ea.declarations);return all;
@@ -18528,7 +18596,6 @@ var nodes = Object.freeze({
         return ea.id;
       }));
     },
-
     objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
       // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
       // nodes as a list
@@ -18541,22 +18608,25 @@ var nodes = Object.freeze({
           case "ArrayExpression":case "ArrayPattern":
             if (!onlyLeafs) result.push(thisNode);
             result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
-              return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
+              return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
             }));
             break;
           case "ObjectExpression":case "ObjectPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+            result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
             break;
           case "AssignmentPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
+            result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
             break;
           default:
             result.push(thisNode);
         }
         return result;
       });
+    },
+    isDeclaration: function isDeclaration(node) {
+      return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
     }
   };
 
@@ -18629,6 +18699,19 @@ var nodes = Object.freeze({
     })).concat(scope.importDecls);
   }
 
+  function declarationsWithIdsOfScope(scope) {
+    // returns a list of pairs [(DeclarationNode,IdentifierNode)]
+    var bareIds = helpers.declIds(scope.params).concat(scope.catches);
+    var declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+    return bareIds.map(function (ea) {
+      return [ea, ea];
+    }).concat(declNodes.map(function (ea) {
+      return [ea, ea.id];
+    })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
+      return [statementOf(scope.node, im), im];
+    }));
+  }
+
   function _declaredVarNames(scope, useComments) {
     return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
   }
@@ -18644,6 +18727,60 @@ var nodes = Object.freeze({
 
   function topLevelFuncDecls(parsed) {
     return FindToplevelFuncDeclVisitor.run(parsed);
+  }
+
+  function resolveReference(ref, scopePath) {
+    if (scopePath.length == 0) return [null, null];
+
+    var _scopePath = babelHelpers.toArray(scopePath);
+
+    var scope = _scopePath[0];
+
+    var outer = _scopePath.slice(1);
+
+    var decls = scope.decls || declarationsWithIdsOfScope(scope);
+    scope.decls = decls;
+    var decl = decls.find(function (_ref) {
+      var _ref2 = babelHelpers.slicedToArray(_ref, 2);
+
+      var _ = _ref2[0];
+      var id = _ref2[1];
+      return id.name == ref;
+    });
+    return decl || resolveReference(ref, outer);
+  }
+
+  function resolveReferences(scope) {
+    function rec(scope, outerScopes) {
+      var path = [scope].concat(outerScopes);
+      scope.refs.forEach(function (ref) {
+        var _resolveReference = resolveReference(ref.name, path);
+
+        var _resolveReference2 = babelHelpers.slicedToArray(_resolveReference, 2);
+
+        var decl = _resolveReference2[0];
+        var id = _resolveReference2[1];
+
+        if (decl) ref.decl = lively_lang.obj.deepCopy(decl);
+        if (id) ref.declId = lively_lang.obj.deepCopy(id);
+      });
+      scope.subScopes.forEach(function (s) {
+        return rec(s, path);
+      });
+    }
+    if (scope.referencesResolved) return scope;
+    rec(scope, []);
+    scope.referencesResolved = true;
+    return scope;
+  }
+
+  function refAt(pos, scope) {
+    var ref = scope.refs.find(function (r) {
+      return r.start <= pos && pos <= r.end;
+    });
+    return ref || scope.subScopes.reduce(function (p, s) {
+      return p || refAt(pos, s);
+    }, null);
   }
 
   function topLevelDeclsAndRefs(parsed, options) {
@@ -18708,8 +18845,6 @@ var nodes = Object.freeze({
   function findReferencesAndDeclsInScope(scope, name) {
     if (name === "this") {
       return scope.thisRefs;
-      scopes(parse("var x = this.foo")).refs;
-      scopes(parse("var x = this.foo")).thisRefs;
     }
 
     return lively_lang.arr.flatten( // all references
@@ -18746,20 +18881,19 @@ var nodes = Object.freeze({
     return acorn.walk.findNodesIncluding(ast, pos);
   }
 
+  var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
+
   function statementOf(parsed, node, options) {
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
     var nodes = nodesAt$1(node.start, parsed);
-    if (nodes.indexOf(node) === -1) return undefined;
-    var found = nodes.reverse().find(function (node, i) {
-      if (!nodes[i + 1]) return false;
-      var t = nodes[i + 1].type;
-      return ["BlockStatement", "Program", "FunctionDeclaration", "FunctionExpress", "ArrowFunctionExpress", "SwitchCase", "SwitchStatement"].indexOf(t) > -1 ? true : false;
+    var found = nodes.reverse().find(function (node) {
+      return _stmtTypes.includes(node.type);
     });
     if (options && options.asPath) {
       var v = new Visitor(),
-          foundPath;
+          foundPath = void 0;
       v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
         if (node === found) {
           foundPath = path;throw new Error("stop search");
@@ -18772,6 +18906,145 @@ var nodes = Object.freeze({
       return foundPath;
     }
     return found;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // imports and exports
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function imports(scope) {
+    var imports = scope.importDecls.reduce(function (imports, node) {
+      var nodes = nodesAtIndex(scope.node, node.start),
+          importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+      if (!importStmt) return imports;
+
+      var from = importStmt.source ? importStmt.source.value : "unknown module";
+      if (!importStmt.specifiers.length) // no imported vars
+        return imports.concat([{
+          local: null,
+          imported: null,
+          fromModule: from,
+          node: node
+        }]);
+
+      return imports.concat(importStmt.specifiers.map(function (importSpec) {
+        var imported;
+        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+        return {
+          local: importSpec.local ? importSpec.local.name : null,
+          imported: imported,
+          fromModule: from,
+          node: node
+        };
+      }));
+    }, []);
+
+    return lively_lang.arr.uniqBy(imports, function (a, b) {
+      return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+    });
+  }
+
+  function exports$1(scope) {
+    resolveReferences(scope);
+    var exports = scope.exportDecls.reduce(function (exports, node) {
+
+      var exportsStmt = statementOf(scope.node, node);
+      if (!exportsStmt) return exports;
+
+      var from = exportsStmt.source ? exportsStmt.source.value : null;
+
+      if (exportsStmt.type === "ExportAllDeclaration") {
+        return exports.concat([{
+          local: null,
+          exported: "*",
+          imported: "*",
+          fromModule: from,
+          node: node,
+          type: "all"
+        }]);
+      }
+
+      if (exportsStmt.type === "ExportDefaultDeclaration") {
+        if (helpers.isDeclaration(exportsStmt.declaration)) {
+          return exports.concat({
+            local: exportsStmt.declaration.id.name,
+            exported: "default",
+            type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+            fromModule: null,
+            node: node,
+            decl: exportsStmt.declaration,
+            declId: exportsStmt.declaration.id
+          });
+        } else if (exportsStmt.declaration.type === "Identifier") {
+          return exports.concat([{
+            local: exportsStmt.declaration.name,
+            exported: "default",
+            fromModule: null,
+            node: node,
+            type: "id",
+            decl: exportsStmt.declaration.decl,
+            declId: exportsStmt.declaration.declId
+          }]);
+        } else {
+          // exportsStmt.declaration is an expression
+          return exports.concat([{
+            local: null,
+            exported: "default",
+            fromModule: null,
+            node: node,
+            type: "expr",
+            decl: exportsStmt.declaration,
+            declId: exportsStmt.declaration
+          }]);
+        }
+      }
+
+      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+        return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+          return {
+            local: !from && exportSpec.local ? exportSpec.local.name : null,
+            exported: exportSpec.exported ? exportSpec.exported.name : null,
+            imported: from && exportSpec.local ? exportSpec.local.name : null,
+            fromModule: from || null,
+            node: node,
+            type: "id",
+            decl: from ? node : exportSpec.local && exportSpec.local.decl,
+            declId: from ? exportSpec.exported : exportSpec.local && exportSpec.local.declId
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+        return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
+          return {
+            local: decl.id.name,
+            exported: decl.id.name,
+            type: exportsStmt.declaration.kind,
+            fromModule: null,
+            node: node,
+            decl: decl,
+            declId: decl.id
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration) {
+        return exports.concat({
+          local: exportsStmt.declaration.id.name,
+          exported: exportsStmt.declaration.id.name,
+          type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+          fromModule: null,
+          node: node,
+          decl: exportsStmt.declaration,
+          declId: exportsStmt.declaration.id
+        });
+      }
+      return exports;
+    }, []);
+
+    return lively_lang.arr.uniqBy(exports, function (a, b) {
+      return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+    });
   }
 
 
@@ -18795,7 +19068,11 @@ var nodes = Object.freeze({
     findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
     findDeclarationClosestToIndex: findDeclarationClosestToIndex,
     nodesAt: nodesAt$1,
-    statementOf: statementOf
+    statementOf: statementOf,
+    resolveReferences: resolveReferences,
+    refAt: refAt,
+    imports: imports,
+    exports: exports$1
   });
 
   var helper = {
@@ -19709,14 +19986,14 @@ var nodes = Object.freeze({
       if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
         /*...*/
       } else if (stmt.declaration.declarations) {
-          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-            return assignExpr(options.captureObj, decl.id, decl.id, false);
-          })));
-        } else if (stmt.declaration.type === "FunctionDeclaration") {
-          /*handled by function rewriter as last step*/
-        } else if (stmt.declaration.type === "ClassDeclaration") {
-            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-          }
+        body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+          return assignExpr(options.captureObj, decl.id, decl.id, false);
+        })));
+      } else if (stmt.declaration.type === "FunctionDeclaration") {
+        /*handled by function rewriter as last step*/
+      } else if (stmt.declaration.type === "ClassDeclaration") {
+        body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+      }
     }
     parsed.body = body;
     return parsed;
@@ -19767,7 +20044,7 @@ var nodes = Object.freeze({
       var stmt = parsed.body[i];
       if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
         body.push(stmt.declaration);
-        stmt.declaration = stmt.declaration.id;
+        stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
       }
       body.push(stmt);
     }
@@ -19930,18 +20207,18 @@ var nodes = Object.freeze({
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
-            type: "CallExpression",
-            arguments: [{ type: "Literal", value: i }],
-            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(el.argument, {
+          type: "CallExpression",
+          arguments: [{ type: "Literal", value: i }],
+          callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-          // like [{x}]
-        } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-            declaredNames.push(helperVarId.name);
-            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-          }
+        // like [{x}]
+      } else {
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+            helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+      }
     });
   }
 
@@ -19956,11 +20233,11 @@ var nodes = Object.freeze({
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-          declaredNames.push(helperVarId.name);
-          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-        }
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+            helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
+      }
     });
   }
 
@@ -20505,14 +20782,13 @@ var categorizer = Object.freeze({
 (function (exports,lively_lang,lively_ast) {
   'use strict';
 
-  var babelHelpers = {};
-  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
     return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
   };
 
-  babelHelpers.asyncToGenerator = function (fn) {
+  var asyncToGenerator = function (fn) {
     return function () {
       var gen = fn.apply(this, arguments);
       return new Promise(function (resolve, reject) {
@@ -20541,13 +20817,13 @@ var categorizer = Object.freeze({
     };
   };
 
-  babelHelpers.classCallCheck = function (instance, Constructor) {
+  var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   };
 
-  babelHelpers.createClass = function () {
+  var createClass = function () {
     function defineProperties(target, props) {
       for (var i = 0; i < props.length; i++) {
         var descriptor = props[i];
@@ -20565,7 +20841,7 @@ var categorizer = Object.freeze({
     };
   }();
 
-  babelHelpers.defineProperty = function (obj, key, value) {
+  var defineProperty = function (obj, key, value) {
     if (key in obj) {
       Object.defineProperty(obj, key, {
         value: value,
@@ -20580,7 +20856,7 @@ var categorizer = Object.freeze({
     return obj;
   };
 
-  babelHelpers.get = function get(object, property, receiver) {
+  var get = function get(object, property, receiver) {
     if (object === null) object = Function.prototype;
     var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -20605,7 +20881,7 @@ var categorizer = Object.freeze({
     }
   };
 
-  babelHelpers.inherits = function (subClass, superClass) {
+  var inherits = function (subClass, superClass) {
     if (typeof superClass !== "function" && superClass !== null) {
       throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
     }
@@ -20621,15 +20897,13 @@ var categorizer = Object.freeze({
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   };
 
-  babelHelpers.possibleConstructorReturn = function (self, call) {
+  var possibleConstructorReturn = function (self, call) {
     if (!self) {
       throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
     }
 
     return call && (typeof call === "object" || typeof call === "function") ? call : self;
   };
-
-  babelHelpers;
 
   // helper
   function signatureOf(name, func) {
@@ -20669,7 +20943,7 @@ var categorizer = Object.freeze({
 
   var knownSymbols = function () {
     return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
-      return babelHelpers.typeof(Symbol[ea]) === "symbol";
+      return _typeof(Symbol[ea]) === "symbol";
     }).reduce(function (map, ea) {
       return map.set(Symbol[ea], "Symbol." + ea);
     }, new Map());
@@ -20791,12 +21065,14 @@ var categorizer = Object.freeze({
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+  var constructorArgMatcher = /\([^\\)]*\)/;
+
   var defaultPropertyDescriptorForClass = {
     enumerable: false,
     configurable: true
   };
 
-  function createClass(name) {
+  function createClass$1(name) {
     if (!name) name = "anonymous_class";
     var constructor = eval(initializerTemplate.replace(/CLASS/, name));
     constructor.displayName = "class " + name;
@@ -20823,7 +21099,7 @@ var categorizer = Object.freeze({
     // classHolder object has it
     var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
         existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
 
     // 2. set the superclass if necessary and set prototype
     if (!superclass) superclass = Object;
@@ -20868,6 +21144,14 @@ var categorizer = Object.freeze({
         pathInPackage: currentModule.pathInPackage()
       };
     }
+
+    // 6. Add a toString method for the class to allows us to see its constructor arguments
+    var init = klass.prototype[initializeSymbol],
+        constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
+        string = "class " + name + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+    klass.toString = function () {
+      return string;
+    };
 
     return klass;
   }
@@ -21190,7 +21474,7 @@ var categorizer = Object.freeze({
 
   var EvalResult = function () {
     function EvalResult() {
-      babelHelpers.classCallCheck(this, EvalResult);
+      classCallCheck(this, EvalResult);
 
       this.isEvalResult = true;
       this.value = undefined;
@@ -21201,7 +21485,7 @@ var categorizer = Object.freeze({
       this.promiseStatus = "unknown";
     }
 
-    babelHelpers.createClass(EvalResult, [{
+    createClass(EvalResult, [{
       key: "printed",
       value: function printed(options) {
         this.value = print(this.value, Object.assign(options || {}, {
@@ -21280,7 +21564,7 @@ var categorizer = Object.freeze({
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -21315,7 +21599,7 @@ var categorizer = Object.freeze({
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -21447,7 +21731,7 @@ var categorizer = Object.freeze({
   }
 
   var runEval$1 = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -21549,13 +21833,13 @@ var categorizer = Object.freeze({
 
   var EvalStrategy = function () {
     function EvalStrategy() {
-      babelHelpers.classCallCheck(this, EvalStrategy);
+      classCallCheck(this, EvalStrategy);
     }
 
-    babelHelpers.createClass(EvalStrategy, [{
+    createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -21579,7 +21863,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -21605,17 +21889,17 @@ var categorizer = Object.freeze({
   }();
 
   var SimpleEvalStrategy = function (_EvalStrategy) {
-    babelHelpers.inherits(SimpleEvalStrategy, _EvalStrategy);
+    inherits(SimpleEvalStrategy, _EvalStrategy);
 
     function SimpleEvalStrategy() {
-      babelHelpers.classCallCheck(this, SimpleEvalStrategy);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
+      classCallCheck(this, SimpleEvalStrategy);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
     }
 
-    babelHelpers.createClass(SimpleEvalStrategy, [{
+    createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -21645,7 +21929,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -21681,14 +21965,14 @@ var categorizer = Object.freeze({
   }(EvalStrategy);
 
   var LivelyVmEvalStrategy = function (_EvalStrategy2) {
-    babelHelpers.inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+    inherits(LivelyVmEvalStrategy, _EvalStrategy2);
 
     function LivelyVmEvalStrategy() {
-      babelHelpers.classCallCheck(this, LivelyVmEvalStrategy);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
+      classCallCheck(this, LivelyVmEvalStrategy);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
     }
 
-    babelHelpers.createClass(LivelyVmEvalStrategy, [{
+    createClass(LivelyVmEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
         if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
@@ -21701,7 +21985,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -21730,7 +22014,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -21764,27 +22048,27 @@ var categorizer = Object.freeze({
   }(EvalStrategy);
 
   var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
-    babelHelpers.inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
-    babelHelpers.createClass(HttpEvalStrategy, null, [{
+    inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
+    createClass(HttpEvalStrategy, null, [{
       key: "defaultURL",
       get: function get() {
-        return "https://localhost:3000/eval";
+        return "http://localhost:3000/lively";
       }
     }]);
 
     function HttpEvalStrategy(url) {
-      babelHelpers.classCallCheck(this, HttpEvalStrategy);
+      classCallCheck(this, HttpEvalStrategy);
 
-      var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
+      var _this4 = possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
 
       _this4.url = url || _this4.constructor.defaultURL;
       return _this4;
     }
 
-    babelHelpers.createClass(HttpEvalStrategy, [{
+    createClass(HttpEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
-        options = babelHelpers.get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
+        options = get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
         return Object.assign({ serverEvalURL: this.url }, options, { context: null });
       }
     }, {
@@ -21795,8 +22079,8 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
-          var res;
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+          var res, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
               switch (_context7.prev = _context7.next) {
@@ -21816,39 +22100,33 @@ var categorizer = Object.freeze({
                   throw new Error("Cannot reach server at " + url + ": " + _context7.t0.message);
 
                 case 9:
-                  _context7.prev = 9;
-                  _context7.t1 = JSON;
-                  _context7.next = 13;
+                  if (res.ok) {
+                    _context7.next = 11;
+                    break;
+                  }
+
+                  throw new Error("Server at " + url + ": " + res.statusText);
+
+                case 11:
+                  _context7.prev = 11;
+                  _context7.next = 14;
                   return res.text();
 
-                case 13:
-                  _context7.t2 = _context7.sent;
-                  return _context7.abrupt("return", _context7.t1.parse.call(_context7.t1, _context7.t2));
+                case 14:
+                  content = _context7.sent;
+                  return _context7.abrupt("return", JSON.parse(content));
 
-                case 17:
-                  _context7.prev = 17;
-                  _context7.t3 = _context7["catch"](9);
-                  _context7.next = 21;
-                  return res.text();
+                case 18:
+                  _context7.prev = 18;
+                  _context7.t1 = _context7["catch"](11);
+                  return _context7.abrupt("return", { isError: true, value: "Server eval failed: " + content + " (" + res.status + ")" });
 
                 case 21:
-                  _context7.t4 = _context7.sent;
-                  _context7.t5 = "Server eval failed: " + _context7.t4;
-                  _context7.t6 = _context7.t5 + " (";
-                  _context7.t7 = res.status;
-                  _context7.t8 = _context7.t6 + _context7.t7;
-                  _context7.t9 = _context7.t8 + ")";
-                  return _context7.abrupt("return", {
-                    isError: true,
-                    value: _context7.t9
-                  });
-
-                case 28:
                 case "end":
                   return _context7.stop();
               }
             }
-          }, _callee7, this, [[0, 6], [9, 17]]);
+          }, _callee7, this, [[0, 6], [11, 18]]);
         }));
 
         function sendRequest(_x13, _x14) {
@@ -21860,7 +22138,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -21887,7 +22165,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -21952,7 +22230,7 @@ var categorizer = Object.freeze({
     doit: function doit(printResult, editor, options) {
       var _this5 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         var result;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -21996,7 +22274,7 @@ var categorizer = Object.freeze({
     printInspect: function printInspect(options) {
       var _this6 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
         var msgMorph, ed;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -22033,7 +22311,7 @@ var categorizer = Object.freeze({
     evalSelection: function evalSelection(printIt) {
       var _this7 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options, result;
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
@@ -22060,7 +22338,7 @@ var categorizer = Object.freeze({
     doListProtocol: function doListProtocol() {
       var _this8 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
         var m, prefix, completions, lister;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -22104,7 +22382,7 @@ var categorizer = Object.freeze({
     doSave: function doSave() {
       var _this9 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
@@ -22166,9 +22444,9 @@ var categorizer = Object.freeze({
     setStatusMessage: function setStatusMessage() {
       throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
     }
-  }, babelHelpers.defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+  }, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
     throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-  }), babelHelpers.defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+  }), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
     throw new Error("showError() not yet implemented for " + this.constructor.name);
   }), _EvalableTextMorphTra);
 

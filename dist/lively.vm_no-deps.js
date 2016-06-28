@@ -6,14 +6,13 @@
 (function (exports,lively_lang,lively_ast) {
   'use strict';
 
-  var babelHelpers = {};
-  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
     return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
   };
 
-  babelHelpers.asyncToGenerator = function (fn) {
+  var asyncToGenerator = function (fn) {
     return function () {
       var gen = fn.apply(this, arguments);
       return new Promise(function (resolve, reject) {
@@ -42,13 +41,13 @@
     };
   };
 
-  babelHelpers.classCallCheck = function (instance, Constructor) {
+  var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   };
 
-  babelHelpers.createClass = function () {
+  var createClass = function () {
     function defineProperties(target, props) {
       for (var i = 0; i < props.length; i++) {
         var descriptor = props[i];
@@ -66,7 +65,7 @@
     };
   }();
 
-  babelHelpers.defineProperty = function (obj, key, value) {
+  var defineProperty = function (obj, key, value) {
     if (key in obj) {
       Object.defineProperty(obj, key, {
         value: value,
@@ -81,7 +80,7 @@
     return obj;
   };
 
-  babelHelpers.get = function get(object, property, receiver) {
+  var get = function get(object, property, receiver) {
     if (object === null) object = Function.prototype;
     var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -106,7 +105,7 @@
     }
   };
 
-  babelHelpers.inherits = function (subClass, superClass) {
+  var inherits = function (subClass, superClass) {
     if (typeof superClass !== "function" && superClass !== null) {
       throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
     }
@@ -122,15 +121,13 @@
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   };
 
-  babelHelpers.possibleConstructorReturn = function (self, call) {
+  var possibleConstructorReturn = function (self, call) {
     if (!self) {
       throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
     }
 
     return call && (typeof call === "object" || typeof call === "function") ? call : self;
   };
-
-  babelHelpers;
 
   // helper
   function signatureOf(name, func) {
@@ -170,7 +167,7 @@
 
   var knownSymbols = function () {
     return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
-      return babelHelpers.typeof(Symbol[ea]) === "symbol";
+      return _typeof(Symbol[ea]) === "symbol";
     }).reduce(function (map, ea) {
       return map.set(Symbol[ea], "Symbol." + ea);
     }, new Map());
@@ -292,12 +289,14 @@
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+  var constructorArgMatcher = /\([^\\)]*\)/;
+
   var defaultPropertyDescriptorForClass = {
     enumerable: false,
     configurable: true
   };
 
-  function createClass(name) {
+  function createClass$1(name) {
     if (!name) name = "anonymous_class";
     var constructor = eval(initializerTemplate.replace(/CLASS/, name));
     constructor.displayName = "class " + name;
@@ -324,7 +323,7 @@
     // classHolder object has it
     var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
         existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
 
     // 2. set the superclass if necessary and set prototype
     if (!superclass) superclass = Object;
@@ -369,6 +368,14 @@
         pathInPackage: currentModule.pathInPackage()
       };
     }
+
+    // 6. Add a toString method for the class to allows us to see its constructor arguments
+    var init = klass.prototype[initializeSymbol],
+        constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
+        string = "class " + name + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+    klass.toString = function () {
+      return string;
+    };
 
     return klass;
   }
@@ -691,7 +698,7 @@
 
   var EvalResult = function () {
     function EvalResult() {
-      babelHelpers.classCallCheck(this, EvalResult);
+      classCallCheck(this, EvalResult);
 
       this.isEvalResult = true;
       this.value = undefined;
@@ -702,7 +709,7 @@
       this.promiseStatus = "unknown";
     }
 
-    babelHelpers.createClass(EvalResult, [{
+    createClass(EvalResult, [{
       key: "printed",
       value: function printed(options) {
         this.value = print(this.value, Object.assign(options || {}, {
@@ -781,7 +788,7 @@
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -816,7 +823,7 @@
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -948,7 +955,7 @@
   }
 
   var runEval$1 = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -1050,13 +1057,13 @@
 
   var EvalStrategy = function () {
     function EvalStrategy() {
-      babelHelpers.classCallCheck(this, EvalStrategy);
+      classCallCheck(this, EvalStrategy);
     }
 
-    babelHelpers.createClass(EvalStrategy, [{
+    createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -1080,7 +1087,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -1106,17 +1113,17 @@
   }();
 
   var SimpleEvalStrategy = function (_EvalStrategy) {
-    babelHelpers.inherits(SimpleEvalStrategy, _EvalStrategy);
+    inherits(SimpleEvalStrategy, _EvalStrategy);
 
     function SimpleEvalStrategy() {
-      babelHelpers.classCallCheck(this, SimpleEvalStrategy);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
+      classCallCheck(this, SimpleEvalStrategy);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
     }
 
-    babelHelpers.createClass(SimpleEvalStrategy, [{
+    createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -1146,7 +1153,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -1182,14 +1189,14 @@
   }(EvalStrategy);
 
   var LivelyVmEvalStrategy = function (_EvalStrategy2) {
-    babelHelpers.inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+    inherits(LivelyVmEvalStrategy, _EvalStrategy2);
 
     function LivelyVmEvalStrategy() {
-      babelHelpers.classCallCheck(this, LivelyVmEvalStrategy);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
+      classCallCheck(this, LivelyVmEvalStrategy);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
     }
 
-    babelHelpers.createClass(LivelyVmEvalStrategy, [{
+    createClass(LivelyVmEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
         if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
@@ -1202,7 +1209,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -1231,7 +1238,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -1265,27 +1272,27 @@
   }(EvalStrategy);
 
   var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
-    babelHelpers.inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
-    babelHelpers.createClass(HttpEvalStrategy, null, [{
+    inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
+    createClass(HttpEvalStrategy, null, [{
       key: "defaultURL",
       get: function get() {
-        return "https://localhost:3000/eval";
+        return "http://localhost:3000/lively";
       }
     }]);
 
     function HttpEvalStrategy(url) {
-      babelHelpers.classCallCheck(this, HttpEvalStrategy);
+      classCallCheck(this, HttpEvalStrategy);
 
-      var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
+      var _this4 = possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
 
       _this4.url = url || _this4.constructor.defaultURL;
       return _this4;
     }
 
-    babelHelpers.createClass(HttpEvalStrategy, [{
+    createClass(HttpEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
-        options = babelHelpers.get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
+        options = get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
         return Object.assign({ serverEvalURL: this.url }, options, { context: null });
       }
     }, {
@@ -1296,8 +1303,8 @@
     }, {
       key: "sendRequest",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
-          var res;
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+          var res, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
               switch (_context7.prev = _context7.next) {
@@ -1317,39 +1324,33 @@
                   throw new Error("Cannot reach server at " + url + ": " + _context7.t0.message);
 
                 case 9:
-                  _context7.prev = 9;
-                  _context7.t1 = JSON;
-                  _context7.next = 13;
+                  if (res.ok) {
+                    _context7.next = 11;
+                    break;
+                  }
+
+                  throw new Error("Server at " + url + ": " + res.statusText);
+
+                case 11:
+                  _context7.prev = 11;
+                  _context7.next = 14;
                   return res.text();
 
-                case 13:
-                  _context7.t2 = _context7.sent;
-                  return _context7.abrupt("return", _context7.t1.parse.call(_context7.t1, _context7.t2));
+                case 14:
+                  content = _context7.sent;
+                  return _context7.abrupt("return", JSON.parse(content));
 
-                case 17:
-                  _context7.prev = 17;
-                  _context7.t3 = _context7["catch"](9);
-                  _context7.next = 21;
-                  return res.text();
+                case 18:
+                  _context7.prev = 18;
+                  _context7.t1 = _context7["catch"](11);
+                  return _context7.abrupt("return", { isError: true, value: "Server eval failed: " + content + " (" + res.status + ")" });
 
                 case 21:
-                  _context7.t4 = _context7.sent;
-                  _context7.t5 = "Server eval failed: " + _context7.t4;
-                  _context7.t6 = _context7.t5 + " (";
-                  _context7.t7 = res.status;
-                  _context7.t8 = _context7.t6 + _context7.t7;
-                  _context7.t9 = _context7.t8 + ")";
-                  return _context7.abrupt("return", {
-                    isError: true,
-                    value: _context7.t9
-                  });
-
-                case 28:
                 case "end":
                   return _context7.stop();
               }
             }
-          }, _callee7, this, [[0, 6], [9, 17]]);
+          }, _callee7, this, [[0, 6], [11, 18]]);
         }));
 
         function sendRequest(_x13, _x14) {
@@ -1361,7 +1362,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -1388,7 +1389,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -1453,7 +1454,7 @@
     doit: function doit(printResult, editor, options) {
       var _this5 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         var result;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -1497,7 +1498,7 @@
     printInspect: function printInspect(options) {
       var _this6 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
         var msgMorph, ed;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -1534,7 +1535,7 @@
     evalSelection: function evalSelection(printIt) {
       var _this7 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options, result;
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
@@ -1561,7 +1562,7 @@
     doListProtocol: function doListProtocol() {
       var _this8 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
         var m, prefix, completions, lister;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -1605,7 +1606,7 @@
     doSave: function doSave() {
       var _this9 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
@@ -1667,9 +1668,9 @@
     setStatusMessage: function setStatusMessage() {
       throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
     }
-  }, babelHelpers.defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+  }, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
     throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-  }), babelHelpers.defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+  }), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
     throw new Error("showError() not yet implemented for " + this.constructor.name);
   }), _EvalableTextMorphTra);
 
