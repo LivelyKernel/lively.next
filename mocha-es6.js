@@ -19192,6 +19192,27 @@ var GLOBAL = typeof window !== "undefined" ? window :
     };
   }();
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // custom assertions
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  chai__default.Assertion.addChainableMethod('stringEquals', function (obj) {
+    var expected = String(obj),
+        actual = String(this._obj);
+
+    return this.assert(expected === actual, 'expected ' + actual + ' to equal' + expected, 'expected ' + actual + ' to not equal' + expected, expected, actual, true /*show diff*/);
+  });
+
+  chai__default.Assertion.overwriteMethod('equal', function (_super) {
+    return function equalsGeometry(other) {
+      if (Array.isArray(this._obj)) {
+        this.assert(this._obj.equals(other), undefined, undefined, String(this._obj), String(other));
+      } else {
+        _super.apply(this, arguments);
+      }
+    };
+  });
+
   function ConsoleReporter(runner) {
     var passes = 0;
     var failures = 0;
@@ -19210,6 +19231,10 @@ var GLOBAL = typeof window !== "undefined" ? window :
       console.log('end: %d/%d', passes, passes + failures);
     });
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // test loading and running
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function gatherTests(suite, depth) {
     return [{ title: suite.title, fullTitle: suite.fullTitle(), depth: depth, type: "suite" }].concat(suite.tests.map(function (ea) {

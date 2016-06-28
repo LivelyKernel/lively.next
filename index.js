@@ -4,6 +4,57 @@ import * as modules from "lively.modules";
 import mocha from "mocha";
 import chai, { expect } from "chai";
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// custom assertions
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+chai.Assertion.addChainableMethod('stringEquals', function(obj) {
+  var expected  = String(obj),
+      actual    = String(this._obj);
+
+  return this.assert(
+    expected === actual,
+    'expected ' + actual + ' to equal' + expected,
+    'expected ' + actual + ' to not equal' + expected,
+    expected, actual, true/*show diff*/);
+});
+
+function arrayEquals(array, otherArray) {
+  var len = array.length;
+  if (!otherArray || len !== otherArray.length) return false;
+
+  for (var i = 0; i < len; i++) {
+    if (Array.isArray(array[i])) {
+      if (!arrayEquals(otherArray[i])) return false;
+      continue;
+    }
+    if (array[i] && otherArray[i] && array[i].equals && otherArray[i].equals) {
+      if (!array[i].equals(otherArray[i])) return false;
+      continue;
+    }
+    if (array[i] != otherArray[i]) return false;
+  }
+  return true;
+}
+
+chai.Assertion.overwriteMethod('equal', function (_super) {
+  return function equalsGeometry (other) {
+    if (Array.isArray(this._obj)) {
+      this.assert(
+        this._obj.equals(other),
+        undefined, undefined,
+        String(this._obj), String(other));
+    } else {
+      _super.apply(this, arguments);
+    }
+  };
+});
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// default reporter, logs to console
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 export { loadTestFile, loadTestFiles, runTestFiles, chai, mocha, expect };
 
 function ConsoleReporter(runner) {
@@ -24,6 +75,11 @@ function ConsoleReporter(runner) {
     console.log('end: %d/%d', passes, passes + failures);
   });
 }
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// test loading and running
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function gatherTests(suite, depth) {
   return [{title: suite.title, fullTitle: suite.fullTitle(), depth: depth, type: "suite"}]
