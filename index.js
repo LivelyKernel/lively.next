@@ -25,10 +25,12 @@ function arrayEquals(array, otherArray) {
 
   for (var i = 0; i < len; i++) {
     if (Array.isArray(array[i])) {
-      if (!arrayEquals(otherArray[i])) return false;
+      if (!arrayEquals(array[i], otherArray[i])) return false;
       continue;
     }
-    if (array[i] && otherArray[i] && array[i].equals && otherArray[i].equals) {
+    if (array[i] && otherArray[i]
+    && typeof array[i].equals === "function"
+    && typeof otherArray[i].equals === "function") {
       if (!array[i].equals(otherArray[i])) return false;
       continue;
     }
@@ -38,12 +40,11 @@ function arrayEquals(array, otherArray) {
 }
 
 chai.Assertion.overwriteMethod('equal', function (_super) {
-  return function equalsGeometry (other) {
-    if (Array.isArray(this._obj)) {
-      this.assert(
-        this._obj.equals(other),
-        undefined, undefined,
-        String(this._obj), String(other));
+  return function equalsKnowingArrays(other) {
+    if (!this.__flags.deep
+      && Array.isArray(this._obj)
+      && arrayEquals(this._obj, other)) {
+        /*do nothin'*/
     } else {
       _super.apply(this, arguments);
     }
