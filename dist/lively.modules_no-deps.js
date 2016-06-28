@@ -1538,7 +1538,7 @@
     }, {
       key: "search",
       value: function search(needle, options) {
-        return searchPackage$1(this.System, this.url, needle, options);
+        return searchInPackage$1(this.System, this.url, needle, options);
       }
     }, {
       key: "mergeWithConfig",
@@ -1679,7 +1679,7 @@
   // search
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function searchPackage$1(System, packageURL, searchStr, options) {
+  function searchInPackage$1(System, packageURL, searchStr, options) {
     packageURL = packageURL.replace(/\/$/, "");
     var p = getPackages$1(System).find(function (p) {
       return p.address == packageURL;
@@ -1706,7 +1706,8 @@
       classCallCheck(this, ModuleInterface);
 
       // We assume module ids to be a URL with a scheme
-      if (!isURL(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
+
+      if (!isURL(id) && !/^@/.test(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
       this.System = System;
       this.id = id;
 
@@ -1741,6 +1742,8 @@
         // System.fetch (at least with the current systemjs release) will not work in
         // all cases b/c modules once loaded by the loaded get cached and System.fetch
         // returns "" in those cases
+
+        if (this.id === "@empty") return Promise.resolve("");
 
         if (this.id.match(/^http/) && this.System.global.fetch) {
           return this.System.global.fetch(this.id).then(function (res) {
@@ -2418,7 +2421,10 @@
             value: function value(depName, key) {
               var depId = S.normalizeSync(depName, _this8.id),
                   depExports = S._loader.modules[depId];
-              if (!depExports) throw new Error("import of " + key + " failed: " + depName + " (tried as " + _this8.id + ") is not loaded!");
+              if (!depExports) {
+                console.warn("import of " + key + " failed: " + depName + " (tried as " + _this8.id + ") is not loaded!");
+                return undefined;
+              }
               if (key == undefined) return depExports.module;
               if (!depExports.module.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
               return depExports.module[key];
@@ -2850,14 +2856,14 @@
   function reloadPackage(packageURL) {
     return reloadPackage$1(exports.System, packageURL);
   }
-  function getPackages(moduleNames) {
+  function getPackages() {
     return getPackages$1(exports.System);
   }
   function applyPackageConfig(packageConfig, packageURL) {
     return applyConfig(exports.System, packageConfig, packageURL);
   }
-  function searchPackage(packageURL, searchString, options) {
-    return searchPackage$1(exports.System, packageURL, searchString, options);
+  function searchInPackage(packageURL, searchString, options) {
+    return searchInPackage$1(exports.System, packageURL, searchString, options);
   }
   function moduleSourceChange(moduleName, newSource, options) {
     return moduleSourceChange$1(exports.System, moduleName, newSource, options);
@@ -2902,7 +2908,7 @@
   exports.reloadPackage = reloadPackage;
   exports.getPackages = getPackages;
   exports.applyPackageConfig = applyPackageConfig;
-  exports.searchPackage = searchPackage;
+  exports.searchInPackage = searchInPackage;
   exports.moduleSourceChange = moduleSourceChange;
   exports.requireMap = requireMap;
   exports.isHookInstalled = isHookInstalled;
