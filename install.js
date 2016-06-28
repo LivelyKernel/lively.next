@@ -1,7 +1,7 @@
 import { exec } from "./shell-exec.js";
-import { join, read, write, ensureDir, getPackageSpec, readPackageSpec } from "lively.installer/helpers.js";
+import { join, read, write, ensureDir, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
-import { copyLivelyWorldIfMissing, copyPartsBinItemIfMissing, downloadPartItem, downloadPartsBin } from "lively.installer/partsbin-helper.js";
+import { copyLivelyWorldIfMissing, copyPartsBinItemIfMissing, downloadPartItem, downloadPartsBin } from "./partsbin-helper.js";
 
 
 var packageSpecFile = getPackageSpec();
