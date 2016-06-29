@@ -85,6 +85,7 @@ export async function install(baseDir, toURL) {
 
     console.log("=> Installing and updating lively.modules part items...")
 
+    if (!toURL) toURL = URL.root;
     var update = await createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", toURL, baseDir, log);
     await update.runUpdates();
 
@@ -101,5 +102,6 @@ export async function install(baseDir, toURL) {
     throw e
   } finally {
     write(join(baseDir, "lively.installer.log"), log.join(""));
+    indicator && indicator.remove();
   }
 }
