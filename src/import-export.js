@@ -61,8 +61,6 @@ function updateModuleExports(System, moduleId, keysAndValues) {
       }
     }
 
-    // For exising exports we find the execution func of each dependent module and run that
-    // FIXME this means we run the entire modules again, side effects and all!!!
     if (existingExports.length) {
       debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
       for (var i = 0, l = record.importers.length; i < l; i++) {
@@ -73,6 +71,8 @@ function updateModuleExports(System, moduleId, keysAndValues) {
           // rk 2016-06-09: for now don't re-execute dependent modules on save,
           // just update module bindings
           if (false) {
+            // For exising exports we find the execution func of each dependent module and run that
+            // FIXME this means we run the entire modules again, side effects and all!!!
             importerModule.execute();
           } else {
             runScheduledExportChanges(System, importerModule.name);

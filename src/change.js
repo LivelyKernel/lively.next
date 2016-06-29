@@ -1,3 +1,4 @@
+import { arr }  from "lively.lang";
 import module from "./module.js";
 import {
   instrumentSourceOfEsmModuleLoad,
@@ -59,17 +60,8 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     // a fallback (module records only exist for esm modules)
     let depId = await System.normalize(depName, load.name),
         depModule = module(System, depId),
-        loaded = await depModule.load();
-    deps.push({name: depName, fullname: depId, module: loaded, record: depModule.record()});
-  }
-
-  // 1. update the record so that when its dependencies change and cause a
-  // re-execute, the correct code (new version) is run
-  var record = module(System, load.name).record();
-  if (record) {
-    record.dependencies = deps.map(ea => ea.record);
-    record.execute = declared.execute;
-    record.setters = declared.setters;
+        exports = await depModule.load();
+    deps.push({name: depName, fullname: depId, module: depModule, exports});
   }
 
   // hmm... for house keeping... not really needed right now, though
@@ -84,8 +76,16 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
     }
   }
 
+  var mod = module(System, load.name),
+      record = mod.record();
+
+  // 1. update the record so that when its dependencies change and cause a
+  // re-execute, the correct code (new version) is run
+  deps.forEach((ea, i) => mod.addDependencyToModuleRecord(ea.module, declared.setters[i]));
+  if (record) record.execute = declared.execute;
+
   // 2. run setters to populate imports
-  deps.forEach((d,i) => declared.setters[i](d.module));
+  deps.forEach((d,i) => declared.setters[i](d.exports));
 
   // 3. execute module body
   var result = declared.execute();
