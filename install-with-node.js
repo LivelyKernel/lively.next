@@ -9,6 +9,8 @@ if (!installDir) {
   process.exit(1);
 }
 
+installDir = require('path').resolve(installDir);
+
 console.log("Installing lively.system packages into %s", installDir);
 
 lively.modules.importPackage(".")
