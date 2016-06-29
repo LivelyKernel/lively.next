@@ -1,3 +1,4 @@
+import { copyPartsBinItem } from './partsbin-helper.js';
 
 export function createPartSpaceUpdate(partSpaceName, fromURL, toURL) {
   // var updates = createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
@@ -8,7 +9,7 @@ export function createPartSpaceUpdate(partSpaceName, fromURL, toURL) {
       update = new PartSpaceUpdate(fromPartSpace, toPartSpace),
       updates = update.computeUpdates()
   
-  return updates;
+  return update;
 }
 
 class PartSpaceUpdate {
@@ -19,6 +20,8 @@ class PartSpaceUpdate {
   }
 
   computeUpdates() {
+    if (this.updates) return this.updates;
+
     var f = this.fromSpace, t = this.toSpace;
     f.load();
     t.load();
@@ -37,7 +40,15 @@ class PartSpaceUpdate {
               return upd;
             }));
 
+    this.updates = updates;
     return updates;
+  }
+
+  async runUpdates(livelyDir, log) {
+    var partUpdates = this.computeUpdates();
+    for (let partUpdate of partUpdates) {
+      await partUpdate.runUpdate(livelyDir, log);
+    }
   }
 
 }
@@ -76,9 +87,28 @@ class PartItemUpdate {
   }
   
   async runUpdate(livelyDir, log) {
-    // var category = this.fromSpace.getName(),
-    //     fromURL = this.fromSpace.getURL().toString().replace(/\/$/, "").slice(0, -category.length),
-    //     {output, code} = await copyPartsBinItem(fromURL, category, this.fromItem.name, livelyDir, {log: log});
+    var category = this.fromSpace.getName(),
+        fromURL = this.fromSpace.getURL().toString().replace(/\/$/, "").slice(0, -category.length),
+        status = this.determineStatus();
+    switch (status) {
+        case "to-missing":
+            console.log(`Part '${this.fromItem.name}' doesn't exist on the remote server; skipped.`);
+            break;
+        case "from-changed":
+        case "up-to-date":
+            console.log(`Part '${this.fromItem.name}' is up-to-date.`);
+            break;
+        case "both-changed":
+            if (!(await $world.confirm(`Do you want to update part '${this.fromItem.name}'?`))) {
+                break;
+            } // else fall through
+        case "from-missing":
+        case "to-changed":
+            let { output } = await copyPartsBinItem(fromURL, category, this.fromItem.name, livelyDir, {log: log});
+            console.log(output);
+            console.log(`${this.fromItem.name} installed/updated!`);
+        default: throw new Error(`unhandled part update status: ${status}`);
+    }
   }
 }
 

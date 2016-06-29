@@ -4,8 +4,8 @@ import { createPartSpaceUpdate } from "./partsbin-update.js";
 
 export async function summaryForPartsBin(partSpaceName, fromURL, toURL) {
   // getPartsBinSummary("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
-  var updates = createPartSpaceUpdate(partSpaceName, fromURL, toURL)
-  var summaries = await Promise.all(updates.map(ea => getSummaryFor(ea)));
+  var update = createPartSpaceUpdate(partSpaceName, fromURL, toURL)
+  var summaries = await Promise.all(update.computeUpdates().map(ea => getSummaryFor(ea)));
   return summaries.join("\n")
 }
 
