@@ -2,11 +2,11 @@ import { exec } from "./shell-exec.js";
 import { join, read, write, ensureDir, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
 import { copyLivelyWorldIfMissing, copyPartsBinItemIfMissing, downloadPartItem, downloadPartsBin } from "./partsbin-helper.js";
-
+import { createPartSpaceUpdate } from "./partsbin-update.js";
 
 var packageSpecFile = getPackageSpec();
 
-export async function install(baseDir) {
+export async function install(baseDir, toURL) {
 
   try {
     var log = [];
@@ -80,18 +80,15 @@ export async function install(baseDir) {
     
     var livelyDir = join(baseDir, "LivelyKernel")
   
-    console.log("=> Downloading PartsBin...\n")
+    console.log("=> Downloading PartsBin...")
     var {output} = await downloadPartsBin(livelyDir, {log: log});
 
-    console.log("=> Downloading lively.system part items...\n")
-    var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, {log: log});
-    console.log(output);
-    var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, {log: log});
-    console.log(output);
-    var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, {log: log});
-    console.log(output);
+    console.log("=> Installing and updating lively.modules part items...")
 
-    console.log("=> Downloading lively.system worlds...\n")
+    var update = await createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", toURL, baseDir, log);
+    await update.runUpdates();
+
+    console.log("=> Downloading lively.system worlds...")
     var {output} = await copyLivelyWorldIfMissing("https://dev.lively-web.org/", "development.html", livelyDir, {log: log});
     console.log(output);
 
