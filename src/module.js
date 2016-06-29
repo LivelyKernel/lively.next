@@ -6,6 +6,7 @@ import { scheduleModuleExportsChange } from "./import-export.js";
 import { livelySystemEnv } from "./system.js";
 import { getPackages } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
+import { subscribe } from "./notify.js";
 
 export default function module(System, moduleName, parent) {
   var sysEnv = livelySystemEnv(System),
@@ -31,6 +32,15 @@ class ModuleInterface {
     // execution and eval
     this.recorderName = "__lvVarRecorder";
     this._recorder = null;
+    
+    // cached values
+    this._source = null;
+    this._ast = null;
+    this._scope = null;
+    
+    subscribe(System, "modulechange", (data) => {
+      if (data.module === this.id) this.reset();
+    });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -50,6 +60,7 @@ class ModuleInterface {
 
     if (this.id === "@empty") return Promise.resolve("")
 
+    if (this._source) return Promise.resolve(this._source);
     if (this.id.match(/^http/) && this.System.global.fetch) {
       return this.System.global.fetch(this.id).then(res => res.text());
     }
@@ -58,7 +69,7 @@ class ModuleInterface {
       const path = this.id.replace(/^file:\/\//, "");
       return new Promise((resolve, reject) =>
         this.System._nodeRequire("fs").readFile(path, (err, content) =>
-          err ? reject(err) : resolve(String(content))));
+          err ? reject(err) : resolve(this._source = String(content))));
     }
 
     if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
@@ -72,9 +83,17 @@ class ModuleInterface {
   }
 
   async ast() {
-    return parse(await this.source());
+    if (this._ast) return this._ast;
+    return this._ast = parse(await this.source());
   }
-
+  
+  async scope() {
+    if (this._scope) return this._scope;
+    const ast = await this.ast(),
+          scope = query.topLevelDeclsAndRefs(ast).scope;
+    return this._scope = query.resolveReferences(scope);
+  }
+  
   metadata() {
     var load = this.System.loads ? this.System.loads[this.id] : null;
     return load ? load.metadata : null;
@@ -84,6 +103,12 @@ class ModuleInterface {
     // assume esm by default
     var meta = this.metadata();
     return meta ? meta.format : "esm";
+  }
+  
+  reset() {
+    this._source = null;
+    this._ast = null;
+    this._scope = null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -112,7 +137,8 @@ class ModuleInterface {
   }
 
   unload(opts) {
-    opts = obj.merge({forgetDeps: true, forgetEnv: true}, opts);
+    opts = obj.merge({reset: true, forgetDeps: true, forgetEnv: true}, opts);
+    if (opts.reset) this.reset();
     if (opts.forgetDeps) this.unloadDeps(opts);
     this.System.delete(this.id);
     if (this.System.loads) {
@@ -252,103 +278,97 @@ class ModuleInterface {
   // imports and exports
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  async imports(optAstOrSource) {
-    const parsed = optAstOrSource ?
-            (typeof optAstOrSource === "string" ?
-              parse(optAstOrSource) : optAstOrSource) :
-            await this.ast(),
-          scope = query.scopes(parsed),
-          imports = scope.importDecls.reduce((imports, node) => {
-            var nodes = query.nodesAtIndex(parsed, node.start),
-                importStmt = arr.without(nodes, scope.node)[0];
-            if (!importStmt) return imports;
-
-            var from = importStmt.source ? importStmt.source.value : "unknown module";
-            if (!importStmt.specifiers.length) // no imported vars
-              return imports.concat([{
-                local:      null,
-                imported:   null,
-                fromModule: from
-              }]);
-
-            return imports.concat(importStmt.specifiers.map(importSpec => {
-              var imported;
-              if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";
-              else if (importSpec.type === "ImportDefaultSpecifier" ) imported = "default";
-              else if (importSpec.type === "ImportSpecifier" ) imported = importSpec.imported.name;
-              else if (importStmt.source) imported = importStmt.source.name;
-              else imported = null;
-              return {
-                local:      importSpec.local ? importSpec.local.name : null,
-                imported:   imported,
-                fromModule: from
-              }
-            }))
-          }, []);
-
-    return arr.uniqBy(imports, (a, b) =>
-      a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule);
-
+  async imports() {
+    const parsed = await this.ast(),
+          scope = await this.scope();
+    return query.imports(scope);
   }
 
-  async exports(optAstOrSource) {
+  async exports() {
+    const parsed = await this.ast(),
+          scope = await this.scope();
+    return query.exports(scope);
+  }
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // bindings
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    const parsed = optAstOrSource ?
-            (typeof optAstOrSource === "string" ?
-              parse(optAstOrSource) : optAstOrSource) :
-            await this.ast(),
-          scope = query.scopes(parsed),
-          exports = scope.exportDecls.reduce((exports, node) => {
+  async _localDeclForRefAt(pos) {
+    const scope = await this.scope(),
+          ref = query.refAt(pos, scope);
+    if (ref && ref.decl) ref.decl.module = this;
+    return ref && {decl: ref.decl, id: ref.declId};
+  }
+  
+  async _importForNSRefAt(pos) {
+    // if pos points to "x" of a property "m.x" with an import * as "m"
+    // then this returns [<importStmt>, <m>, "x"]
+    const scope = await this.scope(),
+          ast = scope.node,
+          nodes = query.nodesAtIndex(ast, pos);
+    if (nodes.length < 2) return [null, null];
+    const id = nodes[nodes.length - 1],
+          member = nodes[nodes.length - 2];
+    if (id.type != "Identifier" ||
+        member.type != "MemberExpression" ||
+        member.computed ||
+        member.object.type !== "Identifier" ||
+        !member.object.decl ||
+        member.object.decl.type !== "ImportDeclaration") {
+      return [null, null];
+    }
+    const name = member.object.name,
+          spec = member.object.decl.specifiers.find(s => s.local.name === name);
+    if (spec.type !== "ImportNamespaceSpecifier") return [null, null];
+    return [member.object.decl, spec.local, id.name];
+  }
 
-      var exportsStmt = query.statementOf(scope.node, node);
-      if (!exportsStmt) return exports;
+  async _resolveImportedDecl(decl) {
+    if (!decl) return [];
+    const {start, name, type} = decl.id;
+    const imports = await this.imports(),
+          im = imports.find(i => i.node.start == start && // can't rely on
+                                 i.node.name == name &&   // object identity
+                                 i.node.type == type);
+    if (im) {
+      const imM = module(this.System, im.fromModule, this.id);
+      return [decl].concat(await imM.bindingPathForExport(im.imported));
+    }
+    return [decl];
+  }
 
-      var from = exportsStmt.source ? exportsStmt.source.value : null;
+  async bindingPathForExport(name) {
+    const exports = await this.exports(),
+          ex = exports.find(e => e.exported === name);
+    if (ex.fromModule) {
+      const imM = module(this.System, ex.fromModule, this.id);
+      const decl = {decl: ex.node, id: ex.declId};
+      decl.decl.module = this;
+      return [decl].concat(await imM.bindingPathForExport(ex.imported));
+    } else {
+      if (ex && ex.decl) ex.decl.module = this;
+      return this._resolveImportedDecl({decl: ex.decl, id: ex.declId});
+    }
+  }
 
-      if (exportsStmt.type === "ExportAllDeclaration") {
-        return exports.concat([{
-          local:           null,
-          exported:        "*",
-          fromModule:      from
-        }])
-      }
-
-      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
-        return exports.concat(exportsStmt.specifiers.map(exportSpec => {
-          return {
-            local:           from ? null : exportSpec.local ? exportSpec.local.name : null,
-            exported:        exportSpec.exported ? exportSpec.exported.name : null,
-            fromModule:      from
-          }
-        }))
-      }
-
-      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
-        return exports.concat(exportsStmt.declaration.declarations.map(decl => {
-          return {
-            local:           decl.id.name,
-            exported:        decl.id.name,
-            type:            exportsStmt.declaration.kind,
-            fromModule:      null
-          }
-        }))
-      }
-
-      if (exportsStmt.declaration) {
-        return exports.concat({
-          local:           exportsStmt.declaration.id.name,
-          exported:        exportsStmt.declaration.id.name,
-          type:            exportsStmt.declaration.type === "FunctionDeclaration" ?
-                            "function" : exportsStmt.declaration.type === "ClassDeclaration" ?
-                              "class" : null,
-          fromModule:      null
-        })
-      }
-      return exports;
-    }, []);
-
-    return arr.uniqBy(exports, (a, b) =>
-      a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule);
+  async bindingPathForRefAt(pos) {
+    const decl = await this._localDeclForRefAt(pos);
+    if (decl) {
+      return await this._resolveImportedDecl(decl);
+    } else {
+      const [imDecl, id, name] = await this._importForNSRefAt(pos);
+      if (!imDecl) return [];
+      imDecl.module = this;
+      const imM = module(this.System, imDecl.source.value, this.id);
+      return [{decl: imDecl, id}].concat(await imM.bindingPathForExport(name));
+    }
+  }
+  
+  async definitionForRefAt(pos) {
+    const path = await this.bindingPathForRefAt(pos);
+    if (path.length < 1) return null;
+    return path[path.length - 1].decl;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -423,4 +443,6 @@ class ModuleInterface {
 
     return res;
   }
+  
+  toString() { return `module(${this.id})`; }
 }
