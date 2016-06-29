@@ -73,6 +73,14 @@ describe('code categorizer', function() {
       expect(result.decls).to.deep.equal(expected, result.decls);
     });
 
+    it("finds classes", function() {
+      var result = categorize("class Foo {}"),
+          expected = [
+            {name: "Foo", type: "class", node: result.ast.body[0]}
+          ];
+      expect(result.decls).to.deep.equal(expected, result.decls);
+    });
+
   });
 
 });
