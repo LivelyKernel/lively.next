@@ -83,11 +83,23 @@ export async function install(baseDir, toURL) {
     console.log("=> Downloading PartsBin...")
     var {output} = await downloadPartsBin(livelyDir, {log: log});
 
-    console.log("=> Installing and updating lively.modules part items...")
+    if (lively.PartsBin) {
+      console.log("=> Installing and updating lively.modules part items...")
+      if (!toURL) toURL = URL.root;
+      var update = await createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", toURL, baseDir, log);
+      await update.runUpdates();
+    } else {
+      console.log("=> Installing any missing lively.modules part items...")
+      var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, {log: log});
+      console.log(output);
+      var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.vm-editor", livelyDir, {log: log});
+      console.log(output);
+      var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "mocha-test-runner", livelyDir, {log: log});
+      console.log(output);
+      var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "ModuleEditor", livelyDir, {log: log});
+      console.log(output);
+    }
 
-    if (!toURL) toURL = URL.root;
-    var update = await createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", toURL, baseDir, log);
-    await update.runUpdates();
 
     console.log("=> Downloading lively.system worlds...")
     var {output} = await copyLivelyWorldIfMissing("https://dev.lively-web.org/", "development.html", livelyDir, {log: log});
