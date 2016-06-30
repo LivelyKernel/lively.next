@@ -1,25 +1,16 @@
-import gfx from "lively.graphics";
 import vdom from "virtual-dom";
 
 var {h, diff, patch, create} = vdom;
-
-const defaultProps = {
-  position: pt(0,0),
-  rotation: 0,
-  scale: 1,
-  extent: pt(0,0),
-  fill: Color.white,
-  clipMode: "visible",
-  submorphs: []
-}
 
 export class Renderer {
 
   static default() { return this._default || new this() }
 
   constructor() {
-    // stores the render state for world morphs, that is domNode + vdom tree
-    this.morphMap = new WeakMap();
+    // stores the render state for morphs, that is the vdom tree
+    this.renderMap = new WeakMap();
+    // stores the dom nodes that are used for rendering "world" morphs
+    this.domNodeMap = new WeakMap();
     this.renderWorldLoopProcess = null;
   }
 
@@ -35,18 +26,21 @@ export class Renderer {
   }
 
   renderStateFor(worldMorph) {
-    let state = this.morphMap.get(worldMorph);
-    if (!state) {
-      var tree = this.renderMorph(worldMorph),
-          domNode = create(tree);
-      this.morphMap.set(worldMorph, state = {tree, domNode});
+    let tree = this.renderMap.get(worldMorph);
+    if (!tree) {
+      tree = this.renderMorph(worldMorph);
+      this.renderMap.set(worldMorph, tree);
     }
-    return state;
+    let domNode = this.domNodeMap.get(worldMorph);
+    if (!domNode) {
+      domNode = create(tree);
+      this.domNodeMap.set(worldMorph, domNode);
+    }
+    return {tree, domNode};
   }
 
   renderWorld(worldMorph) {
-    var state = this.renderStateFor(worldMorph),
-        {domNode, tree} = state;
+    var {domNode, tree} = this.renderStateFor(worldMorph);
 
     if (!domNode.parentNode) {
       $morph("vdomMorphTest").setHTMLString("")
@@ -55,24 +49,29 @@ export class Renderer {
 
     var newTree = this.renderMorph(worldMorph),
         patches = diff(tree, newTree);
-    state.domNode = patch(domNode, patches);
-    state.tree = newTree;
+    patch(domNode, patches);
   }
 
   renderMorph(morph) {
-    console.log(morph)
-    var props = Object.assign({}, defaultProps, morph);
-    return h('div', {
+    if (!morph.hasPendingChanges()) {
+      var rendered = this.renderMap.get(morph);
+      if (rendered) return rendered;
+    }
+
+    var tree = h('div', {
       style: {
         position: "absolute",
-        left: props.position.x + 'px',
-        top: props.position.y + 'px',
-        width: props.extent.x + 'px',
-        height: props.extent.y + 'px',
-        backgroundColor: props.fill ? props.fill.toCSSString() : "",
-        overflow: props.clipMode
+        left: morph.position.x + 'px',
+        top: morph.position.y + 'px',
+        width: morph.extent.x + 'px',
+        height: morph.extent.y + 'px',
+        backgroundColor: morph.fill ? morph.fill.toString() : "",
+        overflow: morph.clipMode
       }
-    }, props.submorphs.map(m => this.renderMorph(m)));
+    }, morph.submorphs.map(m => this.renderMorph(m)));
+    
+    this.renderMap.set(morph, tree);
+    return tree;
   }
 
 }
