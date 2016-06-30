@@ -40,6 +40,8 @@ export class Renderer {
   }
 
   renderWorld(worldMorph) {
+    if (!worldMorph.needsRerender()) return;
+
     var {domNode, tree} = this.renderStateFor(worldMorph);
 
     if (!domNode.parentNode) {
@@ -49,14 +51,16 @@ export class Renderer {
 
     var newTree = this.renderMorph(worldMorph),
         patches = diff(tree, newTree);
+
     patch(domNode, patches);
   }
 
   renderMorph(morph) {
-    if (!morph.hasPendingChanges()) {
+    if (!morph.needsRerender()) {
       var rendered = this.renderMap.get(morph);
       if (rendered) return rendered;
     }
+    morph.aboutToRender();
 
     var tree = h('div', {
       style: {
@@ -69,7 +73,7 @@ export class Renderer {
         overflow: morph.clipMode
       }
     }, morph.submorphs.map(m => this.renderMorph(m)));
-    
+
     this.renderMap.set(morph, tree);
     return tree;
   }

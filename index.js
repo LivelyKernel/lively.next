@@ -5,12 +5,17 @@ import { Morph } from "./morph.js";
 function test() {
   var world = new Morph({extent: pt(300,300)})
   world.extent;
+  world.fill
 
+  // r.stopRenderWorldLoop()
   var r = new Renderer()
   r.renderWorldLoop(world)
-  // r.stopRenderWorldLoop()
 
   world.fill = Color.white;
+  world.fill = Color.random()
+  world.undo()
+  world.changes
+  world.forceRender
 
   // $morph("vdomMorphTest").setHTMLString("")
     
