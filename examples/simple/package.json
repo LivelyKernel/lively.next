@@ -1,0 +1,13 @@
+{
+  "name": "lively.morphics-example-1",
+  "systemjs": {
+    "map": {
+    }
+  },
+  "lively": {
+    "packageMap": {
+      "lively.morphic": "../../",
+      "lively.graphics": "../../node_modules/lively.graphics"
+    }
+  }
+}

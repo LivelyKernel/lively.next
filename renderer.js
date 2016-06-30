@@ -14,10 +14,10 @@ export class Renderer {
     this.renderWorldLoopProcess = null;
   }
 
-  renderWorldLoop(world) {
-    this.renderWorld(world);
+  renderWorldLoop(world, rootElement) {
+    this.renderWorld(world, rootElement);
     this.renderWorldLoopProcess = requestAnimationFrame(() =>
-      this.renderWorldLoop(world));
+      this.renderWorldLoop(world, rootElement));
   }
 
   stopRenderWorldLoop() {
@@ -39,14 +39,13 @@ export class Renderer {
     return {tree, domNode};
   }
 
-  renderWorld(worldMorph) {
+  renderWorld(worldMorph, rootElement) {
     if (!worldMorph.needsRerender()) return;
 
     var {domNode, tree} = this.renderStateFor(worldMorph);
 
     if (!domNode.parentNode) {
-      $morph("vdomMorphTest").setHTMLString("")
-      $morph("vdomMorphTest").renderContext().shapeNode.appendChild(domNode);
+      rootElement.appendChild(domNode);
     }
 
     var newTree = this.renderMorph(worldMorph),

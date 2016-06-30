@@ -13,18 +13,21 @@
     "main": "index.js",
     "map": {
       "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
-      "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js"
+      "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
+      "lively.lang": "./node_modules/lively.lang/dist/lively.lang.dev.js"
     },
     "meta": {
       "node_modules/virtual-dom/dist/virtual-dom.js": {
         "format": "amd"
+      },
+      "./node_modules/lively.lang/dist/lively.lang.dev.js": {
+        "format": "global"
       }
     }
   },
   "lively": {
     "main": "index.js",
     "packageMap": {
-      "lively.lang": "./node_modules/lively.lang",
       "lively.graphics": "./node_modules/lively.graphics"
     }
   },

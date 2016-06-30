@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.morphic example 1</title>
+  </head>
+  <body>
+    <div id="lively-world"></div>
+    <script src="../../node_modules/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
+    <script src="../../node_modules/lively.modules/dist/lively.modules.js"></script>
+    <script>
+      lively.modules.importPackage('.')
+        .then(() => console.log("loaded"))
+        .catch(err => console.error(err))
+    </script>
+  </body>
+</html>
