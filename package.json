@@ -1,0 +1,34 @@
+{
+  "name": "lively.morphic",
+  "version": "0.1.0",
+  "dependencies": {
+    "virtual-dom": "^2.1.1",
+    "lively.lang": "^0.6.2",
+    "lively.graphics": "^0.1.0"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.3.7"
+  },
+  "systemjs": {
+    "main": "index.js",
+    "map": {
+      "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
+      "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js"
+    },
+    "meta": {
+      "node_modules/virtual-dom/dist/virtual-dom.js": {
+        "format": "amd"
+      }
+    }
+  },
+  "lively": {
+    "main": "index.js",
+    "packageMap": {
+      "lively.lang": "./node_modules/lively.lang",
+      "lively.graphics": "./node_modules/lively.graphics"
+    }
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js"
+  }
+}
