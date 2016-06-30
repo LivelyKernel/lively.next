@@ -93,6 +93,14 @@ export class Morph {
   addMorph(morph) {
     morph._owner = this;
     this.change({prop: "submorphs", value: this.submorphs.concat(morph)});
+    return morph;
+  }
+  remove() {
+    var o = this.owner;
+    if (o) {
+      this._owner = null;
+      o.change({prop: "submorphs", value: o.submorphs.filter(ea => ea !== this)});
+    }
   }
   get owner() { return this._owner; }
 
