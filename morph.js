@@ -96,6 +96,9 @@ export class Morph {
   }
   get owner() { return this._owner; }
 
+  moveBy(delta) { this.position = this.position.addPt(delta); }
+  resizeBy(delta) { this.extent = this.extent.addPt(delta); }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
   // undo / redo
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
