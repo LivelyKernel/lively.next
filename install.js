@@ -67,12 +67,14 @@ export async function install(baseDir, toURL) {
 
     i = 0; for (let p of packages) {
       pBar && pBar.setLabel(`npm install ${p.name}`)
-      if (await p.npmInstallNeeded()) {
-        console.log(`npm install of ${p.name}...`);
-        await p.npmInstall();
-      } else {
-        console.log(`npm install of ${p.name} not required`);
-      }
+      console.log(`npm install of ${p.name}...`);
+      await p.npmInstall();
+      // if (await p.npmInstallNeeded()) {
+      //   console.log(`npm install of ${p.name}...`);
+      //   await p.npmInstall();
+      // } else {
+      //   console.log(`npm install of ${p.name} not required`);
+      // }
       pBar && pBar.setValue(++i / packages.length)
     }
 
