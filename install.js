@@ -66,9 +66,13 @@ export async function install(baseDir, toURL) {
     console.log(`=> npm install`);
 
     i = 0; for (let p of packages) {
-      console.log(`npm install of ${p.name}...`);
       pBar && pBar.setLabel(`npm install ${p.name}`)
-      await p.npmInstall()
+      if (await p.npmInstallNeeded()) {
+        console.log(`npm install of ${p.name}...`);
+        await p.npmInstall();
+      } else {
+        console.log(`npm install of ${p.name} not required`);
+      }
       pBar && pBar.setValue(++i / packages.length)
     }
 
