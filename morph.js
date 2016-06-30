@@ -96,6 +96,16 @@ export class Morph {
   }
   get owner() { return this._owner; }
 
+  bounds() {
+    var {x,y} = this.position, {x:w,y:h} = this.extent;
+    return rect(x,y,w,h);
+  }
+
+  innerBounds() {
+    var {x:w,y:h} = this.extent;
+    return rect(0,0,w,h);
+  }
+
   moveBy(delta) { this.position = this.position.addPt(delta); }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
 
