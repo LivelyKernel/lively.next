@@ -12,7 +12,8 @@ export async function exec(cmdString, opts) {
       (err, _stdout, _stderr) => { e = err; stdout = _stdout, stderr = _stderr; resolve(); }));
     var cmd = {
       code: proc.exitCode,
-      output: (e ? "\n"+String(e) : "") + stdout + "\n" + stderr};
+      output: (e ? "\n"+String(e) : "") + stdout + "\n" + stderr,
+      stdout: stdout };
     opts.log.push(cmd.output);
   } else {
     var cmd = lively.shell.run(cmdString, {cwd: opts.cwd});
