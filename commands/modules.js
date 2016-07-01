@@ -142,8 +142,14 @@ async function _searchForExistingFilesWeb(vmEditor, rootURL, p) {
         string: "[create new module]",
         value: "[create new module]"}
       ].concat(found
-        .filter(ea => ea.endsWith(".js") || ea.endsWith(".sl"))
-        .map(ea => ({isListItem: true, string: ea, value: ea}))),
+        .filter(ea => ea.endsWith(".js"))
+        .map(name => {
+          var shortName = name;
+          shortName = p && name.indexOf(p.address) == 0 ?
+            p.name + name.slice(p.address.length) :
+            name;
+          return {isListItem: true, string: shortName, value: name};
+        })),
       answer = await $world.filterableListPrompt("What module to load?", {
         filterLabel: "filter: ",
         list: candidates,

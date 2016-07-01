@@ -103,7 +103,7 @@ export async function interactivelyLoadPackage(system, vmEditor) {
 }
 
 export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
-  var name = resource(await system.normalize(packageURL)).asFile().url;
+  var name = resource(packageURL).asFile().url;
   var p =  (await system.getPackage(name)) || (await system.getPackageForModule(name));
   if (!p) throw new Error("Cannot find package for " + name);
 
