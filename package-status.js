@@ -168,7 +168,10 @@ export class ReporterWidget {
           .then(i => indicator = i)
           .then(() => p.installOrUpdate())
           .then(out => { $world.inform(out); })
-          .catch(err => $world.inform(String(err.stack || err)))
+          .catch(err => {
+            $world.inform(String(err.stack || err));
+            console.log(p.printLog());
+          })
           .then(() => indicator.remove());
       }, {p}) : this.textFlow.nothing, this.textFlow.br);
 

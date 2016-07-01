@@ -87,10 +87,15 @@ export class Package {
     return packages.filter((p) => deps.indexOf(p.name) > -1);
   }
 
+  findDependentPackages(packages) {
+    var deps = Object.keys(this.dependencies);
+    return packages.filter((p) => deps.indexOf(p.name) > -1);
+  }
+
   async symlinkTo(localDir, toPackage) {
     // creates a link from this.directory -> toPackage.directory/localDir/this.name
-    var fromPackage = this;
-    var cmd = await exec(`node -e '
+    var fromPackage = this,
+        cmd = await exec(`node -e '
 var j = require("path").join, fs = require("fs"), localDir = "${localDir}", linkedDir = j(localDir, "${fromPackage.name}");
 if (!fs.existsSync(localDir)) fs.mkdirSync(localDir);
 if (fs.existsSync(linkedDir)) rm(linkedDir);
@@ -110,6 +115,8 @@ function rm(path) {
     await this.readConfig();
     var deps = await this.findDependenciesIn(packages);
     for (let dep of deps) await dep.symlinkTo("node_modules", this);
+    var dependents = packages.select(p => Object.keys(p.dependencies).indexOf(this.name) !== -1)
+    for (let dep of dependents) await this.symlinkTo("node_modules", dep);
   }
 
   async npmInstall() {
@@ -120,7 +127,7 @@ function rm(path) {
     var cmd = await exec('npm list --depth 1 --json --silent', {log: this._log, cwd: this.directory}),
         { stdout } = cmd,
         npmList = JSON.parse(stdout),
-        depNames = Object.getOwnPropertyNames(npmList.dependencies);
+        depNames = Object.getOwnPropertyNames(npmList.dependencies),
         toFix = depNames.reduce(function(depsToFix, name) {
           var dep = npmList.dependencies[name];
           if (dep.missing || dep.invalid) depsToFix.push(name);
