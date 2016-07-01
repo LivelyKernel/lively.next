@@ -13,28 +13,31 @@ describe("code changes of esm format module", () => {
         testProjectSpec = {
           "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
           "file2.js": "var internal = 1; export var y = internal;",
+          "file4.js": "'format esm'; var x = 23;\n",
           "package.json": '{"name": "test-project-1", "main": "file1.js"}',
           "sub-dir": {"file3.js": "export var z = 2;"}
         },
         file1m = testProjectDir + "file1.js",
         file2m = testProjectDir + "file2.js",
-        file3m = testProjectDir + "sub-dir/file3.js";
+        file3m = testProjectDir + "sub-dir/file3.js",
+        file4m = testProjectDir + "file4.js";
 
   function changeModule2Source() {
     // "internal = 1" => "internal = 2"
-    return module2.changeSourceAction(s => s.replace(/(internal = )([0-9]+;)/, "$12;debugger;"));
+    return module2.changeSourceAction(s => s.replace(/(internal = )([0-9]+;)/, "$12;"));
   }
 
-  let S, module1, module2, module3;
-  beforeEach(() => {
+  let S, module1, module2, module3, module4;
+  beforeEach(async () => {
     S = getSystem("test", {baseURL: testProjectDir});
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module3 = module(S, file3m);
-    return createFiles(testProjectDir, testProjectSpec);
+    module4 = module(S, file4m);
+    await createFiles(testProjectDir, testProjectSpec);
   });
 
-  afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
+  afterEach(async () => { removeSystem("test"); await removeDir(testProjectDir); });
 
   it("modifies module and its exports", async () => {
     const m1 = await S.import(file1m),
@@ -115,6 +118,20 @@ describe("code changes of esm format module", () => {
     expect(m).equal(m_reimported, "module identity has changed");
   });
 
+  it("source change updates module dependency info", async () => {
+    await S.import(module2.id);
+    await S.import(module4.id);
+    expect(module2.record().importers).deep.equals([]);
+    expect(module4.record().dependencies).deep.equals([]);
+    expect(module4.record().importers).deep.equals([]);
+
+    await module4.changeSource("import { y } from './file2.js'", {evaluate: true});
+
+    expect(module2.record().importers).to.containSubset([{name: module4.id}]);
+    expect(module4.record().dependencies).to.containSubset([{name: module2.id}]);
+    expect(module4.record().importers).deep.equals([]);
+  });
+
 });
 
 
@@ -158,13 +175,13 @@ describe("code changes of global format module", () => {
     expect(m.z).to.equal(3, "export state after change and re-import");
   });
 
-
   it("affects eval state", async () =>{
     await S.import(file1m);
     await module1.changeSourceAction(s => s.replace(/zzz = 4/, "zzz = 6"));
     expect(module1.env().recorder).property("zzz").equal(6)
     expect(module1.env().recorder).property("z").equal(3);
   });
+
 });
 
 describe("persistent definitions", () => {

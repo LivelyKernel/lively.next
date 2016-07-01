@@ -174,6 +174,37 @@ class ModuleInterface {
     return moduleSourceChange(this.System, this.id, oldSource, newSource, this.format(), options);
   }
 
+  addDependencyToModuleRecord(dependency, setter = function() {}) {
+    // `dependency is another module, setter is the function that gets
+    // triggered when a dependency's binding changes so that "this" module is updated
+    var record = this.record(),
+        dependencyRecord = dependency.record();
+
+    if (record && dependencyRecord) {
+      // 1. update the record so that when its dependencies change and cause a
+      // re-execute, the correct code (new version) is run
+      var depIndex, hasDepenency = record.dependencies.some((ea, i) => {
+        if (!ea) return; depIndex = i; return ea && ea.name === dependency.id; });
+      if (!hasDepenency) {
+        record.dependencies.push(dependencyRecord)
+      } else if (dependencyRecord !== record.dependencies[depIndex] /*happens when a dep is reloaded*/)
+        record.dependencies.splice(depIndex, 1, dependencyRecord);
+
+      // setters are for updating module bindings, the position of the record
+      // in dependencies should be the same as the position of the setter for that
+      // dependency...
+      if (!hasDepenency || !record.setters[depIndex])
+        record.setters[hasDepenency ? depIndex : record.dependencies.length-1] = setter;
+
+      // 2. update records of dependencies, so that they know about this module as an importer
+      var impIndex, hasImporter = dependencyRecord.importers.some((imp, i) => {
+        if (!imp) return; impIndex = i; return imp && imp.name === this.id });
+      if (!hasImporter) dependencyRecord.importers.push(record);
+      else if (record !== dependencyRecord.importers[impIndex])
+        dependencyRecord.importers.splice(impIndex, 1, record);
+    }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dependencies
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -223,30 +254,41 @@ class ModuleInterface {
   get recorder() {
     if (this._recorder) return this._recorder;
 
-    const S = this.System;
+    const S = this.System, self = this;
+
     return this._recorder = Object.create(S.global, {
 
       System: {configurable: true, writable: true, value: S},
 
       _moduleExport: {
         value: (name, val) => {
-          scheduleModuleExportsChange(S, this.id, name, val, true/*add export*/);
+          scheduleModuleExportsChange(S, self.id, name, val, true/*add export*/);
         }
       },
 
       _moduleImport: {
         value: (depName, key) => {
-          var depId = S.normalizeSync(depName, this.id),
-              depExports = S._loader.modules[depId];
+          var depId = S.decanonicalize(depName, self.id),
+              depExports = S.get(depId);
+
           if (!depExports) {
-            console.warn(`import of ${key} failed: ${depName} (tried as ${this.id}) is not loaded!`);
+            console.warn(`import of ${key} failed: ${depName} (tried as ${self.id}) is not loaded!`);
             return undefined;
           }
-          if (key == undefined)
-            return depExports.module;
-          if (!depExports.module.hasOwnProperty(key))
+
+          self.addDependencyToModuleRecord(
+            module(S, depId),
+            // setter is only installed if there isn't a setter already. In
+            // those cases we make sure that at least the module varRecorder gets
+            // updated, which is good enough for "virtual modules"
+            imports => Object.assign(self.recorder, imports));
+
+          if (key == undefined) return depExports;
+
+          if (!depExports.hasOwnProperty(key))
             console.warn(`import from ${depExports}: Has no export ${key}!`);
-          return depExports.module[key];
+
+          return depExports[key];
         }
       }
 
