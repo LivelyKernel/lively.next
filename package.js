@@ -75,15 +75,15 @@ function rm(path) {
   }
 
   async npmInstallNeeded() {
-    var cmd = await exec('npm list --depth 1 --json', {log: this._log, cwd: this.directory}),
-    out = cmd.output,
-    npmList = JSON.parse(out),
-    depNames = Object.getOwnPropertyNames(npmList.dependencies),
-    toFix = depNames.reduce(function(depsToFix, name) {
-      var dep = npmList.dependencies[name];
-      if (dep.missing || dep.invalid) depsToFix.push(name);
-      return depsToFix;
-    }, []);
+    var cmd = await exec('npm list --depth 1 --json --silent', {log: this._log, cwd: this.directory}),
+        { stdout } = cmd,
+        npmList = JSON.parse(stdout),
+        depNames = Object.getOwnPropertyNames(npmList.dependencies);
+        toFix = depNames.reduce(function(depsToFix, name) {
+          var dep = npmList.dependencies[name];
+          if (dep.missing || dep.invalid) depsToFix.push(name);
+          return depsToFix;
+        }, []);
     return toFix.length && toFix.length > 0;
   }
 }
