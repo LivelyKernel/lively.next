@@ -10,6 +10,11 @@ export class Package {
     this.directory = dir;
     this.config = config;
     this.repo = new Repository(this.directory, {log: this._log});
+    this.exists = undefined;
+    this.hasGitRepo = undefined;
+    this.currentBranch = undefined;
+    this.hasLocalChanges = undefined;
+    this.hasRemoteChanges = undefined;
   }
 
   printLog() { return this._log.join(""); }
@@ -30,20 +35,51 @@ export class Package {
     return this;
   }
 
-  async exists() {
+  async readStatus() {
+    this.exists = await this.existsInFileSystem();
+    if (!this.exists) return this;
+    this.hasGitRepo = await this.isGitRepo();
+    if (!this.hasGitRepo) return this;
+    this.currentBranch = await this.repo.currentBranch();
+    this.hasLocalChanges = await this.repo.hasLocalChanges(),
+    this.hasRemoteChanges = await this.repo.hasRemoteChanges(this.config.branch);
+    return this;
+  }
+
+  async existsInFileSystem() {
     return (await exec(`node -e 'process.exit(require("fs").existsSync("${this.directory}") ? 0 : 1);'`)).code === 0;
   }
 
-  async ensure() {
-    if (!(await this.exists()))
-      await this.repo.clone(this.config.repoURL, this.config.branch);
-    return this;
+  async isGitRepo() {
+    return (await exec(`node -e 'process.exit(require("fs").existsSync(require("path").join("${this.directory}", ".git")) ? 0 : 1);'`)).code === 0;
   }
 
-  async update() {
-    if (await this.exists())
-      await this.repo.interactivelyUpdate(this.config.branch, undefined);
-    return this;
+  async ensure(packages) {
+    if (!await this.existsInFileSystem()) {
+      await this.repo.clone(this.config.repoURL, this.config.branch);
+    } else if (!await this.isGitRepo()) {
+      // dir does exists but is not a git repo
+      var helperDir = join(this.directory, ".temp-lively-clone-helper"),
+          helperRepo = new Repository(helperDir, {log: this._log});
+      await helperRepo.clone(this.config.repoURL, this.config.branch);
+      await exec(`mv .temp-lively-clone-helper/.git .git; rm -rf .temp-lively-clone-helper`, {cwd: this.directory});
+    }
+    packages && await this.linkToDependencies(packages);
+    var {output} = await exec(`git status`, {cwd: this.directory})
+    return output;
+  }
+
+  async update(packages) {
+    if (await this.existsInFileSystem())
+      var output = await this.repo.interactivelyUpdate(this.config.branch, undefined);
+    packages && await this.linkToDependencies(packages);
+    return output;
+  }
+
+  async installOrUpdate(packages) {
+    return !await this.existsInFileSystem() || !await this.isGitRepo() ?
+      await this.ensure(packages) :
+      await this.update(packages);
   }
 
   findDependenciesIn(packages) {
