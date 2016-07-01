@@ -985,6 +985,12 @@
                 return object[k];
             }) : [];
         },
+        select: function (obj, keys) {
+            var selected = {};
+            for (var i = 0; i < keys.length; i++)
+                selected[keys[i]] = obj[keys[i]];
+            return selected;
+        },
         addScript: function (object, funcOrString, optName, optMapping) {
             var func = exports.fun.fromString(funcOrString);
             return exports.fun.asScriptOf(func, object, optName, optMapping);
@@ -1298,12 +1304,6 @@
                     result.push(name);
             }
             return result;
-        },
-        select: function (obj, keys) {
-            var selected = {};
-            for (var i = 0; i < keys.length; i++)
-                selected = obj[keys[i]];
-            return selected;
         },
         hash: function (obj) {
             return Object.keys(obj).sort().join('').hashCode();
@@ -16514,6 +16514,10 @@ module.exports = function(acorn) {
     };
   }();
 
+  babelHelpers.toArray = function (arr) {
+    return Array.isArray(arr) ? arr : Array.from(arr);
+  };
+
   babelHelpers.toConsumableArray = function (arr) {
     if (Array.isArray(arr)) {
       for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
@@ -19223,7 +19227,6 @@ var nodes = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var helpers = {
-
     declIds: function declIds(nodes) {
       return lively_lang.arr.flatmap(nodes, function (ea) {
         if (!ea) return [];
@@ -19235,7 +19238,15 @@ var nodes = Object.freeze({
         return [];
       });
     },
-
+    varDecls: function varDecls(scope) {
+      return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
+        return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
+          return helpers.declIds([decl.id]).map(function (id) {
+            return [decl, id];
+          });
+        });
+      });
+    },
     varDeclIds: function varDeclIds(scope) {
       return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
         all.push.apply(all, ea.declarations);return all;
@@ -19243,7 +19254,6 @@ var nodes = Object.freeze({
         return ea.id;
       }));
     },
-
     objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
       // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
       // nodes as a list
@@ -19256,22 +19266,25 @@ var nodes = Object.freeze({
           case "ArrayExpression":case "ArrayPattern":
             if (!onlyLeafs) result.push(thisNode);
             result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
-              return objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
+              return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
             }));
             break;
           case "ObjectExpression":case "ObjectPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+            result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
             break;
           case "AssignmentPattern":
             if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
+            result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
             break;
           default:
             result.push(thisNode);
         }
         return result;
       });
+    },
+    isDeclaration: function isDeclaration(node) {
+      return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
     }
   };
 
@@ -19344,6 +19357,19 @@ var nodes = Object.freeze({
     })).concat(scope.importDecls);
   }
 
+  function declarationsWithIdsOfScope(scope) {
+    // returns a list of pairs [(DeclarationNode,IdentifierNode)]
+    var bareIds = helpers.declIds(scope.params).concat(scope.catches);
+    var declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+    return bareIds.map(function (ea) {
+      return [ea, ea];
+    }).concat(declNodes.map(function (ea) {
+      return [ea, ea.id];
+    })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
+      return [statementOf(scope.node, im), im];
+    }));
+  }
+
   function _declaredVarNames(scope, useComments) {
     return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
   }
@@ -19359,6 +19385,60 @@ var nodes = Object.freeze({
 
   function topLevelFuncDecls(parsed) {
     return FindToplevelFuncDeclVisitor.run(parsed);
+  }
+
+  function resolveReference(ref, scopePath) {
+    if (scopePath.length == 0) return [null, null];
+
+    var _scopePath = babelHelpers.toArray(scopePath);
+
+    var scope = _scopePath[0];
+
+    var outer = _scopePath.slice(1);
+
+    var decls = scope.decls || declarationsWithIdsOfScope(scope);
+    scope.decls = decls;
+    var decl = decls.find(function (_ref) {
+      var _ref2 = babelHelpers.slicedToArray(_ref, 2);
+
+      var _ = _ref2[0];
+      var id = _ref2[1];
+      return id.name == ref;
+    });
+    return decl || resolveReference(ref, outer);
+  }
+
+  function resolveReferences(scope) {
+    function rec(scope, outerScopes) {
+      var path = [scope].concat(outerScopes);
+      scope.refs.forEach(function (ref) {
+        var _resolveReference = resolveReference(ref.name, path);
+
+        var _resolveReference2 = babelHelpers.slicedToArray(_resolveReference, 2);
+
+        var decl = _resolveReference2[0];
+        var id = _resolveReference2[1];
+
+        if (decl) ref.decl = lively_lang.obj.deepCopy(decl);
+        if (id) ref.declId = lively_lang.obj.deepCopy(id);
+      });
+      scope.subScopes.forEach(function (s) {
+        return rec(s, path);
+      });
+    }
+    if (scope.referencesResolved) return scope;
+    rec(scope, []);
+    scope.referencesResolved = true;
+    return scope;
+  }
+
+  function refAt(pos, scope) {
+    var ref = scope.refs.find(function (r) {
+      return r.start <= pos && pos <= r.end;
+    });
+    return ref || scope.subScopes.reduce(function (p, s) {
+      return p || refAt(pos, s);
+    }, null);
   }
 
   function topLevelDeclsAndRefs(parsed, options) {
@@ -19423,8 +19503,6 @@ var nodes = Object.freeze({
   function findReferencesAndDeclsInScope(scope, name) {
     if (name === "this") {
       return scope.thisRefs;
-      scopes(parse("var x = this.foo")).refs;
-      scopes(parse("var x = this.foo")).thisRefs;
     }
 
     return lively_lang.arr.flatten( // all references
@@ -19461,20 +19539,19 @@ var nodes = Object.freeze({
     return acorn.walk.findNodesIncluding(ast, pos);
   }
 
+  var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
+
   function statementOf(parsed, node, options) {
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
     var nodes = nodesAt$1(node.start, parsed);
-    if (nodes.indexOf(node) === -1) return undefined;
-    var found = nodes.reverse().find(function (node, i) {
-      if (!nodes[i + 1]) return false;
-      var t = nodes[i + 1].type;
-      return ["BlockStatement", "Program", "FunctionDeclaration", "FunctionExpress", "ArrowFunctionExpress", "SwitchCase", "SwitchStatement"].indexOf(t) > -1 ? true : false;
+    var found = nodes.reverse().find(function (node) {
+      return _stmtTypes.includes(node.type);
     });
     if (options && options.asPath) {
       var v = new Visitor(),
-          foundPath;
+          foundPath = void 0;
       v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
         if (node === found) {
           foundPath = path;throw new Error("stop search");
@@ -19487,6 +19564,145 @@ var nodes = Object.freeze({
       return foundPath;
     }
     return found;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // imports and exports
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function imports(scope) {
+    var imports = scope.importDecls.reduce(function (imports, node) {
+      var nodes = nodesAtIndex(scope.node, node.start),
+          importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+      if (!importStmt) return imports;
+
+      var from = importStmt.source ? importStmt.source.value : "unknown module";
+      if (!importStmt.specifiers.length) // no imported vars
+        return imports.concat([{
+          local: null,
+          imported: null,
+          fromModule: from,
+          node: node
+        }]);
+
+      return imports.concat(importStmt.specifiers.map(function (importSpec) {
+        var imported;
+        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+        return {
+          local: importSpec.local ? importSpec.local.name : null,
+          imported: imported,
+          fromModule: from,
+          node: node
+        };
+      }));
+    }, []);
+
+    return lively_lang.arr.uniqBy(imports, function (a, b) {
+      return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+    });
+  }
+
+  function exports$1(scope) {
+    resolveReferences(scope);
+    var exports = scope.exportDecls.reduce(function (exports, node) {
+
+      var exportsStmt = statementOf(scope.node, node);
+      if (!exportsStmt) return exports;
+
+      var from = exportsStmt.source ? exportsStmt.source.value : null;
+
+      if (exportsStmt.type === "ExportAllDeclaration") {
+        return exports.concat([{
+          local: null,
+          exported: "*",
+          imported: "*",
+          fromModule: from,
+          node: node,
+          type: "all"
+        }]);
+      }
+
+      if (exportsStmt.type === "ExportDefaultDeclaration") {
+        if (helpers.isDeclaration(exportsStmt.declaration)) {
+          return exports.concat({
+            local: exportsStmt.declaration.id.name,
+            exported: "default",
+            type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+            fromModule: null,
+            node: node,
+            decl: exportsStmt.declaration,
+            declId: exportsStmt.declaration.id
+          });
+        } else if (exportsStmt.declaration.type === "Identifier") {
+          return exports.concat([{
+            local: exportsStmt.declaration.name,
+            exported: "default",
+            fromModule: null,
+            node: node,
+            type: "id",
+            decl: exportsStmt.declaration.decl,
+            declId: exportsStmt.declaration.declId
+          }]);
+        } else {
+          // exportsStmt.declaration is an expression
+          return exports.concat([{
+            local: null,
+            exported: "default",
+            fromModule: null,
+            node: node,
+            type: "expr",
+            decl: exportsStmt.declaration,
+            declId: exportsStmt.declaration
+          }]);
+        }
+      }
+
+      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+        return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+          return {
+            local: !from && exportSpec.local ? exportSpec.local.name : null,
+            exported: exportSpec.exported ? exportSpec.exported.name : null,
+            imported: from && exportSpec.local ? exportSpec.local.name : null,
+            fromModule: from || null,
+            node: node,
+            type: "id",
+            decl: from ? node : exportSpec.local && exportSpec.local.decl,
+            declId: from ? exportSpec.exported : exportSpec.local && exportSpec.local.declId
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+        return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
+          return {
+            local: decl.id.name,
+            exported: decl.id.name,
+            type: exportsStmt.declaration.kind,
+            fromModule: null,
+            node: node,
+            decl: decl,
+            declId: decl.id
+          };
+        }));
+      }
+
+      if (exportsStmt.declaration) {
+        return exports.concat({
+          local: exportsStmt.declaration.id.name,
+          exported: exportsStmt.declaration.id.name,
+          type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+          fromModule: null,
+          node: node,
+          decl: exportsStmt.declaration,
+          declId: exportsStmt.declaration.id
+        });
+      }
+      return exports;
+    }, []);
+
+    return lively_lang.arr.uniqBy(exports, function (a, b) {
+      return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+    });
   }
 
 
@@ -19510,7 +19726,11 @@ var nodes = Object.freeze({
     findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
     findDeclarationClosestToIndex: findDeclarationClosestToIndex,
     nodesAt: nodesAt$1,
-    statementOf: statementOf
+    statementOf: statementOf,
+    resolveReferences: resolveReferences,
+    refAt: refAt,
+    imports: imports,
+    exports: exports$1
   });
 
   var helper = {
@@ -20424,14 +20644,14 @@ var nodes = Object.freeze({
       if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
         /*...*/
       } else if (stmt.declaration.declarations) {
-          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-            return assignExpr(options.captureObj, decl.id, decl.id, false);
-          })));
-        } else if (stmt.declaration.type === "FunctionDeclaration") {
-          /*handled by function rewriter as last step*/
-        } else if (stmt.declaration.type === "ClassDeclaration") {
-            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-          }
+        body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+          return assignExpr(options.captureObj, decl.id, decl.id, false);
+        })));
+      } else if (stmt.declaration.type === "FunctionDeclaration") {
+        /*handled by function rewriter as last step*/
+      } else if (stmt.declaration.type === "ClassDeclaration") {
+        body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+      }
     }
     parsed.body = body;
     return parsed;
@@ -20482,7 +20702,7 @@ var nodes = Object.freeze({
       var stmt = parsed.body[i];
       if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
         body.push(stmt.declaration);
-        stmt.declaration = stmt.declaration.id;
+        stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
       }
       body.push(stmt);
     }
@@ -20645,18 +20865,18 @@ var nodes = Object.freeze({
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
-            type: "CallExpression",
-            arguments: [{ type: "Literal", value: i }],
-            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+        return [merge(varDecl(el.argument, {
+          type: "CallExpression",
+          arguments: [{ type: "Literal", value: i }],
+          callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-          // like [{x}]
-        } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-            declaredNames.push(helperVarId.name);
-            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-          }
+        // like [{x}]
+      } else {
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+            helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+      }
     });
   }
 
@@ -20671,11 +20891,11 @@ var nodes = Object.freeze({
 
         // like {x: {z}} or {x: [a]}
       } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-          declaredNames.push(helperVarId.name);
-          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-        }
+        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+            helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
+        declaredNames.push(helperVarId.name);
+        return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
+      }
     });
   }
 
@@ -21220,14 +21440,13 @@ var categorizer = Object.freeze({
 (function (exports,lively_lang,lively_ast) {
   'use strict';
 
-  var babelHelpers = {};
-  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
     return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
   };
 
-  babelHelpers.asyncToGenerator = function (fn) {
+  var asyncToGenerator = function (fn) {
     return function () {
       var gen = fn.apply(this, arguments);
       return new Promise(function (resolve, reject) {
@@ -21256,13 +21475,13 @@ var categorizer = Object.freeze({
     };
   };
 
-  babelHelpers.classCallCheck = function (instance, Constructor) {
+  var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   };
 
-  babelHelpers.createClass = function () {
+  var createClass = function () {
     function defineProperties(target, props) {
       for (var i = 0; i < props.length; i++) {
         var descriptor = props[i];
@@ -21280,7 +21499,7 @@ var categorizer = Object.freeze({
     };
   }();
 
-  babelHelpers.defineProperty = function (obj, key, value) {
+  var defineProperty = function (obj, key, value) {
     if (key in obj) {
       Object.defineProperty(obj, key, {
         value: value,
@@ -21295,7 +21514,7 @@ var categorizer = Object.freeze({
     return obj;
   };
 
-  babelHelpers.get = function get(object, property, receiver) {
+  var get = function get(object, property, receiver) {
     if (object === null) object = Function.prototype;
     var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -21320,7 +21539,7 @@ var categorizer = Object.freeze({
     }
   };
 
-  babelHelpers.inherits = function (subClass, superClass) {
+  var inherits = function (subClass, superClass) {
     if (typeof superClass !== "function" && superClass !== null) {
       throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
     }
@@ -21336,15 +21555,13 @@ var categorizer = Object.freeze({
     if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   };
 
-  babelHelpers.possibleConstructorReturn = function (self, call) {
+  var possibleConstructorReturn = function (self, call) {
     if (!self) {
       throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
     }
 
     return call && (typeof call === "object" || typeof call === "function") ? call : self;
   };
-
-  babelHelpers;
 
   // helper
   function signatureOf(name, func) {
@@ -21384,7 +21601,7 @@ var categorizer = Object.freeze({
 
   var knownSymbols = function () {
     return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
-      return babelHelpers.typeof(Symbol[ea]) === "symbol";
+      return _typeof(Symbol[ea]) === "symbol";
     }).reduce(function (map, ea) {
       return map.set(Symbol[ea], "Symbol." + ea);
     }, new Map());
@@ -21506,12 +21723,14 @@ var categorizer = Object.freeze({
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+  var constructorArgMatcher = /\([^\\)]*\)/;
+
   var defaultPropertyDescriptorForClass = {
     enumerable: false,
     configurable: true
   };
 
-  function createClass(name) {
+  function createClass$1(name) {
     if (!name) name = "anonymous_class";
     var constructor = eval(initializerTemplate.replace(/CLASS/, name));
     constructor.displayName = "class " + name;
@@ -21538,7 +21757,7 @@ var categorizer = Object.freeze({
     // classHolder object has it
     var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
         existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass(name);
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
 
     // 2. set the superclass if necessary and set prototype
     if (!superclass) superclass = Object;
@@ -21583,6 +21802,14 @@ var categorizer = Object.freeze({
         pathInPackage: currentModule.pathInPackage()
       };
     }
+
+    // 6. Add a toString method for the class to allows us to see its constructor arguments
+    var init = klass.prototype[initializeSymbol],
+        constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
+        string = "class " + name + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+    klass.toString = function () {
+      return string;
+    };
 
     return klass;
   }
@@ -21905,7 +22132,7 @@ var categorizer = Object.freeze({
 
   var EvalResult = function () {
     function EvalResult() {
-      babelHelpers.classCallCheck(this, EvalResult);
+      classCallCheck(this, EvalResult);
 
       this.isEvalResult = true;
       this.value = undefined;
@@ -21916,7 +22143,7 @@ var categorizer = Object.freeze({
       this.promiseStatus = "unknown";
     }
 
-    babelHelpers.createClass(EvalResult, [{
+    createClass(EvalResult, [{
       key: "printed",
       value: function printed(options) {
         this.value = print(this.value, Object.assign(options || {}, {
@@ -21995,7 +22222,7 @@ var categorizer = Object.freeze({
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -22030,7 +22257,7 @@ var categorizer = Object.freeze({
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -22162,7 +22389,7 @@ var categorizer = Object.freeze({
   }
 
   var runEval$1 = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -22238,7 +22465,6 @@ var categorizer = Object.freeze({
               result = _context3.sent;
 
 
-              debugger;
               System.get("@lively-env").evaluationDone(fullname);
               System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
               // console.warn("FIX recordDoitResult")
@@ -22249,7 +22475,7 @@ var categorizer = Object.freeze({
               //   result, Date.now());
               return _context3.abrupt("return", result);
 
-            case 29:
+            case 28:
             case "end":
               return _context3.stop();
           }
@@ -22265,13 +22491,13 @@ var categorizer = Object.freeze({
 
   var EvalStrategy = function () {
     function EvalStrategy() {
-      babelHelpers.classCallCheck(this, EvalStrategy);
+      classCallCheck(this, EvalStrategy);
     }
 
-    babelHelpers.createClass(EvalStrategy, [{
+    createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -22295,7 +22521,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -22321,17 +22547,17 @@ var categorizer = Object.freeze({
   }();
 
   var SimpleEvalStrategy = function (_EvalStrategy) {
-    babelHelpers.inherits(SimpleEvalStrategy, _EvalStrategy);
+    inherits(SimpleEvalStrategy, _EvalStrategy);
 
     function SimpleEvalStrategy() {
-      babelHelpers.classCallCheck(this, SimpleEvalStrategy);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
+      classCallCheck(this, SimpleEvalStrategy);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
     }
 
-    babelHelpers.createClass(SimpleEvalStrategy, [{
+    createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -22361,7 +22587,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -22397,14 +22623,14 @@ var categorizer = Object.freeze({
   }(EvalStrategy);
 
   var LivelyVmEvalStrategy = function (_EvalStrategy2) {
-    babelHelpers.inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+    inherits(LivelyVmEvalStrategy, _EvalStrategy2);
 
     function LivelyVmEvalStrategy() {
-      babelHelpers.classCallCheck(this, LivelyVmEvalStrategy);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
+      classCallCheck(this, LivelyVmEvalStrategy);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
     }
 
-    babelHelpers.createClass(LivelyVmEvalStrategy, [{
+    createClass(LivelyVmEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
         if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
@@ -22417,7 +22643,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -22446,7 +22672,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -22480,8 +22706,8 @@ var categorizer = Object.freeze({
   }(EvalStrategy);
 
   var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
-    babelHelpers.inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
-    babelHelpers.createClass(HttpEvalStrategy, null, [{
+    inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
+    createClass(HttpEvalStrategy, null, [{
       key: "defaultURL",
       get: function get() {
         return "http://localhost:3000/lively";
@@ -22489,18 +22715,18 @@ var categorizer = Object.freeze({
     }]);
 
     function HttpEvalStrategy(url) {
-      babelHelpers.classCallCheck(this, HttpEvalStrategy);
+      classCallCheck(this, HttpEvalStrategy);
 
-      var _this4 = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
+      var _this4 = possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
 
       _this4.url = url || _this4.constructor.defaultURL;
       return _this4;
     }
 
-    babelHelpers.createClass(HttpEvalStrategy, [{
+    createClass(HttpEvalStrategy, [{
       key: "normalizeOptions",
       value: function normalizeOptions(options) {
-        options = babelHelpers.get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
+        options = get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
         return Object.assign({ serverEvalURL: this.url }, options, { context: null });
       }
     }, {
@@ -22511,7 +22737,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
           var res, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -22570,7 +22796,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -22597,7 +22823,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -22662,7 +22888,7 @@ var categorizer = Object.freeze({
     doit: function doit(printResult, editor, options) {
       var _this5 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         var result;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
@@ -22706,7 +22932,7 @@ var categorizer = Object.freeze({
     printInspect: function printInspect(options) {
       var _this6 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
         var msgMorph, ed;
         return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
@@ -22743,7 +22969,7 @@ var categorizer = Object.freeze({
     evalSelection: function evalSelection(printIt) {
       var _this7 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options, result;
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
@@ -22770,7 +22996,7 @@ var categorizer = Object.freeze({
     doListProtocol: function doListProtocol() {
       var _this8 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
         var m, prefix, completions, lister;
         return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
@@ -22814,7 +23040,7 @@ var categorizer = Object.freeze({
     doSave: function doSave() {
       var _this9 = this;
 
-      return babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
         return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
             switch (_context14.prev = _context14.next) {
@@ -22876,9 +23102,9 @@ var categorizer = Object.freeze({
     setStatusMessage: function setStatusMessage() {
       throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
     }
-  }, babelHelpers.defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+  }, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
     throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-  }), babelHelpers.defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+  }), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
     throw new Error("showError() not yet implemented for " + this.constructor.name);
   }), _EvalableTextMorphTra);
 
@@ -23594,7 +23820,7 @@ var categorizer = Object.freeze({
 
   var moduleSourceChangeEsm = function () {
     var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
-      var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, loaded, record, prevLoad, result;
+      var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -23660,9 +23886,9 @@ var categorizer = Object.freeze({
               return depModule.load();
 
             case 23:
-              loaded = _context2.sent;
+              exports = _context2.sent;
 
-              deps.push({ name: depName, fullname: depId, module: loaded, record: depModule.record() });
+              deps.push({ name: depName, fullname: depId, module: depModule, exports: exports });
 
             case 25:
               _iteratorNormalCompletion = true;
@@ -23705,18 +23931,6 @@ var categorizer = Object.freeze({
 
             case 42:
 
-              // 1. update the record so that when its dependencies change and cause a
-              // re-execute, the correct code (new version) is run
-              record = module$2(System, load.name).record();
-
-              if (record) {
-                record.dependencies = deps.map(function (ea) {
-                  return ea.record;
-                });
-                record.execute = declared.execute;
-                record.setters = declared.setters;
-              }
-
               // hmm... for house keeping... not really needed right now, though
               prevLoad = System.loads && System.loads[load.name];
 
@@ -23736,9 +23950,19 @@ var categorizer = Object.freeze({
                 }
               }
 
+              mod = module$2(System, load.name), record = mod.record();
+
+              // 1. update the record so that when its dependencies change and cause a
+              // re-execute, the correct code (new version) is run
+
+              deps.forEach(function (ea, i) {
+                return mod.addDependencyToModuleRecord(ea.module, declared.setters[i]);
+              });
+              if (record) record.execute = declared.execute;
+
               // 2. run setters to populate imports
               deps.forEach(function (d, i) {
-                return declared.setters[i](d.module);
+                return declared.setters[i](d.exports);
               });
 
               // 3. execute module body
@@ -23751,7 +23975,7 @@ var categorizer = Object.freeze({
 
               return _context2.abrupt("return", result);
 
-            case 50:
+            case 51:
             case "end":
               return _context2.stop();
           }
@@ -24462,7 +24686,7 @@ var categorizer = Object.freeze({
     }, {
       key: "search",
       value: function search(needle, options) {
-        return searchPackage$1(this.System, this.url, needle, options);
+        return searchInPackage$1(this.System, this.url, needle, options);
       }
     }, {
       key: "mergeWithConfig",
@@ -24603,7 +24827,7 @@ var categorizer = Object.freeze({
   // search
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function searchPackage$1(System, packageURL, searchStr, options) {
+  function searchInPackage$1(System, packageURL, searchStr, options) {
     packageURL = packageURL.replace(/\/$/, "");
     var p = getPackages$1(System).find(function (p) {
       return p.address == packageURL;
@@ -24627,10 +24851,13 @@ var categorizer = Object.freeze({
 
   var ModuleInterface = function () {
     function ModuleInterface(System, id) {
+      var _this = this;
+
       classCallCheck(this, ModuleInterface);
 
       // We assume module ids to be a URL with a scheme
-      if (!isURL(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
+
+      if (!isURL(id) && !/^@/.test(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
       this.System = System;
       this.id = id;
 
@@ -24638,6 +24865,15 @@ var categorizer = Object.freeze({
       // execution and eval
       this.recorderName = "__lvVarRecorder";
       this._recorder = null;
+
+      // cached values
+      this._source = null;
+      this._ast = null;
+      this._scope = null;
+
+      subscribe$1(System, "modulechange", function (data) {
+        if (data.module === _this.id) _this.reset();
+      });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -24658,7 +24894,7 @@ var categorizer = Object.freeze({
     }, {
       key: "source",
       value: function source() {
-        var _this = this;
+        var _this2 = this;
 
         // rk 2016-06-24:
         // We should consider using lively.resource here. Unfortunately
@@ -24666,6 +24902,9 @@ var categorizer = Object.freeze({
         // all cases b/c modules once loaded by the loaded get cached and System.fetch
         // returns "" in those cases
 
+        if (this.id === "@empty") return Promise.resolve("");
+
+        if (this._source) return Promise.resolve(this._source);
         if (this.id.match(/^http/) && this.System.global.fetch) {
           return this.System.global.fetch(this.id).then(function (res) {
             return res.text();
@@ -24674,11 +24913,11 @@ var categorizer = Object.freeze({
 
         if (this.id.match(/^file:/) && this.System.get("@system-env").node) {
           var _ret = function () {
-            var path = _this.id.replace(/^file:\/\//, "");
+            var path = _this2.id.replace(/^file:\/\//, "");
             return {
               v: new Promise(function (resolve, reject) {
-                return _this.System._nodeRequire("fs").readFile(path, function (err, content) {
-                  return err ? reject(err) : resolve(String(content));
+                return _this2.System._nodeRequire("fs").readFile(path, function (err, content) {
+                  return err ? reject(err) : resolve(_this2._source = String(content));
                 });
               })
             };
@@ -24704,14 +24943,22 @@ var categorizer = Object.freeze({
             while (1) {
               switch (_context.prev = _context.next) {
                 case 0:
-                  _context.next = 2;
-                  return this.source();
+                  if (!this._ast) {
+                    _context.next = 2;
+                    break;
+                  }
+
+                  return _context.abrupt("return", this._ast);
 
                 case 2:
-                  _context.t0 = _context.sent;
-                  return _context.abrupt("return", lively_ast.parse(_context.t0));
+                  _context.next = 4;
+                  return this.source();
 
                 case 4:
+                  _context.t0 = _context.sent;
+                  return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
+
+                case 6:
                 case "end":
                   return _context.stop();
               }
@@ -24726,6 +24973,45 @@ var categorizer = Object.freeze({
         return ast;
       }()
     }, {
+      key: "scope",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+          var ast, scope;
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  if (!this._scope) {
+                    _context2.next = 2;
+                    break;
+                  }
+
+                  return _context2.abrupt("return", this._scope);
+
+                case 2:
+                  _context2.next = 4;
+                  return this.ast();
+
+                case 4:
+                  ast = _context2.sent;
+                  scope = lively_ast.query.topLevelDeclsAndRefs(ast).scope;
+                  return _context2.abrupt("return", this._scope = lively_ast.query.resolveReferences(scope));
+
+                case 7:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function scope() {
+          return ref.apply(this, arguments);
+        }
+
+        return scope;
+      }()
+    }, {
       key: "metadata",
       value: function metadata() {
         var load = this.System.loads ? this.System.loads[this.id] : null;
@@ -24738,6 +25024,13 @@ var categorizer = Object.freeze({
         var meta = this.metadata();
         return meta ? meta.format : "esm";
       }
+    }, {
+      key: "reset",
+      value: function reset() {
+        this._source = null;
+        this._ast = null;
+        this._scope = null;
+      }
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // loading
@@ -24746,33 +25039,33 @@ var categorizer = Object.freeze({
     }, {
       key: "load",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
-              switch (_context2.prev = _context2.next) {
+              switch (_context3.prev = _context3.next) {
                 case 0:
-                  _context2.t0 = this.System.get(this.id);
+                  _context3.t0 = this.System.get(this.id);
 
-                  if (_context2.t0) {
-                    _context2.next = 5;
+                  if (_context3.t0) {
+                    _context3.next = 5;
                     break;
                   }
 
-                  _context2.next = 4;
+                  _context3.next = 4;
                   return this.System.import(this.id);
 
                 case 4:
-                  _context2.t0 = _context2.sent;
+                  _context3.t0 = _context3.sent;
 
                 case 5:
-                  return _context2.abrupt("return", _context2.t0);
+                  return _context3.abrupt("return", _context3.t0);
 
                 case 6:
                 case "end":
-                  return _context2.stop();
+                  return _context3.stop();
               }
             }
-          }, _callee2, this);
+          }, _callee3, this);
         }));
 
         function load() {
@@ -24796,19 +25089,20 @@ var categorizer = Object.freeze({
     }, {
       key: "unloadDeps",
       value: function unloadDeps(opts) {
-        var _this2 = this;
+        var _this3 = this;
 
         opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
         this.dependents().forEach(function (ea) {
-          _this2.System.delete(ea.id);
-          if (_this2.System.loads) delete _this2.System.loads[ea.id];
+          _this3.System.delete(ea.id);
+          if (_this3.System.loads) delete _this3.System.loads[ea.id];
           if (opts.forgetEnv) ea.unloadEnv();
         });
       }
     }, {
       key: "unload",
       value: function unload(opts) {
-        opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
+        opts = lively_lang.obj.merge({ reset: true, forgetDeps: true, forgetEnv: true }, opts);
+        if (opts.reset) this.reset();
         if (opts.forgetDeps) this.unloadDeps(opts);
         this.System.delete(this.id);
         if (this.System.loads) {
@@ -24820,34 +25114,34 @@ var categorizer = Object.freeze({
     }, {
       key: "reload",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(opts) {
-          var _this3 = this;
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(opts) {
+          var _this4 = this;
 
           var toBeReloaded;
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
-              switch (_context3.prev = _context3.next) {
+              switch (_context4.prev = _context4.next) {
                 case 0:
                   opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
                   toBeReloaded = [this];
 
                   if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
                   this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
-                  _context3.next = 6;
+                  _context4.next = 6;
                   return Promise.all(toBeReloaded.map(function (ea) {
-                    return ea.id !== _this3.id && ea.load();
+                    return ea.id !== _this4.id && ea.load();
                   }));
 
                 case 6:
-                  _context3.next = 8;
+                  _context4.next = 8;
                   return this.load();
 
                 case 8:
                 case "end":
-                  return _context3.stop();
+                  return _context4.stop();
               }
             }
-          }, _callee3, this);
+          }, _callee4, this);
         }));
 
         function reload(_x) {
@@ -24864,30 +25158,30 @@ var categorizer = Object.freeze({
     }, {
       key: "changeSourceAction",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(changeFunc) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(changeFunc) {
           var source, newSource;
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
-              switch (_context4.prev = _context4.next) {
+              switch (_context5.prev = _context5.next) {
                 case 0:
-                  _context4.next = 2;
+                  _context5.next = 2;
                   return this.source();
 
                 case 2:
-                  source = _context4.sent;
-                  _context4.next = 5;
+                  source = _context5.sent;
+                  _context5.next = 5;
                   return changeFunc(source);
 
                 case 5:
-                  newSource = _context4.sent;
-                  return _context4.abrupt("return", this.changeSource(newSource, { evaluate: true }));
+                  newSource = _context5.sent;
+                  return _context5.abrupt("return", this.changeSource(newSource, { evaluate: true }));
 
                 case 7:
                 case "end":
-                  return _context4.stop();
+                  return _context5.stop();
               }
             }
-          }, _callee4, this);
+          }, _callee5, this);
         }));
 
         function changeSourceAction(_x2) {
@@ -24899,25 +25193,25 @@ var categorizer = Object.freeze({
     }, {
       key: "changeSource",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(newSource, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(newSource, options) {
           var oldSource;
-          return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
-              switch (_context5.prev = _context5.next) {
+              switch (_context6.prev = _context6.next) {
                 case 0:
-                  _context5.next = 2;
+                  _context6.next = 2;
                   return this.source();
 
                 case 2:
-                  oldSource = _context5.sent;
-                  return _context5.abrupt("return", moduleSourceChange$1(this.System, this.id, oldSource, newSource, this.format(), options));
+                  oldSource = _context6.sent;
+                  return _context6.abrupt("return", moduleSourceChange$1(this.System, this.id, oldSource, newSource, this.format(), options));
 
                 case 4:
                 case "end":
-                  return _context5.stop();
+                  return _context6.stop();
               }
             }
-          }, _callee5, this);
+          }, _callee6, this);
         }));
 
         function changeSource(_x3, _x4) {
@@ -24926,6 +25220,42 @@ var categorizer = Object.freeze({
 
         return changeSource;
       }()
+    }, {
+      key: "addDependencyToModuleRecord",
+      value: function addDependencyToModuleRecord(dependency) {
+        var _this5 = this;
+
+        var setter = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
+
+        // `dependency is another module, setter is the function that gets
+        // triggered when a dependency's binding changes so that "this" module is updated
+        var record = this.record(),
+            dependencyRecord = dependency.record();
+
+        if (record && dependencyRecord) {
+          // 1. update the record so that when its dependencies change and cause a
+          // re-execute, the correct code (new version) is run
+          var depIndex,
+              hasDepenency = record.dependencies.some(function (ea, i) {
+            if (!ea) return;depIndex = i;return ea && ea.name === dependency.id;
+          });
+          if (!hasDepenency) {
+            record.dependencies.push(dependencyRecord);
+          } else if (dependencyRecord !== record.dependencies[depIndex] /*happens when a dep is reloaded*/) record.dependencies.splice(depIndex, 1, dependencyRecord);
+
+          // setters are for updating module bindings, the position of the record
+          // in dependencies should be the same as the position of the setter for that
+          // dependency...
+          if (!hasDepenency || !record.setters[depIndex]) record.setters[hasDepenency ? depIndex : record.dependencies.length - 1] = setter;
+
+          // 2. update records of dependencies, so that they know about this module as an importer
+          var impIndex,
+              hasImporter = dependencyRecord.importers.some(function (imp, i) {
+            if (!imp) return;impIndex = i;return imp && imp.name === _this5.id;
+          });
+          if (!hasImporter) dependencyRecord.importers.push(record);else if (record !== dependencyRecord.importers[impIndex]) dependencyRecord.importers.splice(impIndex, 1, record);
+        }
+      }
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // dependencies
@@ -24934,7 +25264,7 @@ var categorizer = Object.freeze({
     }, {
       key: "dependents",
       value: function dependents() {
-        var _this4 = this;
+        var _this6 = this;
 
         // which modules (module ids) are (in)directly import module with id
         // Let's say you have
@@ -24944,13 +25274,13 @@ var categorizer = Object.freeze({
         // `dependents` gives you an answer what modules are "stale" when you
         // change module1 = module2 + module3
         return lively_lang.graph.hull(lively_lang.graph.invert(requireMap$1(this.System)), this.id).map(function (mid) {
-          return module$2(_this4.System, mid);
+          return module$2(_this6.System, mid);
         });
       }
     }, {
       key: "requirements",
       value: function requirements() {
-        var _this5 = this;
+        var _this7 = this;
 
         // which modules (module ids) are (in)directly required by module with id
         // Let's say you have
@@ -24959,7 +25289,7 @@ var categorizer = Object.freeze({
         // module3: import {y} from "module2.js"; export var z = y + 1;
         // `module("./module3").requirements()` will report ./module2 and ./module1
         return lively_lang.graph.hull(requireMap$1(this.System), this.id).map(function (mid) {
-          return module$2(_this5.System, mid);
+          return module$2(_this7.System, mid);
         });
       }
 
@@ -24993,11 +25323,11 @@ var categorizer = Object.freeze({
     }, {
       key: "package",
       value: function _package() {
-        var _this6 = this;
+        var _this8 = this;
 
         return getPackages$1(this.System).find(function (ea) {
           return ea.modules.some(function (mod) {
-            return mod.name === _this6.id;
+            return mod.name === _this8.id;
           });
         });
       }
@@ -25015,67 +25345,33 @@ var categorizer = Object.freeze({
     }, {
       key: "imports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(optAstOrSource) {
-          var parsed, scope, imports;
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+          var parsed, scope;
+          return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
-              switch (_context6.prev = _context6.next) {
+              switch (_context7.prev = _context7.next) {
                 case 0:
-                  if (!optAstOrSource) {
-                    _context6.next = 4;
-                    break;
-                  }
-
-                  _context6.t0 = typeof optAstOrSource === "string" ? lively_ast.parse(optAstOrSource) : optAstOrSource;
-                  _context6.next = 7;
-                  break;
-
-                case 4:
-                  _context6.next = 6;
+                  _context7.next = 2;
                   return this.ast();
 
-                case 6:
-                  _context6.t0 = _context6.sent;
+                case 2:
+                  parsed = _context7.sent;
+                  _context7.next = 5;
+                  return this.scope();
+
+                case 5:
+                  scope = _context7.sent;
+                  return _context7.abrupt("return", lively_ast.query.imports(scope));
 
                 case 7:
-                  parsed = _context6.t0;
-                  scope = lively_ast.query.scopes(parsed);
-                  imports = scope.importDecls.reduce(function (imports, node) {
-                    var nodes = lively_ast.query.nodesAtIndex(parsed, node.start),
-                        importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-                    if (!importStmt) return imports;
-
-                    var from = importStmt.source ? importStmt.source.value : "unknown module";
-                    if (!importStmt.specifiers.length) // no imported vars
-                      return imports.concat([{
-                        local: null,
-                        imported: null,
-                        fromModule: from
-                      }]);
-
-                    return imports.concat(importStmt.specifiers.map(function (importSpec) {
-                      var imported;
-                      if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
-                      return {
-                        local: importSpec.local ? importSpec.local.name : null,
-                        imported: imported,
-                        fromModule: from
-                      };
-                    }));
-                  }, []);
-                  return _context6.abrupt("return", lively_lang.arr.uniqBy(imports, function (a, b) {
-                    return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
-                  }));
-
-                case 11:
                 case "end":
-                  return _context6.stop();
+                  return _context7.stop();
               }
             }
-          }, _callee6, this);
+          }, _callee7, this);
         }));
 
-        function imports(_x5) {
+        function imports() {
           return ref.apply(this, arguments);
         }
 
@@ -25084,94 +25380,364 @@ var categorizer = Object.freeze({
     }, {
       key: "exports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(optAstOrSource) {
-          var parsed, scope, exports;
-          return regeneratorRuntime.wrap(function _callee7$(_context7) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+          var parsed, scope;
+          return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
-              switch (_context7.prev = _context7.next) {
+              switch (_context8.prev = _context8.next) {
                 case 0:
-                  if (!optAstOrSource) {
-                    _context7.next = 4;
-                    break;
-                  }
-
-                  _context7.t0 = typeof optAstOrSource === "string" ? lively_ast.parse(optAstOrSource) : optAstOrSource;
-                  _context7.next = 7;
-                  break;
-
-                case 4:
-                  _context7.next = 6;
+                  _context8.next = 2;
                   return this.ast();
 
-                case 6:
-                  _context7.t0 = _context7.sent;
+                case 2:
+                  parsed = _context8.sent;
+                  _context8.next = 5;
+                  return this.scope();
+
+                case 5:
+                  scope = _context8.sent;
+                  return _context8.abrupt("return", lively_ast.query.exports(scope));
 
                 case 7:
-                  parsed = _context7.t0;
-                  scope = lively_ast.query.scopes(parsed);
-                  exports = scope.exportDecls.reduce(function (exports, node) {
-
-                    var exportsStmt = lively_ast.query.statementOf(scope.node, node);
-                    if (!exportsStmt) return exports;
-
-                    var from = exportsStmt.source ? exportsStmt.source.value : null;
-
-                    if (exportsStmt.type === "ExportAllDeclaration") {
-                      return exports.concat([{
-                        local: null,
-                        exported: "*",
-                        fromModule: from
-                      }]);
-                    }
-
-                    if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
-                      return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
-                        return {
-                          local: from ? null : exportSpec.local ? exportSpec.local.name : null,
-                          exported: exportSpec.exported ? exportSpec.exported.name : null,
-                          fromModule: from
-                        };
-                      }));
-                    }
-
-                    if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
-                      return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
-                        return {
-                          local: decl.id.name,
-                          exported: decl.id.name,
-                          type: exportsStmt.declaration.kind,
-                          fromModule: null
-                        };
-                      }));
-                    }
-
-                    if (exportsStmt.declaration) {
-                      return exports.concat({
-                        local: exportsStmt.declaration.id.name,
-                        exported: exportsStmt.declaration.id.name,
-                        type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
-                        fromModule: null
-                      });
-                    }
-                    return exports;
-                  }, []);
-                  return _context7.abrupt("return", lively_lang.arr.uniqBy(exports, function (a, b) {
-                    return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
-                  }));
-
-                case 11:
                 case "end":
-                  return _context7.stop();
+                  return _context8.stop();
               }
             }
-          }, _callee7, this);
+          }, _callee8, this);
         }));
 
-        function exports(_x6) {
+        function exports() {
           return ref.apply(this, arguments);
         }
 
         return exports;
+      }()
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // bindings
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    }, {
+      key: "_localDeclForRefAt",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(pos) {
+          var scope, ref;
+          return regeneratorRuntime.wrap(function _callee9$(_context9) {
+            while (1) {
+              switch (_context9.prev = _context9.next) {
+                case 0:
+                  _context9.next = 2;
+                  return this.scope();
+
+                case 2:
+                  scope = _context9.sent;
+                  ref = lively_ast.query.refAt(pos, scope);
+
+                  if (ref && ref.decl) ref.decl.module = this;
+                  return _context9.abrupt("return", ref && { decl: ref.decl, id: ref.declId });
+
+                case 6:
+                case "end":
+                  return _context9.stop();
+              }
+            }
+          }, _callee9, this);
+        }));
+
+        function _localDeclForRefAt(_x6) {
+          return ref.apply(this, arguments);
+        }
+
+        return _localDeclForRefAt;
+      }()
+    }, {
+      key: "_importForNSRefAt",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+          var scope, ast, nodes, id, member, name, spec;
+          return regeneratorRuntime.wrap(function _callee10$(_context10) {
+            while (1) {
+              switch (_context10.prev = _context10.next) {
+                case 0:
+                  _context10.next = 2;
+                  return this.scope();
+
+                case 2:
+                  scope = _context10.sent;
+                  ast = scope.node;
+                  nodes = lively_ast.query.nodesAtIndex(ast, pos);
+
+                  if (!(nodes.length < 2)) {
+                    _context10.next = 7;
+                    break;
+                  }
+
+                  return _context10.abrupt("return", [null, null]);
+
+                case 7:
+                  id = nodes[nodes.length - 1], member = nodes[nodes.length - 2];
+
+                  if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier" || !member.object.decl || member.object.decl.type !== "ImportDeclaration")) {
+                    _context10.next = 10;
+                    break;
+                  }
+
+                  return _context10.abrupt("return", [null, null]);
+
+                case 10:
+                  name = member.object.name, spec = member.object.decl.specifiers.find(function (s) {
+                    return s.local.name === name;
+                  });
+
+                  if (!(spec.type !== "ImportNamespaceSpecifier")) {
+                    _context10.next = 13;
+                    break;
+                  }
+
+                  return _context10.abrupt("return", [null, null]);
+
+                case 13:
+                  return _context10.abrupt("return", [member.object.decl, spec.local, id.name]);
+
+                case 14:
+                case "end":
+                  return _context10.stop();
+              }
+            }
+          }, _callee10, this);
+        }));
+
+        function _importForNSRefAt(_x7) {
+          return ref.apply(this, arguments);
+        }
+
+        return _importForNSRefAt;
+      }()
+    }, {
+      key: "_resolveImportedDecl",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(decl) {
+          var _decl$id, start, name, type, imports, im, imM;
+
+          return regeneratorRuntime.wrap(function _callee11$(_context11) {
+            while (1) {
+              switch (_context11.prev = _context11.next) {
+                case 0:
+                  if (decl) {
+                    _context11.next = 2;
+                    break;
+                  }
+
+                  return _context11.abrupt("return", []);
+
+                case 2:
+                  _decl$id = decl.id;
+                  start = _decl$id.start;
+                  name = _decl$id.name;
+                  type = _decl$id.type;
+                  _context11.next = 8;
+                  return this.imports();
+
+                case 8:
+                  imports = _context11.sent;
+                  im = imports.find(function (i) {
+                    return i.node.start == start && // can't rely on
+                    i.node.name == name && // object identity
+                    i.node.type == type;
+                  });
+
+                  if (!im) {
+                    _context11.next = 17;
+                    break;
+                  }
+
+                  imM = module$2(this.System, im.fromModule, this.id);
+                  _context11.t0 = [decl];
+                  _context11.next = 15;
+                  return imM.bindingPathForExport(im.imported);
+
+                case 15:
+                  _context11.t1 = _context11.sent;
+                  return _context11.abrupt("return", _context11.t0.concat.call(_context11.t0, _context11.t1));
+
+                case 17:
+                  return _context11.abrupt("return", [decl]);
+
+                case 18:
+                case "end":
+                  return _context11.stop();
+              }
+            }
+          }, _callee11, this);
+        }));
+
+        function _resolveImportedDecl(_x8) {
+          return ref.apply(this, arguments);
+        }
+
+        return _resolveImportedDecl;
+      }()
+    }, {
+      key: "bindingPathForExport",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee12(name) {
+          var exports, ex, imM, decl;
+          return regeneratorRuntime.wrap(function _callee12$(_context12) {
+            while (1) {
+              switch (_context12.prev = _context12.next) {
+                case 0:
+                  _context12.next = 2;
+                  return this.exports();
+
+                case 2:
+                  exports = _context12.sent;
+                  ex = exports.find(function (e) {
+                    return e.exported === name;
+                  });
+
+                  if (!ex.fromModule) {
+                    _context12.next = 15;
+                    break;
+                  }
+
+                  imM = module$2(this.System, ex.fromModule, this.id);
+                  decl = { decl: ex.node, id: ex.declId };
+
+                  decl.decl.module = this;
+                  _context12.t0 = [decl];
+                  _context12.next = 11;
+                  return imM.bindingPathForExport(ex.imported);
+
+                case 11:
+                  _context12.t1 = _context12.sent;
+                  return _context12.abrupt("return", _context12.t0.concat.call(_context12.t0, _context12.t1));
+
+                case 15:
+                  if (ex && ex.decl) ex.decl.module = this;
+                  return _context12.abrupt("return", this._resolveImportedDecl({ decl: ex.decl, id: ex.declId }));
+
+                case 17:
+                case "end":
+                  return _context12.stop();
+              }
+            }
+          }, _callee12, this);
+        }));
+
+        function bindingPathForExport(_x9) {
+          return ref.apply(this, arguments);
+        }
+
+        return bindingPathForExport;
+      }()
+    }, {
+      key: "bindingPathForRefAt",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee13(pos) {
+          var decl, _ref, _ref2, imDecl, id, name, imM;
+
+          return regeneratorRuntime.wrap(function _callee13$(_context13) {
+            while (1) {
+              switch (_context13.prev = _context13.next) {
+                case 0:
+                  _context13.next = 2;
+                  return this._localDeclForRefAt(pos);
+
+                case 2:
+                  decl = _context13.sent;
+
+                  if (!decl) {
+                    _context13.next = 9;
+                    break;
+                  }
+
+                  _context13.next = 6;
+                  return this._resolveImportedDecl(decl);
+
+                case 6:
+                  return _context13.abrupt("return", _context13.sent);
+
+                case 9:
+                  _context13.next = 11;
+                  return this._importForNSRefAt(pos);
+
+                case 11:
+                  _ref = _context13.sent;
+                  _ref2 = slicedToArray(_ref, 3);
+                  imDecl = _ref2[0];
+                  id = _ref2[1];
+                  name = _ref2[2];
+
+                  if (imDecl) {
+                    _context13.next = 18;
+                    break;
+                  }
+
+                  return _context13.abrupt("return", []);
+
+                case 18:
+                  imDecl.module = this;
+                  imM = module$2(this.System, imDecl.source.value, this.id);
+                  _context13.t0 = [{ decl: imDecl, id: id }];
+                  _context13.next = 23;
+                  return imM.bindingPathForExport(name);
+
+                case 23:
+                  _context13.t1 = _context13.sent;
+                  return _context13.abrupt("return", _context13.t0.concat.call(_context13.t0, _context13.t1));
+
+                case 25:
+                case "end":
+                  return _context13.stop();
+              }
+            }
+          }, _callee13, this);
+        }));
+
+        function bindingPathForRefAt(_x10) {
+          return ref.apply(this, arguments);
+        }
+
+        return bindingPathForRefAt;
+      }()
+    }, {
+      key: "definitionForRefAt",
+      value: function () {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
+          var path;
+          return regeneratorRuntime.wrap(function _callee14$(_context14) {
+            while (1) {
+              switch (_context14.prev = _context14.next) {
+                case 0:
+                  _context14.next = 2;
+                  return this.bindingPathForRefAt(pos);
+
+                case 2:
+                  path = _context14.sent;
+
+                  if (!(path.length < 1)) {
+                    _context14.next = 5;
+                    break;
+                  }
+
+                  return _context14.abrupt("return", null);
+
+                case 5:
+                  return _context14.abrupt("return", path[path.length - 1].decl);
+
+                case 6:
+                case "end":
+                  return _context14.stop();
+              }
+            }
+          }, _callee14, this);
+        }));
+
+        function definitionForRefAt(_x11) {
+          return ref.apply(this, arguments);
+        }
+
+        return definitionForRefAt;
       }()
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -25206,34 +25772,34 @@ var categorizer = Object.freeze({
     }, {
       key: "search",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(searchStr, options) {
-          var _this7 = this;
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee15(searchStr, options) {
+          var _this9 = this;
 
           var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
 
-          return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          return regeneratorRuntime.wrap(function _callee15$(_context15) {
             while (1) {
-              switch (_context8.prev = _context8.next) {
+              switch (_context15.prev = _context15.next) {
                 case 0:
                   options = Object.assign({ excludedModules: [] }, options);
 
                   if (!options.excludedModules.some(function (ex) {
-                    if (typeof ex === "string") return ex === _this7.id;
-                    if (ex instanceof RegExp) return ex.test(_this7.id);
+                    if (typeof ex === "string") return ex === _this9.id;
+                    if (ex instanceof RegExp) return ex.test(_this9.id);
                     return false;
                   })) {
-                    _context8.next = 3;
+                    _context15.next = 3;
                     break;
                   }
 
-                  return _context8.abrupt("return", []);
+                  return _context15.abrupt("return", []);
 
                 case 3:
-                  _context8.next = 5;
+                  _context15.next = 5;
                   return this.source();
 
                 case 5:
-                  src = _context8.sent;
+                  src = _context15.sent;
                   re = void 0;
 
                   if (searchStr instanceof RegExp) {
@@ -25254,7 +25820,7 @@ var categorizer = Object.freeze({
 
                 case 11:
                   if (!(i < src.length && j < res.length)) {
-                    _context8.next = 25;
+                    _context15.next = 25;
                     break;
                   }
 
@@ -25267,11 +25833,11 @@ var categorizer = Object.freeze({
                   length = _res$j[1];
 
                   if (!(i !== idx)) {
-                    _context8.next = 18;
+                    _context15.next = 18;
                     break;
                   }
 
-                  return _context8.abrupt("continue", 22);
+                  return _context15.abrupt("continue", 22);
 
                 case 18:
                   lineEnd = src.slice(lineStart).indexOf("\n");
@@ -25287,26 +25853,31 @@ var categorizer = Object.freeze({
 
                 case 22:
                   i++;
-                  _context8.next = 11;
+                  _context15.next = 11;
                   break;
 
                 case 25:
-                  return _context8.abrupt("return", res);
+                  return _context15.abrupt("return", res);
 
                 case 26:
                 case "end":
-                  return _context8.stop();
+                  return _context15.stop();
               }
             }
-          }, _callee8, this);
+          }, _callee15, this);
         }));
 
-        function search(_x7, _x8) {
+        function search(_x12, _x13) {
           return ref.apply(this, arguments);
         }
 
         return search;
       }()
+    }, {
+      key: "toString",
+      value: function toString() {
+        return "module(" + this.id + ")";
+      }
     }, {
       key: "dontTransform",
       get: function get() {
@@ -25323,29 +25894,44 @@ var categorizer = Object.freeze({
         return this._recorder = v;
       },
       get: function get() {
-        var _this8 = this;
-
         if (this._recorder) return this._recorder;
 
-        var S = this.System;
+        var S = this.System,
+            self = this;
+
         return this._recorder = Object.create(S.global, {
 
           System: { configurable: true, writable: true, value: S },
 
           _moduleExport: {
             value: function value(name, val) {
-              scheduleModuleExportsChange(S, _this8.id, name, val, true /*add export*/);
+              scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
             }
           },
 
           _moduleImport: {
             value: function value(depName, key) {
-              var depId = S.normalizeSync(depName, _this8.id),
-                  depExports = S._loader.modules[depId];
-              if (!depExports) throw new Error("import of " + key + " failed: " + depName + " (tried as " + _this8.id + ") is not loaded!");
-              if (key == undefined) return depExports.module;
-              if (!depExports.module.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
-              return depExports.module[key];
+              var depId = S.decanonicalize(depName, self.id),
+                  depExports = S.get(depId);
+
+              if (!depExports) {
+                console.warn("import of " + key + " failed: " + depName + " (tried as " + self.id + ") is not loaded!");
+                return undefined;
+              }
+
+              self.addDependencyToModuleRecord(module$2(S, depId),
+              // setter is only installed if there isn't a setter already. In
+              // those cases we make sure that at least the module varRecorder gets
+              // updated, which is good enough for "virtual modules"
+              function (imports) {
+                return Object.assign(self.recorder, imports);
+              });
+
+              if (key == undefined) return depExports;
+
+              if (!depExports.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
+
+              return depExports[key];
             }
           }
 
@@ -25419,16 +26005,22 @@ var categorizer = Object.freeze({
           });
         }
       }
-
-      // For exising exports we find the execution func of each dependent module and run that
-      // FIXME this means we run the entire modules again, side effects and all!!!
       if (existingExports.length) {
         debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
         for (var i = 0, l = record.importers.length; i < l; i++) {
           var importerModule = record.importers[i];
           if (!importerModule.locked) {
-            var importerIndex = importerModule.dependencies.indexOf(record);
-            importerModule.setters[importerIndex](record.exports);
+            // via the module bindings to importer modules we refresh the values
+            // bound in those modules by triggering the setters defined in the
+            // records of those modules
+            var importerIndex,
+                found = importerModule.dependencies.some(function (dep, i) {
+              importerIndex = i;return dep && dep.name === record.name;
+            });
+            if (found) {
+              importerModule.setters[importerIndex](record.exports);
+            }
+
             // rk 2016-06-09: for now don't re-execute dependent modules on save,
             // just update module bindings
             if (false) {} else {
@@ -25774,14 +26366,14 @@ var categorizer = Object.freeze({
   function reloadPackage(packageURL) {
     return reloadPackage$1(exports.System, packageURL);
   }
-  function getPackages(moduleNames) {
+  function getPackages() {
     return getPackages$1(exports.System);
   }
   function applyPackageConfig(packageConfig, packageURL) {
     return applyConfig(exports.System, packageConfig, packageURL);
   }
-  function searchPackage(packageURL, searchString, options) {
-    return searchPackage$1(exports.System, packageURL, searchString, options);
+  function searchInPackage(packageURL, searchString, options) {
+    return searchInPackage$1(exports.System, packageURL, searchString, options);
   }
   function moduleSourceChange(moduleName, newSource, options) {
     return moduleSourceChange$1(exports.System, moduleName, newSource, options);
@@ -25826,7 +26418,7 @@ var categorizer = Object.freeze({
   exports.reloadPackage = reloadPackage;
   exports.getPackages = getPackages;
   exports.applyPackageConfig = applyPackageConfig;
-  exports.searchPackage = searchPackage;
+  exports.searchInPackage = searchInPackage;
   exports.moduleSourceChange = moduleSourceChange;
   exports.requireMap = requireMap;
   exports.isHookInstalled = isHookInstalled;
