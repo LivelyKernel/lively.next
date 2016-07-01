@@ -60,14 +60,20 @@ function updateModuleExports(System, moduleId, keysAndValues) {
         });
       }
     }
-
     if (existingExports.length) {
       debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
       for (var i = 0, l = record.importers.length; i < l; i++) {
         var importerModule = record.importers[i];
         if (!importerModule.locked) {
-          var importerIndex = importerModule.dependencies.indexOf(record);
-          importerModule.setters[importerIndex](record.exports);
+          // via the module bindings to importer modules we refresh the values
+          // bound in those modules by triggering the setters defined in the
+          // records of those modules
+          var importerIndex,
+              found = importerModule.dependencies.some((dep, i) => { importerIndex = i; return dep && dep.name === record.name})
+          if (found) {
+            importerModule.setters[importerIndex](record.exports);
+          }
+
           // rk 2016-06-09: for now don't re-execute dependent modules on save,
           // just update module bindings
           if (false) {
