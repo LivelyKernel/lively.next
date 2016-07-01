@@ -165,11 +165,6 @@ export class Repository {
       return "up-to-date";
     }
 
-    if (typeof $world !== "undefined") {
-      var answer = await $world.confirm(`Do you want to update the package in ${this.directory}?`);
-      if (!answer) throw "Canceled";
-    }
-
     console.log(`Updating ${this.directory} from git ${remote}/${branch}`)
     var stashed = false;
     if (await this.hasLocalChanges()) {

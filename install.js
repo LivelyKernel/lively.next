@@ -37,27 +37,8 @@ export async function install(baseDir, toURL) {
 
     console.log(`=> Installing and updating ${packages.length} packages`);
     i = 0; for (let p of packages) {
-      var exists = await p.exists();
-      if (!exists) {
-        pBar && pBar.setLabel(`git clone – ${p.directory}`)
-        await p.ensure();
-      } else {
-        pBar && pBar.setLabel(`git pull – ${p.directory}`)
-        await p.update();
-      }
+      await p.installOrUpdate(packages);
       pBar && pBar.setValue(++i / packages.length)
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // linking modules among themselves
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    console.log(`=> Linking packages`);
-    await Promise.all(packages.map(ea => ea.readConfig()));
-    for (let p of packages) {
-      var deps = await p.findDependenciesIn(packages);
-      for (let dep of deps) {
-        await dep.symlinkTo("node_modules", p)
-      }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
