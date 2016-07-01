@@ -77,7 +77,7 @@ class PartItemUpdate {
     let toMeta = this.toItem.getMetaInfo(), fromMeta = this.fromItem.getMetaInfo(),
         toSorted = toMeta.changes.sortByKey("date"),
         fromSorted = fromMeta.changes.sortByKey("date"),
-        {toModified, fromModified} = getBranchInfo(toSorted, fromSorted);
+        {localModified: toModified, remoteModified: fromModified} = getBranchInfo(toSorted, fromSorted);
         
     if (!toModified && !fromModified) this.status = "up-to-date"
     else if (toModified && !fromModified) this.status = "to-changed"
@@ -91,10 +91,10 @@ class PartItemUpdate {
         fromURL = this.fromSpace.getURL().toString().replace(/\/$/, "").slice(0, -category.length),
         status = this.determineStatus();
     switch (status) {
-        case "to-missing":
+        case "from-missing":
             console.log(`Part '${this.fromItem.name}' doesn't exist on the remote server; skipped.`);
             break;
-        case "from-changed":
+        case "to-changed":
         case "up-to-date":
             console.log(`Part '${this.fromItem.name}' is up-to-date.`);
             break;
@@ -102,11 +102,12 @@ class PartItemUpdate {
             if (!(await $world.confirm(`Do you want to update part '${this.fromItem.name}'?`))) {
                 break;
             } // else fall through
-        case "from-missing":
-        case "to-changed":
+        case "to-missing":
+        case "from-changed":
             let { output } = await copyPartsBinItem(fromURL, category, this.fromItem.name, livelyDir, {log: log});
             console.log(output);
             console.log(`${this.fromItem.name} installed/updated!`);
+            break;
         default: throw new Error(`unhandled part update status: ${status}`);
     }
   }

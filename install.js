@@ -91,7 +91,7 @@ export async function install(baseDir, toURL) {
       console.log("=> Installing and updating lively.modules part items...")
       if (!toURL) toURL = URL.root;
       var update = await createPartSpaceUpdate("PartsBin/lively.modules", "https://dev.lively-web.org/", toURL, baseDir, log);
-      await update.runUpdates();
+      await update.runUpdates(livelyDir, log);
     } else {
       console.log("=> Installing any missing lively.modules part items...")
       var {output} = await copyPartsBinItemIfMissing("https://dev.lively-web.org/", "PartsBin/lively.modules", "lively.modules-browser-preferences", livelyDir, {log: log});
