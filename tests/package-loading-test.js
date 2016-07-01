@@ -97,21 +97,18 @@ describe("package loading", function() {
 
     it("doesnt group modules with package name as belonging to package", async () => {
       await getPackage(S, project2Dir).import();
-      // S.set(testDir + "project2.js", S.newModule({}));
-      expect(getPackages(S)).to.containSubset([
+      S.set(testDir + "project2.js", S.newModule({}));
+      expect(getPackages(S).map(ea => Object.assign(ea, {System: null}))).to.containSubset([
         {
           address: noTrailingSlash(project2Dir),
           name: `project2`, referencedAs: [`project2`],
           modules: [
-            {deps: [`${project1aDir}entry-a.js`], name: `${project2Dir}index.js`},
+            {deps: [`${project1bDir}entry-b.js`], name: `${project2Dir}index.js`},
             {deps: [], name: `${project2Dir}package.json`}],
         },
         {
           address: noTrailingSlash(project1bDir),
-          name: `some-project`, referencedAs: [`some-project`],
-          modules: [
-            {deps: [`${project1aDir}other.js`], name: `${project1aDir}entry-b.js`},
-            {deps: [],name: `${project1aDir}package.json`}]
+          name: `some-project`, referencedAs: [`some-project`]
         }])
     })
   });
