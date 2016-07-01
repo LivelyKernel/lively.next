@@ -47,5 +47,13 @@
   {
     "name": "lively.serializer",
     "repoURL": "https://github.com/LivelyKernel/lively.serializer"
+  },
+  {
+    "name": "lively.graphics",
+    "repoURL": "https://github.com/LivelyKernel/lively.graphics"
+  },
+  {
+    "name": "lively.morphic",
+    "repoURL": "https://github.com/LivelyKernel/lively.morphic"
   }
 ]
