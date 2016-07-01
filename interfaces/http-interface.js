@@ -136,7 +136,7 @@ try {
   }
 
   getPackages() {
-    return this.runEvalAndStringify(`lively.lang.obj.values(lively.modules.getPackages())`);
+    return this.runEvalAndStringify(`lively.lang.obj.values(lively.lang.obj.values(lively.modules.getPackages()).map(ea => Object.assign({}, ea, {System: null})))`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
