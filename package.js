@@ -70,6 +70,12 @@ function rm(path) {
     return cmd;
   }
 
+  async linkToDependencies(packages) {
+    await this.readConfig();
+    var deps = await this.findDependenciesIn(packages);
+    for (let dep of deps) await dep.symlinkTo("node_modules", this);
+  }
+
   async npmInstall() {
     return exec("npm install", {log: this._log, cwd: this.directory});
   }
