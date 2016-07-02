@@ -1,0 +1,36 @@
+{
+  "name": "lively.changesets",
+  "version": "0.0.1",
+  "description": "Lively ChangeSets based on in-browser git branches",
+  "author": "Christopher Schuster <cs@livoris.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LivelyKernel/lively.changesets/issues"
+  },
+  "homepage": "https://github.com/LivelyKernel/lively.changesets#readme",
+  "main": "index.js",
+  "systemjs": {
+    "main": "./index.js",
+    "map": {
+      "lively.changesets": "."
+    }
+  },
+  "lively": {
+    "main": "index.js",
+    "packageMap": {
+      "lively-system-interface": "./node_modules/lively-system-interface",
+      "js-git-browser": "./node_modules/js-git-browser"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LivelyKernel/lively.changesets.git"
+  },
+  "dependencies": {
+    "lively-system-interface": "LivelyKernel/lively-system-interface",
+    "js-git-browser": "LivelyKernel/js-git-browser"
+  }
+}
