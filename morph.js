@@ -1,4 +1,5 @@
 import { Color, pt, rect } from "lively.graphics";
+import { string } from "lively.lang";
 
 const defaultProperties = {
   position:  pt(0,0),
@@ -17,6 +18,7 @@ export class Morph {
     this._changes = []
     this._pendingChanges = [];
     this._dirty = true; // for initial display
+    this._id = string.newUUID();
     Object.assign(this, props);
   }
 
@@ -26,6 +28,8 @@ export class Morph {
      var c = this.lastChangeFor(key);
      return c ? c.value : this.defaultProperty(key); 
   }
+
+  get id() { return this._id; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // changes
@@ -104,6 +108,11 @@ export class Morph {
   }
   get owner() { return this._owner; }
 
+  withAllSubmorphsDetect(testerFunc) {
+    return testerFunc(this) ||
+      this.submorphs.find(sub => sub.withAllSubmorphsDetect(testerFunc));
+  }
+
   bounds() {
     var {x,y} = this.position, {x:w,y:h} = this.extent;
     return rect(x,y,w,h);
@@ -125,5 +134,20 @@ export class Morph {
     // fixme redo stack
     this._changes.pop();
     this.makeDirty();
+  }
+  
+  dispatchEvent(evt) {
+    var { type, target } = evt;
+    var targetId = target.id;
+    var targetMorph = this.withAllSubmorphsDetect(sub => sub.id === targetId);
+    if (type === "mousedown") {
+      targetMorph.withOwnerChain().reverse().map(ea =>
+      show(ea.name) &&
+      ea.onMouseDown(evt));
+    }
+  }
+  
+  withOwnerChain() {
+    return this.owner ? [this].concat(this.owner.withOwnerChain()) : [this];
   }
 }

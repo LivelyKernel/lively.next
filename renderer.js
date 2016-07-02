@@ -70,11 +70,15 @@ export class Renderer {
         height: morph.extent.y + 'px',
         backgroundColor: morph.fill ? morph.fill.toString() : "",
         overflow: morph.clipMode
-      }
+      },
+      id: morph.id
     }, morph.submorphs.map(m => this.renderMorph(m)));
 
     this.renderMap.set(morph, tree);
     return tree;
   }
 
+  getMorphWithNode(root, node) {
+    return root.withAllSubmorphsDetect(morph => morph.id === node.id);
+  }
 }
