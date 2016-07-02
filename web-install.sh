@@ -62,6 +62,24 @@ install_installer() {
     exit 1
   fi
 
+  export NPM_VERSION=$(npm -v)
+
+node -e "$(cat <<'EOF'
+var version = process.env.NPM_VERSION,
+    match = version.match(/([0-9]+)\.([0-9]+)\.([0-9]+)/);
+if (!match || Number(match[1]) > 2) {
+  console.log('npm version 2 is required, you have version ' + version);
+  process.exit(1);
+}
+EOF
+)";
+
+  if [[ $? -ne 0 ]]; then
+    echo >&2 "stopping, unsupported npm version"
+    exit 1
+  fi
+
+
   install_from_git
   npm_install
 
