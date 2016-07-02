@@ -115,7 +115,7 @@ function rm(path) {
     await this.readConfig();
     var deps = await this.findDependenciesIn(packages);
     for (let dep of deps) await dep.symlinkTo("node_modules", this);
-    var dependents = packages.select(p => Object.keys(p.dependencies).indexOf(this.name) !== -1)
+    var dependents = packages.filter(p => Object.keys(p.dependencies).indexOf(this.name) !== -1)
     for (let dep of dependents) await this.symlinkTo("node_modules", dep);
   }
 
