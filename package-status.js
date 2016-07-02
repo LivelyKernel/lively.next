@@ -110,37 +110,72 @@ class TextFlow {
 // morphic status widget
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// new ReporterWidget("/Users/robert/Lively/lively-dev").morphicSummaryAsMorph()
+// var reporter = new ReporterWidget("/Users/robert/Lively/lively-dev"); reporter.morphicSummaryAsMorph()
+// var {remote, branch} = await reporter.packages[1].repo.localBranchInfo()
 
 export class ReporterWidget {
 
   constructor(baseDir) {
     this.baseDir = baseDir;
     this.textFlow = new TextFlow();
+    this.packages = [];
   }
 
-  renderMorphicSummaryForPackage(p, packages) {
-    var report = [[p.name, {fontWeight: "bold"}], `at ${p.directory}`];
+  withLoadingIndicatorCatchingErrors(func, label = "please wait") {
+    var indicator;
+    return lively.ide.withLoadingIndicatorDo(label)
+      .then(i => indicator = i)
+      .then(() => func)
+      .then(out => { $world.inform(out); })
+      .catch(err => $world.inform(String(err.stack || err)))
+      .then(() => indicator.remove());
+  }
+
+  renderMorphicSummaryForPackage(p) {
+    var reporter = this,
+        report = [[p.name, {fontWeight: "bold"}], `at ${p.directory}`];
+
+    // Package name + status
     if (!p.exists || !p.hasGitRepo) return report.concat(
       this.textFlow.br,
       !p.exists ? "  does not exist!" : "  is not a git repository!",
       this.textFlow.button("install", () => {
-        var indicator;
-        lively.ide.withLoadingIndicatorDo(`installing ${p.name}`)
-          .then(i => indicator = i)
-          .then(() => p.installOrUpdate(packages))
-          .then(out => { $world.inform(out); })
-          .catch(err => $world.inform(String(err.stack || err)))
-          .then(() => indicator.remove());
-      }, {p, packages}), this.textFlow.br, this.textFlow.br);
+        reporter.withLoadingIndicatorCatchingErrors(
+          p.installOrUpdate(reporter.packages), `installing ${p.name}`)
+      }, {p, reporter}), this.textFlow.br, this.textFlow.br);
 
+    // cd button
     report = report.concat(this.textFlow.button("cd", () => {
         lively.shell.setWorkingDirectory(p.directory);
-      }, {p}), this.textFlow.br);
+      }, {p}));
 
+    // more... button
+    report = report.concat(this.textFlow.button("more...", () => {
+        lively.morphic.Menu.openAtHand(null, [
+          ["force re-install", () => {
+            reporter.withLoadingIndicatorCatchingErrors(
+              p.installOrUpdate(reporter.packages), `installing ${p.name}`)
+          }],
+          ["commit everything", () => {
+            $world.prompt("Enter a commit message")
+              .then(msg => p.repo.commit(msg, true))
+              .then(cmd => $world.inform(cmd.output))
+              .catch(err => $world.inform(err.stack || err));
+          }],
+          ["push", () => {
+            Promise.resolve()
+              .then(msg => p.repo.push())
+              .then(cmd => $world.inform(cmd.output))
+              .catch(err => $world.inform(err.stack || err));
+          }]
+        ])
+      }, {p, reporter}), this.textFlow.br);
+
+    // branch info
     if (!p.currentBranch) report = report.concat("not on a branch");
     else report = report.concat(`on branch ${p.currentBranch}`);
 
+    // log button
     report = report.concat(
       this.textFlow.button("log", () =>
 
@@ -150,7 +185,8 @@ export class ReporterWidget {
         .then(cmd =>
           $world.addCodeEditor({title: `Commits of ${p.name}`, content: cmd.output, textMode: "text", extent: pt(700,600)})
             .getWindow().comeForward()), {p}), this.textFlow.br);
-
+    
+    // local changes + diff button
     report = report.concat(
       "local changes?",
       p.hasLocalChanges ? "yes" : "no",
@@ -159,21 +195,14 @@ export class ReporterWidget {
           $world.addCodeEditor({title: `Diff ${p.name}`,content: cmd.output,textMode: "diff", extent: pt(500,600)})
             .getWindow().comeForward()), {p}) : this.textFlow.nothing, this.textFlow.br);
 
+    // remote changes + update button
     report = report.concat(
       "remote changes?",
       p.hasRemoteChanges ? "yes" : "no",
       p.hasRemoteChanges ? this.textFlow.button("update", () => {
-        var indicator;
-        lively.ide.withLoadingIndicatorDo(`updating ${p.name}`)
-          .then(i => indicator = i)
-          .then(() => p.installOrUpdate())
-          .then(out => { $world.inform(out); })
-          .catch(err => {
-            $world.inform(String(err.stack || err));
-            console.log(p.printLog());
-          })
-          .then(() => indicator.remove());
-      }, {p}) : this.textFlow.nothing, this.textFlow.br);
+        reporter.withLoadingIndicatorCatchingErrors(
+          p.installOrUpdate(reporter.packages), `updating ${p.name}`)
+      }, {p, reporter}) : this.textFlow.nothing, this.textFlow.br);
 
     return report.concat(this.textFlow.br, this.textFlow.br);
   }
@@ -184,10 +213,10 @@ export class ReporterWidget {
         new Package(join(this.baseDir, spec.name), spec)
         .readConfig()
         .then(p => p.readStatus())));
-    packages = packages.sortBy(ea =>
+    this.packages = packages.sortBy(ea =>
       (!ea.exists ? 301 : 0) + (!ea.hasGitRepo ? 201 : 0) + (ea.hasRemoteChanges ? 100 : 0) + (ea.hasLocalChanges ? 100 : 0) + ea.name.charCodeAt(0)).reverse();
 
-    var summaries = packages.map(p => this.renderMorphicSummaryForPackage(p, packages)),
+    var summaries = this.packages.map(p => this.renderMorphicSummaryForPackage(p)),
         reporter = this,
         report = [
           this.textFlow.button("refresh",
