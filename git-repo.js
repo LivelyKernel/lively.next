@@ -140,12 +140,24 @@ export class Repository {
       local: (out.local || '').trim().split(' ')[0]};
   }
 
+  async push() {
+    var {remote, branch} = await this.localBranchInfo()
+    if (!remote) throw new Error(`No remote for pusshing ${this.directory}`);
+    if (!branch) throw new Error(`No branch for pusshing ${this.directory}`);
+    return this.cmd(`git push "${remote}" "${branch}"`);    
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // local commit state
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   stash() { return this.cmd("git stash"); }
   stashPop() { return this.cmd("git stash pop"); }
+
+  commit(message, all = false) {
+    if (!message) throw new Error("No commit message");
+    return this.cmd(`git commit ${all ? "-a" : ""} -m "${message}"`);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // pull / fetch
