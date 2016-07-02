@@ -22,6 +22,8 @@ export class Morph {
     Object.assign(this, props);
   }
 
+  get id() { return this._id; }
+
   defaultProperty(key) { return defaultProperties[key]; }
 
   getProperty(key) {
@@ -29,7 +31,13 @@ export class Morph {
      return c ? c.value : this.defaultProperty(key); 
   }
 
-  get id() { return this._id; }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // debugging
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  toString() {
+    return `<Morph ${this.name ? this.name : this.id}>`;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // changes
@@ -93,6 +101,23 @@ export class Morph {
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  { this.change({prop: "clipMode", value}); }
 
+  bounds() {
+    var {x,y} = this.position, {x:w,y:h} = this.extent;
+    return rect(x,y,w,h);
+  }
+
+  innerBounds() {
+    var {x:w,y:h} = this.extent;
+    return rect(0,0,w,h);
+  }
+
+  moveBy(delta) { this.position = this.position.addPt(delta); }
+  resizeBy(delta) { this.extent = this.extent.addPt(delta); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // morphic relationship
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   get submorphs()      { return this.getProperty("submorphs"); }
   addMorph(morph) {
     morph._owner = this;
@@ -109,22 +134,17 @@ export class Morph {
   get owner() { return this._owner; }
 
   withAllSubmorphsDetect(testerFunc) {
-    return testerFunc(this) ||
-      this.submorphs.find(sub => sub.withAllSubmorphsDetect(testerFunc));
+    if (testerFunc(this)) return this;
+    for (let m of this.submorphs) {
+      var found = m.withAllSubmorphsDetect(testerFunc);
+      if (found) return found;
+    }
+    return undefined;
   }
 
-  bounds() {
-    var {x,y} = this.position, {x:w,y:h} = this.extent;
-    return rect(x,y,w,h);
+  ownerChain() {
+    return this.owner ? [this.owner].concat(this.owner.ownerChain()) : [];
   }
-
-  innerBounds() {
-    var {x:w,y:h} = this.extent;
-    return rect(0,0,w,h);
-  }
-
-  moveBy(delta) { this.position = this.position.addPt(delta); }
-  resizeBy(delta) { this.extent = this.extent.addPt(delta); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
   // undo / redo
@@ -137,17 +157,19 @@ export class Morph {
   }
   
   dispatchEvent(evt) {
-    var { type, target } = evt;
-    var targetId = target.id;
-    var targetMorph = this.withAllSubmorphsDetect(sub => sub.id === targetId);
-    if (type === "mousedown") {
-      targetMorph.withOwnerChain().reverse().map(ea =>
-      show(ea.name) &&
-      ea.onMouseDown(evt));
+    var { type, target } = evt,
+        targetId = target.id,
+        targetMorph = this.withAllSubmorphsDetect(sub => sub.id === targetId);
+    switch (type) {
+      case 'mousedown':
+        [targetMorph].concat(targetMorph.ownerChain())
+          .reverse()
+          .map(ea => ea.onMouseDown(evt));
+        break;
+
+      default:
+        throw new Error(`dispatchEvent: ${type} nt yet supported!`)
     }
   }
   
-  withOwnerChain() {
-    return this.owner ? [this].concat(this.owner.withOwnerChain()) : [this];
-  }
 }

@@ -40,15 +40,13 @@ describe("morphic", () => {
   });
 
   it("deep search through morphs", () => {
-    var result = world.withAllSubmorphsDetect(ea => ea === submorph2);
-    expect(result).equals(submorph2);
+    expect(world.withAllSubmorphsDetect(ea => ea === submorph2))
+      .equals(submorph2);
   });
 
-  it("withOwnerChain", () => {
-    expect(submorph2.withOwnerChain())
-      .deep.equals(
-        [submorph2, submorph1, world],
-        submorph2.withOwnerChain().map(ea => ea.name).join(","));
+  it("ownerChain", () => {
+    var owners = submorph2.ownerChain();
+    expect(owners).deep.equals([submorph1, world], owners.map(ea => ea.name).join(", "));
   });
 
   it("renderer associates domNodewith morph", () => {
