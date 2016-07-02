@@ -96,7 +96,8 @@ export async function install(baseDir, toURL) {
     else console.log(`=> Done!\npackages installed and / or updated! You can start a lively server by running 'npm start' inside ${livelyDir}. Afterwards your lively.system development world is running at http://localhost:9001/development.html`)
   } catch (e) {
     console.error("Error occurred during installation: " + e);
-    throw e
+    log.push(e.stack || e);
+    throw e;
   } finally {
     write(join(baseDir, "lively.installer.log"), log.join(""));
     indicator && indicator.remove();
