@@ -135,16 +135,22 @@ export class Morph {
   get submorphs() { return this.getProperty("submorphs").slice(); }
   set submorphs(newSubmorphs) {
     this.submorphs.forEach(m => m.remove());
-    newSubmorphs.forEach(m => {
-      if (!m.isMorph) m = new Morph(m);
-      this.addMorph(m);
-    });
-    return newSubmorphs
+    return newSubmorphs.map(m => this.addMorph(m));
   }
 
-  addMorph(morph) {
+  addMorph(morph, insertBeforeMorph) {
+    if (!morph || typeof morph !== "object")
+      throw new Error(`${morph} cannot be added as a submorph to ${this}`)
+
+    if (!morph.isMorph) morph = new Morph(morph);
+
     morph._owner = this;
-    this.change({prop: "submorphs", value: this.submorphs.concat(morph)});
+    var submorphs = this.submorphs,
+        insertBeforeMorphIndex = insertBeforeMorph ? submorphs.indexOf(insertBeforeMorph) : -1,
+        insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
+    submorphs.splice(insertionIndex, 0, morph);
+
+    this.change({prop: "submorphs", value: submorphs});
     return morph;
   }
 
@@ -152,7 +158,10 @@ export class Morph {
     var o = this.owner;
     if (o) {
       this._owner = null;
-      o.change({prop: "submorphs", value: o.submorphs.filter(ea => ea !== this)});
+      var submorphs = o.submorphs,
+          index = submorphs.indexOf(this)
+      if (index > -1) submorphs.splice(index, 1);
+      o.change({prop: "submorphs", value: submorphs});
     }
   }
 

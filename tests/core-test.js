@@ -88,6 +88,12 @@ describe("morphic", () => {
       expect(submorph2.world()).equals(world);
     });
 
+    it("adds morph in front of other", () => {
+      var newMorph = world.addMorph({name: "new morph"}, world.submorphs[1]);
+      expect(world.submorphs[0]).equals(submorph1);
+      expect(world.submorphs[1]).equals(newMorph);
+      expect(world.submorphs[2]).equals(submorph3);
+    });
   });
 
   describe("rendering", () => {
