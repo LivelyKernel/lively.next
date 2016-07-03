@@ -28,7 +28,7 @@ function exec(cmdString, opts) {
       get output() { return stdout + "\n" + stderr },
       get stdout() { return stdout },
       isRunning() { return typeof exit === "undefined" },
-      kill(sig) { return proc.kill(sig) }
+      kill(sig = "SIGKILL") { return proc.kill(sig) }
     }
     cmd = deferred.promise;
     cmd.__defineGetter__("process", rawCmd.__lookupGetter__("process"));
@@ -120,9 +120,14 @@ export async function startServer(path = "/lively", port = 3011, timeout = 30*10
   
   // 2. start server process and wait until lively-system-interface is ready
   var cmd = exec(`node ${fn}`, {cwd: WORKSPACE_LK}),
-      start = Date.now(), outputSeen;
+      start = Date.now(), outputSeen = "";
   return new Promise(function waitForServerStart(resolve, reject) {
-    if (cmd.output !== outputSeen) { console.log(cmd.output); outputSeen = cmd.output }
+
+    if (cmd.output !== outputSeen) { // for debugging
+      console.log(cmd.output.slice(outputSeen.length));
+      outputSeen = cmd.output;
+    }
+
     if (!cmd.isRunning()) reject(new Error(`server crashed: ${cmd.output}`));
     else if (string.include(cmd.output, "lively-system-interface imported")) resolve({server: cmd});
     else if (Date.now() - start > timeout) reject(new Error(`server start timout`))
