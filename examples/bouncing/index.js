@@ -1,12 +1,16 @@
 import { pt, Color, Point } from "lively.graphics";
 import { Renderer } from "lively.morphic/renderer.js";
-import { Morph, Ellipse } from "lively.morphic/morph.js";
+import { Morph, Ellipse, WorldMorph } from "lively.morphic/morph.js";
+import { EventDispatcher } from "lively.morphic/events.js";
 
 var {scrollWidth: w, scrollHeight: h} = document.body,
-    world = new Morph({extent: pt(w, h)});
+    world = window.$world = new WorldMorph({extent: pt(w, h)});
+  
+var renderer = new Renderer(world, document.body);
+renderer.startRenderWorldLoop();
 
-var r = new Renderer(world, document.getElementById("lively-world"))
-r.startRenderWorldLoop();
+var eventDispatcher = new EventDispatcher(window, world);
+eventDispatcher.install();
 
 Object.assign(Morph.prototype, {
   bounce() {
