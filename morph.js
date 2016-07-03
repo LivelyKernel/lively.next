@@ -119,12 +119,22 @@ export class Morph {
   // morphic relationship
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get submorphs()      { return this.getProperty("submorphs"); }
+  get submorphs() { return this.getProperty("submorphs").slice(); }
+  set submorphs(newSubmorphs) {
+    this.submorphs.forEach(m => m.remove());
+    newSubmorphs.forEach(m => {
+      if (!m.isMorph) m = new Morph(m);
+      this.addMorph(m);
+    });
+    return newSubmorphs
+  }
+
   addMorph(morph) {
     morph._owner = this;
     this.change({prop: "submorphs", value: this.submorphs.concat(morph)});
     return morph;
   }
+
   remove() {
     var o = this.owner;
     if (o) {
