@@ -1,6 +1,19 @@
 import { Color, pt, rect } from "lively.graphics";
 import { string, obj } from "lively.lang";
 
+export function morph(props = {}) {
+  var klass;
+  switch (props.type) {
+    case 'world': klass = WorldMorph; break;
+    case 'hand': klass = HandMorph; break;
+    case 'image': klass = Image; break;
+    case 'ellipse': klass = Ellipse; break;
+    default: klass = Morph;
+  }
+  return new klass(props);
+}
+
+
 const defaultProperties = {
   name: "a morph",
   position:  pt(0,0),
