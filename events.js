@@ -28,7 +28,14 @@ class Event {
     this.world = world;
     this.eventState = eventState;
     this.type = domEvt.type;
+    this.stopped = false;
     this.hand = this.ensureHand();
+  }
+
+  stop() {
+    this.stopped = true;
+    this.domEvt.stopPropagation();
+    this.domEvt.preventDefault();
   }
 
   ensureHand() {
@@ -205,8 +212,8 @@ export class EventDispatcher {
     if (method) {
       var eventTargets = [targetMorph].concat(targetMorph.ownerChain()).reverse();
       for (var i = 0; i < eventTargets.length; i++) {
-        var morph = eventTargets[i];
-        morph[method](evt);
+        if (evt.stopped) break;
+        eventTargets[i][method](evt);
       }
     } else {
       throw new Error(`dispatchEvent: ${type} nt yet supported!`)
