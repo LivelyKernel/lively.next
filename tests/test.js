@@ -9,6 +9,28 @@ describe("morphic", () => {
   var world, submorph1, submorph2, submorph3, renderer, domNode;
 
   beforeEach(() => {
+    // why can't comments be morphs? anyway...
+    // 
+    // +---------------------------------------------------+
+    // |                                                   |
+    // | +--------------------+         +------------+     |
+    // | |                    |         |            |     |
+    // | |  +---------+       |         |            |     |
+    // | |  |         |       |         |            |     |
+    // | |  |         |       |         |            |     |
+    // | |  |submorph2|       |         | submorph3  |     |
+    // | |  |         |       |         |            |     |
+    // | |  |         |       |         |            |     |
+    // | |  +---------+       |         |            |     |
+    // | |                    |         +------------+     |
+    // | |                    |                            |
+    // | |   submorph1        |                            |
+    // | |                    |                            |
+    // | +--------------------+                            |
+    // |                                                   |
+    // |                       world                       |
+    // +---------------------------------------------------+
+
     world = new Morph({extent: pt(300,300)})
     submorph1 = new Morph({extent: pt(100,100), position: pt(10,10), fill: Color.red})
     submorph2 = new Morph({extent: pt(20,20), position: pt(5,10), fill: Color.green})
@@ -21,14 +43,13 @@ describe("morphic", () => {
     submorph1.addMorph(submorph2);
     world.addMorph(submorph3);
     
-    renderer = new Renderer()
-    var rootNode = document.body;
-    renderer.renderWorld(world, rootNode);
-    domNode = renderer.renderStateFor(world).domNode;
+    renderer = new Renderer(world, document.body)
+    renderer.renderWorld();
+    domNode = renderer.domNode;
   });
 
   afterEach(() => {
-    domNode.parentNode.removeChild(domNode);
+    renderer.clear();
   });
 
   it("Morph has property extent", () => {

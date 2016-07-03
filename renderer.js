@@ -6,18 +6,29 @@ export class Renderer {
 
   static default() { return this._default || new this() }
 
-  constructor() {
-    // stores the render state for morphs, that is the vdom tree
+  constructor(world, rootNode) {
+    if (!world || !world.isMorph)
+      throw new Error(`Trying to initialize renderer with an invalid world morph: ${world}`)
+    if (!rootNode || !("nodeType" in rootNode))
+      throw new Error(`Trying to initialize renderer with an invalid root node: ${rootNode}`)
+    this.worldMorph = world;
+    this.rootNode = rootNode;
+    this.domNode = null;
     this.renderMap = new WeakMap();
-    // stores the dom nodes that are used for rendering "world" morphs
-    this.domNodeMap = new WeakMap();
     this.renderWorldLoopProcess = null;
   }
 
-  renderWorldLoop(world, rootElement) {
-    this.renderWorld(world, rootElement);
+  clear() {
+    this.stopRenderWorldLoop();
+    this.domNode.parentNode.removeChild(this.domNode);
+    this.domNode = null;
+    this.renderMap = new WeakMap();
+  }
+
+  startRenderWorldLoop() {
+    this.renderWorld();
     this.renderWorldLoopProcess = requestAnimationFrame(() =>
-      this.renderWorldLoop(world, rootElement));
+      this.renderWorldLoop());
   }
 
   stopRenderWorldLoop() {
@@ -25,31 +36,18 @@ export class Renderer {
     this.renderWorldLoopProcess = null;
   }
 
-  renderStateFor(worldMorph) {
-    let tree = this.renderMap.get(worldMorph);
-    if (!tree) {
-      tree = this.renderMorph(worldMorph);
-      this.renderMap.set(worldMorph, tree);
-    }
-    let domNode = this.domNodeMap.get(worldMorph);
-    if (!domNode) {
-      domNode = create(tree);
-      this.domNodeMap.set(worldMorph, domNode);
-    }
-    return {tree, domNode};
-  }
+  renderWorld() {
+    var world = this.worldMorph;
 
-  renderWorld(worldMorph, rootElement) {
-    if (!worldMorph.needsRerender()) return;
+    if (!world.needsRerender()) return;
 
-    var {domNode, tree} = this.renderStateFor(worldMorph);
-
-    if (!domNode.parentNode) {
-      rootElement.appendChild(domNode);
-    }
-
-    var newTree = this.renderMorph(worldMorph),
+    var tree = this.renderMap.get(world) || this.renderMorph(world),
+        domNode = this.domNode || (this.domNode = create(tree)),
+        newTree = this.renderMorph(world),
         patches = diff(tree, newTree);
+
+    if (!domNode.parentNode)
+      this.rootNode.appendChild(domNode);
 
     patch(domNode, patches);
   }

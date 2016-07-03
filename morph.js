@@ -22,6 +22,7 @@ export class Morph {
     Object.assign(this, props);
   }
 
+  get isMorph() { return true; }
   get id() { return this._id; }
 
   defaultProperty(key) { return defaultProperties[key]; }
