@@ -12,6 +12,7 @@ export class Renderer {
     if (!rootNode || !("nodeType" in rootNode))
       throw new Error(`Trying to initialize renderer with an invalid root node: ${rootNode}`)
     this.worldMorph = world;
+    world._isWorld = true; // for world() method
     this.rootNode = rootNode;
     this.domNode = null;
     this.renderMap = new WeakMap();
@@ -76,7 +77,15 @@ export class Renderer {
     return tree;
   }
 
-  getMorphWithNode(root, node) {
-    return root.withAllSubmorphsDetect(morph => morph.id === node.id);
+  getNodeForMorph(morph) {
+    // Hmm, this also finds dom nodes not associated with this renderer, its
+    // domNode... Is this a problem?
+    return document.getElementById(morph.id);
+  }
+
+  getMorphForNode(node) {
+    return this.worldMorph ?
+      this.worldMorph.withAllSubmorphsDetect(morph => morph.id === node.id) :
+      null;
   }
 }
