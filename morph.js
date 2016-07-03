@@ -117,18 +117,58 @@ export class Morph {
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
   set reactsToPointer(value)  { this.change({prop: "reactsToPointer", value}); }
 
-  bounds() {
+  get bounds() {
     var {x,y} = this.position, {x:w,y:h} = this.extent;
     return rect(x,y,w,h);
   }
 
+  set bounds(bounds) {
+    this.position = bounds.topLeft();
+    this.extent = bounds.extent();
+  }
+
   innerBounds() {
-    var {x:w,y:h} = this.extent;
+    var {x:w, y:h} = this.extent;
     return rect(0,0,w,h);
   }
 
+  align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
   moveBy(delta) { this.position = this.position.addPt(delta); }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
+
+  get width()         { return this.extent.x; }
+  set width(v)        { return this.extent = pt(v, this.extent.y); }
+  get height()        { return this.extent.y; }
+  set height(v)       { return this.extent = pt(this.extent.x, v); }
+
+  get left()          { return this.bounds.left(); }
+  set left(v)         { return this.moveBy(pt(v - this.left), 0); }
+  get right()         { return this.bounds.right(); }
+  set right(v)        { return this.moveBy(pt(v - this.right), 0); }
+  get top()           { return this.bounds.top(); }
+  set top(v)          { return this.moveBy(pt(0, v - this.top)); }
+  get bottom()        { return this.bounds.bottom(); }
+  set bottom(v)       { return this.moveBy(pt(0, v - this.bottom)); }
+
+  get center()        { return this.bounds.center(); }
+  set center(v)       { return this.align(this.center, v); }
+  get topLeft()       { return this.bounds.topLeft(); }
+  set topLeft(v)      { return this.align(this.topLeft, v); }
+  get topRight()      { return this.bounds.topRight(); }
+  set topRight(v)     { return this.align(this.topRight, v); }
+  get bottomRight()   { return this.bounds.bottomRight(); }
+  set bottomRight(v)  { return this.align(this.bottomRight, v); }
+  get bottomLeft()    { return this.bounds.bottomLeft(); }
+  set bottomLeft(v)   { return this.align(this.bottomLeft, v); }
+  get bottomCenter()  { return this.bounds.bottomCenter(); }
+  set bottomCenter(v) { return this.align(this.bottomCenter, v); }
+  get topCenter()     { return this.bounds.topCenter(); }
+  set topCenter(v)    { return this.align(this.topCenter, v); }
+  get leftCenter()    { return this.bounds.leftCenter(); }
+  set leftCenter(v)   { return this.align(this.leftCenter, v); }
+  get rightCenter()   { return this.bounds.rightCenter(); }
+  set rightCenter(v)  { return this.align(this.rightCenter, v); }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic relationship
