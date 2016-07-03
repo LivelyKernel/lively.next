@@ -282,9 +282,11 @@ export class Morph {
 
 export class WorldMorph extends Morph {
 
+  get isWorld() { return true }
+
   handForPointerId(pointerId) {
     return this.submorphs.find(m => m instanceof HandMorph && m.pointerId === pointerId)
-        || this.addMorph(new HandMorph(pointerId));
+        || this.addMorph(new HandMorph(pointerId), this.submorphs[0]);
   }
 
   world() { return this }
@@ -293,6 +295,9 @@ export class WorldMorph extends Morph {
     evt.hand.update(evt);
   }
   
+  onMouseDown(evt) {
+  }
+
   onMouseUp(evt) {
   }
 }
@@ -306,6 +311,8 @@ export class HandMorph extends Morph {
     this.extent = pt(4,4);
     this.reactsToPointer = false;
   }
+
+  get isHand() { return true }
 
   update(evt) {
     this.position = evt.position;
