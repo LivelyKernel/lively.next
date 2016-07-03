@@ -21,7 +21,7 @@ export class Renderer {
 
   clear() {
     this.stopRenderWorldLoop();
-    this.domNode.parentNode.removeChild(this.domNode);
+    this.domNode && this.domNode.parentNode.removeChild(this.domNode);
     this.domNode = null;
     this.renderMap = new WeakMap();
   }
@@ -67,7 +67,8 @@ export class Renderer {
         width: morph.extent.x + 'px',
         height: morph.extent.y + 'px',
         backgroundColor: morph.fill ? morph.fill.toString() : "",
-        overflow: morph.clipMode
+        overflow: morph.clipMode,
+        "pointer-events": morph.reactsToPointer ? "auto" : "none"
     }, morph.shape().style);
 
     const attributes = Object.assign(

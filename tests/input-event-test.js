@@ -2,12 +2,13 @@
 import { expect, chai } from "mocha-es6";
 import { WorldMorph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
-import { dispatchEvent } from "../events.js";
+import { EventDispatcher } from "../events.js";
 
 
 describe("morphic", () => {
 
-  var world, submorph1, submorph2, submorph3, renderer,
+  var world, submorph1, submorph2, submorph3,
+      renderer, eventDispatcher,
       mousedownEvent;
 
   beforeEach(() => {
@@ -27,6 +28,8 @@ describe("morphic", () => {
     renderer = new Renderer(world, document.body)
     renderer.renderWorld();
 
+    eventDispatcher = new EventDispatcher(window, world).install();
+
     mousedownEvent = {
       type: "pointerdown",
       target: renderer.getNodeForMorph(submorph2),
@@ -35,7 +38,8 @@ describe("morphic", () => {
   });
 
   afterEach(() => {
-    renderer.clear();
+    eventDispatcher && eventDispatcher.uninstall();
+    renderer && renderer.clear();
   });
 
   it("emulate mousedown on submorph", () => {
@@ -44,7 +48,7 @@ describe("morphic", () => {
     submorph1.onMouseDown = function() { log.push("submorph1"); };
     submorph2.onMouseDown = function() { log.push("submorph2"); };
     submorph3.onMouseDown = function() { log.push("submorph3"); };
-    dispatchEvent(mousedownEvent, world);
+    eventDispatcher.dispatchEvent(mousedownEvent);
     expect(log).deep.equals(["world", "submorph1", "submorph2"]);
   });
 });

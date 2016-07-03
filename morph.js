@@ -6,9 +6,10 @@ const defaultProperties = {
   position:  pt(0,0),
   rotation:  0,
   scale:  1,
-  extent:  pt(10, 10),
-  fill:  Color.white,
-  clipMode:  "visible",
+  extent: pt(10, 10),
+  fill: Color.white,
+  clipMode: "visible",
+  reactsToPointer: true,
   submorphs:  []
 }
 
@@ -39,7 +40,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   toString() {
-    return `<Morph ${this.name ? this.name : this.id}>`;
+    return `<${this.constructor.name} - ${this.name ? this.name : this.id}>`;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -110,6 +111,9 @@ export class Morph {
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  { this.change({prop: "clipMode", value}); }
+
+  get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
+  set reactsToPointer(value)  { this.change({prop: "reactsToPointer", value}); }
 
   bounds() {
     var {x,y} = this.position, {x:w,y:h} = this.extent;
@@ -194,22 +198,6 @@ export class Morph {
     this.makeDirty();
   }
 
-  dispatchEvent(evt) {
-    var { type, target } = evt,
-        targetId = target.id,
-        targetMorph = this.withAllSubmorphsDetect(sub => sub.id === targetId);
-    switch (type) {
-      case 'mousedown':
-        [targetMorph].concat(targetMorph.ownerChain())
-          .reverse()
-          .map(ea => ea.onMouseDown(evt));
-        break;
-
-      default:
-        throw new Error(`dispatchEvent: ${type} not yet supported!`)
-    }
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // nameing
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -257,7 +245,7 @@ export class Morph {
     return null;
   }
 
-  getInOwners (name) {
+  getInOwners(name) {
     var owner = this.owner;
     if (!owner) return null;
     for (var i = 0; i < owner.submorphs.length; i++) {
@@ -269,6 +257,51 @@ export class Morph {
     }
     return this.owner.getInOwners(name);
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // events
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  onMouseDown(evt) { console.log("clicked on " + this) }
+  onMouseUp(evt) {}
+  onMouseMove(evt) {}
+  onDragStart(evt) {}
+  onDrag(evt) {}
+  onDragEnd(evt) {}
+
+}
+
+export class WorldMorph extends Morph {
+
+  handForPointerId(pointerId) {
+    return this.submorphs.find(m => m instanceof HandMorph && m.pointerId === pointerId)
+        || this.addMorph(new HandMorph(pointerId));
+  }
+
+  world() { return this }
+  
+  onMouseMove(evt) {
+    evt.hand.update(evt);
+  }
+  
+  onMouseUp(evt) {
+  }
+}
+
+export class HandMorph extends Morph {
+
+  constructor(pointerId) {
+    super();
+    this.pointerId = pointerId;
+    this.fill = Color.orange;
+    this.extent = pt(4,4);
+    this.reactsToPointer = false;
+  }
+
+  update(evt) {
+    this.position = evt.position;
+  }
+
 }
 
 export class Ellipse extends Morph {
@@ -299,21 +332,5 @@ export class Image extends Morph {
     return {
       src: this.imageUrl
     }
-  }
-}
-export class WorldMorph extends Morph {
-
-  handForPointerId(pointerId) {
-    return this.submorphs.find(m => m instanceof HandMorph && m.pointerId === pointerId)
-        || this.addMorph(new HandMorph(pointerId));
-  }
-
-  world() { return this }
-  
-  onMouseMove(evt) {
-    evt.hand.update(evt);
-  }
-  
-  onMouseUp(evt) {
   }
 }
