@@ -1,49 +1,28 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
-import { WorldMorph, Renderer, Ellipse, Image } from "../index.js";
+import { morph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
 
 
 describe("morphic", () => {
 
-  var world, submorph1, submorph2, submorph3, renderer, image, ellipse;
+  var world, submorph1, submorph2, submorph3,
+      renderer, image, ellipse;
 
   beforeEach(() => {
-    // why can't comments be morphs? anyway...
-    //
-    // +---------------------------------------------------+
-    // |                                                   |
-    // | +--------------------+         +------------+     |
-    // | |                    |         |            |     |
-    // | |  +---------+       |         |            |     |
-    // | |  |         |       |         |            |     |
-    // | |  |         |       |         |            |     |
-    // | |  |submorph2|       |         | submorph3  |     |
-    // | |  |         |       |         |            |     |
-    // | |  |         |       |         |            |     |
-    // | |  +---------+       |         |            |     |
-    // | |                    |         +------------+     |
-    // | |                    |                            |
-    // | |   submorph1        |                            |
-    // | |                    |                            |
-    // | +--------------------+                            |
-    // |                                                   |
-    // |                       world                       |
-    // +---------------------------------------------------+
-
-    world = new WorldMorph({
-      name: "world", extent: pt(300,300),
+    world = morph({
+      type: "world", name: "world", extent: pt(300,300),
       submorphs: [{
           name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
           submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
         },
-        {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow,
-         submorphs: [new Ellipse({name: "ellipse", extent: pt(100,100), position: pt(42,42), fill: Color.pink}),
-                     new Image({name: "image", extent: pt(100,100), position: pt(42,42), fill: Color.pink})]}
+        {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
+        {type: "image", name: "image", extent: pt(80,80), position: pt(20, 200), fill: Color.lightGray},
+        {type: "ellipse", name: "ellipse", extent: pt(50, 50), position: pt(200, 200), fill: Color.pink}
       ]
     });
-    image = world.submorphs[1].submorphs[1];
-    ellipse = world.submorphs[1].submorphs[0];
+    image = world.submorphs[2];
+    ellipse = world.submorphs[3];
     submorph1 = world.submorphs[0];
     submorph2 = world.submorphs[0].submorphs[0];
     submorph3 = world.submorphs[1];
@@ -137,8 +116,8 @@ describe("morphic", () => {
   describe("shapes", () => {
 
     it("shape influences node style", () => {
-      const style = renderer.domNode.childNodes[1].childNodes[0].style;
-      expect(style.borderRadius).equals("100px");
+      const style = renderer.getNodeForMorph(ellipse).style;
+      expect(style.borderRadius).equals("50px");
       expect(style.position).equals("absolute");
     });
 
@@ -148,14 +127,14 @@ describe("morphic", () => {
     });
 
     it("morph type influences node attributes", () => {
-      const ellipseNode = renderer.domNode.childNodes[1].childNodes[0];
-      const imageNode = renderer.domNode.childNodes[1].childNodes[1];
+      const ellipseNode = renderer.getNodeForMorph(ellipse),
+            imageNode = renderer.getNodeForMorph(image);
       expect(ellipseNode).not.to.have.property('src');
       expect(imageNode).to.have.property('src');
     });
 
     it("shape translates morph attributes to style", () => {
-      expect(ellipse.shape()).deep.equals({style: {borderRadius: "100px/100px"}});
+      expect(ellipse.shape()).deep.equals({style: {borderRadius: "50px/50px"}});
       ellipse.extent = pt(200, 100);
       expect(ellipse.shape()).deep.equals({style: {borderRadius: "200px/100px"}});
     });

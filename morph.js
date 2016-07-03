@@ -28,6 +28,7 @@ const defaultProperties = {
   submorphs:  []
 }
 
+
 export class Morph {
 
   constructor(props, submorphs) {
@@ -201,31 +202,31 @@ export class Morph {
     return newSubmorphs.map(m => this.addMorph(m));
   }
 
-  addMorph(morph, insertBeforeMorph) {
-    if (!morph || typeof morph !== "object")
-      throw new Error(`${morph} cannot be added as a submorph to ${this}`)
+  addMorph(submorph, insertBeforeMorph) {
+    if (!submorph || typeof submorph !== "object")
+      throw new Error(`${submorph} cannot be added as a submorph to ${this}`)
 
-    if (!morph.isMorph) morph = new Morph(morph);
+    if (!submorph.isMorph) submorph = morph(submorph);
 
-    morph._owner = this;
+    submorph._owner = this;
     var submorphs = this.submorphs,
         insertBeforeMorphIndex = insertBeforeMorph ? submorphs.indexOf(insertBeforeMorph) : -1,
         insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
-    submorphs.splice(insertionIndex, 0, morph);
+    submorphs.splice(insertionIndex, 0, submorph);
 
     this.change({prop: "submorphs", value: submorphs});
-    return morph;
+    return submorph;
   }
 
   remove() {
-    var o = this.owner;
-    if (o) {
-      this._owner = null;
-      var submorphs = o.submorphs,
-          index = submorphs.indexOf(this)
-      if (index > -1) submorphs.splice(index, 1);
-      o.change({prop: "submorphs", value: submorphs});
-    }
+    var owner = this.owner;
+    if (!owner) return this;
+    this._owner = null;
+    var submorphs = owner.submorphs,
+        index = submorphs.indexOf(this)
+    if (index > -1) submorphs.splice(index, 1);
+    owner.change({prop: "submorphs", value: submorphs});
+    return this;
   }
 
   get owner() { return this._owner; }
