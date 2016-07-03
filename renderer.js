@@ -59,9 +59,8 @@ export class Renderer {
       if (rendered) return rendered;
     }
     morph.aboutToRender();
-
-    var tree = h('div', {
-      style: {
+    
+    const shapedStyle = Object.assign({
         position: "absolute",
         left: morph.position.x + 'px',
         top: morph.position.y + 'px',
@@ -69,9 +68,16 @@ export class Renderer {
         height: morph.extent.y + 'px',
         backgroundColor: morph.fill ? morph.fill.toString() : "",
         overflow: morph.clipMode
-      },
-      id: morph.id
-    }, morph.submorphs.map(m => this.renderMorph(m)));
+    }, morph.shape().style);
+
+    const attributes = Object.assign(
+                  morph.shape(),
+                  {id: morph.id,
+                   style: shapedStyle});
+
+    var tree = h(morph._nodeType, 
+                attributes, 
+                morph.submorphs.map(m => this.renderMorph(m)));
 
     this.renderMap.set(morph, tree);
     return tree;
