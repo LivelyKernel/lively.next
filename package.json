@@ -13,7 +13,15 @@
   },
   "systemjs": {
     "map": {
-      "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js"
+      "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
+      "child_process": {
+        "node": "@node/child_process",
+        "~node": "@empty"
+      },
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      }
     }
   },
   "lively": {
