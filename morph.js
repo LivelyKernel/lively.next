@@ -1,7 +1,8 @@
 import { Color, pt, rect } from "lively.graphics";
-import { string } from "lively.lang";
+import { string, obj } from "lively.lang";
 
 const defaultProperties = {
+  name: "a morph",
   position:  pt(0,0),
   rotation:  0,
   scale:  1,
@@ -29,7 +30,7 @@ export class Morph {
 
   getProperty(key) {
      var c = this.lastChangeFor(key);
-     return c ? c.value : this.defaultProperty(key); 
+     return c ? c.value : this.defaultProperty(key);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -74,7 +75,7 @@ export class Morph {
   needsRerender() {
     return this._dirty || !!this._pendingChanges.length;
   }
-  
+
   aboutToRender() {
     this.commitChanges();
     this._dirty = false;
@@ -83,6 +84,9 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  get name()           { return this.getProperty("name"); }
+  set name(value)      { this.change({prop: "name", value}); }
 
   get position()       { return this.getProperty("position"); }
   set position(value)  { this.change({prop: "position", value}); }
