@@ -4,12 +4,28 @@ import { WorldMorph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
 import { EventDispatcher } from "../events.js";
 
+function fakeEvent(targetMorph, type, pos = pt(0,0)) {
+  // dom event simulator
+  return {
+    type: type,
+    target: document.getElementById(targetMorph.id),
+    pointerId: "test-pointer-1",
+    pageX: pos.x, pageY: pos.y,
+    stopPropagation: () => {}, preventDefault: () => {}
+  }
+}
+
+function installEventLogger(morph, log) {
+  var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDrag"]
+  loggedEvents.forEach(name => {
+    morph[name] = function(evt) { log.push(name + "-" + morph.name)};
+  });
+}
 
 describe("morphic", () => {
 
   var world, submorph1, submorph2, submorph3,
-      renderer, eventDispatcher,
-      mousedownEvent;
+      eventLog, renderer, eventDispatcher;
 
   beforeEach(() => {
     world = new WorldMorph({
@@ -30,11 +46,8 @@ describe("morphic", () => {
 
     eventDispatcher = new EventDispatcher(window, world).install();
 
-    mousedownEvent = {
-      type: "pointerdown",
-      target: renderer.getNodeForMorph(submorph2),
-      pointerId: "test-pointer-1"
-    }
+    eventLog = [];
+    [world,submorph1,submorph2,submorph3,].forEach(ea => installEventLogger(ea, eventLog));
   });
 
   afterEach(() => {
