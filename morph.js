@@ -49,7 +49,9 @@ export class Morph {
 
   lastChangeFor(prop, onlyCommited) {
     var changes = this._changes.concat(onlyCommited ? [] : this._pendingChanges);
-    return changes.reverse().find(ea => ea.prop === prop);
+    for (var i = changes.length-1; i >= 0; i--)
+      if (changes[i].prop === prop) return changes[i];
+    return null
   }
 
   change(change) {
