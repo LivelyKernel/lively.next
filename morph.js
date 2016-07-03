@@ -10,6 +10,8 @@ const defaultProperties = {
   fill: Color.white,
   clipMode: "visible",
   reactsToPointer: true,
+  draggable: true,
+  grabbable: true,
   submorphs:  []
 }
 
@@ -113,6 +115,12 @@ export class Morph {
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  { this.change({prop: "clipMode", value}); }
+
+  get draggable()       { return this.getProperty("draggable"); }
+  set draggable(value)  { this.change({prop: "draggable", value}); }
+
+  get grabbable()       { return this.getProperty("grabbable"); }
+  set grabbable(value)  { this.change({prop: "grabbable", value}); }
 
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
   set reactsToPointer(value)  { this.change({prop: "reactsToPointer", value}); }
