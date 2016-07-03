@@ -290,7 +290,7 @@ export class Image extends Morph {
     super(props, submorphs);
     this._nodeType = 'img';
     if (!this.imageUrl)
-      this.imageUrl = 'http://lively-web.org/core/media/lively-web-logo-small.png;'
+      this.imageUrl = 'http://lively-web.org/core/media/lively-web-logo-small.png'
   }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }

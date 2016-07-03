@@ -10,5 +10,5 @@ var {scrollWidth: w, scrollHeight: h} = document.body,
 world.addMorph(m1)
 m1.addMorph(m2)
 
-var r = new Renderer()
-r.renderWorldLoop(world, document.getElementById("lively-world"));
+var r = new Renderer(world, document.getElementById("lively-world"))
+r.renderWorld();

@@ -1,12 +1,12 @@
 import { pt, Color, Point } from "lively.graphics";
 import { Renderer } from "lively.morphic/renderer.js";
-import { Morph } from "lively.morphic/morph.js";
+import { Morph, Ellipse } from "lively.morphic/morph.js";
 
 var {scrollWidth: w, scrollHeight: h} = document.body,
     world = new Morph({extent: pt(w, h)});
 
-var r = new Renderer()
-r.renderWorldLoop(world, document.getElementById("lively-world"));
+var r = new Renderer(world, document.getElementById("lively-world"))
+r.startRenderWorldLoop();
 
 Object.assign(Morph.prototype, {
   bounce() {
@@ -21,8 +21,8 @@ Object.assign(Morph.prototype, {
 });
 
 var wbounds = world.bounds(), morphs = [];
-for (var i = 0; i < 1000; i++) {
-  var m = new Morph({
+for (var i = 0; i < 100; i++) {
+  var m = new Ellipse({
     position: wbounds.insetBy(10).randomPoint(),
     extent: Point.random(pt(10,10)).addXY(10,10),
     fill: Color.random()
