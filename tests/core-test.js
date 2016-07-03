@@ -1,12 +1,12 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
-import { Morph, Renderer, Ellipse, Image } from "../index.js";
+import { WorldMorph, Renderer, Ellipse, Image } from "../index.js";
 import { pt, Color } from "lively.graphics";
 
 
 describe("morphic", () => {
 
-  var world, submorph1, submorph2, submorph3, renderer, domNode, image, ellipse;
+  var world, submorph1, submorph2, submorph3, renderer, image, ellipse;
 
   beforeEach(() => {
     // why can't comments be morphs? anyway...
@@ -31,7 +31,7 @@ describe("morphic", () => {
     // |                       world                       |
     // +---------------------------------------------------+
 
-    world = new Morph({
+    world = new WorldMorph({
       name: "world", extent: pt(300,300),
       submorphs: [{
           name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
@@ -49,7 +49,6 @@ describe("morphic", () => {
     submorph3 = world.submorphs[1];
     renderer = new Renderer(world, document.body)
     renderer.renderWorld();
-    domNode = renderer.domNode;
   });
 
   afterEach(() => {
@@ -63,7 +62,7 @@ describe("morphic", () => {
     });
 
     it("Morph has an id", () => {
-      expect(world.id).equals(domNode.id);
+      expect(world.id).equals(renderer.domNode.id);
     });
 
   });
@@ -97,7 +96,7 @@ describe("morphic", () => {
       var node = renderer.getNodeForMorph(submorph2),
           morph = renderer.getMorphForNode(node);
       expect(morph).equals(submorph2, morph && morph.name);
-      expect(domNode.childNodes[0].childNodes[0]).equals(node); // brittle, might change...
+      expect(renderer.domNode.childNodes[0].childNodes[0]).equals(node); // brittle, might change...
     });
 
   });
@@ -132,7 +131,7 @@ describe("morphic", () => {
   describe("shapes", () => {
 
     it("shape influences node style", () => {
-      const style = domNode.childNodes[1].childNodes[0].style;
+      const style = renderer.domNode.childNodes[1].childNodes[0].style;
       expect(style.borderRadius).equals("100px");
       expect(style.position).equals("absolute");
     });
@@ -143,8 +142,8 @@ describe("morphic", () => {
     });
 
     it("morph type influences node attributes", () => {
-      const ellipseNode = domNode.childNodes[1].childNodes[0];
-      const imageNode = domNode.childNodes[1].childNodes[1];
+      const ellipseNode = renderer.domNode.childNodes[1].childNodes[0];
+      const imageNode = renderer.domNode.childNodes[1].childNodes[1];
       expect(ellipseNode).not.to.have.property('src');
       expect(imageNode).to.have.property('src');
     });

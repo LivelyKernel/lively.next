@@ -21,7 +21,6 @@ export class Morph {
     this._pendingChanges = [];
     this._dirty = true; // for initial display
     this._id = string.newUUID();
-    this._isWorld = false;
     Object.assign(this, props);
   }
 
@@ -182,7 +181,7 @@ export class Morph {
   }
 
   world() {
-    return this._isWorld ? this : this.owner ? this.owner.world() : null;
+    return this.owner ? this.owner.world() : null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -300,5 +299,21 @@ export class Image extends Morph {
     return {
       src: this.imageUrl
     }
+  }
+}
+export class WorldMorph extends Morph {
+
+  handForPointerId(pointerId) {
+    return this.submorphs.find(m => m instanceof HandMorph && m.pointerId === pointerId)
+        || this.addMorph(new HandMorph(pointerId));
+  }
+
+  world() { return this }
+  
+  onMouseMove(evt) {
+    evt.hand.update(evt);
+  }
+  
+  onMouseUp(evt) {
   }
 }
