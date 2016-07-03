@@ -15,6 +15,7 @@ const defaultProperties = {
 export class Morph {
 
   constructor(props, submorphs) {
+    this._nodeType = 'div';
     this._owner = null;
     this._changes = []
     this._pendingChanges = [];
@@ -80,6 +81,10 @@ export class Morph {
   aboutToRender() {
     this.commitChanges();
     this._dirty = false;
+  }
+
+  shape() {
+    return {}
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -202,7 +207,7 @@ export class Morph {
         break;
 
       default:
-        throw new Error(`dispatchEvent: ${type} nt yet supported!`)
+        throw new Error(`dispatchEvent: ${type} not yet supported!`)
     }
   }
 
@@ -265,5 +270,35 @@ export class Morph {
     }
     return this.owner.getInOwners(name);
   }
+}
 
+export class Ellipse extends Morph {
+
+  shape() {
+    return {
+      style: {
+        borderRadius: this.extent.x + "px/" + this.extent.y + "px"
+      }
+    }
+  }
+
+}
+
+export class Image extends Morph {
+
+  constructor(props, submorphs) {
+    super(props, submorphs);
+    this._nodeType = 'img';
+    if (!this.imageUrl)
+      this.imageUrl = 'http://lively-web.org/core/media/lively-web-logo-small.png;'
+  }
+
+  get imageUrl()       { return this.getProperty("imageUrl"); }
+  set imageUrl(value)  { this.change({prop: "imageUrl", value}); }
+
+  shape() {
+    return {
+      src: this.imageUrl
+    }
+  }
 }

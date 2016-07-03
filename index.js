@@ -1,4 +1,4 @@
 import { Renderer } from "./renderer.js";
-import { Morph } from "./morph.js";
+import { Morph, Ellipse, Image } from "./morph.js";
 
-export { Renderer, Morph }
+export { Renderer, Morph, Ellipse, Image }
