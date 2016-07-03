@@ -46,7 +46,7 @@ function exec(cmdString, opts) {
 }
 
 var serverCode = `
-require("lively.modules/node_modules/systemjs");
+require("systemjs");
 require("lively.modules");
 require("lively.vm");
 var http = require("http");
@@ -64,7 +64,7 @@ Promise.resolve()
       })
     }).listen(__PORT__, resolve)))
   .then(() => console.log("lively.system running at http://localhost:__PORT____PATH__"))
-  .then(() => lively.modules.importPackage("node_modules/lively-system-interface"))
+  .then(() => lively.modules.importPackage("__SYSTEMINTERFACE_PATH__"))
   .then((system) => { global.livelySystem = system; console.log("lively-system-interface imported"); })
   .catch(err => console.error("Error starting server: " + err.stack || err));
 
@@ -108,11 +108,21 @@ function cors(req, res, next) {
 }`
 
 export async function startServer(path = "/lively", port = 3011, timeout = 30*1000/*ms*/) {
+  // 1. prepare server file
   var WORKSPACE_LK = (isNode ? process.env.WORKSPACE_LK : lively.shell.WORKSPACE_LK) || ".",
-      fn = string.joinPath(WORKSPACE_LK, ".lively.next-eval-server-for-test.js");
-  await writeFile(fn, serverCode.replace(/__PORT__/g, port).replace(/__PATH__/g, path));
-  var cmd = exec(`node ${fn}`, {cwd: WORKSPACE_LK}), start = Date.now();
+      fn = string.joinPath(WORKSPACE_LK, ".lively.next-eval-server-for-test.js"),
+      systemInterfacePath = WORKSPACE_LK !== "." ? "node_modules/lively-system-interface" : ".",
+      serverCodePatched = serverCode
+                            .replace(/__PORT__/g, port)
+                            .replace(/__PATH__/g, path)
+                            .replace(/__SYSTEMINTERFACE_PATH__/g, systemInterfacePath);
+  await writeFile(fn, serverCodePatched);
+  
+  // 2. start server process and wait until lively-system-interface is ready
+  var cmd = exec(`node ${fn}`, {cwd: WORKSPACE_LK}),
+      start = Date.now(), outputSeen;
   return new Promise(function waitForServerStart(resolve, reject) {
+    if (cmd.output !== outputSeen) { console.log(cmd.output); outputSeen = cmd.output }
     if (!cmd.isRunning()) reject(new Error(`server crashed: ${cmd.output}`));
     else if (string.include(cmd.output, "lively-system-interface imported")) resolve({server: cmd});
     else if (Date.now() - start > timeout) reject(new Error(`server start timout`))

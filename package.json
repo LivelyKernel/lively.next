@@ -9,7 +9,8 @@
     "lively.vm": "*"
   },
   "devDependencies": {
-    "mocha-es6": "^0.3.5"
+    "mocha-es6": "^0.3.5",
+    "systemjs": "^0.19.31"
   },
   "systemjs": {
     "map": {
