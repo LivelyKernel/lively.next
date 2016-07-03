@@ -108,7 +108,7 @@ function cors(req, res, next) {
 }`
 
 export async function startServer(path = "/lively", port = 3011, timeout = 30*1000/*ms*/) {
-  var WORKSPACE_LK = isNode ? process.env.WORKSPACE_LK : lively.shell.WORKSPACE_LK,
+  var WORKSPACE_LK = (isNode ? process.env.WORKSPACE_LK : lively.shell.WORKSPACE_LK) || ".",
       fn = string.joinPath(WORKSPACE_LK, ".lively.next-eval-server-for-test.js");
   await writeFile(fn, serverCode.replace(/__PORT__/g, port).replace(/__PATH__/g, path));
   var cmd = exec(`node ${fn}`, {cwd: WORKSPACE_LK}), start = Date.now();
