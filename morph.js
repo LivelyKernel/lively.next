@@ -147,6 +147,7 @@ export class Morph {
       o.change({prop: "submorphs", value: o.submorphs.filter(ea => ea !== this)});
     }
   }
+
   get owner() { return this._owner; }
 
   withAllSubmorphsDetect(testerFunc) {
@@ -188,7 +189,7 @@ export class Morph {
     this._changes.pop();
     this.makeDirty();
   }
-  
+
   dispatchEvent(evt) {
     var { type, target } = evt,
         targetId = target.id,
@@ -204,5 +205,65 @@ export class Morph {
         throw new Error(`dispatchEvent: ${type} nt yet supported!`)
     }
   }
-  
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // nameing
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  get(name) {
+    // search below, search siblings, search upwards
+    if (!name) return null;
+    try {
+      return (this.getNameTest(this, name) && this)
+          || this.getInSubmorphs(name)
+          || this.getInOwners(name);
+    } catch(e) {
+      if (e.constructor == RangeError && e.message == "Maximum call stack size exceeded") {
+        e = new Error("'get' failed due to a stack overflow. The most\n"
+          + "likely source of the problem is using 'get' as part of\n"
+          + "toString, because 'get' calls 'getInOwners', which\n"
+          + "calls 'toString' on this. Try using 'getInSubmorphs' instead,\n"
+          + "which only searches in this' children.");
+      }
+      throw e
+    }
+  }
+
+  getNameTest(morph, expectedName) {
+    var isRe = obj.isRegExp(expectedName);
+    if (isRe) {
+      if (expectedName.test(morph.name) || expectedName.test(String(morph))) return true;
+    } else {
+      if (morph.name === expectedName || String(morph) === expectedName) return true;
+    }
+    return false;
+  }
+
+  getInSubmorphs(name) {
+    if (!this.submorphs.length) return null;
+    var isRe = obj.isRegExp(name);
+    for (var i = 0; i < this.submorphs.length; i++) {
+      var morph = this.submorphs[i];
+      if (this.getNameTest(morph, name)) return morph
+    }
+    for (var i = 0; i < this.submorphs.length; i++)  {
+      var morph = this.submorphs[i].getInSubmorphs(name);
+      if (morph) return morph;
+    }
+    return null;
+  }
+
+  getInOwners (name) {
+    var owner = this.owner;
+    if (!owner) return null;
+    for (var i = 0; i < owner.submorphs.length; i++) {
+      var morph = owner.submorphs[i];
+      if (morph === this) continue;
+      if (this.getNameTest(morph, name)) return morph;
+      var foundInMorph = morph.getInSubmorphs(name);
+      if (foundInMorph) return foundInMorph;
+    }
+    return this.owner.getInOwners(name);
+  }
+
 }
