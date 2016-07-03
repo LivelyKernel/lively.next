@@ -14,12 +14,13 @@ const defaultProperties = {
 
 export class Morph {
 
-  constructor(props) {
+  constructor(props, submorphs) {
     this._owner = null;
     this._changes = []
     this._pendingChanges = [];
     this._dirty = true; // for initial display
     this._id = string.newUUID();
+    this._isWorld = false;
     Object.assign(this, props);
   }
 
@@ -157,11 +158,28 @@ export class Morph {
     return undefined;
   }
 
+  withAllSubmorphsDo(func) {
+    func(this)
+    for (let m of this.submorphs)
+      m.withAllSubmorphsDo(func);
+  }
+
+  withAllSubmorphsSelect(testerFunc) {
+    var result = [];
+    this.withAllSubmorphsDo(m =>
+      testerFunc(m) && result.push(m));
+    return result;
+  }
+
   ownerChain() {
     return this.owner ? [this.owner].concat(this.owner.ownerChain()) : [];
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  
+  world() {
+    return this._isWorld ? this : this.owner ? this.owner.world() : null;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // undo / redo
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
