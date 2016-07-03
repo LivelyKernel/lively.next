@@ -11,6 +11,16 @@ const typeToMethodMap = {
 
 const eventStatesPerWorld = new WeakMap();
 
+function cumulativeOffset(element) {
+  var top = 0, left = 0;
+  do {
+    top += element.offsetTop  || 0;
+    left += element.offsetLeft || 0;
+    element = element.offsetParent;
+  } while(element);
+  return {offsetLeft: left, offsetTop: top};
+}
+
 class Event {
 
   constructor(domEvt, world, eventState) {
@@ -40,8 +50,12 @@ class Event {
   // }
 
   get position() {
-    var pos = pt(this.domEvt.pageX || 0, this.domEvt.pageY || 0);
-    pos = pos.scaleBy(1 / this.world.scale);
+    var worldNode = document.getElementById(this.world.id),
+        {offsetLeft, offsetTop} = cumulativeOffset(worldNode),
+        {pageX, pageY} = this.domEvt,
+        pos = pt((pageX || 0) - offsetLeft, (pageY || 0) - offsetTop);
+    if (this.world.scale !== 1)
+      pos = pos.scaleBy(1 / this.world.scale);
     return pos;
   }
 
