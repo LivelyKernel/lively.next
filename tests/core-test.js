@@ -1,15 +1,16 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
+import { createDOMEnvironment } from "./dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
 
 
 describe("morphic", () => {
 
-  var world, submorph1, submorph2, submorph3,
-      renderer, image, ellipse;
+  var world, submorph1, submorph2, submorph3, image, ellipse,
+      renderer, domEnv;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     world = morph({
       type: "world", name: "world", extent: pt(300,300),
       submorphs: [{
@@ -26,12 +27,15 @@ describe("morphic", () => {
     submorph1 = world.submorphs[0];
     submorph2 = world.submorphs[0].submorphs[0];
     submorph3 = world.submorphs[1];
-    renderer = new Renderer(world, document.body)
+    
+    domEnv = await createDOMEnvironment();
+    renderer = new Renderer(world, domEnv.document.body, domEnv);
     renderer.renderWorld();
   });
 
   afterEach(() => {
-    renderer.clear();
+    renderer && renderer.clear();
+    domEnv && domEnv.destroy();
   });
 
   describe("properties", () => {
@@ -117,7 +121,7 @@ describe("morphic", () => {
 
     it("shape influences node style", () => {
       const style = renderer.getNodeForMorph(ellipse).style;
-      expect(style.borderRadius).equals("50px");
+      expect(style.borderRadius).match(/50px/);
       expect(style.position).equals("absolute");
     });
 
@@ -134,7 +138,7 @@ describe("morphic", () => {
     });
 
     it("shape translates morph attributes to style", () => {
-      expect(ellipse.shape()).deep.equals({style: {borderRadius: "50px/50px"}});
+      expect(ellipse.shape()).deep.property("style.borderRadius").match(/50px/);
       ellipse.extent = pt(200, 100);
       expect(ellipse.shape()).deep.equals({style: {borderRadius: "200px/100px"}});
     });

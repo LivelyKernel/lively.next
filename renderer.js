@@ -6,7 +6,13 @@ export class Renderer {
 
   static default() { return this._default || new this() }
 
-  constructor(world, rootNode) {
+  constructor(world, rootNode, domEnvironment) {
+    if (!domEnvironment) {
+      if (typeof window !== "undefined" && typeof document !== "undefined")
+        domEnvironment = {window, document};
+      else
+        throw new Error("Morphic renderer cannot find DOM environment (window / document)!");
+    }
     if (!world || !world.isMorph)
       throw new Error(`Trying to initialize renderer with an invalid world morph: ${world}`)
     if (!rootNode || !("nodeType" in rootNode))
@@ -15,6 +21,7 @@ export class Renderer {
     world._isWorld = true; // for world() method
     this.rootNode = rootNode;
     this.domNode = null;
+    this.domEnvironment = domEnvironment;
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
   }
@@ -28,12 +35,12 @@ export class Renderer {
 
   startRenderWorldLoop() {
     this.renderWorld();
-    this.renderWorldLoopProcess = requestAnimationFrame(() =>
+    this.renderWorldLoopProcess = this.domEnvironment.window.requestAnimationFrame(() =>
       this.startRenderWorldLoop());
   }
 
   stopRenderWorldLoop() {
-    window.cancelAnimationFrame(this.renderWorldLoopProcess);
+    this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
   }
 
@@ -43,7 +50,7 @@ export class Renderer {
     if (!world.needsRerender()) return;
 
     var tree = this.renderMap.get(world) || this.renderMorph(world),
-        domNode = this.domNode || (this.domNode = create(tree)),
+        domNode = this.domNode || (this.domNode = create(tree, this.domEnvironment)),
         newTree = this.renderMorph(world),
         patches = diff(tree, newTree);
 
@@ -87,7 +94,7 @@ export class Renderer {
   getNodeForMorph(morph) {
     // Hmm, this also finds dom nodes not associated with this renderer, its
     // domNode... Is this a problem?
-    return document.getElementById(morph.id);
+    return this.domNode.ownerDocument.getElementById(morph.id);
   }
 
   getMorphForNode(node) {

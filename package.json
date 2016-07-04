@@ -2,13 +2,13 @@
   "name": "lively.morphic",
   "version": "0.1.0",
   "dependencies": {
-    "js-dom": "0.0.1",
     "lively.graphics": "^0.1.0",
     "lively.lang": "^0.6.2",
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {
     "js-dom": "0.0.1",
+    "jsdom": "^9.4.0",
     "mocha-es6": "^0.3.7"
   },
   "systemjs": {

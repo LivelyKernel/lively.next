@@ -1,14 +1,17 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
+import { createDOMEnvironment } from "./dom-helper.js";
 import { WorldMorph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
 import { EventDispatcher } from "../events.js";
+
+var domEnv;
 
 function fakeEvent(targetMorph, type, pos = pt(0,0)) {
   // dom event simulator
   return {
     type: type,
-    target: document.getElementById(targetMorph.id),
+    target: domEnv.document.getElementById(targetMorph.id),
     pointerId: "test-pointer-1",
     pageX: pos.x, pageY: pos.y,
     stopPropagation: () => {}, preventDefault: () => {}
@@ -22,12 +25,12 @@ function installEventLogger(morph, log) {
   });
 }
 
-describe("morphic", () => {
+describe("events", () => {
 
   var world, submorph1, submorph2, submorph3,
       eventLog, renderer, eventDispatcher;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     world = new WorldMorph({
       name: "world", extent: pt(300,300),
       submorphs: [{
@@ -41,10 +44,11 @@ describe("morphic", () => {
     submorph2 = world.submorphs[0].submorphs[0];
     submorph3 = world.submorphs[1];
 
-    renderer = new Renderer(world, document.body)
+    domEnv = await createDOMEnvironment();
+    renderer = new Renderer(world, domEnv.document.body, domEnv);
     renderer.renderWorld();
 
-    eventDispatcher = new EventDispatcher(window, world).install();
+    eventDispatcher = new EventDispatcher(domEnv.window, world).install();
 
     eventLog = [];
     [world,submorph1,submorph2,submorph3,].forEach(ea => installEventLogger(ea, eventLog));
@@ -53,6 +57,7 @@ describe("morphic", () => {
   afterEach(() => {
     eventDispatcher && eventDispatcher.uninstall();
     renderer && renderer.clear();
+    domEnv.destroy();
   });
 
   it("mousedown on submorph", () => {
