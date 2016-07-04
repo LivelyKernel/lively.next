@@ -1,12 +1,12 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { createDOMEnvironment } from "./dom-helper.js";
 import { morph, Renderer } from "../index.js";
-import mocha from "mocha-es6";
+import { expect, chai} from "mocha-es6";
 import sinon from 'sinon'
 import spies from 'sinon-chai'
 import { pt, Color } from "lively.graphics";
 
-const { expect } = mocha.use(spies);
+chai.use(spies);
 
 describe("morphic", () => {
 

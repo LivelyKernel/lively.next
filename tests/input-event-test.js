@@ -1,5 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach*/
-import mocha from "mocha-es6";
+import { expect, chai } from "mocha-es6";
 import { createDOMEnvironment } from "./dom-helper.js";
 import { WorldMorph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
@@ -7,7 +7,7 @@ import sinon from "sinon";
 import spies from "sinon-chai";
 import { EventDispatcher } from "../events.js";
 
-const { expect } = mocha.use(spies);
+chai.use(spies);
 
 var domEnv;
 
