@@ -336,9 +336,9 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get dragTriggerDistance() { return 5; }
-  onMouseDown(evt) { console.log("down on " + this); }
-  onMouseUp(evt) { console.log("up on " + this); }
-  onMouseMove(evt) { console.log("move on " + this); }
+  onMouseDown(evt) {}
+  onMouseUp(evt) {}
+  onMouseMove(evt) {}
 
   onDragStart(evt) {
     evt.state.lastDragPosition = evt.position;

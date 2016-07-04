@@ -177,8 +177,11 @@ export class EventDispatcher {
 
     if (type === "pointerdown") {
       // so that we receive pointerups even if the cursor leaves the browser
-      if (typeof domEvt.target.setPointerCapture === "function")
-        domEvt.target.setPointerCapture(domEvt.pointerId);
+      if (typeof domEvt.target.setPointerCapture === "function") {
+        try {
+          domEvt.target.setPointerCapture(domEvt.pointerId);
+        } catch (e) {}
+      }
 
       // We remember the morph that we clicked on until we get an up event.
       // This allows us to act on this info later
