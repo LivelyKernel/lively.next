@@ -69,6 +69,7 @@ export class Renderer {
 
     const shapedStyle = Object.assign({
         position: "absolute",
+        visibility: morph.visible ? "visible" : "hidden",
         left: morph.position.x + 'px',
         top: morph.position.y + 'px',
         width: morph.extent.x + 'px',

@@ -15,6 +15,7 @@ export function morph(props = {}) {
 
 
 const defaultProperties = {
+  visible: true,
   name: "a morph",
   position:  pt(0,0),
   rotation:  0,
