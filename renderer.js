@@ -1,6 +1,10 @@
+import { promise } from "lively.lang";
 import vdom from "virtual-dom";
+import { addOrChangeCSSDeclaration } from "./dom-helper.js";
 
 var {h, diff, patch, create} = vdom;
+
+const defaultCSS = '.morph { box-sizing: border-box; }';
 
 export class Renderer {
 
@@ -33,6 +37,11 @@ export class Renderer {
     this.renderMap = new WeakMap();
   }
 
+  ensureDefaultCSS() {
+    return promise.waitFor(3000, () => this.domNode.ownerDocument)
+      .then(doc => addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc))
+  }
+
   startRenderWorldLoop() {
     this.renderWorld();
     this.renderWorldLoopProcess = this.domEnvironment.window.requestAnimationFrame(() =>
@@ -54,8 +63,10 @@ export class Renderer {
         newTree = this.renderMorph(world),
         patches = diff(tree, newTree);
 
-    if (!domNode.parentNode)
+    if (!domNode.parentNode) {
       this.rootNode.appendChild(domNode);
+      this.ensureDefaultCSS();
+    }
 
     patch(domNode, patches);
   }
@@ -80,9 +91,11 @@ export class Renderer {
     }, morph.shape().style);
 
     const attributes = Object.assign(
-                  morph.shape(),
-                  {id: morph.id,
-                   style: shapedStyle});
+      morph.shape(), {
+        id: morph.id,
+        className: "morph",
+        style: shapedStyle
+     });
 
     var tree = h(morph._nodeType,
                 attributes,
