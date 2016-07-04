@@ -154,6 +154,14 @@ export class Morph {
     var {x:w, y:h} = this.extent;
     return rect(0,0,w,h);
   }
+  
+  positionInWorld() {
+    if(this.isWorld){
+      return this.position;
+    } else {
+      return this.position.addPt(this.owner.positionInWorld()); 
+    }
+  }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
   moveBy(delta) { this.position = this.position.addPt(delta); }
@@ -353,6 +361,16 @@ export class Morph {
   onDragEnd(evt) {
     delete evt.state.lastDragPosition;
   }
+  
+  onGrab(evt) {
+    const hand = this.world().withAllSubmorphsDetect((morph) => morph.isHand);
+    hand.grab(this);
+  }
+  
+  onDrop(evt) {
+    const hand = this.world().get("hand");
+    hand.dropMorph();
+  }
 
 }
 
@@ -392,6 +410,7 @@ export class HandMorph extends Morph {
     this.fill = Color.orange;
     this.extent = pt(4,4);
     this.reactsToPointer = false;
+    this._grabbedMorph = null;
   }
 
   get isHand() { return true }
@@ -401,6 +420,32 @@ export class HandMorph extends Morph {
 
   update(evt) {
     this.position = evt.position;
+  }
+  
+  getMorphBelow() {
+    return this.world().withAllSubmorphsDetect(
+      (morph) => {
+        !morph.isHand && !morph.ownerChain().contains(this)
+        morph.bounds.containsRect(this.bounds)
+      }
+    );
+  }
+  
+  grab(morph) {
+    if(morph.grabbable && !this._grabbedMorph){
+      const relativePos = morph.positionInWorld().dist(this.positionInWorld());
+      this._grabbedMorph = morph.remove();
+      this.addMorph(morph);
+      morph.position = relativePos;
+    }
+  }
+  
+  dropMorph() {
+    const target = this.getMorphBelow();
+    const relativePos = this._grabbedMorph.positionInWorld().dist(this.positionInWorld());
+    target.addMorph(this.remove(this._grabbedMorph))
+    this._grabbedMorph.position = relativePos;
+    this._grabbedMorph = null;
   }
 
 }

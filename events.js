@@ -11,7 +11,9 @@ const typeToMethodMap = {
   'pointermove': "onMouseMove",
   'drag': "onDrag",
   'dragstart': "onDragStart",
-  'dragend': "onDragEnd"
+  'dragend': "onDragEnd",
+  'grab' : "onGrab",
+  'drop' : "onDrop"
 }
 
 const pointerEvents = [
@@ -192,7 +194,11 @@ export class EventDispatcher {
 
       // drag release
       if (state.draggedMorph) {
-        events.push(new Event("dragend", domEvt, [targetMorph], this.world, hand, state));
+        if(targetMorph.grabbable) {
+            events.push(new Event("drop", domEvt, [targetMorph], this.world, hand, state));
+          } else {
+            events.push(new Event("dragend", domEvt, [targetMorph], this.world, hand, state));  
+          }
         defaultEvent.targetMorphs = [this.world];
         state.draggedMorph = null;
       }
@@ -213,7 +219,11 @@ export class EventDispatcher {
         var dist = state.clickedOnPosition.dist(defaultEvent.position);
         if (dist > targetMorph.dragTriggerDistance) {
           state.draggedMorph = targetMorph;
-          events.push(new Event("dragstart", domEvt, [targetMorph], this.world, hand, state));
+          if(targetMorph.grabbable) {
+            events.push(new Event("grab", domEvt, [targetMorph], this.world, hand, state));
+          } else {
+            events.push(new Event("dragstart", domEvt, [targetMorph], this.world, hand, state));
+          }
           defaultEvent.targetMorphs = [this.world];
         }
       }
