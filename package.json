@@ -1,6 +1,6 @@
 {
   "name": "lively.modules",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
@@ -42,6 +42,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "doc-comments": "^0.1.4",
     "mocha-es6": "^0.3.1",
+    "rollup": "^0.33.0",
     "rollup-plugin-babel": "^2.5.1"
   }
 }
