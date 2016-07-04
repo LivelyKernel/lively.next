@@ -1,9 +1,12 @@
 /*global declare, it, describe, beforeEach, afterEach*/
-import { expect, chai } from "mocha-es6";
 import { createDOMEnvironment } from "./dom-helper.js";
 import { morph, Renderer } from "../index.js";
+import mocha from "mocha-es6";
+import sinon from 'sinon'
+import spies from 'sinon-chai'
 import { pt, Color } from "lively.graphics";
 
+const { expect } = mocha.use(spies);
 
 describe("morphic", () => {
 
@@ -107,8 +110,9 @@ describe("morphic", () => {
     });
 
     it("get() uses toString", () => {
-      submorph3.toString = () => "oink";
+      const ts = sinon.stub(submorph3, 'toString', () => "oink");
       expect(world.get("oink")).equals(submorph3);
+      expect(ts).to.have.been.called;
     });
 
     it("get() works with RegExp", () => {

@@ -7,6 +7,8 @@
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {
+    "sinon-chai": "2.8.0",
+    "sinon": "1.17.4",
     "jsdom": "^9.4.0",
     "mocha-es6": "^0.3.7"
   },
