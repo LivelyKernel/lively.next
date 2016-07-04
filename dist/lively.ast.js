@@ -18526,18 +18526,22 @@ module.exports = function(acorn) {
     };
   }
 
+  function prop(key, value) {
+    return {
+      type: "Property",
+      key: key,
+      computed: key.type !== "Identifier",
+      shorthand: false,
+      value: value
+    };
+  }
+
   function objectLiteral(keysAndValues) {
     var props = [];
     for (var i = 0; i < keysAndValues.length; i += 2) {
       var key = keysAndValues[i];
       if (typeof key === "string") key = id(key);
-      props.push({
-        type: "Property",
-        key: key,
-        computed: key.type !== "Identifier",
-        shorthand: false,
-        value: keysAndValues[i + 1]
-      });
+      props.push(prop(key, keysAndValues[i + 1]));
     }
     return {
       properties: props,
@@ -18550,6 +18554,7 @@ var nodes = Object.freeze({
     id: id,
     literal: literal,
     objectLiteral: objectLiteral,
+    prop: prop,
     exprStmt: exprStmt,
     returnStmt: returnStmt,
     empty: empty,
@@ -18631,7 +18636,7 @@ var nodes = Object.freeze({
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "$super"];
 
   function scopes(parsed) {
     var vis = new ScopeVisitor(),
@@ -18760,8 +18765,8 @@ var nodes = Object.freeze({
         var decl = _resolveReference2[0];
         var id = _resolveReference2[1];
 
-        if (decl) ref.decl = lively_lang.obj.deepCopy(decl);
-        if (id) ref.declId = lively_lang.obj.deepCopy(id);
+        if (decl) ref.decl = decl;
+        if (id) ref.declId = id;
       });
       scope.subScopes.forEach(function (s) {
         return rec(s, path);
@@ -19815,7 +19820,11 @@ var nodes = Object.freeze({
       return shouldRefBeCaptured(ref, topLevel, options);
     });
 
-    return replace$1(parsed, function (node, path) {
+    var replaced = replace$1(parsed, function (node, path) {
+      return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
+    });
+
+    return replace$1(replaced, function (node, path) {
       return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
     });
   }
@@ -19985,14 +19994,14 @@ var nodes = Object.freeze({
       if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
         /*...*/
       } else if (stmt.declaration.declarations) {
-        body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-          return assignExpr(options.captureObj, decl.id, decl.id, false);
-        })));
-      } else if (stmt.declaration.type === "FunctionDeclaration") {
-        /*handled by function rewriter as last step*/
-      } else if (stmt.declaration.type === "ClassDeclaration") {
-        body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-      }
+          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+            return assignExpr(options.captureObj, decl.id, decl.id, false);
+          })));
+        } else if (stmt.declaration.type === "FunctionDeclaration") {
+          /*handled by function rewriter as last step*/
+        } else if (stmt.declaration.type === "ClassDeclaration") {
+            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+          }
     }
     parsed.body = body;
     return parsed;
@@ -20206,18 +20215,18 @@ var nodes = Object.freeze({
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-        return [merge(varDecl(el.argument, {
-          type: "CallExpression",
-          arguments: [{ type: "Literal", value: i }],
-          callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+          return [merge(varDecl(el.argument, {
+            type: "CallExpression",
+            arguments: [{ type: "Literal", value: i }],
+            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-        // like [{x}]
-      } else {
-        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-            helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-        declaredNames.push(helperVarId.name);
-        return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-      }
+          // like [{x}]
+        } else {
+            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
+            declaredNames.push(helperVarId.name);
+            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+          }
     });
   }
 
@@ -20232,11 +20241,11 @@ var nodes = Object.freeze({
 
         // like {x: {z}} or {x: [a]}
       } else {
-        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-            helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-        declaredNames.push(helperVarId.name);
-        return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-      }
+          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
+          declaredNames.push(helperVarId.name);
+          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
+        }
     });
   }
 
@@ -20584,7 +20593,7 @@ var capturing = Object.freeze({
 
     var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
         defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
-      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || extendDef(n) || someObjectExpressionCall(n);
+      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
     });
 
     if (options.hideOneLiners && parsed.source) {
@@ -20629,6 +20638,30 @@ var capturing = Object.freeze({
         ea.parent = def;
         return ea;
       });
+    });
+    return [def].concat(props);
+  }
+
+  function es6ClassDef(node) {
+    if (node.type !== "ClassDeclaration") return null;
+    var def = {
+      type: "class",
+      name: node.id.name,
+      node: node
+    };
+    // FIXME need to differentiate between class / instance methods, getters, setters!
+    var props = node.body.body.map(function (propNode) {
+      if (propNode.type === "MethodDefinition") {
+        return {
+          type: "class-method",
+          parent: def,
+          name: propNode.key.name,
+          node: propNode
+        };
+      }
+      return null;
+    }).filter(function (ea) {
+      return !!ea;
     });
     return [def].concat(props);
   }
