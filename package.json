@@ -15,6 +15,8 @@
   "systemjs": {
     "main": "index.js",
     "map": {
+      "sinon": "./node_modules/sinon/lib/sinon.js",
+      "sinon-chai": "./node_modules/sinon-chai/lib/sinon-chai.js",
       "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js"
     },
