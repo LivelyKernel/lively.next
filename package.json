@@ -7,7 +7,6 @@
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {
-    "js-dom": "0.0.1",
     "jsdom": "^9.4.0",
     "mocha-es6": "^0.3.7"
   },
