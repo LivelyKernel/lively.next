@@ -1,6 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
-import { createDOMEnvironment } from "./dom-helper.js";
+import { createDOMEnvironment } from "../dom-helper.js";
 import { WorldMorph, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
 import sinon from "sinon";

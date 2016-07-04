@@ -1,5 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach*/
-import { createDOMEnvironment } from "./dom-helper.js";
+import { createDOMEnvironment } from "../dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { expect, chai} from "mocha-es6";
 import sinon from 'sinon'
