@@ -19203,33 +19203,33 @@ var GLOBAL = typeof window !== "undefined" ? window :
     return this.assert(expected === actual, 'expected ' + actual + ' to equal' + expected, 'expected ' + actual + ' to not equal' + expected, expected, actual, true /*show diff*/);
   });
 
-  function arrayEquals(array, otherArray) {
-    var len = array.length;
-    if (!otherArray || len !== otherArray.length) return false;
+  function lively_equals(_super) {
+    return function (other) {
+      if (this.__flags.deep) return _super.apply(this, arguments);else if (Array.isArray(this._obj) && arrayEquals(this._obj, other)) {/*do nothin'*/} else if (this._obj && typeof this._obj.equals === "function" && this._obj.equals(other)) {/*do nothin'*/} else _super.apply(this, arguments);
+    };
 
-    for (var i = 0; i < len; i++) {
-      if (Array.isArray(array[i])) {
-        if (!arrayEquals(array[i], otherArray[i])) return false;
-        continue;
+    function arrayEquals(array, otherArray) {
+      var len = array.length;
+      if (!otherArray || len !== otherArray.length) return false;
+
+      for (var i = 0; i < len; i++) {
+        if (Array.isArray(array[i])) {
+          if (!arrayEquals(array[i], otherArray[i])) return false;
+          continue;
+        }
+        if (array[i] && otherArray[i] && typeof array[i].equals === "function" && typeof otherArray[i].equals === "function") {
+          if (!array[i].equals(otherArray[i])) return false;
+          continue;
+        }
+        if (array[i] != otherArray[i]) return false;
       }
-      if (array[i] && otherArray[i] && typeof array[i].equals === "function" && typeof otherArray[i].equals === "function") {
-        if (!array[i].equals(otherArray[i])) return false;
-        continue;
-      }
-      if (array[i] != otherArray[i]) return false;
+      return true;
     }
-    return true;
   }
 
-  chai__default.Assertion.overwriteMethod('equal', function (_super) {
-    return function equalsKnowingArrays(other) {
-      if (!this.__flags.deep && Array.isArray(this._obj) && arrayEquals(this._obj, other)) {
-        /*do nothin'*/
-      } else {
-          _super.apply(this, arguments);
-        }
-    };
-  });
+  chai__default.Assertion.overwriteMethod('equal', lively_equals);
+  chai__default.Assertion.overwriteMethod('eq', lively_equals);
+  chai__default.Assertion.overwriteMethod('equals', lively_equals);
 
   function ConsoleReporter(runner) {
     var passes = 0;

@@ -19,38 +19,38 @@ chai.Assertion.addChainableMethod('stringEquals', function(obj) {
     expected, actual, true/*show diff*/);
 });
 
-function arrayEquals(array, otherArray) {
-  var len = array.length;
-  if (!otherArray || len !== otherArray.length) return false;
-
-  for (var i = 0; i < len; i++) {
-    if (Array.isArray(array[i])) {
-      if (!arrayEquals(array[i], otherArray[i])) return false;
-      continue;
-    }
-    if (array[i] && otherArray[i]
-    && typeof array[i].equals === "function"
-    && typeof otherArray[i].equals === "function") {
-      if (!array[i].equals(otherArray[i])) return false;
-      continue;
-    }
-    if (array[i] != otherArray[i]) return false;
+function lively_equals(_super) {
+  return function(other) {
+    if (this.__flags.deep) return _super.apply(this, arguments);
+    else if (Array.isArray(this._obj) && arrayEquals(this._obj, other)) { /*do nothin'*/ }
+    else if (this._obj && typeof this._obj.equals === "function" && this._obj.equals(other)) { /*do nothin'*/ }
+    else _super.apply(this, arguments)
   }
-  return true;
+
+  function arrayEquals(array, otherArray) {
+    var len = array.length;
+    if (!otherArray || len !== otherArray.length) return false;
+  
+    for (var i = 0; i < len; i++) {
+      if (Array.isArray(array[i])) {
+        if (!arrayEquals(array[i], otherArray[i])) return false;
+        continue;
+      }
+      if (array[i] && otherArray[i]
+      && typeof array[i].equals === "function"
+      && typeof otherArray[i].equals === "function") {
+        if (!array[i].equals(otherArray[i])) return false;
+        continue;
+      }
+      if (array[i] != otherArray[i]) return false;
+    }
+    return true;
+  }
 }
 
-chai.Assertion.overwriteMethod('equal', function (_super) {
-  return function equalsKnowingArrays(other) {
-    if (!this.__flags.deep
-      && Array.isArray(this._obj)
-      && arrayEquals(this._obj, other)) {
-        /*do nothin'*/
-    } else {
-      _super.apply(this, arguments);
-    }
-  };
-});
-
+chai.Assertion.overwriteMethod('equal', lively_equals);
+chai.Assertion.overwriteMethod('eq', lively_equals);
+chai.Assertion.overwriteMethod('equals', lively_equals);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // default reporter, logs to console
