@@ -1,5 +1,4 @@
-# lively.morphic
-
+# lively.morphic [![Build Status](https://travis-ci.org/LivelyKernel/lively.morphic.svg?branch=master)](https://travis-ci.org/LivelyKernel/lively.morphic)
 ## Examples
 
 Render two boxes:
