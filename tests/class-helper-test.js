@@ -108,4 +108,13 @@ describe("create or extend classes", function() {
     expect(new Y().m()).equals(24);
   });
 
+  it("method can be overridden", () => {
+    var Foo = createOrExtend("Foo", null, [
+          {key: "m", value: function m() { return 23 }}
+        ], undefined, {}),
+        foo = new Foo();
+    foo.m = () => 24;
+    expect(foo.m()).equals(24);
+  });
+
 });

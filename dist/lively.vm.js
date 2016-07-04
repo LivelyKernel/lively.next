@@ -21067,9 +21067,15 @@ var categorizer = Object.freeze({
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
   var constructorArgMatcher = /\([^\\)]*\)/;
 
-  var defaultPropertyDescriptorForClass = {
+  var defaultPropertyDescriptorForGetterSetter = {
     enumerable: false,
     configurable: true
+  };
+
+  var defaultPropertyDescriptorForValue = {
+    enumerable: false,
+    configurable: true,
+    writable: true
   };
 
   function createClass$1(name) {
@@ -21114,11 +21120,13 @@ var categorizer = Object.freeze({
 
     // 3. define methods
     staticMethods && staticMethods.forEach(function (ea) {
-      return Object.defineProperty(klass, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
+      var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
+      Object.defineProperty(klass, ea.key, Object.assign(ea, descr));
     });
 
     instanceMethods && instanceMethods.forEach(function (ea) {
-      Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
+      var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
+      Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, descr));
     });
 
     // 4. define initializer method, in our class system the constructor is always
@@ -22168,14 +22176,14 @@ var categorizer = Object.freeze({
       key: "sendRequest_node",
       value: function () {
         var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
-          var urlParse, request, opts;
+          var urlParse, http, opts;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
               switch (_context9.prev = _context9.next) {
                 case 0:
-                  urlParse = System._nodeRequire("url").parse, request = System._nodeRequire("http").request, opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
+                  urlParse = System._nodeRequire("url").parse, http = System._nodeRequire("http"), opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
                   return _context9.abrupt("return", new Promise(function (resolve, reject) {
-                    var request = request(opts, function (res) {
+                    var request = http.request(opts, function (res) {
                       res.setEncoding('utf8');
                       var data = "";
                       res.on('data', function (chunk) {
