@@ -335,18 +335,32 @@ export class Morph {
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  onMouseDown(evt) { console.log("clicked on " + this) }
-  onMouseUp(evt) {}
-  onMouseMove(evt) {}
-  onDragStart(evt) {}
-  onDrag(evt) {}
-  onDragEnd(evt) {}
+  get dragTriggerDistance() { return 5; }
+  onMouseDown(evt) { console.log("down on " + this); }
+  onMouseUp(evt) { console.log("up on " + this); }
+  onMouseMove(evt) { console.log("move on " + this); }
+
+  onDragStart(evt) {
+    evt.state.lastDragPosition = evt.position;
+  }
+
+  onDrag(evt) {
+    this.moveBy(evt.position.subPt(evt.state.lastDragPosition));
+    evt.state.lastDragPosition = evt.position;
+  }
+
+  onDragEnd(evt) {
+    delete evt.state.lastDragPosition;
+  }
 
 }
 
 export class WorldMorph extends Morph {
 
   get isWorld() { return true }
+
+  get draggable() { return false; }
+  get grabbable() { return false; }
 
   handForPointerId(pointerId) {
     return this.submorphs.find(m => m instanceof HandMorph && m.pointerId === pointerId)
@@ -364,6 +378,9 @@ export class WorldMorph extends Morph {
 
   onMouseUp(evt) {
   }
+
+  logError(err) {
+  }
 }
 
 export class HandMorph extends Morph {
@@ -377,6 +394,9 @@ export class HandMorph extends Morph {
   }
 
   get isHand() { return true }
+
+  get draggable() { return false; }
+  get grabbable() { return false; }
 
   update(evt) {
     this.position = evt.position;

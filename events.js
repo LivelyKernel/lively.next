@@ -1,15 +1,61 @@
+import { arr } from "lively.lang";
 import { pt } from "lively.graphics";
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// event constants and type detection
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const typeToMethodMap = {
   'pointerdown': "onMouseDown",
   'pointerup': "onMouseUp",
-  'pointermove': "onMouseMove"
+  'pointermove': "onMouseMove",
+  'drag': "onDrag",
+  'dragstart': "onDragStart",
+  'dragend': "onDragEnd"
 }
+
+const pointerEvents = [
+  "pointerover",
+  "pointerenter",
+  "pointerdown",
+  "pointermove",
+  "pointerup",
+  "pointercancel",
+  "pointerout",
+  "pointerleave",
+  "gotpointercapture",
+  "lostpointercapture",
+];
+
+const mouseEvents = [
+  "mouseover",
+  "mouseenter",
+  "mousedown",
+  "mousemove",
+  "mouseup",
+  "mouseout",
+  "mouseleave",
+  'click',
+  'dblclick',
+  'selectstart',
+  'contextmenu',
+  'mousewheel'
+];
+
+const keyboardEvents = [
+  'keydown',
+  'keyup',
+  'keypress'
+];
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Event object
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // A place where info about previous events can be stored, e.g. for tracking
 // what was clicked on
-
-const eventStatesPerWorld = new WeakMap();
+const statesPerWorld = new WeakMap();
 
 function cumulativeOffset(element) {
   var top = 0, left = 0;
@@ -23,13 +69,22 @@ function cumulativeOffset(element) {
 
 class Event {
 
-  constructor(domEvt, world, eventState) {
+  constructor(type, domEvt, targetMorphs, world, hand, state) {
+    this.type = type;
     this.domEvt = domEvt;
+    this.targetMorphs = targetMorphs;
     this.world = world;
-    this.eventState = eventState;
-    this.type = domEvt.type;
+    this.hand = hand;
+    this.state = state;
     this.stopped = false;
-    this.hand = this.ensureHand();
+  }
+
+  isMouseEvent() {
+    return arr.include(pointerEvents, this.type) || arr.include(mouseEvents, this.type)
+  }
+
+  isKeyboardEvent() {
+    return !this.isMouseEvent() && arr.include(keyboardEvents, this.type);
   }
 
   stop() {
@@ -38,13 +93,7 @@ class Event {
     this.domEvt.preventDefault();
   }
 
-  ensureHand() {
-    return this.domEvt.pointerId ?
-      this.world.handForPointerId(this.domEvt.pointerId) :
-      null;
-  }
-
-  get targetMorph() {}
+  get targetMorph() { return this.targetMorphs[0]; }
 
   // evt.getTargetMorph = function() {
   //     var node = evt.target;
@@ -57,7 +106,7 @@ class Event {
   // }
 
   get position() {
-    var worldNode = document.getElementById(this.world.id),
+    var worldNode = this.domEvt.target.ownerDocument.getElementById(this.world.id),
         {offsetLeft, offsetTop} = cumulativeOffset(worldNode),
         {pageX, pageY} = this.domEvt,
         pos = pt((pageX || 0) - offsetLeft, (pageY || 0) - offsetTop);
@@ -66,109 +115,23 @@ class Event {
     return pos;
   }
 
+  get startPosition() {
+    // FIXME, might be for more than just clicks...
+    return this.state.clickedOnPosition;
+  }
+
   positionIn(aMorph) {
     // returns the event position localized to aMorph
     return aMorph.localize(this.position);
   }
 
-        // evt.hand = world ?
-        //         evtHand || world.hands.find(function(hand) { return !hand.pointerId }) || world.firstHand() :
-        //         undefined;
-        // evt.getPositionIn = function(aMorph) {
-        //     // returns the event position localized to aMorph
-        //     return aMorph.localize(this.getPosition());
-        // };
-        // evt.mousePoint = evt.mousePoint
-        //               || pt(evt.pageX || 0, evt.pageY || 0);
-        // return evt;
-
-
-  // evt.isLeftMouseButtonDown = function() { return Event.MOUSE_LEFT_DETECTOR(evt) };
-  // evt.isMiddleMouseButtonDown = function() { return Event.MOUSE_MIDDLE_DETECTOR(evt) };
-  // evt.isRightMouseButtonDown = function() { return Event.MOUSE_RIGHT_DETECTOR(evt) };
-
-  // evt.isCommandKey = function() {
-  //     // this is LK convention, not the content of the event
-  //     var isCmd = false;
-  //     if (Config.useAltAsCommand)
-  //         isCmd = isCmd || evt.altKey;
-  //     if (UserAgent.isWindows || UserAgent.isLinux )
-  //         isCmd = isCmd || evt.ctrlKey;
-  //     if (UserAgent.isOpera) // Opera recognizes cmd as ctrl!!?
-  //         isCmd = isCmd || evt.ctrlKey;
-  //     if (UserAgent.isMobile)
-  //         isCmd = isCmd || lively.morphic.World.current().isCommandButtonPressed();
-  //     return isCmd || evt.metaKey || evt.keyIdentifier === 'Meta';
-  // };
-
-        // evt.isShiftDown = function() { return !!evt.shiftKey };
-        // evt.isCtrlDown = function() { return !!evt.ctrlKey };
-        // evt.isAltDown = function() { return !!evt.altKey };
-        // evt.stop = evt.stop || function() {
-        //     evt.isStopped = true;
-        //     evt.stopPropagation();
-        //     evt.preventDefault();
-        // };
-
-        // evt.getKeyChar = function() {
-        //     if (evt.type == "keypress") { // rk what's the reason for this test?
-        //         var id = evt.charCode || evt.which;
-        //         if (id > 63000) return ""; // Old Safari sends weird key char codes
-        //         return id ? String.fromCharCode(id) : "";
-        //     } else  {
-        //         var code = evt.which;
-        //         return code && String.fromCharCode(code);
-        //     }
-        // }
-
-        // evt.getKeyCode = function() { return evt.keyCode }
-
-        // evt.getKeyString = function(options) {
-        //     return Event.pressedKeyString(evt, options);
-        // }
-
-        // evt.isMouseEvent = evt.type === Global.Event.INPUT_TYPE_DOWN || evt.type === Global.Event.INPUT_TYPE_UP || evt.type === Global.Event.INPUT_TYPE_MOVE || evt.type === Global.Event.INPUT_TYPE_OVER || evt.type === 'click' || evt.type === 'dblclick' || evt.type === 'selectstart' || evt.type === 'contextmenu' || evt.type === 'mousewheel';
-
-        // evt.isKeyboardEvent = !evt.isMouseEvent && (evt.type === 'keydown' || evt.type === 'keyup' || evt.type === 'keypress');
-
-        // evt.isArrowKey = function() {
-        //     if (evt.isKeyboardEvent) {
-        //         var c = evt.getKeyCode();
-        //         return (c === Event.KEY_LEFT)
-        //             || (c === Event.KEY_RIGHT)
-        //             || (c === Event.KEY_UP)
-        //             || (c === Event.KEY_DOWN);
-        //     }
-        //     return false
-        // }
-
-        // evt.isInBoundsOf = function(morph) {
-        //     return morph.innerBounds().containsPoint(evt.getPositionIn(morph));
-        // }
-
-        // var world = lively.morphic.World.current();
-        // evt.world = world;
-
-        // var evtHand = world.hands.find(function(hand) { return hand.pointerId === evt.pointerId});
-        // evt.hand = world ?
-        //         evtHand || world.hands.find(function(hand) { return !hand.pointerId }) || world.firstHand() :
-        //         undefined;
-        // evt.getPosition = function() {
-        //     if (!evt.scaledPos) {
-        //         evt.scaledPos = evt.mousePoint.scaleBy(1 / evt.world.getScale());
-        //     }
-        //     return evt.scaledPos;
-        // };
-        // evt.getPositionIn = function(aMorph) {
-        //     // returns the event position localized to aMorph
-        //     return aMorph.localize(this.getPosition());
-        // };
-        // evt.mousePoint = evt.mousePoint
-        //               || pt(evt.pageX || 0, evt.pageY || 0);
-        // return evt;
-    
 }
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// dispatcher: mapping DOM events to morph, invoking morph
+// event handling methods
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export class EventDispatcher {
 
@@ -198,25 +161,92 @@ export class EventDispatcher {
     return this;
   }
 
+  createMorphicEventsFromDOMEvent(domEvt, targetMorph) {
+    // In morphic we don't map events 1:1 from the DOM to the events morph get
+    // triggered with. E.g. we have our own drag behvior. This is the place where
+    // dom events get mapped to those morph events, zero to many.
+
+    var state = statesPerWorld.get(this.world);
+    if (!state) statesPerWorld.set(this.world, state = {});
+
+    var type = domEvt.type,
+        eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
+        hand = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
+        defaultEvent = new Event(type, domEvt, eventTargets, this.world, hand, state),
+        events = [defaultEvent];
+
+    if (type === "pointerdown") {
+      // so that we receive pointerups even if the cursor leaves the browser
+      if (typeof domEvt.target.setPointerCapture === "function")
+        domEvt.target.setPointerCapture(domEvt.pointerId);
+
+      // We remember the morph that we clicked on until we get an up event.
+      // This allows us to act on this info later
+      state.clickedOnMorph = targetMorph;
+      state.clickedOnPosition = defaultEvent.position;
+    } else if (type === "pointerup") {
+      state.clickedOnMorph = null;
+
+      // drag release
+      if (state.draggedMorph) {
+        events.push(new Event("dragend", domEvt, [targetMorph], this.world, hand, state));
+        defaultEvent.targetMorphs = [this.world];
+        state.draggedMorph = null;
+      }
+
+    } else if (type === "pointermove") {
+      // Are we dragging a morph? If so the move gets only send to the world
+      // and the drag only send to the dragged morph
+      if (state.draggedMorph) {
+        events.push(new Event("drag", domEvt, [targetMorph], this.world, hand, state));
+          defaultEvent.targetMorphs = [this.world];
+
+      // Start dragging when we are holding the hand pressed and and move it
+      // beyond targetMorph.dragTriggerDistance
+      } else if (state.clickedOnMorph === targetMorph
+              && targetMorph.draggable
+              && !state.draggedMorph
+              && state.clickedOnPosition) {
+        var dist = state.clickedOnPosition.dist(defaultEvent.position);
+        if (dist > targetMorph.dragTriggerDistance) {
+          state.draggedMorph = targetMorph;
+          events.push(new Event("dragstart", domEvt, [targetMorph], this.world, hand, state));
+          defaultEvent.targetMorphs = [this.world];
+        }
+      }
+    }
+
+    return events;
+  }
+
   dispatchEvent(domEvt) {
     var { type, target } = domEvt,
         targetId = target.id,
-        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId),
-        method = typeToMethodMap[type];
+        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
 
     if (!targetMorph) return;
-  
-    var evtState = eventStatesPerWorld.get(this.world) || eventStatesPerWorld.set(this.world, evtState = {}),
-        evt = new Event(domEvt, this.world, evtState);
-  
-    if (method) {
-      var eventTargets = [targetMorph].concat(targetMorph.ownerChain()).reverse();
-      for (var i = 0; i < eventTargets.length; i++) {
-        if (evt.stopped) break;
-        eventTargets[i][method](evt);
+
+    var events = this.createMorphicEventsFromDOMEvent(domEvt, targetMorph);
+
+    for (var i = 0; i < events.length; i++) {
+      var evt = events[i],
+          method = typeToMethodMap[evt.type],
+          err;
+      if (method) {
+        for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
+          try {
+            evt.targetMorphs[j][method](evt);
+          } catch (e) {
+            err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
+            err.originalError = e;
+            $world.logError(err);
+          }
+          if (err || evt.stopped) break;
+        }
+        if (err) throw err;
+      } else {
+        throw new Error(`dispatchEvent: ${type} not yet supported!`)
       }
-    } else {
-      throw new Error(`dispatchEvent: ${type} nt yet supported!`)
     }
   }
 

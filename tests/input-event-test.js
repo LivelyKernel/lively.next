@@ -19,7 +19,7 @@ function fakeEvent(targetMorph, type, pos = pt(0,0)) {
 }
 
 function installEventLogger(morph, log) {
-  var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDrag"]
+  var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDragStart", "onDrag", "onDragEnd"]
   loggedEvents.forEach(name => {
     morph[name] = function(evt) { log.push(name + "-" + morph.name)};
   });
@@ -77,8 +77,17 @@ describe("events", () => {
   });
 
   it("drag morph", () => {
-    // eventDispatcher.dispatchEvent(fakeEvent("pointerdown", submorph2));
-    // expect(log).deep.equals(["world", "submorph1", "submorph2"]);
+    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerdown", pt(20, 25)));
+    expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
+    eventLog.length = 0;
+    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(30, 33)));
+    expect(eventLog).deep.equals(["onMouseMove-world", "onDragStart-submorph2"]);
+    eventLog.length = 0;
+    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
+    expect(eventLog).deep.equals(["onMouseMove-world", "onDrag-submorph2"]);
+    eventLog.length = 0;
+    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
+    expect(eventLog).deep.equals(["onMouseUp-world", "onDragEnd-submorph2"]);
   });
 
 });
