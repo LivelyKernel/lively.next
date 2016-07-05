@@ -26,6 +26,7 @@ const defaultProperties = {
   reactsToPointer: true,
   draggable: true,
   grabbable: true,
+  dropShadow: false,
   styleClasses: ["morph"],
   submorphs:  []
 }
@@ -471,7 +472,7 @@ export class Morph {
   }
 
   onGrab(evt) {
-    evt.hand.grab(this);
+    evt.hand.grab(this, evt);
   }
 
   onDrop(evt) {
@@ -548,28 +549,43 @@ export class HandMorph extends Morph {
   update(evt) {
     this.position = evt.position;
   }
+  
+  morphBeneath(pos) {
+      var someOwner = this.world() || this.owner;
+      if (!someOwner) return null;
+      var morphs = someOwner.morphsContainingPoint(pos),
+          myIdx = morphs.indexOf(this),
+          morphBeneath = morphs[myIdx + 1];
+      return morphBeneath
+  }
 
   getMorphBelow() {
     return this.world().withAllSubmorphsDetect(
-      (morph) => {
-        !morph.isHand && !morph.ownerChain().contains(this)
-        morph.bounds.containsRect(this.bounds)
-      }
+      (morph) => 
+        !morph.isHand 
+        && !morph.ownerChain().contains(this)
+        && morph.bounds.containsRect(this.bounds)
     );
   }
 
-  grab(morph) {
+  grab(morph, evt) {
     if (morph.grabbable) {
+      evt.state.prevProps = {
+        dropShadow: this.dropShadow,
+        reactsToPointer: this.reactsToPointer
+      }
       this.addMorph(morph);
       // So that the morph doesn't steal events
       morph.reactsToPointer = false;
+      morph.dropShadow = true;
     }
   }
 
   dropMorph(evt) {
     this.submorphs.forEach(morph => {
       evt.targetMorph.addMorph(morph)
-      morph.reactsToPointer = true; // FIXME re-initialize with what value was before grab!
+      morph.reactsToPointer = evt.state.prevProps.reactToPointer;
+      morph.dropShadow = evt.state.prevProps.dropShadow;
     });
   }
 
