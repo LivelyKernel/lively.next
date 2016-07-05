@@ -142,6 +142,9 @@ export class Morph {
 
   get visible()       { return this.getProperty("visible"); }
   set visible(value)  { this.change({prop: "visible", value}); }
+  
+  get dropShadow()      { return this.getProperty("dropShadow"); }
+  set dropShadow(value) { this.change({prop: "dropShadow", value}); }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
   set styleClasses(value)  { this.change({prop: "styleClasses", value}); }

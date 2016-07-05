@@ -101,7 +101,11 @@ export class Renderer {
         backgroundColor: morph.fill ? morph.fill.toString() : "",
         overflow: morph.clipMode,
         "pointer-events": morph.reactsToPointer ? "auto" : "none"
-    }, morph.shape().style);
+    }, 
+    morph.dropShadow &&
+      {WebkitFilter: "drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.36))",
+       WebkitTransition: "-webkit-filter 0.5s"},
+    morph.shape().style);
 
     const attributes = Object.assign(
       morph.shape(), {
