@@ -1,10 +1,10 @@
 import { pt, Color, Point } from "lively.graphics";
 import { Renderer } from "lively.morphic/renderer.js";
-import { Morph, Ellipse, WorldMorph } from "lively.morphic/morph.js";
+import { morph, Morph } from "lively.morphic/morph.js";
 import { EventDispatcher } from "lively.morphic/events.js";
 
 var {scrollWidth: w, scrollHeight: h} = document.body,
-    world = window.$world = new WorldMorph({extent: pt(w, h)});
+    world = window.$world = morph({type: "world", extent: pt(w, h)});
   
 var renderer = new Renderer(world, document.body);
 renderer.startRenderWorldLoop();
@@ -26,11 +26,19 @@ Object.assign(Morph.prototype, {
 
 var wbounds = world.bounds, morphs = [];
 for (var i = 0; i < 100; i++) {
-  var m = new Ellipse({
+  // var m = {
+  //   type: "Ellipse",
+  //   position: wbounds.insetBy(10).randomPoint(),
+  //   extent: Point.random(pt(10,10)).addXY(10,10),
+  //   fill: Color.random()
+  // };
+  var type = Math.random() < 0.1 ? "image" : "ellipse";
+  var m = {
+    type: type,
     position: wbounds.insetBy(10).randomPoint(),
-    extent: Point.random(pt(10,10)).addXY(10,10),
-    fill: Color.random()
-  });
+    extent: Point.random(pt(20,20)).addXY(50,50),
+    fill: type === "image" ? null : Color.random()
+  };
   m.velocity = Point.random(pt(10,10));
   morphs.push(world.addMorph(m))
 }
