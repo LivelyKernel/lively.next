@@ -1,1 +1,9 @@
 node_modules
+tests/files-for-eval-test
+tests/files-for-virtual-modules-test
+tests/package-tests-temp
+tests/search-test-project
+tests/test-dir-imports-exports
+tests/test-project-1-dir
+tests/test-project-2-dir
+tests/test-project-dir
