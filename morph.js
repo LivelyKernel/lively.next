@@ -374,13 +374,11 @@ export class Morph {
   }
   
   onGrab(evt) {
-    const hand = this.world().withAllSubmorphsDetect((morph) => morph.isHand);
-    hand.grab(this);
+    evt.hand.grab(this);
   }
   
   onDrop(evt) {
-    const hand = this.world().get("hand");
-    hand.dropMorph();
+    evt.hand.dropMorph(evt);
   }
 
 }
@@ -448,20 +446,23 @@ export class HandMorph extends Morph {
   }
   
   grab(morph) {
-    if(morph.grabbable && !this._grabbedMorph){
-      const relativePos = morph.positionInWorld().dist(this.positionInWorld());
-      this._grabbedMorph = morph.remove();
+    if (morph.grabbable) {
+      const relativePos = morph.positionInWorld().subPt(this.positionInWorld());
       this.addMorph(morph);
+      // So that the morph doesn't steal events
+      morph.reactsToPointer = false;
       morph.position = relativePos;
     }
   }
   
-  dropMorph() {
-    const target = this.getMorphBelow();
-    const relativePos = this._grabbedMorph.positionInWorld().dist(this.positionInWorld());
-    target.addMorph(this.remove(this._grabbedMorph))
-    this._grabbedMorph.position = relativePos;
-    this._grabbedMorph = null;
+  dropMorph(evt) {
+    this.submorphs.forEach(morph => {
+      // FIME make positioning via transforms work;
+      // var dropPos = evt.positionIn(evt.targetMorph).addPt(morph.position.nagated())
+      evt.targetMorph.addMorph(morph)
+      morph.position = pt(0,0);
+      morph.reactsToPointer = true; // FIXME re-initialize with what value was before grab!
+    });
   }
 
 }

@@ -55,10 +55,6 @@ const keyboardEvents = [
 // Event object
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// A place where info about previous events can be stored, e.g. for tracking
-// what was clicked on
-const statesPerWorld = new WeakMap();
-
 function cumulativeOffset(element) {
   var top = 0, left = 0;
   do {
@@ -142,6 +138,9 @@ export class EventDispatcher {
     this.world = world;
     this.installed = false;
     this.handlerFunctions = {};
+    // A place where info about previous events can be stored, e.g. for tracking
+    // what was clicked on
+    this.eventState = {};
   }
 
   install() {
@@ -168,10 +167,8 @@ export class EventDispatcher {
     // triggered with. E.g. we have our own drag behvior. This is the place where
     // dom events get mapped to those morph events, zero to many.
 
-    var state = statesPerWorld.get(this.world);
-    if (!state) statesPerWorld.set(this.world, state = {});
-
     var type = domEvt.type,
+        state = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
         hand = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
         defaultEvent = new Event(type, domEvt, eventTargets, this.world, hand, state),
@@ -181,7 +178,7 @@ export class EventDispatcher {
       // so that we receive pointerups even if the cursor leaves the browser
       if (typeof domEvt.target.setPointerCapture === "function") {
         try {
-          domEvt.target.setPointerCapture(domEvt.pointerId);
+          // domEvt.target.setPointerCapture(domEvt.pointerId);
         } catch (e) {}
       }
 
@@ -194,13 +191,15 @@ export class EventDispatcher {
 
       // drag release
       if (state.draggedMorph) {
-        if(targetMorph.grabbable) {
-            events.push(new Event("drop", domEvt, [targetMorph], this.world, hand, state));
-          } else {
-            events.push(new Event("dragend", domEvt, [targetMorph], this.world, hand, state));  
-          }
+        events.push(new Event("dragend", domEvt, [targetMorph], this.world, hand, state));  
         defaultEvent.targetMorphs = [this.world];
         state.draggedMorph = null;
+      
+      // grap release
+      } else if (state.grabbedMorph) {
+        events.push(new Event("drop", domEvt, [targetMorph], this.world, hand, state));
+        defaultEvent.targetMorphs = [this.world];
+        state.grabbedMorph = null;
       }
 
     } else if (type === "pointermove") {
@@ -217,11 +216,14 @@ export class EventDispatcher {
               && !state.draggedMorph
               && state.clickedOnPosition) {
         var dist = state.clickedOnPosition.dist(defaultEvent.position);
+
         if (dist > targetMorph.dragTriggerDistance) {
-          state.draggedMorph = targetMorph;
-          if(targetMorph.grabbable) {
+          // FIXME should grab really be triggered through drag?
+          if (targetMorph.grabbable) {
+            state.grabbedMorph = targetMorph;
             events.push(new Event("grab", domEvt, [targetMorph], this.world, hand, state));
           } else {
+            state.draggedMorph = targetMorph;
             events.push(new Event("dragstart", domEvt, [targetMorph], this.world, hand, state));
           }
           defaultEvent.targetMorphs = [this.world];
