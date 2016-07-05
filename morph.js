@@ -221,6 +221,8 @@ export class Morph {
   }
 
   addMorph(submorph, insertBeforeMorph) {
+    if (submorph.owner) submorph.remove();
+
     if (!submorph || typeof submorph !== "object")
       throw new Error(`${submorph} cannot be added as a submorph to ${this}`)
 
