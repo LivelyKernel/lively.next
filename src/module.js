@@ -89,9 +89,12 @@ class ModuleInterface {
   
   async scope() {
     if (this._scope) return this._scope;
-    const ast = await this.ast(),
-          scope = query.topLevelDeclsAndRefs(ast).scope;
-    return this._scope = query.resolveReferences(scope);
+    const ast = await this.ast();
+    return this._scope = query.topLevelDeclsAndRefs(ast).scope;
+  }
+  
+  async resolvedScope() {
+    return this._scope = query.resolveReferences(await this.scope());
   }
   
   metadata() {

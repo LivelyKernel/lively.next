@@ -49,5 +49,31 @@ describe("module loading", () => {
     });
     expect(m.pathInPackage()).equals("./file1.js")
   });
+  
+  it("module scope does not resolve references by default", async () => {
+    await registerPackage(System, testDir);
+    await System.import(testDir + "file1.js");
+    const scope = await loadedModules(System)[module1].scope();
+    expect(scope).containSubset({
+      refs: [{
+        name: "y"
+      }]
+    });
+    expect(scope).to.not.have.property('referencesResolved');
+    expect(scope.refs[0]).to.not.have.property('decl');
+    expect(scope.refs[0]).to.not.have.property('declId');
+  });
 
+  it("module resolved scope resolves references", async () => {
+    await registerPackage(System, testDir);
+    await System.import(testDir + "file1.js");
+    const scope = await loadedModules(System)[module1].resolvedScope();
+    expect(scope).containSubset({
+      refs: [{
+        name: "y",
+        decl: { type: "ImportDeclaration" }
+      }]
+    });
+    expect(scope).to.not.property('_referencesResolved');
+  });
 });
