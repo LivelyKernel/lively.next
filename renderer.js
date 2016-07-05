@@ -4,7 +4,8 @@ import { addOrChangeCSSDeclaration } from "./dom-helper.js";
 
 var {h, diff, patch, create} = vdom;
 
-const defaultCSS = `.morph {
+const defaultCSS = `
+.morph {
   box-sizing: border-box;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -12,7 +13,11 @@ const defaultCSS = `.morph {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}`;
+}
+.hand {
+  z-index: 1;
+}
+`;
 
 export class Renderer {
 
@@ -101,7 +106,7 @@ export class Renderer {
     const attributes = Object.assign(
       morph.shape(), {
         id: morph.id,
-        className: "morph",
+        className: morph.styleClasses.join(" "),
         draggable: false,
         style: shapedStyle
      });

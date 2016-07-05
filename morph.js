@@ -1,5 +1,5 @@
 import { Color, pt, rect } from "lively.graphics";
-import { string, obj } from "lively.lang";
+import { string, obj, arr } from "lively.lang";
 
 export function morph(props = {}) {
   var klass;
@@ -26,6 +26,7 @@ const defaultProperties = {
   reactsToPointer: true,
   draggable: true,
   grabbable: true,
+  styleClasses: ["morph"],
   submorphs:  []
 }
 
@@ -139,6 +140,14 @@ export class Morph {
 
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
   set reactsToPointer(value)  { this.change({prop: "reactsToPointer", value}); }
+
+  get visible()       { return this.getProperty("visible"); }
+  set visible(value)  { this.change({prop: "visible", value}); }
+
+  get styleClasses()       { return this.getProperty("styleClasses").slice(); }
+  set styleClasses(value)  { this.change({prop: "styleClasses", value}); }
+  addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
+  removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
   get bounds() {
     var {x,y} = this.position, {x:w,y:h} = this.extent;
@@ -376,6 +385,11 @@ export class Morph {
 
 export class WorldMorph extends Morph {
 
+  constructor(props) {
+    super(props);
+    this.addStyleClass("world");
+  }
+
   get isWorld() { return true }
 
   get draggable() { return false; }
@@ -410,7 +424,7 @@ export class HandMorph extends Morph {
     this.fill = Color.orange;
     this.extent = pt(4,4);
     this.reactsToPointer = false;
-    this._grabbedMorph = null;
+    this.addStyleClass("hand");
   }
 
   get isHand() { return true }
