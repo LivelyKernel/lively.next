@@ -1,5 +1,5 @@
-import { Color, pt, rect } from "lively.graphics";
-import { string, obj, arr } from "lively.lang";
+import { Color, pt, rect, Transform } from "lively.graphics";
+import { string, obj, arr, num } from "lively.lang";
 
 export function morph(props = {}) {
   var klass;
@@ -161,13 +161,11 @@ export class Morph {
     var {x:w, y:h} = this.extent;
     return rect(0,0,w,h);
   }
-  
-  positionInWorld() {
-    if(this.isWorld){
-      return this.position;
-    } else {
-      return this.position.addPt(this.owner.positionInWorld()); 
-    }
+
+  globalBounds() {
+    return this.owner ?
+      this.owner.getGlobalTransform().transformRectToRect(this.bounds) :
+      this.bounds;
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
@@ -279,6 +277,86 @@ export class Morph {
     return this.owner ? this.owner.world() : null;
   }
 
+  isAncestorOf(aMorph) {
+    // check if aMorph is somewhere in my submorph graph
+    return !!this.withAllSubmorphsDetect(ea => ea === aMorph);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // transforms
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  localize(point) {
+    // map world point to local coordinates
+    var world = this.world();
+    return world ? point.matrixTransform(world.transformToMorph(this)) : point;
+  }
+
+  transformToMorph(other) {
+    var tfm = this.getGlobalTransform(),
+        inv = other.getGlobalTransform().inverse();
+    tfm.preConcatenate(inv);
+    return tfm;
+  }
+
+  transformForNewOwner(newOwner) {
+    return new Transform(this.transformToMorph(newOwner));
+  }
+
+  localizePointFrom(pt, otherMorph) {
+    // map local point to owner coordinates
+    try {
+      return pt.matrixTransform(otherMorph.transformToMorph(this));
+    } catch (er) {
+      console.warn("problem " + er + " in localizePointFrom");
+      return pt;
+    }
+  }
+
+  getGlobalTransform() {
+    var globalTransform = new Transform(),
+        world = this.world();
+    for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner)
+      globalTransform.preConcatenate(morph.getTransform());
+    return globalTransform;
+  }
+
+  worldPoint(pt) {
+    return pt.matrixTransform(this.transformToMorph(this.world()));
+  }
+
+  getTransform () {
+    var scale = this.scale,
+        pos = this.position;
+    if (typeof scale === "number") scale = pt(scale,scale);
+    // FIXME reactivate
+    // if (this.isClip()) {
+    //   var scroll = this.getScroll();
+    //   pos = pos.subXY(scroll[0], scroll[1]);
+    // }
+    return new Transform(pos, this.rotation, scale);
+  }
+
+  setTransform(tfm) {
+    this.position = tfm.getTranslation();
+    this.rotation = num.toRadians(tfm.getRotation());
+    this.scale = tfm.getScalePoint().x;
+  }
+
+  fullContainsWorldPoint(p) { // p is in world coordinates
+    return this.fullContainsPoint(this.owner == null ? p : this.owner.localize(p));
+  }
+
+  fullContainsPoint(p) { // p is in owner coordinates
+    return this.bounds.containsPoint(p);
+  }
+
+  innerBoundsContainsWorldPoint(p) { // p is in world coordinates
+    return this.innerBoundsContainsPoint(this.owner == null ? p : this.localize(p));
+  }
+
+  innerBoundsContainsPoint(p) { return this.innerBounds().containsPoint(p);  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // undo / redo
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -370,11 +448,11 @@ export class Morph {
   onDragEnd(evt) {
     delete evt.state.lastDragPosition;
   }
-  
+
   onGrab(evt) {
     evt.hand.grab(this);
   }
-  
+
   onDrop(evt) {
     evt.hand.dropMorph(evt);
   }
@@ -415,11 +493,11 @@ export class WorldMorph extends Morph {
   }
 
   world() { return this }
-  
+
   onMouseMove(evt) {
     evt.hand.update(evt);
   }
-  
+
   onMouseDown(evt) {
   }
 
@@ -449,7 +527,7 @@ export class HandMorph extends Morph {
   update(evt) {
     this.position = evt.position;
   }
-  
+
   getMorphBelow() {
     return this.world().withAllSubmorphsDetect(
       (morph) => {

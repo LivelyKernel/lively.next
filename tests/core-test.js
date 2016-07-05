@@ -143,3 +143,19 @@ describe("morphic", () => {
     });
   });
 });
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+  describe("geometric transformations", () => {
+
+    it("localizes position", function() {
+        var morph1 = morph(), morph2 = morph();
+        world.addMorph(morph1);
+        morph1.addMorph(morph2);
+        morph2.position = pt(10,10);
+        expect(pt(0,0)).equals(morph2.localize(pt(10,10)));
+    });
+
+  });
+
+  // describe("contains point", () => {
