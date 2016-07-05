@@ -306,6 +306,17 @@ export class Morph {
     // check if aMorph is somewhere in my submorph graph
     return !!this.withAllSubmorphsDetect(ea => ea === aMorph);
   }
+  
+  morphsContainingPoint(point, list) {
+    // if morph1 visually before morph2 than list.indexOf(morph1) < list.indexOf(morph2)
+    if (!list) list = [];
+    if (!this.fullContainsWorldPoint(point)) return list;
+    for (var i = this.submorphs.length -1 ; i >=0; i--) {
+        this.submorphs[i].morphsContainingPoint(point, list);
+    }
+    if (this.innerBoundsContainsWorldPoint(point)) list.push(this);
+    return list;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // transforms
@@ -562,15 +573,6 @@ export class HandMorph extends Morph {
       return morphBeneath
   }
 
-  getMorphBelow() {
-    return this.world().withAllSubmorphsDetect(
-      (morph) => 
-        !morph.isHand 
-        && !morph.ownerChain().contains(this)
-        && morph.bounds.containsRect(this.bounds)
-    );
-  }
-
   grab(morph, evt) {
     if (morph.grabbable) {
       evt.state.prevProps = {
@@ -586,7 +588,7 @@ export class HandMorph extends Morph {
 
   dropMorph(evt) {
     this.submorphs.forEach(morph => {
-      evt.targetMorph.addMorph(morph)
+      this.morphBeneath(this.position).addMorph(morph)
       morph.reactsToPointer = evt.state.prevProps.reactToPointer;
       morph.dropShadow = evt.state.prevProps.dropShadow;
     });
