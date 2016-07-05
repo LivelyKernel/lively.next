@@ -217,20 +217,41 @@ export class Morph {
   }
 
   addMorph(submorph, insertBeforeMorph) {
-    if (submorph.owner) submorph.remove();
+    if (submorph.isMorph) {
 
+      // sanity check
+      if (submorph.isAncestorOf(this)) {
+          alert('addMorph: Circular relationships between morphs not allowed\n'
+              + 'tried to drop ' + submorph + ' on ' + this);
+          return null;
+      }
+
+      // tramsformation of new owner is applied to morph
+      var tfm = submorph.owner
+             && submorph.owner !== this
+             && submorph.transformForNewOwner(this);
+
+      if (submorph.owner) submorph.remove();
+    }
+
+    // ensure it's a morph and not just a spec
     if (!submorph || typeof submorph !== "object")
       throw new Error(`${submorph} cannot be added as a submorph to ${this}`)
-
     if (!submorph.isMorph) submorph = morph(submorph);
 
+    // set new owner
     submorph._owner = this;
+
+    // insert at right position in submorph list, according to insertBeforeMorph
     var submorphs = this.submorphs,
         insertBeforeMorphIndex = insertBeforeMorph ? submorphs.indexOf(insertBeforeMorph) : -1,
         insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
     submorphs.splice(insertionIndex, 0, submorph);
 
     this.change({prop: "submorphs", value: submorphs});
+
+    if (tfm) { submorph.setTransform(tfm); }
+
     return submorph;
   }
 
@@ -536,23 +557,18 @@ export class HandMorph extends Morph {
       }
     );
   }
-  
+
   grab(morph) {
     if (morph.grabbable) {
-      const relativePos = morph.positionInWorld().subPt(this.positionInWorld());
       this.addMorph(morph);
       // So that the morph doesn't steal events
       morph.reactsToPointer = false;
-      morph.position = relativePos;
     }
   }
-  
+
   dropMorph(evt) {
     this.submorphs.forEach(morph => {
-      // FIME make positioning via transforms work;
-      // var dropPos = evt.positionIn(evt.targetMorph).addPt(morph.position.nagated())
       evt.targetMorph.addMorph(morph)
-      morph.position = pt(0,0);
       morph.reactsToPointer = true; // FIXME re-initialize with what value was before grab!
     });
   }

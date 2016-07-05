@@ -46,7 +46,7 @@ describe("events", () => {
 
     domEnv = await createDOMEnvironment();
     renderer = new Renderer(world, domEnv.document.body, domEnv);
-    renderer.renderWorld();
+    renderer.startRenderWorldLoop();
 
     eventDispatcher = new EventDispatcher(domEnv.window, world).install();
 
@@ -104,6 +104,26 @@ describe("events", () => {
     eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
     eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
-  })
+  });
+
+  xit("dropped morph has correct position", () => {
+    world.submorphs = [
+      {position: pt(10,10), extent: pt(40,40), fill: Color.red},
+      {position: pt(60,60), extent: pt(20,20), fill: Color.green}];
+    var [m1, m2] = world.submorphs;
+
+    eventDispatcher.dispatchEvent(fakeEvent(m2, "pointerdown", pt(60,60)));
+    eventDispatcher.dispatchEvent(fakeEvent(m2, "pointermove", pt(65,65)));
+    eventDispatcher.dispatchEvent(fakeEvent(m2, "pointermove", pt(66,66)));
+    eventDispatcher.dispatchEvent(fakeEvent(world, "pointerup", pt(2,2)));
+
+    expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
+    eventLog.length = 0;
+    expect(eventLog).deep.equals(["onMouseMove-world", "onGrab-submorph2"]);
+    eventLog.length = 0;
+    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
+    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
+    expect(eventLog).deep.equals(["onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
+  });
 
 });

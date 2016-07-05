@@ -142,7 +142,7 @@ describe("morphic", () => {
       expect(ellipse.shape()).deep.equals({style: {borderRadius: "200px/100px"}});
     });
   });
-});
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
