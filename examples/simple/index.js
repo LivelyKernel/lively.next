@@ -1,8 +1,10 @@
-import { num, arr } from "lively.lang";
+import { num, arr, installGlobals } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
 import { Renderer } from "lively.morphic/renderer.js";
 import { Morph, WorldMorph } from "lively.morphic/morph.js";
 import { EventDispatcher } from "lively.morphic/events.js";
+
+installGlobals();
 
 var {world, renderer, eventHandler} = setupWorld();
 var eventDispatcher = new EventDispatcher(window, world);
