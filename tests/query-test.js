@@ -515,7 +515,7 @@ describe('query', function() {
 
     function ex(src) {
       const scope = query.scopes(parse(src));
-      return query.exports(scope);
+      return query.exports(scope, true);
     }
 
     it("of ids", async () => {
