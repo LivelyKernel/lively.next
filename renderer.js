@@ -4,7 +4,15 @@ import { addOrChangeCSSDeclaration } from "./dom-helper.js";
 
 var {h, diff, patch, create} = vdom;
 
-const defaultCSS = '.morph { box-sizing: border-box; }';
+const defaultCSS = `.morph {
+  box-sizing: border-box;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}`;
 
 export class Renderer {
 
@@ -94,6 +102,7 @@ export class Renderer {
       morph.shape(), {
         id: morph.id,
         className: "morph",
+        draggable: false,
         style: shapedStyle
      });
 
