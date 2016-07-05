@@ -576,8 +576,8 @@ export class HandMorph extends Morph {
   grab(morph, evt) {
     if (morph.grabbable) {
       evt.state.prevProps = {
-        dropShadow: this.dropShadow,
-        reactsToPointer: this.reactsToPointer
+        dropShadow: morph.dropShadow,
+        reactsToPointer: morph.reactsToPointer
       }
       this.addMorph(morph);
       // So that the morph doesn't steal events
@@ -589,7 +589,7 @@ export class HandMorph extends Morph {
   dropMorph(evt) {
     this.submorphs.forEach(morph => {
       this.morphBeneath(this.position).addMorph(morph)
-      morph.reactsToPointer = evt.state.prevProps.reactToPointer;
+      morph.reactsToPointer = evt.state.prevProps.reactsToPointer;
       morph.dropShadow = evt.state.prevProps.dropShadow;
     });
   }
