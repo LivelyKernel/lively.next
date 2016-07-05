@@ -7,17 +7,13 @@
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {
-    "sinon-chai": "2.8.0",
-    "sinon": "1.17.4",
     "jsdom": "^9.4.0",
     "mocha-es6": "^0.3.7"
   },
   "systemjs": {
     "main": "index.js",
     "map": {
-      "sinon": "./node_modules/sinon/pkg/sinon.js",
       "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
-      "sinon-chai": "./node_modules/sinon-chai/lib/sinon-chai.js",
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js"
     },
     "meta": {
@@ -26,12 +22,6 @@
         "exports": "mochaEs6"
       },
       "node_modules/virtual-dom/dist/virtual-dom.js": {
-        "format": "amd"
-      },
-      "node_modules/sinon/pkg/sinon.js": {
-        "format": "amd"
-      },
-      "node_modules/sinon-chai/lib/sinon-chai.js": {
         "format": "amd"
       }
     }

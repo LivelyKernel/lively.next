@@ -205,15 +205,18 @@ export class EventDispatcher {
     } else if (type === "pointermove") {
       // Are we dragging a morph? If so the move gets only send to the world
       // and the drag only send to the dragged morph
-      if (state.draggedMorph) {
+      if (state.grabbedMorph) {
+        defaultEvent.targetMorphs = [this.world];
+      } else if (state.draggedMorph) {
         events.push(new Event("drag", domEvt, [targetMorph], this.world, hand, state));
-          defaultEvent.targetMorphs = [this.world];
+        defaultEvent.targetMorphs = [this.world];
 
       // Start dragging when we are holding the hand pressed and and move it
       // beyond targetMorph.dragTriggerDistance
       } else if (state.clickedOnMorph === targetMorph
               && targetMorph.draggable
               && !state.draggedMorph
+              && !state.grabbedMorph
               && state.clickedOnPosition) {
         var dist = state.clickedOnPosition.dist(defaultEvent.position);
 

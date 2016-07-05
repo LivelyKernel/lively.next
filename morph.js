@@ -37,7 +37,7 @@ export class Morph {
     this._nodeType = 'div';
     this._owner = null;
     this._changes = []
-    this._pendingChanges = [];
+    this._unrenderedChanges = [];
     this._dirty = true; // for initial display
     this._id = string.newUUID();
     Object.assign(this, props);
@@ -65,24 +65,22 @@ export class Morph {
   // changes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  lastChangeFor(prop, onlyCommited) {
-    var changes = this._changes.concat(onlyCommited ? [] : this._pendingChanges);
+  lastChangeFor(prop, onlyRendered = false) {
+    var changes = this._changes.concat(onlyRendered ? [] : this._unrenderedChanges);
     for (var i = changes.length-1; i >= 0; i--)
       if (changes[i].prop === prop) return changes[i];
     return null
   }
 
   change(change) {
-    this._pendingChanges.push(change);
+    this._unrenderedChanges.push(change);
     this.makeDirty();
     return change;
   }
 
-  hasPendingChanges() { return !!this._pendingChanges.length; }
-
   commitChanges() {
-    this._changes = this._changes.concat(this._pendingChanges);
-    this._pendingChanges = [];
+    this._changes = this._changes.concat(this._unrenderedChanges);
+    this._unrenderedChanges = [];
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -95,7 +93,7 @@ export class Morph {
   }
 
   needsRerender() {
-    return this._dirty || !!this._pendingChanges.length;
+    return this._dirty || !!this._unrenderedChanges.length;
   }
 
   aboutToRender() {
@@ -379,6 +377,22 @@ export class Morph {
   
   onDrop(evt) {
     evt.hand.dropMorph(evt);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // serialization
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  exportToJSON() {
+    // quick hack to "snapshot" world into JSON
+    var exported = arr.groupByKey(this._changes, "prop").reduceGroups((exported, name, props) => {
+      var val = this[name];
+      if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
+      exported[name] = val;
+      return exported;
+    }, {});
+    if (!exported.name) exported.name = this.name;
+    exported._id = this._id;
+    return exported;
   }
 
 }

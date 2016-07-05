@@ -2,11 +2,7 @@
 import { createDOMEnvironment } from "../dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { expect, chai} from "mocha-es6";
-import sinon from 'sinon'
-import spies from 'sinon-chai'
 import { pt, Color } from "lively.graphics";
-
-chai.use(spies);
 
 describe("morphic", () => {
 
@@ -110,9 +106,8 @@ describe("morphic", () => {
     });
 
     it("get() uses toString", () => {
-      const ts = sinon.stub(submorph3, 'toString', () => "oink");
+      submorph3.toString = () => "oink"
       expect(world.get("oink")).equals(submorph3);
-      expect(ts).to.have.been.called;
     });
 
     it("get() works with RegExp", () => {
