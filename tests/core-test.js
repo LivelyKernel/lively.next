@@ -232,7 +232,7 @@ describe("morphic", () => {
 
   });
 
-  describe("bounds", () => {
+  xdescribe("bounds", () => {
 
     it("testMorphBounds", function() {
         var morph1 = new lively.morphic.Morph(),
