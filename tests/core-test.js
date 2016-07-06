@@ -1,8 +1,8 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { createDOMEnvironment } from "../dom-helper.js";
 import { morph, Renderer } from "../index.js";
-import { expect, chai} from "mocha-es6";
-import { pt, Color } from "lively.graphics";
+import { expect, chai } from "mocha-es6";
+import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 describe("morphic", () => {
 
@@ -26,10 +26,10 @@ describe("morphic", () => {
     submorph1 = world.submorphs[0];
     submorph2 = world.submorphs[0].submorphs[0];
     submorph3 = world.submorphs[1];
-    
+
     domEnv = await createDOMEnvironment();
     renderer = new Renderer(world, domEnv.document.body, domEnv);
-    renderer.renderWorld();
+    renderer.startRenderWorldLoop()
   });
 
   afterEach(() => {
@@ -158,76 +158,78 @@ describe("morphic", () => {
 
   });
 
-  xdescribe("contains point", () => {
-    
+  describe("contains point", () => {
+
     it("testMorphsContainingPoint", function() {
-        var morph = lively.morphic.Morph.makeRectangle(0, 0, 100, 100),
-            submorph = lively.morphic.Morph.makeRectangle(20, 20, 30, 30),
-            subsubmorph = lively.morphic.Morph.makeRectangle(25, 25, 5, 5),
-            morph2 = lively.morphic.Morph.makeRectangle(48, 48, 100, 100);
-        this.world.addMorph(morph)
-        morph.addMorph(submorph)
-        submorph.addMorph(subsubmorph)
-        this.world.addMorph(morph2)
+      world.submorphs = [];
+      var morph1 =      morph({position: pt(0, 0), extent: pt(100, 100), fill: Color.red}),
+          submorph =    morph({position: pt(20, 20), extent: pt(30, 30), fill: Color.green}),
+          subsubmorph = morph({position: pt(25, 25), extent: pt(5, 5), fill: Color.blue}),
+          morph2 =      morph({position: pt(48, 48), extent: pt(100, 100), fill: Color.yellow});
 
-        var result, expected;
+      world.addMorph(morph1)
+      morph1.addMorph(submorph)
+      submorph.addMorph(subsubmorph)
+      world.addMorph(morph2)
 
-        result = morph.morphsContainingPoint(pt(-1,-1));
-        this.assertEquals(0, result.length, 'for ' + pt(-1,-1));
+      var result, expected;
 
-        result = morph.morphsContainingPoint(pt(1,1));
-        this.assertEquals(1, result.length, 'for ' + pt(1,1));
-        this.assertEquals(morph, result[0], 'for ' + pt(1,1));
+      result = morph1.morphsContainingPoint(pt(-1,-1));
+      expect(0).equals(result.length,'for ' + pt(-1,-1));
 
-        result = morph.morphsContainingPoint(pt(40,40));
-        this.assertEquals(2, result.length, 'for ' + pt(40,40));
-        this.assertEquals(submorph, result[0]);
-        this.assertEquals(morph, result[1]);
+      result = morph1.morphsContainingPoint(pt(1,1));
+      expect(1).equals(result.length,'for ' + pt(1,1));
+      expect(morph1).equals(result[0],'for ' + pt(1,1));
 
-        result = morph.morphsContainingPoint(pt(45,45));
-        this.assertEquals(3, result.length, 'for ' + pt(45,45));
-        this.assertEquals(subsubmorph, result[0]);
-        this.assertEquals(submorph, result[1]);
-        this.assertEquals(morph, result[2]);
+      result = morph1.morphsContainingPoint(pt(40,40));
+      expect(2).equals(result.length,'for ' + pt(40,40));
+      expect(submorph).equals(result[0]);
+      expect(morph1).equals(result[1]);
 
-        result = this.world.morphsContainingPoint(pt(48,48));
-        this.assertEquals(5, result.length, 'for ' + pt(48,48));
-        this.assertEquals(morph2, result[0]);
-        this.assertEquals(subsubmorph, result[1]);
-        this.assertEquals(submorph, result[2]);
-        this.assertEquals(morph, result[3]);
-        this.assertEquals(this.world, result[4]);
+      result = morph1.morphsContainingPoint(pt(45,45));
+      expect(3).equals(result.length,'for ' + pt(45,45));
+      expect(subsubmorph).equals(result[0]);
+      expect(submorph).equals(result[1]);
+      expect(morph1).equals(result[2]);
+
+      result = world.morphsContainingPoint(pt(48,48));
+      expect(5).equals(result.length,'for ' + pt(48,48));
+      expect(morph2).equals(result[0]);
+      expect(subsubmorph).equals(result[1]);
+      expect(submorph).equals(result[2]);
+      expect(morph1).equals(result[3]);
+      expect(world).equals(result[4]);
     });
 
     it("testMorphsContainingPointWithAddMorphFront", function() {
-        var morph1 = lively.morphic.Morph.makeRectangle(0, 0, 100, 100),
-            morph2 = lively.morphic.Morph.makeRectangle(0, 0, 100, 100);
+        var morph1 = morph({position: pt(0, 0), extent: pt(100, 100)}),
+            morph2 = morph({position: pt(0, 0), extent: pt(100, 100)});
 
-        this.world.addMorph(morph1);
-        this.world.addMorphBack(morph2);
+        world.addMorph(morph1);
+        world.addMorphBack(morph2);
 
-        var result = this.world.morphsContainingPoint(pt(1,1));
-        this.assertEquals(3, result.length);
+        var result = world.morphsContainingPoint(pt(1,1));
+        expect(3).equals(result.length);
 
-        this.assertEquals(morph1, result[0], 'for ' + pt(1,1));
-        this.assertEquals(morph2, result[1], 'for ' + pt(1,1));
+        expect(morph1).equals(result[0],'for ' + pt(1,1));
+        expect(morph2).equals(result[1],'for ' + pt(1,1));
     });
 
     it("testMorphsContainingPointDoesNotIncludeOffsetedOwner", function() {
-        var owner = lively.morphic.Morph.makeRectangle(0, 0, 100, 100),
-            submorph = lively.morphic.Morph.makeRectangle(110, 10, 90, 90),
-            other = lively.morphic.Morph.makeRectangle(100, 0, 100, 100);
+      world.submorphs = [];
+      var owner = morph({name: 'owner', position: pt(0, 0), extent: pt(100, 100), fill: Color.red}),
+          submorph = morph({name: 'submorph', position: pt(110, 10), extent: pt(90, 90), fill: Color.green}),
+          other = morph({name: 'other', position: pt(100, 0), extent: pt(100, 100), fill: Color.blue});
 
-        owner.name = 'owner'; submorph.name = 'submorph'; other.name = 'other';
-        this.world.addMorph(owner)
-        owner.addMorph(submorph)
-        this.world.addMorphBack(other)
+      world.addMorph(owner)
+      owner.addMorph(submorph)
+      world.addMorphBack(other)
 
-        var result = this.world.morphsContainingPoint(pt(150,50));
-        this.assertEquals(3, result.length, 'for ' + pt(150,50));
-        this.assertEquals(this.world, result[2], 'for 2');
-        this.assertEquals(other, result[1], 'for 1');
-        this.assertEquals(submorph, result[0], 'for 0');
+      var result = world.morphsContainingPoint(pt(150,50));
+      expect(3).equals(result.length,'for ' + pt(150,50));
+      expect(world).equals(result[2],'for 2');
+      expect(other).equals(result[1],'for 1');
+      expect(submorph).equals(result[0],'for 0');
     });
 
   });

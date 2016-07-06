@@ -600,7 +600,7 @@ export class HandMorph extends Morph {
   update(evt) {
     this.position = evt.position;
   }
-  
+
   morphBeneath(pos) {
       var someOwner = this.world() || this.owner;
       if (!someOwner) return null;
