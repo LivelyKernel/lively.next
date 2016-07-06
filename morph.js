@@ -291,6 +291,12 @@ export class Morph {
     return submorph;
   }
 
+  addMorphBack(other) {
+    // adds a morph "behind" all other submorphs
+    var next = other === this.submorphs[0] ? this.submorphs[1] : this.submorphs[0];
+    return this.addMorph(other, next);
+  }
+
   remove() {
     var owner = this.owner;
     if (!owner) return this;
