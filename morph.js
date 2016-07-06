@@ -142,7 +142,7 @@ export class Morph {
 
   get visible()       { return this.getProperty("visible"); }
   set visible(value)  { this.change({prop: "visible", value}); }
-  
+
   get dropShadow()      { return this.getProperty("dropShadow"); }
   set dropShadow(value) { this.change({prop: "dropShadow", value}); }
 
@@ -151,12 +151,33 @@ export class Morph {
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
-  get bounds() {
+  bounds() {
     var {x,y} = this.position, {x:w,y:h} = this.extent;
     return rect(x,y,w,h);
   }
 
-  set bounds(bounds) {
+  bounds() {
+    var tfm = this.getTransform(),
+        bounds = this.innerBounds();
+
+    bounds = tfm.transformRectToRect(bounds);
+
+    var subBounds = this.submorphBounds(tfm);
+    if (subBounds) bounds = bounds.union(subBounds);
+
+    // FIXME: reactivate when clipping is done
+    // if (!this.isClip()) {
+    //   var subBounds = this.submorphBounds(tfm);
+    //   if (subBounds) bounds = bounds.union(subBounds);
+    // } else {
+    //   var scroll = this.getScroll();
+    //   bounds = bounds.translatedBy(pt(scroll[0], scroll[1]));
+    // }
+
+    return bounds;
+  }
+
+  setBounds(bounds) {
     this.position = bounds.topLeft();
     this.extent = bounds.extent();
   }
@@ -168,12 +189,23 @@ export class Morph {
 
   globalBounds() {
     return this.owner ?
-      this.owner.getGlobalTransform().transformRectToRect(this.bounds) :
-      this.bounds;
+      this.owner.getGlobalTransform().transformRectToRect(this.bounds()) :
+      this.bounds();
+  }
+
+  submorphBounds(tfm) {
+    tfm = tfm || this.getTransform();
+    var subBounds;
+    for (var i = 0; i < this.submorphs.length; i++) {
+      var morphBounds = this.submorphs[i].bounds();
+      subBounds = subBounds ? subBounds.union(morphBounds) : morphBounds;
+    }
+    return subBounds ? tfm.transformRectToRect(subBounds) : null;
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
   moveBy(delta) { this.position = this.position.addPt(delta); }
+  rotateBy(delta) { this.rotation += delta; }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
 
   get width()         { return this.extent.x; }
@@ -181,32 +213,32 @@ export class Morph {
   get height()        { return this.extent.y; }
   set height(v)       { return this.extent = pt(this.extent.x, v); }
 
-  get left()          { return this.bounds.left(); }
+  get left()          { return this.bounds().left(); }
   set left(v)         { return this.moveBy(pt(v - this.left), 0); }
-  get right()         { return this.bounds.right(); }
+  get right()         { return this.bounds().right(); }
   set right(v)        { return this.moveBy(pt(v - this.right), 0); }
-  get top()           { return this.bounds.top(); }
+  get top()           { return this.bounds().top(); }
   set top(v)          { return this.moveBy(pt(0, v - this.top)); }
-  get bottom()        { return this.bounds.bottom(); }
+  get bottom()        { return this.bounds().bottom(); }
   set bottom(v)       { return this.moveBy(pt(0, v - this.bottom)); }
 
-  get center()        { return this.bounds.center(); }
+  get center()        { return this.bounds().center(); }
   set center(v)       { return this.align(this.center, v); }
-  get topLeft()       { return this.bounds.topLeft(); }
+  get topLeft()       { return this.bounds().topLeft(); }
   set topLeft(v)      { return this.align(this.topLeft, v); }
-  get topRight()      { return this.bounds.topRight(); }
+  get topRight()      { return this.bounds().topRight(); }
   set topRight(v)     { return this.align(this.topRight, v); }
-  get bottomRight()   { return this.bounds.bottomRight(); }
+  get bottomRight()   { return this.bounds().bottomRight(); }
   set bottomRight(v)  { return this.align(this.bottomRight, v); }
-  get bottomLeft()    { return this.bounds.bottomLeft(); }
+  get bottomLeft()    { return this.bounds().bottomLeft(); }
   set bottomLeft(v)   { return this.align(this.bottomLeft, v); }
-  get bottomCenter()  { return this.bounds.bottomCenter(); }
+  get bottomCenter()  { return this.bounds().bottomCenter(); }
   set bottomCenter(v) { return this.align(this.bottomCenter, v); }
-  get topCenter()     { return this.bounds.topCenter(); }
+  get topCenter()     { return this.bounds().topCenter(); }
   set topCenter(v)    { return this.align(this.topCenter, v); }
-  get leftCenter()    { return this.bounds.leftCenter(); }
+  get leftCenter()    { return this.bounds().leftCenter(); }
   set leftCenter(v)   { return this.align(this.leftCenter, v); }
-  get rightCenter()   { return this.bounds.rightCenter(); }
+  get rightCenter()   { return this.bounds().rightCenter(); }
   set rightCenter(v)  { return this.align(this.rightCenter, v); }
 
 
@@ -306,14 +338,13 @@ export class Morph {
     // check if aMorph is somewhere in my submorph graph
     return !!this.withAllSubmorphsDetect(ea => ea === aMorph);
   }
-  
+
   morphsContainingPoint(point, list) {
     // if morph1 visually before morph2 than list.indexOf(morph1) < list.indexOf(morph2)
     if (!list) list = [];
     if (!this.fullContainsWorldPoint(point)) return list;
-    for (var i = this.submorphs.length -1 ; i >=0; i--) {
+    for (var i = this.submorphs.length-1; i >= 0; i--)
         this.submorphs[i].morphsContainingPoint(point, list);
-    }
     if (this.innerBoundsContainsWorldPoint(point)) list.push(this);
     return list;
   }
@@ -384,7 +415,7 @@ export class Morph {
   }
 
   fullContainsPoint(p) { // p is in owner coordinates
-    return this.bounds.containsPoint(p);
+    return this.bounds().containsPoint(p);
   }
 
   innerBoundsContainsWorldPoint(p) { // p is in world coordinates

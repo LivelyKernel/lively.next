@@ -232,61 +232,72 @@ describe("morphic", () => {
 
   });
 
-  xdescribe("bounds", () => {
+  describe("bounds", () => {
 
-    it("testMorphBounds", function() {
-        var morph1 = new lively.morphic.Morph(),
-            morph2 = new lively.morphic.Morph();
-        this.world.addMorph(morph1);
-        morph1.addMorph(morph2);
-        morph1.setBounds(rect(100, 100, 40, 40));
-        morph2.setBounds(rect(20, 10, 40, 40));
-        this.assertEquals(rect(100, 100, 60, 50), morph1.getBounds());
+    it("bounds includes submorphs", () => {
+      world.submorphs = [];
+      var morph1 =      morph({position: pt(0, 0), extent: pt(25,25), fill: Color.red}),
+          submorph =    morph({position: pt(20, 20), extent: pt(30, 30), fill: Color.green}),
+          subsubmorph = morph({position: pt(20, 30), extent: pt(5, 5), fill: Color.blue});
+      world.addMorph(morph1);
+      morph1.addMorph(submorph);
+      submorph.addMorph(subsubmorph);
+
+      expect(morph1.bounds()).equals(new Rectangle(0,0,50,55))
     });
 
-    it("testMorphBoundsOnCreation", function() {
-        var bounds = rect(30, 90, 30, 60),
-            shape = new lively.morphic.Shapes.Rectangle(bounds);
-        this.assertEquals(bounds, shape.getBounds(), 'shape bounds');
-        var morph = new lively.morphic.Morph(shape);
-        this.assertEquals(bounds, morph.getBounds(), 'morph bounds');
+    it("testMorphBounds", function() {
+      world.submorphs = [];
+      var morph1 = morph(),
+          morph2 = morph();
+
+      world.addMorph(morph1);
+      morph1.addMorph(morph2);
+      morph1.setBounds(rect(100, 100, 40, 40));
+      morph2.setBounds(rect(20, 10, 40, 40));
+      morph2.submorphBounds(morph1.getTransform())
+      expect(rect(100, 100, 60, 50)).equals(morph1.bounds());
     });
 
     it("testMorphBoundsChangeOnExtentPositionScaleRotationTransformChanges", function() {
-        this.epsilon = 0.01;
-        var morph = new lively.morphic.Morph();
-        morph.setBounds(rect(100, 100, 40, 40));
-        this.assertEqualsEpsilon(rect(100, 100, 40, 40), morph.getBounds(), "setBounds");
-        morph.setExtent(pt(50,50));
-        this.assertEqualsEpsilon(rect(100, 100, 50, 50), morph.getBounds(), "setExtent");
-        morph.setPosition(pt(150,50));
-        this.assertEqualsEpsilon(rect(150, 50, 50, 50), morph.getBounds(), "setPosition");
-        morph.setScale(2);
-        this.assertEqualsEpsilon(rect(150, 50, 100, 100), morph.getBounds(), "setScale");
-        morph.setTransform(new lively.morphic.Similitude(pt(0,0)));
-        this.assertEqualsEpsilon(rect(0,0 , 50, 50), morph.getBounds(), "setTransform");
-        morph.rotateBy((45).toRadians());
-        this.assertEqualsEpsilon(rect(-35.36, 0, 70.71, 70.71), morph.getBounds(), "setRotation");
+      var m = morph();
+      m.setBounds(rect(100, 100, 40, 40));
+      expect(rect(100, 100, 40, 40)).equals(m.bounds(),"setBounds");
+      m.extent = pt(50,50);
+      expect(rect(100, 100, 50, 50)).equals(m.bounds(),"setExtent");
+      m.position = pt(150,50);
+      expect(rect(150, 50, 50, 50)).equals(m.bounds(),"setPosition");
+      m.scale = 2;
+      expect(rect(150, 50, 100, 100)).equals(m.bounds(),"setScale");
+      m.setTransform(new Transform(pt(0,0)));
+      expect(rect(0,0 , 50, 50)).equals(m.bounds(),"setTransform");
+      m.rotateBy((45).toRadians());
+      expect(m.bounds().x).closeTo(-35.36, 0.1)
+      expect(m.bounds().y).closeTo(0, 0.1)
+      expect(m.bounds().width).closeTo(70.71, 0.1)
+      expect(m.bounds().height).closeTo(70.71, 0.1)
     });
 
-    it("testBorderWidthDoesNotAffectsBounds", function() {
-        var morph = new lively.morphic.Morph();
-        morph.setBounds(rect(100, 100, 40, 40));
-        morph.setBorderWidth(4);
-        this.assertEquals(rect(100, 100, 40, 40), morph.getBounds());
+    xit("testBorderWidthDoesNotAffectsBounds", function() {
+      var m = morph();
+      m.setBounds(rect(100, 100, 40, 40));
+      m.setBorderWidth(4);
+      expect(rect(100, 100, 40, 40)).equals(m.bounds());
     });
 
     it("testSubmorphsAffectBounds", function() {
-        var morph1 = new lively.morphic.Morph(),
-            morph2 = new lively.morphic.Morph();
-        morph1.setBounds(rect(100, 100, 40, 40));
-        this.assertEquals(rect(100, 100, 40, 40), morph1.getBounds());
-        morph2.setBounds(rect(-10,0, 20, 50));
-        morph1.addMorph(morph2);
-        this.assertEquals(rect(90, 100, 50, 50), morph1.getBounds());
-        morph2.remove();
-        this.assertEquals(rect(100, 100, 40, 40), morph1.getBounds());
+      var morph1 = morph(),
+          morph2 = morph();
+      morph1.setBounds(rect(100, 100, 40, 40));
+      expect(rect(100, 100, 40, 40)).equals(morph1.bounds());
+      morph2.setBounds(rect(-10,0, 20, 50));
+      morph1.addMorph(morph2);
+      expect(rect(90, 100, 50, 50)).equals(morph1.bounds());
+      morph2.remove();
+      expect(rect(100, 100, 40, 40)).equals(morph1.bounds());
     });
 
   });
+
+
 });
