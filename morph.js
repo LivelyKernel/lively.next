@@ -609,7 +609,6 @@ export class HandMorph extends Morph {
       var morphs = someOwner.morphsContainingPoint(pos),
           myIdx = morphs.indexOf(this),
           morphBeneath = morphs[myIdx + 1];
-      console.log(morphs, myIdx);
       return morphBeneath
   }
 
