@@ -3,6 +3,7 @@ import { createDOMEnvironment } from "../dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+import { num } from "lively.lang";
 
 describe("morphic", () => {
 
@@ -273,7 +274,7 @@ describe("morphic", () => {
       expect(rect(150, 50, 100, 100)).equals(m.bounds(),"setScale");
       m.setTransform(new Transform(pt(0,0)));
       expect(rect(0,0 , 50, 50)).equals(m.bounds(),"setTransform");
-      m.rotateBy((45).toRadians());
+      m.rotateBy(num.toRadians(45));
       expect(m.bounds().x).closeTo(-35.36, 0.1)
       expect(m.bounds().y).closeTo(0, 0.1)
       expect(m.bounds().width).closeTo(70.71, 0.1)
