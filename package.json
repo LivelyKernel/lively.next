@@ -2,7 +2,7 @@
   "name": "lively.morphic",
   "version": "0.1.0",
   "dependencies": {
-    "lively.graphics": "^0.1.0",
+    "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.lang": "^0.6.2",
     "virtual-dom": "^2.1.1"
   },
