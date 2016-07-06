@@ -600,6 +600,8 @@ export class HandMorph extends Morph {
   update(evt) {
     this.position = evt.position;
   }
+  
+  morphsContainingPoint(point, list) { return list || []; }
 
   morphBeneath(pos) {
       var someOwner = this.world() || this.owner;
@@ -607,6 +609,7 @@ export class HandMorph extends Morph {
       var morphs = someOwner.morphsContainingPoint(pos),
           myIdx = morphs.indexOf(this),
           morphBeneath = morphs[myIdx + 1];
+      console.log(morphs, myIdx);
       return morphBeneath
   }
 
