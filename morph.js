@@ -8,6 +8,7 @@ export function morph(props = {}) {
     case 'hand': klass = HandMorph; break;
     case 'image': klass = Image; break;
     case 'ellipse': klass = Ellipse; break;
+    case 'text': klass = Text; break;
     default: klass = Morph;
   }
   return new klass(props);
@@ -508,6 +509,7 @@ export class Morph {
   onMouseDown(evt) {}
   onMouseUp(evt) {}
   onMouseMove(evt) {}
+  onInput(evt) {}
 
   onDragStart(evt) {
     evt.state.lastDragPosition = evt.position;
@@ -663,5 +665,27 @@ export class Image extends Morph {
     return {
       src: this.imageUrl
     }
+  }
+}
+
+export class Text extends Morph {
+
+  constructor(props, submorphs) {
+    super(props, submorphs);
+    this._nodeType = 'textarea';
+  }
+
+  get textString() { return this.getProperty("textString") }
+  set textString(value) { this.change({prop: "textString", value}) }
+
+  shape() {
+    return {
+      value: this.textString,
+      style: { resize: "none", border: "none" }
+    }
+  }
+
+  onInput(evt) {
+    this.textString = evt.domEvt.target.value;
   }
 }

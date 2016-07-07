@@ -13,7 +13,8 @@ const typeToMethodMap = {
   'dragstart': "onDragStart",
   'dragend': "onDragEnd",
   'grab' : "onGrab",
-  'drop' : "onDrop"
+  'drop' : "onDrop",
+  'input' : "onInput"
 }
 
 const pointerEvents = [
