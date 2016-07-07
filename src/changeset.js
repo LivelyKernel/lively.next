@@ -49,7 +49,8 @@ for these refs for each registered pacakge.
 */
 
 import { arr } from 'lively.lang';
-import { mixins, modes, promisify } from "js-git-browser";
+import { mixins, modes, promisify } from 'js-git-browser';
+import { gitHubToken } from './github-integration.js';
 import { gitInterface } from '../index.js';
 
 const repoForPackage = {};
@@ -70,11 +71,10 @@ async function repositoryForPackage(pkg) { // PackageAddress -> Repository?
   }
   const remote = {},
         repo = {},
-        url = await gitURLForPackage(pkg),
-        githubToken = "<secret>";
+        url = await gitURLForPackage(pkg);
 
   if (url === null) return null;
-  mixins.github(remote, url, githubToken);
+  mixins.github(remote, url, await gitHubToken());
   mixins.readCombiner(remote);
   await new Promise((resolve, reject) => {
     mixins.indexed.init(err => err ? reject(err) : resolve());
