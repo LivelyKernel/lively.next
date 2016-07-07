@@ -34,9 +34,9 @@ Objects such as blobs, trees and commits:
   (e.g. fc340a00be0 -> "this is my file content")
 
 If a package is affected by a change set, there exists a git ref named
-  
+
   `${packageAddress}/refs/heads/${changeSetName}`
-  
+
 which points to a git tree holding the changes made to the package.
 (git trees link to objects and other trees for sub-directories)
 
@@ -71,7 +71,7 @@ async function repositoryForPackage(pkg) { // PackageAddress -> Repository?
   const remote = {},
         repo = {},
         url = await gitURLForPackage(pkg),
-        githubToken = "0f631cc88f3b760a601948aa8d7d6911680b06a8";
+        githubToken = "<secret>";
 
   if (url === null) return null;
   mixins.github(remote, url, githubToken);
@@ -108,14 +108,14 @@ class Branch {
     this.pkg = pkg;
     this.tree = tree;
   }
-  
+
   async fileExists(relPath) { // RelPath -> boolean?
     const repo = await repositoryForPackage(this.pkg);
     if (repo === null) return null;
     const files = await fileHashes(repo, this.tree);
     return !!files[relPath];
   }
-  
+
   async getFileContent(relPath) { // RelPath -> string?
     const repo = await repositoryForPackage(this.pkg);
     if (repo === null) return null;
@@ -123,11 +123,11 @@ class Branch {
     if (!files[relPath]) return null;
     return await repo.loadAs("text", files[relPath]);
   }
-  
+
   async setFileContent(relPath, content) { // string, string -> ()
     //TODO
   }
-  
+
   evaluate() {
     //TODO
   }
@@ -137,13 +137,13 @@ let current = undefined; // undefined (uninitialized) | null (none) | ChangeSet
 let changesets = undefined; // undefined (uninitialized) | Array<ChangeSet>
 
 class ChangeSet {
-  
+
   constructor(name, pkgs) {
     // string, Array<{pkg: PackageAddress, hash}> -> ChangeSet
     this.name = name;
     this.branches = pkgs.map(pkg => new Branch(name, pkg.pkg, pkg.tree));
   }
-  
+
   resolve(path) { // Path -> [Branch, RelPath] | [null, null]
     const mod = gitInterface.getModule(path),
           pkg = mod.package().address,
@@ -157,41 +157,41 @@ class ChangeSet {
     if (!branch) return null;
     return branch.fileExists(relPath);
   }
-  
+
   getFileContent(path) { // Path -> string?
     const [branch, relPath] = this.resolve(path);
     if (!branch) return null;
     return branch.getFileContent(relPath);
   }
-  
+
   setFileContent(path, content) { // Path, string -> boolean
     const [branch, relPath] = this.resolve(path);
     if (!branch) return false;
     branch.setFileContent(relPath, content);
     return true;
   }
-  
+
   evaluate() {
     this.branches.forEach(b => b.evaluate());
   }
-  
+
   setCurrent() {
     current = this;
     window.localStorage.setItem('lively.changesets/current', this.name);
   }
-  
+
   pushToGithub() {
     //TODO
   }
-  
+
   pullFromGithub() {
     //TODO
   }
-  
+
   toFile() {
     //TODO
   }
-  
+
   fromFile() {
     //TODO
   }
