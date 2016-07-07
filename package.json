@@ -19,18 +19,24 @@
     "main": "index.js",
     "packageMap": {
       "lively-system-interface": "./node_modules/lively-system-interface",
-      "js-git-browser": "./node_modules/js-git-browser"
+      "js-git-browser": "./node_modules/js-git-browser",
+      "lively.lang": "./node_modules/lively.lang",
+      "mocha-es6": "./node_modules/mocha-es6"
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha-es6 tests/*-test.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LivelyKernel/lively.changesets.git"
   },
   "dependencies": {
+    "lively.lang": "^0.6.0",
     "lively-system-interface": "LivelyKernel/lively-system-interface",
     "js-git-browser": "LivelyKernel/js-git-browser"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.3.9"
   }
 }
