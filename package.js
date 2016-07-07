@@ -47,11 +47,11 @@ export class Package {
   }
 
   async existsInFileSystem() {
-    return (await exec(`node -e 'process.exit(require("fs").existsSync("${this.directory}") ? 0 : 1);'`)).code === 0;
+    return (await exec(`node -e 'process.exit(require("fs").existsSync("${this.directory}") ? 0 : 1);'`, {cwd: this.directory})).code === 0;
   }
 
   async isGitRepo() {
-    return (await exec(`node -e 'process.exit(require("fs").existsSync(require("path").join("${this.directory}", ".git")) ? 0 : 1);'`)).code === 0;
+    return (await exec(`node -e 'process.exit(require("fs").existsSync(require("path").join("${this.directory}", ".git")) ? 0 : 1);'`, {cwd: this.directory})).code === 0;
   }
 
   async ensure(packages) {
