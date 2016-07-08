@@ -253,7 +253,7 @@ class Package {
 
   isRegistering() { return !!this.registerProcess; }
 
-  async register(packageLoadStack) {
+  async register(packageLoadStack = [this.url]) {
 
     var {System, url} = this;
 
@@ -264,10 +264,9 @@ class Package {
     var cfg = await tryToLoadPackageConfig(System, url),
         packageConfigResult = await applyConfig(System, cfg, url)
 
-    packageLoadStack = packageLoadStack || [];
     for (let supPkg of packageConfigResult.subPackages) {
       // stop here to support circular deps
-      if (arr.include(packageLoadStack, url)) {
+      if (arr.include(packageLoadStack, supPkg.url)) {
         if (System.debug || true) {
           var shortStack = packageLoadStack && packageLoadStack.map(ea => ea.indexOf(System.baseURL) === 0 ? ea.slice(System.baseURL.length) : ea)
           console.log(`[lively.modules package register] ${url} is a circular dependency, stopping registering subpackages, stack: ${shortStack}`);
