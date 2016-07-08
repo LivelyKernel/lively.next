@@ -100,6 +100,7 @@ export async function install(baseDir, toURL) {
     throw e;
   } finally {
     write(join(baseDir, "lively.installer.log"), log.join(""));
+    pBar && pBar.remove();
     indicator && indicator.remove();
   }
 }
