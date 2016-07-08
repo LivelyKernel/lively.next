@@ -79,12 +79,17 @@ export class Morph {
     if (!change.action) change.action = "set";
     this._unrenderedChanges.push(change);
     this.makeDirty();
+    this.signalMorphChange(change, this);
     return change;
   }
 
   commitChanges() {
     this._changes = this._changes.concat(this._unrenderedChanges);
     this._unrenderedChanges = [];
+  }
+
+  signalMorphChange(change, morph) {
+    if (this.owner) this.owner.signalMorphChange(change, morph);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
