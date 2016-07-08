@@ -257,8 +257,12 @@ export class Morph {
 
   get submorphs() { return this.getProperty("submorphs").slice(); }
   set submorphs(newSubmorphs) {
-    this.submorphs.forEach(m => m.remove());
-    return newSubmorphs.map(m => this.addMorph(m));
+    this.submorphs
+      .filter(ea => !arr.include(newSubmorphs, ea))
+      .forEach(m => m.remove());
+    return newSubmorphs.map((m, i) => {
+      if (this.submorphs[i] !== m) this.addMorph(m, this.submorphs[i]);
+    });
   }
 
   addMorph(submorph, insertBeforeMorph) {
