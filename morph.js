@@ -692,7 +692,7 @@ export class Text extends Morph {
   }
 
   get textString() { return this.getProperty("textString") }
-  set textString(value) { this.change({prop: "textString", value}) }
+  set textString(value) { this.recordChange({prop: "textString", value}) }
 
   shape() {
     return {
