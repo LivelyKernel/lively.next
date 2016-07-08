@@ -89,6 +89,7 @@ export class Renderer {
       var rendered = this.renderMap.get(morph);
       if (rendered) return rendered;
     }
+
     morph.aboutToRender();
 
     const shapedStyle = Object.assign({
@@ -106,7 +107,6 @@ export class Renderer {
       {WebkitFilter: "drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.36))",
        WebkitTransition: "-webkit-filter 0.5s"},
     morph.shape().style);
-
     const attributes = Object.assign(
       morph.shape(), {
         id: morph.id,
@@ -126,7 +126,10 @@ export class Renderer {
   getNodeForMorph(morph) {
     // Hmm, this also finds dom nodes not associated with this renderer, its
     // domNode... Is this a problem?
-    return this.domNode.ownerDocument.getElementById(morph.id);
+    // return this.domNode.ownerDocument.getElementById(morph.id);
+
+    // test, for scoped lookup, fixing the issue mentioned above
+    return this.domNode.querySelector("#" + morph.id);
   }
 
   getMorphForNode(node) {

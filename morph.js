@@ -38,10 +38,10 @@ export class Morph {
   constructor(props, submorphs) {
     this._nodeType = 'div';
     this._owner = null;
-    this._changes = []
+    this._changes = [];
     this._unrenderedChanges = [];
     this._dirty = true; // for initial display
-    this._id = string.newUUID();
+    this._id = this.constructor.name + "_" + string.newUUID().replace(/-/g, "_");
     Object.assign(this, props);
   }
 
