@@ -7,7 +7,7 @@ async function test() {
   repo.hasLocalChanges();
   repo.localBranchInfo()
   await repo.hasRemoteChanges();
-  
+
 }
 
 export class Repository {
@@ -115,7 +115,7 @@ export class Repository {
     var {local, remote} = await this.getRemoteAndLocalHeadRef(branch);
     return local !== remote;
   }
-  
+
   async getRemoteAndLocalHeadRef(branch = "master", remote = "origin") {
     var cmdString =
         `remote=$(git ls-remote "${remote}" ${branch});\n`
@@ -142,9 +142,9 @@ export class Repository {
 
   async push() {
     var {remote, branch} = await this.localBranchInfo()
-    if (!remote) throw new Error(`No remote for pusshing ${this.directory}`);
-    if (!branch) throw new Error(`No branch for pusshing ${this.directory}`);
-    return this.cmd(`git push "${remote}" "${branch}"`);    
+    if (!remote) throw new Error(`No remote for pushing ${this.directory}`);
+    if (!branch) throw new Error(`No branch for pushing ${this.directory}`);
+    return this.cmd(`git push "${remote}" "${branch}"`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -185,7 +185,7 @@ export class Repository {
       let {code, output} = await this.stash();
       if (code !== 0) throw new Error("Error in stash: " + output);
     }
-    
+
     // in case we are switching to a new branch that isn't local yet we need to
     // fetch before checkout!
     await this.cmd(`git fetch ${remote}`)
@@ -213,7 +213,7 @@ export class Repository {
           name = parts[parts.length-1];
       return {path: f, name, dir}
     });
-    
+
     for (let f of fileObjs)
       await this.cmd(`mkdir -p .lively-git-helper/${f.dir}; mv ${f.path} .lively-git-helper/${f.path};`)
 
