@@ -689,14 +689,21 @@ export class Text extends Morph {
   constructor(props, submorphs) {
     super(props, submorphs);
     this._nodeType = 'textarea';
+    if (typeof this.allowsInput !== "boolean") {
+      this.allowsInput = true;
+    }
   }
 
   get textString() { return this.getProperty("textString") }
   set textString(value) { this.recordChange({prop: "textString", value}) }
 
+  get allowsInput() { return this.getProperty("allowsInput") }
+  set allowsInput(value) { this.recordChange({prop: "allowsInput", value}) }
+
   shape() {
     return {
       value: this.textString,
+      readOnly: !this.allowsInput,
       style: { resize: "none", border: "none" }
     }
   }
