@@ -4,8 +4,8 @@ import { string, obj, arr, num } from "lively.lang";
 export function morph(props = {}) {
   var klass;
   switch (props.type) {
-    case 'world': klass = WorldMorph; break;
-    case 'hand': klass = HandMorph; break;
+    case 'world': klass = World; break;
+    case 'hand': klass = Hand; break;
     case 'image': klass = Image; break;
     case 'ellipse': klass = Ellipse; break;
     case 'text': klass = Text; break;
@@ -18,9 +18,9 @@ export function morph(props = {}) {
 const defaultProperties = {
   visible: true,
   name: "a morph",
-  position:  pt(0,0),
-  rotation:  0,
-  scale:  1,
+  position: pt(0,0),
+  rotation: 0,
+  scale: 1,
   extent: pt(10, 10),
   fill: Color.white,
   clipMode: "visible",
@@ -545,12 +545,13 @@ export class Morph {
     }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
+    exported.type = this.constructor.name.toLowerCase();
     return exported;
   }
 
 }
 
-export class WorldMorph extends Morph {
+export class World extends Morph {
 
   constructor(props) {
     super(props);
@@ -563,8 +564,8 @@ export class WorldMorph extends Morph {
   get grabbable() { return false; }
 
   handForPointerId(pointerId) {
-    return this.submorphs.find(m => m instanceof HandMorph && m.pointerId === pointerId)
-        || this.addMorph(new HandMorph(pointerId), this.submorphs[0]);
+    return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId)
+        || this.addMorph(new Hand(pointerId), this.submorphs[0]);
   }
 
   world() { return this }
@@ -583,7 +584,7 @@ export class WorldMorph extends Morph {
   }
 }
 
-export class HandMorph extends Morph {
+export class Hand extends Morph {
 
   constructor(pointerId) {
     super();
@@ -602,8 +603,6 @@ export class HandMorph extends Morph {
   update(evt) {
     this.position = evt.position;
   }
-  
-  morphsContainingPoint(point, list) { return list || []; }
 
   morphBeneath(pos) {
       var someOwner = this.world() || this.owner;

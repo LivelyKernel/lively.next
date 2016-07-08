@@ -1,7 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
 import { createDOMEnvironment } from "../dom-helper.js";
-import { WorldMorph, Renderer } from "../index.js";
+import { World, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
 import { EventDispatcher } from "../events.js";
 
@@ -31,7 +31,7 @@ describe("events", () => {
       eventLog, renderer, eventDispatcher;
 
   beforeEach(async () => {
-    world = new WorldMorph({
+    world = new World({
       name: "world", extent: pt(300,300),
       submorphs: [{
           name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,

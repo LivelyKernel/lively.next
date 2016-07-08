@@ -32,11 +32,15 @@ for (var i = 0; i < 100; i++) {
   //   extent: Point.random(pt(10,10)).addXY(10,10),
   //   fill: Color.random()
   // };
-  var type = Math.random() < 0.1 ? "image" : "ellipse";
+
+  var type = Math.random() < 0.1 ? "image" : "ellipse",
+      ext = type === 'image' ?
+        Point.random(pt(20,20)).addXY(50,50) :
+        Point.random(pt(20,20)).addXY(10,10);
   var m = {
     type: type,
     position: wbounds.insetBy(10).randomPoint(),
-    extent: Point.random(pt(20,20)).addXY(50,50),
+    extent: ext,
     fill: type === "image" ? null : Color.random()
   };
   m.velocity = Point.random(pt(10,10));
