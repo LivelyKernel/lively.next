@@ -244,7 +244,7 @@ class ModuleInterface {
       "global", "self",
       "_moduleExport", "_moduleImport",
       "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-    ].concat(query.knownGlobals);
+    ].concat(arr.withoutAll(query.knownGlobals, ["pt", "rect", "rgb", "$super", "$morph", "$world", "show"]));
   }
 
   // FIXME... better to make this read-only, currently needed for loading

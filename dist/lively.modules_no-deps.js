@@ -606,7 +606,7 @@
   }();
 
   var moduleSourceChange$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
       var changeResult;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -663,13 +663,14 @@
         }
       }, _callee, this, [[0, 18]]);
     }));
+
     return function moduleSourceChange(_x, _x2, _x3, _x4, _x5, _x6) {
-      return ref.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeEsm = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
+    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
       var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -832,13 +833,14 @@
         }
       }, _callee2, this, [[13, 30, 34, 42], [35,, 37, 41]]);
     }));
+
     return function moduleSourceChangeEsm(_x7, _x8, _x9, _x10) {
-      return ref.apply(this, arguments);
+      return _ref2.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeGlobal = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
+    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
       var load, updateData, entry;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -884,8 +886,9 @@
         }
       }, _callee3, this);
     }));
+
     return function moduleSourceChangeGlobal(_x11, _x12, _x13, _x14) {
-      return ref.apply(this, arguments);
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -1069,7 +1072,7 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var tryToLoadPackageConfig = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
       var packageConfigURL, config, name;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -1120,8 +1123,9 @@
         }
       }, _callee, this, [[3, 14]]);
     }));
+
     return function tryToLoadPackageConfig(_x, _x2) {
-      return ref.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
@@ -1330,7 +1334,7 @@
     }, {
       key: "import",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -1356,7 +1360,7 @@
         }));
 
         function _import() {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return _import;
@@ -1369,7 +1373,7 @@
     }, {
       key: "register",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           var packageLoadStack = arguments.length <= 0 || arguments[0] === undefined ? [this.url] : arguments[0];
 
           var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
@@ -1492,7 +1496,7 @@
         }));
 
         function register(_x3) {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return register;
@@ -1786,7 +1790,7 @@
     }, {
       key: "ast",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -1815,7 +1819,7 @@
         }));
 
         function ast() {
-          return ref.apply(this, arguments);
+          return _ref.apply(this, arguments);
         }
 
         return ast;
@@ -1823,7 +1827,7 @@
     }, {
       key: "scope",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           var ast, scope;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
@@ -1854,7 +1858,7 @@
         }));
 
         function scope() {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return scope;
@@ -1887,7 +1891,7 @@
     }, {
       key: "load",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -1917,7 +1921,7 @@
         }));
 
         function load() {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return load;
@@ -1962,7 +1966,7 @@
     }, {
       key: "reload",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(opts) {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(opts) {
           var _this4 = this;
 
           var toBeReloaded;
@@ -1993,7 +1997,7 @@
         }));
 
         function reload(_x) {
-          return ref.apply(this, arguments);
+          return _ref4.apply(this, arguments);
         }
 
         return reload;
@@ -2006,7 +2010,7 @@
     }, {
       key: "changeSourceAction",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(changeFunc) {
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(changeFunc) {
           var source, newSource;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -2033,7 +2037,7 @@
         }));
 
         function changeSourceAction(_x2) {
-          return ref.apply(this, arguments);
+          return _ref5.apply(this, arguments);
         }
 
         return changeSourceAction;
@@ -2041,7 +2045,7 @@
     }, {
       key: "changeSource",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(newSource, options) {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(newSource, options) {
           var oldSource;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -2063,7 +2067,7 @@
         }));
 
         function changeSource(_x3, _x4) {
-          return ref.apply(this, arguments);
+          return _ref6.apply(this, arguments);
         }
 
         return changeSource;
@@ -2193,7 +2197,7 @@
     }, {
       key: "imports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -2220,7 +2224,7 @@
         }));
 
         function imports() {
-          return ref.apply(this, arguments);
+          return _ref7.apply(this, arguments);
         }
 
         return imports;
@@ -2228,7 +2232,7 @@
     }, {
       key: "exports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -2255,7 +2259,7 @@
         }));
 
         function exports() {
-          return ref.apply(this, arguments);
+          return _ref8.apply(this, arguments);
         }
 
         return exports;
@@ -2268,7 +2272,7 @@
     }, {
       key: "_localDeclForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(pos) {
+        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(pos) {
           var scope, ref;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -2293,7 +2297,7 @@
         }));
 
         function _localDeclForRefAt(_x6) {
-          return ref.apply(this, arguments);
+          return _ref9.apply(this, arguments);
         }
 
         return _localDeclForRefAt;
@@ -2301,7 +2305,7 @@
     }, {
       key: "_importForNSRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
           var scope, ast, nodes, id, member, name, spec;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -2356,7 +2360,7 @@
         }));
 
         function _importForNSRefAt(_x7) {
-          return ref.apply(this, arguments);
+          return _ref10.apply(this, arguments);
         }
 
         return _importForNSRefAt;
@@ -2364,7 +2368,7 @@
     }, {
       key: "_resolveImportedDecl",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(decl) {
+        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(decl) {
           var _decl$id, start, name, type, imports, im, imM;
 
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
@@ -2420,7 +2424,7 @@
         }));
 
         function _resolveImportedDecl(_x8) {
-          return ref.apply(this, arguments);
+          return _ref11.apply(this, arguments);
         }
 
         return _resolveImportedDecl;
@@ -2428,7 +2432,7 @@
     }, {
       key: "bindingPathForExport",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee12(name) {
+        var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(name) {
           var exports, ex, imM, decl;
           return regeneratorRuntime.wrap(function _callee12$(_context12) {
             while (1) {
@@ -2473,7 +2477,7 @@
         }));
 
         function bindingPathForExport(_x9) {
-          return ref.apply(this, arguments);
+          return _ref12.apply(this, arguments);
         }
 
         return bindingPathForExport;
@@ -2481,8 +2485,8 @@
     }, {
       key: "bindingPathForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee13(pos) {
-          var decl, _ref, _ref2, imDecl, id, name, imM;
+        var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(pos) {
+          var decl, _ref14, _ref15, imDecl, id, name, imM;
 
           return regeneratorRuntime.wrap(function _callee13$(_context13) {
             while (1) {
@@ -2510,11 +2514,11 @@
                   return this._importForNSRefAt(pos);
 
                 case 11:
-                  _ref = _context13.sent;
-                  _ref2 = slicedToArray(_ref, 3);
-                  imDecl = _ref2[0];
-                  id = _ref2[1];
-                  name = _ref2[2];
+                  _ref14 = _context13.sent;
+                  _ref15 = slicedToArray(_ref14, 3);
+                  imDecl = _ref15[0];
+                  id = _ref15[1];
+                  name = _ref15[2];
 
                   if (imDecl) {
                     _context13.next = 18;
@@ -2543,7 +2547,7 @@
         }));
 
         function bindingPathForRefAt(_x10) {
-          return ref.apply(this, arguments);
+          return _ref13.apply(this, arguments);
         }
 
         return bindingPathForRefAt;
@@ -2551,7 +2555,7 @@
     }, {
       key: "definitionForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
+        var _ref16 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
           var path;
           return regeneratorRuntime.wrap(function _callee14$(_context14) {
             while (1) {
@@ -2582,7 +2586,7 @@
         }));
 
         function definitionForRefAt(_x11) {
-          return ref.apply(this, arguments);
+          return _ref16.apply(this, arguments);
         }
 
         return definitionForRefAt;
@@ -2620,7 +2624,7 @@
     }, {
       key: "search",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee15(searchStr, options) {
+        var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(searchStr, options) {
           var _this9 = this;
 
           var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
@@ -2716,7 +2720,7 @@
         }));
 
         function search(_x12, _x13) {
-          return ref.apply(this, arguments);
+          return _ref17.apply(this, arguments);
         }
 
         return search;
@@ -2730,7 +2734,7 @@
       key: "dontTransform",
       get: function get() {
         return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-        ].concat(lively_ast.query.knownGlobals);
+        ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "$morph", "$world", "show"]));
       }
 
       // FIXME... better to make this read-only, currently needed for loading
