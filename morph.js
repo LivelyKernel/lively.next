@@ -333,9 +333,10 @@ export class Morph {
   }
 
   withAllSubmorphsDo(func) {
-    func(this)
+    var result = [func(this)];
     for (let m of this.submorphs)
-      m.withAllSubmorphsDo(func);
+      arr.pushAll(result, m.withAllSubmorphsDo(func));
+    return result;
   }
 
   withAllSubmorphsSelect(testerFunc) {
