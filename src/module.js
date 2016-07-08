@@ -340,7 +340,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async _localDeclForRefAt(pos) {
-    const scope = await this.scope(),
+    const scope = await this.resolvedScope(),
           ref = query.refAt(pos, scope);
     if (ref && ref.decl) ref.decl.module = this;
     return ref && {decl: ref.decl, id: ref.declId};
@@ -349,7 +349,7 @@ class ModuleInterface {
   async _importForNSRefAt(pos) {
     // if pos points to "x" of a property "m.x" with an import * as "m"
     // then this returns [<importStmt>, <m>, "x"]
-    const scope = await this.scope(),
+    const scope = await this.resolvedScope(),
           ast = scope.node,
           nodes = query.nodesAtIndex(ast, pos);
     if (nodes.length < 2) return [null, null];
@@ -384,6 +384,7 @@ class ModuleInterface {
   }
 
   async bindingPathForExport(name) {
+    await this.resolvedScope();
     const exports = await this.exports(),
           ex = exports.find(e => e.exported === name);
     if (ex.fromModule) {
