@@ -1,12 +1,12 @@
 {
   "name": "lively.modules",
-  "version": "0.5.13",
+  "version": "0.5.14",
   "main": "dist/lively.modules.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "mocha-es6 tests/*-test.js",
+    "test": "node_modules/mocha-es6/bin/mocha-es6.js tests/*-test.js",
     "build": "node tools/build.js"
   },
   "systemjs": {
@@ -29,7 +29,7 @@
     }
   },
   "dependencies": {
-    "lively.ast": "^0.7.6",
+    "lively.ast": "^0.7.25",
     "lively.vm": "^0.7.10",
     "lively.lang": "^0.6.0",
     "systemjs": "^0.19.29",
