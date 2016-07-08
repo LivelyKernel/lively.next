@@ -551,12 +551,15 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   exportToJSON() {
     // quick hack to "snapshot" world into JSON
-    var exported = arr.groupByKey(this._changes, "prop").reduceGroups((exported, name, props) => {
-      var val = this[name];
-      if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
-      exported[name] = val;
-      return exported;
-    }, {});
+    var allChanges = Object.assign(
+          arr.groupByKey(this._changes, "prop"),
+          arr.groupByKey(this._unrenderedChanges, "prop")),
+        exported = allChanges.reduceGroups((exported, name, props) => {
+            var val = this[name];
+            if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
+            exported[name] = val;
+            return exported;
+          }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
     exported.type = this.constructor.name.toLowerCase();
