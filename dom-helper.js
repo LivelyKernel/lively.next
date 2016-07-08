@@ -47,6 +47,7 @@ async function createDOMEnvironment_browser() {
   var iframe = await createIFrame(document.body)
   requestAnimationFramePolyfill(iframe.contentWindow);
   return {
+    iframe: iframe,
     window: iframe.contentWindow,
     document: iframe.contentWindow.document,
     destroy() {

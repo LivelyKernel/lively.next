@@ -105,8 +105,20 @@ class Event {
   // }
 
   get position() {
-    var worldNode = this.domEvt.target.ownerDocument.getElementById(this.world.id),
-        {offsetLeft, offsetTop} = cumulativeOffset(worldNode),
+    var worldNode = this.domEvt.target;
+    while (worldNode) {
+      if (worldNode.id === this.world.id) break;
+      worldNode = worldNode.parentNode;
+    }
+    // if (!worldNode)
+    //   worldNode = this.domEvt.target.ownerDocument.getElementById(this.world.id);
+
+    if (!worldNode) {
+      console.error(`event position: cannot find world node for determining the position!`)
+      return pt(0,0)
+    }
+
+    var {offsetLeft, offsetTop} = cumulativeOffset(worldNode),
         {pageX, pageY} = this.domEvt,
         pos = pt((pageX || 0) - offsetLeft, (pageY || 0) - offsetTop);
     if (this.world.scale !== 1)
@@ -209,7 +221,7 @@ export class EventDispatcher {
       if (state.grabbedMorph) {
         defaultEvent.targetMorphs = [this.world];
       } else if (state.draggedMorph) {
-        events.push(new Event("drag", domEvt, [targetMorph], this.world, hand, state));
+        events.push(new Event("drag", domEvt, [state.draggedMorph], this.world, hand, state));
         defaultEvent.targetMorphs = [this.world];
 
       // Start dragging when we are holding the hand pressed and and move it
@@ -251,6 +263,7 @@ export class EventDispatcher {
       var evt = events[i],
           method = typeToMethodMap[evt.type],
           err;
+
       if (method) {
         for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
           try {
