@@ -27,7 +27,7 @@ function installEventLogger(morph, log) {
 
 describe("events", () => {
 
-  var world, submorph1, submorph2, submorph3,
+  var world, submorph1, submorph2, submorph3, submorph4,
       eventLog, renderer, eventDispatcher;
 
   beforeEach(async () => {
@@ -37,12 +37,14 @@ describe("events", () => {
           name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
           submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
         },
-        {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow}
+        {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
+        {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "old text"}
       ]
     })
     submorph1 = world.submorphs[0];
     submorph2 = world.submorphs[0].submorphs[0];
     submorph3 = world.submorphs[1];
+    submorph4 = world.submorphs[2];
 
     domEnv = await createDOMEnvironment();
     renderer = new Renderer(world, domEnv.document.body, domEnv);
@@ -51,7 +53,7 @@ describe("events", () => {
     eventDispatcher = new EventDispatcher(domEnv.window, world).install();
 
     eventLog = [];
-    [world,submorph1,submorph2,submorph3,].forEach(ea => installEventLogger(ea, eventLog));
+    [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
   });
 
   afterEach(() => {
@@ -124,6 +126,18 @@ describe("events", () => {
     eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
     eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
+  });
+
+  it("text input", () => {
+    expect(submorph4).property("textString").equals("old text");
+    domEnv.document.getElementById(submorph4.id).value = "new text";
+    expect(submorph4).property("textString").equals("old text");
+    eventDispatcher.dispatchEvent(fakeEvent(submorph4, "input", pt(225, 225)));
+    expect(submorph4).property("textString").equals("new text");
+    domEnv.document.getElementById(submorph4.id).value = "really new text";
+    expect(submorph4).property("textString").equals("new text");
+    eventDispatcher.dispatchEvent(fakeEvent(submorph4, "input", pt(225, 225)));
+    expect(submorph4).property("textString").equals("really new text");
   });
 
 });
