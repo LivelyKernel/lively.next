@@ -74,7 +74,9 @@ export class Morph {
     return null
   }
 
-  change(change) {
+  recordChange(change) {
+    change.target = this.id;
+    if (!change.action) change.action = "set";
     this._unrenderedChanges.push(change);
     this.makeDirty();
     return change;
@@ -112,43 +114,44 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get name()           { return this.getProperty("name"); }
-  set name(value)      { this.change({prop: "name", value}); }
+  set name(value)      { this.recordChange({prop: "name", value}); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this.change({prop: "position", value}); }
+  set position(value)  { this.recordChange({prop: "position", value}); }
 
   get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this.change({prop: "scale", value}); }
+  set scale(value)     { this.recordChange({prop: "scale", value}); }
 
   get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this.change({prop: "rotation", value}); }
+  set rotation(value)  { this.recordChange({prop: "rotation", value}); }
 
   get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this.change({prop: "extent", value}); }
+  set extent(value)    { this.recordChange({prop: "extent", value}); }
 
   get fill()           { return this.getProperty("fill"); }
-  set fill(value)      { this.change({prop: "fill", value}); }
+  set fill(value)      { this.recordChange({prop: "fill", value}); }
 
   get clipMode()       { return this.getProperty("clipMode"); }
-  set clipMode(value)  { this.change({prop: "clipMode", value}); }
+  set clipMode(value)  { this.recordChange({prop: "clipMode", value}); }
 
   get draggable()       { return this.getProperty("draggable"); }
-  set draggable(value)  { this.change({prop: "draggable", value}); }
+  set draggable(value)  { this.recordChange({prop: "draggable", value}); }
 
   get grabbable()       { return this.getProperty("grabbable"); }
-  set grabbable(value)  { this.change({prop: "grabbable", value}); }
+  set grabbable(value)  { this.recordChange({prop: "grabbable", value}); }
 
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
-  set reactsToPointer(value)  { this.change({prop: "reactsToPointer", value}); }
+  set reactsToPointer(value)  { this.recordChange({prop: "reactsToPointer", value}); }
 
   get visible()       { return this.getProperty("visible"); }
-  set visible(value)  { this.change({prop: "visible", value}); }
+  set visible(value)  { this.recordChange({prop: "visible", value}); }
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) { this.change({prop: "dropShadow", value}); }
+  set dropShadow(value) { this.recordChange({prop: "dropShadow", value}); }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
-  set styleClasses(value)  { this.change({prop: "styleClasses", value}); }
+  set styleClasses(value)  { this.recordChange({prop: "styleClasses", value}); }
+
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
@@ -285,7 +288,7 @@ export class Morph {
         insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
     submorphs.splice(insertionIndex, 0, submorph);
 
-    this.change({prop: "submorphs", value: submorphs});
+    this.recordChange({prop: "submorphs", value: submorphs, action: "add", index: insertionIndex, element: submorph});
 
     if (tfm) { submorph.setTransform(tfm); }
 
@@ -305,7 +308,7 @@ export class Morph {
     var submorphs = owner.submorphs,
         index = submorphs.indexOf(this)
     if (index > -1) submorphs.splice(index, 1);
-    owner.change({prop: "submorphs", value: submorphs});
+    owner.recordChange({prop: "submorphs", value: submorphs, action: "remove", index: index, element: this});
     return this;
   }
 
@@ -350,8 +353,9 @@ export class Morph {
     // if morph1 visually before morph2 than list.indexOf(morph1) < list.indexOf(morph2)
     if (!list) list = [];
     if (!this.fullContainsWorldPoint(point)) return list;
-    for (var i = this.submorphs.length-1; i >= 0; i--)
+    for (var i = this.submorphs.length-1; i >= 0; i--) {
         this.submorphs[i].morphsContainingPoint(point, list);
+    }
     if (this.innerBoundsContainsWorldPoint(point)) list.push(this);
     return list;
   }
@@ -658,7 +662,7 @@ export class Image extends Morph {
   }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }
-  set imageUrl(value)  { this.change({prop: "imageUrl", value}); }
+  set imageUrl(value)  { this.recordChange({prop: "imageUrl", value}); }
 
   shape() {
     return {
