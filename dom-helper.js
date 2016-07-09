@@ -51,8 +51,8 @@ async function createDOMEnvironment_browser() {
     window: iframe.contentWindow,
     document: iframe.contentWindow.document,
     destroy() {
-      iframe.contentWindow.close();
-      iframe.parentNode.removeChild(iframe);
+      iframe.contentWindow && iframe.contentWindow.close();
+      iframe.parentNode && iframe.parentNode.removeChild(iframe);
     }
   }
 }
