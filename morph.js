@@ -1,7 +1,7 @@
 import { Color, pt, rect, Transform } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
-export function morph(props = {}) {
+export function morph(props = {}, opts = {restore: false}) {
   var klass;
   switch (props.type) {
     case 'world': klass = World; break;
@@ -11,7 +11,9 @@ export function morph(props = {}) {
     case 'text': klass = Text; break;
     default: klass = Morph;
   }
-  return new klass(props);
+  return opts.restore ?
+    new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
+    new klass(props);
 }
 
 
@@ -564,6 +566,17 @@ export class Morph {
     exported._id = this._id;
     exported.type = this.constructor.name.toLowerCase();
     return exported;
+  }
+
+  initFromJSON(spec) {
+    Object.assign(this, {
+      _owner: null,
+      _changes: [],
+      _unrenderedChanges: [],
+      _dirty: true,
+      _id: this.constructor.name + "_" + string.newUUID().replace(/-/g, "_")
+    }, spec);
+    return this;
   }
 
 }
