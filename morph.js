@@ -37,8 +37,7 @@ const defaultProperties = {
 
 export class Morph {
 
-  constructor(props, submorphs) {
-    this._nodeType = 'div';
+  constructor(props) {
     this._owner = null;
     this._changes = [];
     this._unrenderedChanges = [];
@@ -46,6 +45,8 @@ export class Morph {
     this._id = this.constructor.name + "_" + string.newUUID().replace(/-/g, "_");
     Object.assign(this, props);
   }
+
+  get _nodeType() { return 'div'; }
 
   get isMorph() { return true; }
   get id() { return this._id; }
@@ -617,11 +618,12 @@ export class World extends Morph {
 export class Hand extends Morph {
 
   constructor(pointerId) {
-    super();
+    super({
+      fill: Color.orange,
+      extent: pt(4,4),
+      reactsToPointer: false
+    });
     this.pointerId = pointerId;
-    this.fill = Color.orange;
-    this.extent = pt(4,4);
-    this.reactsToPointer = false;
     this.addStyleClass("hand");
   }
 
@@ -678,14 +680,16 @@ export class Ellipse extends Morph {
 
 }
 
+
 export class Image extends Morph {
 
-  constructor(props, submorphs) {
-    super(props, submorphs);
-    this._nodeType = 'img';
+  constructor(props) {
+    super(props);
     if (!this.imageUrl)
       this.imageUrl = 'http://lively-web.org/core/media/lively-web-logo-small.png'
   }
+
+  get _nodeType() { return 'img'; }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }
   set imageUrl(value)  { this.recordChange({prop: "imageUrl", value}); }
@@ -701,11 +705,12 @@ export class Text extends Morph {
 
   constructor(props, submorphs) {
     super(props, submorphs);
-    this._nodeType = 'textarea';
     if (typeof this.allowsInput !== "boolean") {
       this.allowsInput = true;
     }
   }
+
+  get _nodeType() { return 'textarea'; }
 
   get textString() { return this.getProperty("textString") }
   set textString(value) { this.recordChange({prop: "textString", value}) }
