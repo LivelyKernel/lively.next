@@ -78,12 +78,28 @@ export class Morph {
   }
 
   recordChange(change) {
-    change.target = this.id;
-    if (!change.action) change.action = "set";
+    change.target = this;
+    if (!change.type) change.type = "setter";
     this._unrenderedChanges.push(change);
     this.makeDirty();
     this.signalMorphChange(change, this);
     return change;
+  }
+
+  applyChange(change) {
+    // can be used from the outside, e.g. to replay changes
+    var {target, type, prop, value, receiver, selector, args} = change;
+
+    if (target !== this)
+      throw new Error(`change applied to ${this} which is not the target of the change ${target}`);
+
+    if (type === "setter") {
+      this.recordChange(change);
+    } else if (type === "method-call") {
+      receiver[selector].apply(receiver, args);
+    } else {
+      throw new Error(`Strange change of type ${type}, cannot apply it! ${obj.inspect(change, {maxDepth: 1})}`);
+    }
   }
 
   commitChanges() {
@@ -300,7 +316,13 @@ export class Morph {
         insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
     submorphs.splice(insertionIndex, 0, submorph);
 
-    this.recordChange({prop: "submorphs", value: submorphs, action: "add", index: insertionIndex, element: submorph});
+    this.recordChange({
+      prop: "submorphs", value: submorphs,
+      type: "method-call",
+      receiver: this,
+      selector: "addMorph",
+      args: [submorph, insertBeforeMorph]
+    });
 
     if (tfm) { submorph.setTransform(tfm); }
 
@@ -320,7 +342,13 @@ export class Morph {
     var submorphs = owner.submorphs,
         index = submorphs.indexOf(this)
     if (index > -1) submorphs.splice(index, 1);
-    owner.recordChange({prop: "submorphs", value: submorphs, action: "remove", index: index, element: this});
+    owner.recordChange({
+      prop: "submorphs", value: submorphs,
+      type: "method-call",
+      receiver: this,
+      selector: "remove",
+      args: []
+    });
     return this;
   }
 
