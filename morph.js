@@ -688,7 +688,7 @@ export class Hand extends Morph {
 
   dropMorph(evt) {
     this.submorphs.forEach(morph => {
-      this.morphBeneath(this.position).addMorph(morph)
+      evt.targetMorph.addMorph(morph)
       morph.reactsToPointer = evt.state.prevProps.reactsToPointer;
       morph.dropShadow = evt.state.prevProps.dropShadow;
     });
