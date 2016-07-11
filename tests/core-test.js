@@ -79,16 +79,28 @@ describe("full morphic setup with renderer and events", () => {
 
   });
 
+});
 
-  describe("copy", () => {
-    
-    it("copies all attributes", () => {
-      
+
+describe("copy", () => {
+
+  var world;
+  before(() => {
+    world = morph({type: "world", extent: pt(300,300), submorphs: [{
+      name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
+      submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]}]});
+  });
+  
+  it("copies all attributes", () => {
+    var copy = world.get("submorph1").copy();
+    expect(copy).to.containSubset({
+      name: "submorph1", fill: Color.red, position: pt(10,10),
+      submorphs: [{name: "submorph2"}]
     });
+    expect(copy.owner).equals(null);
   });
 
 });
-
 
 describe("properties", () => {
 

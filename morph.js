@@ -592,11 +592,13 @@ export class Morph {
     evt.hand.dropMorph(evt);
   }
 
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   exportToJSON() {
-    // quick hack to "snapshot" world into JSON
+    // quick hack to "snapshot" into JSON
     var allChanges = Object.assign(
           arr.groupByKey(this._changes, "prop"),
           arr.groupByKey(this._unrenderedChanges, "prop")),
@@ -622,6 +624,9 @@ export class Morph {
     }, spec);
     return this;
   }
+
+
+  copy() { return morph(this.exportToJSON()); }
 
 }
 
