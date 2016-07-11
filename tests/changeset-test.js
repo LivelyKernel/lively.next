@@ -39,4 +39,15 @@ describe("basics", () => {
     await cs.delete();
     expect(await localChangeSets()).to.not.include(cs);
   });
+  
+  it("writes changes to file if there is no active changeset", async () => {
+    //const cs = await createChangeSet("test");
+    await changeA("export const x = 2;");
+    //expect(await cs.fileExists(fileA)).to.be.null;
+    const changedSrc = await gitInterface.moduleRead(fileA);
+    expect(changedSrc).to.be.eql("export const x = 2;");
+    //await cs.delete();
+    //const changedSrc2 = await gitInterface.moduleRead(fileA);
+    //expect(changedSrc2).to.be.eql(changedSrc);
+  });
 });

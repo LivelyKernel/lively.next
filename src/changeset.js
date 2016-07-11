@@ -103,7 +103,7 @@ async function fileHashes(repo, tree) { // Repository, Tree -> {[RelPath]: Hash}
 }
 
 class Branch {
-  constructor(name, pkg, tree) {
+  constructor(name, pkg, tree) { // ChangeSetName, PackageAddress, Hash
     this.name = name;
     this.pkg = pkg;
     this.tree = tree;
@@ -264,6 +264,6 @@ export async function localChangeSets() { // () => Array<ChangeSet>
 export async function currentChangeSet() { // () -> ChangeSet?
   if (current !== undefined) return current;
   const csName = window.localStorage.getItem('lively.changesets/current');
-  const cs = this.localChangeSets().find(cs => cs.name === csName);
+  const cs = (await localChangeSets()).find(cs => cs.name === csName);
   return current = (cs === undefined ? null : cs);
 }
