@@ -36,5 +36,7 @@ describe("basics", () => {
   it("supports creating new, empty changesets", async () => {
     const cs = await createChangeSet("test");
     expect(await localChangeSets()).to.include(cs);
+    await cs.delete();
+    expect(await localChangeSets()).to.not.include(cs);
   });
 });

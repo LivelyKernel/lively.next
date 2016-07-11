@@ -131,6 +131,17 @@ class Branch {
   evaluate() {
     //TODO
   }
+  
+  delete(db) {
+    return new Promise((resolve, reject) => {
+      const key = this.pkg.address,
+            trans = db.transaction(["refs"], "readonly"),
+            store = trans.objectStore("refs"),
+            request = store.delete(`${key}/heads/${this.name}`);
+      request.onsuccess = evt => resolve(evt.target.result);
+      request.onerror = evt => reject(new Error(evt.value));
+    });
+  }
 }
 
 let current = undefined; // undefined (uninitialized) | null (none) | ChangeSet
@@ -195,6 +206,22 @@ class ChangeSet {
   fromFile() {
     //TODO
   }
+  
+  async delete() {
+    if (this === current) {
+      current = null;
+      window.localStorage.removeItem('lively.changesets/current');
+    }
+    changesets = changesets.filter(cs => cs !== this);
+    const db = await new Promise((resolve, reject) => {
+      const req = window.indexedDB.open("tedit", 1);
+      req.onsuccess = evt => resolve(evt.target.result);
+      req.onerror = err => reject(err);
+    });
+    for (let branch of this.branches) {
+      await branch.delete(db);
+    }
+  }
 }
 
 function localChangeSetsOf(db, pkg) {
@@ -227,8 +254,8 @@ export async function localChangeSets() { // () => Array<ChangeSet>
   });
   const allChangeSets = [];
   const packages = gitInterface.getPackages();
-  for (let i = 0; i < packages.length; i++) {
-    arr.pushAll(allChangeSets, await localChangeSetsOf(db, packages[i]));
+  for (let pkg of packages) {
+    arr.pushAll(allChangeSets, await localChangeSetsOf(db, pkg));
   }
   const groups = arr.groupBy(allChangeSets, ({cs}) => cs);
   return changesets = Object.keys(groups).map(name => new ChangeSet(name, groups[name]));
