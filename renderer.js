@@ -92,22 +92,40 @@ export class Renderer {
 
     morph.aboutToRender();
 
-    const shapedStyle = Object.assign({
+    var {
+      visible,
+      position: {x,y},
+      extent: {x: width, y: height},
+      fill, borderWidth, borderColor, borderRadius: br,
+      clipMode,
+      reactsToPointer
+    } = morph;
+
+    var shapedStyle = Object.assign(
+
+      {
         position: "absolute",
-        visibility: morph.visible ? "visible" : "hidden",
-        left: morph.position.x + 'px',
-        top: morph.position.y + 'px',
-        width: morph.extent.x + 'px',
-        height: morph.extent.y + 'px',
-        backgroundColor: morph.fill ? morph.fill.toString() : "",
-        overflow: morph.clipMode,
-        "pointer-events": morph.reactsToPointer ? "auto" : "none"
-    }, 
-    morph.dropShadow &&
-      {WebkitFilter: "drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.36))",
-       WebkitTransition: "-webkit-filter 0.5s"},
-    morph.shape().style);
-    const attributes = Object.assign(
+        visibility: visible ? "visible" : "hidden",
+        left: x + 'px',
+        top: y + 'px',
+        width: width + 'px',
+        height: height + 'px',
+        backgroundColor: fill ? fill.toString() : "",
+        border: `${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"} solid`,
+        borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
+        overflow: clipMode,
+        "pointer-events": reactsToPointer ? "auto" : "none"
+      },
+
+      morph.dropShadow ? {
+        WebkitFilter: "drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.36))",
+        WebkitTransition: "-webkit-filter 0.5s"
+      } : null,
+
+      morph.shape().style
+    );
+
+    var attributes = Object.assign(
       morph.shape(), {
         id: morph.id,
         className: morph.styleClasses.join(" "),
@@ -115,9 +133,9 @@ export class Renderer {
         style: shapedStyle
      });
 
-    var tree = h(morph._nodeType,
-                attributes,
-                morph.submorphs.map(m => this.renderMorph(m)));
+    var tree = h(
+      morph._nodeType, attributes, 
+      morph.submorphs.map(m => this.renderMorph(m)));
 
     this.renderMap.set(morph, tree);
     return tree;

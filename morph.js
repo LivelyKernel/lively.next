@@ -1,15 +1,15 @@
-import { Color, pt, rect, Transform } from "lively.graphics";
+import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass;
   switch (props.type) {
-    case 'world': klass = World; break;
-    case 'hand': klass = Hand; break;
-    case 'image': klass = Image; break;
+    case 'world':   klass = World; break;
+    case 'hand':    klass = Hand; break;
+    case 'image':   klass = Image; break;
     case 'ellipse': klass = Ellipse; break;
-    case 'text': klass = Text; break;
-    default: klass = Morph;
+    case 'text':    klass = Text; break;
+    default:        klass = Morph;
   }
   return opts.restore ?
     new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
@@ -25,6 +25,9 @@ const defaultProperties = {
   scale: 1,
   extent: pt(10, 10),
   fill: Color.white,
+  borderWidth: 0,
+  borderColor: Color.white,
+  borderRadius: Rectangle.inset(0),
   clipMode: "visible",
   reactsToPointer: true,
   draggable: true,
@@ -154,6 +157,18 @@ export class Morph {
 
   get fill()           { return this.getProperty("fill"); }
   set fill(value)      { this.recordChange({prop: "fill", value}); }
+
+  get borderWidth()       { return this.getProperty("borderWidth"); }
+  set borderWidth(value)  { this.recordChange({prop: "borderWidth", value}); }
+
+  get borderColor()       { return this.getProperty("borderColor"); }
+  set borderColor(value)  { this.recordChange({prop: "borderColor", value}); }
+
+  get borderRadius()      { return this.getProperty("borderRadius"); }
+  set borderRadius(value) {
+    if (typeof value === "number") value = Rectangle.inset(value);
+    this.recordChange({prop: "borderRadius", value});
+  }
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  { this.recordChange({prop: "clipMode", value}); }
@@ -696,14 +711,14 @@ export class Hand extends Morph {
 
 }
 
+
 export class Ellipse extends Morph {
 
-  shape() {
-    return {
-      style: {
-        borderRadius: this.extent.x + "px/" + this.extent.y + "px"
-      }
-    }
+  set borderRadius(_) {}
+  get borderRadius() {
+    // cut the corners so that a rectangle becomes an ellipse
+    var {x:w,y:h} = this.extent;
+    return Rectangle.inset(h,w,h,w);
   }
 
 }
