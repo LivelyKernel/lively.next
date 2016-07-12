@@ -66,17 +66,19 @@ function cumulativeOffset(element) {
   return {offsetLeft: left, offsetTop: top};
 }
 
-class Event {
+export class Event {
 
-  constructor(type, domEvt, targetMorphs, world, hand, state) {
+  constructor(type, domEvt, dispatcher, targetMorphs, hand) {
     this.type = type;
     this.domEvt = domEvt;
+    this.dispatcher = dispatcher;
     this.targetMorphs = targetMorphs;
-    this.world = world;
     this.hand = hand;
-    this.state = state;
     this.stopped = false;
   }
+
+  get world() { return this.dispatcher.world; }
+  get state() { return this.dispatcher.eventState; }
 
   isMouseEvent() {
     return arr.include(pointerEvents, this.type) || arr.include(mouseEvents, this.type)
@@ -184,7 +186,7 @@ export class EventDispatcher {
         state = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
         hand = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
-        defaultEvent = new Event(type, domEvt, eventTargets, this.world, hand, state),
+        defaultEvent = new Event(type, domEvt, this, eventTargets, hand),
         events = [defaultEvent];
 
     if (type === "pointerdown") {
@@ -204,7 +206,7 @@ export class EventDispatcher {
 
       // drag release
       if (state.draggedMorph) {
-        events.push(new Event("dragend", domEvt, [targetMorph], this.world, hand, state));  
+        events.push(new Event("dragend", domEvt, this, [state.draggedMorph], hand));
         defaultEvent.targetMorphs = [this.world];
         state.draggedMorph = null;
       
@@ -221,7 +223,7 @@ export class EventDispatcher {
       if (state.grabbedMorph) {
         defaultEvent.targetMorphs = [this.world];
       } else if (state.draggedMorph) {
-        events.push(new Event("drag", domEvt, [state.draggedMorph], this.world, hand, state));
+        events.push(new Event("drag", domEvt, this, [state.draggedMorph], hand));
         defaultEvent.targetMorphs = [this.world];
 
       // Start dragging when we are holding the hand pressed and and move it
@@ -237,10 +239,10 @@ export class EventDispatcher {
           // FIXME should grab really be triggered through drag?
           if (targetMorph.grabbable) {
             state.grabbedMorph = targetMorph;
-            events.push(new Event("grab", domEvt, [targetMorph], this.world, hand, state));
+            events.push(new Event("grab", domEvt, this, [targetMorph], hand));
           } else {
             state.draggedMorph = targetMorph;
-            events.push(new Event("dragstart", domEvt, [targetMorph], this.world, hand, state));
+            events.push(new Event("dragstart", domEvt, this, [targetMorph], hand));
           }
           defaultEvent.targetMorphs = [this.world];
         }
