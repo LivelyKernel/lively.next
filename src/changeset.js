@@ -1,148 +1,7 @@
-/*
-Database for Browser-Local ChangeSets
--------------------------------------
-
-lively.modules knows about all currently registered packages:
-
-  type PackageAddress = string;
-
-  type Package = { address: PackageAddress, ... };
-
-  System.getPackages() => Array<Package>
-
-A ChangeSet has a name, a set of packages that are affected by it,
-and optionally a base change set:
-
-  type ChangeSetName = string;
-
-  type ChangeSet = { name: ChangeSetName, packages: Array<PackageAddress>, base: ChangeSetName? };
-
-The head of the currently active chain of changesets is stored in localStorage
-
-  localStorage.getItem("lively.changesets/current") => ChangeSetName
-
-The actual changes are stored as git refs and objects in the IndexedDB
-
-Refs such as branches:
-
-  refs : GitRef -> GitHash
-  (e.g. "heads/master" - fc340a00be0)
-
-Objects such as blobs, trees and commits:
-
-  objects : GitHash -> hash/content/etc
-  (e.g. fc340a00be0 -> "this is my file content")
-
-If a package is affected by a change set, there exists a git ref named
-
-  `${packageAddress}/refs/heads/${changeSetName}`
-
-which points to a git tree holding the changes made to the package.
-(git trees link to objects and other trees for sub-directories)
-
-By keeping changes as git tree, it is easy to create a commit for a
-changeset and push this commit as new branch/pull request to GitHub.
-
-All changesets in the current browser session are found by looking
-for these refs for each registered pacakge.
-
-*/
-
 import { arr } from 'lively.lang';
-import { mixins, modes, promisify } from 'js-git-browser';
-import { gitHubToken } from './github-integration.js';
+
 import { gitInterface } from '../index.js';
-
-const repoForPackage = {};
-
-async function gitURLForPackage(pkg) { // PackageAddress -> string?
-  const packageConfig = `${pkg}/package.json`;
-  const conf = await System.import(packageConfig);
-  if (!conf || !conf.repository) return null;
-  const url = conf.repository.url || conf.repository,
-        match = url.match(/github.com[:\/](.*?)(?:\.git)?$/);
-  if (!match) return null;
-  return match[1];
-}
-
-async function repositoryForPackage(pkg) { // PackageAddress -> Repository?
-  if (pkg in repoForPackage) {
-    return repoForPackage[pkg];
-  }
-  const remote = {},
-        repo = {},
-        url = await gitURLForPackage(pkg);
-
-  if (url === null) return null;
-  mixins.github(remote, url, await gitHubToken());
-  mixins.readCombiner(remote);
-  await new Promise((resolve, reject) => {
-    mixins.indexed.init(err => err ? reject(err) : resolve());
-  });
-  mixins.indexed(repo, pkg);
-  mixins.sync(repo, remote);
-  mixins.fallthrough(repo, remote);
-  mixins.createTree(repo);
-  mixins.memCache(repo);
-  mixins.readCombiner(repo);
-  mixins.walkers(repo);
-  mixins.formats(repo);
-  promisify(repo);
-  return repoForPackage[pkg] = repo;
-}
-
-async function fileHashes(repo, tree) { // Repository, Tree -> {[RelPath]: Hash}
-  const treeStream = await repo.treeWalk(tree),
-        files = {};
-  let obj;
-  while (obj = await treeStream.read()) {
-    if (obj.mode !== modes.file) continue;
-    files[obj.path] = obj.hash;
-  }
-  return files;
-}
-
-class Branch {
-  constructor(name, pkg, tree) { // ChangeSetName, PackageAddress, Hash
-    this.name = name;
-    this.pkg = pkg;
-    this.tree = tree;
-  }
-
-  async fileExists(relPath) { // RelPath -> boolean?
-    const repo = await repositoryForPackage(this.pkg);
-    if (repo === null) return null;
-    const files = await fileHashes(repo, this.tree);
-    return !!files[relPath];
-  }
-
-  async getFileContent(relPath) { // RelPath -> string?
-    const repo = await repositoryForPackage(this.pkg);
-    if (repo === null) return null;
-    const files = await fileHashes(repo, this.tree);
-    if (!files[relPath]) return null;
-    return await repo.loadAs("text", files[relPath]);
-  }
-
-  async setFileContent(relPath, content) { // string, string -> ()
-    //TODO
-  }
-
-  evaluate() {
-    //TODO
-  }
-  
-  delete(db) {
-    return new Promise((resolve, reject) => {
-      const key = this.pkg.address,
-            trans = db.transaction(["refs"], "readonly"),
-            store = trans.objectStore("refs"),
-            request = store.delete(`${key}/heads/${this.name}`);
-      request.onsuccess = evt => resolve(evt.target.result);
-      request.onerror = evt => reject(new Error(evt.value));
-    });
-  }
-}
+import Branch from "./branch.js";
 
 let current = undefined; // undefined (uninitialized) | null (none) | ChangeSet
 let changesets = undefined; // undefined (uninitialized) | Array<ChangeSet>
@@ -150,9 +9,9 @@ let changesets = undefined; // undefined (uninitialized) | Array<ChangeSet>
 class ChangeSet {
 
   constructor(name, pkgs) {
-    // string, Array<{pkg: PackageAddress, hash}> -> ChangeSet
+    // string, Array<{pkg: PackageAddress}> -> ChangeSet
     this.name = name;
-    this.branches = pkgs.map(pkg => new Branch(name, pkg.pkg, pkg.tree));
+    this.branches = pkgs.map(pkg => new Branch(name, pkg.pkg));
   }
 
   resolve(path) { // Path -> [Branch, RelPath] | [null, null]
@@ -174,21 +33,27 @@ class ChangeSet {
     if (!branch) return null;
     return branch.getFileContent(relPath);
   }
+  
+  async createBranch(path) { // Path -> Branch?
+    const mod = gitInterface.getModule(path),
+          pkg = mod.package().address,
+          branch = new Branch(this.name, pkg);
+    await branch.createFrom("master");
+    this.branches.push(branch);
+    return branch;
+  }
 
-  setFileContent(path, content) { // Path, string -> boolean
-    const [branch, relPath] = this.resolve(path);
-    if (!branch) return false;
-    branch.setFileContent(relPath, content);
-    return true;
+  async setFileContent(path, content) { // Path, string -> boolean
+    let [branch, relPath] = this.resolve(path);
+    if (!branch) {
+      await this.createBranch(path);
+      return this.setFileContent(path, content);
+    }
+    return branch.setFileContent(relPath, content);
   }
 
   evaluate() {
     this.branches.forEach(b => b.evaluate());
-  }
-
-  setCurrent() {
-    current = this;
-    window.localStorage.setItem('lively.changesets/current', this.name);
   }
 
   pushToGithub() {
@@ -230,12 +95,13 @@ function localChangeSetsOf(db, pkg) {
     const key = pkg.address,
           trans = db.transaction(["refs"], "readonly"),
           store = trans.objectStore("refs"),
-          request = store.getAll(window.IDBKeyRange.bound(`${key}/heads/`, `${key}/headsZ`));
+          request = store.getAll(window.IDBKeyRange.bound(`${key}/heads.`, `${key}/heads:`));
     request.onsuccess = evt => resolve(evt.target.result);
     request.onerror = evt => reject(new Error(evt.value));
-  }).then(keys => keys.map(({path, hash}) => {
-    const pathParts = path.split('/');
-    return {cs: pathParts[pathParts.length - 1], tree: hash, pkg: pkg.address};
+  }).then(keys => keys.map(({path}) => {
+    const pathParts = path.split('/'),
+          cs = pathParts[pathParts.length - 1];
+    return {cs, pkg: pkg.address};
   }));
 }
 
@@ -266,4 +132,15 @@ export async function currentChangeSet() { // () -> ChangeSet?
   const csName = window.localStorage.getItem('lively.changesets/current');
   const cs = (await localChangeSets()).find(cs => cs.name === csName);
   return current = (cs === undefined ? null : cs);
+}
+
+export async function setCurrentChangeSet(csName) { // ChangeSetName -> ChangeSet
+  if (!csName) {
+    current = null;
+    window.localStorage.removeItem('lively.changesets/current');
+  } else {
+    const cs = (await localChangeSets()).find(cs => cs.name === csName);
+    current = cs;
+    window.localStorage.setItem('lively.changesets/current', csName);
+  }
 }
