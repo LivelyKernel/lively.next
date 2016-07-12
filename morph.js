@@ -589,7 +589,7 @@ export class Morph {
   }
 
   onDrop(evt) {
-    evt.hand.dropMorph(evt);
+    evt.hand.dropMorphsOn(this, evt);
   }
 
 
@@ -680,35 +680,37 @@ export class Hand extends Morph {
   get draggable() { return false; }
   get grabbable() { return false; }
 
+  get grabbedMorphs() { return this.submorphs; }
+  
+  carriesMorphs() { return !!this.grabbedMorphs.length; }
+
   update(evt) {
     this.position = evt.position;
   }
 
   morphBeneath(pos) {
-      var someOwner = this.world() || this.owner;
-      if (!someOwner) return null;
-      var morphs = someOwner.morphsContainingPoint(pos),
-          myIdx = morphs.indexOf(this),
-          morphBeneath = morphs[myIdx + 1];
-      return morphBeneath
+    var someOwner = this.world() || this.owner;
+    if (!someOwner) return null;
+    var morphs = someOwner.morphsContainingPoint(pos),
+        myIdx = morphs.indexOf(this),
+        morphBeneath = morphs[myIdx + 1];
+    return morphBeneath;
   }
 
   grab(morph, evt) {
-    if (morph.grabbable) {
-      evt.state.prevProps = {
-        dropShadow: morph.dropShadow,
-        reactsToPointer: morph.reactsToPointer
-      }
-      this.addMorph(morph);
-      // So that the morph doesn't steal events
-      morph.reactsToPointer = false;
-      morph.dropShadow = true;
+    evt.state.prevProps = {
+      dropShadow: morph.dropShadow,
+      reactsToPointer: morph.reactsToPointer
     }
+    this.addMorph(morph);
+    // So that the morph doesn't steal events
+    morph.reactsToPointer = false;
+    morph.dropShadow = true;
   }
 
-  dropMorph(evt) {
-    this.submorphs.forEach(morph => {
-      evt.targetMorph.addMorph(morph)
+  dropMorphsOn(dropTarget, evt) {
+    this.grabbedMorphs.forEach(morph => {
+      dropTarget.addMorph(morph)
       morph.reactsToPointer = evt.state.prevProps.reactsToPointer;
       morph.dropShadow = evt.state.prevProps.dropShadow;
     });
