@@ -106,12 +106,12 @@ describe("events", () => {
     eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(30, 33)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onGrab-submorph2"]);
     eventLog.length = 0;
-    expect(world.hands[0].carriesGrabbedMorph()).equals(true);
+    expect(world.hands[0].carriesMorphs()).equals(true);
     eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
     eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(40, 41)));
     eventDispatcher.dispatchDOMEvent(fakeEvent(world, "pointerup", pt(34, 36)));
-    expect(eventLog).deep.equals(["onMouseMove-world", "onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
-    expect(world.hands[0].carriesGrabbedMorph()).equals(false);
+    expect(eventLog).deep.equals(["onMouseMove-world", "onMouseMove-world", "onMouseUp-world", "onDrop-world"]);
+    expect(world.hands[0].carriesMorphs()).equals(false);
   });
 
   xit("dropped morph has correct position", () => {
