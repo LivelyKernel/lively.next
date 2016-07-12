@@ -98,6 +98,7 @@ describe("copy", () => {
       submorphs: [{name: "submorph2"}]
     });
     expect(copy.owner).equals(null);
+    expect(copy.id).not.equals(world.get("submorph1").id);
   });
 
 });

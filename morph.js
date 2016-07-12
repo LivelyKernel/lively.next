@@ -376,6 +376,8 @@ export class Morph {
     return this;
   }
 
+  removeAllMorphs() { this.submorphs = [] }
+
   get owner() { return this._owner; }
 
   withAllSubmorphsDetect(testerFunc) {

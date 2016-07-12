@@ -21,7 +21,10 @@ function fakeEvent(targetMorph, type, pos = pt(0,0)) {
 function installEventLogger(morph, log) {
   var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDragStart", "onDrag", "onDragEnd", "onGrab", "onDrop"]
   loggedEvents.forEach(name => {
-    morph[name] = function(evt) { log.push(name + "-" + morph.name)}
+    morph[name] = function(evt) {
+      log.push(name + "-" + morph.name);
+      this.constructor.prototype[name].call(this, evt);
+    }
   });
 }
 
@@ -63,49 +66,50 @@ describe("events", () => {
   });
 
   it("mousedown on submorph", () => {
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerdown"));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerdown"));
     expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
   });
 
   it("stop event", () => {
-    submorph1.onMouseDown = function(evt) { 
-      evt.stop(); 
-      eventLog.push("onMouseDown-submorph1"); 
+    submorph1.onMouseDown = function(evt) {
+      evt.stop();
+      eventLog.push("onMouseDown-submorph1");
     }
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerdown"));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerdown"));
     expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1"]);
   });
 
   it("world has hand and moves it", () => {
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(120,130)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(120,130)));
     expect(world.submorphs[0]).property("isHand", true);
   });
 
   it("drag morph", () => {
     submorph2.grabbable = false;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerdown", pt(20, 25)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerdown", pt(20, 25)));
     expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
     eventLog.length = 0;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(30, 33)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(30, 33)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onDragStart-submorph2"]);
     eventLog.length = 0;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onDrag-submorph2"]);
     eventLog.length = 0;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
     expect(eventLog).deep.equals(["onMouseUp-world", "onDragEnd-submorph2"]);
   });
-  
+
   it("grab morph", () => {
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerdown", pt(20, 25)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerdown", pt(20, 25)));
     expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
     eventLog.length = 0;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(30, 33)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(30, 33)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onGrab-submorph2"]);
     eventLog.length = 0;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
-    expect(eventLog).deep.equals(["onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(40, 41)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
+    expect(eventLog).deep.equals(["onMouseMove-world", "onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
   });
 
   xit("dropped morph has correct position", () => {
@@ -114,17 +118,17 @@ describe("events", () => {
       {position: pt(60,60), extent: pt(20,20), fill: Color.green}];
     var [m1, m2] = world.submorphs;
 
-    eventDispatcher.dispatchEvent(fakeEvent(m2, "pointerdown", pt(60,60)));
-    eventDispatcher.dispatchEvent(fakeEvent(m2, "pointermove", pt(65,65)));
-    eventDispatcher.dispatchEvent(fakeEvent(m2, "pointermove", pt(66,66)));
-    eventDispatcher.dispatchEvent(fakeEvent(world, "pointerup", pt(2,2)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointerdown", pt(60,60)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointermove", pt(65,65)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointermove", pt(66,66)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(world, "pointerup", pt(2,2)));
 
     expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
     eventLog.length = 0;
     expect(eventLog).deep.equals(["onMouseMove-world", "onGrab-submorph2"]);
     eventLog.length = 0;
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
-    eventDispatcher.dispatchEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointermove", pt(34, 36)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
     expect(eventLog).deep.equals(["onMouseMove-world", "onMouseUp-world", "onDrop-submorph2"]);
   });
 
@@ -132,11 +136,11 @@ describe("events", () => {
     expect(submorph4).property("textString").equals("old text");
     domEnv.document.getElementById(submorph4.id).value = "new text";
     expect(submorph4).property("textString").equals("old text");
-    eventDispatcher.dispatchEvent(fakeEvent(submorph4, "input", pt(225, 225)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph4, "input", pt(225, 225)));
     expect(submorph4).property("textString").equals("new text");
     domEnv.document.getElementById(submorph4.id).value = "really new text";
     expect(submorph4).property("textString").equals("new text");
-    eventDispatcher.dispatchEvent(fakeEvent(submorph4, "input", pt(225, 225)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(submorph4, "input", pt(225, 225)));
     expect(submorph4).property("textString").equals("really new text");
   });
 
