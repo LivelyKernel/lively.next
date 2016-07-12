@@ -814,11 +814,18 @@ export class Text extends Morph {
   get autoFitsOnInput() { return this.getProperty("autoFitsOnInput") }
   set autoFitsOnInput(value) { this.recordChange({prop: "autoFitsOnInput", value}) }
 
+  get fontFamily() { return this.getProperty("fontFamily") }
+  set fontFamily(value) { this.recordChange({prop: "fontFamily", value}) }
+
+  get fontSize() { return this.getProperty("fontSize") }
+  set fontSize(value) { this.recordChange({prop: "fontSize", value}) }
+
   shape() {
     return {
       value: this.textString,
       readOnly: !this.allowsInput,
-      style: { resize: "none", border: "none", overflow: "hidden", "white-space": "nowrap" }
+      style: { resize: "none", border: "none", overflow: "hidden", "white-space": "nowrap",
+               "font-family": this.fontFamily, "font-size": this.fontSize }
     }
   }
 
