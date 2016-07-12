@@ -87,6 +87,10 @@ class ChangeSet {
       await branch.delete(db);
     }
   }
+  
+  setCurrent() { // -> Promise
+    return setCurrentChangeSet(this.name);
+  }
 }
 
 function localChangeSetsOf(db, pkg) {
