@@ -10,19 +10,21 @@ reading and writing to a current *ChangeSet*.
 
 ## Example use:
 
-    import { gitInterface, createChangeSet } from "lively.changesets";
-    
-    const origSrc = await gitInterface.moduleRead("lively.modules/index.js");
-    
-    const cs = await createChangeSet("test");
-    cs.setCurrent();
-    await gitInterface.moduleWrite("lively.modules/index.js", "export const x=1");
-    const newSrc = await gitInterface.moduleRead("lively.modules/index.js");
-    // newSrc == "export const x=1";
-    
-    cs.delete();
-    const restoredSrc = await gitInterface.moduleRead("lively.modules/index.js");
-    // restoredSrc == origSrc;
+```js
+import { gitInterface, createChangeSet } from "lively.changesets";
+
+const origSrc = await gitInterface.moduleRead("lively.modules/index.js");
+
+const cs = await createChangeSet("test");
+cs.setCurrent();
+await gitInterface.moduleWrite("lively.modules/index.js", "export const x=1");
+const newSrc = await gitInterface.moduleRead("lively.modules/index.js");
+// newSrc == "export const x=1";
+
+cs.delete();
+const restoredSrc = await gitInterface.moduleRead("lively.modules/index.js");
+// restoredSrc == origSrc;
+```
 
 ## Implementation
 
