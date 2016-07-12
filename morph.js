@@ -464,9 +464,13 @@ export class Morph {
     return globalTransform;
   }
 
-  worldPoint(pt) {
-    return pt.matrixTransform(this.transformToMorph(this.world()));
+  worldPoint(p) {
+    var world = this.world();
+    return world ? p.matrixTransform(this.transformToMorph(world)) : p;
   }
+
+  get globalPosition() { return this.worldPoint(pt(0,0)) }
+  set globalPosition(p) { return this.position = this.owner ? this.owner.localize(p) : p; }
 
   getTransform () {
     var scale = this.scale,
