@@ -824,21 +824,16 @@ export class Text extends Morph {
     return {
       value: this.textString,
       readOnly: !this.allowsInput,
-      style: { resize: "none", border: "none", overflow: "hidden", "white-space": "nowrap",
+      style: { resize: "none", border: "none", overflow: "hidden",
+               "white-space": "nowrap", padding: "0px",
                "font-family": this.fontFamily, "font-size": this.fontSize }
     }
   }
 
   autoFitIfNeeded(domNode) {
     if (this.autoFitsOnInput) {
-      domNode.style.height = "0px";
-      domNode.style.width = "0px";
-      var newHeight = domNode.scrollHeight,
-          newWidth = domNode.scrollWidth;
-      domNode.style.height = newHeight + "px";
-      domNode.style.width = newWidth + "px";
-      this.height = newHeight;
-      this.width = newWidth;
+      ({ height: this.height, width: this.width} =
+        this.world().fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString));
     }
   }
 
