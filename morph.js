@@ -822,19 +822,21 @@ export class Text extends Morph {
     }
   }
 
-  autoFit(domNode) {
-    domNode.style.height = "0px";
-    domNode.style.width = "0px";
-    var newHeight = domNode.scrollHeight,
-        newWidth = domNode.scrollWidth;
-    domNode.style.height = newHeight + "px";
-    domNode.style.width = newWidth + "px";
-    this.height = newHeight;
-    this.width = newWidth;
+  autoFitIfNeeded(domNode) {
+    if (this.autoFitsOnInput) {
+      domNode.style.height = "0px";
+      domNode.style.width = "0px";
+      var newHeight = domNode.scrollHeight,
+          newWidth = domNode.scrollWidth;
+      domNode.style.height = newHeight + "px";
+      domNode.style.width = newWidth + "px";
+      this.height = newHeight;
+      this.width = newWidth;
+    }
   }
 
   onInput(evt) {
     this.textString = evt.domEvt.target.value;
-    if (this.autoFitsOnInput) this.autoFit(evt.domEvt.target);
+    this.autoFitIfNeeded(evt.domEvt.target);
   }
 }
