@@ -46,8 +46,7 @@ export default class Branch {
   
   async head() { // -> Hash?
     const repo = await this.repo(),
-          headHash = await repo.readRef(`heads/${this.name}`);
-    var key = repo.refPrefix + `/heads/${this.name}`;
+          headHash = await repo.readRef(`refs/heads/${this.name}`);
     if (!headHash) return null;
     return repo.loadAs("commit", headHash);
   }
@@ -75,13 +74,13 @@ export default class Branch {
   async createFrom(csName) { // ChangeSetName -> ()
     // create a commit and a ref for this branch based on other branch
     const repo = await this.repo(),
-          baseHead = await repo.readRef(`heads/${csName}`);
+          baseHead = await repo.readRef(`refs/heads/${csName}`);
     if (!baseHead) throw new Error(`Could not find branch ${csName}`);
     const tree = (await repo.loadAs("commit", baseHead)).tree,
           author = Object.assign(getAuthor(), {date: new Date()}),
           message = "created changeset",
           commitHash = await repo.saveAs("commit", {tree, author, message, parents: [baseHead]});
-    return repo.updateRef(`heads/${this.name}`, commitHash);
+    return repo.updateRef(`refs/heads/${this.name}`, commitHash);
   }
   
   async fileExists(relPath) { // RelPath -> boolean?
@@ -109,7 +108,7 @@ export default class Branch {
     changes.base = await this.tree();
     const tree = await repo.createTree(changes),
           commitHash = await repo.saveAs("commit", {tree, author, message, parents: base.parents});
-    return repo.updateRef(`heads/${this.name}`, commitHash);
+    return repo.updateRef(`refs/heads/${this.name}`, commitHash);
   }
 
   evaluate() {
@@ -121,7 +120,7 @@ export default class Branch {
       const key = this.pkg,
             trans = db.transaction(["refs"], "readwrite"),
             store = trans.objectStore("refs"),
-            request = store.delete(`${key}/heads/${this.name}`);
+            request = store.delete(`${key}/refs/heads/${this.name}`);
       request.onsuccess = evt => resolve(evt.target.result);
       request.onerror = evt => reject(new Error(evt.value));
     });
