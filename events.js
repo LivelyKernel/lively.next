@@ -1,5 +1,6 @@
 import { arr } from "lively.lang";
 import { pt } from "lively.graphics";
+import bowser from "bowser";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // event constants and type detection
