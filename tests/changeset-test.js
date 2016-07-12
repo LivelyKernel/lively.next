@@ -58,9 +58,7 @@ describe("basics", () => {
   
   it("writes changes to new changeset", async () => {
     const cs = await initChangeSet(pkgDir);
-    console.log(cs.branches.length);
     await changeA("export const x = 2;\n");
-    console.log(cs.branches.length);
     expect(await cs.fileExists(fileA)).to.be.true;
     const changedSrc = await gitInterface.moduleRead(fileA);
     expect(changedSrc).to.be.eql("export const x = 2;\n");
