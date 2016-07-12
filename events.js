@@ -271,7 +271,7 @@ export class EventDispatcher {
         } catch (e) {
           err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
           err.originalError = e;
-          $world.logError(err);
+          typeof $world !== "undefined" ? $world.logError(err) : console.error(err);
         }
         if (err || evt.stopped) break;
       }
