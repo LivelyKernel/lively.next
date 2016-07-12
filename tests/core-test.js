@@ -56,25 +56,25 @@ describe("full morphic setup with renderer and events", () => {
     });
 
     describe("shapes", () => {
-  
+
       it("shape influences node style", () => {
         const style = renderer.getNodeForMorph(ellipse).style;
         expect(style.borderRadius).match(/50px/);
         expect(style.position).equals("absolute");
       });
-  
+
       it("morph type influences node type", () => {
         expect(ellipse._nodeType).equals("div");
         expect(image._nodeType).equals("img");
       });
-  
+
       it("morph type influences node attributes", () => {
         const ellipseNode = renderer.getNodeForMorph(ellipse),
               imageNode = renderer.getNodeForMorph(image);
         expect(ellipseNode).not.to.have.property('src');
         expect(imageNode).to.have.property('src');
       });
-  
+
     });
 
   });
@@ -90,7 +90,7 @@ describe("copy", () => {
       name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
       submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]}]});
   });
-  
+
   it("copies all attributes", () => {
     var copy = world.get("submorph1").copy();
     expect(copy).to.containSubset({
@@ -136,38 +136,56 @@ describe("relationship", () => {
     expect(submorph2.world()).equals(world);
   });
 
-  it("adds morph in front of other", () => {
-    var newMorph = world.addMorph({name: "new morph"}, world.submorphs[1]);
-    expect(world.submorphs[0]).equals(submorph1);
-    expect(world.submorphs[1]).equals(newMorph);
-    expect(world.submorphs[2]).equals(submorph3);
+  describe("addMorph", () => {
+
+    afterEach(() => createDummyWorld());
+
+    it("adds morph in front of other", () => {
+      var newMorph = world.addMorph({name: "new morph"}, world.submorphs[1]);
+      expect(world.submorphs[0]).equals(submorph1);
+      expect(world.submorphs[1]).equals(newMorph);
+      expect(world.submorphs[2]).equals(submorph3);
+    });
+
+    it("adds morph via index", () => {
+      var newMorph1 = world.addMorphAt({name: "new morph 1"}, 1);
+      expect(world.submorphs[0]).equals(submorph1);
+      expect(world.submorphs[1]).equals(newMorph1);
+      expect(world.submorphs[2]).equals(submorph3);
+      var newMorph2 = world.addMorphAt({name: "new morph 2"}, 0);
+      expect(world.submorphs[0]).equals(newMorph2);
+      expect(world.submorphs[1]).equals(submorph1);
+      var newMorph3 = world.addMorphAt({name: "new morph 2"}, 99);
+      expect(world.submorphs[world.submorphs.length-1]).equals(newMorph3);
+    });
+
   });
 
   describe("morph lookup", () => {
-  
+
     it("get() finds a morph by name", () => {
       expect(world.get("submorph2")).equals(submorph2);
       expect(submorph2.get("submorph3")).equals(submorph3);
       submorph2.remove();
       expect(submorph2.get("submorph3")).equals(null);
     });
-  
+
     it("allows double naming", () => {
       submorph1.submorphs = [{name: "a morph"},{name: "a morph", submorphs: [{name: 'another morph'}]},{name: "a morph"}]
       var m = world.get('another morph');
       expect(m.owner).equals(submorph1.submorphs[1]);
       expect(m.get("a morph")).equals(submorph1.submorphs[0]);
     });
-  
+
     it("get() uses toString", () => {
       submorph3.toString = () => "oink"
       expect(world.get("oink")).equals(submorph3);
     });
-  
+
     it("get() works with RegExp", () => {
       expect(world.get(/rph3/)).equals(submorph3);
     });
-  
+
   });
 });
 

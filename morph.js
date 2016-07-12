@@ -93,7 +93,8 @@ export class Morph {
   }
 
   recordChange(change) {
-    change.target = this;
+    if (!change.target) change.target = this;
+    if (!change.owner) change.owner = this.owner;
     if (!change.type) change.type = "setter";
     this._unrenderedChanges.push(change);
     this.makeDirty();
@@ -306,14 +307,15 @@ export class Morph {
     });
   }
 
-  addMorph(submorph, insertBeforeMorph) {
+  addMorphAt(submorph, index) {
     if (submorph.isMorph) {
 
       // sanity check
       if (submorph.isAncestorOf(this)) {
           alert('addMorph: Circular relationships between morphs not allowed\n'
               + 'tried to drop ' + submorph + ' on ' + this);
-          return null;
+          // return null;
+          this.remove();
       }
 
       // tramsformation of new owner is applied to morph
@@ -332,23 +334,30 @@ export class Morph {
     // set new owner
     submorph._owner = this;
 
-    // insert at right position in submorph list, according to insertBeforeMorph
-    var submorphs = this.submorphs,
-        insertBeforeMorphIndex = insertBeforeMorph ? submorphs.indexOf(insertBeforeMorph) : -1,
-        insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
-    submorphs.splice(insertionIndex, 0, submorph);
+    var submorphs = this.submorphs;
+    index = Math.min(submorphs.length, Math.max(0, index));
+    submorphs.splice(index, 0, submorph);
 
     this.recordChange({
       prop: "submorphs", value: submorphs,
       type: "method-call",
       receiver: this,
-      selector: "addMorph",
-      args: [submorph, insertBeforeMorph]
+      selector: "addMorphAt",
+      args: [submorph, index]
     });
 
     if (tfm) { submorph.setTransform(tfm); }
 
     return submorph;
+  }
+
+  addMorph(submorph, insertBeforeMorph) {
+    // insert at right position in submorph list, according to insertBeforeMorph
+    var submorphs = this.submorphs,
+        insertBeforeMorphIndex = insertBeforeMorph ? submorphs.indexOf(insertBeforeMorph) : -1,
+        insertionIndex = insertBeforeMorphIndex === -1 ? submorphs.length : insertBeforeMorphIndex;
+
+    return this.addMorphAt(submorph, insertionIndex);
   }
 
   addMorphBack(other) {
@@ -367,9 +376,11 @@ export class Morph {
     owner.recordChange({
       prop: "submorphs", value: submorphs,
       type: "method-call",
+      owner: owner,
       receiver: this,
       selector: "remove",
-      args: []
+      args: [],
+      meta: {index}
     });
     return this;
   }
