@@ -92,6 +92,12 @@ export class Event {
     this.stopped = true;
     this.domEvt.stopPropagation();
     this.domEvt.preventDefault();
+
+    var draggedMorph = this.state.draggedMorph;
+    if (this.type === "drag" || this.type === "dragstart" || draggedMorph) {
+      this.state.draggedMorph = null;
+      this.dispatcher.schedule(new Event("dragend", this.domEvt, this.dispatcher, [draggedMorph], this.hand));
+    }
   }
 
   get targetMorph() { return this.targetMorphs[0]; }
