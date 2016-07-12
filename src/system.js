@@ -43,9 +43,9 @@ export default class LocalGitSystem extends LocalCoreInterface {
     return Promise.resolve(0);
   }
 
-  async resourceWrite(url, source) {
+  async resourceWrite(url, src) {
     const cs = await currentChangeSet();
-    return cs === null ? super.resourceWrite(url, source) : 23;
+    return cs === null ? super.resourceWrite(url, src) : cs.setFileContent(url, src);
   }
 
   resourceCreateFiles(baseDir, spec) {
