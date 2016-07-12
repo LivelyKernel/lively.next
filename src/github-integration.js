@@ -29,3 +29,17 @@ export async function gitHubToken() {
     return "0000000000000000000000000000000000000000";
   }
 }
+
+export async function gitHubURL(pkg) { // PackageAddress -> string?
+  const packageConfig = `${pkg}/package.json`;
+  try {
+    const conf = await System.import(packageConfig);
+    if (!conf || !conf.repository) return null;
+    const url = conf.repository.url || conf.repository,
+          match = url.match(/github.com[:\/](.*?)(?:\.git)?$/);
+    if (!match) return null;
+    return match[1];
+  } catch (e) {
+    return null;
+  }
+}
