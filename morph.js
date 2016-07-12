@@ -1,5 +1,6 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
+import { show } from "./markers.js";
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass;
@@ -77,6 +78,8 @@ export class Morph {
   toString() {
     return `<${this.constructor.name} - ${this.name ? this.name : this.id}>`;
   }
+
+  show() { return show(this); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // changes
@@ -202,11 +205,6 @@ export class Morph {
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
-
-  bounds() {
-    var {x,y} = this.position, {x:w,y:h} = this.extent;
-    return rect(x,y,w,h);
-  }
 
   bounds() {
     var tfm = this.getTransform(),
