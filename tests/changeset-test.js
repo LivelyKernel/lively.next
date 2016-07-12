@@ -66,4 +66,15 @@ describe("basics", () => {
     const changedSrc2 = await gitInterface.moduleRead(fileA);
     expect(changedSrc2).to.be.eql("export const x = 1;\n");
   });
+  
+  it("writes multiple changes to same changeset", async () => {
+    const cs = await initChangeSet(pkgDir);
+    await changeA("export const x = 2;\n");
+    await changeA("export const x = 3;\n");
+    const changedSrc = await gitInterface.moduleRead(fileA);
+    expect(changedSrc).to.be.eql("export const x = 3;\n");
+    await cs.delete();
+    const changedSrc2 = await gitInterface.moduleRead(fileA);
+    expect(changedSrc2).to.be.eql("export const x = 1;\n");
+  });
 });
