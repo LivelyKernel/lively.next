@@ -100,6 +100,7 @@ describe("events", () => {
   });
 
   it("grab morph", () => {
+    submorph2.grabbable = true;
     eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerdown", pt(20, 25)));
     expect(eventLog).deep.equals(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
     eventLog.length = 0;
