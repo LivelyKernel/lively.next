@@ -36,6 +36,7 @@ export class Renderer {
       throw new Error(`Trying to initialize renderer with an invalid root node: ${rootNode}`)
     this.worldMorph = world;
     world._isWorld = true; // for world() method
+    world._renderer = this;
     this.rootNode = rootNode;
     this.domNode = null;
     this.domEnvironment = domEnvironment;
@@ -48,6 +49,8 @@ export class Renderer {
     this.domNode && this.domNode.parentNode.removeChild(this.domNode);
     this.domNode = null;
     this.renderMap = new WeakMap();
+    this._fontMetric && this._fontMetric.uninstall();
+    this._fontMetric = null;
   }
 
   ensureDefaultCSS() {
@@ -154,5 +157,104 @@ export class Renderer {
     return this.worldMorph ?
       this.worldMorph.withAllSubmorphsDetect(morph => morph.id === node.id) :
       null;
+  }
+
+  get fontMetric() {
+    if (!this._fontMetric) {
+      this._fontMetric = new FontMetric();
+      this._fontMetric.install(this.domNode);
+    }
+    return this._fontMetric;
+  }
+}
+
+
+class FontMetric {
+
+  constructor() {
+    this.charMap = [];
+    this.parentElement = null;
+    this.element = null;
+  }
+
+  install(parentEl = document.body) {
+    this.parentElement = parentEl;
+    this.element = document.createElement("div");
+    this.setMeasureNodeStyles(this.element.style, true);
+    this.parentElement.appendChild(this.element);
+  }
+
+  uninstall() {
+    if (this.element) {
+      this.parentElement.removeChild(this.element);
+      this.parentElement = null;
+      this.element = null;
+    }
+  }
+
+  setMeasureNodeStyles(style, isRoot) {
+    style.width = style.height = "auto";
+    style.left = style.top = "0px";
+    style.visibility = "hidden";
+    style.position = "absolute";
+    style.whiteSpace = "pre";
+    style.font = "inherit";
+    style.overflow = isRoot ? "hidden" : "visible";
+  }
+
+  measure(fontFamily, fontSize, char) {
+    if (!this.element) this.install();
+    var rect = null;
+    this.element.innerHTML = char;
+    this.element.style.fontFamily = fontFamily;
+    this.element.style.fontSize = fontSize;
+    try {
+      rect = this.element.getBoundingClientRect();
+    } catch(e) {
+      rect = {width: 0, height:0};
+    };
+    return {
+      height: rect.height,
+      width: rect.width
+    }
+  }
+
+  sizeFor(fontFamily, fontSize, char) {
+    if (char.length > 1)
+      return this.sizeForStr(fontFamily, fontSize, char);
+
+    if (!this.charMap[fontFamily]) {
+      this.charMap[fontFamily] = [];
+    }
+    if (!this.charMap[fontFamily][fontSize]) {
+      this.charMap[fontFamily][fontSize] = [];
+    }
+    if (!this.charMap[fontFamily][fontSize][char])
+      this.charMap[fontFamily][fontSize][char] = this.measure(fontFamily, fontSize, char);
+    return this.charMap[fontFamily][fontSize][char];
+  }
+
+  sizeForStr(fontFamily, fontSize, str) {
+    var height = 0, width = 0;
+    for (let line of str.split('\n')) {
+      let lineHeight = 0, lineWidth = 0;
+      for (let char of line.split('')) {
+        let { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
+        if (charHeight > lineHeight) lineHeight = charHeight;
+        lineWidth += charWidth;
+      }
+      if (lineWidth > width) width = lineWidth;
+      height += lineHeight || this.sizeFor(fontFamily, fontSize, " ").height;
+    }
+    return { height: height, width: width };
+  }
+
+  asciiSizes(fontFamily, fontSize) {
+    var result = {};
+    for (var i = 32; i <= 126; i++) {
+      var char = String.fromCharCode(i);
+      result[char] = this.sizeFor(fontFamily, fontSize, char)
+    }
+    return result;
   }
 }
