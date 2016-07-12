@@ -1,43 +1,47 @@
+import { arr } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { Morph } from "./morph.js";
 
 export class ObjectDrawer extends Morph {
 
-  constructor() {
-    super({
+  constructor(props) {
+    super(Object.assign({
       name: "object-drawer",
       position: pt(20, 20),
       extent: pt(3 * (120 + 10) + 15, 130),
       fill: Color.white,
       borderWidth: 1,
       borderColor: Color.gray
-    });
+    }, props));
     this.setup();
   }
 
   setup() {
-    var pos = pt(5,5);
+    var n = 3,
+        margin = pt(5,5),
+        objExt = pt(((this.width - margin.x) / n) - margin.x, this.height - margin.y*2),
+        pos = margin;
 
     this.addMorph({
       type: "ellipse",
-      position: pos, extent: pt(118,118),
+      position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
       onDrag: doCopy
     });
 
-    pos = pos.addXY(140, 0);
+    pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
 
     this.addMorph({
-      position: pos, extent: pt(118,118),
+      position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
       onDrag: doCopy
     });
 
-    pos = pos.addXY(140, 0);
+    pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
 
     this.addMorph({
       type: "image",
-      position: pos, extent: pt(118,118),
+      position: pos, extent: objExt,
       fill: null, grabbable: false,
       onDrag: doCopy
     });
@@ -46,7 +50,7 @@ export class ObjectDrawer extends Morph {
       evt.stop();
       evt.hand.grab(Object.assign(this.copy(), {
         fill: this.isImage ? null : Color.random(),
-        grabbable: true,
+        grabbable: false,
         position: evt.positionIn(this).negated()
       }), evt);
     }
