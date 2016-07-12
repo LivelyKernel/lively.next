@@ -32,7 +32,7 @@ const defaultProperties = {
   clipMode: "visible",
   reactsToPointer: true,
   draggable: true,
-  grabbable: true,
+  grabbable: false,
   dropShadow: false,
   styleClasses: ["morph"],
   submorphs:  []
@@ -590,7 +590,14 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get dragTriggerDistance() { return 5; }
-  onMouseDown(evt) {}
+  onMouseDown(evt) {
+    if (this === evt.targetMorph) {
+      setTimeout(() => {
+        if (!evt.state.draggedMorph && evt.state.clickedOnMorph === this)
+          evt.hand.grab(this, evt);
+      }, 800);
+    }
+  }
   onMouseUp(evt) {}
   onMouseMove(evt) {}
   onInput(evt) {}
