@@ -37,6 +37,15 @@ const defaultProperties = {
   submorphs:  []
 }
 
+function newMorphId(morph) {
+  return morph.constructor.name + "_" + string.newUUID().replace(/-/g, "_")
+}
+
+function dissoc(obj, keys) {
+  var clone = obj.clone(obj);
+  keys.forEach(name => delete obj[name]);
+  return clone;
+}
 
 export class Morph {
 
@@ -45,7 +54,7 @@ export class Morph {
     this._changes = [];
     this._unrenderedChanges = [];
     this._dirty = true; // for initial display
-    this._id = this.constructor.name + "_" + string.newUUID().replace(/-/g, "_");
+    this._id = newMorphId(this);
     Object.assign(this, props);
   }
 
@@ -620,13 +629,13 @@ export class Morph {
       _changes: [],
       _unrenderedChanges: [],
       _dirty: true,
-      _id: this.constructor.name + "_" + string.newUUID().replace(/-/g, "_")
+      _id: newMorphId(this)
     }, spec);
     return this;
   }
 
 
-  copy() { return morph(this.exportToJSON()); }
+  copy() { return morph(Object.assign(this.exportToJSON(), {_id: newMorphId(this)})); }
 
 }
 
