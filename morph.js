@@ -658,6 +658,10 @@ export class World extends Morph {
 
   world() { return this }
 
+  get hands() {
+    return this.submorphs.filter(ea => ea.isHand);
+  }
+
   onMouseMove(evt) {
     evt.hand.update(evt);
   }
@@ -748,6 +752,8 @@ export class Image extends Morph {
       this.imageUrl = 'http://lively-web.org/core/media/lively-web-logo-small.png'
   }
 
+  get isImage() { return true }
+
   get _nodeType() { return 'img'; }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }
@@ -768,6 +774,8 @@ export class Text extends Morph {
       this.allowsInput = true;
     }
   }
+
+  get isText() { return true }
 
   get _nodeType() { return 'textarea'; }
 
