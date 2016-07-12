@@ -169,7 +169,7 @@ export class EventDispatcher {
     this.installed = true;
     Object.keys(typeToMethodMap).forEach(type => {
       this.emitter.addEventListener(
-        type, this.handlerFunctions[type] = evt => this.dispatchEvent(evt))
+        type, this.handlerFunctions[type] = evt => this.dispatchDOMEvent(evt))
     });
     return this;
   }
@@ -258,36 +258,38 @@ export class EventDispatcher {
     return events;
   }
 
-  dispatchEvent(domEvt) {
-    var { type, target } = domEvt,
+  schedule(evt) {
+    setTimeout(() => this.dispatchEvent(evt), 0);
+  }
+
+  dispatchEvent(evt) {
+    var method = typeToMethodMap[evt.type],
+        err;
+
+    if (method) {
+      for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
+        try {
+          evt.targetMorphs[j][method](evt);
+        } catch (e) {
+          err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
+          err.originalError = e;
+          $world.logError(err);
+        }
+        if (err || evt.stopped) break;
+      }
+      if (err) throw err;
+    } else {
+      throw new Error(`dispatchEvent: ${evt.type} not yet supported!`)
+    }
+  }
+
+  dispatchDOMEvent(domEvt) {
+    var target = domEvt.target,
         targetId = target.id,
         targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
-
-    if (!targetMorph) return;
-
-    var events = this.createMorphicEventsFromDOMEvent(domEvt, targetMorph);
-
-    for (var i = 0; i < events.length; i++) {
-      var evt = events[i],
-          method = typeToMethodMap[evt.type],
-          err;
-
-      if (method) {
-        for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
-          try {
-            evt.targetMorphs[j][method](evt);
-          } catch (e) {
-            err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
-            err.originalError = e;
-            $world.logError(err);
-          }
-          if (err || evt.stopped) break;
-        }
-        if (err) throw err;
-      } else {
-        throw new Error(`dispatchEvent: ${type} not yet supported!`)
-      }
-    }
+    if (targetMorph)
+      this.createMorphicEventsFromDOMEvent(domEvt, targetMorph)
+        .forEach(evt => this.dispatchEvent(evt))
   }
 
 }
