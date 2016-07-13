@@ -7,3 +7,4 @@ tests/test-dir-imports-exports
 tests/test-project-1-dir
 tests/test-project-2-dir
 tests/test-project-dir
+tests/test-project

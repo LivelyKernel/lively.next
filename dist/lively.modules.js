@@ -21792,15 +21792,9 @@ var categorizer = Object.freeze({
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
   var constructorArgMatcher = /\([^\\)]*\)/;
 
-  var defaultPropertyDescriptorForGetterSetter = {
+  var defaultPropertyDescriptorForClass = {
     enumerable: false,
     configurable: true
-  };
-
-  var defaultPropertyDescriptorForValue = {
-    enumerable: false,
-    configurable: true,
-    writable: true
   };
 
   function createClass$1(name) {
@@ -21845,13 +21839,11 @@ var categorizer = Object.freeze({
 
     // 3. define methods
     staticMethods && staticMethods.forEach(function (ea) {
-      var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
-      Object.defineProperty(klass, ea.key, Object.assign(ea, descr));
+      return Object.defineProperty(klass, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
     });
 
     instanceMethods && instanceMethods.forEach(function (ea) {
-      var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
-      Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, descr));
+      Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, defaultPropertyDescriptorForClass));
     });
 
     // 4. define initializer method, in our class system the constructor is always
@@ -22297,7 +22289,7 @@ var categorizer = Object.freeze({
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -22323,9 +22315,8 @@ var categorizer = Object.freeze({
         }
       }, _callee, this);
     }));
-
     return function ensureImportsAreLoaded(_x, _x2, _x3) {
-      return _ref.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -22333,7 +22324,7 @@ var categorizer = Object.freeze({
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -22406,9 +22397,8 @@ var categorizer = Object.freeze({
         }
       }, _callee2, this);
     }));
-
     return function getEs6Transpiler(_x4, _x5, _x6) {
-      return _ref2.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -22466,7 +22456,7 @@ var categorizer = Object.freeze({
   }
 
   var runEval$1 = function () {
-    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -22559,9 +22549,8 @@ var categorizer = Object.freeze({
         }
       }, _callee3, this);
     }));
-
     return function runEval(_x7, _x8, _x9) {
-      return _ref3.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -22575,7 +22564,7 @@ var categorizer = Object.freeze({
     createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -22591,7 +22580,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x, _x2) {
-          return _ref.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -22599,7 +22588,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -22615,7 +22604,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x3, _x4) {
-          return _ref2.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -22635,7 +22624,7 @@ var categorizer = Object.freeze({
     createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -22657,7 +22646,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x5, _x6) {
-          return _ref3.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -22665,7 +22654,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -22691,7 +22680,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x7, _x8) {
-          return _ref4.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -22721,7 +22710,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -22742,7 +22731,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x9, _x10) {
-          return _ref5.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -22750,7 +22739,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -22774,7 +22763,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x11, _x12) {
-          return _ref6.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -22815,155 +22804,85 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest",
       value: function () {
-        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
-          var method, content;
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+          var res, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
               switch (_context7.prev = _context7.next) {
                 case 0:
-                  method = "sendRequest" + (System.get("@system-env").node ? "_node" : "_web");
+                  _context7.prev = 0;
                   _context7.next = 3;
-                  return this[method](payload, url);
-
-                case 3:
-                  content = _context7.sent;
-                  _context7.prev = 4;
-                  return _context7.abrupt("return", JSON.parse(content));
-
-                case 8:
-                  _context7.prev = 8;
-                  _context7.t0 = _context7["catch"](4);
-                  return _context7.abrupt("return", { isError: true, value: "Server eval failed: " + content });
-
-                case 11:
-                case "end":
-                  return _context7.stop();
-              }
-            }
-          }, _callee7, this, [[4, 8]]);
-        }));
-
-        function sendRequest(_x13, _x14) {
-          return _ref7.apply(this, arguments);
-        }
-
-        return sendRequest;
-      }()
-    }, {
-      key: "sendRequest_web",
-      value: function () {
-        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
-          var res;
-          return regeneratorRuntime.wrap(function _callee8$(_context8) {
-            while (1) {
-              switch (_context8.prev = _context8.next) {
-                case 0:
-                  _context8.prev = 0;
-                  _context8.next = 3;
                   return window.fetch(url, payload);
 
                 case 3:
-                  res = _context8.sent;
-                  _context8.next = 9;
+                  res = _context7.sent;
+                  _context7.next = 9;
                   break;
 
                 case 6:
-                  _context8.prev = 6;
-                  _context8.t0 = _context8["catch"](0);
-                  throw new Error("Cannot reach server at " + url + ": " + _context8.t0.message);
+                  _context7.prev = 6;
+                  _context7.t0 = _context7["catch"](0);
+                  throw new Error("Cannot reach server at " + url + ": " + _context7.t0.message);
 
                 case 9:
                   if (res.ok) {
-                    _context8.next = 11;
+                    _context7.next = 11;
                     break;
                   }
 
                   throw new Error("Server at " + url + ": " + res.statusText);
 
                 case 11:
-                  return _context8.abrupt("return", res.text());
+                  _context7.prev = 11;
+                  _context7.next = 14;
+                  return res.text();
 
-                case 12:
+                case 14:
+                  content = _context7.sent;
+                  return _context7.abrupt("return", JSON.parse(content));
+
+                case 18:
+                  _context7.prev = 18;
+                  _context7.t1 = _context7["catch"](11);
+                  return _context7.abrupt("return", { isError: true, value: "Server eval failed: " + content + " (" + res.status + ")" });
+
+                case 21:
                 case "end":
-                  return _context8.stop();
+                  return _context7.stop();
               }
             }
-          }, _callee8, this, [[0, 6]]);
+          }, _callee7, this, [[0, 6], [11, 18]]);
         }));
 
-        function sendRequest_web(_x15, _x16) {
-          return _ref8.apply(this, arguments);
+        function sendRequest(_x13, _x14) {
+          return ref.apply(this, arguments);
         }
 
-        return sendRequest_web;
-      }()
-    }, {
-      key: "sendRequest_node",
-      value: function () {
-        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
-          var urlParse, http, opts;
-          return regeneratorRuntime.wrap(function _callee9$(_context9) {
-            while (1) {
-              switch (_context9.prev = _context9.next) {
-                case 0:
-                  urlParse = System._nodeRequire("url").parse, http = System._nodeRequire("http"), opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
-                  return _context9.abrupt("return", new Promise(function (resolve, reject) {
-                    var request = http.request(opts, function (res) {
-                      res.setEncoding('utf8');
-                      var data = "";
-                      res.on('data', function (chunk) {
-                        return data += chunk;
-                      });
-                      res.on('end', function () {
-                        return resolve(data);
-                      });
-                      res.on('error', function (err) {
-                        return reject(err);
-                      });
-                    });
-                    request.on('error', function (err) {
-                      return reject(err);
-                    });
-                    request.end(payload.body);
-                  }));
-
-                case 2:
-                case "end":
-                  return _context9.stop();
-              }
-            }
-          }, _callee9, this);
-        }));
-
-        function sendRequest_node(_x17, _x18) {
-          return _ref9.apply(this, arguments);
-        }
-
-        return sendRequest_node;
+        return sendRequest;
       }()
     }, {
       key: "runEval",
       value: function () {
-        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(source, options) {
           var payLoad;
-          return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
-              switch (_context10.prev = _context10.next) {
+              switch (_context8.prev = _context8.next) {
                 case 0:
                   options = this.normalizeOptions(options);
                   payLoad = { method: "POST", body: this.sourceForServer("eval", source, options) };
-                  return _context10.abrupt("return", this.sendRequest(payLoad, options.serverEvalURL));
+                  return _context8.abrupt("return", this.sendRequest(payLoad, options.serverEvalURL));
 
                 case 3:
                 case "end":
-                  return _context10.stop();
+                  return _context8.stop();
               }
             }
-          }, _callee10, this);
+          }, _callee8, this);
         }));
 
-        function runEval(_x19, _x20) {
-          return _ref10.apply(this, arguments);
+        function runEval(_x15, _x16) {
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -22971,40 +22890,40 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(prefix, options) {
           var payLoad, result;
-          return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
-              switch (_context11.prev = _context11.next) {
+              switch (_context9.prev = _context9.next) {
                 case 0:
                   options = this.normalizeOptions(options);
                   payLoad = { method: "POST", body: this.sourceForServer("keysOfObject", prefix, options) };
-                  _context11.next = 4;
+                  _context9.next = 4;
                   return this.sendRequest(payLoad, options.serverEvalURL);
 
                 case 4:
-                  result = _context11.sent;
+                  result = _context9.sent;
 
                   if (!result.isError) {
-                    _context11.next = 7;
+                    _context9.next = 7;
                     break;
                   }
 
                   throw new Error(result.value);
 
                 case 7:
-                  return _context11.abrupt("return", result);
+                  return _context9.abrupt("return", result);
 
                 case 8:
                 case "end":
-                  return _context11.stop();
+                  return _context9.stop();
               }
             }
-          }, _callee11, this);
+          }, _callee9, this);
         }));
 
-        function keysOfObject(_x21, _x22) {
-          return _ref11.apply(this, arguments);
+        function keysOfObject(_x17, _x18) {
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -23036,13 +22955,13 @@ var categorizer = Object.freeze({
     doit: function doit(printResult, editor, options) {
       var _this5 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
         var result;
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context10.prev = _context10.next) {
               case 0:
-                _context12.prev = 0;
+                _context10.prev = 0;
 
                 options = Object.assign({
                   inspect: !printResult,
@@ -23050,11 +22969,11 @@ var categorizer = Object.freeze({
                   targetModule: _this5.moduleId(),
                   context: _this5
                 }, options);
-                _context12.next = 4;
+                _context10.next = 4;
                 return evalStrategy(_this5).runEval(_this5.getCodeForEval(), options);
 
               case 4:
-                result = _context12.sent;
+                result = _context10.sent;
 
                 if (printResult) {
                   _this5.printObject(editor, result.value, false, _this5.getPrintItAsComment());
@@ -23062,166 +22981,166 @@ var categorizer = Object.freeze({
                   _this5.setStatusMessage(result.value);
                 }
                 _this5.onDoitDone(result);
-                return _context12.abrupt("return", result);
+                return _context10.abrupt("return", result);
 
               case 10:
-                _context12.prev = 10;
-                _context12.t0 = _context12["catch"](0);
-                _this5.showError(_context12.t0);throw _context12.t0;
+                _context10.prev = 10;
+                _context10.t0 = _context10["catch"](0);
+                _this5.showError(_context10.t0);throw _context10.t0;
 
               case 14:
               case "end":
-                return _context12.stop();
+                return _context10.stop();
             }
           }
-        }, _callee12, _this5, [[0, 10]]);
+        }, _callee10, _this5, [[0, 10]]);
       }))();
     },
     printInspect: function printInspect(options) {
       var _this6 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
         var msgMorph, ed;
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
           while (1) {
-            switch (_context13.prev = _context13.next) {
+            switch (_context11.prev = _context11.next) {
               case 0:
                 options = options || {};
                 msgMorph = _this6._statusMorph;
-                _context13.next = 4;
+                _context11.next = 4;
                 return new Promise(function (resolve, reject) {
                   return _this6.withAceDo(resolve);
                 });
 
               case 4:
-                ed = _context13.sent;
+                ed = _context11.sent;
 
                 if (!(msgMorph && msgMorph.world())) {
-                  _context13.next = 7;
+                  _context11.next = 7;
                   break;
                 }
 
-                return _context13.abrupt("return", ed.execCommand('insertEvalResult'));
+                return _context11.abrupt("return", ed.execCommand('insertEvalResult'));
 
               case 7:
-                return _context13.abrupt("return", _this6.doit(true, ed, { inspect: true, printDepth: options.depth || _this6.printInspectMaxDepth }));
+                return _context11.abrupt("return", _this6.doit(true, ed, { inspect: true, printDepth: options.depth || _this6.printInspectMaxDepth }));
 
               case 8:
               case "end":
-                return _context13.stop();
+                return _context11.stop();
             }
           }
-        }, _callee13, _this6);
+        }, _callee11, _this6);
       }))();
     },
     evalSelection: function evalSelection(printIt) {
       var _this7 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
         var options, result;
-        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
-            switch (_context14.prev = _context14.next) {
+            switch (_context12.prev = _context12.next) {
               case 0:
                 options = { context: _this7, targetModule: _this7.moduleId(), asString: !!printIt };
-                _context14.next = 3;
+                _context12.next = 3;
                 return evalStrategy(_this7).runEval(_this7.getCodeForEval(), options);
 
               case 3:
-                result = _context14.sent;
+                result = _context12.sent;
 
                 if (printIt) _this7.insertAtCursor(result.value, true);
-                return _context14.abrupt("return", result);
+                return _context12.abrupt("return", result);
 
               case 6:
               case "end":
-                return _context14.stop();
+                return _context12.stop();
             }
           }
-        }, _callee14, _this7);
+        }, _callee12, _this7);
       }))();
     },
     doListProtocol: function doListProtocol() {
       var _this8 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
         var m, prefix, completions, lister;
-        return regeneratorRuntime.wrap(function _callee15$(_context15) {
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
           while (1) {
-            switch (_context15.prev = _context15.next) {
+            switch (_context13.prev = _context13.next) {
               case 0:
-                _context15.prev = 0;
+                _context13.prev = 0;
                 m = lively.module("lively.ide.codeeditor.Completions");
 
                 if (m.isLoaded()) {
-                  _context15.next = 5;
+                  _context13.next = 5;
                   break;
                 }
 
-                _context15.next = 5;
+                _context13.next = 5;
                 return m.load();
 
               case 5:
                 prefix = _this8.getCodeForCompletions();
-                _context15.next = 8;
+                _context13.next = 8;
                 return evalStrategy(_this8).keysOfObject(prefix, { context: _this8, targetModule: _this8.moduleId() });
 
               case 8:
-                completions = _context15.sent;
+                completions = _context13.sent;
                 lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this8);
 
                 lister.openNarrower(completions);
-                return _context15.abrupt("return", lister);
+                return _context13.abrupt("return", lister);
 
               case 14:
-                _context15.prev = 14;
-                _context15.t0 = _context15["catch"](0);
-                _this8.showError(_context15.t0);
+                _context13.prev = 14;
+                _context13.t0 = _context13["catch"](0);
+                _this8.showError(_context13.t0);
               case 17:
               case "end":
-                return _context15.stop();
+                return _context13.stop();
             }
           }
-        }, _callee15, _this8, [[0, 14]]);
+        }, _callee13, _this8, [[0, 14]]);
       }))();
     },
     doSave: function doSave() {
       var _this9 = this;
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee16() {
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
           while (1) {
-            switch (_context16.prev = _context16.next) {
+            switch (_context14.prev = _context14.next) {
               case 0:
                 _this9.savedTextString = _this9.textString;
 
                 if (!_this9.getEvalOnSave()) {
-                  _context16.next = 10;
+                  _context14.next = 10;
                   break;
                 }
 
-                _context16.prev = 2;
-                _context16.next = 5;
+                _context14.prev = 2;
+                _context14.next = 5;
                 return lively.modules.moduleSourceChange(_this9.moduleId(), _this9.textString);
 
               case 5:
-                _context16.next = 10;
+                _context14.next = 10;
                 break;
 
               case 7:
-                _context16.prev = 7;
-                _context16.t0 = _context16["catch"](2);
-                return _context16.abrupt("return", _this9.showError(_context16.t0));
+                _context14.prev = 7;
+                _context14.t0 = _context14["catch"](2);
+                return _context14.abrupt("return", _this9.showError(_context14.t0));
 
               case 10:
                 _this9.onSaveDone();
 
               case 11:
               case "end":
-                return _context16.stop();
+                return _context14.stop();
             }
           }
-        }, _callee16, _this9, [[2, 7]]);
+        }, _callee14, _this9, [[2, 7]]);
       }))();
     },
     onDoitDone: function onDoitDone(result) {},
@@ -23904,7 +23823,7 @@ var categorizer = Object.freeze({
   }();
 
   var moduleSourceChange$1 = function () {
-    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
       var changeResult;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -23961,14 +23880,13 @@ var categorizer = Object.freeze({
         }
       }, _callee, this, [[0, 18]]);
     }));
-
     return function moduleSourceChange(_x, _x2, _x3, _x4, _x5, _x6) {
-      return _ref.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeEsm = function () {
-    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
       var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -24131,14 +24049,13 @@ var categorizer = Object.freeze({
         }
       }, _callee2, this, [[13, 30, 34, 42], [35,, 37, 41]]);
     }));
-
     return function moduleSourceChangeEsm(_x7, _x8, _x9, _x10) {
-      return _ref2.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeGlobal = function () {
-    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
       var load, updateData, entry;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -24184,9 +24101,8 @@ var categorizer = Object.freeze({
         }
       }, _callee3, this);
     }));
-
     return function moduleSourceChangeGlobal(_x11, _x12, _x13, _x14) {
-      return _ref3.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -24370,7 +24286,7 @@ var categorizer = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var tryToLoadPackageConfig = function () {
-    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
       var packageConfigURL, config, name;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -24421,9 +24337,8 @@ var categorizer = Object.freeze({
         }
       }, _callee, this, [[3, 14]]);
     }));
-
     return function tryToLoadPackageConfig(_x, _x2) {
-      return _ref.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -24632,7 +24547,7 @@ var categorizer = Object.freeze({
     }, {
       key: "import",
       value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -24658,7 +24573,7 @@ var categorizer = Object.freeze({
         }));
 
         function _import() {
-          return _ref2.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return _import;
@@ -24671,7 +24586,7 @@ var categorizer = Object.freeze({
     }, {
       key: "register",
       value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           var packageLoadStack = arguments.length <= 0 || arguments[0] === undefined ? [this.url] : arguments[0];
 
           var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
@@ -24794,7 +24709,7 @@ var categorizer = Object.freeze({
         }));
 
         function register(_x3) {
-          return _ref3.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return register;
@@ -25088,7 +25003,7 @@ var categorizer = Object.freeze({
     }, {
       key: "ast",
       value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -25117,7 +25032,7 @@ var categorizer = Object.freeze({
         }));
 
         function ast() {
-          return _ref.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return ast;
@@ -25125,7 +25040,7 @@ var categorizer = Object.freeze({
     }, {
       key: "scope",
       value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           var ast;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
@@ -25155,7 +25070,7 @@ var categorizer = Object.freeze({
         }));
 
         function scope() {
-          return _ref2.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return scope;
@@ -25163,7 +25078,7 @@ var categorizer = Object.freeze({
     }, {
       key: "resolvedScope",
       value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -25185,7 +25100,7 @@ var categorizer = Object.freeze({
         }));
 
         function resolvedScope() {
-          return _ref3.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return resolvedScope;
@@ -25218,7 +25133,7 @@ var categorizer = Object.freeze({
     }, {
       key: "load",
       value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
           return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
               switch (_context4.prev = _context4.next) {
@@ -25248,7 +25163,7 @@ var categorizer = Object.freeze({
         }));
 
         function load() {
-          return _ref4.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return load;
@@ -25293,7 +25208,7 @@ var categorizer = Object.freeze({
     }, {
       key: "reload",
       value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
           var _this4 = this;
 
           var toBeReloaded;
@@ -25324,7 +25239,7 @@ var categorizer = Object.freeze({
         }));
 
         function reload(_x) {
-          return _ref5.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return reload;
@@ -25337,7 +25252,7 @@ var categorizer = Object.freeze({
     }, {
       key: "changeSourceAction",
       value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
           var source, newSource;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -25364,7 +25279,7 @@ var categorizer = Object.freeze({
         }));
 
         function changeSourceAction(_x2) {
-          return _ref6.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return changeSourceAction;
@@ -25372,7 +25287,7 @@ var categorizer = Object.freeze({
     }, {
       key: "changeSource",
       value: function () {
-        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
           var oldSource;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -25394,7 +25309,7 @@ var categorizer = Object.freeze({
         }));
 
         function changeSource(_x3, _x4) {
-          return _ref7.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return changeSource;
@@ -25524,7 +25439,7 @@ var categorizer = Object.freeze({
     }, {
       key: "imports",
       value: function () {
-        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -25551,7 +25466,7 @@ var categorizer = Object.freeze({
         }));
 
         function imports() {
-          return _ref8.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return imports;
@@ -25559,7 +25474,7 @@ var categorizer = Object.freeze({
     }, {
       key: "exports",
       value: function () {
-        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -25586,7 +25501,7 @@ var categorizer = Object.freeze({
         }));
 
         function exports() {
-          return _ref9.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return exports;
@@ -25599,14 +25514,14 @@ var categorizer = Object.freeze({
     }, {
       key: "_localDeclForRefAt",
       value: function () {
-        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
           var scope, ref;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
               switch (_context10.prev = _context10.next) {
                 case 0:
                   _context10.next = 2;
-                  return this.scope();
+                  return this.resolvedScope();
 
                 case 2:
                   scope = _context10.sent;
@@ -25624,7 +25539,7 @@ var categorizer = Object.freeze({
         }));
 
         function _localDeclForRefAt(_x6) {
-          return _ref10.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return _localDeclForRefAt;
@@ -25632,14 +25547,14 @@ var categorizer = Object.freeze({
     }, {
       key: "_importForNSRefAt",
       value: function () {
-        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
           var scope, ast, nodes, id, member, name, spec;
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
               switch (_context11.prev = _context11.next) {
                 case 0:
                   _context11.next = 2;
-                  return this.scope();
+                  return this.resolvedScope();
 
                 case 2:
                   scope = _context11.sent;
@@ -25687,7 +25602,7 @@ var categorizer = Object.freeze({
         }));
 
         function _importForNSRefAt(_x7) {
-          return _ref11.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return _importForNSRefAt;
@@ -25695,7 +25610,7 @@ var categorizer = Object.freeze({
     }, {
       key: "_resolveImportedDecl",
       value: function () {
-        var _ref12 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
           var _decl$id, start, name, type, imports, im, imM;
 
           return regeneratorRuntime.wrap(function _callee12$(_context12) {
@@ -25751,7 +25666,7 @@ var categorizer = Object.freeze({
         }));
 
         function _resolveImportedDecl(_x8) {
-          return _ref12.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return _resolveImportedDecl;
@@ -25759,23 +25674,27 @@ var categorizer = Object.freeze({
     }, {
       key: "bindingPathForExport",
       value: function () {
-        var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
           var exports, ex, imM, decl;
           return regeneratorRuntime.wrap(function _callee13$(_context13) {
             while (1) {
               switch (_context13.prev = _context13.next) {
                 case 0:
                   _context13.next = 2;
-                  return this.exports();
+                  return this.resolvedScope();
 
                 case 2:
+                  _context13.next = 4;
+                  return this.exports();
+
+                case 4:
                   exports = _context13.sent;
                   ex = exports.find(function (e) {
                     return e.exported === name;
                   });
 
                   if (!ex.fromModule) {
-                    _context13.next = 15;
+                    _context13.next = 17;
                     break;
                   }
 
@@ -25784,18 +25703,18 @@ var categorizer = Object.freeze({
 
                   decl.decl.module = this;
                   _context13.t0 = [decl];
-                  _context13.next = 11;
+                  _context13.next = 13;
                   return imM.bindingPathForExport(ex.imported);
 
-                case 11:
+                case 13:
                   _context13.t1 = _context13.sent;
                   return _context13.abrupt("return", _context13.t0.concat.call(_context13.t0, _context13.t1));
 
-                case 15:
+                case 17:
                   if (ex && ex.decl) ex.decl.module = this;
                   return _context13.abrupt("return", this._resolveImportedDecl({ decl: ex.decl, id: ex.declId }));
 
-                case 17:
+                case 19:
                 case "end":
                   return _context13.stop();
               }
@@ -25804,7 +25723,7 @@ var categorizer = Object.freeze({
         }));
 
         function bindingPathForExport(_x9) {
-          return _ref13.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return bindingPathForExport;
@@ -25812,8 +25731,8 @@ var categorizer = Object.freeze({
     }, {
       key: "bindingPathForRefAt",
       value: function () {
-        var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
-          var decl, _ref15, _ref16, imDecl, id, name, imM;
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
+          var decl, _ref, _ref2, imDecl, id, name, imM;
 
           return regeneratorRuntime.wrap(function _callee14$(_context14) {
             while (1) {
@@ -25841,11 +25760,11 @@ var categorizer = Object.freeze({
                   return this._importForNSRefAt(pos);
 
                 case 11:
-                  _ref15 = _context14.sent;
-                  _ref16 = slicedToArray(_ref15, 3);
-                  imDecl = _ref16[0];
-                  id = _ref16[1];
-                  name = _ref16[2];
+                  _ref = _context14.sent;
+                  _ref2 = slicedToArray(_ref, 3);
+                  imDecl = _ref2[0];
+                  id = _ref2[1];
+                  name = _ref2[2];
 
                   if (imDecl) {
                     _context14.next = 18;
@@ -25874,7 +25793,7 @@ var categorizer = Object.freeze({
         }));
 
         function bindingPathForRefAt(_x10) {
-          return _ref14.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return bindingPathForRefAt;
@@ -25882,7 +25801,7 @@ var categorizer = Object.freeze({
     }, {
       key: "definitionForRefAt",
       value: function () {
-        var _ref17 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
           var path;
           return regeneratorRuntime.wrap(function _callee15$(_context15) {
             while (1) {
@@ -25913,7 +25832,7 @@ var categorizer = Object.freeze({
         }));
 
         function definitionForRefAt(_x11) {
-          return _ref17.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return definitionForRefAt;
@@ -25951,7 +25870,7 @@ var categorizer = Object.freeze({
     }, {
       key: "search",
       value: function () {
-        var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
           var _this9 = this;
 
           var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
@@ -26047,7 +25966,7 @@ var categorizer = Object.freeze({
         }));
 
         function search(_x12, _x13) {
-          return _ref18.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return search;
