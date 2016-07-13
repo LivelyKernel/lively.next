@@ -810,9 +810,6 @@ export class Text extends Morph {
     if (typeof this.allowsInput !== "boolean") {
       this.allowsInput = true;
     }
-    if (!this.placeholder) {
-      this.placeholder = "text";
-    }
     this.textString = this.textString || "";
   }
 
@@ -871,9 +868,11 @@ export class Text extends Morph {
 
   autoFitIfNeeded() {
     if (this.autoFits && this.autoFitFlagged) {
+      var fontMetric = this.world().fontMetric,
+          { height: placeholderHeight, width: placeholderWidth } = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.placeholder || " "),
+          { height: textHeight, width: textWidth } = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
+      [this.height, this.width] = [Math.max(placeholderHeight, textHeight), Math.max(placeholderWidth, textWidth)];
       this.autoFitFlagged = false;
-      ({ height: this.height, width: this.width } =
-        this.world().fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString));
     }
   }
 
