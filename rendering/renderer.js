@@ -1,8 +1,5 @@
 import { promise } from "lively.lang";
-import vdom from "virtual-dom";
-import { addOrChangeCSSDeclaration } from "./dom-helper.js";
-
-var {h, diff, patch, create} = vdom;
+import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 
 const defaultCSS = `
 .morph {
@@ -56,10 +53,11 @@ export class Renderer {
   ensureDefaultCSS() {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
       .then(doc => addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc))
+      .then(doc => addOrChangeLinkedCSS("lively-font-awesome", System.decanonicalize("lively.morphic/resources/font-awesome/css/font-awesome.css"), doc));
   }
 
   startRenderWorldLoop() {
-    this.renderWorld();
+    this.worldMorph.renderAsRoot(this);
     this.renderWorldLoopProcess = this.domEnvironment.window.requestAnimationFrame(() =>
       this.startRenderWorldLoop());
   }
@@ -67,81 +65,6 @@ export class Renderer {
   stopRenderWorldLoop() {
     this.domEnvironment.window.cancelAnimationFrame(this.renderWorldLoopProcess);
     this.renderWorldLoopProcess = null;
-  }
-
-  renderWorld() {
-    var world = this.worldMorph;
-
-    if (!world.needsRerender()) return;
-
-    var tree = this.renderMap.get(world) || this.renderMorph(world),
-        domNode = this.domNode || (this.domNode = create(tree, this.domEnvironment)),
-        newTree = this.renderMorph(world),
-        patches = diff(tree, newTree);
-
-    if (!domNode.parentNode) {
-      this.rootNode.appendChild(domNode);
-      this.ensureDefaultCSS();
-    }
-
-    patch(domNode, patches);
-  }
-
-  renderMorph(morph) {
-    if (!morph.needsRerender()) {
-      var rendered = this.renderMap.get(morph);
-      if (rendered) return rendered;
-    }
-
-    morph.aboutToRender();
-
-    var {
-      visible,
-      position: {x,y},
-      extent: {x: width, y: height},
-      fill, borderWidth, borderColor, borderRadius: br,
-      clipMode,
-      reactsToPointer
-    } = morph;
-
-    var shapedStyle = Object.assign(
-
-      {
-        position: "absolute",
-        visibility: visible ? "visible" : "hidden",
-        left: x + 'px',
-        top: y + 'px',
-        width: width + 'px',
-        height: height + 'px',
-        backgroundColor: fill ? fill.toString() : "",
-        border: `${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"} solid`,
-        borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
-        overflow: clipMode,
-        "pointer-events": reactsToPointer ? "auto" : "none"
-      },
-
-      morph.dropShadow ? {
-        WebkitFilter: "drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.36))",
-        WebkitTransition: "-webkit-filter 0.5s"
-      } : null,
-
-      morph.shape().style
-    );
-
-    var attributes = Object.assign(
-      morph.shape(), {
-        id: morph.id,
-        className: morph.styleClasses.join(" "),
-        draggable: false,
-        style: shapedStyle
-     });
-
-    var tree = h(
-      morph._nodeType, attributes, 
-      morph.submorphs.map(m => this.renderMorph(m)));
-
-    this.renderMap.set(morph, tree);
-    return tree;
   }
 
   getNodeForMorph(morph) {

@@ -1,9 +1,9 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
-import { createDOMEnvironment } from "../dom-helper.js";
-import { World, Renderer } from "../index.js";
 import { pt, Color } from "lively.graphics";
+import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { EventDispatcher } from "../events.js";
+import { World, Renderer } from "../index.js";
 
 var domEnv;
 

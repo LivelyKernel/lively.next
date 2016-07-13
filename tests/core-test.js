@@ -1,5 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { createDOMEnvironment } from "../dom-helper.js";
+import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
