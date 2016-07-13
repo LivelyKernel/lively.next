@@ -116,7 +116,7 @@ export class ReporterWidget {
         .then(() => p.hasRemoteChanges && lively.shell.run(`cd ${p.directory};  git fetch --all`))
         .then(() => lively.shell.run(`cd ${p.directory};  git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative -n 200 --all;`))
         .then(cmd =>
-          $world.addCodeEditor({title: `Commits of ${p.name}`, content: cmd.output, textMode: "text", extent: pt(700,600)})
+          $world.addCodeEditor({title: `Commits of ${p.name}`, content: cmd.output, textMode: "text", extent: lively.pt(700,600)})
             .getWindow().comeForward()), {p}), this.textFlow.br);
     
     // local changes + diff button
@@ -124,9 +124,11 @@ export class ReporterWidget {
       "local changes?",
       p.hasLocalChanges ? "yes" : "no",
       p.hasLocalChanges ? this.textFlow.button("diff", () =>
-        lively.shell.run(`cd ${p.directory}; git diff`).then(cmd =>
-          $world.addCodeEditor({title: `Diff ${p.name}`,content: cmd.output,textMode: "diff", extent: pt(500,600)})
-            .getWindow().comeForward()), {p}) : this.textFlow.nothing, this.textFlow.br);
+        lively.shell.run(`cd ${p.directory}; git diff`)
+          .then(cmd =>
+            $world.addCodeEditor({title: `Diff ${p.name}`,content: cmd.output,textMode: "diff", extent: lively.pt(500,600)})
+              .getWindow().comeForward())
+          .catch(err => $world.logError(err)), {p}) : this.textFlow.nothing, this.textFlow.br);
 
     // remote changes + update button
     report = report.concat(
@@ -162,7 +164,7 @@ export class ReporterWidget {
   }
 
   summaryMorph() {
-    var target = lively.morphic.newMorph({extent: pt(600, 440), style: {fill: Color.white, borderWidth: 0}});
+    var target = lively.morphic.newMorph({extent: lively.pt(600, 440), style: {fill: Color.white, borderWidth: 0}});
     var win = target.openInWindow(target.getPosition()).openInWorldCenter();
     win.setTitle(`lively.installer status for ${this.baseDir}`);
     win.comeForward();
