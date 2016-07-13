@@ -1,6 +1,6 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
-import { morphRendering } from "./rendering/morphic-default.js"
+import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
 import { show } from "./markers.js";
 
 export function morph(props = {}, opts = {restore: false}) {
@@ -665,9 +665,9 @@ export class Morph {
     this._dirty = false;
   }
 
-  render(renderer) { return morphRendering.renderMorph(this, renderer); }
+  render(renderer) { return renderMorph(this, renderer); }
 
-  renderAsRoot(renderer) { return morphRendering.renderRootMorph(this, renderer); }
+  renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 
 }
 
