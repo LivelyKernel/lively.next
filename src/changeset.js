@@ -1,7 +1,9 @@
-import { arr } from 'lively.lang';
+import { arr, events } from 'lively.lang';
 
 import { gitInterface } from '../index.js';
 import Branch from "./branch.js";
+
+export const notify = events.makeEmitter({});
 
 let current = undefined; // undefined (uninitialized) | null (none) | ChangeSet
 let changesets = undefined; // undefined (uninitialized) | Array<ChangeSet>
@@ -49,6 +51,7 @@ class ChangeSet {
       await this.createBranch(path);
       return this.setFileContent(path, content);
     }
+    notify.emit('change', {changeset: this.name});
     return branch.setFileContent(relPath, content);
   }
 
@@ -86,6 +89,7 @@ class ChangeSet {
     for (let branch of this.branches) {
       await branch.delete(db);
     }
+    notify.emit('delete', {changeset: this.name});
   }
   
   setCurrent() { // -> Promise
@@ -112,6 +116,7 @@ function localChangeSetsOf(db, pkg) {
 export async function createChangeSet(name) { // ChangeSetName => ChangeSet
   const cs = new ChangeSet(name, []);
   (await localChangeSets()).push(cs);
+  notify.emit('add', {changeset: name});
   return cs;
 }
 
@@ -147,4 +152,5 @@ export async function setCurrentChangeSet(csName) { // ChangeSetName -> ChangeSe
     current = cs;
     window.localStorage.setItem('lively.changesets/current', csName);
   }
+  notify.emit("current", {changeset: csName || null});
 }

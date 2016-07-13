@@ -1,6 +1,10 @@
 import { mixins, modes, promisify } from 'js-git-browser';
 
+import { removeDir, createFiles } from "lively.modules/tests/helpers.js";
+
+import { gitInterface } from "../index.js";
 import { createChangeSet, setCurrentChangeSet } from "../src/changeset.js";
+
 
 async function repoForPackage(pkg) {
   const repo = {};
@@ -27,12 +31,38 @@ export async function initMaster(pkg) {
           content: "export const x = 1;\n"}];
   const tree = await repo.createTree(changes),
         commitHash = await repo.saveAs("commit", {tree, author, message});
-  return repo.updateRef("heads/master", commitHash);
+  return repo.updateRef("refs/heads/master", commitHash);
 }
 
-export async function initChangeSet(pkg) {
-  await initMaster(pkg);
+export const
+  pkgDir = System.decanonicalize("lively.changesets/tests/temp"),
+  pkgFiles = {
+    "a.js": "export const x = 1;\n",
+    "package.json": JSON.stringify({
+      name: "temp",
+      main: "a.js"
+    })
+  },
+  fileA = pkgDir + "/a.js",
+  vmEditorMock = {updateModuleList: () => 0};
+
+export async function initChangeSet() {
+  await initMaster(pkgDir);
   const cs = await createChangeSet("test");
   setCurrentChangeSet("test");
   return cs;
+}
+
+export async function createPackage() {
+  await createFiles(pkgDir, pkgFiles);
+  return gitInterface.importPackage(pkgDir);
+}
+
+export async function changeFile(newSrc) {
+  await gitInterface.interactivelyChangeModule(vmEditorMock, fileA, newSrc);
+}
+
+export async function removePackage() {
+  await gitInterface.removePackage(pkgDir);
+  await removeDir(pkgDir);
 }
