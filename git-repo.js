@@ -32,7 +32,7 @@ export class Repository {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async currentBranch() {
-    var {output} = await this.cmd('git branch -q | grep "*"');
+    var {output} = await this.cmd('git branch | grep "*"');
     return output.trim().replace(/^\*\s*/, "");
   }
 
