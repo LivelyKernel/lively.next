@@ -85,7 +85,7 @@ export class Renderer {
   get fontMetric() {
     if (!this._fontMetric) {
       this._fontMetric = new FontMetric();
-      this._fontMetric.install(this.domNode);
+      this._fontMetric.install(this.rootNode);
     }
     return this._fontMetric;
   }
@@ -126,7 +126,6 @@ class FontMetric {
   }
 
   measure(fontFamily, fontSize, char) {
-    if (!this.element) this.install();
     var rect = null;
     this.element.innerHTML = char;
     this.element.style.fontFamily = fontFamily;

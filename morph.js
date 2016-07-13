@@ -810,6 +810,10 @@ export class Text extends Morph {
     if (typeof this.allowsInput !== "boolean") {
       this.allowsInput = true;
     }
+    if (!this.placeholder) {
+      this.placeholder = "text";
+    }
+    this.textString = this.textString || "";
   }
 
   get isText() { return true }
@@ -817,39 +821,63 @@ export class Text extends Morph {
   get _nodeType() { return 'textarea'; }
 
   get textString() { return this.getProperty("textString") }
-  set textString(value) { this.recordChange({prop: "textString", value}) }
+  set textString(value) {
+    this.recordChange({prop: "textString", value});
+    this.autoFitFlagged = true;
+  }
 
   get allowsInput() { return this.getProperty("allowsInput") }
   set allowsInput(value) { this.recordChange({prop: "allowsInput", value}) }
 
-  get autoFitsOnInput() { return this.getProperty("autoFitsOnInput") }
-  set autoFitsOnInput(value) { this.recordChange({prop: "autoFitsOnInput", value}) }
+  get autoFits() { return this.getProperty("autoFits") }
+  set autoFits(value) {
+    this.recordChange({prop: "autoFits", value});
+    this.autoFitFlagged = true;
+  }
 
   get fontFamily() { return this.getProperty("fontFamily") }
-  set fontFamily(value) { this.recordChange({prop: "fontFamily", value}) }
+  set fontFamily(value) {
+    this.recordChange({prop: "fontFamily", value});
+    this.autoFitFlagged = true;
+  }
 
   get fontSize() { return this.getProperty("fontSize") }
-  set fontSize(value) { this.recordChange({prop: "fontSize", value}) }
+  set fontSize(value) {
+    this.recordChange({prop: "fontSize", value});
+    this.autoFitFlagged = true;
+  }
+
+  get placeholder() { return this.getProperty("placeholder") }
+  set placeholder(value) {
+    this.recordChange({prop: "placeholder", value});
+    this.autoFitFlagged = true;
+  }
+
+  aboutToRender() {
+    super.aboutToRender();
+    this.autoFitIfNeeded();
+  }
 
   shape() {
     return {
       value: this.textString,
       readOnly: !this.allowsInput,
+      placeholder: this.placeholder,
       style: { resize: "none", border: "none", overflow: "hidden",
                "white-space": "nowrap", padding: "0px",
                "font-family": this.fontFamily, "font-size": this.fontSize }
     }
   }
 
-  autoFitIfNeeded(domNode) {
-    if (this.autoFitsOnInput) {
-      ({ height: this.height, width: this.width} =
+  autoFitIfNeeded() {
+    if (this.autoFits && this.autoFitFlagged) {
+      this.autoFitFlagged = false;
+      ({ height: this.height, width: this.width } =
         this.world().fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString));
     }
   }
 
   onInput(evt) {
     this.textString = evt.domEvt.target.value;
-    this.autoFitIfNeeded(evt.domEvt.target);
   }
 }
