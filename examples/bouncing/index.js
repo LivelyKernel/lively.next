@@ -1,7 +1,5 @@
 import { pt, Color, Point } from "lively.graphics";
-import { Renderer } from "lively.morphic/renderer.js";
-import { morph, Morph } from "lively.morphic/morph.js";
-import { EventDispatcher } from "lively.morphic/events.js";
+import { EventDispatcher, Renderer, morph, Morph } from "lively.morphic";
 
 var {scrollWidth: w, scrollHeight: h} = document.body,
     world = window.$world = morph({type: "world", extent: pt(w, h)});
@@ -16,7 +14,7 @@ Object.assign(Morph.prototype, {
   bounce() {
     var {x,y} = this.velocity,
         outer = this.owner.innerBounds(),
-        inner = this.bounds;
+        inner = this.bounds();
     if (inner.right() > outer.right() || inner.left() < outer.left()) x = -x;
     if (inner.bottom() > outer.bottom() || inner.top() < outer.top()) y = -y;
     this.velocity = pt(x,y);
@@ -24,7 +22,7 @@ Object.assign(Morph.prototype, {
   }
 });
 
-var wbounds = world.bounds, morphs = [];
+var wbounds = world.bounds(), morphs = [];
 for (var i = 0; i < 100; i++) {
   // var m = {
   //   type: "Ellipse",

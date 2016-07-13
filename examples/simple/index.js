@@ -1,8 +1,6 @@
 import { num, arr, installGlobals } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { Renderer } from "lively.morphic/renderer.js";
-import { Morph, World } from "lively.morphic/morph.js";
-import { EventDispatcher } from "lively.morphic/events.js";
+import { EventDispatcher, Renderer, Morph, World } from "lively.morphic/morph.js";
 
 installGlobals();
 
