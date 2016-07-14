@@ -24,10 +24,13 @@ export function renderMorph(morph, renderer) {
   var shapedStyle = Object.assign(
 
     {
+      transform: morph.getTransform().toCSSValue(
+        {x: morph.origin.x - (width / 2),
+         y: morph.origin.y - (height / 2)}),
       position: "absolute",
       visibility: visible ? "visible" : "hidden",
-      left: x + 'px',
-      top: y + 'px',
+      // left: x + 'px',
+      // top: y + 'px',
       width: width + 'px',
       height: height + 'px',
       backgroundColor: fill ? fill.toString() : "",

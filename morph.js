@@ -22,9 +22,10 @@ export function morph(props = {}, opts = {restore: false}) {
 const defaultProperties = {
   visible: true,
   name: "a morph",
-  position: pt(0,0),
-  rotation: 0,
-  scale: 1,
+  position:  pt(0,0),
+  rotation:  0,
+  scale:  1,
+  origin: pt(0,0),
   extent: pt(10, 10),
   fill: Color.white,
   borderWidth: 0,
@@ -156,6 +157,9 @@ export class Morph {
 
   get rotation()       { return this.getProperty("rotation"); }
   set rotation(value)  { this.recordChange({prop: "rotation", value}); }
+
+  get origin()         { return this.getProperty("origin"); }
+  set origin(value)    { return this.recordChange({prop: "origin", value}); }
 
   get extent()         { return this.getProperty("extent"); }
   set extent(value)    { this.recordChange({prop: "extent", value}); }
@@ -431,6 +435,20 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // transforms
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  adjustOrigin(newOrigin) {
+    if (this.origin.eqPt(newOrigin)) return;
+
+    var oldOrigin            = this.origin,
+        delta                = newOrigin.subPt(oldOrigin),
+        transform            = this.getTransform(),
+        oldTransformedOrigin = transform.transformPoint(oldOrigin),
+        newTransformedOrigin = transform.transformPoint(newOrigin),
+        transformedDelta     = newTransformedOrigin.subPt(oldTransformedOrigin);
+
+    if (this.owner) this.moveBy(transformedDelta);
+    this.origin = newOrigin;
+  }
 
   localize(point) {
     // map world point to local coordinates
@@ -770,9 +788,7 @@ export class Hand extends Morph {
       morph.dropShadow = evt.state.prevProps.dropShadow;
     });
   }
-
 }
-
 
 export class Ellipse extends Morph {
 
