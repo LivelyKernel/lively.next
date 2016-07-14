@@ -151,6 +151,23 @@ export class Event {
     return aMorph.localize(this.position);
   }
 
+  // mouse buttons, see
+  // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
+  leftMouseButtonPressed() {
+    return (this.domEvt.buttons || 0) & 1;
+  }
+
+  rightMouseButtonPressed() {
+    return (this.domEvt.buttons || 0) & 2;
+  }
+
+  middleMouseButtonPressed() {
+    return (this.domEvt.buttons || 0) & 4;
+  }
+
+  metaPressed() {
+    return !!this.domEvt.metaKey
+  }
 }
 
 
