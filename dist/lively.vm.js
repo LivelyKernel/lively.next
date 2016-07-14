@@ -10506,265 +10506,297 @@ var atomOrPropertyOrLabel = /^\s*[):;]/ ;
 var removeComments = /([^\n])\/\*(\*(?!\/)|[^\n*])*\*\/([^\n])/g ;
 
 function hasLineTerminatorBeforeNext(st, since) {
-	return st.lineStart >= since;
+    return st.lineStart >= since;
 }
 
 function test(regex,st,noComment) {
-	var src = st.input.slice(st.start) ;
-	if (noComment) {
-		src = src.replace(removeComments,"$1 $3") ;
+    var src = st.input.slice(st.start) ;
+    if (noComment) {
+        src = src.replace(removeComments,"$1 $3") ;
   }
-	return regex.test(src);
+    return regex.test(src);
 }
 
 /* Return the object holding the parser's 'State'. This is different between acorn ('this')
  * and babylon ('this.state') */
 function state(p) {
-	if (('state' in p) && p.state.constructor && p.state.constructor.name==='State')
-		return p.state ; // Probably babylon
-	return p ; // Probably acorn
+    if (('state' in p) && p.state.constructor && p.state.constructor.name==='State')
+        return p.state ; // Probably babylon
+    return p ; // Probably acorn
 }
 
 /* Create a new parser derived from the specified parser, so that in the
  * event of an error we can back out and try again */
 function subParse(parser, pos, extensions) {
-	// NB: The Babylon constructor does NOT expect 'pos' as an argument, and so
-	// the input needs truncation at the start position, however at present
-	// this doesn't work nicely as all the node location/start/end values
-	// are therefore offset. Consequently, this plug-in is NOT currently working
-	// with the (undocumented) Babylon plug-in interface.
-	var p = new parser.constructor(parser.options, parser.input, pos);
-	if (extensions)
-		for (var k in extensions)
-			p[k] = extensions[k] ;
+    // NB: The Babylon constructor does NOT expect 'pos' as an argument, and so
+    // the input needs truncation at the start position, however at present
+    // this doesn't work nicely as all the node location/start/end values
+    // are therefore offset. Consequently, this plug-in is NOT currently working
+    // with the (undocumented) Babylon plug-in interface.
+    var p = new parser.constructor(parser.options, parser.input, pos);
+    if (extensions)
+        for (var k in extensions)
+            p[k] = extensions[k] ;
 
-	var src = state(parser) ;
-	var dest = state(p) ;
-	['inFunction','inAsyncFunction','inAsync','inGenerator','inModule'].forEach(function(k){
-		if (k in src)
-			dest[k] = src[k] ;
-	}) ;
-	p.nextToken();
-	return p;
+    var src = state(parser) ;
+    var dest = state(p) ;
+    ['inFunction','inAsyncFunction','inAsync','inGenerator','inModule'].forEach(function(k){
+        if (k in src)
+            dest[k] = src[k] ;
+    }) ;
+    p.nextToken();
+    return p;
 }
 
 function asyncAwaitPlugin (parser,options){
-	var es7check = function(){} ;
+    var es7check = function(){} ;
 
-	parser.extend("initialContext",function(base){
-		return function(){
-			if (this.options.ecmaVersion < 7) {
-				es7check = function(node) {
-					parser.raise(node.start,"async/await keywords only available when ecmaVersion>=7") ;
-				} ;
-			}
+    parser.extend("initialContext",function(base){
+        return function(){
+            if (this.options.ecmaVersion < 7) {
+                es7check = function(node) {
+                    parser.raise(node.start,"async/await keywords only available when ecmaVersion>=7") ;
+                } ;
+            }
       this.reservedWords = new RegExp(this.reservedWords.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrict = new RegExp(this.reservedWordsStrict.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrictBind = new RegExp(this.reservedWordsStrictBind.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
-			this.inAsyncFunction = options.inAsyncFunction ;
-			if (options.awaitAnywhere && options.inAsyncFunction)
-				parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
+            this.inAsyncFunction = options.inAsyncFunction ;
+            if (options.awaitAnywhere && options.inAsyncFunction)
+                parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
 
-			return base.apply(this,arguments);
-		}
-	}) ;
+            return base.apply(this,arguments);
+        }
+    }) ;
 
-	parser.extend("shouldParseExportStatement",function(base){
-	    return function(){
-	        if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
-	            return true ;
-	        }
-	        return base.apply(this,arguments) ;
-	    }
-	}) ;
+    parser.extend("shouldParseExportStatement",function(base){
+        return function(){
+            if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
+                return true ;
+            }
+            return base.apply(this,arguments) ;
+        }
+    }) ;
 
-	parser.extend("parseStatement",function(base){
-		return function (declaration, topLevel) {
-			var st = state(this) ;
-			var start = st.start;
-			var startLoc = st.startLoc;
-			if (st.type.label==='name') {
-				if (test(asyncFunction,st,true)) {
-					var wasAsync = st.inAsyncFunction ;
-					try {
-						st.inAsyncFunction = true ;
-						this.next() ;
-						var r = this.parseStatement(declaration, topLevel) ;
- 						r.async = true ;
-						r.start = start;
-						r.loc && (r.loc.start = startLoc);
-						return r ;
-					} finally {
-						st.inAsyncFunction = wasAsync ;
-					}
-				} else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
-					// NON-STANDARD EXTENSION iff. options.asyncExits is set, the
-					// extensions 'async return <expr>?' and 'async throw <expr>?'
-					// are enabled. In each case they are the standard ESTree nodes
-					// with the flag 'async:true'
-					this.next() ;
-					var r = this.parseStatement(declaration, topLevel) ;
-					r.async = true ;
-					r.start = start;
-					r.loc && (r.loc.start = startLoc);
-					return r ;
-				}
-			}
-			return base.apply(this,arguments);
-		}
-	}) ;
+    parser.extend("parseStatement",function(base){
+        return function (declaration, topLevel) {
+            var st = state(this) ;
+            var start = st.start;
+            var startLoc = st.startLoc;
+            if (st.type.label==='name') {
+                if (test(asyncFunction,st,true)) {
+                    var wasAsync = st.inAsyncFunction ;
+                    try {
+                        st.inAsyncFunction = true ;
+                        this.next() ;
+                        var r = this.parseStatement(declaration, topLevel) ;
+                        r.async = true ;
+                        r.start = start;
+                        r.loc && (r.loc.start = startLoc);
+                        return r ;
+                    } finally {
+                        st.inAsyncFunction = wasAsync ;
+                    }
+                } else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
+                    // NON-STANDARD EXTENSION iff. options.asyncExits is set, the
+                    // extensions 'async return <expr>?' and 'async throw <expr>?'
+                    // are enabled. In each case they are the standard ESTree nodes
+                    // with the flag 'async:true'
+                    this.next() ;
+                    var r = this.parseStatement(declaration, topLevel) ;
+                    r.async = true ;
+                    r.start = start;
+                    r.loc && (r.loc.start = startLoc);
+                    return r ;
+                }
+            }
+            return base.apply(this,arguments);
+        }
+    }) ;
 
   parser.extend("parseIdent",function(base){
-		return function(liberal){
-				var id = base.apply(this,arguments);
-				var st = state(this) ;
-				if (st.inAsyncFunction && id.name==='await') {
-					if (arguments.length===0) {
-						this.raise(id.start,"'await' is reserved within async functions") ;
-					}
-				}
-				return id ;
-		}
-	}) ;
+        return function(liberal){
+                var id = base.apply(this,arguments);
+                var st = state(this) ;
+                if (st.inAsyncFunction && id.name==='await') {
+                    if (arguments.length===0) {
+                        this.raise(id.start,"'await' is reserved within async functions") ;
+                    }
+                }
+                return id ;
+        }
+    }) ;
 
-	parser.extend("parseExprAtom",function(base){
-		return function(refShorthandDefaultPos){
-			var st = state(this) ;
-			var start = st.start ;
-			var startLoc = st.startLoc;
-			var rhs,r = base.apply(this,arguments);
-			if (r.type==='Identifier') {
-				if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
-					// Is this really an async function?
-					var isAsync = st.inAsyncFunction ;
-					try {
-						st.inAsyncFunction = true ;
-						var pp = this ;
-						var inBody = false ;
+    parser.extend("parseExprAtom",function(base){
+        return function(refShorthandDefaultPos){
+            var st = state(this) ;
+            var start = st.start ;
+            var startLoc = st.startLoc;
+            var rhs,r = base.apply(this,arguments);
+            if (r.type==='Identifier') {
+                if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
+                    // Is this really an async function?
+                    var isAsync = st.inAsyncFunction ;
+                    try {
+                        st.inAsyncFunction = true ;
+                        var pp = this ;
+                        var inBody = false ;
 
-						var parseHooks = {
-							parseFunctionBody:function(node,isArrowFunction){
-								try {
-									var wasInBody = inBody ;
-									inBody = true ;
-									return pp.parseFunctionBody.apply(this,arguments) ;
-								} finally {
-									inBody = wasInBody ;
-								}
-							},
-							raise:function(){
-								try {
-									return pp.raise.apply(this,arguments) ;
-								} catch(ex) {
-									throw inBody?ex:NotAsync ;
-								}
-							}
-						} ;
+                        var parseHooks = {
+                            parseFunctionBody:function(node,isArrowFunction){
+                                try {
+                                    var wasInBody = inBody ;
+                                    inBody = true ;
+                                    return pp.parseFunctionBody.apply(this,arguments) ;
+                                } finally {
+                                    inBody = wasInBody ;
+                                }
+                            },
+                            raise:function(){
+                                try {
+                                    return pp.raise.apply(this,arguments) ;
+                                } catch(ex) {
+                                    throw inBody?ex:NotAsync ;
+                                }
+                            }
+                        } ;
 
-						rhs = subParse(this,st.start,parseHooks).parseExpression() ;
-						if (rhs.type==='SequenceExpression')
-							rhs = rhs.expressions[0] ;
-						if (rhs.type==='FunctionExpression' || rhs.type==='FunctionDeclaration' || rhs.type==='ArrowFunctionExpression') {
-							rhs.async = true ;
-							rhs.start = start;
-							rhs.loc && (rhs.loc.start = startLoc);
-							st.pos = rhs.end;
-							this.next();
-							es7check(rhs) ;
-							return rhs ;
-						}
-					} catch (ex) {
-						if (ex!==NotAsync)
-							throw ex ;
-					}
-					finally {
-						st.inAsyncFunction = isAsync ;
-					}
-				}
-				else if (r.name==='await') {
-					var n = this.startNodeAt(r.start, r.loc && r.loc.start);
-					if (st.inAsyncFunction) {
-						rhs = this.parseExprSubscripts() ;
-						n.operator = 'await' ;
-						n.argument = rhs ;
-						n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
-						es7check(n) ;
-						return n ;
-					} else
-						// NON-STANDARD EXTENSION iff. options.awaitAnywhere is true,
-						// an 'AwaitExpression' is allowed anywhere the token 'await'
-						// could not be an identifier with the name 'await'.
+                        rhs = subParse(this,st.start,parseHooks).parseExpression() ;
+                        if (rhs.type==='SequenceExpression')
+                            rhs = rhs.expressions[0] ;
+                        if (rhs.type==='FunctionExpression' || rhs.type==='FunctionDeclaration' || rhs.type==='ArrowFunctionExpression') {
+                            rhs.async = true ;
+                            rhs.start = start;
+                            rhs.loc && (rhs.loc.start = startLoc);
+                            st.pos = rhs.end;
+                            this.next();
+                            es7check(rhs) ;
+                            return rhs ;
+                        }
+                    } catch (ex) {
+                        if (ex!==NotAsync)
+                            throw ex ;
+                    }
+                    finally {
+                        st.inAsyncFunction = isAsync ;
+                    }
+                }
+                else if (r.name==='await') {
+                    var n = this.startNodeAt(r.start, r.loc && r.loc.start);
+                    if (st.inAsyncFunction) {
+                        rhs = this.parseExprSubscripts() ;
+                        n.operator = 'await' ;
+                        n.argument = rhs ;
+                        n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
+                        es7check(n) ;
+                        return n ;
+                    } else
+                        // NON-STANDARD EXTENSION iff. options.awaitAnywhere is true,
+                        // an 'AwaitExpression' is allowed anywhere the token 'await'
+                        // could not be an identifier with the name 'await'.
 
-						// Look-ahead to see if this is really a property or label called async or await
-						if (st.input.slice(r.end).match(atomOrPropertyOrLabel))
-							return r ; // This is a valid property name or label
+                        // Look-ahead to see if this is really a property or label called async or await
+                        if (st.input.slice(r.end).match(atomOrPropertyOrLabel))
+                            return r ; // This is a valid property name or label
 
-						if (typeof options==="object" && options.awaitAnywhere) {
-							start = st.start ;
-							rhs = subParse(this,start-4).parseExprSubscripts() ;
-							if (rhs.end<=start) {
-								rhs = subParse(this,start).parseExprSubscripts() ;
-								n.operator = 'await' ;
-								n.argument = rhs ;
-								n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
-								st.pos = rhs.end;
-								this.next();
-								es7check(n) ;
-								return n ;
-							}
-						}
-				}
-			}
-			return r ;
-		}
-	}) ;
+                        if (typeof options==="object" && options.awaitAnywhere) {
+                            start = st.start ;
+                            rhs = subParse(this,start-4).parseExprSubscripts() ;
+                            if (rhs.end<=start) {
+                                rhs = subParse(this,start).parseExprSubscripts() ;
+                                n.operator = 'await' ;
+                                n.argument = rhs ;
+                                n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
+                                st.pos = rhs.end;
+                                this.next();
+                                es7check(n) ;
+                                return n ;
+                            }
+                        }
+                }
+            }
+            return r ;
+        }
+    }) ;
 
-	parser.extend('finishNodeAt',function(base){
-			return function(node,type,pos,loc) {
-				if (node.__asyncValue) {
-					delete node.__asyncValue ;
-					node.value.async = true ;
-				}
-				return base.apply(this,arguments) ;
-			}
-	}) ;
+    parser.extend('finishNodeAt',function(base){
+            return function(node,type,pos,loc) {
+                if (node.__asyncValue) {
+                    delete node.__asyncValue ;
+                    node.value.async = true ;
+                }
+                return base.apply(this,arguments) ;
+            }
+    }) ;
 
-	parser.extend('finishNode',function(base){
-			return function(node,type) {
-				if (node.__asyncValue) {
-					delete node.__asyncValue ;
-					node.value.async = true ;
-				}
-				return base.apply(this,arguments) ;
-			}
-	}) ;
+    parser.extend('finishNode',function(base){
+            return function(node,type) {
+                if (node.__asyncValue) {
+                    delete node.__asyncValue ;
+                    node.value.async = true ;
+                }
+                return base.apply(this,arguments) ;
+            }
+    }) ;
 
-	parser.extend("parsePropertyName",function(base){
-		return function (prop) {
-			var st = state(this) ;
-			var key = base.apply(this,arguments) ;
-			if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
-				// Look-ahead to see if this is really a property or label called async or await
-				if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
-					es7check(prop) ;
-					key = base.apply(this,arguments) ;
-					if (key.type==='Identifier') {
-						if (key.name==='constructor')
-							this.raise(key.start,"'constructor()' cannot be be async") ;
-						else if (key.name==='set')
-							this.raise(key.start,"'set <member>(value)' cannot be be async") ;
-					}
-					prop.__asyncValue = true ;
-				}
-			}
-			return key;
-		};
-	}) ;
+    parser.extend("parsePropertyName",function(base){
+        return function (prop) {
+            var st = state(this) ;
+            var key = base.apply(this,arguments) ;
+            if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
+                // Look-ahead to see if this is really a property or label called async or await
+                if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
+                    es7check(prop) ;
+                    key = base.apply(this,arguments) ;
+                    if (key.type==='Identifier') {
+                        if (key.name==='constructor')
+                            this.raise(key.start,"'constructor()' cannot be be async") ;
+                        else if (key.name==='set')
+                            this.raise(key.start,"'set <member>(value)' cannot be be async") ;
+                    }
+                    prop.__asyncValue = true ;
+                }
+            }
+            return key;
+        };
+    }) ;
+
+    parser.extend("parseClassMethod",function(base){
+        return function (classBody, method, isGenerator) {
+            var st, wasAsync ;
+            if (method.__asyncValue) {
+                st = state(this) ;
+                wasAsync = st.inAsyncFunction ;
+                st.inAsyncFunction = true ;
+            }
+            var r = base.apply(this,arguments) ;
+            if (st) {
+                st.inAsyncFunction = wasAsync ;
+            }
+            return r ;
+        }
+    }) ;
+    
+    parser.extend("parsePropertyValue",function(base){
+        return function (prop, isPattern, isGenerator, startPos, startLoc, refDestructuringErrors) {
+            var st, wasAsync ;
+            if (prop.__asyncValue) {
+                st = state(this) ;
+                wasAsync = st.inAsyncFunction ;
+                st.inAsyncFunction = true ;
+            }
+            var r = base.apply(this,arguments) ;
+            if (st) {
+                st.inAsyncFunction = wasAsync ;
+            }
+            return r ;
+        }
+    }) ;
 }
 
 module.exports = function(acorn) {
-	acorn.plugins.asyncawait = asyncAwaitPlugin ;
-	return acorn
+    acorn.plugins.asyncawait = asyncAwaitPlugin ;
+    return acorn
 }
 
   module.exports(acorn);
@@ -18527,18 +18559,22 @@ module.exports = function(acorn) {
     };
   }
 
+  function prop(key, value) {
+    return {
+      type: "Property",
+      key: key,
+      computed: key.type !== "Identifier",
+      shorthand: false,
+      value: value
+    };
+  }
+
   function objectLiteral(keysAndValues) {
     var props = [];
     for (var i = 0; i < keysAndValues.length; i += 2) {
       var key = keysAndValues[i];
       if (typeof key === "string") key = id(key);
-      props.push({
-        type: "Property",
-        key: key,
-        computed: key.type !== "Identifier",
-        shorthand: false,
-        value: keysAndValues[i + 1]
-      });
+      props.push(prop(key, keysAndValues[i + 1]));
     }
     return {
       properties: props,
@@ -18551,6 +18587,7 @@ var nodes = Object.freeze({
     id: id,
     literal: literal,
     objectLiteral: objectLiteral,
+    prop: prop,
     exprStmt: exprStmt,
     returnStmt: returnStmt,
     empty: empty,
@@ -18632,7 +18669,7 @@ var nodes = Object.freeze({
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "Class", "Global", "Functions", "Objects", "Strings", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
 
   function scopes(parsed) {
     var vis = new ScopeVisitor(),
@@ -18761,8 +18798,8 @@ var nodes = Object.freeze({
         var decl = _resolveReference2[0];
         var id = _resolveReference2[1];
 
-        if (decl) ref.decl = lively_lang.obj.deepCopy(decl);
-        if (id) ref.declId = lively_lang.obj.deepCopy(id);
+        if (decl) ref.decl = decl;
+        if (id) ref.declId = id;
       });
       scope.subScopes.forEach(function (s) {
         return rec(s, path);
@@ -18945,7 +18982,9 @@ var nodes = Object.freeze({
   }
 
   function exports$1(scope) {
-    resolveReferences(scope);
+    var resolve = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+    if (resolve) resolveReferences(scope);
     var exports = scope.exportDecls.reduce(function (exports, node) {
 
       var exportsStmt = statementOf(scope.node, node);
@@ -19816,7 +19855,11 @@ var nodes = Object.freeze({
       return shouldRefBeCaptured(ref, topLevel, options);
     });
 
-    return replace$1(parsed, function (node, path) {
+    var replaced = replace$1(parsed, function (node, path) {
+      return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
+    });
+
+    return replace$1(replaced, function (node, path) {
       return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
     });
   }
@@ -20585,7 +20628,7 @@ var capturing = Object.freeze({
 
     var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
         defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
-      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || extendDef(n) || someObjectExpressionCall(n);
+      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
     });
 
     if (options.hideOneLiners && parsed.source) {
@@ -20630,6 +20673,30 @@ var capturing = Object.freeze({
         ea.parent = def;
         return ea;
       });
+    });
+    return [def].concat(props);
+  }
+
+  function es6ClassDef(node) {
+    if (node.type !== "ClassDeclaration") return null;
+    var def = {
+      type: "class",
+      name: node.id.name,
+      node: node
+    };
+    // FIXME need to differentiate between class / instance methods, getters, setters!
+    var props = node.body.body.map(function (propNode) {
+      if (propNode.type === "MethodDefinition") {
+        return {
+          type: "class-method",
+          parent: def,
+          name: propNode.key.name,
+          node: propNode
+        };
+      }
+      return null;
+    }).filter(function (ea) {
+      return !!ea;
     });
     return [def].concat(props);
   }
@@ -21085,10 +21152,26 @@ var categorizer = Object.freeze({
     return constructor;
   }
 
+  function ensureInitializeStub(superclass) {
+    // when we inherit from "conventional classes" those don't have an
+    // initializer method. We install a stub that calls the superclass function
+    // itself
+    if (superclass === Object || superclass.prototype.hasOwnProperty(initializeSymbol)) return;
+    Object.defineProperty(superclass.prototype, initializeSymbol, {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: function value() /*args*/{
+        superclass.apply(this, arguments);
+      }
+    });
+    superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
+  }
+
   function createOrExtend(name, superclass) {
     var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
     var staticMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
-    var classHolder = arguments[4];
+    var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
     var currentModule = arguments[5];
 
     // Given a `classHolder` object as "environment", will try to find a "class"
@@ -21113,6 +21196,7 @@ var categorizer = Object.freeze({
       if (existingSuperclass) {
         console.warn("Changing superclass of class " + name + " from " + (existingSuperclass.name + " to " + superclass.name + ": This will leave ") + ("existing instances of " + name + " orphaned, i.e. " + name + " is practically not ") + ("their class anymore and they will not get new behaviors when " + name + " is ") + "changed!!!");
       }
+      ensureInitializeStub(superclass);
       klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
@@ -21122,24 +21206,27 @@ var categorizer = Object.freeze({
     staticMethods && staticMethods.forEach(function (ea) {
       var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
       Object.defineProperty(klass, ea.key, Object.assign(ea, descr));
+      if (typeof ea.value === "function") klass[ea.key].displayName = ea.key;
     });
 
     instanceMethods && instanceMethods.forEach(function (ea) {
       var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
       Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, descr));
+      if (typeof ea.value === "function") klass.prototype[ea.key].displayName = ea.key;
     });
 
     // 4. define initializer method, in our class system the constructor is always
     // as defined in initializerTemplate and re-directs to the initializer method.
     // This way we can change the constructor without loosing the identity of the
     // class
-    if (!klass.prototype[initializeSymbol]) {
+    if (!klass.prototype.hasOwnProperty(initializeSymbol)) {
       Object.defineProperty(klass.prototype, initializeSymbol, {
         enumerable: false,
         configurable: true,
         writable: true,
         value: function value() {}
       });
+      klass.prototype[initializeSymbol].displayName = "lively-initialize";
     }
 
     // 5. If we have a `currentModule` instance (from lively.modules/src/module.js)
@@ -21572,7 +21659,7 @@ var categorizer = Object.freeze({
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -21598,9 +21685,8 @@ var categorizer = Object.freeze({
         }
       }, _callee, this);
     }));
-
     return function ensureImportsAreLoaded(_x, _x2, _x3) {
-      return _ref.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -21608,7 +21694,7 @@ var categorizer = Object.freeze({
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -21681,9 +21767,8 @@ var categorizer = Object.freeze({
         }
       }, _callee2, this);
     }));
-
     return function getEs6Transpiler(_x4, _x5, _x6) {
-      return _ref2.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -21741,7 +21826,7 @@ var categorizer = Object.freeze({
   }
 
   var runEval$1 = function () {
-    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -21834,9 +21919,8 @@ var categorizer = Object.freeze({
         }
       }, _callee3, this);
     }));
-
     return function runEval(_x7, _x8, _x9) {
-      return _ref3.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -21850,7 +21934,7 @@ var categorizer = Object.freeze({
     createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -21866,7 +21950,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x, _x2) {
-          return _ref.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -21874,7 +21958,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -21890,7 +21974,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x3, _x4) {
-          return _ref2.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -21910,7 +21994,7 @@ var categorizer = Object.freeze({
     createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -21932,7 +22016,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x5, _x6) {
-          return _ref3.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -21940,7 +22024,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -21966,7 +22050,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x7, _x8) {
-          return _ref4.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -21996,7 +22080,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -22017,7 +22101,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x9, _x10) {
-          return _ref5.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -22025,7 +22109,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -22049,7 +22133,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x11, _x12) {
-          return _ref6.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -22090,7 +22174,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest",
       value: function () {
-        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
           var method, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -22119,7 +22203,7 @@ var categorizer = Object.freeze({
         }));
 
         function sendRequest(_x13, _x14) {
-          return _ref7.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return sendRequest;
@@ -22127,7 +22211,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest_web",
       value: function () {
-        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
           var res;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -22167,7 +22251,7 @@ var categorizer = Object.freeze({
         }));
 
         function sendRequest_web(_x15, _x16) {
-          return _ref8.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return sendRequest_web;
@@ -22175,7 +22259,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest_node",
       value: function () {
-        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
           var urlParse, http, opts;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -22211,7 +22295,7 @@ var categorizer = Object.freeze({
         }));
 
         function sendRequest_node(_x17, _x18) {
-          return _ref9.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return sendRequest_node;
@@ -22219,7 +22303,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -22238,7 +22322,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x19, _x20) {
-          return _ref10.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -22246,7 +22330,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
@@ -22279,7 +22363,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x21, _x22) {
-          return _ref11.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;

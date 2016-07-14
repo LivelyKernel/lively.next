@@ -117,4 +117,28 @@ describe("create or extend classes", function() {
     expect(foo.m()).equals(24);
   });
 
+  describe("compat with conventional class function", () => {
+
+    it("constructor of base class is used", () => {
+      var A = function A(x) { this.y = x + 1 },
+          B = createOrExtend("B", A, undefined, undefined, {}),
+          b = new B(3);
+
+      expect(b.y).equals(4, "constructor not called");
+    });
+
+    it("constructor of base class is used when using own constructor + calling super", () => {
+      var A = function A(x) { this.y = x + 1 },
+          B = createOrExtend("B", A, [{
+            key: initializeSymbol, value: function(x) {
+              this.constructor[superclassSymbol].prototype[initializeSymbol].call(this, x);
+              this.z = this.y + 1;
+            }}]),
+          b = new B(3);
+      expect(b.y).equals(4, "super constructor not called");
+      expect(b.z).equals(5, "constructor issue");
+    });
+    
+  });
+
 });
