@@ -2,12 +2,12 @@ import { exec } from "./shell-exec.js";
 
 async function test() {
 
-  var repo = new Repository("/Users/robert/Lively/lively-dev/lively.modules")
+  var repo = new Repository("/home/lively/lively-web.org/lively-modules-install/LivelyKernel")
   repo.currentBranch()
   repo.hasLocalChanges();
   repo.localBranchInfo()
-  await repo.hasRemoteChanges();
-
+  await repo.needsPullOrPush("new-module-system");
+  await repo.getRemoteAndLocalHeadRef("new-module-system")
 }
 
 export class Repository {
@@ -111,9 +111,30 @@ export class Repository {
     return choice;
   }
 
-  async hasRemoteChanges(branch = "master") {
+  async needsPullOrPush(branch = "master") {
     var {local, remote} = await this.getRemoteAndLocalHeadRef(branch);
-    return local !== remote;
+    if (local === remote) return {pull: false, push: false};
+
+    var {code, output} = await this.cmd(`git branch --contains ${remote}`);
+
+    if (code) {
+      console.error(output)
+      return {pull: false, push: false};
+    }
+
+    // check if remote hash is in history of branch. If it is, HEAD is newer
+    // than remote and we can push, if not, remote is newer
+    var pull = output
+      .trim().split("\n")
+      .filter(line => !line.match(/remotes/))
+      .map(line => line.replace(/\*\s*/, "").trim())
+      .every(line => line !== branch);
+    return {pull, push: !pull}
+  }
+
+  async hasRemoteChanges(branch = "master") {
+    var {pull, push} = this.needsPullOrPush(branch);
+    return !!pull;
   }
 
   async getRemoteAndLocalHeadRef(branch = "master", remote = "origin") {

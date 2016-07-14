@@ -15,6 +15,7 @@ export class Package {
     this.currentBranch = undefined;
     this.hasLocalChanges = undefined;
     this.hasRemoteChanges = undefined;
+    this._npmPackagesThatNeedFixing = undefined;
   }
 
   printLog() { return this._log.join(""); }
@@ -41,8 +42,11 @@ export class Package {
     this.hasGitRepo = await this.isGitRepo();
     if (!this.hasGitRepo) return this;
     this.currentBranch = await this.repo.currentBranch();
-    this.hasLocalChanges = await this.repo.hasLocalChanges(),
-    this.hasRemoteChanges = await this.repo.hasRemoteChanges(this.config.branch);
+    this.hasLocalChanges = await this.repo.hasLocalChanges();
+    var {pull, push} = await this.repo.needsPullOrPush(this.config.branch);
+    this.hasRemoteChanges = !!pull
+    this.hasLocalChangesToPush = !!push
+    this._npmPackagesThatNeedFixing = await this.npmPackagesThatNeedFixing();
     return this;
   }
 
@@ -123,16 +127,34 @@ function rm(path) {
     return exec("npm install", {log: this._log, cwd: this.directory});
   }
 
-  async npmInstallNeeded() {
+  async npmPackagesThatNeedFixing() {
     var cmd = await exec('npm list --depth 1 --json --silent', {log: this._log, cwd: this.directory}),
         { stdout } = cmd,
         npmList = JSON.parse(stdout),
-        depNames = Object.getOwnPropertyNames(npmList.dependencies),
-        toFix = depNames.reduce(function(depsToFix, name) {
-          var dep = npmList.dependencies[name];
-          if (dep.missing || dep.invalid) depsToFix.push(name);
-          return depsToFix;
-        }, []);
+        depNames = Object.getOwnPropertyNames(npmList.dependencies);
+    return depNames.reduce(function(depsToFix, name) {
+      var dep = npmList.dependencies[name];
+      if (dep.missing || dep.invalid) depsToFix.push(name);
+      return depsToFix;
+    }, []);
+  }
+
+  async npmInstallNeeded() {
+    var toFix = await this.npmPackagesThatNeedFixing()
     return toFix.length && toFix.length > 0;
   }
+
+  async fixNPMPackages(packages) {
+    if (!packages) packages = await this.npmPackagesThatNeedFixing();
+    var indicator;
+    if (typeof lively !== "undefined" && lively.ide)
+      indicator = await lively.ide.withLoadingIndicatorDo();
+    for (let p of packages) {
+      if (indicator) indicator.setLabel(`npm install\n${p}`);
+      var {code, output} = await exec(`npm install ${p}`);
+      if (code && typeof $world !== "undefined") await $world.inform(`npm install of ${p}failed:\n${output}`);
+    }
+    indicator && indicator.remove();
+  }
+
 }

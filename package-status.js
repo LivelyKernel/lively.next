@@ -26,7 +26,8 @@ function printSummaryFor(p, packages) {
   if (!p.branch) report += "    not on a branch\n"
   else report += `    on branch ${p.branch}\n`;
 
-  report += `    local changes? ${(p.hasLocalChanges) ? "yes" : "no"}\n`;
+  report += `    local changes to commit? ${(p.hasLocalChanges) ? "yes" : "no"}\n`;
+  report += `    local changes to push? ${(p.hasLocalChangesToPush) ? "yes" : "no"}\n`;
   report += `    remote changes? ${(p.hasRemoteChanges) ? "yes" : "no"}\n`;
 
   return report;
@@ -58,8 +59,8 @@ export class ReporterWidget {
     var indicator;
     return lively.ide.withLoadingIndicatorDo(label)
       .then(i => indicator = i)
-      .then(() => func)
-      .then(out => { $world.inform(out); })
+      .then(() => func())
+      .then(out => { out && $world.inform(out); })
       .catch(err => $world.inform(String(err.stack || err)))
       .then(() => indicator.remove());
   }
@@ -74,7 +75,7 @@ export class ReporterWidget {
       !p.exists ? "  does not exist!" : "  is not a git repository!",
       this.textFlow.button("install", () => {
         reporter.withLoadingIndicatorCatchingErrors(
-          p.installOrUpdate(reporter.packages), `installing ${p.name}`)
+          () => p.installOrUpdate(reporter.packages), `installing ${p.name}`)
       }, {p, reporter}), this.textFlow.br, this.textFlow.br);
 
     // cd button
@@ -87,7 +88,7 @@ export class ReporterWidget {
         lively.morphic.Menu.openAtHand(null, [
           ["force re-install", () => {
             reporter.withLoadingIndicatorCatchingErrors(
-              p.installOrUpdate(reporter.packages), `installing ${p.name}`)
+              () => p.installOrUpdate(reporter.packages), `installing ${p.name}`)
           }],
           ["commit everything", () => {
             $world.prompt("Enter a commit message")
@@ -121,7 +122,7 @@ export class ReporterWidget {
     
     // local changes + diff button
     report = report.concat(
-      "local changes?",
+      "local changes to commit?",
       p.hasLocalChanges ? "yes" : "no",
       p.hasLocalChanges ? this.textFlow.button("diff", () =>
         lively.shell.run(`cd ${p.directory}; git diff`)
@@ -130,26 +131,57 @@ export class ReporterWidget {
               .getWindow().comeForward())
           .catch(err => $world.logError(err)), {p}) : this.textFlow.nothing, this.textFlow.br);
 
+    report = report.concat(
+      "local changes to push?",
+      p.hasLocalChangesToPush ? "yes" : "no",
+      p.hasLocalChangesToPush ? this.textFlow.button("push", () =>
+        lively.shell.runInWindow(`cd ${p.directory}; git push origin ${p.config.branch}`)
+          .catch(err => $world.logError(err)), {p}) : this.textFlow.nothing, this.textFlow.br);
+
     // remote changes + update button
     report = report.concat(
       "remote changes?",
       p.hasRemoteChanges ? "yes" : "no",
       p.hasRemoteChanges ? this.textFlow.button("update", () => {
         reporter.withLoadingIndicatorCatchingErrors(
-          p.installOrUpdate(reporter.packages), `updating ${p.name}`)
+          () => p.installOrUpdate(reporter.packages), `updating ${p.name}`)
       }, {p, reporter}) : this.textFlow.nothing, this.textFlow.br);
+
+    // missing / outdated npm packages
+    var missingNpmPackages = p._npmPackagesThatNeedFixing;
+    if (missingNpmPackages && missingNpmPackages.length) {
+    report = report.concat(
+      "missing npm packages:",
+      missingNpmPackages.join(", "),
+      this.textFlow.button("update / install", () =>
+        p.fixNPMPackages(missingNpmPackages), {p, reporter, missingNpmPackages}), this.textFlow.br);
+    }
 
     return report.concat(this.textFlow.br, this.textFlow.br);
   }
 
   async morphicSummary(targetMorph) {
-    var packages = await Promise.all(
-      (await readPackageSpec()).map(spec =>
-        new Package(join(this.baseDir, spec.name), spec)
-        .readConfig()
-        .then(p => p.readStatus())));
+    var pBar = $world.addProgressBar(null, "checking packages"), done = 0;
+    try {
+      var specs = await readPackageSpec(),
+          packages = await Promise.all(
+          specs.map(spec =>
+            new Package(join(this.baseDir, spec.name), spec)
+              .readConfig()
+              .then(p => p.readStatus())
+              .then(p => {
+                done++; pBar.setValue(done / specs.length);
+                return p;
+              })))
+
+    } catch (e) {
+      $world.inform(String(e.stack || e));
+    } finally {
+      pBar.remove();
+    }
+
     this.packages = packages.sortBy(ea =>
-      (!ea.exists ? 301 : 0) + (!ea.hasGitRepo ? 201 : 0) + (ea.hasRemoteChanges ? 100 : 0) + (ea.hasLocalChanges ? 100 : 0) + ea.name.charCodeAt(0)).reverse();
+      (!ea.exists ? 401 : 0) + (!ea.hasGitRepo ? 301 : 0) + (ea.hasRemoteChanges ? 200 : 0)+ (ea.hasLocalChangesToPush ? 80 : 0) + (ea.hasLocalChanges ? 100 : 0) + (ea._npmPackagesThatNeedFixing.length ? 50 : 0) + ea.name.charCodeAt(0)).reverse();
 
     var summaries = this.packages.map(p => this.renderMorphicSummaryForPackage(p)),
         reporter = this,
