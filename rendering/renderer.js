@@ -52,8 +52,9 @@ export class Renderer {
 
   ensureDefaultCSS() {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
-      .then(doc => addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc))
-      .then(doc => addOrChangeLinkedCSS("lively-font-awesome", System.decanonicalize("lively.morphic/assets/font-awesome/css/font-awesome.css"), doc));
+      .then(doc => Promise.all([
+        addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc),
+        addOrChangeLinkedCSS("lively-font-awesome", System.decanonicalize("lively.morphic/assets/font-awesome/css/font-awesome.css"), doc)]));
   }
 
   startRenderWorldLoop() {
