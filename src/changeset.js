@@ -5,8 +5,8 @@ import Branch from "./branch.js";
 
 export const notify = events.makeEmitter({});
 
-let current = undefined; // undefined (uninitialized) | null (none) | ChangeSet
-let changesets = undefined; // undefined (uninitialized) | Array<ChangeSet>
+let current; // undefined (uninitialized) | null (none) | ChangeSet
+let changesets; // undefined (uninitialized) | Array<ChangeSet>
 
 class ChangeSet {
 
@@ -90,6 +90,10 @@ class ChangeSet {
       await branch.delete(db);
     }
     notify.emit('delete', {changeset: this.name});
+  }
+  
+  isCurrent() { // -> bool
+    return this === current;
   }
   
   setCurrent() { // -> Promise

@@ -30,6 +30,7 @@ describe("basics", () => {
     expect(await cs.fileExists(fileA)).to.be.null;
     const changedSrc = await gitInterface.moduleRead(fileA);
     expect(changedSrc).to.be.eql("export const x = 2;\n");
+    expect(cs.branches).to.have.length(0);
     await cs.delete();
     const changedSrc2 = await gitInterface.moduleRead(fileA);
     expect(changedSrc2).to.be.eql(changedSrc);
@@ -41,6 +42,9 @@ describe("basics", () => {
     expect(await cs.fileExists(fileA)).to.be.true;
     const changedSrc = await gitInterface.moduleRead(fileA);
     expect(changedSrc).to.be.eql("export const x = 2;\n");
+    expect(cs.branches).to.have.length(1);
+    const changedFiles = await cs.branches[0].changedFiles();
+    expect(Object.keys(changedFiles)).to.be.deep.eql(["/a.js"]);
     await cs.delete();
     const changedSrc2 = await gitInterface.moduleRead(fileA);
     expect(changedSrc2).to.be.eql("export const x = 1;\n");

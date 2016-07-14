@@ -57,10 +57,8 @@ export default class Branch {
     return commit.tree;
   }
   
-  async files() { // -> {[RelPath]: Hash}
-    const repo = await this.repo(),
-          tree = await this.tree();
-    if (!tree) throw new Error("File tree not found in git");
+  async filesForTree(tree) { // Tree -> {[RelPath]: Hash}
+    const repo = await this.repo();
     const treeStream = await repo.treeWalk(tree),
           files = {};
     let obj;
@@ -69,6 +67,34 @@ export default class Branch {
       files[obj.path] = obj.hash;
     }
     return files;
+  }
+  
+  async files() { // -> {[RelPath]: Hash}
+    const tree = await this.tree();
+    if (!tree) throw new Error("File tree not found in git");
+    return this.filesForTree(tree);
+  }
+  
+  async parent() { // () -> Commit
+    const repo = await this.repo(),
+          commitHash = await repo.readRef(`refs/heads/${this.name}`),
+          commit = await repo.loadAs("commit", commitHash);
+    return repo.loadAs("commit", commit.parents[0]);
+  }
+  
+  async changedFiles() { // -> {[RelPath]: Hash}
+    const repo = await this.repo(),
+          files = await this.files(),
+          parentTree = (await this.parent()).tree;
+    if (!parentTree) throw new Error("File tree not found in git");
+    const parentFiles = await this.filesForTree(parentTree),
+          changedFiles = {};
+    Object.keys(files).forEach(relPath => {
+      if (files[relPath] != parentFiles[relPath]) {
+        changedFiles[relPath] = files[relPath];
+      }
+    });
+    return changedFiles;
   }
   
   async createFrom(csName) { // ChangeSetName -> ()
