@@ -107,7 +107,7 @@ function localChangeSetsOf(db, pkg) {
     const key = pkg.address,
           trans = db.transaction(["refs"], "readonly"),
           store = trans.objectStore("refs"),
-          request = store.getAll(window.IDBKeyRange.bound(`${key}/heads.`, `${key}/heads:`));
+          request = store.getAll(window.IDBKeyRange.bound(`${key}/refs/heads.`, `${key}/refs/heads:`));
     request.onsuccess = evt => resolve(evt.target.result);
     request.onerror = evt => reject(new Error(evt.value));
   }).then(keys => keys.map(({path}) => {
