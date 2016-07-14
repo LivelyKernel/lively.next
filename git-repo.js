@@ -32,7 +32,7 @@ export class Repository {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async currentBranch() {
-    var {output} = await this.cmd('git branch | grep "*"');
+    var {output} = await this.cmd('git branch -q | grep "*"');
     return output.trim().replace(/^\*\s*/, "");
   }
 
@@ -241,7 +241,7 @@ export class Repository {
                             .filter(line => line.match(/^\s/))
                             .map(line => line.trim())
 
-    var pullCmd = this.moveFilesElsewhereWhile(overwrittenFiles, async () => await this.pull(branch, remote));
+    var pullCmd = await this.moveFilesElsewhereWhile(overwrittenFiles, async () => await this.pull(branch, remote));
     if (pullCmd.code !== 0) throw new Error("Error in pull:" + pullCmd.output);
     return pullCmd;
   }
