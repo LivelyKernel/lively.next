@@ -811,7 +811,7 @@ export class Image extends Morph {
 export class Text extends Morph {
 
   constructor(props, submorphs) {
-    super(Object.assign({ allowsInput: true, textString: "" },
+    super(Object.assign({ allowsInput: true, textString: "", draggable: false },
                         props),
           submorphs);
   }
