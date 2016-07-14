@@ -21156,7 +21156,7 @@ var categorizer = Object.freeze({
     // when we inherit from "conventional classes" those don't have an
     // initializer method. We install a stub that calls the superclass function
     // itself
-    if (superclass === Object || superclass.prototype.hasOwnProperty(initializeSymbol)) return;
+    if (superclass === Object || superclass.prototype[initializeSymbol]) return;
     Object.defineProperty(superclass.prototype, initializeSymbol, {
       enumerable: false,
       configurable: true,
@@ -21219,7 +21219,7 @@ var categorizer = Object.freeze({
     // as defined in initializerTemplate and re-directs to the initializer method.
     // This way we can change the constructor without loosing the identity of the
     // class
-    if (!klass.prototype.hasOwnProperty(initializeSymbol)) {
+    if (!klass.prototype[initializeSymbol]) {
       Object.defineProperty(klass.prototype, initializeSymbol, {
         enumerable: false,
         configurable: true,
