@@ -603,7 +603,7 @@ export class Morph {
   onMouseDown(evt) {
     if (this === evt.targetMorph) {
       setTimeout(() => {
-        if (!evt.state.draggedMorph && evt.state.clickedOnMorph === this)
+        if (!evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs())
           evt.hand.grab(this, evt);
       }, 800);
     }
