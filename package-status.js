@@ -164,7 +164,7 @@ export class ReporterWidget {
   }
 
   summaryMorph() {
-    var target = lively.morphic.newMorph({extent: lively.pt(600, 440), style: {fill: Color.white, borderWidth: 0}});
+    var target = lively.morphic.newMorph({extent: lively.pt(600, 440), style: {fill: lively.Color.white, borderWidth: 0}});
     var win = target.openInWindow(target.getPosition()).openInWorldCenter();
     win.setTitle(`lively.installer status for ${this.baseDir}`);
     win.comeForward();
