@@ -736,7 +736,7 @@ export class World extends Morph {
   onMouseDown(evt) {
     if(!evt.stopped && !evt.halo && evt.domEvt.metaKey) {
       this.addMorph(new HaloSelection(evt.domEvt.pointerId, evt.state.clickedOnMorph));
-    } else if(!evt.targetMorphs.find((morph) => morph instanceof Halo)) {
+    } else if(evt.halo && !evt.targetMorphs.find((morph) => morph instanceof Halo)) {
       evt.halo.remove();
     }
   }
@@ -1019,9 +1019,7 @@ export class HaloSelection extends Morph {
   }
 
   initButtons() {
-    this.originAnchor = this.addMorph(
-      this.originAnchor()
-    );
+    this.addMorph(this.originHalo());
     this.buttonControls = [
       this.resizeHalo(),
       this.closeHalo(),
