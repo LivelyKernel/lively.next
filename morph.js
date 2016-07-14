@@ -706,6 +706,10 @@ export class World extends Morph {
   get draggable() { return false; }
   get grabbable() { return false; }
 
+  haloForPointerId(pointerId) {
+    return this.submorphs.find(m => m instanceof HaloSelection && m.pointerId === pointerId);
+  }
+
   handForPointerId(pointerId) {
     return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId)
         || this.addMorph(new Hand(pointerId), this.submorphs[0]);
@@ -717,6 +721,10 @@ export class World extends Morph {
     return this.submorphs.filter(ea => ea.isHand);
   }
 
+  get halos() {
+    return this.submorphs.filter(ea => ea.isHalo);
+  }
+
   get fontMetric() {
     return this._renderer && this._renderer.fontMetric
   }
@@ -726,6 +734,11 @@ export class World extends Morph {
   }
 
   onMouseDown(evt) {
+    if(!evt.stopped && !evt.halo && evt.domEvt.metaKey) {
+      this.addMorph(new HaloSelection(evt.domEvt.pointerId, evt.state.clickedOnMorph));
+    } else if(!evt.targetMorphs.find((morph) => morph instanceof Halo)) {
+      evt.halo.remove();
+    }
   }
 
   onMouseUp(evt) {
@@ -754,7 +767,7 @@ export class Hand extends Morph {
   get grabbable() { return false; }
 
   get grabbedMorphs() { return this.submorphs; }
-  
+
   carriesMorphs() { return !!this.grabbedMorphs.length; }
 
   update(evt) {
@@ -797,6 +810,238 @@ export class Ellipse extends Morph {
     // cut the corners so that a rectangle becomes an ellipse
     var {x:w,y:h} = this.extent;
     return Rectangle.inset(h,w,h,w);
+  }
+
+}
+
+class Halo extends Ellipse {
+
+  constructor(props) {
+    super(
+      Object.assign(
+        props,
+        {fill: "rgba(240, 240, 240, 0.7)",
+         grabbable: false,
+         extent: pt(24, 24)}));
+    this.addMorph(new Text(
+      {
+        textString: props.name[0].toUpperCase(),
+        fontSize: 12,
+        fill: Color.transparent,
+        allowsInput: false,
+        styleClasses: props.styleClasses
+      }
+    ));
+  }
+
+  computePosition() {
+    const {x: width, y: height} = this.halo.extent;
+    const {row, col} = this.location;
+    const collWidth = (width + this.extent.x) / 3;
+    const rowHeight = height / 3;
+    this.position = pt(collWidth * col, rowHeight * row).subPt(pt(26,26));
+  }
+
+}
+
+export class HaloSelection extends Morph {
+
+  constructor(pointerId, target) {
+    super({
+        borderColor: Color.red,
+        borderWidth: 2,
+        fill: Color.transparent
+    });
+    this.pointerId = pointerId;
+    this.target = target;
+    this.draggedButton = null;
+    this.initButtons();
+    this.updateLayout();
+  }
+
+  get isHalo() { return true }
+
+  magnify(propety) {
+    // hide all other buttons, view property
+  }
+
+  liftFocus() {
+    // show all buttons, update halo layout
+  }
+
+  resizeHalo() {
+    return new Halo({
+      name: "resize",
+      styleClasses: ["fa", "fa-expand", "fa-flip-horizontal"],
+      location: {col: 3, row: 3},
+      property: 'extent',
+      halo: this,
+      onDrag: (evt) => {
+        const delta = evt.position.subPt(evt.state.lastDragPosition);
+        this.target.resizeBy(delta);
+        this.updateLayout();
+        evt.state.lastDragPosition = evt.position;
+      }
+    })
+  }
+
+  closeHalo() {
+    return new Halo({
+      name: "close",
+      styleClasses: ["fa", "fa-close"],
+      location: {col: 3, row: 0},
+      draggable: false,
+      halo: this,
+      onMouseDown: (evt) => {
+        console.log(this)
+        this.remove();
+        this.target.remove();
+      }
+    })
+  }
+
+  grabHalo() {
+    return new Halo({
+      name: "grab",
+      styleClasses: ["fa", "fa-hand-rock-o"],
+      location: {col: 1, row: 0},
+      halo: this,
+      onDragStart: (evt) => {
+        evt.hand.grab(this.target, evt);
+      },
+      onDrag: (evt) => {
+        this.updateLayout();
+      },
+      onDragEnd: (evt) => {
+        evt.hand.dropMorphsOn(evt.hand.morphBeneath(evt.hand.position), evt);
+      }
+    })
+  }
+
+  dragHalo() {
+    return new Halo({
+      name: "drag",
+      styleClasses: ["fa", "fa-arrows"],
+      property: 'position',
+      location: {col: 2, row: 0},
+      halo: this,
+      onDrag: (evt) => {
+        this.target.moveBy(evt.position.subPt(evt.state.lastDragPosition));
+        this.updateLayout();
+        evt.state.lastDragPosition = evt.position;
+      },
+    })
+  }
+
+  inspectHalo() {
+    return new Halo({
+      name: "inspect",
+      styleClasses: ["fa", "fa-search"],
+      draggable: false,
+      location: {col: 3, row: 2},
+      halo: this,
+      onMouseDown: (evt) => {
+        this.target.inspect();
+      }
+    })
+  }
+
+  editHalo() {
+    return new Halo({
+      name: "edit",
+      styleClasses: ["fa", "fa-pencil"],
+      draggable: false,
+      location: {col: 3, row: 1},
+      halo: this,
+      onMouseDown: (evt) => {
+        this.target.edit();
+      }
+    })
+  }
+
+  rotateHalo() {
+    return new Halo({
+      name: "rotate",
+      styleClasses: ["fa", "fa-repeat"],
+      location: {col: 0, row: 3},
+      halo: this,
+      onDrag: (evt) => {
+        // update rotation
+      }
+    })
+  }
+
+  copyHalo() {
+    return new Halo({
+      name: "copy",
+      styleClasses: ["fa", "fa-clone"],
+      location: {col: 0, row: 1},
+      halo: this,
+      onDragStart: (evt) => {
+        // copy morph, grab copy, set target to copy
+      },
+      onDrag: (evt) => {
+        // update halo
+      },
+      onDragEnd: (evt) => {
+        // drop copy
+      }
+    })
+  }
+
+  originHalo() {
+    return new Ellipse({
+      name: "origin", fill: Color.red,
+      opacity: 0.9, borderColor: Color.black,
+      borderWidth: 2,
+      position: this.target.origin,
+      extent: pt(15,15),
+      halo: this,
+      onDrag: (evt) => {
+        this.target.origin = this.target.origin.addPt(
+          evt.position.subPt(evt.state.lastDragPosition));
+        this.updateLayout();
+        evt.state.lastDragPosition = evt.position;
+      }
+    });
+  }
+
+  stylizeHalo() {
+    return new Halo({
+      name: "syle",
+      styleClasses: ["fa", "fa-picture-o"],
+      location: {col: 0, row: 2},
+      halo: this,
+      onMouseDown: (evt) => {
+        // stylize
+      }
+    })
+  }
+
+  initButtons() {
+    this.originAnchor = this.addMorph(
+      this.originAnchor()
+    );
+    this.buttonControls = [
+      this.resizeHalo(),
+      this.closeHalo(),
+      this.dragHalo(),
+      this.grabHalo(),
+      // this.inspectHalo(),
+      // this.editHalo(),
+      // this.copyHalo(),
+      // this.rotateHalo(),
+      // this.stylizeHalo()
+    ].map((button) => this.addMorph(button));
+  }
+
+  updateLayout() {
+    const {x, y, width, height} = this.target.globalBounds()
+    this.position = pt(x,y)
+    this.extent = pt(width, height);
+    this.buttonControls.forEach((button) => {
+      button.computePosition()
+    });
   }
 
 }
