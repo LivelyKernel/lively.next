@@ -2,6 +2,14 @@ import { promise } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 
 const defaultCSS = `
+.no-html-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 .morph {
   box-sizing: border-box;
   -webkit-touch-callout: none;
