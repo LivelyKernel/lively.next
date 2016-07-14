@@ -593,6 +593,11 @@ export class Morph {
   onMouseUp(evt) {}
   onMouseMove(evt) {}
   onInput(evt) {}
+  onSelect(evt) {}
+  onDeselect(evt) {}
+  onKeyDown(evt) {}
+  onBlur(evt) {}
+  onFocus(evt) {}
 
   onDragStart(evt) {
     evt.state.lastDragPosition = evt.position;
@@ -806,11 +811,9 @@ export class Image extends Morph {
 export class Text extends Morph {
 
   constructor(props, submorphs) {
-    super(props, submorphs);
-    if (typeof this.allowsInput !== "boolean") {
-      this.allowsInput = true;
-    }
-    this.textString = this.textString || "";
+    super(Object.assign({ allowsInput: true, textString: "" },
+                        props),
+          submorphs);
   }
 
   get isText() { return true }
@@ -850,6 +853,9 @@ export class Text extends Morph {
     this.autoFitFlagged = true;
   }
 
+  get selection() { return this.getProperty("selection") }
+  set selection(value) { this.recordChange({prop: "selection", value}) }
+
   aboutToRender() {
     super.aboutToRender();
     this.autoFitIfNeeded();
@@ -878,5 +884,15 @@ export class Text extends Morph {
 
   onInput(evt) {
     this.textString = evt.domEvt.target.value;
+  }
+
+  onSelect(evt) {
+    var {selectionStart: start, selectionEnd: end } = evt.domEvt.target,
+        text = this.textString.substring(start, end)
+    this.selection = { text: text, start: start, end: end };
+  }
+
+  onDeselect(evt) {
+    this.selection = undefined;
   }
 }

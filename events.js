@@ -15,7 +15,12 @@ const typeToMethodMap = {
   'dragend': "onDragEnd",
   'grab' : "onGrab",
   'drop' : "onDrop",
-  'input' : "onInput"
+  'input' : "onInput",
+  'select' : "onSelect",
+  'deselect' : "onDeselect",
+  'keydown' : "onKeyDown",
+  'blur' : "onBlur",
+  'focus' : "onFocus"
 }
 
 const pointerEvents = [
@@ -252,6 +257,14 @@ export class EventDispatcher {
           defaultEvent.targetMorphs = [this.world];
         }
       }
+
+    } else if (type === "select") {
+      state.selectionMorph = targetMorph;
+    }
+
+    if (state.selectionMorph && (type === "keydown" || type === "pointerdown" || type === "blur" || type === "focus")) {
+      events.push(new Event("deselect", domEvt, this, [state.selectionMorph], hand));
+      state.selectionMorph = null;
     }
 
     return events;
