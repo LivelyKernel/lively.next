@@ -590,7 +590,7 @@ export class Morph {
     if (this === evt.targetMorph) {
       setTimeout(() => {
         if (this.grabbable && !evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs())
-          evt.hand.grab(this, evt);
+          evt.hand.grab(this);
       }, 800);
     }
   }
@@ -612,11 +612,11 @@ export class Morph {
   onDragEnd(evt) { }
 
   onGrab(evt) {
-    evt.hand.grab(this, evt);
+    evt.hand.grab(this);
   }
 
   onDrop(evt) {
-    evt.hand.dropMorphsOn(this, evt);
+    evt.hand.dropMorphsOn(this);
   }
 
 
@@ -751,6 +751,7 @@ export class Hand extends Morph {
       extent: pt(4,4),
       reactsToPointer: false
     });
+    this.prevMorphProps = {};
     this.pointerId = pointerId;
     this.addStyleClass("hand");
   }
@@ -777,8 +778,8 @@ export class Hand extends Morph {
     return morphBeneath;
   }
 
-  grab(morph, evt) {
-    evt.state.prevProps = {
+  grab(morph) {
+    this.prevMorphProps = {
       dropShadow: morph.dropShadow,
       reactsToPointer: morph.reactsToPointer
     }
@@ -788,11 +789,11 @@ export class Hand extends Morph {
     morph.dropShadow = true;
   }
 
-  dropMorphsOn(dropTarget, evt) {
+  dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
       dropTarget.addMorph(morph)
-      morph.reactsToPointer = evt.state.prevProps.reactsToPointer;
-      morph.dropShadow = evt.state.prevProps.dropShadow;
+      morph.reactsToPointer = this.prevMorphProps.reactsToPointer;
+      morph.dropShadow = this.prevMorphProps.dropShadow;
     });
   }
 }

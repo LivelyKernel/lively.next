@@ -52,7 +52,7 @@ export class ObjectDrawer extends Morph {
         fill: this.isImage ? null : Color.random(),
         grabbable: false,
         position: evt.positionIn(this).negated()
-      }), evt);
+      }));
     }
 
   }
