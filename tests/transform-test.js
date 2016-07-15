@@ -357,10 +357,36 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("export default class Foo {}", opts))).to.equal(
         "var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nexport default Foo;"));
 
+  it("with export class", () =>
+      expect(stringify(classToFunctionTransform("export class Foo {}", opts))).to.equal(
+        "export var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);"));
+
   it("adds current module accessor", () =>
       expect(
         stringify(classToFunctionTransform("class Foo {}", Object.assign({}, opts, {currentModuleAccessor: nodes.member("foo", "bar")}))))
         .to.equal(
           "var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, foo.bar);"));
 
+  it("add superclass ref when module accessor available and superclass in toplevel scope", () => {
+      expect(
+        stringify(classToFunctionTransform("var Bar; class Foo extends Bar {}", Object.assign({}, opts, {currentModuleAccessor: nodes.member("foo", "bar")}))))
+        .to.equal(`var Bar;
+var Foo = createOrExtendClass('Foo', {
+    referencedAs: 'Bar',
+    value: Bar
+}, undefined, undefined, _rec, foo.bar);`)
+  });
+
+  it("doesnt add superclass ref when not in toplevel scope", () => {
+      expect(
+        stringify(
+          classToFunctionTransform(
+            "function zork() { var Bar; class Foo extends Bar {} };",
+            Object.assign({}, opts, {currentModuleAccessor: nodes.member("foo", "bar")}))))
+        .to.equal(`function zork() {
+    var Bar;
+    var Foo = createOrExtendClass('Foo', Bar, undefined, undefined, {}, foo.bar);
+}
+;`)
+  });
 });
