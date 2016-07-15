@@ -82,7 +82,12 @@ export class Event {
     this.hand = hand;
     this.halo = halo;
     this.stopped = false;
+    this.onAfterDispatchCallbacks = [];
+    this.onStopCallbacks = [];
   }
+
+  onAfterDispatch(cb) { this.onAfterDispatchCallbacks.push(cb); return this; }
+  onStop(cb) { this.onStopCallbacks.push(cb); return this; }
 
   get world() { return this.dispatcher.world; }
   get state() { return this.dispatcher.eventState; }
@@ -99,12 +104,7 @@ export class Event {
     this.stopped = true;
     this.domEvt.stopPropagation();
     this.domEvt.preventDefault();
-
-    var draggedMorph = this.state.draggedMorph;
-    if (this.type === "drag" || this.type === "dragstart" || draggedMorph) {
-      this.state.draggedMorph = null;
-      this.dispatcher.schedule(new Event("dragend", this.domEvt, this.dispatcher, [draggedMorph], this.hand, this.halo));
-    }
+    this.onStopCallbacks.forEach(ea => ea());
   }
 
   get targetMorph() { return this.targetMorphs[0]; }
@@ -168,6 +168,35 @@ export class Event {
   metaPressed() {
     return !!this.domEvt.metaKey
   }
+}
+
+function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
+  var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo)
+    .onStop(() => {
+      state.draggedMorph = null;
+      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, state, hand, halo));
+    });
+  state.draggedMorph = targetMorph;
+  state.lastDragPosition = evt.position;
+  return evt;
+}
+
+function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
+  var evt = new Event("drag", domEvt, dispatcher, [state.draggedMorph], hand, halo)
+    .onAfterDispatch(() => state.lastDragPosition = evt.position)
+    .onStop(() => {
+      state.draggedMorph = null;
+      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, state, hand, halo));
+    })
+  return evt;
+}
+
+function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
+  return new Event("dragend", domEvt, dispatcher, [state.draggedMorph], hand, halo)
+    .onAfterDispatch(() => {
+      state.draggedMorph = null;
+      state.lastDragPosition = null;
+    });
 }
 
 
@@ -237,9 +266,8 @@ export class EventDispatcher {
 
       // drag release
       if (state.draggedMorph) {
-        events.push(new Event("dragend", domEvt, this, [state.draggedMorph], hand, halo));
+        events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo));
         defaultEvent.targetMorphs = [this.world];
-        state.draggedMorph = null;
 
       // grap release
       } else if (hand.carriesMorphs()) {
@@ -252,9 +280,10 @@ export class EventDispatcher {
       // and the drag only send to the dragged morph
       if (hand.carriesMorphs()) {
         defaultEvent.targetMorphs = [this.world];
+
       } else if (state.draggedMorph) {
-        events.push(new Event("drag", domEvt, this, [state.draggedMorph], hand, halo));
         defaultEvent.targetMorphs = [this.world];
+        events.push(dragEvent(domEvt, this, targetMorph, state, hand, halo));
 
       // Start dragging when we are holding the hand pressed and and move it
       // beyond targetMorph.dragTriggerDistance
@@ -270,8 +299,7 @@ export class EventDispatcher {
           if (targetMorph.grabbable) {
             events.push(new Event("grab", domEvt, this, [targetMorph], hand, halo));
           } else {
-            state.draggedMorph = targetMorph;
-            events.push(new Event("dragstart", domEvt, this, [targetMorph], hand, halo));
+            events.push(dragStartEvent(domEvt, this, targetMorph, state, hand, halo));
           }
           defaultEvent.targetMorphs = [this.world];
         }
@@ -297,21 +325,21 @@ export class EventDispatcher {
     var method = typeToMethodMap[evt.type],
         err;
 
-    if (method) {
-      for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
-        try {
-          evt.targetMorphs[j][method](evt);
-        } catch (e) {
-          err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
-          err.originalError = e;
-          typeof $world !== "undefined" ? $world.logError(err) : console.error(err);
-        }
-        if (err || evt.stopped) break;
+    if (!method)
+      throw new Error(`dispatchEvent: ${evt.type} not yet supported!`);
+
+    for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
+      try {
+        evt.targetMorphs[j][method](evt);
+      } catch (e) {
+        err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
+        err.originalError = e;
+        typeof $world !== "undefined" ? $world.logError(err) : console.error(err);
       }
-      if (err) throw err;
-    } else {
-      throw new Error(`dispatchEvent: ${evt.type} not yet supported!`)
+      if (err || evt.stopped) break;
     }
+    evt.onAfterDispatchCallbacks.forEach(ea => ea());
+    if (err) throw err;
   }
 
   dispatchDOMEvent(domEvt) {

@@ -603,18 +603,13 @@ export class Morph {
   onBlur(evt) {}
   onFocus(evt) {}
 
-  onDragStart(evt) {
-    evt.state.lastDragPosition = evt.position;
-  }
+  onDragStart(evt) { }
 
   onDrag(evt) {
     this.moveBy(evt.position.subPt(evt.state.lastDragPosition));
-    evt.state.lastDragPosition = evt.position;
   }
 
-  onDragEnd(evt) {
-    delete evt.state.lastDragPosition;
-  }
+  onDragEnd(evt) { }
 
   onGrab(evt) {
     evt.hand.grab(this, evt);
@@ -877,7 +872,6 @@ export class HaloSelection extends Morph {
         const delta = evt.position.subPt(evt.state.lastDragPosition);
         this.target.resizeBy(delta);
         this.alignWithTarget();
-        evt.state.lastDragPosition = evt.position;
       }
     })
   }
@@ -925,7 +919,6 @@ export class HaloSelection extends Morph {
       onDrag: (evt) => {
         this.target.moveBy(evt.position.subPt(evt.state.lastDragPosition));
         this.alignWithTarget();
-        evt.state.lastDragPosition = evt.position;
       },
     })
   }
@@ -998,7 +991,6 @@ export class HaloSelection extends Morph {
         this.target.origin = this.target.origin.addPt(
           evt.position.subPt(evt.state.lastDragPosition));
         this.alignWithTarget();
-        evt.state.lastDragPosition = evt.position;
       }
     });
   }
