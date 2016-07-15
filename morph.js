@@ -432,6 +432,15 @@ export class Morph {
     return list;
   }
 
+  morphBeneath(pos) {
+    var someOwner = this.world() || this.owner;
+    if (!someOwner) return null;
+    var morphs = someOwner.morphsContainingPoint(pos),
+        myIdx = morphs.indexOf(this),
+        morphBeneath = morphs[myIdx + 1];
+    return morphBeneath;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // transforms
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -765,17 +774,10 @@ export class Hand extends Morph {
 
   carriesMorphs() { return !!this.grabbedMorphs.length; }
 
+  morphsContainingPoint(point, list) { return list }
+
   update(evt) {
     this.position = evt.position;
-  }
-
-  morphBeneath(pos) {
-    var someOwner = this.world() || this.owner;
-    if (!someOwner) return null;
-    var morphs = someOwner.morphsContainingPoint(pos),
-        myIdx = morphs.indexOf(this),
-        morphBeneath = morphs[myIdx + 1];
-    return morphBeneath;
   }
 
   grab(morph) {
@@ -835,6 +837,7 @@ export class HaloSelection extends Morph {
 
   constructor(pointerId, target) {
     super({
+      styleClasses: ["halo"],
       borderColor: Color.red,
       borderWidth: 2,
       fill: Color.transparent
@@ -848,12 +851,12 @@ export class HaloSelection extends Morph {
 
   get target() { return this.state.target; }
 
-  magnify(property) {
-    // hide all other buttons, view property
-  }
-
-  liftFocus() {
-    // show all buttons, update halo layout
+  refocus(newTarget) {
+    var owner = this.owner;
+    this.remove();
+    this.state.target = newTarget;
+    owner.addMorphAt(this, 0);
+    this.alignWithTarget();
   }
 
   resizeHalo() {
@@ -895,11 +898,10 @@ export class HaloSelection extends Morph {
       location: {col: 1, row: 0},
       halo: this,
       init: (hand) => {
-        // this.moveToFront();
         hand.grab(this.target);
       },
-      update: (hand) => {
-        hand.dropMorphsOn(hand.morphBeneath(hand.position));
+      update(hand) {
+        hand.dropMorphsOn(this.morphBeneath(hand.position));
       },
       onDragStart(evt) {
         this.init(evt.hand)
@@ -980,11 +982,12 @@ export class HaloSelection extends Morph {
       location: {col: 0, row: 1},
       halo: this,
       init: (hand) => {
-        this.target = this.target.copy()
-        hand.grab(this.target);
+        const copy = this.target.copy()
+        hand.grab(copy);
+        this.refocus(copy);
       },
-      update: (hand) => {
-        hand.dropMorphsOn(hand.morphBeneath(hand.position));
+      update(hand) {
+        hand.dropMorphsOn(this.morphBeneath(hand.position));
       },
       onDragStart(evt) {
         this.init(evt.hand)
@@ -1032,7 +1035,7 @@ export class HaloSelection extends Morph {
       this.grabHalo(),
       // this.inspectHalo(),
       // this.editHalo(),
-      // this.copyHalo(),
+      this.copyHalo(),
       this.rotateHalo(),
       // this.stylizeHalo()
     ];
