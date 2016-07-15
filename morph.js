@@ -696,10 +696,6 @@ export class World extends Morph {
   get draggable() { return false; }
   get grabbable() { return false; }
 
-  haloForPointerId(pointerId) {
-    return this.submorphs.find(m => m instanceof HaloSelection && m.pointerId === pointerId);
-  }
-
   handForPointerId(pointerId) {
     return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId)
         || this.addMorph(new Hand(pointerId), this.submorphs[0]);
@@ -711,10 +707,6 @@ export class World extends Morph {
     return this.submorphs.filter(ea => ea.isHand);
   }
 
-  get halos() {
-    return this.submorphs.filter(ea => ea.isHalo);
-  }
-
   get fontMetric() {
     return this._renderer && this._renderer.fontMetric
   }
@@ -724,9 +716,9 @@ export class World extends Morph {
   }
 
   onMouseDown(evt) {
-    if(!evt.stopped && !evt.halo && evt.domEvt.metaKey) {
-      this.addMorph(new HaloSelection(evt.domEvt.pointerId, evt.state.clickedOnMorph));
-    } else if(evt.halo && !evt.targetMorphs.find((morph) => morph instanceof Halo)) {
+    if(!evt.stopped && !evt.halo && evt.metaPressed()) {
+      this.showHaloFor(evt.state.clickedOnMorph, evt.domEvt.pointerId);
+    } else if(evt.halo && !evt.targetMorphs.find((morph) => morph instanceof HaloItem)) {
       evt.halo.remove();
     }
   }
@@ -735,6 +727,22 @@ export class World extends Morph {
   }
 
   logError(err) {
+    console.error(err);
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // halos
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  halos() { return this.submorphs.filter(m => m.isHalo); }
+
+  haloForPointerId(pointerId) {
+    return this.submorphs.find(m => m.isHalo && m.state.pointerId === pointerId);
+  }
+
+  showHaloFor(morph, pointerId) {
+    return this.addMorph(new HaloSelection(pointerId, morph));
   }
 
 }
