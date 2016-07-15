@@ -10505,265 +10505,297 @@ var atomOrPropertyOrLabel = /^\s*[):;]/ ;
 var removeComments = /([^\n])\/\*(\*(?!\/)|[^\n*])*\*\/([^\n])/g ;
 
 function hasLineTerminatorBeforeNext(st, since) {
-	return st.lineStart >= since;
+    return st.lineStart >= since;
 }
 
 function test(regex,st,noComment) {
-	var src = st.input.slice(st.start) ;
-	if (noComment) {
-		src = src.replace(removeComments,"$1 $3") ;
+    var src = st.input.slice(st.start) ;
+    if (noComment) {
+        src = src.replace(removeComments,"$1 $3") ;
   }
-	return regex.test(src);
+    return regex.test(src);
 }
 
 /* Return the object holding the parser's 'State'. This is different between acorn ('this')
  * and babylon ('this.state') */
 function state(p) {
-	if (('state' in p) && p.state.constructor && p.state.constructor.name==='State')
-		return p.state ; // Probably babylon
-	return p ; // Probably acorn
+    if (('state' in p) && p.state.constructor && p.state.constructor.name==='State')
+        return p.state ; // Probably babylon
+    return p ; // Probably acorn
 }
 
 /* Create a new parser derived from the specified parser, so that in the
  * event of an error we can back out and try again */
 function subParse(parser, pos, extensions) {
-	// NB: The Babylon constructor does NOT expect 'pos' as an argument, and so
-	// the input needs truncation at the start position, however at present
-	// this doesn't work nicely as all the node location/start/end values
-	// are therefore offset. Consequently, this plug-in is NOT currently working
-	// with the (undocumented) Babylon plug-in interface.
-	var p = new parser.constructor(parser.options, parser.input, pos);
-	if (extensions)
-		for (var k in extensions)
-			p[k] = extensions[k] ;
+    // NB: The Babylon constructor does NOT expect 'pos' as an argument, and so
+    // the input needs truncation at the start position, however at present
+    // this doesn't work nicely as all the node location/start/end values
+    // are therefore offset. Consequently, this plug-in is NOT currently working
+    // with the (undocumented) Babylon plug-in interface.
+    var p = new parser.constructor(parser.options, parser.input, pos);
+    if (extensions)
+        for (var k in extensions)
+            p[k] = extensions[k] ;
 
-	var src = state(parser) ;
-	var dest = state(p) ;
-	['inFunction','inAsyncFunction','inAsync','inGenerator','inModule'].forEach(function(k){
-		if (k in src)
-			dest[k] = src[k] ;
-	}) ;
-	p.nextToken();
-	return p;
+    var src = state(parser) ;
+    var dest = state(p) ;
+    ['inFunction','inAsyncFunction','inAsync','inGenerator','inModule'].forEach(function(k){
+        if (k in src)
+            dest[k] = src[k] ;
+    }) ;
+    p.nextToken();
+    return p;
 }
 
 function asyncAwaitPlugin (parser,options){
-	var es7check = function(){} ;
+    var es7check = function(){} ;
 
-	parser.extend("initialContext",function(base){
-		return function(){
-			if (this.options.ecmaVersion < 7) {
-				es7check = function(node) {
-					parser.raise(node.start,"async/await keywords only available when ecmaVersion>=7") ;
-				} ;
-			}
+    parser.extend("initialContext",function(base){
+        return function(){
+            if (this.options.ecmaVersion < 7) {
+                es7check = function(node) {
+                    parser.raise(node.start,"async/await keywords only available when ecmaVersion>=7") ;
+                } ;
+            }
       this.reservedWords = new RegExp(this.reservedWords.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrict = new RegExp(this.reservedWordsStrict.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
       this.reservedWordsStrictBind = new RegExp(this.reservedWordsStrictBind.toString().replace(/await|async/g,"").replace("|/","/").replace("/|","/").replace("||","|")) ;
-			this.inAsyncFunction = options.inAsyncFunction ;
-			if (options.awaitAnywhere && options.inAsyncFunction)
-				parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
+            this.inAsyncFunction = options.inAsyncFunction ;
+            if (options.awaitAnywhere && options.inAsyncFunction)
+                parser.raise(node.start,"The options awaitAnywhere and inAsyncFunction are mutually exclusive") ;
 
-			return base.apply(this,arguments);
-		}
-	}) ;
+            return base.apply(this,arguments);
+        }
+    }) ;
 
-	parser.extend("shouldParseExportStatement",function(base){
-	    return function(){
-	        if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
-	            return true ;
-	        }
-	        return base.apply(this,arguments) ;
-	    }
-	}) ;
+    parser.extend("shouldParseExportStatement",function(base){
+        return function(){
+            if (this.type.label==='name' && this.value==='async' && test(asyncFunction,state(this))) {
+                return true ;
+            }
+            return base.apply(this,arguments) ;
+        }
+    }) ;
 
-	parser.extend("parseStatement",function(base){
-		return function (declaration, topLevel) {
-			var st = state(this) ;
-			var start = st.start;
-			var startLoc = st.startLoc;
-			if (st.type.label==='name') {
-				if (test(asyncFunction,st,true)) {
-					var wasAsync = st.inAsyncFunction ;
-					try {
-						st.inAsyncFunction = true ;
-						this.next() ;
-						var r = this.parseStatement(declaration, topLevel) ;
- 						r.async = true ;
-						r.start = start;
-						r.loc && (r.loc.start = startLoc);
-						return r ;
-					} finally {
-						st.inAsyncFunction = wasAsync ;
-					}
-				} else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
-					// NON-STANDARD EXTENSION iff. options.asyncExits is set, the
-					// extensions 'async return <expr>?' and 'async throw <expr>?'
-					// are enabled. In each case they are the standard ESTree nodes
-					// with the flag 'async:true'
-					this.next() ;
-					var r = this.parseStatement(declaration, topLevel) ;
-					r.async = true ;
-					r.start = start;
-					r.loc && (r.loc.start = startLoc);
-					return r ;
-				}
-			}
-			return base.apply(this,arguments);
-		}
-	}) ;
+    parser.extend("parseStatement",function(base){
+        return function (declaration, topLevel) {
+            var st = state(this) ;
+            var start = st.start;
+            var startLoc = st.startLoc;
+            if (st.type.label==='name') {
+                if (test(asyncFunction,st,true)) {
+                    var wasAsync = st.inAsyncFunction ;
+                    try {
+                        st.inAsyncFunction = true ;
+                        this.next() ;
+                        var r = this.parseStatement(declaration, topLevel) ;
+                        r.async = true ;
+                        r.start = start;
+                        r.loc && (r.loc.start = startLoc);
+                        return r ;
+                    } finally {
+                        st.inAsyncFunction = wasAsync ;
+                    }
+                } else if ((typeof options==="object" && options.asyncExits) && test(asyncExit,st)) {
+                    // NON-STANDARD EXTENSION iff. options.asyncExits is set, the
+                    // extensions 'async return <expr>?' and 'async throw <expr>?'
+                    // are enabled. In each case they are the standard ESTree nodes
+                    // with the flag 'async:true'
+                    this.next() ;
+                    var r = this.parseStatement(declaration, topLevel) ;
+                    r.async = true ;
+                    r.start = start;
+                    r.loc && (r.loc.start = startLoc);
+                    return r ;
+                }
+            }
+            return base.apply(this,arguments);
+        }
+    }) ;
 
   parser.extend("parseIdent",function(base){
-		return function(liberal){
-				var id = base.apply(this,arguments);
-				var st = state(this) ;
-				if (st.inAsyncFunction && id.name==='await') {
-					if (arguments.length===0) {
-						this.raise(id.start,"'await' is reserved within async functions") ;
-					}
-				}
-				return id ;
-		}
-	}) ;
+        return function(liberal){
+                var id = base.apply(this,arguments);
+                var st = state(this) ;
+                if (st.inAsyncFunction && id.name==='await') {
+                    if (arguments.length===0) {
+                        this.raise(id.start,"'await' is reserved within async functions") ;
+                    }
+                }
+                return id ;
+        }
+    }) ;
 
-	parser.extend("parseExprAtom",function(base){
-		return function(refShorthandDefaultPos){
-			var st = state(this) ;
-			var start = st.start ;
-			var startLoc = st.startLoc;
-			var rhs,r = base.apply(this,arguments);
-			if (r.type==='Identifier') {
-				if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
-					// Is this really an async function?
-					var isAsync = st.inAsyncFunction ;
-					try {
-						st.inAsyncFunction = true ;
-						var pp = this ;
-						var inBody = false ;
+    parser.extend("parseExprAtom",function(base){
+        return function(refShorthandDefaultPos){
+            var st = state(this) ;
+            var start = st.start ;
+            var startLoc = st.startLoc;
+            var rhs,r = base.apply(this,arguments);
+            if (r.type==='Identifier') {
+                if (r.name==='async' && !hasLineTerminatorBeforeNext(st, r.end)) {
+                    // Is this really an async function?
+                    var isAsync = st.inAsyncFunction ;
+                    try {
+                        st.inAsyncFunction = true ;
+                        var pp = this ;
+                        var inBody = false ;
 
-						var parseHooks = {
-							parseFunctionBody:function(node,isArrowFunction){
-								try {
-									var wasInBody = inBody ;
-									inBody = true ;
-									return pp.parseFunctionBody.apply(this,arguments) ;
-								} finally {
-									inBody = wasInBody ;
-								}
-							},
-							raise:function(){
-								try {
-									return pp.raise.apply(this,arguments) ;
-								} catch(ex) {
-									throw inBody?ex:NotAsync ;
-								}
-							}
-						} ;
+                        var parseHooks = {
+                            parseFunctionBody:function(node,isArrowFunction){
+                                try {
+                                    var wasInBody = inBody ;
+                                    inBody = true ;
+                                    return pp.parseFunctionBody.apply(this,arguments) ;
+                                } finally {
+                                    inBody = wasInBody ;
+                                }
+                            },
+                            raise:function(){
+                                try {
+                                    return pp.raise.apply(this,arguments) ;
+                                } catch(ex) {
+                                    throw inBody?ex:NotAsync ;
+                                }
+                            }
+                        } ;
 
-						rhs = subParse(this,st.start,parseHooks).parseExpression() ;
-						if (rhs.type==='SequenceExpression')
-							rhs = rhs.expressions[0] ;
-						if (rhs.type==='FunctionExpression' || rhs.type==='FunctionDeclaration' || rhs.type==='ArrowFunctionExpression') {
-							rhs.async = true ;
-							rhs.start = start;
-							rhs.loc && (rhs.loc.start = startLoc);
-							st.pos = rhs.end;
-							this.next();
-							es7check(rhs) ;
-							return rhs ;
-						}
-					} catch (ex) {
-						if (ex!==NotAsync)
-							throw ex ;
-					}
-					finally {
-						st.inAsyncFunction = isAsync ;
-					}
-				}
-				else if (r.name==='await') {
-					var n = this.startNodeAt(r.start, r.loc && r.loc.start);
-					if (st.inAsyncFunction) {
-						rhs = this.parseExprSubscripts() ;
-						n.operator = 'await' ;
-						n.argument = rhs ;
-						n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
-						es7check(n) ;
-						return n ;
-					} else
-						// NON-STANDARD EXTENSION iff. options.awaitAnywhere is true,
-						// an 'AwaitExpression' is allowed anywhere the token 'await'
-						// could not be an identifier with the name 'await'.
+                        rhs = subParse(this,st.start,parseHooks).parseExpression() ;
+                        if (rhs.type==='SequenceExpression')
+                            rhs = rhs.expressions[0] ;
+                        if (rhs.type==='FunctionExpression' || rhs.type==='FunctionDeclaration' || rhs.type==='ArrowFunctionExpression') {
+                            rhs.async = true ;
+                            rhs.start = start;
+                            rhs.loc && (rhs.loc.start = startLoc);
+                            st.pos = rhs.end;
+                            this.next();
+                            es7check(rhs) ;
+                            return rhs ;
+                        }
+                    } catch (ex) {
+                        if (ex!==NotAsync)
+                            throw ex ;
+                    }
+                    finally {
+                        st.inAsyncFunction = isAsync ;
+                    }
+                }
+                else if (r.name==='await') {
+                    var n = this.startNodeAt(r.start, r.loc && r.loc.start);
+                    if (st.inAsyncFunction) {
+                        rhs = this.parseExprSubscripts() ;
+                        n.operator = 'await' ;
+                        n.argument = rhs ;
+                        n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
+                        es7check(n) ;
+                        return n ;
+                    } else
+                        // NON-STANDARD EXTENSION iff. options.awaitAnywhere is true,
+                        // an 'AwaitExpression' is allowed anywhere the token 'await'
+                        // could not be an identifier with the name 'await'.
 
-						// Look-ahead to see if this is really a property or label called async or await
-						if (st.input.slice(r.end).match(atomOrPropertyOrLabel))
-							return r ; // This is a valid property name or label
+                        // Look-ahead to see if this is really a property or label called async or await
+                        if (st.input.slice(r.end).match(atomOrPropertyOrLabel))
+                            return r ; // This is a valid property name or label
 
-						if (typeof options==="object" && options.awaitAnywhere) {
-							start = st.start ;
-							rhs = subParse(this,start-4).parseExprSubscripts() ;
-							if (rhs.end<=start) {
-								rhs = subParse(this,start).parseExprSubscripts() ;
-								n.operator = 'await' ;
-								n.argument = rhs ;
-								n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
-								st.pos = rhs.end;
-								this.next();
-								es7check(n) ;
-								return n ;
-							}
-						}
-				}
-			}
-			return r ;
-		}
-	}) ;
+                        if (typeof options==="object" && options.awaitAnywhere) {
+                            start = st.start ;
+                            rhs = subParse(this,start-4).parseExprSubscripts() ;
+                            if (rhs.end<=start) {
+                                rhs = subParse(this,start).parseExprSubscripts() ;
+                                n.operator = 'await' ;
+                                n.argument = rhs ;
+                                n = this.finishNodeAt(n,'AwaitExpression', rhs.end, rhs.loc && rhs.loc.end) ;
+                                st.pos = rhs.end;
+                                this.next();
+                                es7check(n) ;
+                                return n ;
+                            }
+                        }
+                }
+            }
+            return r ;
+        }
+    }) ;
 
-	parser.extend('finishNodeAt',function(base){
-			return function(node,type,pos,loc) {
-				if (node.__asyncValue) {
-					delete node.__asyncValue ;
-					node.value.async = true ;
-				}
-				return base.apply(this,arguments) ;
-			}
-	}) ;
+    parser.extend('finishNodeAt',function(base){
+            return function(node,type,pos,loc) {
+                if (node.__asyncValue) {
+                    delete node.__asyncValue ;
+                    node.value.async = true ;
+                }
+                return base.apply(this,arguments) ;
+            }
+    }) ;
 
-	parser.extend('finishNode',function(base){
-			return function(node,type) {
-				if (node.__asyncValue) {
-					delete node.__asyncValue ;
-					node.value.async = true ;
-				}
-				return base.apply(this,arguments) ;
-			}
-	}) ;
+    parser.extend('finishNode',function(base){
+            return function(node,type) {
+                if (node.__asyncValue) {
+                    delete node.__asyncValue ;
+                    node.value.async = true ;
+                }
+                return base.apply(this,arguments) ;
+            }
+    }) ;
 
-	parser.extend("parsePropertyName",function(base){
-		return function (prop) {
-			var st = state(this) ;
-			var key = base.apply(this,arguments) ;
-			if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
-				// Look-ahead to see if this is really a property or label called async or await
-				if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
-					es7check(prop) ;
-					key = base.apply(this,arguments) ;
-					if (key.type==='Identifier') {
-						if (key.name==='constructor')
-							this.raise(key.start,"'constructor()' cannot be be async") ;
-						else if (key.name==='set')
-							this.raise(key.start,"'set <member>(value)' cannot be be async") ;
-					}
-					prop.__asyncValue = true ;
-				}
-			}
-			return key;
-		};
-	}) ;
+    parser.extend("parsePropertyName",function(base){
+        return function (prop) {
+            var st = state(this) ;
+            var key = base.apply(this,arguments) ;
+            if (key.type === "Identifier" && key.name === "async" && !hasLineTerminatorBeforeNext(st, key.end)) {
+                // Look-ahead to see if this is really a property or label called async or await
+                if (!st.input.slice(key.end).match(atomOrPropertyOrLabel)){
+                    es7check(prop) ;
+                    key = base.apply(this,arguments) ;
+                    if (key.type==='Identifier') {
+                        if (key.name==='constructor')
+                            this.raise(key.start,"'constructor()' cannot be be async") ;
+                        else if (key.name==='set')
+                            this.raise(key.start,"'set <member>(value)' cannot be be async") ;
+                    }
+                    prop.__asyncValue = true ;
+                }
+            }
+            return key;
+        };
+    }) ;
+
+    parser.extend("parseClassMethod",function(base){
+        return function (classBody, method, isGenerator) {
+            var st, wasAsync ;
+            if (method.__asyncValue) {
+                st = state(this) ;
+                wasAsync = st.inAsyncFunction ;
+                st.inAsyncFunction = true ;
+            }
+            var r = base.apply(this,arguments) ;
+            if (st) {
+                st.inAsyncFunction = wasAsync ;
+            }
+            return r ;
+        }
+    }) ;
+    
+    parser.extend("parsePropertyValue",function(base){
+        return function (prop, isPattern, isGenerator, startPos, startLoc, refDestructuringErrors) {
+            var st, wasAsync ;
+            if (prop.__asyncValue) {
+                st = state(this) ;
+                wasAsync = st.inAsyncFunction ;
+                st.inAsyncFunction = true ;
+            }
+            var r = base.apply(this,arguments) ;
+            if (st) {
+                st.inAsyncFunction = wasAsync ;
+            }
+            return r ;
+        }
+    }) ;
 }
 
 module.exports = function(acorn) {
-	acorn.plugins.asyncawait = asyncAwaitPlugin ;
-	return acorn
+    acorn.plugins.asyncawait = asyncAwaitPlugin ;
+    return acorn
 }
 
   module.exports(acorn);
@@ -18724,8 +18756,8 @@ var nodes = Object.freeze({
 
   function declarationsWithIdsOfScope(scope) {
     // returns a list of pairs [(DeclarationNode,IdentifierNode)]
-    var bareIds = helpers.declIds(scope.params).concat(scope.catches);
-    var declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+    var bareIds = helpers.declIds(scope.params).concat(scope.catches),
+        declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
     return bareIds.map(function (ea) {
       return [ea, ea];
     }).concat(declNodes.map(function (ea) {
@@ -18784,50 +18816,47 @@ var nodes = Object.freeze({
         var decl = _resolveReference2[0];
         var id = _resolveReference2[1];
 
-        ref.decl = decl;
-        ref.declId = id;
+        map.set(ref, { decl: decl, declId: id, ref: ref });
       });
       scope.subScopes.forEach(function (s) {
         return rec(s, path);
       });
     }
-    if (scope.referencesResolved) return scope;
-    rec(scope, []);
-    scope.referencesResolved = true;
-    return scope;
-  }
-
-  function safeResolveReferences(scope) {
-    function rec(scope, outerScopes) {
-      var path = [scope].concat(outerScopes);
-      scope.refs.forEach(function (ref) {
-        var _resolveReference3 = resolveReference(ref.name, path);
-
-        var _resolveReference4 = babelHelpers.slicedToArray(_resolveReference3, 2);
-
-        var decl = _resolveReference4[0];
-        var id = _resolveReference4[1];
-
-        if (decl || id) map.set(ref, { decl: decl, declId: id });
-      });
-      scope.subScopes.forEach(function (s) {
-        return rec(s, path);
-      });
-    }
-    if (scope.referencesResolved) return scope;
+    if (scope.referencesResolvedSafely) return scope;
     var map = scope.resolvedRefMap = new Map();
     rec(scope, []);
-    scope.referencesResolved = true;
+    scope.referencesResolvedSafely = true;
     return scope;
   }
 
-  function refAt(pos, scope) {
-    var ref = scope.refs.find(function (r) {
-      return r.start <= pos && pos <= r.end;
-    });
-    return ref || scope.subScopes.reduce(function (p, s) {
-      return p || refAt(pos, s);
-    }, null);
+  function refWithDeclAt(pos, scope) {
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var ref = _step.value;
+        var _ref$ref = ref.ref;
+        var start = _ref$ref.start;
+        var end = _ref$ref.end;
+
+        if (start <= pos && pos <= end) return ref;
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
   }
 
   function topLevelDeclsAndRefs(parsed, options) {
@@ -18934,8 +18963,8 @@ var nodes = Object.freeze({
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
-    var nodes = nodesAt$1(node.start, parsed);
-    var found = nodes.reverse().find(function (node) {
+    var nodes = nodesAt$1(node.start, parsed),
+        found = nodes.reverse().find(function (node) {
       return lively_lang.arr.include(_stmtTypes, node.type);
     });
     if (options && options.asPath) {
@@ -18995,6 +19024,7 @@ var nodes = Object.freeze({
     var resolve = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
     if (resolve) resolveReferences(scope);
+
     var exports = scope.exportDecls.reduce(function (exports, node) {
 
       var exportsStmt = statementOf(scope.node, node);
@@ -19012,7 +19042,6 @@ var nodes = Object.freeze({
           type: "all"
         }]);
       }
-
       if (exportsStmt.type === "ExportDefaultDeclaration") {
         if (helpers.isDeclaration(exportsStmt.declaration)) {
           return exports.concat({
@@ -19025,14 +19054,19 @@ var nodes = Object.freeze({
             declId: exportsStmt.declaration.id
           });
         } else if (exportsStmt.declaration.type === "Identifier") {
+          var _ref3 = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
+
+          var decl = _ref3.decl;
+          var declId = _ref3.declId;
+
           return exports.concat([{
             local: exportsStmt.declaration.name,
             exported: "default",
             fromModule: null,
             node: node,
             type: "id",
-            decl: exportsStmt.declaration.decl,
-            declId: exportsStmt.declaration.declId
+            decl: decl,
+            declId: declId
           }]);
         } else {
           // exportsStmt.declaration is an expression
@@ -19050,15 +19084,25 @@ var nodes = Object.freeze({
 
       if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
         return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+          var decl, declId;
+          if (from) {
+            // "export { x as y } from 'foo'" is the only case where export
+            // creates a (non-local) declaration itself
+            decl = node;declId = exportSpec.exported;
+          } else if (exportSpec.local) {
+            var resolved = scope.resolvedRefMap.get(exportSpec.local);
+            decl = resolved.decl, declId = resolved.declId;
+          }
+
           return {
             local: !from && exportSpec.local ? exportSpec.local.name : null,
             exported: exportSpec.exported ? exportSpec.exported.name : null,
             imported: from && exportSpec.local ? exportSpec.local.name : null,
             fromModule: from || null,
-            node: node,
             type: "id",
-            decl: from ? node : exportSpec.local && exportSpec.local.decl,
-            declId: from ? exportSpec.exported : exportSpec.local && exportSpec.local.declId
+            node: node,
+            decl: decl,
+            declId: declId
           };
         }));
       }
@@ -19119,8 +19163,7 @@ var nodes = Object.freeze({
     nodesAt: nodesAt$1,
     statementOf: statementOf,
     resolveReferences: resolveReferences,
-    safeResolveReferences: safeResolveReferences,
-    refAt: refAt,
+    refWithDeclAt: refWithDeclAt,
     imports: imports,
     exports: exports$1
   });
@@ -19610,8 +19653,7 @@ var nodes = Object.freeze({
     //   }])
 
     var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
-    options.scope = safeResolveReferences(scopes(parsed));
-    // options.scope = options.scope || query.resolveReferences(query.scopes(parsed));
+    options.scope = resolveReferences(scopes(parsed));
 
     var replaced = simpleReplace(parsed, options.classHolder, function (node, classHolder, path) {
 
