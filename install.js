@@ -37,8 +37,9 @@ export async function install(baseDir, toURL) {
 
     console.log(`=> Installing and updating ${packages.length} packages`);
     i = 0; for (let p of packages) {
+      pBar && pBar.setLabel(`updating ${p.name}`);
       await p.installOrUpdate(packages);
-      pBar && pBar.setValue(++i / packages.length)
+      pBar && pBar.setValue(++i / packages.length);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -46,6 +47,7 @@ export async function install(baseDir, toURL) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     console.log(`=> npm install`);
 
+    pBar && pBar.setValue(0)
     i = 0; for (let p of packages) {
       pBar && pBar.setLabel(`npm install ${p.name}`)
       if (await p.npmInstallNeeded()) {
