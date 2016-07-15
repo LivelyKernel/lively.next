@@ -2763,7 +2763,7 @@
       key: "dontTransform",
       get: function get() {
         return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-        ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "$morph", "$world", "show"]));
+        ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]));
       }
 
       // FIXME... better to make this read-only, currently needed for loading
