@@ -2,6 +2,7 @@ import { promise } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 
 const defaultCSS = `
+
 .no-html-select {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -10,6 +11,7 @@ const defaultCSS = `
   -ms-user-select: none;
   user-select: none;
 }
+
 .morph {
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
   -webkit-backface-visibility: hidden;
@@ -25,8 +27,15 @@ const defaultCSS = `
   -ms-user-select: none;
   user-select: none;
 }
+
 .hand {
   z-index: 1;
+}
+
+.halo-item {
+  /*FIXME: we shouldn't need to hardcode the size...*/
+	line-height: 24px !important;
+	text-align: center;
 }
 `;
 

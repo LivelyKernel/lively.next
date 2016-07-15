@@ -112,8 +112,9 @@ export function addOrChangeCSSDeclaration(id = "lively-css", cssString, doc = do
 export function addOrChangeLinkedCSS(id, url, doc = document) {
   var link = doc.getElementById(id);
   if (!link) {
-    link = doc.createElement('node');
+    link = doc.createElement('link');
     link.type = 'text/css';
+    link.rel = "stylesheet";
     link.setAttribute('id', id);
     doc.head.appendChild(link);
   }
