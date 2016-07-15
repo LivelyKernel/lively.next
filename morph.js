@@ -861,7 +861,7 @@ export class HaloSelection extends Morph {
       name: "resize",
       styleClasses: ["halo-item", "fa", "fa-expand"],
       location: {col: 3, row: 3},
-      rotation: Math.PI / 2,
+      rotation: -Math.PI / 2,
       origin: pt(12, 12),
       property: 'extent',
       halo: this,
@@ -894,11 +894,18 @@ export class HaloSelection extends Morph {
       styleClasses: ["halo-item", "fa", "fa-hand-rock-o"],
       location: {col: 1, row: 0},
       halo: this,
-      onDragStart: (evt) => {
-        evt.hand.grab(this.target, evt);
+      init: (hand) => {
+        // this.moveToFront();
+        hand.grab(this.target);
       },
-      onDragEnd: (evt) => {
-        evt.hand.dropMorphsOn(evt.hand.morphBeneath(evt.hand.position), evt);
+      update: (hand) => {
+        hand.dropMorphsOn(hand.morphBeneath(hand.position));
+      },
+      onDragStart(evt) {
+        this.init(evt.hand)
+      },
+      onDragEnd(evt) {
+        this.update(evt.hand)
       }
     }));
   }
@@ -958,10 +965,10 @@ export class HaloSelection extends Morph {
         this.alignWithTarget();
       },
       onDragStart(evt) {
-        this.init(evt.position.subPt(this.target.globalPosition).theta());
+        this.init(evt.position.subPt(self.target.globalPosition).theta());
       },
       onDrag(evt) {
-        this.update(evt.position.subPt(this.target.globalPosition).theta());
+        this.update(evt.position.subPt(self.target.globalPosition).theta());
       }
     }));
   }
@@ -972,14 +979,18 @@ export class HaloSelection extends Morph {
       styleClasses: ["halo-item", "fa", "fa-clone"],
       location: {col: 0, row: 1},
       halo: this,
-      onDragStart: (evt) => {
-        // copy morph, grab copy, set target to copy
+      init: (hand) => {
+        this.target = this.target.copy()
+        hand.grab(this.target);
       },
-      onDrag: (evt) => {
-        // update halo
+      update: (hand) => {
+        hand.dropMorphsOn(hand.morphBeneath(hand.position));
       },
-      onDragEnd: (evt) => {
-        // drop copy
+      onDragStart(evt) {
+        this.init(evt.hand)
+      },
+      onDragEnd(evt) {
+        this.update(evt.hand);
       }
     }));
   }
@@ -1029,7 +1040,10 @@ export class HaloSelection extends Morph {
 
   alignWithTarget() {
     const {x, y, width, height} = this.target.globalBounds();
-    this.position = pt(x,y)
+    const origin = this.target.origin;
+    // fixme, adjust position such that origin is fixed globally
+    // in case rotations are applied
+    this.position = pt(x,y);
     this.extent = pt(width, height);
     this.buttonControls.forEach((button) => button.alignInHalo());
     this.originHalo().position = this.target.origin;
