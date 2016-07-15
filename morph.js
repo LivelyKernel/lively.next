@@ -902,6 +902,7 @@ export class HaloSelection extends Morph {
       },
       update(hand) {
         hand.dropMorphsOn(this.morphBeneath(hand.position));
+        this.halo.alignWithTarget();
       },
       onDragStart(evt) {
         this.init(evt.hand)
@@ -988,6 +989,7 @@ export class HaloSelection extends Morph {
       },
       update(hand) {
         hand.dropMorphsOn(this.morphBeneath(hand.position));
+        this.halo.alignWithTarget();
       },
       onDragStart(evt) {
         this.init(evt.hand)
