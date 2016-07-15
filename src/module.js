@@ -37,7 +37,8 @@ class ModuleInterface {
     this._source = null;
     this._ast = null;
     this._scope = null;
-    
+    this._observersOfTopLevelState = [];
+
     subscribe(System, "modulechange", (data) => {
       if (data.module === this.id) this.reset();
     });
@@ -126,6 +127,7 @@ class ModuleInterface {
 
   unloadEnv() {
     this._recorder = null;
+    this._observersOfTopLevelState = [];
     // FIXME this shouldn't be necessary anymore....
     delete livelySystemEnv(this.System).loadedModules[this.id];
   }
@@ -300,6 +302,29 @@ class ModuleInterface {
 
   define(varName, value) { return this.recorder[varName] = value; }
   undefine(varName) { delete this.recorder[varName]; }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // observing top level state
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  subscribeToToplevelDefinitionChanges(func) {
+    this._observersOfTopLevelState.push(func);
+    return func;
+  }
+
+  notifyTopLevelObservers(key) {
+    var ignored = [
+          "createOrExtendES6ClassForLively",
+          "lively.capturing-declaration-wrapper"],
+        rec = this.recorder;
+    if (arr.include(ignored, key)) return;
+    this._observersOfTopLevelState.forEach(fn => fn(key, rec[key]));
+  }
+
+  unsubscribeFromToplevelDefinitionChanges(funcOrName) {
+    this._observersOfTopLevelState = typeof funcOrName === "string" ?
+      this._observersOfTopLevelState.filter(ea => ea.name !== funcOrName) :
+      this._observersOfTopLevelState.filter(ea => ea !== funcOrName);
+  }
 
   evaluationDone() {
     this.addGetterSettersForNewVars();

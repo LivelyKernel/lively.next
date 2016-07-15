@@ -117,14 +117,12 @@ describe("lively.modules aware eval", () => {
           .then((m) => expect(m.foo).to.equal(5, "foo updated in module1 after re-eval"));
       }]));
 
-  it("of import statement", () =>
+  it("of import statement", async () => {
     // test if import is transformed to lookup + if the imported module gets before eval
-    promise.chain([
-      () => runEval("import { z } from './file3.js'; z", {System: S, targetModule: testProjectDir + "file1.js"}),
-      (result, state) => {
-        expect(result.value).to.not.match(/error/i);
-        expect(result.value).to.equal(1, "imported value");
-      }]));
+    var result = await runEval("import { z } from './file3.js'; z", {System: S, targetModule: testProjectDir + "file1.js"})
+    expect(result.value).to.not.match(/error/i);
+    expect(result.value).to.equal(1, "imported value");
+  });
 
 
   it("reload module dependencies", async () => {
@@ -165,5 +163,16 @@ describe("lively.modules aware eval", () => {
     })
 
   });
+
+  describe("notifications of toplevel changes", () => {
+  
+    it("triggers notification on change", async () => {
+      var seen = {};
+      module3.subscribeToToplevelDefinitionChanges((key, val) => seen[key] = val);
+      await runEval("var z = 22, foo = 123;", {System: S, targetModule: module3.id})
+      expect(seen).containSubset({z: 22, foo: 123});
+    });
+  });
+
 });
 

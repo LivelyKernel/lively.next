@@ -6,21 +6,22 @@ import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 
+const dir = System.decanonicalize("lively.modules/tests/"),
+      testProjectDir = dir + "test-project-1-dir/",
+      testProjectSpec = {
+        "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
+        "file2.js": "var internal = 1; export var y = internal;",
+        "file4.js": "'format esm'; var x = 23;\n",
+        "package.json": '{"name": "test-project-1", "main": "file1.js"}',
+        "sub-dir": {"file3.js": "export var z = 2;"}
+      },
+      file1m = testProjectDir + "file1.js",
+      file2m = testProjectDir + "file2.js",
+      file3m = testProjectDir + "sub-dir/file3.js",
+      file4m = testProjectDir + "file4.js";
+
 describe("code changes of esm format module", () => {
 
-  const dir = System.decanonicalize("lively.modules/tests/"),
-        testProjectDir = dir + "test-project-1-dir/",
-        testProjectSpec = {
-          "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
-          "file2.js": "var internal = 1; export var y = internal;",
-          "file4.js": "'format esm'; var x = 23;\n",
-          "package.json": '{"name": "test-project-1", "main": "file1.js"}',
-          "sub-dir": {"file3.js": "export var z = 2;"}
-        },
-        file1m = testProjectDir + "file1.js",
-        file2m = testProjectDir + "file2.js",
-        file3m = testProjectDir + "sub-dir/file3.js",
-        file4m = testProjectDir + "file4.js";
 
   function changeModule2Source() {
     // "internal = 1" => "internal = 2"
@@ -150,11 +151,11 @@ describe("code changes of global format module", () => {
       }
 
   let S, module1;
-  beforeEach(() => {
+  beforeEach(async () => {
     S = getSystem("test", {baseURL: dir});
     module1 = module(S, file1m);
-    return createFiles(testProjectDir, testProjectSpec)
-      .then(() => S.import(testProjectDir + "file1.js"));
+    await createFiles(testProjectDir, testProjectSpec);
+    await S.import(testProjectDir + "file1.js");
   });
 
   afterEach(() => {
@@ -162,7 +163,7 @@ describe("code changes of global format module", () => {
     try { delete S.global.zzz; } catch (e) {}
   });
 
-  afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
+  afterEach(async () => { removeSystem("test"); await removeDir(testProjectDir); });
 
   it("modifies module and its exports", async () => {
     var m = await S.import(file1m);
@@ -226,4 +227,38 @@ describe("persistent definitions", () => {
     expect(class1).not.equals(class2, "Foo class identity the same");
   });
 
-})
+});
+
+describe("notifications of toplevel changes", () => {
+
+  let S, module1, module2, module3, module4;
+  beforeEach(async () => {
+    S = getSystem("test", {baseURL: testProjectDir});
+    module1 = module(S, file1m);
+    module2 = module(S, file2m);
+    module3 = module(S, file3m);
+    module4 = module(S, file4m);
+    await createFiles(testProjectDir, testProjectSpec);
+  });
+
+  afterEach(async () => { removeSystem("test"); await removeDir(testProjectDir); });
+  
+  it("triggers notification on change", async () => {
+    var seen = {};
+    module4.subscribeToToplevelDefinitionChanges((key, val) => seen[key] = val);
+    await module4.load();
+    expect(seen).containSubset({System: {}, x: 23});
+    seen = {};
+    await module4.changeSource("'format esm'; var x = 24;", {evaluate: true});
+    expect(seen).containSubset({x: 24});
+  });
+
+  it("triggers notification via module binding", async () => {
+    await module1.load();
+    var seen = {};
+    module1.subscribeToToplevelDefinitionChanges((key, val) => seen[key] = val);
+    await module2.changeSource("var y = 123;", {evaluate: true});
+    expect(seen).containSubset({y: 123});
+  });
+
+});

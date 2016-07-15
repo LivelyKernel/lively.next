@@ -6,6 +6,7 @@ import { removeDir, createFiles, inspect as i } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 import { registerPackage } from "../src/packages.js";
+import { runEval } from "lively.vm";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-project-dir/",
@@ -14,6 +15,7 @@ var dir = System.decanonicalize("lively.modules/tests/"),
       "file2.js": "export var y = 1;",
       "file3.js": "var zzz = 4; System.global.z = zzz / 2;",
       "file4.js": "export default class Foo { static bar() {} }; Foo.bar();",
+      "file5.js": "import Foo from './file4.js'; class Bar extends Foo {}",
       "package.json": JSON.stringify({
                         "name": "test-project-1",
                         "main": "file1.js",
@@ -21,26 +23,30 @@ var dir = System.decanonicalize("lively.modules/tests/"),
                       })
     }
 
+let S, module1, module2, module3, module4, module5;
+
+async function setup() {
+  S = getSystem("test", {baseURL: dir});
+  module1 = module(S, testProjectDir + "file1.js");
+  module2 = module(S, testProjectDir + "file2.js");
+  module3 = module(S, testProjectDir + "file3.js");
+  module4 = module(S, testProjectDir + "file4.js");
+  module5 = module(S, testProjectDir + "file5.js");
+  try { delete S.global.z; } catch (e) {}
+  try { delete S.global.zzz; } catch (e) {}
+  await createFiles(testProjectDir, testProjectSpec);
+  await S.import(testProjectDir + "file1.js");
+}
+
+function teardown() {
+  removeSystem("test");
+  return removeDir(testProjectDir);
+}
 
 describe("instrumentation", () => {
 
-  let S, module1, module2, module3, module4;
-  beforeEach(() => {
-    S = getSystem("test", {baseURL: dir});
-    module1 = module(S, testProjectDir + "file1.js");
-    module2 = module(S, testProjectDir + "file2.js");
-    module3 = module(S, testProjectDir + "file3.js");
-    module4 = module(S, testProjectDir + "file4.js");
-    try { delete S.global.z; } catch (e) {}
-    try { delete S.global.zzz; } catch (e) {}
-    return createFiles(testProjectDir, testProjectSpec)
-      .then(() => S.import(testProjectDir + "file1.js"));
-  });
-
-  afterEach(() => {
-    removeSystem("test");
-    return removeDir(testProjectDir);
-  });
+  beforeEach(setup);
+  afterEach(teardown);
 
   it("gets access to internal module state", async () => {
     expect(module1).to.have.deep.property("recorder.y", 1);
@@ -73,6 +79,8 @@ describe("instrumentation", () => {
 
   describe("classes", function() {
 
+    var supersym = Symbol.for("lively-instance-superclass");
+
     it("class export is recorded", async () => {
       var exports = await S.import(`${testProjectDir}file4.js`);
       expect(exports.default).is.a("function");
@@ -92,6 +100,14 @@ describe("instrumentation", () => {
         },
         pathInPackage: "./file4.js"
       });
+    });
+
+    it("classes are updated when their toplevel superclasses change", async () => {
+      await S.import(`${testProjectDir}file5.js`);
+      module5.recorder.Bar[Symbol.for("lively-instance-superclass")]
+      expect(module5.recorder.Bar[supersym]).equals(module4.recorder.Foo);
+      await runEval("export default class Baz {}", {System: S, targetModule: module4.id});
+      expect(module5.recorder.Bar[supersym]).equals(module4.recorder.Baz, "didn't update class");
     });
   });
 
