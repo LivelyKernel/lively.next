@@ -861,11 +861,11 @@ export class HaloSelection extends Morph {
       location: {col: 3, row: 3},
       property: 'extent',
       halo: this,
-      doAction: (delta) => {
+      update: (delta) => {
         this.target.resizeBy(delta);
         this.alignWithTarget();
       },
-      onDrag(evt) { this.doAction(evt.state.dragDelta) }
+      onDrag(evt) { this.update(evt.state.dragDelta) }
     }));
   }
 
@@ -876,11 +876,11 @@ export class HaloSelection extends Morph {
       location: {col: 3, row: 0},
       draggable: false,
       halo: this,
-      doAction: () => {
+      update: () => {
         this.remove();
         this.target.remove();
       },
-      onMouseDown(evt) { this.doAction(); }
+      onMouseDown(evt) { this.update(); }
     }));
   }
 
@@ -909,11 +909,11 @@ export class HaloSelection extends Morph {
       property: 'position',
       location: {col: 2, row: 0},
       halo: this,
-      doAction: (delta) => {
+      update: (delta) => {
         this.target.moveBy(delta);
         this.alignWithTarget();
       },
-      onDrag(evt) { this.doAction(evt.state.dragDelta); },
+      onDrag(evt) { this.update(evt.state.dragDelta); },
     }));
   }
 
@@ -944,13 +944,23 @@ export class HaloSelection extends Morph {
   }
 
   rotateHalo() {
+    var angle = 0;
     return this.getSubmorphNamed("rotate") || this.addMorph(new HaloItem({
       name: "rotate",
       styleClasses: ["halo-item", "fa", "fa-repeat"],
       location: {col: 0, row: 3},
       halo: this,
-      onDrag: (evt) => {
-        // update rotation
+      init: (angleToTarget) => { angle = angleToTarget; },
+      update: (angleToTarget) => {
+        this.target.rotateBy(angleToTarget - angle);
+        angle = angleToTarget;
+        this.alignWithTarget();
+      },
+      onDragStart(evt) {
+        this.init(evt.position.subPt(this.target.globalPosition).theta());
+      },
+      onDrag(evt) {
+        this.update(evt.position.subPt(this.target.globalPosition).theta());
       }
     }));
   }
@@ -981,11 +991,11 @@ export class HaloSelection extends Morph {
       position: this.target.origin,
       extent: pt(15,15),
       halo: this,
-      doAction: (delta) => {
+      update: (delta) => {
         this.target.origin = this.target.origin.addPt(delta);
         this.alignWithTarget();
       },
-      onDrag(evt) { this.doAction(evt.state.dragDelta); }
+      onDrag(evt) { this.update(evt.state.dragDelta); }
     }));;
   }
 
@@ -1011,7 +1021,7 @@ export class HaloSelection extends Morph {
       // this.inspectHalo(),
       // this.editHalo(),
       // this.copyHalo(),
-      // this.rotateHalo(),
+      this.rotateHalo(),
       // this.stylizeHalo()
     ];
   }

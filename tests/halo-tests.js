@@ -3,6 +3,7 @@ import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
+import { num } from "lively.lang";
 
 var world, submorph1;
 
@@ -50,26 +51,33 @@ describe("halos", () => {
 
   it("drag drags", () => {
     var halo = world.showHaloFor(submorph1);
-    halo.dragHalo().doAction(pt(10,5));
+    halo.dragHalo().update(pt(10,5));
     expect(submorph1.position).equals(pt(20, 15));
   });
 
   it("resize resizes", () => {
     var halo = world.showHaloFor(submorph1);
-    halo.resizeHalo().doAction(pt(10,5));
+    halo.resizeHalo().update(pt(10,5));
     expect(submorph1.extent).equals(pt(110, 105));
+  });
+
+  it("rotate rotates", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.rotateHalo().init(num.toRadians(10));
+    halo.rotateHalo().update(num.toRadians(25));
+    expect(submorph1.rotation).closeTo(num.toRadians(15), 0.1);
   });
 
   it("close removes", () => {
     var halo = world.showHaloFor(submorph1);
-    halo.closeHalo().doAction();
+    halo.closeHalo().update();
     expect(submorph1.owner).equals(null);
   });
 
   it("origin shifts origin", () => {
     submorph1.origin = pt(20,30);
     var halo = world.showHaloFor(submorph1);
-    halo.originHalo().doAction(pt(10,5));
+    halo.originHalo().update(pt(10,5));
     expect(submorph1.origin).equals(pt(30, 35));
     expect(halo.originHalo().position).equals(pt(30, 35));
   });
