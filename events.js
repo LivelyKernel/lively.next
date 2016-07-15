@@ -263,8 +263,8 @@ export class EventDispatcher {
               && !state.draggedMorph
               && !hand.carriesMorphs()
               && state.clickedOnPosition) {
-        var dist = state.clickedOnPosition.dist(defaultEvent.position);
 
+        var dist = state.clickedOnPosition.dist(defaultEvent.position);
         if (dist > targetMorph.dragTriggerDistance) {
           // FIXME should grab really be triggered through drag?
           if (targetMorph.grabbable) {

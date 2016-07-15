@@ -1,5 +1,5 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num } from "lively.lang";
+import { string, obj, arr, num, promise } from "lively.lang";
 import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
 import { show } from "./markers.js";
 
@@ -436,20 +436,6 @@ export class Morph {
   // transforms
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  adjustOrigin(newOrigin) {
-    if (this.origin.eqPt(newOrigin)) return;
-
-    var oldOrigin            = this.origin,
-        delta                = newOrigin.subPt(oldOrigin),
-        transform            = this.getTransform(),
-        oldTransformedOrigin = transform.transformPoint(oldOrigin),
-        newTransformedOrigin = transform.transformPoint(newOrigin),
-        transformedDelta     = newTransformedOrigin.subPt(oldTransformedOrigin);
-
-    if (this.owner) this.moveBy(transformedDelta);
-    this.origin = newOrigin;
-  }
-
   localize(point) {
     // map world point to local coordinates
     var world = this.world();
@@ -686,6 +672,10 @@ export class Morph {
   aboutToRender() {
     this.commitChanges();
     this._dirty = false;
+  }
+
+  whenRendered() {
+    return promise.waitFor(() => !this.needsRerender()).then(() => this);
   }
 
   render(renderer) { return renderMorph(this, renderer); }

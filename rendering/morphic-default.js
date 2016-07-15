@@ -16,6 +16,7 @@ export function renderMorph(morph, renderer) {
     visible,
     position: {x,y},
     extent: {x: width, y: height},
+    origin: {x: originX, y: originY},
     fill, borderWidth, borderColor, borderRadius: br,
     clipMode,
     reactsToPointer
@@ -24,15 +25,11 @@ export function renderMorph(morph, renderer) {
   var shapedStyle = Object.assign(
 
     {
-      transform: morph.getTransform().toCSSValue(
-        {x: morph.origin.x - (width / 2),
-         y: morph.origin.y - (height / 2)}),
+      transform: morph.getTransform().toCSSTransformString(),
+      transformOrigin: `${originX}px ${originY}px `,
       position: "absolute",
       visibility: visible ? "visible" : "hidden",
-      // left: x + 'px',
-      // top: y + 'px',
-      width: width + 'px',
-      height: height + 'px',
+      width: width + 'px', height: height + 'px',
       backgroundColor: fill ? fill.toString() : "",
       border: `${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"} solid`,
       borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,

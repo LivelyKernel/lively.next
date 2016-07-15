@@ -55,6 +55,26 @@ describe("full morphic setup with renderer and events", () => {
       expect(renderer.domNode.childNodes[0].childNodes[0]).equals(node); // brittle, might change...
     });
 
+    describe("transforms", () => {
+
+      it("scale and rotation are rendered", async () => {
+        submorph1.rotateBy(num.toRadians(45));
+        await submorph1.whenRendered();
+        expect(renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
+          .match(/translate\(10px,\s*10px\)/)
+          .match(/rotate\(45deg\)/)
+          .match(/scale\(1,\s*1\)/)
+      });
+
+      it("origin rendered via css transformOrigin", async () => {
+        submorph1.origin = pt(20,10);
+        await submorph1.whenRendered();
+        expect(renderer.getNodeForMorph(submorph1))
+          .deep.property("style.transformOrigin").match(/20px 10px/);
+      });
+
+    });
+
     describe("shapes", () => {
 
       it("shape influences node style", () => {
