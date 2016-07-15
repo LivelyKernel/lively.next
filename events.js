@@ -178,6 +178,7 @@ function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
     });
   state.draggedMorph = targetMorph;
   state.lastDragPosition = evt.position;
+  state.dragDelta = pt(0,0);
   return evt;
 }
 
@@ -188,15 +189,18 @@ function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
       state.draggedMorph = null;
       dispatcher.schedule(dragEndEvent(domEvt, dispatcher, state, hand, halo));
     })
+  state.dragDelta = evt.position.subPt(state.lastDragPosition);
   return evt;
 }
 
 function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
-  return new Event("dragend", domEvt, dispatcher, [state.draggedMorph], hand, halo)
+  var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph], hand, halo)
     .onAfterDispatch(() => {
       state.draggedMorph = null;
       state.lastDragPosition = null;
     });
+  state.dragDelta = evt.position.subPt(state.lastDragPosition);
+  return evt;
 }
 
 

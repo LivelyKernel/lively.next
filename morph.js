@@ -606,7 +606,7 @@ export class Morph {
   onDragStart(evt) { }
 
   onDrag(evt) {
-    this.moveBy(evt.position.subPt(evt.state.lastDragPosition));
+    this.moveBy(evt.state.dragDelta);
   }
 
   onDragEnd(evt) { }

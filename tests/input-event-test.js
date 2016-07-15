@@ -3,7 +3,7 @@ import { expect, chai } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { EventDispatcher } from "../events.js";
-import { World, Renderer } from "../index.js";
+import { morph, World, Renderer } from "../index.js";
 
 var domEnv;
 
@@ -28,42 +28,46 @@ function installEventLogger(morph, log) {
   });
 }
 
+var world, submorph1, submorph2, submorph3, submorph4,
+    eventLog, renderer, eventDispatcher;
+
+async function setup() {
+  world = new World({
+    name: "world", extent: pt(300,300),
+    submorphs: [{
+        name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
+        submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
+      },
+      {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
+      {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "old text"}
+    ]
+  })
+  submorph1 = world.submorphs[0];
+  submorph2 = world.submorphs[0].submorphs[0];
+  submorph3 = world.submorphs[1];
+  submorph4 = world.submorphs[2];
+
+  domEnv = await createDOMEnvironment();
+  renderer = new Renderer(world, domEnv.document.body, domEnv);
+  renderer.startRenderWorldLoop();
+
+  eventDispatcher = new EventDispatcher(domEnv.window, world).install();
+
+  eventLog = [];
+  [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
+}
+
+function teardown() {
+  eventDispatcher && eventDispatcher.uninstall();
+  renderer && renderer.clear();
+  domEnv.destroy();
+}
+
 describe("events", () => {
 
-  var world, submorph1, submorph2, submorph3, submorph4,
-      eventLog, renderer, eventDispatcher;
 
-  beforeEach(async () => {
-    world = new World({
-      name: "world", extent: pt(300,300),
-      submorphs: [{
-          name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
-          submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
-        },
-        {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
-        {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "old text"}
-      ]
-    })
-    submorph1 = world.submorphs[0];
-    submorph2 = world.submorphs[0].submorphs[0];
-    submorph3 = world.submorphs[1];
-    submorph4 = world.submorphs[2];
-
-    domEnv = await createDOMEnvironment();
-    renderer = new Renderer(world, domEnv.document.body, domEnv);
-    renderer.startRenderWorldLoop();
-
-    eventDispatcher = new EventDispatcher(domEnv.window, world).install();
-
-    eventLog = [];
-    [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
-  });
-
-  afterEach(() => {
-    eventDispatcher && eventDispatcher.uninstall();
-    renderer && renderer.clear();
-    domEnv.destroy();
-  });
+  beforeEach(async () => setup());
+  afterEach(() => teardown());
 
   it("mousedown on submorph", () => {
     eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerdown"));
@@ -97,6 +101,21 @@ describe("events", () => {
     eventLog.length = 0;
     eventDispatcher.dispatchDOMEvent(fakeEvent(submorph2, "pointerup", pt(34, 36)));
     expect(eventLog).deep.equals(["onMouseUp-world", "onDragEnd-submorph2"]);
+  });
+
+  it("drag computes drag delta", async () => {
+    var m = world.addMorph(morph({extent: pt(50,50), fill: Color.pink, grabbable: false}));
+    await m.whenRendered()
+    var dragStartEvent, dragEvent, dragEndEvent;
+    m.onDragStart = evt => dragStartEvent = evt;
+    m.onDrag = evt => dragEvent = evt;
+    m.onDragEnd = evt => dragEndEvent = evt;
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m, "pointerdown", pt(20, 25)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m, "pointermove", pt(30, 35)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m, "pointermove", pt(40, 50)));
+    expect(dragEvent.state.dragDelta).equals(pt(10,15))
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m, "pointerup", pt(40, 51)));
+    expect(dragEndEvent.state.dragDelta).equals(pt(0, 1))
   });
 
   it("grab morph", () => {
