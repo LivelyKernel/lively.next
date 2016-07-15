@@ -47,7 +47,7 @@ describe("halos", () => {
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
     expect(halo.originHalo().position).equals(submorph1.origin);
   });
-});
+
   it("drag drags", () => {
     var halo = world.showHaloFor(submorph1);
     halo.dragHalo().doAction(pt(10,5));
@@ -66,3 +66,11 @@ describe("halos", () => {
     expect(submorph1.owner).equals(null);
   });
 
+  it("origin shifts origin", () => {
+    submorph1.origin = pt(20,30);
+    var halo = world.showHaloFor(submorph1);
+    halo.originHalo().doAction(pt(10,5));
+    expect(submorph1.origin).equals(pt(30, 35));
+    expect(halo.originHalo().position).equals(pt(30, 35));
+  });
+});

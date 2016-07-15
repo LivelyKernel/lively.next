@@ -974,18 +974,18 @@ export class HaloSelection extends Morph {
   }
 
   originHalo() {
-    return this.getSubmorphNamed("origin") || this.addMorph(new Ellipse({
+    return this.getSubmorphNamed("origin") || this.addMorph(new HaloItem({
       name: "origin", fill: Color.red,
       opacity: 0.9, borderColor: Color.black,
       borderWidth: 2,
       position: this.target.origin,
       extent: pt(15,15),
       halo: this,
-      onDrag: (evt) => {
-        this.target.origin = this.target.origin.addPt(
-          evt.position.subPt(evt.state.lastDragPosition));
+      doAction: (delta) => {
+        this.target.origin = this.target.origin.addPt(delta);
         this.alignWithTarget();
-      }
+      },
+      onDrag(evt) { this.doAction(evt.state.dragDelta); }
     }));;
   }
 
@@ -1021,6 +1021,7 @@ export class HaloSelection extends Morph {
     this.position = pt(x,y)
     this.extent = pt(width, height);
     this.buttonControls.forEach((button) => button.alignInHalo());
+    this.originHalo().position = this.target.origin;
   }
 
 }
