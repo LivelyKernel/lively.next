@@ -99,11 +99,22 @@ describe("halos", () => {
         hand = world.handForPointerId("test-pointer");
     halo.grabHalo().init(hand)
     hand.position = submorph1.globalBounds().center();
-    halo.alignWithTarget();
     expect(submorph2.owner).equals(hand);
     halo.grabHalo().update(hand)
     expect(halo.position).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(submorph1);
+  });
+
+  it("copy copies", () => {
+    var halo = world.showHaloFor(submorph2),
+        hand = world.handForPointerId("test-pointer");
+    halo.copyHalo().init(hand)
+    var copy = halo.target;
+    expect(copy).not.equals(submorph2);
+    hand.position = submorph1.globalBounds().center();
+    halo.copyHalo().update(hand)
+    expect(halo.position).equals(copy.globalBounds().topLeft());
+    expect(copy.owner).equals(submorph1);
   });
 
 });
