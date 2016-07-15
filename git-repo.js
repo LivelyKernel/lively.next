@@ -118,7 +118,7 @@ export class Repository {
     var {code, output} = await this.cmd(`git branch --contains ${remote}`);
 
     if (code) {
-      console.error(output)
+      console.error(`Error checking pull/push for ${this.directory}${output}`);
       return {pull: false, push: false};
     }
 
@@ -192,9 +192,8 @@ export class Repository {
     var current = await this.localBranchInfo();
     var trackedRemote = await this.remoteOfBranch(branch);
     if (trackedRemote) remote = trackedRemote;
-
     if (!await this.hasRemoteChanges(branch)) {
-      false && console.log(`No remote changes, ${this.directory} is up-tp-date.`)
+      false && console.log(`No remote changes, ${this.directory} is up-to-date.`)
       return "up-to-date";
     }
 
