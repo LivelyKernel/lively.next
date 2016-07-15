@@ -28,9 +28,12 @@
         'systemjs-babel-build': pluginBabelPath + '/systemjs-babel-browser.js'
       },
       transpiler: 'plugin-babel',
-      babelOptions: Object.assign(
-        {stage3: true, es2015: true, modularRuntime: true},
-        System.babelOptions)
+      babelOptions: Object.assign({
+        sourceMaps: "inline",
+        stage3: true,
+        es2015: true,
+        modularRuntime: true
+      }, System.babelOptions)
     });
   }
 

@@ -51,11 +51,11 @@ var dir = System.decanonicalize("lively.modules/tests/"),
 describe("binding", () => {
 
   var S, modules;
-  beforeEach(() => {
+  beforeEach(async () => {
     S = getSystem('import-export-test');
     modules = Object.keys(testProjectSpec)
                     .map(k => module(S, testProjectDir + k));
-    return createFiles(testProjectDir, testProjectSpec)
+    await createFiles(testProjectDir, testProjectSpec)
   });
   afterEach(() => removeDir(testProjectDir));
 
@@ -66,8 +66,8 @@ describe("binding", () => {
         start: 4,
         end: 9,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file1.js"}
       },
+      declModule: {id: testProjectDir + "file1.js"},
       id: {start: 4, end: 5, name: "x"}
     }]);
   });
@@ -75,22 +75,24 @@ describe("binding", () => {
   it("to named declaration", async () => {
     const decls = await modules[3].bindingPathForRefAt(41);
     expect(decls).to.containSubset([{
+      declModule: {id: testProjectDir + "file3.js"},
       decl: {
         start: 0,
         end: 31,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file3.js"}
       },
       id: {start: 9, end: 10, name: "x"}
-    },{
+    },
+    {
+      declModule: {id: testProjectDir + "file2.js"},
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
       id: {start: 11, end: 12, name: "x"},
-    }]);
+    }
+    ]);
   });
   
   it("to named declaration as", async () => {
@@ -100,47 +102,50 @@ describe("binding", () => {
         start: 0,
         end: 37,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file4.js"}
       },
+      declModule: {id: testProjectDir + "file4.js"},
       id: {start: 14, end: 16, name: "xx"}
-    },{
+    }, {
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
+      declModule: {id: testProjectDir + "file2.js"},
       id: {start: 11, end: 12, name: "x"},
     }]);
   });
 
   it("to re-exported named declaration", async () => {
-    const decls = await modules[6].bindingPathForRefAt(41);
+    const decls = await modules[6].bindingPathForRefAt(41)
     expect(decls).to.containSubset([{
       decl: {
         start: 0,
         end: 31,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file6.js"}
       },
+      declModule: {id: testProjectDir + "file6.js"},
       id: {start: 9, end: 10, name: "x"}
-    },{
+    },
+    {
       decl: {
         start: 0,
         end: 31,
         type: "ExportNamedDeclaration",
-        module: {id: testProjectDir + "file5.js"}
       },
+      declModule: {id: testProjectDir + "file5.js"},
       id: {start: 9, end: 10, name: "x"}
-    },{
+    },
+    {
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
+      declModule: {id: testProjectDir + "file2.js"},
       id: {start: 11, end: 12, name: "x"},
-    }]);
+    }
+    ]);
   });
   
   it("to re-export named declaration as", async () => {
@@ -150,24 +155,24 @@ describe("binding", () => {
         start: 0,
         end: 31,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file8.js"}
       },
+      declModule: {id: testProjectDir + "file8.js"},
       id: {start: 9, end: 10, name: "y"}
     },{
       decl: {
         start: 0,
         end: 36,
         type: "ExportNamedDeclaration",
-        module: {id: testProjectDir + "file7.js"}
       },
+      declModule: {id: testProjectDir + "file7.js"},
       id: {start: 14, end: 15, name: "y"}
     },{
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
+      declModule: {id: testProjectDir + "file2.js"},
       id: {start: 11, end: 12, name: "x"},
     }]);
   });
@@ -179,24 +184,24 @@ describe("binding", () => {
         start: 0,
         end: 32,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file20.js"}
       },
+      declModule: {id: testProjectDir + "file20.js"},
       id: {start: 9, end: 10, name: "x"}
     },{
       decl: {
         start: 0,
         end: 31,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file19.js"}
       },
+      declModule: {id: testProjectDir + "file19.js"},
       id: {start: 9, end: 10, name: "x"}
     },{
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
+      declModule: {id: testProjectDir + "file2.js"},
       id: {start: 11, end: 12, name: "x"},
     }]);
   });
@@ -208,16 +213,16 @@ describe("binding", () => {
         start: 0,
         end: 31,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file10.js"}
       },
+      declModule: {id: testProjectDir + "file10.js"},
       id: {start: 9, end: 10, name: "x"}
     },{
       decl: {
         start: 4,
         end: 9,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file9.js"}
       },
+      declModule: {id: testProjectDir + "file9.js"},
       id: {start: 4, end: 5, name: "x"}
     }]);
   });
@@ -229,16 +234,16 @@ describe("binding", () => {
         start: 0,
         end: 28,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file12.js"}
       },
+      declModule: {id: testProjectDir + "file12.js"},
       id: {start: 7, end: 8, name: "x"}
     },{
       decl: {
         start: 15,
         end: 17,
         type: "Literal",
-        module: {id: testProjectDir + "file11.js"}
       },
+      declModule: {id: testProjectDir + "file11.js"},
       id: {start: 15, end: 17, value: 23}
     }]);
   });
@@ -250,16 +255,16 @@ describe("binding", () => {
         start: 0,
         end: 28,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file14.js"}
       },
+      declModule: {id: testProjectDir + "file14.js"},
       id: {start: 7, end: 8, name: "y"}
     },{
       decl: {
         start: 4,
         end: 9,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file13.js"}
       },
+      declModule: {id: testProjectDir + "file13.js"},
       id: {start: 4, end: 5, name: "x"}
     }]);
   });
@@ -271,16 +276,16 @@ describe("binding", () => {
         start: 0,
         end: 28,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file16.js"}
       },
+      declModule: {id: testProjectDir + "file16.js"},
       id: {start: 7, end: 8, name: "f"}
     },{
       decl: {
         start: 15,
         end: 38,
         type: "FunctionDeclaration",
-        module: {id: testProjectDir + "file15.js"}
       },
+      declModule: {id: testProjectDir + "file15.js"},
       id: {start: 30, end: 33, name: "foo"}
     }]);
   });
@@ -292,16 +297,16 @@ describe("binding", () => {
         start: 0,
         end: 34,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file18.js"}
       },
+      declModule: {id: testProjectDir + "file18.js"},
       id: {start: 9, end: 12, name: "bar"}
     },{
       decl: {
         start: 7,
         end: 24,
         type: "FunctionDeclaration",
-        module: {id: testProjectDir + "file17.js"}
       },
+      declModule: {id: testProjectDir + "file17.js"},
       id: {start: 16, end: 19, name: "bar"}
     }]);
   });
@@ -314,16 +319,16 @@ describe("binding", () => {
         start: 0,
         end: 49,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file21.js"}
       },
+      declModule: {id: testProjectDir + "file21.js"},
       id: {start: 9, end: 10, name: "x"}
     },{
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
+      declModule: {id: testProjectDir + "file2.js"},
       id: {start: 11, end: 12, name: "x"},
     }]);
   });
@@ -336,16 +341,16 @@ describe("binding", () => {
         start: 0,
         end: 32,
         type: "ImportDeclaration",
-        module: {id: testProjectDir + "file22.js"}
       },
+      declModule: {id: testProjectDir + "file22.js"},
       id: {start: 12, end: 13, name: "m"}
     },{
       decl: {
         start: 11,
         end: 16,
         type: "VariableDeclarator",
-        module: {id: testProjectDir + "file2.js"}
       },
+      declModule: {id: testProjectDir + "file2.js"},
       id: {start: 11, end: 12, name: "x"},
     }]);
   });

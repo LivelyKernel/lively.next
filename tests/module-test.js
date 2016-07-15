@@ -68,12 +68,7 @@ describe("module loading", () => {
     await registerPackage(System, testDir);
     await System.import(testDir + "file1.js");
     const scope = await loadedModules(System)[module1].resolvedScope();
-    expect(scope).containSubset({
-      refs: [{
-        name: "y",
-        decl: { type: "ImportDeclaration" }
-      }]
-    });
+    expect(scope.resolvedRefMap.get(scope.refs[0])).containSubset({decl: {type: "ImportDeclaration"}});
     expect(scope).to.not.property('_referencesResolved');
   });
 });

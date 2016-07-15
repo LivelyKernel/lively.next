@@ -404,9 +404,8 @@ class ModuleInterface {
 
   async _localDeclForRefAt(pos) {
     const scope = await this.resolvedScope(),
-          ref = query.refAt(pos, scope);
-    if (ref && ref.decl) ref.decl.module = this;
-    return ref && {decl: ref.decl, id: ref.declId};
+          ref = query.refWithDeclAt(pos, scope);
+    return ref && {decl: ref.decl, id: ref.declId, declModule: this};
   }
   
   async _importForNSRefAt(pos) {
@@ -418,24 +417,30 @@ class ModuleInterface {
     if (nodes.length < 2) return [null, null];
     const id = nodes[nodes.length - 1],
           member = nodes[nodes.length - 2];
-    if (id.type != "Identifier" ||
-        member.type != "MemberExpression" ||
-        member.computed ||
-        member.object.type !== "Identifier" ||
-        !member.object.decl ||
-        member.object.decl.type !== "ImportDeclaration") {
-      return [null, null];
-    }
+
+
+    if (id.type != "Identifier"
+     || member.type != "MemberExpression"
+     || member.computed
+     || member.object.type !== "Identifier")
+       return [null, null];
+
+    var {decl} = scope.resolvedRefMap.get(member.object) || {}
+
+     if (!decl || decl.type !== "ImportDeclaration")
+       return [null, null];
+
     const name = member.object.name,
-          spec = member.object.decl.specifiers.find(s => s.local.name === name);
-    if (spec.type !== "ImportNamespaceSpecifier") return [null, null];
-    return [member.object.decl, spec.local, id.name];
+          spec = decl.specifiers.find(s => s.local.name === name);
+
+    return spec.type !== "ImportNamespaceSpecifier" ?
+      [null, null] : [decl, spec.local, id.name];
   }
 
   async _resolveImportedDecl(decl) {
     if (!decl) return [];
-    const {start, name, type} = decl.id;
-    const imports = await this.imports(),
+    const {start, name, type} = decl.id,
+          imports = await this.imports(),
           im = imports.find(i => i.node.start == start && // can't rely on
                                  i.node.name == name &&   // object identity
                                  i.node.type == type);
@@ -453,31 +458,30 @@ class ModuleInterface {
     if (ex.fromModule) {
       const imM = module(this.System, ex.fromModule, this.id);
       const decl = {decl: ex.node, id: ex.declId};
-      decl.decl.module = this;
+      decl.declModule = this;
       return [decl].concat(await imM.bindingPathForExport(ex.imported));
     } else {
-      if (ex && ex.decl) ex.decl.module = this;
-      return this._resolveImportedDecl({decl: ex.decl, id: ex.declId});
+      return this._resolveImportedDecl({
+        decl: ex.decl,
+        id: ex.declId,
+        declModule: ex && ex.decl ? this: null
+      });
     }
   }
 
   async bindingPathForRefAt(pos) {
     const decl = await this._localDeclForRefAt(pos);
-    if (decl) {
-      return await this._resolveImportedDecl(decl);
-    } else {
-      const [imDecl, id, name] = await this._importForNSRefAt(pos);
-      if (!imDecl) return [];
-      imDecl.module = this;
-      const imM = module(this.System, imDecl.source.value, this.id);
-      return [{decl: imDecl, id}].concat(await imM.bindingPathForExport(name));
-    }
+    if (decl) return await this._resolveImportedDecl(decl);
+
+    const [imDecl, id, name] = await this._importForNSRefAt(pos);
+    if (!imDecl) return [];
+    const imM = module(this.System, imDecl.source.value, this.id);
+    return [{decl: imDecl, declModule: this, id}].concat(await imM.bindingPathForExport(name));
   }
   
   async definitionForRefAt(pos) {
     const path = await this.bindingPathForRefAt(pos);
-    if (path.length < 1) return null;
-    return path[path.length - 1].decl;
+    return path.length < 1 ? null : path[path.length - 1].decl;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
