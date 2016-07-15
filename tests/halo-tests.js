@@ -48,3 +48,21 @@ describe("halos", () => {
     expect(halo.originHalo().position).equals(submorph1.origin);
   });
 });
+  it("drag drags", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.dragHalo().doAction(pt(10,5));
+    expect(submorph1.position).equals(pt(20, 15));
+  });
+
+  it("resize resizes", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.resizeHalo().doAction(pt(10,5));
+    expect(submorph1.extent).equals(pt(110, 105));
+  });
+
+  it("close removes", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.closeHalo().doAction();
+    expect(submorph1.owner).equals(null);
+  });
+

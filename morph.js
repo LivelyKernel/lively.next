@@ -810,18 +810,11 @@ export class Ellipse extends Morph {
 class HaloItem extends Ellipse {
 
   constructor(props) {
-    super(Object.assign(props, {
+    super(Object.assign({
       fill: Color.gray.withA(.7),
       grabbable: false,
       extent: pt(24, 24)
-    }));
-    // this.addMorph(new Text({
-    //   textString: props.name[0].toUpperCase(),
-    //   fontSize: 12,
-    //   fill: Color.transparent,
-    //   allowsInput: false,
-    //   styleClasses: props.styleClasses
-    // }));
+    }, props));
   }
 
   get isHaloItem() { return true };
@@ -868,11 +861,11 @@ export class HaloSelection extends Morph {
       location: {col: 3, row: 3},
       property: 'extent',
       halo: this,
-      onDrag: (evt) => {
-        const delta = evt.position.subPt(evt.state.lastDragPosition);
+      doAction: (delta) => {
         this.target.resizeBy(delta);
         this.alignWithTarget();
-      }
+      },
+      onDrag(evt) { this.doAction(evt.state.dragDelta) }
     }));
   }
 
@@ -883,11 +876,11 @@ export class HaloSelection extends Morph {
       location: {col: 3, row: 0},
       draggable: false,
       halo: this,
-      onMouseDown: (evt) => {
-        console.log(this)
+      doAction: () => {
         this.remove();
         this.target.remove();
-      }
+      },
+      onMouseDown(evt) { this.doAction(); }
     }));
   }
 
@@ -916,10 +909,11 @@ export class HaloSelection extends Morph {
       property: 'position',
       location: {col: 2, row: 0},
       halo: this,
-      onDrag: (evt) => {
-        this.target.moveBy(evt.position.subPt(evt.state.lastDragPosition));
+      doAction: (delta) => {
+        this.target.moveBy(delta);
         this.alignWithTarget();
       },
+      onDrag(evt) { this.doAction(evt.state.dragDelta); },
     }));
   }
 
