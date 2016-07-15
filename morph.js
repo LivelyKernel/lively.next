@@ -858,8 +858,10 @@ export class HaloSelection extends Morph {
   resizeHalo() {
     return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
-      styleClasses: ["halo-item", "fa", "fa-expand", "fa-flip-horizontal"],
+      styleClasses: ["halo-item", "fa", "fa-expand"],
       location: {col: 3, row: 3},
+      rotation: Math.PI / 2,
+      origin: pt(12, 12),
       property: 'extent',
       halo: this,
       update: (delta) => {
@@ -998,8 +1000,8 @@ export class HaloSelection extends Morph {
   }
 
   stylizeHalo() {
-    return this.getSubmorphNamed("syle") || this.addMorph(new HaloItem({
-      name: "syle",
+    return this.getSubmorphNamed("style") || this.addMorph(new HaloItem({
+      name: "style",
       styleClasses: ["halo-item", "fa", "fa-picture-o"],
       location: {col: 0, row: 2},
       halo: this,
