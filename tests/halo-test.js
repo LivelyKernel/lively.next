@@ -6,17 +6,7 @@ import { pt, Color, Rectangle } from "lively.graphics";
 import { num } from "lively.lang";
 import { EventDispatcher } from "../events.js";
 
-var world, submorph1, eventDispatcher;
-
-function fakeEvent(targetMorph, type, pos = pt(0,0)) {
-  return {
-    type: type,
-    target: domEnv.document.getElementById(targetMorph.id),
-    pointerId: "test-pointer-1",
-    pageX: pos.x, pageY: pos.y,
-    stopPropagation: () => {}, preventDefault: () => {}
-  }
-}
+var world, submorph1, submorph2, eventDispatcher;
 
 function createDummyWorld() {
   world = morph({
@@ -24,10 +14,10 @@ function createDummyWorld() {
     submorphs: [{
         name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
         submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
-      }
-    ]
+      }]
   });
   submorph1 = world.submorphs[0];
+  submorph2 = submorph1.submorphs[0];
 }
 
 var renderer, domEnv;
@@ -57,7 +47,7 @@ describe("halos", () => {
     submorph1.origin = pt(20,30);
     var halo = world.showHaloFor(submorph1),
         innerButton = halo.buttonControls.find(item =>
-          submorph1.bounds().containsPoint(item.globalBounds().center()));
+        submorph1.bounds().containsPoint(item.globalBounds().center()));
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
     expect(halo.originHalo().position).equals(submorph1.origin);
   });
@@ -72,6 +62,15 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1);
     halo.resizeHalo().update(pt(10,5));
     expect(submorph1.extent).equals(pt(110, 105));
+  });
+
+  it("align to the morph extent while resizing", () => {
+    submorph1.origin = pt(20,30);
+    var halo = world.showHaloFor(submorph1, "test-pointer-1"),
+        resizeButton = halo.resizeHalo(),
+        resizeButtonCenter = resizeButton.globalBounds().center();
+    resizeButton.update(pt(42,42));
+    expect(halo.extent).equals(submorph1.extent);
   });
 
   it("rotate rotates", () => {
@@ -95,26 +94,16 @@ describe("halos", () => {
     expect(halo.originHalo().position).equals(pt(30, 35));
   });
 
-  it("align to the morph position while grabbing", () => {
-    submorph1.origin = pt(20,30);
-    var halo = world.showHaloFor(submorph1, "test-pointer-1"),
-        grabButton = halo.grabHalo(),
-        grabButtonCenter = grabButton.globalBounds().center();
-    eventDispatcher.dispatchDOMEvent(fakeEvent(grabButton, "pointerdown", grabButtonCenter));
-    eventDispatcher.dispatchDOMEvent(fakeEvent(grabButton, "pointermove", pt(42,42)));
-    expect(halo.position).equals(submorph1.globalBounds.topLeft());
-    eventDispatcher.dispatchDOMEvent(fakeEvent(grabButton, "pointermove", pt(42,42)));
-    eventDispatcher.dispatchDOMEvent(fakeEvent(grabButton, "pointerup", grabButtonCenter));
-    expect(halo.position).equals(submorph1.globalBounds.topLeft());
-  });
-
-  it("align to the morph extent while resizing", () => {
-    submorph1.origin = pt(20,30);
-    var halo = world.showHaloFor(submorph1, "test-pointer-1"),
-        resizeButton = halo.resizeHalo(),
-        resizeButtonCenter = resizeButton.globalBounds().center();
-    resizeButton.update(pt(42,42));
-    expect(halo.extent).equals(submorph1.extent);
+  it("grab grabs", () => {
+    var halo = world.showHaloFor(submorph2),
+        hand = world.handForPointerId("test-pointer");
+    halo.grabHalo().init(hand)
+    hand.position = submorph1.globalBounds().center();
+    halo.alignWithTarget();
+    // expect(submorph2.owner).equals(hand);
+    halo.grabHalo().update(hand)
+    expect(halo.position).equals(submorph2.globalBounds().topLeft());
+    // expect(submorph2.owner).equals(submorph1);
   });
 
 });
