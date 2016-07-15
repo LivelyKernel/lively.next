@@ -837,7 +837,7 @@ export class HaloSelection extends Morph {
 
   constructor(pointerId, target) {
     super({
-      styleClasses: ["halo"],
+      styleClasses: ["morph", "halo"],
       borderColor: Color.red,
       borderWidth: 2,
       fill: Color.transparent
