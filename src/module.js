@@ -1,8 +1,8 @@
 import { parse, query } from "lively.ast";
-import { arr, obj, graph } from "lively.lang";
+import { arr, obj, graph, properties } from "lively.lang";
 import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
-import { scheduleModuleExportsChange } from "./import-export.js";
+import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { livelySystemEnv } from "./system.js";
 import { getPackages } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
@@ -300,6 +300,44 @@ class ModuleInterface {
 
   define(varName, value) { return this.recorder[varName] = value; }
   undefine(varName) { delete this.recorder[varName]; }
+
+  evaluationDone() {
+    this.addGetterSettersForNewVars();
+    runScheduledExportChanges(this.System, this.id);
+  }
+
+  addGetterSettersForNewVars() {
+    // after eval we modify the env so that all captures vars are wrapped in
+    // getter/setter to be notified of changes
+    // FIXME: better to not capture via assignments but use func calls...!
+    var rec = this.recorder,
+        prefix = "__lively.modules__";
+  
+    if (rec === this.System.global) {
+      console.warn(`[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!`)
+      return;
+    }
+  
+    properties.own(rec).forEach(key => {
+      if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
+      Object.defineProperty(rec, prefix + key, {
+        enumerable: false,
+        writable: true,
+        value: rec[key]
+      });
+      Object.defineProperty(rec, key, {
+        enumerable: true,
+        get: () => rec[prefix + key],
+        set: (v) => {
+          rec[prefix + key] = v;
+          scheduleModuleExportsChange(this.System, this.id, key, v, false/*add export*/);
+          this.notifyTopLevelObservers(key);
+        }
+      });
+
+      this.notifyTopLevelObservers(key);
+    });
+  }
 
   env() { return this; }
 

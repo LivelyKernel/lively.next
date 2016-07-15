@@ -1,6 +1,5 @@
 import * as ast from "lively.ast";
 import { arr, obj, properties } from "lively.lang";
-import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "./module.js";
 
@@ -18,17 +17,16 @@ var defaultOptions = {
 
 function livelySystemEnv(System) {
   return {
-    moduleEnv: function(id) { return module(System, id); },
+    moduleEnv(id) { return module(System, id); },
 
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.decanonicalize("lively.modules/index.js")); },
 
-    evaluationDone: function(moduleId) {
-      addGetterSettersForNewVars(System, moduleId);
-      runScheduledExportChanges(System, moduleId);
+    evaluationDone(moduleId) {
+      module(System, moduleId).evaluationDone();
     },
 
-    dumpConfig: function() {
+    dumpConfig() {
       return JSON.stringify({
         baseURL: System.baseURL,
         transpiler: System.transpiler,
@@ -282,36 +280,6 @@ function printSystemConfig(System) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function loadedModules(System) { return System.get("@lively-env").loadedModules; }
-
-function addGetterSettersForNewVars(System, moduleId) {
-  // after eval we modify the env so that all captures vars are wrapped in
-  // getter/setter to be notified of changes
-  // FIXME: better to not capture via assignments but use func calls...!
-  var rec = module(System, moduleId).recorder,
-      prefix = "__lively.modules__";
-
-  if (rec === System.global) {
-    console.warn(`[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!`)
-    return;
-  }
-
-  properties.own(rec).forEach(key => {
-    if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
-    Object.defineProperty(rec, prefix + key, {
-      enumerable: false,
-      writable: true,
-      value: rec[key]
-    });
-    Object.defineProperty(rec, key, {
-      enumerable: true,
-      get: () => rec[prefix + key],
-      set: (v) => {
-        scheduleModuleExportsChange(System, moduleId, key, v, false/*add export*/);
-        return rec[prefix + key] = v;
-      }
-    });
-  });
-}
 
 function searchLoadedModules(System, searchStr, options) {
   return Promise.all(

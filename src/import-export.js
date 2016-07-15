@@ -69,7 +69,10 @@ function updateModuleExports(System, moduleId, keysAndValues) {
           // bound in those modules by triggering the setters defined in the
           // records of those modules
           var importerIndex,
-              found = importerModule.dependencies.some((dep, i) => { importerIndex = i; return dep && dep.name === record.name})
+              found = importerModule.dependencies.some((dep, i) => {
+                importerIndex = i;
+                return dep && dep.name === record.name
+              })
           if (found) {
             importerModule.setters[importerIndex](record.exports);
           }
@@ -81,7 +84,7 @@ function updateModuleExports(System, moduleId, keysAndValues) {
             // FIXME this means we run the entire modules again, side effects and all!!!
             importerModule.execute();
           } else {
-            runScheduledExportChanges(System, importerModule.name);
+            module(System, importerModule.name).evaluationDone();
           }
         }
       }
