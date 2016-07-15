@@ -862,7 +862,7 @@ export class HaloSelection extends Morph {
   }
 
   resizeHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
       styleClasses: ["halo-item", "fa", "fa-expand", "fa-flip-horizontal"],
       location: {col: 3, row: 3},
@@ -873,11 +873,11 @@ export class HaloSelection extends Morph {
         this.target.resizeBy(delta);
         this.alignWithTarget();
       }
-    })
+    }));
   }
 
   closeHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("close") || this.addMorph(new HaloItem({
       name: "close",
       styleClasses: ["halo-item", "fa", "fa-close"],
       location: {col: 3, row: 0},
@@ -888,11 +888,11 @@ export class HaloSelection extends Morph {
         this.remove();
         this.target.remove();
       }
-    })
+    }));
   }
 
   grabHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("grab") || this.addMorph(new HaloItem({
       name: "grab",
       styleClasses: ["halo-item", "fa", "fa-hand-rock-o"],
       location: {col: 1, row: 0},
@@ -906,11 +906,11 @@ export class HaloSelection extends Morph {
       onDragEnd: (evt) => {
         evt.hand.dropMorphsOn(evt.hand.morphBeneath(evt.hand.position), evt);
       }
-    })
+    }));
   }
 
   dragHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("drag") || this.addMorph(new HaloItem({
       name: "drag",
       styleClasses: ["halo-item", "fa", "fa-arrows"],
       property: 'position',
@@ -920,11 +920,11 @@ export class HaloSelection extends Morph {
         this.target.moveBy(evt.position.subPt(evt.state.lastDragPosition));
         this.alignWithTarget();
       },
-    })
+    }));
   }
 
   inspectHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("inspect") || this.addMorph(new HaloItem({
       name: "inspect",
       styleClasses: ["halo-item", "fa", "fa-search"],
       draggable: false,
@@ -933,11 +933,11 @@ export class HaloSelection extends Morph {
       onMouseDown: (evt) => {
         this.target.inspect();
       }
-    })
+    }));
   }
 
   editHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("edit") || this.addMorph(new HaloItem({
       name: "edit",
       styleClasses: ["halo-item", "fa", "fa-pencil"],
       draggable: false,
@@ -946,11 +946,11 @@ export class HaloSelection extends Morph {
       onMouseDown: (evt) => {
         this.target.edit();
       }
-    })
+    }));
   }
 
   rotateHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("rotate") || this.addMorph(new HaloItem({
       name: "rotate",
       styleClasses: ["halo-item", "fa", "fa-repeat"],
       location: {col: 0, row: 3},
@@ -958,11 +958,11 @@ export class HaloSelection extends Morph {
       onDrag: (evt) => {
         // update rotation
       }
-    })
+    }));
   }
 
   copyHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("copy") || this.addMorph(new HaloItem({
       name: "copy",
       styleClasses: ["halo-item", "fa", "fa-clone"],
       location: {col: 0, row: 1},
@@ -976,11 +976,11 @@ export class HaloSelection extends Morph {
       onDragEnd: (evt) => {
         // drop copy
       }
-    })
+    }));
   }
 
   originHalo() {
-    return new Ellipse({
+    return this.getSubmorphNamed("origin") || this.addMorph(new Ellipse({
       name: "origin", fill: Color.red,
       opacity: 0.9, borderColor: Color.black,
       borderWidth: 2,
@@ -992,11 +992,11 @@ export class HaloSelection extends Morph {
           evt.position.subPt(evt.state.lastDragPosition));
         this.alignWithTarget();
       }
-    });
+    }));;
   }
 
   stylizeHalo() {
-    return new HaloItem({
+    return this.getSubmorphNamed("syle") || this.addMorph(new HaloItem({
       name: "syle",
       styleClasses: ["halo-item", "fa", "fa-picture-o"],
       location: {col: 0, row: 2},
@@ -1004,7 +1004,7 @@ export class HaloSelection extends Morph {
       onMouseDown: (evt) => {
         // stylize
       }
-    })
+    }));
   }
 
   initButtons() {
@@ -1019,7 +1019,7 @@ export class HaloSelection extends Morph {
       // this.copyHalo(),
       // this.rotateHalo(),
       // this.stylizeHalo()
-    ].map((button) => this.addMorph(button));
+    ];
   }
 
   alignWithTarget() {
