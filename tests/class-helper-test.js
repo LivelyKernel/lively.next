@@ -90,7 +90,7 @@ describe("create or extend classes", function() {
         Foo2 = createOrExtend("Foo2", Object, undefined, undefined, {}),
         foo = new Foo2();
     expect(foo).to.not.have.property("m");
-    createOrExtend("Foo2", Foo, undefined, undefined, {Foo2: Foo2});
+    createOrExtend("Foo2", Foo, undefined, undefined, {Foo2});
     // Changing the superclass currently means changing the prototype, the
     // thing that instances have in  common with their class. When that's replaced
     // the instances are orphaned. That's not a feature but to change that we
@@ -100,7 +100,7 @@ describe("create or extend classes", function() {
     var anotherFoo = new Foo2();
     expect(anotherFoo).to.have.property("m");
   });
-  
+
   it("works with anonymous classes", () => {
     var X = createOrExtend(undefined, undefined, [{key: "m", value: function() { return 23; }}], undefined, {}),
         Y = createOrExtend(undefined, X, [{key: "m", value: function() { return super.m() + 1; }}], undefined, {});
@@ -138,7 +138,32 @@ describe("create or extend classes", function() {
       expect(b.y).equals(4, "super constructor not called");
       expect(b.z).equals(5, "constructor issue");
     });
-    
+
+  });
+
+  describe("with modules", () => {
+
+    it("adds module meta data", () => {
+      var mod = {package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; }},
+          Foo = createOrExtend("Foo", null, undefined, undefined, {}, mod);
+      expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals(
+        {package: {name: "foo", version: undefined}, pathInPackage: "./bar"});
+    });
+
+    it("adds observer for superclass", () => {
+      var callback = null,
+          mod = {
+            package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; },
+            subscribeToToplevelDefinitionChanges: (func) => callback = func,
+            unsubscribeFromToplevelDefinitionChanges: (func) => {}
+          },
+          Foo = createOrExtend("Foo", {referencedAs: "Bar"}, undefined, undefined, {}, mod),
+          Bar = createOrExtend("Bar", null, [{key: "m", value() { return 23; }}]);
+      callback("Bar", Bar);
+      expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Bar);
+      expect(new Foo().m()).equals(23);
+    });
+
   });
 
 });
