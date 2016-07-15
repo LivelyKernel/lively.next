@@ -26,21 +26,25 @@ function createDummyWorld() {
   submorph3 = world.submorphs[1];
 }
 
+
+var renderer, domEnv;
+async function createAndRenderDummyWorld() {
+  createDummyWorld();
+  domEnv = await createDOMEnvironment();
+  renderer = new Renderer(world, domEnv.document.body, domEnv);
+  renderer.startRenderWorldLoop()
+}
+
+function cleanup() {
+  renderer && renderer.clear();
+  domEnv && domEnv.destroy();
+}
+
+
 describe("full morphic setup with renderer and events", () => {
 
-  var renderer, domEnv;
-
-  beforeEach(async () => {
-    createDummyWorld();
-    domEnv = await createDOMEnvironment();
-    renderer = new Renderer(world, domEnv.document.body, domEnv);
-    renderer.startRenderWorldLoop()
-  });
-
-  afterEach(() => {
-    renderer && renderer.clear();
-    domEnv && domEnv.destroy();
-  });
+  beforeEach(async () => createAndRenderDummyWorld());
+  afterEach(() => cleanup());
 
   describe("rendering", () => {
 
