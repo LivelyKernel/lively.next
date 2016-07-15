@@ -708,6 +708,7 @@ export class World extends Morph {
 
   onMouseMove(evt) {
     evt.hand.update(evt);
+    evt.halo && evt.halo.alignWithTarget();
   }
 
   onMouseDown(evt) {
@@ -892,9 +893,6 @@ export class HaloSelection extends Morph {
       halo: this,
       onDragStart: (evt) => {
         evt.hand.grab(this.target, evt);
-      },
-      onDrag: (evt) => {
-        this.alignWithTarget();
       },
       onDragEnd: (evt) => {
         evt.hand.dropMorphsOn(evt.hand.morphBeneath(evt.hand.position), evt);

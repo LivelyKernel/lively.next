@@ -3,9 +3,13 @@ import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { morph, Renderer } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
+<<<<<<< 08062d317f9608e8114b0dc77bde767d0038c455
 import { num } from "lively.lang";
+=======
+import { EventDispatcher } from "../events.js";
+>>>>>>> align halo to target while grabbing
 
-var world, submorph1;
+var world, submorph1, eventDispatcher;
 
 function createDummyWorld() {
   world = morph({
@@ -25,6 +29,7 @@ async function createAndRenderDummyWorld() {
   domEnv = await createDOMEnvironment();
   renderer = new Renderer(world, domEnv.document.body, domEnv);
   renderer.startRenderWorldLoop()
+  eventDispatcher = new EventDispatcher(domEnv.window, world).install();
 }
 
 function cleanup() {
@@ -80,5 +85,30 @@ describe("halos", () => {
     halo.originHalo().update(pt(10,5));
     expect(submorph1.origin).equals(pt(30, 35));
     expect(halo.originHalo().position).equals(pt(30, 35));
+
+  it("tracks the morph position while grabbing", () => {
+    submorph1.origin = pt(20,30);
+    var halo = world.showHaloFor(submorph1),
+        grabButton = halo.grabHalo(),
+        grabButtonCenter = grabButton.globalBounds().center();
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointerdown", grabButtonCenter));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointermove", pt(42,42)));
+    expect(halo.position).equals(submorph1.globalBounds.topLeft());
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointermove", pt(42,42)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointerup", grabButtonCenter));
+    expect(halo.position).equals(submorph1.globalBounds.topLeft());
+  });
+
+  it("tracks the morph extent while resizing", () => {
+    submorph1.origin = pt(20,30);
+    var halo = world.showHaloFor(submorph1),
+        resizeButton = halo.resizeHalo(),
+        resizeButtonCenter = resizeButton.globalBounds().center();
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointerdown", resizeButtonCenter));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointermove", pt(42,42)));
+    expect(halo.extent).equals(submorph1.extent);
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointermove", pt(42,42)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(button, "pointerup", grabBresizeButtonCenteruttonCenter));
+    expect(halo.extent).equals(submorph1.extent;
   });
 });
