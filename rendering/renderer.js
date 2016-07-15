@@ -11,7 +11,13 @@ const defaultCSS = `
   user-select: none;
 }
 .morph {
+  /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
+  -webkit-backface-visibility: hidden;
+
+  /*include border size in extent of element*/
   box-sizing: border-box;
+
+  /*don't use dom selection on morphs*/
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
