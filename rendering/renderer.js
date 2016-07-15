@@ -32,6 +32,10 @@ const defaultCSS = `
   z-index: 1;
 }
 
+.halo {
+  z-index: 2;
+}
+
 .halo-item {
   /*FIXME: we shouldn't need to hardcode the size...*/
 	line-height: 24px !important;

@@ -965,10 +965,10 @@ export class HaloSelection extends Morph {
         this.alignWithTarget();
       },
       onDragStart(evt) {
-        this.init(evt.position.subPt(self.target.globalPosition).theta());
+        this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
       },
       onDrag(evt) {
-        this.update(evt.position.subPt(self.target.globalPosition).theta());
+        this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
       }
     }));
   }
@@ -1046,7 +1046,7 @@ export class HaloSelection extends Morph {
     this.position = pt(x,y);
     this.extent = pt(width, height);
     this.buttonControls.forEach((button) => button.alignInHalo());
-    this.originHalo().position = this.target.origin;
+    this.originHalo().position = origin;
   }
 
 }

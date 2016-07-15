@@ -100,10 +100,10 @@ describe("halos", () => {
     halo.grabHalo().init(hand)
     hand.position = submorph1.globalBounds().center();
     halo.alignWithTarget();
-    // expect(submorph2.owner).equals(hand);
+    expect(submorph2.owner).equals(hand);
     halo.grabHalo().update(hand)
     expect(halo.position).equals(submorph2.globalBounds().topLeft());
-    // expect(submorph2.owner).equals(submorph1);
+    expect(submorph2.owner).equals(submorph1);
   });
 
 });
