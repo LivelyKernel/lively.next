@@ -530,14 +530,14 @@ export class Morph {
     if (!name) return null;
     try {
       return (this.getNameTest(this, name) && this)
-          || this.getInSubmorphs(name)
-          || this.getInOwners(name);
+          || this.getSubmorphNamed(name)
+          || this.getOwnerNamed(name);
     } catch(e) {
       if (e.constructor == RangeError && e.message == "Maximum call stack size exceeded") {
         e = new Error("'get' failed due to a stack overflow. The most\n"
           + "likely source of the problem is using 'get' as part of\n"
-          + "toString, because 'get' calls 'getInOwners', which\n"
-          + "calls 'toString' on this. Try using 'getInSubmorphs' instead,\n"
+          + "toString, because 'get' calls 'getOwnerNamed', which\n"
+          + "calls 'toString' on this. Try using 'getSubmorphNamed' instead,\n"
           + "which only searches in this' children.");
       }
       throw e
@@ -554,7 +554,7 @@ export class Morph {
     return false;
   }
 
-  getInSubmorphs(name) {
+  getSubmorphNamed(name) {
     if (!this.submorphs.length) return null;
     var isRe = obj.isRegExp(name);
     for (var i = 0; i < this.submorphs.length; i++) {
@@ -562,23 +562,23 @@ export class Morph {
       if (this.getNameTest(morph, name)) return morph
     }
     for (var i = 0; i < this.submorphs.length; i++)  {
-      var morph = this.submorphs[i].getInSubmorphs(name);
+      var morph = this.submorphs[i].getSubmorphNamed(name);
       if (morph) return morph;
     }
     return null;
   }
 
-  getInOwners(name) {
+  getOwnerNamed(name) {
     var owner = this.owner;
     if (!owner) return null;
     for (var i = 0; i < owner.submorphs.length; i++) {
       var morph = owner.submorphs[i];
       if (morph === this) continue;
       if (this.getNameTest(morph, name)) return morph;
-      var foundInMorph = morph.getInSubmorphs(name);
+      var foundInMorph = morph.getSubmorphNamed(name);
       if (foundInMorph) return foundInMorph;
     }
-    return this.owner.getInOwners(name);
+    return this.owner.getOwnerNamed(name);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
