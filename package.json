@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.7.18",
+  "version": "0.7.19",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "dist/lively.vm.js",
   "systemjs": {

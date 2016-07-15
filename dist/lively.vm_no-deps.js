@@ -289,6 +289,7 @@
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+  var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
   var constructorArgMatcher = /\([^\\)]*\)/;
 
   var defaultPropertyDescriptorForGetterSetter = {
@@ -309,58 +310,24 @@
     return constructor;
   }
 
-  function ensureInitializeStub(superclass) {
-    // when we inherit from "conventional classes" those don't have an
-    // initializer method. We install a stub that calls the superclass function
-    // itself
-    if (superclass === Object || superclass.prototype[initializeSymbol]) return;
-    Object.defineProperty(superclass.prototype, initializeSymbol, {
-      enumerable: false,
-      configurable: true,
-      writable: true,
-      value: function value() /*args*/{
-        superclass.apply(this, arguments);
-      }
-    });
-    superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
-  }
-
-  function createOrExtend(name, superclass) {
-    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
-    var staticMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
-    var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
-    var currentModule = arguments[5];
-
-    // Given a `classHolder` object as "environment", will try to find a "class"
-    // (JS constructor function) inside it. If no class is found it will create a
-    // new costructor function object and will attach the methods to it. If a class
-    // is found it will be modified.
-    // This is being used as the compile target for es6 class syntax by the
-    // lively.ast capturing / transform logic
-    // Example:
-    // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
-    // new Foo().m() // => 23
-
-    // 1. create a new constructor function if necessary, re-use an exisiting if the
-    // classHolder object has it
-    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
-        existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
-
-    // 2. set the superclass if necessary and set prototype
-    if (!superclass) superclass = Object;
+  function setSuperclass(klass, superclassOrSpec) {
+    // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
+    var superclass = !superclassOrSpec ? Object : typeof superclassOrSpec === "function" ? superclassOrSpec : superclassOrSpec.value ? superclassOrSpec.value : Object;
+    var existingSuperclass = klass && klass[superclassSymbol];
+    // set the superclass if necessary and set prototype
     if (!existingSuperclass || existingSuperclass !== superclass) {
-      if (existingSuperclass) {
-        console.warn("Changing superclass of class " + name + " from " + (existingSuperclass.name + " to " + superclass.name + ": This will leave ") + ("existing instances of " + name + " orphaned, i.e. " + name + " is practically not ") + ("their class anymore and they will not get new behaviors when " + name + " is ") + "changed!!!");
-      }
       ensureInitializeStub(superclass);
       klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
     }
+    return superclass;
+  }
 
-    // 3. define methods
-    staticMethods && staticMethods.forEach(function (ea) {
+  function addMethods(klass, instanceMethods, classMethods) {
+    // install methods from two lists (static + instance) of {key, value} or
+    // {key, get/set} descriptors
+    classMethods && classMethods.forEach(function (ea) {
       var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
       Object.defineProperty(klass, ea.key, Object.assign(ea, descr));
       if (typeof ea.value === "function") klass[ea.key].displayName = ea.key;
@@ -385,8 +352,53 @@
       });
       klass.prototype[initializeSymbol].displayName = "lively-initialize";
     }
+  }
 
-    // 5. If we have a `currentModule` instance (from lively.modules/src/module.js)
+  function ensureInitializeStub(superclass) {
+    // when we inherit from "conventional classes" those don't have an
+    // initializer method. We install a stub that calls the superclass function
+    // itself
+    if (superclass === Object || superclass.prototype[initializeSymbol]) return;
+    Object.defineProperty(superclass.prototype, initializeSymbol, {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: function value() /*args*/{
+        superclass.apply(this, arguments);
+      }
+    });
+    superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
+  }
+
+  function createOrExtend(name, superclassSpec) {
+    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+    var classMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
+    var currentModule = arguments[5];
+
+    // Given a `classHolder` object as "environment", will try to find a "class"
+    // (JS constructor function) inside it. If no class is found it will create a
+    // new costructor function object and will attach the methods to it. If a class
+    // is found it will be modified.
+    // This is being used as the compile target for es6 class syntax by the
+    // lively.ast capturing / transform logic
+    // Example:
+    // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
+    // new Foo().m() // => 23
+
+    // 1. create a new constructor function if necessary, re-use an exisiting if the
+    // classHolder object has it
+    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
+        existingSuperclass = klass && klass[superclassSymbol];
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
+
+    // 2. set the superclass if necessary and set prototype
+    var superclass = setSuperclass(klass, superclassSpec);
+
+    // 3. Install methods
+    addMethods(klass, instanceMethods, classMethods);
+
+    // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
     // then we also store some meta data about the module. This allows us to
     // (de)serialize class instances in lively.serializer
     if (currentModule) {
@@ -395,6 +407,24 @@
         package: p ? { name: p.name, version: p.version } : {},
         pathInPackage: currentModule.pathInPackage()
       };
+
+      // if we have a module, we can listen to toplevel changes of it in case the
+      // superclass binding changes. With that we can keep our class up-to-date
+      // even if the superclass binding changes. This is especially useful for
+      // situations where modules have a circular dependency and classes in modules
+      // won't get defined correctly when loaded first. See
+      // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
+      if (superclassSpec && superclassSpec.referencedAs) {
+        if (klass[moduleSubscribeToToplevelChangesSym]) {
+          currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
+        }
+        klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
+          if (name === superclassSpec.referencedAs) {
+            setSuperclass(klass, val);
+            addMethods(klass, instanceMethods, classMethods);
+          }
+        });
+      }
     }
 
     // 6. Add a toString method for the class to allows us to see its constructor arguments
@@ -816,7 +846,7 @@
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -842,8 +872,9 @@
         }
       }, _callee, this);
     }));
+
     return function ensureImportsAreLoaded(_x, _x2, _x3) {
-      return ref.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
@@ -851,7 +882,7 @@
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -924,8 +955,9 @@
         }
       }, _callee2, this);
     }));
+
     return function getEs6Transpiler(_x4, _x5, _x6) {
-      return ref.apply(this, arguments);
+      return _ref2.apply(this, arguments);
     };
   }();
 
@@ -983,7 +1015,7 @@
   }
 
   var runEval$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -1076,8 +1108,9 @@
         }
       }, _callee3, this);
     }));
+
     return function runEval(_x7, _x8, _x9) {
-      return ref.apply(this, arguments);
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -1091,7 +1124,7 @@
     createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -1107,7 +1140,7 @@
         }));
 
         function runEval(_x, _x2) {
-          return ref.apply(this, arguments);
+          return _ref.apply(this, arguments);
         }
 
         return runEval;
@@ -1115,7 +1148,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -1131,7 +1164,7 @@
         }));
 
         function keysOfObject(_x3, _x4) {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1151,7 +1184,7 @@
     createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -1173,7 +1206,7 @@
         }));
 
         function runEval(_x5, _x6) {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return runEval;
@@ -1181,7 +1214,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -1207,7 +1240,7 @@
         }));
 
         function keysOfObject(_x7, _x8) {
-          return ref.apply(this, arguments);
+          return _ref4.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1237,7 +1270,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -1258,7 +1291,7 @@
         }));
 
         function runEval(_x9, _x10) {
-          return ref.apply(this, arguments);
+          return _ref5.apply(this, arguments);
         }
 
         return runEval;
@@ -1266,7 +1299,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -1290,7 +1323,7 @@
         }));
 
         function keysOfObject(_x11, _x12) {
-          return ref.apply(this, arguments);
+          return _ref6.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1331,7 +1364,7 @@
     }, {
       key: "sendRequest",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
           var method, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -1360,7 +1393,7 @@
         }));
 
         function sendRequest(_x13, _x14) {
-          return ref.apply(this, arguments);
+          return _ref7.apply(this, arguments);
         }
 
         return sendRequest;
@@ -1368,7 +1401,7 @@
     }, {
       key: "sendRequest_web",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
+        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
           var res;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -1408,7 +1441,7 @@
         }));
 
         function sendRequest_web(_x15, _x16) {
-          return ref.apply(this, arguments);
+          return _ref8.apply(this, arguments);
         }
 
         return sendRequest_web;
@@ -1416,7 +1449,7 @@
     }, {
       key: "sendRequest_node",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
+        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
           var urlParse, http, opts;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -1452,7 +1485,7 @@
         }));
 
         function sendRequest_node(_x17, _x18) {
-          return ref.apply(this, arguments);
+          return _ref9.apply(this, arguments);
         }
 
         return sendRequest_node;
@@ -1460,7 +1493,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -1479,7 +1512,7 @@
         }));
 
         function runEval(_x19, _x20) {
-          return ref.apply(this, arguments);
+          return _ref10.apply(this, arguments);
         }
 
         return runEval;
@@ -1487,7 +1520,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
+        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
@@ -1520,7 +1553,7 @@
         }));
 
         function keysOfObject(_x21, _x22) {
-          return ref.apply(this, arguments);
+          return _ref11.apply(this, arguments);
         }
 
         return keysOfObject;

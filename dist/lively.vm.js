@@ -18582,6 +18582,23 @@ module.exports = function(acorn) {
     };
   }
 
+  function ifStmt(test) {
+    var consequent = arguments.length <= 1 || arguments[1] === undefined ? block() : arguments[1];
+    var alternate = arguments.length <= 2 || arguments[2] === undefined ? block() : arguments[2];
+
+    return {
+      consequent: consequent, alternate: alternate, test: test,
+      type: "IfStatement"
+    };
+  }
+
+  function logical(op, left, right) {
+    return {
+      operator: op, left: left, right: right,
+      type: "LogicalExpression"
+    };
+  }
+
 var nodes = Object.freeze({
     isIdentifier: isIdentifier,
     id: id,
@@ -18600,7 +18617,9 @@ var nodes = Object.freeze({
     assign: assign,
     block: block,
     program: program,
-    tryStmt: tryStmt
+    tryStmt: tryStmt,
+    ifStmt: ifStmt,
+    logical: logical
   });
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -18738,8 +18757,8 @@ var nodes = Object.freeze({
 
   function declarationsWithIdsOfScope(scope) {
     // returns a list of pairs [(DeclarationNode,IdentifierNode)]
-    var bareIds = helpers.declIds(scope.params).concat(scope.catches);
-    var declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+    var bareIds = helpers.declIds(scope.params).concat(scope.catches),
+        declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
     return bareIds.map(function (ea) {
       return [ea, ea];
     }).concat(declNodes.map(function (ea) {
@@ -18798,26 +18817,47 @@ var nodes = Object.freeze({
         var decl = _resolveReference2[0];
         var id = _resolveReference2[1];
 
-        if (decl) ref.decl = decl;
-        if (id) ref.declId = id;
+        map.set(ref, { decl: decl, declId: id, ref: ref });
       });
       scope.subScopes.forEach(function (s) {
         return rec(s, path);
       });
     }
-    if (scope.referencesResolved) return scope;
+    if (scope.referencesResolvedSafely) return scope;
+    var map = scope.resolvedRefMap = new Map();
     rec(scope, []);
-    scope.referencesResolved = true;
+    scope.referencesResolvedSafely = true;
     return scope;
   }
 
-  function refAt(pos, scope) {
-    var ref = scope.refs.find(function (r) {
-      return r.start <= pos && pos <= r.end;
-    });
-    return ref || scope.subScopes.reduce(function (p, s) {
-      return p || refAt(pos, s);
-    }, null);
+  function refWithDeclAt(pos, scope) {
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var ref = _step.value;
+        var _ref$ref = ref.ref;
+        var start = _ref$ref.start;
+        var end = _ref$ref.end;
+
+        if (start <= pos && pos <= end) return ref;
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
   }
 
   function topLevelDeclsAndRefs(parsed, options) {
@@ -18924,9 +18964,9 @@ var nodes = Object.freeze({
     // Find the statement that a target node is in. Example:
     // let source be "var x = 1; x + 1;" and we are looking for the
     // Identifier "x" in "x+1;". The second statement is what will be found.
-    var nodes = nodesAt$1(node.start, parsed);
-    var found = nodes.reverse().find(function (node) {
-      return _stmtTypes.includes(node.type);
+    var nodes = nodesAt$1(node.start, parsed),
+        found = nodes.reverse().find(function (node) {
+      return lively_lang.arr.include(_stmtTypes, node.type);
     });
     if (options && options.asPath) {
       var v = new Visitor(),
@@ -18985,6 +19025,7 @@ var nodes = Object.freeze({
     var resolve = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
     if (resolve) resolveReferences(scope);
+
     var exports = scope.exportDecls.reduce(function (exports, node) {
 
       var exportsStmt = statementOf(scope.node, node);
@@ -19002,7 +19043,6 @@ var nodes = Object.freeze({
           type: "all"
         }]);
       }
-
       if (exportsStmt.type === "ExportDefaultDeclaration") {
         if (helpers.isDeclaration(exportsStmt.declaration)) {
           return exports.concat({
@@ -19015,14 +19055,19 @@ var nodes = Object.freeze({
             declId: exportsStmt.declaration.id
           });
         } else if (exportsStmt.declaration.type === "Identifier") {
+          var _ref3 = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
+
+          var decl = _ref3.decl;
+          var declId = _ref3.declId;
+
           return exports.concat([{
             local: exportsStmt.declaration.name,
             exported: "default",
             fromModule: null,
             node: node,
             type: "id",
-            decl: exportsStmt.declaration.decl,
-            declId: exportsStmt.declaration.declId
+            decl: decl,
+            declId: declId
           }]);
         } else {
           // exportsStmt.declaration is an expression
@@ -19040,15 +19085,25 @@ var nodes = Object.freeze({
 
       if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
         return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+          var decl, declId;
+          if (from) {
+            // "export { x as y } from 'foo'" is the only case where export
+            // creates a (non-local) declaration itself
+            decl = node;declId = exportSpec.exported;
+          } else if (exportSpec.local) {
+            var resolved = scope.resolvedRefMap.get(exportSpec.local);
+            decl = resolved.decl, declId = resolved.declId;
+          }
+
           return {
             local: !from && exportSpec.local ? exportSpec.local.name : null,
             exported: exportSpec.exported ? exportSpec.exported.name : null,
             imported: from && exportSpec.local ? exportSpec.local.name : null,
             fromModule: from || null,
-            node: node,
             type: "id",
-            decl: from ? node : exportSpec.local && exportSpec.local.decl,
-            declId: from ? exportSpec.exported : exportSpec.local && exportSpec.local.declId
+            node: node,
+            decl: decl,
+            declId: declId
           };
         }));
       }
@@ -19109,7 +19164,7 @@ var nodes = Object.freeze({
     nodesAt: nodesAt$1,
     statementOf: statementOf,
     resolveReferences: resolveReferences,
-    refAt: refAt,
+    refWithDeclAt: refWithDeclAt,
     imports: imports,
     exports: exports$1
   });
@@ -19497,8 +19552,14 @@ var nodes = Object.freeze({
     var instanceProps = id("undefined"),
         classProps = id("undefined");
 
-    if (node.body.body.length) {
-      var _node$body$body$reduc = node.body.body.reduce(function (props, propNode) {
+    var body = node.body.body;
+    var superClass = node.superClass;
+    var classId = node.id;
+    var type = node.type;
+
+
+    if (body.length) {
+      var _body$reduce = body.reduce(function (props, propNode) {
         var decl;var key = propNode.key;
         var kind = propNode.kind;
         var value = propNode.value;
@@ -19521,24 +19582,49 @@ var nodes = Object.freeze({
         return props;
       }, { inst: [], clazz: [] });
 
-      var inst = _node$body$body$reduc.inst;
-      var clazz = _node$body$body$reduc.clazz;
+      var inst = _body$reduce.inst;
+      var clazz = _body$reduce.clazz;
 
 
       if (inst.length) instanceProps = { type: "ArrayExpression", elements: inst };
       if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
     }
 
-    var classCreator = funcCall(options.functionNode, node.id ? literal(node.id.name) : id("undefined"), node.superClass || id("undefined"), instanceProps, classProps, classHolder, options.currentModuleAccessor || id("undefined"));
+    var scope = options.scope,
+        superClassReferencedAs,
+        superClassRef;
 
-    if (node.type === "ClassExpression") return classCreator;
+    if (superClass && options.currentModuleAccessor) {
+      if (options.classHolder === superClass.object) {
+        superClassRef = superClass;
+        superClassReferencedAs = superClass.property.name;
+      } else {
+        var found = scope && scope.resolvedRefMap && scope.resolvedRefMap.get(superClass),
+            isTopLevel = found && found.decl && scope.decls && scope.decls.find(function (_ref) {
+          var _ref2 = babelHelpers.slicedToArray(_ref, 1);
+
+          var decl = _ref2[0];
+          return decl === found.decl;
+        });
+        if (isTopLevel) {
+          superClassRef = superClass;
+          superClassReferencedAs = superClass.name;
+        };
+      }
+    }
+
+    var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
+
+    var classCreator = funcCall(options.functionNode, classId ? literal(classId.name) : id("undefined"), superClassSpec, instanceProps, classProps, classHolder, options.currentModuleAccessor || id("undefined"));
+
+    if (type === "ClassExpression") return classCreator;
 
     var result = classCreator;
 
-    if (options.declarationWrapper && classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(node.id.name), literal("class"), result, options.classHolder);
+    if (options.declarationWrapper && classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
 
     // since it is a declaration and we removed the class construct we need to add a var-decl
-    result = varDecl(node.id, result, "var");
+    result = varDecl(classId, result, "var");
     result[isTransformedClassVarDeclSymbol] = true;
 
     return result;
@@ -19560,7 +19646,7 @@ var nodes = Object.freeze({
     // From
     //   class Foo extends SuperFoo { m() { return 2 + super.m() }}
     // produces something like
-    //   createOrExtend({}, SuperFoo, "Foo2", [{
+    //   createOrExtend({}, {referencedAs: "SuperFoo", value: SuperFoo}, "Foo2", [{
     //     key: "m",
     //     value: function m() {
     //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
@@ -19568,7 +19654,9 @@ var nodes = Object.freeze({
     //   }])
 
     var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
-    return simpleReplace(parsed, options.classHolder, function (node, classHolder, path) {
+    options.scope = resolveReferences(scopes(parsed));
+
+    var replaced = simpleReplace(parsed, options.classHolder, function (node, classHolder, path) {
 
       if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, classHolder, path, options);
 
@@ -19584,6 +19672,8 @@ var nodes = Object.freeze({
 
       return node;
     });
+
+    return replaced;
   }
 
   var merge = Object.assign;
@@ -20029,14 +20119,14 @@ var nodes = Object.freeze({
       if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
         /*...*/
       } else if (stmt.declaration.declarations) {
-        body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-          return assignExpr(options.captureObj, decl.id, decl.id, false);
-        })));
-      } else if (stmt.declaration.type === "FunctionDeclaration") {
-        /*handled by function rewriter as last step*/
-      } else if (stmt.declaration.type === "ClassDeclaration") {
-        body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-      }
+          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+            return assignExpr(options.captureObj, decl.id, decl.id, false);
+          })));
+        } else if (stmt.declaration.type === "FunctionDeclaration") {
+          /*handled by function rewriter as last step*/
+        } else if (stmt.declaration.type === "ClassDeclaration") {
+            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+          }
     }
     parsed.body = body;
     return parsed;
@@ -20250,18 +20340,18 @@ var nodes = Object.freeze({
 
         // like [...foo]
       } else if (el.type === "RestElement") {
-        return [merge(varDecl(el.argument, {
-          type: "CallExpression",
-          arguments: [{ type: "Literal", value: i }],
-          callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
+          return [merge(varDecl(el.argument, {
+            type: "CallExpression",
+            arguments: [{ type: "Literal", value: i }],
+            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
 
-        // like [{x}]
-      } else {
-        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-            helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-        declaredNames.push(helperVarId.name);
-        return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-      }
+          // like [{x}]
+        } else {
+            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
+            declaredNames.push(helperVarId.name);
+            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+          }
     });
   }
 
@@ -20276,11 +20366,11 @@ var nodes = Object.freeze({
 
         // like {x: {z}} or {x: [a]}
       } else {
-        var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-            helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-        declaredNames.push(helperVarId.name);
-        return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-      }
+          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
+              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
+          declaredNames.push(helperVarId.name);
+          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
+        }
     });
   }
 
@@ -21132,6 +21222,7 @@ var categorizer = Object.freeze({
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+  var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
   var constructorArgMatcher = /\([^\\)]*\)/;
 
   var defaultPropertyDescriptorForGetterSetter = {
@@ -21152,58 +21243,24 @@ var categorizer = Object.freeze({
     return constructor;
   }
 
-  function ensureInitializeStub(superclass) {
-    // when we inherit from "conventional classes" those don't have an
-    // initializer method. We install a stub that calls the superclass function
-    // itself
-    if (superclass === Object || superclass.prototype[initializeSymbol]) return;
-    Object.defineProperty(superclass.prototype, initializeSymbol, {
-      enumerable: false,
-      configurable: true,
-      writable: true,
-      value: function value() /*args*/{
-        superclass.apply(this, arguments);
-      }
-    });
-    superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
-  }
-
-  function createOrExtend(name, superclass) {
-    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
-    var staticMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
-    var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
-    var currentModule = arguments[5];
-
-    // Given a `classHolder` object as "environment", will try to find a "class"
-    // (JS constructor function) inside it. If no class is found it will create a
-    // new costructor function object and will attach the methods to it. If a class
-    // is found it will be modified.
-    // This is being used as the compile target for es6 class syntax by the
-    // lively.ast capturing / transform logic
-    // Example:
-    // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
-    // new Foo().m() // => 23
-
-    // 1. create a new constructor function if necessary, re-use an exisiting if the
-    // classHolder object has it
-    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
-        existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
-
-    // 2. set the superclass if necessary and set prototype
-    if (!superclass) superclass = Object;
+  function setSuperclass(klass, superclassOrSpec) {
+    // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
+    var superclass = !superclassOrSpec ? Object : typeof superclassOrSpec === "function" ? superclassOrSpec : superclassOrSpec.value ? superclassOrSpec.value : Object;
+    var existingSuperclass = klass && klass[superclassSymbol];
+    // set the superclass if necessary and set prototype
     if (!existingSuperclass || existingSuperclass !== superclass) {
-      if (existingSuperclass) {
-        console.warn("Changing superclass of class " + name + " from " + (existingSuperclass.name + " to " + superclass.name + ": This will leave ") + ("existing instances of " + name + " orphaned, i.e. " + name + " is practically not ") + ("their class anymore and they will not get new behaviors when " + name + " is ") + "changed!!!");
-      }
       ensureInitializeStub(superclass);
       klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
     }
+    return superclass;
+  }
 
-    // 3. define methods
-    staticMethods && staticMethods.forEach(function (ea) {
+  function addMethods(klass, instanceMethods, classMethods) {
+    // install methods from two lists (static + instance) of {key, value} or
+    // {key, get/set} descriptors
+    classMethods && classMethods.forEach(function (ea) {
       var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
       Object.defineProperty(klass, ea.key, Object.assign(ea, descr));
       if (typeof ea.value === "function") klass[ea.key].displayName = ea.key;
@@ -21228,8 +21285,53 @@ var categorizer = Object.freeze({
       });
       klass.prototype[initializeSymbol].displayName = "lively-initialize";
     }
+  }
 
-    // 5. If we have a `currentModule` instance (from lively.modules/src/module.js)
+  function ensureInitializeStub(superclass) {
+    // when we inherit from "conventional classes" those don't have an
+    // initializer method. We install a stub that calls the superclass function
+    // itself
+    if (superclass === Object || superclass.prototype[initializeSymbol]) return;
+    Object.defineProperty(superclass.prototype, initializeSymbol, {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: function value() /*args*/{
+        superclass.apply(this, arguments);
+      }
+    });
+    superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
+  }
+
+  function createOrExtend(name, superclassSpec) {
+    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+    var classMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
+    var currentModule = arguments[5];
+
+    // Given a `classHolder` object as "environment", will try to find a "class"
+    // (JS constructor function) inside it. If no class is found it will create a
+    // new costructor function object and will attach the methods to it. If a class
+    // is found it will be modified.
+    // This is being used as the compile target for es6 class syntax by the
+    // lively.ast capturing / transform logic
+    // Example:
+    // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
+    // new Foo().m() // => 23
+
+    // 1. create a new constructor function if necessary, re-use an exisiting if the
+    // classHolder object has it
+    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
+        existingSuperclass = klass && klass[superclassSymbol];
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
+
+    // 2. set the superclass if necessary and set prototype
+    var superclass = setSuperclass(klass, superclassSpec);
+
+    // 3. Install methods
+    addMethods(klass, instanceMethods, classMethods);
+
+    // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
     // then we also store some meta data about the module. This allows us to
     // (de)serialize class instances in lively.serializer
     if (currentModule) {
@@ -21238,6 +21340,24 @@ var categorizer = Object.freeze({
         package: p ? { name: p.name, version: p.version } : {},
         pathInPackage: currentModule.pathInPackage()
       };
+
+      // if we have a module, we can listen to toplevel changes of it in case the
+      // superclass binding changes. With that we can keep our class up-to-date
+      // even if the superclass binding changes. This is especially useful for
+      // situations where modules have a circular dependency and classes in modules
+      // won't get defined correctly when loaded first. See
+      // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
+      if (superclassSpec && superclassSpec.referencedAs) {
+        if (klass[moduleSubscribeToToplevelChangesSym]) {
+          currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
+        }
+        klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
+          if (name === superclassSpec.referencedAs) {
+            setSuperclass(klass, val);
+            addMethods(klass, instanceMethods, classMethods);
+          }
+        });
+      }
     }
 
     // 6. Add a toString method for the class to allows us to see its constructor arguments
@@ -21659,7 +21779,7 @@ var categorizer = Object.freeze({
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -21685,8 +21805,9 @@ var categorizer = Object.freeze({
         }
       }, _callee, this);
     }));
+
     return function ensureImportsAreLoaded(_x, _x2, _x3) {
-      return ref.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
@@ -21694,7 +21815,7 @@ var categorizer = Object.freeze({
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -21767,8 +21888,9 @@ var categorizer = Object.freeze({
         }
       }, _callee2, this);
     }));
+
     return function getEs6Transpiler(_x4, _x5, _x6) {
-      return ref.apply(this, arguments);
+      return _ref2.apply(this, arguments);
     };
   }();
 
@@ -21826,7 +21948,7 @@ var categorizer = Object.freeze({
   }
 
   var runEval$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -21919,8 +22041,9 @@ var categorizer = Object.freeze({
         }
       }, _callee3, this);
     }));
+
     return function runEval(_x7, _x8, _x9) {
-      return ref.apply(this, arguments);
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -21934,7 +22057,7 @@ var categorizer = Object.freeze({
     createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -21950,7 +22073,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x, _x2) {
-          return ref.apply(this, arguments);
+          return _ref.apply(this, arguments);
         }
 
         return runEval;
@@ -21958,7 +22081,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -21974,7 +22097,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x3, _x4) {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -21994,7 +22117,7 @@ var categorizer = Object.freeze({
     createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -22016,7 +22139,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x5, _x6) {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return runEval;
@@ -22024,7 +22147,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -22050,7 +22173,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x7, _x8) {
-          return ref.apply(this, arguments);
+          return _ref4.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -22080,7 +22203,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -22101,7 +22224,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x9, _x10) {
-          return ref.apply(this, arguments);
+          return _ref5.apply(this, arguments);
         }
 
         return runEval;
@@ -22109,7 +22232,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -22133,7 +22256,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x11, _x12) {
-          return ref.apply(this, arguments);
+          return _ref6.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -22174,7 +22297,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
           var method, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -22203,7 +22326,7 @@ var categorizer = Object.freeze({
         }));
 
         function sendRequest(_x13, _x14) {
-          return ref.apply(this, arguments);
+          return _ref7.apply(this, arguments);
         }
 
         return sendRequest;
@@ -22211,7 +22334,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest_web",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
+        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
           var res;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -22251,7 +22374,7 @@ var categorizer = Object.freeze({
         }));
 
         function sendRequest_web(_x15, _x16) {
-          return ref.apply(this, arguments);
+          return _ref8.apply(this, arguments);
         }
 
         return sendRequest_web;
@@ -22259,7 +22382,7 @@ var categorizer = Object.freeze({
     }, {
       key: "sendRequest_node",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
+        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
           var urlParse, http, opts;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -22295,7 +22418,7 @@ var categorizer = Object.freeze({
         }));
 
         function sendRequest_node(_x17, _x18) {
-          return ref.apply(this, arguments);
+          return _ref9.apply(this, arguments);
         }
 
         return sendRequest_node;
@@ -22303,7 +22426,7 @@ var categorizer = Object.freeze({
     }, {
       key: "runEval",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -22322,7 +22445,7 @@ var categorizer = Object.freeze({
         }));
 
         function runEval(_x19, _x20) {
-          return ref.apply(this, arguments);
+          return _ref10.apply(this, arguments);
         }
 
         return runEval;
@@ -22330,7 +22453,7 @@ var categorizer = Object.freeze({
     }, {
       key: "keysOfObject",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
+        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
@@ -22363,7 +22486,7 @@ var categorizer = Object.freeze({
         }));
 
         function keysOfObject(_x21, _x22) {
-          return ref.apply(this, arguments);
+          return _ref11.apply(this, arguments);
         }
 
         return keysOfObject;
