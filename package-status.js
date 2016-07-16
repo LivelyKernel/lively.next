@@ -135,8 +135,8 @@ export class ReporterWidget {
       "local changes to push?",
       p.hasLocalChangesToPush ? "yes" : "no",
       p.hasLocalChangesToPush ? this.textFlow.button("push", () =>
-        lively.shell.runInWindow(`cd ${p.directory}; git push origin ${p.config.branch}`)
-          .catch(err => $world.logError(err)), {p}) : this.textFlow.nothing, this.textFlow.br);
+        lively.shell.runInWindow(`cd ${p.directory}; git push origin ${p.config.branch}`), {p}) :
+        this.textFlow.nothing, this.textFlow.br);
 
     // remote changes + update button
     report = report.concat(
