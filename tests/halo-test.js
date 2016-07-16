@@ -49,7 +49,7 @@ describe("halos", () => {
         innerButton = halo.buttonControls.find(item =>
         submorph1.bounds().containsPoint(item.globalBounds().center()));
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
-    expect(halo.originHalo().position).equals(submorph1.origin);
+    expect(halo.originHalo().bounds().center()).equals(submorph1.origin);
   });
 
   it("drag drags", () => {
@@ -91,7 +91,7 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1);
     halo.originHalo().update(pt(10,5));
     expect(submorph1.origin).equals(pt(30, 35));
-    expect(halo.originHalo().position).equals(pt(30, 35));
+    expect(halo.originHalo().bounds().center()).equals(pt(30, 35));
   });
 
   it("grab grabs", () => {
