@@ -91,7 +91,7 @@ export class ReporterWidget {
               () => p.installOrUpdate(reporter.packages), `installing ${p.name}`)
           }],
           ["commit everything", () => {
-            $world.prompt("Enter a commit message")
+            $world.prompt("Enter a commit message", {historyId: "lively.installer-commit-all-message"})
               .then(msg => p.repo.commit(msg, true))
               .then(cmd => $world.inform(cmd.output))
               .catch(err => $world.inform(err.stack || err));
@@ -145,7 +145,12 @@ export class ReporterWidget {
       p.hasRemoteChanges ? this.textFlow.button("update", () => {
         reporter.withLoadingIndicatorCatchingErrors(
           () => p.installOrUpdate(reporter.packages), `updating ${p.name}`)
-      }, {p, reporter}) : this.textFlow.nothing, this.textFlow.br);
+      }, {p, reporter}) : this.textFlow.nothing,
+      p.hasRemoteChanges ? this.textFlow.button("show changes", () => {
+        p.repo.getRemoteAndLocalHeadRef(p.config.branch).then(({local, remote}) =>
+          lively.shell.runInWindow(`cd ${p.directory}; git diff ${local}...${remote}`))
+      }, {p}) : this.textFlow.nothing,
+      this.textFlow.br);
 
     // missing / outdated npm packages
     var missingNpmPackages = p._npmPackagesThatNeedFixing;

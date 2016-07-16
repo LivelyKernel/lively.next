@@ -111,29 +111,29 @@ export class Repository {
     return choice;
   }
 
-  async needsPullOrPush(branch = "master") {
-    var {local, remote} = await this.getRemoteAndLocalHeadRef(branch);
-    if (local === remote) return {pull: false, push: false};
+  async needsPullOrPush(branch = "master", remote = "origin") {
+    var result = await this.getRemoteAndLocalHeadRef();
+    if (result.local === result.remote)
+      return {push: false, pull: false}
 
+    return {
+      pull: !await this.isCommitInBranch(result.remote, branch, remote),
+      push: !await this.isAncestorCommit(result.local, result.remote)
+    }
+  }
+
+  async isCommitInBranch(commit, branch = "master", remote = "origin") {
     var {code, output} = await this.cmd(`git branch --contains ${remote}`);
+    if (code || !output.trim()) return false;
+    return output
+        .trim().split("\n")
+        .map(line => line.replace(/\*\s*/, "").trim())
+        .some(line => line === branch);
+  }
 
-    if (code && output.match(/no such commit/)) {
-      return {pull: true, push: false}
-    }
-
-    if (code) {
-      console.error(`Error checking pull/push for ${this.directory}${output}`);
-      return {pull: false, push: false};
-    }
-
-    // check if remote hash is in history of branch. If it is, HEAD is newer
-    // than remote and we can push, if not, remote is newer
-    var pull = output
-      .trim().split("\n")
-      .filter(line => !line.match(/remotes/))
-      .map(line => line.replace(/\*\s*/, "").trim())
-      .every(line => line !== branch);
-    return {pull, push: !pull}
+  async isAncestorCommit(maybeAncestorCommit, commit) {
+    var {code} = await this.cmd(`git merge-base --is-ancestor ${maybeAncestorCommit} ${commit}`);
+    return !code;
   }
 
   async hasRemoteChanges(branch = "master") {
@@ -145,7 +145,8 @@ export class Repository {
     var cmdString =
         `remote=$(git ls-remote "${remote}" ${branch});\n`
       + `local=$(git show-ref --hash ${branch} | head -n 1);\n`
-      + `echo "{\\"remote\\": \\"$remote\\", \\"local\\": \\"$local\\"}";`;
+      + `remoteLocal=$(git show-ref --hash ${remote}/${branch} | head -n 1);\n`
+      + `echo "{\\"remoteLocal\\": \\"$remoteLocal\\", \\"remote\\": \\"$remote\\", \\"local\\": \\"$local\\"}";`;
 
     var {output} = await this.cmd(cmdString);
 
@@ -162,7 +163,8 @@ export class Repository {
 
     return {
       remote: (out.remote || '').trim().split(' ')[0],
-      local: (out.local || '').trim().split(' ')[0]};
+      local: (out.local || '').trim().split(' ')[0],
+      remoteLocal: (out.remoteLocal || '').trim().split(' ')[0]};
   }
 
   async push() {
@@ -181,7 +183,7 @@ export class Repository {
 
   commit(message, all = false) {
     if (!message) throw new Error("No commit message");
-    return this.cmd(`git commit ${all ? "-a" : ""} -m "${message}"`);
+    return this.cmd(`git commit ${all ? "-a" : ""} -m "${message.replace(/\"/g, '\\"')}"`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
