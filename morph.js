@@ -206,8 +206,11 @@ export class Morph {
 
   bounds() {
     var tfm = this.getTransform(),
-        bounds = this.innerBounds();
+        bounds = this.innerBounds(),
+        toOrigin = new Transform(this.origin),
+        fromOrigin = new Transform(this.origin.negated());
 
+    tfm = fromOrigin.preConcatenate(tfm).preConcatenate(toOrigin);
     bounds = tfm.transformRectToRect(bounds);
 
     var subBounds = this.submorphBounds(tfm);
