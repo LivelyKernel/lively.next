@@ -137,8 +137,7 @@ export class Repository {
   }
 
   async hasRemoteChanges(branch = "master") {
-    var {pull, push} = this.needsPullOrPush(branch);
-    return !!pull;
+    return !!(await this.needsPullOrPush(branch)).pull;
   }
 
   async getRemoteAndLocalHeadRef(branch = "master", remote = "origin") {
