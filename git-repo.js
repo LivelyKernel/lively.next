@@ -112,11 +112,8 @@ export class Repository {
   }
 
   async needsPullOrPush(branch = "master", remote = "origin") {
-    var result = await this.getRemoteAndLocalHeadRef();
-    if (result.local === result.remote)
-      return {push: false, pull: false}
-
-    return {
+    var result = await this.getRemoteAndLocalHeadRef(branch, remote);
+    return result.local === result.remote ? {push: false, pull: false} : {
       pull: !await this.isAncestorCommit(result.remote, result.local),
       push: !await this.isAncestorCommit(result.local, result.remote)
     }
