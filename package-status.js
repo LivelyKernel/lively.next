@@ -175,7 +175,9 @@ export class ReporterWidget {
       "missing npm packages:",
       missingNpmPackages.join(", "),
       this.textFlow.button("update / install", () =>
-        p.fixNPMPackages(missingNpmPackages), {p, reporter, missingNpmPackages}), this.textFlow.br);
+        p.fixNPMPackages(missingNpmPackages)
+          .then(() => p.linkToDependencies(packages)), {p, missingNpmPackages, packages}),
+      this.textFlow.br);
     }
 
     return report.concat(this.textFlow.br, this.textFlow.br);

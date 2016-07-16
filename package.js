@@ -100,6 +100,7 @@ export class Package {
   async symlinkTo(localDir, toPackage) {
     // creates a link from this.directory -> toPackage.directory/localDir/this.name
     var fromPackage = this,
+        // _ = console.log(`symlink ${fromPackage.name} => ${toPackage.name}/${localDir}/${fromPackage.name}`),
         cmd = await exec(`node -e '
 var j = require("path").join, fs = require("fs"), localDir = "${localDir}", linkedDir = j(localDir, "${fromPackage.name}");
 if (!fs.existsSync(localDir)) fs.mkdirSync(localDir);
@@ -152,7 +153,7 @@ function rm(path) {
       indicator = await lively.ide.withLoadingIndicatorDo();
     for (let p of packages) {
       if (indicator) indicator.setLabel(`npm install\n${p}`);
-      var {code, output} = await exec(`npm install ${p}`);
+      var {code, output} = await exec(`npm install ${p}`, {log: this._log, cwd: this.directory});
       if (code && typeof $world !== "undefined") await $world.inform(`npm install of ${p}failed:\n${output}`);
     }
     indicator && indicator.remove();
