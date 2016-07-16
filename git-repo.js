@@ -117,6 +117,10 @@ export class Repository {
 
     var {code, output} = await this.cmd(`git branch --contains ${remote}`);
 
+    if (code && output.match(/no such commit/)) {
+      return {pull: true, push: false}
+    }
+
     if (code) {
       console.error(`Error checking pull/push for ${this.directory}${output}`);
       return {pull: false, push: false};
