@@ -196,11 +196,23 @@ export class Halo extends Morph {
       name: "origin", fill: Color.red,
       opacity: 0.9, borderColor: Color.black,
       borderWidth: 2,
-      position: this.target.origin,
+      position: this.target.origin.subPt(pt(7.5,7.5)),
       extent: pt(15,15),
       halo: this,
+      computePositionAtTarget: () => {
+          var world = this.target.world(),
+              origin = world.localizePointFrom(
+                                this.target.position,
+                                this.target.owner)
+                            .addPt(this.target.origin);
+          const {x,y} = this.target.globalBounds();
+          return origin.subPt(pt(x,y)).subPt(pt(7.5,7.5));
+      },
+      alignInHalo() {
+        this.position = this.computePositionAtTarget();
+      },
       update: (delta) => {
-        this.target.origin = this.target.origin.addPt(delta);
+        this.target.adjustOrigin(this.target.origin.addPt(delta));
         this.alignWithTarget();
       },
       onDrag(evt) { this.update(evt.state.dragDelta); }
@@ -237,12 +249,11 @@ export class Halo extends Morph {
   alignWithTarget() {
     const {x, y, width, height} = this.target.globalBounds();
     const origin = this.target.origin;
-    // fixme, adjust position such that origin is fixed globally
-    // in case rotations are applied
+    // take into account the rotation and position of the origin
     this.position = pt(x,y);
     this.extent = pt(width, height);
     this.buttonControls.forEach((button) => button.alignInHalo());
-    this.originHalo().position = origin;
+    this.originHalo().alignInHalo();
   }
 
 }
