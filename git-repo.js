@@ -117,7 +117,7 @@ export class Repository {
       return {push: false, pull: false}
 
     return {
-      pull: !await this.isCommitInBranch(result.remote, branch, remote),
+      pull: !await this.isAncestorCommit(result.remote, result.local),
       push: !await this.isAncestorCommit(result.local, result.remote)
     }
   }

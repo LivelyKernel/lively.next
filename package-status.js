@@ -6,11 +6,27 @@ import { TextFlow } from "./morphic-helpers.js";
 
 var packageSpecFile = System.decanonicalize("lively.installer/packages-config.json");
 
+// await readPackageSpec()
 export async function readPackageSpec() {
   return JSON.parse(System.get("@system-env").browser ?
     await (await fetch(packageSpecFile)).text() :
     await read(packageSpecFile));
 }
+
+// await packages("/Users/robert/Lively/lively-dev/")
+// var baseDir = "/Users/robert/Lively/lively-dev/"
+export async function packages(baseDir) {
+  var specs = await readPackageSpec();
+  return await Promise.all(
+    specs.map(spec =>
+      new Package(join(baseDir, spec.name), spec)
+        .readConfig()
+        .then(p => p.readStatus())
+        .then(p => {
+          return p;
+        })));
+}
+
 
 function printSummaryFor(p, packages) {
   var report = `Package ${p.name} at ${p.directory}`

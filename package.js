@@ -45,6 +45,7 @@ export class Package {
     this.hasLocalChanges = await this.repo.hasLocalChanges();
     var {pull, push} = await this.repo.needsPullOrPush(this.config.branch);
     this.hasRemoteChanges = !!pull
+    if (this.hasRemoteChanges) await this.repo.cmd(`git fetch --all`);
     this.hasLocalChangesToPush = !!push
     this._npmPackagesThatNeedFixing = await this.npmPackagesThatNeedFixing();
     return this;
