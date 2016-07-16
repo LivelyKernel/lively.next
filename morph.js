@@ -204,6 +204,16 @@ export class Morph {
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
+  adjustOrigin(newOrigin) {
+    // FIXME: adjust the position of the morph
+    // with respect to the current transform,
+    // such that the morph does not bounce around
+    var oldPos = this.globalBounds().topLeft();
+    this.origin = newOrigin;
+    var newPos = this.globalBounds().topLeft();
+    this.position = this.position.addPt(oldPos.subPt(newPos));
+  }
+
   bounds() {
     var tfm = this.getTransform(),
         bounds = this.innerBounds(),
