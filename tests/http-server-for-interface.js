@@ -28,7 +28,10 @@ function exec(cmdString, opts) {
       get output() { return stdout + "\n" + stderr },
       get stdout() { return stdout },
       isRunning() { return typeof exit === "undefined" },
-      kill(sig = "SIGKILL") { return proc.kill(sig) }
+      kill(sig = "SIGKILL") {
+        proc.kill(sig);
+        return new Promise((resolve, reject) => !this.isRunning());
+      }
     }
     cmd = deferred.promise;
     cmd.__defineGetter__("process", rawCmd.__lookupGetter__("process"));
@@ -36,8 +39,8 @@ function exec(cmdString, opts) {
     cmd.__defineGetter__("output",  rawCmd.__lookupGetter__("output"));
     cmd.__defineGetter__("stdout",  rawCmd.__lookupGetter__("stdout"));
     cmd.__defineGetter__("stdout",  rawCmd.__lookupGetter__("stdout"));
-    cmd.isRunning = rawCmd.isRunning;
-    cmd.kill = rawCmd.kill;
+    cmd.isRunning = rawCmd.isRunning.bind(rawCmd);
+    cmd.kill = rawCmd.kill.bind(rawCmd);
     promise.waitFor(() => !cmd.isRunning()).then(() => deferred.resolve(rawCmd))
   } else {
     cmd = lively.shell.run(cmdString, {cwd: opts.cwd});

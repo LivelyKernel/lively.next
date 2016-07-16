@@ -14,8 +14,7 @@ describe("http lively-system-interface", function () {
   });
 
   after(async () => {
-    server.kill();
-    return server;
+    await server.kill();
   });
 
   it("evals on server", async () => {
