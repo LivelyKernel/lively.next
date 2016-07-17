@@ -1,10 +1,14 @@
-import { pt, Color, Point, Rectangle } from "lively.graphics";
+import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
 import { morph, Morph } from "./index.js";
 
 
-export function show(morph) {
+export function show(target) {
 
-  return showRect(morph.world(), morph.globalBounds());
+  if (!target) return;
+  if (target.isMorph) return showRect(morph.world(), morph.globalBounds());
+  if (target instanceof Point) return showRect($$world, new Rectangle(target.x-5, target.y-5, 10,10));
+  
+  console.warn(`show: cannot "show" ${target}`);
 
   function showRect(world, rect) {
     var marker = BoundsMarker.highlightBounds(rect);
