@@ -204,7 +204,7 @@ export class Halo extends Morph {
       location: {col: 0, row: 1},
       halo: this,
       init: (hand) => {
-        var pos = this.globalPosition,
+        var pos = this.target.globalPosition,
             copy = this.target.copy();
         hand.grab(copy);
         copy.globalPosition = pos;
