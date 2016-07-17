@@ -112,7 +112,7 @@ export class Halo extends Morph {
       location: {col: 2, row: 0},
       halo: this,
       update: (delta) => {
-        this.target.moveBy(delta);
+        this.target.globalPosition = this.target.globalPosition.addPt(delta);
         this.alignWithTarget();
       },
       onDrag(evt) { this.update(evt.state.dragDelta); },
@@ -174,8 +174,10 @@ export class Halo extends Morph {
       location: {col: 0, row: 1},
       halo: this,
       init: (hand) => {
-        const copy = this.target.copy()
+        var pos = this.globalPosition;
+        const copy = this.target.copy();
         hand.grab(copy);
+        copy.globalPosition = pos;
         this.refocus(copy);
       },
       update(hand) {
