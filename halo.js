@@ -35,7 +35,6 @@ export class Halo extends Morph {
     });
     this.state = {pointerId, target, draggedButton: null}
     this.initButtons();
-    this.alignWithTarget();
   }
 
   get isHalo() { return true }
@@ -174,8 +173,8 @@ export class Halo extends Morph {
       location: {col: 0, row: 1},
       halo: this,
       init: (hand) => {
-        var pos = this.globalPosition;
-        const copy = this.target.copy();
+        var pos = this.globalPosition,
+            copy = this.target.copy();
         hand.grab(copy);
         copy.globalPosition = pos;
         this.refocus(copy);
@@ -256,6 +255,7 @@ export class Halo extends Morph {
     this.extent = pt(width, height);
     this.buttonControls.forEach((button) => button.alignInHalo());
     this.originHalo().alignInHalo();
+    return this;
   }
 
 }
