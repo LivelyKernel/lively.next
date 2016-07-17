@@ -19,8 +19,11 @@ export class Text extends Morph {
     this.autoFitFlagged = true;
   }
 
-  get allowsInput() { return this.getProperty("allowsInput") }
-  set allowsInput(value) { this.recordChange({prop: "allowsInput", value}) }
+  get readOnly() { return this.getProperty("readOnly"); }
+  set readOnly(value) {
+    this.nativeCursor = value ? "default" : "auto";
+    this.recordChange({prop: "readOnly", value});
+  }
 
   get autoFits() { return this.getProperty("autoFits") }
   set autoFits(value) {
@@ -57,11 +60,14 @@ export class Text extends Morph {
   shape() {
     return {
       value: this.textString,
-      readOnly: !this.allowsInput,
+      readOnly: this.readOnly,
       placeholder: this.placeholder,
-      style: { resize: "none", border: "none", overflow: "hidden",
-               "white-space": "nowrap", padding: "0px",
-               "font-family": this.fontFamily, "font-size": this.fontSize }
+      style: {
+        resize: "none",
+       "white-space": "nowrap", padding: "0px",
+       "font-family": this.fontFamily,
+       "font-size": this.fontSize + "px"
+     }
     }
   }
 
