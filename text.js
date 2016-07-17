@@ -1,4 +1,5 @@
 import { Morph } from "./morph.js";
+import { FontMetric } from "./rendering/renderer.js";
 
 export class Text extends Morph {
 
@@ -64,12 +65,18 @@ export class Text extends Morph {
     }
   }
 
+  fit() {
+    var fontMetric = FontMetric.default(),
+        {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(
+          this.fontFamily, this.fontSize, this.placeholder || " "),
+        {height, width} = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
+    this.height = Math.max(placeholderHeight, height);
+    this.width = Math.max(placeholderWidth, width);
+  }
+
   autoFitIfNeeded() {
     if (this.autoFits && this.autoFitFlagged) {
-      var fontMetric = this.world().fontMetric,
-          { height: placeholderHeight, width: placeholderWidth } = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.placeholder || " "),
-          { height: textHeight, width: textWidth } = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
-      [this.height, this.width] = [Math.max(placeholderHeight, textHeight), Math.max(placeholderWidth, textWidth)];
+      this.fit();
       this.autoFitFlagged = false;
     }
   }

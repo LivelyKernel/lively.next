@@ -120,7 +120,15 @@ export class Renderer {
 }
 
 
-class FontMetric {
+export class FontMetric {
+
+  static default(doc = document) {
+    if (!this._fontMetric) {
+      this._fontMetric = new FontMetric();
+      this._fontMetric.install(doc.body);
+    }
+    return this._fontMetric;
+  }
 
   constructor() {
     this.charMap = [];
