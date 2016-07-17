@@ -4,7 +4,10 @@ import { FontMetric } from "./rendering/renderer.js";
 export class Text extends Morph {
 
   static makeLabel(text, props) {
-    return new this(Object.assign({textString: text, readOnly: true, autoFits: true}, props));
+    return new this(Object.assign({
+      textString: text, readOnly: true,
+      fixedWidth: false, fixedHeight: false
+    }, props));
   }
 
   constructor(props) {
@@ -12,11 +15,10 @@ export class Text extends Morph {
       readOnly: false,
       clipMode: "hidden",
       textString: "",
-      autoFits: true
+      fixedWidth: false, fixedHeight: false
     }, props));
-    if (this.autoFits) {
-      this.fit()
-    }
+    this.fit();
+    this._needsFit = false;
   }
 
   get isText() { return true }
@@ -26,7 +28,7 @@ export class Text extends Morph {
   get textString() { return this.getProperty("textString") }
   set textString(value) {
     this.recordChange({prop: "textString", value});
-    this.autoFitFlagged = true;
+    this._needsFit = true;
   }
 
   get readOnly() { return this.getProperty("readOnly"); }
@@ -35,28 +37,34 @@ export class Text extends Morph {
     this.recordChange({prop: "readOnly", value});
   }
 
-  get autoFits() { return this.getProperty("autoFits") }
-  set autoFits(value) {
-    this.recordChange({prop: "autoFits", value});
-    this.autoFitFlagged = true;
+  get fixedWidth() { return this.getProperty("fixedWidth") }
+  set fixedWidth(value) {
+    this.recordChange({prop: "fixedWidth", value});
+    this._needsFit = true;
+  }
+
+  get fixedHeight() { return this.getProperty("fixedHeight") }
+  set fixedHeight(value) {
+    this.recordChange({prop: "fixedHeight", value});
+    this._needsFit = true;
   }
 
   get fontFamily() { return this.getProperty("fontFamily") }
   set fontFamily(value) {
     this.recordChange({prop: "fontFamily", value});
-    this.autoFitFlagged = true;
+    this._needsFit = true;
   }
 
   get fontSize() { return this.getProperty("fontSize") }
   set fontSize(value) {
     this.recordChange({prop: "fontSize", value});
-    this.autoFitFlagged = true;
+    this._needsFit = true;
   }
 
   get placeholder() { return this.getProperty("placeholder") }
   set placeholder(value) {
     this.recordChange({prop: "placeholder", value});
-    this.autoFitFlagged = true;
+    this._needsFit = true;
   }
 
   get selection() { return this.getProperty("selection") }
@@ -64,7 +72,7 @@ export class Text extends Morph {
 
   aboutToRender() {
     super.aboutToRender();
-    this.autoFitIfNeeded();
+    this.fitIfNeeded();
   }
 
   shape() {
@@ -82,18 +90,22 @@ export class Text extends Morph {
   }
 
   fit() {
+    if (this.fixedHeight && this.fixedWidth) return;
+
     var fontMetric = FontMetric.default(),
         {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(
           this.fontFamily, this.fontSize, this.placeholder || " "),
         {height, width} = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
-    this.height = Math.max(placeholderHeight, height);
-    this.width = Math.max(placeholderWidth, width);
+    if (!this.fixedHeight)
+      this.height = Math.max(placeholderHeight, height);
+    if (!this.fixedWidth)
+      this.width = Math.max(placeholderWidth, width);
   }
 
-  autoFitIfNeeded() {
-    if (this.autoFits && this.autoFitFlagged) {
+  fitIfNeeded() {
+    if (this._needsFit) {
       this.fit();
-      this.autoFitFlagged = false;
+      this._needsFit = false;
     }
   }
 
