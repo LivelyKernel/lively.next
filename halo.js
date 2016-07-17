@@ -1,4 +1,4 @@
-import { Ellipse, Morph } from "./index.js"
+import { Ellipse, Morph, Text } from "./index.js"
 import { Color, pt, rect } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
@@ -21,7 +21,6 @@ export class HaloItem extends Ellipse {
           rowHeight = height / 3;
     this.position = pt(collWidth * col, rowHeight * row).subPt(pt(26,26));
   }
-
 }
 
 export class Halo extends Morph {
@@ -34,12 +33,15 @@ export class Halo extends Morph {
       fill: Color.transparent
     });
     this.state = {pointerId, target, draggedButton: null}
+    this.initPropertyDisplay();
     this.initButtons();
   }
 
   get isHalo() { return true }
 
   get target() { return this.state.target; }
+
+  morphsContainingPoint(list) { return list }
 
   refocus(newTarget) {
     var owner = this.owner;
@@ -62,7 +64,16 @@ export class Halo extends Morph {
         this.target.resizeBy(delta);
         this.alignWithTarget();
       },
-      onDrag(evt) { this.update(evt.state.dragDelta) }
+      init() {
+        this.halo.activeButton = this;
+      },
+      stop() {
+        this.halo.activeButton = null;
+        this.halo.alignWithTarget();
+      },
+      onDragStart(evt) { this.init() },
+      onDrag(evt) { this.update(evt.state.dragDelta) },
+      onDragEnd(evt) { this.stop() }
     }));
   }
 
@@ -110,11 +121,20 @@ export class Halo extends Morph {
       property: 'position',
       location: {col: 2, row: 0},
       halo: this,
+      init() {
+        this.halo.activeButton = this;
+      },
+      stop() {
+        this.halo.activeButton = null;
+        this.halo.alignWithTarget();
+      },
       update: (delta) => {
         this.target.globalPosition = this.target.globalPosition.addPt(delta);
         this.alignWithTarget();
       },
+      onDragStart(evt) { this.init() },
       onDrag(evt) { this.update(evt.state.dragDelta); },
+      onDragEnd(evt) { this.stop() }
     }));
   }
 
@@ -148,20 +168,31 @@ export class Halo extends Morph {
     var angle = 0;
     return this.getSubmorphNamed("rotate") || this.addMorph(new HaloItem({
       name: "rotate",
+      property: "rotation",
       styleClasses: ["halo-item", "fa", "fa-repeat"],
       location: {col: 0, row: 3},
       halo: this,
-      init: (angleToTarget) => { angle = angleToTarget; },
+      init(angleToTarget) {
+        this.halo.activeButton = this;
+        angle = angleToTarget;
+      },
       update: (angleToTarget) => {
         this.target.rotateBy(angleToTarget - angle);
         angle = angleToTarget;
         this.alignWithTarget();
+      },
+      stop() {
+        this.halo.activeButton = null;
+        this.halo.alignWithTarget();
       },
       onDragStart(evt) {
         this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
       },
       onDrag(evt) {
         this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
+      },
+      onDragEnd(evt) {
+        this.stop();
       }
     }));
   }
@@ -247,13 +278,55 @@ export class Halo extends Morph {
     ];
   }
 
+  initPropertyDisplay() {
+    const textField = new Text({
+      allowsInput: false,
+      position: pt(3,3),
+      extent: pt(90, 14),
+      fill: Color.red.withA(0),
+      fontSize: 12,
+      isHaloItem: true
+    });
+    this.propertyDisplay = this.propertyDisplay || this.addMorph(
+      new Morph({
+        fill: Color.lightGray.withA(0.5),
+        borderRadius: 15,
+        extent: pt(100, 20),
+        position: pt(0,-22),
+        visible: false,
+        halo: this,
+        isHaloItem: true,
+        displayProperty(property) {
+          this.visible = true;
+          textField.visible = true;
+          textField.textString = this.halo.target.getProperty(property).toString();
+        },
+        disable() {
+          this.visible = false;
+          textField.visible = false;
+        },
+        submorphs: [textField]
+      }));
+  }
+
   alignWithTarget() {
     const {x, y, width, height} = this.target.globalBounds();
     const origin = this.target.origin;
-    // take into account the rotation and position of the origin
     this.position = pt(x,y);
     this.extent = pt(width, height);
-    this.buttonControls.forEach((button) => button.alignInHalo());
+    this.propertyDisplay.disable();
+    this.buttonControls.forEach((button) => {
+      if (this.activeButton) {
+        if (this.activeButton == button){
+          button.visible = true;
+          this.propertyDisplay.displayProperty(button.property);
+        } else {
+          button.visible = false;
+        }
+      } else {
+        button.visible = true;
+      }
+        button.alignInHalo()});
     this.originHalo().alignInHalo();
     return this;
   }
