@@ -18,6 +18,7 @@ export function morph(props = {}, opts = {restore: false}) {
     new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
     new klass(props);
 }
+import config from "./config.js";
 
 
 const defaultProperties = {
@@ -36,6 +37,7 @@ const defaultProperties = {
   reactsToPointer: true,
   draggable: true,
   grabbable: false,
+  halosEnabled: !!config.halosEnabled,
   dropShadow: false,
   styleClasses: ["morph"],
   submorphs:  []
@@ -188,6 +190,9 @@ export class Morph {
 
   get grabbable()       { return this.getProperty("grabbable"); }
   set grabbable(value)  { this.recordChange({prop: "grabbable", value}); }
+
+  get halosEnabled()       { return this.getProperty("halosEnabled"); }
+  set halosEnabled(value)  { this.recordChange({prop: "halosEnabled", value}); }
 
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
   set reactsToPointer(value)  { this.recordChange({prop: "reactsToPointer", value}); }
@@ -735,15 +740,23 @@ export class World extends Morph {
   }
 
   onMouseDown(evt) {
-    if(!evt.stopped && !evt.halo && evt.metaPressed()) {
-      this.showHaloFor(evt.state.clickedOnMorph, evt.domEvt.pointerId);
-    } else if(evt.halo && !evt.targetMorphs.find((morph) => morph instanceof HaloItem)) {
-      evt.halo.remove();
+    var target = evt.state.clickedOnMorph;
+
+    var addHalo = target.halosEnabled && !evt.halo && evt.metaPressed();
+    if (addHalo) {
+      this.showHaloFor(target, evt.domEvt.pointerId);
+      return;
     }
+
+    var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
+    if (removeHalo) {
+      evt.halo.remove();
+      return;
+    }
+
   }
 
-  onMouseUp(evt) {
-  }
+  onMouseUp(evt) { }
 
   logError(err) {
     console.error(err);
