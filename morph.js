@@ -26,11 +26,12 @@ const defaultProperties = {
   halosEnabled: !!config.halosEnabled,
   dropShadow: false,
   styleClasses: ["morph"],
+  nativeCursor: "auto",
   submorphs:  []
 }
 
-function newMorphId(morph) {
-  return morph.constructor.name + "_" + string.newUUID().replace(/-/g, "_")
+function newMorphId(prefix) {
+  return prefix + "_" + string.newUUID().replace(/-/g, "_")
 }
 
 function dissoc(obj, keys) {
@@ -182,6 +183,15 @@ export class Morph {
 
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
   set reactsToPointer(value)  { this.recordChange({prop: "reactsToPointer", value}); }
+
+  // nativeCursor cna be one of
+  // auto, default, none, context-menu, help, pointer, progress, wait, cell,
+  // crosshair, text, vertical-text, alias, copy, move, no-drop, not-allowed,
+  // e-resize, n-resize, ne-resize, nw-resize, s-resize, se-resize, sw-resize,
+  // w-resize, ew-resize, ns-resize, nesw-resize, nwse-resize, col-resize,
+  // row-resize, all-scroll, zoom-in, zoom-out, grab, grabbing
+  get nativeCursor()       { return this.getProperty("nativeCursor"); }
+  set nativeCursor(value)  { this.recordChange({prop: "nativeCursor", value}); }
 
   get visible()       { return this.getProperty("visible"); }
   set visible(value)  { this.recordChange({prop: "visible", value}); }

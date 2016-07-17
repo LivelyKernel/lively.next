@@ -53,7 +53,8 @@ export function renderMorph(morph, renderer) {
       border: `${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"} solid`,
       borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
       overflow: clipMode,
-      "pointer-events": reactsToPointer ? "auto" : "none"
+      "pointer-events": reactsToPointer ? "auto" : "none",
+      cursor: morph.nativeCursor
     },
 
     morph.dropShadow ? {
