@@ -646,7 +646,7 @@ export class Morph {
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  exportToJSON() {
+  exportToJSON(options = {keepFunctions: true}) {
     // quick hack to "snapshot" into JSON
     var allChanges = Object.assign(
           arr.groupByKey(this._changes, "prop"),
@@ -660,6 +660,10 @@ export class Morph {
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
     exported.type = this.constructor.name.toLowerCase();
+    if (options.keepFunctions) {
+      Object.keys(this).forEach(name =>
+        typeof this[name] === "function" && (exported[name] = this[name]));
+    }
     return exported;
   }
 
