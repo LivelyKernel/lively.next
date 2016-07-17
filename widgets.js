@@ -8,7 +8,7 @@ export class ObjectDrawer extends Morph {
     super(Object.assign({
       name: "object-drawer",
       position: pt(20, 20),
-      extent: pt(3 * (120 + 10) + 15, 130),
+      extent: pt(4 * (120 + 10) + 15, 130),
       fill: Color.white,
       borderWidth: 1,
       borderColor: Color.gray
@@ -17,7 +17,7 @@ export class ObjectDrawer extends Morph {
   }
 
   setup() {
-    var n = 3,
+    var n = 4,
         margin = pt(5,5),
         objExt = pt(((this.width - margin.x) / n) - margin.x, this.height - margin.y*2),
         pos = margin;
@@ -26,7 +26,8 @@ export class ObjectDrawer extends Morph {
       type: "ellipse",
       position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
-      onDrag: doCopy
+      onDrag: doCopy,
+      init() { this.fill = Color.random(); }
     });
 
     pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
@@ -34,7 +35,8 @@ export class ObjectDrawer extends Morph {
     this.addMorph({
       position: pos, extent: objExt,
       fill: Color.random(), grabbable: false,
-      onDrag: doCopy
+      onDrag: doCopy,
+      init() { this.fill = Color.random(); }
     });
 
     pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
@@ -46,13 +48,28 @@ export class ObjectDrawer extends Morph {
       onDrag: doCopy
     });
 
+    pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
+
+    this.addMorph({
+      type: "text",
+      textString: "Lively rocks!",
+      position: pos, extent: objExt,
+      fill: Color.white, grabbable: false,
+      readOnly: true,
+      onDrag: doCopy,
+      init() {
+        this.draggable = false;
+        this.grabbable = false;
+        this.readOnly = false;
+      }
+    });
+
     function doCopy(evt) {
       evt.stop();
-      evt.hand.grab(Object.assign(this.copy(), {
-        fill: this.isImage ? null : Color.random(),
-        grabbable: false,
-        position: evt.positionIn(this).negated()
-      }));
+      var copy = Object.assign(this.copy(), {position: evt.positionIn(this).negated()})
+      evt.hand.grab(copy);
+      delete copy.onDrag;
+      copy.init && copy.init();
     }
 
   }
