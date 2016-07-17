@@ -19548,14 +19548,14 @@ var nodes = Object.freeze({
 
   function replaceClass(node, classHolder, path, options) {
     console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
-    var instanceProps = id("undefined"),
-        classProps = id("undefined");
 
     var body = node.body.body;
     var superClass = node.superClass;
     var classId = node.id;
     var type = node.type;
-
+    var instanceProps = id("undefined");
+    var classProps = id("undefined");
+    var className = classId ? classId.name : "anonymous_class";
 
     if (body.length) {
       var _body$reduce = body.reduce(function (props, propNode) {
@@ -19569,11 +19569,16 @@ var nodes = Object.freeze({
         }
 
         if (kind === "method") {
-          decl = objectLiteral(["key", literal(key.name || key.value), "value", Object.assign({}, value, { id: null })]);
+          // The name is just for debugging purposes when it appears in
+          // native debuggers. We have to be careful about it b/c it shadows
+          // outer functions / vars, something that is totally not apparent for a user
+          // of the class syntax. That's the reason for making it a little cryptic
+          var methodId = id(className + "_" + (key.name || key.value) + "_");
+          decl = objectLiteral(["key", literal(key.name || key.value), "value", Object.assign({}, value, { id: methodId })]);
         } else if (kind === "get" || kind === "set") {
           decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, { id: id(kind) })]);
         } else if (kind === "constructor") {
-          decl = objectLiteral(["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", Object.assign({}, value, { id: null })]);
+          decl = objectLiteral(["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", Object.assign({}, value, { id: id(className + "_initialize_") })]);
         } else {
           console.warn("classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
         }

@@ -308,7 +308,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {m() { return 23; }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', undefined, [{
         key: 'm',
-        value: function () {
+        value: function Foo_m_() {
             return 23;
         }
     }], undefined, _rec, undefined);`));
@@ -317,7 +317,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {static m() { return 23; }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', undefined, undefined, [{
         key: 'm',
-        value: function () {
+        value: function Foo_m_() {
             return 23;
         }
     }], _rec, undefined);`));
@@ -330,7 +330,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, b, c); }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', Bar, [{
         key: 'm',
-        value: function () {
+        value: function Foo_m_() {
             this.constructor[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, b, c);
         }
     }], undefined, _rec, undefined);`));
@@ -339,7 +339,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { this.x = arg; }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', undefined, [{
         key: Symbol.for('lively-instance-initialize'),
-        value: function (arg) {
+        value: function Foo_initialize_(arg) {
             this.x = arg;
         }
     }], undefined, _rec, undefined);`));
@@ -348,7 +348,7 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { super(arg, 23); }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', undefined, [{
         key: Symbol.for('lively-instance-initialize'),
-        value: function (arg) {
+        value: function Foo_initialize_(arg) {
             this.constructor[Symbol.for('lively-instance-superclass')].prototype[Symbol.for('lively-instance-initialize')].call(this, arg, 23);
         }
     }], undefined, _rec, undefined);`));
