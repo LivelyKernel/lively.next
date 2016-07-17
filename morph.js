@@ -728,7 +728,7 @@ export class World extends Morph {
   onMouseDown(evt) {
     var target = evt.state.clickedOnMorph;
 
-    var addHalo = target.halosEnabled && !evt.halo && evt.metaPressed();
+    var addHalo = target.halosEnabled && !evt.halo && evt.isCommandKey();
     if (addHalo) {
       this.showHaloFor(target, evt.domEvt.pointerId);
       return;
@@ -740,6 +740,13 @@ export class World extends Morph {
       return;
     }
 
+    if (evt.isAltDown() && config.altClickDefinesThat) {
+      // FIXME currently delayed to overwrite that in old morphic
+      (() => System.global.that = target).delay(0.1);
+      target.show();
+      evt.stop();
+      console.log(`Set global "that" to ${target}`);
+    }
   }
 
   onMouseUp(evt) { }
