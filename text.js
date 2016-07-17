@@ -3,10 +3,20 @@ import { FontMetric } from "./rendering/renderer.js";
 
 export class Text extends Morph {
 
-  constructor(props, submorphs) {
-    super(Object.assign({ allowsInput: true, textString: "", draggable: false },
-                        props),
-          submorphs);
+  static makeLabel(text, props) {
+    return new this(Object.assign({textString: text, readOnly: true, autoFits: true}, props));
+  }
+
+  constructor(props) {
+    super(Object.assign({
+      readOnly: false,
+      clipMode: "hidden",
+      textString: "",
+      autoFits: true
+    }, props));
+    if (this.autoFits) {
+      this.fit()
+    }
   }
 
   get isText() { return true }
