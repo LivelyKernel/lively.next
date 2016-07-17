@@ -5,7 +5,7 @@ export * from "./text.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { World, Morph, Hand, Ellipse } from "./morph.js";
+import { World, Morph, Hand, Image, Ellipse } from "./morph.js";
 import { Text } from "./text.js";
 
 export function morph(props = {}, opts = {restore: false}) {
