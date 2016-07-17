@@ -5,7 +5,7 @@ import { morph, Morph } from "./index.js";
 export function show(target) {
 
   if (!target) return;
-  if (target.isMorph) return showRect(morph.world(), morph.globalBounds());
+  if (target.isMorph) return showRect(target.world(), target.globalBounds());
   if (target instanceof Point) return showRect($$world, new Rectangle(target.x-5, target.y-5, 10,10));
   if (typeof Element !== "undefined" && target instanceof Element) return showRect($$world, Rectangle.fromElement(target));
   
