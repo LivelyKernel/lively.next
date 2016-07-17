@@ -94,6 +94,14 @@ describe("halos", () => {
     expect(halo.originHalo().bounds().center()).equals(pt(30, 35));
   });
 
+  it("origin shifts origin accorfing to global delta", () => {
+    submorph1.position = pt(200,100);
+    submorph1.rotateBy(num.toRadians(90));
+    var halo = world.showHaloFor(submorph1);
+    halo.originHalo().update(pt(20,5));
+    expect(submorph1.origin).equals(pt(5, -20));
+  });
+
   it("grab grabs", () => {
     var halo = world.showHaloFor(submorph2),
         hand = world.handForPointerId("test-pointer");
