@@ -165,7 +165,7 @@ export class FontMetric {
     var rect = null;
     this.element.innerHTML = char;
     this.element.style.fontFamily = fontFamily;
-    this.element.style.fontSize = fontSize;
+    this.element.style.fontSize = fontSize + "px";
     try {
       rect = this.element.getBoundingClientRect();
     } catch(e) {
