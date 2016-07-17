@@ -3,21 +3,7 @@ import { string, obj, arr, num, promise } from "lively.lang";
 import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
 import { Halo, HaloItem } from "./halo.js"
 import { show } from "./markers.js";
-
-export function morph(props = {}, opts = {restore: false}) {
-  var klass;
-  switch (props.type) {
-    case 'world':   klass = World; break;
-    case 'hand':    klass = Hand; break;
-    case 'image':   klass = Image; break;
-    case 'ellipse': klass = Ellipse; break;
-    case 'text':    klass = Text; break;
-    default:        klass = Morph;
-  }
-  return opts.restore ?
-    new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
-    new klass(props);
-}
+import { morph } from "./index.js";
 import config from "./config.js";
 
 
