@@ -2,6 +2,25 @@ import vdom from "virtual-dom";
 
 var {h, diff, patch, create} = vdom;
 
+function shadowCss(morph) {
+  var x = 1,
+      y = 1,
+      r = morph.rotation;
+  r = (r + (2 * Math.PI)) % (2 * Math.PI);
+  if (2*Math.PI > r && r > 1.5*Math.PI) {
+    x = 1 - (((2*Math.PI - r)/(Math.PI/2)) * 2);
+    y = 1;
+  } else if (1.5*Math.PI > r && r > Math.PI) {
+    x = -1;
+    y = 1 - (((1.5*Math.PI - r)/(Math.PI/2)) * 2);
+  } else if (Math.PI > r && r > (Math.PI/2)) {
+    x = 1 + (((Math.PI/2 - r)/(Math.PI/2)) * 2);
+    y = -1
+  } else if (Math.PI/2 > r && r > 0) {
+    y = 1 - ((r/(Math.PI/2)) * 2);
+  }
+  return `drop-shadow(${5 * x}px ${5 * y}px 5px rgba(0, 0, 0, 0.36))`
+}
 
 export function renderMorph(morph, renderer) {
 
@@ -38,8 +57,8 @@ export function renderMorph(morph, renderer) {
     },
 
     morph.dropShadow ? {
-      WebkitFilter: "drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.36))",
-      WebkitTransition: "-webkit-filter 0.5s"
+      WebkitFilter: shadowCss(morph)
+      // WebkitTransition: "-webkit-filter 0.5s"
     } : null,
 
     morph.shape().style
