@@ -94,7 +94,7 @@ describe("halos", () => {
     expect(halo.originHalo().bounds().center()).equals(pt(30, 35));
   });
 
-  it("origin shifts origin accorfing to global delta", () => {
+  it("origin shifts origin according to global delta", () => {
     submorph1.position = pt(200,100);
     submorph1.rotateBy(num.toRadians(90));
     var halo = world.showHaloFor(submorph1);

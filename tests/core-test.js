@@ -278,6 +278,17 @@ describe("bounds", () => {
     expect(rect(100, 100, 40, 40)).equals(morph1.bounds());
   });
 
+  it("globalBounds for transformed inner morph", () => {
+    var world = morph({
+      type: "world", extent: pt(300,300),
+      submorphs: [{
+        extent: pt(100,100), rotation: num.toRadians(-45),
+        submorphs: [{name: "target", extent: pt(20,20), rotation: num.toRadians(-45)}]}
+    ]});
+    // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
+    expect(world.get("target").globalBounds()).equals(rect(0,-20, 20, 20))
+  });
+
 });
 
 
