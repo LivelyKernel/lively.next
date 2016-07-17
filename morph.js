@@ -767,7 +767,7 @@ export class World extends Morph {
   }
 
   showHaloFor(morph, pointerId) {
-    return this.addMorph(new Halo(pointerId, morph));
+    return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
   }
 
 }
