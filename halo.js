@@ -244,6 +244,10 @@ export class Halo extends Morph {
         this.position = this.computePositionAtTarget();
       },
       update: (delta) => {
+        var oldOrigin = this.target.origin,
+            globalOrigin = this.target.worldPoint(oldOrigin),
+            newOrigin = this.target.localize(globalOrigin.addPt(delta));
+        delta = newOrigin.subPt(oldOrigin);
         this.target.adjustOrigin(this.target.origin.addPt(delta));
         this.alignWithTarget();
       },
