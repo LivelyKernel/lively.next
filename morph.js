@@ -1,5 +1,5 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise } from "lively.lang";
+import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
 import { Halo } from "./halo.js"
 import { show } from "./markers.js";
@@ -47,7 +47,7 @@ export class Morph {
     this._changes = [];
     this._unrenderedChanges = [];
     this._dirty = true; // for initial display
-    this._id = newMorphId(this);
+    this._id = newMorphId(this.constructor.name);
     Object.assign(this, props);
   }
 
@@ -669,13 +669,16 @@ export class Morph {
       _changes: [],
       _unrenderedChanges: [],
       _dirty: true,
-      _id: newMorphId(this)
+      _id: newMorphId(this.constructor.name)
     }, spec);
     return this;
   }
 
-
-  copy() { return morph(Object.assign(this.exportToJSON(), {_id: newMorphId(this)})); }
+  copy() {
+    var exported = this.exportToJSON();
+    tree.prewalk(exported, spec => spec._id = newMorphId(spec.type), ({submorphs}) => submorphs);
+    return morph(exported);
+  }
 
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

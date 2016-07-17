@@ -123,6 +123,7 @@ describe("copy", () => {
     });
     expect(copy.owner).equals(null);
     expect(copy.id).not.equals(world.get("submorph1").id);
+    expect(copy.get("submorph2").id).not.equals(world.get("submorph2").id);
   });
 
 });
