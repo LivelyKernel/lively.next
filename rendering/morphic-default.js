@@ -58,7 +58,6 @@ export function renderMorph(morph, renderer) {
 
     morph.dropShadow ? {
       WebkitFilter: shadowCss(morph)
-      // WebkitTransition: "-webkit-filter 0.5s"
     } : null,
 
     morph.shape().style

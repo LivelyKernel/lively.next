@@ -1,7 +1,7 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise } from "lively.lang";
 import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
-import { Halo, HaloItem } from "./halo.js"
+import { Halo } from "./halo.js"
 import { show } from "./markers.js";
 import { morph } from "./index.js";
 import config from "./config.js";
@@ -196,9 +196,6 @@ export class Morph {
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
   adjustOrigin(newOrigin) {
-    // FIXME: adjust the position of the morph
-    // with respect to the current transform,
-    // such that the morph does not bounce around
     var oldPos = this.globalBounds().topLeft();
     this.origin = newOrigin;
     var newPos = this.globalBounds().topLeft();
@@ -241,7 +238,7 @@ export class Morph {
 
   globalBounds() {
     return this.owner ?
-      this.owner.getGlobalTransform().transformRectToRect(this.bounds()) :
+      this.getGlobalTransform().transformRectToRect(this.innerBounds()) :
       this.bounds();
   }
 
@@ -481,7 +478,7 @@ export class Morph {
     var globalTransform = new Transform(),
         world = this.world();
     for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner)
-      globalTransform.preConcatenate(morph.getTransform());
+        globalTransform.preConcatenate(morph.getTransform());
     return globalTransform;
   }
 
@@ -502,6 +499,7 @@ export class Morph {
     //   var scroll = this.getScroll();
     //   pos = pos.subXY(scroll[0], scroll[1]);
     // }
+
     return new Transform(pos, this.rotation, scale);
   }
 
