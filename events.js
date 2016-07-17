@@ -345,7 +345,7 @@ function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
   var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo)
     .onStop(() => {
       state.draggedMorph = null;
-      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, state, hand, halo));
+      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo));
     });
   state.draggedMorph = targetMorph;
   state.lastDragPosition = evt.position;
@@ -358,14 +358,14 @@ function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
     .onAfterDispatch(() => state.lastDragPosition = evt.position)
     .onStop(() => {
       state.draggedMorph = null;
-      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, state, hand, halo));
+      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo));
     })
   state.dragDelta = evt.position.subPt(state.lastDragPosition);
   return evt;
 }
 
 function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
-  var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph], hand, halo)
+  var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph || targetMorph], hand, halo)
     .onAfterDispatch(() => {
       state.draggedMorph = null;
       state.lastDragPosition = null;
