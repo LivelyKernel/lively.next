@@ -35,9 +35,9 @@ function newMorphId(prefix) {
   return prefix + "_" + string.newUUID().replace(/-/g, "_")
 }
 
-function dissoc(obj, keys) {
-  var clone = obj.clone(obj);
-  keys.forEach(name => delete obj[name]);
+function dissoc(object, keys) {
+  var clone = obj.clone(object);
+  keys.forEach(name => delete clone[name]);
   return clone;
 }
 
@@ -49,6 +49,10 @@ export class Morph {
     this._unrenderedChanges = [];
     this._dirty = true; // for initial display
     this._id = newMorphId(this.constructor.name);
+    if (props.bounds) {
+      this.setBounds(props.bounds);
+      props = dissoc(props, ["bounds"]);
+    }
     Object.assign(this, props);
   }
 
