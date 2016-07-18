@@ -776,8 +776,11 @@ export class World extends Morph {
   onContextMenu(evt) {
     evt.stop();
     if (evt.state.menu) evt.state.menu.remove();
-    var menu = evt.state.menu = new Menu({position: evt.position, title: "Test", items: [["item 1", () => {}]]});
-    this.addMorph(menu);
+    this.addMorph(evt.state.menu = new Menu({
+      position: evt.position,
+      title: "Test",
+      items: [["item 1", () => { console.log("???") }]]
+    }));
   }
 
   logError(err) {

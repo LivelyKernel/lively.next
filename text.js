@@ -3,20 +3,24 @@ import { FontMetric } from "./rendering/renderer.js";
 
 export class Text extends Morph {
 
-  static makeLabel(text, props) {
-    return new this(Object.assign({
-      textString: text, readOnly: true,
-      fixedWidth: false, fixedHeight: false
-    }, props));
+  static makeLabel(string, props) {
+    return new Text({
+      textString: string,
+      fontFamily: "Helvetica Neue, Arial",
+      fontSize: 11,
+      readOnly: true,
+      ...props
+    });
   }
 
   constructor(props) {
-    super(Object.assign({
+    super({
       readOnly: false,
       clipMode: "hidden",
       textString: "",
-      fixedWidth: false, fixedHeight: false
-    }, props));
+      fixedWidth: false, fixedHeight: false,
+      ...props
+    });
     this.fit();
     this._needsFit = false;
   }
