@@ -41,7 +41,7 @@ async function setup() {
 
   eventLog = [];
   [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
-  
+
   await world.whenRendered();
 }
 
@@ -135,6 +135,30 @@ describe("events", () => {
     expect(world.hands[0].carriesMorphs()).equals(false);
     expect(submorph2.owner).equals(world);
     expect(submorph2.position).equals(morphPos.addXY(10,10));
+  });
+
+  it("dropped morph has correct position", () => {
+    world.submorphs = [
+      {position: pt(10,10), extent: pt(100,100), fill: Color.red,
+       rotation: -45,
+       origin: pt(50,50)
+       },
+      {position: pt(60,60), extent: pt(20,20), fill: Color.green, grabbable: true, origin: pt(10,10)
+      }];
+    var [m1, m2] = world.submorphs;
+    var prevGlobalPos = m2.globalPosition;
+
+    world.renderAsRoot(renderer);
+
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointerdown", pt(60,60)));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointermove", pt(65,65)));
+    expect(m2.globalPosition).equals(prevGlobalPos);
+    expect(m2.owner).not.equals(world);
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointermove", pt(50,50)));
+    expect(m2.globalPosition).equals(pt(45,45));
+    eventDispatcher.dispatchDOMEvent(fakeEvent(m1, "pointerup", pt(2,2)));
+    expect(m2.owner).equals(m1);
+    expect(m2.globalPosition).equals(pt(45,45));
   });
 
   it("text input", () => {
