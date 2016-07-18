@@ -81,7 +81,7 @@ export class Text extends Morph {
       readOnly: this.readOnly,
       placeholder: this.placeholder,
       style: {
-        resize: "none",
+        resize: "none", border: 0,
        "white-space": "nowrap", padding: "0px",
        "font-family": this.fontFamily,
        "font-size": this.fontSize + "px"
@@ -114,9 +114,9 @@ export class Text extends Morph {
   }
 
   onSelect(evt) {
-    var {selectionStart: start, selectionEnd: end } = evt.domEvt.target,
+    var {selectionStart: start, selectionEnd: end} = evt.domEvt.target,
         text = this.textString.substring(start, end)
-    this.selection = { text: text, start: start, end: end };
+    this.selection = {text, start, end};
   }
 
   onDeselect(evt) {
