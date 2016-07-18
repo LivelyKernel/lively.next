@@ -281,9 +281,10 @@ export class Halo extends Morph {
 
   initPropertyDisplay() {
     const textField = new Text({
-      allowsInput: false,
-      position: pt(3,3),
+      readOnly: true,
+      position: pt(6,3),
       extent: pt(90, 14),
+      fixedWidth: true,
       fill: Color.red.withA(0),
       fontSize: 12,
       isHaloItem: true
