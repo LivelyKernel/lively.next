@@ -214,7 +214,8 @@ export class Morph {
     var oldPos = this.globalBounds().topLeft();
     this.origin = newOrigin;
     var newPos = this.globalBounds().topLeft();
-    this.position = this.position.addPt(oldPos.subPt(newPos));
+    var globalDelta = oldPos.subPt(newPos)
+    this.globalPosition = this.globalPosition.addPt(globalDelta);
   }
 
   bounds() {
@@ -468,6 +469,11 @@ export class Morph {
     return world ? point.matrixTransform(world.transformToMorph(this)) : point;
   }
 
+  worldPoint(p) {
+    var world = this.world();
+    return world ? p.matrixTransform(this.transformToMorph(world)) : p;
+  }
+
   transformToMorph(other) {
     var tfm = this.getGlobalTransform(),
         inv = other.getGlobalTransform().inverse();
@@ -493,16 +499,15 @@ export class Morph {
     var globalTransform = new Transform(),
         world = this.world();
     for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner)
-        globalTransform.preConcatenate(morph.getTransform());
+    {
+      globalTransform.preConcatenate(new Transform(morph.origin.negated()))
+                     .preConcatenate(morph.getTransform())
+                     .preConcatenate(new Transform(morph.origin));
+    }
     return globalTransform;
   }
 
-  worldPoint(p) {
-    var world = this.world();
-    return world ? p.matrixTransform(this.transformToMorph(world)) : p;
-  }
-
-  get globalPosition() { return this.worldPoint(pt(0,0)) }
+  get globalPosition() { return this.owner.worldPoint(this.position) }
   set globalPosition(p) { return this.position = this.owner ? this.owner.localize(p) : p; }
 
   getTransform () {

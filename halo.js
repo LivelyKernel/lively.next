@@ -232,13 +232,10 @@ export class Halo extends Morph {
       extent: pt(15,15),
       halo: this,
       computePositionAtTarget: () => {
-          var world = this.target.world(),
-              origin = world.localizePointFrom(
-                                this.target.position,
-                                this.target.owner)
-                            .addPt(this.target.origin);
-          const {x,y} = this.target.globalBounds();
-          return origin.subPt(pt(x,y)).subPt(pt(7.5,7.5));
+          return this.localizePointFrom(
+                      this.target.origin,
+                      this.target
+                    ).subPt(pt(7.5,7.5));
       },
       alignInHalo() {
         this.position = this.computePositionAtTarget();
