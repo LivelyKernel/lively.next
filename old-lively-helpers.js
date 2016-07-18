@@ -56,6 +56,7 @@ function createHtmlMorph() {
   htmlMorph.name = "lively.morphic world"
   htmlMorph.setHTML("");
   htmlMorph.setFill(window.Color.white);
+  htmlMorph.onBackspacePressed = function(evt) {};
   addMorphicSetupMethods(htmlMorph);
 
   var win = htmlMorph.openInWindow();
