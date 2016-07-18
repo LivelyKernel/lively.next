@@ -42,8 +42,8 @@ describe("menus", () => {
     world.addMorph(menu);
     expect(menu.submorphs[0].textString).equals("Test");
     expect(menu.submorphs[1].textString).equals("item 1");
-    expect(menu.width).within(30,40, "menu width");
-    expect(menu.height).within(30,50, "menu height");
+    expect(menu.width).within(35,50, "menu width");
+    expect(menu.height).within(35,50, "menu height");
   });
 
 });

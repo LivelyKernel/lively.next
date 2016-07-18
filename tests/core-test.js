@@ -287,7 +287,11 @@ describe("bounds", () => {
         submorphs: [{name: "target", extent: pt(20,20), rotation: num.toRadians(-45)}]}
     ]});
     // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
-    expect(world.get("target").globalBounds()).equals(rect(0,-20, 20, 20))
+    var {x,y,width,height} = world.get("target").globalBounds();
+    expect(x).closeTo(0, 0.1, "x");
+    expect(y).closeTo(-20, 0.1, "y");
+    expect(width).closeTo(20, 0.1, "width");
+    expect(height).closeTo(20, 0.1, "height");
   });
 
 });
