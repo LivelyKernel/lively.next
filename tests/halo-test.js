@@ -20,6 +20,12 @@ function createDummyWorld() {
   submorph2 = submorph1.submorphs[0];
 }
 
+function closeToPoint(p1,p2) {
+  var {x,y} = p1;
+  expect(x).closeTo(p2.x, 0.1, "x");
+  expect(y).closeTo(p2.y, 0.1, "y");
+}
+
 var renderer, domEnv;
 
 async function createAndRenderDummyWorld() {
@@ -58,6 +64,19 @@ describe("halos", () => {
     expect(submorph1.position).equals(pt(20, 15));
   });
 
+  it("acitve drag hides other halos and displays position", () => {
+    var halo = world.showHaloFor(submorph1),
+        dragHalo = halo.dragHalo(),
+        otherHalos = halo.buttonControls.filter((b) => b != dragHalo)
+    dragHalo.init();
+    halo.alignWithTarget();
+    expect(halo.activeButton).equals(dragHalo);
+    expect(halo.propertyDisplay.displayedValue()).equals(submorph1.position.toString());
+    otherHalos.forEach((h) => {
+      expect(h).to.have.property("visible", false);
+    });
+  })
+
   it("resize resizes", () => {
     var halo = world.showHaloFor(submorph1);
     halo.resizeHalo().update(pt(10,5));
@@ -73,12 +92,38 @@ describe("halos", () => {
     expect(halo.extent).equals(submorph1.extent);
   });
 
+  it("active resize hides other halos and displays extent", () => {
+    var halo = world.showHaloFor(submorph1),
+        resizeHalo = halo.resizeHalo()
+        otherHalos = halo.buttonControls.filter((b) => b != resizeHalo)
+    resizeHalo.init();
+    halo.alignWithTarget();
+    expect(halo.activeButton).equals(resizeHalo);
+    expect(halo.propertyDisplay.displayedValue()).equals(submorph1.extent.toString());
+    otherHalos.forEach((h) => {
+      expect(h).to.have.property("visible", false);
+    });
+  });
+
   it("rotate rotates", () => {
     var halo = world.showHaloFor(submorph1);
     halo.rotateHalo().init(num.toRadians(10));
     halo.rotateHalo().update(num.toRadians(25));
     expect(submorph1.rotation).closeTo(num.toRadians(15), 0.1);
   });
+
+  it("active rotate halo hides other halos and displays rotation", () => {
+    var halo = world.showHaloFor(submorph1),
+        rotateHalo = halo.rotateHalo(),
+        otherHalos = halo.buttonControls.filter((b) => b != rotateHalo);
+    rotateHalo.init();
+    halo.alignWithTarget();
+    expect(halo.activeButton).equals(rotateHalo);
+    expect(halo.propertyDisplay.displayedValue()).equals(submorph1.rotation.toString());
+    otherHalos.forEach((h) => {
+      expect(h).to.have.property("visible", false);
+    });
+  })
 
   it("close removes", () => {
     var halo = world.showHaloFor(submorph1);
@@ -100,6 +145,40 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1);
     halo.originHalo().update(pt(20,5));
     expect(submorph1.origin).equals(pt(5, -20));
+  });
+
+  it("shifting the origin will not move morph", () => {
+    submorph1.position = pt(200,100);
+    submorph1.rotateBy(num.toRadians(90));
+    var oldGlobalPos = submorph1.globalBounds().topLeft();
+    var halo = world.showHaloFor(submorph1);
+    halo.originHalo().update(pt(20,5));
+    expect(submorph1.origin).equals(pt(5, -20));
+    expect(submorph1.globalBounds().topLeft()).equals(oldGlobalPos);
+
+    submorph1.rotation = num.toRadians(-42);
+    oldGlobalPos = submorph2.globalBounds().topLeft();
+    halo = world.showHaloFor(submorph2);
+    halo.originHalo().update(pt(20,5));
+    closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
+  });
+
+  it("origin halo aligns correctly if owner is transformed", () => {
+    var halo = world.showHaloFor(submorph2);
+    submorph1.rotation = num.toRadians(-45);
+    submorph2.rotation = num.toRadians(-45);
+    halo.alignWithTarget();
+    expect(submorph2.worldPoint(submorph2.origin)).equals(halo.originHalo().globalBounds().center());
+  });
+
+  it("origin halo aligns correctly if owner is transformed with different origin", () => {
+    var halo = world.showHaloFor(submorph2);
+    submorph1.origin = submorph2.bounds().center();
+    submorph2.origin = submorph2.innerBounds().center();
+    submorph1.rotation = num.toRadians(-45);
+    submorph2.rotation = num.toRadians(-45);
+    halo.alignWithTarget();
+    expect(submorph2.worldPoint(submorph2.origin)).equals(halo.originHalo().globalBounds().center());
   });
 
   it("grab grabs", () => {

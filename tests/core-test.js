@@ -283,7 +283,7 @@ describe("bounds", () => {
     var world = morph({
       type: "world", extent: pt(300,300),
       submorphs: [{
-        extent: pt(100,100), rotation: num.toRadians(-45),
+        extent: pt(100,100), rotation: num.toRadians(-45) ,
         submorphs: [{name: "target", extent: pt(20,20), rotation: num.toRadians(-45)}]}
     ]});
     // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
@@ -307,6 +307,17 @@ describe("geometric transformations", () => {
     morph1.addMorph(morph2);
     morph2.position = pt(10,10);
     expect(pt(0,0)).equals(morph2.localize(pt(10,10)));
+  });
+
+  it("localizes positions if nested in transforms", function() {
+    var world = morph({type: "world", extent: pt(300,300)}),
+        morph1 = morph({extent: pt(200, 200), position: pt(50,50), origin: pt(100,100)}),
+        morph2 = morph({extent: pt(100, 100), position: pt(50,50), origin: pt(50,50)});
+    world.addMorph(morph1);
+    morph1.addMorph(morph2);
+    morph1.rotation = num.toRadians(-45);
+    expect(morph2.origin).equals(morph2.localize(world.bounds().center()));
+    expect(world.bounds().center()).equals(morph2.worldPoint(morph2.origin));
   });
 
 });

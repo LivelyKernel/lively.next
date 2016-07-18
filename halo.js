@@ -297,6 +297,7 @@ export class Halo extends Morph {
         visible: false,
         halo: this,
         isHaloItem: true,
+        displayedValue() { return textField.textString },
         displayProperty(property) {
           this.visible = true;
           textField.visible = true;
