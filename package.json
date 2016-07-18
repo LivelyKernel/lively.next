@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "acorn": "^3.2.0",
+    "acorn-object-spread": "^1.0.0",
     "babel-core": "^5.8.35",
     "babel-preset-es2015-rollup": "^1.1.1",
     "estree-to-js": "^0.1.4",

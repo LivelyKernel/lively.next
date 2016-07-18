@@ -16,6 +16,11 @@ module.exports = new Promise((resolve, reject) => {
   ${fs.readFileSync(require.resolve("acorn-es7-plugin"))}
   module.exports(acorn);
 })(this.acorn);`,
+      acornObjectSpreadSrc = `(function(acorn) {
+  var module = {exports: {}};
+  ${fs.readFileSync(require.resolve("acorn-object-spread/inject.js")).toString().replace(/let /g, "var ")}
+  module.exports(acorn);
+})(this.acorn);`,
       targetFile = "dist/acorn.js",
       source = `(function() {
   var module = undefined, require = undefined;
@@ -23,6 +28,7 @@ module.exports = new Promise((resolve, reject) => {
   ${walkSrc}
   ${looseSrc}
   ${acornAsyncSrc}
+  ${acornObjectSpreadSrc}
   return this.acorn;
 })();`;
   
