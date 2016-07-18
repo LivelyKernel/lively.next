@@ -50,7 +50,7 @@ export function renderMorph(morph, renderer) {
       visibility: visible ? "visible" : "hidden",
       width: width + 'px', height: height + 'px',
       backgroundColor: fill ? fill.toString() : "",
-      border: `${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"} solid`,
+      "box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`,
       borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
       overflow: clipMode,
       "pointer-events": reactsToPointer ? "auto" : "none",
