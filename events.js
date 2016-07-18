@@ -8,19 +8,20 @@ import bowser from "bowser";
 
 const typeToMethodMap = {
   'pointerdown': "onMouseDown",
-  'pointerup': "onMouseUp",
+  'pointerup':   "onMouseUp",
   'pointermove': "onMouseMove",
-  'drag': "onDrag",
-  'dragstart': "onDragStart",
-  'dragend': "onDragEnd",
-  'grab' : "onGrab",
-  'drop' : "onDrop",
-  'input' : "onInput",
-  'select' : "onSelect",
-  'deselect' : "onDeselect",
-  'keydown' : "onKeyDown",
-  'blur' : "onBlur",
-  'focus' : "onFocus"
+  'drag':        "onDrag",
+  'dragstart':   "onDragStart",
+  'dragend':     "onDragEnd",
+  'grab':        "onGrab",
+  'drop':        "onDrop",
+  'input':       "onInput",
+  'select':      "onSelect",
+  'deselect' :   "onDeselect",
+  'keydown':     "onKeyDown",
+  'blur':        "onBlur",
+  'focus':       "onFocus",
+  'contextmenu': "onContextMenu"
 }
 
 const pointerEvents = [
@@ -33,7 +34,7 @@ const pointerEvents = [
   "pointerout",
   "pointerleave",
   "gotpointercapture",
-  "lostpointercapture",
+  "lostpointercapture"
 ];
 
 const mouseEvents = [

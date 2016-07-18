@@ -2,6 +2,7 @@ import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
 import { Halo } from "./halo.js"
+import { Menu } from "./menus.js"
 import { show } from "./markers.js";
 import { morph } from "./index.js";
 import config from "./config.js";
@@ -624,6 +625,7 @@ export class Morph {
   onKeyDown(evt) {}
   onBlur(evt) {}
   onFocus(evt) {}
+  onContextMenu(evt) {}
 
   onDragStart(evt) { }
 
@@ -761,10 +763,22 @@ export class World extends Morph {
       target.show();
       evt.stop();
       console.log(`Set global "that" to ${target}`);
+      return;
+    }
+
+    if (evt.state.menu) {
+      evt.state.menu.remove();
     }
   }
 
   onMouseUp(evt) { }
+
+  onContextMenu(evt) {
+    evt.stop();
+    if (evt.state.menu) evt.state.menu.remove();
+    var menu = evt.state.menu = new Menu({position: evt.position, title: "Test", items: [["item 1", () => {}]]});
+    this.addMorph(menu);
+  }
 
   logError(err) {
     console.error(err);
