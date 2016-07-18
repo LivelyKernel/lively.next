@@ -20,7 +20,7 @@ module.exports = Promise.resolve()
         exclude: 'node_modules/**', sourceMap: false,
         "presets": ["es2015-rollup"],
         babelrc: false,
-        plugins: ['transform-async-to-generator']})
+        plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread"]})
     ]
   }))
   .then(bundle =>

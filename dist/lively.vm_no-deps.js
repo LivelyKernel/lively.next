@@ -454,6 +454,9 @@
     code = lively_ast.transform.transformSingleExpression(code);
     var parsed = lively_ast.parse(code);
 
+    // transforming experimental ES features into accepted es6 form...
+    parsed = lively_ast.transform.objectSpreadTransform(parsed);
+
     // 2. capture top level vars into topLevelVarRecorder "environment"
 
     if (options.topLevelVarRecorder) {
@@ -489,7 +492,6 @@
       }
 
       // 2.2 Here we call out to the actual code transformation that installs the
-
       parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
         es6ImportFuncId: options.es6ImportFuncId,
         es6ExportFuncId: options.es6ExportFuncId,
@@ -639,8 +641,7 @@
       thenDo = options;options = null;
     }
 
-    var warnings = [],
-        result = new EvalResult(),
+    var result = new EvalResult(),
         returnedError,
         returnedValue,
         onEvalEndError,
@@ -657,13 +658,13 @@
         recorder = options.topLevelVarRecorder || getGlobal();
 
     if (options.wrapInStartEndCall) {
-      if (recorder[startEvalFunctionName]) console.warn("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!");
+      if (recorder[startEvalFunctionName]) console.warn(result.addWarning("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!"));
 
-      if (recorder[endEvalFunctionName]) console.warn("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!");
+      if (recorder[endEvalFunctionName]) console.warn(result.addWarning("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!"));
 
       recorder[startEvalFunctionName] = function () {
         if (onEvalStartCalled) {
-          console.warn("onEvalStartCalled multiple times!");return;
+          console.warn(result.addWarning("onEvalStartCalled multiple times!"));return;
         }
         onEvalStartCalled = true;
         if (typeof options.onStartEval === "function") options.onStartEval();
@@ -671,7 +672,7 @@
 
       recorder[endEvalFunctionName] = function (err, value) {
         if (onEvalEndCalled) {
-          console.warn("onEvalEndCalled multiple times!");return;
+          console.warn(result.addWarning("onEvalEndCalled multiple times!"));return;
         }
         onEvalEndCalled = true;
         finishEval(err, value, result, options, recorder, evalDone, thenDo);
@@ -686,9 +687,7 @@
       if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
       // console.log(code);
     } catch (e) {
-      var warning = "lively.vm evalCodeTransform not working: " + (e.stack || e);
-      console.warn(warning);
-      warnings.push(warning);
+      console.warn(result.addWarning("lively.vm evalCodeTransform not working: " + (e.stack || e)));
     }
 
     // 3. Now really run eval!
@@ -768,6 +767,11 @@
     }
 
     createClass(EvalResult, [{
+      key: "addWarning",
+      value: function addWarning(warn) {
+        this.warnings.push(warn);return warn;
+      }
+    }, {
       key: "printed",
       value: function printed(options) {
         this.value = print(this.value, Object.assign(options || {}, {
@@ -1566,6 +1570,22 @@
     return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
   }
 
+  function processEvalError(evalResult) {
+    // produce a hopefully helpful string out of an error
+    var isError = evalResult.isError;
+    var value = evalResult.value;
+    var warnings = evalResult.warnings;
+
+    console.assert(evalResult.isError, "processEvalError called with non-error eval result");
+    var error = String(value),
+        stack = value.stack,
+        warning = warnings.join("\n");
+    if (error.match(/syntaxerror/i) && warning.match(/syntaxerror/i)) {
+      return warning + "\n\n" + error;
+    }
+    return stack || error;
+  }
+
   var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
     applyTo: function applyTo(obj) {
       var overrides = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
@@ -1586,7 +1606,7 @@
       var _this5 = this;
 
       return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
-        var result;
+        var result, val;
         return regeneratorRuntime.wrap(function _callee12$(_context12) {
           while (1) {
             switch (_context12.prev = _context12.next) {
@@ -1604,26 +1624,27 @@
 
               case 4:
                 result = _context12.sent;
+                val = result.isError ? processEvalError(result) : result.value;
 
                 if (printResult) {
-                  _this5.printObject(editor, result.value, false, _this5.getPrintItAsComment());
+                  _this5.printObject(editor, val, false, _this5.getPrintItAsComment());
                 } else {
-                  _this5.setStatusMessage(result.value);
+                  _this5[result.isError ? "showError" : "setStatusMessage"](val);
                 }
                 _this5.onDoitDone(result);
                 return _context12.abrupt("return", result);
 
-              case 10:
-                _context12.prev = 10;
+              case 11:
+                _context12.prev = 11;
                 _context12.t0 = _context12["catch"](0);
                 _this5.showError(_context12.t0);throw _context12.t0;
 
-              case 14:
+              case 15:
               case "end":
                 return _context12.stop();
             }
           }
-        }, _callee12, _this5, [[0, 10]]);
+        }, _callee12, _this5, [[0, 11]]);
       }))();
     },
     printInspect: function printInspect(options) {
