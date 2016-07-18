@@ -118,7 +118,7 @@ describe("ast.capturing", function() {
                    "class Foo {\n  a() {\n    return 23;\n  }\n}",
                    "var Foo = _createOrExtendClass('Foo', undefined, [{\n"
                  + "        key: 'a',\n"
-                 + "        value: function () {\n"
+                 + "        value: function Foo_a_() {\n"
                  + "            return 23;\n"
                  + "        }\n"
                  + "    }], undefined, _rec, undefined);");
@@ -476,7 +476,7 @@ describe("ast.capturing", function() {
                 "export default class Foo {a() { return 23; }};",
                 "var Foo = _createOrExtendClass('Foo', undefined, [{\n"
                 + "        key: 'a',\n"
-                + "        value: function () {\n"
+                + "        value: function Foo_a_() {\n"
                 + "            return 23;\n"
                 + "        }\n"
                 + "    }], undefined, _rec, undefined);\n"
@@ -487,7 +487,7 @@ describe("ast.capturing", function() {
                 "export class Foo {a() { return 23; }};",
                 "var Foo = _define('Foo', 'class', _createOrExtendClass('Foo', undefined, [{\n"
                 + "        key: 'a',\n"
-                + "        value: function () {\n"
+                + "        value: function Foo_a_() {\n"
                 + "            return 23;\n"
                 + "        }\n"
                 + "    }], undefined, _rec, undefined), _rec);\n"
