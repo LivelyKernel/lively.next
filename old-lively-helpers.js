@@ -15,7 +15,10 @@ export function setupMorphicWorldOn(htmlMorph) {
 
   var eventDispatcher = new EventDispatcher(window, world);
   eventDispatcher.install();
-  
+
+  // FIXME currently used for show()
+  window.$$world = world;
+
   return {world, renderer, eventDispatcher};
 }
 
