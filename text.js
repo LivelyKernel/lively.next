@@ -19,6 +19,7 @@ export class Text extends Morph {
       clipMode: "hidden",
       textString: "",
       fixedWidth: false, fixedHeight: false,
+      draggable: false,
       ...props
     });
     this.fit();
