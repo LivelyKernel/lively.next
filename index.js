@@ -3,6 +3,7 @@ export * from "./morph.js";
 export * from "./events.js";
 export * from "./text.js";
 export * from "./menus.js";
+export { show } from "./markers.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

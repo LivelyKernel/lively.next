@@ -31,7 +31,7 @@ export class Menu extends Morph {
     var maxWidth = 0, pos = pt(p, p);
     
     if (this.title) {
-      var title = this.addMorph(Text.makeLabel(this.title, {position: pos, fontSize: 14, draggable: false}));
+      var title = this.addMorph(Text.makeLabel(this.title, {position: pos, fontSize: 16, draggable: false}));
       pos = title.bottomLeft;
       maxWidth = Math.max(title.width, maxWidth);
     }
@@ -41,7 +41,7 @@ export class Menu extends Morph {
         textString: item[0],
         position: pos,
         onMouseDown: item[1],
-        fontSize: 12,
+        fontSize: 14,
         draggable: false
       }))
       pos = itemMorph.bottomLeft;

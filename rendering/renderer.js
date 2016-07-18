@@ -36,10 +36,16 @@ const defaultCSS = `
   z-index: 2;
 }
 
+.center-text {
+	text-align: center;
+	vertical-align: middle;
+}
+
 .halo-item {
   /*FIXME: we shouldn't need to hardcode the size...*/
 	line-height: 24px !important;
 	text-align: center;
+	vertical-align: middle;
 }
 `;
 

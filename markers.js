@@ -5,6 +5,7 @@ import { morph, Morph } from "./index.js";
 export function show(target) {
 
   if (!target) return;
+  if (typeof target === "string") return $$world.setStatusMessage(target);
   if (target.isMorph) return showRect(target.world(), target.globalBounds());
   if (target instanceof Point) return showRect($$world, new Rectangle(target.x-5, target.y-5, 10,10));
   if (typeof Element !== "undefined" && target instanceof Element) return showRect($$world, Rectangle.fromElement(target));
@@ -108,6 +109,85 @@ class BoundsMarker extends Morph {
             r.bottomLeft().  addXY(0, -markerLength).  extent(pt(0, markerLength))];
     corners.forEach((corner, i) => corner.setBounds(boundsForMarkers[i]));    
     return this;
+  }
+
+}
+
+export class StatusMessage extends Morph {
+
+  constructor(msg, color = Color.gray, props = {}) {
+
+    super({
+
+      name: 'messageMorph',
+      extent: pt(240, 65),
+      clipMode: 'hidden',
+      grabbing: false, dragging: true,
+      borderRadius: 20, borderWidth: 5,
+      fill: null,
+      stayOpen: false,
+      isMaximized: false,
+      ...props,
+
+
+      submorphs: [
+      {
+        name: 'messageText',
+        type: "text",
+        draggable: false,
+        bounds: pt(240, 65).extentAsRectangle().insetBy(10),
+        fixedWidth: false, fixedHeight: false, clipMode: 'visible',
+        fontSize: 14, fontFamily: "Monaco, Inconsolata, 'DejaVu Sans Mono', monospace"
+      },
+  
+      {
+        name: 'closeButton',
+        topRight: pt(240-15, 12), extent: pt(20,20),
+        fill: null,
+        styleClasses: ["center-text", "fa", "fa-close"],
+        nativeCursor: "pointer",
+        onMouseUp(evt) { this.owner.remove(); evt.stop(); }
+      }]
+
+    });
+
+    
+    this.setMessage(msg, color);
+  }
+
+  isEpiMorph() { return true }
+  isStatusMessage() { return true }
+
+  get stayOpen()         { return this.getProperty("stayOpen"); }
+  set stayOpen(value)    { this.recordChange({prop: "stayOpen", value}); }
+  get isMaximized()      { return this.getProperty("isMaximized"); }
+  set isMaximized(value) { this.recordChange({prop: "isMaximized", value}); }
+
+  setMessage(msg, color) {
+    var textMsg = this.get('messageText');
+    textMsg.textString = msg;
+    this.borderColor = color;
+  }
+
+  expand() {
+    var world = this.world();
+    if (!world || this.isMaximized) return;
+    this.isMaximized = true;
+    this.stayOpen = true;
+    var text = this.get('messageText');
+    Object.assign(text, {readOnly: false, fixedWidth: false, selectable: true})
+    text.fit();
+    var ext = text.extent.addXY(20,20),
+        visibleBounds = world.visibleBounds();
+    if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 20;
+    if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 20;
+    ext = this.extent.maxPt(ext);
+    this.extent = ext;
+    this.center = visibleBounds.center();
+  }
+
+  onMouseDown(evt) {
+    this.expand();
   }
 
 }

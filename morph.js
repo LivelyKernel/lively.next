@@ -3,7 +3,7 @@ import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph, renderMorph } from "./rendering/morphic-default.js"
 import { Halo } from "./halo.js"
 import { Menu } from "./menus.js"
-import { show } from "./markers.js";
+import { show, StatusMessage } from "./markers.js";
 import { morph } from "./index.js";
 import config from "./config.js";
 
@@ -741,6 +741,10 @@ export class World extends Morph {
     return this._renderer && this._renderer.fontMetric
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // events
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   onMouseMove(evt) {
     evt.hand.update(evt);
     evt.halo && evt.halo.alignWithTarget();
@@ -782,15 +786,13 @@ export class World extends Morph {
     if (evt.state.menu) evt.state.menu.remove();
     this.addMorph(evt.state.menu = new Menu({
       position: evt.position,
-      title: "Test",
-      items: [["item 1", () => { console.log("???") }]]
+      title: "Test", items: [
+        ["item 1", () => { this.setStatusMessage("item 1 clicked") }],
+        ["item 2", () => { this.setStatusMessage("item 2 clicked") }],
+        ["item 3", () => { this.setStatusMessage("item 3 clicked") }]
+      ]
     }));
   }
-
-  logError(err) {
-    console.error(err);
-  }
-
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // halos
@@ -804,6 +806,75 @@ export class World extends Morph {
 
   showHaloFor(morph, pointerId) {
     return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  visibleBounds() {
+    // FIXME, see below
+    return this.innerBounds()
+  }
+
+  // visibleBounds () {
+  //   // the bounds call seems to slow down halos...
+  //   return this.windowBounds().intersection(this.innerBounds());
+  // }
+
+  // windowBounds(optWorldDOMNode) {
+  //   if (this.cachedWindowBounds) return this.cachedWindowBounds;
+  //   var canvas = optWorldDOMNode || this.renderContext().getMorphNode(),
+  //     topmost = document.documentElement,
+  //     body = document.body,
+  //     scale = 1 / this.getScale(),
+  //     topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
+  //     width, height;
+  //   if (UserAgent.isTouch || UserAgent.isMobile){
+  //     width = window.innerWidth * scale;
+  //     height = window.innerHeight * scale;
+  //   } else {
+  //     width = topmost.clientWidth * scale;
+  //     height = topmost.clientHeight * scale;
+  //   }
+  //   return this.cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
+  // }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // status messages
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  visibleStatusMessages() {
+    return this.submorphs.filter(ea => ea.isStatusMessage)
+  }
+
+  logError(err) {
+    this.setStatusMessage(err.stack || String(err), Color.red);
+  }
+
+  setStatusMessage(msg, color, delay = 5000, optStyle = {}) {
+    // world.setStatusMessage("test", Color.green)
+    console[color == Color.red ? "error" : "log"](msg);
+
+    if (!config.verboseLogging) return null;
+
+    var msgMorph = new StatusMessage(msg, color, optStyle);
+
+    var messages = this.visibleStatusMessages();
+    for (let m of messages) {
+      if (messages.length <= (config.maxStatusMessages || 0)) break;
+      if (m.stayOpen) continue;
+      m.remove();
+      arr.remove(messages, m);
+    }
+
+    messages.forEach(msg => !msg.isMaximized && msg.moveBy(pt(0, -msgMorph.extent.y)));
+
+    msgMorph.align(msgMorph.bounds().bottomRight(), this.visibleBounds().bottomRight().addXY(-20, -20));
+    this.addMorph(msgMorph);
+
+    if (typeof delay !== "undefined")
+      setTimeout(() => msgMorph.stayOpen || msgMorph.remove(), delay);
+
+    return msgMorph;
   }
 
 }
