@@ -5391,6 +5391,61 @@ module.exports = function(acorn) {
 
   module.exports(acorn);
 })(this.acorn);
+  (function(acorn) {
+  var module = {exports: {}};
+  'use strict';
+
+module.exports = function(acorn) {
+  var tt = acorn.tokTypes;
+  var pp = acorn.Parser.prototype;
+
+  // this is the same parseObj that acorn has with...
+  function parseObj(isPattern, refDestructuringErrors) {
+    var node = this.startNode(), first = true, propHash = {}
+    node.properties = []
+    this.next()
+    while (!this.eat(tt.braceR)) {
+      if (!first) {
+        this.expect(tt.comma)
+        if (this.afterTrailingComma(tt.braceR)) break
+      } else first = false
+
+      var prop = this.startNode(), isGenerator, startPos, startLoc
+      if (this.options.ecmaVersion >= 6) {
+        // ...the spread logic borrowed from babylon :)
+        if (this.type === tt.ellipsis) {
+          prop = this.parseSpread()
+          prop.type = isPattern ? "RestProperty" : "SpreadProperty"
+          node.properties.push(prop)
+          continue
+        }
+
+        prop.method = false
+        prop.shorthand = false
+        if (isPattern || refDestructuringErrors) {
+          startPos = this.start
+          startLoc = this.startLoc
+        }
+        if (!isPattern)
+          isGenerator = this.eat(tt.star)
+      }
+      this.parsePropertyName(prop)
+      this.parsePropertyValue(prop, isPattern, isGenerator, startPos, startLoc, refDestructuringErrors)
+      this.checkPropClash(prop, propHash)
+      node.properties.push(this.finishNode(prop, "Property"))
+    }
+    return this.finishNode(node, isPattern ? "ObjectPattern" : "ObjectExpression")
+  }
+
+  acorn.plugins.objectSpread = function objectSpreadPlugin(instance) {
+    pp.parseObj = parseObj;
+  };
+
+  return acorn;
+};
+
+  module.exports(acorn);
+})(this.acorn);
   return this.acorn;
 })();;
 ;(function(GLOBAL) {
@@ -10495,7 +10550,7 @@ module.exports = function(acorn) {
   babelHelpers;
 
   // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-  // Generated on 16-06-07 00:29 PDT
+  // Generated on 16-07-17 17:25 PDT
 
   function Visitor() {}
   Visitor.prototype.accept = function accept(node, state, path) {
@@ -10542,6 +10597,10 @@ module.exports = function(acorn) {
         return this.visitModuleDeclaration(node, state, path);
       case "ModuleSpecifier":
         return this.visitModuleSpecifier(node, state, path);
+      case "RestProperty":
+        return this.visitRestProperty(node, state, path);
+      case "SpreadProperty":
+        return this.visitSpreadProperty(node, state, path);
       case "Identifier":
         return this.visitIdentifier(node, state, path);
       case "Literal":
@@ -10821,6 +10880,18 @@ module.exports = function(acorn) {
     node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
     return node;
   };
+  Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
+    var visitor = this;
+    // argument is of types Expression
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+    return node;
+  };
+  Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
+    var visitor = this;
+    // argument is of types Expression
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+    return node;
+  };
   Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
     var visitor = this;
     return node;
@@ -11009,7 +11080,7 @@ module.exports = function(acorn) {
   };
   Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
     var visitor = this;
-    // properties is a list with types Property
+    // properties is a list with types Property, SpreadProperty
     var newElements = [];
     for (var i = 0; i < node["properties"].length; i++) {
       var ea = node["properties"][i];
@@ -11181,7 +11252,7 @@ module.exports = function(acorn) {
   };
   Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
     var visitor = this;
-    // properties is a list with types AssignmentProperty
+    // properties is a list with types AssignmentProperty, RestProperty
     var newElements = [];
     for (var i = 0; i < node["properties"].length; i++) {
       var ea = node["properties"][i];
@@ -11663,7 +11734,8 @@ module.exports = function(acorn) {
           thisRefs: [],
           params: [],
           catches: [],
-          subScopes: []
+          subScopes: [],
+          resolvedRefMap: new Map()
         };
         if (parentScope) parentScope.subScopes.push(scope);
         return scope;
@@ -12145,6 +12217,7 @@ module.exports = function(acorn) {
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
 
     source = typeof parsed === 'string' ? parsed : source;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -12161,6 +12234,7 @@ module.exports = function(acorn) {
     options.sourceType = options.sourceType || "module";
     options.plugins = options.plugins || {};
     options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
 
     source = typeof parsed === 'string' ? parsed : null;
     parsed = typeof parsed === 'string' ? acorn.parse(parsed, options) : parsed;
@@ -12699,6 +12773,7 @@ module.exports = function(acorn) {
     options.plugins = options.plugins || {};
     // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
     options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
 
     var ast, safeSource, err;
     if (options.type === 'LabeledStatement') {
@@ -12759,6 +12834,7 @@ module.exports = function(acorn) {
     if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
     options.plugins = options.plugins || {};
     options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
 
     if (options.withComments) {
       // record comments
@@ -13414,7 +13490,7 @@ var nodes = Object.freeze({
       });
     }
     if (scope.referencesResolvedSafely) return scope;
-    var map = scope.resolvedRefMap = new Map();
+    var map = scope.resolvedRefMap || (scope.resolvedRefMap = new Map());
     rec(scope, []);
     scope.referencesResolvedSafely = true;
     return scope;
@@ -13682,7 +13758,8 @@ var nodes = Object.freeze({
             decl = node;declId = exportSpec.exported;
           } else if (exportSpec.local) {
             var resolved = scope.resolvedRefMap.get(exportSpec.local);
-            decl = resolved.decl, declId = resolved.declId;
+            decl = resolved ? resolved.decl : null;
+            declId = resolved ? resolved.declId : null;
           }
 
           return {
@@ -13758,6 +13835,56 @@ var nodes = Object.freeze({
     imports: imports,
     exports: exports$1
   });
+
+  var ObjectSpreadTransformer = function (_Visitor) {
+    babelHelpers.inherits(ObjectSpreadTransformer, _Visitor);
+
+    function ObjectSpreadTransformer() {
+      babelHelpers.classCallCheck(this, ObjectSpreadTransformer);
+      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ObjectSpreadTransformer).apply(this, arguments));
+    }
+
+    babelHelpers.createClass(ObjectSpreadTransformer, [{
+      key: "accept",
+      value: function accept(node, state, path) {
+        if (node.type === "ObjectExpression") {
+          node = this.transformSpreadProperty(node);
+        }
+        return babelHelpers.get(Object.getPrototypeOf(ObjectSpreadTransformer.prototype), "accept", this).call(this, node, state, path);
+      }
+    }, {
+      key: "transformSpreadProperty",
+      value: function transformSpreadProperty(node) {
+        var currentGroup = [],
+            propGroups = [currentGroup];
+
+        node.properties.forEach(function (prop) {
+          if (prop.type !== "SpreadProperty") currentGroup.push(prop);else {
+            propGroups.push(prop);
+            currentGroup = [];
+            propGroups.push(currentGroup);
+          }
+        });
+
+        if (propGroups.length === 1) return node;
+
+        if (!currentGroup.length) propGroups.pop();
+
+        return funcCall.apply(undefined, [member("Object", "assign")].concat(babelHelpers.toConsumableArray(propGroups.map(function (group) {
+          return group.type === "SpreadProperty" ? group.argument : {
+            properties: group,
+            type: 'ObjectExpression'
+          };
+        }))));
+      }
+    }]);
+    return ObjectSpreadTransformer;
+  }(Visitor);
+
+  function objectSpreadTransform(parsed) {
+    // "var x = {y, ...z}" => "var x = Object.assign({ y }, z);"
+    return new ObjectSpreadTransformer().accept(parsed, {}, []);
+  };
 
   var helper = {
     // currently this is used by the replacement functions below but
@@ -14068,7 +14195,8 @@ var nodes = Object.freeze({
     returnLastStatement: returnLastStatement,
     wrapInFunction: wrapInFunction,
     wrapInStartEndCall: wrapInStartEndCall,
-    transformSingleExpression: transformSingleExpression
+    transformSingleExpression: transformSingleExpression,
+    objectSpreadTransform: objectSpreadTransform
   });
 
   var isTransformedClassVarDeclSymbol = Symbol();
