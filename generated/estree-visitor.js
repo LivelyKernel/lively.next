@@ -1,6 +1,6 @@
 "format esm";
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 16-06-07 00:29 PDT
+// Generated on 16-07-17 17:25 PDT
 function Visitor() {}
 Visitor.prototype.accept = function accept(node, state, path) {
   if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
@@ -26,6 +26,8 @@ Visitor.prototype.accept = function accept(node, state, path) {
     case "MethodDefinition": return this.visitMethodDefinition(node, state, path);
     case "ModuleDeclaration": return this.visitModuleDeclaration(node, state, path);
     case "ModuleSpecifier": return this.visitModuleSpecifier(node, state, path);
+    case "RestProperty": return this.visitRestProperty(node, state, path);
+    case "SpreadProperty": return this.visitSpreadProperty(node, state, path);
     case "Identifier": return this.visitIdentifier(node, state, path);
     case "Literal": return this.visitLiteral(node, state, path);
     case "ExpressionStatement": return this.visitExpressionStatement(node, state, path);
@@ -250,6 +252,18 @@ Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, sta
   node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
   return node;
 }
+Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+}
+Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+}
 Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
   var visitor = this;
   return node;
@@ -441,7 +455,7 @@ Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, sta
 }
 Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
   var visitor = this;
-  // properties is a list with types Property
+  // properties is a list with types Property, SpreadProperty
   var newElements = [];
   for (var i = 0; i < node["properties"].length; i++) {
     var ea = node["properties"][i];
@@ -620,7 +634,7 @@ Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(nod
 }
 Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
   var visitor = this;
-  // properties is a list with types AssignmentProperty
+  // properties is a list with types AssignmentProperty, RestProperty
   var newElements = [];
   for (var i = 0; i < node["properties"].length; i++) {
     var ea = node["properties"][i];
