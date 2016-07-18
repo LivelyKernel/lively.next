@@ -33,6 +33,8 @@
     "acorn": "^3.2.0",
     "acorn-object-spread": "^1.0.0",
     "babel-core": "^5.8.35",
+    "babel-plugin-syntax-object-rest-spread": "^6.8.0",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-preset-es2015-rollup": "^1.1.1",
     "estree-to-js": "^0.1.4",
     "mocha-es6": "^0.3.1",

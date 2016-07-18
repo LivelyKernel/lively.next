@@ -12,6 +12,7 @@ import {
   wrapInStartEndCall
 } from "../lib/transform.js";
 import { classToFunctionTransform } from "../lib/class-to-function-transform.js";
+import objectSpreadTransform from "../lib/object-spread-transform.js";
 import * as nodes from "../lib/nodes.js";
 import { parse } from "../lib/parser.js";
 import stringify from "../lib/stringify.js";
@@ -285,7 +286,7 @@ describe('ast.transform', function() {
 
 
 describe("class transform", () => {
-  
+
   var opts = {
     classHolder: {type: "Identifier", name: "_rec"},
     functionNode: {type: "Identifier", name: "createOrExtendClass"},
@@ -389,4 +390,14 @@ var Foo = createOrExtendClass('Foo', {
 }
 ;`)
   });
+});
+
+describe("object spread transform", () => {
+  it("transforms into assign", () =>
+    expect(stringify(objectSpreadTransform(parse("var x = {y, ...z}")))).to.equal(
+      "var x = Object.assign({ y }, z);"));
+
+  it("transforms into assign nested", () =>
+    expect(stringify(objectSpreadTransform(parse("var x = {y, a: {...z}}")))).to.equal(
+      "var x = {\n    y,\n    a: Object.assign({}, z)\n};"));
 });

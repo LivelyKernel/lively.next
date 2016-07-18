@@ -32,7 +32,9 @@ module.exports = Promise.resolve()
       babel({
         exclude: 'node_modules/**',
         sourceMap: false,
-        "presets": [ "es2015-rollup" ]})]
+        "presets": [ "es2015-rollup" ],
+        "plugins": ["syntax-object-rest-spread", "transform-object-rest-spread"]
+    })]
   }))
   .then(bundle =>
     bundle.generate({
