@@ -187,7 +187,7 @@ export class Repository {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   pull(branch = "master", remote = "origin") {
-    return this.cmd(`git pull ${remote} ${branch}`);
+    return this.cmd(`git pull --rebase ${remote} ${branch}`);
   }
 
   async interactivelyUpdate(branch = "master", remote = "origin") {
