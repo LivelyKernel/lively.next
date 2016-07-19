@@ -20,10 +20,13 @@ export class Text extends Morph {
       textString: "",
       fixedWidth: false, fixedHeight: false,
       draggable: false,
+      _selection: { start: 0, end: 0 },
       ...props
     });
     this.fit();
     this._needsFit = false;
+    this._needsSelect = false;
+
   }
 
   get fontMetric() { return FontMetric.default(); }
@@ -74,12 +77,21 @@ export class Text extends Morph {
     this._needsFit = true;
   }
 
-  get selection() { return this.getProperty("selection") }
-  set selection(value) { this.recordChange({prop: "selection", value}) }
+  get _selection() { return this.getProperty("_selection") }
+  set _selection(value) { this.recordChange({prop: "_selection", value}); }
+
+  get selection() { return new TextSelection(this) }
 
   aboutToRender() {
     super.aboutToRender();
     this.fitIfNeeded();
+  }
+
+  render(renderer) {
+    var tree = super.render(renderer);
+    var domNode = renderer.getNodeForMorph(this);
+    this.selectIfNeeded(renderer);
+    return tree;
   }
 
   shape() {
@@ -113,18 +125,54 @@ export class Text extends Morph {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
+  select(renderer) {
+    var domNode = renderer.getNodeForMorph(this);
+    domNode && ({ start: domNode.selectionStart, end: domNode.selectionEnd } = this._selection);
+  }
+
+  selectIfNeeded(renderer) {
+    if (this._needsSelect) {
+      this.select(renderer);
+      this._needsSelect = false;
+    }
+  }
+
   onInput(evt) {
     this.textString = evt.domEvt.target.value;
   }
 
   onSelect(evt) {
-    var {selectionStart: start, selectionEnd: end} = evt.domEvt.target,
-        text = this.textString.substring(start, end)
-    this.selection = {text, start, end};
+    var { selectionStart: start, selectionEnd: end } = evt.domEvt.target;
+    this._selection = { start: start, end: end };
   }
 
   onDeselect(evt) {
-    this.selection = undefined;
+    this._selection = { start: 0, end: 0 };
   }
+
+}
+
+
+class TextSelection {
+
+  constructor(textMorph) {
+    this.textMorph = textMorph;
+  }
+
+  get start() { return this.textMorph._selection.start }
+  set start(val) {
+    let morph = this.textMorph;
+    morph._selection = { start: val, end: this.end };
+    morph._needsSelect = true;
+  }
+
+  get end() { return this.textMorph._selection.end }
+  set end(val) {
+    let morph = this.textMorph;
+    morph._selection = { start: this.start, end: val };
+    morph._needsSelect = true;
+  }
+
+  get text() { return this.textMorph.textString.substring(this.start, this.end) }
 
 }
