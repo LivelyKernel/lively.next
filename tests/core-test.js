@@ -293,6 +293,22 @@ describe("bounds", () => {
     expect(width).closeTo(20, 0.1, "width");
     expect(height).closeTo(20, 0.1, "height");
   });
+  
+  it("globalBounds for inner morph with different origin", () => {
+    var world = morph({
+      type: "world", extent: pt(300,300),
+      submorphs: [{
+        extent: pt(100,100), rotation: num.toRadians(0) ,
+        submorphs: [{name: "target", position:pt(10,10), 
+                     extent: pt(20,20), rotation: num.toRadians(90), origin: pt(10,10)}]}
+    ]});
+    // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
+    var {x,y,width,height} = world.get("target").globalBounds();
+    expect(x).closeTo(0, 0.1, "x");
+    expect(y).closeTo(0, 0.1, "y");
+    expect(width).closeTo(20, 0.1, "width");
+    expect(height).closeTo(20, 0.1, "height");
+  });
 
 });
 
@@ -309,15 +325,38 @@ describe("geometric transformations", () => {
     expect(pt(0,0)).equals(morph2.localize(pt(10,10)));
   });
 
+  it("origin influences bounds", function() {
+    var world = morph({type: "world", extent: pt(300,300)}),
+        morph1 = morph({extent: pt(200, 200), position: pt(150,150), origin: pt(100,100)}),
+        morph2 = morph({extent: pt(100, 100), position: pt(0,0), origin: pt(50,50)});
+    world.addMorph(morph1);
+    morph1.addMorph(morph2);
+    expect(morph2.bounds().topLeft()).equals(pt(-50,-50));
+    expect(morph2.globalBounds().topLeft()).equals(pt(100,100));
+    morph2.position = morph2.position.addPt(pt(1,1));
+    expect(morph2.origin).equals(pt(50,50));
+    expect(morph2.globalBounds().topLeft()).equals(pt(101,101));
+  });
+  
+  it("origin influences localize", function() {
+    var world = morph({type: "world", extent: pt(300,300)}),
+        morph1 = morph({extent: pt(200, 200), position: pt(150,150), origin: pt(100,100)}),
+        morph2 = morph({extent: pt(100, 100), position: pt(0,0), origin: pt(50,50)});
+    world.addMorph(morph1);
+    morph1.addMorph(morph2);
+    expect(morph1.worldPoint(pt(0,0))).equals(pt(150,150));
+    expect(morph1.localize(pt(150,150))).equals(pt(0,0));
+  });
+  
   it("localizes positions if nested in transforms", function() {
     var world = morph({type: "world", extent: pt(300,300)}),
-        morph1 = morph({extent: pt(200, 200), position: pt(50,50), origin: pt(100,100)}),
-        morph2 = morph({extent: pt(100, 100), position: pt(50,50), origin: pt(50,50)});
+        morph1 = morph({extent: pt(200, 200), position: pt(150,150), origin: pt(100,100)}),
+        morph2 = morph({extent: pt(100, 100), position: pt(0,0), origin: pt(50,50)});
     world.addMorph(morph1);
     morph1.addMorph(morph2);
     morph1.rotation = num.toRadians(-45);
-    expect(morph2.origin).equals(morph2.localize(world.bounds().center()));
-    expect(world.bounds().center()).equals(morph2.worldPoint(morph2.origin));
+    expect(pt(0,0)).equals(morph2.localize(pt(150,150)));
+    expect(pt(150,150)).equals(morph2.worldPoint(pt(0,0)));
   });
 
 });

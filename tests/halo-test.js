@@ -147,7 +147,7 @@ describe("halos", () => {
     expect(submorph1.origin).equals(pt(5, -20));
   });
 
-  it("shifting the origin will not move morph", () => {
+  it("shifting the origin will not move bounds", () => {
     submorph1.position = pt(200,100);
     submorph1.rotateBy(num.toRadians(90));
     var oldGlobalPos = submorph1.globalBounds().topLeft();
@@ -161,6 +161,16 @@ describe("halos", () => {
     halo = world.showHaloFor(submorph2);
     halo.originHalo().update(pt(20,5));
     closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
+    
+    submorph2.rotation = num.toRadians(-20);
+    oldGlobalPos = submorph2.globalBounds().topLeft();
+    halo = world.showHaloFor(submorph2);
+    halo.originHalo().update(pt(20,5));
+    closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
+  });
+  
+  it("shifting the origin will not move submorphs", () => {
+
   });
 
   it("origin halo aligns correctly if owner is transformed", () => {
@@ -170,15 +180,27 @@ describe("halos", () => {
     halo.alignWithTarget();
     expect(submorph2.worldPoint(submorph2.origin)).equals(halo.originHalo().globalBounds().center());
   });
+  
+  it("origin halo aligns correctly if morph is transformed with different origin", () => {
+    var halo = world.showHaloFor(submorph1);
+    submorph1.adjustOrigin(submorph1.innerBounds().center());
+    submorph1.rotation = num.toRadians(-45);
+    halo.alignWithTarget();
+    var originHaloCenter = halo.originHalo().globalBounds().center(),
+        originWorldPos = submorph1.worldPoint(pt(0,0));
+    closeToPoint(originHaloCenter, originWorldPos);
+  });
 
   it("origin halo aligns correctly if owner is transformed with different origin", () => {
     var halo = world.showHaloFor(submorph2);
-    submorph1.origin = submorph2.bounds().center();
-    submorph2.origin = submorph2.innerBounds().center();
+    submorph1.adjustOrigin(submorph2.innerBounds().center());
+    submorph2.adjustOrigin(submorph2.innerBounds().center());
     submorph1.rotation = num.toRadians(-45);
     submorph2.rotation = num.toRadians(-45);
     halo.alignWithTarget();
-    expect(submorph2.worldPoint(submorph2.origin)).equals(halo.originHalo().globalBounds().center());
+    var originHaloCenter = halo.originHalo().globalBounds().center(),
+        originWorldPos = submorph2.worldPoint(pt(0,0));
+    closeToPoint(originHaloCenter, originWorldPos);
   });
 
   it("grab grabs", () => {
