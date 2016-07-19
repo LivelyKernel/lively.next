@@ -1,4 +1,5 @@
-import { Morph } from "./morph.js";
+import { string } from "lively.lang";
+import { Morph, show } from "./index.js";
 import { FontMetric } from "./rendering/renderer.js";
 
 export class Text extends Morph {
@@ -37,7 +38,7 @@ export class Text extends Morph {
 
   get textString() { return this.getProperty("textString") }
   set textString(value) {
-    this.recordChange({prop: "textString", value});
+    this.recordChange({prop: "textString", value: String(value)});
     this._needsFit = true;
   }
 
@@ -81,6 +82,14 @@ export class Text extends Morph {
   set _selection(value) { this.recordChange({prop: "_selection", value}); }
 
   get selection() { return new TextSelection(this) }
+
+  selectionOrLineString() {
+    var sel = this.selection;
+    if (sel.text) return sel.text;
+    var line = string.lineIndexComputer(this.textString)(sel.start),
+        [start, end] = string.lineNumberToIndexesComputer(this.textString)(line);
+    return this.textString.slice(start, end).trim();
+  }
 
   aboutToRender() {
     super.aboutToRender();
@@ -141,6 +150,12 @@ export class Text extends Morph {
     this.textString = evt.domEvt.target.value;
   }
 
+  onMouseUp(evt) { this.onSelect(evt); }
+
+  onMouseDown(evt) { this.onSelect(evt); }
+
+  onDeselect(evt) { this.onSelect(evt) }
+
   onSelect(evt) {
     var { selectionStart: start, selectionEnd: end } = evt.domEvt.target;
     this._selection = { start: start, end: end };
@@ -148,6 +163,29 @@ export class Text extends Morph {
 
   onDeselect(evt) {
     this._selection = { start: 0, end: 0 };
+  }
+
+  onKeyUp(evt) {
+    switch (evt.keyString()) {
+      case 'Command-D': case 'Command-P': evt.stop(); break;
+    }
+  }
+
+  async onKeyDown(evt) {
+    switch (evt.keyString()) {
+      case 'Command-D':
+        evt.stop();
+        var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
+        this.world()[result.isError ? "logError" : "setStatusMessage"](result.value);
+        break;
+
+      case 'Command-P':
+        var sel = this.selection;
+        evt.stop();
+        var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
+        this.textString = this.textString.slice(0, sel.end) + result.value + this.textString.slice(sel.end);
+        break;
+    }
   }
 
 }

@@ -69,7 +69,7 @@ function cumulativeOffset(element) {
   return {offsetLeft: left, offsetTop: top};
 }
 
-var Keys = {
+export var Keys = {
 
   KEY_BACKSPACE: 8,
   KEY_TAB:     9,
@@ -375,6 +375,8 @@ export class Event {
   isShiftDown() { return Keys.isShiftDown(this.domEvt); }
   isCtrlDown() {return Keys.isCtrlDown(this.domEvt);}
   isAltDown() { return Keys.isAltDown(this.domEvt); }
+
+  keyString(opts) { return Keys.pressedKeyString(this.domEvt, opts); }
 
 }
 
