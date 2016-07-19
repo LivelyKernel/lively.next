@@ -9,7 +9,7 @@ export function show(target) {
   if (target.isMorph) return showRect(target.world(), target.globalBounds());
   if (target instanceof Point) return showRect($$world, new Rectangle(target.x-5, target.y-5, 10,10));
   if (typeof Element !== "undefined" && target instanceof Element) return showRect($$world, Rectangle.fromElement(target));
-  
+
   console.warn(`show: cannot "show" ${target}`);
 
   function showRect(world, rect) {
@@ -19,10 +19,10 @@ export function show(target) {
 
   function showThenHide (world, morphOrMorphs, duration = 3) {
     if (!world) return;
-    var morphs = Object.isArray(morphOrMorphs) ? morphOrMorphs : [morphOrMorphs];
+    var morphs = Array.isArray(morphOrMorphs) ? morphOrMorphs : [morphOrMorphs];
     morphs.forEach(ea => world.addMorph(ea));
     if (duration) { // FIXME use scheduler
-      setTimeout(() => morphs.invoke('remove'), duration*1000);
+      setTimeout(() => morphs.forEach(ea => ea.remove()), duration*1000);
     }
     return morphOrMorphs;
   }
@@ -36,7 +36,7 @@ class BoundsMarker extends Morph {
   // xxxx     xxxx
   // x           x
   // x           x
-  // 
+  //
   // x           x
   // x           x
   // xxxx     xxxx
@@ -59,7 +59,7 @@ class BoundsMarker extends Morph {
   get isEpiMorph() { return true }
 
   get markerStyle() {
-    return {fill: null, borderWidth: 2, borderColor: Color.red}
+    return {fill: Color.red}
   }
 
   markerLength(forBounds) {
@@ -90,24 +90,25 @@ class BoundsMarker extends Morph {
       bottomRightH, bottomRightV,
       bottomLeftH, bottomLeftV];
   }
-  
+
   alignWithMorph(otherMorph) {
     return this.alignWithRect(otherMorph.globalBounds());
   }
 
   alignWithRect(r) {
-    var corners = this.ensureMarkerCorners(),
+    var markerWidth = 5,
+        corners = this.ensureMarkerCorners(),
         markerLength = this.markerLength(r),
         boundsForMarkers = [
-            r.topLeft().     addXY(0,0).               extent(pt(markerLength, 0)),
-            r.topLeft().     addXY(0,2).               extent(pt(0, markerLength)),
-            r.topRight().    addXY(-markerLength, 0).  extent(pt(markerLength, 0)),
-            r.topRight().    addXY(-4,2).              extent(pt(0, markerLength)),
-            r.bottomRight(). addXY(-4, -markerLength). extent(pt(0, markerLength)),
-            r.bottomRight(). addXY(-markerLength, -2). extent(pt(markerLength, 0)),
-            r.bottomLeft().  addXY(0,-2).              extent(pt(markerLength, 0)),
-            r.bottomLeft().  addXY(0, -markerLength).  extent(pt(0, markerLength))];
-    corners.forEach((corner, i) => corner.setBounds(boundsForMarkers[i]));    
+          r.topLeft().    addXY(0,0).                        extent(pt(markerLength, markerWidth)),
+          r.topLeft().    addXY(0,0).                        extent(pt(markerWidth, markerLength)),
+          r.topRight().   addXY(-markerLength, 0).           extent(pt(markerLength, markerWidth)),
+          r.topRight().   addXY(-markerWidth,0).             extent(pt(markerWidth, markerLength)),
+          r.bottomRight().addXY(-markerWidth, -markerLength).extent(pt(markerWidth, markerLength)),
+          r.bottomRight().addXY(-markerLength, -markerWidth).extent(pt(markerLength, markerWidth)),
+          r.bottomLeft(). addXY(0,-markerWidth).             extent(pt(markerLength, markerWidth)),
+          r.bottomLeft(). addXY(0, -markerLength).           extent(pt(markerWidth, markerLength))];
+    corners.forEach((corner, i) => corner.setBounds(boundsForMarkers[i]));
     return this;
   }
 
@@ -139,7 +140,7 @@ export class StatusMessage extends Morph {
         fixedWidth: false, fixedHeight: false, clipMode: 'visible',
         fontSize: 14, fontFamily: "Monaco, Inconsolata, 'DejaVu Sans Mono', monospace"
       },
-  
+
       {
         name: 'closeButton',
         topRight: pt(240-15, 12), extent: pt(20,20),
@@ -151,7 +152,7 @@ export class StatusMessage extends Morph {
 
     });
 
-    
+
     this.setMessage(msg, color);
   }
 
