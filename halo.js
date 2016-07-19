@@ -2,13 +2,15 @@ import { Ellipse, Morph, Text } from "./index.js"
 import { Color, pt, rect } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
+const itemExtent = pt(24,24);
+
 export class HaloItem extends Ellipse {
 
   constructor(props) {
     super(Object.assign({
       fill: Color.gray.withA(.7),
       grabbable: false,
-      extent: pt(24, 24)
+      extent: itemExtent
     }, props));
   }
 
@@ -18,8 +20,9 @@ export class HaloItem extends Ellipse {
     const {x: width, y: height} = this.halo.extent,
           {row, col} = this.location,
           collWidth = (width + this.extent.x) / 3,
-          rowHeight = height / 3;
-    this.position = pt(collWidth * col, rowHeight * row).subPt(pt(26,26));
+          rowHeight = height / 3,
+          pos = pt(collWidth * col, rowHeight * row).subPt(itemExtent);
+    this.setBounds(pos.extent(itemExtent));
   }
 }
 
@@ -233,7 +236,7 @@ export class Halo extends Morph {
       halo: this,
       computePositionAtTarget: () => {
           return this.localizePointFrom(
-                      this.target.origin,
+                      pt(0,0),
                       this.target
                     ).subPt(pt(7.5,7.5));
       },
@@ -271,11 +274,11 @@ export class Halo extends Morph {
       this.closeHalo(),
       this.dragHalo(),
       this.grabHalo(),
-      // this.inspectHalo(),
-      // this.editHalo(),
+      this.inspectHalo(),
+      this.editHalo(),
       this.copyHalo(),
       this.rotateHalo(),
-      // this.stylizeHalo()
+      this.stylizeHalo()
     ];
   }
 
@@ -302,7 +305,7 @@ export class Halo extends Morph {
         displayProperty(property) {
           this.visible = true;
           textField.visible = true;
-          textField.textString = this.halo.target.getProperty(property).toString();
+          textField.textString = this.halo.target[property].toString();
         },
         disable() {
           this.visible = false;
