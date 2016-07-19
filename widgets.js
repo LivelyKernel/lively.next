@@ -8,7 +8,7 @@ export class ObjectDrawer extends Morph {
     super(Object.assign({
       name: "object-drawer",
       position: pt(20, 20),
-      extent: pt(4 * (120 + 10) + 15, 130),
+      extent: pt(4 * (140 + 10) + 15, 140),
       fill: Color.white,
       borderWidth: 1,
       borderColor: Color.gray
@@ -56,6 +56,7 @@ export class ObjectDrawer extends Morph {
       position: pos, extent: objExt,
       fill: Color.white, grabbable: false,
       readOnly: true,
+      fontSize: 16,
       onDrag: doCopy,
       init() {
         this.draggable = false;

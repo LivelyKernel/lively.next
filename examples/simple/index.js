@@ -5,21 +5,18 @@ import { ObjectDrawer } from "lively.morphic/widgets.js";
 
 installGlobals();
 
-var {world, renderer, eventHandler} = setupWorld();
-var eventDispatcher = new EventDispatcher(window, world);
-eventDispatcher.install();
-
+var {world, renderer, eventDispatcher} = setupWorld();
 world.eventDispatcher = eventDispatcher;
-window.$world = world;
+window.$$world = world;
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function setupWorld() {
-  var world = new World({name: "world", extent: pt(window.innerWidth,window.innerHeight)})
+  var world = new World({name: "world", extent: pt(window.innerWidth, window.innerHeight)}),
+      renderer = new Renderer(world, document.getElementById("lively-world")).startRenderWorldLoop(),
+      eventDispatcher = new EventDispatcher(window, world).install();
   world.addMorph(new ObjectDrawer());
 
-  var renderer = new Renderer(world, document.getElementById("lively-world"));
-  renderer.startRenderWorldLoop();
 
-  return {world, renderer}
+  return {world, renderer, eventDispatcher}
 }
