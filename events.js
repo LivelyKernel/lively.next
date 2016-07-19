@@ -576,7 +576,7 @@ export class EventDispatcher {
         targetId = targetNode.id,
         targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
     if (!targetMorph) {
-      console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
+      // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
       return;
     }
     this.createMorphicEventsFromDOMEvent(domEvt, targetMorph)
