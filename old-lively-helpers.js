@@ -8,13 +8,12 @@ export function setupMorphicWorldOn(htmlMorph) {
 
   var rootNode = htmlMorph.renderContext().shapeNode;
   var world = morph({type: "world", extent: Point.ensure(htmlMorph.getExtent())})
-  var drawer = world.addMorph(new ObjectDrawer({position: pt(20,10)}));
-
   var renderer = new Renderer(world, rootNode);
   renderer.startRenderWorldLoop()
-
   var eventDispatcher = new EventDispatcher(window, world);
   eventDispatcher.install();
+
+  var drawer = world.addMorph(new ObjectDrawer({position: pt(20,10)}));
 
   // FIXME currently used for show()
   window.$$world = world;

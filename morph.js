@@ -35,12 +35,6 @@ function newMorphId(prefix) {
   return prefix + "_" + string.newUUID().replace(/-/g, "_")
 }
 
-function dissoc(object, keys) {
-  var clone = obj.clone(object);
-  keys.forEach(name => delete clone[name]);
-  return clone;
-}
-
 export class Morph {
 
   constructor(props) {
@@ -51,7 +45,7 @@ export class Morph {
     this._id = newMorphId(this.constructor.name);
     if (props.bounds) {
       this.setBounds(props.bounds);
-      props = dissoc(props, ["bounds"]);
+      props = obj.dissoc(props, ["bounds"]);
     }
     Object.assign(this, props);
   }
@@ -443,14 +437,15 @@ export class Morph {
     // if morph1 visually before morph2 than list.indexOf(morph1) < list.indexOf(morph2)
     if (!list) list = [];
     if (!this.fullContainsWorldPoint(point)) return list;
-    for (var i = this.submorphs.length-1; i >= 0; i--) {
-        this.submorphs[i].morphsContainingPoint(point, list);
-    }
+    for (var i = this.submorphs.length-1; i >= 0; i--)
+      this.submorphs[i].morphsContainingPoint(point, list);
     if (this.innerBoundsContainsWorldPoint(point)) list.push(this);
     return list;
   }
 
   morphBeneath(pos) {
+    // returns the morph that is visually stacked below this morph at pos
+    // note that this is independent of the morph hierarchy
     var someOwner = this.world() || this.owner;
     if (!someOwner) return null;
     var morphs = someOwner.morphsContainingPoint(pos),
@@ -740,10 +735,6 @@ export class World extends Morph {
 
   get hands() {
     return this.submorphs.filter(ea => ea.isHand);
-  }
-
-  get fontMetric() {
-    return this._renderer && this._renderer.fontMetric
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

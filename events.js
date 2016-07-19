@@ -1,4 +1,4 @@
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { pt } from "lively.graphics";
 import bowser from "bowser";
 
@@ -160,10 +160,10 @@ var Keys = {
     }
     return function(domEvt) {
       var id, c = domEvt.keyCode,
-          shifted = domEvt.isShiftDown(),
-          ctrl = domEvt.isCtrlDown(),
-          cmd = domEvt.isCommandKey(),
-          alt = domEvt.isAltDown();
+          shifted = this.isShiftDown(domEvt),
+          ctrl = this.isCtrlDown(domEvt),
+          cmd = this.isCommandKey(domEvt),
+          alt = this.isAltDown(domEvt);
       if ((c >= 65 && c <= 90)) {
         id = String.fromCharCode(c).toUpperCase();
       } else {
@@ -218,9 +218,9 @@ var Keys = {
     var keyParts = [];
     // modifiers
     if (domEvt.metaKey || domEvt.keyIdentifier === 'Meta') keyParts.push('Command');
-    if (domEvt.isCtrlDown()) keyParts.push('Control');
-    if (domEvt.isAltDown()) keyParts.push('Alt');
-    if (domEvt.isShiftDown()) keyParts.push('Shift');
+    if (this.isCtrlDown(domEvt)) keyParts.push('Control');
+    if (this.isAltDown(domEvt)) keyParts.push('Alt');
+    if (this.isShiftDown(domEvt)) keyParts.push('Shift');
     // key
     var id;
     if (domEvt.keyCode === Event.KEY_TAB) id = 'Tab';
@@ -239,8 +239,42 @@ var Keys = {
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Event object
+// Event objects
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+class SimulatedDOMEvent {
+
+  constructor(props = {}) {
+    if (props.position) {
+      let {x, y} = props.position;
+      props = obj.dissoc(props, ["position"]);
+      props.pageX = x; props.pageY = y;
+    }
+
+    if (!props.hasOwnProperty("pointerId") && arr.include(mouseEvents.concat(pointerEvents), props.type)) {
+      props = {...props, pointerId: 1};
+    }
+
+    Object.assign(this, {
+      type: undefined,
+      target: undefined,
+      pageX: undefined,
+      pageY: undefined,
+      pointerId: undefined,
+      buttons: -1,
+      keyCode: undefined,
+      keyIdentifier: undefined,
+      altKey: false,
+      ctrlKey: false,
+      shiftKey: false,
+      metaKey: false,
+      ...props
+    });
+  }
+
+  preventDefault() {}
+  stopPropagation() {}
+}
 
 export class Event {
 
@@ -252,10 +286,12 @@ export class Event {
     this.hand = hand;
     this.halo = halo;
     this.stopped = false;
+    this.onDispatchCallbacks = [];
     this.onAfterDispatchCallbacks = [];
     this.onStopCallbacks = [];
   }
 
+  onDispatch(cb) { this.onDispatchCallbacks.push(cb); return this; }
   onAfterDispatch(cb) { this.onAfterDispatchCallbacks.push(cb); return this; }
   onStop(cb) { this.onStopCallbacks.push(cb); return this; }
 
@@ -344,34 +380,38 @@ export class Event {
 
 function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
   var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo)
+    .onDispatch(() => {
+      state.draggedMorph = targetMorph;
+      state.lastDragPosition = evt.position;
+      state.dragDelta = pt(0,0);
+    })
     .onStop(() => {
       state.draggedMorph = null;
       dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo));
     });
-  state.draggedMorph = targetMorph;
-  state.lastDragPosition = evt.position;
-  state.dragDelta = pt(0,0);
   return evt;
 }
 
 function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
   var evt = new Event("drag", domEvt, dispatcher, [state.draggedMorph], hand, halo)
+    .onDispatch(() => {
+      state.dragDelta = evt.position.subPt(state.lastDragPosition);
+    })
     .onAfterDispatch(() => state.lastDragPosition = evt.position)
     .onStop(() => {
       state.draggedMorph = null;
       dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo));
-    })
-  state.dragDelta = evt.position.subPt(state.lastDragPosition);
+    });
   return evt;
 }
 
 function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
   var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph || targetMorph], hand, halo)
+    .onDispatch(() => state.dragDelta = evt.position.subPt(state.lastDragPosition))
     .onAfterDispatch(() => {
       state.draggedMorph = null;
       state.lastDragPosition = null;
     });
-  state.dragDelta = evt.position.subPt(state.lastDragPosition);
   return evt;
 }
 
@@ -425,18 +465,30 @@ export class EventDispatcher {
         defaultEvent = new Event(type, domEvt, this, eventTargets, hand, halo),
         events = [defaultEvent];
 
+    if (type === "click") {
+      // Note, we currently don't subscribe to click DOM events, this is just a
+      // convenience for event simulation
+      return this.createMorphicEventsFromDOMEvent({...domEvt, type: "pointerdown"}, targetMorph).concat(
+          this.createMorphicEventsFromDOMEvent({...domEvt, type: "pointerup"}, targetMorph))
+    }
+
     if (type === "pointerdown") {
       // so that we receive pointerups even if the cursor leaves the browser
       if (typeof domEvt.target.setPointerCapture === "function") {
         try {
+          // rk 2016-07-18: This currently doesn't work well with running a new
+          // morphic world inside an old Lively...
           // domEvt.target.setPointerCapture(domEvt.pointerId);
         } catch (e) {}
       }
 
       // We remember the morph that we clicked on until we get an up event.
       // This allows us to act on this info later
-      state.clickedOnMorph = targetMorph;
-      state.clickedOnPosition = defaultEvent.position;
+      defaultEvent.onDispatch(() => {
+        state.clickedOnMorph = targetMorph;
+        state.clickedOnPosition = defaultEvent.position;
+      });
+
     } else if (type === "pointerup") {
       state.clickedOnMorph = null;
 
@@ -482,12 +534,13 @@ export class EventDispatcher {
       }
 
     } else if (type === "select") {
-      state.selectionMorph = targetMorph;
+      defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
     }
 
     if (state.selectionMorph && (type === "keydown" || type === "pointerdown" || type === "blur" || type === "focus")) {
-      events.push(new Event("deselect", domEvt, this, [state.selectionMorph], hand));
-      state.selectionMorph = null;
+      events.push(
+        new Event("deselect", domEvt, this, [state.selectionMorph], hand)
+          .onDispatch(() => state.selectionMorph = null));
     }
 
     return events;
@@ -500,10 +553,10 @@ export class EventDispatcher {
   dispatchEvent(evt) {
     var method = typeToMethodMap[evt.type],
         err;
-
     if (!method)
       throw new Error(`dispatchEvent: ${evt.type} not yet supported!`);
 
+    evt.onDispatchCallbacks.forEach(ea => ea());
     for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
       try {
         evt.targetMorphs[j][method](evt);
@@ -519,12 +572,29 @@ export class EventDispatcher {
   }
 
   dispatchDOMEvent(domEvt) {
-    var target = domEvt.target,
-        targetId = target.id,
+    var targetNode = domEvt.target,
+        targetId = targetNode.id,
         targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
-    if (targetMorph)
-      this.createMorphicEventsFromDOMEvent(domEvt, targetMorph)
-        .forEach(evt => this.dispatchEvent(evt))
+    if (!targetMorph) {
+      console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
+      return;
+    }
+    this.createMorphicEventsFromDOMEvent(domEvt, targetMorph)
+      .forEach(evt => this.dispatchEvent(evt))
   }
 
+  simulateDOMEvents(...eventSpecs) {
+    var doc = (this.emitter.document || this.emitter.ownerDocument);
+    for (let spec of eventSpecs) {
+      let {target, position} = spec;
+      if (!target) {
+        if (!position) target = this.world;
+        else target = this.world.morphsContainingPoint(position)[0];
+      }
+      if (target.isMorph) {
+        spec = {...spec, target: doc.getElementById(target.id)};
+      }
+      this.dispatchDOMEvent(new SimulatedDOMEvent(spec));
+    }
+  }
 }
