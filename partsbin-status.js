@@ -1,5 +1,6 @@
 "format esm";
 
+import { join } from "./helpers.js";
 import { createPartSpaceUpdate } from "./partsbin-update.js";
 import { TextFlow } from "./morphic-helpers.js";
 
@@ -35,7 +36,7 @@ function getSummaryFor(update) {
 export class ReporterWidget {
 
   constructor(baseDir, partSpaceName, fromURL, toURL) {
-    this.baseDir = baseDir;
+    this.livelyDir = join(baseDir, "LivelyKernel")
     this.partSpaceName = partSpaceName;
     this.fromURL = fromURL;
     this.toURL = toURL;
@@ -48,22 +49,22 @@ export class ReporterWidget {
         name = meta.partName,
         status = update.status,
         report = [[name, {fontWeight: "bold"}], this.textFlow.br],
-        button, localStatus, remoteStatus;
+        button, localStatus, remoteStatus,
+        widget = this;
 
     if (status === "unknown") {
       report = report.concat("status unknown (?)", this.textFlow.br);
     } else {
       if (status === "to-missing") {
         report = report.concat("doesn't exist locally",
-          this.textFlow.button(button, () => {
+          this.textFlow.button("install", () => {
             var indicator;
             lively.ide.withLoadingIndicatorDo(`installing ${name}`)
               .then(i => indicator = i)
-              .then(() => update.runUpdate(this.baseDir))
-              .then(out => { $world.inform(out); })
+              .then(() => update.runUpdate(widget.livelyDir))
               .catch(err => $world.inform(String(err.stack || err)))
               .then(() => indicator.remove());
-          }, {update}));
+          }, {update, name, widget}));
       } else {
         report = report.concat(`local changes? ${ status === "to-changed" || status === "both-changed" ? "yes" : "no"}`);
       }
@@ -75,15 +76,14 @@ export class ReporterWidget {
         case "from-changed":
         case "both-changed":
           report = report.concat("remote changes? yes",
-          this.textFlow.button(button, () => {
+          this.textFlow.button("update", () => {
             var indicator;
             lively.ide.withLoadingIndicatorDo(`updating ${name}`)
               .then(i => indicator = i)
-              .then(() => update.runUpdate(this.baseDir))
-              .then(out => { $world.inform(out); })
+              .then(() => update.runUpdate(widget.livelyDir))
               .catch(err => $world.inform(String(err.stack || err)))
               .then(() => indicator.remove());
-          }, {update}));
+          }, {update, name, widget}));
           break;
         default:
           report = report.concat("remote changes? no");
@@ -91,62 +91,6 @@ export class ReporterWidget {
       report = report.concat(this.textFlow.br);
     }
   
-    return report.concat(this.textFlow.br, this.textFlow.br);
-  }
-
-  renderMorphicSummaryForPackage(p, packages) {
-    var report = [[p.name, {fontWeight: "bold"}], `at ${p.directory}`];
-    if (!p.exists || !p.hasGitRepo) return report.concat(
-      this.textFlow.br,
-      !p.exists ? "  does not exist!" : "  is not a git repository!",
-      this.textFlow.button("install", () => {
-        var indicator;
-        lively.ide.withLoadingIndicatorDo(`installing ${p.name}`)
-          .then(i => indicator = i)
-          .then(() => p.installOrUpdate(packages))
-          .then(out => { $world.inform(out); })
-          .catch(err => $world.inform(String(err.stack || err)))
-          .then(() => indicator.remove());
-      }, {p, packages}), this.textFlow.br, this.textFlow.br);
-
-    report = report.concat(this.textFlow.button("cd", () => {
-        lively.shell.setWorkingDirectory(p.directory);
-      }, {p}), this.textFlow.br);
-
-    if (!p.currentBranch) report = report.concat("not on a branch");
-    else report = report.concat(`on branch ${p.currentBranch}`);
-
-    report = report.concat(
-      this.textFlow.button("log", () =>
-
-        Promise.resolve()
-        .then(() => p.hasRemoteChanges && lively.shell.run(`cd ${p.directory};  git fetch --all`))
-        .then(() => lively.shell.run(`cd ${p.directory};  git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative -n 200 --all;`))
-        .then(cmd =>
-          $world.addCodeEditor({title: `Commits of ${p.name}`, content: cmd.output, textMode: "text", extent: pt(700,600)})
-            .getWindow().comeForward()), {p}), this.textFlow.br);
-
-    report = report.concat(
-      "local changes?",
-      p.hasLocalChanges ? "yes" : "no",
-      p.hasLocalChanges ? this.textFlow.button("diff", () =>
-        lively.shell.run(`cd ${p.directory}; git diff`).then(cmd =>
-          $world.addCodeEditor({title: `Diff ${p.name}`,content: cmd.output,textMode: "diff", extent: pt(500,600)})
-            .getWindow().comeForward()), {p}) : this.textFlow.nothing, this.textFlow.br);
-
-    report = report.concat(
-      "remote changes?",
-      p.hasRemoteChanges ? "yes" : "no",
-      p.hasRemoteChanges ? this.textFlow.button("update", () => {
-        var indicator;
-        lively.ide.withLoadingIndicatorDo(`updating ${p.name}`)
-          .then(i => indicator = i)
-          .then(() => p.installOrUpdate())
-          .then(out => { $world.inform(out); })
-          .catch(err => $world.inform(String(err.stack || err)))
-          .then(() => indicator.remove());
-      }, {p}) : this.textFlow.nothing, this.textFlow.br);
-
     return report.concat(this.textFlow.br, this.textFlow.br);
   }
 
