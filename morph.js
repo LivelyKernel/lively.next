@@ -205,14 +205,13 @@ export class Morph {
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
   adjustOrigin(newOrigin) {
-    var oldOrigin = this.origin;
-    var oldPos = this.globalBounds().topLeft();
+    var oldOrigin = this.origin,
+        oldPos = this.globalBounds().topLeft();
     this.origin = newOrigin;
-    this.submorphs.forEach((m) => {
-      m.position = m.position.subPt(newOrigin.subPt(oldOrigin));
-    });
-    var newPos = this.globalBounds().topLeft();
-    var globalDelta = oldPos.subPt(newPos)
+    this.submorphs.forEach((m) =>
+      m.position = m.position.subPt(newOrigin.subPt(oldOrigin)));
+    var newPos = this.globalBounds().topLeft(),
+        globalDelta = oldPos.subPt(newPos)
     this.globalPosition = this.globalPosition.addPt(globalDelta);
   }
 
@@ -503,12 +502,10 @@ export class Morph {
   getGlobalTransform() {
     var globalTransform = new Transform(),
         world = this.world();
-    for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner)
-    {
-      globalTransform.preConcatenate(new Transform(morph.origin))
-                     .preConcatenate(morph.getTransform())
-                     
-                     
+    for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner) {
+      globalTransform
+        .preConcatenate(new Transform(morph.origin))
+        .preConcatenate(morph.getTransform())
     }
     return globalTransform;
   }
@@ -520,22 +517,16 @@ export class Morph {
     var scale = this.scale,
         pos = this.position,
         moveToOrigin = new Transform(this.origin);
-    
+
     if (typeof scale === "number") scale = pt(scale,scale);
     // FIXME reactivate
     // if (this.isClip()) {
     //   var scroll = this.getScroll();
     //   pos = pos.subXY(scroll[0], scroll[1]);
     // }
-    
-//    return new Transform(pos, this.rotation, scale)
 
-    return moveToOrigin
-              .inverse()
-              .preConcatenate(
-                new Transform(pos, this.rotation, scale)
-                )
-              //.preConcatenate(moveToOrigin);
+    return moveToOrigin.inverse()
+      .preConcatenate(new Transform(pos, this.rotation, scale));
   }
 
   setTransform(tfm) {
@@ -632,7 +623,8 @@ export class Morph {
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get dragTriggerDistance() { return 5; }
+  get dragTriggerDistance() { return 0; }
+
   onMouseDown(evt) {
     if (this === evt.targetMorph) {
       setTimeout(() => {

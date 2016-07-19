@@ -1,10 +1,10 @@
-import { Ellipse, Morph, Text } from "./index.js"
+import { Ellipse, Morph } from "./index.js"
 import { Color, pt, rect } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
 const itemExtent = pt(24,24);
 
-export class HaloItem extends Ellipse {
+class HaloItem extends Ellipse {
 
   constructor(props) {
     super(Object.assign({

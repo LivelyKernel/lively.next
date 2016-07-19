@@ -58,10 +58,6 @@ class BoundsMarker extends Morph {
 
   get isEpiMorph() { return true }
 
-  get markerStyle() {
-    return {fill: Color.red}
-  }
-
   markerLength(forBounds) {
     forBounds = forBounds.insetBy(-2);
     var length = Math.min(forBounds.width, forBounds.height);
@@ -69,7 +65,7 @@ class BoundsMarker extends Morph {
   }
 
   createMarkerEdge() {
-      var b = morph(this.markerStyle);
+      var b = morph({fill: Color.red, reactsToPointer: false});
       // b.isEpiMorph = true;
       // b.ignoreEvents();
       return b;
