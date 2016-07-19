@@ -66,7 +66,7 @@ describe("full morphic setup with renderer and events", () => {
         await submorph1.whenRendered();
         expect(renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
           .match(/translate\(10px,\s*10px\)/)
-          .match(/rotate\(45deg\)/)
+          .match(/rotate\((45|44\.9+)deg\)/)
           .match(/scale\(1,\s*1\)/)
       });
 

@@ -21,35 +21,34 @@ var world, submorph1, submorph2, submorph3, submorph4,
     eventLog, renderer, eventDispatcher;
 
 async function setup() {
-  world = new World({
-    name: "world", extent: pt(300,300),
-    submorphs: [{
-        name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
-        submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
-      },
-      {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
-      {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "old text"}
-    ]
-  })
+  domEnv = await createDOMEnvironment();
+  world = new World({name: "world", extent: pt(300,300)})
+  renderer = new Renderer(world, domEnv.document.body, domEnv);
+  renderer.startRenderWorldLoop();
+  eventDispatcher = new EventDispatcher(domEnv.window, world).install();
+
+  world.submorphs = [{
+      name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
+      submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
+    },
+    {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
+    {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "old text"}];
+
   submorph1 = world.submorphs[0];
   submorph2 = world.submorphs[0].submorphs[0];
   submorph3 = world.submorphs[1];
   submorph4 = world.submorphs[2];
 
-  domEnv = await createDOMEnvironment();
-  renderer = new Renderer(world, domEnv.document.body, domEnv);
-  renderer.startRenderWorldLoop();
-
-  eventDispatcher = new EventDispatcher(domEnv.window, world).install();
-
   eventLog = [];
   [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
+  
+  await world.whenRendered();
 }
 
 function teardown() {
   eventDispatcher && eventDispatcher.uninstall();
   renderer && renderer.clear();
-  domEnv.destroy();
+  domEnv && domEnv.destroy();
 }
 
 function assertEventLogContains(stuff) {

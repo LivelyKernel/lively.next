@@ -72,6 +72,7 @@ export class Renderer {
     this.domEnvironment = domEnvironment;
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
+    FontMetric.initDefault(domEnvironment.document);
   }
 
   clear() {
@@ -79,8 +80,7 @@ export class Renderer {
     this.domNode && this.domNode.parentNode.removeChild(this.domNode);
     this.domNode = null;
     this.renderMap = new WeakMap();
-    this._fontMetric && this._fontMetric.uninstall();
-    this._fontMetric = null;
+    FontMetric.removeDefault();
   }
 
   ensureDefaultCSS() {
@@ -116,24 +116,29 @@ export class Renderer {
       null;
   }
 
-  get fontMetric() {
-    if (!this._fontMetric) {
-      this._fontMetric = new FontMetric();
-      this._fontMetric.install(this.rootNode);
-    }
-    return this._fontMetric;
-  }
 }
 
 
 export class FontMetric {
 
-  static default(doc = document) {
+  static default() {
+    if (!this._fontMetric) 
+      throw new Error("FontMetric has not yet been initialized!")
+    return this._fontMetric;
+  }
+
+  static initDefault(doc = typeof document !== "undefined" ? document : null) {
     if (!this._fontMetric) {
       this._fontMetric = new FontMetric();
-      this._fontMetric.install(doc.body);
+      this._fontMetric.install(doc, doc.body);
     }
-    return this._fontMetric;
+  }
+
+  static removeDefault() {
+    if (this._fontMetric) {
+      this._fontMetric.uninstall();
+      this._fontMetric = null;
+    }
   }
 
   constructor() {
@@ -142,9 +147,9 @@ export class FontMetric {
     this.element = null;
   }
 
-  install(parentEl = document.body) {
+  install(doc, parentEl) {
     this.parentElement = parentEl;
-    this.element = document.createElement("div");
+    this.element = doc.createElement("div");
     this.setMeasureNodeStyles(this.element.style, true);
     this.parentElement.appendChild(this.element);
   }

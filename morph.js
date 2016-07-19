@@ -737,10 +737,6 @@ export class World extends Morph {
     return this.submorphs.filter(ea => ea.isHand);
   }
 
-  get fontMetric() {
-    return this._renderer && this._renderer.fontMetric
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

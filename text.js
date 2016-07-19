@@ -25,6 +25,8 @@ export class Text extends Morph {
     this._needsFit = false;
   }
 
+  get fontMetric() { return FontMetric.default(); }
+
   get isText() { return true }
 
   get _nodeType() { return 'textarea'; }
@@ -94,23 +96,20 @@ export class Text extends Morph {
   }
 
   fit() {
-    if (this.fixedHeight && this.fixedWidth) return;
+    var {fixedHeight, fixedWidth} = this;
+    if (fixedHeight && fixedWidth) return;
 
-    var fontMetric = FontMetric.default(),
-        {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(
-          this.fontFamily, this.fontSize, this.placeholder || " "),
-        {height, width} = fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
-    if (!this.fixedHeight)
+    var {fontMetric, fontFamily, fontSize, placeholder, textString} = this,
+        {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(fontFamily, fontSize, placeholder || " "),
+        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, textString);
+    if (!fixedHeight)
       this.height = Math.max(placeholderHeight, height);
-    if (!this.fixedWidth)
+    if (!fixedWidth)
       this.width = Math.max(placeholderWidth, width);
   }
 
   fitIfNeeded() {
-    if (this._needsFit) {
-      this.fit();
-      this._needsFit = false;
-    }
+    if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
   onInput(evt) {
