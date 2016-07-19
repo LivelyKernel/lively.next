@@ -850,7 +850,7 @@
   // load support
 
   var ensureImportsAreLoaded = function () {
-    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
       var body, imports;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -876,9 +876,8 @@
         }
       }, _callee, this);
     }));
-
     return function ensureImportsAreLoaded(_x, _x2, _x3) {
-      return _ref.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -886,7 +885,7 @@
   // transpiler to make es next work
 
   var getEs6Transpiler = function () {
-    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
       var babel, babelPluginPath, babelPath, babelPlugin;
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
         while (1) {
@@ -959,9 +958,8 @@
         }
       }, _callee2, this);
     }));
-
     return function getEs6Transpiler(_x4, _x5, _x6) {
-      return _ref2.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -1019,7 +1017,7 @@
   }
 
   var runEval$1 = function () {
-    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
       var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -1112,9 +1110,8 @@
         }
       }, _callee3, this);
     }));
-
     return function runEval(_x7, _x8, _x9) {
-      return _ref3.apply(this, arguments);
+      return ref.apply(this, arguments);
     };
   }();
 
@@ -1128,7 +1125,7 @@
     createClass(EvalStrategy, [{
       key: "runEval",
       value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -1144,7 +1141,7 @@
         }));
 
         function runEval(_x, _x2) {
-          return _ref.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -1152,7 +1149,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -1168,7 +1165,7 @@
         }));
 
         function keysOfObject(_x3, _x4) {
-          return _ref2.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1188,7 +1185,7 @@
     createClass(SimpleEvalStrategy, [{
       key: "runEval",
       value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -1210,7 +1207,7 @@
         }));
 
         function runEval(_x5, _x6) {
-          return _ref3.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -1218,7 +1215,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
           var _this2 = this;
 
           var result;
@@ -1244,7 +1241,7 @@
         }));
 
         function keysOfObject(_x7, _x8) {
-          return _ref4.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1274,7 +1271,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
           var conf;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
@@ -1295,7 +1292,7 @@
         }));
 
         function runEval(_x9, _x10) {
-          return _ref5.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -1303,7 +1300,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
           var result;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -1327,7 +1324,7 @@
         }));
 
         function keysOfObject(_x11, _x12) {
-          return _ref6.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1368,7 +1365,7 @@
     }, {
       key: "sendRequest",
       value: function () {
-        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
           var method, content;
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
@@ -1397,7 +1394,7 @@
         }));
 
         function sendRequest(_x13, _x14) {
-          return _ref7.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return sendRequest;
@@ -1405,7 +1402,7 @@
     }, {
       key: "sendRequest_web",
       value: function () {
-        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
           var res;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -1445,7 +1442,7 @@
         }));
 
         function sendRequest_web(_x15, _x16) {
-          return _ref8.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return sendRequest_web;
@@ -1453,7 +1450,7 @@
     }, {
       key: "sendRequest_node",
       value: function () {
-        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
           var urlParse, http, opts;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -1489,7 +1486,7 @@
         }));
 
         function sendRequest_node(_x17, _x18) {
-          return _ref9.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return sendRequest_node;
@@ -1497,7 +1494,7 @@
     }, {
       key: "runEval",
       value: function () {
-        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
           var payLoad;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -1516,7 +1513,7 @@
         }));
 
         function runEval(_x19, _x20) {
-          return _ref10.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return runEval;
@@ -1524,7 +1521,7 @@
     }, {
       key: "keysOfObject",
       value: function () {
-        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
+        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
           var payLoad, result;
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
@@ -1557,7 +1554,7 @@
         }));
 
         function keysOfObject(_x21, _x22) {
-          return _ref11.apply(this, arguments);
+          return ref.apply(this, arguments);
         }
 
         return keysOfObject;
@@ -1579,7 +1576,7 @@
     console.assert(evalResult.isError, "processEvalError called with non-error eval result");
     var error = String(value),
         stack = value.stack,
-        warning = warnings.join("\n");
+        warning = warnings ? warnings.join("\n") : "";
     if (error.match(/syntaxerror/i) && warning.match(/syntaxerror/i)) {
       return warning + "\n\n" + error;
     }
