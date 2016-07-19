@@ -107,7 +107,7 @@ export class Renderer {
     // return this.domNode.ownerDocument.getElementById(morph.id);
 
     // test, for scoped lookup, fixing the issue mentioned above
-    return this.domNode.querySelector("#" + morph.id);
+    return this.domNode ? this.domNode.querySelector("#" + morph.id) : null;
   }
 
   getMorphForNode(node) {
