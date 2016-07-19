@@ -149,14 +149,16 @@ describe("events", () => {
     var prevGlobalPos = m2.globalPosition;
 
     world.renderAsRoot(renderer);
-
-    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointerdown", pt(60,60)));
-    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointermove", pt(65,65)));
+    eventDispatcher.simulateDOMEvents(
+      {type: "pointerdown", target: m2, position: pt(60,60)},
+      {type: "pointermove", target: m2, position: (pt(65,65))});
     expect(m2.globalPosition).equals(prevGlobalPos);
     expect(m2.owner).not.equals(world);
-    eventDispatcher.dispatchDOMEvent(fakeEvent(m2, "pointermove", pt(50,50)));
+    eventDispatcher.simulateDOMEvents(
+      {type: "pointermove", target: m2, position: pt(50,50)});
     expect(m2.globalPosition).equals(pt(45,45));
-    eventDispatcher.dispatchDOMEvent(fakeEvent(m1, "pointerup", pt(2,2)));
+    eventDispatcher.simulateDOMEvents(
+      {type: "pointerup", target: m1, position: (pt(2,2))});
     expect(m2.owner).equals(m1);
     expect(m2.globalPosition).equals(pt(45,45));
   });
