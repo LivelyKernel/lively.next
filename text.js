@@ -174,5 +174,9 @@ class TextSelection {
   }
 
   get text() { return this.textMorph.textString.substring(this.start, this.end) }
-
+  set text(val) {
+    var oldText = this.textMorph.textString,
+        newText = oldText.substr(0, this.start) + val + oldText.substr(this.end);
+    this.textMorph.textString = newText;
+  }
 }
