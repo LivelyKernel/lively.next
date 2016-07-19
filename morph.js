@@ -205,8 +205,12 @@ export class Morph {
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
 
   adjustOrigin(newOrigin) {
+    var oldOrigin = this.origin;
     var oldPos = this.globalBounds().topLeft();
     this.origin = newOrigin;
+    this.submorphs.forEach((m) => {
+      m.position = m.position.subPt(newOrigin.subPt(oldOrigin));
+    });
     var newPos = this.globalBounds().topLeft();
     var globalDelta = oldPos.subPt(newPos)
     this.globalPosition = this.globalPosition.addPt(globalDelta);
@@ -214,14 +218,11 @@ export class Morph {
 
   bounds() {
     var tfm = this.getTransform(),
-        bounds = this.innerBounds(),
-        toOrigin = new Transform(this.origin),
-        fromOrigin = new Transform(this.origin.negated());
+        bounds = this.innerBounds();
 
-    tfm = fromOrigin.preConcatenate(tfm).preConcatenate(toOrigin);
     bounds = tfm.transformRectToRect(bounds);
 
-    var subBounds = this.submorphBounds(tfm);
+    var subBounds = this.submorphBounds();
     if (subBounds) bounds = bounds.union(subBounds);
 
     // FIXME: reactivate when clipping is done
@@ -237,7 +238,7 @@ export class Morph {
   }
 
   setBounds(bounds) {
-    this.position = bounds.topLeft();
+    this.position = bounds.topLeft().addPt(this.origin);
     this.extent = bounds.extent();
   }
 
@@ -247,19 +248,28 @@ export class Morph {
   }
 
   globalBounds() {
-    return this.owner ?
-      this.getGlobalTransform().transformRectToRect(this.innerBounds()) :
-      this.bounds();
+    if(this.owner) {
+       var tfm = new Transform()
+                  .preConcatenate(new Transform(this.origin).inverse())
+                  .preConcatenate(this.getGlobalTransform()),
+          bounds = tfm.transformRectToRect(this.innerBounds()),
+          subBounds = this.submorphBounds(this.getGlobalTransform());
+        if (subBounds) bounds = bounds.union(subBounds);
+        return bounds;
+    } else {
+      return this.bounds();
+    }
   }
 
   submorphBounds(tfm) {
     tfm = tfm || this.getTransform();
     var subBounds;
     for (var i = 0; i < this.submorphs.length; i++) {
-      var morphBounds = this.submorphs[i].bounds();
+      var morphBounds = this.submorphs[i].globalBounds();
       subBounds = subBounds ? subBounds.union(morphBounds) : morphBounds;
     }
-    return subBounds ? tfm.transformRectToRect(subBounds) : null;
+    return subBounds;
+    // return subBounds ? tfm.transformRectToRect(subBounds) : null;
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
@@ -495,27 +505,37 @@ export class Morph {
         world = this.world();
     for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner)
     {
-      globalTransform.preConcatenate(new Transform(morph.origin.negated()))
+      globalTransform.preConcatenate(new Transform(morph.origin))
                      .preConcatenate(morph.getTransform())
-                     .preConcatenate(new Transform(morph.origin));
+                     
+                     
     }
     return globalTransform;
   }
 
-  get globalPosition() { return this.owner.worldPoint(this.position) }
-  set globalPosition(p) { return this.position = this.owner ? this.owner.localize(p) : p; }
+  get globalPosition() { return this.worldPoint(pt(0,0)) }
+  set globalPosition(p) { return this.position = (this.owner ? this.owner.localize(p) : p); }
 
-  getTransform () {
+  getTransform() {
     var scale = this.scale,
-        pos = this.position;
+        pos = this.position,
+        moveToOrigin = new Transform(this.origin);
+    
     if (typeof scale === "number") scale = pt(scale,scale);
     // FIXME reactivate
     // if (this.isClip()) {
     //   var scroll = this.getScroll();
     //   pos = pos.subXY(scroll[0], scroll[1]);
     // }
+    
+//    return new Transform(pos, this.rotation, scale)
 
-    return new Transform(pos, this.rotation, scale);
+    return moveToOrigin
+              .inverse()
+              .preConcatenate(
+                new Transform(pos, this.rotation, scale)
+                )
+              //.preConcatenate(moveToOrigin);
   }
 
   setTransform(tfm) {

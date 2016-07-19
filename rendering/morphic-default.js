@@ -1,4 +1,5 @@
 import vdom from "virtual-dom";
+import { Transform } from "lively.graphics"
 
 var {h, diff, patch, create} = vdom;
 
@@ -35,17 +36,23 @@ export function renderMorph(morph, renderer) {
     visible,
     position: {x,y},
     extent: {x: width, y: height},
-    origin: {x: originX, y: originY},
+    origin,
     fill, borderWidth, borderColor, borderRadius: br,
     clipMode,
-    reactsToPointer
+    reactsToPointer,
+    owner
   } = morph;
 
   var shapedStyle = Object.assign(
 
     {
-      transform: morph.getTransform().toCSSTransformString(),
-      transformOrigin: `${originX}px ${originY}px `,
+      transform: new Transform()
+                        .preConcatenate(new Transform(morph.origin))
+                        .preConcatenate(morph.getTransform())
+                        .preConcatenate(new Transform(morph.origin).inverse())
+                        .preConcatenate(new Transform(owner && owner.origin))
+                        .toCSSTransformString(),
+      transformOrigin: `${origin.x}px ${origin.y}px `,
       position: "absolute",
       visibility: visible ? "visible" : "hidden",
       width: width + 'px', height: height + 'px',
