@@ -134,6 +134,11 @@ function normalizeHook(proceed, name, parent, parentAddress) {
   var System = this;
   if (name === "..") name = '../index.js'; // Fix ".."
 
+  // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
+  // names with double slashes which causes module id issues later. This fixes
+  // that...
+  name = name.replace(/([^:])\/\/+/g, "$1\/");
+
   return proceed(name, parent, parentAddress)
     .then(result => {
 
