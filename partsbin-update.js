@@ -47,7 +47,7 @@ class PartSpaceUpdate {
   async runUpdates(livelyDir, log) {
     var partUpdates = this.computeUpdates();
     for (let partUpdate of partUpdates) {
-      await partUpdate.runUpdate(livelyDir, log);
+      await partUpdate.runUpdate(livelyDir, log, true);
     }
   }
 
@@ -86,7 +86,7 @@ class PartItemUpdate {
     return this.status;
   }
   
-  async runUpdate(livelyDir, log) {
+  async runUpdate(livelyDir, log, prompt = false) {
     var category = this.fromSpace.getName(),
         fromURL = this.fromSpace.getURL().toString().replace(/\/$/, "").slice(0, -category.length),
         status = this.determineStatus();
@@ -99,7 +99,7 @@ class PartItemUpdate {
             console.log(`Part '${this.fromItem.name}' is up-to-date.`);
             break;
         case "both-changed":
-            if (!(await $world.confirm(`Do you want to update part '${this.fromItem.name}'?`))) {
+            if (prompt && !(await $world.confirm(`Do you want to update part '${this.fromItem.name}'?`))) {
                 break;
             } // else fall through
         case "to-missing":
