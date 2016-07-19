@@ -504,6 +504,7 @@ export class EventDispatcher {
       }
 
     } else if (type === "pointermove") {
+
       // Are we dragging a morph? If so the move gets only send to the world
       // and the drag only send to the dragged morph
       if (hand.carriesMorphs()) {
@@ -515,19 +516,20 @@ export class EventDispatcher {
 
       // Start dragging when we are holding the hand pressed and and move it
       // beyond targetMorph.dragTriggerDistance
-      } else if (state.clickedOnMorph === targetMorph
+      } else if (state.clickedOnMorph && state.clickedOnPosition
               && targetMorph.draggable
               && !state.draggedMorph
               && !hand.carriesMorphs()
               && state.clickedOnPosition) {
 
-        var dist = state.clickedOnPosition.dist(defaultEvent.position);
-        if (dist > targetMorph.dragTriggerDistance) {
+        var dist = state.clickedOnPosition.dist(defaultEvent.position),
+            dragTarget = state.clickedOnMorph;
+        if (dist > dragTarget.dragTriggerDistance) {
           // FIXME should grab really be triggered through drag?
-          if (targetMorph.grabbable) {
-            events.push(new Event("grab", domEvt, this, [targetMorph], hand, halo));
+          if (dragTarget.grabbable) {
+            events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo));
           } else {
-            events.push(dragStartEvent(domEvt, this, targetMorph, state, hand, halo));
+            events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo));
           }
           defaultEvent.targetMorphs = [this.world];
         }
