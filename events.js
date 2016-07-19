@@ -160,10 +160,10 @@ var Keys = {
     }
     return function(domEvt) {
       var id, c = domEvt.keyCode,
-          shifted = domEvt.isShiftDown(),
-          ctrl = domEvt.isCtrlDown(),
-          cmd = domEvt.isCommandKey(),
-          alt = domEvt.isAltDown();
+          shifted = this.isShiftDown(domEvt),
+          ctrl = this.isCtrlDown(domEvt),
+          cmd = this.isCommandKey(domEvt),
+          alt = this.isAltDown(domEvt);
       if ((c >= 65 && c <= 90)) {
         id = String.fromCharCode(c).toUpperCase();
       } else {
@@ -218,9 +218,9 @@ var Keys = {
     var keyParts = [];
     // modifiers
     if (domEvt.metaKey || domEvt.keyIdentifier === 'Meta') keyParts.push('Command');
-    if (domEvt.isCtrlDown()) keyParts.push('Control');
-    if (domEvt.isAltDown()) keyParts.push('Alt');
-    if (domEvt.isShiftDown()) keyParts.push('Shift');
+    if (this.isCtrlDown(domEvt)) keyParts.push('Control');
+    if (this.isAltDown(domEvt)) keyParts.push('Alt');
+    if (this.isShiftDown(domEvt)) keyParts.push('Shift');
     // key
     var id;
     if (domEvt.keyCode === Event.KEY_TAB) id = 'Tab';
