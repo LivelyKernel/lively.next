@@ -45,7 +45,7 @@ export class ReporterWidget {
   
   renderMorphicSummaryForPart(update) {
     var fromItem = update.fromItem,
-        meta = fromItem.loadedMetaInfo,
+        meta = fromItem.getMetaInfo(),
         name = meta.partName,
         status = update.status,
         report = [[name, {fontWeight: "bold"}], this.textFlow.br],
