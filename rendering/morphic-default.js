@@ -54,7 +54,7 @@ export function renderMorph(morph, renderer) {
                         .toCSSTransformString(),
       transformOrigin: `${origin.x}px ${origin.y}px `,
       position: "absolute",
-      visibility: visible ? "visible" : "hidden",
+      display: visible ? "" : "none",
       width: width + 'px', height: height + 'px',
       backgroundColor: fill ? fill.toString() : "",
       "box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`,
