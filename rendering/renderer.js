@@ -54,16 +54,14 @@ export class Renderer {
   static default() { return this._default || new this() }
 
   constructor(world, rootNode, domEnvironment) {
-    if (!domEnvironment) {
-      if (typeof window !== "undefined" && typeof document !== "undefined")
-        domEnvironment = {window, document};
-      else
-        throw new Error("Morphic renderer cannot find DOM environment (window / document)!");
-    }
     if (!world || !world.isMorph)
       throw new Error(`Trying to initialize renderer with an invalid world morph: ${world}`)
     if (!rootNode || !("nodeType" in rootNode))
       throw new Error(`Trying to initialize renderer with an invalid root node: ${rootNode}`)
+    if (!domEnvironment) {
+      var doc = rootNode.ownerDocument;
+      domEnvironment = {window: System.global, document: doc};
+    }
     this.worldMorph = world;
     world._isWorld = true; // for world() method
     world._renderer = this;
@@ -94,6 +92,7 @@ export class Renderer {
     this.worldMorph.renderAsRoot(this);
     this.renderWorldLoopProcess = this.domEnvironment.window.requestAnimationFrame(() =>
       this.startRenderWorldLoop());
+    return this;
   }
 
   stopRenderWorldLoop() {
