@@ -369,7 +369,7 @@ describe("contains point", () => {
         morph1 =      morph({position: pt(0, 0), extent: pt(100, 100), fill: Color.red}),
         submorph =    morph({position: pt(20, 20), extent: pt(30, 30), fill: Color.green}),
         subsubmorph = morph({position: pt(25, 25), extent: pt(5, 5), fill: Color.blue}),
-        morph2 =      morph({position: pt(48, 48), extent: pt(100, 100), fill: Color.yellow});
+        morph2 =      morph({position: pt(48, 48), extent: pt(100, 100), fill: Color.yellow, origin: pt(90,90)});
 
     world.addMorph(morph1)
     morph1.addMorph(submorph)
