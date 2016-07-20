@@ -4,7 +4,7 @@
   "dependencies": {
     "bowser": "^1.4.1",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
-    "lively.lang": "^0.6.3",
+    "lively.lang": "^0.7.0",
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {
