@@ -3118,7 +3118,10 @@
     // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
     // names with double slashes which causes module id issues later. This fixes
     // that...
-    name = name.replace(/([^:])\/\/+/g, "$1\/");
+    // name = name.replace(/([^:])\/\/+/g, "$1\/");
+    name = name.replace(/.\/{2,}/g, function (match) {
+      return match[0] === ":" ? match : match[0] + "/";
+    });
 
     return proceed(name, parent, parentAddress).then(function (result) {
 
