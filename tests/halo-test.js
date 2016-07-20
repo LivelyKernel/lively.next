@@ -94,15 +94,13 @@ describe("halos", () => {
 
   it("active resize hides other halos and displays extent", () => {
     var halo = world.showHaloFor(submorph1),
-        resizeHalo = halo.resizeHalo()
-        otherHalos = halo.buttonControls.filter((b) => b != resizeHalo)
+        resizeHalo = halo.resizeHalo(),
+        otherHalos = halo.buttonControls.filter((b) => b != resizeHalo);
     resizeHalo.init();
     halo.alignWithTarget();
     expect(halo.activeButton).equals(resizeHalo);
-    expect(halo.propertyDisplay.displayedValue()).equals(submorph1.extent.toString());
-    otherHalos.forEach((h) => {
-      expect(h).to.have.property("visible", false);
-    });
+    expect(halo.propertyDisplay.displayedValue()).equals("100.0w 100.0h");
+    otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
 
   it("rotate rotates", () => {
@@ -119,7 +117,7 @@ describe("halos", () => {
     rotateHalo.init();
     halo.alignWithTarget();
     expect(halo.activeButton).equals(rotateHalo);
-    expect(halo.propertyDisplay.displayedValue()).equals(submorph1.rotation.toString());
+    expect(halo.propertyDisplay.displayedValue()).equals("0.0°");
     otherHalos.forEach((h) => {
       expect(h).to.have.property("visible", false);
     });

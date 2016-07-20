@@ -24,6 +24,51 @@ class HaloItem extends Ellipse {
           pos = pt(collWidth * col, rowHeight * row).subPt(itemExtent);
     this.setBounds(pos.extent(itemExtent));
   }
+
+  init() {}
+  update() {}
+  stop() {}
+  valueForPropertyDisplay() { return undefined; }
+
+}
+
+class HaloPropertyDisplay extends Morph {
+
+  constructor() {
+    super({
+      name: "propertyDisplay",
+      fill: Color.lightGray.withA(0.5),
+      borderRadius: 15,
+      extent: pt(100, 20),
+      position: pt(0,-22),
+      visible: false,
+      reactsToPointer: false
+    });
+
+    this.addMorph({
+      type: "text",
+      name: "textField",
+      readOnly: true,
+      position: pt(6,3),
+      extent: pt(90, 14),
+      fixedWidth: true,
+      fill: Color.red.withA(0),
+      fontSize: 12,
+      reactsToPointer: false
+    });
+  }
+
+  get isHaloItem() { return true; }
+
+  displayedValue() { return this.get("textField").textString; }
+
+  displayProperty(val) {
+    this.visible = true;
+    this.get("textField").textString = String(val);
+  }
+
+  disable() { this.visible = false; }
+
 }
 
 export class Halo extends Morph {
@@ -36,7 +81,6 @@ export class Halo extends Morph {
       fill: Color.transparent
     });
     this.state = {pointerId, target, draggedButton: null}
-    this.initPropertyDisplay();
     this.initButtons();
   }
 
@@ -45,6 +89,10 @@ export class Halo extends Morph {
   get target() { return this.state.target; }
 
   morphsContainingPoint(list) { return list }
+
+  get propertyDisplay() {
+    return this.getSubmorphNamed("propertyDisplay") || this.addMorph(new HaloPropertyDisplay());
+  }
 
   refocus(newTarget) {
     var owner = this.owner;
@@ -63,6 +111,10 @@ export class Halo extends Morph {
       origin: pt(12, 12),
       property: 'extent',
       halo: this,
+      valueForPropertyDisplay: () => {
+        var {width, height} = this;
+        return `${width.toFixed(1)}w ${height.toFixed(1)}h`;
+      },
       update: (delta) => {
         this.target.resizeBy(delta);
         this.alignWithTarget();
@@ -124,6 +176,7 @@ export class Halo extends Morph {
       property: 'position',
       location: {col: 2, row: 0},
       halo: this,
+      valueForPropertyDisplay: () => this.target.position,
       init() {
         this.halo.activeButton = this;
       },
@@ -175,6 +228,7 @@ export class Halo extends Morph {
       styleClasses: ["halo-item", "fa", "fa-repeat"],
       location: {col: 0, row: 3},
       halo: this,
+      valueForPropertyDisplay: () => num.toDegrees(this.target.rotation).toFixed(1) + "°",
       init(angleToTarget) {
         this.halo.activeButton = this;
         angle = angleToTarget;
@@ -243,6 +297,12 @@ export class Halo extends Morph {
       alignInHalo() {
         this.position = this.computePositionAtTarget();
       },
+      valueForPropertyDisplay: () => this.target.origin,
+      init() { this.halo.activeButton = this; },
+      stop() {
+        this.halo.activeButton = null;
+        this.halo.alignWithTarget();
+      },
       update: (delta) => {
         var oldOrigin = this.target.origin,
             globalOrigin = this.target.worldPoint(oldOrigin),
@@ -251,6 +311,8 @@ export class Halo extends Morph {
         this.target.adjustOrigin(this.target.origin.addPt(delta));
         this.alignWithTarget();
       },
+      onDragStart(evt) { this.init(); },
+      onDragEnd(evt) { this.stop(); },
       onDrag(evt) { this.update(evt.state.dragDelta); }
     }));;
   }
@@ -282,57 +344,27 @@ export class Halo extends Morph {
     ];
   }
 
-  initPropertyDisplay() {
-    const textField = new Text({
-      readOnly: true,
-      position: pt(6,3),
-      extent: pt(90, 14),
-      fixedWidth: true,
-      fill: Color.red.withA(0),
-      fontSize: 12,
-      isHaloItem: true
-    });
-    this.propertyDisplay = this.propertyDisplay || this.addMorph(
-      new Morph({
-        fill: Color.lightGray.withA(0.5),
-        borderRadius: 15,
-        extent: pt(100, 20),
-        position: pt(0,-22),
-        visible: false,
-        halo: this,
-        isHaloItem: true,
-        displayedValue() { return textField.textString },
-        displayProperty(property) {
-          this.visible = true;
-          textField.visible = true;
-          textField.textString = this.halo.target[property].toString();
-        },
-        disable() {
-          this.visible = false;
-          textField.visible = false;
-        },
-        submorphs: [textField]
-      }));
+  updatePropertyDisplay(haloItem) {
+    var val = haloItem.valueForPropertyDisplay();
+    if (typeof val !== "undefined")
+      this.propertyDisplay.displayProperty(val);
+    else
+      this.propertyDisplay.disable();
   }
 
   alignWithTarget() {
-    const {x, y, width, height} = this.target.globalBounds();
-    const origin = this.target.origin;
-    this.position = pt(x,y);
-    this.extent = pt(width, height);
-    this.propertyDisplay.disable();
-    this.buttonControls.forEach((button) => {
-      if (this.activeButton) {
-        if (this.activeButton == button){
-          button.visible = true;
-          this.propertyDisplay.displayProperty(button.property);
-        } else {
-          button.visible = false;
-        }
-      } else {
-        button.visible = true;
-      }
-        button.alignInHalo()});
+    const {x, y, width, height} = this.target.globalBounds(),
+          origin = this.target.origin;
+    this.setBounds(rect(x,y, width, height));
+    if (this.activeButton) {
+      this.buttonControls.forEach(ea => ea.visible = false);
+      this.activeButton.visible = true;
+      this.updatePropertyDisplay(this.activeButton);
+      this.activeButton.alignInHalo();
+    } else {
+      this.buttonControls.forEach(b => { b.visible = true; b.alignInHalo(); });
+      this.propertyDisplay.disable();
+    }
     this.originHalo().alignInHalo();
     return this;
   }
