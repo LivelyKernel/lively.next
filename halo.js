@@ -1,5 +1,5 @@
 import { Ellipse, Morph } from "./index.js"
-import { Color, pt, rect } from "lively.graphics";
+import { Color, pt, rect, Line } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
 const itemExtent = pt(24,24);
@@ -105,9 +105,8 @@ export class Halo extends Morph {
   resizeHalo() {
     return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
-      styleClasses: ["halo-item", "fa", "fa-expand"],
+      styleClasses: ["halo-item", "fa", "fa-arrows-alt"],
       location: {col: 3, row: 3},
-      rotation: -Math.PI / 2,
       origin: pt(12, 12),
       property: 'extent',
       halo: this,
@@ -115,20 +114,48 @@ export class Halo extends Morph {
         var {width, height} = this;
         return `${width.toFixed(1)}w ${height.toFixed(1)}h`;
       },
-      update: (delta) => {
-        this.target.resizeBy(delta);
-        this.alignWithTarget();
+      update(delta, proportional=false) {
+        delta = this.proportionalMode(proportional, delta);
+        this.halo.target.resizeBy(delta);
+        this.halo.alignWithTarget();
       },
-      init() {
+      init(proportional=false) {
+        this.proportionalMode(proportional);
         this.halo.activeButton = this;
       },
-      stop() {
+      stop(proportional=false) {
+        this.proportionalMode(proportional);
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
-      onDragStart(evt) { this.init() },
-      onDrag(evt) { this.update(evt.state.dragDelta) },
-      onDragEnd(evt) { this.stop() }
+      onDragStart(evt) { this.init(evt.isShiftDown()) },
+      onDrag(evt) { this.update(evt.state.dragDelta, evt.isShiftDown()) },
+      onDragEnd(evt) { this.stop(evt.isShiftDown()) },
+      // FIXME: keyboard events are not yet targeted to morphs
+      onKeyDown(evt) {
+        this.proportionalMode(evt.isShiftDown());
+      },
+      onKeyUp(evt) {
+        this.proportionalMode(false);
+      },
+      proportionalMode(active, delta=null) {
+        if (active) {
+          const diagonal = this.halo.toggleDiagonal(true);
+          this.styleClasses = ["halo-item", "fa", "fa-expand"];
+          this.rotation = -Math.PI / 2;
+          if (delta) {
+            delta = diagonal.scaleBy(
+                      diagonal.dotProduct(delta) /
+                      diagonal.dotProduct(diagonal));
+          }
+          return delta;
+        } else {
+          this.styleClasses = ["halo-item", "fa", "fa-arrows-alt"];
+          this.rotation = 0;
+          this.halo.toggleDiagonal(false);
+          return delta;
+        }
+      }
     }));
   }
 
@@ -289,10 +316,8 @@ export class Halo extends Morph {
       extent: pt(15,15),
       halo: this,
       computePositionAtTarget: () => {
-          return this.localizePointFrom(
-                      pt(0,0),
-                      this.target
-                    ).subPt(pt(7.5,7.5));
+          return this.localizePointFrom(pt(0,0),this.target)
+                     .subPt(pt(7.5,7.5));
       },
       alignInHalo() {
         this.position = this.computePositionAtTarget();
@@ -350,6 +375,36 @@ export class Halo extends Morph {
       this.propertyDisplay.displayProperty(val);
     else
       this.propertyDisplay.disable();
+  }
+
+  toggleDiagonal(active) {
+    // FIXME: Implement svg paths
+    // var diagonal = this.getSubmorphNamed("diagonal");
+    // if (visible) {
+    //   if (!diagonal) {
+    //     diagonal = new Path(
+    //       {name: "diagonal",
+    //       style: "dashed",
+    //       gradient: {0: Color.transparent,
+    //                   0.1: Color.red,
+    //                   0.9: Color.transparent},
+    //       path: [this.bounds().topLeft(),
+    //               this.bounds().bottomRight()]});
+    //     this.add(diagonal);
+    //   } else {
+    //     if (diagonal) {
+    //       diagonal.remove();
+    //     }
+    //   }
+    // }
+    if (active) {
+      this.diagonal = this.diagonal || 
+                      this.target.bounds().bottomRight()
+                          .subPt(this.target.bounds().topLeft());
+      return this.diagonal
+    } else {
+      this.diagonal = null;
+    }
   }
 
   alignWithTarget() {

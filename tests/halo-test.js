@@ -102,6 +102,16 @@ describe("halos", () => {
     expect(halo.propertyDisplay.displayedValue()).equals("100.0w 100.0h");
     otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
+  
+  it("resizes proportionally", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.resizeHalo().init(true);
+    expect(submorph1.extent.x).equals(submorph1.extent.y);
+    halo.resizeHalo().update(pt(10,5), true);
+    expect(submorph1.extent.x).equals(submorph1.extent.y);
+    halo.resizeHalo().update(pt(1000,500), true);
+    expect(submorph1.extent.x).equals(submorph1.extent.y);
+  });
 
   it("rotate rotates", () => {
     var halo = world.showHaloFor(submorph1);
