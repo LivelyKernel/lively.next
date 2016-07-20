@@ -67,7 +67,11 @@ export class ObjectDrawer extends Morph {
 
     function doCopy(evt) {
       evt.stop();
-      var copy = Object.assign(this.copy(), {position: evt.positionIn(this).negated()})
+      var copy = Object.assign(this.copy(), {position: evt.positionIn(this).negated()});
+      var name = copy.constructor.name.toLowerCase();
+      name = (name[0].match(/[aeiou]/) ? "an " : "a ") + name;
+      var i = 1; while (this.world().get(name + " " + i)) i++
+      copy.name = name + " " + i;
       evt.hand.grab(copy);
       delete copy.onDrag;
       copy.init && copy.init();
