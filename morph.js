@@ -547,7 +547,9 @@ export class Morph {
     return this.innerBoundsContainsPoint(this.owner == null ? p : this.localize(p));
   }
 
-  innerBoundsContainsPoint(p) { return this.innerBounds().containsPoint(p);  }
+  innerBoundsContainsPoint(p) { // p is in local coordinates (offset by origin)
+    return this.innerBounds().containsPoint(p.addPt(this.origin));  
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // undo / redo
