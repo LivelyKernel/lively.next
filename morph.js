@@ -633,12 +633,15 @@ export class Morph {
       }, 800);
     }
   }
+
   onMouseUp(evt) {}
   onMouseMove(evt) {}
+
   onInput(evt) {}
   onSelect(evt) {}
   onDeselect(evt) {}
   onKeyDown(evt) {}
+  onKeyUp(evt) {}
   onBlur(evt) {}
   onFocus(evt) {}
   onContextMenu(evt) {}
@@ -659,6 +662,13 @@ export class Morph {
     evt.hand.dropMorphsOn(this);
   }
 
+  onHoverIn(evt) {
+    console.log(`hoverin ${this}`)
+  }
+
+  onHoverOut(evt) {
+    console.log(`hoverout ${this}`)
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization

@@ -1,14 +1,19 @@
 /*global declare, it, describe, beforeEach, afterEach*/
-import { expect, chai } from "mocha-es6";
+import { expect } from "mocha-es6";
+import { promise } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { EventDispatcher } from "../events.js";
 import { morph, World, Renderer, show } from "../index.js";
 
+function wait(n) {
+  return n ? promise.delay(n*1000) : Promise.resolve();
+}
+
 var domEnv;
 
 function installEventLogger(morph, log) {
-  var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDragStart", "onDrag", "onDragEnd", "onGrab", "onDrop"]
+  var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDragStart", "onDrag", "onDragEnd", "onGrab", "onDrop", "onHoverIn", "onHoverOut"]
   loggedEvents.forEach(name => {
     morph[name] = function(evt) {
       log.push(name + "-" + morph.name);
@@ -175,6 +180,56 @@ describe("events", () => {
     expect(submorph4).property("textString").equals("really new text");
   });
 
+  describe("hover", () => {
+    
+    it("hover in + out", async () => {
+      eventDispatcher.simulateDOMEvents({target: submorph3, type: "pointerover", position: pt(50,50)});
+      // await wait();
+      eventDispatcher.simulateDOMEvents({target: submorph3, type: "pointerout", position: pt(50,50)});
+      assertEventLogContains(["onHoverIn-submorph3", "onHoverOut-submorph3"]);
+    });
+
+    it("hover in + out with submorph", () => {
+      // simulate the over/out dom events when moving
+      // - into submorph1 => into submorph2 (contained in 1) => out of submorph2 => out of submorph1
+      eventDispatcher.simulateDOMEvents(
+        {type: "pointerover", target: submorph1, position: pt(10,10)},
+        {type: "pointerout", target: submorph1, position: pt(15,20)},
+        {type: "pointerover", target: submorph2, position: pt(15,20)},
+        {type: "pointerout", target: submorph2, position: pt(15,41)},
+        {type: "pointerover", target: submorph1, position: pt(15,41)},
+        {type: "pointerout", target: submorph1, position: pt(9,9)
+      });
+      assertEventLogContains([
+        "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-submorph2", "onHoverOut-submorph1"]);
+    });
+
+    xit("hover in + out with submorph sticking out", () => {
+// setup();
+// teardown()
+
+      // simulate the over/out dom events when moving
+      // - into submorph1 => into submorph2 (contained in 1) => out of submorph2 => out of submorph1
+      eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(10,10)});
+      eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(15,20)});
+      eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph2, position: pt(15,20)});
+      eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph2, position: pt(15,41)});
+      eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(15,41)});
+      eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(9,9)});
+
+      // eventDispatcher.simulateDOMEvents(
+      //   {type: "pointerover", target: submorph1, position: pt(10,10)},
+      //   {type: "pointerout", target: submorph1, position: pt(15,20)},
+      //   {type: "pointerover", target: submorph2, position: pt(15,20)},
+      //   {type: "pointerout", target: submorph2, position: pt(15,40)},
+      //   {type: "pointerover", target: submorph1, position: pt(15,40)},
+      //   {type: "pointerout", target: submorph1, position: pt(15,20)
+      // });
+      assertEventLogContains([
+        "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-submorph2", "onHoverOut-submorph1"]);
+    });
+
+  });
 
   describe("simulation", () => {
 

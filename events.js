@@ -6,10 +6,28 @@ import bowser from "bowser";
 // event constants and type detection
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+const domEventsWeListenTo = [
+  'pointerdown',
+  'pointerup',
+  'pointermove',
+  "pointerover",
+  "pointerout",
+  'input',
+  'select',
+  'deselect' ,
+  'keydown',
+  'keyup',
+  'blur',
+  'focus',
+  'contextmenu'
+]
+
 const typeToMethodMap = {
   'pointerdown': "onMouseDown",
   'pointerup':   "onMouseUp",
   'pointermove': "onMouseMove",
+  'hoverin':     "onHoverIn",
+  'hoverout':    "onHoverOut",
   'drag':        "onDrag",
   'dragstart':   "onDragStart",
   'dragend':     "onDragEnd",
@@ -19,6 +37,7 @@ const typeToMethodMap = {
   'select':      "onSelect",
   'deselect' :   "onDeselect",
   'keydown':     "onKeyDown",
+  'keyup':       "onKeyUp",
   'blur':        "onBlur",
   'focus':       "onFocus",
   'contextmenu': "onContextMenu"
@@ -27,12 +46,12 @@ const typeToMethodMap = {
 const pointerEvents = [
   "pointerover",
   "pointerenter",
+  "pointerout",
+  "pointerleave",
   "pointerdown",
   "pointermove",
   "pointerup",
   "pointercancel",
-  "pointerout",
-  "pointerleave",
   "gotpointercapture",
   "lostpointercapture"
 ];
@@ -433,13 +452,21 @@ export class EventDispatcher {
     this.handlerFunctions = {};
     // A place where info about previous events can be stored, e.g. for tracking
     // what was clicked on
-    this.eventState = {};
+    this.eventState = {
+      selectionMorph: null,
+      clickedOnPosition: null,
+      clickedOnMorph: null,
+      draggedMorph: null,
+      dragDelta: null,
+      lastDragPosition: null,
+      hoverMorphs: [],
+    };
   }
 
   install() {
     if (this.installed) return this;
     this.installed = true;
-    Object.keys(typeToMethodMap).forEach(type => {
+    domEventsWeListenTo.forEach(type => {
       this.emitter.addEventListener(
         type, this.handlerFunctions[type] = evt => this.dispatchDOMEvent(evt))
     });
@@ -540,8 +567,23 @@ export class EventDispatcher {
 
     } else if (type === "select") {
       defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
+
+    } else if (type === "pointerover") {
+// console.log(`in ${targetMorph}`)
+      if (state.hoverMorphs.includes(targetMorph)) events = [];
+      else events = [new Event("hoverin", domEvt, this, [targetMorph], hand, halo).onDispatch(() =>
+                      arr.pushIfNotIncluded(state.hoverMorphs, targetMorph))]
+
+    } else if (type === "pointerout") {
+// console.log(`out ${targetMorph}`)
+      if (targetMorph.fullContainsWorldPoint(defaultEvent.position)) events = [];
+      
+      else events = [new Event("hoverout", domEvt, this, [targetMorph], hand, halo).onAfterDispatch(() =>
+                      arr.remove(state.hoverMorphs, targetMorph))]
     }
 
+
+    // FIXME...!
     if (state.selectionMorph && (type === "keydown" || type === "pointerdown" || type === "blur" || type === "focus")) {
       events.push(
         new Event("deselect", domEvt, this, [state.selectionMorph], hand)
