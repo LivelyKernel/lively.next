@@ -119,6 +119,13 @@ describe("halos", () => {
     halo.rotateHalo().update(num.toRadians(25));
     expect(submorph1.rotation).closeTo(num.toRadians(15), 0.1);
   });
+  
+  it("scale scales", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.rotateHalo().initScale(pt(10,10));
+    halo.rotateHalo().updateScale(pt(20,20));
+    expect(submorph1.scale).equals(2);
+  });
 
   it("active rotate halo hides other halos and displays rotation", () => {
     var halo = world.showHaloFor(submorph1),

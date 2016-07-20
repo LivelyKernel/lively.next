@@ -111,12 +111,12 @@ export class Halo extends Morph {
       property: 'extent',
       halo: this,
       valueForPropertyDisplay: () => {
-        var {width, height} = this;
+        var {x: width, y: height} = this.target.extent;
         return `${width.toFixed(1)}w ${height.toFixed(1)}h`;
       },
       update(delta, proportional=false) {
         delta = this.proportionalMode(proportional, delta);
-        this.halo.target.resizeBy(delta);
+        this.halo.target.resizeBy(delta.scaleBy(1 / this.halo.target.scale));
         this.halo.alignWithTarget();
       },
       init(proportional=false) {
@@ -248,35 +248,67 @@ export class Halo extends Morph {
   }
 
   rotateHalo() {
-    var angle = 0;
+    var angle = 0,
+        scaleGauge = null;
     return this.getSubmorphNamed("rotate") || this.addMorph(new HaloItem({
       name: "rotate",
       property: "rotation",
       styleClasses: ["halo-item", "fa", "fa-repeat"],
       location: {col: 0, row: 3},
       halo: this,
-      valueForPropertyDisplay: () => num.toDegrees(this.target.rotation).toFixed(1) + "°",
+      valueForPropertyDisplay: () => scaleGauge ?
+                                       this.target.scale.toFixed(4).toString() :
+                                       num.toDegrees(this.target.rotation).toFixed(1) + "°",
       init(angleToTarget) {
         this.halo.activeButton = this;
         angle = angleToTarget;
       },
+      initScale(gauge) {
+        this.halo.activeButton = this;
+        scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
+      },
       update: (angleToTarget) => {
+        scaleGauge = null;
         this.target.rotateBy(angleToTarget - angle);
         angle = angleToTarget;
         this.alignWithTarget();
       },
+      updateScale: (gauge) => {
+        if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.target.scale);
+        this.target.scale = gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0));
+        this.alignWithTarget();
+      },
       stop() {
+        scaleGauge = null;
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
       onDragStart(evt) {
-        this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
+        this.adaptAppearance(evt.isShiftDown());
+        if (evt.isShiftDown()) {
+          this.initScale(evt.position.subPt(this.halo.target.globalPosition)); 
+        } else {
+          this.init(evt.position.subPt(this.halo.target.globalPosition).theta()); 
+        }
       },
       onDrag(evt) {
-        this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
+        this.adaptAppearance(evt.isShiftDown());
+        if (evt.isShiftDown()) {
+          this.updateScale(evt.position.subPt(this.halo.target.globalPosition)); 
+        } else {
+          this.update(evt.position.subPt(this.halo.target.globalPosition).theta()); 
+        }
       },
       onDragEnd(evt) {
+        this.adaptAppearance(evt.isShiftDown());
         this.stop();
+      },
+      adaptAppearance(scaling) {
+        if (scaling) {
+          this.styleClasses = ["halo-item", "fa", "fa-search-plus"];
+        } else {
+          this.styleClasses = ["halo-item", "fa", "fa-repeat"];
+        }
       }
     }));
   }
