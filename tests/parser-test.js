@@ -3,7 +3,7 @@
 import { expect } from "mocha-es6";
 
 import { printAst } from "../lib/mozilla-ast-visitor-interface.js";
-import { parse } from "../lib/parser.js";
+import { parse, parseFunction } from "../lib/parser.js";
 
 describe('parse', function() {
 
@@ -13,7 +13,7 @@ describe('parse', function() {
       .equals("ExpressionStatement"));
 
   describe("async / await", () => {
-    
+
     it("parses nested awaits", () => {
         var src = "await (await foo()).bar()",
             parsed = parse(src),
@@ -28,6 +28,26 @@ describe('parse', function() {
                      + "        \\-.body[0].expression.argument.callee.property:Identifier(20-23)"
         expect(printAst(parsed, {printPositions: true})).to.equal(expected);
     });
-    
+
+  });
+
+  describe("parseFunction", () => {
+
+    it("anonmyous function", () => {
+      expect(parseFunction("function(x) { return x + 1; }").type).equals("FunctionExpression")
+    });
+
+    it("named function", () => {
+      expect(parseFunction("function foo(x) { return x + 1; }")).containSubset({type: "FunctionExpression", id: {name: "foo"}})
+    });
+
+    it("arrow function", () => {
+      expect(parseFunction("(x) => { return x + 1; }")).containSubset({type: "ArrowFunctionExpression"})
+    });
+
+    it("short function", () => {
+      expect(parseFunction("x => x + 1")).containSubset({type: "ArrowFunctionExpression"})
+    });
+
   });
 });
