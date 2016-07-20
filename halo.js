@@ -224,7 +224,7 @@ export class Halo extends Morph {
   inspectHalo() {
     return this.getSubmorphNamed("inspect") || this.addMorph(new HaloItem({
       name: "inspect",
-      styleClasses: ["halo-item", "fa", "fa-search"],
+      styleClasses: ["halo-item", "fa", "fa-eye"],
       draggable: false,
       location: {col: 3, row: 2},
       halo: this,
