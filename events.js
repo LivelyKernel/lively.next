@@ -60,13 +60,13 @@ const keyboardEvents = [
 
 
 function cumulativeOffset(element) {
-  var top = 0, left = 0;
+  var offsetTop = 0, offsetLeft = 0;
   do {
-    top += element.offsetTop  || 0;
-    left += element.offsetLeft || 0;
+    offsetTop += element.offsetTop  || 0;
+    offsetLeft += element.offsetLeft || 0;
     element = element.offsetParent;
   } while(element);
-  return {offsetLeft: left, offsetTop: top};
+  return {offsetLeft, offsetTop};
 }
 
 export var Keys = {
@@ -245,8 +245,9 @@ export var Keys = {
 class SimulatedDOMEvent {
 
   constructor(props = {}) {
+
     if (props.position) {
-      let {x, y} = props.position;
+      let {position: {x, y}, target} = props;
       props = obj.dissoc(props, ["position"]);
       props.pageX = x; props.pageY = y;
     }
@@ -597,6 +598,10 @@ export class EventDispatcher {
       }
       if (target.isMorph) {
         spec = {...spec, target: doc.getElementById(target.id)};
+      }
+      if (spec.position) {
+        var {offsetLeft, offsetTop} = cumulativeOffset(doc.getElementById(this.world.id));
+        spec.position = spec.position.addXY(offsetLeft, offsetTop);
       }
       this.dispatchDOMEvent(new SimulatedDOMEvent(spec));
     }
