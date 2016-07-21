@@ -18,7 +18,9 @@ class CustomVNode {
   renderMorph() {
     var vtree = this.morphVtree = renderMorph(this.morph, this.renderer);
     // The placeholder in vdom that our real dom node will replace
-    vtree.children.unshift(h("div", {}, [], "customNode-key-" + this.id));
+    var key = "customNode-key-" + this.morph.id;
+    if (!vtree.children.find(ea => ea.key === key))
+      vtree.children.push(h("div", {key}, []));
     return vtree;
   }
 
@@ -41,7 +43,7 @@ class CustomVNode {
     return null;
   }
 
-  destroy(domNode) { debugger; console.log("destroy " + domNode.outerHTML); }
+  destroy(domNode) { console.log("destroy " + domNode.outerHTML); }
 }
 
 // Usage:
