@@ -1,12 +1,62 @@
-import { Morph } from "./morph.js";
-import { Text } from "./text.js";
+import { Text, Morph, show } from "./index.js";
 import { pt, Color } from "lively.graphics";
+
+export class MenuItem extends Text {
+
+  constructor(textString, action, props) {
+    super({
+     fixedWidth: false, fixedHeight: false,
+     fill: null,
+     fontSize: 14,
+     draggable: false,
+     readOnly: true,
+     nativeCursor: "pointer",
+     textString,
+     action,
+     ...props});
+  }
+
+  get action() { return this.getProperty("action") }
+  set action(value) { this.recordChange({prop: "action", value}); }
+
+  get isMenuItem() { return true; }
+
+  select() {
+    this.fontColor = Color.white;
+    this.fill = Color.blue;
+  }
+
+  deselect() {
+    this.fill = Color.null;
+    this.fontColor = Color.black;
+  }
+
+  onHoverIn(evt) {
+    this.owner.itemMorphs.forEach(ea => ea !== this && ea.deselect());
+    this.select();
+  }
+
+  onHoverOut(evt) {
+    this.deselect();
+  }
+
+  onMouseDown(evt) {
+    try {
+      if (typeof this.action !== "function")
+        throw new Error(`Menu item ${this.textString} as no executable action!`)
+      this.action();
+    } catch (err) {
+      var w = this.world();
+      if (w) w.logError(err);
+      else console.error(err);
+    }
+  }
+}
 
 export class Menu extends Morph {
 
   constructor(props) {
     super({
-      items: [],
       title: null,
       padding: 3,
       borderWidth: 1,
@@ -25,6 +75,10 @@ export class Menu extends Morph {
   get padding() { return this.getProperty("padding") }
   set padding(value) { this.recordChange({prop: "padding", value}); }
 
+  get itemMorphs() {
+    return this.submorphs.filter(ea => ea.isMenuItem);
+  }
+
   updateMorphs() {
     this.submorphs = [];
     var p = this.padding;
@@ -37,15 +91,9 @@ export class Menu extends Morph {
     }
 
     this.items.forEach(item => {
-      var itemMorph = this.addMorph(Text.makeLabel(item[0], {
-        textString: item[0],
-        position: pos,
-        onMouseDown: item[1],
-        fontSize: 14,
-        draggable: false
-      }))
+      var itemMorph = this.addMorph(new MenuItem(item[0], item[1], {position: pos}));
       pos = itemMorph.bottomLeft;
-      maxWidth = Math.max(itemMorph.width, maxWidth);
+      maxWidth = Math.max(itemMorph.width + 6/*FIXME*/, maxWidth);
     });
 
     this.submorphs.forEach(ea => {
