@@ -1,4 +1,5 @@
 import { string } from "lively.lang";
+import { Color, pr } from "lively.graphics";
 import { Morph, show } from "./index.js";
 import { FontMetric } from "./rendering/renderer.js";
 
@@ -8,6 +9,7 @@ export class Text extends Morph {
     return new Text({
       textString: string,
       fontFamily: "Helvetica Neue, Arial",
+      fontColor: Color.black,
       fontSize: 11,
       readOnly: true,
       ...props
@@ -27,7 +29,6 @@ export class Text extends Morph {
     this.fit();
     this._needsFit = false;
     this._needsSelect = false;
-
   }
 
   get fontMetric() { return FontMetric.default(); }
@@ -72,6 +73,11 @@ export class Text extends Morph {
     this._needsFit = true;
   }
 
+  get fontColor() { return this.getProperty("fontColor") }
+  set fontColor(value) {
+    this.recordChange({prop: "fontColor", value});
+  }
+
   get placeholder() { return this.getProperty("placeholder") }
   set placeholder(value) {
     this.recordChange({prop: "placeholder", value});
@@ -97,8 +103,8 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    var tree = super.render(renderer);
-    var domNode = renderer.getNodeForMorph(this);
+    var tree = super.render(renderer),
+        domNode = renderer.getNodeForMorph(this);
     this.selectIfNeeded(renderer);
     return tree;
   }
@@ -112,7 +118,8 @@ export class Text extends Morph {
         resize: "none", border: 0,
        "white-space": "nowrap", padding: "0px",
        "font-family": this.fontFamily,
-       "font-size": this.fontSize + "px"
+       "font-size": this.fontSize + "px",
+       "color": String(this.fontColor)
      }
     }
   }
