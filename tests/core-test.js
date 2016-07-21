@@ -45,7 +45,7 @@ describe("full morphic setup with renderer and events", function () {
 
   // jsdom sometimes takes its time to initialize...
   if (System.get("@system-env").node)
-    this.timeout(5000);
+    this.timeout(10000);
 
   beforeEach(async () => createAndRenderDummyWorld());
   afterEach(() => cleanup());

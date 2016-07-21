@@ -61,7 +61,11 @@ function assertEventLogContains(stuff) {
   eventLog.length = 0;
 }
 
-describe("events", () => {
+describe("events", function() {
+
+  // jsdom sometimes takes its time to initialize...
+  if (System.get("@system-env").node)
+    this.timeout(10000);
 
   beforeEach(async () => setup());
   afterEach(() => teardown());
