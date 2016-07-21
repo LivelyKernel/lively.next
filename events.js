@@ -1,4 +1,4 @@
-import { arr, obj } from "lively.lang";
+import { arr, obj, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import bowser from "bowser";
 
@@ -483,8 +483,12 @@ export class EventDispatcher {
       draggedMorph: null,
       dragDelta: null,
       lastDragPosition: null,
-      hoverMorphs: [],
+      hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
     };
+  }
+
+  whenIdle() {
+    return promise.waitFor(() => this.activations === 0);
   }
 
   install() {
@@ -506,10 +510,11 @@ export class EventDispatcher {
     return this;
   }
 
-  createMorphicEventsFromDOMEvent(domEvt, targetMorph) {
+  processDOMEvent(domEvt, targetMorph) {
     // In morphic we don't map events 1:1 from the DOM to the events morph get
     // triggered with. E.g. we have our own drag behvior. This is the place where
     // dom events get mapped to those morph events, zero to many.
+    // Also for some kinds of event we need to accumulate
 
     var type = domEvt.type,
         state = this.eventState,
@@ -517,93 +522,142 @@ export class EventDispatcher {
         hand = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
         halo = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
         defaultEvent = new Event(type, domEvt, this, eventTargets, hand, halo),
-        events = [defaultEvent];
+        events = [defaultEvent],
+        later = [];
 
-    if (type === "click") {
-      // Note, we currently don't subscribe to click DOM events, this is just a
-      // convenience for event simulation
-      return this.createMorphicEventsFromDOMEvent({...domEvt, type: "pointerdown"}, targetMorph).concat(
-          this.createMorphicEventsFromDOMEvent({...domEvt, type: "pointerup"}, targetMorph))
-    }
 
-    if (type === "pointerdown") {
-      // so that we receive pointerups even if the cursor leaves the browser
-      if (typeof domEvt.target.setPointerCapture === "function") {
-        try {
-          // rk 2016-07-18: This currently doesn't work well with running a new
-          // morphic world inside an old Lively...
-          // domEvt.target.setPointerCapture(domEvt.pointerId);
-        } catch (e) {}
-      }
+    switch (type) {
 
-      // We remember the morph that we clicked on until we get an up event.
-      // This allows us to act on this info later
-      defaultEvent.onDispatch(() => {
-        state.clickedOnMorph = targetMorph;
-        state.clickedOnPosition = defaultEvent.position;
-      });
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case 'click':
+        // Note, we currently don't subscribe to click DOM events, this is just a
+        // convenience for event simulation
+        var {events: downEvents} = this.processDOMEvent({...domEvt, type: "pointerdown"}, targetMorph),
+            {events: upEvents} = this.processDOMEvent({...domEvt, type: "pointerup"}, targetMorph);
+        events = downEvents.concat(upEvents);
+        break;
 
-    } else if (type === "pointerup") {
-      state.clickedOnMorph = null;
 
-      // drag release
-      if (state.draggedMorph) {
-        events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo));
-        defaultEvent.targetMorphs = [this.world];
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "pointerdown":
+        // so that we receive pointerups even if the cursor leaves the browser
+        if (typeof domEvt.target.setPointerCapture === "function") {
+          try {
+            // rk 2016-07-18: This currently doesn't work well with running a new
+            // morphic world inside an old Lively...
+            // domEvt.target.setPointerCapture(domEvt.pointerId);
+          } catch (e) {}
+        }
 
-      // grap release
-      } else if (hand.carriesMorphs()) {
-        events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo));
-        defaultEvent.targetMorphs = [this.world];
-      }
+        // We remember the morph that we clicked on until we get an up event.
+        // This allows us to act on this info later
+        defaultEvent.onDispatch(() => {
+          state.clickedOnMorph = targetMorph;
+          state.clickedOnPosition = defaultEvent.position;
+        });
+        break;
 
-    } else if (type === "pointermove") {
 
-      // Are we dragging a morph? If so the move gets only send to the world
-      // and the drag only send to the dragged morph
-      if (hand.carriesMorphs()) {
-        defaultEvent.targetMorphs = [this.world];
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "pointerup":
+        defaultEvent.onDispatch(() => state.clickedOnMorph = null);
 
-      } else if (state.draggedMorph) {
-        defaultEvent.targetMorphs = [this.world];
-        events.push(dragEvent(domEvt, this, targetMorph, state, hand, halo));
+        // drag release
+        if (state.draggedMorph) {
+          events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo));
+          defaultEvent.targetMorphs = [this.world];
 
-      // Start dragging when we are holding the hand pressed and and move it
-      // beyond targetMorph.dragTriggerDistance
-      } else if (state.clickedOnMorph && state.clickedOnPosition
-              && targetMorph.draggable
-              && !state.draggedMorph
-              && !hand.carriesMorphs()
-              && state.clickedOnPosition) {
-
-        var dist = state.clickedOnPosition.dist(defaultEvent.position),
-            dragTarget = state.clickedOnMorph;
-        if (dist > dragTarget.dragTriggerDistance) {
-          // FIXME should grab really be triggered through drag?
-          if (dragTarget.grabbable) {
-            events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo));
-          } else {
-            events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo));
-          }
+        // grap release
+        } else if (hand.carriesMorphs()) {
+          events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo));
           defaultEvent.targetMorphs = [this.world];
         }
-      }
+        break;
 
-    } else if (type === "select") {
-      defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
 
-    } else if (type === "pointerover") {
-// console.log(`in ${targetMorph}`)
-      if (state.hoverMorphs.includes(targetMorph)) events = [];
-      else events = [new Event("hoverin", domEvt, this, [targetMorph], hand, halo).onDispatch(() =>
-                      arr.pushIfNotIncluded(state.hoverMorphs, targetMorph))]
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "pointermove":
+        // Are we dragging a morph? If so the move gets only send to the world
+        // and the drag only send to the dragged morph
+        if (hand.carriesMorphs()) {
+          defaultEvent.targetMorphs = [this.world];
 
-    } else if (type === "pointerout") {
-// console.log(`out ${targetMorph}`)
-      if (targetMorph.fullContainsWorldPoint(defaultEvent.position)) events = [];
-      
-      else events = [new Event("hoverout", domEvt, this, [targetMorph], hand, halo).onAfterDispatch(() =>
-                      arr.remove(state.hoverMorphs, targetMorph))]
+        } else if (state.draggedMorph) {
+          defaultEvent.targetMorphs = [this.world];
+          events.push(dragEvent(domEvt, this, targetMorph, state, hand, halo));
+
+        // Start dragging when we are holding the hand pressed and and move it
+        // beyond targetMorph.dragTriggerDistance
+        } else if (state.clickedOnMorph && state.clickedOnPosition
+                && targetMorph.draggable
+                && !state.draggedMorph
+                && !hand.carriesMorphs()
+                && state.clickedOnPosition) {
+
+          var dist = state.clickedOnPosition.dist(defaultEvent.position),
+              dragTarget = state.clickedOnMorph;
+          if (dist > dragTarget.dragTriggerDistance) {
+            // FIXME should grab really be triggered through drag?
+            if (dragTarget.grabbable) {
+              events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo));
+            } else {
+              events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo));
+            }
+            defaultEvent.targetMorphs = [this.world];
+          }
+        }
+        break;
+
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "select":
+        defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
+        break;
+
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // The DOM doesn't directly support "hover" events, instead pointerover
+      // and pointerout events are sent to DOM nodes when a pointer enters or
+      // leaves the direct boundaries of that node. These events cannot be
+      // directly mapped to hover in /out because:
+      // a) a pointerout event is sent when the pointer enters a child node. In
+      // this case we do not want to signal hoverout of the parent node!
+      // b) if a child node "sticks out" a parent node and the pointer is moved
+      // out the child nodes bounds without entering the parents node bounds
+      // again, a pointerout event is only sent to the child node. In this case,
+      // however, we want to generate hoverOut events for both the child and the
+      // parent node.
+
+      case "pointerover":
+        if (state.hover.unresolvedPointerOut)
+          state.hover.unresolvedPointerOut = false;
+
+        var hoveredOverMorphs = [targetMorph].concat(targetMorph.ownerChain()).reverse(),
+            hoverOutEvents = arr.withoutAll(state.hover.hoveredOverMorphs, hoveredOverMorphs)
+              .map(m => new Event("hoverout", domEvt, this, [m], hand, halo)
+                          .onDispatch(() => arr.remove(state.hover.hoveredOverMorphs, m))),
+            hoverInEvents = arr.withoutAll(hoveredOverMorphs, state.hover.hoveredOverMorphs)
+              .map(m => new Event("hoverin", domEvt, this, [m], hand, halo)
+                          .onDispatch(() => arr.pushIfNotIncluded(state.hover.hoveredOverMorphs, m)))
+        events = hoverOutEvents.concat(hoverInEvents);
+        break;
+
+      case "pointerout":
+        events = [];
+        state.hover.unresolvedPointerOut = true;
+        later.push(() => {
+          // outTargetMorph usually gets reset by a asynchronously following
+          // pointerover event *except* when we the pointer leaves the entire
+          // window. In this case we hover out of all morphs that are currently
+          // marked as hovered in
+          if (state.hover.unresolvedPointerOut) {
+            return Promise.all(state.hover.hoveredOverMorphs.map(m =>
+              this.schedule(new Event("hoverout", domEvt, this, [m], hand, halo)
+                              .onAfterDispatch(() => arr.remove(state.hover.hoveredOverMorphs, m)))));
+
+          }
+        });
+        break;
     }
 
 
@@ -614,11 +668,15 @@ export class EventDispatcher {
           .onDispatch(() => state.selectionMorph = null));
     }
 
-    return events;
+
+    return {events, later};
   }
 
   schedule(evt) {
-    setTimeout(() => this.dispatchEvent(evt), 0);
+    this.activations++;
+    return Promise.resolve()
+      .then(() => this.dispatchEvent(evt))
+      .then(() => this.activations--, (err) => { this.activations--; throw err; })
   }
 
   dispatchEvent(evt) {
@@ -628,6 +686,7 @@ export class EventDispatcher {
       throw new Error(`dispatchEvent: ${evt.type} not yet supported!`);
 
     evt.onDispatchCallbacks.forEach(ea => ea());
+    this.activations++;
     for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
       try {
         evt.targetMorphs[j][method](evt);
@@ -638,6 +697,7 @@ export class EventDispatcher {
       }
       if (err || evt.stopped) break;
     }
+    this.activations--;
     evt.onAfterDispatchCallbacks.forEach(ea => ea());
     if (err) throw err;
   }
@@ -650,8 +710,16 @@ export class EventDispatcher {
       // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
       return;
     }
-    this.createMorphicEventsFromDOMEvent(domEvt, targetMorph)
-      .forEach(evt => this.dispatchEvent(evt))
+    var {events, later} = this.processDOMEvent(domEvt, targetMorph);
+
+    // run "later" callbacks
+    later.map(callback => {
+      this.activations++;
+      return promise.delay(0)
+        .then(callback)
+        .then(() => this.activations--, err => { this.activations--; throw err; })
+    });
+    events.forEach(evt => this.dispatchEvent(evt));
   }
 
   simulateDOMEvents(...eventSpecs) {
@@ -669,7 +737,8 @@ export class EventDispatcher {
         var {offsetLeft, offsetTop} = cumulativeOffset(doc.getElementById(this.world.id));
         spec.position = spec.position.addXY(offsetLeft, offsetTop);
       }
-      this.dispatchDOMEvent(new SimulatedDOMEvent(spec));
+      this.dispatchDOMEvent(new SimulatedDOMEvent(spec))
     }
+    return this;
   }
 }

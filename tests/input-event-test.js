@@ -57,7 +57,7 @@ function teardown() {
 }
 
 function assertEventLogContains(stuff) {
-  expect(eventLog).deep.equals(stuff)
+  expect(stuff).equals(eventLog)
   eventLog.length = 0;
 }
 
@@ -117,7 +117,7 @@ describe("events", () => {
     expect(dragEndEvent.state.dragDelta).equals(pt(0, 1))
   });
 
-  it("grab and drop morph", () => {
+  it("grab and drop morph", async () => {
     submorph2.grabbable = true;
     var morphPos = submorph2.globalPosition;
 
@@ -142,7 +142,7 @@ describe("events", () => {
     expect(submorph2.position).equals(morphPos.addXY(10,10));
   });
 
-  it("dropped morph has correct position", () => {
+  it("dropped morph has correct position", async () => {
     world.submorphs = [
       {position: pt(10,10), extent: pt(100,100), fill: Color.red,
        rotation: -45,
@@ -182,59 +182,61 @@ describe("events", () => {
 
   describe("hover", () => {
     
-    it("hover in + out", async () => {
-      eventDispatcher.simulateDOMEvents({target: submorph3, type: "pointerover", position: pt(50,50)});
-      // await wait();
-      eventDispatcher.simulateDOMEvents({target: submorph3, type: "pointerout", position: pt(50,50)});
-      assertEventLogContains(["onHoverIn-submorph3", "onHoverOut-submorph3"]);
+    it("into world", async () => {
+      await eventDispatcher.simulateDOMEvents({target: world, type: "pointerover", position: pt(50,50)}).whenIdle();
+      assertEventLogContains(["onHoverIn-world"]);
     });
 
-    it("hover in + out with submorph", () => {
+    it("in and out world", async () => {
+      await eventDispatcher.simulateDOMEvents(
+        {target: world, type: "pointerover", position: pt(50,50)},
+        {target: world, type: "pointerout", position: pt(50,50)}).whenIdle();
+      assertEventLogContains(["onHoverIn-world", "onHoverOut-world"]);
+    });
+
+    it("in and out single morph", async () => {
+      await eventDispatcher.simulateDOMEvents(
+        {target: submorph3, type: "pointerover", position: pt(50,50)},
+        {target: submorph3, type: "pointerout", position: pt(50,50)}).whenIdle();;
+      assertEventLogContains(["onHoverIn-world", "onHoverIn-submorph3", "onHoverOut-world","onHoverOut-submorph3"]);
+    });
+
+    it("hover in and out with submorph", async () => {
       // simulate the over/out dom events when moving
       // - into submorph1 => into submorph2 (contained in 1) => out of submorph2 => out of submorph1
-      eventDispatcher.simulateDOMEvents(
-        {type: "pointerover", target: submorph1, position: pt(10,10)},
+      await eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(10,10)}).whenIdle();
+
+      await eventDispatcher.simulateDOMEvents(
         {type: "pointerout", target: submorph1, position: pt(15,20)},
-        {type: "pointerover", target: submorph2, position: pt(15,20)},
+        {type: "pointerover", target: submorph2, position: pt(15,20)}).whenIdle();
+
+      await eventDispatcher.simulateDOMEvents(
         {type: "pointerout", target: submorph2, position: pt(15,41)},
-        {type: "pointerover", target: submorph1, position: pt(15,41)},
-        {type: "pointerout", target: submorph1, position: pt(9,9)
-      });
+        {type: "pointerover", target: submorph1, position: pt(15,41)}).whenIdle();
+
+      await eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(9,9) }).whenIdle();
+
       assertEventLogContains([
-        "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-submorph2", "onHoverOut-submorph1"]);
+        "onHoverIn-world", "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-submorph2", "onHoverOut-world", "onHoverOut-submorph1"]);
     });
 
-    xit("hover in + out with submorph sticking out", () => {
-// setup();
-// teardown()
+    it("hover in and out with submorph sticking out", async () => {
 
-      // simulate the over/out dom events when moving
-      // - into submorph1 => into submorph2 (contained in 1) => out of submorph2 => out of submorph1
-      eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(10,10)});
-      eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(15,20)});
-      eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph2, position: pt(15,20)});
-      eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph2, position: pt(15,41)});
-      eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(15,41)});
-      eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(9,9)});
+      var tl = submorph1.topLeft;
+      submorph2.topRight = pt(submorph1.width + 10, 0);
+      await eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph2, position: pt(109, 10)}).whenIdle();
+      await eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph2, position: pt(111, 10)}).whenIdle();
 
-      // eventDispatcher.simulateDOMEvents(
-      //   {type: "pointerover", target: submorph1, position: pt(10,10)},
-      //   {type: "pointerout", target: submorph1, position: pt(15,20)},
-      //   {type: "pointerover", target: submorph2, position: pt(15,20)},
-      //   {type: "pointerout", target: submorph2, position: pt(15,40)},
-      //   {type: "pointerover", target: submorph1, position: pt(15,40)},
-      //   {type: "pointerout", target: submorph1, position: pt(15,20)
-      // });
       assertEventLogContains([
-        "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-submorph2", "onHoverOut-submorph1"]);
+        "onHoverIn-world", "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-world", "onHoverOut-submorph1", "onHoverOut-submorph2"]);
     });
 
   });
 
   describe("simulation", () => {
 
-    it("click", () => {
-      eventDispatcher.simulateDOMEvents({type: "click", position: pt(25,25)});
+    it("click", async () => {
+      await eventDispatcher.simulateDOMEvents({type: "click", position: pt(25,25)});
       assertEventLogContains([
         "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
         "onMouseUp-world", "onMouseUp-submorph1", "onMouseUp-submorph2"]);

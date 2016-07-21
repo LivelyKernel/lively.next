@@ -665,11 +665,13 @@ export class Morph {
   }
 
   onHoverIn(evt) {
-    console.log(`hoverin ${this}`)
+    this.hover = (this.hover || 0) +1;
+    // console.log(`hoverin ${this} ${this.hover}`)
   }
 
   onHoverOut(evt) {
-    console.log(`hoverout ${this}`)
+    this.hover = (this.hover || 0) -1;
+    // console.log(`hoverout ${this} ${this.hover}`)
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
