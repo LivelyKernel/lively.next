@@ -443,9 +443,33 @@ function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
 // event handling methods
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+/*
+
+The event dispatcher controls what events get send to morphs and what the basic
+control flow (which events get send when) is.
+
+There is only one outer event handler per event type on the DOM level. DOM
+events we currently listen to are listed in `domEventsWeListenTo`.
+
+The event dispatch for most events works by identifying the event target (DOM
+node -> morph). We then use the morphic owner chain of that morph to establish
+all event targets. I.e. the target morph itself, its owner, … until we reach
+the world. Those morphs will receive the event, the dispatch happens in
+“capturing” order, i.e. outside in, the world comes first, then its submorph,
+etc. At each step we call the morphic event handler method. This method can has
+the ability to `stop()` an event, i.e. that morphs further down the dispatch
+chain (including the actual target) won’t receive the event.
+
+There are some events that aren’t “capturing”, i.e. that are not being send to
+the entire owner chain of the target morph. Currently these are dragstart,
+dragend, drag, focus, blur, grab, hoverin, hoverout.
+
+*/
+
 export class EventDispatcher {
 
   constructor(domEventEmitter, world) {
+    this.activations = 0;
     this.emitter = domEventEmitter;
     this.world = world;
     this.installed = false;
