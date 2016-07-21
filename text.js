@@ -24,6 +24,8 @@ export class Text extends Morph {
       fixedWidth: false, fixedHeight: false,
       draggable: false,
       _selection: { start: 0, end: 0 },
+      fontFamily: "Sans-Serif",
+      fontSize: 12,
       ...props
     });
     this.fit();
@@ -103,10 +105,8 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    var tree = super.render(renderer),
-        domNode = renderer.getNodeForMorph(this);
     this.selectIfNeeded(renderer);
-    return tree;
+    return super.render(renderer);
   }
 
   shape() {
