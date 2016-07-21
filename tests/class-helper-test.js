@@ -59,20 +59,28 @@ describe("create or extend classes", function() {
   });
 
   it("inherits", function() {
-    var Foo = createOrExtend("Foo", null, [{key: "m", value: function m() { return this.x + 23 }},
-           {key: "n", value: function n() { return 123 }}], undefined, {}),
-        Foo2 = createOrExtend("Foo2", Foo, [{key: "m", value: function m() {
-            return 2 + this.constructor[superclassSymbol].prototype.m.call(this); }}], undefined, {}),
+    var Foo = createOrExtend("Foo", null, [
+          {key: "m", value: function m(a) { return this.x + 23 + a }},
+          {key: "n", value: function n() { return 123 }}
+        ], undefined, {}),
+        Foo2 = createOrExtend("Foo2", Foo, [
+          {needsDeclaringClass: true, key: "m", value: function m(declaringClass, a) { return 2 + declaringClass[Symbol.for("lively-instance-superclass")].prototype.m.call(this, a);}}], undefined, {}),
         foo = new Foo2();
     foo.x = 1;
-    expect(foo.m()).equals(26);
+    expect(foo.m(1)).equals(27);
     expect(foo.n()).equals(123);
     expect(Foo2[superclassSymbol]).equals(Foo);
   });
 
   it("super in initialize", function() {
-    var Foo = createOrExtend("Foo", null, [{key: initializeSymbol, value: function(a, b) { this.x = a + b; }}], undefined, {}),
-        Foo2 = createOrExtend("Foo2", Foo, [{key: initializeSymbol, value: function(a, b) { this.constructor[superclassSymbol].prototype[initializeSymbol].call(this,a, b); this.y = a; }}], undefined, {})
+    var Foo = createOrExtend("Foo", null, [
+          {key: initializeSymbol, value: function(a, b) { this.x = a + b; }}
+        ], undefined, {}),
+        Foo2 = createOrExtend("Foo2", Foo, [
+          {needsDeclaringClass: true, key: initializeSymbol, value: function(declaringClass, a, b) {
+            declaringClass[Symbol.for("lively-instance-superclass")].prototype[initializeSymbol].call(this,a, b);
+            this.y = a; }}
+        ], undefined, {})
     expect(new Foo2(2,3).x).equals(5);
     expect(new Foo2(2,3).y).equals(2);
   });
@@ -81,7 +89,7 @@ describe("create or extend classes", function() {
     var Foo = createOrExtend("Foo", null, undefined, undefined, {}),
         Foo2 = createOrExtend("Foo2", Foo, undefined, undefined, {}),
         foo = new Foo2();
-    createOrExtend("Foo", null, [{key: "m", value: function m() { return 23 }}], undefined, {Foo: Foo})
+    createOrExtend("Foo", null, [{key: "m", value: function m() { return 23 }}], undefined, {Foo: Foo});
     expect(foo.m()).equals(23);
   });
 
@@ -103,7 +111,7 @@ describe("create or extend classes", function() {
 
   it("works with anonymous classes", () => {
     var X = createOrExtend(undefined, undefined, [{key: "m", value: function() { return 23; }}], undefined, {}),
-        Y = createOrExtend(undefined, X, [{key: "m", value: function() { return super.m() + 1; }}], undefined, {});
+        Y = createOrExtend(undefined, X, [{needsDeclaringClass: true, key: "m", value: function(declaringClass) { return declaringClass[Symbol.for("lively-instance-superclass")].prototype.m.call(this) + 1; }}], undefined, {});
     expect(new X().m()).equals(23);
     expect(new Y().m()).equals(24);
   });
@@ -130,8 +138,9 @@ describe("create or extend classes", function() {
     it("constructor of base class is used when using own constructor + calling super", () => {
       var A = function A(x) { this.y = x + 1 },
           B = createOrExtend("B", A, [{
-            key: initializeSymbol, value: function(x) {
-              this.constructor[superclassSymbol].prototype[initializeSymbol].call(this, x);
+            needsDeclaringClass: true,
+            key: initializeSymbol, value: function(declaringClass, x) {
+              declaringClass[Symbol.for("lively-instance-superclass")].prototype[initializeSymbol].call(this, x);
               this.z = this.y + 1;
             }}]),
           b = new B(3);
@@ -148,6 +157,20 @@ describe("create or extend classes", function() {
           Foo = createOrExtend("Foo", null, undefined, undefined, {}, mod);
       expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals(
         {package: {name: "foo", version: undefined}, pathInPackage: "./bar"});
+    });
+
+    it("adds observer for superclass", () => {
+      var callback = null,
+          mod = {
+            package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; },
+            subscribeToToplevelDefinitionChanges: (func) => callback = func,
+            unsubscribeFromToplevelDefinitionChanges: (func) => {}
+          },
+          Foo = createOrExtend("Foo", {referencedAs: "Bar"}, undefined, undefined, {}, mod),
+          Bar = createOrExtend("Bar", null, [{key: "m", value() { return 23; }}]);
+      callback("Bar", Bar);
+      expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Bar);
+      expect(new Foo().m()).equals(23);
     });
 
     it("adds observer for superclass", () => {
