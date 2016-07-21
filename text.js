@@ -99,10 +99,9 @@ export class Text extends Morph {
 
     this.recordChange({
       prop: "textString", value: newText,
-      type: "method-call",
-      receiver: this,
-      selector: "insertText",
-      args: [pos, str]
+      type: "insert",
+      pos: pos,
+      str: str
     });
   }
 
@@ -113,10 +112,9 @@ export class Text extends Morph {
 
     this.recordChange({
       prop: "textString", value: newText,
-      type: "method-call",
-      receiver: this,
-      selector: "deleteText",
-      args: [start, end]
+      type: "delete",
+      start: start,
+      end: end
     });
   }
 
