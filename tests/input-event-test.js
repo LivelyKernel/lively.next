@@ -13,7 +13,13 @@ function wait(n) {
 var domEnv;
 
 function installEventLogger(morph, log) {
-  var loggedEvents = ["onMouseDown","onMouseUp","onMouseMove","onDragStart", "onDrag", "onDragEnd", "onGrab", "onDrop", "onHoverIn", "onHoverOut"]
+  var loggedEvents = [
+    "onMouseDown","onMouseUp","onMouseMove",
+    "onDragStart", "onDrag", "onDragEnd",
+    "onGrab", "onDrop",
+    "onHoverIn", "onHoverOut",
+    "onFocus", "onBlur",
+    "onKeyDown", "onKeyUp"]
   loggedEvents.forEach(name => {
     morph[name] = function(evt) {
       log.push(name + "-" + morph.name);
@@ -185,7 +191,7 @@ describe("events", function() {
   });
 
   describe("hover", () => {
-    
+
     it("into world", async () => {
       await eventDispatcher.simulateDOMEvents({target: world, type: "pointerover", position: pt(50,50)}).whenIdle();
       assertEventLogContains(["onHoverIn-world"]);
@@ -233,6 +239,34 @@ describe("events", function() {
 
       assertEventLogContains([
         "onHoverIn-world", "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-world", "onHoverOut-submorph1", "onHoverOut-submorph2"]);
+    });
+
+  });
+
+  describe("key events", () => {
+
+    it("focus + blur", async () => {
+      eventDispatcher.simulateDOMEvents(
+        {target: submorph1, type: "focus"},
+        {target: submorph1, type: "blur"});
+      assertEventLogContains(["onFocus-submorph1", "onBlur-submorph1"]);
+    });
+
+    it("key down", async () => {
+      eventDispatcher.simulateDOMEvents({target: submorph1, type: "keydown", ctrlKey: true, keyCode: 65});
+      assertEventLogContains(["onKeyDown-world", "onKeyDown-submorph1"]);
+    });
+
+    it("key down keystring", async () => {
+      var pressed; submorph1.onKeyDown = evt => pressed = evt.keyString();
+      eventDispatcher.simulateDOMEvents({target: submorph1, type: "keydown", ctrlKey: true, keyCode: 65});
+      expect(pressed).equals("Control-A")
+    });
+
+    it("key up keystring", async () => {
+      var pressed; submorph1.onKeyUp = evt => pressed = evt.keyString();
+      eventDispatcher.simulateDOMEvents({target: submorph1, type: "keyup", altKey: true, metaKey: true, keyCode: 88});
+      expect(pressed).equals("Command-Alt-X")
     });
 
   });

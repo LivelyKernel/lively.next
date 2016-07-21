@@ -7,19 +7,19 @@ import bowser from "bowser";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const domEventsWeListenTo = [
-  'pointerdown',
-  'pointerup',
-  'pointermove',
-  "pointerover",
-  "pointerout",
-  'input',
-  'select',
-  'deselect' ,
-  'keydown',
-  'keyup',
-  'blur',
-  'focus',
-  'contextmenu'
+  {type: 'pointerdown', capturing: false},
+  {type: 'pointerup',   capturing: false},
+  {type: 'pointermove', capturing: false},
+  {type: 'pointerover', capturing: false},
+  {type: 'pointerout',  capturing: false},
+  {type: 'input',       capturing: false},
+  {type: 'select',      capturing: false},
+  {type: 'deselect',    capturing: false} ,
+  {type: 'keydown',     capturing: false},
+  {type: 'keyup',       capturing: false},
+  {type: 'blur',        capturing: true},
+  {type: 'focus',       capturing: true},
+  {type: 'contextmenu', capturing: false}
 ]
 
 const typeToMethodMap = {
@@ -477,6 +477,7 @@ export class EventDispatcher {
     // A place where info about previous events can be stored, e.g. for tracking
     // what was clicked on
     this.eventState = {
+      focusedMorph: null,
       selectionMorph: null,
       clickedOnPosition: null,
       clickedOnMorph: null,
@@ -494,18 +495,16 @@ export class EventDispatcher {
   install() {
     if (this.installed) return this;
     this.installed = true;
-    domEventsWeListenTo.forEach(type => {
+    domEventsWeListenTo.forEach(({type, capturing}) =>
       this.emitter.addEventListener(
-        type, this.handlerFunctions[type] = evt => this.dispatchDOMEvent(evt))
-    });
+        type, this.handlerFunctions[type] = evt => this.dispatchDOMEvent(evt), capturing));
     return this;
   }
 
   uninstall() {
     this.installed = false;
-    Object.keys(this.handlerFunctions).forEach(type => {
-      this.emitter.removeEventListener(type, this.handlerFunctions[type]);
-    });
+    Object.keys(this.handlerFunctions).forEach(({type, capturing}) =>
+      this.emitter.removeEventListener(type, this.handlerFunctions[type], capturing));
     this.handlerFunctions = {};
     return this;
   }
@@ -610,12 +609,6 @@ export class EventDispatcher {
 
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      case "select":
-        defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
-        break;
-
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // The DOM doesn't directly support "hover" events, instead pointerover
       // and pointerout events are sent to DOM nodes when a pointer enters or
       // leaves the direct boundaries of that node. These events cannot be
@@ -658,6 +651,20 @@ export class EventDispatcher {
           }
         });
         break;
+
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "select":
+        defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
+        break;
+
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "focus": case "blur":
+        events = [new Event(type, domEvt, this, [targetMorph], hand, halo)
+          .onDispatch(() => state.focusedMorph = type === "focus" ? targetMorph : null)]
+        break;
+
     }
 
 
@@ -676,12 +683,11 @@ export class EventDispatcher {
     this.activations++;
     return Promise.resolve()
       .then(() => this.dispatchEvent(evt))
-      .then(() => this.activations--, (err) => { this.activations--; throw err; })
+      .then(() => this.activations--, err => { this.activations--; throw err; })
   }
 
   dispatchEvent(evt) {
-    var method = typeToMethodMap[evt.type],
-        err;
+    var method = typeToMethodMap[evt.type], err;
     if (!method)
       throw new Error(`dispatchEvent: ${evt.type} not yet supported!`);
 
@@ -710,6 +716,7 @@ export class EventDispatcher {
       // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
       return;
     }
+
     var {events, later} = this.processDOMEvent(domEvt, targetMorph);
 
     // run "later" callbacks

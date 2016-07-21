@@ -28,6 +28,7 @@ const defaultProperties = {
   dropShadow: false,
   styleClasses: ["morph"],
   nativeCursor: "auto",
+  focusable: true,
   submorphs:  []
 }
 
@@ -180,10 +181,11 @@ export class Morph {
   get halosEnabled()       { return this.getProperty("halosEnabled"); }
   set halosEnabled(value)  { this.recordChange({prop: "halosEnabled", value}); }
 
+  // does this morph react to pointer / mouse events
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
   set reactsToPointer(value)  { this.recordChange({prop: "reactsToPointer", value}); }
 
-  // nativeCursor cna be one of
+  // The shape of the OS mouse cursor. nativeCursor can be one of
   // auto, default, none, context-menu, help, pointer, progress, wait, cell,
   // crosshair, text, vertical-text, alias, copy, move, no-drop, not-allowed,
   // e-resize, n-resize, ne-resize, nw-resize, s-resize, se-resize, sw-resize,
@@ -191,6 +193,10 @@ export class Morph {
   // row-resize, all-scroll, zoom-in, zoom-out, grab, grabbing
   get nativeCursor()       { return this.getProperty("nativeCursor"); }
   set nativeCursor(value)  { this.recordChange({prop: "nativeCursor", value}); }
+
+  // can this morph receive keyboard focus?
+  get focusable()       { return this.getProperty("focusable"); }
+  set focusable(value)  { this.recordChange({prop: "focusable", value}); }
 
   get visible()       { return this.getProperty("visible"); }
   set visible(value)  { this.recordChange({prop: "visible", value}); }
@@ -644,8 +650,6 @@ export class Morph {
   onDeselect(evt) {}
   onKeyDown(evt) {}
   onKeyUp(evt) {}
-  onBlur(evt) {}
-  onFocus(evt) {}
   onContextMenu(evt) {}
 
   onDragStart(evt) { }
@@ -673,6 +677,9 @@ export class Morph {
     this.hover = (this.hover || 0) -1;
     // console.log(`hoverout ${this} ${this.hover}`)
   }
+
+  onFocus(evt) { console.log(`focusing ${this}`) }
+  onBlur(evt) { console.log(`defocusing ${this}`) }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
