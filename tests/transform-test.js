@@ -331,9 +331,21 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, b, c); }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', Bar, [{
         key: 'm',
-        value: function Foo_m_() {
-            this.constructor[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, b, c);
-        }
+        value: function Foo_m_(lively_declaring_class_arg) {
+            lively_declaring_class_arg[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, b, c);
+        },
+        needsDeclaringClass: true
+    }], undefined, _rec, undefined);`));
+
+  it("with supercall and arguments usage", () =>
+      expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, arguments[0], c); }}", opts))).to.equal(
+        `var Foo = createOrExtendClass('Foo', Bar, [{
+        key: 'm',
+        value: function Foo_m_(lively_declaring_class_arg) {
+            var __lively_arguments_fixed_bc_declaring_class_arg = Array.from(arguments).slice(1);
+            lively_declaring_class_arg[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, __lively_arguments_fixed_bc_declaring_class_arg[0], c);
+        },
+        needsDeclaringClass: true
     }], undefined, _rec, undefined);`));
   
   it("constructor is converted to initialize", () =>
@@ -349,9 +361,10 @@ describe("class transform", () => {
       expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { super(arg, 23); }}", opts))).to.equal(
         `var Foo = createOrExtendClass('Foo', undefined, [{
         key: Symbol.for('lively-instance-initialize'),
-        value: function Foo_initialize_(arg) {
-            this.constructor[Symbol.for('lively-instance-superclass')].prototype[Symbol.for('lively-instance-initialize')].call(this, arg, 23);
-        }
+        value: function Foo_initialize_(lively_declaring_class_arg, arg) {
+            lively_declaring_class_arg[Symbol.for('lively-instance-superclass')].prototype[Symbol.for('lively-instance-initialize')].call(this, arg, 23);
+        },
+        needsDeclaringClass: true
     }], undefined, _rec, undefined);`));
 
   it("with export default", () =>
