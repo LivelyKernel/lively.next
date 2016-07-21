@@ -41,8 +41,9 @@ export class Text extends Morph {
 
   get textString() { return this.getProperty("textString") }
   set textString(value) {
-    this.recordChange({prop: "textString", value: String(value)});
-    this._needsFit = true;
+    let oldText = this.textString;
+    oldText && this.deleteText(0, oldText.length);
+    this.insertText(0, value);
   }
 
   get readOnly() { return this.getProperty("readOnly"); }
@@ -90,6 +91,34 @@ export class Text extends Morph {
   set _selection(value) { this.recordChange({prop: "_selection", value}); }
 
   get selection() { return new TextSelection(this) }
+
+  insertText(pos, str) {
+    var oldText = this.textString,
+        newText = oldText ? oldText.substr(0, pos) + str + oldText.substr(pos) : str;
+    this._needsFit = true;
+
+    this.recordChange({
+      prop: "textString", value: newText,
+      type: "method-call",
+      receiver: this,
+      selector: "insertText",
+      args: [pos, str]
+    });
+  }
+
+  deleteText(start, end) {
+    var oldText = this.textString,
+        newText = oldText.substr(0, start) + oldText.substr(end);
+    this._needsFit = true;
+
+    this.recordChange({
+      prop: "textString", value: newText,
+      type: "method-call",
+      receiver: this,
+      selector: "deleteText",
+      args: [start, end]
+    });
+  }
 
   selectionOrLineString() {
     var sel = this.selection;
