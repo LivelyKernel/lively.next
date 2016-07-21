@@ -1,5 +1,5 @@
 import { num, arr, string, obj, promise, fun } from "lively.lang";
-import { morph } from "./index.js";
+import { morph } from "lively.morphic";
 
 var i = val => obj.inspect(val, {maxDepth: 2}),
     assert = (bool, msgFn) => { if (!bool) throw new Error(msgFn()); }

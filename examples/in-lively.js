@@ -1,8 +1,7 @@
 import { obj, num, arr, string } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { Renderer } from "lively.morphic/renderer.js";
-import { morph, EventDispatcher } from "lively.morphic";
-import { Client, Master } from "lively.morphic/sync.js";
+import { morph, EventDispatcher, Renderer } from "lively.morphic";
+import { Client, Master } from "lively.sync";
 
 if (!$morph("vdomMorphTest")) {
   var canvas = lively.PartsBin.getPart("HTMLWrapperMorph", "PartsBin/HTML/")

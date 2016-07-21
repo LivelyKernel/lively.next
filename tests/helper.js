@@ -1,6 +1,5 @@
-import { createDOMEnvironment } from "../dom-helper.js";
-import { EventDispatcher } from "../events.js";
-import { morph, Renderer } from "../index.js";
+import { createDOMEnvironment } from "lively.morphic/dom-helper.js";
+import { morph, Renderer, EventDispatcher } from "lively.morphic";
 import { pt } from "lively.graphics";
 
 export async function buildTestWorld(spec = {type: "world", name: "world", extent: pt(300,300)}, pos = pt(0,0)) {

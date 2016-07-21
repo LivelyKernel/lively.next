@@ -1,10 +1,10 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 
 import { expect } from "mocha-es6";
-import { morph } from "../index.js";
+import { morph } from "lively.morphic";
 import { promise, tree } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { Client, Master } from "lively.morphic/sync.js";
+import { Client, Master } from "../index.js";
 import { buildTestWorld, destroyTestWorld } from "./helper.js";
 
 // var env1, env2, env3,
