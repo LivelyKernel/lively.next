@@ -265,8 +265,8 @@ describe("events", function() {
 
     it("key up keystring", async () => {
       var pressed; submorph1.onKeyUp = evt => pressed = evt.keyString();
-      eventDispatcher.simulateDOMEvents({target: submorph1, type: "keyup", altKey: true, metaKey: true, keyCode: 88});
-      expect(pressed).equals("Command-Alt-X")
+      eventDispatcher.simulateDOMEvents({target: submorph1, type: "keyup", altKey: true, shiftKey: true, keyCode: 88});
+      expect(pressed).equals("Alt-Shift-X")
     });
 
   });

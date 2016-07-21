@@ -645,6 +645,8 @@ export class Morph {
   onMouseUp(evt) {}
   onMouseMove(evt) {}
 
+  onFocus(evt) {}
+  onBlur(evt) {}
   onInput(evt) {}
   onSelect(evt) {}
   onDeselect(evt) {}
@@ -668,18 +670,8 @@ export class Morph {
     evt.hand.dropMorphsOn(this);
   }
 
-  onHoverIn(evt) {
-    this.hover = (this.hover || 0) +1;
-    // console.log(`hoverin ${this} ${this.hover}`)
-  }
-
-  onHoverOut(evt) {
-    this.hover = (this.hover || 0) -1;
-    // console.log(`hoverout ${this} ${this.hover}`)
-  }
-
-  onFocus(evt) { console.log(`focusing ${this}`) }
-  onBlur(evt) { console.log(`defocusing ${this}`) }
+  onHoverIn(evt) {}
+  onHoverOut(evt) {}
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
