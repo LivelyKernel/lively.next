@@ -324,19 +324,38 @@
     return superclass;
   }
 
+  function installValueDescriptor(object, klass, descr) {
+    descr = Object.assign(descr, defaultPropertyDescriptorForValue);
+    descr.value.displayName = descr.key;
+    if (descr.needsDeclaringClass) {
+      var orig = descr.value.originalFunction || descr.value;
+      descr.value = Object.assign(function declaring_class_wrapper() /*args*/{
+        return orig.call.apply(orig, [this, klass].concat(Array.prototype.slice.call(arguments)));
+      }, {
+        originalFunction: orig,
+        toString: function toString() {
+          return orig.toString();
+        },
+        displayName: descr.key
+      });
+    }
+    Object.defineProperty(object, descr.key, descr);
+  }
+
+  function installGetterSetterDescriptor(klass, descr) {
+    descr = Object.assign(descr, defaultPropertyDescriptorForGetterSetter);
+    Object.defineProperty(klass, descr.key, descr);
+  }
+
   function addMethods(klass, instanceMethods, classMethods) {
     // install methods from two lists (static + instance) of {key, value} or
     // {key, get/set} descriptors
     classMethods && classMethods.forEach(function (ea) {
-      var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
-      Object.defineProperty(klass, ea.key, Object.assign(ea, descr));
-      if (typeof ea.value === "function") klass[ea.key].displayName = ea.key;
+      ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
     });
 
     instanceMethods && instanceMethods.forEach(function (ea) {
-      var descr = ea.value ? defaultPropertyDescriptorForValue : defaultPropertyDescriptorForGetterSetter;
-      Object.defineProperty(klass.prototype, ea.key, Object.assign(ea, descr));
-      if (typeof ea.value === "function") klass.prototype[ea.key].displayName = ea.key;
+      ea.value ? installValueDescriptor(klass.prototype, klass, ea) : installGetterSetterDescriptor(klass.prototype, ea);
     });
 
     // 4. define initializer method, in our class system the constructor is always
@@ -370,7 +389,7 @@
     superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
   }
 
-  function createOrExtend(name, superclassSpec) {
+  function createOrExtend(className, superclassSpec) {
     var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
     var classMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
     var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
@@ -388,9 +407,9 @@
 
     // 1. create a new constructor function if necessary, re-use an exisiting if the
     // classHolder object has it
-    var klass = name && classHolder.hasOwnProperty(name) && classHolder[name],
+    var klass = className && classHolder.hasOwnProperty(className) && classHolder[className],
         existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(name);
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(className);
 
     // 2. set the superclass if necessary and set prototype
     var superclass = setSuperclass(klass, superclassSpec);
@@ -420,6 +439,7 @@
         }
         klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
           if (name === superclassSpec.referencedAs) {
+            // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
             setSuperclass(klass, val);
             addMethods(klass, instanceMethods, classMethods);
           }
@@ -430,7 +450,7 @@
     // 6. Add a toString method for the class to allows us to see its constructor arguments
     var init = klass.prototype[initializeSymbol],
         constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
-        string = "class " + name + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+        string = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
     klass.toString = function () {
       return string;
     };
