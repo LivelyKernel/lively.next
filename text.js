@@ -231,19 +231,18 @@ class TextSelection {
     this.textMorph = textMorph;
   }
 
-  get start() { return this.textMorph._selection.start }
-  set start(val) {
+  get range() { return this.textMorph._selection; }
+  set range(rangeObj) {
     let morph = this.textMorph;
-    morph._selection = { start: val, end: this.end };
+    morph._selection = rangeObj;
     morph._needsSelect = true;
   }
 
-  get end() { return this.textMorph._selection.end }
-  set end(val) {
-    let morph = this.textMorph;
-    morph._selection = { start: this.start, end: val };
-    morph._needsSelect = true;
-  }
+  get start() { return this.range.start; }
+  set start(val) { this.range = { start: val, end: this.end }; }
+
+  get end() { return this.range.end }
+  set end(val) { this.range = { start: this.start, end: val }; }
 
   get text() { return this.textMorph.textString.substring(this.start, this.end) }
   set text(val) {
