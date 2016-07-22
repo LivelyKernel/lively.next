@@ -214,7 +214,7 @@ export var Keys = {
     var key = this.unicodeUnescape(keyEvt.keyIdentifier);
     if (key === 'Meta') key = "Command";
     if (key === ' ') key = "Space";
-    if (keyEvt.keyCode === Event.KEY_BACKSPACE) key = "Backspace";
+    if (keyEvt.keyCode === this.KEY_BACKSPACE) key = "Backspace";
     return key;
   },
 
@@ -242,9 +242,9 @@ export var Keys = {
     if (this.isShiftDown(domEvt)) keyParts.push('Shift');
     // key
     var id;
-    if (domEvt.keyCode === Event.KEY_TAB) id = 'Tab';
-    else if (domEvt.keyCode === Event.KEY_ESC) id = 'Esc';
-    else if (domEvt.keyCode === Event.KEY_DELETE) id = 'Del';
+    if (domEvt.keyCode === this.KEY_TAB) id = 'Tab';
+    else if (domEvt.keyCode === this.KEY_ESC) id = 'Esc';
+    else if (domEvt.keyCode === this.KEY_DELETE) id = 'Del';
     else id = this.decodeKeyIdentifier(domEvt);
     if (options.ignoreModifiersIfNoCombo) {
       if (keyParts.length >= 1 && keyParts.include(id)) return '';
