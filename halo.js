@@ -309,7 +309,13 @@ export class Halo extends Morph {
         } else {
           this.styleClasses = ["halo-item", "fa", "fa-repeat"];
         }
-      }
+      },
+      onKeyDown(evt) {
+          this.adaptAppearance(evt.isShiftDown());
+      },
+      onKeyUp(evt) {
+          this.adaptAppearance(evt.isShiftDown());
+      },
     }));
   }
 
