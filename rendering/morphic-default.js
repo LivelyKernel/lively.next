@@ -3,6 +3,53 @@ import { Transform } from "lively.graphics"
 
 var {h, diff, patch, create} = vdom;
 
+function defaultStyle(morph) {
+  const {
+    visible,
+    position: {x,y},
+    extent: {x: width, y: height},
+    origin,
+    fill, borderWidth, borderColor, borderRadius: br,
+    clipMode, reactsToPointer, focusable,
+    owner
+  } = morph;
+
+  return {
+    transform: new Transform()
+                      .preConcatenate(new Transform(morph.origin))
+                      .preConcatenate(morph.getTransform())
+                      .preConcatenate(new Transform(morph.origin).inverse())
+                      .preConcatenate(new Transform(owner && owner.origin))
+                      .toCSSTransformString(),
+    transformOrigin: `${origin.x}px ${origin.y}px `,
+    position: "absolute",
+    display: visible ? "" : "none",
+    width: width + 'px', height: height + 'px',
+    backgroundColor: fill ? fill.toString() : "",
+    "box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`,
+    borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
+    overflow: clipMode,
+    "pointer-events": reactsToPointer ? "auto" : "none",
+    cursor: morph.nativeCursor,
+
+    ...(morph.dropShadow ? {
+      WebkitFilter: shadowCss(morph)
+    } : null),
+
+    ...morph.shape().style
+  };
+}
+
+function defaultAttributes(morph) {
+  return {
+    ...morph.shape(),
+    id: morph.id,
+    className: morph.styleClasses.join(" "),
+    draggable: false,
+    tabIndex: morph.focusable ? 1 : -1,
+   };
+}
+
 function shadowCss(morph) {
   var x = 1,
       y = 1,
@@ -32,54 +79,10 @@ export function renderMorph(morph, renderer) {
 
   morph.aboutToRender();
 
-  var {
-    _nodeType,
-    visible,
-    position: {x,y},
-    extent: {x: width, y: height},
-    origin,
-    fill, borderWidth, borderColor, borderRadius: br,
-    clipMode, reactsToPointer, focusable,
-    owner, submorphs
-  } = morph;
-
-  var shapedStyle = {
-    transform: new Transform()
-                      .preConcatenate(new Transform(morph.origin))
-                      .preConcatenate(morph.getTransform())
-                      .preConcatenate(new Transform(morph.origin).inverse())
-                      .preConcatenate(new Transform(owner && owner.origin))
-                      .toCSSTransformString(),
-    transformOrigin: `${origin.x}px ${origin.y}px `,
-    position: "absolute",
-    display: visible ? "" : "none",
-    width: width + 'px', height: height + 'px',
-    backgroundColor: fill ? fill.toString() : "",
-    "box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`,
-    borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
-    overflow: clipMode,
-    "pointer-events": reactsToPointer ? "auto" : "none",
-    cursor: morph.nativeCursor,
-
-    ...(morph.dropShadow ? {
-      WebkitFilter: shadowCss(morph)
-    } : null),
-
-    ...morph.shape().style
-  };
-
-  var attributes = {
-    ...morph.shape(),
-    id: morph.id,
-    className: morph.styleClasses.join(" "),
-    draggable: false,
-    tabIndex: focusable ? 1 : -1,
-    style: shapedStyle
-   };
-
-  var tree = h(
-    _nodeType, attributes,
-    submorphs.map(m => m.render(renderer)));
+  var tree = h(morph._nodeType,
+                {...defaultAttributes(morph),
+                 style: defaultStyle(morph)},
+               morph.submorphs.map(m => m.render(renderer)));
 
   renderer.renderMap.set(morph, tree);
   return tree;
