@@ -3,7 +3,7 @@ import { Transform } from "lively.graphics"
 
 var {h, diff, patch, create} = vdom;
 
-function defaultStyle(morph) {
+export function defaultStyle(morph) {
   const {
     visible,
     position: {x,y},
@@ -40,7 +40,7 @@ function defaultStyle(morph) {
   };
 }
 
-function defaultAttributes(morph) {
+export function defaultAttributes(morph) {
   return {
     ...morph.shape(),
     id: morph.id,
