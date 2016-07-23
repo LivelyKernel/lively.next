@@ -80,15 +80,15 @@ describe("marshalling", () => {
     });
 
     it("snapshots object with custom symbols", () => {
-// registry = new Registry()
-//     var ref = registry.add(obj);
-//     registry.jsonSnapshot()
-//     Registry.fromJSONSnapshot(registry.jsonSnapshot()).resolveToObj(ref.id)
-
       var obj = {foo: Symbol("test")},
           {foo} = serializationRoundtrip(obj);
       expect(foo).not.equals(obj.foo);
       expect(foo).stringEquals(obj.foo);
+    });
+
+    it("property symbols are ignored", () => {
+      var obj = {[Symbol.for("test")]: 23, foo: 24};
+      expect(serializationRoundtrip(obj)).deep.equals({foo: 24, _rev: 0});
     });
 
     xdescribe("deserializes", () => {
