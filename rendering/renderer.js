@@ -156,14 +156,14 @@ export class Renderer {
   }
 
   renderImage(image) {
-    const style = defaultStyle(image);
-    return h("div", {...defaultAttributes(image), style},
+    return h("div", {...defaultAttributes(image),
+                     style: defaultStyle(image)},
                     [h("img", {src: image.imageUrl,
                                draggable: false,
                                style: {
                                   "pointer-events": "none",
                                   position: "absolute",
-                                  width: style.width, height: style.height}}),
+                                  width: "100%", height: "100%"}}),
                     h("div", image.submorphs.map(m => this.render(m)))]);
   }
 }
