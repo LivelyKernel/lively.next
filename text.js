@@ -150,18 +150,6 @@ export class Text extends Morph {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
-  select(renderer) {
-    var domNode = renderer.getNodeForMorph(this);
-    domNode && ({ start: domNode.selectionStart, end: domNode.selectionEnd } = this._selection);
-  }
-
-  selectIfNeeded(renderer) {
-    if (this._needsSelect) {
-      this.select(renderer);
-      this._needsSelect = false;
-    }
-  }
-
   onInput(evt) {
     this.textString = evt.domEvt.target.value;
   }

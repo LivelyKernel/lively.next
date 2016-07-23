@@ -137,12 +137,14 @@ export class Renderer {
   }
 
   renderText(text) {
-    text.selectIfNeeded(this);
     return h("textarea",
               {...defaultAttributes(text),
                value: text.textString,
                readOnly: text.readOnly,
                placeholder: text.placeholder,
+               ...(text._needsSelect &&
+                    {selectionStart: text._selection.start,
+                     selectionEnd: text._selection.end}),
                style: {...defaultStyle(text),
                  resize: "none", border: 0,
                 "white-space": "nowrap", padding: "0px",
