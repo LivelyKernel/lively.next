@@ -91,16 +91,18 @@ describe("full morphic setup with renderer and events", function () {
         expect(style.position).equals("absolute");
       });
 
-      it("morph type influences node type", () => {
-        expect(ellipse._nodeType).equals("div");
-        expect(image._nodeType).equals("img");
+      it("morph type influences node structure", () => {
+        const ellipseNode = renderer.getNodeForMorph(ellipse),
+              imageNode = renderer.getNodeForMorph(image);
+        expect(ellipseNode.nodeName).equals("DIV");
+        expect(imageNode.childNodes[0].nodeName).equals("IMG");
       });
 
       it("morph type influences node attributes", () => {
         const ellipseNode = renderer.getNodeForMorph(ellipse),
               imageNode = renderer.getNodeForMorph(image);
         expect(ellipseNode).not.to.have.property('src');
-        expect(imageNode).to.have.property('src');
+        expect(imageNode.childNodes[0]).to.have.property('src');
       });
 
     });
