@@ -83,7 +83,7 @@ export class Menu extends Morph {
     this.submorphs = [];
     var p = this.padding;
     var maxWidth = 0, pos = pt(p, p);
-    
+
     if (this.title) {
       var title = this.addMorph(Text.makeLabel(this.title, {position: pos, fontSize: 16, draggable: false}));
       pos = title.bottomLeft;

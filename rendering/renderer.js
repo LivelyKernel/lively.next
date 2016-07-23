@@ -140,7 +140,17 @@ export class Renderer {
     text.selectIfNeeded(this);
     return h("textarea",
               {...defaultAttributes(text),
-               style: defaultStyle(text)});
+               value: text.textString,
+               readOnly: text.readOnly,
+               placeholder: text.placeholder,
+               style: {...defaultStyle(text),
+                 resize: "none", border: 0,
+                "white-space": "nowrap", padding: "0px",
+                "font-family": text.fontFamily,
+                "font-size": text.fontSize + "px",
+                "color": String(text.fontColor)
+              }
+            });
   }
 
   renderImage(image) {

@@ -133,21 +133,6 @@ export class Text extends Morph {
     return renderer.renderText(this);
   }
 
-  shape() {
-    return {
-      value: this.textString,
-      readOnly: this.readOnly,
-      placeholder: this.placeholder,
-      style: {
-        resize: "none", border: 0,
-       "white-space": "nowrap", padding: "0px",
-       "font-family": this.fontFamily,
-       "font-size": this.fontSize + "px",
-       "color": String(this.fontColor)
-     }
-    }
-  }
-
   fit() {
     var {fixedHeight, fixedWidth} = this;
     if (fixedHeight && fixedWidth) return;
