@@ -32,15 +32,12 @@ export function defaultStyle(morph) {
 
     ...(morph.dropShadow ? {
       WebkitFilter: shadowCss(morph)
-    } : null),
-
-    ...morph.shape().style
+    } : null)
   };
 }
 
 export function defaultAttributes(morph) {
   return {
-    ...morph.shape(),
     id: morph.id,
     className: morph.styleClasses.join(" "),
     draggable: false,

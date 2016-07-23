@@ -126,10 +126,6 @@ export class Morph {
     if (this.owner) this.owner.makeDirty();
   }
 
-  shape() {
-    return {}
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
