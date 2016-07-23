@@ -1,7 +1,5 @@
 import { string, arr } from "lively.lang";
 
-var uuids = arr.range(0,10000).map(_ => string.newUUID());
-
 function isPrimitive(obj) {
   // primitive objects don't need to be registered
   if (obj == null) return true;
@@ -46,73 +44,92 @@ var symbolExpression = (() => {
 
 export class ObjectRef {
 
-  static create(obj, serializedObj) {
-    return new this(obj.id, obj, serializedObj);
+  static create(obj, snapshot) {
+    return new this(obj.id, obj, snapshot);
   }
 
-  constructor(id, realObj, serializedObj) {
-    this.id = id || uuids.pop() || string.newUUID();
+  constructor(id, realObj, snapshot) {
+    this.id = id || string.newUUID();
     this.realObj = realObj;
-    this.serializedObj = serializedObj;
+    this.snapshotVersions = [];
+    this.snapshots = {};
+    if (snapshot) {
+      var rev = snapshot.rev || 0;
+      this.snapshotVersions.push(rev);
+      this.snapshots[rev] = snapshot;
+    }
   }
 
   get isObjectRef() { return true; }
 
-  asPropertyValueForSnapshot() {
-    return {__ref__: true, id: this.id}
+  get currentSnapshot() { return this.snapshots[arr.last(this.snapshotVersions)]}
+
+  asRefForSerializedObjMap(rev = "????") {
+    return {__ref__: true, id: this.id, rev}
   }
 
-  marshallInto(snapshot, pool) {
-    if (this.serializedObj) {
-      snapshot[this.id] = this.serializedObj;
-      return this.asPropertyValueForSnapshot();
+  snapshotObj(serializedObjMap, pool) {
+    // serializedObjMap: maps ids to snapshots
+
+    var {id, realObj, snapshots} = this;
+
+    if (!realObj) {
+      console.error(`Cannot marshall object ref ${id}, no real object!`);
+      return {...this.asRefForSerializedObjMap(), isMissing: true};
     }
 
-    var obj = this.realObj;
-    if (!obj) {
-      console.error(`Cannot marshall object ref ${this.id}, no real object!`);
-      return {...this.asPropertyValueForSnapshot(), isMissing: true};
+    var rev = realObj._rev || 0;
+    arr.pushIfNotIncluded(this.snapshotVersions, rev);
+
+    if (snapshots[rev]) {
+      if (!serializedObjMap[id])
+        serializedObjMap[id] = snapshots[rev];
+      return this.asRefForSerializedObjMap(rev);
     }
 
-    var serializedObj = this.serializedObj = snapshot[this.id] = {props: []};
+    var {props} = snapshots[rev] = serializedObjMap[id] = {rev, props: []};
     
-    for (let i = 0, keys = Object.keys(obj); i < keys.length; i++) {
+    for (let i = 0, keys = Object.keys(realObj); i < keys.length; i++) {
       let key = keys[i],
-          ref = pool.add(obj[key]);
-      if (ref.isObjectRef) {
-        serializedObj.props.push({key, value: ref.marshallInto(snapshot, pool)})
-      } else {
-        serializedObj.props.push({key, value: ref})
-      }
+          ref = pool.add(realObj[key]),
+          value = ref.isObjectRef ? ref.snapshotObj(serializedObjMap, pool) : ref;
+      props.push({key, value});
     }
 
-    return this.asPropertyValueForSnapshot();
+    return this.asRefForSerializedObjMap(rev);
   }
 
-  unmarshall(snapshot, pool) {
+  recreateObjFromSnapshot(serializedObjMap, pool) {
+    // serializedObjMap: map from ids to object snapshots
+
     if (this.realObj) return this;
 
-    var serializedObj = this.serializedObj;
-    if (!serializedObj) {
-      console.error(`Cannot unmarshall ObjectRef ${this.id} b/c of missing serializedObj`);
+    var snapshot = serializedObjMap[this.id];
+    if (!snapshot) {
+      console.error(`Cannot recreateObjFromSnapshot ObjectRef ${this.id} b/c of missing snapshot in snapshot map!`);
       return this;
     }
 
-    if (serializedObj.__recreate__) {
-      this.realObj = evalRecreateExpr(serializedObj);
+    var {rev, __recreate__, props} = snapshot;
+    rev = rev || 0;
+    this.snapshotVersions.push(rev);
+    this.snapshots[rev] = snapshot;
+
+    if (__recreate__) {
+      this.realObj = evalRecreateExpr(snapshot);
       pool.internalAddRef(this); // for updating realObj
       return this;
     }
 
-    var newObj = this.realObj = {};
+    var newObj = this.realObj = {_rev: rev};
     pool.internalAddRef(this); // for updating realObj
 
-    for (var i = 0; i < serializedObj.props.length; i++) {
-      var {key, value} = serializedObj.props[i];
+    for (var i = 0; i < props.length; i++) {
+      var {key, value} = props[i];
       if (isPrimitive(value)) newObj[key] = value;
       else if (value.__expr__) newObj[key] = evalSerializedExpr(value);
       else {
-        var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, snapshot, pool);
+        var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool);
         newObj[key] = valueRef.realObj;
       }
     }
@@ -121,9 +138,7 @@ export class ObjectRef {
   }
 
   static fromSnapshot(id, snapshot, pool) {
-    var ref = new this(id, null, snapshot[id]);
-    pool.internalAddRef(ref)
-    return ref.unmarshall(snapshot, pool);
+    return pool.internalAddRef(new this(id)).recreateObjFromSnapshot(snapshot, pool);
   }
 }
 
@@ -178,7 +193,7 @@ export class ObjectPool {
     var snapshot = {};
     for (var i = 0, ids = Object.keys(this._id_ref_map); i < ids.length; i++) {
       var ref = this._id_ref_map[ids[i]];
-      ref.marshallInto(snapshot, this);
+      ref.snapshotObj(snapshot, this);
     }
     return snapshot;
   }

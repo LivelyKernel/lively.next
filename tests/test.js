@@ -4,11 +4,53 @@ import { expect, chai } from "mocha-es6";
 import { ObjectPool, ObjectRef } from "../index.js";
 
 function serializationRoundtrip(obj, serializer = new ObjectPool()) {
-    var ref = objPool.add(obj);
-    return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
+  var ref = objPool.add(obj);
+  return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
 }
 
 var objPool;
+
+
+describe("object registration", () => {
+  beforeEach(() => objPool = new ObjectPool());
+
+  it("registers objects", () => {
+    var o = {id: "123"},
+        ref = objPool.add(o);
+    expect(objPool.resolveToObj("123")).equals(o, "object not found in pool");
+    expect(objPool.resolveToObj("1234")).equals(undefined, "unknown id returned sth");
+    expect(ref.id).equals("123");
+  });
+
+  it("pool remembers objects", () => {
+    var o = {},
+        ref1 = objPool.add(o),
+        ref2 = objPool.add(o);
+    expect(objPool.resolveToObj(ref1.id)).equals(o);
+    expect(ref1).equals(ref2, "different refs");
+  });
+
+});
+
+
+describe("snapshots", () => {
+
+  beforeEach(() => objPool = new ObjectPool());
+
+  it("snapshots", () => {
+    var o = {foo: 23, ref: {bar: 24}},
+        ref = objPool.add(o),
+        snapshot = objPool.jsonSnapshot(),
+        objPool2 = ObjectPool.fromJSONSnapshot(snapshot);
+    expect(objPool2.resolveToObj(ref.id)).not.equals(o, "identical object");
+    expect(objPool2.resolveToObj(ref.id)).deep.equals({...o, _rev: 0, ref: {...o.ref, _rev: 0}}, "object structure changed");
+    expect(objPool.objects()).to.have.length(2);
+    expect(objPool2.objects()).containSubset(objPool.objects(), "object list diverged");
+  });
+
+  
+});
+
 
 describe("marshalling", () => {
 
@@ -26,7 +68,7 @@ describe("marshalling", () => {
           ref = objPool.add(s);
       expect(ref).to.have.property("id")
       expect(ref.isObjectRef).equals(true);
-      expect(ref.serializedObj.__recreate__).equals('Symbol("foo")');
+      expect(ref.currentSnapshot.__recreate__).equals('Symbol("foo")');
       expect(objPool.resolveToObj(ref.id)).equals(s);
     });
 
@@ -57,44 +99,7 @@ describe("marshalling", () => {
   });
 });
 
-describe("object registration", () => {
-  beforeEach(() => objPool = new ObjectPool());
-
-  it("registers objects", () => {
-    var o = {id: "123"},
-        ref = objPool.add(o);
-    expect(objPool.resolveToObj("123")).equals(o, "object not found in pool");
-    expect(objPool.resolveToObj("1234")).equals(undefined, "unknown id returned sth");
-    expect(ref.id).equals("123");
-  });
-
-  it("pool remembers objects", () => {
-    var o = {},
-        ref1 = objPool.add(o),
-        ref2 = objPool.add(o);
-    expect(objPool.resolveToObj(ref1.id)).equals(o);
-    expect(ref1).equals(ref2, "different refs");
-  });
-
-});
-
-
-describe("snapshots", () => {
-
-  beforeEach(() => objPool = new ObjectPool());
-
-  it("snapshots", () => {
-    var o = {foo: 23},
-        ref = objPool.add(o),
-        snapshot = objPool.jsonSnapshot(),
-        objPool2 = ObjectPool.fromJSONSnapshot(snapshot);
-    expect(objPool2.resolveToObj(ref.id)).not.equals(o, "identical object");
-    expect(objPool2.resolveToObj(ref.id)).deep.equals(o, "object structure changed");
-    expect(objPool.objects()).deep.equals(objPool2.objects(), "object list diverged");
-  })
-
-})
-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function benchmarks() {
 
