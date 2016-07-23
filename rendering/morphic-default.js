@@ -89,6 +89,18 @@ export function renderMorph(morph, renderer) {
 
 }
 
+export function renderImage(morph, renderer) {
+  const style = defaultStyle(morph);
+  return h("div", {...defaultAttributes(morph), style},
+                  [h("img", {src: morph.imageUrl,
+                             draggable: false,
+                             style: {
+                                "pointer-events": "none",
+                                position: "absolute",
+                                width: style.width, height: style.height}}),
+                  h("div", morph.submorphs.map(m => m.render(renderer)))]);
+}
+
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 

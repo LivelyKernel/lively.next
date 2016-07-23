@@ -1,11 +1,10 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree } from "lively.lang";
-import { renderRootMorph, renderMorph, defaultStyle, defaultAttributes } from "./rendering/morphic-default.js"
+import { renderRootMorph, renderMorph, renderImage } from "./rendering/morphic-default.js"
 import { Halo } from "./halo.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import { morph } from "./index.js";
-import {h} from "virtual-dom";
 import config from "./config.js";
 
 
@@ -969,21 +968,11 @@ export class Image extends Morph {
 
   get isImage() { return true }
 
-  get _nodeType() { return 'img'; }
-
   get imageUrl()       { return this.getProperty("imageUrl"); }
   set imageUrl(value)  { this.recordChange({prop: "imageUrl", value}); }
 
   render(renderer) {
-    const style = defaultStyle(this);
-    return h("div", {...defaultAttributes(this), style},
-                    [h("img", {src: this.imageUrl,
-                               draggable: false,
-                               style: {
-                                  "pointer-events": "none",
-                                  position: "absolute",
-                                  width: style.width, height: style.height}}),
-                    h("div", this.submorphs.map(m => m.render(renderer)))]);
+    return renderImage(this);
   }
 }
 
