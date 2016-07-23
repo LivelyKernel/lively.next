@@ -1,7 +1,5 @@
-import vdom from "virtual-dom";
+import {diff, patch, create} from "virtual-dom";
 import { Transform } from "lively.graphics"
-
-var {h, diff, patch, create} = vdom;
 
 export function defaultStyle(morph) {
   const {
@@ -70,43 +68,12 @@ function shadowCss(morph) {
   return `drop-shadow(${5 * x}px ${5 * y}px 5px rgba(0, 0, 0, 0.36))`
 }
 
-export function renderMorph(morph, renderer) {
-
-  if (!morph.needsRerender()) {
-    var rendered = renderer.renderMap.get(morph);
-    if (rendered) return rendered;
-  }
-
-  morph.aboutToRender();
-
-  var tree = h(morph._nodeType,
-                {...defaultAttributes(morph),
-                 style: defaultStyle(morph)},
-               morph.submorphs.map(m => m.render(renderer)));
-
-  renderer.renderMap.set(morph, tree);
-  return tree;
-
-}
-
-export function renderImage(morph, renderer) {
-  const style = defaultStyle(morph);
-  return h("div", {...defaultAttributes(morph), style},
-                  [h("img", {src: morph.imageUrl,
-                             draggable: false,
-                             style: {
-                                "pointer-events": "none",
-                                position: "absolute",
-                                width: style.width, height: style.height}}),
-                  h("div", morph.submorphs.map(m => m.render(renderer)))]);
-}
-
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 
   var tree = renderer.renderMap.get(world) || world.render(renderer),
       domNode = renderer.domNode || (renderer.domNode = create(tree, renderer.domEnvironment)),
-      newTree = world.render(renderer),
+      newTree = renderer.render(world),
       patches = diff(tree, newTree);
 
   if (!domNode.parentNode) {

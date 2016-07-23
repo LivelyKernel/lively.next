@@ -1,5 +1,7 @@
 import { promise } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
+import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
+import {h} from "virtual-dom";
 
 const defaultCSS = `
 
@@ -115,13 +117,50 @@ export class Renderer {
       null;
   }
 
+  render(x) {
+    if (!x.needsRerender()) {
+      var rendered = this.renderMap.get(x);
+      if (rendered) return rendered;
+    }
+    x.aboutToRender();
+
+    var tree = x.render(this);
+    this.renderMap.set(x, tree);
+    return tree;
+  }
+
+  renderMorph(morph) {
+    return h("div",
+              {...defaultAttributes(morph),
+               style: defaultStyle(morph)},
+             morph.submorphs.map(m => this.render(m)));
+  }
+
+  renderText(text) {
+    text.selectIfNeeded(this);
+    return h("textarea",
+              {...defaultAttributes(text),
+               style: defaultStyle(text)});
+  }
+
+  renderImage(image) {
+    const style = defaultStyle(image);
+    return h("div", {...defaultAttributes(image), style},
+                    [h("img", {src: image.imageUrl,
+                               draggable: false,
+                               style: {
+                                  "pointer-events": "none",
+                                  position: "absolute",
+                                  width: style.width, height: style.height}}),
+                    h("div", image.submorphs.map(m => this.render(m)))]);
+  }
 }
 
 
 export class FontMetric {
 
   static default() {
-    if (!this._fontMetric) 
+    if (!this._fontMetric)
       throw new Error("FontMetric has not yet been initialized!")
     return this._fontMetric;
   }

@@ -1,6 +1,6 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree } from "lively.lang";
-import { renderRootMorph, renderMorph, renderImage } from "./rendering/morphic-default.js"
+import { renderRootMorph } from "./rendering/morphic-default.js"
 import { Halo } from "./halo.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
@@ -50,8 +50,6 @@ export class Morph {
     }
     Object.assign(this, props);
   }
-
-  get _nodeType() { return 'div'; }
 
   get isMorph() { return true; }
   get id() { return this._id; }
@@ -733,7 +731,7 @@ export class Morph {
     return promise.waitFor(() => !this.needsRerender()).then(() => this);
   }
 
-  render(renderer) { return renderMorph(this, renderer); }
+  render(renderer) { return renderer.renderMorph(this); }
 
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 
@@ -963,7 +961,7 @@ export class Image extends Morph {
   constructor(props) {
     super(props);
     if (!this.imageUrl)
-      this.imageUrl = 'http://lively-web.org/core/media/lively-web-logo-small.png'
+      this.imageUrl = 'http://localhost:9001/core/media/lively-web-logo-small.png'
   }
 
   get isImage() { return true }
@@ -972,7 +970,7 @@ export class Image extends Morph {
   set imageUrl(value)  { this.recordChange({prop: "imageUrl", value}); }
 
   render(renderer) {
-    return renderImage(this);
+    return renderer.renderImage(this);
   }
 }
 

@@ -1,6 +1,5 @@
 import { obj } from "lively.lang";
 import { Morph } from "./index.js";
-import{ renderMorph } from "./rendering/morphic-default.js"
 import vdom from "virtual-dom";
 var { diff, patch, h, create: createElement } = vdom
 
@@ -16,7 +15,7 @@ class CustomVNode {
   get type() { return "Widget"; }
 
   renderMorph() {
-    var vtree = this.morphVtree = renderMorph(this.morph, this.renderer);
+    var vtree = this.morphVtree = this.renderer.renderMorph(this.morph);
     // The placeholder in vdom that our real dom node will replace
     var key = "customNode-key-" + this.morph.id;
     if (!vtree.children[0] || vtree.children[0].key !== key)

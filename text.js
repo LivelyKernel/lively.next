@@ -37,8 +37,6 @@ export class Text extends Morph {
 
   get isText() { return true }
 
-  get _nodeType() { return 'textarea'; }
-
   get textString() { return this.getProperty("textString") }
   set textString(value) {
     let oldText = this.textString;
@@ -132,8 +130,7 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    this.selectIfNeeded(renderer);
-    return super.render(renderer);
+    return renderer.renderText(this);
   }
 
   shape() {
