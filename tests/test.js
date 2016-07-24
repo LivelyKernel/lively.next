@@ -1,15 +1,23 @@
 /*global describe, it, beforeEach, afterEach*/
 import { expect, chai } from "mocha-es6";
 
-import { ObjectPool, ObjectRef } from "../index.js";
+import { obj } from "lively.lang";
+import { ObjectPool, ObjectRef, serialize } from "../index.js";
 
-function serializationRoundtrip(obj, serializer = new ObjectPool()) {
+function serializationRoundtrip(obj) {
   var ref = objPool.add(obj);
   return ObjectPool.fromJSONSnapshot(objPool.jsonSnapshot()).resolveToObj(ref.id);
 }
 
-var objPool;
 
+function itSerializesInto(subject, expected) {
+  var title = `serializes ${String(subject)} into ${JSON.stringify(expected)}`
+  return it(title, () => {
+    expect(obj.values(serialize(subject))[0]).deep.equals(expected);
+  });
+}
+
+var objPool;
 
 describe("object registration", () => {
   beforeEach(() => objPool = new ObjectPool());
@@ -57,17 +65,15 @@ describe("marshalling", () => {
 
   describe("symbols", () => {
 
-
-    it("register named and known sym => expression", () => {
-      expect(objPool.add(Symbol.for("test"))).deep.equals({__expr__: 'Symbol.for("test")'});
-      expect(objPool.add(Symbol.iterator)).deep.equals({__expr__: 'Symbol.iterator'});
-    });
+    itSerializesInto(Symbol.for("test"), {__expr__: 'Symbol.for("test")'});
+    itSerializesInto(Symbol.iterator, {__expr__: 'Symbol.iterator'});
 
     it("registers custom symbol", () => {
       var s = Symbol("foo"),
           ref = objPool.add(s);
       expect(ref).to.have.property("id")
       expect(ref.isObjectRef).equals(true);
+      objPool.snapshot();
       expect(ref.currentSnapshot.__recreate__).equals('Symbol("foo")');
       expect(objPool.resolveToObj(ref.id)).equals(s);
     });
@@ -103,17 +109,17 @@ describe("marshalling", () => {
   describe("serialized expressions", () => {
 
     it("simple", () => {
-      var exprObj = {n: 1, serializeExpr() { return `({n: ${this.n + 1}, serializeExpr: ${this.serializeExpr}})` }},
+      var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}, __serialize__: ${this.__serialize__}})` }}},
           obj = {foo: exprObj},
           {id} = objPool.add(obj),
           objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
           obj2 = objPool2.resolveToObj(id);
       expect(obj2).deep.property("foo.n", 2);
-      expect(obj2.foo).property("serializeExpr").to.be.a("function");
+      expect(obj2.foo).property("__serialize__").to.be.a("function");
     });
 
     it("with expression evaluator", () => {
-      var proto = {n: 1, serializeExpr() { return `foo(${this.n+1})`; }},
+      var proto = {n: 1, __serialize__() { return {__expr__: `foo(${this.n+1})`}; }},
           obj = obj = {foo: Object.create(proto)},
           {id} = objPool.add(obj),
           objPool2 = new ObjectPool();
@@ -129,11 +135,11 @@ describe("marshalling", () => {
 
       var obj2 = objPool2.resolveToObj(id);
       expect(obj2).deep.property("foo.n", 2);
-      expect(obj2.foo).property("serializeExpr").to.be.a("function");
+      expect(obj2.foo).property("__serialize__").to.be.a("function");
     });
 
     it("serialized object is expr itself", () => {
-      var exprObj = {n: 1, serializeExpr() { return `({n: ${this.n + 1}})` }},
+      var exprObj = {n: 1, __serialize__() { return {__expr__: `({n: ${this.n + 1}})`} }},
           {id} = objPool.add(exprObj),
           objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
           obj2 = objPool2.resolveToObj(id);

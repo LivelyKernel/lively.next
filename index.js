@@ -17,27 +17,25 @@ function defaultObjectRecreator(exprObj) {
 }
 
 
-function makeExpr(string) {
-  return {__expr__: String(string)};
-}
+Object.defineProperty(Symbol.prototype, "__serialize__", {
+  configurable: true,
+  value: (() => {
+    const knownSymbols = (() =>
+      Object.getOwnPropertyNames(Symbol)
+        .filter(ea => typeof Symbol[ea] === "symbol")
+        .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
+    const symMatcher = /^Symbol\((.*)\)$/;
 
+    return function() {
+      // turns a symbol into a __expr__ or a __recreate__ object.
+      if (Symbol.keyFor(this)) return {__expr__: `Symbol.for("${Symbol.keyFor(this)}")`};
+      if (knownSymbols.get(this)) return {__expr__: knownSymbols.get(this)};
+      var match = String(this).match(symMatcher)
+      return {__recreate__: match ? `Symbol("${match[1]}")` : "Symbol()"};
+    }
+  })()
+})
 
-// turns a symbol into a __expr__ or a __recreate__ object.
-var symbolExpression = (() => {
-
-  const knownSymbols = (() =>
-    Object.getOwnPropertyNames(Symbol)
-      .filter(ea => typeof Symbol[ea] === "symbol")
-      .reduce((map, ea) => map.set(Symbol[ea], "Symbol." + ea), new Map()))();
-  const symMatcher = /^Symbol\((.*)\)$/;
-
-  return function(sym) {
-    if (Symbol.keyFor(sym)) return makeExpr(`Symbol.for("${Symbol.keyFor(sym)}")`);
-    if (knownSymbols.get(sym)) return makeExpr(knownSymbols.get(sym));
-    var match = String(sym).match(symMatcher)
-    return {__recreate__: match ? `Symbol("${match[1]}")` : "Symbol()"};
-  }
-})();
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -86,8 +84,8 @@ export class ObjectRef {
     }
 
     // can realObj be serialized into an expression?
-    if (typeof realObj.serializeExpr === "function") {
-      snapshots[rev] = serializedObjMap[id] = {rev, __expr__: realObj.serializeExpr()};
+    if (typeof realObj.__serialize__ === "function") {
+      snapshots[rev] = serializedObjMap[id] = realObj.__serialize__(this, serializedObjMap, pool);
       return ref;
     }
 
@@ -96,10 +94,10 @@ export class ObjectRef {
     var {props} = snapshots[rev] = serializedObjMap[id] = {rev, props: []};
     for (let i = 0, keys = Object.keys(realObj); i < keys.length; i++) {
       let key = keys[i], value = realObj[key];
-      if (typeof value === "function") continue;
-      else if (isPrimitive(value)) { /*...*/ }
-      else if (typeof value.serializeExpr === "function") {
-        value = {__expr__: value.serializeExpr()};
+      if (typeof value === "function") continue; // FIXME
+      else if (isPrimitive(value)) { /* store value directly */ }
+      else if (typeof value.__serialize__ === "function") {
+        value = value.__serialize__(this, serializedObjMap, pool);
       } else {
         let ref = pool.add(realObj[key]);
         value = ref.isObjectRef ? ref.snapshotObj(serializedObjMap, pool) : ref;
@@ -136,13 +134,14 @@ export class ObjectRef {
         var {key, value} = props[i];
         if (isPrimitive(value)) newObj[key] = value;
         else if (value.__expr__) newObj[key] = pool.expressionEvaluator(value);
+        else if (value.__recreate__) newObj[key] = pool.objectRecreator(value);
         else {
           var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool);
           newObj[key] = valueRef.realObj;
         }
       }
     }
-    
+
     return this;
   }
 
@@ -184,21 +183,9 @@ export class ObjectPool {
     // holder in a serialized graph / list
 
     // primitive objects don't need to be registered
-    if (isPrimitive(obj)) return obj;
+    if (isPrimitive(obj)) return undefined;
 
-    // we have it already
-    var ref = this.ref(obj);
-    if (ref) return ref;
-
-    // symbols only need to be registered when they aren't global or named
-    // symbols
-    if (typeof obj === "symbol") {
-      let expr = symbolExpression(obj);
-      if (!expr.__recreate__) return expr;
-      return this.internalAddRef(new ObjectRef(this.uuidGen(), obj, expr));
-    }
-
-    return this.internalAddRef(new ObjectRef(obj.id || this.uuidGen(), obj));
+    return this.ref(obj) || this.internalAddRef(new ObjectRef(obj.id || this.uuidGen(), obj));
   }
 
   snapshot() {
@@ -229,7 +216,11 @@ export class ObjectPool {
   }
 }
 
-
+export function serialize(obj) {
+  var objPool = new ObjectPool();
+  objPool.add(obj);
+  return objPool.snapshot();
+}
 
 
 // export class Serializer {
