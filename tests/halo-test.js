@@ -53,7 +53,8 @@ describe("halos", () => {
     submorph1.origin = pt(20,30);
     var halo = world.showHaloFor(submorph1),
         innerButton = halo.buttonControls.find(item =>
-        submorph1.bounds().containsPoint(item.globalBounds().center()));
+        submorph1.bounds().containsPoint(item.globalBounds().center())
+        && item != halo.originHalo());
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
     expect(halo.originHalo().bounds().center()).equals(submorph1.origin);
   });
@@ -102,7 +103,7 @@ describe("halos", () => {
     expect(halo.propertyDisplay.displayedValue()).equals("100.0w 100.0h");
     otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
-  
+
   it("resizes proportionally", () => {
     var halo = world.showHaloFor(submorph1);
     halo.resizeHalo().init(true);
@@ -113,18 +114,56 @@ describe("halos", () => {
     expect(submorph1.extent.x).equals(submorph1.extent.y);
   });
 
+  it("shows a visual guide when resizing proportionally", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.resizeHalo().init(true);
+    halo.resizeHalo().update(pt(10,5), true);
+    var d = halo.getSubmorphNamed("diagonal");
+    expect(d).to.not.be.undefined;
+    expect(d.vertices.map((p) =>
+              d.worldPoint(p))).equals(
+                [halo.globalBounds().topLeft(),
+                 halo.globalBounds().bottomRight()]);
+  });
+
   it("rotate rotates", () => {
     var halo = world.showHaloFor(submorph1);
     halo.rotateHalo().init(num.toRadians(10));
     halo.rotateHalo().update(num.toRadians(25));
     expect(submorph1.rotation).closeTo(num.toRadians(15), 0.1);
   });
-  
+
+  it("indicates rotation", () => {
+    var halo = world.showHaloFor(submorph1),
+        rh = halo.rotateHalo(),
+        oh = halo.originHalo();
+    rh.init(num.toRadians(10));
+    rh.update(num.toRadians(25));
+    const ri = halo.getSubmorphNamed("rotationIndicator");
+    expect(ri).to.not.be.undefined;
+    expect(ri.vertices.map((p) =>
+            ri.worldPoint(p))).equals(
+              [oh.globalBounds().center(), rh.globalBounds().center()]);
+  });
+
   it("scale scales", () => {
     var halo = world.showHaloFor(submorph1);
     halo.rotateHalo().initScale(pt(10,10));
     halo.rotateHalo().updateScale(pt(20,20));
     expect(submorph1.scale).equals(2);
+  });
+
+  it("indicates scale", () => {
+    var halo = world.showHaloFor(submorph1),
+        rh = halo.rotateHalo(),
+        oh = halo.originHalo();
+    rh.initScale(pt(10,10));
+    rh.updateScale(pt(20,20));
+    const ri = halo.getSubmorphNamed("rotationIndicator");
+    expect(ri).to.not.be.undefined;
+    expect(ri.vertices.map((p) =>
+            ri.worldPoint(p))).equals(
+              [oh.globalBounds().center(), rh.globalBounds().center()]);
   });
 
   it("active rotate halo hides other halos and displays rotation", () => {
@@ -176,16 +215,21 @@ describe("halos", () => {
     halo = world.showHaloFor(submorph2);
     halo.originHalo().update(pt(20,5));
     closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
-    
+
     submorph2.rotation = num.toRadians(-20);
     oldGlobalPos = submorph2.globalBounds().topLeft();
     halo = world.showHaloFor(submorph2);
     halo.originHalo().update(pt(20,5));
     closeToPoint(submorph2.globalBounds().topLeft(), oldGlobalPos);
   });
-  
-  it("shifting the origin will not move submorphs", () => {
 
+  it("shifting the origin will not move submorphs", () => {
+    submorph1.position = pt(200,100);
+    submorph1.rotateBy(num.toRadians(90));
+    var halo = world.showHaloFor(submorph1);
+    var oldGlobalPos = submorph2.globalPosition;
+    halo.originHalo().update(pt(20,5));
+    closeToPoint(submorph2.globalPosition, oldGlobalPos);
   });
 
   it("origin halo aligns correctly if owner is transformed", () => {
@@ -195,7 +239,7 @@ describe("halos", () => {
     halo.alignWithTarget();
     expect(submorph2.worldPoint(submorph2.origin)).equals(halo.originHalo().globalBounds().center());
   });
-  
+
   it("origin halo aligns correctly if morph is transformed with different origin", () => {
     var halo = world.showHaloFor(submorph1);
     submorph1.adjustOrigin(submorph1.innerBounds().center());
