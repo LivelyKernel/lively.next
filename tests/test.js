@@ -48,15 +48,15 @@ describe("snapshots", () => {
     expect(objPool2.objects()).containSubset(objPool.objects(), "object list diverged");
   });
 
-  
 });
 
 
 describe("marshalling", () => {
 
+  beforeEach(() => objPool = new ObjectPool());
+
   describe("symbols", () => {
 
-    beforeEach(() => objPool = new ObjectPool());
 
     it("register named and known sym => expression", () => {
       expect(objPool.add(Symbol.for("test"))).deep.equals({__expr__: 'Symbol.for("test")'});
@@ -91,11 +91,55 @@ describe("marshalling", () => {
       expect(serializationRoundtrip(obj)).deep.equals({foo: 24, _rev: 0});
     });
 
-    xdescribe("deserializes", () => {
+    it("serializes symbol directly", () => {
+      var obj = {foo: Symbol("test")},
+          obj2 = serializationRoundtrip(Symbol("test"));
+      expect(obj2).not.equals(obj);
+      expect(obj2).stringEquals(Symbol("test"));
+    });
 
-      it("unknown sym", () => {
-      });
-    })
+  });
+
+  describe("serialized expressions", () => {
+
+    it("simple", () => {
+      var exprObj = {n: 1, serializeExpr() { return `({n: ${this.n + 1}, serializeExpr: ${this.serializeExpr}})` }},
+          obj = {foo: exprObj},
+          {id} = objPool.add(obj),
+          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
+          obj2 = objPool2.resolveToObj(id);
+      expect(obj2).deep.property("foo.n", 2);
+      expect(obj2.foo).property("serializeExpr").to.be.a("function");
+    });
+
+    it("with expression evaluator", () => {
+      var proto = {n: 1, serializeExpr() { return `foo(${this.n+1})`; }},
+          obj = obj = {foo: Object.create(proto)},
+          {id} = objPool.add(obj),
+          objPool2 = new ObjectPool();
+          
+
+      objPool2.expressionEvaluator = exprObj => {
+        var e = exprObj.__expr__;
+        if (e.startsWith("foo")) return Object.create(proto, {n: {value: Number(e.match(/[0-9]+/)[0])}})
+        return undefined;
+      };
+
+      objPool2.readSnapshot(objPool.snapshot());
+
+      var obj2 = objPool2.resolveToObj(id);
+      expect(obj2).deep.property("foo.n", 2);
+      expect(obj2.foo).property("serializeExpr").to.be.a("function");
+    });
+
+    it("serialized object is expr itself", () => {
+      var exprObj = {n: 1, serializeExpr() { return `({n: ${this.n + 1}})` }},
+          {id} = objPool.add(exprObj),
+          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
+          obj2 = objPool2.resolveToObj(id);
+      expect(obj2).property("n", 2);
+    });
+
   });
 });
 
@@ -109,17 +153,21 @@ function benchmarks() {
   objs[objs.length-1].first = objs[0]
 
   lively.lang.fun.timeToRunN(() => { new ObjectPool().add(objs[0]) }, 1000)
+
   lively.lang.fun.timeToRunN(() => {
     var r = new ObjectPool();
     r.add(objs[0])
-    objPool.jsonSnapshot()
+    objPool.snapshot()
   }, 1000);
 
+
 console.profile("s")
+// var uuids = Array.range(0,10000).map(ea => lively.lang.string.newUUID())
   lively.lang.fun.timeToRunN(() => {
-    var r = new ObjectPool();
+    var r = new ObjectPool(() => uuids.pop() || lively.lang.string.newUUID());
     r.add(objs[0])
-    var r2 = ObjectPool.fromJSONSnapshot(r.jsonSnapshot())
+    // var r2 = ObjectPool.fromJSONSnapshot(r.jsonSnapshot())
+    var r2 = ObjectPool.fromSnapshot(r.snapshot())
   }, 100);
 console.profileEnd("s")
 

@@ -8,11 +8,11 @@ function isPrimitive(obj) {
   return false;
 }
 
-function evalSerializedExpr(exprObj) {
+function defaultExpressionEvaluator(exprObj) {
   return eval(exprObj.__expr__);
 }
 
-function evalRecreateExpr(exprObj) {
+function defaultObjectRecreator(exprObj) {
   return eval(exprObj.__recreate__);
 }
 
@@ -44,12 +44,8 @@ var symbolExpression = (() => {
 
 export class ObjectRef {
 
-  static create(obj, snapshot) {
-    return new this(obj.id, obj, snapshot);
-  }
-
   constructor(id, realObj, snapshot) {
-    this.id = id || string.newUUID();
+    this.id = id;
     this.realObj = realObj;
     this.snapshotVersions = [];
     this.snapshots = {};
@@ -78,25 +74,40 @@ export class ObjectRef {
       return {...this.asRefForSerializedObjMap(), isMissing: true};
     }
 
-    var rev = realObj._rev || 0;
+    var rev = realObj._rev || 0,
+        ref = this.asRefForSerializedObjMap(rev);
     arr.pushIfNotIncluded(this.snapshotVersions, rev);
 
+    // do we already have serialized a current version of realObj?
     if (snapshots[rev]) {
       if (!serializedObjMap[id])
         serializedObjMap[id] = snapshots[rev];
-      return this.asRefForSerializedObjMap(rev);
+      return ref;
     }
 
+    // can realObj be serialized into an expression?
+    if (typeof realObj.serializeExpr === "function") {
+      snapshots[rev] = serializedObjMap[id] = {rev, __expr__: realObj.serializeExpr()};
+      return ref;
+    }
+
+    // do the generic serialization, i.e. enumerate all properties and
+    // serialize the referenced objects recursively
     var {props} = snapshots[rev] = serializedObjMap[id] = {rev, props: []};
-    
     for (let i = 0, keys = Object.keys(realObj); i < keys.length; i++) {
-      let key = keys[i],
-          ref = pool.add(realObj[key]),
-          value = ref.isObjectRef ? ref.snapshotObj(serializedObjMap, pool) : ref;
+      let key = keys[i], value = realObj[key];
+      if (typeof value === "function") continue;
+      else if (isPrimitive(value)) { /*...*/ }
+      else if (typeof value.serializeExpr === "function") {
+        value = {__expr__: value.serializeExpr()};
+      } else {
+        let ref = pool.add(realObj[key]);
+        value = ref.isObjectRef ? ref.snapshotObj(serializedObjMap, pool) : ref;
+      }
       props.push({key, value});
     }
 
-    return this.asRefForSerializedObjMap(rev);
+    return ref;
   }
 
   recreateObjFromSnapshot(serializedObjMap, pool) {
@@ -110,27 +121,25 @@ export class ObjectRef {
       return this;
     }
 
-    var {rev, __recreate__, props} = snapshot;
+    var {rev, __recreate__, __expr__, props} = snapshot;
     rev = rev || 0;
     this.snapshotVersions.push(rev);
     this.snapshots[rev] = snapshot;
 
-    if (__recreate__) {
-      this.realObj = evalRecreateExpr(snapshot);
-      pool.internalAddRef(this); // for updating realObj
-      return this;
-    }
-
-    var newObj = this.realObj = {_rev: rev};
+    var newObj = this.realObj = __expr__ ?
+      pool.expressionEvaluator(snapshot) : __recreate__ ?
+        pool.objectRecreator(snapshot) : {_rev: rev};
     pool.internalAddRef(this); // for updating realObj
 
-    for (var i = 0; i < props.length; i++) {
-      var {key, value} = props[i];
-      if (isPrimitive(value)) newObj[key] = value;
-      else if (value.__expr__) newObj[key] = evalSerializedExpr(value);
-      else {
-        var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool);
-        newObj[key] = valueRef.realObj;
+    if (props) {
+      for (var i = 0; i < props.length; i++) {
+        var {key, value} = props[i];
+        if (isPrimitive(value)) newObj[key] = value;
+        else if (value.__expr__) newObj[key] = pool.expressionEvaluator(value);
+        else {
+          var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool);
+          newObj[key] = valueRef.realObj;
+        }
       }
     }
     
@@ -147,9 +156,12 @@ export class ObjectRef {
 
 export class ObjectPool {
 
-  constructor() {
+  constructor(uuidGen = string.newUUID) {
     this._obj_ref_map = new Map();
     this._id_ref_map = {};
+    this.uuidGen = uuidGen;
+    this.expressionEvaluator = defaultExpressionEvaluator;
+    this.objectRecreator = defaultObjectRecreator;
   }
 
   knowsId(id) { return !!this._id_ref_map[id]; }
@@ -183,10 +195,10 @@ export class ObjectPool {
     if (typeof obj === "symbol") {
       let expr = symbolExpression(obj);
       if (!expr.__recreate__) return expr;
-      return this.internalAddRef(ObjectRef.create(obj, expr));
+      return this.internalAddRef(new ObjectRef(this.uuidGen(), obj, expr));
     }
 
-    return this.internalAddRef(ObjectRef.create(obj));
+    return this.internalAddRef(new ObjectRef(obj.id || this.uuidGen(), obj));
   }
 
   snapshot() {
