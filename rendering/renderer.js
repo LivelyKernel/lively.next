@@ -166,6 +166,51 @@ export class Renderer {
                                   width: "100%", height: "100%"}}),
                     h("div", image.submorphs.map(m => this.render(m)))]);
   }
+
+  renderPath(path) {
+    const {transform, transformOrigin, position, WebkitFilter,
+           display} = defaultStyle(path),
+          {width, height} = path.innerBounds(),
+          vertices = renderVertices(path),
+          defs = path.gradient && renderGradient(path);
+    return h("div", {...defaultAttributes(path),
+                     style: {transform, transformOrigin, position,
+                             width: width + 'px', height: height + 'px',
+                             display, WebkitFilter, "pointer-events": "auto"}},
+              h("svg", {namespace: "http://www.w3.org/2000/svg",
+                        style: {position: "absolute", "pointer-events": "none"},
+                        attributes:
+                         {width, height, "viewBox": [-2,-2,width,height].join(" "),
+                        ...(path.borderStyle == "dashed" && {"stroke-dasharray": "7 4"})}},
+                  [defs].concat(vertices)));
+  }
+}
+
+function renderVertices(path) {
+  var vertices = [];
+  for (var i = 0; i < path.vertices.length - 1; i++) {
+    var {x: x1, y: y1} = path.vertices[i],
+        {x: x2, y: y2} = path.vertices[i+1];
+    vertices.push(h("path",
+                {namespace: "http://www.w3.org/2000/svg",
+                 attributes:
+                  {"sroke-width": path.borderWidth,
+                   stroke: path.gradient ? "url(#" + path.id + ")" : path.borderColor,
+                 d: "M"+x1+","+y1+" "+"L"+x2+","+y2}}));
+  }
+  return vertices;
+}
+
+function renderGradient(path) {
+  return h("defs", {namespace: "http://www.w3.org/2000/svg"},
+                h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
+                                     attributes: {id: path.id}},
+                    path.gradient.map(([k, c]) =>
+                        h("stop",
+                            {namespace: "http://www.w3.org/2000/svg",
+                              attributes:
+                                {offset: (k * 100) + "%",
+                                 "stop-color": c}}))));
 }
 
 

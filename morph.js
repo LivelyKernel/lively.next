@@ -981,3 +981,37 @@ export class HTMLMorph extends Morph {
   set html(value)      { this._domNode && (this._domNode.innerHTML = value); }
 
 }
+
+export class Path extends Morph {
+
+  get borderStyle() { return this.getProperty("borderStyle") }
+  set borderStyle(value) { return this.recordChange({prop: "borderStyle", value}) }
+
+  get vertices() { return this.getProperty("vertices")}
+  set vertices(value) { return this.recordChange({prop: "vertices", value})}
+
+  get extent() { return this.getProperty("extent") }
+  set extent(value) {
+    this.scaleVerticesBy(value.scaleByPt(this.extent.inverted()));
+    return this.recordChange({prop: "extent", value});
+  }
+
+  scaleVerticesBy(scale) {
+    const vs = this.vertices;
+    this.vertices = vs && vs.map((v) => v.scaleByPt(scale));
+  }
+
+  addVertex(v, before=null) {
+    if (before) {
+      const insertIndex = this.vertices.indexOf(before);
+      this.vertices = this.vertices.splice(insertIndex, 0, v);
+    } else {
+      this.vertices = this.vertices.concat(v);
+    }
+  }
+
+  render(renderer) {
+    return renderer.renderPath(this);
+  }
+
+}
