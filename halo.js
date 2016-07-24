@@ -1,5 +1,5 @@
-import { Ellipse, Morph } from "./index.js"
-import { Color, pt, rect, Line } from "lively.graphics";
+import { Ellipse, Morph, Path } from "./index.js"
+import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
 const itemExtent = pt(24,24);
@@ -48,10 +48,11 @@ class HaloPropertyDisplay extends Morph {
     this.addMorph({
       type: "text",
       name: "textField",
+      fontColor: Color.darkGray,
       readOnly: true,
       position: pt(6,3),
       extent: pt(90, 14),
-      fixedWidth: true,
+      fixedWidth: false,
       fill: Color.red.withA(0),
       fontSize: 12,
       reactsToPointer: false
@@ -63,8 +64,10 @@ class HaloPropertyDisplay extends Morph {
   displayedValue() { return this.get("textField").textString; }
 
   displayProperty(val) {
+    val = String(val);
     this.visible = true;
-    this.get("textField").textString = String(val);
+    this.get("textField").textString = val;
+    this.width = 12 + this.get("textField").width;
   }
 
   disable() { this.visible = false; }
@@ -267,18 +270,18 @@ export class Halo extends Morph {
         this.halo.activeButton = this;
         scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
       },
-      update: (angleToTarget) => {
+      update(angleToTarget) {
+        this.halo.toggleRotationIndicator(true, this);
         scaleGauge = null;
-        this.target.rotateBy(angleToTarget - angle);
+        this.halo.target.rotateBy(angleToTarget - angle);
         angle = angleToTarget;
-        this.alignWithTarget();
       },
       updateScale: (gauge) => {
         if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.target.scale);
         this.target.scale = gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0));
-        this.alignWithTarget();
       },
       stop() {
+        this.halo.toggleRotationIndicator(false, this);
         scaleGauge = null;
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
@@ -286,17 +289,18 @@ export class Halo extends Morph {
       onDragStart(evt) {
         this.adaptAppearance(evt.isShiftDown());
         if (evt.isShiftDown()) {
-          this.initScale(evt.position.subPt(this.halo.target.globalPosition)); 
+          this.initScale(evt.position.subPt(this.halo.target.globalPosition));
         } else {
-          this.init(evt.position.subPt(this.halo.target.globalPosition).theta()); 
+          this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
         }
       },
       onDrag(evt) {
+        this.globalPosition = evt.position.addPt(pt(-10,-10));
         this.adaptAppearance(evt.isShiftDown());
         if (evt.isShiftDown()) {
-          this.updateScale(evt.position.subPt(this.halo.target.globalPosition)); 
+          this.updateScale(evt.position.subPt(this.halo.target.globalPosition));
         } else {
-          this.update(evt.position.subPt(this.halo.target.globalPosition).theta()); 
+          this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
         }
       },
       onDragEnd(evt) {
@@ -393,8 +397,8 @@ export class Halo extends Morph {
   }
 
   initButtons() {
-    this.addMorph(this.originHalo());
     this.buttonControls = [
+      this.originHalo(),
       this.resizeHalo(),
       this.closeHalo(),
       this.dragHalo(),
@@ -415,33 +419,59 @@ export class Halo extends Morph {
       this.propertyDisplay.disable();
   }
 
+  onKeyUp(evt) {
+    this.toggleDiagonal(false);
+  }
+
   toggleDiagonal(active) {
-    // FIXME: Implement svg paths
-    // var diagonal = this.getSubmorphNamed("diagonal");
-    // if (visible) {
-    //   if (!diagonal) {
-    //     diagonal = new Path(
-    //       {name: "diagonal",
-    //       style: "dashed",
-    //       gradient: {0: Color.transparent,
-    //                   0.1: Color.red,
-    //                   0.9: Color.transparent},
-    //       path: [this.bounds().topLeft(),
-    //               this.bounds().bottomRight()]});
-    //     this.add(diagonal);
-    //   } else {
-    //     if (diagonal) {
-    //       diagonal.remove();
-    //     }
-    //   }
-    // }
+    var diagonal = this.getSubmorphNamed("diagonal");
     if (active) {
-      this.diagonal = this.diagonal || 
-                      this.target.bounds().bottomRight()
-                          .subPt(this.target.bounds().topLeft());
-      return this.diagonal
+      if (diagonal) {
+        diagonal.extent = this.extent.addPt(diagonal.position.negated().scaleBy(2));
+        return diagonal.vertices[1];
+      } else {
+        var offset = this.extent.scaleBy(0.5);
+        diagonal = this.extent;
+        this.addMorphBack(new Path({
+          name: "diagonal",
+          borderStyle: "dashed",
+          position: offset.negated(),
+          extent: this.extent.addPt(offset.scaleBy(2)),
+          borderColor: Color.red,
+          borderWidth: 2,
+          gradient:[[0, Color.red.withA(0)],
+                    [0.1, Color.red],
+                    [0.9, Color.red],
+                    [1.0, Color.red.withA(0)]],
+          vertices: [pt(0,0), diagonal.addPt(offset.scaleBy(2))]}));
+        return diagonal;
+      }
     } else {
-      this.diagonal = null;
+      if (diagonal) {
+        diagonal.remove()
+      }
+    }
+  }
+
+  toggleRotationIndicator(active, haloItem) {
+    if (active) {
+      var originPos = this.getSubmorphNamed("origin").bounds().center();
+      const localize = (p) => this.rotationIndicator.localizePointFrom(p, this);
+      if (!this.rotationIndicator) {
+        this.rotationIndicator = this.addMorphBack(new Path({
+            borderColor: Color.red,
+            bounds: haloItem.bounds().union(this.innerBounds()),
+            vertices: []
+          }));
+      } else {
+        this.rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));
+        this.rotationIndicator.vertices = [localize(originPos), localize(haloItem.bounds().center())];
+      }
+    } else {
+      if (this.rotationIndicator) {
+        this.rotationIndicator.remove();
+        this.rotationIndicator = null;
+      }
     }
   }
 
