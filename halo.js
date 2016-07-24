@@ -127,14 +127,13 @@ export class Halo extends Morph {
         this.halo.activeButton = this;
       },
       stop(proportional=false) {
-        this.proportionalMode(proportional);
+        this.proportionalMode(false);
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
       onDragStart(evt) { this.init(evt.isShiftDown()) },
       onDrag(evt) { this.update(evt.state.dragDelta, evt.isShiftDown()) },
       onDragEnd(evt) { this.stop(evt.isShiftDown()) },
-      // FIXME: keyboard events are not yet targeted to morphs
       onKeyDown(evt) {
         this.proportionalMode(evt.isShiftDown());
       },
@@ -265,26 +264,30 @@ export class Halo extends Morph {
       init(angleToTarget) {
         this.halo.activeButton = this;
         angle = angleToTarget;
+        this.halo.toggleRotationIndicator(true, this);
       },
       initScale(gauge) {
         this.halo.activeButton = this;
         scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
+        this.halo.toggleRotationIndicator(true, this);
       },
       update(angleToTarget) {
-        this.halo.toggleRotationIndicator(true, this);
         scaleGauge = null;
         this.halo.target.rotateBy(angleToTarget - angle);
         angle = angleToTarget;
+        this.halo.toggleRotationIndicator(true, this);
       },
-      updateScale: (gauge) => {
-        if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.target.scale);
-        this.target.scale = gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0));
+      updateScale(gauge) {
+        if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
+        angle = gauge.theta();
+        this.halo.target.scale = gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0));
+        this.halo.toggleRotationIndicator(true, this);
       },
       stop() {
-        this.halo.toggleRotationIndicator(false, this);
         scaleGauge = null;
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
+        this.halo.toggleRotationIndicator(false, this);
       },
       onDragStart(evt) {
         this.adaptAppearance(evt.isShiftDown());
@@ -454,23 +457,24 @@ export class Halo extends Morph {
   }
 
   toggleRotationIndicator(active, haloItem) {
+    var rotationIndicator = this.getSubmorphNamed("rotationIndicator");
     if (active) {
       var originPos = this.getSubmorphNamed("origin").bounds().center();
-      const localize = (p) => this.rotationIndicator.localizePointFrom(p, this);
-      if (!this.rotationIndicator) {
-        this.rotationIndicator = this.addMorphBack(new Path({
+      const localize = (p) => rotationIndicator.localizePointFrom(p, this);
+      if (!rotationIndicator) {
+        this.addMorphBack(new Path({
+            name: "rotationIndicator",
             borderColor: Color.red,
             bounds: haloItem.bounds().union(this.innerBounds()),
             vertices: []
           }));
       } else {
-        this.rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));
-        this.rotationIndicator.vertices = [localize(originPos), localize(haloItem.bounds().center())];
+        rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));
+        rotationIndicator.vertices = [localize(originPos), localize(haloItem.bounds().center())];
       }
     } else {
-      if (this.rotationIndicator) {
-        this.rotationIndicator.remove();
-        this.rotationIndicator = null;
+      if (rotationIndicator) {
+        rotationIndicator.remove();
       }
     }
   }
