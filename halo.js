@@ -212,14 +212,25 @@ export class Halo extends Morph {
       stop() {
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
+        this.halo.toggleMesh(false);
       },
-      update: (delta) => {
-        this.target.globalPosition = this.target.globalPosition.addPt(delta);
+      update: (delta, grid=false) => {
+        var newPos = this.target.globalPosition.addPt(delta);
+        if (grid) {
+          newPos = newPos.griddedBy(pt(10,10));
+        }
+        this.target.globalPosition = newPos;
         this.alignWithTarget();
+        this.toggleMesh(grid);
       },
       onDragStart(evt) { this.init() },
-      onDrag(evt) { this.update(evt.state.dragDelta); },
-      onDragEnd(evt) { this.stop() }
+      onDrag(evt) { this.update(
+                    this.halo.tranformMoveDeltaDependingOnHaloPosition(
+                        evt, evt.state.dragDelta, "topRight"
+                      ),
+                    evt.isAltDown()); },
+      onDragEnd(evt) { this.stop() },
+      onKeyUp(evt) { this.halo.toggleMesh(false) }
     }));
   }
 
@@ -425,6 +436,42 @@ export class Halo extends Morph {
 
   onKeyUp(evt) {
     this.toggleDiagonal(false);
+    this.toggleMesh(false);
+  }
+
+  tranformMoveDeltaDependingOnHaloPosition(evt, moveDelta, cornerName) {
+    // Griding and rounding might move the morph differently
+    // so we have to recalculate the delta...
+    if(!evt.isAltDown())
+        return moveDelta
+
+    var pos = this.target.bounds()[cornerName]()
+    var newOffset = evt.position.subPt(this.target.owner.worldPoint(pos))
+    this.startOffset = this.startOffset || newOffset;
+
+    var deltaOffset = newOffset.subPt(this.startOffset)
+
+    moveDelta = moveDelta.addPt(deltaOffset);
+    return moveDelta
+ }
+
+  toggleMesh(active) {
+    var mesh = this.getSubmorphNamed("mesh");
+    if (active) {
+      if (mesh) {
+        mesh.position = this.localizePointFrom(pt(2,2), this.world());
+      } else {
+        this.addMorphBack(
+          new Morph({name: "mesh",
+                     onKeyUp: (evt) => this.toggleMesh(false),
+                     extent: this.world().extent,
+                     position: this.localizePointFrom(pt(2,2), this.world()),
+                     opacity: 0.1,
+                     styleClasses: ["morph", "halo-mesh"], fill: Color.transparent}))
+      }
+    } else {
+      mesh && mesh.remove();
+    }
   }
 
   toggleDiagonal(active) {
@@ -438,6 +485,7 @@ export class Halo extends Morph {
         diagonal = this.extent;
         this.addMorphBack(new Path({
           name: "diagonal",
+          styleClasses: ["morph", "halo-guide"],
           borderStyle: "dashed",
           position: offset.negated(),
           extent: this.extent.addPt(offset.scaleBy(2)),
@@ -464,6 +512,7 @@ export class Halo extends Morph {
       const localize = (p) => rotationIndicator.localizePointFrom(p, this);
       if (!rotationIndicator) {
         this.addMorphBack(new Path({
+            styleClasses: ["morph", "halo-guide"],
             name: "rotationIndicator",
             borderColor: Color.red,
             bounds: haloItem.bounds().union(this.innerBounds()),

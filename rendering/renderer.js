@@ -14,6 +14,21 @@ const defaultCSS = `
   user-select: none;
 }
 
+.halo-guide {
+  -webkit-animation: fadein .5s;
+}
+
+.halo-mesh {
+  background-color:transparent;
+  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
+  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+   -webkit-animation: fadein .5s;
+}
+
 .morph {
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
   -webkit-backface-visibility: hidden;
@@ -49,6 +64,16 @@ const defaultCSS = `
 	text-align: center;
 	vertical-align: middle;
 }
+
+@-webkit-keyframes fadein { /* Safari and Chrome */
+    from {
+        opacity:0;
+    }
+    to {
+        opacity:1;
+    }
+}
+
 `;
 
 export class Renderer {
