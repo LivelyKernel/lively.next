@@ -159,22 +159,12 @@ export class Text extends Morph {
     domNode && domNode.setSelectionRange(start, end);
   }
 
-  onInput(evt) {
-    this.textString = evt.domEvt.target.value;
-  }
-
   onMouseUp(evt) { this.onSelect(evt); }
 
   onMouseDown(evt) { this.onSelect(evt); }
 
-  onDeselect(evt) { this.onSelect(evt) }
-
   onSelect(evt) {
     this.recordSelectionFrom(evt.domEvt.target);
-  }
-
-  onDeselect(evt) {
-    this._selection = { start: 0, end: 0 };
   }
 
   onKeyUp(evt) {
@@ -184,7 +174,9 @@ export class Text extends Morph {
   }
 
   async onKeyDown(evt) {
-    switch (evt.keyString()) {
+    var keyString = evt.keyString(),
+        sel = this.selection;
+    switch (keyString) {
       case 'Command-D':
         evt.stop();
         var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
@@ -192,11 +184,63 @@ export class Text extends Morph {
         break;
 
       case 'Command-P':
-        var sel = this.selection;
         evt.stop();
         var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
         this.textString = this.textString.slice(0, sel.end) + result.value + this.textString.slice(sel.end);
         break;
+
+      case 'Backspace':
+        evt.stop();
+        sel.isCollapsed && sel.start && sel.start--;
+        sel.text = "";
+        sel.collapse();
+        break;
+
+      case 'Left':
+        sel.start && sel.start--;
+        sel.collapse();
+        break;
+
+      case 'Right':
+        evt.stop();
+        sel.start++;
+        sel.collapse();
+        break;
+
+      case 'Up':
+        evt.stop();
+        var text = this.textString,
+            line = string.lineIndexComputer(text)(sel.start),
+            prevLine = line - 1,
+            rangeComp = string.lineNumberToIndexesComputer(text),
+            [lineStart, lineEnd] = rangeComp(line),
+            [prevLineStart, prevLineEnd] = rangeComp(prevLine);
+        if (prevLine < 0) break;
+        sel.start = Math.min(prevLineStart + (sel.start - lineStart), prevLineEnd-1);
+        sel.collapse();
+        break;
+
+      case 'Down':
+        evt.stop();
+        var text = this.textString,
+            line = string.lineIndexComputer(text)(sel.start),
+            nextLine = line + 1,
+            rangeComp = string.lineNumberToIndexesComputer(text),
+            [lineStart, lineEnd] = rangeComp(line),
+            [nextLineStart, nextLineEnd] = rangeComp(nextLine);
+        sel.start = Math.min(nextLineStart + (sel.start - lineStart), nextLineEnd-1);
+        sel.collapse();
+        break;
+
+      default:
+        // FIXME!
+        if (keyString.length !== 1 && keyString !== "Space" && keyString !== "Enter") {
+          break;
+        }
+        evt.stop();
+        var char = evt.domEvt.key;
+        sel.text = (char === "Enter" ? "\n" : char);
+        sel.collapse(sel.start + 1);
     }
   }
 
