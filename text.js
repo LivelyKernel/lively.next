@@ -216,8 +216,18 @@ class TextSelection {
 
   get text() { return this.textMorph.textString.substring(this.start, this.end) }
   set text(val) {
-    var oldText = this.textMorph.textString,
-        newText = oldText.substr(0, this.start) + val + oldText.substr(this.end);
-    this.textMorph.textString = newText;
+    let { start, end } = this.range,
+        morph = this.textMorph;
+    if (!this.isCollapsed) {
+      morph.deleteText(start, end);
+    }
+    if (val.length) {
+      morph.insertText(start, val);
+    }
+  }
+
+  get isCollapsed() { return this.start === this.end; }
+  collapse(index = this.start) {
+    this.end = index;
   }
 }
