@@ -236,7 +236,5 @@ class TextSelection {
   }
 
   get isCollapsed() { return this.start === this.end; }
-  collapse(index = this.start) {
-    this.end = index;
-  }
+  collapse(index = this.start) { this.range = { start: index, end: index }; }
 }
