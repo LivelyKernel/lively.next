@@ -4,6 +4,11 @@ import { string, obj, arr, num } from "lively.lang";
 
 const itemExtent = pt(24,24);
 
+const guideGradient = [[0, Color.red.withA(0)],
+                       [0.1, Color.red],
+                       [0.9, Color.red],
+                       [1.0, Color.red.withA(0)]]
+
 class HaloItem extends Ellipse {
 
   constructor(props) {
@@ -456,20 +461,52 @@ export class Halo extends Morph {
  }
 
   toggleMesh(active) {
-    var mesh = this.getSubmorphNamed("mesh");
+    var mesh = this.getSubmorphNamed("mesh"),
+        horizontal = this.getSubmorphNamed("horizontal"),
+        vertical = this.getSubmorphNamed("vertical");
     if (active) {
       if (mesh) {
-        mesh.position = this.localizePointFrom(pt(2,2), this.world());
+        const {x, y} = this.target.worldPoint(pt(0,0)),
+              pos = this.localize(pt(0,0));
+        horizontal.position = pos;
+        vertical.position = pos;
+        horizontal.vertices = [pt(0,y), pt(this.world().width, y)];
+        vertical.vertices = [pt(x,0), pt(x, this.world().height)];
+        mesh.position = this.localize(pt(2,2));
       } else {
-        this.addMorphBack(
-          new Morph({name: "mesh",
-                     onKeyUp: (evt) => this.toggleMesh(false),
-                     extent: this.world().extent,
-                     position: this.localizePointFrom(pt(2,2), this.world()),
-                     opacity: 0.1,
-                     styleClasses: ["morph", "halo-mesh"], fill: Color.transparent}))
+        const defaultGuideProps = {
+                     styleClasses: ["morph", "halo-guide"],
+                     borderStyle: "dashed",
+                     position: this.localize(pt(0,0)),
+                     extent:  this.world().extent,
+                     borderWidth: 2,
+                     borderColor: Color.red
+                   },
+               {width, height, extent} = this.world(),
+               {x, y} = this.target.worldPoint(pt(0,0));
+         this.addMorphBack(
+           new Path({
+             ...defaultGuideProps,
+             name: "vertical",
+             vertices: [pt(x,0), pt(x, height)]
+           }));
+         this.addMorphBack(
+           new Path({
+             ...defaultGuideProps,
+             name: "horizontal",
+             vertices: [pt(0,y), pt(width, y)]
+           }));
+         this.addMorphBack(
+           new Morph({name: "mesh",
+                      onKeyUp: (evt) => this.toggleMesh(false),
+                      extent,
+                      position: this.localize(pt(2,2)),
+                      opacity: 0.1,
+                      styleClasses: ["morph", "halo-mesh"], fill: Color.transparent}));
       }
     } else {
+      vertical && vertical.remove();
+      horizontal && horizontal.remove();
       mesh && mesh.remove();
     }
   }
@@ -491,10 +528,7 @@ export class Halo extends Morph {
           extent: this.extent.addPt(offset.scaleBy(2)),
           borderColor: Color.red,
           borderWidth: 2,
-          gradient:[[0, Color.red.withA(0)],
-                    [0.1, Color.red],
-                    [0.9, Color.red],
-                    [1.0, Color.red.withA(0)]],
+          gradient: guideGradient,
           vertices: [pt(0,0), diagonal.addPt(offset.scaleBy(2))]}));
         return diagonal;
       }
