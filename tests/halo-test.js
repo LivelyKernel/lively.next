@@ -128,9 +128,12 @@ describe("halos", () => {
 
   it("rotate rotates", () => {
     var halo = world.showHaloFor(submorph1);
+    submorph1.rotation = num.toRadians(10);
     halo.rotateHalo().init(num.toRadians(10));
+    halo.rotateHalo().update(num.toRadians(10));
+    expect(submorph1.rotation).closeTo(num.toRadians(10), 0.1);
     halo.rotateHalo().update(num.toRadians(25));
-    expect(submorph1.rotation).closeTo(num.toRadians(15), 0.1);
+    expect(submorph1.rotation).closeTo(num.toRadians(25), 0.1);
   });
 
   it("rotate snaps to 45 degree angles", () => {

@@ -267,7 +267,8 @@ export class Halo extends Morph {
 
   rotateHalo() {
     var angle = 0,
-        scaleGauge = null;
+        scaleGauge = null,
+        initRotation = 0;
     return this.getSubmorphNamed("rotate") || this.addMorph(new HaloItem({
       name: "rotate",
       property: "rotation",
@@ -280,6 +281,7 @@ export class Halo extends Morph {
       init(angleToTarget) {
         this.halo.activeButton = this;
         angle = angleToTarget;
+        initRotation = this.halo.target.rotation;
         this.halo.toggleRotationIndicator(true, this);
       },
       initScale(gauge) {
@@ -289,7 +291,7 @@ export class Halo extends Morph {
       },
       update(angleToTarget) {
         scaleGauge = null;
-        var newRotation = angleToTarget - angle;
+        var newRotation = initRotation + (angleToTarget - angle);
         newRotation = newRotation.toDegrees().detent(10,45).toRadians();
         this.halo.target.rotation = newRotation;
         this.halo.toggleRotationIndicator(true, this);
