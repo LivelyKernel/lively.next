@@ -64,6 +64,19 @@ describe("halos", () => {
     halo.dragHalo().update(pt(10,5));
     expect(submorph1.position).equals(pt(20, 15));
   });
+  
+  it("drags gridded and shows guides", () => {
+    var halo = world.showHaloFor(submorph1);
+    halo.dragHalo().update(pt(10,11), true);
+    expect(submorph1.position).equals(pt(20, 20));
+    expect(halo.getSubmorphNamed("mesh")).not.to.be.null;
+    expect(halo.getSubmorphNamed("vertical")).not.to.be.null;
+    expect(halo.getSubmorphNamed("horizontal")).not.to.be.null;
+    halo.dragHalo().stop();
+    expect(halo.getSubmorphNamed("mesh")).to.be.null;
+    expect(halo.getSubmorphNamed("vertical")).to.be.null;
+    expect(halo.getSubmorphNamed("horizontal")).to.be.null;
+  });
 
   it("acitve drag hides other halos and displays position", () => {
     var halo = world.showHaloFor(submorph1),
