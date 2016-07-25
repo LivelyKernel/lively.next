@@ -39,15 +39,18 @@ class HaloItem extends Ellipse {
 
 class HaloPropertyDisplay extends Morph {
 
-  constructor() {
+  get defaultPosition() { return pt(0,-22); }
+
+  constructor(halo) {
     super({
       name: "propertyDisplay",
       fill: Color.lightGray.withA(0.5),
       borderRadius: 15,
       extent: pt(100, 20),
-      position: pt(0,-22),
+      position: this.defaultPosition,
       visible: false,
-      reactsToPointer: false
+      reactsToPointer: false,
+      halo
     });
 
     this.addMorph({
@@ -72,10 +75,18 @@ class HaloPropertyDisplay extends Morph {
     val = String(val);
     this.visible = true;
     this.get("textField").textString = val;
+    // FIXME: What we actually want is morph layouting
     this.width = 12 + this.get("textField").width;
+    var activeButton = this.halo.activeButton;
+    if (activeButton && activeButton.topLeft.x < (this.width + 10)) {
+      this.position = pt(activeButton.topRight.x + 10,-22);
+    } else {
+      this.position = this.defaultPosition;
+    }
   }
 
-  disable() { this.visible = false; }
+  disable() { this.position = this.defaultPosition;
+              this.visible = false; }
 
 }
 
@@ -99,7 +110,7 @@ export class Halo extends Morph {
   morphsContainingPoint(list) { return list }
 
   get propertyDisplay() {
-    return this.getSubmorphNamed("propertyDisplay") || this.addMorph(new HaloPropertyDisplay());
+    return this.getSubmorphNamed("propertyDisplay") || this.addMorph(new HaloPropertyDisplay(this));
   }
 
   refocus(newTarget) {
@@ -182,17 +193,37 @@ export class Halo extends Morph {
   }
 
   grabHalo() {
+    var dti = null;
     return this.getSubmorphNamed("grab") || this.addMorph(new HaloItem({
       name: "grab",
       styleClasses: ["halo-item", "fa", "fa-hand-rock-o"],
       location: {col: 1, row: 0},
       halo: this,
-      init: (hand) => {
-        hand.grab(this.target);
+      valueForPropertyDisplay() {
+        var target = this.morphBeneath(this.hand.position);
+        if (target && target != this.world()) {
+            dti = this.halo.getSubmorphNamed("dropTargetIndicator")
+                      ||  this.halo.addMorphBack(new Morph({
+                            styleClasses: ["morph", "halo-guide"],
+                            name: "dropTargetIndicator",
+                            fill: Color.orange.withA(0.5)}));
+            dti.position = this.halo.localize(target.globalBounds().topLeft());
+            dti.extent = target.globalBounds().extent();
+        } else {
+          dti && dti.remove();
+        }
+        return target.name;
+      },
+      init(hand) {
+        this.hand = hand;
+        hand.grab(this.halo.target);
+        this.halo.activeButton = this;
       },
       update(hand) {
+        this.halo.activeButton = null;
         hand.dropMorphsOn(this.morphBeneath(hand.position));
         this.halo.alignWithTarget();
+        dti && dti.remove();
       },
       onDragStart(evt) {
         this.init(evt.hand)
@@ -544,7 +575,7 @@ export class Halo extends Morph {
   toggleRotationIndicator(active, haloItem) {
     var rotationIndicator = this.getSubmorphNamed("rotationIndicator");
     if (active) {
-      var originPos = this.getSubmorphNamed("origin").bounds().center();
+      var originPos = this.getSubmorphNamed("origin").center;
       const localize = (p) => rotationIndicator.localizePointFrom(p, this);
       if (!rotationIndicator) {
         this.addMorphBack(new Path({
@@ -556,7 +587,7 @@ export class Halo extends Morph {
           }));
       } else {
         rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));
-        rotationIndicator.vertices = [localize(originPos), localize(haloItem.bounds().center())];
+        rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
       }
     } else {
       if (rotationIndicator) {
