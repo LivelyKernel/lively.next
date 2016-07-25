@@ -175,6 +175,7 @@ export class Text extends Morph {
 
   async onKeyDown(evt) {
     var keyString = evt.keyString(),
+        key = evt.domEvt.key,
         sel = this.selection;
     switch (keyString) {
       case 'Command-D':
@@ -196,50 +197,32 @@ export class Text extends Morph {
         sel.collapse();
         break;
 
-      case 'Left':
-        sel.start && sel.start--;
-        sel.collapse();
-        break;
-
-      case 'Right':
+      case 'Left': case 'Right':
         evt.stop();
-        sel.start++;
+        sel.start += (keyString === 'Right' ? 1 : (sel.start > 0 ? -1 : 0));
         sel.collapse();
         break;
 
-      case 'Up':
+      case 'Up': case 'Down':
         evt.stop();
         var text = this.textString,
             line = string.lineIndexComputer(text)(sel.start),
-            prevLine = line - 1,
+            otherLine = line + (keyString === "Down" ? 1 : -1),
             rangeComp = string.lineNumberToIndexesComputer(text),
             [lineStart, lineEnd] = rangeComp(line),
-            [prevLineStart, prevLineEnd] = rangeComp(prevLine);
-        if (prevLine < 0) break;
-        sel.start = Math.min(prevLineStart + (sel.start - lineStart), prevLineEnd-1);
-        sel.collapse();
-        break;
-
-      case 'Down':
-        evt.stop();
-        var text = this.textString,
-            line = string.lineIndexComputer(text)(sel.start),
-            nextLine = line + 1,
-            rangeComp = string.lineNumberToIndexesComputer(text),
-            [lineStart, lineEnd] = rangeComp(line),
-            [nextLineStart, nextLineEnd] = rangeComp(nextLine);
-        sel.start = Math.min(nextLineStart + (sel.start - lineStart), nextLineEnd-1);
+            otherLineRange = rangeComp(otherLine),
+            [otherLineStart, otherLineEnd] = otherLineRange || [lineStart, lineEnd];
+        sel.start = Math.min(otherLineStart + (sel.start - lineStart), otherLineEnd-1);
         sel.collapse();
         break;
 
       default:
         // FIXME!
-        if (keyString.length !== 1 && keyString !== "Space" && keyString !== "Enter") {
+        evt.stop();
+        if (key.length !== 1 && key !== "Space" && key !== "Enter") {
           break;
         }
-        evt.stop();
-        var char = evt.domEvt.key;
-        sel.text = (char === "Enter" ? "\n" : char);
+        sel.text = (key === "Enter" ? "\n" : key);
         sel.collapse(sel.start + 1);
     }
   }
