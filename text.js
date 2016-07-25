@@ -150,6 +150,16 @@ export class Text extends Morph {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
+  recordSelectionFrom(domNode) {
+    var { selectionStart: start, selectionEnd: end } = domNode;
+    this._selection = { start: start, end: end };
+  }
+
+  applySelectionTo(domNode) {
+    var { start, end } = this._selection;
+    domNode && domNode.setSelectionRange(start, end);
+  }
+
   onInput(evt) {
     this.textString = evt.domEvt.target.value;
   }
@@ -161,8 +171,7 @@ export class Text extends Morph {
   onDeselect(evt) { this.onSelect(evt) }
 
   onSelect(evt) {
-    var { selectionStart: start, selectionEnd: end } = evt.domEvt.target;
-    this._selection = { start: start, end: end };
+    this.recordSelectionFrom(evt.domEvt.target);
   }
 
   onDeselect(evt) {
