@@ -127,7 +127,7 @@ export class Halo extends Morph {
   resizeHalo() {
     return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
-      styleClasses: ["halo-item", "fa", "fa-arrows-alt"],
+      styleClasses: ["halo-item", "fa", "fa-crop"],
       location: {col: 3, row: 3},
       origin: pt(12, 12),
       property: 'extent',
@@ -171,7 +171,7 @@ export class Halo extends Morph {
           }
           return delta;
         } else {
-          this.styleClasses = ["halo-item", "fa", "fa-arrows-alt"];
+          this.styleClasses = ["halo-item", "fa", "fa-crop"];
           this.rotation = 0;
           this.halo.toggleDiagonal(false);
           return delta;
