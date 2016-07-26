@@ -233,6 +233,7 @@ class TextSelection {
     if (val.length) {
       morph.insertText(start, val);
     }
+    this.range = { start: this.start, end: this.start + val.length };
   }
 
   get isCollapsed() { return this.start === this.end; }
