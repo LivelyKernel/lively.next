@@ -59,6 +59,25 @@ requests to GitHub, thereby integrating with the normal Lively development proce
 All changesets in the current browser session are found by searching the IndexedDB
 of the browser for refs in the format above for each registered pacakge.
 
+### Notifications
+
+You can subscribe to ChangeSet events.
+
+Example Use:
+
+```js
+import { notify } from "lively.changesets";
+
+notify.on("add", msg =>
+  console.log(`added ChangeSet ${msg.changeset}`));
+notify.on("change", msg =>
+  console.log(`modified ChangeSet ${msg.changeset}`));
+notify.on("current", msg =>
+  console.log(`switched to ${msg.changeset} (was ${msg.before})`));
+notify.on("delete", msg =>
+  console.log(`deleted ChangeSet ${msg.changeset}`));
+```
+
 ### Tools
 
 TODO: [ChangeSorter](http://wiki.squeak.org/squeak/2145)
