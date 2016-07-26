@@ -14,6 +14,9 @@ describe("basics", () => {
   });
 
   afterEach(async () => {
+    const local = await localChangeSets();
+    const toDelete = local.filter(c => c.name === "test");
+    await Promise.all(toDelete.map(c => c.delete()));
     await removePackage();
   });
 
