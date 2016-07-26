@@ -12,9 +12,6 @@ const domEventsWeListenTo = [
   {type: 'pointermove', capturing: false},
   {type: 'pointerover', capturing: false},
   {type: 'pointerout',  capturing: false},
-  {type: 'input',       capturing: false},
-  {type: 'select',      capturing: false},
-  {type: 'deselect',    capturing: false},
   {type: 'keydown',     capturing: false},
   {type: 'keyup',       capturing: false},
   {type: 'blur',        capturing: true},
@@ -35,9 +32,6 @@ const typeToMethodMap = {
   'dragend':     "onDragEnd",
   'grab':        "onGrab",
   'drop':        "onDrop",
-  'input':       "onInput",
-  'select':      "onSelect",
-  'deselect' :   "onDeselect",
   'keydown':     "onKeyDown",
   'keyup':       "onKeyUp",
   'blur':        "onBlur",
@@ -70,7 +64,6 @@ const mouseEvents = [
   "mouseleave",
   'click',
   'dblclick',
-  'selectstart',
   'contextmenu',
   'mousewheel'
 ];
@@ -656,13 +649,6 @@ export class EventDispatcher {
         });
         break;
 
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      case "select":
-        defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
-        break;
-
-
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "focus": case "blur":
         events = [new Event(type, domEvt, this, [targetMorph], hand, halo)
@@ -670,15 +656,6 @@ export class EventDispatcher {
         break;
 
     }
-
-
-    // FIXME...!
-    if (state.selectionMorph && (type === "keydown" || type === "pointerdown" || type === "blur" || type === "focus")) {
-      events.push(
-        new Event("deselect", domEvt, this, [state.selectionMorph], hand)
-          .onDispatch(() => state.selectionMorph = null));
-    }
-
 
     return {events, later};
   }

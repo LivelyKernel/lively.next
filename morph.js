@@ -654,9 +654,6 @@ export class Morph {
 
   onFocus(evt) {}
   onBlur(evt) {}
-  onInput(evt) {}
-  onSelect(evt) {}
-  onDeselect(evt) {}
   onKeyDown(evt) {}
   onKeyUp(evt) {}
   onContextMenu(evt) {}
