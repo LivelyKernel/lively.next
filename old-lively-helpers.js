@@ -52,10 +52,10 @@ function createHtmlMorph() {
   var htmlMorph = new lively.morphic.HtmlWrapperMorph(pt(666,600));
   htmlMorph.addScript(function onMouseDown() {});
   htmlMorph.addScript(function onContextMenu() {});
+  htmlMorph.addScript(function onKeyDown() {});
   htmlMorph.name = "lively.morphic world"
   htmlMorph.setHTML("");
   htmlMorph.setFill(window.Color.white);
-  htmlMorph.onBackspacePressed = function(evt) {};
   addMorphicSetupMethods(htmlMorph);
 
   var win = htmlMorph.openInWindow();
