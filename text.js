@@ -174,6 +174,9 @@ export class Text extends Morph {
         key = evt.domEvt.key,
         sel = this.selection;
     switch (keyString) {
+      case 'Command-C': case 'Command-X': case 'Command-V':
+        break; // handled by onCut()/onPaste()
+
       case 'Command-D':
         evt.stop();
         var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
@@ -223,6 +226,16 @@ export class Text extends Morph {
     }
   }
 
+  onCut(evt) {
+    var sel = this.selection;
+    sel.text = "";
+    sel.collapse();
+  }
+  onPaste(evt) {
+    var sel = this.selection;
+    sel.text = evt.domEvt.clipboardData.getData("Text");
+    sel.collapse(sel.end);
+  }
 }
 
 

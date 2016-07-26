@@ -14,12 +14,14 @@ const domEventsWeListenTo = [
   {type: 'pointerout',  capturing: false},
   {type: 'input',       capturing: false},
   {type: 'select',      capturing: false},
-  {type: 'deselect',    capturing: false} ,
+  {type: 'deselect',    capturing: false},
   {type: 'keydown',     capturing: false},
   {type: 'keyup',       capturing: false},
   {type: 'blur',        capturing: true},
   {type: 'focus',       capturing: true},
-  {type: 'contextmenu', capturing: false}
+  {type: 'contextmenu', capturing: false},
+  {type: 'cut', capturing: false},
+  {type: 'paste', capturing: false}
 ]
 
 const typeToMethodMap = {
@@ -40,7 +42,9 @@ const typeToMethodMap = {
   'keyup':       "onKeyUp",
   'blur':        "onBlur",
   'focus':       "onFocus",
-  'contextmenu': "onContextMenu"
+  'contextmenu': "onContextMenu",
+  'cut': "onCut",
+  'paste': "onPaste"
 }
 
 const pointerEvents = [
