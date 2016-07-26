@@ -123,7 +123,7 @@ describe("marshalling", () => {
           obj = obj = {foo: Object.create(proto)},
           {id} = objPool.add(obj),
           objPool2 = new ObjectPool();
-          
+
 
       objPool2.expressionEvaluator = exprObj => {
         var e = exprObj.__expr__;
@@ -144,6 +144,24 @@ describe("marshalling", () => {
           objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
           obj2 = objPool2.resolveToObj(id);
       expect(obj2).property("n", 2);
+    });
+
+  });
+
+  describe("nested arrays", () => {
+
+    it("serialize correctly", () => {
+      var obj1a = {foo: 23},
+          obj2a = {bar: [123, [obj1a]]},
+          {id: id1a} = objPool.add(obj1a),
+          {id: id2a} = objPool.add(obj2a),
+          objPool2 = ObjectPool.fromSnapshot(objPool.snapshot()),
+          obj2b = objPool2.resolveToObj(id2a),
+          obj1b = objPool2.resolveToObj(id1a);
+
+      expect(obj2b).containSubset({bar: [123, [{foo: 23}]]});
+
+      expect(obj2b.bar[1][0]).equals(obj1b);
     });
 
   });

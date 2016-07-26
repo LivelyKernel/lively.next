@@ -58,7 +58,7 @@ export class ObjectRef {
     return {__ref__: true, id: this.id, rev}
   }
 
-  snapshotObj(serializedObjMap, pool) {
+  snapshotObject(serializedObjMap, pool) {
     // serializedObjMap: maps ids to snapshots
 
     var {id, realObj, snapshots} = this;
@@ -89,19 +89,29 @@ export class ObjectRef {
     // serialize the referenced objects recursively
     var {props} = snapshots[rev] = serializedObjMap[id] = {rev, props: []};
     for (let i = 0, keys = Object.keys(realObj); i < keys.length; i++) {
-      let key = keys[i], value = realObj[key];
-      if (typeof value === "function") continue; // FIXME
-      else if (isPrimitive(value)) { /* store value directly */ }
-      else if (typeof value.__serialize__ === "function") {
-        value = value.__serialize__(this, serializedObjMap, pool);
-      } else {
-        let ref = pool.add(realObj[key]);
-        value = ref.isObjectRef ? ref.snapshotObj(serializedObjMap, pool) : ref;
-      }
-      props.push({key, value});
+      let key = keys[i];
+      props.push({key, value: this.snapshotProperty(realObj[key], [key], serializedObjMap, pool)});
     }
 
     return ref;
+  }
+
+  snapshotProperty(value, path, serializedObjMap, pool) {
+    // returns the value to serialize, i.e. what to put into the snapshot object
+
+    if (typeof value === "function") return undefined; // FIXME
+
+    if (isPrimitive(value)) return value; // stored as is
+
+    if (typeof value.__serialize__ === "function")
+      return value.__serialize__(this, serializedObjMap, pool);
+
+    if (Array.isArray(value))
+      return value.map((ea, i) => this.snapshotProperty(ea, path.concat(i), serializedObjMap, pool));
+
+    let ref = pool.add(value);
+
+    return ref && ref.isObjectRef ? ref.snapshotObject(serializedObjMap, pool) : ref;
   }
 
   recreateObjFromSnapshot(serializedObjMap, pool) {
@@ -127,17 +137,22 @@ export class ObjectRef {
     if (props) {
       for (var i = 0; i < props.length; i++) {
         var {key, value} = props[i];
-        if (isPrimitive(value)) newObj[key] = value;
-        else if (value.__expr__) newObj[key] = pool.expressionEvaluator(value);
-        else if (value.__recreate__) newObj[key] = pool.objectRecreator(value);
-        else {
-          var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool);
-          newObj[key] = valueRef.realObj;
-        }
+        newObj[key] = this.recreateProperty(value, serializedObjMap, pool);
       }
     }
 
     return this;
+  }
+
+  recreateProperty(value, serializedObjMap, pool) {
+    if (isPrimitive(value)) return value;
+
+    if (Array.isArray(value)) return value.map((ea, i) => this.recreateProperty(ea, serializedObjMap, pool));
+
+    if (value.__expr__) return pool.expressionEvaluator(value);
+
+    var valueRef = pool.refForId(value.id) || ObjectRef.fromSnapshot(value.id, serializedObjMap, pool);
+    return valueRef.realObj;
   }
 
   static fromSnapshot(id, snapshot, pool) {
@@ -155,7 +170,6 @@ export class ObjectPool {
     this._id_ref_map = {};
     this.uuidGen = uuidGen;
     this.expressionEvaluator = defaultExpressionEvaluator;
-    this.objectRecreator = defaultObjectRecreator;
   }
 
   knowsId(id) { return !!this._id_ref_map[id]; }
@@ -180,6 +194,8 @@ export class ObjectPool {
     // primitive objects don't need to be registered
     if (isPrimitive(obj)) return undefined;
 
+    if (Array.isArray(obj)) return obj.map(element => this.add(element));
+
     return this.ref(obj) || this.internalAddRef(new ObjectRef(obj.id || this.uuidGen(), obj));
   }
 
@@ -187,7 +203,7 @@ export class ObjectPool {
     var snapshot = {};
     for (var i = 0, ids = Object.keys(this._id_ref_map); i < ids.length; i++) {
       var ref = this._id_ref_map[ids[i]];
-      ref.snapshotObj(snapshot, this);
+      ref.snapshotObject(snapshot, this);
     }
     return snapshot;
   }
