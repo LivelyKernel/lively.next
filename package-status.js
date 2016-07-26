@@ -204,7 +204,7 @@ export class ReporterWidget {
     }
 
     this.packages = packages.sortBy(ea =>
-      (!ea.exists ? 401 : 0) + (!ea.hasGitRepo ? 301 : 0) + (ea.hasRemoteChanges ? 200 : 0)+ (ea.hasLocalChangesToPush ? 80 : 0) + (ea.hasLocalChanges ? 100 : 0) + (ea._npmPackagesThatNeedFixing.length ? 50 : 0) + ea.name.charCodeAt(0)).reverse();
+      (!ea.exists ? 401 : 0) + (!ea.hasGitRepo ? 301 : 0) + (ea.hasRemoteChanges ? 200 : 0)+ (ea.hasLocalChangesToPush ? 80 : 0) + (ea.hasLocalChanges ? 100 : 0) + (ea._npmPackagesThatNeedFixing && ea._npmPackagesThatNeedFixing.length ? 50 : 0) + ea.name.charCodeAt(0)).reverse();
 
     var summaries = this.packages.map(p => this.renderMorphicSummaryForPackage(p)),
         reporter = this,
