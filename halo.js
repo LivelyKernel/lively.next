@@ -316,14 +316,14 @@ export class Halo extends Morph {
       update(angleToTarget) {
         scaleGauge = null;
         var newRotation = initRotation + (angleToTarget - angle);
-        newRotation = newRotation.toDegrees().detent(10,45).toRadians();
+        newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
         this.halo.target.rotation = newRotation;
         this.halo.toggleRotationIndicator(true, this);
       },
       updateScale(gauge) {
         if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
         angle = gauge.theta();
-        this.halo.target.scale = (gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0))).detent(0.1, 0.5);
+        this.halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0)), 0.1, 0.5);
         this.halo.toggleRotationIndicator(true, this);
       },
       stop() {
