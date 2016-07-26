@@ -18,6 +18,10 @@ const defaultCSS = `
   -webkit-animation: fadein .5s;
 }
 
+.smooth-extent {
+  -webkit-transition: width .2s, height .2s, transform .2s;
+}
+
 .halo-mesh {
   background-color:transparent;
   background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
