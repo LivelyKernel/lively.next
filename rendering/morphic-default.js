@@ -6,7 +6,7 @@ export function defaultStyle(morph) {
     visible,
     position: {x,y},
     extent: {x: width, y: height},
-    origin,
+    origin, opacity,
     fill, borderWidth, borderColor, borderRadius: br,
     clipMode, reactsToPointer, focusable,
     owner
@@ -21,6 +21,7 @@ export function defaultStyle(morph) {
                       .toCSSTransformString(),
     transformOrigin: `${origin.x}px ${origin.y}px `,
     position: "absolute",
+    opacity,
     display: visible ? "" : "none",
     width: width + 'px', height: height + 'px',
     backgroundColor: fill ? fill.toString() : "",

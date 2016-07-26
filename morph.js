@@ -14,6 +14,7 @@ const defaultProperties = {
   position:  pt(0,0),
   rotation:  0,
   scale:  1,
+  opacity: 1,
   origin: pt(0,0),
   extent: pt(10, 10),
   fill: Color.white,
