@@ -99,6 +99,10 @@ class ChangeSet {
   setCurrent() { // -> Promise
     return setCurrentChangeSet(this.name);
   }
+  
+  toString() { // -> String
+    return `ChangeSet(${this.name})`;
+  }
 }
 
 function localChangeSetsOf(db, pkg) {

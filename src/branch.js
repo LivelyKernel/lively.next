@@ -151,4 +151,9 @@ export default class Branch {
       request.onerror = evt => reject(new Error(evt.value));
     });
   }
+  
+  toString() { // -> String
+    return `Branch(${this.name}, ${this.pkg})`;
+  }
+
 }
