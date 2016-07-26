@@ -970,18 +970,6 @@ export class Image extends Morph {
   }
 }
 
-export class HTMLMorph extends Morph {
-
-  constructor(props) {
-    super(props);
-    this._domNode = null;
-  }
-
-  get html()           { return this._domNode ? this._domNode.outerHTML : null; }
-  set html(value)      { this._domNode && (this._domNode.innerHTML = value); }
-
-}
-
 export class Path extends Morph {
 
   get borderStyle() { return this.getProperty("borderStyle") }
