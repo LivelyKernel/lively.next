@@ -8,25 +8,31 @@ import { pkgDir, fileA, createPackage, removePackage, vmEditorMock, initMaster, 
 
 describe("notify", () => {
   
-  let added, changed, deleted;
+  let added, changed, current, deleted;
   
   function onAdd(msg) { added.push(msg); }
   function onChange(msg) { changed.push(msg); }
+  function onCurrent(msg) { current.push(msg); }
   function onDelete(msg) { deleted.push(msg); }
   
   beforeEach(async () => {
     await createPackage();
-    setCurrentChangeSet(null);
-    added = [], changed = [], deleted = [];
+    await setCurrentChangeSet(null);
+    added = [], changed = [], current = [], deleted = [];
     notify.on("add", onAdd);
     notify.on("change", onChange);
+    notify.on("current", onCurrent);
     notify.on("delete", onDelete);
   });
 
   afterEach(async () => {
+    const local = await localChangeSets();
+    const toDelete = local.filter(c => c.name.match(/^test/));
+    await Promise.all(toDelete.map(c => c.delete()));
     await removePackage();
     notify.removeListener("add", onAdd);
     notify.removeListener("change", onChange);
+    notify.removeListener("current", onCurrent);
     notify.removeListener("delete", onDelete);
   });
 
@@ -66,4 +72,18 @@ describe("notify", () => {
     ]);
   });
 
+  it("when switching changesets", async () => {
+    const cs = await createChangeSet("test"),
+          cs2 = await createChangeSet("test2");
+    expect(current).to.deep.equal([]);
+    await setCurrentChangeSet("test");
+    expect(current).to.containSubset([
+      {changeset: "test"}
+    ]);
+    await setCurrentChangeSet("test2");
+    expect(current).to.containSubset([
+      {changeset: "test"},
+      {changeset: "test2", before: "test"}
+    ]);
+  });
 });

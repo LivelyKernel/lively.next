@@ -152,6 +152,7 @@ export async function currentChangeSet() { // () -> ChangeSet?
 }
 
 export async function setCurrentChangeSet(csName) { // ChangeSetName -> ChangeSet
+  const old = await currentChangeSet();
   if (!csName) {
     current = null;
     window.localStorage.removeItem('lively.changesets/current');
@@ -160,5 +161,8 @@ export async function setCurrentChangeSet(csName) { // ChangeSetName -> ChangeSe
     current = cs;
     window.localStorage.setItem('lively.changesets/current', csName);
   }
-  notify.emit("current", {changeset: csName || null});
+  notify.emit("current", {
+    changeset: csName || null,
+    before: old ? old.name : null
+  });
 }
