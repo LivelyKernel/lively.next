@@ -9,23 +9,28 @@ import { events } from 'lively.lang';
 
 function getEnv() { // -> [Emitter, Array<Notification>]
   if (typeof System === 'undefined') {
-    console.log("no system");
     return [events.makeEmitter({}), []];
   }
-  let livelyEnv = System.get("@lively-env");
+  const livelyEnv = System.get("@lively-env");
+  let options;
   if (livelyEnv === undefined) {
-    livelyEnv = {};
-    System.set("@lively-env", System.newModule(livelyEnv));
+    options = {};
+    System.set("@lively-env", System.newModule({options}));
+  } else {
+    options = livelyEnv.options;
   }
-  if (!livelyEnv.emitter) {
-    Object.assign(livelyEnv, {
+  if (!options) {
+    throw new Error("@lively-env registered read-only");
+  }
+  if (!options.emitter) {
+    Object.assign(options, {
       emitter: System["__lively.notifications_emitter"] ||
               (System["__lively.notifications_emitter"] = events.makeEmitter({})),
-      record: System["__lively.notifications_record"] ||
-             (System["__lively.notifications_record"] = []),
+      notifications: System["__lively.notifications_notifications"] ||
+             (System["__lively.notifications_notifications"] = []),
     });
   }
-  return [livelyEnv.emitter, livelyEnv.record];
+  return [options.emitter, options.notifications];
 }
 
 let emitter;
@@ -36,12 +41,12 @@ function getEmitter() { // -> Emitter
   return emitter = getEnv()[0];
 }
 
-let record;
-function getRecord() { // -> Array<Notification>
-  if (record !== undefined) {
-    return record;
+let notifications;
+export function getNotifications() { // -> Array<Notification>
+  if (notifications !== undefined) {
+    return notifications;
   }
-  return record = getEnv()[1];
+  return notifications = getEnv()[1];
 }
 
 export function subscribe(type, handler) { // EventType, Handler -> ()
@@ -50,7 +55,9 @@ export function subscribe(type, handler) { // EventType, Handler -> ()
 
 export function emit(type, data = {}, time = Date.now()) {
   // EventType, Notification?, EventTime? -> ()
-  getEmitter().emit(type, Object.assign({type, time}, data));
+  const notification = Object.assign({type, time}, data);
+  getEmitter().emit(type, notification);
+  record(notification);
 }
 
 export function unsubscribe(type, handler) { // EventType, Handler -> ()
@@ -59,4 +66,27 @@ export function unsubscribe(type, handler) { // EventType, Handler -> ()
 
 export function unsubscribeAll(type) { // EventType -> ()
   getEmitter().removeAllListeners(type);
+}
+
+function record(notification) { // Notification -> ()
+  const notifications = getNotifications();
+  if (notifications.isRecording) {
+    notifications.push(notification);
+    if (notifications.limit) {
+      notifications.splice(0, notifications.length - notifications.limit);
+    }
+  }
+}
+
+export function startRecording() {
+  getNotifications().isRecording = true;
+}
+
+export function stopRecording() {
+  getNotifications().isRecording = false;
+}
+
+export function clearRecord() {
+  const notifications = getNotifications();
+  notifications.splice(0, notifications.length);
 }
