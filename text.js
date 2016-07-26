@@ -159,13 +159,9 @@ export class Text extends Morph {
     domNode && domNode.setSelectionRange(start, end);
   }
 
-  onMouseUp(evt) { this.onSelect(evt); }
+  onMouseUp(evt) { this.onMouseDown(evt); }
 
-  onMouseDown(evt) { this.onSelect(evt); }
-
-  onSelect(evt) {
-    this.recordSelectionFrom(evt.domEvt.target);
-  }
+  onMouseDown(evt) { this.recordSelectionFrom(evt.domEvt.target); }
 
   onKeyUp(evt) {
     switch (evt.keyString()) {
