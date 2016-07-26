@@ -155,29 +155,33 @@ export class Renderer {
   }
 
   renderMorph(morph) {
-    return h("div",
-              {...defaultAttributes(morph),
-               style: defaultStyle(morph)},
-             morph.submorphs.map(m => this.render(m)));
+    return h("div", {
+      ...defaultAttributes(morph),
+      style: defaultStyle(morph)
+    }, morph.submorphs.map(m => this.render(m)));
   }
 
   renderText(text) {
-    return h("textarea",
-              {...defaultAttributes(text),
-               value: text.textString,
-               readOnly: text.readOnly,
-               placeholder: text.placeholder,
-               ...(text._needsSelect &&
-                    {selectionStart: text._selection.start,
-                     selectionEnd: text._selection.end}),
-               style: {...defaultStyle(text),
-                 resize: "none", border: 0,
-                "white-space": "nowrap", padding: "0px",
-                "font-family": text.fontFamily,
-                "font-size": text.fontSize + "px",
-                "color": String(text.fontColor)
-              }
-            });
+    return h("textarea", {
+      ...defaultAttributes(text),
+      value: text.textString,
+      readOnly: text.readOnly,
+      placeholder: text.placeholder,
+      ...(text._needsSelect && {
+        selectionStart: text._selection.start,
+        selectionEnd: text._selection.end
+      }),
+      style: {
+        ...defaultStyle(text),
+        resize: "none",
+        border: 0,
+        "white-space": "nowrap",
+        padding: "0px",
+        "font-family": text.fontFamily,
+        "font-size": text.fontSize + "px",
+        "color": String(text.fontColor)
+      }
+    });
   }
 
   renderImage(image) {
