@@ -12,10 +12,6 @@ function defaultExpressionEvaluator(exprObj) {
   return eval(exprObj.__expr__);
 }
 
-function defaultObjectRecreator(exprObj) {
-  return eval(exprObj.__recreate__);
-}
-
 
 Object.defineProperty(Symbol.prototype, "__serialize__", {
   configurable: true,
@@ -27,11 +23,11 @@ Object.defineProperty(Symbol.prototype, "__serialize__", {
     const symMatcher = /^Symbol\((.*)\)$/;
 
     return function() {
-      // turns a symbol into a __expr__ or a __recreate__ object.
+      // turns a symbol into a __expr__ object.
       if (Symbol.keyFor(this)) return {__expr__: `Symbol.for("${Symbol.keyFor(this)}")`};
       if (knownSymbols.get(this)) return {__expr__: knownSymbols.get(this)};
       var match = String(this).match(symMatcher)
-      return {__recreate__: match ? `Symbol("${match[1]}")` : "Symbol()"};
+      return {__expr__: match ? `Symbol("${match[1]}")` : "Symbol()", isValue: false};
     }
   })()
 })
@@ -119,14 +115,13 @@ export class ObjectRef {
       return this;
     }
 
-    var {rev, __recreate__, __expr__, props} = snapshot;
+    var {rev, __expr__, props} = snapshot;
     rev = rev || 0;
     this.snapshotVersions.push(rev);
     this.snapshots[rev] = snapshot;
 
     var newObj = this.realObj = __expr__ ?
-      pool.expressionEvaluator(snapshot) : __recreate__ ?
-        pool.objectRecreator(snapshot) : {_rev: rev};
+      pool.expressionEvaluator(snapshot) : {_rev: rev};
     pool.internalAddRef(this); // for updating realObj
 
     if (props) {

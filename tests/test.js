@@ -74,7 +74,7 @@ describe("marshalling", () => {
       expect(ref).to.have.property("id")
       expect(ref.isObjectRef).equals(true);
       objPool.snapshot();
-      expect(ref.currentSnapshot.__recreate__).equals('Symbol("foo")');
+      expect(ref.currentSnapshot.__expr__).equals('Symbol("foo")');
       expect(objPool.resolveToObj(ref.id)).equals(s);
     });
 
