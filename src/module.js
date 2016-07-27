@@ -6,7 +6,7 @@ import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import
 import { livelySystemEnv } from "./system.js";
 import { getPackages } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
-import { subscribe } from "./notify.js";
+import { emit, subscribe } from "lively.notifications";
 
 export default function module(System, moduleName, parent) {
   var sysEnv = livelySystemEnv(System),
@@ -39,7 +39,7 @@ class ModuleInterface {
     this._scope = null;
     this._observersOfTopLevelState = [];
 
-    subscribe(System, "modulechange", (data) => {
+    subscribe("lively.modules/modulechange", data => {
       if (data.module === this.id) this.reset();
     });
   }
@@ -120,7 +120,12 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async load() {
-    return this.System.get(this.id) || await this.System.import(this.id);
+    let m = this.System.get(this.id);
+    if (!m) {
+      m = await this.System.import(this.id);
+    }
+    emit("lively.modules/moduleload", {module: this.id})
+    return m;
   }
 
   isLoaded() { return !!this.System.get(this.id); }
@@ -153,6 +158,7 @@ class ModuleInterface {
       delete this.System.meta[this.id];
     if (opts.forgetEnv)
       this.unloadEnv();
+    emit("lively.modules/moduleunload", {module: this.id})
   }
 
   async reload(opts) {

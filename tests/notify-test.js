@@ -4,8 +4,8 @@ import { expect } from "mocha-es6";
 import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem } from "../src/system.js";
-// import { runEval } from "../src/eval.js";
-import { getNotifications, subscribe, unsubscribe } from "../src/notify.js";
+import module from "../src/module.js";
+import { subscribe, unsubscribe } from "lively.notifications";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
     testProjectDir = dir + "test-project-dir/",
@@ -20,91 +20,54 @@ var dir = System.decanonicalize("lively.modules/tests/"),
     module3 = testProjectDir + "file3.js";
 
 
-xdescribe("notifications", () => {
+describe("notify", () => {
 
-  var System;
+  let System, modulechanged, moduleloaded, moduleunloaded, packageregistered, packageremoved;
+  
+  function changeModule1Source() {
+    const m1 = module(System, module1);
+    return m1.changeSourceAction(s => s.replace(/(z = )([0-9]+;)/, "$13;"));
+  }
+  
+  function onModuleLoaded(n)      { moduleloaded.push(n); }
+  function onModuleChanged(n)     { modulechanged.push(n); }
+  function onModuleUnloaded(n)    { moduleunloaded.push(n); }
+  function onPackageRegistered(n) { packageregistered.push(n); }
+  function onPackageRemoved(n)    { packageremoved.push(n); }
+  
   beforeEach(() => {
     System = getSystem("test", {baseURL: dir});
-    return createFiles(testProjectDir, testProjectSpec)
-            .then(() => System.import(module1));
+    modulechanged = [];
+    moduleloaded = [];
+    moduleunloaded = [];
+    packageregistered = [];
+    packageremoved = [];
+    subscribe("lively.modules/moduleloaded", onModuleLoaded);
+    subscribe("lively.modules/modulechanged", onModuleChanged);
+    subscribe("lively.modules/moduleunloaded", onModuleUnloaded);
+    subscribe("lively.modules/packageregistered", onPackageRegistered);
+    subscribe("lively.modules/packageremoved", onPackageRemoved);
+    return createFiles(testProjectDir, testProjectSpec);
   });
 
-  afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
-
-  describe("recordings", () => {
-
-    it("doits", () =>
-      runEval(System, "1 + z + x", {targetModule: module1})
-        .then(_ => expect(getNotifications(System)).to.containSubset(
-          [{type: "doitrequest", code: "1 + z + x"},
-           {type: "doitresult", code: "1 + z + x", result: {value: 6}}])));
-  
-    it("module changes", () =>
-      moduleSourceChangeAction(System, module1, s => s.replace(/z = 2/, "z = 3"))
-        .then(_ => expect(getNotifications(System)).to.containSubset(
-          [{type: "modulechange",
-            error: null,
-            module: module1,
-            oldCode: "import { y } from './file2.js'; var z = 2; export var x = y + z;",
-            newCode: "import { y } from './file2.js'; var z = 3; export var x = y + z;"}])));
-    
+  afterEach(() => {
+    unsubscribe("lively.modules/moduleloaded", onModuleLoaded);
+    unsubscribe("lively.modules/modulechanged", onModuleChanged);
+    unsubscribe("lively.modules/moduleunloaded", onModuleUnloaded);
+    unsubscribe("lively.modules/packageregistered", onPackageRegistered);
+    unsubscribe("lively.modules/packageremoved", onPackageRemoved);
+    removeSystem("test");
+    return removeDir(testProjectDir);
   });
 
-  describe("subscription", () => {
-
-    it("calls event handler for type", () =>
-      new Promise((resolve, reject) => {
-        subscribe(System, "doitresult", (data) => resolve(data));
-        runEval(System, "1 + z + x", {targetModule: module1});
-      })
-      .then(event => expect(event).to.containSubset(
-        {type: "doitresult", code: "1 + z + x", result: {value: 6}})));
-
-    it("can subscribe to all events", () =>
-      new Promise((resolve, reject) => {
-        var recorded = [];
-        subscribe(System, event => recorded.push(event));
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => resolve(recorded), 20);
-      })
-      .then(recorded => expect(recorded).to.containSubset(
-        [{type: "doitrequest", code: "1 + z + x"},
-         {type: "doitresult", code: "1 + z + x", result: {value: 6}}])));
-
-    it("unsubscribes", () => {
-      var recorded = [], handler = event => recorded.push(event);
-      return new Promise((resolve, reject) => {
-        subscribe(System, handler);
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => { unsubscribe(System, handler); resolve(); }, 20);
-      })
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-      .then(() => runEval(System, "1 + z + x", {targetModule: module1}))
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-    });
-
-    it("unsubscribe via name", () => {
-      var recorded = [];
-      return new Promise((resolve, reject) => {
-        subscribe(System, undefined, "test-handler", event => recorded.push(event));
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => { unsubscribe(System, "test-handler"); resolve(); }, 20);
-      })
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-      .then(() => runEval(System, "1 + z + x", {targetModule: module1}))
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-    });
-
-    it("does not duplicate subscription when name is used", () =>
-      new Promise((resolve, reject) => {
-        var recorded = [];
-        subscribe(System, undefined, "test-handler", event => recorded.push(event));
-        subscribe(System, undefined, "test-handler", event => recorded.push(event));
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => resolve(recorded), 20);
-      })
-      .then(recorded => expect(recorded).to.have.lengthOf(2)));
-
+  it("when module changes", async () => {
+    expect(modulechanged).to.deep.equal([]);
+    await changeModule1Source();
+    expect(modulechanged).to.containSubset([{
+      error: null,
+      module: module1,
+      oldSource: "import { y } from './file2.js'; var z = 2; export var x = y + z;",
+      newSource: "import { y } from './file2.js'; var z = 3; export var x = y + z;"
+    }]);
   });
-
 });

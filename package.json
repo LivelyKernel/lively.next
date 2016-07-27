@@ -25,13 +25,15 @@
       "lively.lang": "./node_modules/lively.lang",
       "lively.ast": "./node_modules/lively.ast",
       "lively.vm": "./node_modules/lively.vm",
+      "lively.notifications": "./node_modules/lively.notifications",
       "mocha-es6": "./node_modules/mocha-es6"
     }
   },
   "dependencies": {
     "lively.ast": "^0.7.25",
-    "lively.vm": "^0.7.10",
     "lively.lang": "^0.7.0",
+    "lively.notifications": "^0.2.0",
+    "lively.vm": "^0.7.10",
     "systemjs": "^0.19.29",
     "systemjs-plugin-babel": "0.0.12"
   },
