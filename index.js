@@ -4,6 +4,7 @@ export * from "./events.js";
 export * from "./text.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
+export * from "./list.js";
 export { show } from "./markers.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
