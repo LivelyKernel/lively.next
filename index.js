@@ -53,12 +53,14 @@ export function subscribe(type, handler, system) {
   return handler;
 }
 
-let notifications;
-export function getNotifications() { // -> Array<Notification>
-  if (notifications !== undefined) {
-    return notifications;
-  }
-  return notifications = getEnv()[1];
+export function emit(type, data = {}, time = Date.now(), system) {
+  // EventType, Notification?, EventTime?, System? -> Notification
+  const notification = Object.assign({type, time}, data);
+  const {emitter, notifications} = getEnv(system);
+  emitter.emit(type, notification);
+  if (emitter.isLogging) log(notification);
+  if (emitter.isRecording) record(notifications, notification);
+  return notification;
 }
 
 export function unsubscribe(type, handler, system) {
@@ -97,7 +99,16 @@ export function getRecord(system) { // System? -> Notifications
   return getEnv(system).notifications;
 }
 
-export function clearRecord() {
-  const notifications = getNotifications();
-  notifications.splice(0, notifications.length);
+function log(notification) { // Notification -> ()
+  const {type, time} = notification;
+  const padded = type + " ".repeat(Math.max(0, 20 - type.length));
+  console.log(time, padded, obj.inspect(notification, {maxDepth: 2}));
+}
+
+export function startLogging(system) { // System? -> ()
+  getEnv(system).emitter.isLogging = true;
+}
+
+export function stopLogging(system) { // System? -> ()
+  getEnv(system).emitter.isLogging = false;
 }
