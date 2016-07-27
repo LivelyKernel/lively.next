@@ -233,11 +233,11 @@ import { obj, arr } from "lively.lang";
   
   There are five types of system-wide notifications:
   
-  1. `{type: "lively.modules/moduleload", module}`
-  2. `{type: "lively.modules/modulechange", module, oldSource, newSource, error, options}`
-  3. `{type: "lively.modules/moduleunload", module}`
-  4. `{type: "lively.modules/packageregister", package}`
-  5. `{type: "lively.modules/packageremove", package}`
+  1. `{type: "lively.modules/moduleloaded", module}`
+  2. `{type: "lively.modules/modulechanged", module, oldSource, newSource, error, options}`
+  3. `{type: "lively.modules/moduleunloaded", module}`
+  4. `{type: "lively.modules/packageregistered", package}`
+  5. `{type: "lively.modules/packageremoved", package}`
 
   These notifications are all emitted with `lively.notifications`.
 

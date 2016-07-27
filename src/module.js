@@ -39,7 +39,7 @@ class ModuleInterface {
     this._scope = null;
     this._observersOfTopLevelState = [];
 
-    subscribe("lively.modules/modulechange", data => {
+    subscribe("lively.modules/modulechanged", data => {
       if (data.module === this.id) this.reset();
     });
   }
@@ -124,7 +124,7 @@ class ModuleInterface {
     if (!m) {
       m = await this.System.import(this.id);
     }
-    emit("lively.modules/moduleload", {module: this.id})
+    emit("lively.modules/moduleloaded", {module: this.id})
     return m;
   }
 
@@ -158,7 +158,7 @@ class ModuleInterface {
       delete this.System.meta[this.id];
     if (opts.forgetEnv)
       this.unloadEnv();
-    emit("lively.modules/moduleunload", {module: this.id})
+    emit("lively.modules/moduleunloaded", {module: this.id});
   }
 
   async reload(opts) {

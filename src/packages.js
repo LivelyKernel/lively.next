@@ -281,7 +281,7 @@ class Package {
     var registerP = this.registerProcess.promise;
     this.registerProcess.resolve(cfg);
     delete this.registerProcess;
-    emit("lively.modules/packageregister", {"package": this.url});
+    emit("lively.modules/packageregistered", {"package": this.url});
 
     return registerP;
   }
@@ -308,7 +308,7 @@ class Package {
     });
     delete System.meta[packageConfigURL];
     delete System.packages[url];
-    emit("lively.modules/packageremove", {"package": this.url});
+    emit("lively.modules/packageremoved", {"package": this.url});
   }
 
   reload() { this.remove(); return this.import(); }

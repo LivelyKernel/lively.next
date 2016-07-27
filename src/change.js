@@ -18,12 +18,12 @@ async function moduleSourceChange(System, moduleId, oldSource, newSource, format
       throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format ${format}`);
     }
 
-    emit("lively.modules/modulechange", {
+    emit("lively.modules/modulechanged", {
       module: moduleId, oldSource, newSource, options });
     
     return changeResult;
   } catch (error) {
-    emit("lively.modules/modulechange", {
+    emit("lively.modules/modulechanged", {
       module: moduleId, oldSource, newSource, error, options });
     throw error;
   }
