@@ -43,20 +43,20 @@ describe("notify", () => {
     moduleunloaded = [];
     packageregistered = [];
     packageremoved = [];
-    subscribe("lively.modules/moduleloaded", onModuleLoaded);
-    subscribe("lively.modules/modulechanged", onModuleChanged);
-    subscribe("lively.modules/moduleunloaded", onModuleUnloaded);
-    subscribe("lively.modules/packageregistered", onPackageRegistered);
-    subscribe("lively.modules/packageremoved", onPackageRemoved);
+    subscribe("lively.modules/moduleloaded", onModuleLoaded, system);
+    subscribe("lively.modules/modulechanged", onModuleChanged, system);
+    subscribe("lively.modules/moduleunloaded", onModuleUnloaded, system);
+    subscribe("lively.modules/packageregistered", onPackageRegistered, system);
+    subscribe("lively.modules/packageremoved", onPackageRemoved, system);
     return createFiles(testProjectDir, testProjectSpec);
   });
 
   afterEach(() => {
-    unsubscribe("lively.modules/moduleloaded", onModuleLoaded);
-    unsubscribe("lively.modules/modulechanged", onModuleChanged);
-    unsubscribe("lively.modules/moduleunloaded", onModuleUnloaded);
-    unsubscribe("lively.modules/packageregistered", onPackageRegistered);
-    unsubscribe("lively.modules/packageremoved", onPackageRemoved);
+    unsubscribe("lively.modules/moduleloaded", onModuleLoaded, system);
+    unsubscribe("lively.modules/modulechanged", onModuleChanged, system);
+    unsubscribe("lively.modules/moduleunloaded", onModuleUnloaded, system);
+    unsubscribe("lively.modules/packageregistered", onPackageRegistered, system);
+    unsubscribe("lively.modules/packageremoved", onPackageRemoved, system);
     removeSystem("test");
     return removeDir(testProjectDir);
   });

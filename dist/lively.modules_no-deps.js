@@ -652,7 +652,7 @@
             case 14:
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, options: options });
+                module: moduleId, oldSource: oldSource, newSource: newSource, options: options }, Date.now(), System);
 
               return _context.abrupt("return", changeResult);
 
@@ -661,7 +661,7 @@
               _context.t0 = _context["catch"](0);
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options });
+                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
               throw _context.t0;
 
             case 22:
@@ -1488,7 +1488,7 @@
 
                   this.registerProcess.resolve(cfg);
                   delete this.registerProcess;
-                  lively_notifications.emit("lively.modules/packageregistered", { "package": this.url });
+                  lively_notifications.emit("lively.modules/packageregistered", { "package": this.url }, Date.now(), System);
 
                   return _context3.abrupt("return", registerP);
 
@@ -1534,7 +1534,7 @@
         });
         delete System.meta[packageConfigURL];
         delete System.packages[url];
-        lively_notifications.emit("lively.modules/packageremoved", { "package": this.url });
+        lively_notifications.emit("lively.modules/packageremoved", { "package": this.url }, Date.now(), System);
       }
     }, {
       key: "reload",
@@ -1947,7 +1947,7 @@
                   m = _context4.sent;
 
                 case 5:
-                  lively_notifications.emit("lively.modules/moduleloaded", { module: this.id });
+                  lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
                   return _context4.abrupt("return", m);
 
                 case 7:
@@ -2001,7 +2001,7 @@
         }
         if (this.System.meta) delete this.System.meta[this.id];
         if (opts.forgetEnv) this.unloadEnv();
-        lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id });
+        lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
       }
     }, {
       key: "reload",
@@ -3267,6 +3267,6 @@
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively_notifications,lively.vm));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

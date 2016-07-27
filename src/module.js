@@ -124,7 +124,7 @@ class ModuleInterface {
     if (!m) {
       m = await this.System.import(this.id);
     }
-    emit("lively.modules/moduleloaded", {module: this.id})
+    emit("lively.modules/moduleloaded", {module: this.id}, Date.now(), this.System);
     return m;
   }
 
@@ -158,7 +158,7 @@ class ModuleInterface {
       delete this.System.meta[this.id];
     if (opts.forgetEnv)
       this.unloadEnv();
-    emit("lively.modules/moduleunloaded", {module: this.id});
+    emit("lively.modules/moduleunloaded", {module: this.id}, Date.now(), this.System);
   }
 
   async reload(opts) {

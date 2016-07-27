@@ -6043,6 +6043,159 @@
     };
 }(typeof lively !== 'undefined' && lively.lang ? lively.lang : {}));
 })();
+(function() {
+  var GLOBAL = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+  this.lively = this.lively || {};
+(function (exports,lively_lang) {
+  'use strict';
+
+  // type EventType = string
+  // type EventTime = number
+  // type Notification = {type: EventType, time: EventTime, ...};
+  // type Handler = Notification -> ()
+  // type Notifications = { [number]: Notification, limit: number }
+  // type Emitter = {isRecording: boolean, isLogging: boolean, ... }
+  // type Env = {emitter: Emitter, notifications: Notifications}
+
+  var env = void 0;
+
+  function getEnv(system) {
+    // System? -> Env
+    if (system === undefined) {
+      if (typeof System === 'undefined') {
+        // fallback if not System is available
+        if (env !== undefined) {
+          return env;
+        }
+        return env = { emitter: lively_lang.events.makeEmitter({}), notifications: [] };
+      } else {
+        system = System;
+      }
+    }
+    var livelyEnv = system.get("@lively-env");
+    var options = void 0;
+    if (livelyEnv === undefined) {
+      options = {};
+      system.set("@lively-env", system.newModule({ options: options }));
+    } else {
+      options = livelyEnv.options;
+    }
+    if (!options) {
+      throw new Error("@lively-env registered read-only");
+    }
+    if (!options.emitter) {
+      Object.assign(options, {
+        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({})),
+        notifications: system["__lively.notifications_notifications"] || (system["__lively.notifications_notifications"] = [])
+      });
+    }
+    var _options = options;
+    var emitter = _options.emitter;
+    var notifications = _options.notifications;
+
+    return { emitter: emitter, notifications: notifications };
+  }
+
+  function subscribe(type, handler, system) {
+    // EventType, Handler, System? -> Handler
+    getEnv(system).emitter.on(type, handler);
+    return handler;
+  }
+
+  function emit(type) {
+    var data = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var time = arguments.length <= 2 || arguments[2] === undefined ? Date.now() : arguments[2];
+    var system = arguments[3];
+
+    // EventType, Notification?, EventTime?, System? -> Notification
+    var notification = Object.assign({ type: type, time: time }, data);
+
+    var _getEnv = getEnv(system);
+
+    var emitter = _getEnv.emitter;
+    var notifications = _getEnv.notifications;
+
+    emitter.emit(type, notification);
+    if (emitter.isLogging) log(notification);
+    if (emitter.isRecording) record(notifications, notification);
+    return notification;
+  }
+
+  function unsubscribe(type, handler, system) {
+    // EventType, Handler, System? -> Handler
+    getEnv(system).emitter.removeListener(type, handler);
+    return handler;
+  }
+
+  function unsubscribeAll(type, system) {
+    // EventType, System? -> ()
+    getEnv(system).emitter.removeAllListeners(type);
+  }
+
+  function record(notifications, notification) {
+    // Array<Notification>, Notification -> ()
+    notifications.push(notification);
+    if (notifications.limit) {
+      notifications.splice(0, notifications.length - notifications.limit);
+    }
+  }
+
+  function startRecording(system) {
+    // System? -> ()
+    getEnv(system).emitter.isRecording = true;
+  }
+
+  function stopRecording(system) {
+    // System? -> ()
+    getEnv(system).emitter.isRecording = false;
+  }
+
+  function clearRecord(system) {
+    // System? -> ()
+    var _getEnv2 = getEnv(system);
+
+    var notifications = _getEnv2.notifications;
+
+    notifications.splice(0, notifications.length);
+  }
+
+  function getRecord(system) {
+    // System? -> Notifications
+    return getEnv(system).notifications;
+  }
+
+  function log(notification) {
+    // Notification -> ()
+    var padded = notification.type + " ".repeat(Math.max(0, 32 - notification.type.length));
+    console.log(padded + ' ' + lively_lang.obj.inspect(notification, { maxDepth: 2 }));
+  }
+
+  function startLogging(system) {
+    // System? -> ()
+    getEnv(system).emitter.isLogging = true;
+  }
+
+  function stopLogging(system) {
+    // System? -> ()
+    getEnv(system).emitter.isLogging = false;
+  }
+
+  exports.subscribe = subscribe;
+  exports.emit = emit;
+  exports.unsubscribe = unsubscribe;
+  exports.unsubscribeAll = unsubscribeAll;
+  exports.startRecording = startRecording;
+  exports.stopRecording = stopRecording;
+  exports.clearRecord = clearRecord;
+  exports.getRecord = getRecord;
+  exports.startLogging = startLogging;
+  exports.stopLogging = stopLogging;
+
+}((this.lively.notifications = this.lively.notifications || {}),lively.lang));
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.notifications;
+})();
 
 
 (function() {
@@ -21749,7 +21902,7 @@ var categorizer = Object.freeze({
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast) {
+(function (exports,lively_lang,lively_ast,lively_notifications) {
   'use strict';
 
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -22846,30 +22999,30 @@ var categorizer = Object.freeze({
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
-              // console.warn("FIX recordDoitRequest")
-              // recordDoitRequest(
-              //   System, originalCode,
-              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-              //   Date.now());
+              console.log("emitted");
+              lively_notifications.emit("lively.vm/doitrequest", {
+                code: originalCode,
+                waitForPromise: options.waitForPromise,
+                targetModule: options.targetModule }, Date.now(), System);
 
-              _context3.next = 24;
+              _context3.next = 26;
               return vmRunEval(code, options);
 
-            case 24:
+            case 26:
               result = _context3.sent;
 
 
               System.get("@lively-env").evaluationDone(fullname);
               System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
-              // console.warn("FIX recordDoitResult")
 
-              // recordDoitResult(
-              //   System, originalCode,
-              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-              //   result, Date.now());
+              lively_notifications.emit("lively.vm/doitresult", {
+                code: originalCode, result: result,
+                waitForPromise: options.waitForPromise,
+                targetModule: options.targetModule }, Date.now(), System);
+
               return _context3.abrupt("return", result);
 
-            case 28:
+            case 31:
             case "end":
               return _context3.stop();
           }
@@ -23626,7 +23779,7 @@ var categorizer = Object.freeze({
   exports.evalCodeTransform = evalCodeTransform;
   exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
 
-}((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));
+}((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast,lively.notifications));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
 
@@ -24283,7 +24436,7 @@ var categorizer = Object.freeze({
             case 14:
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, options: options });
+                module: moduleId, oldSource: oldSource, newSource: newSource, options: options }, Date.now(), System);
 
               return _context.abrupt("return", changeResult);
 
@@ -24292,7 +24445,7 @@ var categorizer = Object.freeze({
               _context.t0 = _context["catch"](0);
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options });
+                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
               throw _context.t0;
 
             case 22:
@@ -25119,7 +25272,7 @@ var categorizer = Object.freeze({
 
                   this.registerProcess.resolve(cfg);
                   delete this.registerProcess;
-                  lively_notifications.emit("lively.modules/packageregistered", { "package": this.url });
+                  lively_notifications.emit("lively.modules/packageregistered", { "package": this.url }, Date.now(), System);
 
                   return _context3.abrupt("return", registerP);
 
@@ -25165,7 +25318,7 @@ var categorizer = Object.freeze({
         });
         delete System.meta[packageConfigURL];
         delete System.packages[url];
-        lively_notifications.emit("lively.modules/packageremoved", { "package": this.url });
+        lively_notifications.emit("lively.modules/packageremoved", { "package": this.url }, Date.now(), System);
       }
     }, {
       key: "reload",
@@ -25578,7 +25731,7 @@ var categorizer = Object.freeze({
                   m = _context4.sent;
 
                 case 5:
-                  lively_notifications.emit("lively.modules/moduleloaded", { module: this.id });
+                  lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
                   return _context4.abrupt("return", m);
 
                 case 7:
@@ -25632,7 +25785,7 @@ var categorizer = Object.freeze({
         }
         if (this.System.meta) delete this.System.meta[this.id];
         if (opts.forgetEnv) this.unloadEnv();
-        lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id });
+        lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
       }
     }, {
       key: "reload",
@@ -26898,6 +27051,6 @@ var categorizer = Object.freeze({
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively_notifications,lively.vm));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

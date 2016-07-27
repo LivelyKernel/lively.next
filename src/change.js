@@ -17,14 +17,14 @@ async function moduleSourceChange(System, moduleId, oldSource, newSource, format
     } else {
       throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format ${format}`);
     }
-
+    
     emit("lively.modules/modulechanged", {
-      module: moduleId, oldSource, newSource, options });
+      module: moduleId, oldSource, newSource, options }, Date.now(), System);
     
     return changeResult;
   } catch (error) {
     emit("lively.modules/modulechanged", {
-      module: moduleId, oldSource, newSource, error, options });
+      module: moduleId, oldSource, newSource, error, options }, Date.now(), System);
     throw error;
   }
 }
