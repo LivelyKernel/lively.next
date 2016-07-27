@@ -61,22 +61,14 @@ of the browser for refs in the format above for each registered pacakge.
 
 ### Notifications
 
-You can subscribe to ChangeSet events.
+There are four different types of system-wide notifications:
 
-Example Use:
+1. `{type: "lively.changesets/added", changeset}`
+2. `{type: "lively.changesets/changed", changeset, path}`
+3. `{type: "lively.changesets/switchedcurrent", changeset, before}`
+4. `{type: "lively.changesets/deleted", changeset}`
 
-```js
-import { notify } from "lively.changesets";
-
-notify.on("add", msg =>
-  console.log(`added ChangeSet ${msg.changeset}`));
-notify.on("change", msg =>
-  console.log(`modified ChangeSet ${msg.changeset}`));
-notify.on("current", msg =>
-  console.log(`switched to ${msg.changeset} (was ${msg.before})`));
-notify.on("delete", msg =>
-  console.log(`deleted ChangeSet ${msg.changeset}`));
-```
+These notifications are all emitted with `lively.notifications`.
 
 ### Tools
 

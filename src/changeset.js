@@ -1,9 +1,9 @@
-import { arr, events } from 'lively.lang';
+import { arr } from 'lively.lang';
+import { emit } from 'lively.notifications';
 
 import { gitInterface } from '../index.js';
 import Branch from "./branch.js";
 
-export const notify = events.makeEmitter({});
 
 let current; // undefined (uninitialized) | null (none) | ChangeSet
 let changesets; // undefined (uninitialized) | Array<ChangeSet>
@@ -51,7 +51,7 @@ class ChangeSet {
       await this.createBranch(path);
       return this.setFileContent(path, content);
     }
-    notify.emit('change', {changeset: this.name});
+    emit("lively.changesets/changed", {changeset: this.name, path: relPath});
     return branch.setFileContent(relPath, content);
   }
 
@@ -89,7 +89,7 @@ class ChangeSet {
     for (let branch of this.branches) {
       await branch.delete(db);
     }
-    notify.emit('delete', {changeset: this.name});
+    emit("lively.changesets/deleted", {changeset: this.name});
   }
   
   isCurrent() { // -> bool
@@ -124,7 +124,7 @@ function localChangeSetsOf(db, pkg) {
 export async function createChangeSet(name) { // ChangeSetName => ChangeSet
   const cs = new ChangeSet(name, []);
   (await localChangeSets()).push(cs);
-  notify.emit('add', {changeset: name});
+  emit("lively.changesets/added", {changeset: name});
   return cs;
 }
 
@@ -161,7 +161,7 @@ export async function setCurrentChangeSet(csName) { // ChangeSetName -> ChangeSe
     current = cs;
     window.localStorage.setItem('lively.changesets/current', csName);
   }
-  notify.emit("current", {
+  emit("lively.changesets/switchedcurrent", {
     changeset: csName || null,
     before: old ? old.name : null
   });

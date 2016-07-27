@@ -1,6 +1,7 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
+import { subscribe, unsubscribe } from "lively.notifications";
 
 import { createChangeSet, localChangeSets, currentChangeSet, setCurrentChangeSet, notify } from "../src/changeset.js";
 import { gitInterface } from "../index.js";
@@ -19,10 +20,10 @@ describe("notify", () => {
     await createPackage();
     await setCurrentChangeSet(null);
     added = [], changed = [], current = [], deleted = [];
-    notify.on("add", onAdd);
-    notify.on("change", onChange);
-    notify.on("current", onCurrent);
-    notify.on("delete", onDelete);
+    subscribe("lively.changesets/added", onAdd);
+    subscribe("lively.changesets/changed", onChange);
+    subscribe("lively.changesets/switchedcurrent", onCurrent);
+    subscribe("lively.changesets/deleted", onDelete);
   });
 
   afterEach(async () => {
@@ -30,10 +31,10 @@ describe("notify", () => {
     const toDelete = local.filter(c => c.name.match(/^test/));
     await Promise.all(toDelete.map(c => c.delete()));
     await removePackage();
-    notify.removeListener("add", onAdd);
-    notify.removeListener("change", onChange);
-    notify.removeListener("current", onCurrent);
-    notify.removeListener("delete", onDelete);
+    unsubscribe("lively.changesets/added", onAdd);
+    unsubscribe("lively.changesets/changed", onChange);
+    unsubscribe("lively.changesets/switchedcurrent", onCurrent);
+    unsubscribe("lively.changesets/deleted", onDelete);
   });
 
   it("of new changesets", async () => {

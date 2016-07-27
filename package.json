@@ -19,6 +19,7 @@
     "main": "index.js",
     "packageMap": {
       "lively.modules": "./node_modules/lively.modules",
+      "lively.notifications": "./node_modules/lively.notifications",
       "lively-system-interface": "./node_modules/lively-system-interface",
       "js-git-browser": "./node_modules/js-git-browser",
       "lively.lang": "./node_modules/lively.lang",
@@ -34,6 +35,7 @@
   },
   "dependencies": {
     "lively.modules": "0.5.14",
+    "lively.notifications": "^0.3.2",
     "lively.lang": "^0.6.0",
     "lively-system-interface": "LivelyKernel/lively-system-interface",
     "js-git-browser": "LivelyKernel/js-git-browser"
