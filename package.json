@@ -1,6 +1,6 @@
 {
   "name": "lively.notifications",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Shared event bus for subscribing to and emitting system-wide notifications",
   "author": "Christopher Schuster <cs@livoris.net>",
   "license": "MIT",
@@ -8,7 +8,7 @@
     "url": "https://github.com/LivelyKernel/lively.notifications/issues"
   },
   "homepage": "https://github.com/LivelyKernel/lively.notifications#readme",
-  "main": "index.js",
+  "main": "dist/lively.notifications.js",
   "systemjs": {
     "main": "./index.js",
     "map": {
@@ -23,6 +23,7 @@
     }
   },
   "scripts": {
+    "build": "node build.js",
     "test": "mocha-es6 tests/*-test.js"
   },
   "repository": {
@@ -33,6 +34,11 @@
     "lively.lang": "^0.7.2"
   },
   "devDependencies": {
-    "mocha-es6": "^0.3.9"
+    "babel-plugin-syntax-object-rest-spread": "^6.8.0",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "mocha-es6": "^0.3.9",
+    "rollup": "^0.34.1",
+    "rollup-plugin-babel": "^2.6.1"
   }
 }
