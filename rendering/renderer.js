@@ -2,6 +2,7 @@ import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
 import { h } from "virtual-dom";
+import { pt } from "lively.graphics";
 
 const defaultCSS = `
 
@@ -266,3 +267,4 @@ function renderGradient(morph) {
                                 {offset: (k * 100) + "%",
                                  "stop-color": c}}))));
 }
+
