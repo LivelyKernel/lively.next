@@ -237,7 +237,9 @@ function renderVertices(path) {
 function renderGradient(path) {
   return h("defs", {namespace: "http://www.w3.org/2000/svg"},
                 h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
-                                     attributes: {id: path.id}},
+                                     attributes: {id: path.id,
+                                                  gradientUnits: "userSpaceOnUse"}
+                                     },
                     path.gradient.map(([k, c]) =>
                         h("stop",
                             {namespace: "http://www.w3.org/2000/svg",
