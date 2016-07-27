@@ -167,6 +167,7 @@ export class Window extends Morph {
       styleClasses: ["morph", "fa", "fa-chevron-down"],
       extent: pt(20,20),
       origin: pt(10,10),
+      opacity: 0.5,
       fill: Color.gray.withA(0),
       rotation: num.toRadians(-45),
       position: this.extent.subPt(pt(10,10)),
