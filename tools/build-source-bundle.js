@@ -9,6 +9,7 @@ var targetFile1 = "dist/lively.modules_no-deps.js";
 var targetFile2 = "dist/lively.modules.js";
 var targetFile3 = "dist/lively.modules-with-lively.vm.js";
 
+var notificationsSource = fs.readFileSync(require.resolve("lively.notifications/dist/lively.notifications_no-deps.js"));
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
 var vmSource = fs.readFileSync(require.resolve("lively.vm/dist/lively.vm_no-deps.js"));
@@ -33,7 +34,8 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
-        "lively.vm": "lively.vm"
+        "lively.vm": "lively.vm",
+        "lively.notifications": "lively.notifications"
       }
     }))
 
@@ -52,7 +54,7 @@ ${initSource}\n
   ${source}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();`;
-    var complete = `${regeneratorSource}\n${langSource}\n${astSource}\n${vmSource}\n${noDeps}`;
+    var complete = `${regeneratorSource}\n${langSource}\n${notificationsSource}\n${astSource}\n${vmSource}\n${noDeps}`;
     return {noDeps: noDeps, complete: complete};
   })
 
