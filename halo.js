@@ -399,7 +399,7 @@ export class Halo extends Morph {
   originHalo() {
     return this.getSubmorphNamed("origin") || this.addMorph(new HaloItem({
       name: "origin", fill: Color.red,
-      opacity: 0.9, borderColor: Color.black,
+      opacity: 0.5, borderColor: Color.black,
       borderWidth: 2,
       position: this.target.origin.subPt(pt(7.5,7.5)),
       extent: pt(15,15),
@@ -499,7 +499,7 @@ export class Halo extends Morph {
                      borderStyle: "dashed",
                      position, extent,
                      borderWidth: 2,
-                     borderColor: Color.red},
+                     gradient: guideGradient},
                {x, y} = this.target.worldPoint(pt(0,0));
         // init
          vertical = vertical || this.addMorphBack(
@@ -518,7 +518,6 @@ export class Halo extends Morph {
            new Morph({name: "mesh",
                       onKeyUp: (evt) => this.toggleMesh(false),
                       extent, position: this.localize(pt(2,2)),
-                      opacity: 0.1,
                       styleClasses: ["morph", "halo-mesh"], fill: Color.transparent}));
         // update
         horizontal.position = position;
