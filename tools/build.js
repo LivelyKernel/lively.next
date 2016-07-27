@@ -8,6 +8,7 @@ var babel = require('rollup-plugin-babel');
 var targetFile1 = "dist/lively.vm_no-deps.js";
 var targetFile2 = "dist/lively.vm.js";
 
+var notificationsSource = fs.readFileSync(require.resolve("lively.notifications/dist/lively.notifications_no-deps.js"));
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
 
@@ -30,6 +31,7 @@ module.exports = Promise.resolve()
       globals: {
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
+        "lively.notifications": "lively.notifications",
         "module": "typeof module !== 'undefined' ? module.constructor : {}",
         "fs": "typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: () => { throw new Error('fs module not available'); }}"
       },
@@ -44,7 +46,7 @@ module.exports = Promise.resolve()
   ${bundled.code}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();`,
-        complete = `${langSource}\n${astSource}\n${noDeps}`;
+        complete = `${langSource}\n${astSource}\n${notificationsSource}\n${noDeps}`;
     return {noDeps: noDeps, complete: complete}
   })
 
