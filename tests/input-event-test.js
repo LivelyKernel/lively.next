@@ -34,7 +34,7 @@ function createDummyWorld() {
       submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
     },
     {name: "submorph3", extent: pt(50,50), position: pt(200,20), fill: Color.yellow},
-    {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "old text"}];
+    {name: "submorph4", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.blue, textString: "text"}];
 
   submorph1 = world.submorphs[0];
   submorph2 = world.submorphs[0].submorphs[0];
@@ -165,17 +165,40 @@ describe("events", function() {
     expect(m2.globalPosition).equals(pt(45,45));
   });
 
-  it("text input", () => {
-    expect(submorph4).property("textString").equals("old text");
-    env.domEnv.document.getElementById(submorph4.id).value = "new text";
-    expect(submorph4).property("textString").equals("old text");
-    env.eventDispatcher.simulateDOMEvents({type: "input", target: submorph4, position: pt(225, 225)});
-    expect(submorph4).property("textString").equals("new text");
-    env.domEnv.document.getElementById(submorph4.id).value = "really new text";
-    expect(submorph4).property("textString").equals("new text");
-    env.eventDispatcher.simulateDOMEvents({type: "input", target: submorph4, position: pt(225, 225)});
-    expect(submorph4).property("textString").equals("really new text");
-  });
+  describe("text", () => {
+
+    it("text entry via keydown", () => {
+      expect(submorph4).property("textString").equals("text");
+      eventDispatcher.simulateDOMEvents(
+        {target: submorph4, type: "keydown", key: 'l'},
+        {target: submorph4, type: "keydown", key: 'o'},
+        {target: submorph4, type: "keydown", key: 'l'},
+        {target: submorph4, type: "keydown", key: 'Enter'}
+      );
+      expect(submorph4).property("textString").equals("lol\ntext");
+    });
+
+    it("backspace", () => {
+      expect(submorph4).property("textString").equals("text");
+      eventDispatcher.simulateDOMEvents(
+        {target: submorph4, type: "keydown", key: 'l'},
+        {target: submorph4, type: "keydown", key: 'o'},
+        {target: submorph4, type: "keydown", key: 'l'},
+        {target: submorph4, type: "keydown", key: 'w'},
+        {target: submorph4, type: "keydown", key: 'u'},
+        {target: submorph4, type: "keydown", key: 't'}
+      );
+      expect(submorph4).property("textString").equals("lolwuttext");
+      eventDispatcher.simulateDOMEvents(
+        {target: submorph4, type: "keydown", keyCode: 8},
+        {target: submorph4, type: "keydown", keyCode: 8},
+        {target: submorph4, type: "keydown", keyCode: 8},
+        {target: submorph4, type: "keydown", key: ' '}
+      );
+      expect(submorph4).property("textString").equals("lol text");
+    });
+
+  })
 
   describe("hover", () => {
 
