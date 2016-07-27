@@ -5385,7 +5385,11 @@
     };
 }(typeof lively !== 'undefined' && lively.lang ? lively.lang : {}));
 })();
-this.lively = this.lively || {};
+(function() {
+  var GLOBAL = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+  this.lively = this.lively || {};
 (function (exports,lively_lang) {
   'use strict';
 
@@ -5506,11 +5510,8 @@ this.lively = this.lively || {};
 
   function log(notification) {
     // Notification -> ()
-    var type = notification.type;
-    var time = notification.time;
-
-    var padded = type + " ".repeat(Math.max(0, 20 - type.length));
-    console.log(time, padded, lively_lang.obj.inspect(notification, { maxDepth: 2 }));
+    var padded = notification.type + " ".repeat(Math.max(0, 32 - notification.type.length));
+    console.log(padded + ' ' + lively_lang.obj.inspect(notification, { maxDepth: 2 }));
   }
 
   function startLogging(system) {
@@ -5535,3 +5536,5 @@ this.lively = this.lively || {};
   exports.stopLogging = stopLogging;
 
 }((this.lively.notifications = this.lively.notifications || {}),lively.lang));
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.notifications;
+})();

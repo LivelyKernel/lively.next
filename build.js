@@ -32,7 +32,14 @@ module.exports = Promise.resolve()
 
   // 3. massage code a little
   .then(bundled => {
-    return {noDeps: bundled.code, complete: `${langSource}\n${bundled.code}`};
+    const noDeps = `(function() {
+  var GLOBAL = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+  ${bundled.code}
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.notifications;
+})();`;
+    return {noDeps: noDeps, complete: `${langSource}\n${noDeps}`};
   })
 
   // 4. create files

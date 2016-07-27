@@ -100,9 +100,8 @@ export function getRecord(system) { // System? -> Notifications
 }
 
 function log(notification) { // Notification -> ()
-  const {type, time} = notification;
-  const padded = type + " ".repeat(Math.max(0, 20 - type.length));
-  console.log(time, padded, obj.inspect(notification, {maxDepth: 2}));
+  const padded = notification.type + " ".repeat(Math.max(0, 32 - notification.type.length));
+  console.log(padded + ' ' + obj.inspect(notification, {maxDepth: 2}));
 }
 
 export function startLogging(system) { // System? -> ()
