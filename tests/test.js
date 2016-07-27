@@ -124,7 +124,6 @@ describe("marshalling", () => {
           {id} = objPool.add(obj),
           objPool2 = new ObjectPool();
 
-
       objPool2.expressionEvaluator = exprObj => {
         var e = exprObj.__expr__;
         if (e.startsWith("foo")) return Object.create(proto, {n: {value: Number(e.match(/[0-9]+/)[0])}})

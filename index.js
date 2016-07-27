@@ -1,5 +1,7 @@
 import { string, arr } from "lively.lang";
 
+import ClassHelper from "./class-helper.js";
+
 function isPrimitive(obj) {
   // primitive objects don't need to be registered
   if (obj == null) return true;
@@ -31,7 +33,6 @@ Object.defineProperty(Symbol.prototype, "__serialize__", {
     }
   })()
 })
-
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -92,6 +93,7 @@ export class ObjectRef {
       let key = keys[i];
       props.push({key, value: this.snapshotProperty(realObj[key], [key], serializedObjMap, pool)});
     }
+    pool.classHelper.addClassInfo(this, realObj, snapshots[rev]);
 
     return ref;
   }
@@ -131,7 +133,10 @@ export class ObjectRef {
     this.snapshots[rev] = snapshot;
 
     var newObj = this.realObj = __expr__ ?
-      pool.expressionEvaluator(snapshot) : {_rev: rev};
+      pool.expressionEvaluator(snapshot) :
+      pool.classHelper.restoreIfClassInstance(this, snapshot) || {};
+    if (!newObj._rev) newObj._rev = rev;
+
     pool.internalAddRef(this); // for updating realObj
 
     if (props) {
@@ -165,10 +170,11 @@ export class ObjectRef {
 
 export class ObjectPool {
 
-  constructor(uuidGen = string.newUUID) {
+  constructor(options = {ignoreClassNotFound: true, uuidGen: null}) {
     this._obj_ref_map = new Map();
     this._id_ref_map = {};
-    this.uuidGen = uuidGen;
+    this.classHelper = new ClassHelper(options);
+    this.uuidGen = options.uuidGen || string.newUUID;
     this.expressionEvaluator = defaultExpressionEvaluator;
   }
 
@@ -218,12 +224,12 @@ export class ObjectPool {
 
   jsonSnapshot() { return JSON.stringify(this.snapshot(), null, 2); }
 
-  static fromJSONSnapshot(jsonSnapshoted) {
-    return this.fromSnapshot(JSON.parse(jsonSnapshoted));
+  static fromJSONSnapshot(jsonSnapshoted, options) {
+    return this.fromSnapshot(JSON.parse(jsonSnapshoted), options);
   }
 
-  static fromSnapshot(snapshoted) {
-    return new this().readSnapshot(snapshoted);
+  static fromSnapshot(snapshoted, options) {
+    return new this(options).readSnapshot(snapshoted);
   }
 }
 
