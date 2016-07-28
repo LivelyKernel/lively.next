@@ -65,6 +65,7 @@ function createHtmlMorph() {
   resetButton.align(resetButton.bounds().topRight(), window.pt(left-10, 2))
   titleBar.buttons.push(resetButton);
   window.lively.bindings.connect(resetButton, 'fire', htmlMorph, 'setupNewMorphicWorld');
+  window.lively.bindings.connect(htmlMorph.getWindow().closeButton, 'fire', htmlMorph, 'cleanupNewMorphicWorld');
 
   return htmlMorph;
 }
