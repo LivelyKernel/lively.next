@@ -93,7 +93,7 @@
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast,lively_vm) {
+(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm) {
   'use strict';
 
   function installHook$1(System, hookName, hook) {
@@ -498,96 +498,6 @@
     });
   }
 
-  var eventTypes = ["modulechange", "doitrequest", "doitresult"];
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // genric stuff
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function getNotifications$1(System) {
-    return System.get("@lively-env").notifications;
-  }
-
-  function truncateNotifications(System) {
-    var limit = System.get("@lively-env").options.notificationLimit;
-    if (limit) {
-      var notifications = getNotifications$1(System);
-      notifications.splice(0, notifications.length - limit);
-    }
-  }
-
-  function record(System, event) {
-    getNotifications$1(System).push(event);
-    truncateNotifications(System);
-    notifySubscriber(System, event.type, event);
-    return event;
-  }
-
-  function recordModuleChange(System, moduleId, oldSource, newSource, error, options, time) {
-    return record(System, {
-      type: "modulechange",
-      module: moduleId,
-      oldCode: oldSource, newCode: newSource,
-      error: error, options: options,
-      time: time || Date.now()
-    });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // subscriptions
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function notifySubscriber(System, type, data) {
-    subsribersForType(System, type).forEach(function (_ref) {
-      var name = _ref.name;
-      var handler = _ref.handler;
-
-      try {
-        handler(data);
-      } catch (e) {
-        console.error("Error in lively.modules notification handler " + (name || handler) + ":\n" + e.stack);
-      }
-    });
-  }
-
-  function subsribersForType(System, type) {
-    var subscribers = System.get("@lively-env").notificationSubscribers;
-    return subscribers[type] || (subscribers[type] = []);
-  }
-
-  function _addSubscriber(System, name, type, handlerFunc) {
-    var subscribers = subsribersForType(System, type);
-    if (name) _removeNamedSubscriptionOfType(System, name, type);
-    subscribers.push({ name: name, handler: handlerFunc });
-  }
-
-  function _removeNamedSubscriptionOfType(System, name, type) {
-    var subscribers = subsribersForType(System, type);
-    subscribers.forEach(function (ea, i) {
-      return ea.name === name && subscribers.splice(i, 1);
-    });
-  }
-
-  function subscribe$1(System, type, name, handlerFunc) {
-    if (typeof name === "function") {
-      handlerFunc = name;
-      name = undefined;
-    }
-
-    if (typeof type === "function") {
-      handlerFunc = type;
-      type = undefined;
-      name = undefined;
-    }
-
-    if (type && eventTypes.indexOf(type) === -1) throw new Error("Unknown notification type " + type);
-    if (typeof handlerFunc !== "function") throw new Error("handlerFunc in subscribe is not a function " + handlerFunc);
-    var types = type ? [type] : eventTypes;
-    types.forEach(function (type) {
-      return _addSubscriber(System, name, type, handlerFunc);
-    });
-  }
-
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
@@ -741,14 +651,17 @@
 
             case 14:
 
-              recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
+              lively_notifications.emit("lively.modules/modulechanged", {
+                module: moduleId, oldSource: oldSource, newSource: newSource, options: options }, Date.now(), System);
+
               return _context.abrupt("return", changeResult);
 
             case 18:
               _context.prev = 18;
               _context.t0 = _context["catch"](0);
 
-              recordModuleChange(System, moduleId, oldSource, newSource, _context.t0, options, Date.now());
+              lively_notifications.emit("lively.modules/modulechanged", {
+                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
               throw _context.t0;
 
             case 22:
@@ -1575,10 +1488,11 @@
 
                   this.registerProcess.resolve(cfg);
                   delete this.registerProcess;
+                  lively_notifications.emit("lively.modules/packageregistered", { "package": this.url }, Date.now(), System);
 
                   return _context3.abrupt("return", registerP);
 
-                case 47:
+                case 48:
                 case "end":
                   return _context3.stop();
               }
@@ -1620,6 +1534,7 @@
         });
         delete System.meta[packageConfigURL];
         delete System.packages[url];
+        lively_notifications.emit("lively.modules/packageremoved", { "package": this.url }, Date.now(), System);
       }
     }, {
       key: "reload",
@@ -1815,7 +1730,7 @@
       this._scope = null;
       this._observersOfTopLevelState = [];
 
-      subscribe$1(System, "modulechange", function (data) {
+      lively_notifications.subscribe("lively.modules/modulechanged", function (data) {
         if (data.module === _this.id) _this.reset();
       });
     }
@@ -2013,13 +1928,14 @@
       key: "load",
       value: function () {
         var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+          var m;
           return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
               switch (_context4.prev = _context4.next) {
                 case 0:
-                  _context4.t0 = this.System.get(this.id);
+                  m = this.System.get(this.id);
 
-                  if (_context4.t0) {
+                  if (m) {
                     _context4.next = 5;
                     break;
                   }
@@ -2028,12 +1944,13 @@
                   return this.System.import(this.id);
 
                 case 4:
-                  _context4.t0 = _context4.sent;
+                  m = _context4.sent;
 
                 case 5:
-                  return _context4.abrupt("return", _context4.t0);
+                  lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
+                  return _context4.abrupt("return", m);
 
-                case 6:
+                case 7:
                 case "end":
                   return _context4.stop();
               }
@@ -2084,6 +2001,7 @@
         }
         if (this.System.meta) delete this.System.meta[this.id];
         if (opts.forgetEnv) this.unloadEnv();
+        lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
       }
     }, {
       key: "reload",
@@ -3327,15 +3245,6 @@
   function unwrapModuleLoad() {
     unwrapModuleLoad$1(exports.System);
   }
-  function getNotifications() {
-    return getNotifications$1(exports.System);
-  }
-  function subscribe(type, name, handlerFunc) {
-    return subscribe$1(exports.System, type, name, handlerFunc);
-  }
-  function unsubscribe(type, nameOrHandlerFunc) {
-    return subscribe$1(exports.System, type, nameOrHandlerFunc);
-  }
 
   exports.getSystem = getSystem;
   exports.removeSystem = removeSystem;
@@ -3357,10 +3266,7 @@
   exports.removeHook = removeHook;
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
-  exports.getNotifications = getNotifications;
-  exports.subscribe = subscribe;
-  exports.unsubscribe = unsubscribe;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.vm));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

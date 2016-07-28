@@ -1,11 +1,11 @@
 import { arr }  from "lively.lang";
+import { emit } from "lively.notifications";
 import module from "./module.js";
 import {
   instrumentSourceOfEsmModuleLoad,
   instrumentSourceOfGlobalModuleLoad
 } from "./instrumentation.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
-import { recordModuleChange } from "./notify.js";
 
 async function moduleSourceChange(System, moduleId, oldSource, newSource, format, options) {
   try {
@@ -17,12 +17,15 @@ async function moduleSourceChange(System, moduleId, oldSource, newSource, format
     } else {
       throw new Error(`moduleSourceChange is not supported for module ${moduleId} with format ${format}`);
     }
-
-    recordModuleChange(System, moduleId, oldSource, newSource, null, options, Date.now());
+    
+    emit("lively.modules/modulechanged", {
+      module: moduleId, oldSource, newSource, options }, Date.now(), System);
+    
     return changeResult;
-  } catch (err) {
-    recordModuleChange(System, moduleId, oldSource, newSource, err, options, Date.now());
-    throw err;
+  } catch (error) {
+    emit("lively.modules/modulechanged", {
+      module: moduleId, oldSource, newSource, error, options }, Date.now(), System);
+    throw error;
   }
 }
 

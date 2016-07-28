@@ -1,110 +1,112 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { removeDir, createFiles } from "./helpers.js";
+import { subscribe, unsubscribe } from "lively.notifications";
 
+import { removeDir, createFiles } from "./helpers.js";
 import { getSystem, removeSystem } from "../src/system.js";
-// import { runEval } from "../src/eval.js";
-import { getNotifications, subscribe, unsubscribe } from "../src/notify.js";
+import module from "../src/module.js";
+import { getPackage } from "../src/packages.js";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
-    testProjectDir = dir + "test-project-dir/",
+    testProjectDir = dir + "test-project-dir",
     testProjectSpec = {
       "file1.js": "import { y } from './file2.js'; var z = 2; export var x = y + z;",
       "file2.js": "import { z } from './file3.js'; export var y = z;",
       "file3.js": "export var z = 1;",
       "package.json": '{"name": "test-project-1", "main": "file1.js"}',
     },
-    module1 = testProjectDir + "file1.js",
-    module2 = testProjectDir + "file2.js",
-    module3 = testProjectDir + "file3.js";
+    module1 = testProjectDir + "/file1.js",
+    module2 = testProjectDir + "/file2.js",
+    module3 = testProjectDir + "/file3.js";
 
 
-xdescribe("notifications", () => {
+describe("notify", () => {
 
-  var System;
-  beforeEach(() => {
-    System = getSystem("test", {baseURL: dir});
-    return createFiles(testProjectDir, testProjectSpec)
-            .then(() => System.import(module1));
-  });
-
-  afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
-
-  describe("recordings", () => {
-
-    it("doits", () =>
-      runEval(System, "1 + z + x", {targetModule: module1})
-        .then(_ => expect(getNotifications(System)).to.containSubset(
-          [{type: "doitrequest", code: "1 + z + x"},
-           {type: "doitresult", code: "1 + z + x", result: {value: 6}}])));
+  let system, modulechanged, moduleloaded, moduleunloaded, packageregistered, packageremoved;
   
-    it("module changes", () =>
-      moduleSourceChangeAction(System, module1, s => s.replace(/z = 2/, "z = 3"))
-        .then(_ => expect(getNotifications(System)).to.containSubset(
-          [{type: "modulechange",
-            error: null,
-            module: module1,
-            oldCode: "import { y } from './file2.js'; var z = 2; export var x = y + z;",
-            newCode: "import { y } from './file2.js'; var z = 3; export var x = y + z;"}])));
-    
+  function changeModule1Source() {
+    const m1 = module(system, module1);
+    return m1.changeSourceAction(s => s.replace(/(z = )([0-9]+;)/, "$13;"));
+  }
+  
+  function onModuleLoaded(n)      { moduleloaded.push(n); }
+  function onModuleChanged(n)     { modulechanged.push(n); }
+  function onModuleUnloaded(n)    { moduleunloaded.push(n); }
+  function onPackageRegistered(n) { packageregistered.push(n); }
+  function onPackageRemoved(n)    { packageremoved.push(n); }
+  
+  beforeEach(() => {
+    system = getSystem("test", {baseURL: dir});
+    modulechanged = [];
+    moduleloaded = [];
+    moduleunloaded = [];
+    packageregistered = [];
+    packageremoved = [];
+    subscribe("lively.modules/moduleloaded", onModuleLoaded, system);
+    subscribe("lively.modules/modulechanged", onModuleChanged, system);
+    subscribe("lively.modules/moduleunloaded", onModuleUnloaded, system);
+    subscribe("lively.modules/packageregistered", onPackageRegistered, system);
+    subscribe("lively.modules/packageremoved", onPackageRemoved, system);
+    return createFiles(testProjectDir, testProjectSpec);
   });
 
-  describe("subscription", () => {
-
-    it("calls event handler for type", () =>
-      new Promise((resolve, reject) => {
-        subscribe(System, "doitresult", (data) => resolve(data));
-        runEval(System, "1 + z + x", {targetModule: module1});
-      })
-      .then(event => expect(event).to.containSubset(
-        {type: "doitresult", code: "1 + z + x", result: {value: 6}})));
-
-    it("can subscribe to all events", () =>
-      new Promise((resolve, reject) => {
-        var recorded = [];
-        subscribe(System, event => recorded.push(event));
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => resolve(recorded), 20);
-      })
-      .then(recorded => expect(recorded).to.containSubset(
-        [{type: "doitrequest", code: "1 + z + x"},
-         {type: "doitresult", code: "1 + z + x", result: {value: 6}}])));
-
-    it("unsubscribes", () => {
-      var recorded = [], handler = event => recorded.push(event);
-      return new Promise((resolve, reject) => {
-        subscribe(System, handler);
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => { unsubscribe(System, handler); resolve(); }, 20);
-      })
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-      .then(() => runEval(System, "1 + z + x", {targetModule: module1}))
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-    });
-
-    it("unsubscribe via name", () => {
-      var recorded = [];
-      return new Promise((resolve, reject) => {
-        subscribe(System, undefined, "test-handler", event => recorded.push(event));
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => { unsubscribe(System, "test-handler"); resolve(); }, 20);
-      })
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-      .then(() => runEval(System, "1 + z + x", {targetModule: module1}))
-      .then(_ => expect(recorded).to.have.lengthOf(2))
-    });
-
-    it("does not duplicate subscription when name is used", () =>
-      new Promise((resolve, reject) => {
-        var recorded = [];
-        subscribe(System, undefined, "test-handler", event => recorded.push(event));
-        subscribe(System, undefined, "test-handler", event => recorded.push(event));
-        runEval(System, "1 + z + x", {targetModule: module1});
-        setTimeout(() => resolve(recorded), 20);
-      })
-      .then(recorded => expect(recorded).to.have.lengthOf(2)));
-
+  afterEach(() => {
+    unsubscribe("lively.modules/moduleloaded", onModuleLoaded, system);
+    unsubscribe("lively.modules/modulechanged", onModuleChanged, system);
+    unsubscribe("lively.modules/moduleunloaded", onModuleUnloaded, system);
+    unsubscribe("lively.modules/packageregistered", onPackageRegistered, system);
+    unsubscribe("lively.modules/packageremoved", onPackageRemoved, system);
+    removeSystem("test");
+    return removeDir(testProjectDir);
   });
 
+  it("when module changes", async () => {
+    expect(modulechanged).to.deep.equal([]);
+    await changeModule1Source();
+    expect(modulechanged).to.containSubset([{
+      type: "lively.modules/modulechanged",
+      module: module1,
+      oldSource: "import { y } from './file2.js'; var z = 2; export var x = y + z;",
+      newSource: "import { y } from './file2.js'; var z = 3; export var x = y + z;"
+    }]);
+  });
+  
+  it("when module gets loaded", async () => {
+    expect(moduleloaded).to.deep.equal([]);
+    await module(system, module1).load();
+    expect(moduleloaded).to.containSubset([{
+      type: "lively.modules/moduleloaded",
+      module: module1
+    }]);
+  });
+  
+  it("when module gets unloaded", async () => {
+    expect(moduleunloaded).to.deep.equal([]);
+    await module(system, module1).load();
+    module(system, module1).unload();
+    expect(moduleunloaded).to.containSubset([{
+      type: "lively.modules/moduleunloaded",
+      module: module1
+    }]);
+  });
+  
+  it("when package gets registered", async () => {
+    expect(packageregistered).to.deep.equal([]);
+    await getPackage(system, testProjectDir).register();
+    expect(packageregistered).to.containSubset([{
+      type: "lively.modules/packageregistered",
+      "package": testProjectDir
+    }]);
+  });
+
+  it("when package gets removed", async () => {
+    expect(packageremoved).to.deep.equal([]);
+    await getPackage(system, testProjectDir).register();
+    getPackage(system, testProjectDir).remove();
+    expect(packageremoved).to.containSubset([{
+      type: "lively.modules/packageremoved",
+      "package": testProjectDir
+    }]);
+  });
 });

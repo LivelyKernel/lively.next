@@ -298,6 +298,18 @@ installHook("fetch", function myFetch(proceed, load) {
 });
 ```
 
+### notification
+
+There are five types of system-wide notifications:
+
+1. `{type: "lively.modules/moduleloaded", module}`
+2. `{type: "lively.modules/modulechanged", module, oldSource, newSource, error, options}`
+3. `{type: "lively.modules/moduleunloaded", module}`
+4. `{type: "lively.modules/packageregistered", package}`
+5. `{type: "lively.modules/packageremoved", package}`
+
+These notifications are all emitted with `lively.notifications`.
+
 
 
 

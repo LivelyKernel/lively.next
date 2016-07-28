@@ -1,4 +1,5 @@
 import { arr, promise, obj } from "lively.lang";
+import { emit } from "lively.notifications";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "../src/module.js";
 import { computeRequireMap as requireMap } from './dependencies.js'
@@ -280,6 +281,7 @@ class Package {
     var registerP = this.registerProcess.promise;
     this.registerProcess.resolve(cfg);
     delete this.registerProcess;
+    emit("lively.modules/packageregistered", {"package": this.url}, Date.now(), System);
 
     return registerP;
   }
@@ -306,6 +308,7 @@ class Package {
     });
     delete System.meta[packageConfigURL];
     delete System.packages[url];
+    emit("lively.modules/packageremoved", {"package": this.url}, Date.now(), System);
   }
 
   reload() { this.remove(); return this.import(); }

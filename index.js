@@ -228,6 +228,18 @@ import { obj, arr } from "lively.lang";
     return proceed(load); // default behavior
   });
   ```
+  
+  ### notification
+  
+  There are five types of system-wide notifications:
+  
+  1. `{type: "lively.modules/moduleloaded", module}`
+  2. `{type: "lively.modules/modulechanged", module, oldSource, newSource, error, options}`
+  3. `{type: "lively.modules/moduleunloaded", module}`
+  4. `{type: "lively.modules/packageregistered", package}`
+  5. `{type: "lively.modules/packageremoved", package}`
+
+  These notifications are all emitted with `lively.notifications`.
 
  */
 
@@ -324,12 +336,3 @@ import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoa
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad }
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// notifications
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import * as notify from "./src/notify.js";
-function getNotifications() { return notify.getNotifications(defaultSystem); }
-function subscribe(type, name, handlerFunc) { return notify.subscribe(defaultSystem, type, name, handlerFunc); }
-function unsubscribe(type, nameOrHandlerFunc) { return notify.subscribe(defaultSystem, type, nameOrHandlerFunc); }
-export { getNotifications, subscribe, unsubscribe };
