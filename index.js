@@ -1,4 +1,4 @@
-import { string, arr } from "lively.lang";
+import { string, arr, obj } from "lively.lang";
 
 import ClassHelper from "./class-helper.js";
 
@@ -10,8 +10,24 @@ function isPrimitive(obj) {
   return false;
 }
 
+// note __boundValues__ becomes a dynamically scoped "variable" inside eval
+function __eval__(__source__, __boundValues__) { return eval(__source__) }
+
 function defaultExpressionEvaluator(exprObj) {
-  return eval(exprObj.__expr__);
+  var source = exprObj.__expr__;
+  if (exprObj.bindings) {
+    var __boundValues__ = {},
+        names = Object.keys(exprObj.bindings);
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i],
+          module = System.get(System.decanonicalize(exprObj.bindings[name]));
+      if (module) {
+        __boundValues__[name] = module[name];
+        source = `var ${name} = __boundValues__.${name};\n${source}`;
+      }
+    }
+  }
+  return __eval__(source, __boundValues__);
 }
 
 
