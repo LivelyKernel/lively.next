@@ -92,7 +92,7 @@ export class Window extends Morph {
       borderWidth: 1,
       clipMode: "hidden"
     });
-    this.submorphs = this.makeTitleBar()
+    this.submorphs = this.submorphs.concat(this.makeTitleBar());
   }
 
   resizeBy(delta) {
