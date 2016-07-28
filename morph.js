@@ -44,22 +44,25 @@ export class Morph {
     this._changes = [];
     this._unrenderedChanges = [];
     this._dirty = true; // for initial display
+    this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     if (props.bounds) {
       this.setBounds(props.bounds);
       props = obj.dissoc(props, ["bounds"]);
     }
+    if (props.type) props = obj.dissoc(props, ["type"]);
     Object.assign(this, props);
   }
 
+  get __only_serialize__() { return Object.keys(this._currentState); }
+  
   get isMorph() { return true; }
   get id() { return this._id; }
 
   defaultProperty(key) { return defaultProperties[key]; }
 
   getProperty(key) {
-     var c = this.lastChangeFor(key);
-     return c ? c.value : this.defaultProperty(key);
+    return this._currentState[key];
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -87,6 +90,7 @@ export class Morph {
     if (!change.target) change.target = this;
     if (!change.owner) change.owner = this.owner;
     if (!change.type) change.type = "setter";
+    if (change.hasOwnProperty("value")) this._currentState[change.prop] = change.value;
     this._unrenderedChanges.push(change);
     this.makeDirty();
     this.signalMorphChange(change, this);
@@ -746,12 +750,15 @@ export class World extends Morph {
   constructor(props) {
     super(props);
     this.addStyleClass("world");
+    this._renderer = null; // assigned in rendering/renderer.js
   }
 
   get isWorld() { return true }
 
   get draggable() { return false; }
+  set draggable(_) {}
   get grabbable() { return false; }
+  set grabbable(_) {}
 
   handForPointerId(pointerId) {
     return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId)
@@ -918,7 +925,9 @@ export class Hand extends Morph {
   get isHand() { return true }
 
   get draggable() { return false; }
+  set draggable(_) {}
   get grabbable() { return false; }
+  set grabbable(_) {}
 
   get grabbedMorphs() { return this.submorphs; }
 
