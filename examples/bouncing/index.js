@@ -17,11 +17,11 @@ Object.assign(Morph.prototype, {
         inner = this.bounds();
     if (inner.right() > outer.right() || inner.left() < outer.left()) x = -x;
     if (inner.bottom() > outer.bottom() || inner.top() < outer.top()) y = -y;
-    this.velocity = pt(x,y);
-    this.rotation += -0.1;
     this.time += 0.1;
-    // this.scale = 1 + Math.abs(Math.sin(this.time))
-    // this.moveBy(this.velocity);
+    // this.rotation += this.spin;
+    // this.scale = 1 + Math.abs(Math.sin(this.time));
+    this.moveBy(this.velocity);
+    this._changes = [];
   }
 });
 
@@ -42,12 +42,13 @@ for (var i = 0; i < 100; i++) {
   var m = {
     time: 0,
     type: type,
-    origin: pt(0, 0),
+    origin: ext.scaleBy(0.5),
     position: wbounds.insetBy(10).randomPoint(),
     extent: ext,
     fill: type === "image" ? null : Color.random()
   };
   m.velocity = Point.random(pt(10,10));
+  m.spin = Math.random()/10 - 0.05
   morphs.push(world.addMorph(m))
 }
 

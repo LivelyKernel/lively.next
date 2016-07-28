@@ -90,9 +90,9 @@ export class Window extends Morph {
       dropShadow: true,
       borderColor: Color.gray,
       borderWidth: 1,
-      clipMode: "hidden",
-      submorphs: this.makeTitleBar()
+      clipMode: "hidden"
     });
+    this.submorphs = this.makeTitleBar()
   }
 
   resizeBy(delta) {
