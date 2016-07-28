@@ -46,6 +46,7 @@ export class Morph {
     this._dirty = true; // for initial display
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
+    this._cachedBounds = null;
     if (props.bounds) {
       this.setBounds(props.bounds);
       props = obj.dissoc(props, ["bounds"]);
@@ -139,13 +140,13 @@ export class Morph {
   set name(value)      { this.recordChange({prop: "name", value}); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this.recordChange({prop: "position", value}); }
+  set position(value)  { this._cachedBounds = null; this.recordChange({prop: "position", value}); }
 
   get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this.recordChange({prop: "scale", value}); }
+  set scale(value)     { this._cachedBounds = null; this.recordChange({prop: "scale", value}); }
 
   get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this.recordChange({prop: "rotation", value}); }
+  set rotation(value)  { this._cachedBounds = null; this.recordChange({prop: "rotation", value}); }
 
   get origin()         { return this.getProperty("origin"); }
   set origin(value)    { return this.recordChange({prop: "origin", value}); }
@@ -221,6 +222,8 @@ export class Morph {
   }
 
   bounds() {
+    if (this._cachedBounds) return this._cachedBounds;
+
     var tfm = this.getTransform(),
         bounds = this.innerBounds();
 
@@ -242,6 +245,7 @@ export class Morph {
   }
 
   setBounds(bounds) {
+    this._cachedBounds = bounds;
     this.position = bounds.topLeft().addPt(this.origin);
     this.extent = bounds.extent();
   }
@@ -330,6 +334,8 @@ export class Morph {
   }
 
   addMorphAt(submorph, index) {
+    this._cachedBounds = null;
+
     if (submorph.isMorph) {
 
       // sanity check
@@ -391,6 +397,7 @@ export class Morph {
   remove() {
     var owner = this.owner;
     if (!owner) return this;
+    owner._cachedBounds = null;
     this._owner = null;
     var submorphs = owner.submorphs,
         index = submorphs.indexOf(this)
