@@ -1,7 +1,9 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
+import { subscribe, unsubscribe } from "lively.notifications";
 import { runEval } from "../index.js";
+
 var modules = typeof lively !== "undefined" && lively.modules;
 
 var dir = System.normalizeSync("lively.vm/tests/test-resources/"),
@@ -47,5 +49,39 @@ describe("eval", () => {
     var result = await runEval("await ('a').toUpperCase()", {System: S, targetModule: module4});
     expect(result).property("value").to.equal("A")
   })
+  
+  it("notifies request", async() => {
+    const doitrequest = [];
+    function onDoItRequest(msg) { doitrequest.push(msg); }
+    console.log("subscribed");
+    subscribe("lively.vm/doitrequest", onDoItRequest, S);
+    
+    expect(doitrequest).to.deep.equal([]);
+    await runEval("1 + z + x", {System: S, targetModule: module1});
+    unsubscribe("lively.vm/doitrequest", onDoItRequest, S);
+    expect(doitrequest).to.containSubset([{
+      type: "lively.vm/doitrequest",
+      code: "1 + z + x",
+      targetModule: module1
+    }]);
+  });
+
+  it("notifies result", async() => {
+    const doitresult = [];
+    function onDoItResult(msg) { doitresult.push(msg); }
+    subscribe("lively.vm/doitresult", onDoItResult, S);
+    
+    expect(doitresult).to.deep.equal([]);
+    await runEval("1 + z + x", {System: S, targetModule: module1});
+    unsubscribe("lively.vm/doitresult", onDoItResult, S);
+    expect(doitresult).to.containSubset([{
+      type: "lively.vm/doitresult",
+      code: "1 + z + x",
+      result: {
+        value: 6
+      },
+      targetModule: module1
+    }]);
+  });
 
 });

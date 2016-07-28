@@ -12,7 +12,8 @@
   "lively": {
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
-      "lively.ast": "./node_modules/lively.ast"
+      "lively.ast": "./node_modules/lively.ast",
+      "lively.notifications": "./node_modules/lively.notifications"
     }
   },
   "scripts": {
@@ -35,7 +36,8 @@
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
     "lively.ast": "^0.7.6",
-    "lively.lang": "^0.7.0"
+    "lively.lang": "^0.7.0",
+    "lively.notifications": "^0.3.0"
   },
   "devDependencies": {
     "babel-plugin-syntax-object-rest-spread": "^6.8.0",

@@ -3,7 +3,7 @@
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast) {
+(function (exports,lively_lang,lively_ast,lively_notifications) {
   'use strict';
 
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -1100,30 +1100,30 @@
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
-              // console.warn("FIX recordDoitRequest")
-              // recordDoitRequest(
-              //   System, originalCode,
-              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-              //   Date.now());
+              console.log("emitted");
+              lively_notifications.emit("lively.vm/doitrequest", {
+                code: originalCode,
+                waitForPromise: options.waitForPromise,
+                targetModule: options.targetModule }, Date.now(), System);
 
-              _context3.next = 24;
+              _context3.next = 26;
               return vmRunEval(code, options);
 
-            case 24:
+            case 26:
               result = _context3.sent;
 
 
               System.get("@lively-env").evaluationDone(fullname);
               System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
-              // console.warn("FIX recordDoitResult")
 
-              // recordDoitResult(
-              //   System, originalCode,
-              //   {waitForPromise: options.waitForPromise, targetModule: options.targetModule},
-              //   result, Date.now());
+              lively_notifications.emit("lively.vm/doitresult", {
+                code: originalCode, result: result,
+                waitForPromise: options.waitForPromise,
+                targetModule: options.targetModule }, Date.now(), System);
+
               return _context3.abrupt("return", result);
 
-            case 28:
+            case 31:
             case "end":
               return _context3.stop();
           }
@@ -1880,6 +1880,6 @@
   exports.evalCodeTransform = evalCodeTransform;
   exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
 
-}((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast));
+}((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast,lively.notifications));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();

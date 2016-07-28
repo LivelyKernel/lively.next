@@ -44,6 +44,15 @@ window.x // -> undefined, evalSync did not touch globals
 ```
 -->
 
+### notifications
+
+There are two types of system-wide notifications:
+
+1. `{type: "lively.vm/doitrequest", code, targetModule, waitForPromise}`
+2. `{type: "lively.vm/doitresult", code, targetModule, waitForPromise, result}`
+
+These notifications are all emitted with `lively.notifications`.
+
 ## LICENSE
 
 [MIT](LICENSE)
