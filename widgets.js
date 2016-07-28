@@ -189,22 +189,21 @@ export class Window extends Morph {
       opacity: 0.5,
       fill: Color.gray.withA(0),
       rotation: num.toRadians(-45),
-      position: this.extent.subPt(pt(10,10)),
+      bottomRight: this.extent,
       onDrag(evt) {
         this.owner.resizeBy(evt.state.dragDelta);
-        this.position = this.owner.extent.subPt(pt(10,10));
+        this.bottomRight = this.owner.extent;
       }
     };
   }
 
   toggleMinimize() {
+    this.styleClasses = ["morph", "smooth-extent"]
     if (this.minimized) {
       this.extent = this.cachedExtent;
       this.resizer().visible = true
-      this.styleClasses = ["morph"];
       this.minimized = false;
     } else {
-      this.styleClasses = ["morph", "smooth-extent"];
       this.cachedExtent =  this.extent;
       this.extent = pt(this.extent.x, 25);
       this.resizer().visible = false;
@@ -215,25 +214,31 @@ export class Window extends Morph {
   close() {
     this.remove()
   }
-
-  bringToFront() {
-    this.world().addMorph(this);
-  }
-
-  onDragStart(evt) {
+  
+  onMouseDown(evt) {
     this.bringToFront();
+    this.styleClasses = ["morph"];
   }
 
   toggleMaximize() {
+    // FIXME: if the corresponding dom now is going to be
+    // respawned in the next render cycle by teh virtual-dom
+    // the animation will not be triggered, since a completely new
+    // node with the already changed values will appear. CSS animations
+    // will not trigger. Maybe move away from CSS animations to something
+    // more explicit, i.e. velocity.js?
+    this.styleClasses = ["morph", "smooth-extent"]
     if (this.maximized) {
       this.setBounds(this.cachedBounds);
-      this.styleClasses = ["morph"];
+      this.resizer().bottomRight = this.extent;
       this.maximized = false;
     } else {
-      this.styleClasses = ["morph", "smooth-extent"]
       this.cachedBounds = this.bounds();
       this.setBounds(this.world().bounds());
+      this.resizer().bottomRight = this.extent;
+      this.resizer().visible = true;
       this.maximized = true;
+      this.minimized = false;
     }
   }
 
