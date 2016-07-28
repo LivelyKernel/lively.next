@@ -201,46 +201,57 @@ export class Renderer {
   }
 
   renderPath(path) {
+    const vertices = [],
+          edge = ({x: x1, y: y1}, {x: x2, y: y2}) =>
+                  h("path",
+                    {namespace: "http://www.w3.org/2000/svg",
+                     attributes:
+                      {"sroke-width": path.borderWidth,
+                       stroke: path.gradient ? "url(#" + path.id + ")" : path.borderColor,
+                       d: "M"+x1+","+y1+" "+"L"+x2+","+y2}});
+  
+    for (var i = 0; i < path.vertices.length - 1; i++) {
+      vertices.push(edge(path.vertices[i], path.vertices[i + 1]));
+    }
+    return renderSvgMorph(path, vertices);
+  }
+  
+  renderPolygon(polygon) {
+    const vertices = h("polygon",
+                        {namespace: "http://www.w3.org/2000/svg",
+                         attributes:
+                          {style: "fill:" + (polygon.gradient ? "url(#" + polygon.id + ")" : polygon.fill) + 
+                                  ";stroke-width:" + polygon.borderWidth +
+                                  ";stroke:" + polygon.borderColor,
+                           points: polygon.vertices.map(({x,y}) => x + "," + y).join(" ")}});
+    return renderSvgMorph(polygon, [vertices]);
+  }
+}
+
+function renderSvgMorph(morph, svg) {
     const {transform, transformOrigin, position, WebkitFilter,
-           display} = defaultStyle(path),
-          {width, height} = path.innerBounds(),
-          vertices = renderVertices(path),
-          defs = path.gradient && renderGradient(path);
-    return h("div", {...defaultAttributes(path),
+           display} = defaultStyle(morph),
+          {width, height} = morph.innerBounds(),
+          defs = morph.gradient && renderGradient(morph);
+    return h("div", {...defaultAttributes(morph),
                      style: {transform, transformOrigin, position,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},
               h("svg", {namespace: "http://www.w3.org/2000/svg",
                         style: {position: "absolute", "pointer-events": "none"},
                         attributes:
-                         {width, height, "viewBox": [-2,-2,width,height].join(" "),
-                        ...(path.borderStyle == "dashed" && {"stroke-dasharray": "7 4"})}},
-                  [defs].concat(vertices)));
+                         {width, height, "viewBox": [0,0,width,height].join(" "),
+                        ...(morph.borderStyle == "dashed" && {"stroke-dasharray": "7 4"})}},
+                  [defs].concat(svg)));
   }
-}
 
-function renderVertices(path) {
-  var vertices = [];
-  for (var i = 0; i < path.vertices.length - 1; i++) {
-    var {x: x1, y: y1} = path.vertices[i],
-        {x: x2, y: y2} = path.vertices[i+1];
-    vertices.push(h("path",
-                {namespace: "http://www.w3.org/2000/svg",
-                 attributes:
-                  {"sroke-width": path.borderWidth,
-                   stroke: path.gradient ? "url(#" + path.id + ")" : path.borderColor,
-                 d: "M"+x1+","+y1+" "+"L"+x2+","+y2}}));
-  }
-  return vertices;
-}
-
-function renderGradient(path) {
+function renderGradient(morph) {
   return h("defs", {namespace: "http://www.w3.org/2000/svg"},
                 h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
-                                     attributes: {id: path.id,
+                                     attributes: {id: morph.id,
                                                   gradientUnits: "userSpaceOnUse"}
                                      },
-                    path.gradient.map(([k, c]) =>
+                    morph.gradient.map(([k, c]) =>
                         h("stop",
                             {namespace: "http://www.w3.org/2000/svg",
                               attributes:
