@@ -39,6 +39,7 @@ export function defaultStyle(morph) {
 
 export function defaultAttributes(morph) {
   return {
+    key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
     draggable: false,
