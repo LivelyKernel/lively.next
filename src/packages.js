@@ -270,7 +270,7 @@ class Package {
       if (arr.include(packageLoadStack, supPkg.url)) {
         if (System.debug || true) {
           var shortStack = packageLoadStack && packageLoadStack.map(ea => ea.indexOf(System.baseURL) === 0 ? ea.slice(System.baseURL.length) : ea)
-          console.log(`[lively.modules package register] ${url} is a circular dependency, stopping registering subpackages, stack: ${shortStack}`);
+          System.debug && console.log(`[lively.modules package register] ${url} is a circular dependency, stopping registering subpackages, stack: ${shortStack}`);
         }
       } else {
         packageLoadStack.push(supPkg.url);
