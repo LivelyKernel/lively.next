@@ -96,6 +96,7 @@ export class Window extends Morph {
   }
 
   resizeBy(delta) {
+    this.styleClasses = ["morph"];
     super.resizeBy(delta);
     this.titleLabel().center = pt(Math.max(this.extent.x / 2, 100), 10);
   }
@@ -173,6 +174,7 @@ export class Window extends Morph {
       name: "titleLabel",
       readOnly: true,
       draggable: false,
+      grabbable: false,
       fill: Color.gray.withA(0),
       fontColor: Color.darkGray,
       textString: this.title || this.name,
@@ -242,4 +244,61 @@ export class Window extends Morph {
     }
   }
 
+}
+
+export class Button extends Morph {
+  
+  constructor(props) {
+    super({
+      draggable: false,
+      action: () => this.world().setStatusMessage(this.name + " clicked!"),
+      borderRadius: 15,
+      extent: pt(100,24),
+      borderWidth: 1,
+      active: true,
+      ...props
+    });
+    const label = new Text({
+        name: "label",
+        readOnly: true,
+        fontColor: this.active ? Color.rgb(17,103,189) : Color.gray,
+        textString: props.label || this.name,
+        fill: Color.white.withA(0),
+    });
+    label.center = this.innerBounds().center();
+    this.addMorph(label);
+  }
+  
+  get action() { return this.getProperty("action") }
+  set action(value) { this.recordChange({prop: "action", value}); }
+  get active() { return this.getProperty("active") }
+  set active(value) {
+    if (value) {
+      this.borderColor = Color.rgb(17,103,189);
+      this.fill = Color.rgb(213,228,248);
+    } else {
+      this.borderColor = Color.gray;
+      this.fill = Color.lightGray;
+    }
+    this.recordChange({prop: "active", value})
+  }
+  
+  onMouseDown(evt) {
+    if (this.active) {
+      this.fill = Color.rgb(161,173,188);
+      try {
+        if (typeof this.action !== "function")
+          throw new Error(`Button ${this.name} as no executable action!`)
+        this.action();
+      } catch (err) {
+        var w = this.world();
+        if (w) w.logError(err);
+        else console.error(err);
+      } 
+    }
+  }
+  
+  onMouseUp(evt) {
+    if (this.active) this.fill = Color.rgb(213,228,248); 
+  }
 }
