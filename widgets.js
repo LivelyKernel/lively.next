@@ -59,6 +59,7 @@ export class ObjectDrawer extends Morph {
       readOnly: true,
       fontSize: 16,
       onDrag: doCopy,
+      draggable: true,
       init() {
         this.draggable = false;
         this.grabbable = false;
