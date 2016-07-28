@@ -599,7 +599,7 @@ export class EventDispatcher {
             // FIXME should grab really be triggered through drag?
             if (dragTarget.grabbable) {
               events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo));
-            } else {
+            } else if (dragTarget.draggable) {
               events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo));
             }
             defaultEvent.targetMorphs = [this.world];
