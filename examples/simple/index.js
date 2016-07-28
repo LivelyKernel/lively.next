@@ -1,6 +1,6 @@
 import { num, arr, installGlobals } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { EventDispatcher, Renderer, Morph, World } from "lively.morphic";
+import { EventDispatcher, Renderer, Morph, World, Polygon } from "lively.morphic";
 import { ObjectDrawer, Window, Button} from "lively.morphic/widgets.js";
 
 installGlobals();
@@ -17,7 +17,11 @@ function setupWorld() {
       eventDispatcher = new EventDispatcher(window, world).install();
   world.addMorph(new ObjectDrawer());
   world.addMorph(new Window({name: "Alice", extent: pt(300, 300), position: pt(200,200),
-                             submorphs: [new Button({label: "Click me!", bottomLeft: pt(10,290)}), new Button({label: "Click me!", bottomRight: pt(220,290), active: false})]}));
+                             submorphs: [
+                            new Button({label: "Click me!", bottomLeft: pt(10,290)}), 
+                             new Button({label: "Click me!", bottomRight: pt(220,290), active: false}),
+                             new Polygon({name: "poly", vertices: [pt(0,0), pt(100,50), pt(50, 100)],
+                                          extent: pt(102,102), fill: Color.orange})]}));
   world.addMorph(new Window({name: "Bob", extent: pt(200, 300), position: pt(600,200),
                              submorphs: []})); 
     world.addMorph(new Window({name: "Carlo", extent: pt(200, 300), position: pt(800,200)}));
