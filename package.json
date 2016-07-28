@@ -1,6 +1,6 @@
 {
   "name": "lively.vm",
-  "version": "0.7.24",
+  "version": "0.7.25",
   "description": "Controlled JavaScript code execution and instrumentation.",
   "main": "dist/lively.vm.js",
   "systemjs": {
@@ -12,8 +12,7 @@
   "lively": {
     "packageMap": {
       "lively.lang": "./node_modules/lively.lang",
-      "lively.ast": "./node_modules/lively.ast",
-      "lively.modules": "./node_modules/lively.modules"
+      "lively.ast": "./node_modules/lively.ast"
     }
   },
   "scripts": {
@@ -43,7 +42,6 @@
     "babel-plugin-transform-async-to-generator": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-preset-es2015-rollup": "^1.1.1",
-    "lively.modules": "^0.5.0",
     "mocha-es6": "^0.3.1",
     "rollup": "^0.26.1",
     "rollup-plugin-babel": "^2.4.0"
