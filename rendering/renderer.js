@@ -19,7 +19,7 @@ const defaultCSS = `
 }
 
 .smooth-extent {
-  -webkit-transition: width .2s, height .2s, transform .2s;
+  -webkit-transition: width .15s, height .15s, transform .15s;
 }
 
 .halo-mesh {
