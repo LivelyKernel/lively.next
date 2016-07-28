@@ -50,6 +50,7 @@ describe("snapshots", () => {
         ref = objPool.add(o),
         snapshot = objPool.jsonSnapshot(),
         objPool2 = ObjectPool.fromJSONSnapshot(snapshot);
+
     expect(objPool2.resolveToObj(ref.id)).not.equals(o, "identical object");
     expect(objPool2.resolveToObj(ref.id)).deep.equals({...o, _rev: 0, ref: {...o.ref, _rev: 0}}, "object structure changed");
     expect(objPool.objects()).to.have.length(2);
@@ -145,6 +146,21 @@ describe("marshalling", () => {
       expect(obj2).property("n", 2);
     });
 
+    it("bindings via object import", () => {
+      var exprObj = {
+        n: 1, __serialize__() {
+          return {
+            __expr__: `createSomeObject(${this.n})`,
+            bindings: {"createSomeObject": "lively.serializer2/tests/test-resources/module1.js"}
+          }
+        }
+      },
+          _ = objPool.add(exprObj),
+          obj2 = ObjectPool.fromSnapshot(objPool.snapshot()).objects()[0];
+      expect(obj2).property("n", 2);
+    });
+
+
   });
 
   describe("nested arrays", () => {
@@ -161,6 +177,32 @@ describe("marshalling", () => {
       expect(obj2b).containSubset({bar: [123, [{foo: 23}]]});
 
       expect(obj2b.bar[1][0]).equals(obj1b);
+    });
+
+  });
+
+  describe("ignore properties", () => {
+
+    it("via __dont_serialize__", () => {
+      var obj = {foo: 23, bar: 24, __dont_serialize__: ["bar"]},
+          ref = objPool.add(obj),
+          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+      expect(objCopy).deep.equals({_rev: 0, foo: 23, __dont_serialize__: ["bar"]});
+    });
+
+    it("__dont_serialize__ is merged in proto chain", () => {
+      var proto = Object.assign(Object.create({__dont_serialize__: ["bar"]}), {__dont_serialize__: ["baz"]}),
+          obj = Object.assign(Object.create(proto), {__dont_serialize__: ["zork"], foo: 1, bar: 2, baz: 3, zork: 4}),
+          ref = objPool.add(obj),
+          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+      expect(objCopy).deep.equals({_rev: 0, foo: 1, __dont_serialize__: ["zork"]});
+    });
+
+    it("__only_serialize__", () => {
+      var obj = {foo: 23, bar: 24, __only_serialize__: ["bar"]},
+          ref = objPool.add(obj),
+          objCopy = ObjectPool.fromSnapshot(objPool.snapshot()).resolveToObj(ref.id);
+      expect(objCopy).deep.equals({_rev: 0, bar: 24});
     });
 
   });

@@ -96,7 +96,7 @@ describe('class serialization', function() {
         ref = objPool.add(instance),
         serialized = objPool.jsonSnapshot();
     try {
-      var result = ObjectPool.fromJSONSnapshot(serialized, {ignoreClassNotFound: true}).resolveToObj(ref.id)
+      var result = ObjectPool.fromJSONSnapshot(serialized, {ignoreClassNotFound: true}).resolveToObj(ref.id);
     } catch(e) {
       expect().assert(false, `Should ignore class not found but raised error:\n${e}`);
     }

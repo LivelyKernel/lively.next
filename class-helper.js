@@ -31,8 +31,9 @@ export default class ClassHelper {
       return;
     }
 
-    var meta = {className, module: realObj.constructor[moduleMetaInClassProp]}
-    snapshot[classMetaForSerializationProp] = meta;
+    var moduleMeta = realObj.constructor[moduleMetaInClassProp];
+    if (className === "Object" && !moduleMeta) return;
+    snapshot[classMetaForSerializationProp] = {className, module: moduleMeta};
   }
 
   restoreIfClassInstance(objRef, snapshot) {
@@ -54,12 +55,14 @@ export default class ClassHelper {
   locateClass(meta) {
     // meta = {className, module: {package, pathInPackage}}
     var module = meta.module;
-    if (module.package && module.package.name) {
+    if (module && module.package && module.package.name) {
       var packagePath = System.decanonicalize(module.package.name + "/"),
           moduleId = lively.lang.string.joinPath(packagePath, module.pathInPackage.replace(/^\.\//, "")),
           module = System.get("@lively-env").moduleEnv(moduleId);
-      console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId}  is not yet loaded`);
-      return module.recorder[meta.className];
+      if (!module)
+        console.warn(`Trying to deserialize instance of class ${meta.className} but the module ${moduleId} is not yet loaded`);
+      else
+        return module.recorder[meta.className];
     }
 
     // is it a global?
