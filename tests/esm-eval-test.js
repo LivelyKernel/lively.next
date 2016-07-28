@@ -1,9 +1,8 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-
-import { getSystem, removeSystem } from "lively.modules/src/system.js";
 import { runEval } from "../index.js";
+var modules = typeof lively !== "undefined" && lively.modules;
 
 var dir = System.normalizeSync("lively.vm/tests/test-resources/"),
     testProjectDir = dir + "es6-project/",
@@ -16,11 +15,11 @@ describe("eval", () => {
 
   var S;
   beforeEach(function() {
-    S = getSystem('test', { baseURL: dir });
+    S = modules ? modules.getSystem('test', { baseURL: dir }) : System;
     return S.import(module1);
   });
 
-  afterEach(() => removeSystem("test"));
+  afterEach(() => modules && modules.removeSystem("test"));
 
   it("inside of module", async () => {
     var result = await runEval("1 + z + x", {System: S, targetModule: module1});
