@@ -1003,9 +1003,18 @@ export class Path extends Morph {
   set vertices(value) { return this.recordChange({prop: "vertices", value})}
 
   get extent() { return this.getProperty("extent") }
-  set extent(value) {
-    this.scaleVerticesBy(value.scaleByPt(this.extent.inverted()));
-    return this.recordChange({prop: "extent", value});
+  set extent(value) { return this.recordChange({prop: "extent", value}); }
+
+  resizeBy(delta) {
+    const oldExtent = this.extent;
+    super.resizeBy(delta);
+    this.scaleVerticesBy(this.extent.scaleByPt(oldExtent.inverted()));
+  }
+  
+  setBounds(bounds) {
+    const oldExtent = this.extent;
+    super.setBounds(bounds);
+    this.scaleVerticesBy(this.extent.scaleByPt(oldExtent.inverted()));
   }
 
   scaleVerticesBy(scale) {

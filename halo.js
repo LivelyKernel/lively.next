@@ -545,7 +545,7 @@ export class Halo extends Morph {
           position: offset.negated(),
           extent: this.extent.addPt(offset.scaleBy(2)),
           vertices: [pt(0,0), this.extent.addPt(offset.scaleBy(2))]}));
-        diagonal.extent = this.extent.addPt(diagonal.position.scaleBy(-2));
+        diagonal.setBounds(diagonal.position.extent(this.extent.addPt(diagonal.position.scaleBy(-2))))
         return diagonal.vertices[1];
     } else {
       diagonal && diagonal.remove();
