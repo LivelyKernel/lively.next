@@ -75,8 +75,11 @@ export class ObjectRef {
     return {__ref__: true, id: this.id, rev}
   }
 
-  snapshotObject(serializedObjMap, pool) {
+  snapshotObject(serializedObjMap, pool, path = []) {
     // serializedObjMap: maps ids to snapshots
+
+console.log(path.join("."));
+if (path.length > 40) throw new Error("stop");
 
     var {id, realObj, snapshots} = this;
 
@@ -105,13 +108,37 @@ export class ObjectRef {
     // do the generic serialization, i.e. enumerate all properties and
     // serialize the referenced objects recursively
     var {props} = snapshots[rev] = serializedObjMap[id] = {rev, props: []};
-    for (let i = 0, keys = Object.keys(realObj); i < keys.length; i++) {
+    var keys;
+
+    if (realObj.__dont_serialize__) {
+      var exceptions = obj.mergePropertyInHierarchy(realObj, "__dont_serialize__");
+      keys = arr.withoutAll(Object.keys(realObj), exceptions);
+
+    } else if (realObj.__only_serialize__) {
+      // FIXME what about __only_serialize__ && __dont_serialize__?
+      keys = realObj.__only_serialize__;
+
+    } else keys = Object.keys(realObj)
+
+    for (let i = 0; i < keys.length; i++) {
       let key = keys[i];
-      props.push({key, value: this.snapshotProperty(realObj[key], [key], serializedObjMap, pool)});
+      props.push({key, value: this.snapshotProperty(realObj[key], path.concat([key]), serializedObjMap, pool)});
     }
     pool.classHelper.addClassInfo(this, realObj, snapshots[rev]);
 
     return ref;
+  }
+
+
+  snapshotProperties(realObj, snapshot, propNames, path, serializedObjMap, pool) {
+    // do the generic serialization, i.e. enumerate all properties and
+    // serialize the referenced objects recursively
+    var props = snapshot.props;
+    for (let i = 0; i < propNames.length; i++) {
+      let key = propNames[i];
+      props.push({key, value: this.snapshotProperty(realObj[key], path.concat([key]), serializedObjMap, pool)});
+    }
+    pool.classHelper.addClassInfo(this, realObj, snapshot);
   }
 
   snapshotProperty(value, path, serializedObjMap, pool) {
@@ -129,8 +156,12 @@ export class ObjectRef {
 
     let ref = pool.add(value);
 
-    return ref && ref.isObjectRef ? ref.snapshotObject(serializedObjMap, pool) : ref;
+    return ref && ref.isObjectRef ? ref.snapshotObject(serializedObjMap, pool, path) : ref;
   }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
   recreateObjFromSnapshot(serializedObjMap, pool) {
     // serializedObjMap: map from ids to object snapshots
@@ -148,10 +179,14 @@ export class ObjectRef {
     this.snapshotVersions.push(rev);
     this.snapshots[rev] = snapshot;
 
-    var newObj = this.realObj = __expr__ ?
-      pool.expressionEvaluator(snapshot) :
-      pool.classHelper.restoreIfClassInstance(this, snapshot) || {};
-    if (!newObj._rev) newObj._rev = rev;
+    var newObj;
+    if (__expr__) {
+      newObj = pool.expressionEvaluator(snapshot);
+    } else {
+      newObj = pool.classHelper.restoreIfClassInstance(this, snapshot) || {};
+      if (!newObj._rev) newObj._rev = rev;
+    }
+    this.realObj = newObj;
 
     pool.internalAddRef(this); // for updating realObj
 
@@ -231,10 +266,9 @@ export class ObjectPool {
   }
 
   readSnapshot(snapshot) {
-    for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++) {
+    for (var i = 0, ids = Object.keys(snapshot); i < ids.length; i++)
       if (!this.resolveToObj(ids[i]))
         ObjectRef.fromSnapshot(ids[i], snapshot, this);
-    }
     return this;
   }
 
@@ -254,40 +288,3 @@ export function serialize(obj) {
   objPool.add(obj);
   return objPool.snapshot();
 }
-
-
-// export class Serializer {
-
-//   constructor(registry = new Registry()) {
-//     this.registry = registry;
-//   }
-
-//   resolveToObj(id) { return this.registry.resolveToObj(id); }
-//   objects() { return this.registry.objects(); }
-//   add(obj) { return this.registry.add(obj); }
-//   register(obj) { this.add(obj); return this; }
-
-//   // deserialize(serialized) {
-//   //   if (serialized.__expr__) return evalSerializedExpr(serialized);
-//   //   var found = this.registry.resolveToObj(serialized.id);
-//   //   if (found) return found;
-
-//   //   if (serialized.__recreate__) {
-//   //     var recreated = evalRecreateExpr(serialized);
-//   //     this.registry.add(recreated);
-//   //     return recreated;
-//   //   }
-
-//   //   throw new Error(`Don't know how to deserialize ${JSON.stringify(serialized)}`);
-//   // }
-
-//   static fromJSONSnapshot(jsonSnapshoted) {
-//     return this.fromSnapshot(JSON.parse(jsonSnapshoted));
-//   }
-//   static fromSnapshot(snapshoted) {
-//     return new this(new Registry().readSnapshot(snapshoted));
-//   }
-
-//   snapshot() { return this.registry.snapshot(); }
-//   jsonSnapshot() { return JSON.stringify(this.snapshot()); }
-// }
