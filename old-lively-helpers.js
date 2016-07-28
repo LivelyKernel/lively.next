@@ -4,20 +4,19 @@ import { pt, Color, Point, Rectangle, Transform } from "lively.graphics";
 import { Renderer, morph, Text, EventDispatcher, Menu } from "lively.morphic";
 import { ObjectDrawer } from "lively.morphic/widgets.js";
 
-export function setupMorphicWorldOn(htmlMorph) {
+export function setupMorphicWorldOn(htmlMorph, world) {
 
   var rootNode = htmlMorph.renderContext().shapeNode;
-  var world = morph({type: "world", extent: Point.ensure(htmlMorph.getExtent())})
-  var renderer = new Renderer(world, rootNode);
-  renderer.startRenderWorldLoop()
-  var eventDispatcher = new EventDispatcher(window, world);
-  eventDispatcher.install();
+  if (!world) {
+    world = morph({type: "world", extent: Point.ensure(htmlMorph.getExtent())});
+    world.addMorph(new ObjectDrawer({position: pt(20,10)}));;
+  }
 
-  var drawer = world.addMorph(new ObjectDrawer({position: pt(20,10)}));
+  var renderer = new Renderer(world, rootNode).startRenderWorldLoop(),
+      eventDispatcher = new EventDispatcher(window, world).install();
 
   // FIXME currently used for show()
   window.$$world = world;
-
   return {world, renderer, eventDispatcher};
 }
 
@@ -72,7 +71,7 @@ function createHtmlMorph() {
   return htmlMorph;
 }
 
-export function createWorld() {
+export function createWorld(world) {
   var htmlMorph = createHtmlMorph();
   htmlMorph.getWindow().openInWorldCenter()
   htmlMorph.onLoad()

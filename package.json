@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "dependencies": {
     "bowser": "^1.4.1",
+    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.lang": "^0.7.0",
     "virtual-dom": "^2.1.1"
@@ -35,6 +36,7 @@
   "lively": {
     "main": "index.js",
     "packageMap": {
+      "lively.serializer2": "./node_modules/lively.serializer2",
       "lively.graphics": "./node_modules/lively.graphics",
       "lively.lang": "./node_modules/lively.lang"
     }
