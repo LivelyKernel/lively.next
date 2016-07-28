@@ -405,6 +405,13 @@ export class Morph {
 
   removeAllMorphs() { this.submorphs = [] }
 
+  bringToFront() {　
+    const submorphs = this.owner.submorphs,
+          index = submorphs.indexOf(this);
+    submorphs.splice(index,1);
+    this.owner.submorphs = submorphs.concat(this);
+  }
+
   get owner() { return this._owner; }
 
   withAllSubmorphsDetect(testerFunc) {

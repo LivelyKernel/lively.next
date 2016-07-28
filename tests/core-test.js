@@ -62,6 +62,11 @@ describe("full morphic setup with renderer and events", function () {
       expect(morph).equals(submorph2, morph && morph.name);
       expect(renderer.domNode.childNodes[0].childNodes[0]).equals(node); // brittle, might change...
     });
+    
+    it("can be moved to the front", () => {
+      submorph1.bringToFront();
+      expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
+    });
 
     describe("transforms", () => {
 
