@@ -1434,7 +1434,7 @@
                       return ea.indexOf(System.baseURL) === 0 ? ea.slice(System.baseURL.length) : ea;
                     });
 
-                    console.log("[lively.modules package register] " + url + " is a circular dependency, stopping registering subpackages, stack: " + shortStack);
+                    System.debug && console.log("[lively.modules package register] " + url + " is a circular dependency, stopping registering subpackages, stack: " + shortStack);
                   }
                   _context3.next = 26;
                   break;
