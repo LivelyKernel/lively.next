@@ -39,8 +39,8 @@ export class Morph {
   constructor(props) {
     this._owner = null;
     this._changes = [];
-    this._unrenderedChanges = [];
     this._dirty = true; // for initial display
+    this._rev = 0; // counting changes
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
@@ -59,9 +59,7 @@ export class Morph {
 
   defaultProperty(key) { return defaultProperties[key]; }
 
-  getProperty(key) {
-    return this._currentState[key];
-  }
+  getProperty(key) { return this._currentState[key]; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
@@ -77,19 +75,13 @@ export class Morph {
   // changes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  lastChangeFor(prop, onlyRendered = false) {
-    var changes = this._changes.concat(onlyRendered ? [] : this._unrenderedChanges);
-    for (var i = changes.length-1; i >= 0; i--)
-      if (changes[i].prop === prop) return changes[i];
-    return null
-  }
-
   recordChange(change) {
     if (!change.target) change.target = this;
     if (!change.owner) change.owner = this.owner;
     if (!change.type) change.type = "setter";
     if (change.hasOwnProperty("value")) this._currentState[change.prop] = change.value;
-    this._unrenderedChanges.push(change);
+    this._rev++;
+    this._changes.push(change);
     this.makeDirty();
     this.signalMorphChange(change, this);
     return change;
@@ -111,11 +103,6 @@ export class Morph {
     }
   }
 
-  commitChanges() {
-    this._changes = this._changes.concat(this._unrenderedChanges);
-    this._unrenderedChanges = [];
-  }
-
   signalMorphChange(change, morph) {
     if (this.owner) this.owner.signalMorphChange(change, morph);
   }
@@ -125,6 +112,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   makeDirty() {
+    if (this._dirty) return;
     this._dirty = true;
     if (this.owner) this.owner.makeDirty();
   }
@@ -137,9 +125,7 @@ export class Morph {
   set name(value)      { this.recordChange({prop: "name", value}); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  {
-    this._cachedBounds = null;
-    this.recordChange({prop: "position", value}); }
+  set position(value)  { this._cachedBounds = null; this.recordChange({prop: "position", value}); }
 
   get scale()          { return this.getProperty("scale"); }
   set scale(value)     { this._cachedBounds = null; this.recordChange({prop: "scale", value}); }
@@ -697,15 +683,12 @@ export class Morph {
 
   exportToJSON(options = {keepFunctions: true}) {
     // quick hack to "snapshot" into JSON
-    var allChanges = Object.assign(
-          arr.groupByKey(this._changes, "prop"),
-          arr.groupByKey(this._unrenderedChanges, "prop")),
-        exported = allChanges.reduceGroups((exported, name, props) => {
-            var val = this[name];
-            if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
-            exported[name] = val;
-            return exported;
-          }, {});
+    var exported = Object.keys(this._currentState).reduce((exported, name) => {
+      var val = this[name];
+      if (name === "submorphs") val = val.map(ea => ea.exportToJSON());
+      exported[name] = val;
+      return exported;
+    }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
     exported.type = this.constructor.name.toLowerCase();
@@ -720,7 +703,6 @@ export class Morph {
     Object.assign(this, {
       _owner: null,
       _changes: [],
-      _unrenderedChanges: [],
       _dirty: true,
       _id: newMorphId(this.constructor.name)
     }, spec);
@@ -738,12 +720,9 @@ export class Morph {
   // rendering
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  needsRerender() {
-    return this._dirty || !!this._unrenderedChanges.length;
-  }
+  needsRerender() { return this._dirty; }
 
   aboutToRender() {
-    this.commitChanges();
     this._dirty = false;
   }
 
