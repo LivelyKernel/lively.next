@@ -2,6 +2,7 @@
 
 import { expect } from "mocha-es6";
 
+import { string } from "lively.lang";
 import stringify from "../lib/stringify.js";
 import { parse } from "../lib/parser.js";
 import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from "../lib/capturing.js";
@@ -24,6 +25,32 @@ function _testVarTfm(descr, options, code, expected, only) {
 
 function testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, false); }
 function only_testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, true); }
+
+
+function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta) {
+  if (methodString.includes("\n")) methodString = string.indent(methodString, "    ", 2).replace(/^\s+/, "");
+  if (classMethodString.includes("\n")) classMethodString = string.indent(classMethodString, "    ", 2).replace(/^\s+/, "");
+
+  var identifier = className ? `__lively_classholder__.${className} || function ${className}` : "function "
+
+  return `function (superclass) {
+    var __lively_classholder__ = ${classHolder};
+    var __lively_class__ = ${identifier}() {
+        var firstArg = arguments[0];
+        if (firstArg && firstArg[Symbol.for('lively-instance-restorer')]) {
+        } else {
+            this[Symbol.for('lively-instance-initialize')].apply(this, arguments);
+        }
+    };
+    return _createOrExtendClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, __lively_classholder__, ${moduleMeta});
+}(${superClassName})`
+}
+
+function classTemplateDecl(className, superClassName, methodString, classMethodString, classHolder, moduleMeta) {
+  return `var ${className} = ${classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta)};`
+}
+
+
 
 describe("ast.capturing", function() {
 
@@ -116,28 +143,28 @@ describe("ast.capturing", function() {
 
         testVarTfm("normal def",
                    "class Foo {\n  a() {\n    return 23;\n  }\n}",
-                   "var Foo = _createOrExtendClass('Foo', undefined, [{\n"
-                 + "        key: 'a',\n"
-                 + "        value: function Foo_a_() {\n"
-                 + "            return 23;\n"
-                 + "        }\n"
-                 + "    }], undefined, _rec, undefined);");
+                   classTemplateDecl('Foo', 'undefined', "[{\n"
+                                                       + "    key: 'a',\n"
+                                                       + "    value: function Foo_a_() {\n"
+                                                       + "        return 23;\n"
+                                                       + "    }\n"
+                                                       + "}]", 'undefined', "_rec", 'undefined'));
   
         testVarTfm("exported def",
                    "export class Foo {}",
-                   "export var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\n_rec.Foo = Foo;");
+                   `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')}\n_rec.Foo = Foo;`);
   
         testVarTfm("exported default def",
                    "export default class Foo {}",
-                   "var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nFoo = _rec.Foo;\nexport default Foo;");
+                   `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')}\nFoo = _rec.Foo;\nexport default Foo;`);
   
         testVarTfm("does not capture class expr",
                    "var bar = class Foo {}",
-                   "_rec.bar = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);");
+                   `_rec.bar = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')};`);
   
         testVarTfm("captures var that has same name as class expr",
                    "var Foo = class Foo {}; new Foo();",
-                   "_rec.Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nnew _rec.Foo();");
+                   `_rec.Foo = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')};\nnew _rec.Foo();`);
 
       });
 
@@ -394,11 +421,11 @@ describe("ast.capturing", function() {
 
       testVarTfm("class decl",
                  "export class Foo {};",
-                 "export var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\n_rec.Foo = Foo;\n;");
+                 `export ${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')}\n_rec.Foo = Foo;\n;`);
 
       testVarTfm("default class decl",
                  "export default class Foo {};",
-                 "var Foo = _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nFoo = _rec.Foo;\nexport default Foo;\n;");
+                 `${classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')}\nFoo = _rec.Foo;\nexport default Foo;\n;`);
 
       testVarTfm("class decl without classToFunction",
                  {classToFunction: null},
@@ -474,24 +501,30 @@ describe("ast.capturing", function() {
       testVarTfm("default class decl",
                 opts,
                 "export default class Foo {a() { return 23; }};",
-                "var Foo = _createOrExtendClass('Foo', undefined, [{\n"
-                + "        key: 'a',\n"
-                + "        value: function Foo_a_() {\n"
-                + "            return 23;\n"
-                + "        }\n"
-                + "    }], undefined, _rec, undefined);\n"
-                + "_moduleExport('default', _rec.Foo);\n;");
+                classTemplateDecl('Foo', 'undefined', "[{\n"
+                                                    + "    key: 'a',\n"
+                                                    + "    value: function Foo_a_() {\n"
+                                                    + "        return 23;\n"
+                                                    + "    }\n"
+                                                    + "}]", 'undefined', "_rec", 'undefined')
+              + "\n_moduleExport('default', _rec.Foo);\n;");
 
       testVarTfm("class decl, declarationWrapper",
                 Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
                 "export class Foo {a() { return 23; }};",
-                "var Foo = _define('Foo', 'class', _createOrExtendClass('Foo', undefined, [{\n"
-                + "        key: 'a',\n"
-                + "        value: function Foo_a_() {\n"
-                + "            return 23;\n"
-                + "        }\n"
-                + "    }], undefined, _rec, undefined), _rec);\n"
-                + "_moduleExport('Foo', _rec.Foo);\n;");
+                "var Foo = _define('Foo', 'class', "
+                + classTemplate('Foo', 'undefined', "[{\n"
+                                                  + "    key: 'a',\n"
+                                                  + "    value: function Foo_a_() {\n"
+                                                  + "        return 23;\n"
+                                                  + "    }\n"
+                                                  + "}]", 'undefined', "_rec", 'undefined')
+                + ", _rec);\n"
+                + "_moduleExport('Foo', _rec.Foo);\n;"
+                
+
+                
+                );
 
       testVarTfm("named",
                 opts,
@@ -555,7 +588,7 @@ describe("declarations", () => {
           rewriteToCaptureTopLevelVariables(
             parse("class Foo {}"), {name: "_rec", type: "Identifier"},
             {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("var Foo = _define('Foo', 'class', _createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined), _rec);");
+      .equals(`var Foo = _define('Foo', 'class', ${classTemplate('Foo', 'undefined', "undefined", 'undefined', "_rec", 'undefined')}, _rec);`);
   });
 
   it("wraps function decls", () => {

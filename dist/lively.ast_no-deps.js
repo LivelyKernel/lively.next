@@ -14169,55 +14169,60 @@ var nodes = Object.freeze({
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var arguments_replacement_name = "__lively_arguments_fixed_bc_declaring_class_arg";
+  // class ArgumentsReplaceVisitor extends Visitor {
 
-  var ArgumentsReplaceVisitor = function (_Visitor) {
-    babelHelpers.inherits(ArgumentsReplaceVisitor, _Visitor);
+  //   accept(node, rootNode, path) {
+  //     return isFunctionNode(node) && node !== rootNode ?
+  //       node : this.replace(super.accept(node, rootNode, path));
+  //   }
 
-    function ArgumentsReplaceVisitor() {
-      babelHelpers.classCallCheck(this, ArgumentsReplaceVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ArgumentsReplaceVisitor).apply(this, arguments));
-    }
+  //   replace(node) {
 
-    babelHelpers.createClass(ArgumentsReplaceVisitor, [{
-      key: "accept",
-      value: function accept(node, rootNode, path) {
-        return isFunctionNode(node) && node !== rootNode ? node : this.replace(babelHelpers.get(Object.getPrototypeOf(ArgumentsReplaceVisitor.prototype), "accept", this).call(this, node, rootNode, path));
-      }
-    }, {
-      key: "replace",
-      value: function replace(node) {
+  //     if (isFunctionNode(node) && Array.isArray(node.body.body)) {
+  //       // insert var __lively_arguments_fixed_bc_super_arg = Array.from(arguments).slice(1)
+  //       var newArgs = funcCall(member(funcCall(member("Array", "from"), id("arguments")), "slice"), literal(1)),
+  //           newArgsDecl = varDecl(arguments_replacement_name, newArgs);
+  //       node.body.body.unshift(newArgsDecl)
 
-        if (isFunctionNode(node) && Array.isArray(node.body.body)) {
-          // insert var __lively_arguments_fixed_bc_super_arg = Array.from(arguments).slice(1)
-          var newArgs = funcCall(member(funcCall(member("Array", "from"), id("arguments")), "slice"), literal(1)),
-              newArgsDecl = varDecl(arguments_replacement_name, newArgs);
-          node.body.body.unshift(newArgsDecl);
-        } else if (node.type === "Identifier" && node.name === "arguments") {
-          // replace arguments refs
-          node = id(arguments_replacement_name);
-        }
+  //     } else if (node.type === "Identifier" && node.name === "arguments") {
+  //       // replace arguments refs
+  //       node = id(arguments_replacement_name);
+  //     }
 
-        return node;
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed) {
+  //     return node;
+  //   }
 
-        return new this().accept(parsed, parsed, []);
-      }
-    }]);
-    return ArgumentsReplaceVisitor;
-  }(Visitor);
+  //   static run(parsed) {
+
+  //     return new this().accept(parsed, parsed, []);
+  //   }
+  // }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function constructorTemplate(name) {
+    // Creates a function like
+    // function CLASS() {
+    //   var firstArg = arguments[0];
+    //   if (firstArg && firstArg[Symbol.for("lively-instance-restorer")]) {
+    //     // for deserializing instances just do nothing
+    //   } else {
+    //     // automatically call the initialize method
+    //     this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
+    //   }
+    // }
+
+    return funcExpr({ id: name ? id(name) : null }, [], varDecl("firstArg", member("arguments", literal(0))), ifStmt(binaryExpr(id("firstArg"), "&&", member("firstArg", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var isTransformedClassVarDeclSymbol = Symbol();
-  var node_marker_super_found = Symbol();
-  var superclass_arg_name = "lively_declaring_class_arg";
+  var tempLivelyClassVar = "__lively_class__";
+  var tempLivelyClassHolderVar = "__lively_classholder__";
 
-  var ClassReplaceVisitor = function (_Visitor2) {
-    babelHelpers.inherits(ClassReplaceVisitor, _Visitor2);
+  var ClassReplaceVisitor = function (_Visitor) {
+    babelHelpers.inherits(ClassReplaceVisitor, _Visitor);
 
     function ClassReplaceVisitor() {
       babelHelpers.classCallCheck(this, ClassReplaceVisitor);
@@ -14228,35 +14233,24 @@ var nodes = Object.freeze({
       key: "accept",
       value: function accept(node, state, path) {
         if (isFunctionNode(node)) {
-          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]), superFound: false, argumentsFound: false });
-        }
-        return this.replace(babelHelpers.get(Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path), state, path);
-      }
-    }, {
-      key: "replace",
-      value: function replace(node, state, path) {
-
-        if (node.type === "ClassExpression" || node.type === "ClassDeclaration") return replaceClass(node, state, path, state.options);
-
-        if (node.type === "Super") return replaceSuper(node, state, path, state.options);
-
-        if (node.type === "CallExpression" && node.callee.type === "Super") return replaceDirectSuperCall(node, state, path, state.options);
-
-        if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") return replaceSuperMethodCall(node, state, path, state.options);
-
-        if (node.type === "ExportDefaultDeclaration") {
-          return splitExportDefaultWithClass(node, state, path, state.options);
+          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]) });
         }
 
-        if (node.type === "Identifier" && node.name === "arguments") state.argumentsFound = true;
+        if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
 
-        if (isFunctionNode(node)) {
-          if (state.superFound) {
-            node = insertSuperClassArgIntoParams(node);
-            if (state.argumentsFound) node = ArgumentsReplaceVisitor.run(node);
-            node[node_marker_super_found] = true;
-          }
-        }
+        if (node.type === "Super") node = replaceSuper(node, state, path, state.options);
+
+        if (node.type === "MemberExpression" && node.object && node.object.type === "Super") node = replaceSuperGetter(node, state, path, state.options);
+
+        if (node.type === "AssignmentExpression" && node.left.type === "MemberExpression" && node.left.object.type === "Super") node = replaceSuperSetter(node, state, path, state.options);
+
+        if (node.type === "CallExpression" && node.callee.type === "Super") node = replaceDirectSuperCall(node, state, path, state.options);
+
+        if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
+
+        node = babelHelpers.get(Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+
+        if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
 
         return node;
       }
@@ -14265,16 +14259,15 @@ var nodes = Object.freeze({
       value: function run(parsed, options) {
         var v = new this(),
             classHolder = options.classHolder || objectLiteral([]);
-        return v.accept(parsed, { options: options, classHolder: classHolder, superFound: false, argumentsFound: false }, []);
+        return v.accept(parsed, { options: options, classHolder: classHolder }, []);
       }
     }]);
     return ClassReplaceVisitor;
   }(Visitor);
 
   function replaceSuper(node, state, path, options) {
-    // like super()
+    // just super
     console.assert(node.type === "Super");
-    state.superFound = true;
 
     var _path$slice = path.slice(-2);
 
@@ -14285,36 +14278,38 @@ var nodes = Object.freeze({
 
     if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
 
-    // return member(
-    //   member(
-    //     member("this", "constructor"),
-    //     funcCall(
-    //       member("Symbol", "for"),
-    //       literal("lively-instance-superclass")), true),
-    //   "prototype");
-    // return member(id(superclass_arg_name), "prototype");
-    return member(member(id(superclass_arg_name), funcCall(member("Symbol", "for"), literal("lively-instance-superclass")), true), "prototype");
+    return funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
   }
+
+  // parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
 
   function replaceSuperMethodCall(node, state, path, options) {
     // like super.foo()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.object.type === "Super");
-    state.superFound = true;
-    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee.object, state.classHolder, [], options), node.callee.property), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+
+    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state.classHolder, [], options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
   function replaceDirectSuperCall(node, state, path, options) {
     // like super.foo()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.type === "Super");
-    state.superFound = true;
-    return funcCall.apply(undefined, [member(member(replaceSuper(node.callee, state.classHolder, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+
+    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state.classHolder, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
-  function insertSuperClassArgIntoParams(node) {
-    node.params.unshift(id(superclass_arg_name));
-    return node;
+  function replaceSuperGetter(node, state, path, options) {
+    console.assert(node.type === "MemberExpression");
+    console.assert(node.object.type === "Super");
+    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state.classHolder, [], options), literal(node.property.value || node.property.name), id("this"));
+  }
+
+  function replaceSuperSetter(node, state, path, options) {
+    console.assert(node.type === "AssignmentExpression");
+    console.assert(node.left.object.type === "Super");
+
+    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state.classHolder, [], options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
   }
 
   function replaceClass(node, state, path, options) {
@@ -14348,14 +14343,11 @@ var nodes = Object.freeze({
           var methodId = id(className + "_" + (key.name || key.value) + "_"),
               _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, { id: methodId })];
 
-          if (value[node_marker_super_found]) _props.push("needsDeclaringClass", literal(true));
-
           decl = objectLiteral(_props);
         } else if (kind === "get" || kind === "set") {
           decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, { id: id(kind) })]);
         } else if (kind === "constructor") {
           var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, { id: id(className + "_initialize_") })];
-          if (value[node_marker_super_found]) _props2.push("needsDeclaringClass", literal(true));
           decl = objectLiteral(_props2);
         } else {
           console.warn("classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
@@ -14397,7 +14389,7 @@ var nodes = Object.freeze({
 
     var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
 
-    var classCreator = funcCall(options.functionNode, classId ? literal(classId.name) : id("undefined"), superClassSpec, instanceProps, classProps, state.classHolder, options.currentModuleAccessor || id("undefined"));
+    var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? binaryExpr(member(tempLivelyClassHolderVar, classId), "||", constructorTemplate(classId.name)) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
 
     if (type === "ClassExpression") return classCreator;
 

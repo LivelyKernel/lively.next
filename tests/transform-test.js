@@ -2,7 +2,7 @@
 
 import { expect } from "mocha-es6";
 
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
 import {
   helper,
   replace,
@@ -281,127 +281,6 @@ describe('ast.transform', function() {
       + "    foo.end(err, undefined);\n"
       + "}"));
 
-  });
-});
-
-
-describe("class transform", () => {
-
-  var opts = {
-    classHolder: {type: "Identifier", name: "_rec"},
-    functionNode: {type: "Identifier", name: "createOrExtendClass"},
-    addDeclarations: false
-  };
-
-  it("is translated into createOrExtendClass function", () =>
-      expect(stringify(classToFunctionTransform("class Foo {}", opts))).to.equal(
-        "var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);"));
-
-  it("with class expressions", () =>
-      expect(stringify(classToFunctionTransform("var x = class Foo {}", opts))).to.equal(
-        "var x = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);"));
-
-  it("with anonymous class expressions", () =>
-      expect(stringify(classToFunctionTransform("var x = class {}", opts))).to.equal(
-        "var x = createOrExtendClass(undefined, undefined, undefined, undefined, _rec, undefined);"));
-
-  it("with methods", () =>
-      expect(stringify(classToFunctionTransform("class Foo {m() { return 23; }}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', undefined, [{
-        key: 'm',
-        value: function Foo_m_() {
-            return 23;
-        }
-    }], undefined, _rec, undefined);`));
-
-  it("with class side methods", () =>
-      expect(stringify(classToFunctionTransform("class Foo {static m() { return 23; }}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', undefined, undefined, [{
-        key: 'm',
-        value: function Foo_m_() {
-            return 23;
-        }
-    }], _rec, undefined);`));
-
-  it("with superclass", () =>
-      expect(stringify(classToFunctionTransform("class Foo extends Bar {}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', Bar, undefined, undefined, _rec, undefined);`));
-
-  it("with supercall", () =>
-      expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, b, c); }}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', Bar, [{
-        key: 'm',
-        value: function Foo_m_(lively_declaring_class_arg) {
-            lively_declaring_class_arg[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, b, c);
-        },
-        needsDeclaringClass: true
-    }], undefined, _rec, undefined);`));
-
-  it("with supercall and arguments usage", () =>
-      expect(stringify(classToFunctionTransform("class Foo extends Bar {m() { super.m(a, arguments[0], c); }}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', Bar, [{
-        key: 'm',
-        value: function Foo_m_(lively_declaring_class_arg) {
-            var __lively_arguments_fixed_bc_declaring_class_arg = Array.from(arguments).slice(1);
-            lively_declaring_class_arg[Symbol.for('lively-instance-superclass')].prototype.m.call(this, a, __lively_arguments_fixed_bc_declaring_class_arg[0], c);
-        },
-        needsDeclaringClass: true
-    }], undefined, _rec, undefined);`));
-  
-  it("constructor is converted to initialize", () =>
-      expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { this.x = arg; }}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', undefined, [{
-        key: Symbol.for('lively-instance-initialize'),
-        value: function Foo_initialize_(arg) {
-            this.x = arg;
-        }
-    }], undefined, _rec, undefined);`));
-
-  it("super call in constructor is converted to initialize call", () =>
-      expect(stringify(classToFunctionTransform("class Foo {constructor(arg) { super(arg, 23); }}", opts))).to.equal(
-        `var Foo = createOrExtendClass('Foo', undefined, [{
-        key: Symbol.for('lively-instance-initialize'),
-        value: function Foo_initialize_(lively_declaring_class_arg, arg) {
-            lively_declaring_class_arg[Symbol.for('lively-instance-superclass')].prototype[Symbol.for('lively-instance-initialize')].call(this, arg, 23);
-        },
-        needsDeclaringClass: true
-    }], undefined, _rec, undefined);`));
-
-  it("with export default", () =>
-      expect(stringify(classToFunctionTransform("export default class Foo {}", opts))).to.equal(
-        "var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);\nexport default Foo;"));
-
-  it("with export class", () =>
-      expect(stringify(classToFunctionTransform("export class Foo {}", opts))).to.equal(
-        "export var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, undefined);"));
-
-  it("adds current module accessor", () =>
-      expect(
-        stringify(classToFunctionTransform("class Foo {}", Object.assign({}, opts, {currentModuleAccessor: nodes.member("foo", "bar")}))))
-        .to.equal(
-          "var Foo = createOrExtendClass('Foo', undefined, undefined, undefined, _rec, foo.bar);"));
-
-  it("add superclass ref when module accessor available and superclass in toplevel scope", () => {
-      expect(
-        stringify(classToFunctionTransform("var Bar; class Foo extends Bar {}", Object.assign({}, opts, {currentModuleAccessor: nodes.member("foo", "bar")}))))
-        .to.equal(`var Bar;
-var Foo = createOrExtendClass('Foo', {
-    referencedAs: 'Bar',
-    value: Bar
-}, undefined, undefined, _rec, foo.bar);`)
-  });
-
-  it("doesnt add superclass ref when not in toplevel scope", () => {
-      expect(
-        stringify(
-          classToFunctionTransform(
-            "function zork() { var Bar; class Foo extends Bar {} };",
-            Object.assign({}, opts, {currentModuleAccessor: nodes.member("foo", "bar")}))))
-        .to.equal(`function zork() {
-    var Bar;
-    var Foo = createOrExtendClass('Foo', Bar, undefined, undefined, {}, foo.bar);
-}
-;`)
   });
 });
 
