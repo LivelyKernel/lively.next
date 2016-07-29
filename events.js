@@ -37,8 +37,8 @@ const typeToMethodMap = {
   'blur':        "onBlur",
   'focus':       "onFocus",
   'contextmenu': "onContextMenu",
-  'cut': "onCut",
-  'paste': "onPaste"
+  'cut':         "onCut",
+  'paste':       "onPaste"
 }
 
 const pointerEvents = [
@@ -475,7 +475,6 @@ export class EventDispatcher {
     // what was clicked on
     this.eventState = {
       focusedMorph: null,
-      selectionMorph: null,
       clickedOnPosition: null,
       clickedOnMorph: null,
       draggedMorph: null,
