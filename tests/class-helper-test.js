@@ -1,104 +1,117 @@
 /*global beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
+import { classToFunctionTransform } from "node_modules/lively.ast/lib/class-to-function-transform.js"
+// import { classToFunctionTransform } from "lively.ast/lib/class-to-function-transform.js"
+
 import {
-  createOrExtend,
+  initializeClass,
   initializeSymbol,
   instanceRestorerSymbol,
   superclassSymbol
 } from "../lib/class-helpers.js";
 
+import { runEval } from "../lib/eval.js"
+
+var tfmOpts, varRecorder;
+
+async function evalClass(classSource) {
+  var result = await runEval(
+    lively.ast.stringify(classToFunctionTransform(classSource, tfmOpts)),
+    {topLevelVarRecorder: varRecorder})
+  if (result.isError) throw result.value;
+  return result.value;
+}
+
+// lively.ast.stringifyclassToFunctionTransform("class Foo2 extends Foo { get x() { return super.x + 1 }\n set x(v) { super.x = v } }", tfmOpts)
+
 describe("create or extend classes", function() {
 
-  it("uses known symbols", () => {
+  beforeEach(() => {
+    varRecorder = {initializeClass};
+    tfmOpts = {
+      classHolder: {type: "Identifier", name: '__lvVarRecorder'},
+      functionNode: {type: "Identifier", name: "initializeClass"}}
+  });
+
+  it("uses known symbols", async () => {
     expect(superclassSymbol).equals(Symbol.for("lively-instance-superclass"));
     expect(instanceRestorerSymbol).equals(Symbol.for("lively-instance-restorer"));
     expect(initializeSymbol).equals(Symbol.for("lively-instance-initialize"));
   });
 
-  it("produces new class", function() {
-    var Foo = createOrExtend("Foo", null, [
-          {key: "m", value: function m() { return 23 }}
-        ], undefined, {});
+  it("produces new class", async function() {
+    var Foo = await evalClass("class Foo {m() { return 23 }}")
     expect(Foo.name).equals("Foo");
     expect(new Foo().m()).equals(23);
   });
 
-  it("is not stored in classHolder by default", function() {
-    var classHolder = {}
-    var Foo = createOrExtend("Foo", null, [
-          {key: "m", value: function m() { return 23 }}
-        ], undefined, classHolder);
+  it("is not stored in classHolder by default", async function() {
+    var Foo = await evalClass("var x = class Foo {m() { return 23 }}")
     expect(Foo.name).equals("Foo");
-    expect(classHolder).to.not.have.property("Foo");
+    expect(varRecorder).to.not.have.property("Foo");
   });
 
-  it("is initialized with arguments from constructor call", function() {
-    var Foo = createOrExtend("Foo", null, [
-          {key: initializeSymbol, value: function(a, b) { this.x = a + b; }}
-        ], undefined, {});
+  it("is initialized with arguments from constructor call", async function() {
+    var Foo = await evalClass("class Foo {constructor(a, b) { this.x = a + b; }}")
     expect(new Foo(2,3).x).equals(5);
   });
 
-  it("accepts getter and setter", function() {
-    var Foo = createOrExtend("Foo", null, [{
-        key: "x",
-        get: function get() { return this._x },
-        set: function set(v) { return this._x = v }
-      }], undefined, {});
+  it("accepts getter and setter", async function() {
+    var Foo = await evalClass("class Foo {get x() { return this._x; } set x(v) { this._x = v; }}")
     var foo = new Foo();
     foo.x = 23;
     expect(foo.x).equals(23);
     expect(foo._x).equals(23);
   });
 
-  it("same name does not mean same class", function() {
-    var Foo1 = createOrExtend("Foo", null, undefined, undefined, {}),
-        Foo2 = createOrExtend("Foo", null, undefined, undefined, {});
+  it("same name does not mean same class", async function() {
+    var Foo1 = await evalClass("var _ = class Foo {}")
+    var Foo2 = await evalClass("var _ = class Foo {}")
     expect(Foo1).to.not.equal(Foo2);
   });
 
-  it("inherits", function() {
-    var Foo = createOrExtend("Foo", null, [
-          {key: "m", value: function m(a) { return this.x + 23 + a }},
-          {key: "n", value: function n() { return 123 }}
-        ], undefined, {}),
-        Foo2 = createOrExtend("Foo2", Foo, [
-          {needsDeclaringClass: true, key: "m", value: function m(declaringClass, a) { return 2 + declaringClass[Symbol.for("lively-instance-superclass")].prototype.m.call(this, a);}}], undefined, {}),
-        foo = new Foo2();
+  it("inherits", async function() {
+    var Foo = await evalClass("class Foo { m(a) { return this.x + 23 + a } n() { return 123 } }")
+    var Foo2 = await evalClass("class Foo2 extends Foo { m(a) { return 2 + super.m(a); } }")
+    var foo = new Foo2();
     foo.x = 1;
     expect(foo.m(1)).equals(27);
     expect(foo.n()).equals(123);
     expect(Foo2[superclassSymbol]).equals(Foo);
   });
 
-  it("super in initialize", function() {
-    var Foo = createOrExtend("Foo", null, [
-          {key: initializeSymbol, value: function(a, b) { this.x = a + b; }}
-        ], undefined, {}),
-        Foo2 = createOrExtend("Foo2", Foo, [
-          {needsDeclaringClass: true, key: initializeSymbol, value: function(declaringClass, a, b) {
-            declaringClass[Symbol.for("lively-instance-superclass")].prototype[initializeSymbol].call(this,a, b);
-            this.y = a; }}
-        ], undefined, {})
+  it("works with super accessors", async () => {
+    var Foo = await evalClass("class Foo { get x() { return this._x } set x(v) { this._x = v }}");
+    var Foo2 = await evalClass("class Foo2 extends Foo { get x() { return super.x + 1 }\n set x(v) { super.x = v } }")
+    var foo = new Foo2();
+    foo.x = 23;
+    expect(foo.x).equals(24);
+    
+  });
+
+  it("super in initialize", async function() {
+    var Foo = await evalClass("class Foo { constructor(a, b) { this.x = a + b; } }")
+    var Foo2 = await evalClass("class Foo2 extends Foo { constructor(a, b) { super(a,b); this.y = a; } }")
     expect(new Foo2(2,3).x).equals(5);
     expect(new Foo2(2,3).y).equals(2);
   });
 
-  it("modifying the superclass affects the subclass and its instances", function() {
-    var Foo = createOrExtend("Foo", null, undefined, undefined, {}),
-        Foo2 = createOrExtend("Foo2", Foo, undefined, undefined, {}),
-        foo = new Foo2();
-    createOrExtend("Foo", null, [{key: "m", value: function m() { return 23 }}], undefined, {Foo: Foo});
+  it("modifying the superclass affects the subclass and its instances", async function() {
+    await evalClass("class Foo {}")
+    var Foo2 = await evalClass("class Foo2 extends Foo {}")
+    var foo = new Foo2();
+    await evalClass("class Foo { m() { return 23; } }")
     expect(foo.m()).equals(23);
   });
 
-  it("changing the superclass will leave existing instances stale", function() {
-    var Foo = createOrExtend("Foo", null, [{key: "m", value: function m() { return 23 }}], undefined, {}),
-        Foo2 = createOrExtend("Foo2", Object, undefined, undefined, {}),
-        foo = new Foo2();
+  it("changing the superclass will leave existing instances stale", async function() {
+    await evalClass("class Foo {m() { return 23 } }")
+    var Foo2 = await evalClass("class Foo2 extends Object {}")
+    var foo = new Foo2();
     expect(foo).to.not.have.property("m");
-    createOrExtend("Foo2", Foo, undefined, undefined, {Foo2});
+    await evalClass("class Foo2 extends Foo {}")
+
     // Changing the superclass currently means changing the prototype, the
     // thing that instances have in  common with their class. When that's replaced
     // the instances are orphaned. That's not a feature but to change that we
@@ -109,17 +122,15 @@ describe("create or extend classes", function() {
     expect(anotherFoo).to.have.property("m");
   });
 
-  it("works with anonymous classes", () => {
-    var X = createOrExtend(undefined, undefined, [{key: "m", value: function() { return 23; }}], undefined, {}),
-        Y = createOrExtend(undefined, X, [{needsDeclaringClass: true, key: "m", value: function(declaringClass) { return declaringClass[Symbol.for("lively-instance-superclass")].prototype.m.call(this) + 1; }}], undefined, {});
+  it("works with anonymous classes", async () => {
+    var X = varRecorder.X = await evalClass("var _ = class { m() { return 23; }}"),
+        Y = await evalClass("var _ = class extends X { m() { return super.m() + 1; }}");
     expect(new X().m()).equals(23);
     expect(new Y().m()).equals(24);
   });
 
-  it("method can be overridden", () => {
-    var Foo = createOrExtend("Foo", null, [
-          {key: "m", value: function m() { return 23 }}
-        ], undefined, {}),
+  it("method can be overridden", async () => {
+    var Foo = await evalClass("class Foo {m() { return 23 } }"),
         foo = new Foo();
     foo.m = () => 24;
     expect(foo.m()).equals(24);
@@ -127,22 +138,16 @@ describe("create or extend classes", function() {
 
   describe("compat with conventional class function", () => {
 
-    it("constructor of base class is used", () => {
-      var A = function A(x) { this.y = x + 1 },
-          B = createOrExtend("B", A, undefined, undefined, {}),
+    it("constructor of base class is used", async () => {
+      varRecorder.A = function A(x) { this.y = x + 1 };
+      var B = await evalClass("class B extends A {m() { return 23 } }"),
           b = new B(3);
-
       expect(b.y).equals(4, "constructor not called");
     });
 
-    it("constructor of base class is used when using own constructor + calling super", () => {
-      var A = function A(x) { this.y = x + 1 },
-          B = createOrExtend("B", A, [{
-            needsDeclaringClass: true,
-            key: initializeSymbol, value: function(declaringClass, x) {
-              declaringClass[Symbol.for("lively-instance-superclass")].prototype[initializeSymbol].call(this, x);
-              this.z = this.y + 1;
-            }}]),
+    it("constructor of base class is used when using own constructor + calling super", async () => {
+      varRecorder.A = function A(x) { this.y = x + 1 };
+      var B = await evalClass("class B extends A {constructor(x) { super(x); this.z = this.y + 1; } }"),
           b = new B(3);
       expect(b.y).equals(4, "super constructor not called");
       expect(b.z).equals(5, "constructor issue");
@@ -151,37 +156,30 @@ describe("create or extend classes", function() {
   });
 
   describe("with modules", () => {
+    beforeEach(() => {
+      tfmOpts.currentModuleAccessor = {
+        object: {name: "__lvVarRecorder", type: "Identifier"},
+        property: {name: "module", type: "Identifier"},
+        type: "MemberExpression"
+      }
+    });
 
-    it("adds module meta data", () => {
-      var mod = {package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; }},
-          Foo = createOrExtend("Foo", null, undefined, undefined, {}, mod);
+    it("adds module meta data", async () => {
+      varRecorder.module = {package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; }};
+      var Foo = await evalClass("class Foo {}");
       expect(Foo[Symbol.for("lively-instance-module-meta")]).deep.equals(
         {package: {name: "foo", version: undefined}, pathInPackage: "./bar"});
     });
 
-    it("adds observer for superclass", () => {
-      var callback = null,
-          mod = {
-            package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; },
-            subscribeToToplevelDefinitionChanges: (func) => callback = func,
-            unsubscribeFromToplevelDefinitionChanges: (func) => {}
-          },
-          Foo = createOrExtend("Foo", {referencedAs: "Bar"}, undefined, undefined, {}, mod),
-          Bar = createOrExtend("Bar", null, [{key: "m", value() { return 23; }}]);
-      callback("Bar", Bar);
-      expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Bar);
-      expect(new Foo().m()).equals(23);
-    });
-
-    it("adds observer for superclass", () => {
-      var callback = null,
-          mod = {
-            package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; },
-            subscribeToToplevelDefinitionChanges: (func) => callback = func,
-            unsubscribeFromToplevelDefinitionChanges: (func) => {}
-          },
-          Foo = createOrExtend("Foo", {referencedAs: "Bar"}, undefined, undefined, {}, mod),
-          Bar = createOrExtend("Bar", null, [{key: "m", value() { return 23; }}]);
+    it("adds observer for superclass", async () => {
+      var callback = null;
+      varRecorder.module = {
+        package() { return {name: "foo"}; }, pathInPackage() { return "./bar"; },
+        subscribeToToplevelDefinitionChanges: (func) => callback = func,
+        unsubscribeFromToplevelDefinitionChanges: (func) => {}
+      }
+      var Foo = await evalClass("var Bar; class Foo extends Bar {}");
+      var Bar = await evalClass('class Bar {m() { return 23; }}');
       callback("Bar", Bar);
       expect(Foo[Symbol.for("lively-instance-superclass")]).equals(Bar);
       expect(new Foo().m()).equals(23);

@@ -284,8 +284,6 @@
     getCompletions: getCompletions
   });
 
-  var initializerTemplate = "(function CLASS(){\n  var firstArg = arguments[0];\n  if (firstArg && firstArg[Symbol.for(\"lively-instance-restorer\")]) {\n    // for deserializing instances just do nothing\n  } else {\n    // automatically call the initialize method\n    this[Symbol.for(\"lively-instance-initialize\")].apply(this, arguments);\n  }\n})";
-
   var initializeSymbol = Symbol.for("lively-instance-initialize");
   var superclassSymbol = Symbol.for("lively-instance-superclass");
   var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
@@ -302,13 +300,6 @@
     configurable: true,
     writable: true
   };
-
-  function createClass$1(name) {
-    if (!name) name = "anonymous_class";
-    var constructor = eval(initializerTemplate.replace(/CLASS/, name));
-    constructor.displayName = "class " + name;
-    return constructor;
-  }
 
   function setSuperclass(klass, superclassOrSpec) {
     // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
@@ -358,10 +349,9 @@
       ea.value ? installValueDescriptor(klass.prototype, klass, ea) : installGetterSetterDescriptor(klass.prototype, ea);
     });
 
-    // 4. define initializer method, in our class system the constructor is always
-    // as defined in initializerTemplate and re-directs to the initializer method.
-    // This way we can change the constructor without loosing the identity of the
-    // class
+    // 4. define initializer method, in our class system the constructor is
+    // generic and re-directs to the initializer method. This way we can change
+    // the constructor without loosing the identity of the class
     if (!klass.prototype[initializeSymbol]) {
       Object.defineProperty(klass.prototype, initializeSymbol, {
         enumerable: false,
@@ -389,7 +379,7 @@
     superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
   }
 
-  function createOrExtend(className, superclassSpec) {
+  function initializeClass(constructorFunc, superclassSpec) {
     var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
     var classMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
     var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
@@ -402,14 +392,18 @@
     // This is being used as the compile target for es6 class syntax by the
     // lively.ast capturing / transform logic
     // Example:
-    // var Foo = createOrExtend({}, function Foo() {}, "Foo", [{key: "m", value: function m() { return 23 }}]);
+    // var Foo = function(superclass) {
+    //   function Foo() {}
+    //   return initializeClass(Foo, superclass, [{key: "m", value: function m() { return 23 }}])
+    // }();
     // new Foo().m() // => 23
 
     // 1. create a new constructor function if necessary, re-use an exisiting if the
     // classHolder object has it
-    var klass = className && classHolder.hasOwnProperty(className) && classHolder[className],
+    var className = constructorFunc.name,
+        klass = className && classHolder.hasOwnProperty(className) && classHolder[className],
         existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = createClass$1(className);
+    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = constructorFunc;
 
     // 2. set the superclass if necessary and set prototype
     var superclass = setSuperclass(klass, superclassSpec);
@@ -458,11 +452,50 @@
     return klass;
   }
 
+  initializeClass._get = function _get(object, property, receiver) {
+    if (object === null) object = Function.prototype;
+    var desc = Object.getOwnPropertyDescriptor(object, property);
+    if (desc === undefined) {
+      var parent = Object.getPrototypeOf(object);
+      if (parent === null) {
+        return undefined;
+      } else {
+        return _get(parent, property, receiver);
+      }
+    } else if ("value" in desc) {
+      return desc.value;
+    } else {
+      var getter = desc.get;
+      if (getter === undefined) {
+        return undefined;
+      }
+      return getter.call(receiver);
+    }
+  };
+
+  initializeClass._set = function _set(object, property, value, receiver) {
+    var desc = Object.getOwnPropertyDescriptor(object, property);
+    if (desc === undefined) {
+      var parent = Object.getPrototypeOf(object);
+      if (parent !== null) {
+        _set(parent, property, value, receiver);
+      }
+    } else if ("value" in desc && desc.writable) {
+      desc.value = value;
+    } else {
+      var setter = desc.set;
+      if (setter !== undefined) {
+        setter.call(receiver, value);
+      }
+    }
+    return value;
+  };
+
   var id = lively_ast.nodes.id;
   var literal = lively_ast.nodes.literal;
   var member = lively_ast.nodes.member;
   var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
-  var defaultClassToFunctionConverterName = "createOrExtendES6ClassForLively";
+  var defaultClassToFunctionConverterName = "initializeES6ClassForLively";
   function evalCodeTransform(code, options) {
     // variable declaration and references in the the source code get
     // transformed so that they are bound to `varRecorderName` aren't local
@@ -502,7 +535,7 @@
         // existing) constructor function in a way that allows us to redefine
         // methods and properties of the class while keeping the class object
         // identical
-        options.topLevelVarRecorder[defaultClassToFunctionConverterName] = createOrExtend;
+        options.topLevelVarRecorder[defaultClassToFunctionConverterName] = initializeClass;
         es6ClassToFunctionOptions = {
           currentModuleAccessor: options.currentModuleAccessor,
           classHolder: varRecorder,
@@ -862,9 +895,6 @@
     } : undefined;
     return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
   }
-
-  // import { moduleEnv } from "lively.modules/src/system.js";
-  // import { recordDoitRequest, recordDoitResult } from "lively.modules/src/notify.js";
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // load support
