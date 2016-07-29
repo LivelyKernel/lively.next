@@ -13,14 +13,8 @@ export function defaultStyle(morph) {
   } = morph;
 
   return {
-    transform: new Transform()
-                      .preConcatenate(new Transform(morph.origin))
-                      .preConcatenate(morph.getTransform())
-                      .preConcatenate(new Transform(morph.origin).inverse())
-                      .preConcatenate(new Transform(owner && owner.origin))
-                      .toCSSTransformString(),
-    transformOrigin: `${origin.x}px ${origin.y}px `,
     position: "absolute",
+    top: -origin.y + "px", left: -origin.x + "px",
     opacity,
     display: visible ? "" : "none",
     width: width + 'px', height: height + 'px',
@@ -39,7 +33,7 @@ export function defaultStyle(morph) {
 
 export function defaultAttributes(morph) {
   return {
-    key: morph.id,
+    // key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
     draggable: false,
@@ -70,7 +64,7 @@ function shadowCss(morph) {
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 
-  var tree = renderer.renderMap.get(world) || world.render(renderer),
+  var tree = renderer.renderMap.get(world) || renderer.render(world),
       domNode = renderer.domNode || (renderer.domNode = create(tree, renderer.domEnvironment)),
       newTree = renderer.render(world),
       patches = diff(tree, newTree);

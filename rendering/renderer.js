@@ -1,4 +1,4 @@
-import { promise } from "lively.lang";
+import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
 import {h} from "virtual-dom";
@@ -47,6 +47,7 @@ const defaultCSS = `
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  zIndex: 1010
 }
 
 .hand {
@@ -152,8 +153,20 @@ export class Renderer {
       if (rendered) return rendered;
     }
     x.aboutToRender();
+    
+    var className = null;
+    if(x.styleClasses && x.styleClasses.indexOf("halo") > -1) className = "halo";
+    if (x.styleClasses && x.styleClasses.indexOf("hand") > -1) className = "hand";
 
-    var tree = x.render(this);
+    var // tfm = x.getTransform(),
+        rot = num.toDegrees(x.rotation), scale = x.scale,
+        tree = h("div", {key: x.id,
+                         ...(className && {className}),
+                         style: {
+                           transform: `rotate(${rot}deg) scale(${scale},${scale})`,
+                           position: "absolute",
+                           top: x.position.y + "px", 
+                           left: x.position.x + "px"}}, x.render(this));
     this.renderMap.set(x, tree);
     return tree;
   }
@@ -162,7 +175,14 @@ export class Renderer {
     return h("div", {
       ...defaultAttributes(morph),
       style: defaultStyle(morph)
-    }, morph.submorphs.map(m => this.render(m)));
+    }, this.renderSubmorphs(morph));
+  }
+  
+  renderSubmorphs(morph) {
+    return h("div", {style: {position: "absolute", 
+                             top: morph.origin.y + "px" , 
+                             left: morph.origin.x + "px"}}, 
+            morph.submorphs.map(m => this.render(m)));
   }
 
   renderText(text) {
@@ -197,7 +217,7 @@ export class Renderer {
                                   "pointer-events": "none",
                                   position: "absolute",
                                   width: "100%", height: "100%"}}),
-                    h("div", image.submorphs.map(m => this.render(m)))]);
+                     this.renderSubmorphs(image)]);
   }
 
   renderPath(path) {
@@ -213,7 +233,7 @@ export class Renderer {
     for (var i = 0; i < path.vertices.length - 1; i++) {
       vertices.push(edge(path.vertices[i], path.vertices[i + 1]));
     }
-    return renderSvgMorph(path, vertices);
+    return this.renderSvgMorph(path, vertices);
   }
   
   renderPolygon(polygon) {
@@ -224,26 +244,28 @@ export class Renderer {
                                   ";stroke-width:" + polygon.borderWidth +
                                   ";stroke:" + polygon.borderColor,
                            points: polygon.vertices.map(({x,y}) => x + "," + y).join(" ")}});
-    return renderSvgMorph(polygon, [vertices]);
+    return this.renderSvgMorph(polygon, [vertices]);
   }
-}
-
-function renderSvgMorph(morph, svg) {
-    const {transform, transformOrigin, position, WebkitFilter,
-           display} = defaultStyle(morph),
+  
+  renderSvgMorph(morph, svg) {
+    const {position, WebkitFilter,
+           display, top, left} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
     return h("div", {...defaultAttributes(morph),
-                     style: {transform, transformOrigin, position,
+                     style: {top, left, position,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},
-              h("svg", {namespace: "http://www.w3.org/2000/svg",
+              [h("svg", {namespace: "http://www.w3.org/2000/svg",
                         style: {position: "absolute", "pointer-events": "none"},
                         attributes:
                          {width, height, "viewBox": [0,0,width,height].join(" "),
                         ...(morph.borderStyle == "dashed" && {"stroke-dasharray": "7 4"})}},
-                  [defs].concat(svg)));
+                  [defs].concat(svg)),
+                this.renderSubmorphs(morph)]);
   }
+}
+
 
 function renderGradient(morph) {
   return h("defs", {namespace: "http://www.w3.org/2000/svg"},
