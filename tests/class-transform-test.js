@@ -16,9 +16,8 @@ function classTemplate(className, superClassName, methodString, classMethodStrin
 
   return `function (superclass) {
     var __lively_classholder__ = ${classHolder};
-    var __lively_class__ = ${identifier}() {
-        var firstArg = arguments[0];
-        if (firstArg && firstArg[Symbol.for('lively-instance-restorer')]) {
+    var __lively_class__ = ${identifier}(__first_arg__) {
+        if (__first_arg__ && __first_arg__[Symbol.for('lively-instance-restorer')]) {
         } else {
             this[Symbol.for('lively-instance-initialize')].apply(this, arguments);
         }
