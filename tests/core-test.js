@@ -53,14 +53,16 @@ describe("full morphic setup with renderer and events", function () {
   describe("rendering", () => {
 
     it("morph id is DOM node id", () => {
-      expect(world.id).equals(renderer.domNode.id);
+      expect(world.id).equals(renderer.domNode.children[0].id);
     });
 
     it("renderer associates domNodewith morph", () => {
       var node = renderer.getNodeForMorph(submorph2),
           morph = renderer.getMorphForNode(node);
       expect(morph).equals(submorph2, morph && morph.name);
-      expect(renderer.domNode.childNodes[0].childNodes[0]).equals(node); // brittle, might change...
+      expect(renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
+                             .childNodes[0].childNodes[0].childNodes[0]
+                             .childNodes[0]).equals(node); // brittle, might change...
     });
     
     it("can be moved to the front", () => {
@@ -73,17 +75,18 @@ describe("full morphic setup with renderer and events", function () {
       it("scale and rotation are rendered", async () => {
         submorph1.rotateBy(num.toRadians(45));
         await submorph1.whenRendered();
-        expect(renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
-          .match(/translate\(10px,\s*10px\)/)
+        expect(renderer.getNodeForMorph(submorph1).parentNode).deep.property("style.transform")
           .match(/rotate\((45|44\.9+)deg\)/)
           .match(/scale\(1,\s*1\)/)
       });
 
-      it("origin rendered via css transformOrigin", async () => {
+      it("origin rendered via origin node", async () => {
         submorph1.origin = pt(20,10);
         await submorph1.whenRendered();
         expect(renderer.getNodeForMorph(submorph1))
-          .deep.property("style.transformOrigin").match(/20px 10px/);
+          .deep.property("style.left").match(/20px/);
+        expect(renderer.getNodeForMorph(submorph1))
+          .deep.property("style.top").match(/10px/);
       });
 
     });
