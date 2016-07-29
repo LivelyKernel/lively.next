@@ -19566,7 +19566,7 @@ var nodes = Object.freeze({
     //   }
     // }
 
-    return funcExpr({ id: name ? id(name) : null }, [], varDecl("firstArg", member("arguments", literal(0))), ifStmt(binaryExpr(id("firstArg"), "&&", member("firstArg", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
+    return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
