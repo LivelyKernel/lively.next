@@ -19548,42 +19548,9 @@ var nodes = Object.freeze({
     objectSpreadTransform: objectSpreadTransform
   });
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
   function isFunctionNode(node) {
     return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
   }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  // class ArgumentsReplaceVisitor extends Visitor {
-
-  //   accept(node, rootNode, path) {
-  //     return isFunctionNode(node) && node !== rootNode ?
-  //       node : this.replace(super.accept(node, rootNode, path));
-  //   }
-
-  //   replace(node) {
-
-  //     if (isFunctionNode(node) && Array.isArray(node.body.body)) {
-  //       // insert var __lively_arguments_fixed_bc_super_arg = Array.from(arguments).slice(1)
-  //       var newArgs = funcCall(member(funcCall(member("Array", "from"), id("arguments")), "slice"), literal(1)),
-  //           newArgsDecl = varDecl(arguments_replacement_name, newArgs);
-  //       node.body.body.unshift(newArgsDecl)
-
-  //     } else if (node.type === "Identifier" && node.name === "arguments") {
-  //       // replace arguments refs
-  //       node = id(arguments_replacement_name);
-  //     }
-
-  //     return node;
-  //   }
-
-  //   static run(parsed) {
-
-  //     return new this().accept(parsed, parsed, []);
-  //   }
-  // }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -19776,7 +19743,7 @@ var nodes = Object.freeze({
 
     var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
 
-    var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? binaryExpr(member(tempLivelyClassHolderVar, classId), "||", constructorTemplate(classId.name)) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
+    var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "||", constructorTemplate(classId.name)) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
 
     if (type === "ClassExpression") return classCreator;
 
