@@ -140,7 +140,9 @@ export class Morph {
   set name(value)      { this.recordChange({prop: "name", value}); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this._cachedBounds = null; this.recordChange({prop: "position", value}); }
+  set position(value)  {
+    this._cachedBounds = null;
+    this.recordChange({prop: "position", value}); }
 
   get scale()          { return this.getProperty("scale"); }
   set scale(value)     { this._cachedBounds = null; this.recordChange({prop: "scale", value}); }
@@ -152,7 +154,7 @@ export class Morph {
   set origin(value)    { return this.recordChange({prop: "origin", value}); }
 
   get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this.recordChange({prop: "extent", value}); }
+  set extent(value)    { this._cachedBounds = null; this.recordChange({prop: "extent", value}); }
 
   get fill()           { return this.getProperty("fill"); }
   set fill(value)      { this.recordChange({prop: "fill", value}); }
@@ -240,7 +242,7 @@ export class Morph {
     //   var scroll = this.getScroll();
     //   bounds = bounds.translatedBy(pt(scroll[0], scroll[1]));
     // }
-
+    this._cachedBounds = bounds;
     return bounds;
   }
 
@@ -281,7 +283,13 @@ export class Morph {
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
-  moveBy(delta) { this.position = this.position.addPt(delta); }
+  moveBy(delta) {
+    var bounds = this._cachedBounds;
+    if (bounds)
+      bounds = bounds.translatedBy(delta);
+    this.position = this.position.addPt(delta); 
+    this._cachedBounds = bounds;
+  }
   rotateBy(delta) { this.rotation += delta; }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
 
@@ -1001,9 +1009,6 @@ export class Path extends Morph {
 
   get vertices() { return this.getProperty("vertices")}
   set vertices(value) { return this.recordChange({prop: "vertices", value})}
-
-  get extent() { return this.getProperty("extent") }
-  set extent(value) { return this.recordChange({prop: "extent", value}); }
 
   resizeBy(delta) {
     const oldExtent = this.extent;
