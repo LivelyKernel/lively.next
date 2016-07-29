@@ -17,9 +17,10 @@ Object.assign(Morph.prototype, {
         inner = this.bounds();
     if (inner.right() > outer.right() || inner.left() < outer.left()) x = -x;
     if (inner.bottom() > outer.bottom() || inner.top() < outer.top()) y = -y;
+    this.velocity = pt(x, y);
     this.time += 0.1;
-    // this.rotation += this.spin;
-    // this.scale = 1 + Math.abs(Math.sin(this.time));
+    this.rotation += this.spin;
+    this.scale = 1 + Math.abs(Math.sin(this.time));
     this.moveBy(this.velocity);
     this._changes = [];
   }

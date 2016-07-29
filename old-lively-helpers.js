@@ -2,7 +2,7 @@
 import { num, arr } from "lively.lang";
 import { pt, Color, Point, Rectangle, Transform } from "lively.graphics";
 import { Renderer, morph, Text, EventDispatcher, Menu } from "lively.morphic";
-import { ObjectDrawer } from "lively.morphic/widgets.js";
+import { ObjectDrawer, Window } from "lively.morphic/widgets.js";
 
 export function setupMorphicWorldOn(htmlMorph) {
 
@@ -12,6 +12,8 @@ export function setupMorphicWorldOn(htmlMorph) {
       eventDispatcher = new EventDispatcher(window, world).install();
 
   world.addMorph(new ObjectDrawer({position: pt(20,10)}));;
+  world.addMorph(new Window({extent: pt(200, 300), position: pt(200,200)}));
+  world.addMorph(new Window({extent: pt(200, 300), position: pt(400,200)}));
 
   // FIXME currently used for show()
   window.$$world = world;
