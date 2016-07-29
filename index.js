@@ -1,6 +1,7 @@
 export { Renderer } from "./rendering/renderer.js";
-export * from "./morph.js";
 export * from "./events.js";
+export * from "./morph.js";
+export * from "./world.js";
 export * from "./text.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
@@ -9,7 +10,8 @@ export { show } from "./markers.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { World, Morph, Hand, Image, Ellipse } from "./morph.js";
+import { World } from "./world.js";
+import { Morph, Hand, Image, Ellipse } from "./morph.js";
 import { Text } from "./text.js";
 
 export function morph(props = {}, opts = {restore: false}) {

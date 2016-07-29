@@ -10,5 +10,3 @@ export function deserializeMorph(idAndSnapshot) {
       objPool = ObjectPool.fromSnapshot(snapshot);
   return objPool.resolveToObj(id)
 }
-
-

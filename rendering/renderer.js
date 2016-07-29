@@ -153,7 +153,7 @@ export class Renderer {
       if (rendered) return rendered;
     }
     x.aboutToRender();
-    
+
     var className = null;
     if(x.styleClasses && x.styleClasses.indexOf("halo") > -1) className = "halo";
     if (x.styleClasses && x.styleClasses.indexOf("hand") > -1) className = "hand";
