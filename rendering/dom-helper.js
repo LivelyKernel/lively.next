@@ -83,6 +83,18 @@ export function createDOMEnvironment() {
     createDOMEnvironment_node();
 }
 
+export function browserDOMEnvironment() {
+  // sync alternative
+  if (!System.get("@system-env").browser)
+    throw new Error("browserEnvironment() only works in browsers!");
+  requestAnimationFramePolyfill(window);
+  return {
+    destroy() {},
+    window: window,
+    document: document
+  }
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function setCSSDef(node, cssDefString, doc) {
