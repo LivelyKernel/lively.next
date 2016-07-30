@@ -34,6 +34,7 @@ const defaultCSS = `
 }
 
 .morph {
+  outline: none;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
   -webkit-backface-visibility: hidden;
 
