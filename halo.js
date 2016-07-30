@@ -540,7 +540,7 @@ export class Halo extends Morph {
   toggleDiagonal(active) {
     var diagonal = this.getSubmorphNamed("diagonal");
     if (active) {
-      var offset = pt(100,100);
+      var offset = this.extent.normalized().scaleByPt(pt(100,100));
       diagonal = diagonal || this.addMorphBack(new Path({
           name: "diagonal",
           styleClasses: ["morph", "halo-guide"],
