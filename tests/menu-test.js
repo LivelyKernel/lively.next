@@ -1,11 +1,24 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { morph, Renderer, Menu } from "../index.js";
+import MorphicEnv from "../env.js";
+var env, renderer;
+async function createMorphicEnvWithWorld() {
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.setWorld(createDummyWorld());
+  renderer = env.renderer;
+}
+function cleanup() { env && env.uninstall(); }
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import { morph, Menu } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 var inBrowser = System.get("@system-env").browser ? it :
   (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
+
 
 var world;
 function createDummyWorld() {
@@ -16,27 +29,10 @@ function createDummyWorld() {
 }
 
 
-var renderer, domEnv;
-async function createAndRenderDummyWorld() {
-  createDummyWorld();
-  domEnv = await createDOMEnvironment();
-  renderer = new Renderer(world, domEnv.document.body, domEnv);
-  renderer.startRenderWorldLoop()
-}
-
-function cleanup() {
-  renderer && renderer.clear();
-  domEnv && domEnv.destroy();
-}
-
-
 describe("menus", () => {
 
-  beforeEach(async () => createAndRenderDummyWorld());
+  beforeEach(async () => createMorphicEnvWithWorld());
   afterEach(() => cleanup());
-
-// createAndRenderDummyWorld()
-// cleanup()
 
   inBrowser("appear with title and items", () => {
     var item1Activated = 0,

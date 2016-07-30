@@ -1,12 +1,23 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { morph, Renderer } from "../index.js";
+import MorphicEnv from "../env.js";
+var env, renderer;
+async function createMorphicEnvWithWorld() {
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.setWorld(createDummyWorld());
+  renderer = env.renderer;
+}
+function cleanup() { env && env.uninstall(); }
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import { morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { num } from "lively.lang";
 
 var world, submorph1, submorph2, submorph3, image, ellipse;
-
 function createDummyWorld() {
   world = morph({
     type: "world", name: "world", extent: pt(300,300),
@@ -24,20 +35,7 @@ function createDummyWorld() {
   submorph1 = world.submorphs[0];
   submorph2 = world.submorphs[0].submorphs[0];
   submorph3 = world.submorphs[1];
-}
-
-
-var renderer, domEnv;
-async function createAndRenderDummyWorld() {
-  createDummyWorld();
-  domEnv = await createDOMEnvironment();
-  renderer = new Renderer(world, domEnv.document.body, domEnv);
-  renderer.startRenderWorldLoop()
-}
-
-function cleanup() {
-  renderer && renderer.clear();
-  domEnv && domEnv.destroy();
+  return world;
 }
 
 
@@ -47,7 +45,7 @@ describe("full morphic setup with renderer and events", function () {
   if (System.get("@system-env").node)
     this.timeout(10000);
 
-  beforeEach(async () => createAndRenderDummyWorld());
+  beforeEach(async () => createMorphicEnvWithWorld());
   afterEach(() => cleanup());
 
   describe("rendering", () => {
