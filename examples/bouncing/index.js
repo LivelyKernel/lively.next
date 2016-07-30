@@ -41,7 +41,7 @@ for (var i = 0; i < 100; i++) {
         Point.random(pt(20,20)).addXY(50,50) :
         Point.random(pt(20,20)).addXY(10,10);
   var m = {
-    time: 0,
+    time: Math.random()*10,
     type: type,
     origin: ext.scaleBy(0.5),
     position: wbounds.insetBy(10).randomPoint(),
