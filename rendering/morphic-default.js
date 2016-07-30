@@ -1,4 +1,5 @@
 import {diff, patch, create} from "virtual-dom";
+import { num } from "lively.lang";
 import { Transform } from "lively.graphics"
 
 export function defaultStyle(morph) {
@@ -6,7 +7,7 @@ export function defaultStyle(morph) {
     visible,
     position: {x,y},
     extent: {x: width, y: height},
-    origin, opacity,
+    origin, opacity, position, scale, rotation,
     fill, borderWidth, borderColor, borderRadius: br,
     clipMode, reactsToPointer, focusable,
     owner
@@ -14,7 +15,8 @@ export function defaultStyle(morph) {
 
   return {
     position: "absolute",
-    top: -origin.y + "px", left: -origin.x + "px",
+    transform: `translate(${position.x - origin.x}px, ${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`,
+    transformOrigin: `${origin.x}px ${origin.y}px`,
     opacity,
     display: visible ? "" : "none",
     width: width + 'px', height: height + 'px',
@@ -24,7 +26,6 @@ export function defaultStyle(morph) {
     overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",
     cursor: morph.nativeCursor,
-
     ...(morph.dropShadow ? {
       WebkitFilter: shadowCss(morph)
     } : null)
@@ -33,7 +34,7 @@ export function defaultStyle(morph) {
 
 export function defaultAttributes(morph) {
   return {
-    // key: morph.id,
+    key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
     draggable: false,

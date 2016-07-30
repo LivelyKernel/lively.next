@@ -152,21 +152,10 @@ export class Renderer {
       var rendered = this.renderMap.get(x);
       if (rendered) return rendered;
     }
+    
     x.aboutToRender();
 
-    var className = null;
-    if(x.styleClasses && x.styleClasses.indexOf("halo") > -1) className = "halo";
-    if (x.styleClasses && x.styleClasses.indexOf("hand") > -1) className = "hand";
-
-    var // tfm = x.getTransform(),
-        rot = num.toDegrees(x.rotation), scale = x.scale,
-        tree = h("div", {key: x.id,
-                         ...(className && {className}),
-                         style: {
-                           transform: `rotate(${rot}deg) scale(${scale},${scale})`,
-                           position: "absolute",
-                           top: x.position.y + "px", 
-                           left: x.position.x + "px"}}, x.render(this));
+    var tree = x.render(this);
     this.renderMap.set(x, tree);
     return tree;
   }
@@ -179,9 +168,8 @@ export class Renderer {
   }
   
   renderSubmorphs(morph) {
-    return h("div", {style: {position: "absolute", 
-                             top: morph.origin.y + "px" , 
-                             left: morph.origin.x + "px"}}, 
+    return h("div", {style: {position: "absolute",
+                             transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`}}, 
             morph.submorphs.map(m => this.render(m)));
   }
 
@@ -248,12 +236,12 @@ export class Renderer {
   }
   
   renderSvgMorph(morph, svg) {
-    const {position, WebkitFilter,
+    const {position, WebkitFilter, transform, transformOrigin,
            display, top, left} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
     return h("div", {...defaultAttributes(morph),
-                     style: {top, left, position,
+                     style: {transform, transformOrigin, position,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg",
