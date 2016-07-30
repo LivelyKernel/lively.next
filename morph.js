@@ -676,6 +676,10 @@ export class Morph {
 
   onHoverIn(evt) {}
   onHoverOut(evt) {}
+  
+  focus() {
+    this._wantsFocus = true;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
@@ -723,6 +727,13 @@ export class Morph {
   needsRerender() { return this._dirty; }
 
   aboutToRender() {
+    if (this._wantsFocus) {
+      const node =  this.world()._renderer.getNodeForMorph(this);
+      if (node) {
+        node.focus();
+        this._wantsFocus = false;
+      }
+    }
     this._dirty = false;
   }
 
