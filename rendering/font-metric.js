@@ -26,23 +26,19 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = [];
-    this.parentElement = null;
     this.element = null;
   }
 
   install(doc, parentEl) {
-    this.parentElement = parentEl;
     this.element = doc.createElement("div");
     this.setMeasureNodeStyles(this.element.style, true);
-    this.parentElement.appendChild(this.element);
+    parentEl.appendChild(this.element);
   }
 
   uninstall() {
-    if (this.element) {
-      this.parentElement.removeChild(this.element);
-      this.parentElement = null;
-      this.element = null;
-    }
+    if (!this.element) return
+    if (this.element.parentNode) this.element.parentNode.removeChild(this.element);
+    this.element = null;
   }
 
   setMeasureNodeStyles(style, isRoot) {
