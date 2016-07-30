@@ -104,6 +104,7 @@ export class Halo extends Morph {
     });
     this.state = {pointerId, target, draggedButton: null}
     this.initButtons();
+    this.focus();
   }
 
   get isHalo() { return true }
@@ -146,7 +147,6 @@ export class Halo extends Morph {
         this.halo.activeButton = this;
       },
       stop(proportional=false) {
-        this.proportionalMode(false);
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
@@ -154,7 +154,8 @@ export class Halo extends Morph {
       onDrag(evt) { this.update(evt.state.dragDelta, evt.isShiftDown()) },
       onDragEnd(evt) { this.stop(evt.isShiftDown()) },
       onKeyDown(evt) {
-        this.proportionalMode(evt.isShiftDown());
+        this.styleClasses = ["halo-item", "fa", "fa-expand"];
+        this.rotation = -Math.PI / 2;
       },
       onKeyUp(evt) {
         this.proportionalMode(false);
@@ -467,8 +468,11 @@ export class Halo extends Morph {
   }
 
   onKeyUp(evt) {
-    this.toggleDiagonal(false);
-    this.toggleMesh(false);
+    this.buttonControls.map(b => b.onKeyUp(evt));
+  }
+  
+  onKeyDown(evt) {
+    this.buttonControls.map(b => b.onKeyDown(evt));
   }
 
   tranformMoveDeltaDependingOnHaloPosition(evt, moveDelta, cornerName) {
@@ -530,12 +534,13 @@ export class Halo extends Morph {
       horizontal && horizontal.remove();
       mesh && mesh.remove();
     }
+    this.focus();
   }
 
   toggleDiagonal(active) {
     var diagonal = this.getSubmorphNamed("diagonal");
     if (active) {
-      var offset = this.extent.scaleBy(0.5);
+      var offset = pt(100,100);
       diagonal = diagonal || this.addMorphBack(new Path({
           name: "diagonal",
           styleClasses: ["morph", "halo-guide"],
