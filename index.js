@@ -28,17 +28,3 @@ export function morph(props = {}, opts = {restore: false}) {
     new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
     new klass(props);
 }
-
-
-import { Renderer } from "./rendering/renderer.js";
-import { EventDispatcher } from "./events.js";
-
-export function addWorldToDOM(world, domEnv = {window, document, destroy() {}}) {
-  var renderer = new Renderer(world, domEnv.document.body, domEnv).startRenderWorldLoop(),
-      eventDispatcher = new EventDispatcher(domEnv.window, world).install();
-  world.makeDirty();
-  return {
-    world, renderer, eventDispatcher,
-    destroy() { renderer.clear(); eventDispatcher.uninstall(); domEnv.destroy(); }
-  }
-}

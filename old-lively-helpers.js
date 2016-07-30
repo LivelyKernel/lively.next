@@ -1,36 +1,36 @@
 // For getting a new Morphic world setup in old Lively
 import { num, arr } from "lively.lang";
-import { pt, Color, Point, Rectangle, Transform } from "lively.graphics";
-import { Renderer, morph, Text, EventDispatcher, Menu } from "lively.morphic";
+import { pt, Color, Point } from "lively.graphics";
+import { morph } from "lively.morphic";
 import { ObjectDrawer, Window } from "lively.morphic/widgets.js";
+import MorphicEnv from "lively.morphic/env.js";
 
 export function setupMorphicWorldOn(htmlMorph) {
-
   var rootNode = htmlMorph.renderContext().shapeNode,
-      world = morph({type: "world", extent: Point.ensure(htmlMorph.getExtent())}),
-      renderer = new Renderer(world, rootNode).startRenderWorldLoop(),
-      eventDispatcher = new EventDispatcher(window, world).install();
-
-  world.addMorph(new ObjectDrawer({position: pt(20,10)}));;
-  world.addMorph(new Window({extent: pt(200, 300), position: pt(200,200)}));
-  world.addMorph(new Window({extent: pt(200, 300), position: pt(400,200)}));
+      env = new MorphicEnv(),
+      world = morph({
+        env, type: "world", extent: Point.ensure(htmlMorph.getExtent()),
+        submorphs: [
+          new ObjectDrawer({env, position: pt(20,10)}),
+          new Window({env, extent: pt(200, 300), position: pt(200,200)}),
+          new Window({env, extent: pt(200, 300), position: pt(400,200)})
+        ]});
+  env.setWorldRenderedOn(world, rootNode)
 
   // FIXME currently used for show()
   window.$$world = world;
-  return {world, renderer, eventDispatcher};
+  return env;
 }
 
 
 function addMorphicSetupMethods(htmlMorph) {
-  htmlMorph.doNotSerialize = ["state"];
+  htmlMorph.doNotSerialize = ["env"];
   htmlMorph.addScript(function cleanupNewMorphicWorld() {
-    if (this.state) {
-      var {renderer, eventDispatcher} = this.state;
-      renderer && renderer.clear();
-      eventDispatcher && eventDispatcher.uninstall();
+    if (this.env) {
+      this.env && this.env.uninstall();
     }
     this.setHTML('');
-    this.state = {};
+    this.env = {};
   });
 
   htmlMorph.addScript(function setupNewMorphicWorld() {
@@ -38,13 +38,12 @@ function addMorphicSetupMethods(htmlMorph) {
     return window.lively.next.bootstrapped
       .then(() => window.lively.modules.importPackage("node_modules/lively.morphic"))
       .then(() => window.System.import("lively.morphic/old-lively-helpers.js"))
-      .then(helpers => this.state = helpers.setupMorphicWorldOn(this))
+      .then(helpers => this.env = helpers.setupMorphicWorldOn(this))
       .catch(err => window.$world.logError(err));
   });
 
-  htmlMorph.addScript(function onLoad() {
-    this.setupNewMorphicWorld();
-  });
+  htmlMorph.addScript(function onShutdown() { this.cleanupNewMorphicWorld(); });
+  htmlMorph.addScript(function onLoad() { this.setupNewMorphicWorld(); });
 }
 
 function createHtmlMorph() {
