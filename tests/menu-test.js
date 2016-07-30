@@ -2,16 +2,7 @@
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-var env, renderer;
-async function createMorphicEnvWithWorld() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.setWorld(createDummyWorld());
-  renderer = env.renderer;
-}
-function cleanup() { env && env.uninstall(); }
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+import { MorphicEnv } from "../index.js";
 import { morph, Menu } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
@@ -22,7 +13,7 @@ var inBrowser = System.get("@system-env").browser ? it :
 
 var world;
 function createDummyWorld() {
-  world = morph({
+  return world = morph({
     type: "world", name: "world", extent: pt(300,300),
     submorphs: []
   });
@@ -31,8 +22,8 @@ function createDummyWorld() {
 
 describe("menus", () => {
 
-  beforeEach(async () => createMorphicEnvWithWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   inBrowser("appear with title and items", () => {
     var item1Activated = 0,

@@ -45,16 +45,13 @@ function requestAnimationFramePolyfill(window) {
 
 async function createDOMEnvironment_browser() {
   var iframe = await createIFrame(document.body)
-  requestAnimationFramePolyfill(iframe.contentWindow);
-  return {
-    iframe: iframe,
-    window: iframe.contentWindow,
-    document: iframe.contentWindow.document,
-    destroy() {
+  return new DomEnvironment(
+    iframe.contentWindow,
+    iframe.contentWindow.document,
+    () => {
       iframe.contentWindow && iframe.contentWindow.close();
       iframe.parentNode && iframe.parentNode.removeChild(iframe);
-    }
-  }
+    });
 }
 
 function createDOMEnvironment_node() {
@@ -66,14 +63,10 @@ function createDOMEnvironment_node() {
       '<div></div>',
       ["https://code.jquery.com/pep/0.4.1/pep.js"],
       { virtualConsole },
-      function (err, window) {
-        requestAnimationFramePolyfill(window);
-        err ? reject(err) : resolve({
-          window: window,
-          document: window.document,
-          destroy() { window.close(); }
-        })
-      });
+      (err, window) =>
+        err ?
+          reject(err) :
+          resolve(new DomEnvironment(window, window.document, () => window.close())));
   })
 }
 
@@ -83,16 +76,26 @@ export function createDOMEnvironment() {
     createDOMEnvironment_node();
 }
 
-export function browserDOMEnvironment() {
-  // sync alternative
-  if (!System.get("@system-env").browser)
-    throw new Error("browserEnvironment() only works in browsers!");
-  requestAnimationFramePolyfill(window);
-  return {
-    destroy() {},
-    window: window,
-    document: document
+class DomEnvironment {
+
+  constructor(window, document, destroyFn) {
+    requestAnimationFramePolyfill(window);
+    this.window = window;
+    this.document = document;
+    this.destroyFn = destroyFn;
   }
+
+  destroy() {
+    if (typeof this.destroyFn === "function")
+      this.destroyFn();
+  }
+}
+
+var _defaultEnv;
+export function defaultDOMEnv() {
+  return _defaultEnv || (_defaultEnv = System.get("@system-env").browser ?
+    new DomEnvironment(window, document) :
+    createDOMEnvironment());
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

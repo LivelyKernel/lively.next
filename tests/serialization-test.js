@@ -1,17 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-var env, renderer;
-async function createMorphicEnvWithWorld() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.setWorld(createDummyWorld());
-  renderer = env.renderer;
-}
-function cleanup() { env && env.uninstall(); }
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+import { MorphicEnv } from "../index.js";
 import { morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
@@ -30,8 +19,8 @@ function createDummyWorld() {
 
 describe("morph serialization", () => {
   
-  beforeEach(() => createMorphicEnvWithWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   it("serialize single morph", () => {
     var m = morph({fill: Color.red, position: pt(10,20)}),

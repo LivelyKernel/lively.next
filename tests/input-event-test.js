@@ -1,22 +1,10 @@
 /*global declare, it, describe, beforeEach, afterEach*/
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-var env, renderer;
-async function createMorphicEnvWithWorld() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.setWorld(createDummyWorld());
-  await env.world.whenRendered();
-  renderer = env.renderer;
-}
-function cleanup() { env && env.uninstall(); }
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 import { expect } from "mocha-es6";
 import { promise } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { morph, World, show } from "../index.js";
+import { createDOMEnvironment } from "../rendering/dom-helper.js";
+import { MorphicEnv } from "../index.js";
 
 function wait(n) {
   return n ? promise.delay(n*1000) : Promise.resolve();
@@ -38,7 +26,7 @@ function installEventLogger(morph, log) {
   });
 }
 
-var world, submorph1, submorph2, submorph3, submorph4, eventLog;
+var env, world, submorph1, submorph2, submorph3, submorph4, eventLog;
 function createDummyWorld() {
   world = new World({name: "world", extent: pt(300,300)})
   world.submorphs = [{
@@ -71,8 +59,9 @@ describe("events", function() {
   if (System.get("@system-env").node)
     this.timeout(10000);
 
-  beforeEach(async () => createMorphicEnvWithWorld());
-  afterEach(() => cleanup());
+
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   it("mousedown on submorph", () => {
     env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: submorph2});
@@ -161,7 +150,7 @@ describe("events", function() {
     var [m1, m2] = world.submorphs;
     var prevGlobalPos = m2.globalPosition;
 
-    world.renderAsRoot(renderer);
+    world.renderAsRoot(env.renderer);
     env.eventDispatcher.simulateDOMEvents(
       {type: "pointerdown", target: m2, position: pt(60,60)},
       {type: "pointermove", target: m2, position: (pt(65,65))});

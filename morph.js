@@ -2,7 +2,7 @@ import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
 import { morph } from "./index.js";
-import MorphEnv from "./env.js";
+import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 
 
@@ -45,7 +45,7 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
-    this._env = props.env || MorphEnv.default();
+    this._env = props.env || MorphicEnv.default();
     if (props.env) props = obj.dissoc(props, ["env"]);
     if (props.bounds) {
       this.setBounds(props.bounds);

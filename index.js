@@ -1,11 +1,10 @@
-export { Renderer } from "./rendering/renderer.js";
-export * from "./events.js";
 export * from "./morph.js";
 export * from "./world.js";
 export * from "./text.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
 export * from "./list.js";
+export * from "./env.js";
 export { show } from "./markers.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

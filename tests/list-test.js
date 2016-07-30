@@ -1,17 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-var env, renderer;
-async function createMorphicEnvWithWorld() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.setWorld(createDummyWorld());
-  renderer = env.renderer;
-}
-function cleanup() { env && env.uninstall(); }
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+import { MorphicEnv } from "../index.js";
 import { expect } from "mocha-es6";
 import { Morph, List } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
@@ -33,8 +22,8 @@ function createDummyWorld() {
 
 describe("list morph", () => {
 
-  beforeEach(async () => createMorphicEnvWithWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   describe("vertical layout", () => {
 

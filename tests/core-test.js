@@ -1,22 +1,11 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-var env, renderer;
-async function createMorphicEnvWithWorld() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.setWorld(createDummyWorld());
-  renderer = env.renderer;
-}
-function cleanup() { env && env.uninstall(); }
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-import { morph } from "../index.js";
+import { morph, MorphicEnv } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { num } from "lively.lang";
 
+var env;
 var world, submorph1, submorph2, submorph3, image, ellipse;
 function createDummyWorld() {
   world = morph({
@@ -45,20 +34,20 @@ describe("full morphic setup with renderer and events", function () {
   if (System.get("@system-env").node)
     this.timeout(10000);
 
-  beforeEach(async () => createMorphicEnvWithWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   describe("rendering", () => {
 
     it("morph id is DOM node id", () => {
-      expect(world.id).equals(renderer.domNode.children[0].id);
+      expect(world.id).equals(env.renderer.domNode.children[0].id);
     });
 
     it("renderer associates domNodewith morph", () => {
-      var node = renderer.getNodeForMorph(submorph2),
-          morph = renderer.getMorphForNode(node);
+      var node = env.renderer.getNodeForMorph(submorph2),
+          morph = env.renderer.getMorphForNode(node);
       expect(morph).equals(submorph2, morph && morph.name);
-      expect(renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
+      expect(env.renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
                              .childNodes[0].childNodes[0].childNodes[0]
                              .childNodes[0]).equals(node); // brittle, might change...
     });
@@ -73,7 +62,7 @@ describe("full morphic setup with renderer and events", function () {
       it("scale and rotation are rendered", async () => {
         submorph1.rotateBy(num.toRadians(45));
         await submorph1.whenRendered();
-        expect(renderer.getNodeForMorph(submorph1).parentNode).deep.property("style.transform")
+        expect(env.renderer.getNodeForMorph(submorph1).parentNode).deep.property("style.transform")
           .match(/rotate\((45|44\.9+)deg\)/)
           .match(/scale\(1,\s*1\)/)
       });
@@ -81,9 +70,9 @@ describe("full morphic setup with renderer and events", function () {
       it("origin rendered via origin node", async () => {
         submorph1.origin = pt(20,10);
         await submorph1.whenRendered();
-        expect(renderer.getNodeForMorph(submorph1))
+        expect(env.renderer.getNodeForMorph(submorph1))
           .deep.property("style.left").match(/20px/);
-        expect(renderer.getNodeForMorph(submorph1))
+        expect(env.renderer.getNodeForMorph(submorph1))
           .deep.property("style.top").match(/10px/);
       });
 
@@ -92,21 +81,21 @@ describe("full morphic setup with renderer and events", function () {
     describe("shapes", () => {
 
       it("shape influences node style", () => {
-        const style = renderer.getNodeForMorph(ellipse).style;
+        const style = env.renderer.getNodeForMorph(ellipse).style;
         expect(style.borderRadius).match(/50px/);
         expect(style.position).equals("absolute");
       });
 
       it("morph type influences node structure", () => {
-        const ellipseNode = renderer.getNodeForMorph(ellipse),
-              imageNode = renderer.getNodeForMorph(image);
+        const ellipseNode = env.renderer.getNodeForMorph(ellipse),
+              imageNode = env.renderer.getNodeForMorph(image);
         expect(ellipseNode.nodeName).equals("DIV");
         expect(imageNode.childNodes[0].nodeName).equals("IMG");
       });
 
       it("morph type influences node attributes", () => {
-        const ellipseNode = renderer.getNodeForMorph(ellipse),
-              imageNode = renderer.getNodeForMorph(image);
+        const ellipseNode = env.renderer.getNodeForMorph(ellipse),
+              imageNode = env.renderer.getNodeForMorph(image);
         expect(ellipseNode).not.to.have.property('src');
         expect(imageNode.childNodes[0]).to.have.property('src');
       });

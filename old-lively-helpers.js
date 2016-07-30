@@ -1,13 +1,12 @@
 // For getting a new Morphic world setup in old Lively
 import { num, arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { morph } from "lively.morphic";
+import { morph, MorphicEnv } from "lively.morphic";
 import { ObjectDrawer, Window } from "lively.morphic/widgets.js";
-import MorphicEnv from "lively.morphic/env.js";
 
 export function setupMorphicWorldOn(htmlMorph) {
   var rootNode = htmlMorph.renderContext().shapeNode,
-      env = new MorphicEnv(),
+      env = MorphicEnv.default(),
       world = morph({
         env, type: "world", extent: Point.ensure(htmlMorph.getExtent()),
         submorphs: [
@@ -21,7 +20,6 @@ export function setupMorphicWorldOn(htmlMorph) {
   window.$$world = world;
   return env;
 }
-
 
 function addMorphicSetupMethods(htmlMorph) {
   htmlMorph.doNotSerialize = ["env"];

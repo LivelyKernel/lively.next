@@ -1,9 +1,6 @@
 /*global declare, it, xit, describe, beforeEach, afterEach, before, after*/
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+import { MorphicEnv } from "../index.js";
 import { Text } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";

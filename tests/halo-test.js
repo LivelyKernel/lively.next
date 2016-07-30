@@ -1,24 +1,12 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import MorphicEnv from "../env.js";
-var env, renderer;
-async function createMorphicEnvWithWorld() {
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.setWorld(createDummyWorld());
-  renderer = env.renderer;
-}
-function cleanup() { env && env.uninstall(); }
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+import { MorphicEnv } from "../index.js";
 import { expect } from "mocha-es6";
 import { morph } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num } from "lively.lang";
 
 var world, submorph1, submorph2, eventDispatcher;
-
 function createDummyWorld() {
   world = morph({
     type: "world", name: "world", extent: pt(300,300),
@@ -38,13 +26,11 @@ function closeToPoint(p1,p2) {
   expect(y).closeTo(p2.y, 0.1, "y");
 }
 
-var renderer, domEnv;
-
 
 describe("halos", () => {
 
-  beforeEach(async () => createMorphicEnvWithWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
 
   it("halo items are placed correctly", () => {
