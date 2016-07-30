@@ -30,7 +30,7 @@ function addMorphicSetupMethods(htmlMorph) {
       this.env && this.env.uninstall();
     }
     this.setHTML('');
-    this.env = {};
+    this.env = null;
   });
 
   htmlMorph.addScript(function setupNewMorphicWorld() {
