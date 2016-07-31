@@ -1,11 +1,11 @@
 /*global declare, it, xit, describe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { FontMetric } from "../rendering/renderer.js";
-import { Text, morph, Renderer } from "../index.js";
+import { MorphicEnv } from "../index.js";
+import { Text } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
-
+// FIXME! FontMetric should work in nodejs with jsdom as well!!!
 var inBrowser = System.get("@system-env").browser ? it :
   (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
 
@@ -19,24 +19,22 @@ function text(string, props) {
   });
 }
 
-var domEnv;
+var env;
 
 describe("text", () => {
 
   beforeEach(async () => {
-    domEnv = await createDOMEnvironment();
-    FontMetric.initDefault(domEnv.document);
+    env = new MorphicEnv(await createDOMEnvironment());
   })
 
   afterEach(() => {
-    FontMetric.removeDefault();
-    domEnv.destroy();
+    env && env.uninstall();
   })
 
   describe("font metric", () => {
 
     inBrowser("computes font size", () => {
-      var {width, height} = FontMetric.default().sizeFor("Arial", 12, "A");
+      var {width, height} = env.fontMetric.sizeFor("Arial", 12, "A");
       expect(width).closeTo(8, 1);
       expect(height).closeTo(14, 1);
     });

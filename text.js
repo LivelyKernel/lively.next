@@ -1,7 +1,6 @@
 import { string } from "lively.lang";
 import { Color, pr } from "lively.graphics";
 import { Morph, show } from "./index.js";
-import { FontMetric } from "./rendering/renderer.js";
 
 export class Text extends Morph {
 
@@ -33,7 +32,7 @@ export class Text extends Morph {
     this._needsSelect = false;
   }
 
-  get fontMetric() { return FontMetric.default(); }
+  get fontMetric() { return this.env.fontMetric; }
 
   get isText() { return true }
 

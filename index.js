@@ -1,11 +1,10 @@
-export { Renderer } from "./rendering/renderer.js";
-export * from "./events.js";
 export * from "./morph.js";
 export * from "./world.js";
 export * from "./text.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
 export * from "./list.js";
+export * from "./env.js";
 export { show } from "./markers.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -27,18 +26,4 @@ export function morph(props = {}, opts = {restore: false}) {
   return opts.restore ?
     new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
     new klass(props);
-}
-
-
-import { Renderer } from "./rendering/renderer.js";
-import { EventDispatcher } from "./events.js";
-
-export function addWorldToDOM(world, domEnv = {window, document, destroy() {}}) {
-  var renderer = new Renderer(world, domEnv.document.body, domEnv).startRenderWorldLoop(),
-      eventDispatcher = new EventDispatcher(domEnv.window, world).install();
-  world.makeDirty();
-  return {
-    world, renderer, eventDispatcher,
-    destroy() { renderer.clear(); eventDispatcher.uninstall(); domEnv.destroy(); }
-  }
 }

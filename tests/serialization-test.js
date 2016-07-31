@@ -1,14 +1,14 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { morph, addWorldToDOM } from "../index.js";
+import { MorphicEnv } from "../index.js";
+import { morph } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
 import { serializeMorph, deserializeMorph } from "../serialization.js";
 
-var world, rendered;
-
+var world;
 function createDummyWorld() {
-  world = morph({
+  return world = morph({
     type: "world", name: "world", extent: pt(300,300),
     submorphs: [{
         name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
@@ -17,20 +17,10 @@ function createDummyWorld() {
   });
 }
 
-async function createAndRenderDummyWorld() {
-  createDummyWorld();
-  rendered = addWorldToDOM(world, await createDOMEnvironment());
-}
-
-function cleanup() {
-  rendered && rendered.destroy();
-}
-
-
 describe("morph serialization", () => {
   
-  beforeEach(() => createAndRenderDummyWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   it("serialize single morph", () => {
     var m = morph({fill: Color.red, position: pt(10,20)}),

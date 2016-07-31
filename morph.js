@@ -2,6 +2,7 @@ import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
 import { morph } from "./index.js";
+import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 
 
@@ -36,7 +37,7 @@ function newMorphId(prefix) {
 
 export class Morph {
 
-  constructor(props) {
+  constructor(props = {}) {
     this._owner = null;
     this._changes = [];
     this._dirty = true; // for initial display
@@ -44,6 +45,8 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
+    this._env = props.env || MorphicEnv.default();
+    if (props.env) props = obj.dissoc(props, ["env"]);
     if (props.bounds) {
       this.setBounds(props.bounds);
       props = obj.dissoc(props, ["bounds"]);
@@ -57,8 +60,9 @@ export class Morph {
   get isMorph() { return true; }
   get id() { return this._id; }
 
-  defaultProperty(key) { return defaultProperties[key]; }
+  get env() { return this._env; }
 
+  defaultProperty(key) { return defaultProperties[key]; }
   getProperty(key) { return this._currentState[key]; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
