@@ -91,6 +91,15 @@ export class Morph {
   onChange(change) {}
   onSubmorphChange(submorph, change) {}
 
+  signalMorphChange(change, morph) {
+    if (this.owner) this.owner.signalMorphChange(change, morph);
+  }
+  
+  refreshLayoutIfNeeded(submorphChange) {
+    const needsRefresh = ["extent", "position", "scale", "rotation"].indexOf(submorphChange.prop) > -1;
+    if (this.layout && needsRefresh) this.layout.applyTo(this);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // render hooks
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -104,6 +113,9 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  get layout()         { return this.getProperty("layout") }
+  set layout(value)    { this.recordChange({prop: "layout", value}); }
 
   get name()           { return this.getProperty("name"); }
   set name(value)      { this.recordChange({prop: "name", value}); }

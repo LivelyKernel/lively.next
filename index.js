@@ -5,6 +5,7 @@ export * from "./menus.js";
 export * from "./html-morph.js";
 export * from "./list.js";
 export * from "./env.js";
+export * from "./layout.js";
 export { show } from "./markers.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
