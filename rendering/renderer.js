@@ -1,8 +1,7 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import FontMetric from "./font-metric.js";
 import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
-import {h} from "virtual-dom";
+import { h } from "virtual-dom";
 
 const defaultCSS = `
 
@@ -102,7 +101,6 @@ export class Renderer {
     this.domEnvironment = domEnvironment;
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
-    FontMetric.initDefault({document: domEnvironment.document});
   }
 
   clear() {
@@ -110,7 +108,6 @@ export class Renderer {
     this.domNode && this.domNode.parentNode.removeChild(this.domNode);
     this.domNode = null;
     this.renderMap = new WeakMap();
-    FontMetric.removeDefault();
   }
 
   ensureDefaultCSS() {
