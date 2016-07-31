@@ -27,13 +27,6 @@ describe("list morph", () => {
 
   describe("vertical layout", () => {
 
-    it("renders items vertically", () => {
-      const [item1, item2, item3] = list.submorphs;
-      expect(item1.position).equals(pt(0,0));
-      expect(item2.position).equals(item1.bottomLeft);
-      expect(item3.position).equals(item2.bottomLeft);
-    });
-
     it("adjusts width to widest item", () => {
       const maxWidth = arr.max(list.items.map( m => m.width ));
       expect(list.width).equals(maxWidth);
@@ -43,25 +36,6 @@ describe("list morph", () => {
       const totalHeight = list.items.reduce((h, m) => h + m.height, 0)
       expect(list.height).equals(totalHeight);
     });
-
-    it("adjusts layout when item is removed", () => {
-      const [item1, item2, item3] = list.submorphs;
-      list.removeItem(item2);
-      expect(list.items.length).equals(2);
-      expect(item3.position).equals(item1.bottomLeft);
-      expect(list.height).equals(142);
-    });
-
-    it("adjusts layout when item is inserted", () => {
-      const [item1, item2, item3] = list.submorphs,
-            item4 = new Morph({extent: pt(200,200)});
-      list.addItemAt(item4, 1);
-      expect(list.items.length).equals(4);
-      expect(item4.position).equals(item1.bottomLeft);
-      expect(list.width).equals(200);
-      expect(list.height).equals(384);
-    });
-
   });
 
 
@@ -72,13 +46,6 @@ describe("list morph", () => {
        list.layoutPolicy = "horizontal";
        list.applyLayout();
      });
-
-    it("renders items horizontally", () => {
-      const [item1, item2, item3] = list.submorphs;
-      expect(item1.position).equals(pt(0,0));
-      expect(item2.position).equals(item1.topRight);
-      expect(item3.position).equals(item2.topRight);
-    });
 
     it("adjusts width to number of items", () => {
       const totalWidth = list.items.reduce( (w,m) => w + m.width, 0);
