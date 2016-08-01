@@ -1,7 +1,7 @@
 import { defaultDOMEnv } from "./rendering/dom-helper.js";
 import { Renderer } from "./rendering/renderer.js";
 import FontMetric from "./rendering/font-metric.js";
-import { ChangeRecorder } from "./changes.js";
+import { ChangeRecorder, UndoManager } from "./changes.js";
 import { EventDispatcher } from "./events.js";
 
 
@@ -43,7 +43,8 @@ export class MorphicEnv {
     
     this.objPool = null;
     this.synchronizer = null;
-    this.changes = new ChangeRecorder();
+    this.changeRecorder = new ChangeRecorder();
+    this.undoManager = new UndoManager();
   }
 
   initWithDOMEnv(domEnv) {

@@ -1,13 +1,13 @@
-import { obj } from "lively.lang";
+import { obj, arr } from "lively.lang";
 
 function signalChange(change, morph) {
-  
+
   // if (!morph.isHand)
   //   console.log(`[change] ${morph._rev} ${change.target.id.slice(0,7)}.${change.prop} -> ${String(change.value).slice(0,100)}`);
 
   try {
     morph.onChange(change);
-    
+
     var owner = morph.owner;
     while (owner) {
       owner.onSubmorphChange(change, morph);
@@ -28,20 +28,70 @@ export class ChangeRecorder {
     this.changes = [];
     this.revision = 0;
     this.activeTags = [];
-    this.activeTagsCopy = [];
+    this.taggings = {};
+    this.taggingsPerMorph = new WeakMap();
   }
 
-  tagWhile(morph, tags, duringFn) {
-    var idx = this.activeTags.length;
-    this.activeTags.push(...tags);
-    this.activeTagsCopy = this.activeTags.slice();
+  changesFor(morph) {
+    return this.changes.filter(c => c.target === morph);
+  }
+
+  changesWhile(whileFn) {
+    var from = this.changes.length;
+    whileFn();
+    return this.changes.slice(from, this.changes.length);
+  }
+
+  tagWhile(morph, tags, whileFn) {
+    var id = this.tagStart(morph, tags);
     try {
-      return duringFn.call(morph);
+      return this.changesWhile(whileFn);
     } finally {
-      this.activeTags.splice(idx, this.activeTags.length-idx);
-      this.activeTagsCopy = this.activeTags.slice();
-      console.log(this.activeTagsCopy.join(" - "))
+      this.tagEnd(morph, id);
     }
+  }
+
+  tagStart(morph, tags) {
+    var baseId = "tagging__" + morph.id + "__" + Date.now(), id;
+    var i = 1; do {
+      id = baseId + "-" + i++;
+    } while (id in this.taggings)
+
+    this.taggings[id] = {tags, startRev: this.revision};
+    var perMorph = this.taggingsPerMorph.get(morph);
+    if (!perMorph) perMorph = [id]; else perMorph.push(id);
+    this.taggingsPerMorph.set(morph, perMorph);
+    this.activeTags.push(...tags);
+    return id;
+  }
+
+  tagEnd(morph, optId) {
+    var perMorph = this.taggingsPerMorph.get(morph);
+    if (!perMorph || !perMorph.length) {
+      console.warn(`Cannot tagEnd for morph ${morph}: tagging data not found`)
+      return [];
+    }
+
+    var id = optId;
+    if (!optId) id = perMorph.pop();
+    else arr.remove(perMorph, id);
+
+
+    if (!this.taggings[id]) return [];
+    var {tags, startRev} = this.taggings[id];
+    delete this.taggings[id];
+
+    // efficiently remove tags belonging to this tagging, not don't remove duplicates!
+    for (var i = this.activeTags.length - 1; i >= 0; i--) {
+      var tagIdx = tags.findIndex(t => this.activeTags[i] === t);
+      if (tagIdx !== -1) {
+        this.activeTags.splice(i, 1);
+        tags.splice(tagIdx, 1);
+      }
+      if (!tags.length) break;
+    }
+
+    return this.changes.slice(startRev);
   }
 
   record(morph, change) {
@@ -75,12 +125,23 @@ export class ChangeRecorder {
     }
   }
 
-}  changesFor(morph) {
-    return this.changes.filter(c => c.target === morph);
+}
+
+
+export class UndoManager {
+
+  constructor() {
+    this.undos = [];
+    this.redos = [];
+    this.undoInProgress = null;
   }
 
-  changesWhile(whileFn) {
-    var from = this.changes.length;
-    whileFn();
-    return this.changes.slice(from, this.changes.length);
+  undoStart(morph, name) {
+
   }
+
+  undoStop(morph, name) {
+
+  }
+
+}
