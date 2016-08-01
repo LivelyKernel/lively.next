@@ -1,10 +1,20 @@
-import { mixins, modes, promisify } from 'js-git-browser';
+import { mixins, modes, promisify, codec, bodec } from 'js-git-browser';
 import { gitHubToken, gitHubURL } from './github-integration.js';
 
 const repoForPackage = {};
 
-function getAuthor() {
+function getAuthor() { // -> {name: string, email: string}
   return {name: "John Doe", email: "john@example.org"};
+}
+
+// type EntryType = "tree" | "commit" | "tag" | "blob"
+
+function serialize(type, body) { // EntryType, any -> string
+  return bodec.toString(codec.frame({type:type,body:body}), "base64");
+}
+
+function deserialize(str) { // string -> {type: EntryType, body: any}
+  return codec.deframe(bodec.fromString(str, "base64"), true);
 }
 
 export default class Branch {
@@ -44,7 +54,7 @@ export default class Branch {
     return repoForPackage[this.pkg] = repo;
   }
   
-  async head() { // -> Hash?
+  async head() { // -> Entry?
     const repo = await this.repo(),
           headHash = await repo.readRef(`refs/heads/${this.name}`);
     if (!headHash) return null;
@@ -57,22 +67,26 @@ export default class Branch {
     return commit.tree;
   }
   
-  async filesForTree(tree) { // Tree -> {[RelPath]: Hash}
+  async filesForTree(tree, withDir) {
+    // Tree, boolean -> {[RelPath]: Hash}
     const repo = await this.repo();
     const treeStream = await repo.treeWalk(tree),
           files = {};
     let obj;
     while (obj = await treeStream.read()) {
+      if (withDir && obj.mode === modes.tree) {
+        files[obj.path] = obj.hash;
+      }
       if (obj.mode !== modes.file) continue;
       files[obj.path] = obj.hash;
     }
     return files;
   }
   
-  async files() { // -> {[RelPath]: Hash}
+  async files(withDir = false) { // boolean? -> {[RelPath]: Hash}
     const tree = await this.tree();
     if (!tree) throw new Error("File tree not found in git");
-    return this.filesForTree(tree);
+    return this.filesForTree(tree, withDir);
   }
   
   async parent() { // () -> Commit
@@ -82,12 +96,12 @@ export default class Branch {
     return repo.loadAs("commit", commit.parents[0]);
   }
   
-  async changedFiles() { // -> {[RelPath]: Hash}
+  async changedFiles(withDir) { // boolean? -> {[RelPath]: Hash}
     const repo = await this.repo(),
-          files = await this.files(),
+          files = await this.files(withDir),
           parentTree = (await this.parent()).tree;
     if (!parentTree) throw new Error("File tree not found in git");
-    const parentFiles = await this.filesForTree(parentTree),
+    const parentFiles = await this.filesForTree(parentTree, withDir),
           changedFiles = {};
     Object.keys(files).forEach(relPath => {
       if (files[relPath] != parentFiles[relPath]) {
@@ -154,6 +168,35 @@ export default class Branch {
   
   toString() { // -> String
     return `Branch(${this.name}, ${this.pkg})`;
+  }
+
+  async fromObject(obj) { // { ".": Hash, [Hash]: Entry } -> Branch
+    const repo = await this.repo();
+    for (const hash in obj) {
+      if (hash === ".") {
+        await repo.updateRef(`refs/heads/${this.name}`, obj[hash]);
+        continue;
+      }
+      const {type, body} = deserialize(obj[hash]);
+      await repo.saveAs(type, body);
+    }
+    return this;
+  }
+  
+  async toObject() { // -> { ".": Hash, [Hash]: Entry }
+    const repo = await this.repo(),
+          changed = await this.changedFiles(true),
+          headHash = await repo.readRef(`refs/heads/${this.name}`),
+          headCommit = await repo.loadAs("commit", headHash),
+          result = {};
+    for (const relPath in changed) {
+      const hash = changed[relPath];
+      const {type, body} = await repo.loadRaw(hash);
+      result[hash] = serialize(type, body);
+    }
+    result[headHash] = serialize("commit", headCommit);
+    result["."] = headHash;
+    return result;
   }
 
 }

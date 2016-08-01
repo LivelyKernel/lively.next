@@ -5,7 +5,7 @@ import { gitInterface } from '../index.js';
 import Branch from "./branch.js";
 
 
-let current; // undefined (uninitialized) | null (none) | ChangeSet
+let current; // null (none) | ChangeSet
 let changesets; // undefined (uninitialized) | Array<ChangeSet>
 
 class ChangeSet {
@@ -67,18 +67,28 @@ class ChangeSet {
     //TODO
   }
 
-  toFile() {
-    //TODO
+  async fromObject(obj) {
+    this.name = obj["."];
+    this.branches = await Promise.all(
+      Object.keys(obj)
+      .filter(pkg => pkg !== ".")
+      .map(pkg => new Branch(this.name, pkg))
+      .map(b => b.fromObject(obj[b.pkg])));
+    return this;
   }
-
-  fromFile() {
-    //TODO
+  
+  async toObject() {
+    const result = {};
+    for (let branch of this.branches) {
+      result[branch.pkg] = await branch.toObject();
+    }
+    result["."] = this.name;
+    return result;
   }
   
   async delete() {
     if (this === current) {
-      current = null;
-      window.localStorage.removeItem('lively.changesets/current');
+      setCurrentChangeSet(null);
     }
     changesets = changesets.filter(cs => cs !== this);
     const db = await new Promise((resolve, reject) => {
@@ -144,22 +154,17 @@ export async function localChangeSets() { // () => Array<ChangeSet>
   return changesets = Object.keys(groups).map(name => new ChangeSet(name, groups[name]));
 }
 
-export async function currentChangeSet() { // () -> ChangeSet?
-  if (current !== undefined) return current;
-  const csName = window.localStorage.getItem('lively.changesets/current');
-  const cs = (await localChangeSets()).find(cs => cs.name === csName);
-  return current = (cs === undefined ? null : cs);
+export function currentChangeSet() { // () -> ChangeSet?
+  return current;
 }
 
-export async function setCurrentChangeSet(csName) { // ChangeSetName -> ChangeSet
-  const old = await currentChangeSet();
+export async function setCurrentChangeSet(csName) { // ChangeSetName? -> ChangeSet
+  const old = currentChangeSet();
   if (!csName) {
     current = null;
-    window.localStorage.removeItem('lively.changesets/current');
   } else {
     const cs = (await localChangeSets()).find(cs => cs.name === csName);
     current = cs;
-    window.localStorage.setItem('lively.changesets/current', csName);
   }
   emit("lively.changesets/switchedcurrent", {
     changeset: csName || null,

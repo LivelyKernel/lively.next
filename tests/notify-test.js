@@ -3,7 +3,7 @@
 import { expect } from "mocha-es6";
 import { subscribe, unsubscribe } from "lively.notifications";
 
-import { createChangeSet, localChangeSets, currentChangeSet, setCurrentChangeSet, notify } from "../src/changeset.js";
+import { createChangeSet, localChangeSets, setCurrentChangeSet, notify } from "../src/changeset.js";
 import { gitInterface } from "../index.js";
 import { pkgDir, fileA, createPackage, removePackage, vmEditorMock, initMaster, initChangeSet, changeFile } from "./helpers.js";
 

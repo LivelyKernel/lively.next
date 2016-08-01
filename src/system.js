@@ -3,8 +3,8 @@ import { isHookInstalled, installHook, removeHook } from "lively.modules";
 import { currentChangeSet } from './changeset.js';
 
 async function fetch_from_changeset(proceed, load) {
-  const cs = await currentChangeSet(),
-        content = cs && cs.getFileContent(load.name);
+  const cs = currentChangeSet(),
+        content = cs && await cs.getFileContent(load.name);
   return content === null ? proceed(load) : content;
 }
 
@@ -17,13 +17,13 @@ export default class LocalGitSystem extends LocalCoreInterface {
   }
 
   async resourceExists(url) {
-    const cs = await currentChangeSet(),
+    const cs = currentChangeSet(),
           exists = cs && await cs.fileExists(url);
     return exists === null ? super(url) : exists;
   }
 
   async resourceEnsureExistance(url, optContent = "") {
-    const cs = await currentChangeSet();
+    const cs = currentChangeSet();
     if (!cs) return super.resourceEnsureExistance(url, optContent);
     const exists = await this.resourceExists(url);
     if (!exists) await this.resourceWrite(url, optContent);
@@ -34,7 +34,7 @@ export default class LocalGitSystem extends LocalCoreInterface {
   }
 
   async resourceRead(url) {
-    const cs = await currentChangeSet(),
+    const cs = currentChangeSet(),
           content = cs && await cs.getFileContent(url);
     return content === null ? super.resourceRead(url) : content;
   }
@@ -44,7 +44,7 @@ export default class LocalGitSystem extends LocalCoreInterface {
   }
 
   async resourceWrite(url, src) {
-    const cs = await currentChangeSet();
+    const cs = currentChangeSet();
     return cs === null ? super.resourceWrite(url, src) : cs.setFileContent(url, src);
   }
 

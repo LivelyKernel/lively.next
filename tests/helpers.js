@@ -5,7 +5,6 @@ import { removeDir, createFiles } from "lively.modules/tests/helpers.js";
 import { gitInterface } from "../index.js";
 import { createChangeSet, setCurrentChangeSet } from "../src/changeset.js";
 
-
 async function repoForPackage(pkg) {
   const repo = {};
   await new Promise((resolve, reject) => {
