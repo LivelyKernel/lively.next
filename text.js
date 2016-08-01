@@ -154,14 +154,23 @@ export class Text extends Morph {
     this._selection = { start: start, end: end };
   }
 
-  applySelectionTo(domNode) {
-    var { start, end } = this._selection;
-    domNode && domNode.setSelectionRange(start, end);
+  onMouseDown(evt) { this.onMouseMove(evt); }
+
+  onMouseMove(evt) {
+    var { clickedOnMorph, clickedOnPosition } = evt.state;
+    if (clickedOnMorph === this) {
+      var startPos = this.localize(clickedOnPosition),
+          endPos = this.localize(evt.position),
+          { fontFamily, fontSize, textString, fontMetric, selection } = this,
+          { start: curStart, end: curEnd } = selection,
+          start = fontMetric.indexFromPoint(fontFamily, fontSize, textString, startPos),
+          end = fontMetric.indexFromPoint(fontFamily, fontSize, textString, endPos);
+      if (start > end)
+        [start, end] = [end, start];
+      if (end !== curEnd || start !== curStart)
+        selection.range = { start: start, end: end };
+    }
   }
-
-  onMouseUp(evt) { this.onMouseDown(evt); }
-
-  onMouseDown(evt) { this.recordSelectionFrom(evt.domEvt.target); }
 
   onKeyUp(evt) {
     switch (evt.keyString()) {
@@ -190,6 +199,7 @@ export class Text extends Morph {
         break;
 
       case 'Backspace':
+        if (this.readOnly) break;
         evt.stop();
         sel.isCollapsed && sel.start && sel.start--;
         sel.text = "";
@@ -216,6 +226,7 @@ export class Text extends Morph {
         break;
 
       default:
+        if (this.readOnly) break;
         // FIXME!
         evt.stop();
         if (key.length !== 1 && key !== "Space" && key !== "Enter") {

@@ -81,6 +81,18 @@ const defaultCSS = `
     }
 }
 
+span.selected {
+  background: #ACCEF7;
+  line-height: normal;
+}
+
+span.cursor {
+  width: 0px;
+  display: inline-block;
+  outline: 1px solid black;
+  line-height: normal;
+}
+
 `;
 
 export class Renderer {
@@ -173,26 +185,25 @@ export class Renderer {
   }
 
   renderText(text) {
-    return h("textarea", {
+    let { textString, selection, readOnly } = text;
+    return h("div", {
       ...defaultAttributes(text),
-      value: text.textString,
-      readOnly: text.readOnly,
-      placeholder: text.placeholder,
-      ...(text._needsSelect && {
-        selectionStart: text._selection.start,
-        selectionEnd: text._selection.end
-      }),
       style: {
         ...defaultStyle(text),
         resize: "none",
-        border: 0,
-        "white-space": "nowrap",
+        "white-space": "pre",
         padding: "0px",
         "font-family": text.fontFamily,
         "font-size": text.fontSize + "px",
         "color": String(text.fontColor)
-      }
-    });
+      },
+    }, [textString.substring(0, selection.start),
+        h('span.selected.no-html-select', {
+          textContent: textString.substring(selection.start, selection.end),
+          style: { "pointer-events": "none" }
+        }),
+        h(`span${ readOnly ? "" : ".cursor" }.no-html-select`, "\u200b"),
+        textString.substring(selection.end)]);
   }
 
   renderImage(image) {
