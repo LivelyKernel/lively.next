@@ -1,11 +1,11 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { Morph, VerticalLayout, HorizontalLayout, TilingLayout, Renderer } from "../index.js";
+import { Morph, VerticalLayout, HorizontalLayout, TilingLayout, MorphicEnv } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, arr } from "lively.lang";
 
-var world, m, renderer, domEnv;
+var world, m, env, domEnv;
 
 function createDummyWorld() {
   world = new Morph({
@@ -21,24 +21,13 @@ function createDummyWorld() {
     ]})]
   });
   m = world.submorphs[0];
-}
-
-async function createAndRenderDummyWorld() {
-  createDummyWorld();
-  domEnv = await createDOMEnvironment();
-  renderer = new Renderer(world, domEnv.document.body, domEnv);
-  renderer.startRenderWorldLoop()
-}
-
-function cleanup() {
-  renderer && renderer.clear();
-  domEnv && domEnv.destroy();
+  return world;
 }
 
 describe("layout", () => {
   
-  beforeEach(async () => createAndRenderDummyWorld());
-  afterEach(() => cleanup());
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
   
   describe("vertical layout", () => {
     

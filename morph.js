@@ -88,10 +88,16 @@ export class Morph {
     return this;
   }
 
-  onChange(change) {}
-  onSubmorphChange(submorph, change) {}
+  onChange(change) {
+    if (change.prop == "layout") change.value.applyTo(this);
+    if (change.prop == "submorphs" && this.layout) this.layout.applyTo(this);
+  }
+  onSubmorphChange(submorph, change) {
+    if (this.layout) this.layout.applyTo(this);
+  }
 
   signalMorphChange(change, morph) {
+    this.refreshLayoutIfNeeded(change);
     if (this.owner) this.owner.signalMorphChange(change, morph);
   }
   
