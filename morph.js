@@ -79,37 +79,17 @@ export class Morph {
   // changes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  recordChange(change) {
-    if (!change.target) change.target = this;
-    if (!change.owner) change.owner = this.owner;
-    if (!change.type) change.type = "setter";
-    if (change.hasOwnProperty("value")) this._currentState[change.prop] = change.value;
-    this._rev++;
-    this._changes.push(change);
-    this.makeDirty();
-    this.signalMorphChange(change, this);
-    return change;
+  get changes() { return this._changes }
+  recordChange(change) { return this.env.changes.record(this, change); }
+  applyChange(change) { this.env.changes.apply(this, change); }
+
+  tagChangesWhile(tags, whileFn) {
+    this.env.changes.tagWhile(this, tags, whileFn);
+    return this;
   }
 
-  applyChange(change) {
-    // can be used from the outside, e.g. to replay changes
-    var {target, type, prop, value, receiver, selector, args} = change;
-
-    if (target !== this)
-      throw new Error(`change applied to ${this} which is not the target of the change ${target}`);
-
-    if (type === "setter") {
-      this.recordChange(change);
-    } else if (type === "method-call") {
-      receiver[selector].apply(receiver, args);
-    } else {
-      throw new Error(`Strange change of type ${type}, cannot apply it! ${obj.inspect(change, {maxDepth: 1})}`);
-    }
-  }
-
-  signalMorphChange(change, morph) {
-    if (this.owner) this.owner.signalMorphChange(change, morph);
-  }
+  onChange(change) {}
+  onSubmorphChange(submorph, change) {}
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // render hooks

@@ -1,10 +1,17 @@
 import { defaultDOMEnv } from "./rendering/dom-helper.js";
 import { Renderer } from "./rendering/renderer.js";
 import FontMetric from "./rendering/font-metric.js";
+import { ChangeRecorder } from "./changes.js";
 import { EventDispatcher } from "./events.js";
 
 
+// MorphicEnv.reset();
+
 export class MorphicEnv {
+
+  static reset() {
+    this._envs = [];
+  }
 
   static default() {
     if (!this._envs || !this._envs.length) this.pushDefault(new this());
@@ -36,6 +43,7 @@ export class MorphicEnv {
     
     this.objPool = null;
     this.synchronizer = null;
+    this.changes = new ChangeRecorder();
   }
 
   initWithDOMEnv(domEnv) {
