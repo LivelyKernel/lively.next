@@ -222,22 +222,30 @@ export class Halo extends Morph {
         this.halo.toggleDropIndicator(dropTarget && dropTarget != this.world(), dropTarget);
         return dropTarget && dropTarget.name;
       },
+      
       init(hand) {
         this.hand = hand;
         hand.grab(this.halo.target);
         this.halo.activeButton = this;
       },
-      update(hand) {
+      
+      update() {
+        this.halo.alignWithTarget();
+      },
+      
+      stop(hand) {
         this.halo.activeButton = null;
         hand.dropMorphsOn(this.morphBeneath(hand.position));
         this.halo.alignWithTarget();
         this.halo.toggleDropIndicator(false, dropTarget);
       },
+      
       onDragStart(evt) {
         this.init(evt.hand)
       },
+      
       onDragEnd(evt) {
-        this.update(evt.hand)
+        this.stop(evt.hand)
       }
     }));
   }
@@ -344,6 +352,7 @@ export class Halo extends Morph {
       updateScale(gauge) {
         if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
         angle = gauge.theta();
+        initRotation = this.halo.target.rotation;
         this.halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0)), 0.1, 0.5);
         this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
@@ -359,7 +368,11 @@ export class Halo extends Morph {
       adaptAppearance(scaling) {
         this.styleClasses = ["halo-item", "fa", scaling ? "fa-search-plus" : "fa-repeat"];
       },
-
+      
+      alignInHalo() {
+        if (this.halo.activeButton != this) this.bottomRight = this.halo.innerBounds().bottomLeft();
+      },
+      
       // events
       onDragStart(evt) {
         this.adaptAppearance(evt.isShiftDown());
