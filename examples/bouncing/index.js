@@ -18,7 +18,6 @@ Object.assign(Morph.prototype, {
     this.rotation += this.spin;
     this.scale = 1 + Math.abs(Math.sin(this.time));
     this.moveBy(this.velocity);
-    this._changes = [];
   }
 });
 

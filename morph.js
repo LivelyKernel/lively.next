@@ -38,14 +38,14 @@ function newMorphId(prefix) {
 export class Morph {
 
   constructor(props = {}) {
+    var env = props.env || MorphicEnv.default();
+    this._env = env;
+    this._rev = env.changeRecorder.revision;
     this._owner = null;
-    this._changes = [];
     this._dirty = true; // for initial display
-    this._rev = 0; // counting changes
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
-    this._env = props.env || MorphicEnv.default();
     if (props.env) props = obj.dissoc(props, ["env"]);
     if (props.bounds) {
       this.setBounds(props.bounds);
@@ -56,7 +56,7 @@ export class Morph {
   }
 
   get __only_serialize__() { return Object.keys(this._currentState); }
-  
+
   get isMorph() { return true; }
   get id() { return this._id; }
 
@@ -79,26 +79,47 @@ export class Morph {
   // changes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get changes() { return this._changes }
-  recordChange(change) { return this.env.changes.record(this, change); }
-  applyChange(change) { this.env.changes.apply(this, change); }
-
-  tagChangesWhile(tags, whileFn) {
-    this.env.changes.tagWhile(this, tags, whileFn);
-    return this;
-  }
-
   onChange(change) {}
   onSubmorphChange(submorph, change) {}
 
+  get changes() { return this.env.changeRecorder.changesFor(this); }
+  recordChange(change) { return this.env.changeRecorder.record(this, change); }
+  applyChange(change) { this.env.changeRecorder.apply(this, change); }
+
+  changesWhile(whileFn) {
+    return this.env.changeRecorder.changesWhile(whileFn);
+  }
+
+  tagChangesWhile(tags, whileFn) {
+    return this.env.changeRecorder.tagWhile(this, tags, whileFn);
+  }
+
+  tagChangesStart(tags) {
+    return this.env.changeRecorder.tagStart(this, tags);
+  }
+
+  tagChangesEnd(optTagId) {
+    return this.env.changeRecorder.tagEnd(this, optTagId);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // render hooks
+  // undo
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  makeDirty() {
-    if (this._dirty) return;
-    this._dirty = true;
-    if (this.owner) this.owner.makeDirty();
+  undoStart(name) {
+    this.env.undoManager.undoStart(this, name);
+  }
+
+  undoStop(name) {
+    this.env.undoManager.undoStop(this, name);
+  }
+
+  undo() {
+    // TODO
+  }
+
+  redo() {
+    // TODO
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -254,7 +275,7 @@ export class Morph {
     var bounds = this._cachedBounds;
     if (bounds)
       bounds = bounds.translatedBy(delta);
-    this.position = this.position.addPt(delta); 
+    this.position = this.position.addPt(delta);
     this._cachedBounds = bounds;
   }
   rotateBy(delta) { this.rotation += delta; }
@@ -391,7 +412,7 @@ export class Morph {
 
   removeAllMorphs() { this.submorphs = [] }
 
-  bringToFront() {　
+  bringToFront() {
     const submorphs = this.owner.submorphs,
           index = submorphs.indexOf(this);
     submorphs.splice(index,1);
@@ -660,7 +681,7 @@ export class Morph {
 
   onHoverIn(evt) {}
   onHoverOut(evt) {}
-  
+
   focus() {
     this._wantsFocus = true;
   }
@@ -690,7 +711,6 @@ export class Morph {
   initFromJSON(spec) {
     Object.assign(this, {
       _owner: null,
-      _changes: [],
       _dirty: true,
       _id: newMorphId(this.constructor.name)
     }, spec);
@@ -707,6 +727,12 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  makeDirty() {
+    if (this._dirty) return;
+    this._dirty = true;
+    if (this.owner) this.owner.makeDirty();
+  }
 
   needsRerender() { return this._dirty; }
 
@@ -773,7 +799,7 @@ export class Path extends Morph {
     super.resizeBy(delta);
     this.scaleVerticesBy(this.extent.scaleByPt(oldExtent.inverted()));
   }
-  
+
   setBounds(bounds) {
     const oldExtent = this.extent;
     super.setBounds(bounds);
@@ -800,7 +826,7 @@ export class Path extends Morph {
 }
 
 export class Polygon extends Path {
-  
+
   constructor(props) {
     if (props.vertices && props.vertices.length > 2) {
       super(props)
@@ -808,9 +834,9 @@ export class Polygon extends Path {
       throw new Error("A polygon requires 3 or more vertices!");
     }
   }
-  
+
   render(renderer) {
     return renderer.renderPolygon(this);
   }
-  
+
 }
