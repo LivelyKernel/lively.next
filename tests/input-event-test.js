@@ -198,6 +198,35 @@ describe("events", function() {
       expect(submorph4).property("textString").equals("lol text");
     });
 
+    it("entry clears selection", () => {
+      expect(submorph4).property("textString").equals("text");
+      submorph4.selection.range = { start: 0, end: 4 };
+      env.eventDispatcher.simulateDOMEvents(
+        {target: submorph4, type: "keydown", key: 'w'},
+        {target: submorph4, type: "keydown", key: 'o'},
+        {target: submorph4, type: "keydown", key: 'w'}
+      );
+      expect(submorph4).property("textString").equals("wow");
+    });
+
+    it("click sets cursor", () => {
+      expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: 0 });
+      env.eventDispatcher.simulateDOMEvents(
+        {target: submorph4, type: "click", position: pt(215, 200)}
+      );
+      expect(submorph4).property("selection").property("range").deep.equals({ start: 2, end: 2 });
+    });
+
+    it("drag sets selection", () => {
+      expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: 0 });
+      env.eventDispatcher.simulateDOMEvents(
+        {target: submorph4, type: "pointerdown", position: pt(200, 200)},
+        {target: submorph4, type: "pointermove", position: pt(220, 200)}, // simulate overshoot
+        {target: submorph4, type: "pointermove", position: pt(215, 200)},
+        {target: submorph4, type: "pointerup", position: pt(215, 200)}
+      );
+      expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: 2 });
+    });
   })
 
   describe("hover", () => {
