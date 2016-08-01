@@ -8,8 +8,9 @@ describe("morph change recording", () => {
 
   it("records property modifications as changes", () => {
     var m = morph({extent: pt(10,20), fill: Color.red});
-    expect(m._rev).equals(1);
-    // expect(m.changes).equals(2);
+    // Hm... make this one??? For creation...?
+    expect(m._rev).equals(2);
+    expect(m.changes).containSubset([{prop: "extent"}, {prop: "fill"}]);
   });
 
   it("tag changes", () => {
