@@ -123,8 +123,8 @@ class ModuleInterface {
     let m = this.System.get(this.id);
     if (!m) {
       m = await this.System.import(this.id);
+      emit("lively.modules/moduleloaded", {module: this.id}, Date.now(), this.System);
     }
-    emit("lively.modules/moduleloaded", {module: this.id}, Date.now(), this.System);
     return m;
   }
 
