@@ -1,7 +1,7 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
-import { morph } from "./index.js";
+import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 

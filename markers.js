@@ -1,34 +1,34 @@
 import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
-import { morph, Morph } from "./index.js";
+import { morph, Morph, MorphicEnv } from "./index.js";
 
 
 export function show(target) {
 
-  if (!target) return;
-  if (typeof target === "string") return $$world.setStatusMessage(target);
+  var world = MorphicEnv.default().world;
+
+  if (target === null || target === undefined) return;
   if (target.isMorph) return showRect(target.world(), target.globalBounds());
-  if (target instanceof Point) return showRect($$world, new Rectangle(target.x-5, target.y-5, 10,10));
-  if (typeof Element !== "undefined" && target instanceof Element) return showRect($$world, Rectangle.fromElement(target));
+  if (target.isPoint) return showRect(world, new Rectangle(target.x-5, target.y-5, 10,10));
+  if (target.isRectangle) return showRect(world, target);
+  if (typeof Element !== "undefined" && target instanceof Element) return showRect(world, Rectangle.fromElement(target));
 
-  console.warn(`show: cannot "show" ${target}`);
-
-  function showRect(world, rect) {
-    var marker = BoundsMarker.highlightBounds(rect);
-    return showThenHide(world, marker);
-  }
-
-  function showThenHide (world, morphOrMorphs, duration = 3) {
-    if (!world) return;
-    var morphs = Array.isArray(morphOrMorphs) ? morphOrMorphs : [morphOrMorphs];
-    morphs.forEach(ea => world.addMorph(ea));
-    if (duration) { // FIXME use scheduler
-      setTimeout(() => morphs.forEach(ea => ea.remove()), duration*1000);
-    }
-    return morphOrMorphs;
-  }
-
+  return world.setStatusMessage(String(target));
 }
 
+function showRect(world, rect) {
+  var marker = BoundsMarker.highlightBounds(rect);
+  return showThenHide(world, marker);
+}
+
+function showThenHide (world, morphOrMorphs, duration = 3) {
+  if (!world) return;
+  var morphs = Array.isArray(morphOrMorphs) ? morphOrMorphs : [morphOrMorphs];
+  morphs.forEach(ea => world.addMorph(ea));
+  if (duration) { // FIXME use scheduler
+    setTimeout(() => morphs.forEach(ea => ea.remove()), duration*1000);
+  }
+  return morphOrMorphs;
+}
 
 class BoundsMarker extends Morph {
 
