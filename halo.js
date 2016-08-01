@@ -12,11 +12,15 @@ const guideGradient = [[0, Color.red.withA(0)],
 class HaloItem extends Ellipse {
 
   constructor(props) {
-    super(Object.assign({
+    super({
       fill: Color.gray.withA(.7),
       grabbable: false,
-      extent: itemExtent
-    }, props));
+      location: null, // where to appear on target morph
+      property: null, // what property of target to represent + modify
+      extent: itemExtent,
+      ...props
+    });
+
   }
 
   get isHaloItem() { return true };
@@ -78,8 +82,8 @@ class HaloPropertyDisplay extends Morph {
     // FIXME: What we actually want is morph layouting
     this.width = 12 + this.get("textField").width;
     var activeButton = this.halo.activeButton;
-    if (activeButton && 
-        activeButton.topLeft.x < (this.width + 10) && 
+    if (activeButton &&
+        activeButton.topLeft.x < (this.width + 10) &&
         activeButton.topLeft.y < 0) {
       this.position = pt(activeButton.topRight.x + 10,-22);
     } else {
@@ -87,9 +91,9 @@ class HaloPropertyDisplay extends Morph {
     }
   }
 
-  disable() { 
+  disable() {
     this.position = this.defaultPosition;
-    this.visible = false; 
+    this.visible = false;
   }
 }
 
@@ -126,6 +130,7 @@ export class Halo extends Morph {
   }
 
   resizeHalo() {
+
     return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
       styleClasses: ["halo-item", "fa", "fa-crop"],
@@ -133,33 +138,41 @@ export class Halo extends Morph {
       origin: pt(12, 12),
       property: 'extent',
       halo: this,
+
       valueForPropertyDisplay: () => {
         var {x: width, y: height} = this.target.extent;
         return `${width.toFixed(1)}w ${height.toFixed(1)}h`;
       },
+
       update(delta, proportional=false) {
         delta = this.proportionalMode(proportional, delta);
         this.halo.target.resizeBy(delta.scaleBy(1 / this.halo.target.scale));
         this.halo.alignWithTarget();
       },
+
       init(proportional=false) {
         this.proportionalMode(proportional);
         this.halo.activeButton = this;
       },
+
       stop(proportional=false) {
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
+
       onDragStart(evt) { this.init(evt.isShiftDown()) },
       onDrag(evt) { this.update(evt.state.dragDelta, evt.isShiftDown()) },
       onDragEnd(evt) { this.stop(evt.isShiftDown()) },
+
       onKeyDown(evt) {
         this.styleClasses = ["halo-item", "fa", "fa-expand"];
         this.rotation = -Math.PI / 2;
       },
+
       onKeyUp(evt) {
         this.proportionalMode(false);
       },
+
       proportionalMode(active, delta=null) {
         if (active) {
           const diagonal = this.halo.toggleDiagonal(true);
@@ -178,6 +191,7 @@ export class Halo extends Morph {
           return delta;
         }
       }
+
     }));
   }
 
@@ -294,6 +308,7 @@ export class Halo extends Morph {
     var angle = 0,
         scaleGauge = null,
         initRotation = 0;
+
     return this.getSubmorphNamed("rotate") || this.addMorph(new HaloItem({
       name: "rotate",
       property: "rotation",
@@ -303,43 +318,48 @@ export class Halo extends Morph {
       valueForPropertyDisplay: () => scaleGauge ?
                                        this.target.scale.toFixed(4).toString() :
                                        num.toDegrees(this.target.rotation).toFixed(1) + "°",
+
       init(angleToTarget) {
         this.halo.activeButton = this;
         angle = angleToTarget;
         initRotation = this.halo.target.rotation;
         this.halo.toggleRotationIndicator(true, this);
       },
+
       initScale(gauge) {
         this.halo.activeButton = this;
         scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
         this.halo.toggleRotationIndicator(true, this);
       },
+
       update(angleToTarget) {
         scaleGauge = null;
         var newRotation = initRotation + (angleToTarget - angle);
         newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
         this.halo.target.rotation = newRotation;
+        this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
       },
+
       updateScale(gauge) {
         if (!scaleGauge) scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
         angle = gauge.theta();
         this.halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0)), 0.1, 0.5);
+        this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
       },
+
       stop() {
         scaleGauge = null;
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(false, this);
       },
+
       adaptAppearance(scaling) {
-        if (scaling) {
-          this.styleClasses = ["halo-item", "fa", "fa-search-plus"];
-        } else {
-          this.styleClasses = ["halo-item", "fa", "fa-repeat"];
-        }
+        this.styleClasses = ["halo-item", "fa", scaling ? "fa-search-plus" : "fa-repeat"];
       },
+
       // events
       onDragStart(evt) {
         this.adaptAppearance(evt.isShiftDown());
@@ -349,6 +369,7 @@ export class Halo extends Morph {
           this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
         }
       },
+
       onDrag(evt) {
         this.globalPosition = evt.position.addPt(pt(-10,-10));
         this.adaptAppearance(evt.isShiftDown());
@@ -358,16 +379,20 @@ export class Halo extends Morph {
           this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
         }
       },
+
       onDragEnd(evt) {
         this.adaptAppearance(evt.isShiftDown());
         this.stop();
       },
+
       onKeyDown(evt) {
-          this.adaptAppearance(evt.isShiftDown());
+        this.adaptAppearance(evt.isShiftDown());
       },
+
       onKeyUp(evt) {
-          this.adaptAppearance(evt.isShiftDown());
-      },
+        this.adaptAppearance(evt.isShiftDown());
+      }
+
     }));
   }
 
@@ -470,7 +495,7 @@ export class Halo extends Morph {
   onKeyUp(evt) {
     this.buttonControls.map(b => b.onKeyUp(evt));
   }
-  
+
   onKeyDown(evt) {
     this.buttonControls.map(b => b.onKeyDown(evt));
   }
@@ -559,29 +584,30 @@ export class Halo extends Morph {
 
   toggleRotationIndicator(active, haloItem) {
     var rotationIndicator = this.getSubmorphNamed("rotationIndicator");
-    if (active && haloItem) {
-      const originPos = this.getSubmorphNamed("origin").center,
-            localize = (p) => rotationIndicator.localizePointFrom(p, this);
-      rotationIndicator = rotationIndicator || this.addMorphBack(new Path({
-          styleClasses: ["morph", "halo-guide"],
-          name: "rotationIndicator",
-          borderColor: Color.red,
-          vertices: []
-        }));
-      rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));
-      rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
-    } else {
+    if (!active || !haloItem) {
       rotationIndicator && rotationIndicator.remove();
+      return;
     }
+
+    const originPos = this.getSubmorphNamed("origin").center,
+          localize = (p) => rotationIndicator.localizePointFrom(p, this);
+    rotationIndicator = rotationIndicator || this.addMorphBack(new Path({
+      styleClasses: ["morph", "halo-guide"],
+      name: "rotationIndicator",
+      borderColor: Color.red,
+      vertices: []
+    }));
+    rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));
+    rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
   }
-  
+
   toggleDropIndicator(active, target) {
     var dropIndicator = this.getSubmorphNamed("dropTargetIndicator");
     if (active && target && target != this.world()) {
-        dropIndicator = dropIndicator || this.addMorphBack(new Morph({
+        dropIndicator = dropIndicator || this.addMorphBack({
                         styleClasses: ["morph", "halo-guide"],
                         name: "dropTargetIndicator",
-                        fill: Color.orange.withA(0.5)}));
+                        fill: Color.orange.withA(0.5)});
         dropIndicator.position = this.localize(target.globalBounds().topLeft());
         dropIndicator.extent = target.globalBounds().extent();
     } else {

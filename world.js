@@ -39,7 +39,6 @@ export class World extends Morph {
 
   onMouseMove(evt) {
     evt.hand.update(evt);
-    evt.halo && evt.halo.alignWithTarget();
   }
 
   onMouseDown(evt) {
