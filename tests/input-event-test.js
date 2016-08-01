@@ -169,7 +169,7 @@ describe("events", function() {
 
     it("text entry via keydown", () => {
       expect(submorph4).property("textString").equals("text");
-      eventDispatcher.simulateDOMEvents(
+      env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "keydown", key: 'l'},
         {target: submorph4, type: "keydown", key: 'o'},
         {target: submorph4, type: "keydown", key: 'l'},
@@ -180,7 +180,7 @@ describe("events", function() {
 
     it("backspace", () => {
       expect(submorph4).property("textString").equals("text");
-      eventDispatcher.simulateDOMEvents(
+      env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "keydown", key: 'l'},
         {target: submorph4, type: "keydown", key: 'o'},
         {target: submorph4, type: "keydown", key: 'l'},
@@ -189,7 +189,7 @@ describe("events", function() {
         {target: submorph4, type: "keydown", key: 't'}
       );
       expect(submorph4).property("textString").equals("lolwuttext");
-      eventDispatcher.simulateDOMEvents(
+      env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "keydown", keyCode: 8},
         {target: submorph4, type: "keydown", keyCode: 8},
         {target: submorph4, type: "keydown", keyCode: 8},
