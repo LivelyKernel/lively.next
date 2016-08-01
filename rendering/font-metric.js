@@ -1,3 +1,5 @@
+import { pt } from "lively.graphics";
+
 export default class FontMetric {
 
   static default() {
