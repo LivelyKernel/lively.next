@@ -130,6 +130,15 @@ describe("halos", () => {
     halo.rotateHalo().update(num.toRadians(25));
     expect(submorph1.rotation).closeTo(num.toRadians(25), 0.1);
   });
+  
+  it("rotate does not align to Halo while active", () => {
+    var halo = world.showHaloFor(submorph1);
+    submorph1.rotation = num.toRadians(10);
+    halo.rotateHalo().init(num.toRadians(10));
+    halo.rotateHalo().position = pt(55,55);
+    halo.rotateHalo().update(num.toRadians(10));
+    expect(halo.rotateHalo().position).equals(pt(55,55));
+  })
 
   it("rotate snaps to 45 degree angles", () => {
     var halo = world.showHaloFor(submorph1);
@@ -277,9 +286,10 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph2),
         hand = world.handForPointerId("test-pointer");
     halo.grabHalo().init(hand)
-    hand.position = submorph1.globalBounds().center();
+    hand.update({halo, position: submorph1.globalBounds().center()});
+    expect(halo.position).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(hand);
-    halo.grabHalo().update(hand)
+    halo.grabHalo().stop(hand)
     expect(halo.position).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(submorph1);
   });
