@@ -52,7 +52,18 @@ for (var i = 0; i < 1000; i++) {
   morphs.push(world.addMorph(props))
 }
 
+var time = Date.now();
 (function loop() {
   morphs.forEach(ea => ea.bounce());
+
+  var time2 = Date.now();
+  if (time2-time > 10*1000) {
+    time = time2;
+    var rec = world.env.changeRecorder;
+    console.log(`[changes] ${rec.revision} ${rec.changes.length}`);
+    console.log(`${(rec.changes.length/30).toFixed(1)} changes/s`);
+    rec.changes.length = 0;
+  }
+
   requestAnimationFrame(loop);
 })();
