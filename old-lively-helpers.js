@@ -46,6 +46,7 @@ function addMorphicSetupMethods(htmlMorph) {
 
 function createHtmlMorph() {
   var htmlMorph = new lively.morphic.HtmlWrapperMorph(pt(666,600));
+  htmlMorph.removeStyleClassName("selectable");
   htmlMorph.addScript(function onMouseDown() {});
   htmlMorph.addScript(function onContextMenu() {});
   htmlMorph.addScript(function onKeyDown() {});
