@@ -29,6 +29,9 @@ function addMorphicSetupMethods(htmlMorph) {
     }
     this.setHTML('');
     this.env = null;
+    window.lively.modules.importPackage("node_modules/lively.morphic")
+      .then(() => window.System.import("lively.morphic/env.js"))
+      .then(env => env.MorphicEnv.reset());
   });
 
   htmlMorph.addScript(function setupNewMorphicWorld() {
