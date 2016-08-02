@@ -473,7 +473,7 @@ export class EventDispatcher {
     this.emitter = domEventEmitter;
     this.world = world;
     this.installed = false;
-    this.handlerFunctions = {};
+    this.handlerFunctions = [];
     // A place where info about previous events can be stored, e.g. for tracking
     // what was clicked on
     this.eventState = {
@@ -495,17 +495,19 @@ export class EventDispatcher {
   install() {
     if (this.installed) return this;
     this.installed = true;
-    domEventsWeListenTo.forEach(({type, capturing}) =>
-      this.emitter.addEventListener(
-        type, this.handlerFunctions[type] = evt => this.dispatchDOMEvent(evt), capturing));
+    domEventsWeListenTo.forEach(({type, capturing}) => {
+      let fn = evt => this.dispatchDOMEvent(evt);
+      this.handlerFunctions.push({ type, fn, capturing });
+      this.emitter.addEventListener(type, fn, capturing);
+    });
     return this;
   }
 
   uninstall() {
     this.installed = false;
-    Object.keys(this.handlerFunctions).forEach(({type, capturing}) =>
-      this.emitter.removeEventListener(type, this.handlerFunctions[type], capturing));
-    this.handlerFunctions = {};
+    this.handlerFunctions.forEach(({ type, fn, capturing }) =>
+      this.emitter.removeEventListener(type, fn, capturing));
+    this.handlerFunctions = [];
     return this;
   }
 
