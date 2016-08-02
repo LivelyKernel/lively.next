@@ -60,7 +60,7 @@ describe("events", function() {
     this.timeout(10000);
 
 
-  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  beforeEach(async () => (env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()))).setWorld(createDummyWorld()));
   afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   it("mousedown on submorph", () => {
