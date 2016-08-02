@@ -210,22 +210,30 @@ describe("events", function() {
     });
 
     it("click sets cursor", () => {
+      var clickPos = pt(215, 200),
+          { fontFamily, fontSize, textString } = submorph4;
       expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: 0 });
       env.eventDispatcher.simulateDOMEvents(
-        {target: submorph4, type: "click", position: pt(215, 200)}
+        {target: submorph4, type: "click", position: clickPos }
       );
-      expect(submorph4).property("selection").property("range").deep.equals({ start: 2, end: 2 });
+      var clickIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, submorph4.localize(clickPos));
+      expect(clickIndex).not.equal(0);
+      expect(submorph4).property("selection").property("range").deep.equals({ start: clickIndex, end: clickIndex });
     });
 
     it("drag sets selection", () => {
+        var dragEndPos = pt(215, 200),
+          { fontFamily, fontSize, textString } = submorph4;
       expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: 0 });
       env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "pointerdown", position: pt(200, 200)},
         {target: submorph4, type: "pointermove", position: pt(220, 200)}, // simulate overshoot
-        {target: submorph4, type: "pointermove", position: pt(215, 200)},
-        {target: submorph4, type: "pointerup", position: pt(215, 200)}
+        {target: submorph4, type: "pointermove", position: dragEndPos},
+        {target: submorph4, type: "pointerup", position: dragEndPos}
       );
-      expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: 2 });
+      var dragEndIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, submorph4.localize(dragEndPos));
+      expect(dragEndIndex).not.equal(0);
+      expect(submorph4).property("selection").property("range").deep.equals({ start: 0, end: dragEndIndex });
     });
   })
 
