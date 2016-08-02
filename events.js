@@ -17,8 +17,9 @@ const domEventsWeListenTo = [
   {type: 'blur',        capturing: true},
   {type: 'focus',       capturing: true},
   {type: 'contextmenu', capturing: false},
-  {type: 'cut', capturing: false},
-  {type: 'paste', capturing: false}
+  {type: 'cut',         capturing: false},
+  {type: 'copy',        capturing: false},
+  {type: 'paste',       capturing: false}
 ]
 
 const typeToMethodMap = {
@@ -38,6 +39,7 @@ const typeToMethodMap = {
   'focus':       "onFocus",
   'contextmenu': "onContextMenu",
   'cut':         "onCut",
+  'copy':        "onCopy",
   'paste':       "onPaste"
 }
 

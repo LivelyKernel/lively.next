@@ -238,10 +238,16 @@ export class Text extends Morph {
   }
 
   onCut(evt) {
+    // FIXME!
     var sel = this.selection;
     sel.text = "";
     sel.collapse();
   }
+
+  onCopy(evt) {
+    // TODO!
+  }
+
   onPaste(evt) {
     var sel = this.selection;
     sel.text = evt.domEvt.clipboardData.getData("Text");
