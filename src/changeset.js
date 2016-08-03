@@ -5,7 +5,7 @@ import { gitInterface } from '../index.js';
 import Branch from "./branch.js";
 
 
-let current; // null (none) | ChangeSet
+let current = null; // null (none) | ChangeSet
 let changesets; // undefined (uninitialized) | Array<ChangeSet>
 
 class ChangeSet {
@@ -88,7 +88,7 @@ class ChangeSet {
   
   async delete() {
     if (this === current) {
-      setCurrentChangeSet(null);
+      await setCurrentChangeSet(null);
     }
     changesets = changesets.filter(cs => cs !== this);
     const db = await new Promise((resolve, reject) => {
@@ -158,14 +158,40 @@ export function currentChangeSet() { // () -> ChangeSet?
   return current;
 }
 
-export async function setCurrentChangeSet(csName) { // ChangeSetName? -> ChangeSet
-  const old = currentChangeSet();
-  if (!csName) {
-    current = null;
-  } else {
-    const cs = (await localChangeSets()).find(cs => cs.name === csName);
-    current = cs;
+async function switchPackage(pkg, prev, next) {
+  // PackageAddress, ChangeSet, ChangeSet -> ()
+  let prevB = prev && prev.branches.find(b => b.pkg === pkg),
+      nextB = next && next.branches.find(b => b.pkg === pkg);
+  if (!prevB && !nextB) return; // no changes in this package
+  if (!prevB) prevB = new Branch("master", pkg);
+  if (!nextB) nextB = new Branch("master", pkg);
+  const prevFiles = await prevB.files();
+  const nextFiles = await nextB.files();
+  for (const relPath in prevFiles) {
+    const prevHash = prevFiles[relPath],
+          nextHash = nextFiles[relPath];
+    if (prevHash && nextHash && prevHash != nextHash) {
+      const moduleName = pkg + relPath;
+      const newSource = await nextB.getFileContent(relPath);
+      await gitInterface.coreInterface.moduleSourceChange(moduleName, newSource, { targetModule: moduleName, doEval: true });
+    }
   }
+}
+
+export async function setCurrentChangeSet(csName) {
+  // ChangeSetName? -> ChangeSet
+  const old = currentChangeSet();
+  let next;
+  if (!csName) {
+    next = null;
+  } else {
+    next = (await localChangeSets()).find(cs => cs.name === csName);
+  }
+  if (next === current) return;
+  for (const pkg of gitInterface.getPackages()) {
+    await switchPackage(pkg.address, current, next);
+  }
+  current = next;
   emit("lively.changesets/switchedcurrent", {
     changeset: csName || null,
     before: old ? old.name : null

@@ -10,7 +10,7 @@ describe("basics", () => {
 
   beforeEach(async () => {
     await createPackage();
-    setCurrentChangeSet(null);
+    await setCurrentChangeSet(null);
   });
 
   afterEach(async () => {
@@ -18,6 +18,7 @@ describe("basics", () => {
     const toDelete = local.filter(c => c.name.match(/^test/));
     await Promise.all(toDelete.map(c => c.delete()));
     await removePackage();
+    await setCurrentChangeSet(null);
   });
 
   it("supports creating new, empty changesets", async () => {
@@ -53,14 +54,14 @@ describe("basics", () => {
     expect(changedSrc2).to.be.eql("export const x = 1;\n");
   });
   
-  it("restore changes from changeset", async () => {
+  it("restores changes from changeset", async () => {
     const cs = await initChangeSet();
     await changeFile("export const x = 2;\n");
-    setCurrentChangeSet(null);
+    await setCurrentChangeSet(null);
     
     const changedSrc = await gitInterface.moduleRead(fileA);
     expect(changedSrc).to.be.eql("export const x = 1;\n");
-    setCurrentChangeSet("test");
+    await setCurrentChangeSet("test");
     const changedSrc2 = await gitInterface.moduleRead(fileA);
     expect(changedSrc2).to.be.eql("export const x = 2;\n");
     await cs.delete();
@@ -75,5 +76,23 @@ describe("basics", () => {
     await cs.delete();
     const changedSrc2 = await gitInterface.moduleRead(fileA);
     expect(changedSrc2).to.be.eql("export const x = 1;\n");
+  });
+  
+  it("loads module when switching changeset", async () => {
+    const cs = await initChangeSet(),
+          mod = await gitInterface.getModule(fileA);
+    await changeFile("export const x = 2;\n");
+
+    expect(await System.import(fileA)).to.containSubset({x: 2});
+    expect(mod.env().recorder).to.containSubset({x: 2});
+    
+    await setCurrentChangeSet(null);
+    expect(await System.import(fileA)).to.containSubset({x: 1});
+    expect(mod.env().recorder).to.containSubset({x: 1});
+
+    await setCurrentChangeSet("test");
+    expect(await System.import(fileA)).to.containSubset({x: 2});
+    expect(mod.env().recorder).to.containSubset({x: 2});
+    await cs.delete();
   });
 });

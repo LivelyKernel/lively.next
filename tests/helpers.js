@@ -48,7 +48,7 @@ export const
 export async function initChangeSet() {
   await initMaster(pkgDir);
   const cs = await createChangeSet("test");
-  setCurrentChangeSet("test");
+  await setCurrentChangeSet("test");
   return cs;
 }
 

@@ -30,7 +30,7 @@ describe("serialize", () => {
     expect(changedSrc).to.be.eql("export const x = 1;\n");
     const cs2 = await createChangeSet("test");
     await cs2.fromObject(obj);
-    setCurrentChangeSet("test");
+    await setCurrentChangeSet("test");
     const changedSrc2 = await gitInterface.moduleRead(fileA);
     expect(changedSrc2).to.be.eql("export const x = 2;\n");
     await cs2.delete();
