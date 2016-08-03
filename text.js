@@ -238,19 +238,20 @@ export class Text extends Morph {
   }
 
   onCut(evt) {
-    // FIXME!
+    this.onCopy(evt);
     var sel = this.selection;
     sel.text = "";
     sel.collapse();
   }
 
   onCopy(evt) {
-    // TODO!
+    evt.stop();
+    evt.domEvt.clipboardData.setData("text", this.selection.text);
   }
 
   onPaste(evt) {
     var sel = this.selection;
-    sel.text = evt.domEvt.clipboardData.getData("Text");
+    sel.text = evt.domEvt.clipboardData.getData("text");
     sel.collapse(sel.end);
   }
 }
