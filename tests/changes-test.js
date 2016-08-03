@@ -14,6 +14,7 @@ describe("morph change recording", () => {
     expect(m.changes).containSubset([{prop: "extent"}, {prop: "fill"}]);
   });
 
+MorphicEnv.reset()
   it("onChange and onSubmorphChange handlers", () => {
     var m1 = morph({submorphs: [{fill: Color.green}]}),
         m2 = m1.submorphs[0],
@@ -176,7 +177,17 @@ describe("undo", () => {
     m1.fill = Color.green;
     m1.submorphs[0].position = pt(10,10);
     m1.undoStop("test");
-    expect(m1.env.undoManager.undos).containSubset([{changes: [{prop: "fill"}, {prop: "position"}]}]);
+    expect(m1.env.undoManager.undos).containSubset([{name: "test", changes: [{prop: "fill"}, {prop: "position"}]}]);
+  });
+
+  xit("undoes", () => {
+    var m1 = morph({position: pt(3,4), submorphs: [{fill: Color.green}]});
+    m1.undoStart("test");
+    m1.submorphs[0].fill = Color.yellow;
+    m1.position = pt(10,10);
+    m1.undoStop("test");
+    m1.env.undoManager.undo();
+    expect(m1).containSubset({position: pt(3,4), submorphs: [{fill: Color.green}]});
   });
 
 });

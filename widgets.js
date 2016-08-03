@@ -271,7 +271,7 @@ export class Button extends Morph {
   }
   
   get action() { return this.getProperty("action") }
-  set action(value) { this.recordChange({prop: "action", value}); }
+  set action(value) { this.recordValueChange("action", value); }
   get active() { return this.getProperty("active") }
   set active(value) {
     if (value) {
@@ -281,7 +281,7 @@ export class Button extends Morph {
       this.borderColor = Color.gray;
       this.fill = Color.lightGray;
     }
-    this.recordChange({prop: "active", value})
+    this.recordValueChange("active", value)
   }
   
   onMouseDown(evt) {

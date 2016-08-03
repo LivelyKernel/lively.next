@@ -46,46 +46,46 @@ export class Text extends Morph {
   get readOnly() { return this.getProperty("readOnly"); }
   set readOnly(value) {
     this.nativeCursor = value ? "default" : "auto";
-    this.recordChange({prop: "readOnly", value});
+    this.recordValueChange("readOnly", value);
   }
 
   get fixedWidth() { return this.getProperty("fixedWidth") }
   set fixedWidth(value) {
-    this.recordChange({prop: "fixedWidth", value});
+    this.recordValueChange("fixedWidth", value);
     this._needsFit = true;
   }
 
   get fixedHeight() { return this.getProperty("fixedHeight") }
   set fixedHeight(value) {
-    this.recordChange({prop: "fixedHeight", value});
+    this.recordValueChange("fixedHeight", value);
     this._needsFit = true;
   }
 
   get fontFamily() { return this.getProperty("fontFamily") }
   set fontFamily(value) {
-    this.recordChange({prop: "fontFamily", value});
+    this.recordValueChange("fontFamily", value);
     this._needsFit = true;
   }
 
   get fontSize() { return this.getProperty("fontSize") }
   set fontSize(value) {
-    this.recordChange({prop: "fontSize", value});
+    this.recordValueChange("fontSize", value);
     this._needsFit = true;
   }
 
   get fontColor() { return this.getProperty("fontColor") }
   set fontColor(value) {
-    this.recordChange({prop: "fontColor", value});
+    this.recordValueChange("fontColor", value);
   }
 
   get placeholder() { return this.getProperty("placeholder") }
   set placeholder(value) {
-    this.recordChange({prop: "placeholder", value});
+    this.recordValueChange("placeholder", value);
     this._needsFit = true;
   }
 
   get _selection() { return this.getProperty("_selection") }
-  set _selection(value) { this.recordChange({prop: "_selection", value}); }
+  set _selection(value) { this.recordValueChange("_selection", value); }
 
   get selection() { return new TextSelection(this) }
 
@@ -94,12 +94,9 @@ export class Text extends Morph {
         newText = oldText ? oldText.substr(0, pos) + str + oldText.substr(pos) : str;
     this._needsFit = true;
 
-    this.recordChange({
-      prop: "textString", value: newText,
-      type: "insert",
-      pos: pos,
-      str: str
-    });
+    this.recordValueChange(
+      "textString", newText,
+      {action: "insert", pos: pos, str: str});
   }
 
   deleteText(start, end) {
@@ -107,12 +104,9 @@ export class Text extends Morph {
         newText = oldText.substr(0, start) + oldText.substr(end);
     this._needsFit = true;
 
-    this.recordChange({
-      prop: "textString", value: newText,
-      type: "delete",
-      start: start,
-      end: end
-    });
+    this.recordValueChange(
+      "textString", newText,
+      {action: "delete", start: start, end: end});
   }
 
   selectionOrLineString() {

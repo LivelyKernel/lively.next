@@ -83,8 +83,15 @@ export class Morph {
   onSubmorphChange(submorph, change) {}
 
   get changes() { return this.env.changeRecorder.changesFor(this); }
-  recordChange(change) { return this.env.changeRecorder.record(this, change); }
   applyChange(change) { this.env.changeRecorder.apply(this, change); }
+
+  recordValueChange(prop, value, meta) {
+    return this.env.changeRecorder.recordValueChange(this, prop, value, meta);
+  }
+
+  recordMethodCallChange(receiver, selector, args, prop, value, meta) {
+    return this.env.changeRecorder.recordMethodCallChange(this, receiver, selector, args, prop, value, meta)
+  }
 
   changesWhile(whileFn) {
     return this.env.changeRecorder.changesWhile(whileFn);
@@ -127,53 +134,53 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get name()           { return this.getProperty("name"); }
-  set name(value)      { this.recordChange({prop: "name", value}); }
+  set name(value)      { this.recordValueChange("name", value); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this._cachedBounds = null; this.recordChange({prop: "position", value}); }
+  set position(value)  { this._cachedBounds = null; this.recordValueChange("position", value); }
 
   get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this._cachedBounds = null; this.recordChange({prop: "scale", value}); }
+  set scale(value)     { this._cachedBounds = null; this.recordValueChange("scale", value); }
 
   get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this._cachedBounds = null; this.recordChange({prop: "rotation", value}); }
+  set rotation(value)  { this._cachedBounds = null; this.recordValueChange("rotation", value); }
 
   get origin()         { return this.getProperty("origin"); }
-  set origin(value)    { return this.recordChange({prop: "origin", value}); }
+  set origin(value)    { return this.recordValueChange("origin", value); }
 
   get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this._cachedBounds = null; this.recordChange({prop: "extent", value}); }
+  set extent(value)    { this._cachedBounds = null; this.recordValueChange("extent", value); }
 
   get fill()           { return this.getProperty("fill"); }
-  set fill(value)      { this.recordChange({prop: "fill", value}); }
+  set fill(value)      { this.recordValueChange("fill", value); }
 
   get borderWidth()       { return this.getProperty("borderWidth"); }
-  set borderWidth(value)  { this.recordChange({prop: "borderWidth", value}); }
+  set borderWidth(value)  { this.recordValueChange("borderWidth", value); }
 
   get borderColor()       { return this.getProperty("borderColor"); }
-  set borderColor(value)  { this.recordChange({prop: "borderColor", value}); }
+  set borderColor(value)  { this.recordValueChange("borderColor", value); }
 
   get borderRadius()      { return this.getProperty("borderRadius"); }
   set borderRadius(value) {
     if (typeof value === "number") value = Rectangle.inset(value);
-    this.recordChange({prop: "borderRadius", value});
+    this.recordValueChange("borderRadius", value);
   }
 
   get clipMode()       { return this.getProperty("clipMode"); }
-  set clipMode(value)  { this.recordChange({prop: "clipMode", value}); }
+  set clipMode(value)  { this.recordValueChange("clipMode", value); }
 
   get draggable()       { return this.getProperty("draggable"); }
-  set draggable(value)  { this.recordChange({prop: "draggable", value}); }
+  set draggable(value)  { this.recordValueChange("draggable", value); }
 
   get grabbable()       { return this.getProperty("grabbable"); }
-  set grabbable(value)  { this.recordChange({prop: "grabbable", value}); }
+  set grabbable(value)  { this.recordValueChange("grabbable", value); }
 
   get halosEnabled()       { return this.getProperty("halosEnabled"); }
-  set halosEnabled(value)  { this.recordChange({prop: "halosEnabled", value}); }
+  set halosEnabled(value)  { this.recordValueChange("halosEnabled", value); }
 
   // does this morph react to pointer / mouse events
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
-  set reactsToPointer(value)  { this.recordChange({prop: "reactsToPointer", value}); }
+  set reactsToPointer(value)  { this.recordValueChange("reactsToPointer", value); }
 
   // The shape of the OS mouse cursor. nativeCursor can be one of
   // auto, default, none, context-menu, help, pointer, progress, wait, cell,
@@ -182,20 +189,20 @@ export class Morph {
   // w-resize, ew-resize, ns-resize, nesw-resize, nwse-resize, col-resize,
   // row-resize, all-scroll, zoom-in, zoom-out, grab, grabbing
   get nativeCursor()       { return this.getProperty("nativeCursor"); }
-  set nativeCursor(value)  { this.recordChange({prop: "nativeCursor", value}); }
+  set nativeCursor(value)  { this.recordValueChange("nativeCursor", value); }
 
   // can this morph receive keyboard focus?
   get focusable()       { return this.getProperty("focusable"); }
-  set focusable(value)  { this.recordChange({prop: "focusable", value}); }
+  set focusable(value)  { this.recordValueChange("focusable", value); }
 
   get visible()       { return this.getProperty("visible"); }
-  set visible(value)  { this.recordChange({prop: "visible", value}); }
+  set visible(value)  { this.recordValueChange("visible", value); }
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) { this.recordChange({prop: "dropShadow", value}); }
+  set dropShadow(value) { this.recordValueChange("dropShadow", value); }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
-  set styleClasses(value)  { this.recordChange({prop: "styleClasses", value}); }
+  set styleClasses(value)  { this.recordValueChange("styleClasses", value); }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
@@ -246,7 +253,7 @@ export class Morph {
   }
 
   globalBounds() {
-    if(this.owner) {
+    if (this.owner) {
        var tfm = new Transform()
                   .preConcatenate(new Transform(this.origin).inverse())
                   .preConcatenate(this.getGlobalTransform()),
@@ -362,13 +369,12 @@ export class Morph {
     index = Math.min(submorphs.length, Math.max(0, index));
     submorphs.splice(index, 0, submorph);
 
-    this.recordChange({
-      prop: "submorphs", value: submorphs,
-      type: "method-call",
-      receiver: this,
-      selector: "addMorphAt",
-      args: [submorph, index]
-    });
+    this.recordMethodCallChange(
+      this,              /*receiver*/
+      "addMorphAt",      /*selector*/
+      [submorph, index], /*args*/
+      "submorphs",       /*prop*/
+      submorphs          /*value*/);
 
     if (tfm) { submorph.setTransform(tfm); }
 
@@ -398,15 +404,15 @@ export class Morph {
     var submorphs = owner.submorphs,
         index = submorphs.indexOf(this)
     if (index > -1) submorphs.splice(index, 1);
-    owner.recordChange({
-      prop: "submorphs", value: submorphs,
-      type: "method-call",
-      owner: owner,
-      receiver: this,
-      selector: "remove",
-      args: [],
-      meta: {index}
-    });
+
+    owner.recordMethodCallChange(
+      this,          /*receiver*/
+      "remove",      /*selector*/
+      [],            /*args*/
+      "submorphs",   /*prop*/
+      submorphs,     /*value*/
+      {owner, index} /*meta*/);
+
     return this;
   }
 
@@ -769,7 +775,7 @@ export class Image extends Morph {
   get isImage() { return true }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }
-  set imageUrl(value)  { this.recordChange({prop: "imageUrl", value}); }
+  set imageUrl(value)  { this.recordValueChange("imageUrl", value); }
 
   render(renderer) {
     return renderer.renderImage(this);
@@ -779,10 +785,10 @@ export class Image extends Morph {
 export class Path extends Morph {
 
   get borderStyle() { return this.getProperty("borderStyle") }
-  set borderStyle(value) { return this.recordChange({prop: "borderStyle", value}) }
+  set borderStyle(value) { this.recordValueChange("borderStyle", value) }
 
   get vertices() { return this.getProperty("vertices")}
-  set vertices(value) { return this.recordChange({prop: "vertices", value})}
+  set vertices(value) { this.recordValueChange("vertices", value)}
 
   resizeBy(delta) {
     const oldExtent = this.extent;

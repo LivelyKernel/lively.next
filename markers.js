@@ -156,9 +156,9 @@ export class StatusMessage extends Morph {
   isStatusMessage() { return true }
 
   get stayOpen()         { return this.getProperty("stayOpen"); }
-  set stayOpen(value)    { this.recordChange({prop: "stayOpen", value}); }
+  set stayOpen(value)    { this.recordValueChange("stayOpen", value); }
   get isMaximized()      { return this.getProperty("isMaximized"); }
-  set isMaximized(value) { this.recordChange({prop: "isMaximized", value}); }
+  set isMaximized(value) { this.recordValueChange("isMaximized", value); }
 
   setMessage(msg, color) {
     var textMsg = this.get('messageText');
