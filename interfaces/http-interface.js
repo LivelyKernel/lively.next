@@ -143,6 +143,10 @@ try {
   // package related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  async registerPackage(packageURL) {
+    return this.runEvalAndStringify(`lively.modules.registerPackage(${JSON.stringify(packageURL)})`);
+  }
+
   async importPackage(packageURL) {
     return this.runEvalAndStringify(`lively.modules.importPackage(${JSON.stringify(packageURL)})`);
   }
