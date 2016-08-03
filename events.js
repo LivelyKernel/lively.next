@@ -76,6 +76,12 @@ const keyboardEvents = [
   'keypress'
 ];
 
+const focusTargetingEvents = [
+  'cut',
+  'copy',
+  'paste',
+];
+
 
 function cumulativeOffset(element) {
   var offsetTop = 0, offsetLeft = 0;
@@ -695,7 +701,8 @@ export class EventDispatcher {
   dispatchDOMEvent(domEvt) {
     var targetNode = domEvt.target,
         targetId = targetNode.id,
-        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
+        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId) ||
+                      (focusTargetingEvents.includes(domEvt.type) && this.eventState.focusedMorph);
     if (!targetMorph) {
       // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
       return;
