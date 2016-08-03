@@ -20,7 +20,8 @@ function signalChange(change, morph) {
 
 
 class Change {
-  replay() { throw new Error("Not yet implemented"); }
+  apply() { throw new Error("Not yet implemented"); }
+  reverseApply() { throw new Error("Not yet implemented"); }
 }
 
 export class ValueChange {
@@ -31,17 +32,19 @@ export class ValueChange {
     this.target = target;
     this.prop = prop;
     this.value = value;
+    this.prevValue = null;
     this.meta = meta;
     this.tags = tags;
   }
 
-  replay(morph) {
-    var {target} = this;
-    if (target !== morph)
-      throw new Error(`change applied to ${morph} which is not the target of the change ${target}`);
-    var {prop, value, meta} = this;
-    morph[prop] = value;
-    // morph.recordValueChange(prop, value, meta);
+  apply() {
+    var {target, prop, value} = this;
+    target[prop] = value;
+  }
+
+  reverseApply() {
+    var {target, prop, prevValue} = this;
+    target[prop] = prevValue;
   }
 }
 
@@ -56,16 +59,21 @@ export class MethodCallChange {
     this.args = args;
     this.prop = prop;
     this.value = value;
+    this.prevValue = null;
     this.meta = meta;
     this.tags = tags;
   }
 
-  replay(morph) {
+  apply() {
     var {target, receiver, selector, args} = this;
-    if (target !== morph)
-      throw new Error(`change applied to ${morph} which is not the target of the change ${target}`);
     receiver[selector].apply(receiver, args);
   }
+
+  reverseApply() {
+    var {target, prop, prevValue} = this;
+    target[prop] = prevValue;
+  }
+
 }
 
 
@@ -157,7 +165,10 @@ export class ChangeRecorder {
 
   _record(morph, change) {
     // FIXME
-    if (change.hasOwnProperty("value")) morph._currentState[change.prop] = change.value;
+    if (change.hasOwnProperty("value")) {
+      change.prevValue = morph._currentState[change.prop];
+      morph._currentState[change.prop] = change.value;
+    }
     this.changes.push(change);
     morph._rev = ++this.revision;
     morph.makeDirty();
@@ -165,7 +176,7 @@ export class ChangeRecorder {
     return change;
   }
 
-  apply(morph, change) { change.replay(morph); }
+  apply(change) { change.apply(); }
 
 }
 
