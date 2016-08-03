@@ -201,7 +201,8 @@ export class UndoManager {
   }
 
   undoStop(morph, name) {
-    if (!this.undoInProgress) return
+    if (!this.undoInProgress) return;
+    if (this.redos.length) this.redos.length = 0;
     var {id, name, changes} = this.undoInProgress;
     this.undos.push(this.undoInProgress);
     delete this.undoInProgress
@@ -212,6 +213,14 @@ export class UndoManager {
   undo() {
     var undo = this.undos.pop();
     if (!undo) return;
-    
+    undo.changes.slice().reverse().forEach(change => change.reverseApply());
+    this.redos.unshift(undo);
+  }
+
+  redo() {
+    var redo = this.redos.shift();
+    if (!redo) return;
+    redo.changes.slice().reverse().forEach(change => change.apply());
+    this.undos.push(redo);
   }
 }

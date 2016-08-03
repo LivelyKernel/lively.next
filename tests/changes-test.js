@@ -1,9 +1,11 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { createDOMEnvironment } from "../rendering/dom-helper.js";
+import { defaultDOMEnv } from "../rendering/dom-helper.js";
 import { morph, MorphicEnv } from "../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
 import { num, arr } from "lively.lang";
+
+var env;
 
 describe("morph change recording", () => {
 
@@ -14,7 +16,6 @@ describe("morph change recording", () => {
     expect(m.changes).containSubset([{prop: "extent"}, {prop: "fill"}]);
   });
 
-MorphicEnv.reset()
   it("onChange and onSubmorphChange handlers", () => {
     var m1 = morph({submorphs: [{fill: Color.green}]}),
         m2 = m1.submorphs[0],
@@ -44,6 +45,9 @@ MorphicEnv.reset()
 
 
 describe("tagging", () => {
+
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(defaultDOMEnv())));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   beforeEach(() => {
     
@@ -171,23 +175,43 @@ describe("tagging", () => {
 
 describe("undo", () => {
 
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv())));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
+
   it("records changes for undo", () => {
     var m1 = morph({submorphs: [{fill: Color.green}]});
     m1.undoStart("test");
     m1.fill = Color.green;
     m1.submorphs[0].position = pt(10,10);
     m1.undoStop("test");
-    expect(m1.env.undoManager.undos).containSubset([{name: "test", changes: [{prop: "fill"}, {prop: "position"}]}]);
+    expect(env.undoManager.undos).containSubset([{name: "test", changes: [{prop: "fill"}, {prop: "position"}]}]);
   });
 
-  xit("undoes", () => {
+  it("does undo and redo", () => {
     var m1 = morph({position: pt(3,4), submorphs: [{fill: Color.green}]});
     m1.undoStart("test");
     m1.submorphs[0].fill = Color.yellow;
     m1.position = pt(10,10);
     m1.undoStop("test");
-    m1.env.undoManager.undo();
-    expect(m1).containSubset({position: pt(3,4), submorphs: [{fill: Color.green}]});
+    env.undoManager.undo();
+    expect(m1.position).equals(pt(3,4));
+    expect(m1.submorphs[0].fill).equals(Color.green);
+    expect(env.undoManager.undos).to.have.length(0);
+    expect(env.undoManager.redos).to.have.length(1);
+    env.undoManager.redo();
+    expect(m1.position).equals(pt(10,10));
+    expect(m1.submorphs[0].fill).equals(Color.yellow);
+    expect(env.undoManager.undos).to.have.length(1);
+    expect(env.undoManager.redos).to.have.length(0);
+  });
+
+  it("redo removed on new undo", () => {
+    var m1 = morph({position: pt(3,4)});
+    m1.undoStart("test"); m1.position = pt(10,10); m1.undoStop("test");
+    env.undoManager.undo();
+    m1.undoStart("test"); m1.position = pt(20,20); m1.undoStop("test");
+    expect(env.undoManager.undos).to.have.length(1);
+    expect(env.undoManager.redos).to.have.length(0);
   });
 
 });
