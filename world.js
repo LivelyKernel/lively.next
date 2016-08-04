@@ -77,10 +77,9 @@ export class World extends Morph {
     if (evt.state.menu) evt.state.menu.remove();
     this.addMorph(evt.state.menu = new Menu({
       position: evt.position,
-      title: "Test", items: [
-        ["item 1", () => { this.setStatusMessage("item 1 clicked") }],
-        ["item 2", () => { this.setStatusMessage("item 2 clicked") }],
-        ["item 3", () => { this.setStatusMessage("item 3 clicked") }]
+      title: "World menu", items: [
+        ["undo", () => { this.env.undoManager.undo(); }],
+        ["redo", () => { this.env.undoManager.redo(); }]
       ]
     }));
   }
