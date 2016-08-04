@@ -38,6 +38,7 @@ function newMorphId(prefix) {
 export class Morph {
 
   constructor(props = {}) {
+    this._class = this.constructor;
     this._owner = null;
     this._changes = [];
     this._dirty = true; // for initial display
@@ -720,7 +721,7 @@ export class Morph {
   copy() {
     var exported = this.exportToJSON();
     tree.prewalk(exported, spec => spec._id = newMorphId(spec.type), ({submorphs}) => submorphs);
-    return new this.constructor(exported);
+    return morph(exported);
   }
 
 
