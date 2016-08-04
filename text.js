@@ -1,6 +1,8 @@
 import { string } from "lively.lang";
 import { Color, pr } from "lively.graphics";
 import { Morph, show } from "./index.js";
+import { defaultAttributes } from "./rendering/morphic-default.js";
+import { h } from "virtual-dom";
 
 export class Text extends Morph {
 
@@ -30,9 +32,14 @@ export class Text extends Morph {
     this.fit();
     this._needsFit = false;
     this._needsSelect = false;
+
+    // Note: clipboardHelper may already exist if this Text morph was copied
+    this.clipboardHelper || this.addMorph(new ClipboardHelper());
   }
 
   get fontMetric() { return this.env.fontMetric; }
+
+  get clipboardHelper() { return this.submorphs.filter(m => m.isClipboardHelper)[0]; }
 
   get isText() { return true }
 
@@ -253,6 +260,29 @@ export class Text extends Morph {
     var sel = this.selection;
     sel.text = evt.domEvt.clipboardData.getData("text");
     sel.collapse(sel.end);
+  }
+
+  onFocus(evt) {
+    this.clipboardHelper.focus();
+  }
+}
+
+
+export class ClipboardHelper extends Morph {
+
+  get isClipboardHelper() { return true; }
+
+  render(renderer) {
+    return h('textarea',
+         {  ...defaultAttributes(this),
+            resize: "none",
+            value: " ",
+            style: {  width: "0px",
+                      height: "0px",
+                      overflow: "hidden",
+                      background: "red",
+                      padding: "0px",
+                      border: "0px" }});
   }
 }
 
