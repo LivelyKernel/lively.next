@@ -86,20 +86,16 @@ export class Morph {
 
   onSubmorphChange(submorph, change) {
     if (this.layout) this.layout.applyTo(this);
+    else this.refreshLayoutIfNeeded(change);
   }
-
-  signalMorphChange(change, morph) {
-    this.refreshLayoutIfNeeded(change);
-    if (this.owner) this.owner.signalMorphChange(change, morph);
-  }
-
-  get changes() { return this.env.changeManager.changesFor(this); }
-  applyChange(change) { this.env.changeManager.apply(this, change); }
 
   refreshLayoutIfNeeded(submorphChange) {
     const needsRefresh = ["extent", "position", "scale", "rotation"].indexOf(submorphChange.prop) > -1;
     if (this.layout && needsRefresh) this.layout.applyTo(this);
   }
+
+  get changes() { return this.env.changeManager.changesFor(this); }
+  applyChange(change) { this.env.changeManager.apply(this, change); }
 
   addValueChange(prop, value, meta) {
     return this.env.changeManager.addValueChange(this, prop, value, meta);
@@ -140,7 +136,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
   get layout()         { return this.getProperty("layout") }
-  set layout(value)    { this.addValueChange({prop: "layout", value}); }
+  set layout(value)    { this.addValueChange("layout", value); }
 
   get name()           { return this.getProperty("name"); }
   set name(value)      { this.addValueChange("name", value); }
