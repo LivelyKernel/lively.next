@@ -190,7 +190,6 @@ export class Renderer {
       ...defaultAttributes(text),
       style: {
         ...defaultStyle(text),
-        resize: "none",
         "white-space": "pre",
         padding: "0px",
         "font-family": text.fontFamily,
@@ -203,7 +202,8 @@ export class Renderer {
           style: { "pointer-events": "none" }
         }),
         h(`span${ readOnly ? "" : ".cursor" }.no-html-select`, "\u200b"),
-        textString.substring(selection.end)]);
+        textString.substring(selection.end),
+        this.renderSubmorphs(text)]);
   }
 
   renderImage(image) {
