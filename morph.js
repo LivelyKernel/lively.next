@@ -682,6 +682,7 @@ export class Morph {
   
   focus() {
     this._wantsFocus = true;
+    this._dirty = true;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -719,7 +720,7 @@ export class Morph {
   copy() {
     var exported = this.exportToJSON();
     tree.prewalk(exported, spec => spec._id = newMorphId(spec.type), ({submorphs}) => submorphs);
-    return morph(exported);
+    return new this.constructor(exported);
   }
 
 
