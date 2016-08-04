@@ -11,6 +11,8 @@ const guideGradient = [[0, Color.red.withA(0)],
 
 class HaloItem extends Ellipse {
 
+  get isEpiMorph() { return true; }
+
   constructor(props) {
     super({
       fill: Color.gray.withA(.7),
@@ -98,6 +100,8 @@ class HaloPropertyDisplay extends Morph {
 }
 
 export class Halo extends Morph {
+
+  get isEpiMorph() { return true; }
 
   constructor(pointerId, target) {
     super({

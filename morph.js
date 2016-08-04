@@ -309,6 +309,12 @@ export class Morph {
   get rightCenter()   { return this.bounds().rightCenter(); }
   set rightCenter(v)  { return this.align(this.rightCenter, v); }
 
+  get isEpiMorph() { /*transient "meta" morph*/ return false; }
+  isUsedAsEpiMorph() {
+    var m = this;
+    while (m) { if (m.isEpiMorph) return true; m = m.owner; }
+    return false;
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic relationship
