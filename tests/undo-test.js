@@ -48,7 +48,7 @@ describe("undo", () => {
     expect(env.undoManager.redos).to.have.length(0);
   });
 
-  it("undos morph remove", () => {
+  it("morph remove", () => {
     var m1 = morph({submorphs: [{}]}), m2 = m1.submorphs[0];
     m1.undoStart("test"); m2.remove(); m1.undoStop("test");
     env.undoManager.undo()
@@ -56,7 +56,7 @@ describe("undo", () => {
     expect(m2.owner).equals(m1);
   });
 
-  it("undo only records changes of morph and its submorphs", () => {
+  it("only records changes of morph and its submorphs", () => {
     var m1 = morph(), m2 = m1.addMorph({}), m3 = morph();
     m1.undoStart("test");
     m1.fill = Color.blue;
@@ -66,6 +66,18 @@ describe("undo", () => {
 
     expect(arr.uniq(arr.flatmap(env.undoManager.undos, ({changes}) => arr.pluck(changes, "target"))))
       .equals([m1, m2])
+  });
+
+  it("can have multiple targets", () => {
+    var m1 = morph(), m2 = m1.addMorph({}), m3 = morph();
+    m1.undoStart("test").addTarget(m3);
+    m1.fill = Color.blue;
+    m2.fill = Color.green;
+    m3.fill = Color.yellow;
+    m1.undoStop("test");
+
+    expect(arr.uniq(arr.flatmap(env.undoManager.undos, ({changes}) => arr.pluck(changes, "target"))))
+      .equals([m1, m2, m3])
   });
 
 });

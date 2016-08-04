@@ -110,12 +110,14 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   undoStart(name) {
-    this.env.undoManager.undoStart(this, name);
+    return this.env.undoManager.undoStart(this, name);
   }
 
   undoStop(name) {
-    this.env.undoManager.undoStop(this, name);
+    return this.env.undoManager.undoStop(this, name);
   }
+
+  get undoInProgress() { return this.env.undoManager.undoInProgress; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface

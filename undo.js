@@ -1,4 +1,47 @@
-// import { obj, arr, events } from "lively.lang";
+import { obj, arr, events } from "lively.lang";
+
+class Undo {
+
+  constructor(name, targets = []) {
+    this.name = name;
+    this.targets = targets;
+    this.recorder = null;
+    this.changes = null;
+  }
+
+  startRecording() {
+    if (this.recorder) {
+      throw new Error("Undo already recorded / recording");
+    }
+    if (!this.targets.length) {
+      throw new Error("Undo has no target morphs");
+    }
+    var morph = this.targets[0];
+    this.recorder = morph.startRecordChanges(({target}) =>
+      !target.isUsedAsEpiMorph() && this.targets.some(undoTarget =>
+        undoTarget === target || undoTarget.isAncestorOf(target)));
+    return this;
+  }
+
+  stopRecording() {
+    var {name, recorder: {id, changes}, targets: [morph]} = this;
+    changes.push(...morph.stopRecordChanges(id));
+    this.changes = changes;
+  }
+
+  apply() {
+    this.changes.slice().forEach(change => change.apply());
+    return this;
+  }
+
+  reverseApply() {
+    this.changes.slice().reverse().forEach(change => change.reverseApply());
+    return this;
+  }
+
+  addTarget(t) { arr.pushIfNotIncluded(this.targets, t); }
+}
+
 
 export class UndoManager {
 
@@ -13,33 +56,30 @@ export class UndoManager {
       console.warn(`There is already an undo recorded`)
       return;
     }
-    return this.undoInProgress = {
-      id: morph.startRecordChanges(({target}) => morph === target || morph.isAncestorOf(target)),
-      name, changes: []
-    };
+    return this.undoInProgress = new Undo(name, [morph]).startRecording();
   }
 
-  undoStop(morph, name) {
-    if (!this.undoInProgress) return;
+  undoStop() {
+    var undo = this.undoInProgress;
+    if (!undo) return null;
+    undo.stopRecording();
+    this.undoInProgress = null;
+    this.undos.push(undo);
     if (this.redos.length) this.redos.length = 0;
-    var {id, name, changes} = this.undoInProgress;
-    this.undos.push(this.undoInProgress);
-    delete this.undoInProgress
-    changes.push(...morph.stopRecordChanges(id));
-    return name;
+    return undo;
   }
 
   undo() {
     var undo = this.undos.pop();
     if (!undo) return;
-    undo.changes.slice().reverse().forEach(change => change.reverseApply());
     this.redos.unshift(undo);
+    return undo.reverseApply();
   }
 
   redo() {
     var redo = this.redos.shift();
     if (!redo) return;
-    redo.changes.slice().reverse().forEach(change => change.apply());
     this.undos.push(redo);
+    return redo.apply();
   }
 }

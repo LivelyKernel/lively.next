@@ -161,7 +161,7 @@ export class Halo extends Morph {
       },
 
       stop(proportional=false) {
-        this.halo.target.undoEnd("resize-halo");
+        this.halo.target.undoStop("resize-halo");
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
@@ -210,7 +210,10 @@ export class Halo extends Morph {
       halo: this,
       update: () => {
         this.remove();
+        var o = this.target.owner
+        o.undoStart("close-halo");
         this.target.remove();
+        o.undoStop("close-halo");
       },
       onMouseDown(evt) { this.update(); }
     }));
@@ -229,15 +232,21 @@ export class Halo extends Morph {
         return dropTarget && dropTarget.name;
       },
       init(hand) {
+        var undo = this.halo.target.undoStart("grab-halo");
+        undo.addTarget(this.halo.target.owner);
         this.hand = hand;
         hand.grab(this.halo.target);
         this.halo.activeButton = this;
       },
       update(hand) {
+        var undo = this.halo.target.undoInProgress,
+            dropTarget = this.morphBeneath(hand.position);
+        undo.addTarget(dropTarget);
+        hand.dropMorphsOn(dropTarget);
         this.halo.activeButton = null;
-        hand.dropMorphsOn(this.morphBeneath(hand.position));
         this.halo.alignWithTarget();
         this.halo.toggleDropIndicator(false, dropTarget);
+        this.halo.target.undoStop("grab-halo");
       },
       onDragStart(evt) {
         this.init(evt.hand)
@@ -257,9 +266,11 @@ export class Halo extends Morph {
       halo: this,
       valueForPropertyDisplay: () => this.target.position,
       init() {
+        this.halo.target.undoStart("drag-halo");
         this.halo.activeButton = this;
       },
       stop() {
+        this.halo.target.undoStop("drag-halo");
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
         this.halo.toggleMesh(false);
@@ -326,6 +337,7 @@ export class Halo extends Morph {
                                        num.toDegrees(this.target.rotation).toFixed(1) + "°",
 
       init(angleToTarget) {
+        this.halo.target.undoStart("rotate-halo");
         this.halo.activeButton = this;
         angle = angleToTarget;
         initRotation = this.halo.target.rotation;
@@ -360,6 +372,7 @@ export class Halo extends Morph {
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(false, this);
+        this.halo.target.undoStop("rotate-halo");
       },
 
       adaptAppearance(scaling) {
@@ -411,12 +424,17 @@ export class Halo extends Morph {
       init: (hand) => {
         var pos = this.target.globalPosition,
             copy = this.target.copy();
+        copy.undoStart("copy-halo");
         hand.grab(copy);
         copy.globalPosition = pos;
         this.refocus(copy);
       },
       update(hand) {
-        hand.dropMorphsOn(this.morphBeneath(hand.position));
+        var dropTarget = this.morphBeneath(hand.position),
+            undo = this.halo.target.undoInProgress;
+        undo.addTarget(dropTarget);
+        hand.dropMorphsOn(dropTarget);
+        this.halo.target.undoStop("copy-halo");
         this.halo.alignWithTarget();
       },
       onDragStart(evt) {
@@ -444,8 +462,12 @@ export class Halo extends Morph {
         this.position = this.computePositionAtTarget();
       },
       valueForPropertyDisplay: () => this.target.origin,
-      init() { this.halo.activeButton = this; },
+      init() {
+        this.halo.target.undoStart("origin-halo");
+        this.halo.activeButton = this;
+      },
       stop() {
+        this.halo.target.undoStop("origin-halo");
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
