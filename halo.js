@@ -151,11 +151,13 @@ export class Halo extends Morph {
       },
 
       init(proportional=false) {
+        this.halo.target.undoStart("resize-halo");
         this.proportionalMode(proportional);
         this.halo.activeButton = this;
       },
 
       stop(proportional=false) {
+        this.halo.target.undoEnd("resize-halo");
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
       },
