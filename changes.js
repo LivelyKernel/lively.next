@@ -1,11 +1,14 @@
-import { obj, arr } from "lively.lang";
+import { obj, arr, events } from "lively.lang";
 
-function signalChange(change, morph) {
+function signalChange(changeManager, change, morph) {
 
   // if (!morph.isHand)
   //   console.log(`[change] ${morph._rev} ${change.target.id.slice(0,7)}.${change.prop} -> ${String(change.value).slice(0,100)}`);
 
   try {
+    if (changeManager.changeListeners.length)
+      changeManager.changeListeners.forEach(listener => listener(change));
+
     morph.onChange(change);
 
     var owner = morph.owner;
@@ -25,16 +28,15 @@ class Change {
 }
 
 export class ValueChange {
-  
+
   get type() { return "setter" }
 
-  constructor(target, prop, value, meta, tags = []) {
+  constructor(target, prop, value, meta) {
     this.target = target;
     this.prop = prop;
     this.value = value;
     this.prevValue = null;
     this.meta = meta;
-    this.tags = tags;
   }
 
   apply() {
@@ -49,10 +51,10 @@ export class ValueChange {
 }
 
 export class MethodCallChange {
-  
+
   get type() { return "method-call" }
 
-  constructor(target, receiver, selector, args, prop, value, meta, tags = []) {
+  constructor(target, receiver, selector, args, prop, value, meta) {
     this.target = target;
     this.receiver = receiver;
     this.selector = selector;
@@ -61,7 +63,6 @@ export class MethodCallChange {
     this.value = value;
     this.prevValue = null;
     this.meta = meta;
-    this.tags = tags;
   }
 
   apply() {
@@ -77,7 +78,7 @@ export class MethodCallChange {
 }
 
 
-export class ChangeRecorder {
+export class ChangeManager {
 
   constructor() {
     this.reset();
@@ -86,80 +87,26 @@ export class ChangeRecorder {
   reset() {
     this.changes = [];
     this.revision = 0;
-    this.activeTags = [];
-    this.taggings = {};
-    this.taggingsPerMorph = new WeakMap();
+
+    this.changeListeners = [];
+    this.changeRecordersPerMorph = new WeakMap();
+    this.changeRecorders = {};
   }
 
-  changesFor(morph) {
-    return this.changes.filter(c => c.target === morph);
-  }
+  changesFor(morph) { return this.changes.filter(c => c.target === morph); }
 
-  changesWhile(whileFn) {
-    var from = this.changes.length;
-    whileFn();
-    return this.changes.slice(from, this.changes.length);
-  }
+  apply(change) { change.apply(); }
 
-  tagWhile(morph, tags, whileFn) {
-    var id = this.tagStart(morph, tags);
-    try {
-      return this.changesWhile(whileFn);
-    } finally {
-      this.tagEnd(morph, id);
-    }
-  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // interface for adding changes, used by morphs
 
-  tagStart(morph, tags) {
-    var baseId = "tagging__" + morph.id + "__" + Date.now(), id;
-    var i = 1; do {
-      id = baseId + "-" + i++;
-    } while (id in this.taggings)
-
-    this.taggings[id] = {tags, startRev: this.revision};
-    var perMorph = this.taggingsPerMorph.get(morph);
-    if (!perMorph) perMorph = [id]; else perMorph.push(id);
-    this.taggingsPerMorph.set(morph, perMorph);
-    this.activeTags.push(...tags);
-    return id;
-  }
-
-  tagEnd(morph, optId) {
-    var perMorph = this.taggingsPerMorph.get(morph);
-    if (!perMorph || !perMorph.length) {
-      console.warn(`Cannot tagEnd for morph ${morph}: tagging data not found`)
-      return [];
-    }
-
-    var id = optId;
-    if (!optId) id = perMorph.pop();
-    else arr.remove(perMorph, id);
-
-
-    if (!this.taggings[id]) return [];
-    var {tags, startRev} = this.taggings[id];
-    delete this.taggings[id];
-
-    // efficiently remove tags belonging to this tagging, not don't remove duplicates!
-    for (var i = this.activeTags.length - 1; i >= 0; i--) {
-      var tagIdx = tags.findIndex(t => this.activeTags[i] === t);
-      if (tagIdx !== -1) {
-        this.activeTags.splice(i, 1);
-        tags.splice(tagIdx, 1);
-      }
-      if (!tags.length) break;
-    }
-
-    return this.changes.slice(startRev);
-  }
-
-  recordValueChange(morph, prop, value, meta) {
-    var change = new ValueChange(morph, prop, value, meta, arr.uniq(this.activeTags));
+  addValueChange(morph, prop, value, meta) {
+    var change = new ValueChange(morph, prop, value, meta);
     return this._record(morph, change);
   }
 
-  recordMethodCallChange(morph, receiver, selector, args, prop, value, meta) {
-    var change = new MethodCallChange(morph, receiver, selector, args, prop, value, meta, arr.uniq(this.activeTags));
+  addMethodCallChange(morph, receiver, selector, args, prop, value, meta) {
+    var change = new MethodCallChange(morph, receiver, selector, args, prop, value, meta);
     return this._record(morph, change);
   }
 
@@ -172,55 +119,73 @@ export class ChangeRecorder {
     this.changes.push(change);
     morph._rev = ++this.revision;
     morph.makeDirty();
-    signalChange(change, morph);
+    signalChange(this, change, morph);
+
     return change;
   }
 
-  apply(change) { change.apply(); }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // listen for changes / record changes
 
-}
-
-
-export class UndoManager {
-
-  constructor() {
-    this.undos = [];
-    this.redos = [];
-    this.undoInProgress = null;
+  changesWhile(whileFn, optFilter) {
+    var from = this.changes.length;
+    whileFn();
+    var changes = this.changes.slice(from, this.changes.length);
+    return optFilter ? changes.filter(optFilter) : changes;
   }
 
-  undoStart(morph, name) {
-    if (this.undoInProgress) {
-      console.warn(`There is already an undo recorded`)
-      return;
+  addChangeListener(listenFn) { arr.pushIfNotIncluded(this.changeListeners, listenFn); }
+  removeChangeListener(listenFn) { arr.remove(this.changeListeners, listenFn); }
+
+  startMorphChangeRecorder(morph, optFilter) {
+    // change recorder is a change listener that is identified by id an belongs
+    // to a specific morph. This makes it easy to just start / stop recordings
+    // without having to manage listener storage and its lifetime
+
+    // 1. id for recorder
+    var baseId = "change-recorder__" + morph.id + "__" + Date.now(), id;
+    var i = 1; do {
+      id = baseId + "-" + i++;
+    } while (id in this.changeRecorders)
+
+    // 2. Recorder object to be used to record specific changes when they occur,
+    // based on change listeners
+    var listener = optFilter ?
+          change => console.log(`change for ${id}`) || optFilter(change) && recorder.changes.push(change) :
+          change => console.log(`change for ${id}`) || recorder.changes.push(change),
+        recorder = this.changeRecorders[id] = {filter: optFilter, changes: [], listener}
+
+    this.addChangeListener(listener);
+
+    // store recorder alongside morph for easy lookup
+    var perMorph = this.changeRecordersPerMorph.get(morph);
+    if (!perMorph) {
+      perMorph = [];
+      this.changeRecordersPerMorph.set(morph, perMorph);
     }
-    return this.undoInProgress = {
-      id: morph.tagChangesStart([`undo-${name}`]),
-      name, changes: []
-    };
+    perMorph.push(id);
+
+    return id;
   }
 
-  undoStop(morph, name) {
-    if (!this.undoInProgress) return;
-    if (this.redos.length) this.redos.length = 0;
-    var {id, name, changes} = this.undoInProgress;
-    this.undos.push(this.undoInProgress);
-    delete this.undoInProgress
-    changes.push(...morph.tagChangesEnd(id));
-    return name;
+  stopMorphChangeRecorder(morph, optId) {
+    var perMorph = this.changeRecordersPerMorph.get(morph);
+    if (!perMorph || !perMorph.length) {
+      console.warn(`Cannot endMorphChangeRecorder for morph ${morph}: recorder not found`)
+      return [];
+    }
+
+    var id = optId;
+    if (!optId) id = perMorph.pop();
+    else arr.remove(perMorph, id);
+
+    if (!this.changeRecorders[id]) return [];
+    var {changes, listener} = this.changeRecorders[id];
+    delete this.changeRecorders[id];
+
+    this.removeChangeListener(listener);
+
+    return changes;
   }
 
-  undo() {
-    var undo = this.undos.pop();
-    if (!undo) return;
-    undo.changes.slice().reverse().forEach(change => change.reverseApply());
-    this.redos.unshift(undo);
-  }
-
-  redo() {
-    var redo = this.redos.shift();
-    if (!redo) return;
-    redo.changes.slice().reverse().forEach(change => change.apply());
-    this.undos.push(redo);
-  }
 }

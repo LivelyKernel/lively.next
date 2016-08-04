@@ -15,17 +15,17 @@ export class List extends Morph {
 
   // horizonal or vertical (tiling?)
   get layoutPolicy() { return this.getProperty("layoutPolicy"); }
-  set layoutPolicy(value) { this.recordValueChange("layoutPolicy", value); }
+  set layoutPolicy(value) { this.addValueChange("layoutPolicy", value); }
 
   get items() { return this.getProperty("items"); }
-  set items(value) { this.recordValueChange("items", value); }
+  set items(value) { this.addValueChange("items", value); }
 
   addItemAt(item, index) {
     var items = this.items;
     var index = Math.min(items.length, Math.max(0, index));
     items.splice(index, 0, item);
 
-    this.recordMethodCallChange(
+    this.addMethodCallChange(
       this,          /*receiver*/
       "addItemAt",   /*selector*/
       [item, index], /*args*/
@@ -40,7 +40,7 @@ export class List extends Morph {
         index = items.indexOf(item)
     if (index > -1) items.splice(index, 1);
 
-    this.recordMethodCallChange(
+    this.addMethodCallChange(
       this,         /*receiver*/
       "removeItem", /*selector*/
       [item],       /*args*/

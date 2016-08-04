@@ -17,7 +17,7 @@ export class MenuItem extends Text {
   }
 
   get action() { return this.getProperty("action") }
-  set action(value) { this.recordValueChange("action", value); }
+  set action(value) { this.addValueChange("action", value); }
 
   get isMenuItem() { return true; }
 
@@ -67,13 +67,13 @@ export class Menu extends Morph {
   }
 
   get title() { return this.getProperty("title") }
-  set title(value) { this.recordValueChange("title", value); }
+  set title(value) { this.addValueChange("title", value); }
 
   get items() { return this.getProperty("items") }
-  set items(value) { this.recordValueChange("items", value); }
+  set items(value) { this.addValueChange("items", value); }
 
   get padding() { return this.getProperty("padding") }
-  set padding(value) { this.recordValueChange("padding", value); }
+  set padding(value) { this.addValueChange("padding", value); }
 
   get itemMorphs() {
     return this.submorphs.filter(ea => ea.isMenuItem);

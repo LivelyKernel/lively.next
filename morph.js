@@ -40,7 +40,7 @@ export class Morph {
   constructor(props = {}) {
     var env = props.env || MorphicEnv.default();
     this._env = env;
-    this._rev = env.changeRecorder.revision;
+    this._rev = env.changeManager.revision;
     this._owner = null;
     this._dirty = true; // for initial display
     this._currentState = {...defaultProperties};
@@ -82,31 +82,27 @@ export class Morph {
   onChange(change) {}
   onSubmorphChange(submorph, change) {}
 
-  get changes() { return this.env.changeRecorder.changesFor(this); }
-  applyChange(change) { this.env.changeRecorder.apply(this, change); }
+  get changes() { return this.env.changeManager.changesFor(this); }
+  applyChange(change) { this.env.changeManager.apply(this, change); }
 
-  recordValueChange(prop, value, meta) {
-    return this.env.changeRecorder.recordValueChange(this, prop, value, meta);
+  addValueChange(prop, value, meta) {
+    return this.env.changeManager.addValueChange(this, prop, value, meta);
   }
 
-  recordMethodCallChange(receiver, selector, args, prop, value, meta) {
-    return this.env.changeRecorder.recordMethodCallChange(this, receiver, selector, args, prop, value, meta)
+  addMethodCallChange(receiver, selector, args, prop, value, meta) {
+    return this.env.changeManager.addMethodCallChange(this, receiver, selector, args, prop, value, meta)
   }
 
-  changesWhile(whileFn) {
-    return this.env.changeRecorder.changesWhile(whileFn);
+  changesWhile(whileFn, optFilter) {
+    return this.env.changeManager.changesWhile(whileFn, optFilter);
   }
 
-  tagChangesWhile(tags, whileFn) {
-    return this.env.changeRecorder.tagWhile(this, tags, whileFn);
+  startRecordChanges(optFilter) {
+    return this.env.changeManager.startMorphChangeRecorder(this, optFilter);
   }
 
-  tagChangesStart(tags) {
-    return this.env.changeRecorder.tagStart(this, tags);
-  }
-
-  tagChangesEnd(optTagId) {
-    return this.env.changeRecorder.tagEnd(this, optTagId);
+  stopRecordChanges(id) {
+    return this.env.changeManager.stopMorphChangeRecorder(this, id);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -121,66 +117,58 @@ export class Morph {
     this.env.undoManager.undoStop(this, name);
   }
 
-  undo() {
-    // TODO
-  }
-
-  redo() {
-    // TODO
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get name()           { return this.getProperty("name"); }
-  set name(value)      { this.recordValueChange("name", value); }
+  set name(value)      { this.addValueChange("name", value); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this._cachedBounds = null; this.recordValueChange("position", value); }
+  set position(value)  { this._cachedBounds = null; this.addValueChange("position", value); }
 
   get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this._cachedBounds = null; this.recordValueChange("scale", value); }
+  set scale(value)     { this._cachedBounds = null; this.addValueChange("scale", value); }
 
   get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this._cachedBounds = null; this.recordValueChange("rotation", value); }
+  set rotation(value)  { this._cachedBounds = null; this.addValueChange("rotation", value); }
 
   get origin()         { return this.getProperty("origin"); }
-  set origin(value)    { return this.recordValueChange("origin", value); }
+  set origin(value)    { return this.addValueChange("origin", value); }
 
   get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this._cachedBounds = null; this.recordValueChange("extent", value); }
+  set extent(value)    { this._cachedBounds = null; this.addValueChange("extent", value); }
 
   get fill()           { return this.getProperty("fill"); }
-  set fill(value)      { this.recordValueChange("fill", value); }
+  set fill(value)      { this.addValueChange("fill", value); }
 
   get borderWidth()       { return this.getProperty("borderWidth"); }
-  set borderWidth(value)  { this.recordValueChange("borderWidth", value); }
+  set borderWidth(value)  { this.addValueChange("borderWidth", value); }
 
   get borderColor()       { return this.getProperty("borderColor"); }
-  set borderColor(value)  { this.recordValueChange("borderColor", value); }
+  set borderColor(value)  { this.addValueChange("borderColor", value); }
 
   get borderRadius()      { return this.getProperty("borderRadius"); }
   set borderRadius(value) {
     if (typeof value === "number") value = Rectangle.inset(value);
-    this.recordValueChange("borderRadius", value);
+    this.addValueChange("borderRadius", value);
   }
 
   get clipMode()       { return this.getProperty("clipMode"); }
-  set clipMode(value)  { this.recordValueChange("clipMode", value); }
+  set clipMode(value)  { this.addValueChange("clipMode", value); }
 
   get draggable()       { return this.getProperty("draggable"); }
-  set draggable(value)  { this.recordValueChange("draggable", value); }
+  set draggable(value)  { this.addValueChange("draggable", value); }
 
   get grabbable()       { return this.getProperty("grabbable"); }
-  set grabbable(value)  { this.recordValueChange("grabbable", value); }
+  set grabbable(value)  { this.addValueChange("grabbable", value); }
 
   get halosEnabled()       { return this.getProperty("halosEnabled"); }
-  set halosEnabled(value)  { this.recordValueChange("halosEnabled", value); }
+  set halosEnabled(value)  { this.addValueChange("halosEnabled", value); }
 
   // does this morph react to pointer / mouse events
   get reactsToPointer()       { return this.getProperty("reactsToPointer"); }
-  set reactsToPointer(value)  { this.recordValueChange("reactsToPointer", value); }
+  set reactsToPointer(value)  { this.addValueChange("reactsToPointer", value); }
 
   // The shape of the OS mouse cursor. nativeCursor can be one of
   // auto, default, none, context-menu, help, pointer, progress, wait, cell,
@@ -189,20 +177,20 @@ export class Morph {
   // w-resize, ew-resize, ns-resize, nesw-resize, nwse-resize, col-resize,
   // row-resize, all-scroll, zoom-in, zoom-out, grab, grabbing
   get nativeCursor()       { return this.getProperty("nativeCursor"); }
-  set nativeCursor(value)  { this.recordValueChange("nativeCursor", value); }
+  set nativeCursor(value)  { this.addValueChange("nativeCursor", value); }
 
   // can this morph receive keyboard focus?
   get focusable()       { return this.getProperty("focusable"); }
-  set focusable(value)  { this.recordValueChange("focusable", value); }
+  set focusable(value)  { this.addValueChange("focusable", value); }
 
   get visible()       { return this.getProperty("visible"); }
-  set visible(value)  { this.recordValueChange("visible", value); }
+  set visible(value)  { this.addValueChange("visible", value); }
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) { this.recordValueChange("dropShadow", value); }
+  set dropShadow(value) { this.addValueChange("dropShadow", value); }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
-  set styleClasses(value)  { this.recordValueChange("styleClasses", value); }
+  set styleClasses(value)  { this.addValueChange("styleClasses", value); }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
@@ -369,7 +357,7 @@ export class Morph {
     index = Math.min(submorphs.length, Math.max(0, index));
     submorphs.splice(index, 0, submorph);
 
-    this.recordMethodCallChange(
+    this.addMethodCallChange(
       this,              /*receiver*/
       "addMorphAt",      /*selector*/
       [submorph, index], /*args*/
@@ -405,7 +393,7 @@ export class Morph {
         index = submorphs.indexOf(this)
     if (index > -1) submorphs.splice(index, 1);
 
-    owner.recordMethodCallChange(
+    owner.addMethodCallChange(
       this,          /*receiver*/
       "remove",      /*selector*/
       [],            /*args*/
@@ -459,8 +447,10 @@ export class Morph {
   }
 
   isAncestorOf(aMorph) {
-    // check if aMorph is somewhere in my submorph graph
-    return !!this.withAllSubmorphsDetect(ea => ea === aMorph);
+    // check if aMorph is somewhere in my submorph tree
+    var owner = aMorph.owner;
+    while (owner) { if (owner === this) return true; owner = owner.owner; }
+    return false;
   }
 
   morphsContainingPoint(point, list) {
@@ -659,13 +649,10 @@ export class Morph {
   onKeyUp(evt) {}
   onContextMenu(evt) {}
 
-  onDragStart(evt) { }
+  onDragStart(evt) { this.undoStart("drag-move"); }
+  onDragEnd(evt) { this.undoStop("drag-move"); }
+  onDrag(evt) { this.moveBy(evt.state.dragDelta); }
 
-  onDrag(evt) {
-    this.moveBy(evt.state.dragDelta);
-  }
-
-  onDragEnd(evt) { }
 
   onGrab(evt) {
     evt.hand.grab(this);
@@ -775,7 +762,7 @@ export class Image extends Morph {
   get isImage() { return true }
 
   get imageUrl()       { return this.getProperty("imageUrl"); }
-  set imageUrl(value)  { this.recordValueChange("imageUrl", value); }
+  set imageUrl(value)  { this.addValueChange("imageUrl", value); }
 
   render(renderer) {
     return renderer.renderImage(this);
@@ -785,10 +772,10 @@ export class Image extends Morph {
 export class Path extends Morph {
 
   get borderStyle() { return this.getProperty("borderStyle") }
-  set borderStyle(value) { this.recordValueChange("borderStyle", value) }
+  set borderStyle(value) { this.addValueChange("borderStyle", value) }
 
   get vertices() { return this.getProperty("vertices")}
-  set vertices(value) { this.recordValueChange("vertices", value)}
+  set vertices(value) { this.addValueChange("vertices", value)}
 
   resizeBy(delta) {
     const oldExtent = this.extent;

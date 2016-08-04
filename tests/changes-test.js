@@ -9,10 +9,13 @@ var env;
 
 describe("morph change recording", () => {
 
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(defaultDOMEnv())));
+  afterEach(() =>  MorphicEnv.popDefault().uninstall());
+
   it("records property modifications as changes", () => {
     var m = morph({extent: pt(10,20), fill: Color.red});
     // Hm... make this one??? For creation...?
-    expect(m._rev).equals(m.env.changeRecorder.revision);
+    expect(m._rev).equals(m.env.changeManager.revision);
     expect(m.changes).containSubset([{prop: "extent"}, {prop: "fill"}]);
   });
 
@@ -41,177 +44,88 @@ describe("morph change recording", () => {
     expect(changes).containSubset([{prop: "fill"}, {prop: "position"}]);
   });
 
-});
 
+  describe("change listener process", () => {
 
-describe("tagging", () => {
-
-  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(defaultDOMEnv())));
-  afterEach(() =>  MorphicEnv.popDefault().uninstall());
-
-  beforeEach(() => {
-    
-    // MorphicEnv.reset();
-// MorphicEnv.popDefault()
-// var env = MorphicEnv.default()
-// env.changeRecorder.activeTags
-// env.changeRecorder.taggings
-  });
-
-  it("tag changes sync", () => {
-    var m = morph({extent: pt(10,20), fill: Color.red}),
-        idx1 = m.changes.length, idx2, idx3;
-
-    m.tagChangesWhile(['test-change'], () => {
-      m.fill = Color.blue;
-      idx2 = m.changes.length;
-      m.tagChangesWhile(['test-change-2'], () =>
-        m.addMorph({fill: Color.green}));
+    it("add / remove", () => {
+      var changes = [];
+      var onChange = change => changes.push(change);
+      var m1 = morph(), m2 = m1.addMorph({});
+      env.changeManager.addChangeListener(onChange);
+      m1.fill = Color.red;
+      m2.addMorph({});
+      env.changeManager.removeChangeListener(onChange);
+      m2.fill = Color.green;
+      expect(changes).containSubset([{prop: "fill"}, {prop: "submorphs"}]);
     });
 
-    idx3 = m.changes.length;
-    m.moveBy(pt(1,2));
-
-    expect(arr.uniq(arr.flatten(m.changes.slice(idx1, idx2).map(c => c.tags))))
-      .equals(["test-change"], "tags of initial morph")
-
-    expect(arr.uniq(arr.flatten(m.changes.slice(idx2, idx3).map(c => c.tags))))
-      .equals(["test-change", "test-change-2"], "tags of initial morph 2")
-
-    expect(arr.uniq(arr.flatten(m.changes.slice(idx3).map(c => c.tags))))
-      .equals([], "tags of initial morph 3")
-
-    expect(arr.uniq(arr.flatten(m.submorphs[0].changes.map(c => c.tags))))
-      .equals(["test-change", "test-change-2"], "tags of submorph")
-
-    expect(MorphicEnv.default().changeRecorder.activeTags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.taggings).deep.equals({});
-  });
-
-  it("tag changes async", () => {
-    var m = morph({extent: pt(10,20), fill: Color.red});
-    m.tagChangesStart(["test"]);
-    m.fill = Color.red;
-    m.rotation += .1;
-    var changes = m.tagChangesEnd();
-    m.rotation += .1;
-    expect(changes).containSubset([{prop: "fill", tags: ["test"]}, {prop: "rotation", tags: ["test"]}]);
-    expect(m.changes.last().tags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.activeTags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.taggings).deep.equals({});
-  });
-
-  it("tag changes async nested", () => {
-    var m = morph({extent: pt(10,20), fill: Color.red});
-    m.tagChangesStart(["test"]);
-    m.fill = Color.red;
-    m.tagChangesStart(["test-2"]);
-    m.rotation += .1;
-    var changes1 = m.tagChangesEnd();
-    m.rotation += .1;
-    var changes2 = m.tagChangesEnd();
-
-    expect(changes1).containSubset([{prop: "rotation", tags: ["test-2"]}]);
-    expect(changes2).containSubset([{prop: "fill", tags: ["test"]}, {prop: "rotation", tags: ["test", "test-2"]}, {prop: "rotation", tags: ["test"]}]);
-    expect(MorphicEnv.default().changeRecorder.activeTags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.taggings).deep.equals({});
-  });
-
-  it("tag changes async overlap", () => {
-    var m = morph({extent: pt(10,20), fill: Color.red});
-    var id1 = m.tagChangesStart(["test"]);
-    m.fill = Color.red;
-    var id2 = m.tagChangesStart(["test-2"]);
-    m.rotation += .1;
-    var changes1 = m.tagChangesEnd(id1);
-    m.rotation += .1;
-    var changes2 = m.tagChangesEnd(id2);
-
-    expect(changes1).containSubset([{prop: "fill", tags: ["test"]}, {prop: "rotation", tags: ["test", "test-2"]}]);
-    expect(changes2).containSubset([{prop: "rotation", tags: ["test-2"]}]);
-    expect(MorphicEnv.default().changeRecorder.activeTags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.taggings).deep.equals({});
-  });
-
-  it("tag changes async overlap with same tag", () => {
-    var m = morph({extent: pt(10,20), fill: Color.red});
-    var id1 = m.tagChangesStart(["test"]);
-    m.fill = Color.red;
-    var id2 = m.tagChangesStart(["test"]);
-    m.rotation += .1;
-    var changes1 = m.tagChangesEnd(id1);
-    m.rotation += .1;
-    var changes2 = m.tagChangesEnd(id2);
-
-    expect(changes1).containSubset([{prop: "fill", tags: ["test"]}, {prop: "rotation", tags: ["test"]}]);
-    expect(changes2).containSubset([{prop: "rotation", tags: ["test"]}]);
-    expect(MorphicEnv.default().changeRecorder.activeTags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.taggings).deep.equals({});
-  });
-
-  it("tag changes sync then async", () => {
-    var m = morph({extent: pt(10,20), fill: Color.red});
-
-    var changes1 = m.tagChangesWhile(['test-1'], () => {
-      m.fill = Color.blue;
-      m.tagChangesStart(["test-2"]);
-      m.addMorph({fill: Color.green});
+    it("record async", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red});
+      m.startRecordChanges();
+      m.fill = Color.red;
+      m.rotation += .1;
+      var changes = m.stopRecordChanges();
+      m.rotation += .1;
+      expect(changes).containSubset([{prop: "fill"}, {prop: "rotation"}]);
+      expect(MorphicEnv.default().changeManager.changeListeners).equals([]);
+      expect(MorphicEnv.default().changeManager.changeRecorders).deep.equals({});
     });
-    m.rotation += .1;
-    var changes2 = m.tagChangesEnd();
+  
+    it("record async nested", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red});
+      m.startRecordChanges();
+      m.fill = Color.red;
+      m.startRecordChanges();
+      m.rotation += .1;
+      var changes1 = m.stopRecordChanges();
+      m.rotation += .1;
+      var changes2 = m.stopRecordChanges();
+  
+      expect(changes1).containSubset([{prop: "rotation"}]);
+      expect(changes2).containSubset([{prop: "fill"}, {prop: "rotation"}, {prop: "rotation"}]);
+      expect(MorphicEnv.default().changeManager.changeListeners).equals([]);
+      expect(MorphicEnv.default().changeManager.changeRecorders).deep.equals({});
+    });
+  
+    it("record async overlap", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red});
+      var id1 = m.startRecordChanges();
+      m.fill = Color.red;
+      var id2 = m.startRecordChanges();
+      m.rotation += .1;
+      var changes1 = m.stopRecordChanges(id1);
+      m.rotation += .1;
+      var changes2 = m.stopRecordChanges(id2);
 
-    expect(changes1).containSubset([
-      {prop: "fill", tags: ["test-1"]},
-      {prop: "fill", tags: ["test-1", "test-2"]},
-      {prop: "submorphs", tags: ["test-1", "test-2"]}]);
 
-    expect(changes2).containSubset([{prop: "rotation", tags: ["test-2"]}]);
-
-    expect(MorphicEnv.default().changeRecorder.activeTags).equals([]);
-    expect(MorphicEnv.default().changeRecorder.taggings).deep.equals({});
-  });
-
-});
-
-describe("undo", () => {
-
-  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv())));
-  afterEach(() =>  MorphicEnv.popDefault().uninstall());
-
-  it("records changes for undo", () => {
-    var m1 = morph({submorphs: [{fill: Color.green}]});
-    m1.undoStart("test");
-    m1.fill = Color.green;
-    m1.submorphs[0].position = pt(10,10);
-    m1.undoStop("test");
-    expect(env.undoManager.undos).containSubset([{name: "test", changes: [{prop: "fill"}, {prop: "position"}]}]);
-  });
-
-  it("does undo and redo", () => {
-    var m1 = morph({position: pt(3,4), submorphs: [{fill: Color.green}]});
-    m1.undoStart("test");
-    m1.submorphs[0].fill = Color.yellow;
-    m1.position = pt(10,10);
-    m1.undoStop("test");
-    env.undoManager.undo();
-    expect(m1.position).equals(pt(3,4));
-    expect(m1.submorphs[0].fill).equals(Color.green);
-    expect(env.undoManager.undos).to.have.length(0);
-    expect(env.undoManager.redos).to.have.length(1);
-    env.undoManager.redo();
-    expect(m1.position).equals(pt(10,10));
-    expect(m1.submorphs[0].fill).equals(Color.yellow);
-    expect(env.undoManager.undos).to.have.length(1);
-    expect(env.undoManager.redos).to.have.length(0);
-  });
-
-  it("redo removed on new undo", () => {
-    var m1 = morph({position: pt(3,4)});
-    m1.undoStart("test"); m1.position = pt(10,10); m1.undoStop("test");
-    env.undoManager.undo();
-    m1.undoStart("test"); m1.position = pt(20,20); m1.undoStop("test");
-    expect(env.undoManager.undos).to.have.length(1);
-    expect(env.undoManager.redos).to.have.length(0);
+      expect(changes1).containSubset([{prop: "fill"}, {prop: "rotation"}]);
+      expect(changes2).containSubset([{prop: "rotation"}]);
+      expect(MorphicEnv.default().changeManager.changeListeners).equals([]);
+      expect(MorphicEnv.default().changeManager.changeRecorders).deep.equals({});
+    });
+  
+    it("record sync then async", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red});
+  
+      var changes1 = m.changesWhile(() => {
+        m.fill = Color.blue;
+        m.startRecordChanges();
+        m.addMorph({fill: Color.green});
+      });
+      m.rotation += .1;
+      var changes2 = m.stopRecordChanges();
+  
+      expect(changes1).containSubset([
+        {prop: "fill"},
+        {prop: "fill"},
+        {prop: "submorphs"}]);
+  
+      expect(changes2).containSubset([{prop: "rotation"}]);
+  
+      expect(MorphicEnv.default().changeManager.changeListeners).equals([]);
+      expect(MorphicEnv.default().changeManager.changeRecorders).deep.equals({});
+    });
+  
   });
 
 });
