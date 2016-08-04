@@ -140,7 +140,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
   get layout()         { return this.getProperty("layout") }
-  set layout(value)    { this.recordChange({prop: "layout", value}); }
+  set layout(value)    { this.addValueChange({prop: "layout", value}); }
 
   get name()           { return this.getProperty("name"); }
   set name(value)      { this.addValueChange("name", value); }
