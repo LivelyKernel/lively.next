@@ -89,7 +89,7 @@ export class Morph {
   }
 
   onChange(change) {
-    if (change.prop == "layout") change.value.applyTo(this);
+    if (change.prop == "layout" && change.value) change.value.applyTo(this);
     if (["submorphs", "extent"].includes(change.prop) && this.layout) this.layout.applyTo(this);
     
   }
