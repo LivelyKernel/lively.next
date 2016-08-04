@@ -1,4 +1,12 @@
-import { obj, arr, events } from "lively.lang";
+import { arr, string } from "lively.lang";
+
+function newKeyIn(obj, base = "_") {
+  var i = 1, key;
+  do {
+    key = base + "-" + i++;
+  } while (key in obj);
+  return key;
+}
 
 function signalChange(changeManager, change, morph) {
 
@@ -137,35 +145,45 @@ export class ChangeManager {
   addChangeListener(listenFn) { arr.pushIfNotIncluded(this.changeListeners, listenFn); }
   removeChangeListener(listenFn) { arr.remove(this.changeListeners, listenFn); }
 
-  startMorphChangeRecorder(morph, optFilter) {
-    // change recorder is a change listener that is identified by id an belongs
-    // to a specific morph. This makes it easy to just start / stop recordings
-    // without having to manage listener storage and its lifetime
+  startRecordingChanges(optFilter, optName = "") {
+    // change recorder is a change listener that is identified by id
 
-    // 1. id for recorder
-    var baseId = "change-recorder__" + morph.id + "__" + Date.now(), id;
-    var i = 1; do {
-      id = baseId + "-" + i++;
-    } while (id in this.changeRecorders)
-
-    // 2. Recorder object to be used to record specific changes when they occur,
+    // Recorder object to be used to record specific changes when they occur,
     // based on change listeners
-    var listener = optFilter ?
-          change => console.log(`change for ${id}`) || optFilter(change) && recorder.changes.push(change) :
-          change => console.log(`change for ${id}`) || recorder.changes.push(change),
-        recorder = this.changeRecorders[id] = {filter: optFilter, changes: [], listener}
+    var id = newKeyIn(this.changeRecorders, optName + "__change_recorder_" + Date.now()),
+        listener = optFilter ?
+          change => optFilter(change) && recorder.changes.push(change) :
+          change => recorder.changes.push(change),
+        recorder = this.changeRecorders[id] = {id, filter: optFilter, changes: [], listener};
 
     this.addChangeListener(listener);
 
-    // store recorder alongside morph for easy lookup
+    return recorder;
+  }
+
+  stopChangeRecorder(id) {
+    if (!(id in this.changeRecorders)) return [];
+    var {changes, listener} = this.changeRecorders[id];
+    delete this.changeRecorders[id];
+    this.removeChangeListener(listener);
+    return changes;
+  }
+
+  startMorphChangeRecorder(morph, optFilter) {
+    var recorder = this.startRecordingChanges(optFilter, morph.id);
+
+    // store recorder alongside morph for easy lookup and
+    // to make it easy to just start / stop recordings
+    // without having to manage listener storage and its lifetime
+
     var perMorph = this.changeRecordersPerMorph.get(morph);
     if (!perMorph) {
       perMorph = [];
       this.changeRecordersPerMorph.set(morph, perMorph);
     }
-    perMorph.push(id);
+    perMorph.push(recorder.id);
 
-    return id;
+    return recorder;
   }
 
   stopMorphChangeRecorder(morph, optId) {
@@ -179,13 +197,7 @@ export class ChangeManager {
     if (!optId) id = perMorph.pop();
     else arr.remove(perMorph, id);
 
-    if (!this.changeRecorders[id]) return [];
-    var {changes, listener} = this.changeRecorders[id];
-    delete this.changeRecorders[id];
-
-    this.removeChangeListener(listener);
-
-    return changes;
+    return this.stopChangeRecorder(id);
   }
 
 }

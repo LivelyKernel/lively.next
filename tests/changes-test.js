@@ -89,9 +89,9 @@ describe("morph change recording", () => {
   
     it("record async overlap", () => {
       var m = morph({extent: pt(10,20), fill: Color.red});
-      var id1 = m.startRecordChanges();
+      var {id: id1} = m.startRecordChanges();
       m.fill = Color.red;
-      var id2 = m.startRecordChanges();
+      var {id: id2} = m.startRecordChanges();
       m.rotation += .1;
       var changes1 = m.stopRecordChanges(id1);
       m.rotation += .1;
