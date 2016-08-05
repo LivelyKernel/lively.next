@@ -185,7 +185,7 @@ export class Renderer {
   }
 
   renderText(text) {
-    let { textString, selection, readOnly } = text;
+    let { textString, selection, readOnly, clipboardHelper } = text;
     return h("div", {
       ...defaultAttributes(text),
       style: {
@@ -201,7 +201,7 @@ export class Renderer {
           textContent: textString.substring(selection.start, selection.end),
           style: { "pointer-events": "none" }
         }),
-        h(`span${ readOnly ? "" : ".cursor" }.no-html-select`, "\u200b"),
+        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial") } }, "\u200b"),
         textString.substring(selection.end),
         this.renderSubmorphs(text)]);
   }

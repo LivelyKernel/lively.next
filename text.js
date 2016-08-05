@@ -264,7 +264,10 @@ export class Text extends Morph {
 
   onFocus(evt) {
     this.clipboardHelper.focus();
+    this.makeDirty();
   }
+
+  onBlur(evt) { this.makeDirty(); }
 }
 
 
@@ -283,6 +286,13 @@ export class ClipboardHelper extends Morph {
                       background: "red",
                       padding: "0px",
                       border: "0px" }});
+  }
+
+  onFocus(evt) { this._hasFocus = true; }
+
+  onBlur(evt) {
+    this._hasFocus = false;
+    this.makeDirty();
   }
 }
 
