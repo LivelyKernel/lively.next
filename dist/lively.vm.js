@@ -19567,7 +19567,7 @@ var nodes = Object.freeze({
     //   }
     // }
 
-    return funcExpr({ id: name ? id(name) : null }, [], varDecl("firstArg", member("arguments", literal(0))), ifStmt(binaryExpr(id("firstArg"), "&&", member("firstArg", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
+    return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -22336,16 +22336,15 @@ var categorizer = Object.freeze({
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
-              console.log("emitted");
               lively_notifications.emit("lively.vm/doitrequest", {
                 code: originalCode,
                 waitForPromise: options.waitForPromise,
                 targetModule: options.targetModule }, Date.now(), System);
 
-              _context3.next = 26;
+              _context3.next = 25;
               return vmRunEval(code, options);
 
-            case 26:
+            case 25:
               result = _context3.sent;
 
 
@@ -22359,7 +22358,7 @@ var categorizer = Object.freeze({
 
               return _context3.abrupt("return", result);
 
-            case 31:
+            case 30:
             case "end":
               return _context3.stop();
           }

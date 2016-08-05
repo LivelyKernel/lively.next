@@ -1130,16 +1130,15 @@
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
-              console.log("emitted");
               lively_notifications.emit("lively.vm/doitrequest", {
                 code: originalCode,
                 waitForPromise: options.waitForPromise,
                 targetModule: options.targetModule }, Date.now(), System);
 
-              _context3.next = 26;
+              _context3.next = 25;
               return vmRunEval(code, options);
 
-            case 26:
+            case 25:
               result = _context3.sent;
 
 
@@ -1153,7 +1152,7 @@
 
               return _context3.abrupt("return", result);
 
-            case 31:
+            case 30:
             case "end":
               return _context3.stop();
           }
