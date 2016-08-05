@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "dependencies": {
     "bowser": "^1.4.1",
-    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.lang": "^0.7.0",
+    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+    "pepjs": "^0.4.1",
     "virtual-dom": "^2.1.1"
   },
   "devDependencies": {

@@ -15,23 +15,23 @@ export class List extends Morph {
 
   // horizonal or vertical (tiling?)
   get layoutPolicy() { return this.getProperty("layoutPolicy"); }
-  set layoutPolicy(value) { this.recordChange({prop: "layoutPolicy", value}); }
+  set layoutPolicy(value) { this.addValueChange("layoutPolicy", value); }
 
   get items() { return this.getProperty("items"); }
-  set items(value) { this.recordChange({prop: "items", value}); }
+  set items(value) { this.addValueChange("items", value); }
 
   addItemAt(item, index) {
     var items = this.items;
     var index = Math.min(items.length, Math.max(0, index));
     items.splice(index, 0, item);
 
-    this.recordChange({
-      prop: "items", value: items,
-      type: "method-call",
-      receiver: this,
-      selector: "addItemAt",
-      args: [item, index]
-    });
+    this.addMethodCallChange(
+      this,          /*receiver*/
+      "addItemAt",   /*selector*/
+      [item, index], /*args*/
+      "items",       /*prop*/
+      items          /*value*/);
+
     this.applyLayout();
   }
 
@@ -39,13 +39,14 @@ export class List extends Morph {
     var items = this.items,
         index = items.indexOf(item)
     if (index > -1) items.splice(index, 1);
-    this.recordChange({
-      prop: "items", value: items,
-      type: "method-call",
-      receiver: this,
-      selector: "removeItem",
-      args: [item]
-    });
+
+    this.addMethodCallChange(
+      this,         /*receiver*/
+      "removeItem", /*selector*/
+      [item],       /*args*/
+      "items",      /*prop*/
+      items         /*value*/);
+
     this.applyLayout();
   }
 
@@ -54,7 +55,7 @@ export class List extends Morph {
     if (this.layoutPolicy == "horizontal" ) {
       var maxHeight = 0,
           pos = pt(0, 0);
-      
+
       this.items.forEach(item => {
         this.addMorph(item);
         item.position = pos;
@@ -62,7 +63,7 @@ export class List extends Morph {
         maxHeight = Math.max(item.height, maxHeight);
       });
 
-      this.extent = pt(pos.x, maxHeight);    
+      this.extent = pt(pos.x, maxHeight);
     } else if (this.layoutPolicy == "vertical") {
       var maxWidth = 0,
           pos = pt(0, 0);

@@ -136,16 +136,161 @@ describe("layout", () => {
     
   });
   
-    describe("grid layout", () => {
-    
+  describe("grid layout", () => {
+      
      beforeEach(() => {
-       m.layout = new TilingLayout();
+       m.layout = null
+       m.width = 300;
+       m.height = 300;
+       m.layout = new GridLayout({grid: 
+                          [[null, "m1", null],
+                           ["m2", null, null],
+                           [null, null,"m3"]]});
      });
     
     it("aligns submorphs along a grid", () => {
+      const [m1, m2, m3] = m.submorphs;
+      expect(m1.position).equals(pt(100, 0));
+      expect(m2.position).equals(pt(0, 100));
+      expect(m3.position).equals(pt(200, 200));
+    });
+    
+    it("appends missing cells", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new GridLayout({grid: 
+                          [[null, "m1"],
+                           ["m2"],
+                           [null, null,"m3"]]});
+      expect(m.layout.rowCount).equals(3);
+      expect(m.layout.columnCount).equals(3);
+      expect(m3.position).equals(pt(200, 200));
+    });
+    
+    it("can create an empty grid and auto assign submorphs to closest cell", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = null;
+      m1.position = pt(288, 20);
+      m2.position = pt(15,20);
+      m3.position = pt(10, 220);
+      m.layout = new GridLayout({columnCount: 3, rowCount: 3});
+      expect(m2.position).equals(pt(0,0));
+      expect(m3.position).equals(pt(0, 200));
+      expect(m1.position).equals(pt(200,0));
+    })
+    
+    it("allows morphs to take up multiple cells", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new GridLayout({grid: 
+                          [[null, "m1", null],
+                           ["m2", "m2", null],
+                           [null, null,"m3"]]});
+      expect(m2.position).equals(pt(0, 100));
+    });
+    
+    it("allows morphs to be reassigned to cells", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.assign(m2, {row: 2, col: 1});
+      expect(m.layout.grid[1][0]).equals(null);
+      expect(m2.position).equals(pt(100, 200));
+      m.layout.assign(m1, {row: 0, col: [0,1,2]});
+      expect(m1.position).equals(pt(0,0));
+      expect(() => m.layout.assign(m3, {row: [0,2], col: 1})).to.throw(RangeError);
+    });
+    
+    it("updates layout on changed extent", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.resizeBy(pt(300,300));
+      expect(m1.position).equals(pt(200, 0));
+      expect(m2.position).equals(pt(0, 200));
+      expect(m3.position).equals(pt(400, 400));
       
     });
     
+    it("allows rows and columns to be fixed", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new GridLayout({grid: 
+                               /* 50px */
+                          [[null, "m1", null], /* 50 px*/
+                           ["m2", null, null],
+                           [null, null,"m3"]],
+                           colSizing: {1: {fixed: 50}},
+                           rowSizing: {0: {fixed: 50}}});
+      expect(m1.position).equals(pt(125, 0));
+      expect(m2.position).equals(pt(0, 50));
+      expect(m3.position).equals(pt(175, 175));
+    });
+    
+    it("can set minimum spacing for columns and rows", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new GridLayout({grid: 
+                               /* 50px */
+                          [[null, "m1", null], /* 50 px*/
+                           ["m2", null, null],
+                           [null, null,"m3"]],
+                           colSizing: {0: {min: 50}},
+                           rowSizing: {0: {min: 50}}});
+      m.extent = pt(25, 25); // too small!
+      expect(m.extent).equals(pt(50,50));
+      expect(m1.position).equals(pt(50, 0));
+      expect(m2.position).equals(pt(0, 50));
+      expect(m3.position).equals(pt(50, 50));
+      m.extent = pt(100, 100);
+      expect(m.extent).equals(pt(100,100));
+      expect(m1.position).equals(pt(50, 0));
+      expect(m2.position).equals(pt(0, 50));
+      expect(m3.position).equals(pt(75, 75));
+    });
+    
+    it("by default enforces the cell's extent upon the contained morph", () => {
+      const [m1, m2, m3] = m.submorphs;
+      expect(m1.extent).equals(pt(100, 100));
+      expect(m2.extent).equals(pt(100, 100));
+      expect(m3.extent).equals(pt(100, 100));
+      m.layout = new GridLayout({grid: 
+                          [[null, "m1", null],
+                          ["m2", "m2", "m3"],
+                          [null, null, "m3"]]});
+      expect(m1.extent).equals(pt(100, 100));
+      expect(m2.extent).equals(pt(200, 100));
+      expect(m3.extent).equals(pt(100, 200));
+    });
+    
+    it("can vary the proportional width and height of rows and columns", () => {
+      m.layout.adjustColumnStretch(0, 0.2);
+      expect(m.layout.colSizing[0].proportion).equals(1/3 + 0.2)
+      expect(m.layout.colSizing[1].proportion).equals(1/3 - 0.2)
+      m.layout.adjustRowStretch(0, 0.2);
+      expect(m.layout.rowSizing[0].proportion).equals(1/3 + 0.2)
+      expect(m.layout.rowSizing[1].proportion).equals(1/3 - 0.2)
+      m.layout.adjustColumnStretch(0, 1.0)
+      expect(m.layout.colSizing[0].proportion).equals(2/3);
+      expect(m.layout.colSizing[1].proportion).equals(0);
+      m.layout.adjustRowStretch(0, 1.0)
+      expect(m.layout.rowSizing[0].proportion).equals(2/3);
+      expect(m.layout.rowSizing[1].proportion).equals(0);
+    });
+    
+    it("can add rows and columns", () => {
+          // [[null, "m1", X, null],
+          //  [X,    X,    X,   X ]
+          //  ["m2", null, X, null],
+          //  [null, null, X,"m3"]]
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.addRowBefore(1);
+      m.layout.addColumnBefore(2);
+      expect(m1.position).equals(pt((300 / 4),0));
+      expect(m2.position).equals(pt(0, 2 * (300 / 4)));
+      expect(m3.position).equals(pt(3 * (300 / 4), 3 * (300 / 4)));
+    });
+    
+    it("can remove rows and columns", () => {
+          // [[null, null],
+          //  ["m2", null]]
+       const [m1, m2, m3] = m.submorphs;
+       m.layout.removeColumn(1);
+       m.layout.removeRow(2);
+       expect(m2.position).equals(pt(0, 150));
+    });
   });
   
 })
