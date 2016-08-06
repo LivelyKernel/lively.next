@@ -71,6 +71,10 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   // package related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  async registerPackage(packageURL) {
+    return modules.registerPackage(packageURL);
+  }
+
   async importPackage(packageURL) {
     return modules.importPackage(packageURL);
   }

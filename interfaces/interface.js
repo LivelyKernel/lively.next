@@ -69,6 +69,7 @@ export class AbstractCoreInterface {
   // package related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  async registerPackage(packageURL)         { todo("registerPackage") }
   async importPackage(packageURL)           { todo("importPackage") }
   async removePackage(packageURL)           { todo("removePackage") }
   async reloadPackage(packageURL)           { todo("reloadPackage") }

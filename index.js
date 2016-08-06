@@ -37,6 +37,7 @@ export class Interface {
   getPackageForModule(a, b, c)                   { return this.coreInterface.getPackageForModule(a, b, c); }
   systemConfChange(a, b, c)                      { return this.coreInterface.systemConfChange(a, b, c); }
 
+  registerPackage(packageURL) { return this.coreInterface.registerPackage(packageURL); }
   importPackage(packageURL) { return this.coreInterface.importPackage(packageURL); }
   removePackage(packageURL) { return this.coreInterface.removePackage(packageURL); }
   reloadPackage(packageURL) { return this.coreInterface.reloadPackage(packageURL); }
