@@ -21,8 +21,8 @@ export class List extends Morph {
   set items(value) { this.addValueChange("items", value); }
 
   addItemAt(item, index) {
-    var items = this.items;
-    var index = Math.min(items.length, Math.max(0, index));
+    var items = this.items,
+        index = Math.min(items.length, Math.max(0, index));
     items.splice(index, 0, item);
 
     this.addMethodCallChange(
@@ -52,7 +52,8 @@ export class List extends Morph {
 
   applyLayout() {
     this.submorphs = [];
-    if (this.layoutPolicy == "horizontal" ) {
+
+    if (this.layoutPolicy == "horizontal") {
       var maxHeight = 0,
           pos = pt(0, 0);
 
@@ -64,7 +65,11 @@ export class List extends Morph {
       });
 
       this.extent = pt(pos.x, maxHeight);
-    } else if (this.layoutPolicy == "vertical") {
+
+      return;
+    }
+
+    if (this.layoutPolicy == "vertical") {
       var maxWidth = 0,
           pos = pt(0, 0);
 
@@ -76,9 +81,9 @@ export class List extends Morph {
       });
 
       this.extent = pt(maxWidth, pos.y);
-    } else {
-      throw new Error("Unsupported Layout " + this.layoutPolicy);
     }
+
+    throw new Error("Unsupported Layout " + this.layoutPolicy);
   }
 
 }

@@ -5,14 +5,14 @@ import { Morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, Morp
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, arr } from "lively.lang";
 
-var world, m, env, domEnv;
+var world, m, env;
 
 function createDummyWorld() {
   world = new Morph({
     type: "world", name: "world", extent: pt(300,300),
     submorphs: [new Morph({
       layout: new VerticalLayout(),
-      center: pt(150,150), 
+      center: pt(150,150),
       extent: pt(200, 400),
       submorphs: [
         new Morph({name: "m1", extent: pt(100,100)}),
@@ -25,19 +25,20 @@ function createDummyWorld() {
 }
 
 describe("layout", () => {
-  
-  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
-  afterEach(() =>  MorphicEnv.popDefault().uninstall());
-  
+
+  before(async () => env = await MorphicEnv.pushDefault(new MorphicEnv()))
+  after(() =>  MorphicEnv.popDefault().uninstall());
+  beforeEach(() => env.setWorld(createDummyWorld()));
+
   describe("vertical layout", () => {
-    
+
     it("renders submorphs vertically", () => {
       const [item1, item2, item3] = m.submorphs;
       expect(item1.position).equals(pt(0,0));
       expect(item2.position).equals(item1.bottomLeft);
       expect(item3.position).equals(item2.bottomLeft);
     });
-    
+
     it("adjusts layout when submorph changes extent", () => {
       const [item1, item2, item3] = m.submorphs;
       item2.extent = pt(100,100);
@@ -45,13 +46,13 @@ describe("layout", () => {
       expect(item2.position).equals(item1.bottomLeft);
       expect(item3.position).equals(item2.bottomLeft);
     });
-    
+
     it("adjusts layout when submorph is removed", () => {
       const [item1, item2, item3] = m.submorphs;
       item2.remove();
       expect(item3.position).equals(item1.bottomLeft);
     });
-    
+
     it("adjusts layout when submorph is inserted", () => {
       const [item1, item2, item3] = m.submorphs,
             item4 = new Morph({extent: pt(200,200)});
@@ -59,14 +60,14 @@ describe("layout", () => {
       expect(item4.position).equals(item1.bottomLeft);
       expect(item2.position).equals(item4.bottomLeft);
     });
-    
+
     it("can vary the spacing between submorphs", () => {
       const [item1, item2, item3] = m.submorphs;
       m.layout = new VerticalLayout({spacing: 10});
       expect(item2.position).equals(item1.bottomLeft.addPt(pt(0,10)));
       expect(item3.position).equals(item2.bottomLeft.addPt(pt(0,10)));
     });
-  
+
     it("adjusts width to widest item", () => {
       const maxWidth = arr.max(m.submorphs.map( m => m.width ));
       expect(m.width).equals(maxWidth);
@@ -76,24 +77,23 @@ describe("layout", () => {
       const totalHeight = m.submorphs.reduce((h, m) => h + m.height, 0)
       expect(m.height).equals(totalHeight);
     });
-  
+
   });
 
-    
 
   describe("horizontal layout", () => {
-    
+
      beforeEach(() => {
        m.layout = new HorizontalLayout();
      });
-    
+
     it("renders submorphs horizontally", () => {
       const [item1, item2, item3] = m.submorphs;
       expect(item1.position).equals(pt(0,0));
       expect(item2.position).equals(item1.topRight);
       expect(item3.position).equals(item2.topRight);
     });
-    
+
     it("adjusts width to number of items", () => {
       const totalWidth = m.submorphs.reduce( (w,m) => w + m.width, 0);
       expect(m.width).equals(totalWidth);
@@ -103,29 +103,29 @@ describe("layout", () => {
       const maxHeight = arr.max(m.submorphs.map(m => m.height))
       expect(m.height).equals(maxHeight);
     });
-    
+
     it("enforces minimum height and minimum width", () => {
       m.extent = pt(50,50);
       expect(m.height).equals(100);
       expect(m.width).equals(250);
     });
-    
+
   });
-  
+
   describe("tiling layout", () => {
-    
+
      beforeEach(() => {
        m.layout = new TilingLayout();
        m.width = 200;
      });
-    
+
     it("tiles submorphs to fit the bounds", () => {
       const [m1, m2, m3] = m.submorphs;
       expect(m1.position).equals(pt(0,0));
       expect(m2.position).equals(m1.topRight);
       expect(m3.position).equals(m1.bottomLeft);
     });
-    
+
     it("updates layout on changed extent", () => {
       const [m1, m2, m3] = m.submorphs;
       m.extent = pt(400, 100);
@@ -133,31 +133,31 @@ describe("layout", () => {
       expect(m2.position).equals(m1.topRight);
       expect(m3.position).equals(m2.topRight);
     });
-    
+
   });
-  
+
   describe("grid layout", () => {
-      
+
      beforeEach(() => {
        m.layout = null
        m.width = 300;
        m.height = 300;
-       m.layout = new GridLayout({grid: 
+       m.layout = new GridLayout({grid:
                           [[null, "m1", null],
                            ["m2", null, null],
                            [null, null,"m3"]]});
      });
-    
+
     it("aligns submorphs along a grid", () => {
       const [m1, m2, m3] = m.submorphs;
       expect(m1.position).equals(pt(100, 0));
       expect(m2.position).equals(pt(0, 100));
       expect(m3.position).equals(pt(200, 200));
     });
-    
+
     it("appends missing cells", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid: 
+      m.layout = new GridLayout({grid:
                           [[null, "m1"],
                            ["m2"],
                            [null, null,"m3"]]});
@@ -165,7 +165,7 @@ describe("layout", () => {
       expect(m.layout.columnCount).equals(3);
       expect(m3.position).equals(pt(200, 200));
     });
-    
+
     it("can create an empty grid and auto assign submorphs to closest cell", () => {
       const [m1, m2, m3] = m.submorphs;
       m.layout = null;
@@ -177,16 +177,16 @@ describe("layout", () => {
       expect(m3.position).equals(pt(0, 200));
       expect(m1.position).equals(pt(200,0));
     })
-    
+
     it("allows morphs to take up multiple cells", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid: 
+      m.layout = new GridLayout({grid:
                           [[null, "m1", null],
                            ["m2", "m2", null],
                            [null, null,"m3"]]});
       expect(m2.position).equals(pt(0, 100));
     });
-    
+
     it("allows morphs to be reassigned to cells", () => {
       const [m1, m2, m3] = m.submorphs;
       m.layout.assign(m2, {row: 2, col: 1});
@@ -196,19 +196,19 @@ describe("layout", () => {
       expect(m1.position).equals(pt(0,0));
       expect(() => m.layout.assign(m3, {row: [0,2], col: 1})).to.throw(RangeError);
     });
-    
+
     it("updates layout on changed extent", () => {
       const [m1, m2, m3] = m.submorphs;
       m.resizeBy(pt(300,300));
       expect(m1.position).equals(pt(200, 0));
       expect(m2.position).equals(pt(0, 200));
       expect(m3.position).equals(pt(400, 400));
-      
+
     });
-    
+
     it("allows rows and columns to be fixed", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid: 
+      m.layout = new GridLayout({grid:
                                /* 50px */
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
@@ -219,10 +219,10 @@ describe("layout", () => {
       expect(m2.position).equals(pt(0, 50));
       expect(m3.position).equals(pt(175, 175));
     });
-    
+
     it("can set minimum spacing for columns and rows", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid: 
+      m.layout = new GridLayout({grid:
                                /* 50px */
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
@@ -240,13 +240,13 @@ describe("layout", () => {
       expect(m2.position).equals(pt(0, 50));
       expect(m3.position).equals(pt(75, 75));
     });
-    
+
     it("by default enforces the cell's extent upon the contained morph", () => {
       const [m1, m2, m3] = m.submorphs;
       expect(m1.extent).equals(pt(100, 100));
       expect(m2.extent).equals(pt(100, 100));
       expect(m3.extent).equals(pt(100, 100));
-      m.layout = new GridLayout({grid: 
+      m.layout = new GridLayout({grid:
                           [[null, "m1", null],
                           ["m2", "m2", "m3"],
                           [null, null, "m3"]]});
@@ -254,7 +254,7 @@ describe("layout", () => {
       expect(m2.extent).equals(pt(200, 100));
       expect(m3.extent).equals(pt(100, 200));
     });
-    
+
     it("can vary the proportional width and height of rows and columns", () => {
       m.layout.adjustColumnStretch(0, 0.2);
       expect(m.layout.colSizing[0].proportion).equals(1/3 + 0.2)
@@ -269,7 +269,7 @@ describe("layout", () => {
       expect(m.layout.rowSizing[0].proportion).equals(2/3);
       expect(m.layout.rowSizing[1].proportion).equals(0);
     });
-    
+
     it("can add rows and columns", () => {
           // [[null, "m1", X, null],
           //  [X,    X,    X,   X ]
@@ -282,7 +282,7 @@ describe("layout", () => {
       expect(m2.position).equals(pt(0, 2 * (300 / 4)));
       expect(m3.position).equals(pt(3 * (300 / 4), 3 * (300 / 4)));
     });
-    
+
     it("can remove rows and columns", () => {
           // [[null, null],
           //  ["m2", null]]
@@ -292,5 +292,5 @@ describe("layout", () => {
        expect(m2.position).equals(pt(0, 150));
     });
   });
-  
+
 })
