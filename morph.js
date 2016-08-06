@@ -90,7 +90,7 @@ export class Morph {
   }
 
   refreshLayoutIfNeeded(submorphChange) {
-    const needsRefresh = ["extent", "position", "scale", "rotation"].indexOf(submorphChange.prop) > -1;
+    const needsRefresh = ["extent", "position", "scale", "rotation"].includes(submorphChange.prop);
     if (this.layout && needsRefresh) this.layout.applyTo(this);
   }
 
@@ -101,20 +101,24 @@ export class Morph {
     return this.env.changeManager.addValueChange(this, prop, value, meta);
   }
 
-  addMethodCallChange(receiver, selector, args, prop, value, meta) {
-    return this.env.changeManager.addMethodCallChange(this, receiver, selector, args, prop, value, meta)
+  addMethodCallChangeDoing(receiver, selector, args, prop, value, doFn) {
+    return this.env.changeManager.addMethodCallChangeDoing(this, receiver, selector, args, prop, value, doFn)
   }
 
-  changesWhile(whileFn, optFilter) {
-    return this.env.changeManager.changesWhile(whileFn, optFilter);
+  groupChangesWhile(groupChange, whileFn) {
+    return this.env.changeManager.groupChangesWhile(this, groupChange, whileFn);
   }
 
-  startRecordChanges(optFilter) {
-    return this.env.changeManager.startMorphChangeRecorder(this, optFilter);
+  recordChangesWhile(whileFn, optFilter) {
+    return this.env.changeManager.recordChangesWhile(whileFn, optFilter);
   }
 
-  stopRecordChanges(id) {
-    return this.env.changeManager.stopMorphChangeRecorder(this, id);
+  recordChangesStart(optFilter) {
+    return this.env.changeManager.recordChangesStartForMorph(this, optFilter);
+  }
+
+  recordChangesStop(id) {
+    return this.env.changeManager.recordChangesStopForMorph(this, id);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -134,7 +138,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   get layout()         { return this.getProperty("layout") }
   set layout(value)    { this.addValueChange("layout", value); }
 
@@ -339,55 +343,59 @@ export class Morph {
 
   get submorphs() { return this.getProperty("submorphs").slice(); }
   set submorphs(newSubmorphs) {
-    this.submorphs
-      .filter(ea => !arr.include(newSubmorphs, ea))
-      .forEach(m => m.remove());
-    return newSubmorphs.map((m, i) => {
-      if (this.submorphs[i] !== m) this.addMorph(m, this.submorphs[i]);
-    });
+    this.submorphs.forEach(m => newSubmorphs.includes(m) || m.remove());
+    newSubmorphs.forEach((m, i) =>
+      this.submorphs[i] !== m && this.addMorph(m, this.submorphs[i]));
   }
 
   addMorphAt(submorph, index) {
-    this._cachedBounds = null;
-
-    if (submorph.isMorph) {
-
-      // sanity check
-      if (submorph.isAncestorOf(this)) {
-          alert('addMorph: Circular relationships between morphs not allowed\n'
-              + 'tried to drop ' + submorph + ' on ' + this);
-          // return null;
-          this.remove();
-      }
-
-      // tramsformation of new owner is applied to morph
-      var tfm = submorph.owner
-             && submorph.owner !== this
-             && submorph.transformForNewOwner(this);
-
-      if (submorph.owner) submorph.remove();
-    }
-
-    // ensure it's a morph and not just a spec
+    // ensure it's a morph or a spec
     if (!submorph || typeof submorph !== "object")
       throw new Error(`${submorph} cannot be added as a submorph to ${this}`)
+
+    // sanity check
+    if (submorph.isMorph && submorph.isAncestorOf(this)) {
+      this.env.world.logError(new Error(`addMorph: Circular relationships between morphs not allowed\ntried to add ${submorph} to ${this}`));
+      return null;
+    }
+
     if (!submorph.isMorph) submorph = morph(submorph);
 
-    // set new owner
-    submorph._owner = this;
+    this._cachedBounds = null;
 
-    var submorphs = this.submorphs;
+    var prevOwner = submorph.owner,
+        submorphs = this.submorphs;
+
+    // modify the submorphs array
     index = Math.min(submorphs.length, Math.max(0, index));
+    // is the morph already in submorphs? Remove it and fix index
+    var existingIndex = submorphs.indexOf(submorph);
+    if (existingIndex !== -1) {
+      submorphs.splice(existingIndex, 1);
+      if (existingIndex < index) index--;
+    }
     submorphs.splice(index, 0, submorph);
 
-    this.addMethodCallChange(
+    this.addMethodCallChangeDoing(
       this,              /*receiver*/
       "addMorphAt",      /*selector*/
       [submorph, index], /*args*/
       "submorphs",       /*prop*/
-      submorphs          /*value*/);
+      submorphs          /*value*/,
+      () => {
+        var tfm;
+        if (prevOwner && prevOwner !== this) {
+        // since morph transforms are local to a morphs owner we need to
+        // compute a new transform for the morph inside the new owner so that the
+        // morphs does not appear to change its position / rotation / scale
+          tfm = submorph.transformForNewOwner(this);
+          submorph.remove();
+        }
 
-    if (tfm) { submorph.setTransform(tfm); }
+        // set new owner
+        submorph._owner = this;
+        if (tfm) submorph.setTransform(tfm);
+      });
 
     return submorph;
   }
@@ -407,27 +415,31 @@ export class Morph {
     return this.addMorph(other, next);
   }
 
-  remove() {
-    var owner = this.owner;
-    if (!owner) return this;
-    owner._cachedBounds = null;
-    this._owner = null;
-    var submorphs = owner.submorphs,
-        index = submorphs.indexOf(this)
-    if (index > -1) submorphs.splice(index, 1);
+  removeMorph(morph) {
+    var index = this.submorphs.indexOf(morph);
+    if (index === -1) return;
 
-    owner.addMethodCallChange(
-      this,          /*receiver*/
-      "remove",      /*selector*/
-      [],            /*args*/
-      "submorphs",   /*prop*/
-      submorphs,     /*value*/
-      {owner, index} /*meta*/);
+    var submorphs = this.submorphs;
+    submorphs.splice(index, 1);
 
-    return this;
+    this.addMethodCallChangeDoing(
+      this,           /*receiver*/
+      "removeMorph",  /*selector*/
+      [morph],        /*args*/
+      "submorphs",    /*prop*/
+      submorphs,      /*value*/
+      () => {
+        this._cachedBounds = null;
+        morph._owner = null;
+      });
   }
 
-  removeAllMorphs() { this.submorphs = [] }
+  remove() {
+    if (this.owner) this.owner.removeMorph(this);
+    return this
+  }
+
+  removeAllMorphs() { this.submorphs = []; }
 
   bringToFront() {
     const submorphs = this.owner.submorphs,

@@ -17,7 +17,7 @@ class Undo {
       throw new Error("Undo has no target morphs");
     }
     var morph = this.targets[0];
-    this.recorder = morph.startRecordChanges(({target}) =>
+    this.recorder = morph.recordChangesStart(({target}) =>
       !target.isUsedAsEpiMorph() && this.targets.some(undoTarget =>
         undoTarget === target || undoTarget.isAncestorOf(target)));
     return this;
@@ -25,7 +25,7 @@ class Undo {
 
   stopRecording() {
     var {name, recorder: {id, changes}, targets: [morph]} = this;
-    changes.push(...morph.stopRecordChanges(id));
+    changes.push(...morph.recordChangesStop(id));
     this.changes = changes;
   }
 

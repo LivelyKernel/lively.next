@@ -25,29 +25,34 @@ export class List extends Morph {
         index = Math.min(items.length, Math.max(0, index));
     items.splice(index, 0, item);
 
-    this.addMethodCallChange(
+    this.addMethodCallChangeDoing(
       this,          /*receiver*/
       "addItemAt",   /*selector*/
       [item, index], /*args*/
       "items",       /*prop*/
-      items          /*value*/);
-
-    this.applyLayout();
+      items,        /*value*/
+      () => {
+        this.applyLayout();
+      });
   }
 
   removeItem(item) {
     var items = this.items,
         index = items.indexOf(item)
-    if (index > -1) items.splice(index, 1);
+    if (index === -1) return;
 
-    this.addMethodCallChange(
+    items.splice(index, 1);
+
+    this.addMethodCallChangeDoing(
       this,         /*receiver*/
       "removeItem", /*selector*/
       [item],       /*args*/
       "items",      /*prop*/
-      items         /*value*/);
+      items,        /*value*/
+      () => {
+        this.applyLayout();
+      });
 
-    this.applyLayout();
   }
 
   applyLayout() {

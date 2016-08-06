@@ -31,11 +31,36 @@ function signalChange(changeManager, change, morph) {
 
 
 class Change {
+  constructor(target) {
+    this.target = target;
+  }
+  get type() { return "abstract change" }
   apply() { throw new Error("Not yet implemented"); }
   reverseApply() { throw new Error("Not yet implemented"); }
 }
 
-export class ValueChange {
+export class GroupChange extends Change {
+  constructor(target) {
+    this.target = target;
+    this.changes = [];
+  }
+
+  consumesChanges() { return true }
+
+  addChange(c) { this.changes.push(c); }
+
+  apply() {
+    this.changes.slice().forEach(change => change.apply());
+    return this;
+  }
+
+  reverseApply() {
+    this.changes.slice().reverse().forEach(change => change.reverseApply());
+    return this;
+  }
+}
+
+export class ValueChange extends Change {
 
   get type() { return "setter" }
 
@@ -58,11 +83,12 @@ export class ValueChange {
   }
 }
 
-export class MethodCallChange {
+export class MethodCallChange extends GroupChange {
 
   get type() { return "method-call" }
 
   constructor(target, receiver, selector, args, prop, value, meta) {
+    this.changes = [];
     this.target = target;
     this.receiver = receiver;
     this.selector = selector;
@@ -99,6 +125,8 @@ export class ChangeManager {
     this.changeListeners = [];
     this.changeRecordersPerMorph = new WeakMap();
     this.changeRecorders = {};
+    
+    this.changeGroupStack = [];
   }
 
   changesFor(morph) { return this.changes.filter(c => c.target === morph); }
@@ -113,9 +141,10 @@ export class ChangeManager {
     return this._record(morph, change);
   }
 
-  addMethodCallChange(morph, receiver, selector, args, prop, value, meta) {
-    var change = new MethodCallChange(morph, receiver, selector, args, prop, value, meta);
-    return this._record(morph, change);
+  addMethodCallChangeDoing(morph, receiver, selector, args, prop, value, doFn) {
+    var change = new MethodCallChange(morph, receiver, selector, args, prop, value);
+    morph.groupChangesWhile(change, doFn);
+    return change;
   }
 
   _record(morph, change) {
@@ -124,18 +153,40 @@ export class ChangeManager {
       change.prevValue = morph._currentState[change.prop];
       morph._currentState[change.prop] = change.value;
     }
-    this.changes.push(change);
-    morph._rev = ++this.revision;
+
     morph.makeDirty();
-    signalChange(this, change, morph);
+
+    var grouping = arr.last(this.changeGroupStack);
+    if (grouping && grouping.consumesChanges()) {
+      grouping.addChange(change);
+    } else {
+      this.changes.push(change);
+      morph._rev = ++this.revision;
+      signalChange(this, change, morph);
+    }
 
     return change;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // group changes
+
+  groupChangesWhile(targetMorph, groupChange, whileFn) {
+    this.changeGroupStack.push(groupChange);
+    try {
+      whileFn();
+      arr.remove(this.changeGroupStack, groupChange);
+      this._record(targetMorph, groupChange);
+    } catch (err) {
+      arr.remove(this.changeGroupStack, groupChange);
+      throw err;
+    }
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // listen for changes / record changes
 
-  changesWhile(whileFn, optFilter) {
+  recordChangesWhile(whileFn, optFilter) {
     var from = this.changes.length;
     whileFn();
     var changes = this.changes.slice(from, this.changes.length);
@@ -145,7 +196,7 @@ export class ChangeManager {
   addChangeListener(listenFn) { arr.pushIfNotIncluded(this.changeListeners, listenFn); }
   removeChangeListener(listenFn) { arr.remove(this.changeListeners, listenFn); }
 
-  startRecordingChanges(optFilter, optName = "") {
+  recordChangesStart(optFilter, optName = "") {
     // change recorder is a change listener that is identified by id
 
     // Recorder object to be used to record specific changes when they occur,
@@ -161,7 +212,7 @@ export class ChangeManager {
     return recorder;
   }
 
-  stopChangeRecorder(id) {
+  recordChangesStop(id) {
     if (!(id in this.changeRecorders)) return [];
     var {changes, listener} = this.changeRecorders[id];
     delete this.changeRecorders[id];
@@ -169,8 +220,8 @@ export class ChangeManager {
     return changes;
   }
 
-  startMorphChangeRecorder(morph, optFilter) {
-    var recorder = this.startRecordingChanges(optFilter, morph.id);
+  recordChangesStartForMorph(morph, optFilter) {
+    var recorder = this.recordChangesStart(optFilter, morph.id);
 
     // store recorder alongside morph for easy lookup and
     // to make it easy to just start / stop recordings
@@ -186,7 +237,7 @@ export class ChangeManager {
     return recorder;
   }
 
-  stopMorphChangeRecorder(morph, optId) {
+  recordChangesStopForMorph(morph, optId) {
     var perMorph = this.changeRecordersPerMorph.get(morph);
     if (!perMorph || !perMorph.length) {
       console.warn(`Cannot endMorphChangeRecorder for morph ${morph}: recorder not found`)
@@ -197,7 +248,7 @@ export class ChangeManager {
     if (!optId) id = perMorph.pop();
     else arr.remove(perMorph, id);
 
-    return this.stopChangeRecorder(id);
+    return this.recordChangesStop(id);
   }
 
 }
