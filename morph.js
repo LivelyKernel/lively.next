@@ -726,6 +726,9 @@ export class Morph {
   copy() {
     var exported = this.exportToJSON();
     tree.prewalk(exported, spec => spec._id = newMorphId(spec.type), ({submorphs}) => submorphs);
+    exported.name = exported.name.replace(
+        /copy( [0-9]+)?$/,
+        (_, num) => `copy ${num && num.trim() ? Number(num)+1 : "1"}`);
     return morph(exported);
   }
 
