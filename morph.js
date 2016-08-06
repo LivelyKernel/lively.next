@@ -39,7 +39,6 @@ export class Morph {
 
   constructor(props = {}) {
     var env = props.env || MorphicEnv.default();
-    this._class = this.constructor;
     this._env = env;
     this._rev = env.changeManager.revision;
     this._owner = null;
@@ -708,6 +707,7 @@ export class Morph {
     }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
+    exported._class = this.constructor;
     exported.type = this.constructor.name.toLowerCase();
     if (options.keepFunctions) {
       Object.keys(this).forEach(name =>

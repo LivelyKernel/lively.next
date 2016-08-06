@@ -277,7 +277,6 @@ export class ClipboardHelper extends Morph {
             style: {  width: "0px",
                       height: "0px",
                       overflow: "hidden",
-                      background: "red",
                       padding: "0px",
                       border: "0px" }});
   }
