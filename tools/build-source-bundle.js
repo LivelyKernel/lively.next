@@ -13,6 +13,7 @@ var notificationsSource = fs.readFileSync(require.resolve("lively.notifications/
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
 var vmSource = fs.readFileSync(require.resolve("lively.vm/dist/lively.vm_no-deps.js"));
+var resSource = fs.readFileSync(require.resolve("lively.resources/dist/lively.resources_no-deps.js"));
 var initSource = fs.readFileSync(path.join(__dirname, "../systemjs-init.js"));
 var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runtime/runtime.js"));
 
@@ -35,7 +36,8 @@ module.exports = Promise.resolve()
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
         "lively.vm": "lively.vm",
-        "lively.notifications": "lively.notifications"
+        "lively.notifications": "lively.notifications",
+        "lively.resources": "lively.resources"
       }
     }))
 
@@ -54,7 +56,7 @@ ${initSource}\n
   ${source}
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();`;
-    var complete = `${regeneratorSource}\n${langSource}\n${notificationsSource}\n${astSource}\n${vmSource}\n${noDeps}`;
+    var complete = `${regeneratorSource}\n${langSource}\n${notificationsSource}\n${astSource}\n${vmSource}\n${resSource}\n${noDeps}`;
     return {noDeps: noDeps, complete: complete};
   })
 
