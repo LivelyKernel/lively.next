@@ -260,22 +260,25 @@ export class Button extends Morph {
       extent: pt(100,24),
       borderWidth: 1,
       active: true,
-      ...props
+      ...obj.dissoc(props, ["label"]),
     });
-    const label = new Text({
-        name: "label",
-        readOnly: true,
-        fontColor: this.active ? Color.rgb(17,103,189) : Color.gray,
-        textString: props.label || this.name,
-        fill: Color.white.withA(0),
+    this.addMorph({
+      type: "text",
+      name: "label",
+      readOnly: true,
+      fontColor: this.active ? Color.rgb(17,103,189) : Color.gray,
+      textString: props.label || "",
+      fill: Color.white.withA(0),
     });
-    label.center = this.innerBounds().center();
-    this.addMorph(label);
+    this.submorphs[0].center = this.innerBounds().center();
   }
   
-  get action() { return this.getProperty("action") }
+  get label() { return this.get("label").textString; }
+  set label(label) { this.get("label").textString = label; }
   set action(value) { this.addValueChange("action", value); }
-  get active() { return this.getProperty("active") }
+  get action() { return this.getProperty("action"); }
+  set action(value) { this.addValueChange("action", value); }
+  get active() { return this.getProperty("active"); }
   set active(value) {
     if (value) {
       this.borderColor = Color.rgb(17,103,189);
@@ -284,7 +287,7 @@ export class Button extends Morph {
       this.borderColor = Color.gray;
       this.fill = Color.lightGray;
     }
-    this.addValueChange("active", value)
+    this.addValueChange("active", value);
   }
   
   onMouseDown(evt) {
