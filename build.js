@@ -5,7 +5,8 @@ var path = require("path");
 var rollup = require('rollup');
 var babel = require('rollup-plugin-babel');
 
-var targetFile = "dist/lively.resources.js";
+var targetFile1 = "dist/lively.resources_no-deps.js";
+var targetFile2 = "dist/lively.resources.js";
 
 var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runtime/runtime.js"));
 
@@ -23,21 +24,24 @@ module.exports = Promise.resolve()
   .then(bundle =>
     bundle.generate({
       format: 'iife',
-      moduleName: 'lively.resources'
+      moduleName: 'lively.resources',
+      globals: {
+        "fs": "typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}"
+      }
     }))
   .then(bundled => {
-    var source = bundled.code;
-    source = source.replace('defaultSystem || prepareSystem(GLOBAL.System)', 'exports.System || prepareSystem(GLOBAL.System)');
-    return `
-${regeneratorSource}\n
-(function() {
+    const noDeps = `(function() {
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
-  ${source}
-  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
+  ${bundled.code}
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();`;
+    return {noDeps: noDeps, complete: `${regeneratorSource}\n${noDeps}`};
   })
   .then(compiled => {
-    fs.writeFileSync(targetFile, compiled);
-  });
+    fs.writeFileSync(targetFile1, compiled.noDeps);
+    fs.writeFileSync(targetFile2, compiled.complete);
+  })
+  .catch(err => console.error(err));
+
