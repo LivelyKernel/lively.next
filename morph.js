@@ -677,12 +677,12 @@ export class Morph {
 
   onFocus(evt) {}
   onBlur(evt) {}
-  onInput(evt) {}
-  onSelect(evt) {}
-  onDeselect(evt) {}
   onKeyDown(evt) {}
   onKeyUp(evt) {}
   onContextMenu(evt) {}
+  onCut(evt) {}
+  onCopy(evt) {}
+  onPaste(evt) {}
 
   onDragStart(evt) { this.undoStart("drag-move"); }
   onDragEnd(evt) { this.undoStop("drag-move"); }
@@ -702,6 +702,7 @@ export class Morph {
 
   focus() {
     this._wantsFocus = true;
+    this._dirty = true;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -718,6 +719,7 @@ export class Morph {
     }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
+    exported._class = this.constructor;
     exported.type = this.constructor.name.toLowerCase();
     if (options.keepFunctions) {
       Object.keys(this).forEach(name =>

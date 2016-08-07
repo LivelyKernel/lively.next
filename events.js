@@ -12,14 +12,14 @@ const domEventsWeListenTo = [
   {type: 'pointermove', capturing: false},
   {type: 'pointerover', capturing: false},
   {type: 'pointerout',  capturing: false},
-  {type: 'input',       capturing: false},
-  {type: 'select',      capturing: false},
-  {type: 'deselect',    capturing: false} ,
   {type: 'keydown',     capturing: false},
   {type: 'keyup',       capturing: false},
   {type: 'blur',        capturing: true},
   {type: 'focus',       capturing: true},
-  {type: 'contextmenu', capturing: false}
+  {type: 'contextmenu', capturing: false},
+  {type: 'cut',         capturing: false},
+  {type: 'copy',        capturing: false},
+  {type: 'paste',       capturing: false}
 ]
 
 const typeToMethodMap = {
@@ -33,14 +33,14 @@ const typeToMethodMap = {
   'dragend':     "onDragEnd",
   'grab':        "onGrab",
   'drop':        "onDrop",
-  'input':       "onInput",
-  'select':      "onSelect",
-  'deselect' :   "onDeselect",
   'keydown':     "onKeyDown",
   'keyup':       "onKeyUp",
   'blur':        "onBlur",
   'focus':       "onFocus",
-  'contextmenu': "onContextMenu"
+  'contextmenu': "onContextMenu",
+  'cut':         "onCut",
+  'copy':        "onCopy",
+  'paste':       "onPaste"
 }
 
 const pointerEvents = [
@@ -66,7 +66,6 @@ const mouseEvents = [
   "mouseleave",
   'click',
   'dblclick',
-  'selectstart',
   'contextmenu',
   'mousewheel'
 ];
@@ -75,6 +74,12 @@ const keyboardEvents = [
   'keydown',
   'keyup',
   'keypress'
+];
+
+const focusTargetingEvents = [
+  'cut',
+  'copy',
+  'paste',
 ];
 
 
@@ -478,7 +483,6 @@ export class EventDispatcher {
     // what was clicked on
     this.eventState = {
       focusedMorph: null,
-      selectionMorph: null,
       clickedOnPosition: null,
       clickedOnMorph: null,
       draggedMorph: null,
@@ -654,13 +658,6 @@ export class EventDispatcher {
         });
         break;
 
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      case "select":
-        defaultEvent.onDispatch(() => state.selectionMorph = targetMorph);
-        break;
-
-
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "focus": case "blur":
         events = [new Event(type, domEvt, this, [targetMorph], hand, halo)
@@ -668,15 +665,6 @@ export class EventDispatcher {
         break;
 
     }
-
-
-    // FIXME...!
-    if (state.selectionMorph && (type === "keydown" || type === "pointerdown" || type === "blur" || type === "focus")) {
-      events.push(
-        new Event("deselect", domEvt, this, [state.selectionMorph], hand)
-          .onDispatch(() => state.selectionMorph = null));
-    }
-
 
     return {events, later};
   }
@@ -713,7 +701,8 @@ export class EventDispatcher {
   dispatchDOMEvent(domEvt) {
     var targetNode = domEvt.target,
         targetId = targetNode.id,
-        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
+        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId) ||
+                      (focusTargetingEvents.includes(domEvt.type) && this.eventState.focusedMorph);
     if (!targetMorph) {
       // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
       return;

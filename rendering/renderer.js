@@ -2,6 +2,7 @@ import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
 import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
 import { h } from "virtual-dom";
+import { pt } from "lively.graphics";
 
 const defaultCSS = `
 
@@ -78,6 +79,18 @@ const defaultCSS = `
     to {
         opacity:1;
     }
+}
+
+span.selected {
+  background: #ACCEF7;
+  line-height: normal;
+}
+
+span.cursor {
+  width: 0px;
+  display: inline-block;
+  outline: 1px solid black;
+  line-height: normal;
 }
 
 `;
@@ -172,26 +185,25 @@ export class Renderer {
   }
 
   renderText(text) {
-    return h("textarea", {
+    let { textString, selection, readOnly, clipboardHelper } = text;
+    return h("div", {
       ...defaultAttributes(text),
-      value: text.textString,
-      readOnly: text.readOnly,
-      placeholder: text.placeholder,
-      ...(text._needsSelect && {
-        selectionStart: text._selection.start,
-        selectionEnd: text._selection.end
-      }),
       style: {
         ...defaultStyle(text),
-        resize: "none",
-        border: 0,
-        "white-space": "nowrap",
+        "white-space": "pre",
         padding: "0px",
         "font-family": text.fontFamily,
         "font-size": text.fontSize + "px",
         "color": String(text.fontColor)
-      }
-    });
+      },
+    }, [textString.substring(0, selection.start),
+        h('span.selected.no-html-select', {
+          textContent: textString.substring(selection.start, selection.end),
+          style: { "pointer-events": "none" }
+        }),
+        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial") } }, "\u200b"),
+        textString.substring(selection.end),
+        this.renderSubmorphs(text)]);
   }
 
   renderImage(image) {
@@ -266,3 +278,4 @@ function renderGradient(morph) {
                                 {offset: (k * 100) + "%",
                                  "stop-color": c}}))));
 }
+

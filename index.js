@@ -15,8 +15,8 @@ import { Morph, Hand, Image, Ellipse } from "./morph.js";
 import { Text } from "./text.js";
 
 export function morph(props = {}, opts = {restore: false}) {
-  var klass;
-  switch (props.type) {
+  var klass = props._class;
+  if (!klass) switch (props.type) {
     case 'world':   klass = World; break;
     case 'hand':    klass = Hand; break;
     case 'image':   klass = Image; break;
@@ -24,6 +24,7 @@ export function morph(props = {}, opts = {restore: false}) {
     case 'text':    klass = Text; break;
     default:        klass = Morph;
   }
+
   return opts.restore ?
     new klass({[Symbol.for("lively-instance-restorer")]: true}).initFromJSON(props) :
     new klass(props);
