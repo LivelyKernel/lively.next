@@ -1,5 +1,3 @@
-/*global System*/
-
 import { Resource } from "./resource.js";
 
 import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat } from "fs";
@@ -7,7 +5,7 @@ import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat } fro
 function wrapInPromise(func) {
   return (...args) =>
     new Promise((resolve, reject) =>
-      func.apply(System.global, args.concat((err, result) => err ? reject(err) : resolve(result))))
+      func.apply(null, args.concat((err, result) => err ? reject(err) : resolve(result))))
 }
 
 const readFileP = wrapInPromise(readFile),
