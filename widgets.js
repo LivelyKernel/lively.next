@@ -1,4 +1,4 @@
-import { arr, num } from "lively.lang";
+import { arr, num, obj } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { Morph, Ellipse, Text } from "./index.js";
 
@@ -83,17 +83,18 @@ export class ObjectDrawer extends Morph {
 
 export class Window extends Morph {
 
-  constructor(props) {
+  constructor(props = {}) {
     super({
-      ...props,
       fill: Color.lightGray,
-      borderRadius: 15,
+      borderRadius: 7,
       dropShadow: true,
       borderColor: Color.gray,
       borderWidth: 1,
-      clipMode: "hidden"
+      clipMode: "hidden",
+      ...obj.dissoc(props, ["title"])
     });
     this.submorphs = this.submorphs.concat(this.makeTitleBar());
+    this.title = props.title || this.name || "";
   }
 
   resizeBy(delta) {
@@ -178,7 +179,6 @@ export class Window extends Morph {
       grabbable: false,
       fill: Color.gray.withA(0),
       fontColor: Color.darkGray,
-      textString: this.title || this.name,
       center: pt(this.extent.x / 2, 10)
     };
   }
@@ -200,6 +200,9 @@ export class Window extends Morph {
     };
   }
 
+  get title() { return this.titleLabel().textString; }
+  set title(title) { this.titleLabel().textString = title; }
+  
   toggleMinimize() {
     this.styleClasses = ["morph", "smooth-extent"]
     if (this.minimized) {
@@ -212,15 +215,6 @@ export class Window extends Morph {
       this.resizer().visible = false;
       this.minimized = true;
     }
-  }
-
-  close() {
-    this.remove()
-  }
-  
-  onMouseDown(evt) {
-    this.bringToFront();
-    this.styleClasses = ["morph"];
   }
 
   toggleMaximize() {
@@ -243,6 +237,15 @@ export class Window extends Morph {
       this.maximized = true;
       this.minimized = false;
     }
+  }
+
+  close() {
+    this.remove()
+  }
+
+  onMouseDown(evt) {
+    this.bringToFront();
+    this.styleClasses = ["morph"];
   }
 
 }
