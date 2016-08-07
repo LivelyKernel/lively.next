@@ -1,6 +1,7 @@
 export * from "./morph.js";
 export * from "./world.js";
 export * from "./text.js";
+export * from "./widgets.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
 export * from "./list.js";

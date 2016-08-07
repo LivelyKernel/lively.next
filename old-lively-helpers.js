@@ -2,7 +2,8 @@
 import { num, arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
 import { morph, MorphicEnv } from "lively.morphic";
-import { ObjectDrawer, Window } from "lively.morphic/widgets.js";
+import { ObjectDrawer, Workspace } from "lively.morphic/tools.js";
+import { Window } from "lively.morphic/widgets.js";
 
 export function setupMorphicWorldOn(htmlMorph) {
   var rootNode = htmlMorph.renderContext().shapeNode,
@@ -12,7 +13,7 @@ export function setupMorphicWorldOn(htmlMorph) {
         submorphs: [
           new ObjectDrawer({env, position: pt(20,10)}),
           new Window({env, extent: pt(200, 300), position: pt(200,200)}),
-          new Window({env, extent: pt(200, 300), position: pt(400,200)})
+          new Workspace({env, extent: pt(200, 300), position: pt(400,200)})
         ]});
   env.setWorldRenderedOn(world, rootNode)
 

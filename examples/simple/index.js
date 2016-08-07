@@ -1,6 +1,7 @@
 import { pt, Color, Point } from "lively.graphics";
 import { Morph, World, Polygon, MorphicEnv } from "lively.morphic";
-import { ObjectDrawer, Window, Button} from "lively.morphic/widgets.js";
+import { Window, Button} from "lively.morphic/widgets.js";
+import { ObjectDrawer, Workspace } from "lively.morphic/tools.js";
 
 var world = new World({
   name: "world",
@@ -20,7 +21,7 @@ var world = new World({
 
     new Window({name: "Bob", extent: pt(200, 300), position: pt(600,200)}),
 
-    new Window({name: "Carlo", extent: pt(200, 300), position: pt(800,200)}),
+    new Workspace({extent: pt(200, 300), position: pt(800,200)}),
   ]
 });
 

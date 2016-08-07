@@ -2,85 +2,6 @@ import { arr, num, obj } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { Morph, Ellipse, Text } from "./index.js";
 
-export class ObjectDrawer extends Morph {
-
-  constructor(props) {
-    super({
-      name: "object-drawer",
-      position: pt(20, 20),
-      extent: pt(4 * (140 + 10) + 15, 140),
-      fill: Color.white,
-      borderWidth: 1,
-      borderColor: Color.gray,
-      ...props
-    });
-    this.setup();
-  }
-
-  setup() {
-    var n = 4,
-        margin = pt(5,5),
-        objExt = pt(((this.width - margin.x) / n) - margin.x, this.height - margin.y*2),
-        pos = margin;
-
-    this.addMorph({
-      type: "ellipse",
-      position: pos, extent: objExt,
-      fill: Color.random(), grabbable: false,
-      onDrag: doCopy,
-      init() { this.fill = Color.random(); }
-    });
-
-    pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
-
-    this.addMorph({
-      position: pos, extent: objExt,
-      fill: Color.random(), grabbable: false,
-      onDrag: doCopy,
-      init() { this.fill = Color.random(); }
-    });
-
-    pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
-
-    this.addMorph({
-      type: "image",
-      position: pos, extent: objExt,
-      fill: null, grabbable: false,
-      onDrag: doCopy
-    });
-
-    pos = arr.last(this.submorphs).topRight.addXY(margin.x, 0);
-
-    this.addMorph({
-      type: "text",
-      textString: "Lively rocks!",
-      position: pos, extent: objExt,
-      fill: Color.white, grabbable: false,
-      readOnly: true,
-      fontSize: 16,
-      onDrag: doCopy,
-      draggable: true,
-      init() {
-        this.draggable = false;
-        this.grabbable = false;
-        this.readOnly = false;
-      }
-    });
-
-    function doCopy(evt) {
-      evt.stop();
-      var copy = Object.assign(this.copy(), {position: evt.positionIn(this).negated()});
-      var name = copy.constructor.name.toLowerCase();
-      name = (name[0].match(/[aeiou]/) ? "an " : "a ") + name;
-      var i = 1; while (this.world().get(name + " " + i)) i++
-      copy.name = name + " " + i;
-      evt.hand.grab(copy);
-      delete copy.onDrag;
-      copy.init && copy.init();
-    }
-  }
-}
-
 export class Window extends Morph {
 
   constructor(props = {}) {
@@ -91,19 +12,23 @@ export class Window extends Morph {
       borderColor: Color.gray,
       borderWidth: 1,
       clipMode: "hidden",
-      ...obj.dissoc(props, ["title"])
+      ...obj.dissoc(props, ["title", "targetMorph"])
     });
-    this.submorphs = this.submorphs.concat(this.makeTitleBar());
+    this.submorphs = this.submorphs.concat(this.controls());
     this.title = props.title || this.name || "";
+    if (props.targetMorph) this.targetMorph = props.targetMorph;
   }
 
   resizeBy(delta) {
     this.styleClasses = ["morph"];
     super.resizeBy(delta);
+    // FIXME proper layouting
     this.titleLabel().center = pt(Math.max(this.extent.x / 2, 100), 10);
+    var t = this.targetMorph;
+    if (t) t.resizeBy(delta);
   }
 
-  makeTitleBar() {
+  controls() {
     return this.buttons()
            .concat(this.titleLabel())
            .concat(this.resizer());
@@ -202,6 +127,12 @@ export class Window extends Morph {
 
   get title() { return this.titleLabel().textString; }
   set title(title) { this.titleLabel().textString = title; }
+
+  get targetMorph() { return arr.last(arr.withoutAll(this.submorphs, this.controls())); }
+  set targetMorph(targetMorph) {
+    this.addMorph(targetMorph, this.resizer());
+    targetMorph.setBounds(this.innerBounds().insetBy(5).withTopLeft(pt(5,25)));
+  }
   
   toggleMinimize() {
     this.styleClasses = ["morph", "smooth-extent"]
@@ -248,6 +179,7 @@ export class Window extends Morph {
     this.styleClasses = ["morph"];
   }
 
+  
 }
 
 export class Button extends Morph {
