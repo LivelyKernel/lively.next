@@ -72,6 +72,7 @@ function removeSystem(nameOrSystem) {
 }
 
 import { wrapModuleLoad } from "./instrumentation.js"
+import { wrapResource } from "./resource.js"
 
 function makeSystem(cfg) {
   return prepareSystem(new SystemClass(), cfg);
@@ -83,6 +84,7 @@ function prepareSystem(System, config) {
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
+  wrapResource(System);
   wrapModuleLoad(System);
 
   if (!isHookInstalled(System, "normalizeHook"))
@@ -90,10 +92,6 @@ function prepareSystem(System, config) {
 
   if (!isHookInstalled(System, "decanonicalize", "decanonicalizeHook"))
     installHook(System, "decanonicalize", decanonicalizeHook);
-
-
-  if (!isHookInstalled(System, "fetch", "fetch_lively_protocol"))
-    installHook(System, "fetch", fetch_lively_protocol);
 
   if (!isHookInstalled(System, "newModule", "newModule_volatile"))
     installHook(System, "newModule", newModule_volatile);
@@ -236,19 +234,6 @@ function normalize_packageOfURL(url, System) {
         matchingPackages.reduce((matchingPkg, ea) => matchingPkg.penalty > ea.penalty ? ea: matchingPkg).url :
         null;
   return pName ? System.packages[pName] : null;
-}
-
-function fetch_lively_protocol(proceed, load) {
-  if (load.name.match(/^lively:\/\//)) {
-    load.metadata.format = "esm";
-    var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
-        worldId = match[1], localObjectName = match[2];
-    return (typeof $morph !== "undefined"
-         && $morph(localObjectName)
-         && $morph(localObjectName).textString)
-        || `/*Could not locate ${load.name}*/`;
-  }
-  return proceed(load);
 }
 
 function newModule_volatile(proceed, exports) {

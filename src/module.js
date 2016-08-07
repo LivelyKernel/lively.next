@@ -58,29 +58,16 @@ class ModuleInterface {
     // System.fetch (at least with the current systemjs release) will not work in
     // all cases b/c modules once loaded by the loaded get cached and System.fetch
     // returns "" in those cases
+    //
+    // cs 2016-08-06:
+    // Changed implementation, so it uses System.resource to be consistent
+    // with module loading
 
     if (this.id === "@empty") return Promise.resolve("")
 
     if (this._source) return Promise.resolve(this._source);
-    if (this.id.match(/^http/) && this.System.global.fetch) {
-      return this.System.global.fetch(this.id).then(res => res.text());
-    }
 
-    if (this.id.match(/^file:/) && this.System.get("@system-env").node) {
-      const path = this.id.replace(/^file:\/\//, "");
-      return new Promise((resolve, reject) =>
-        this.System._nodeRequire("fs").readFile(path, (err, content) =>
-          err ? reject(err) : resolve(this._source = String(content))));
-    }
-
-    if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
-      // This needs to go into a separate place for "virtual" lively modules
-      var morphId = arr.last(this.id.split("/"));
-      var m = $world.getMorphById(morphId);
-      return Promise.resolve(m ? m.textContent : "");
-    }
-
-    return Promise.reject(new Error(`Cannot retrieve source for ${this.id}`));
+    return this.System.resource(this.id).read();
   }
 
   async ast() {
@@ -181,8 +168,8 @@ class ModuleInterface {
   }
 
   async changeSource(newSource, options) {
-    const oldSource = await this.source();
-    return moduleSourceChange(this.System, this.id, oldSource, newSource, this.format(), options);
+    await moduleSourceChange(this.System, this.id, newSource, this.format(), options);
+    return this.System.resource(this.id).write(newSource);
   }
 
   addDependencyToModuleRecord(dependency, setter = function() {}) {
