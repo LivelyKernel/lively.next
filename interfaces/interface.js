@@ -89,11 +89,11 @@ export class AbstractCoreInterface {
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) { todo("keyValueListOfVariablesInModule") }
 
   async moduleRead(moduleName) {
-    return this.resourceRead(await this.normalize(moduleName));
+    return this.getModule(moduleName).source();
   }
 
   async moduleWrite(moduleName, source) {
-    return this.resourceWrite(await this.normalize(moduleName), source);
+    return this.getModule(moduleName).changeSource(source);
   }
 
 }
