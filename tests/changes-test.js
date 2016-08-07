@@ -1,6 +1,7 @@
 /*global System, beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
+import { resource } from "lively.resources";
 import { removeDir, createFiles } from "./helpers.js";
 
 import { getSystem, removeSystem } from "../src/system.js";
@@ -133,6 +134,11 @@ describe("code changes of esm format module", () => {
     expect(module4.record().importers).deep.equals([]);
   });
 
+  it("affects file resource", async () => {
+    await changeModule2Source();
+    const newContent = await resource(file2m).read();
+    expect(newContent).to.deep.equal("var internal = 2; export var y = internal;");
+  });
 });
 
 
