@@ -93,7 +93,7 @@
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm) {
+(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm,lively_resources) {
   'use strict';
 
   function installHook$1(System, hookName, hook) {
@@ -611,7 +611,7 @@
   }();
 
   var moduleSourceChange$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, newSource, format, options) {
       var changeResult;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -652,7 +652,7 @@
             case 14:
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, options: options }, Date.now(), System);
+                module: moduleId, newSource: newSource, options: options }, Date.now(), System);
 
               return _context.abrupt("return", changeResult);
 
@@ -661,7 +661,7 @@
               _context.t0 = _context["catch"](0);
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
+                module: moduleId, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
               throw _context.t0;
 
             case 22:
@@ -671,13 +671,14 @@
         }
       }, _callee, this, [[0, 18]]);
     }));
-    return function moduleSourceChange(_x, _x2, _x3, _x4, _x5, _x6) {
-      return ref.apply(this, arguments);
+
+    return function moduleSourceChange(_x, _x2, _x3, _x4, _x5) {
+      return _ref.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeEsm = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
+    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
       var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -840,13 +841,14 @@
         }
       }, _callee2, this, [[13, 30, 34, 42], [35,, 37, 41]]);
     }));
-    return function moduleSourceChangeEsm(_x7, _x8, _x9, _x10) {
-      return ref.apply(this, arguments);
+
+    return function moduleSourceChangeEsm(_x6, _x7, _x8, _x9) {
+      return _ref2.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeGlobal = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
+    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
       var load, updateData, entry;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -892,8 +894,9 @@
         }
       }, _callee3, this);
     }));
-    return function moduleSourceChangeGlobal(_x11, _x12, _x13, _x14) {
-      return ref.apply(this, arguments);
+
+    return function moduleSourceChangeGlobal(_x10, _x11, _x12, _x13) {
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -1077,7 +1080,7 @@
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var tryToLoadPackageConfig = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
       var packageConfigURL, config, name;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -1128,8 +1131,9 @@
         }
       }, _callee, this, [[3, 14]]);
     }));
+
     return function tryToLoadPackageConfig(_x, _x2) {
-      return ref.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
@@ -1338,7 +1342,7 @@
     }, {
       key: "import",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -1364,7 +1368,7 @@
         }));
 
         function _import() {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return _import;
@@ -1377,7 +1381,7 @@
     }, {
       key: "register",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           var packageLoadStack = arguments.length <= 0 || arguments[0] === undefined ? [this.url] : arguments[0];
 
           var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
@@ -1501,7 +1505,7 @@
         }));
 
         function register(_x3) {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return register;
@@ -1753,51 +1757,26 @@
     }, {
       key: "source",
       value: function source() {
-        var _this2 = this;
-
         // rk 2016-06-24:
         // We should consider using lively.resource here. Unfortunately
         // System.fetch (at least with the current systemjs release) will not work in
         // all cases b/c modules once loaded by the loaded get cached and System.fetch
         // returns "" in those cases
+        //
+        // cs 2016-08-06:
+        // Changed implementation, so it uses System.resource to be consistent
+        // with module loading
 
         if (this.id === "@empty") return Promise.resolve("");
 
         if (this._source) return Promise.resolve(this._source);
-        if (this.id.match(/^http/) && this.System.global.fetch) {
-          return this.System.global.fetch(this.id).then(function (res) {
-            return res.text();
-          });
-        }
 
-        if (this.id.match(/^file:/) && this.System.get("@system-env").node) {
-          var _ret = function () {
-            var path = _this2.id.replace(/^file:\/\//, "");
-            return {
-              v: new Promise(function (resolve, reject) {
-                return _this2.System._nodeRequire("fs").readFile(path, function (err, content) {
-                  return err ? reject(err) : resolve(_this2._source = String(content));
-                });
-              })
-            };
-          }();
-
-          if ((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object") return _ret.v;
-        }
-
-        if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
-          // This needs to go into a separate place for "virtual" lively modules
-          var morphId = lively_lang.arr.last(this.id.split("/"));
-          var m = $world.getMorphById(morphId);
-          return Promise.resolve(m ? m.textContent : "");
-        }
-
-        return Promise.reject(new Error("Cannot retrieve source for " + this.id));
+        return this.System.resource(this.id).read();
       }
     }, {
       key: "ast",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -1826,7 +1805,7 @@
         }));
 
         function ast() {
-          return ref.apply(this, arguments);
+          return _ref.apply(this, arguments);
         }
 
         return ast;
@@ -1834,7 +1813,7 @@
     }, {
       key: "scope",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           var ast;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
@@ -1864,7 +1843,7 @@
         }));
 
         function scope() {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return scope;
@@ -1872,7 +1851,7 @@
     }, {
       key: "resolvedScope",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -1894,7 +1873,7 @@
         }));
 
         function resolvedScope() {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return resolvedScope;
@@ -1927,7 +1906,7 @@
     }, {
       key: "load",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
           var m;
           return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
@@ -1936,7 +1915,7 @@
                   m = this.System.get(this.id);
 
                   if (m) {
-                    _context4.next = 5;
+                    _context4.next = 6;
                     break;
                   }
 
@@ -1946,8 +1925,9 @@
                 case 4:
                   m = _context4.sent;
 
-                case 5:
                   lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
+
+                case 6:
                   return _context4.abrupt("return", m);
 
                 case 7:
@@ -1959,7 +1939,7 @@
         }));
 
         function load() {
-          return ref.apply(this, arguments);
+          return _ref4.apply(this, arguments);
         }
 
         return load;
@@ -1980,12 +1960,12 @@
     }, {
       key: "unloadDeps",
       value: function unloadDeps(opts) {
-        var _this3 = this;
+        var _this2 = this;
 
         opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
         this.dependents().forEach(function (ea) {
-          _this3.System.delete(ea.id);
-          if (_this3.System.loads) delete _this3.System.loads[ea.id];
+          _this2.System.delete(ea.id);
+          if (_this2.System.loads) delete _this2.System.loads[ea.id];
           if (opts.forgetEnv) ea.unloadEnv();
         });
       }
@@ -2006,8 +1986,8 @@
     }, {
       key: "reload",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
-          var _this4 = this;
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
+          var _this3 = this;
 
           var toBeReloaded;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -2021,7 +2001,7 @@
                   this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
                   _context5.next = 6;
                   return Promise.all(toBeReloaded.map(function (ea) {
-                    return ea.id !== _this4.id && ea.load();
+                    return ea.id !== _this3.id && ea.load();
                   }));
 
                 case 6:
@@ -2037,7 +2017,7 @@
         }));
 
         function reload(_x) {
-          return ref.apply(this, arguments);
+          return _ref5.apply(this, arguments);
         }
 
         return reload;
@@ -2050,7 +2030,7 @@
     }, {
       key: "changeSourceAction",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
           var source, newSource;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -2077,7 +2057,7 @@
         }));
 
         function changeSourceAction(_x2) {
-          return ref.apply(this, arguments);
+          return _ref6.apply(this, arguments);
         }
 
         return changeSourceAction;
@@ -2085,20 +2065,18 @@
     }, {
       key: "changeSource",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
-          var oldSource;
+        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
               switch (_context7.prev = _context7.next) {
                 case 0:
                   _context7.next = 2;
-                  return this.source();
+                  return moduleSourceChange$1(this.System, this.id, newSource, this.format(), options);
 
                 case 2:
-                  oldSource = _context7.sent;
-                  return _context7.abrupt("return", moduleSourceChange$1(this.System, this.id, oldSource, newSource, this.format(), options));
+                  return _context7.abrupt("return", this.System.resource(this.id).write(newSource));
 
-                case 4:
+                case 3:
                 case "end":
                   return _context7.stop();
               }
@@ -2107,7 +2085,7 @@
         }));
 
         function changeSource(_x3, _x4) {
-          return ref.apply(this, arguments);
+          return _ref7.apply(this, arguments);
         }
 
         return changeSource;
@@ -2115,7 +2093,7 @@
     }, {
       key: "addDependencyToModuleRecord",
       value: function addDependencyToModuleRecord(dependency) {
-        var _this5 = this;
+        var _this4 = this;
 
         var setter = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
 
@@ -2143,7 +2121,7 @@
           // 2. update records of dependencies, so that they know about this module as an importer
           var impIndex,
               hasImporter = dependencyRecord.importers.some(function (imp, i) {
-            if (!imp) return;impIndex = i;return imp && imp.name === _this5.id;
+            if (!imp) return;impIndex = i;return imp && imp.name === _this4.id;
           });
           if (!hasImporter) dependencyRecord.importers.push(record);else if (record !== dependencyRecord.importers[impIndex]) dependencyRecord.importers.splice(impIndex, 1, record);
         }
@@ -2156,7 +2134,7 @@
     }, {
       key: "dependents",
       value: function dependents() {
-        var _this6 = this;
+        var _this5 = this;
 
         // which modules (module ids) are (in)directly import module with id
         // Let's say you have
@@ -2166,13 +2144,13 @@
         // `dependents` gives you an answer what modules are "stale" when you
         // change module1 = module2 + module3
         return lively_lang.graph.hull(lively_lang.graph.invert(requireMap$1(this.System)), this.id).map(function (mid) {
-          return module$2(_this6.System, mid);
+          return module$2(_this5.System, mid);
         });
       }
     }, {
       key: "requirements",
       value: function requirements() {
-        var _this7 = this;
+        var _this6 = this;
 
         // which modules (module ids) are (in)directly required by module with id
         // Let's say you have
@@ -2181,7 +2159,7 @@
         // module3: import {y} from "module2.js"; export var z = y + 1;
         // `module("./module3").requirements()` will report ./module2 and ./module1
         return lively_lang.graph.hull(requireMap$1(this.System), this.id).map(function (mid) {
-          return module$2(_this7.System, mid);
+          return module$2(_this6.System, mid);
         });
       }
 
@@ -2241,7 +2219,7 @@
     }, {
       key: "addGetterSettersForNewVars",
       value: function addGetterSettersForNewVars() {
-        var _this8 = this;
+        var _this7 = this;
 
         // after eval we modify the env so that all captures vars are wrapped in
         // getter/setter to be notified of changes
@@ -2268,12 +2246,12 @@
             },
             set: function set(v) {
               rec[prefix + key] = v;
-              scheduleModuleExportsChange(_this8.System, _this8.id, key, v, false /*add export*/);
-              _this8.notifyTopLevelObservers(key);
+              scheduleModuleExportsChange(_this7.System, _this7.id, key, v, false /*add export*/);
+              _this7.notifyTopLevelObservers(key);
             }
           });
 
-          _this8.notifyTopLevelObservers(key);
+          _this7.notifyTopLevelObservers(key);
         });
       }
     }, {
@@ -2289,11 +2267,11 @@
     }, {
       key: "package",
       value: function _package() {
-        var _this9 = this;
+        var _this8 = this;
 
         return getPackages$1(this.System).find(function (ea) {
           return ea.modules.some(function (mod) {
-            return mod.name === _this9.id;
+            return mod.name === _this8.id;
           });
         });
       }
@@ -2311,7 +2289,7 @@
     }, {
       key: "imports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -2338,7 +2316,7 @@
         }));
 
         function imports() {
-          return ref.apply(this, arguments);
+          return _ref8.apply(this, arguments);
         }
 
         return imports;
@@ -2346,7 +2324,7 @@
     }, {
       key: "exports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -2373,7 +2351,7 @@
         }));
 
         function exports() {
-          return ref.apply(this, arguments);
+          return _ref9.apply(this, arguments);
         }
 
         return exports;
@@ -2386,7 +2364,7 @@
     }, {
       key: "_localDeclForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
           var scope, ref;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -2409,7 +2387,7 @@
         }));
 
         function _localDeclForRefAt(_x6) {
-          return ref.apply(this, arguments);
+          return _ref10.apply(this, arguments);
         }
 
         return _localDeclForRefAt;
@@ -2417,8 +2395,8 @@
     }, {
       key: "_importForNSRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
-          var scope, ast, nodes, id, member, _ref, decl, name, spec;
+        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
+          var scope, ast, nodes, id, member, _ref12, decl, name, spec;
 
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
@@ -2450,8 +2428,8 @@
                   return _context11.abrupt("return", [null, null]);
 
                 case 10:
-                  _ref = scope.resolvedRefMap.get(member.object) || {};
-                  decl = _ref.decl;
+                  _ref12 = scope.resolvedRefMap.get(member.object) || {};
+                  decl = _ref12.decl;
 
                   if (!(!decl || decl.type !== "ImportDeclaration")) {
                     _context11.next = 14;
@@ -2475,7 +2453,7 @@
         }));
 
         function _importForNSRefAt(_x7) {
-          return ref.apply(this, arguments);
+          return _ref11.apply(this, arguments);
         }
 
         return _importForNSRefAt;
@@ -2483,7 +2461,7 @@
     }, {
       key: "_resolveImportedDecl",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
+        var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
           var _decl$id, start, name, type, imports, im, imM;
 
           return regeneratorRuntime.wrap(function _callee12$(_context12) {
@@ -2539,7 +2517,7 @@
         }));
 
         function _resolveImportedDecl(_x8) {
-          return ref.apply(this, arguments);
+          return _ref13.apply(this, arguments);
         }
 
         return _resolveImportedDecl;
@@ -2547,7 +2525,7 @@
     }, {
       key: "bindingPathForExport",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
+        var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
           var exports, ex, imM, decl;
           return regeneratorRuntime.wrap(function _callee13$(_context13) {
             while (1) {
@@ -2599,7 +2577,7 @@
         }));
 
         function bindingPathForExport(_x9) {
-          return ref.apply(this, arguments);
+          return _ref14.apply(this, arguments);
         }
 
         return bindingPathForExport;
@@ -2607,8 +2585,8 @@
     }, {
       key: "bindingPathForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
-          var decl, _ref2, _ref3, imDecl, id, name, imM;
+        var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
+          var decl, _ref16, _ref17, imDecl, id, name, imM;
 
           return regeneratorRuntime.wrap(function _callee14$(_context14) {
             while (1) {
@@ -2636,11 +2614,11 @@
                   return this._importForNSRefAt(pos);
 
                 case 9:
-                  _ref2 = _context14.sent;
-                  _ref3 = slicedToArray(_ref2, 3);
-                  imDecl = _ref3[0];
-                  id = _ref3[1];
-                  name = _ref3[2];
+                  _ref16 = _context14.sent;
+                  _ref17 = slicedToArray(_ref16, 3);
+                  imDecl = _ref17[0];
+                  id = _ref17[1];
+                  name = _ref17[2];
 
                   if (imDecl) {
                     _context14.next = 16;
@@ -2668,7 +2646,7 @@
         }));
 
         function bindingPathForRefAt(_x10) {
-          return ref.apply(this, arguments);
+          return _ref15.apply(this, arguments);
         }
 
         return bindingPathForRefAt;
@@ -2676,7 +2654,7 @@
     }, {
       key: "definitionForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
+        var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
           var path;
           return regeneratorRuntime.wrap(function _callee15$(_context15) {
             while (1) {
@@ -2698,7 +2676,7 @@
         }));
 
         function definitionForRefAt(_x11) {
-          return ref.apply(this, arguments);
+          return _ref18.apply(this, arguments);
         }
 
         return definitionForRefAt;
@@ -2736,8 +2714,8 @@
     }, {
       key: "search",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
-          var _this10 = this;
+        var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
+          var _this9 = this;
 
           var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
 
@@ -2748,8 +2726,8 @@
                   options = Object.assign({ excludedModules: [] }, options);
 
                   if (!options.excludedModules.some(function (ex) {
-                    if (typeof ex === "string") return ex === _this10.id;
-                    if (ex instanceof RegExp) return ex.test(_this10.id);
+                    if (typeof ex === "string") return ex === _this9.id;
+                    if (ex instanceof RegExp) return ex.test(_this9.id);
                     return false;
                   })) {
                     _context16.next = 3;
@@ -2832,7 +2810,7 @@
         }));
 
         function search(_x12, _x13) {
-          return ref.apply(this, arguments);
+          return _ref19.apply(this, arguments);
         }
 
         return search;
@@ -2904,6 +2882,51 @@
     }]);
     return ModuleInterface;
   }();
+
+  function fetch_resource(proceed, load) {
+    var System = this,
+        res = System.resource(load.name);
+    if (load.name.match(/^lively:\/\//)) {
+      load.metadata.format = "esm";
+    }
+
+    if (res) {
+      return res.read();
+    }
+    return proceed(load);
+  }
+
+  function lively_protocol(proceed, url) {
+    if (!url.match(/^lively:\/\//)) return proceed(url);
+    var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
+        worldId = match[1],
+        localObjectName = match[2];
+    return {
+      read: function read() {
+        return Promise.resolve(typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + localObjectName + "*/");
+      },
+      write: function write(source) {
+        if (typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString) {
+          $morph(localObjectName).textString = source;
+          return Promise.resolve(source);
+        } else {
+          return Promise.reject("Could not save morph " + localObjectName);
+        }
+      }
+    };
+  }
+
+  function wrapResource(System) {
+    if (!System.resource) {
+      System.resource = lively_resources.resource;
+    }
+    if (!isHookInstalled$1(System, "fetch", fetch_resource)) {
+      installHook$1(System, "fetch", fetch_resource);
+    }
+    if (!isHookInstalled$1(System, "resource", lively_protocol)) {
+      installHook$1(System, "resource", lively_protocol);
+    }
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -2990,13 +3013,12 @@
 
     System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
+    wrapResource(System);
     wrapModuleLoad$1(System);
 
     if (!isHookInstalled$1(System, "normalizeHook")) installHook$1(System, "normalize", normalizeHook);
 
     if (!isHookInstalled$1(System, "decanonicalize", "decanonicalizeHook")) installHook$1(System, "decanonicalize", decanonicalizeHook);
-
-    if (!isHookInstalled$1(System, "fetch", "fetch_lively_protocol")) installHook$1(System, "fetch", fetch_lively_protocol);
 
     if (!isHookInstalled$1(System, "newModule", "newModule_volatile")) installHook$1(System, "newModule", newModule_volatile);
 
@@ -3023,6 +3045,7 @@
     }
 
     // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
+
 
     System.config(config);
 
@@ -3134,17 +3157,6 @@
       return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
     }).url : null;
     return pName ? System.packages[pName] : null;
-  }
-
-  function fetch_lively_protocol(proceed, load) {
-    if (load.name.match(/^lively:\/\//)) {
-      load.metadata.format = "esm";
-      var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
-          worldId = match[1],
-          localObjectName = match[2];
-      return typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + load.name + "*/";
-    }
-    return proceed(load);
   }
 
   function newModule_volatile(proceed, exports) {
@@ -3267,6 +3279,6 @@
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();
