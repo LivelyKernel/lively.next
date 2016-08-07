@@ -31,7 +31,10 @@ const defaultProperties = {
   submorphs:  []
 }
 
-function newMorphId(prefix) {
+function newMorphId(classOrClassName) {
+  var prefix = typeof classOrClassName === "function" ?
+    classOrClassName.name : typeof classOrClassName === "string" ?
+      classOrClassName.toLowerCase() : "";
   return prefix + "_" + string.newUUID().replace(/-/g, "_")
 }
 
@@ -719,8 +722,7 @@ export class Morph {
     }, {});
     if (!exported.name) exported.name = this.name;
     exported._id = this._id;
-    exported._class = this.constructor;
-    exported.type = this.constructor.name.toLowerCase();
+    exported.type = this.constructor; // not JSON!
     if (options.keepFunctions) {
       Object.keys(this).forEach(name =>
         typeof this[name] === "function" && (exported[name] = this[name]));
