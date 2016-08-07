@@ -633,7 +633,8 @@ export class Morph {
   }
 
   getSubmorphNamed(name) {
-    if (!this.submorphs.length) return null;
+    if (!this._currentState /*pre-init when used in constructor*/
+     || !this.submorphs.length) return null;
     var isRe = obj.isRegExp(name);
     for (var i = 0; i < this.submorphs.length; i++) {
       var morph = this.submorphs[i];
