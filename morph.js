@@ -282,11 +282,10 @@ export class Morph {
     tfm = tfm || this.getTransform();
     var subBounds;
     for (var i = 0; i < this.submorphs.length; i++) {
-      var morphBounds = this.submorphs[i].globalBounds();
+      var morphBounds = this.submorphs[i].bounds();
       subBounds = subBounds ? subBounds.union(morphBounds) : morphBounds;
     }
-    return subBounds;
-    // return subBounds ? tfm.transformRectToRect(subBounds) : null;
+    return subBounds ? tfm.transformRectToRect(subBounds) : null;
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
