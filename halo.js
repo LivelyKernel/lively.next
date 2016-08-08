@@ -30,8 +30,8 @@ class HaloItem extends Ellipse {
   alignInHalo() {
     const {x: width, y: height} = this.halo.extent,
           {row, col} = this.location,
-          collWidth = (width + this.extent.x) / 3,
-          rowHeight = height / 3,
+          collWidth = Math.max((width + this.extent.x) / 3, 26),
+          rowHeight = Math.max(height / 3, 26),
           pos = pt(collWidth * col, rowHeight * row).subPt(itemExtent);
     this.setBounds(pos.extent(itemExtent));
   }
@@ -363,7 +363,7 @@ export class Halo extends Morph {
         var newRotation = initRotation + (angleToTarget - angle);
         newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
         this.halo.target.rotation = newRotation;
-        this.halo.alignWithTarget();
+        this.halo.alignWithTarget(this);
         this.halo.toggleRotationIndicator(true, this);
       },
 
@@ -372,7 +372,7 @@ export class Halo extends Morph {
         angle = gauge.theta();
         initRotation = this.halo.target.rotation;
         this.halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0)), 0.1, 0.5);
-        this.halo.alignWithTarget();
+        this.halo.alignWithTarget(this);
         this.halo.toggleRotationIndicator(true, this);
       },
 
@@ -386,10 +386,6 @@ export class Halo extends Morph {
 
       adaptAppearance(scaling) {
         this.styleClasses = ["halo-item", "fa", scaling ? "fa-search-plus" : "fa-repeat"];
-      },
-      
-      alignInHalo() {
-        if (this.halo.activeButton != this) this.bottomRight = this.halo.innerBounds().bottomLeft();
       },
       
       // events
@@ -656,7 +652,7 @@ export class Halo extends Morph {
     }
   }
 
-  alignWithTarget() {
+  alignWithTarget(skip) {
     const {x, y, width, height} = this.target.globalBounds(),
           origin = this.target.origin;
     this.setBounds(rect(x,y, width, height));
@@ -664,7 +660,7 @@ export class Halo extends Morph {
       this.buttonControls.forEach(ea => ea.visible = false);
       this.activeButton.visible = true;
       this.updatePropertyDisplay(this.activeButton);
-      this.activeButton.alignInHalo();
+      if (skip != this.activeButton) this.activeButton.alignInHalo();
     } else {
       this.buttonControls.forEach(b => { b.visible = true; b.alignInHalo(); });
       this.propertyDisplay.disable();

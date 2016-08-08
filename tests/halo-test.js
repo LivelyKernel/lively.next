@@ -42,6 +42,18 @@ describe("halos", () => {
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
     expect(halo.originHalo().bounds().center()).equals(submorph1.origin);
   });
+  
+  it("halo items never overlap each other", () => {
+    submorph1.origin = pt(20,30);
+    submorph1.extent = pt(20,20);
+    var halo = world.showHaloFor(submorph1),
+        innerButton = halo.buttonControls.find(item =>
+          halo.buttonControls.find(otherItem => 
+            otherItem != item &&
+            otherItem.globalBounds().intersects(item.globalBounds()))
+          && item != halo.originHalo());
+    expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
+  });
 
   it("drag drags", () => {
     var halo = world.showHaloFor(submorph1);
