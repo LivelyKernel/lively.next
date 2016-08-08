@@ -181,6 +181,7 @@ export class Morph {
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  { this.addValueChange("clipMode", value); }
+  isClip() { return this.clipMode !== "visible"; }
 
   get scroll()       { return this.getProperty("scroll"); }
   set scroll(value)  { this.addValueChange("scroll", value); }
@@ -242,17 +243,11 @@ export class Morph {
 
     bounds = tfm.transformRectToRect(bounds);
 
-    var subBounds = this.submorphBounds();
-    if (subBounds) bounds = bounds.union(subBounds);
+    if (!this.isClip()) {
+      var subBounds = this.submorphBounds(tfm);
+      if (subBounds) bounds = bounds.union(subBounds);
+    }
 
-    // FIXME: reactivate when clipping is done
-    // if (!this.isClip()) {
-    //   var subBounds = this.submorphBounds(tfm);
-    //   if (subBounds) bounds = bounds.union(subBounds);
-    // } else {
-    //   var scroll = this.getScroll();
-    //   bounds = bounds.translatedBy(pt(scroll[0], scroll[1]));
-    // }
     this._cachedBounds = bounds;
     return bounds;
   }
@@ -269,17 +264,16 @@ export class Morph {
   }
 
   globalBounds() {
-    if (this.owner) {
-       var tfm = new Transform()
-                  .preConcatenate(new Transform(this.origin).inverse())
-                  .preConcatenate(this.getGlobalTransform()),
-          bounds = tfm.transformRectToRect(this.innerBounds()),
-          subBounds = this.submorphBounds(this.getGlobalTransform());
-        if (subBounds) bounds = bounds.union(subBounds);
-        return bounds;
-    } else {
-      return this.bounds();
+    if (!this.owner) return this.bounds();
+    var tfm = new Transform()
+                .preConcatenate(new Transform(this.origin).inverse())
+                .preConcatenate(this.getGlobalTransform()),
+        bounds = tfm.transformRectToRect(this.innerBounds());
+    if (!this.isClip()) {
+      var subBounds = this.submorphBounds(this.getGlobalTransform());
+      if (subBounds) bounds = bounds.union(subBounds);
     }
+    return bounds;
   }
 
   submorphBounds(tfm) {
@@ -571,11 +565,8 @@ export class Morph {
         moveToOrigin = new Transform(this.origin);
 
     if (typeof scale === "number") scale = pt(scale,scale);
-    // FIXME reactivate
-    // if (this.isClip()) {
-    //   var scroll = this.getScroll();
-    //   pos = pos.subXY(scroll[0], scroll[1]);
-    // }
+
+    if (this.owner && this.owner.isClip()) pos = pos.subPt(this.owner.scroll);
 
     return moveToOrigin.inverse()
       .preConcatenate(new Transform(pos, this.rotation, scale));

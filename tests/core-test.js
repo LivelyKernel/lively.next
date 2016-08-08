@@ -111,6 +111,19 @@ describe("setup with renderer and events", function () {
       expect(node.scrollTop).equals(50);
     });
 
+    it("inner morphs have correct transform", async () => {
+      submorph1.clipMode = "auto";
+      submorph2.extent = pt(200,200);
+      var submorph2Bounds = submorph2.globalBounds();
+      submorph1.scroll = pt(40, 50);
+      await submorph1.whenRendered();
+      expect(submorph1.globalBounds()).equals(rect(10,10, 100,100));
+      expect(submorph1.bounds()).equals(rect(10,10, 100,100));
+      expect(submorph2.globalBounds()).equals(submorph2Bounds.translatedBy(submorph1.scroll.negated()));
+      submorph1.scroll = pt(0,0);
+      expect(submorph2.globalBounds()).equals(submorph2Bounds);
+    });
+
   });
 });
 
