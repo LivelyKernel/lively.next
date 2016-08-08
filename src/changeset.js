@@ -1,7 +1,8 @@
 import { arr } from 'lively.lang';
 import { emit } from 'lively.notifications';
+import { module, getPackages } from "lively.modules";
 
-import { gitInterface } from '../index.js';
+import { install, uninstall } from "../index.js";
 import Branch from "./branch.js";
 
 
@@ -15,13 +16,13 @@ class ChangeSet {
     this.name = name;
     this.branches = pkgs.map(pkg => new Branch(name, pkg.pkg));
   }
-
+  
   resolve(path) { // Path -> [Branch, RelPath] | [null, null]
-    const mod = gitInterface.getModule(path),
+    const mod = module(path),
           pkg = mod.package().address,
           branch = this.branches.find(b => b.pkg === pkg);
     if (!branch) return [null, null];
-    return [branch, mod.pathInPackage().replace(/^\.\//, '/')];
+    return [branch, mod.pathInPackage().replace(/^\.\//, '')];
   }
 
   fileExists(path) { // Path -> boolean?
@@ -37,8 +38,7 @@ class ChangeSet {
   }
   
   async createBranch(path) { // Path -> Branch?
-    const mod = gitInterface.getModule(path),
-          pkg = mod.package().address,
+    const pkg = module(path).package().address,
           branch = new Branch(this.name, pkg);
     await branch.createFrom("master");
     this.branches.push(branch);
@@ -132,7 +132,23 @@ function localChangeSetsOf(db, pkg) {
 }
 
 export async function createChangeSet(name) { // ChangeSetName => ChangeSet
-  const cs = new ChangeSet(name, []);
+  const db = await new Promise((resolve, reject) => {
+    const req = window.indexedDB.open("tedit", 1);
+    req.onsuccess = evt => resolve(evt.target.result);
+    req.onerror = err => reject(err);
+  });
+  const branches = [];
+  for (let pkg of getPackages()) {
+    const k = await new Promise((resolve, reject) => {
+      const trans = db.transaction(["refs"], "readonly"),
+            store = trans.objectStore("refs"),
+            request = store.get(`${pkg.address}/refs/heads/${name}`);
+      request.onsuccess = evt => resolve(evt.target.result);
+      request.onerror = evt => reject(new Error(evt.value));
+    });
+    if (k) branches.push({pkg: pkg.address});
+  }
+  const cs = new ChangeSet(name, branches);
   (await localChangeSets()).push(cs);
   emit("lively.changesets/added", {changeset: name});
   return cs;
@@ -146,8 +162,7 @@ export async function localChangeSets() { // () => Array<ChangeSet>
     req.onerror = err => reject(err);
   });
   const allChangeSets = [];
-  const packages = gitInterface.getPackages();
-  for (let pkg of packages) {
+  for (let pkg of getPackages()) {
     arr.pushAll(allChangeSets, await localChangeSetsOf(db, pkg));
   }
   const groups = arr.groupBy(allChangeSets, ({cs}) => cs);
@@ -169,13 +184,21 @@ async function switchPackage(pkg, prev, next) {
   const nextFiles = await nextB.files();
   for (const relPath in prevFiles) {
     const prevHash = prevFiles[relPath],
-          nextHash = nextFiles[relPath];
-    if (prevHash && nextHash && prevHash != nextHash) {
-      const moduleName = pkg + relPath;
+          nextHash = nextFiles[relPath],
+          mod = module(`${pkg}/${relPath}`);
+    if (prevHash && nextHash && prevHash != nextHash && mod.isLoaded()) {
       const newSource = await nextB.getFileContent(relPath);
-      await gitInterface.coreInterface.moduleSourceChange(moduleName, newSource, { targetModule: moduleName, doEval: true });
+      await mod.changeSource(newSource, { targetModule: `${pkg}/${relPath}`, doEval: true });
     }
   }
+}
+
+function fetchFromChangeset(proceed, load) {
+  const cs = currentChangeSet();
+  if (!cs) return proceed(load);
+  return cs.getFileContent(load.name).then(content => {
+    return content === null ? proceed(load) : content;
+  });
 }
 
 export async function setCurrentChangeSet(csName) {
@@ -188,7 +211,12 @@ export async function setCurrentChangeSet(csName) {
     next = (await localChangeSets()).find(cs => cs.name === csName);
   }
   if (next === current) return;
-  for (const pkg of gitInterface.getPackages()) {
+  if (next) {
+    install();
+  } else {
+    uninstall();
+  }
+  for (const pkg of getPackages()) {
     await switchPackage(pkg.address, current, next);
   }
   current = next;

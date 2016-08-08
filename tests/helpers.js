@@ -1,8 +1,8 @@
-import { mixins, modes, promisify } from 'js-git-browser';
+import { mixins, modes, promisify } from "js-git-browser";
 
+import { registerPackage, removePackage } from "lively.modules";
 import { removeDir, createFiles } from "lively.modules/tests/helpers.js";
 
-import { gitInterface } from "../index.js";
 import { createChangeSet, setCurrentChangeSet } from "../src/changeset.js";
 
 async function repoForPackage(pkg) {
@@ -20,17 +20,23 @@ async function repoForPackage(pkg) {
   return repo;
 }
 
-export async function initMaster(pkg) {
+export async function initMaster(pkg, withChange = false) {
   const repo = await repoForPackage(pkg),
         author = {name: "John Doe", email: "john@example.org", date: new Date()},
         message = "initial commit",
         changes = [{
           path: "a.js",
           mode: modes.file,
-          content: "export const x = 1;\n"}];
-  const tree = await repo.createTree(changes),
+          content: "export const x = 1;\n"}],
+        tree = await repo.createTree(changes),
         commitHash = await repo.saveAs("commit", {tree, author, message});
-  return repo.updateRef("refs/heads/master", commitHash);
+  await repo.updateRef("refs/heads/master", commitHash);
+  if (withChange) {
+    changes[0].content = "export const x = 2;\n";
+    const tree2 = await repo.createTree(changes),
+        commitHash2 = await repo.saveAs("commit", {tree: tree2, author, message, parents: [commitHash]});
+    await repo.updateRef("refs/heads/test", commitHash2);
+  }
 }
 
 export const
@@ -45,8 +51,8 @@ export const
   fileA = pkgDir + "/a.js",
   vmEditorMock = {updateModuleList: () => 0};
 
-export async function initChangeSet() {
-  await initMaster(pkgDir);
+export async function initChangeSet(withChange = false) {
+  await initMaster(pkgDir, withChange);
   const cs = await createChangeSet("test");
   await setCurrentChangeSet("test");
   return cs;
@@ -54,14 +60,10 @@ export async function initChangeSet() {
 
 export async function createPackage() {
   await createFiles(pkgDir, pkgFiles);
-  return gitInterface.importPackage(pkgDir);
+  return registerPackage(pkgDir);
 }
 
-export async function changeFile(newSrc) {
-  await gitInterface.interactivelyChangeModule(vmEditorMock, fileA, newSrc);
-}
-
-export async function removePackage() {
-  await gitInterface.removePackage(pkgDir);
+export async function deletePackage() {
+  await removePackage(pkgDir);
   await removeDir(pkgDir);
 }

@@ -74,11 +74,12 @@ export default class Branch {
           files = {};
     let obj;
     while (obj = await treeStream.read()) {
+      const path = obj.path.replace(/^\//, "");
       if (withDir && obj.mode === modes.tree) {
-        files[obj.path] = obj.hash;
+        files[path] = obj.hash;
       }
       if (obj.mode !== modes.file) continue;
-      files[obj.path] = obj.hash;
+      files[path] = obj.hash;
     }
     return files;
   }
