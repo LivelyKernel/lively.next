@@ -257,7 +257,7 @@ export var Keys = {
       if (keyParts.length >= 1 && keyParts.include(id)) return '';
     };
     keyParts.push(id);
-    var result = keyParts.compact().uniq().join('-');
+    var result = arr.uniq(arr.compact(keyParts)).join('-');
     if (options.ignoreKeys && options.ignoreKeys.include(result)) return '';
     return result;
   }
