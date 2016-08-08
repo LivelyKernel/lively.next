@@ -1,5 +1,6 @@
+import { arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { Morph, World, Polygon, MorphicEnv } from "lively.morphic";
+import { Morph, World, List, Polygon, MorphicEnv } from "lively.morphic";
 import { Window, Button} from "lively.morphic/widgets.js";
 import { ObjectDrawer, Workspace } from "lively.morphic/tools.js";
 
@@ -8,6 +9,8 @@ var world = new World({
   extent: pt(window.innerWidth, window.innerHeight),
   submorphs: [
     new ObjectDrawer(),
+
+    new List({items: arr.range(0,200).map(n => "item " + n), position: pt(20, 200), extent: pt(200, 300)}),
 
     new Window({
       name: "Alice", extent: pt(300, 300), position: pt(200,200),
@@ -19,9 +22,7 @@ var world = new World({
           extent: pt(102,102), fill: Color.orange})
       ]}),
 
-    new Window({name: "Bob", extent: pt(200, 300), position: pt(600,200)}),
-
-    new Workspace({extent: pt(200, 300), position: pt(800,200)}),
+    new Workspace({extent: pt(200, 300), position: pt(800,200)})
   ]
 });
 
