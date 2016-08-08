@@ -124,7 +124,11 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   moduleFormat(moduleName) {
     return modules.module(moduleName).format();
   }
-
+  
+  moduleRead(moduleName) {
+    return modules.module(moduleName).source();
+  }
+ 
   moduleSourceChange(moduleName, newSource, options) {
     return modules.module(moduleName).changeSource(newSource, options);
   }
