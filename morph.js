@@ -760,7 +760,7 @@ export class Morph {
 
   aboutToRender(renderer) {
     // FIXME focus + scroll are DOM-specific => move to renderer
-    if (this._wantsFocus || this.clipMode !== "visible")
+    if (this._wantsFocus || this.isClip())
       renderer.afterRenderCallTargets.push(this);
 
     this._dirty = false;
@@ -772,7 +772,7 @@ export class Morph {
       this._wantsFocus = false;
     }
 
-    if (this.clipMode !== "visible" && node) {
+    if (this.isClip() && node) {
       const {x: scrollX, y: scrollY} = this.scroll;
       node.scrollLeft = scrollX;
       node.scrollTop = scrollY;

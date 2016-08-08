@@ -58,7 +58,7 @@ export class World extends Morph {
 
     if (evt.isAltDown() && config.altClickDefinesThat) {
       // FIXME currently delayed to overwrite that in old morphic
-      (() => System.global.that = target).delay(0.1);
+      setTimeout(() => System.global.that = target, 100);
       target.show();
       evt.stop();
       console.log(`Set global "that" to ${target}`);

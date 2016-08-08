@@ -99,7 +99,7 @@ describe("setup with renderer and events", function () {
 
   });
 
-  describe("scoll", () => {
+  describe("scroll", () => {
 
     it("clip morph can specify scroll", async () => {
       submorph1.clipMode = "auto";

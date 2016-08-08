@@ -236,9 +236,9 @@ export var Keys = {
     if (domEvt.keyIdentifier === undefined) {
       var id = this.manualKeyIdentifierLookup(domEvt);
       if (options.ignoreModifiersIfNoCombo
-       && [16,17,18,91,93,224].include(domEvt.keyCode)
-       && !id.include('-')) return "";
-      if (options.ignoreKeys && options.ignoreKeys.include(id)) return '';
+       && [16,17,18,91,93,224].includes(domEvt.keyCode)
+       && !id.includes('-')) return "";
+      if (options.ignoreKeys && options.ignoreKeys.includes(id)) return '';
       return id;
     }
     var keyParts = [];
@@ -254,11 +254,11 @@ export var Keys = {
     else if (domEvt.keyCode === this.KEY_DELETE) id = 'Del';
     else id = this.decodeKeyIdentifier(domEvt);
     if (options.ignoreModifiersIfNoCombo) {
-      if (keyParts.length >= 1 && keyParts.include(id)) return '';
+      if (keyParts.length >= 1 && keyParts.includes(id)) return '';
     };
     keyParts.push(id);
     var result = arr.uniq(arr.compact(keyParts)).join('-');
-    if (options.ignoreKeys && options.ignoreKeys.include(result)) return '';
+    if (options.ignoreKeys && options.ignoreKeys.includes(result)) return '';
     return result;
   }
 }
@@ -278,7 +278,7 @@ class SimulatedDOMEvent {
       props.pageX = x; props.pageY = y;
     }
 
-    if (!props.hasOwnProperty("pointerId") && arr.include(mouseEvents.concat(pointerEvents), props.type)) {
+    if (!props.hasOwnProperty("pointerId") && mouseEvents.concat(pointerEvents).includes(props.type)) {
       props = {...props, pointerId: 1};
     }
 
