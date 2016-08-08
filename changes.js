@@ -171,12 +171,12 @@ export class ChangeManager {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // group changes
 
-  groupChangesWhile(targetMorph, groupChange, whileFn) {
+  groupChangesWhile(targetMorph, groupChange = new GroupChange(targetMorph), whileFn) {
     this.changeGroupStack.push(groupChange);
     try {
       whileFn();
       arr.remove(this.changeGroupStack, groupChange);
-      this._record(targetMorph, groupChange);
+      return this._record(targetMorph, groupChange);
     } catch (err) {
       arr.remove(this.changeGroupStack, groupChange);
       throw err;
