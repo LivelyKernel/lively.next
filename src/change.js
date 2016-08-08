@@ -41,8 +41,6 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
         metadata: {format: "esm"}
       };
 
-  if (!System.get(moduleId)) await System.import(moduleId);
-
   // translate the source and produce a {declare: FUNCTION, localDeps:
   // [STRING]} object
   var updateData = await instrumentSourceOfEsmModuleLoad(System, load);

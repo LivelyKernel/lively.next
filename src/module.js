@@ -168,8 +168,8 @@ class ModuleInterface {
   }
 
   async changeSource(newSource, options) {
-    await moduleSourceChange(this.System, this.id, newSource, this.format(), options);
-    return this.System.resource(this.id).write(newSource);
+    await this.System.resource(this.id).write(newSource);
+    return moduleSourceChange(this.System, this.id, newSource, this.format(), options);
   }
 
   addDependencyToModuleRecord(dependency, setter = function() {}) {

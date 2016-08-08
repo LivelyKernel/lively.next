@@ -139,6 +139,14 @@ describe("code changes of esm format module", () => {
     const newContent = await resource(file2m).read();
     expect(newContent).to.deep.equal("var internal = 2; export var y = internal;");
   });
+
+  it("writes changes despite errors", async () => {
+    try {
+      await module2.changeSource("export export export");
+    } catch(e) {}
+    const newContent = await resource(file2m).read();
+    expect(newContent).to.deep.equal("export export export");
+  });
 });
 
 
