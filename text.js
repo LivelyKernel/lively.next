@@ -207,6 +207,14 @@ export class Text extends Morph {
         sel.collapse();
         break;
 
+      case 'Del': // forward-delete
+        if (this.readOnly) break;
+        evt.stop();
+        sel.isCollapsed && sel.end++;
+        sel.text = "";
+        sel.collapse();
+        break;
+
       case 'Left': case 'Right':
         evt.stop();
         sel.start += (keyString === 'Right' ? 1 : (sel.start > 0 ? -1 : 0));
@@ -227,13 +235,19 @@ export class Text extends Morph {
         break;
 
       default:
-        if (this.readOnly) break;
-        // FIXME!
         evt.stop();
-        if (key.length !== 1 && key !== "Space" && key !== "Enter") {
-          break;
+        if (this.readOnly) return;
+        switch (key) {
+          case 'Enter':
+            sel.text = "\n"; break;
+          case 'Space':
+            sel.text = " "; break;
+          case 'Tab':
+            sel.text = "\t"; break;
+          default:
+            if (key.length === 1) sel.text = key;
+            else return; // ignored key
         }
-        sel.text = (key === "Enter" ? "\n" : key);
         sel.collapse(sel.start + 1);
     }
   }
