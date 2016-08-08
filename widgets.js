@@ -104,7 +104,8 @@ export class Window extends Morph {
       grabbable: false,
       fill: Color.gray.withA(0),
       fontColor: Color.darkGray,
-      center: pt(this.extent.x / 2, 10)
+      center: pt(this.extent.x / 2, 10),
+      reactsToPointer: false
     };
   }
 
