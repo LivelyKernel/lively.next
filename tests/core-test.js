@@ -28,7 +28,7 @@ function createDummyWorld() {
 }
 
 
-describe("full morphic setup with renderer and events", function () {
+describe("setup with renderer and events", function () {
 
   // jsdom sometimes takes its time to initialize...
   if (System.get("@system-env").node)
@@ -37,71 +37,81 @@ describe("full morphic setup with renderer and events", function () {
   beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
   afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
-  describe("rendering", () => {
 
-    it("morph id is DOM node id", () => {
-      expect(world.id).equals(env.renderer.domNode.id);
+  it("morph id is DOM node id", () => {
+    expect(world.id).equals(env.renderer.domNode.id);
+  });
+
+  it("renderer associates domNodewith morph", () => {
+    var node = env.renderer.getNodeForMorph(submorph2),
+        morph = env.renderer.getMorphForNode(node);
+    expect(morph).equals(submorph2, morph && morph.name);
+    expect(env.renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
+                           .childNodes[0]).equals(node); // brittle, might change...
+  });
+  
+  it("can be moved to the front", () => {
+    submorph1.bringToFront();
+    expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
+  });
+
+  describe("transforms", () => {
+
+    it("scale and rotation are rendered", async () => {
+      submorph1.rotateBy(num.toRadians(45));
+      await submorph1.whenRendered();
+      expect(env.renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
+        .match(/translate\(10px, 10px\)/)
+        .match(/rotate\((45|44\.9+)deg\)/)
+        .match(/scale\(1,\s*1\)/)
     });
 
-    it("renderer associates domNodewith morph", () => {
-      var node = env.renderer.getNodeForMorph(submorph2),
-          morph = env.renderer.getMorphForNode(node);
-      expect(morph).equals(submorph2, morph && morph.name);
-      expect(env.renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
-                             .childNodes[0]).equals(node); // brittle, might change...
-    });
-    
-    it("can be moved to the front", () => {
-      submorph1.bringToFront();
-      expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
-    });
-
-    describe("transforms", () => {
-
-      it("scale and rotation are rendered", async () => {
-        submorph1.rotateBy(num.toRadians(45));
-        await submorph1.whenRendered();
-        expect(env.renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
-          .match(/translate\(10px, 10px\)/)
-          .match(/rotate\((45|44\.9+)deg\)/)
-          .match(/scale\(1,\s*1\)/)
-      });
-
-      it("origin rendered via origin transform", async () => {
-        submorph1.origin = pt(20,10);
-        await submorph1.whenRendered();
-        expect(env.renderer.getNodeForMorph(submorph1))
-          .deep.property("style.transformOrigin").match(/20px 10px/);
-      });
-
-    });
-
-    describe("shapes", () => {
-
-      it("shape influences node style", () => {
-        const style = env.renderer.getNodeForMorph(ellipse).style;
-        expect(style.borderRadius).match(/50px/);
-        expect(style.position).equals("absolute");
-      });
-
-      it("morph type influences node structure", () => {
-        const ellipseNode = env.renderer.getNodeForMorph(ellipse),
-              imageNode = env.renderer.getNodeForMorph(image);
-        expect(ellipseNode.nodeName).equals("DIV");
-        expect(imageNode.childNodes[0].nodeName).equals("IMG");
-      });
-
-      it("morph type influences node attributes", () => {
-        const ellipseNode = env.renderer.getNodeForMorph(ellipse),
-              imageNode = env.renderer.getNodeForMorph(image);
-        expect(ellipseNode).not.to.have.property('src');
-        expect(imageNode.childNodes[0]).to.have.property('src');
-      });
-
+    it("origin rendered via origin transform", async () => {
+      submorph1.origin = pt(20,10);
+      await submorph1.whenRendered();
+      expect(env.renderer.getNodeForMorph(submorph1))
+        .deep.property("style.transformOrigin").match(/20px 10px/);
     });
 
   });
 
+  describe("shapes", () => {
+
+    it("shape influences node style", () => {
+      const style = env.renderer.getNodeForMorph(ellipse).style;
+      expect(style.borderRadius).match(/50px/);
+      expect(style.position).equals("absolute");
+    });
+
+    it("morph type influences node structure", () => {
+      const ellipseNode = env.renderer.getNodeForMorph(ellipse),
+            imageNode = env.renderer.getNodeForMorph(image);
+      expect(ellipseNode.nodeName).equals("DIV");
+      expect(imageNode.childNodes[0].nodeName).equals("IMG");
+    });
+
+    it("morph type influences node attributes", () => {
+      const ellipseNode = env.renderer.getNodeForMorph(ellipse),
+            imageNode = env.renderer.getNodeForMorph(image);
+      expect(ellipseNode).not.to.have.property('src');
+      expect(imageNode.childNodes[0]).to.have.property('src');
+    });
+
+  });
+
+  describe("scoll", () => {
+
+    it("clip morph can specify scroll", async () => {
+      submorph1.clipMode = "auto";
+      submorph2.extent = pt(200,200);
+      submorph1.scroll = pt(40, 50);
+      await submorph1.whenRendered();
+      var node = env.renderer.getNodeForMorph(submorph1);
+      expect(node.scrollLeft).equals(40);
+      expect(node.scrollTop).equals(50);
+    });
+
+  });
 });
 
 

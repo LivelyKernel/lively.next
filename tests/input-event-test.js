@@ -43,7 +43,7 @@ function createDummyWorld() {
 
   eventLog = [];
   [world,submorph1,submorph2,submorph3,submorph4].forEach(ea => installEventLogger(ea, eventLog));
-  
+
   return world;
 }
 
@@ -314,6 +314,24 @@ describe("events", function() {
       var pressed; submorph1.onKeyUp = evt => pressed = evt.keyString();
       env.eventDispatcher.simulateDOMEvents({target: submorph1, type: "keyup", altKey: true, shiftKey: true, keyCode: 88});
       expect(pressed).equals("Alt-Shift-X")
+    });
+
+  });
+
+  describe("scrolling", () => {
+
+    beforeEach(async () => {
+      submorph1.clipMode = "auto";
+      submorph2.extent = pt(200,200);
+      await submorph1.whenRendered();
+    });
+
+    it("has correct scroll after scroll event and onScroll is triggered", async () => {
+      var called = false;
+      submorph1.onScroll = () => called = true;
+      await env.eventDispatcher.simulateDOMEvents({type: "scroll", target: submorph1, scrollLeft: 20, scrollTop: 100}).whenIdle();
+      expect(submorph1.scroll).equals(pt(20,100));
+      expect().assert(called, "onScroll not called");
     });
 
   });

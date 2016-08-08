@@ -682,8 +682,6 @@ export class Morph {
   onMouseUp(evt) {}
   onMouseMove(evt) {}
 
-  onFocus(evt) {}
-  onBlur(evt) {}
   onKeyDown(evt) {}
   onKeyUp(evt) {}
   onContextMenu(evt) {}
@@ -707,10 +705,14 @@ export class Morph {
   onHoverIn(evt) {}
   onHoverOut(evt) {}
 
+  onScroll(evt) {}
+
   focus() {
     this._wantsFocus = true;
     this._dirty = true;
   }
+  onFocus(evt) {}
+  onBlur(evt) {}
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization

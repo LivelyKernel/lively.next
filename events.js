@@ -19,7 +19,8 @@ const domEventsWeListenTo = [
   {type: 'contextmenu', capturing: false},
   {type: 'cut',         capturing: false},
   {type: 'copy',        capturing: false},
-  {type: 'paste',       capturing: false}
+  {type: 'paste',       capturing: false},
+  {type: 'scroll',      capturing: true}
 ]
 
 const typeToMethodMap = {
@@ -40,7 +41,8 @@ const typeToMethodMap = {
   'contextmenu': "onContextMenu",
   'cut':         "onCut",
   'copy':        "onCopy",
-  'paste':       "onPaste"
+  'paste':       "onPaste",
+  'scroll':       "onScroll"
 }
 
 const pointerEvents = [
@@ -664,6 +666,12 @@ export class EventDispatcher {
           .onDispatch(() => state.focusedMorph = type === "focus" ? targetMorph : null)]
         break;
 
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      case "scroll":
+        events = [new Event(type, domEvt, this, [targetMorph], hand, halo)
+          .onDispatch(() => targetMorph.scroll = pt(domEvt.target.scrollLeft, domEvt.target.scrollTop))]
+        break;
+
     }
 
     return {events, later};
@@ -723,7 +731,7 @@ export class EventDispatcher {
   simulateDOMEvents(...eventSpecs) {
     var doc = (this.emitter.document || this.emitter.ownerDocument);
     for (let spec of eventSpecs) {
-      let {target, position} = spec;
+      let {target, position, type} = spec;
       if (!target) {
         if (!position) target = this.world;
         else target = this.world.morphsContainingPoint(position)[0];
@@ -734,6 +742,10 @@ export class EventDispatcher {
       if (spec.position) {
         var {offsetLeft, offsetTop} = cumulativeOffset(doc.getElementById(this.world.id));
         spec.position = spec.position.addXY(offsetLeft, offsetTop);
+      }
+      if (type === "scroll" && ("scrollLeft" in spec || "scrollRight" in spec)) {
+        spec.target.scrollLeft = spec.scrollLeft || 0;
+        spec.target.scrollTop = spec.scrollTop || 0;
       }
       this.dispatchDOMEvent(new SimulatedDOMEvent(spec))
     }
