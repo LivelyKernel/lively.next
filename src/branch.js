@@ -138,6 +138,8 @@ export default class Branch {
 
   async setFileContent(relPath, content) { // string, string -> ()
     // add file as a new commit based on parent and replace current head
+    const prevContent = await this.getFileContent(relPath);
+    if (prevContent == content) return;
     const repo = await this.repo(),
           base = await this.head(),
           author = Object.assign(getAuthor(), {date: new Date()}),

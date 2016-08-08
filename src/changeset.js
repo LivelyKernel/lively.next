@@ -185,10 +185,15 @@ async function switchPackage(pkg, prev, next) {
   for (const relPath in prevFiles) {
     const prevHash = prevFiles[relPath],
           nextHash = nextFiles[relPath],
-          mod = module(`${pkg}/${relPath}`);
-    if (prevHash && nextHash && prevHash != nextHash && mod.isLoaded()) {
-      const newSource = await nextB.getFileContent(relPath);
-      await mod.changeSource(newSource, { targetModule: `${pkg}/${relPath}`, doEval: true });
+          mod = `${pkg}/${relPath}`;
+    if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded()) {
+      let newSource;
+      if (nextB.name === "master") {
+        newSource = await System.resource(mod).read();
+      } else {
+        newSource = await nextB.getFileContent(relPath);
+      }
+      await module(mod).changeSource(newSource, {targetModule: mod, doEval: true});
     }
   }
 }
@@ -210,16 +215,16 @@ export async function setCurrentChangeSet(csName) {
   } else {
     next = (await localChangeSets()).find(cs => cs.name === csName);
   }
-  if (next === current) return;
+  if (next === old) return;
   if (next) {
     install();
   } else {
     uninstall();
   }
-  for (const pkg of getPackages()) {
-    await switchPackage(pkg.address, current, next);
-  }
   current = next;
+  for (const pkg of getPackages()) {
+    await switchPackage(pkg.address, old, next);
+  }
   emit("lively.changesets/switchedcurrent", {
     changeset: csName || null,
     before: old ? old.name : null

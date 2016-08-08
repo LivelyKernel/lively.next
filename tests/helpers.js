@@ -66,4 +66,16 @@ export async function createPackage() {
 export async function deletePackage() {
   await removePackage(pkgDir);
   await removeDir(pkgDir);
+  const db = await new Promise((resolve, reject) => {
+    const req = window.indexedDB.open("tedit", 1);
+    req.onsuccess = evt => resolve(evt.target.result);
+    req.onerror = err => reject(err);
+  });
+  return new Promise((resolve, reject) => {
+    const trans = db.transaction(["refs"], "readwrite"),
+          store = trans.objectStore("refs"),
+          req = store.delete(`${pkgDir}/refs/heads/master`);
+    req.onsuccess = evt => resolve(evt.target.result);
+    req.onerror = evt => reject(new Error(evt.value));
+  });
 }
