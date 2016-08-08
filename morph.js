@@ -20,6 +20,7 @@ const defaultProperties = {
   borderColor: Color.white,
   borderRadius: Rectangle.inset(0),
   clipMode: "visible",
+  scroll: pt(0,0),
   reactsToPointer: true,
   draggable: true,
   grabbable: false,
@@ -180,6 +181,9 @@ export class Morph {
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  { this.addValueChange("clipMode", value); }
+
+  get scroll()       { return this.getProperty("scroll"); }
+  set scroll(value)  { this.addValueChange("scroll", value); }
 
   get draggable()       { return this.getProperty("draggable"); }
   set draggable(value)  { this.addValueChange("draggable", value); }

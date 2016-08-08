@@ -289,4 +289,3 @@ function renderGradient(morph) {
                                 {offset: (k * 100) + "%",
                                  "stop-color": c}}))));
 }
-
