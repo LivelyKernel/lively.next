@@ -115,6 +115,7 @@ export class Renderer {
     this.domEnvironment = domEnvironment;
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
+    this.afterRenderCallTargets = [];
   }
 
   clear() {
@@ -160,11 +161,11 @@ export class Renderer {
 
   render(x) {
     if (!x.needsRerender()) {
-      var rendered = this.renderMap.get(x);
-      if (rendered) return rendered;
+      var renderedTree = this.renderMap.get(x);
+      if (renderedTree) return renderedTree;
     }
-    
-    x.aboutToRender();
+
+    x.aboutToRender(this);
 
     var tree = x.render(this);
     this.renderMap.set(x, tree);
@@ -177,11 +178,15 @@ export class Renderer {
       style: defaultStyle(morph)
     }, this.renderSubmorphs(morph));
   }
-  
+
   renderSubmorphs(morph) {
-    return h("div", {style: {position: "absolute",
-                             transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`}}, 
-            morph.submorphs.map(m => this.render(m)));
+    return h("div", {
+        style: {
+          position: "absolute",
+          transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`
+        }
+      },
+      morph.submorphs.map(m => this.render(m)));
   }
 
   renderText(text) {
@@ -207,15 +212,21 @@ export class Renderer {
   }
 
   renderImage(image) {
-    return h("div", {...defaultAttributes(image),
-                     style: defaultStyle(image)},
-                    [h("img", {src: image.imageUrl,
-                               draggable: false,
-                               style: {
-                                  "pointer-events": "none",
-                                  position: "absolute",
-                                  width: "100%", height: "100%"}}),
-                     this.renderSubmorphs(image)]);
+    return h("div", {
+      ...defaultAttributes(image),
+        style: defaultStyle(image)
+      }, [
+        h("img", {
+          src: image.imageUrl,
+          draggable: false,
+          style: {
+            "pointer-events": "none",
+            position: "absolute",
+            width: "100%", height: "100%"
+          }
+        }),
+        this.renderSubmorphs(image)
+      ]);
   }
 
   renderPath(path) {
@@ -227,24 +238,24 @@ export class Renderer {
                       {"sroke-width": path.borderWidth,
                        stroke: path.gradient ? "url(#" + path.id + ")" : path.borderColor,
                        d: "M"+x1+","+y1+" "+"L"+x2+","+y2}});
-  
+
     for (var i = 0; i < path.vertices.length - 1; i++) {
       vertices.push(edge(path.vertices[i], path.vertices[i + 1]));
     }
     return this.renderSvgMorph(path, vertices);
   }
-  
+
   renderPolygon(polygon) {
     const vertices = h("polygon",
                         {namespace: "http://www.w3.org/2000/svg",
                          attributes:
-                          {style: "fill:" + (polygon.gradient ? "url(#" + polygon.id + ")" : polygon.fill) + 
+                          {style: "fill:" + (polygon.gradient ? "url(#" + polygon.id + ")" : polygon.fill) +
                                   ";stroke-width:" + polygon.borderWidth +
                                   ";stroke:" + polygon.borderColor,
                            points: polygon.vertices.map(({x,y}) => x + "," + y).join(" ")}});
     return this.renderSvgMorph(polygon, [vertices]);
   }
-  
+
   renderSvgMorph(morph, svg) {
     const {position, WebkitFilter, transform, transformOrigin,
            display, top, left} = defaultStyle(morph),

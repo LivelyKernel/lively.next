@@ -761,15 +761,25 @@ export class Morph {
 
   needsRerender() { return this._dirty; }
 
-  aboutToRender() {
-    if (this._wantsFocus) {
-      const node =  this.world()._renderer.getNodeForMorph(this);
-      if (node) {
-        node.focus();
-        this._wantsFocus = false;
-      }
-    }
+  aboutToRender(renderer) {
+    // FIXME focus + scroll are DOM-specific => move to renderer
+    if (this._wantsFocus || this.clipMode !== "visible")
+      renderer.afterRenderCallTargets.push(this);
+
     this._dirty = false;
+  }
+
+  onAfterRender(node) {
+    if (this._wantsFocus && node) {
+      node.focus();
+      this._wantsFocus = false;
+    }
+
+    if (this.clipMode !== "visible" && node) {
+      const {x: scrollX, y: scrollY} = this.scroll;
+      node.scrollLeft = scrollX;
+      node.scrollTop = scrollY;
+    }
   }
 
   whenRendered() {

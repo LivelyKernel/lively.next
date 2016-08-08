@@ -124,8 +124,8 @@ export class Text extends Morph {
     return this.textString.slice(start, end).trim();
   }
 
-  aboutToRender() {
-    super.aboutToRender();
+  aboutToRender(renderer) {
+    super.aboutToRender(renderer);
     this.fitIfNeeded();
   }
 
