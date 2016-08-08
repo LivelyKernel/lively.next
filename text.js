@@ -150,11 +150,6 @@ export class Text extends Morph {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
-  recordSelectionFrom(domNode) {
-    var { selectionStart: start, selectionEnd: end } = domNode;
-    this._selection = { start: start, end: end };
-  }
-
   onMouseDown(evt) { this.onMouseMove(evt); }
 
   onMouseMove(evt) {
