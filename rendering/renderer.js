@@ -199,14 +199,14 @@ export class Renderer {
         padding: "0px",
         "font-family": text.fontFamily,
         "font-size": text.fontSize + "px",
-        "color": String(text.fontColor)
+        color: String(text.fontColor)
       },
     }, [textString.substring(0, selection.start),
         h('span.selected.no-html-select', {
           textContent: textString.substring(selection.start, selection.end),
-          style: { "pointer-events": "none" }
+          style: { "pointer-events": "none", position: "absolute" }
         }),
-        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial") } }, "\u200b"),
+        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial"), position: "absolute" } }, "\u200b"),
         textString.substring(selection.end),
         this.renderSubmorphs(text)]);
   }
