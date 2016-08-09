@@ -26,7 +26,7 @@ export class VerticalLayout extends Layout {
     submorphs.forEach(m => {
       m.position = pos;
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
-      maxWidth = Math.max(m.height, maxWidth);
+      maxWidth = Math.max(m.width, maxWidth);
     });
     morph.extent = pt(maxWidth, pos.y)
     this.active = false;
@@ -47,9 +47,9 @@ export class HorizontalLayout extends Layout {
     submorphs.forEach(m => {
       m.position = pos;
       pos = m.topRight.addPt(pt(this.spacing, 0));
-      maxHeight = Math.max(m.width, maxHeight);
+      maxHeight = Math.max(m.height, maxHeight);
     });
-    morph.extent = pt(pos.x, maxHeight);
+    morph.extent = pt(pos.x + this.spacing, maxHeight + 2 * this.spacing);
     this.active = false;
  }
 

@@ -15,7 +15,7 @@ function createDummyWorld() {
       center: pt(150,150),
       extent: pt(200, 400),
       submorphs: [
-        new Morph({name: "m1", extent: pt(100,100)}),
+        new Morph({name: "m1", extent: pt(100,75)}),
         new Morph({name: "m2", extent: pt(50,50)}),
         new Morph({name: "m3", extent: pt(100, 50)})
     ]})]
@@ -106,7 +106,7 @@ describe("layout", () => {
 
     it("enforces minimum height and minimum width", () => {
       m.extent = pt(50,50);
-      expect(m.height).equals(100);
+      expect(m.height).equals(75);
       expect(m.width).equals(250);
     });
 
