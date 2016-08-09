@@ -1,6 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
 import { morph, MorphicEnv, List } from "../index.js";
 import { expect } from "mocha-es6";
+import { arr } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 var env, world;
@@ -55,7 +56,7 @@ describe("lists", function () {
     });
 
     it("only renders necessary items", () => {
-      list.items = Array.range(0,100);
+      list.items = arr.range(0,100);
       var nVisible = Math.ceil(list.height / list.itemMorphs[0].height)
       expect(list.itemMorphs.length).equals(nVisible);
     });
