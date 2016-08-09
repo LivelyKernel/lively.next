@@ -21,7 +21,6 @@ export async function interactivelyChangeModule(system, vmEditor, moduleName, ne
   // options.write, options.eval, ..
   options = obj.merge({targetModule: moduleName}, options);
   moduleName = await system.normalize(moduleName);
-  await system.moduleWrite(moduleName, newSource);
   await system.moduleSourceChange(moduleName, newSource, options);
   await vmEditor.updateModuleList();
   return moduleName;
