@@ -189,7 +189,7 @@ async function switchPackage(pkg, prev, next) {
       } else {
         newSource = await nextB.getFileContent(relPath);
       }
-      await module(mod).changeSource(newSource, {targetModule: mod, doEval: true});
+      await module(mod).changeSource(newSource, {targetModule: mod, doEval: true}).catch(e => console.error(e));
     }
   }
 }

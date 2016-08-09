@@ -2,13 +2,14 @@ import { createChangeSet, localChangeSets, currentChangeSet, setCurrentChangeSet
 import { installHook, removeHook, isHookInstalled } from "lively.modules";
 
 function resourceFromChangeSet(proceed, url) {
-  const cs = currentChangeSet();
   return {
     async read() {
-      const content = cs && (await cs.getFileContent(url));
+      const cs = currentChangeSet(),
+            content = cs && (await cs.getFileContent(url));
       return (content !== null) ? content : proceed(url).read();
     },
     write(source) {
+      const cs = currentChangeSet();
       return cs ? cs.setFileContent(url, source) : proceed(url).write(source);
     }
   };
