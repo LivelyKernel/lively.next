@@ -1,6 +1,7 @@
 {
   "name": "lively.resources",
   "version": "0.1.2",
+  "repository": "https://github.com/LivelyKernel/lively.resources",
   "systemjs": {
     "map": {
       "fs": {
