@@ -56,6 +56,10 @@ export class Text extends Morph {
     this.addValueChange("readOnly", value);
   }
 
+  get hasFocus() { return this.clipboardHelper._hasFocus; }
+
+  get rejectsInput() { return this.readOnly || !this.hasFocus }
+
   get fixedWidth() { return this.getProperty("fixedWidth") }
   set fixedWidth(value) {
     this.addValueChange("fixedWidth", value);
@@ -195,7 +199,7 @@ export class Text extends Morph {
         break;
 
       case 'Backspace':
-        if (this.readOnly) break;
+        if (this.rejectsInput) break;
         evt.stop();
         sel.isCollapsed && sel.start && sel.start--;
         sel.text = "";
@@ -203,7 +207,7 @@ export class Text extends Morph {
         break;
 
       case 'Del': // forward-delete
-        if (this.readOnly) break;
+        if (this.rejectsInput) break;
         evt.stop();
         sel.isCollapsed && sel.end++;
         sel.text = "";
@@ -230,8 +234,8 @@ export class Text extends Morph {
         break;
 
       default:
+        if (this.rejectsInput) break;
         evt.stop();
-        if (this.readOnly) return;
         switch (key) {
           case 'Enter':
             sel.text = "\n"; break;
@@ -248,6 +252,7 @@ export class Text extends Morph {
   }
 
   onCut(evt) {
+    if (this.rejectsInput) return;
     this.onCopy(evt);
     var sel = this.selection;
     sel.text = "";
@@ -255,11 +260,14 @@ export class Text extends Morph {
   }
 
   onCopy(evt) {
+    if (!this.hasFocus) return;
     evt.stop();
     evt.domEvt.clipboardData.setData("text", this.selection.text);
   }
 
   onPaste(evt) {
+    if (this.rejectsInput) return;
+    evt.stop();
     var sel = this.selection;
     sel.text = evt.domEvt.clipboardData.getData("text");
     sel.collapse(sel.end);
