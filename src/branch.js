@@ -1,5 +1,6 @@
 import { mixins, modes, promisify, codec, bodec } from 'js-git-browser';
 import { gitHubToken, gitHubURL } from './github-integration.js';
+import { packageGitHead, localGitHead } from './local-git-integration.js';
 import { diffStr } from "./diff.js";
 
 const repoForPackage = {};
@@ -122,17 +123,35 @@ export default class Branch {
           parentFile = await repo.loadAs("text", parentFiles[relPath]);
     return diffStr(parentFile, file);
   }
-
-  async createFrom(csName) { // ChangeSetName -> ()
+  
+  async createFrom(baseHead) { // Hash -> ()
     // create a commit and a ref for this branch based on other branch
-    const repo = await this.repo(),
-          baseHead = await repo.readRef(`refs/heads/${csName}`);
-    if (!baseHead) throw new Error(`Could not find branch ${csName}`);
+    const repo = await this.repo();
     const tree = (await repo.loadAs("commit", baseHead)).tree,
           author = Object.assign(getAuthor(), {date: new Date()}),
           message = "created changeset",
           commitHash = await repo.saveAs("commit", {tree, author, message, parents: [baseHead]});
     return repo.updateRef(`refs/heads/${this.name}`, commitHash);
+  }
+  
+  async createFromCS(csName) { // ChangeSetName -> ()
+    // create a commit and a ref for this branch based on other branch
+    const repo = await this.repo(),
+          baseHead = await repo.readRef(`refs/heads/${csName}`);
+    if (!baseHead) throw new Error(`Could not find branch ${csName}`);
+    return this.createFrom(baseHead);
+  }
+
+  async createFromHead() { // () -> ()
+    // create a commit and a ref for this branch based on other branch
+    let baseHead = await packageGitHead(this.pkg);
+    if (!baseHead) {
+      baseHead = await localGitHead(this.pkg);
+    }
+    if (!baseHead) {
+      return this.createFromCS("master");
+    }
+    return this.createFrom(baseHead);
   }
   
   async fileExists(relPath) { // RelPath -> boolean?

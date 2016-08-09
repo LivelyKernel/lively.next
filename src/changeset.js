@@ -40,7 +40,7 @@ class ChangeSet {
   async createBranch(path) { // Path -> Branch?
     const pkg = module(path).package().address,
           branch = new Branch(this.name, pkg);
-    await branch.createFrom("master");
+    await branch.createFromHead();
     this.branches.push(branch);
     return branch;
   }
