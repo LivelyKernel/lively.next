@@ -132,7 +132,7 @@ export class Window extends Morph {
   get targetMorph() { return arr.last(arr.withoutAll(this.submorphs, this.controls())); }
   set targetMorph(targetMorph) {
     this.addMorph(targetMorph, this.resizer());
-    targetMorph.setBounds(this.innerBounds().insetBy(5).withTopLeft(pt(5,25)));
+    targetMorph.setBounds(this.innerBounds().withTopLeft(pt(0,25)));
   }
   
   toggleMinimize() {
