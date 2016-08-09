@@ -1,6 +1,6 @@
 {
   "name": "lively.resources",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "systemjs": {
     "map": {
       "fs": {
@@ -15,9 +15,16 @@
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
-    "build": "node tools/build.js"
+    "build": "node build.js"
   },
   "devDependencies": {
-    "mocha-es6": "^0.3.5"
+    "babel-plugin-syntax-object-rest-spread": "^6.8.0",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "babel-regenerator-runtime": "^6.5.0",
+    "mocha-es6": "^0.3.5",
+    "rollup": "^0.34.1",
+    "rollup-plugin-babel": "^2.6.1"
   }
 }
