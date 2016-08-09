@@ -55,10 +55,6 @@ class ChangeSet {
     return branch.setFileContent(relPath, content);
   }
 
-  evaluate() {
-    this.branches.forEach(b => b.evaluate());
-  }
-
   pushToGithub() {
     //TODO
   }

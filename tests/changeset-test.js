@@ -50,6 +50,8 @@ describe("basics", () => {
     expect(cs.branches).to.have.length(1);
     const changedFiles = await cs.branches[0].changedFiles();
     expect(Object.keys(changedFiles)).to.be.deep.eql(["a.js"]);
+    const fileDiff = "- export const x = 1;\n+ export const x = 2;\n  \n";
+    expect(await cs.branches[0].diffFile("a.js")).to.be.deep.eql(fileDiff);
     await cs.delete();
     const changedSrc2 = await module(fileA).source();
     expect(changedSrc2).to.be.eql("export const x = 1;\n");

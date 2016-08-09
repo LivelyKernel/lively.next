@@ -1,5 +1,6 @@
 import { mixins, modes, promisify, codec, bodec } from 'js-git-browser';
 import { gitHubToken, gitHubURL } from './github-integration.js';
+import { diffStr } from "./diff.js";
 
 const repoForPackage = {};
 
@@ -111,7 +112,17 @@ export default class Branch {
     });
     return changedFiles;
   }
-  
+
+  async diffFile(relPath) {
+    const repo = await this.repo(),
+          file = await this.getFileContent(relPath),
+          parentTree = (await this.parent()).tree;
+    if (!parentTree) throw new Error("File tree not found in git");
+    const parentFiles = await this.filesForTree(parentTree),
+          parentFile = await repo.loadAs("text", parentFiles[relPath]);
+    return diffStr(parentFile, file);
+  }
+
   async createFrom(csName) { // ChangeSetName -> ()
     // create a commit and a ref for this branch based on other branch
     const repo = await this.repo(),
@@ -154,10 +165,6 @@ export default class Branch {
     return repo.updateRef(`refs/heads/${this.name}`, commitHash);
   }
 
-  evaluate() {
-    //TODO
-  }
-  
   delete(db) {
     return new Promise((resolve, reject) => {
       const key = this.pkg,
