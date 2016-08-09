@@ -134,7 +134,7 @@ export class Halo extends Morph {
   }
 
   resizeHalo() {
-
+    const halo = this;
     return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
       styleClasses: ["halo-item", "fa", "fa-crop"],
@@ -150,20 +150,31 @@ export class Halo extends Morph {
 
       update(delta, proportional=false) {
         delta = this.proportionalMode(proportional, delta);
-        this.halo.target.resizeBy(delta.scaleBy(1 / this.halo.target.scale));
-        this.halo.alignWithTarget();
+        halo.target.resizeBy(delta.scaleBy(1 / halo.target.scale));
+        halo.alignWithTarget();
       },
 
       init(proportional=false) {
-        this.halo.target.undoStart("resize-halo");
+        halo.target.undoStart("resize-halo");
         this.proportionalMode(proportional);
-        this.halo.activeButton = this;
+        halo.activeButton = this;
       },
 
       stop(proportional=false) {
-        this.halo.target.undoStop("resize-halo");
-        this.halo.activeButton = null;
-        this.halo.alignWithTarget();
+        halo.target.undoStop("resize-halo");
+        this.proportionalMode(false);
+        halo.activeButton = null;
+        halo.alignWithTarget();
+      },
+      
+      adaptAppearance(proportional) {
+        if (proportional) {
+          this.styleClasses = ["halo-item", "fa", "fa-expand"];
+          this.rotation = -Math.PI / 2; 
+        } else {
+          this.styleClasses = ["halo-item", "fa", "fa-crop"];
+          this.rotation = 0;
+        }
       },
 
       onDragStart(evt) { this.init(evt.isShiftDown()) },
@@ -171,19 +182,16 @@ export class Halo extends Morph {
       onDragEnd(evt) { this.stop(evt.isShiftDown()) },
 
       onKeyDown(evt) {
-        this.styleClasses = ["halo-item", "fa", "fa-expand"];
-        this.rotation = -Math.PI / 2;
+        this.adaptAppearance(evt.isShiftDown());
       },
 
       onKeyUp(evt) {
-        this.proportionalMode(false);
+        this.adaptAppearance(false);
       },
 
       proportionalMode(active, delta=null) {
         if (active) {
-          const diagonal = this.halo.toggleDiagonal(true);
-          this.styleClasses = ["halo-item", "fa", "fa-expand"];
-          this.rotation = -Math.PI / 2;
+          const diagonal = halo.toggleDiagonal(true);
           if (delta) {
             delta = diagonal.scaleBy(
                       diagonal.dotProduct(delta) /
@@ -191,9 +199,7 @@ export class Halo extends Morph {
           }
           return delta;
         } else {
-          this.styleClasses = ["halo-item", "fa", "fa-crop"];
-          this.rotation = 0;
-          this.halo.toggleDiagonal(false);
+          halo.toggleDiagonal(false);
           return delta;
         }
       }
