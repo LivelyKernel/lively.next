@@ -13,6 +13,7 @@ export { show } from "./markers.js"
 
 import { World } from "./world.js";
 import { Morph, Hand, Image, Ellipse } from "./morph.js";
+import { List } from "./list.js";
 import { Text } from "./text.js";
 import { Button } from "./widgets.js";
 
@@ -27,6 +28,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'image':   klass = Image; break;
         case 'ellipse': klass = Ellipse; break;
         case 'text':    klass = Text; break;
+        case 'list':    klass = List; break;
         case 'button':  klass = Button; break;
       }
   }

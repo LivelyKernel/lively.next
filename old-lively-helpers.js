@@ -12,7 +12,7 @@ export function setupMorphicWorldOn(htmlMorph) {
         env, type: "world", extent: Point.ensure(htmlMorph.getExtent()),
         submorphs: [
           new ObjectDrawer({env, position: pt(20,10)}),
-          new Window({env, extent: pt(200, 300), position: pt(200,200)}),
+          {env, type: "List", items: Array.range(0,150).map(n => `item ${n}`), extent: pt(200, 300), position: pt(200,200), borderWidth: 1, borderColor: Color.gray},
           new Workspace({env, extent: pt(200, 300), position: pt(400,200)})
         ]});
   env.setWorldRenderedOn(world, rootNode)

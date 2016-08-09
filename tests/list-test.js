@@ -22,12 +22,24 @@ describe("lists", function () {
   });
 
   describe("interface", () => {
-    
 
     it("adds items", () => {
       list.addItem("foo");
       list.addItem("bar");
       expect(list.items).containSubset([{string: "foo", value: "foo"}, {string: "bar", value: "bar"}]);
+    });
+
+  });
+
+  describe("selection", () => {
+    
+    it("selects item", () => {
+      list.addItem("foo");
+      list.addItem("bar");
+      list.selection = "foo";
+      expect(list.selection).equals("foo");
+      expect(list.selections).equals(["foo"]);
+      expect(list.selectedItems).equals([list.items[0]]);
     });
 
   });
@@ -40,15 +52,15 @@ describe("lists", function () {
       expect(list.itemMorphs).containSubset([{textString: "foo"}, {textString: "bar"}]);
       expect(list.itemMorphs[0].topLeft).equals(pt(0,0));
       expect(list.itemMorphs[1].topLeft).equals(list.itemMorphs[0].bottomLeft);
-    })
+    });
 
     it("only renders necessary items", () => {
       list.items = Array.range(0,100);
       var nVisible = Math.ceil(list.height / list.itemMorphs[0].height)
       expect(list.itemMorphs.length).equals(nVisible);
-    })
+    });
     
-  })
+  });
 });
 
 

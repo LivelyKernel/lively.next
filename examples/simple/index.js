@@ -10,7 +10,7 @@ var world = new World({
   submorphs: [
     new ObjectDrawer(),
 
-    new List({items: arr.range(0,200).map(n => "item " + n), position: pt(20, 200), extent: pt(200, 300)}),
+    new List({items: arr.range(0,2000).map(n => "item " + n), position: pt(20, 300), extent: pt(140, 200), borderWidth: 1, borderColor: Color.gray}),
 
     new Window({
       name: "Alice", extent: pt(300, 300), position: pt(200,200),
