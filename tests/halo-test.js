@@ -55,6 +55,12 @@ describe("halos", () => {
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
   });
 
+  it("name shows name", () => {
+    var halo = world.showHaloFor(submorph1);
+    expect(halo.nameHalo().topCenter).equals(halo.innerBounds().bottomCenter().addPt(pt(0,2)));
+    expect(halo.nameHalo().nameHolder.textString).equals(submorph1.name);
+  })
+
   it("drag drags", () => {
     var halo = world.showHaloFor(submorph1);
     halo.dragHalo().update(pt(10,5));

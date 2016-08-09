@@ -1,4 +1,4 @@
-import { Ellipse, Morph, Path } from "./index.js"
+import { Ellipse, Morph, Path, Text, HorizontalLayout } from "./index.js"
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num } from "lively.lang";
 
@@ -9,12 +9,13 @@ const guideGradient = [[0, Color.red.withA(0)],
                        [0.9, Color.red],
                        [1.0, Color.red.withA(0)]]
 
-class HaloItem extends Ellipse {
+class HaloItem extends Morph {
 
   get isEpiMorph() { return true; }
 
   constructor(props) {
     super({
+      borderRadius: 15,
       fill: Color.gray.withA(.7),
       grabbable: false,
       location: null, // where to appear on target morph
@@ -41,6 +42,109 @@ class HaloItem extends Ellipse {
   stop() {}
   valueForPropertyDisplay() { return undefined; }
 
+}
+
+class NameHalo extends HaloItem {
+  
+  constructor(props) {
+    
+    super({
+        borderRadius: 15,
+        fill: Color.gray.withA(.7),
+        borderColor: Color.green,
+        layout: new HorizontalLayout({spacing: 3}),
+        ...props
+      });
+      
+    this.nameHolder = new Text({
+        leftCenter: pt(5,8),
+        fixedHeight: true,
+        height: 20,
+        fill: Color.gray.withA(0),
+        draggable: false,
+        fill: Color.transparent, 
+        fontColor: Color.garkgray});
+
+    this.addMorph({
+      draggable: false,
+      height: 20, fill: Color.gray.transparent,
+      submorphs: [this.nameHolder]});
+      
+    this.validityIndicator = new Text({
+      readOnly: true,
+      draggable: false,
+      fill: Color.orange.withA(0),
+      fontColor: Color.green,
+      fixedWidth: true,
+      fixedHeight: true,
+      extent: pt(18,18),
+      submorphs: [{name: "validityIcon",
+                   draggable: false,
+                   styleClasses: ["morph", "fa", "fa-check"],
+                   center: pt(9,9),
+                   fill: Color.white.withA(0), 
+                   extent: pt(18,18)}]});
+    
+    this.alignInHalo();
+  }
+  
+  updateName(newName) {
+    if (this.validName) {
+      this.halo.target.name = newName;
+      this.toggleActive(false); 
+    }
+  }
+  
+  toggleActive(active) {
+    if (active) {
+      this.borderWidth = 3;
+      this.halo.changingName = true;
+      this.addMorph(this.validityIndicator);
+      this.alignInHalo();
+    } else {
+      this.borderWidth = 0;
+      this.halo.changingName = false;
+      this.validityIndicator.remove();
+      this.alignInHalo();
+    }
+  }
+  
+  toggleNameValid(valid) {
+    this.validName = valid;
+    if (valid) {
+      this.borderColor = Color.green;
+      this.validityIndicator.fontColor = Color.green;
+      this.validityIndicator.get("validityIcon").styleClasses = ["fa", "fa-check"];
+    } else {
+      this.borderColor = Color.red;
+      this.validityIndicator.fontColor = Color.red;
+      this.validityIndicator.get("validityIcon").styleClasses = ["fa", "fa-exclamation-circle"];
+    }
+  }
+  
+  alignInHalo() {
+    this.nameHolder.textString = this.halo.target.name;
+    this.nameHolder.fit();
+    var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
+    this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
+  }
+  
+  onKeyDown(evt) {
+    if ("Enter" == evt.keyString()) {
+      this.updateName(this.nameHolder.textString);
+      evt.stop();
+    }
+  }
+  
+  onMouseDown() {
+    this.toggleActive(true)
+  }
+  
+  onKeyUp(evt) {
+    const newName = this.nameHolder.textString;
+    this.toggleNameValid(!this.halo.target.owner.getSubmorphNamed(newName) || 
+                          this.halo.target.name == newName);
+  }
 }
 
 class HaloPropertyDisplay extends Morph {
@@ -113,6 +217,7 @@ export class Halo extends Morph {
     this.state = {pointerId, target, draggedButton: null}
     this.initButtons();
     this.focus();
+    this.alignWithTarget();
   }
 
   get isHalo() { return true }
@@ -131,6 +236,10 @@ export class Halo extends Morph {
     this.state.target = newTarget;
     owner.addMorphAt(this, 0);
     this.alignWithTarget();
+  }
+  
+  nameHalo() {
+    return this.getSubmorphNamed("name") || this.addMorph(new NameHalo({halo: this, name: "name"}));
   }
 
   resizeHalo() {
@@ -523,7 +632,8 @@ export class Halo extends Morph {
       this.editHalo(),
       this.copyHalo(),
       this.rotateHalo(),
-      this.stylizeHalo()
+      this.stylizeHalo(),
+      this.nameHalo()
     ];
   }
 
@@ -536,6 +646,7 @@ export class Halo extends Morph {
   }
 
   onKeyUp(evt) {
+    if (this.changingName) return;
     this.buttonControls.map(b => b.onKeyUp(evt));
   }
 
@@ -550,6 +661,7 @@ export class Halo extends Morph {
       "Right": pt(1, 0),
       "Shift-Right": pt(1, 0),
     }, delta;
+    if (this.changingName) return;
     if (delta = offsets[evt.keyString()]) {
       evt.stop();
       if (evt.isShiftDown()) {
@@ -688,6 +800,7 @@ export class Halo extends Morph {
       this.updatePropertyDisplay(this.activeButton);
       if (skip != this.activeButton) this.activeButton.alignInHalo();
     } else {
+      if (this.changingName) this.nameHalo().toggleActive(false);
       this.buttonControls.forEach(b => { b.visible = true; b.alignInHalo(); });
       this.propertyDisplay.disable();
     }
