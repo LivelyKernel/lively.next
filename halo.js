@@ -141,8 +141,9 @@ class NameHalo extends HaloItem {
   }
   
   onKeyUp(evt) {
-    const newName = this.nameHolder.textString;
-    this.toggleNameValid(!this.halo.target.owner.getSubmorphNamed(newName) || 
+    const newName = this.nameHolder.textString,
+          owner = this.halo.target.owner;
+    this.toggleNameValid(!owner || !owner.getSubmorphNamed(newName) || 
                           this.halo.target.name == newName);
   }
 }
