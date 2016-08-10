@@ -88,9 +88,8 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   async packageConfChange(source, confFile) {
-  
-    var S = modules.System;
-    var config = parseJsonLikeObj(source);
+    var S = modules.System,
+        config = parseJsonLikeObj(source);
     await this.resourceWrite(confFile, JSON.stringify(config, null, 2));
   
     var p = await this.getPackageForModule(confFile);

@@ -2,6 +2,7 @@ import { HttpEvalStrategy } from "lively.vm/lib/eval-strategies.js";
 import { AbstractCoreInterface } from "./interface";
 import * as ast from "lively.ast";
 import { promise } from "lively.lang";
+import { module } from "lively.modules";
 
 // ast.transform.wrapInFunction("var x = 23; x + foo + bar; class Foo {}; Foo")
 // var s = new HttpEvalStrategy("http://localhost:3000/eval")
@@ -167,6 +168,11 @@ try {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // module related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  async getModule(name) {
+    var spec = (await this.getModules()).find(ea => ea.name === name);
+    return spec ? module(spec.name) : null;
+  }
 
   importModule(name) {
     return this.runEvalAndStringify(`lively.modules.System.import(${JSON.stringify(name)})`);
