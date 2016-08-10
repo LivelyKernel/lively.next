@@ -203,7 +203,14 @@ describe("layout", () => {
       expect(m1.position).equals(pt(200, 0));
       expect(m2.position).equals(pt(0, 200));
       expect(m3.position).equals(pt(400, 400));
-
+      m.resizeBy(pt(-300,0));
+      expect(m1.position).equals(pt(100, 0));
+      expect(m2.position).equals(pt(0, 200));
+      expect(m3.position).equals(pt(200, 400));
+      m.resizeBy(pt(0,-300));
+      expect(m1.position).equals(pt(100, 0));
+      expect(m2.position).equals(pt(0, 100));
+      expect(m3.position).equals(pt(200, 200));
     });
 
     it("allows rows and columns to be fixed", () => {

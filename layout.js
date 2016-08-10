@@ -266,7 +266,7 @@ export class GridLayout extends Layout {
   }
 
   adjustRowAndColSizes() {
-    const computeLength = (sizing, ids, i) => {
+    const computeLength = (sizing, ids, containerLength, i) => {
       const {proportion, fixed, min} = sizing[i];
       if (fixed) return fixed;
       var fixedLength = 0, remainingProportion = 1;
@@ -274,18 +274,18 @@ export class GridLayout extends Layout {
         const {fixed, proportion, min} = sizing[i];
         if (fixed) {
           fixedLength += fixed
-        } else if (proportion * this.container.width < min) {
+        } else if (proportion * containerLength < min) {
           remainingProportion -= proportion;
           fixedLength += min;
         }
       });
-      return Math.max(min, (this.container.width - fixedLength) * proportion / remainingProportion);
+      return Math.max(min, (containerLength - fixedLength) * proportion / remainingProportion);
     }
 
     this.colWidths = arr.range(0, this.columnCount - 1).map(x =>
-        computeLength(this.colSizing, arr.range(0, this.columnCount - 1), x));
+        computeLength(this.colSizing, arr.range(0, this.columnCount - 1), this.container.width, x));
     this.rowHeights = arr.range(0, this.rowCount - 1).map(y =>
-        computeLength(this.rowSizing, arr.range(0, this.rowCount - 1), y));
+        computeLength(this.rowSizing, arr.range(0, this.rowCount - 1), this.container.height, y));
 
     const minWidth = arr.sum(this.colWidths),
           minHeight = arr.sum(this.rowHeights);
@@ -302,7 +302,7 @@ export class GridLayout extends Layout {
                                   .map(r => this.rowHeights[r])),
               width = arr.sum(arr.uniq(cells.map(({col}) => col))
                                  .map(c => this.colWidths[c]));
-        m.extent = pt(width, height);
+        m.resizeBy(pt(width, height).subPt(m.extent));
       }
     });
   }
