@@ -93,6 +93,10 @@ span.cursor {
   line-height: normal;
 }
 
+div.text span {
+  pointer-events: none;
+}
+
 `;
 
 export class Renderer {
@@ -191,7 +195,7 @@ export class Renderer {
 
   renderText(text) {
     let { textString, selection, readOnly, clipboardHelper } = text;
-    return h("div", {
+    return h("div.text", {
       ...defaultAttributes(text),
       style: {
         ...defaultStyle(text),
@@ -199,16 +203,13 @@ export class Renderer {
         padding: "0px",
         "font-family": text.fontFamily,
         "font-size": text.fontSize + "px",
-        color: String(text.fontColor)
+        "color": String(text.fontColor)
       },
-    }, [textString.substring(0, selection.start),
-        h('span.selected.no-html-select', {
-          textContent: textString.substring(selection.start, selection.end),
-          style: { "pointer-events": "none", position: "absolute" }
-        }),
-        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial"), position: "absolute" } }, "\u200b"),
-        textString.substring(selection.end),
-        this.renderSubmorphs(text)]);
+    }, [this.renderSubmorphs(text),
+        textString.substring(0, selection.start),
+        h('span.selected.no-html-select', textString.substring(selection.start, selection.end)),
+        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial") } }, "\u200b"),
+        textString.substring(selection.end)]);
   }
 
   renderImage(image) {
