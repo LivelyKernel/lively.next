@@ -211,14 +211,13 @@ export class GridLayout extends Layout {
       this.colSizing[col].proportion += delta;
       this.colSizing[col + 1].proportion -= delta;
     } else {
-      this.colSizing.forEach(c => {
-        const {fixed, proportion} = this.colSizing[c];
-        if (!fixed) {
-          this.colSizing[c].proportion -= proportion * delta;
-        }
+      this.colSizing.forEach((sizing, c) => {
+        if (!sizing.fixed && c < col) sizing.proportion /= (1 + delta);
       });
+      this.colSizing[col].proportion = (this.colSizing[col].proportion + delta) / (1 + delta);
       this.container.width += this.container.width * delta;
     }
+    this.applyTo(this.container);
   }
 
   adjustRowStretch(row, delta) {
@@ -227,14 +226,15 @@ export class GridLayout extends Layout {
       this.rowSizing[row].proportion += delta;
       this.rowSizing[row + 1].proportion -= delta;
     } else {
-      this.rowSizing.forEach(r => {
-        const {fixed, proportion} = this.rowSizing[r];
-        if (!fixed) {
-          this.rowSizing[r].proportion -= proportion * delta;
+      this.rowSizing.forEach((sizing, r) => {
+        if (!sizing.fixed && r < row) {
+          this.rowSizing[r].proportion /= (1 + delta);
         }
       });
+      this.rowSizing[row].proportion = (this.rowSizing[row].proportion + delta) / (1 + delta);
       this.container.height += this.container.height * delta;
     }
+    this.applyTo(this.container);
   }
 
   initMorphToCells() {

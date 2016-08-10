@@ -275,7 +275,17 @@ describe("layout", () => {
       m.layout.adjustRowStretch(0, 1.0)
       expect(m.layout.rowSizing[0].proportion).equals(2/3);
       expect(m.layout.rowSizing[1].proportion).equals(0);
+      expect(m.layout.rowHeights[0]).equals(m.layout.rowSizing[0].proportion * 300);
+      expect(m.layout.rowHeights[1]).equals(m.layout.rowSizing[1].proportion * 300);
     });
+    
+    it("can vary the proportion of the last row / column", () => {
+      m.layout.adjustColumnStretch(2, 1/3);
+      expect(m.layout.colSizing[0].proportion).equals(1/4);
+      expect(m.layout.colSizing[1].proportion).equals(1/4);
+      expect(m.layout.colSizing[2].proportion).equals(1/2);
+      expect(m.width).equals(4/3 * 300);
+    })
 
     it("can add rows and columns", () => {
           // [[null, "m1", X, null],
