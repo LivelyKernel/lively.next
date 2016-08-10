@@ -188,6 +188,11 @@ export class Text extends Morph {
       case 'Command-C': case 'Command-X': case 'Command-V':
         break; // handled by onCut()/onPaste()
 
+      case 'Command-A':
+        evt.stop();
+        sel.range = { start: 0, end: this.textString.length };
+        break;
+
       case 'Command-D':
         evt.stop();
         var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
