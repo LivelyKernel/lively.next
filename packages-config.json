@@ -8,6 +8,10 @@
     "repoURL": "https://github.com/LivelyKernel/lively.lang"
   },
   {
+    "name": "lively.bindings",
+    "repoURL": "https://github.com/LivelyKernel/lively.bindings"
+  },
+  {
     "name": "lively.ast",
     "repoURL": "https://github.com/LivelyKernel/lively.ast"
   },
