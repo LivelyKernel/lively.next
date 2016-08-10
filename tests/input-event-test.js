@@ -167,8 +167,10 @@ describe("events", function() {
 
   describe("text", () => {
 
-    it("text entry via keydown", () => {
+    it("text entry via keydown", async () => {
       expect(submorph4).property("textString").equals("text");
+      env.eventDispatcher.simulateDOMEvents({target: submorph4, type: "focus" });
+      await submorph4.whenRendered();
       env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "keydown", key: 'l'},
         {target: submorph4, type: "keydown", key: 'o'},
@@ -178,8 +180,10 @@ describe("events", function() {
       expect(submorph4).property("textString").equals("lol\ntext");
     });
 
-    it("backspace", () => {
+    it("backspace", async () => {
       expect(submorph4).property("textString").equals("text");
+      env.eventDispatcher.simulateDOMEvents({target: submorph4, type: "focus" });
+      await submorph4.whenRendered();
       env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "keydown", key: 'l'},
         {target: submorph4, type: "keydown", key: 'o'},
@@ -198,8 +202,10 @@ describe("events", function() {
       expect(submorph4).property("textString").equals("lol text");
     });
 
-    it("entry clears selection", () => {
+    it("entry clears selection", async () => {
       expect(submorph4).property("textString").equals("text");
+      env.eventDispatcher.simulateDOMEvents({target: submorph4, type: "focus" });
+      await submorph4.whenRendered();
       submorph4.selection.range = { start: 0, end: 4 };
       env.eventDispatcher.simulateDOMEvents(
         {target: submorph4, type: "keydown", key: 'w'},
