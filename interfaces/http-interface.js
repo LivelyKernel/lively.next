@@ -185,7 +185,7 @@ try {
   }
 
   moduleRead(moduleName) {
-    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).source(${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
+    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).source()`);
   }
 
   moduleSourceChange(moduleName, newSource, options) {
