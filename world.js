@@ -53,6 +53,11 @@ export class World extends Morph {
     var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
     if (removeHalo) {
       evt.halo.remove();
+      if (evt.isCommandKey()) {
+        if (evt.halo.target.owner) {
+          this.showHaloFor(evt.halo.target.owner, evt.domEvt.pointerId);
+        }
+      }
       return;
     }
 
