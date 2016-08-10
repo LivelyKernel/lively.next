@@ -1,5 +1,6 @@
+/* global System */
 import { string } from "lively.lang";
-import { Color, pr } from "lively.graphics";
+import { Color } from "lively.graphics";
 import { Morph, show } from "./index.js";
 import { defaultAttributes } from "./rendering/morphic-default.js";
 import { h } from "virtual-dom";
@@ -101,7 +102,8 @@ export class Text extends Morph {
   get selection() { return new TextSelection(this) }
 
   insertText(pos, str) {
-    var oldText = this.textString,
+    var str = String(str),
+        oldText = this.textString,
         newText = oldText ? oldText.substr(0, pos) + str + oldText.substr(pos) : str;
     this._needsFit = true;
 
