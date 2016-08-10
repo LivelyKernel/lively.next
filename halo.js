@@ -722,7 +722,7 @@ export class Halo extends Morph {
            new Morph({name: "mesh",
                       onKeyUp: (evt) => this.toggleMesh(false),
                       extent, position: this.localize(pt(2,2)),
-                      styleClasses: ["morph", "halo-mesh"], fill: Color.transparent}));
+                      styleClasses: ["morph", "halo-mesh"], fill: null}));
         // update
         horizontal.position = position;
         vertical.position = position;
