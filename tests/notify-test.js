@@ -67,7 +67,6 @@ describe("notify", () => {
     expect(modulechanged).to.containSubset([{
       type: "lively.modules/modulechanged",
       module: module1,
-      oldSource: "import { y } from './file2.js'; var z = 2; export var x = y + z;",
       newSource: "import { y } from './file2.js'; var z = 3; export var x = y + z;"
     }]);
   });

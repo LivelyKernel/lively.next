@@ -7,7 +7,7 @@ import {
 } from "./instrumentation.js";
 import { scheduleModuleExportsChange } from "./import-export.js";
 
-async function moduleSourceChange(System, moduleId, oldSource, newSource, format, options) {
+async function moduleSourceChange(System, moduleId, newSource, format, options) {
   try {
     var changeResult;
     if (!format || format === "es6" || format === "esm" || format === "register" || format === "defined") {
@@ -19,12 +19,12 @@ async function moduleSourceChange(System, moduleId, oldSource, newSource, format
     }
     
     emit("lively.modules/modulechanged", {
-      module: moduleId, oldSource, newSource, options }, Date.now(), System);
+      module: moduleId, newSource, options }, Date.now(), System);
     
     return changeResult;
   } catch (error) {
     emit("lively.modules/modulechanged", {
-      module: moduleId, oldSource, newSource, error, options }, Date.now(), System);
+      module: moduleId, newSource, error, options }, Date.now(), System);
     throw error;
   }
 }
@@ -40,8 +40,6 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
         dependencies: [],
         metadata: {format: "esm"}
       };
-
-  if (!System.get(moduleId)) await System.import(moduleId);
 
   // translate the source and produce a {declare: FUNCTION, localDeps:
   // [STRING]} object

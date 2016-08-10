@@ -20378,7 +20378,7 @@ var nodes = Object.freeze({
     //   }
     // }
 
-    return funcExpr({ id: name ? id(name) : null }, [], varDecl("firstArg", member("arguments", literal(0))), ifStmt(binaryExpr(id("firstArg"), "&&", member("firstArg", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
+    return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -22994,16 +22994,15 @@ var categorizer = Object.freeze({
 
               System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
 
-              console.log("emitted");
               lively_notifications.emit("lively.vm/doitrequest", {
                 code: originalCode,
                 waitForPromise: options.waitForPromise,
                 targetModule: options.targetModule }, Date.now(), System);
 
-              _context3.next = 26;
+              _context3.next = 25;
               return vmRunEval(code, options);
 
-            case 26:
+            case 25:
               result = _context3.sent;
 
 
@@ -23017,7 +23016,7 @@ var categorizer = Object.freeze({
 
               return _context3.abrupt("return", result);
 
-            case 31:
+            case 30:
             case "end":
               return _context3.stop();
           }
@@ -23777,6 +23776,1283 @@ var categorizer = Object.freeze({
 }((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast,lively.notifications));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
+(function() {
+  var GLOBAL = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+  this.lively = this.lively || {};
+(function (exports,fs) {
+  'use strict';
+
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
+
+  var asyncToGenerator = function (fn) {
+    return function () {
+      var gen = fn.apply(this, arguments);
+      return new Promise(function (resolve, reject) {
+        function step(key, arg) {
+          try {
+            var info = gen[key](arg);
+            var value = info.value;
+          } catch (error) {
+            reject(error);
+            return;
+          }
+
+          if (info.done) {
+            resolve(value);
+          } else {
+            return Promise.resolve(value).then(function (value) {
+              return step("next", value);
+            }, function (err) {
+              return step("throw", err);
+            });
+          }
+        }
+
+        return step("next");
+      });
+    };
+  };
+
+  var classCallCheck = function (instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  };
+
+  var createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  var inherits = function (subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  };
+
+  var possibleConstructorReturn = function (self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  };
+
+  var slashEndRe = /\/+$/;
+  var slashStartRe = /^\/+/;
+  var protocolRe = /^[a-z0-9-_]+:/;
+  var slashslashRe = /^\/\/[^\/]+/;
+  function nyi(obj, name) {
+    throw new Error(name + " for " + obj.constructor.name + " not yet implemented");
+  }
+
+  var Resource = function () {
+    function Resource(url) {
+      classCallCheck(this, Resource);
+
+      this.isResource = true;
+      this.url = String(url);
+    }
+
+    createClass(Resource, [{
+      key: "toString",
+      value: function toString() {
+        return this.constructor.name + "(\"" + this.url + "\")";
+      }
+    }, {
+      key: "path",
+      value: function path() {
+        var path = this.url.replace(protocolRe, "").replace(slashslashRe, "");
+        return path === "" ? "/" : path;
+      }
+    }, {
+      key: "schemeAndHost",
+      value: function schemeAndHost() {
+        return this.url.slice(0, this.url.length - this.path().length);
+      }
+    }, {
+      key: "parent",
+      value: function parent() {
+        if (this.isRoot()) return null;
+        return resource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
+      }
+    }, {
+      key: "parents",
+      value: function parents() {
+        var result = [],
+            p = this.parent();
+        while (p) {
+          result.unshift(p);p = p.parent();
+        }
+        return result;
+      }
+    }, {
+      key: "join",
+      value: function join(path) {
+        return resource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+      }
+    }, {
+      key: "isRoot",
+      value: function isRoot() {
+        return this.path() === "/";
+      }
+    }, {
+      key: "isFile",
+      value: function isFile() {
+        return !this.isRoot() && !this.url.match(slashEndRe);
+      }
+    }, {
+      key: "isDirectory",
+      value: function isDirectory() {
+        return !this.isFile();
+      }
+    }, {
+      key: "asDirectory",
+      value: function asDirectory() {
+        return resource(this.url.replace(slashEndRe, "") + "/");
+      }
+    }, {
+      key: "root",
+      value: function root() {
+        var toplevel = this.url.slice(0, -this.path().length);
+        return resource(toplevel + "/");
+      }
+    }, {
+      key: "asFile",
+      value: function asFile() {
+        return resource(this.url.replace(slashEndRe, ""));
+      }
+    }, {
+      key: "ensureExistance",
+      value: function () {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.next = 2;
+                  return this.exists();
+
+                case 2:
+                  if (!_context.sent) {
+                    _context.next = 4;
+                    break;
+                  }
+
+                  return _context.abrupt("return", this);
+
+                case 4:
+                  _context.next = 6;
+                  return this.parent().ensureExistance();
+
+                case 6:
+                  if (!this.isFile()) {
+                    _context.next = 11;
+                    break;
+                  }
+
+                  _context.next = 9;
+                  return this.write(optionalContent || "");
+
+                case 9:
+                  _context.next = 13;
+                  break;
+
+                case 11:
+                  _context.next = 13;
+                  return this.mkdir();
+
+                case 13:
+                  return _context.abrupt("return", this);
+
+                case 14:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, this);
+        }));
+
+        function ensureExistance(_x) {
+          return _ref.apply(this, arguments);
+        }
+
+        return ensureExistance;
+      }()
+    }, {
+      key: "read",
+      value: function () {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  nyi(this, "read");
+                case 1:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function read() {
+          return _ref2.apply(this, arguments);
+        }
+
+        return read;
+      }()
+    }, {
+      key: "write",
+      value: function () {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  nyi(this, "write");
+                case 1:
+                case "end":
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, this);
+        }));
+
+        function write() {
+          return _ref3.apply(this, arguments);
+        }
+
+        return write;
+      }()
+    }, {
+      key: "exists",
+      value: function () {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            while (1) {
+              switch (_context4.prev = _context4.next) {
+                case 0:
+                  nyi(this, "exists");
+                case 1:
+                case "end":
+                  return _context4.stop();
+              }
+            }
+          }, _callee4, this);
+        }));
+
+        function exists() {
+          return _ref4.apply(this, arguments);
+        }
+
+        return exists;
+      }()
+    }, {
+      key: "remove",
+      value: function () {
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+          return regeneratorRuntime.wrap(function _callee5$(_context5) {
+            while (1) {
+              switch (_context5.prev = _context5.next) {
+                case 0:
+                  nyi(this, "remove");
+                case 1:
+                case "end":
+                  return _context5.stop();
+              }
+            }
+          }, _callee5, this);
+        }));
+
+        function remove() {
+          return _ref5.apply(this, arguments);
+        }
+
+        return remove;
+      }()
+    }, {
+      key: "dirList",
+      value: function () {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(depth) {
+          return regeneratorRuntime.wrap(function _callee6$(_context6) {
+            while (1) {
+              switch (_context6.prev = _context6.next) {
+                case 0:
+                  nyi(this, "dirList");
+                case 1:
+                case "end":
+                  return _context6.stop();
+              }
+            }
+          }, _callee6, this);
+        }));
+
+        function dirList(_x2) {
+          return _ref6.apply(this, arguments);
+        }
+
+        return dirList;
+      }()
+    }]);
+    return Resource;
+  }();
+
+  var XPathQuery = function () {
+    function XPathQuery(expression) {
+      classCallCheck(this, XPathQuery);
+
+      this.expression = expression;
+      this.contextNode = null;
+      this.xpe = new XPathEvaluator();
+    }
+
+    createClass(XPathQuery, [{
+      key: "establishContext",
+      value: function establishContext(node) {
+        if (this.nsResolver) return;
+        var ctx = node.ownerDocument ? node.ownerDocument.documentElement : node.documentElement;
+        if (ctx !== this.contextNode) {
+          this.contextNode = ctx;
+          this.nsResolver = this.xpe.createNSResolver(ctx);
+        }
+      }
+    }, {
+      key: "manualNSLookup",
+      value: function manualNSLookup() {
+        this.nsResolver = function (prefix) {
+          return Namespace[prefix.toUpperCase()] || null;
+        };
+        return this;
+      }
+    }, {
+      key: "findAll",
+      value: function findAll(node, defaultValue) {
+        this.establishContext(node);
+        var result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null),
+            accumulator = [],
+            res = null;
+        while (res = result.iterateNext()) {
+          accumulator.push(res);
+        }return accumulator.length > 0 || defaultValue === undefined ? accumulator : defaultValue;
+      }
+    }, {
+      key: "findFirst",
+      value: function findFirst(node) {
+        this.establishContext(node);
+        var result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
+        return result.iterateNext();
+      }
+    }]);
+    return XPathQuery;
+  }();
+
+  function davNs(xmlString) {
+    // finds the declaration of the webdav namespace, usually "d" or "D"
+    var davNSMatch = xmlString.match(/\/([a-z]+?):multistatus/i);
+    return davNSMatch ? davNSMatch[1] : "d";
+  }
+
+  function urlListFromPropfindDocument(xmlString) {
+    // the xmlString looks like this:
+    // <?xml version="1.0" encoding="utf-8"?>
+    // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
+    //   <d:response>
+    //     <d:href>sub-dir/</d:href>
+    //     <d:propstat>
+    //       <d:prop>
+    //         <d:getlastmodified xmlns:b="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" b:dt="dateTime.rfc1123">Fri, 24 Jun 2016 09:58:20 -0700</d:getlastmodified>
+    //         <d:resourcetype>
+    //           <d:collection/>
+    //         </d:resourcetype>
+    //       </d:prop>
+    //       <d:status>HTTP/1.1 200 Ok</d:status>
+    //     </d:propstat>
+    //   </d:response>
+    // ...
+    // </d:multistatus>
+
+    var doc = new DOMParser().parseFromString(xmlString, "text/xml"),
+        ns = davNs(xmlString),
+        nodes = new XPathQuery("/" + ns + ":multistatus/" + ns + ":response").findAll(doc.documentElement),
+        urlQ = new XPathQuery(ns + ":href");
+    return nodes.slice(1 /*first node is source*/).map(function (node) {
+      var urlNode = urlQ.findFirst(node);
+      return urlNode.textContent || urlNode.text; // text is FIX for IE9+
+    });
+  }
+
+  var WebDAVResource = function (_Resource) {
+    inherits(WebDAVResource, _Resource);
+
+    function WebDAVResource() {
+      classCallCheck(this, WebDAVResource);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(WebDAVResource).apply(this, arguments));
+    }
+
+    createClass(WebDAVResource, [{
+      key: "read",
+      value: function () {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.next = 2;
+                  return fetch(this.url, { mode: 'cors' });
+
+                case 2:
+                  return _context.abrupt("return", _context.sent.text());
+
+                case 3:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, this);
+        }));
+
+        function read() {
+          return _ref.apply(this, arguments);
+        }
+
+        return read;
+      }()
+    }, {
+      key: "write",
+      value: function () {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(content) {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  if (this.isFile()) {
+                    _context2.next = 2;
+                    break;
+                  }
+
+                  throw new Error("Cannot write a non-file: " + this.url);
+
+                case 2:
+                  _context2.next = 4;
+                  return fetch(this.url, { mode: 'cors', method: "PUT", body: content });
+
+                case 4:
+                  return _context2.abrupt("return", this);
+
+                case 5:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function write(_x) {
+          return _ref2.apply(this, arguments);
+        }
+
+        return write;
+      }()
+    }, {
+      key: "mkdir",
+      value: function () {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  if (!this.isFile()) {
+                    _context3.next = 2;
+                    break;
+                  }
+
+                  throw new Error("Cannot mkdir on a file: " + this.url);
+
+                case 2:
+                  _context3.next = 4;
+                  return fetch(this.url, { mode: 'cors', method: "MKCOL" });
+
+                case 4:
+                  return _context3.abrupt("return", this);
+
+                case 5:
+                case "end":
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, this);
+        }));
+
+        function mkdir() {
+          return _ref3.apply(this, arguments);
+        }
+
+        return mkdir;
+      }()
+    }, {
+      key: "exists",
+      value: function () {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            while (1) {
+              switch (_context4.prev = _context4.next) {
+                case 0:
+                  if (!this.isRoot()) {
+                    _context4.next = 4;
+                    break;
+                  }
+
+                  _context4.t0 = true;
+                  _context4.next = 7;
+                  break;
+
+                case 4:
+                  _context4.next = 6;
+                  return fetch(this.url, { mode: 'cors', method: "HEAD" });
+
+                case 6:
+                  _context4.t0 = !!_context4.sent.ok;
+
+                case 7:
+                  return _context4.abrupt("return", _context4.t0);
+
+                case 8:
+                case "end":
+                  return _context4.stop();
+              }
+            }
+          }, _callee4, this);
+        }));
+
+        function exists() {
+          return _ref4.apply(this, arguments);
+        }
+
+        return exists;
+      }()
+    }, {
+      key: "remove",
+      value: function () {
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+          return regeneratorRuntime.wrap(function _callee5$(_context5) {
+            while (1) {
+              switch (_context5.prev = _context5.next) {
+                case 0:
+                  _context5.next = 2;
+                  return fetch(this.url, { mode: 'cors', method: "DELETE" });
+
+                case 2:
+                  return _context5.abrupt("return", this);
+
+                case 3:
+                case "end":
+                  return _context5.stop();
+              }
+            }
+          }, _callee5, this);
+        }));
+
+        function remove() {
+          return _ref5.apply(this, arguments);
+        }
+
+        return remove;
+      }()
+    }, {
+      key: "dirList",
+      value: function () {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+          var depth = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
+          var res, xmlString, root, subResources, subCollections;
+          return regeneratorRuntime.wrap(function _callee6$(_context6) {
+            while (1) {
+              switch (_context6.prev = _context6.next) {
+                case 0:
+                  if (this.isDirectory()) {
+                    _context6.next = 2;
+                    break;
+                  }
+
+                  throw new Error("dirList called on non-directory: " + this.path());
+
+                case 2:
+                  if (!(typeof depth !== "number" && depth !== 'infinity')) {
+                    _context6.next = 4;
+                    break;
+                  }
+
+                  throw new Error("dirList – invalid depth argument: " + depth);
+
+                case 4:
+
+                  if (depth <= 0) depth = 1;
+
+                  if (!(depth === 1)) {
+                    _context6.next = 18;
+                    break;
+                  }
+
+                  _context6.next = 8;
+                  return fetch(this.url, {
+                    method: "PROPFIND",
+                    mode: 'cors',
+                    redirect: 'follow',
+                    headers: new Headers({
+                      'Content-Type': 'text/xml'
+                    })
+                  });
+
+                case 8:
+                  res = _context6.sent;
+
+                  if (res.ok) {
+                    _context6.next = 11;
+                    break;
+                  }
+
+                  throw new Error("Error in dirList for " + this.url + ": " + res.statusText);
+
+                case 11:
+                  _context6.next = 13;
+                  return res.text();
+
+                case 13:
+                  xmlString = _context6.sent;
+                  root = this.root();
+                  return _context6.abrupt("return", urlListFromPropfindDocument(xmlString).map(function (path) {
+                    return root.join(path);
+                  }));
+
+                case 18:
+                  _context6.next = 20;
+                  return this.dirList(1);
+
+                case 20:
+                  subResources = _context6.sent;
+                  subCollections = subResources.filter(function (ea) {
+                    return ea.isDirectory();
+                  });
+                  return _context6.abrupt("return", Promise.all(subCollections.map(function (col) {
+                    return col.dirList(typeof depth === "number" ? depth - 1 : depth);
+                  })).then(function (recursiveResult) {
+                    return recursiveResult.reduce(function (all, ea) {
+                      return all.concat(ea);
+                    }, subResources);
+                  }));
+
+                case 23:
+                case "end":
+                  return _context6.stop();
+              }
+            }
+          }, _callee6, this);
+        }));
+
+        function dirList(_x2) {
+          return _ref6.apply(this, arguments);
+        }
+
+        return dirList;
+      }()
+    }]);
+    return WebDAVResource;
+  }(Resource);
+
+  function wrapInPromise(func) {
+    return function () {
+      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      return new Promise(function (resolve, reject) {
+        return func.apply(null, args.concat(function (err, result) {
+          return err ? reject(err) : resolve(result);
+        }));
+      });
+    };
+  }
+
+  var readFileP = wrapInPromise(fs.readFile);
+  var writeFileP = wrapInPromise(fs.writeFile);
+  var existsP = function existsP(path) {
+    return new Promise(function (resolve, reject) {
+      return fs.exists(path, function (exists) {
+        return resolve(!!exists);
+      });
+    });
+  };
+  var readdirP = wrapInPromise(fs.readdir);
+  var mkdirP = wrapInPromise(fs.mkdir);
+  var rmdirP = wrapInPromise(fs.rmdir);
+  var unlinkP = wrapInPromise(fs.unlink);
+  var lstatP = wrapInPromise(fs.lstat);
+  var NodeJSFileResource = function (_Resource) {
+    inherits(NodeJSFileResource, _Resource);
+
+    function NodeJSFileResource() {
+      classCallCheck(this, NodeJSFileResource);
+      return possibleConstructorReturn(this, Object.getPrototypeOf(NodeJSFileResource).apply(this, arguments));
+    }
+
+    createClass(NodeJSFileResource, [{
+      key: "stat",
+      value: function () {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  return _context.abrupt("return", lstatP(this.path()));
+
+                case 1:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, this);
+        }));
+
+        function stat() {
+          return _ref.apply(this, arguments);
+        }
+
+        return stat;
+      }()
+    }, {
+      key: "read",
+      value: function () {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  return _context2.abrupt("return", readFileP(this.path()).then(String));
+
+                case 1:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2, this);
+        }));
+
+        function read() {
+          return _ref2.apply(this, arguments);
+        }
+
+        return read;
+      }()
+    }, {
+      key: "write",
+      value: function () {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
+          return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+              switch (_context3.prev = _context3.next) {
+                case 0:
+                  if (!this.isDirectory()) {
+                    _context3.next = 2;
+                    break;
+                  }
+
+                  throw new Error("Cannot write into a directory: " + this.path());
+
+                case 2:
+                  _context3.next = 4;
+                  return writeFileP(this.path(), content);
+
+                case 4:
+                  return _context3.abrupt("return", this);
+
+                case 5:
+                case "end":
+                  return _context3.stop();
+              }
+            }
+          }, _callee3, this);
+        }));
+
+        function write(_x) {
+          return _ref3.apply(this, arguments);
+        }
+
+        return write;
+      }()
+    }, {
+      key: "mkdir",
+      value: function () {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(content) {
+          return regeneratorRuntime.wrap(function _callee4$(_context4) {
+            while (1) {
+              switch (_context4.prev = _context4.next) {
+                case 0:
+                  if (!this.isFile()) {
+                    _context4.next = 2;
+                    break;
+                  }
+
+                  throw new Error("Cannot mkdir on a file: " + this.path());
+
+                case 2:
+                  _context4.next = 4;
+                  return mkdirP(this.path());
+
+                case 4:
+                  return _context4.abrupt("return", this);
+
+                case 5:
+                case "end":
+                  return _context4.stop();
+              }
+            }
+          }, _callee4, this);
+        }));
+
+        function mkdir(_x2) {
+          return _ref4.apply(this, arguments);
+        }
+
+        return mkdir;
+      }()
+    }, {
+      key: "exists",
+      value: function () {
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+          return regeneratorRuntime.wrap(function _callee5$(_context5) {
+            while (1) {
+              switch (_context5.prev = _context5.next) {
+                case 0:
+                  return _context5.abrupt("return", this.isRoot() ? true : existsP(this.path()));
+
+                case 1:
+                case "end":
+                  return _context5.stop();
+              }
+            }
+          }, _callee5, this);
+        }));
+
+        function exists() {
+          return _ref5.apply(this, arguments);
+        }
+
+        return exists;
+      }()
+    }, {
+      key: "dirList",
+      value: function () {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+          var depth = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
+
+          var subResources, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, name, subResource, subCollections;
+
+          return regeneratorRuntime.wrap(function _callee6$(_context6) {
+            while (1) {
+              switch (_context6.prev = _context6.next) {
+                case 0:
+                  if (this.isDirectory()) {
+                    _context6.next = 2;
+                    break;
+                  }
+
+                  throw new Error("dirList called on non-directory: " + this.path());
+
+                case 2:
+                  if (!(typeof depth !== "number" && depth !== 'infinity')) {
+                    _context6.next = 4;
+                    break;
+                  }
+
+                  throw new Error("dirList – invalid depth argument: " + depth);
+
+                case 4:
+
+                  if (depth <= 0) depth = 1;
+
+                  if (!(depth === 1)) {
+                    _context6.next = 48;
+                    break;
+                  }
+
+                  subResources = [];
+                  _iteratorNormalCompletion = true;
+                  _didIteratorError = false;
+                  _iteratorError = undefined;
+                  _context6.prev = 10;
+                  _context6.next = 13;
+                  return readdirP(this.path());
+
+                case 13:
+                  _context6.t0 = Symbol.iterator;
+                  _iterator = _context6.sent[_context6.t0]();
+
+                case 15:
+                  if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                    _context6.next = 31;
+                    break;
+                  }
+
+                  name = _step.value;
+                  subResource = this.join(name);
+                  _context6.t1 = subResources;
+                  _context6.next = 21;
+                  return subResource.stat();
+
+                case 21:
+                  if (!_context6.sent.isDirectory()) {
+                    _context6.next = 25;
+                    break;
+                  }
+
+                  _context6.t2 = subResource.asDirectory();
+                  _context6.next = 26;
+                  break;
+
+                case 25:
+                  _context6.t2 = subResource;
+
+                case 26:
+                  _context6.t3 = _context6.t2;
+
+                  _context6.t1.push.call(_context6.t1, _context6.t3);
+
+                case 28:
+                  _iteratorNormalCompletion = true;
+                  _context6.next = 15;
+                  break;
+
+                case 31:
+                  _context6.next = 37;
+                  break;
+
+                case 33:
+                  _context6.prev = 33;
+                  _context6.t4 = _context6["catch"](10);
+                  _didIteratorError = true;
+                  _iteratorError = _context6.t4;
+
+                case 37:
+                  _context6.prev = 37;
+                  _context6.prev = 38;
+
+                  if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
+                  }
+
+                case 40:
+                  _context6.prev = 40;
+
+                  if (!_didIteratorError) {
+                    _context6.next = 43;
+                    break;
+                  }
+
+                  throw _iteratorError;
+
+                case 43:
+                  return _context6.finish(40);
+
+                case 44:
+                  return _context6.finish(37);
+
+                case 45:
+                  return _context6.abrupt("return", subResources);
+
+                case 48:
+                  _context6.next = 50;
+                  return this.dirList(1);
+
+                case 50:
+                  subResources = _context6.sent;
+                  subCollections = subResources.filter(function (ea) {
+                    return ea.isDirectory();
+                  });
+                  return _context6.abrupt("return", Promise.all(subCollections.map(function (col) {
+                    return col.dirList(typeof depth === "number" ? depth - 1 : depth);
+                  })).then(function (recursiveResult) {
+                    return recursiveResult.reduce(function (all, ea) {
+                      return all.concat(ea);
+                    }, subResources);
+                  }));
+
+                case 53:
+                case "end":
+                  return _context6.stop();
+              }
+            }
+          }, _callee6, this, [[10, 33, 37, 45], [38,, 40, 44]]);
+        }));
+
+        function dirList(_x3) {
+          return _ref6.apply(this, arguments);
+        }
+
+        return dirList;
+      }()
+    }, {
+      key: "isEmptyDirectory",
+      value: function () {
+        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+          return regeneratorRuntime.wrap(function _callee7$(_context7) {
+            while (1) {
+              switch (_context7.prev = _context7.next) {
+                case 0:
+                  _context7.next = 2;
+                  return this.dirList();
+
+                case 2:
+                  _context7.t0 = _context7.sent.length;
+                  return _context7.abrupt("return", _context7.t0 === 0);
+
+                case 4:
+                case "end":
+                  return _context7.stop();
+              }
+            }
+          }, _callee7, this);
+        }));
+
+        function isEmptyDirectory() {
+          return _ref7.apply(this, arguments);
+        }
+
+        return isEmptyDirectory;
+      }()
+    }, {
+      key: "remove",
+      value: function () {
+        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+          var _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subResource;
+
+          return regeneratorRuntime.wrap(function _callee8$(_context8) {
+            while (1) {
+              switch (_context8.prev = _context8.next) {
+                case 0:
+                  _context8.next = 2;
+                  return this.exists();
+
+                case 2:
+                  if (_context8.sent) {
+                    _context8.next = 5;
+                    break;
+                  }
+
+                  _context8.next = 41;
+                  break;
+
+                case 5:
+                  if (!this.isDirectory()) {
+                    _context8.next = 39;
+                    break;
+                  }
+
+                  _iteratorNormalCompletion2 = true;
+                  _didIteratorError2 = false;
+                  _iteratorError2 = undefined;
+                  _context8.prev = 9;
+                  _context8.next = 12;
+                  return this.dirList();
+
+                case 12:
+                  _context8.t0 = Symbol.iterator;
+                  _iterator2 = _context8.sent[_context8.t0]();
+
+                case 14:
+                  if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+                    _context8.next = 21;
+                    break;
+                  }
+
+                  subResource = _step2.value;
+                  _context8.next = 18;
+                  return subResource.remove();
+
+                case 18:
+                  _iteratorNormalCompletion2 = true;
+                  _context8.next = 14;
+                  break;
+
+                case 21:
+                  _context8.next = 27;
+                  break;
+
+                case 23:
+                  _context8.prev = 23;
+                  _context8.t1 = _context8["catch"](9);
+                  _didIteratorError2 = true;
+                  _iteratorError2 = _context8.t1;
+
+                case 27:
+                  _context8.prev = 27;
+                  _context8.prev = 28;
+
+                  if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                    _iterator2.return();
+                  }
+
+                case 30:
+                  _context8.prev = 30;
+
+                  if (!_didIteratorError2) {
+                    _context8.next = 33;
+                    break;
+                  }
+
+                  throw _iteratorError2;
+
+                case 33:
+                  return _context8.finish(30);
+
+                case 34:
+                  return _context8.finish(27);
+
+                case 35:
+                  _context8.next = 37;
+                  return rmdirP(this.path());
+
+                case 37:
+                  _context8.next = 41;
+                  break;
+
+                case 39:
+                  _context8.next = 41;
+                  return unlinkP(this.path());
+
+                case 41:
+                  return _context8.abrupt("return", this);
+
+                case 42:
+                case "end":
+                  return _context8.stop();
+              }
+            }
+          }, _callee8, this, [[9, 23, 27, 35], [28,, 30, 34]]);
+        }));
+
+        function remove() {
+          return _ref8.apply(this, arguments);
+        }
+
+        return remove;
+      }()
+    }]);
+    return NodeJSFileResource;
+  }(Resource);
+
+  function resource(url) {
+    if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
+    if (url.isResource) return url;
+    url = String(url);
+    if (url.match(/^http/i)) return new WebDAVResource(url);
+    if (url.match(/^file/i)) return new NodeJSFileResource(url);
+    throw new Error("Cannot find resource type for url " + url);
+  }
+
+  var createFiles = function () {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec) {
+      var base, name, _resource;
+
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              base = resource(baseDir).asDirectory();
+              _context.next = 3;
+              return base.ensureExistance();
+
+            case 3:
+              _context.t0 = regeneratorRuntime.keys(fileSpec);
+
+            case 4:
+              if ((_context.t1 = _context.t0()).done) {
+                _context.next = 18;
+                break;
+              }
+
+              name = _context.t1.value;
+
+              if (fileSpec.hasOwnProperty(name)) {
+                _context.next = 8;
+                break;
+              }
+
+              return _context.abrupt("continue", 4);
+
+            case 8:
+              _resource = base.join(name);
+
+              if (!(_typeof(fileSpec[name]) === "object")) {
+                _context.next = 14;
+                break;
+              }
+
+              _context.next = 12;
+              return createFiles(_resource, fileSpec[name]);
+
+            case 12:
+              _context.next = 16;
+              break;
+
+            case 14:
+              _context.next = 16;
+              return _resource.write(fileSpec[name]);
+
+            case 16:
+              _context.next = 4;
+              break;
+
+            case 18:
+              return _context.abrupt("return", base);
+
+            case 19:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee, this);
+    }));
+
+    return function createFiles(_x, _x2) {
+      return _ref.apply(this, arguments);
+    };
+  }();
+
+  exports.resource = resource;
+  exports.createFiles = createFiles;
+
+}((this.lively.resources = this.lively.resources || {}),typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}));
+  if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
+})();
 
 (function configure() {
 
@@ -23872,7 +25148,7 @@ var categorizer = Object.freeze({
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
-(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm) {
+(function (exports,lively_lang,lively_ast,lively_notifications,lively_vm,lively_resources) {
   'use strict';
 
   function installHook$1(System, hookName, hook) {
@@ -24390,7 +25666,7 @@ var categorizer = Object.freeze({
   }();
 
   var moduleSourceChange$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, oldSource, newSource, format, options) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, newSource, format, options) {
       var changeResult;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -24431,7 +25707,7 @@ var categorizer = Object.freeze({
             case 14:
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, options: options }, Date.now(), System);
+                module: moduleId, newSource: newSource, options: options }, Date.now(), System);
 
               return _context.abrupt("return", changeResult);
 
@@ -24440,7 +25716,7 @@ var categorizer = Object.freeze({
               _context.t0 = _context["catch"](0);
 
               lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, oldSource: oldSource, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
+                module: moduleId, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
               throw _context.t0;
 
             case 22:
@@ -24450,13 +25726,14 @@ var categorizer = Object.freeze({
         }
       }, _callee, this, [[0, 18]]);
     }));
-    return function moduleSourceChange(_x, _x2, _x3, _x4, _x5, _x6) {
-      return ref.apply(this, arguments);
+
+    return function moduleSourceChange(_x, _x2, _x3, _x4, _x5) {
+      return _ref.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeEsm = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
+    var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
       var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
 
       return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -24619,13 +25896,14 @@ var categorizer = Object.freeze({
         }
       }, _callee2, this, [[13, 30, 34, 42], [35,, 37, 41]]);
     }));
-    return function moduleSourceChangeEsm(_x7, _x8, _x9, _x10) {
-      return ref.apply(this, arguments);
+
+    return function moduleSourceChangeEsm(_x6, _x7, _x8, _x9) {
+      return _ref2.apply(this, arguments);
     };
   }();
 
   var moduleSourceChangeGlobal = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
+    var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
       var load, updateData, entry;
       return regeneratorRuntime.wrap(function _callee3$(_context3) {
         while (1) {
@@ -24671,8 +25949,9 @@ var categorizer = Object.freeze({
         }
       }, _callee3, this);
     }));
-    return function moduleSourceChangeGlobal(_x11, _x12, _x13, _x14) {
-      return ref.apply(this, arguments);
+
+    return function moduleSourceChangeGlobal(_x10, _x11, _x12, _x13) {
+      return _ref3.apply(this, arguments);
     };
   }();
 
@@ -24856,7 +26135,7 @@ var categorizer = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var tryToLoadPackageConfig = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
       var packageConfigURL, config, name;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -24907,8 +26186,9 @@ var categorizer = Object.freeze({
         }
       }, _callee, this, [[3, 14]]);
     }));
+
     return function tryToLoadPackageConfig(_x, _x2) {
-      return ref.apply(this, arguments);
+      return _ref.apply(this, arguments);
     };
   }();
 
@@ -25117,7 +26397,7 @@ var categorizer = Object.freeze({
     }, {
       key: "import",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
               switch (_context2.prev = _context2.next) {
@@ -25143,7 +26423,7 @@ var categorizer = Object.freeze({
         }));
 
         function _import() {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return _import;
@@ -25156,7 +26436,7 @@ var categorizer = Object.freeze({
     }, {
       key: "register",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           var packageLoadStack = arguments.length <= 0 || arguments[0] === undefined ? [this.url] : arguments[0];
 
           var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
@@ -25280,7 +26560,7 @@ var categorizer = Object.freeze({
         }));
 
         function register(_x3) {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return register;
@@ -25532,51 +26812,26 @@ var categorizer = Object.freeze({
     }, {
       key: "source",
       value: function source() {
-        var _this2 = this;
-
         // rk 2016-06-24:
         // We should consider using lively.resource here. Unfortunately
         // System.fetch (at least with the current systemjs release) will not work in
         // all cases b/c modules once loaded by the loaded get cached and System.fetch
         // returns "" in those cases
+        //
+        // cs 2016-08-06:
+        // Changed implementation, so it uses System.resource to be consistent
+        // with module loading
 
         if (this.id === "@empty") return Promise.resolve("");
 
         if (this._source) return Promise.resolve(this._source);
-        if (this.id.match(/^http/) && this.System.global.fetch) {
-          return this.System.global.fetch(this.id).then(function (res) {
-            return res.text();
-          });
-        }
 
-        if (this.id.match(/^file:/) && this.System.get("@system-env").node) {
-          var _ret = function () {
-            var path = _this2.id.replace(/^file:\/\//, "");
-            return {
-              v: new Promise(function (resolve, reject) {
-                return _this2.System._nodeRequire("fs").readFile(path, function (err, content) {
-                  return err ? reject(err) : resolve(_this2._source = String(content));
-                });
-              })
-            };
-          }();
-
-          if ((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object") return _ret.v;
-        }
-
-        if (this.id.match(/^lively:/) && typeof $world !== "undefined") {
-          // This needs to go into a separate place for "virtual" lively modules
-          var morphId = lively_lang.arr.last(this.id.split("/"));
-          var m = $world.getMorphById(morphId);
-          return Promise.resolve(m ? m.textContent : "");
-        }
-
-        return Promise.reject(new Error("Cannot retrieve source for " + this.id));
+        return this.System.resource(this.id).read();
       }
     }, {
       key: "ast",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
           return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -25605,7 +26860,7 @@ var categorizer = Object.freeze({
         }));
 
         function ast() {
-          return ref.apply(this, arguments);
+          return _ref.apply(this, arguments);
         }
 
         return ast;
@@ -25613,7 +26868,7 @@ var categorizer = Object.freeze({
     }, {
       key: "scope",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
           var ast;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
@@ -25643,7 +26898,7 @@ var categorizer = Object.freeze({
         }));
 
         function scope() {
-          return ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         }
 
         return scope;
@@ -25651,7 +26906,7 @@ var categorizer = Object.freeze({
     }, {
       key: "resolvedScope",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
           return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
               switch (_context3.prev = _context3.next) {
@@ -25673,7 +26928,7 @@ var categorizer = Object.freeze({
         }));
 
         function resolvedScope() {
-          return ref.apply(this, arguments);
+          return _ref3.apply(this, arguments);
         }
 
         return resolvedScope;
@@ -25706,7 +26961,7 @@ var categorizer = Object.freeze({
     }, {
       key: "load",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
           var m;
           return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
@@ -25715,7 +26970,7 @@ var categorizer = Object.freeze({
                   m = this.System.get(this.id);
 
                   if (m) {
-                    _context4.next = 5;
+                    _context4.next = 6;
                     break;
                   }
 
@@ -25725,8 +26980,9 @@ var categorizer = Object.freeze({
                 case 4:
                   m = _context4.sent;
 
-                case 5:
                   lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
+
+                case 6:
                   return _context4.abrupt("return", m);
 
                 case 7:
@@ -25738,7 +26994,7 @@ var categorizer = Object.freeze({
         }));
 
         function load() {
-          return ref.apply(this, arguments);
+          return _ref4.apply(this, arguments);
         }
 
         return load;
@@ -25759,12 +27015,12 @@ var categorizer = Object.freeze({
     }, {
       key: "unloadDeps",
       value: function unloadDeps(opts) {
-        var _this3 = this;
+        var _this2 = this;
 
         opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
         this.dependents().forEach(function (ea) {
-          _this3.System.delete(ea.id);
-          if (_this3.System.loads) delete _this3.System.loads[ea.id];
+          _this2.System.delete(ea.id);
+          if (_this2.System.loads) delete _this2.System.loads[ea.id];
           if (opts.forgetEnv) ea.unloadEnv();
         });
       }
@@ -25785,8 +27041,8 @@ var categorizer = Object.freeze({
     }, {
       key: "reload",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
-          var _this4 = this;
+        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
+          var _this3 = this;
 
           var toBeReloaded;
           return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -25800,7 +27056,7 @@ var categorizer = Object.freeze({
                   this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
                   _context5.next = 6;
                   return Promise.all(toBeReloaded.map(function (ea) {
-                    return ea.id !== _this4.id && ea.load();
+                    return ea.id !== _this3.id && ea.load();
                   }));
 
                 case 6:
@@ -25816,7 +27072,7 @@ var categorizer = Object.freeze({
         }));
 
         function reload(_x) {
-          return ref.apply(this, arguments);
+          return _ref5.apply(this, arguments);
         }
 
         return reload;
@@ -25829,7 +27085,7 @@ var categorizer = Object.freeze({
     }, {
       key: "changeSourceAction",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
+        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
           var source, newSource;
           return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
@@ -25856,7 +27112,7 @@ var categorizer = Object.freeze({
         }));
 
         function changeSourceAction(_x2) {
-          return ref.apply(this, arguments);
+          return _ref6.apply(this, arguments);
         }
 
         return changeSourceAction;
@@ -25864,20 +27120,18 @@ var categorizer = Object.freeze({
     }, {
       key: "changeSource",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
-          var oldSource;
+        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
           return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
               switch (_context7.prev = _context7.next) {
                 case 0:
                   _context7.next = 2;
-                  return this.source();
+                  return moduleSourceChange$1(this.System, this.id, newSource, this.format(), options);
 
                 case 2:
-                  oldSource = _context7.sent;
-                  return _context7.abrupt("return", moduleSourceChange$1(this.System, this.id, oldSource, newSource, this.format(), options));
+                  return _context7.abrupt("return", this.System.resource(this.id).write(newSource));
 
-                case 4:
+                case 3:
                 case "end":
                   return _context7.stop();
               }
@@ -25886,7 +27140,7 @@ var categorizer = Object.freeze({
         }));
 
         function changeSource(_x3, _x4) {
-          return ref.apply(this, arguments);
+          return _ref7.apply(this, arguments);
         }
 
         return changeSource;
@@ -25894,7 +27148,7 @@ var categorizer = Object.freeze({
     }, {
       key: "addDependencyToModuleRecord",
       value: function addDependencyToModuleRecord(dependency) {
-        var _this5 = this;
+        var _this4 = this;
 
         var setter = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
 
@@ -25922,7 +27176,7 @@ var categorizer = Object.freeze({
           // 2. update records of dependencies, so that they know about this module as an importer
           var impIndex,
               hasImporter = dependencyRecord.importers.some(function (imp, i) {
-            if (!imp) return;impIndex = i;return imp && imp.name === _this5.id;
+            if (!imp) return;impIndex = i;return imp && imp.name === _this4.id;
           });
           if (!hasImporter) dependencyRecord.importers.push(record);else if (record !== dependencyRecord.importers[impIndex]) dependencyRecord.importers.splice(impIndex, 1, record);
         }
@@ -25935,7 +27189,7 @@ var categorizer = Object.freeze({
     }, {
       key: "dependents",
       value: function dependents() {
-        var _this6 = this;
+        var _this5 = this;
 
         // which modules (module ids) are (in)directly import module with id
         // Let's say you have
@@ -25945,13 +27199,13 @@ var categorizer = Object.freeze({
         // `dependents` gives you an answer what modules are "stale" when you
         // change module1 = module2 + module3
         return lively_lang.graph.hull(lively_lang.graph.invert(requireMap$1(this.System)), this.id).map(function (mid) {
-          return module$2(_this6.System, mid);
+          return module$2(_this5.System, mid);
         });
       }
     }, {
       key: "requirements",
       value: function requirements() {
-        var _this7 = this;
+        var _this6 = this;
 
         // which modules (module ids) are (in)directly required by module with id
         // Let's say you have
@@ -25960,7 +27214,7 @@ var categorizer = Object.freeze({
         // module3: import {y} from "module2.js"; export var z = y + 1;
         // `module("./module3").requirements()` will report ./module2 and ./module1
         return lively_lang.graph.hull(requireMap$1(this.System), this.id).map(function (mid) {
-          return module$2(_this7.System, mid);
+          return module$2(_this6.System, mid);
         });
       }
 
@@ -26020,7 +27274,7 @@ var categorizer = Object.freeze({
     }, {
       key: "addGetterSettersForNewVars",
       value: function addGetterSettersForNewVars() {
-        var _this8 = this;
+        var _this7 = this;
 
         // after eval we modify the env so that all captures vars are wrapped in
         // getter/setter to be notified of changes
@@ -26047,12 +27301,12 @@ var categorizer = Object.freeze({
             },
             set: function set(v) {
               rec[prefix + key] = v;
-              scheduleModuleExportsChange(_this8.System, _this8.id, key, v, false /*add export*/);
-              _this8.notifyTopLevelObservers(key);
+              scheduleModuleExportsChange(_this7.System, _this7.id, key, v, false /*add export*/);
+              _this7.notifyTopLevelObservers(key);
             }
           });
 
-          _this8.notifyTopLevelObservers(key);
+          _this7.notifyTopLevelObservers(key);
         });
       }
     }, {
@@ -26068,11 +27322,11 @@ var categorizer = Object.freeze({
     }, {
       key: "package",
       value: function _package() {
-        var _this9 = this;
+        var _this8 = this;
 
         return getPackages$1(this.System).find(function (ea) {
           return ea.modules.some(function (mod) {
-            return mod.name === _this9.id;
+            return mod.name === _this8.id;
           });
         });
       }
@@ -26090,7 +27344,7 @@ var categorizer = Object.freeze({
     }, {
       key: "imports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
@@ -26117,7 +27371,7 @@ var categorizer = Object.freeze({
         }));
 
         function imports() {
-          return ref.apply(this, arguments);
+          return _ref8.apply(this, arguments);
         }
 
         return imports;
@@ -26125,7 +27379,7 @@ var categorizer = Object.freeze({
     }, {
       key: "exports",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
           var parsed, scope;
           return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
@@ -26152,7 +27406,7 @@ var categorizer = Object.freeze({
         }));
 
         function exports() {
-          return ref.apply(this, arguments);
+          return _ref9.apply(this, arguments);
         }
 
         return exports;
@@ -26165,7 +27419,7 @@ var categorizer = Object.freeze({
     }, {
       key: "_localDeclForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+        var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
           var scope, ref;
           return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
@@ -26188,7 +27442,7 @@ var categorizer = Object.freeze({
         }));
 
         function _localDeclForRefAt(_x6) {
-          return ref.apply(this, arguments);
+          return _ref10.apply(this, arguments);
         }
 
         return _localDeclForRefAt;
@@ -26196,8 +27450,8 @@ var categorizer = Object.freeze({
     }, {
       key: "_importForNSRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
-          var scope, ast, nodes, id, member, _ref, decl, name, spec;
+        var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
+          var scope, ast, nodes, id, member, _ref12, decl, name, spec;
 
           return regeneratorRuntime.wrap(function _callee11$(_context11) {
             while (1) {
@@ -26229,8 +27483,8 @@ var categorizer = Object.freeze({
                   return _context11.abrupt("return", [null, null]);
 
                 case 10:
-                  _ref = scope.resolvedRefMap.get(member.object) || {};
-                  decl = _ref.decl;
+                  _ref12 = scope.resolvedRefMap.get(member.object) || {};
+                  decl = _ref12.decl;
 
                   if (!(!decl || decl.type !== "ImportDeclaration")) {
                     _context11.next = 14;
@@ -26254,7 +27508,7 @@ var categorizer = Object.freeze({
         }));
 
         function _importForNSRefAt(_x7) {
-          return ref.apply(this, arguments);
+          return _ref11.apply(this, arguments);
         }
 
         return _importForNSRefAt;
@@ -26262,7 +27516,7 @@ var categorizer = Object.freeze({
     }, {
       key: "_resolveImportedDecl",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
+        var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
           var _decl$id, start, name, type, imports, im, imM;
 
           return regeneratorRuntime.wrap(function _callee12$(_context12) {
@@ -26318,7 +27572,7 @@ var categorizer = Object.freeze({
         }));
 
         function _resolveImportedDecl(_x8) {
-          return ref.apply(this, arguments);
+          return _ref13.apply(this, arguments);
         }
 
         return _resolveImportedDecl;
@@ -26326,7 +27580,7 @@ var categorizer = Object.freeze({
     }, {
       key: "bindingPathForExport",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
+        var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
           var exports, ex, imM, decl;
           return regeneratorRuntime.wrap(function _callee13$(_context13) {
             while (1) {
@@ -26378,7 +27632,7 @@ var categorizer = Object.freeze({
         }));
 
         function bindingPathForExport(_x9) {
-          return ref.apply(this, arguments);
+          return _ref14.apply(this, arguments);
         }
 
         return bindingPathForExport;
@@ -26386,8 +27640,8 @@ var categorizer = Object.freeze({
     }, {
       key: "bindingPathForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
-          var decl, _ref2, _ref3, imDecl, id, name, imM;
+        var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
+          var decl, _ref16, _ref17, imDecl, id, name, imM;
 
           return regeneratorRuntime.wrap(function _callee14$(_context14) {
             while (1) {
@@ -26415,11 +27669,11 @@ var categorizer = Object.freeze({
                   return this._importForNSRefAt(pos);
 
                 case 9:
-                  _ref2 = _context14.sent;
-                  _ref3 = slicedToArray(_ref2, 3);
-                  imDecl = _ref3[0];
-                  id = _ref3[1];
-                  name = _ref3[2];
+                  _ref16 = _context14.sent;
+                  _ref17 = slicedToArray(_ref16, 3);
+                  imDecl = _ref17[0];
+                  id = _ref17[1];
+                  name = _ref17[2];
 
                   if (imDecl) {
                     _context14.next = 16;
@@ -26447,7 +27701,7 @@ var categorizer = Object.freeze({
         }));
 
         function bindingPathForRefAt(_x10) {
-          return ref.apply(this, arguments);
+          return _ref15.apply(this, arguments);
         }
 
         return bindingPathForRefAt;
@@ -26455,7 +27709,7 @@ var categorizer = Object.freeze({
     }, {
       key: "definitionForRefAt",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
+        var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
           var path;
           return regeneratorRuntime.wrap(function _callee15$(_context15) {
             while (1) {
@@ -26477,7 +27731,7 @@ var categorizer = Object.freeze({
         }));
 
         function definitionForRefAt(_x11) {
-          return ref.apply(this, arguments);
+          return _ref18.apply(this, arguments);
         }
 
         return definitionForRefAt;
@@ -26515,8 +27769,8 @@ var categorizer = Object.freeze({
     }, {
       key: "search",
       value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
-          var _this10 = this;
+        var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
+          var _this9 = this;
 
           var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
 
@@ -26527,8 +27781,8 @@ var categorizer = Object.freeze({
                   options = Object.assign({ excludedModules: [] }, options);
 
                   if (!options.excludedModules.some(function (ex) {
-                    if (typeof ex === "string") return ex === _this10.id;
-                    if (ex instanceof RegExp) return ex.test(_this10.id);
+                    if (typeof ex === "string") return ex === _this9.id;
+                    if (ex instanceof RegExp) return ex.test(_this9.id);
                     return false;
                   })) {
                     _context16.next = 3;
@@ -26611,7 +27865,7 @@ var categorizer = Object.freeze({
         }));
 
         function search(_x12, _x13) {
-          return ref.apply(this, arguments);
+          return _ref19.apply(this, arguments);
         }
 
         return search;
@@ -26683,6 +27937,51 @@ var categorizer = Object.freeze({
     }]);
     return ModuleInterface;
   }();
+
+  function fetch_resource(proceed, load) {
+    var System = this,
+        res = System.resource(load.name);
+    if (load.name.match(/^lively:\/\//)) {
+      load.metadata.format = "esm";
+    }
+
+    if (res) {
+      return res.read();
+    }
+    return proceed(load);
+  }
+
+  function lively_protocol(proceed, url) {
+    if (!url.match(/^lively:\/\//)) return proceed(url);
+    var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
+        worldId = match[1],
+        localObjectName = match[2];
+    return {
+      read: function read() {
+        return Promise.resolve(typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + localObjectName + "*/");
+      },
+      write: function write(source) {
+        if (typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString) {
+          $morph(localObjectName).textString = source;
+          return Promise.resolve(source);
+        } else {
+          return Promise.reject("Could not save morph " + localObjectName);
+        }
+      }
+    };
+  }
+
+  function wrapResource(System) {
+    if (!System.resource) {
+      System.resource = lively_resources.resource;
+    }
+    if (!isHookInstalled$1(System, "fetch", fetch_resource)) {
+      installHook$1(System, "fetch", fetch_resource);
+    }
+    if (!isHookInstalled$1(System, "resource", lively_protocol)) {
+      installHook$1(System, "resource", lively_protocol);
+    }
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -26769,13 +28068,12 @@ var categorizer = Object.freeze({
 
     System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
+    wrapResource(System);
     wrapModuleLoad$1(System);
 
     if (!isHookInstalled$1(System, "normalizeHook")) installHook$1(System, "normalize", normalizeHook);
 
     if (!isHookInstalled$1(System, "decanonicalize", "decanonicalizeHook")) installHook$1(System, "decanonicalize", decanonicalizeHook);
-
-    if (!isHookInstalled$1(System, "fetch", "fetch_lively_protocol")) installHook$1(System, "fetch", fetch_lively_protocol);
 
     if (!isHookInstalled$1(System, "newModule", "newModule_volatile")) installHook$1(System, "newModule", newModule_volatile);
 
@@ -26802,6 +28100,7 @@ var categorizer = Object.freeze({
     }
 
     // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
+
 
     System.config(config);
 
@@ -26913,17 +28212,6 @@ var categorizer = Object.freeze({
       return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
     }).url : null;
     return pName ? System.packages[pName] : null;
-  }
-
-  function fetch_lively_protocol(proceed, load) {
-    if (load.name.match(/^lively:\/\//)) {
-      load.metadata.format = "esm";
-      var match = load.name.match(/lively:\/\/([^\/]+)\/(.*)$/),
-          worldId = match[1],
-          localObjectName = match[2];
-      return typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + load.name + "*/";
-    }
-    return proceed(load);
   }
 
   function newModule_volatile(proceed, exports) {
@@ -27046,6 +28334,6 @@ var categorizer = Object.freeze({
   exports.wrapModuleLoad = wrapModuleLoad;
   exports.unwrapModuleLoad = unwrapModuleLoad;
 
-}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm));
+}((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources));
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();
