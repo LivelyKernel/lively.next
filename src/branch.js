@@ -56,19 +56,42 @@ export default class Branch {
     return repoForPackage[this.pkg] = repo;
   }
   
-  async head() { // -> Entry?
+  async commit(hash) { // Hash -> Commit
     const repo = await this.repo(),
-          headHash = await repo.readRef(`refs/heads/${this.name}`);
-    if (!headHash) return null;
-    return repo.loadAs("commit", headHash);
+          commit = await repo.loadAs("commit", hash);
+    commit.hash = hash;
+    return commit;
   }
   
-  async tree() { // -> Hash?
-    const commit = await this.head();
-    if (!commit) return null;
-    return commit.tree;
+  tree(hash) { // Hash -> Promise<Hash>
+    return this.commit(hash).then(c => c.tree);
   }
   
+  async head() { // -> Hash
+    const repo = await this.repo();
+    return repo.readRef(`refs/heads/${this.name}`);
+  }
+  
+  headCommit() { // -> Promise<Commit>
+    return this.head().then(head => this.commit(head));
+  }
+  
+  headTree() { // -> Promise<Hash>
+    return this.head().then(head => this.tree(head));
+  }
+  
+  parent() { // () -> Promise<Hash>
+    return this.headCommit().then(commit => commit.parents[0]);
+  }
+  
+  parentCommit() { // () -> Promise<Commit>
+    return this.parent().then(p => this.commit(p));
+  }
+  
+  async parentTree() { // () -> Hash
+    return this.parent().then(p => this.tree(p));
+  }
+
   async filesForTree(tree, withDir) {
     // Tree, boolean -> {[RelPath]: Hash}
     const repo = await this.repo();
@@ -87,22 +110,15 @@ export default class Branch {
   }
   
   async files(withDir = false) { // boolean? -> {[RelPath]: Hash}
-    const tree = await this.tree();
+    const tree = await this.headTree();
     if (!tree) throw new Error("File tree not found in git");
     return this.filesForTree(tree, withDir);
-  }
-  
-  async parent() { // () -> Commit
-    const repo = await this.repo(),
-          commitHash = await repo.readRef(`refs/heads/${this.name}`),
-          commit = await repo.loadAs("commit", commitHash);
-    return repo.loadAs("commit", commit.parents[0]);
   }
   
   async changedFiles(withDir) { // boolean? -> {[RelPath]: Hash}
     const repo = await this.repo(),
           files = await this.files(withDir),
-          parentTree = (await this.parent()).tree;
+          parentTree = await this.parentTree();
     if (!parentTree) throw new Error("File tree not found in git");
     const parentFiles = await this.filesForTree(parentTree, withDir),
           changedFiles = {};
@@ -117,7 +133,7 @@ export default class Branch {
   async diffFile(relPath) {
     const repo = await this.repo(),
           file = await this.getFileContent(relPath),
-          parentTree = (await this.parent()).tree;
+          parentTree = await this.parentTree();
     if (!parentTree) throw new Error("File tree not found in git");
     const parentFiles = await this.filesForTree(parentTree),
           parentFile = await repo.loadAs("text", parentFiles[relPath]);
@@ -127,7 +143,7 @@ export default class Branch {
   async createFrom(baseHead) { // Hash -> ()
     // create a commit and a ref for this branch based on other branch
     const repo = await this.repo();
-    const tree = (await repo.loadAs("commit", baseHead)).tree,
+    const tree = await this.tree(baseHead),
           author = Object.assign(getAuthor(), {date: new Date()}),
           message = "created changeset",
           commitHash = await repo.saveAs("commit", {tree, author, message, parents: [baseHead]});
@@ -171,14 +187,14 @@ export default class Branch {
     const prevContent = await this.getFileContent(relPath);
     if (prevContent == content) return;
     const repo = await this.repo(),
-          base = await this.head(),
+          base = await this.headCommit(),
           author = Object.assign(getAuthor(), {date: new Date()}),
           message = "work in progress",
           changes = [{
             path: relPath,
             mode: modes.file,
             content}];
-    changes.base = await this.tree();
+    changes.base = await this.headTree();
     const tree = await repo.createTree(changes),
           commitHash = await repo.saveAs("commit", {tree, author, message, parents: base.parents});
     return repo.updateRef(`refs/heads/${this.name}`, commitHash);
@@ -215,8 +231,8 @@ export default class Branch {
   async toObject() { // -> { ".": Hash, [Hash]: Entry }
     const repo = await this.repo(),
           changed = await this.changedFiles(true),
-          headHash = await repo.readRef(`refs/heads/${this.name}`),
-          headCommit = await repo.loadAs("commit", headHash),
+          headCommit = await this.headCommit(),
+          headHash = headCommit.hash,
           result = {};
     for (const relPath in changed) {
       const hash = changed[relPath];

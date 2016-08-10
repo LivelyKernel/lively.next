@@ -112,7 +112,7 @@ class ChangeSet {
 }
 
 function localChangeSetsOf(db, pkg) {
-  // IndexedDB, Package -> Promise<Array<{cs: ChangeSetName, tree: Hash, pkg: PackageAddress}>>
+  // IndexedDB, Package -> Promise<Array<{cs: ChangeSetName, pkg: PackageAddress}>>
   return new Promise((resolve, reject) => {
     const key = pkg.address,
           trans = db.transaction(["refs"], "readonly"),
