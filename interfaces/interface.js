@@ -84,16 +84,13 @@ export class AbstractCoreInterface {
   forgetModule(name, opts)                                 { todo("forgetModule") }
   reloadModule(name, opts)                                 { todo("reloadModule") }
   moduleFormat(moduleName)                                 { todo("moduleFormat") }
+  moduleRead(moduleName)                                   { todo("moduleRead") }
   moduleSourceChange(moduleName, newSource, options)       { todo("moduleSourceChange") }
   importsAndExportsOf(modId, sourceOrAst)                  { todo("importsAndExportsOf") }
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) { todo("keyValueListOfVariablesInModule") }
 
-  async moduleRead(moduleName) {
-    return this.resourceRead(await this.normalize(moduleName));
-  }
-
-  async moduleWrite(moduleName, source) {
-    return this.resourceWrite(await this.normalize(moduleName), source);
+  moduleWrite(moduleName, newSource) {
+    return this.moduleSourceChange(moduleName, newSource);
   }
 
 }
