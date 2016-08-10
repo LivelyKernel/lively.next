@@ -33,7 +33,7 @@ export async function interactivelyCreatePackage(system, vmEditor) {
     guessedAddress = resource(guessedAddress).parent().url;
 
   var loc = await $world.prompt("Confirm or change package location", {input: guessedAddress, historyId: "lively.vm-editor-add-package-address"});
-  
+
   if (!loc) throw "Canceled";
 
   var url = resource(loc).asDirectory(),
@@ -87,7 +87,7 @@ export async function interactivelyLoadPackage(system, vmEditor) {
       throw new Error(`The package path ${relative} is not inside the Lively directory (${URL.root})`)
     }
   }
-  
+
   spec.address = dir.replace(/\/$/, "");
   spec.url = new URL(spec.address + "/");
   spec.configFile = spec.url.withFilename("package.json").toString();
@@ -146,11 +146,19 @@ export async function showExportsAndImportsOf(system, packageAddress) {
   for (let mod of p.modules) {
     if (!mod.name.match(/\.js$/)) continue;
     
-    var importsExports = await system.importsAndExportsOf(mod.name, await system.moduleRead(mod.name));
+    try {
+      var importsExports = await system.importsAndExportsOf(mod.name, await system.moduleRead(mod.name));
+    } catch (e) {
+      $world.logError(new Error(`Error when getting imports/exports from module ${mod.name}:\n${e.stack}`));
+      continue;
+    }
+
     var report = `${mod.name}`;
-        
-    if (!importsExports.imports.length && !importsExports.exports.length)
-      return report += "\n  does not import / export anything";
+
+    if (!importsExports.imports.length && !importsExports.exports.length) {
+      report += "\n  does not import / export anything";
+      continue;
+    }
 
     if (importsExports.imports.length) {
       report += "\n  imports:\n"
