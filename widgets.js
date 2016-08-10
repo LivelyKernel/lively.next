@@ -1,6 +1,6 @@
 import { arr, num, obj } from "lively.lang";
 import { pt, Color } from "lively.graphics";
-import { Morph, Ellipse, Text } from "./index.js";
+import { morph, Morph, Ellipse, Text } from "./index.js";
 
 export class Window extends Morph {
 
@@ -131,6 +131,14 @@ export class Window extends Morph {
 
   get targetMorph() { return arr.last(arr.withoutAll(this.submorphs, this.controls())); }
   set targetMorph(targetMorph) {
+    if (!targetMorph) {
+      var existing = this.targetMorph;
+      existing && existing.remove();
+      return;
+    }
+
+    if (!targetMorph.isMorph) targetMorph = morph(targetMorph); // spec
+
     this.addMorph(targetMorph, this.resizer());
     targetMorph.setBounds(this.innerBounds().withTopLeft(pt(0,25)));
   }
