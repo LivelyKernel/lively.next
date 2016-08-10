@@ -4,6 +4,8 @@ import { expect } from "mocha-es6";
 import { arr } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
+var it = System.get("@system-env").browser ? System.global.it : System.global.xit;
+
 var env, world;
 function createDummyWorld() {
   return morph({
@@ -28,6 +30,7 @@ describe("lists", function () {
       list.addItem("foo");
       list.addItem("bar");
       expect(list.items).containSubset([{string: "foo", value: "foo"}, {string: "bar", value: "bar"}]);
+      expect(list.itemMorphs).containSubset([{textString: "foo"}, {textString: "bar"}]);
     });
 
   });

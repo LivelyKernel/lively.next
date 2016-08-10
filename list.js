@@ -155,7 +155,9 @@ export class List extends Morph {
         lastItemIndex = Math.ceil((top+height) / itemHeight);
 
     listItemContainer.extent = pt(this.width, itemHeight*items.length);
-    
+
+// console.log(`[list] itemHeight: ${itemHeight} lastItemIndex: ${lastItemIndex}-firstItemIndex: ${firstItemIndex}`)
+
     for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
       var itemIndex = firstItemIndex+i,
           item = items[itemIndex];
@@ -166,12 +168,14 @@ export class List extends Morph {
         break;
       }
 
-      var itemMorph = itemMorphs[i] || (itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph({fontFamily, fontSize})));
+      var itemMorph = itemMorphs[i] || (itemMorphs[i] = console.log(`[list] creating itemMorph for ${item.string}`) || listItemContainer.addMorph(new ListItemMorph({fontFamily, fontSize})));
 
       itemMorph.displayItem(item, itemIndex,
         pt(0, itemHeight*(itemIndex)),
         selectedIndexes.includes(itemIndex));
     }
+
+// console.log(`[list] deleting ${itemMorphs.length-(lastItemIndex-firstItemIndex)} items`);
 
     itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
 
