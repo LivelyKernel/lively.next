@@ -166,6 +166,9 @@ export class Morph {
 
   get fill()           { return this.getProperty("fill"); }
   set fill(value)      { this.addValueChange("fill", value); }
+  
+  get opacity()         { return this.getProperty("opacity"); }
+  set opacity(value)    { this.addValueChange("opacity", value); }
 
   get borderWidth()       { return this.getProperty("borderWidth"); }
   set borderWidth(value)  { this.addValueChange("borderWidth", value); }
