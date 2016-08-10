@@ -183,8 +183,7 @@ export class StatusMessage extends Morph {
     this.center = visibleBounds.center();
   }
 
-  onMouseDown(evt) {
+  onMouseUp(evt) {
     this.expand();
   }
-
 }
