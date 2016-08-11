@@ -9,7 +9,7 @@ var shell = lively.shell;
 
 export async function startMorphicNodejsProcessAndWorld() {
   await shell.writeFile(string.joinPath(shell.WORKSPACE_LK, ".lively-morphic-nodejs-server.js"), serverSource);
-  var win = shell.runInWindow("node .lively-morphic-nodejs-server.js", {cwd: shell.WORKSPACE_LK, group: "lively.morphic-nodejs-world"}),
+  var win = await shell.runInWindow("node .lively-morphic-nodejs-server.js", {cwd: shell.WORKSPACE_LK, group: "lively.morphic-nodejs-world"}),
       cmd = win.targetMorph.currentCommand;
 
   await promise.waitFor(20*1000, () => !cmd.isRunning() || cmd.output.includes("lively-system-interface imported"));
