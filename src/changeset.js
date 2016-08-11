@@ -111,22 +111,6 @@ class ChangeSet {
   }
 }
 
-function localChangeSetsOf(db, pkg) {
-  // IndexedDB, Package -> Promise<Array<{cs: ChangeSetName, pkg: PackageAddress}>>
-  return new Promise((resolve, reject) => {
-    const key = pkg.address,
-          trans = db.transaction(["refs"], "readonly"),
-          store = trans.objectStore("refs"),
-          request = store.getAll(window.IDBKeyRange.bound(`${key}/refs/heads.`, `${key}/refs/heads:`));
-    request.onsuccess = evt => resolve(evt.target.result);
-    request.onerror = evt => reject(new Error(evt.value));
-  }).then(keys => keys.map(({path}) => {
-    const pathParts = path.split('/'),
-          cs = pathParts[pathParts.length - 1];
-    return {cs, pkg: pkg.address};
-  }));
-}
-
 export async function createChangeSet(name) { // ChangeSetName => ChangeSet
   const db = await new Promise((resolve, reject) => {
     const req = window.indexedDB.open("tedit", 1);
@@ -150,6 +134,14 @@ export async function createChangeSet(name) { // ChangeSetName => ChangeSet
   return cs;
 }
 
+function parseChangeSetRef(url) {
+  // string -> {cs: ChangeSetName, pkg: PackageAddress}?
+  const parts = url.split('/'),
+        l = parts.length;
+  if (l < 4 || parts[l-3] !== "refs" || parts[l-2] !== "heads") return null;
+  return {cs: parts[l - 1], pkg: parts.slice(0, l - 3).join('/')};
+}
+
 export async function localChangeSets() { // () => Array<ChangeSet>
   if (changesets !== undefined) return changesets;
   const db = await new Promise((resolve, reject) => {
@@ -157,11 +149,15 @@ export async function localChangeSets() { // () => Array<ChangeSet>
     req.onsuccess = evt => resolve(evt.target.result);
     req.onerror = err => reject(err);
   });
-  const allChangeSets = [];
-  for (let pkg of getPackages()) {
-    arr.pushAll(allChangeSets, await localChangeSetsOf(db, pkg));
-  }
-  const groups = arr.groupBy(allChangeSets, ({cs}) => cs);
+  const refs = await new Promise((resolve, reject) => {
+    const trans = db.transaction(["refs"], "readonly"),
+          store = trans.objectStore("refs"),
+          request = store.getAllKeys();
+    request.onsuccess = evt => resolve(evt.target.result);
+    request.onerror = evt => reject(new Error(evt.value));
+  });
+  const allChangeSets = refs.map(parseChangeSetRef).filter(t => !!t),
+        groups = arr.groupBy(allChangeSets, ({cs}) => cs);
   return changesets = Object.keys(groups).map(name => new ChangeSet(name, groups[name]));
 }
 
