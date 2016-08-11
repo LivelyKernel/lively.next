@@ -19,11 +19,15 @@ function getEnv(system) { // System? -> Env
       if (env !== undefined) {
         return env;
       }
-      return env = {emitter: events.makeEmitter({}), notifications: []};
+      return env = {
+        emitter: events.makeEmitter({}, {maxListenerLimit: 10000}),
+        notifications: []
+      };
     } else {
       system = System;
     }
   }
+
   const livelyEnv = system.get("@lively-env");
   let options;
   if (livelyEnv === undefined) {
@@ -38,9 +42,9 @@ function getEnv(system) { // System? -> Env
   if (!options.emitter) {
     Object.assign(options, {
       emitter: system["__lively.notifications_emitter"] ||
-              (system["__lively.notifications_emitter"] = events.makeEmitter({})),
+              (system["__lively.notifications_emitter"] = events.makeEmitter({}, {maxListenerLimit: 10000})),
       notifications: system["__lively.notifications_notifications"] ||
-             (system["__lively.notifications_notifications"] = []),
+                    (system["__lively.notifications_notifications"] = []),
     });
   }
   const {emitter, notifications} = options;
