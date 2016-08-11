@@ -1,6 +1,6 @@
 /*global System*/
 import { string } from "lively.lang";
-import { Color } from "lively.graphics";
+import { Color, pt } from "lively.graphics";
 import { Morph } from "../index.js";
 import { ClipboardHelper } from "./clipboard-helper.js";
 import Selection from "./selection.js";
