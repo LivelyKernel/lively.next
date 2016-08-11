@@ -1,6 +1,6 @@
 import { arr } from 'lively.lang';
 import { emit } from 'lively.notifications';
-import { module, getPackages } from "lively.modules";
+import { module, getPackages, importPackage } from "lively.modules";
 
 import { install, uninstall } from "../index.js";
 import Branch from "./branch.js";
@@ -214,8 +214,13 @@ export async function setCurrentChangeSet(csName) {
     uninstall();
   }
   current = next;
+  const toLoad = next ? next.branches.reduce((prev, b) => (prev[b.pkg] = true, prev), {}) : {};
   for (const pkg of getPackages()) {
     await switchPackage(pkg.address, old, next);
+    delete toLoad[pkg.address];
+  }
+  for (const pkg in toLoad) {
+    if (toLoad[pkg]) await importPackage(pkg);
   }
   emit("lively.changesets/switchedcurrent", {
     changeset: csName || null,
