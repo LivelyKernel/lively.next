@@ -24,11 +24,15 @@
         if (env !== undefined) {
           return env;
         }
-        return env = { emitter: lively_lang.events.makeEmitter({}), notifications: [] };
+        return env = {
+          emitter: lively_lang.events.makeEmitter({}, { maxListenerLimit: 10000 }),
+          notifications: []
+        };
       } else {
         system = System;
       }
     }
+
     var livelyEnv = system.get("@lively-env");
     var options = void 0;
     if (livelyEnv === undefined) {
@@ -42,7 +46,7 @@
     }
     if (!options.emitter) {
       Object.assign(options, {
-        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({})),
+        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({}, { maxListenerLimit: 10000 })),
         notifications: system["__lively.notifications_notifications"] || (system["__lively.notifications_notifications"] = [])
       });
     }

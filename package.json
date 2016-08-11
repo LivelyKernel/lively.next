@@ -1,6 +1,6 @@
 {
   "name": "lively.notifications",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Shared event bus for subscribing to and emitting system-wide notifications",
   "author": "Christopher Schuster <cs@livoris.net>",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "url": "git+https://github.com/LivelyKernel/lively.notifications.git"
   },
   "dependencies": {
-    "lively.lang": "^0.7.2"
+    "lively.lang": "^0.7.3"
   },
   "devDependencies": {
     "babel-plugin-syntax-object-rest-spread": "^6.8.0",
