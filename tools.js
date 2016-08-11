@@ -103,7 +103,6 @@ export class Workspace extends Window {
 
 
 import { connect, disconnect } from "lively.bindings";
-import { localInterface as livelySystem } from "lively-system-interface";
 
 export class Browser extends Window {
 
@@ -142,8 +141,9 @@ export class Browser extends Window {
     this.get("sourceEditor").textString = ""
   }
 
-  onLoad() {
+  async onLoad() {
     this.reset();
+    var livelySystem = (await System.import("lively-system-interface")).localInterface;
     this.get("packageList").items = livelySystem.getPackages().map(p => ({isListItem: true, string: p.name, value: p}));
   }
 
@@ -168,6 +168,7 @@ export class Browser extends Window {
       return;
     }
     
+    var livelySystem = (await System.import("lively-system-interface")).localInterface;
     var source = await livelySystem.moduleRead(m.name);
     this.get("sourceEditor").textString = source;
   }
@@ -179,6 +180,7 @@ export class Browser extends Window {
     if (!module) return show("Cannot save, no module selected");
 
     try {
+      var livelySystem = (await System.import("lively-system-interface")).localInterface;
       await livelySystem.interactivelyChangeModule(
         this,
         module.name,
