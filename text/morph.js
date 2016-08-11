@@ -25,6 +25,7 @@ export class Text extends Morph {
       clipMode: "hidden",
       textString: "",
       fixedWidth: false, fixedHeight: false,
+      padding: { top: 0, right: 0, bottom: 0, left: 0 },
       draggable: false,
       _selection: { start: 0, end: 0 },
       fontFamily: "Sans-Serif",
@@ -71,6 +72,52 @@ export class Text extends Morph {
   get fixedHeight() { return this.getProperty("fixedHeight") }
   set fixedHeight(value) {
     this.addValueChange("fixedHeight", value);
+    this._needsFit = true;
+  }
+
+  get padding() {
+    var _this = this;
+    return {
+      get top() { return _this.paddingTop; },
+      set top(v) { _this.paddingTop = v; },
+      get right() { return _this.paddingRight; },
+      set right(v) { _this.paddingRight = v; },
+      get bottom() { return _this.paddingBottom; },
+      set bottom(v) { _this.paddingBottom = v; },
+      get left() { return _this.paddingLeft; },
+      set left(v) { _this.paddingLeft = v; },
+    }
+  }
+
+  set padding(value) {
+    if (typeof value === "number") {
+      this.paddingTop = this.paddingRight = this.paddingBottom = this.paddingLeft = value;
+    } else {
+      ({ top: this.paddingTop, right: this.paddingRight, bottom: this.paddingBottom, left: this.paddingLeft }) = value;
+    }
+  }
+
+  get paddingTop() { return this.getProperty("paddingTop") }
+  set paddingTop(value) {
+    this.addValueChange("paddingTop", typeof value === "number" ? value : 0);
+    this._needsFit = true;
+  }
+
+  get paddingRight() { return this.getProperty("paddingRight") }
+  set paddingRight(value) {
+    this.addValueChange("paddingRight", typeof value === "number" ? value : 0);
+    this._needsFit = true;
+  }
+
+  get paddingBottom() { return this.getProperty("paddingBottom") }
+  set paddingBottom(value) {
+    this.addValueChange("paddingBottom",typeof value === "number" ? value : 0);
+    this._needsFit = true;
+  }
+
+  get paddingLeft() { return this.getProperty("paddingLeft") }
+  set paddingLeft(value) {
+    this.addValueChange("paddingLeft", typeof value === "number" ? value : 0);
     this._needsFit = true;
   }
 
@@ -141,16 +188,16 @@ export class Text extends Morph {
   }
 
   fit() {
-    var {fixedHeight, fixedWidth} = this;
+    var { fixedHeight, fixedWidth, padding } = this;
     if (fixedHeight && fixedWidth) return;
 
     var {fontMetric, fontFamily, fontSize, placeholder, textString} = this,
         {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(fontFamily, fontSize, placeholder || " "),
         {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, textString);
     if (!fixedHeight)
-      this.height = Math.max(placeholderHeight, height);
+      this.height = Math.max(placeholderHeight, height) + padding.top + padding.bottom;
     if (!fixedWidth)
-      this.width = Math.max(placeholderWidth, width);
+      this.width = Math.max(placeholderWidth, width) + padding.left + padding.right;
   }
 
   fitIfNeeded() {
@@ -162,9 +209,10 @@ export class Text extends Morph {
   onMouseMove(evt) {
     var { clickedOnMorph, clickedOnPosition } = evt.state;
     if (clickedOnMorph === this) {
-      var startPos = this.localize(clickedOnPosition),
-          endPos = this.localize(evt.position),
-          { fontFamily, fontSize, textString, fontMetric, selection } = this,
+      var { fontFamily, fontSize, textString, fontMetric, selection, paddingLeft, paddingTop } = this,
+          offset = pt(paddingLeft, paddingTop),
+          startPos = this.localize(clickedOnPosition.subPt(offset)),
+          endPos = this.localize(evt.position.subPt(offset)),
           { start: curStart, end: curEnd } = selection,
           start = fontMetric.indexFromPoint(fontFamily, fontSize, textString, startPos),
           end = fontMetric.indexFromPoint(fontFamily, fontSize, textString, endPos);

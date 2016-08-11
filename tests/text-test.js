@@ -15,6 +15,7 @@ function text(string, props) {
     fontFamily: "Arial",
     fontSize: 10,
     extent: pt(100,100),
+    padding: { top: 1, right: 1, bottom: 1, left: 1 },
     ...props
   });
 }
@@ -43,19 +44,19 @@ describe("text", () => {
 
   inBrowser("computes size on construction", async () => {
     var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: false});
-    expect(height).within(9,12)
-    expect(width).within(18,22)
+    expect(height).within(11,14)
+    expect(width).within(20,24)
   });
 
   inBrowser("computes only width", () => {
     var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: true});
     expect(height).equals(100)
-    expect(width).within(18,22)
+    expect(width).within(20,24)
   });
 
   inBrowser("computes only height", () => {
     var {extent: {x: width, y: height}} = text("hello", {fixedWidth: true, fixedHeight: false});
-    expect(height).within(9,12);
+    expect(height).within(11,14);
     expect(width).equals(100);
   });
 
