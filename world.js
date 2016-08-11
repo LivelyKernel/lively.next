@@ -7,6 +7,9 @@ import config from "./config.js";
 import { morph } from "./index.js";
 import { Morph } from "./morph.js";
 
+
+import { ObjectDrawer, Workspace, Browser } from "./tools.js";
+
 export class World extends Morph {
 
   constructor(props) {
@@ -84,7 +87,10 @@ export class World extends Morph {
       position: evt.position,
       title: "World menu", items: [
         ["undo", () => { this.env.undoManager.undo(); }],
-        ["redo", () => { this.env.undoManager.redo(); }]
+        ["redo", () => { this.env.undoManager.redo(); }],
+        ["Workspace", () => { this.addMorph(new Workspace({center: this.center})); }],
+        ["Browser", () => { this.addMorph(new Browser({center: this.center})); }],
+        ["ObjectDrawer", () => { this.addMorph(new ObjectDrawer({center: this.center})); }],
       ]
     }));
   }

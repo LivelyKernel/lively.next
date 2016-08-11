@@ -14,7 +14,10 @@
     <script src="/node_modules/lively.modules/node_modules/systemjs/dist/system.src.js"></script>
     <script src="/node_modules/lively.modules/dist/lively.modules.js"></script>
     <script>
-      lively.modules.importPackage('.')
+      Promise.resolve()
+        // FIXME!!!
+        .then(() => lively.modules.importPackage('http://localhost:9001/node_modules/lively-system-interface/'))
+        .then(() => lively.modules.importPackage('.'))
         .then(function() { console.log("loaded"); })
         .catch(function(err) { console.error(err); })
     </script>
