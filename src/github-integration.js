@@ -33,7 +33,8 @@ export async function gitHubToken() {
 export async function gitHubURL(pkg) { // PackageAddress -> string?
   const packageConfig = `${pkg}/package.json`;
   try {
-    const conf = await System.import(packageConfig);
+    const res = await fetch(packageConfig),
+          conf = await res.json();
     if (!conf || !conf.repository) return null;
     const url = conf.repository.url || conf.repository,
           match = url.match(/github.com[:\/](.*?)(?:\.git)?$/);
