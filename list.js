@@ -1,6 +1,7 @@
 import { Morph, Text } from "./index.js"
 import { pt, Color } from "lively.graphics";
 import { arr } from "lively.lang";
+import { signal } from "lively.bindings";
 
 function asItem(obj) {
   return obj && obj.isListItem ? obj : {
@@ -44,6 +45,10 @@ export class List extends Morph {
       ...props
     });
     this.update();
+  }
+
+  get connections() {
+    return {selection: {signalOnAssignment: false}};
   }
 
   // horizonal or vertical (tiling?)
@@ -116,6 +121,7 @@ export class List extends Morph {
       "selectedIndexes",
       (indexes || []).filter(i => 0 <= i && i < maxLength));
     this.groupChangesWhile(undefined, () => this.update());
+    signal(this, "selection", this.selection);
   }
 
   get selection() { return this.selections[0]; }
