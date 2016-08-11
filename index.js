@@ -1,6 +1,6 @@
 export * from "./morph.js";
 export * from "./world.js";
-export * from "./text.js";
+export * from "./text/morph.js";
 export * from "./widgets.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
@@ -14,7 +14,7 @@ export { show } from "./markers.js"
 import { World } from "./world.js";
 import { Morph, Hand, Image, Ellipse } from "./morph.js";
 import { List } from "./list.js";
-import { Text } from "./text.js";
+import { Text } from "./text/morph.js";
 import { Button } from "./widgets.js";
 
 export function morph(props = {}, opts = {restore: false}) {

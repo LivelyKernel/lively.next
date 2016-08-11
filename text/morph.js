@@ -1,9 +1,10 @@
-/* global System */
+/*global System*/
 import { string } from "lively.lang";
 import { Color } from "lively.graphics";
-import { Morph, show } from "./index.js";
-import { defaultAttributes } from "./rendering/morphic-default.js";
-import { h } from "virtual-dom";
+import { Morph } from "../index.js";
+import { ClipboardHelper } from "./clipboard-helper.js";
+import Selection from "./selection.js";
+import { renderText } from "./rendering.js";
 
 export class Text extends Morph {
 
@@ -99,7 +100,7 @@ export class Text extends Morph {
   get _selection() { return this.getProperty("_selection") }
   set _selection(value) { this.addValueChange("_selection", value); }
 
-  get selection() { return new TextSelection(this) }
+  get selection() { return new Selection(this) }
 
   insertText(pos, str) {
     var str = String(str),
@@ -136,7 +137,7 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    return renderer.renderText(this);
+    return renderText(renderer, this);
   }
 
   fit() {
@@ -205,6 +206,11 @@ export class Text extends Morph {
         this.textString = this.textString.slice(0, sel.end) + result.value + this.textString.slice(sel.end);
         break;
 
+      case 'Command-S':
+        evt.stop();
+        this.doSave();
+        break;
+
       case 'Backspace':
         if (this.rejectsInput) break;
         evt.stop();
@@ -258,6 +264,8 @@ export class Text extends Morph {
     }
   }
 
+  doSave() { /*...*/ }
+
   onCut(evt) {
     if (this.rejectsInput) return;
     this.onCopy(evt);
@@ -286,67 +294,4 @@ export class Text extends Morph {
   }
 
   onBlur(evt) { this.makeDirty(); }
-}
-
-
-export class ClipboardHelper extends Morph {
-
-  get isClipboardHelper() { return true; }
-
-  render(renderer) {
-    return h('textarea',
-         {  ...defaultAttributes(this),
-            resize: "none",
-            value: " ",
-            style: {  position: "absolute",
-                      width: "0px",
-                      height: "0px",
-                      overflow: "hidden",
-                      padding: "0px",
-                      border: "0px" }});
-  }
-
-  onFocus(evt) { this._hasFocus = true; }
-
-  onBlur(evt) {
-    this._hasFocus = false;
-    this.makeDirty();
-  }
-}
-
-
-class TextSelection {
-
-  constructor(textMorph) {
-    this.textMorph = textMorph;
-  }
-
-  get range() { return this.textMorph._selection; }
-  set range(rangeObj) {
-    let morph = this.textMorph;
-    morph._selection = rangeObj;
-    morph._needsSelect = true;
-  }
-
-  get start() { return this.range.start; }
-  set start(val) { this.range = { start: val, end: this.end }; }
-
-  get end() { return this.range.end }
-  set end(val) { this.range = { start: this.start, end: val }; }
-
-  get text() { return this.textMorph.textString.substring(this.start, this.end) }
-  set text(val) {
-    let { start, end } = this.range,
-        morph = this.textMorph;
-    if (!this.isCollapsed) {
-      morph.deleteText(start, end);
-    }
-    if (val.length) {
-      morph.insertText(start, val);
-    }
-    this.range = { start: this.start, end: this.start + val.length };
-  }
-
-  get isCollapsed() { return this.start === this.end; }
-  collapse(index = this.start) { this.range = { start: index, end: index }; }
 }

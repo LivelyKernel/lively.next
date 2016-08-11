@@ -193,25 +193,6 @@ export class Renderer {
       morph.submorphs.map(m => this.render(m)));
   }
 
-  renderText(text) {
-    let { textString, selection, readOnly, clipboardHelper } = text;
-    return h("div.text", {
-      ...defaultAttributes(text),
-      style: {
-        ...defaultStyle(text),
-        "white-space": "pre",
-        padding: "0px",
-        "font-family": text.fontFamily,
-        "font-size": text.fontSize + "px",
-        "color": String(text.fontColor)
-      },
-    }, [this.renderSubmorphs(text),
-        textString.substring(0, selection.start),
-        h('span.selected.no-html-select', textString.substring(selection.start, selection.end)),
-        h('span.cursor.no-html-select', { style: { visibility: (readOnly || !clipboardHelper._hasFocus ? "hidden" : "initial") } }, "\u200b"),
-        textString.substring(selection.end)]);
-  }
-
   renderImage(image) {
     return h("div", {
       ...defaultAttributes(image),
