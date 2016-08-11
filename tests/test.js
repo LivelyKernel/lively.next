@@ -1,10 +1,9 @@
 /*global describe, it, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
 
-import { connect, disconnect } from "../index.js";
+import { connect, disconnect, signal } from "../index.js";
 
 describe("connect", () => {
-
 
   it("simpleConnection", function() {
     var obj1 = {x: 4},
@@ -46,7 +45,50 @@ describe("connect", () => {
 
 });
 
+describe("signals", () => {
 
+  it("doesn't signal on assignment", function() {
+    var obj = {triggerCount: 0}, obj2 = {};
+
+    connect(obj, 'foo', obj2, 'bar', {
+      converter: function(val) {
+      this.sourceObj.triggerCount++;
+      return val;
+      },
+      signalOnAssignment: false
+    });
+
+    obj.foo = 23;
+    expect(undefined).equals(obj2.bar, 'obj2 has value through connection');
+    expect(0).equals(obj.triggerCount, 'triggered?');
+
+    signal(obj, 'foo', 24);
+    expect(24).equals(obj2.bar, 'manually signal not working');
+    expect(1).equals(obj.triggerCount, 'trigger count after manual signal');
+  });
+
+});
+
+describe("connection points", () => {
+  
+  it("converter", () => {
+    var obj = {connections: {foo: {converter: x => x + 1}}}, obj2 = {};
+    connect(obj, 'foo', obj2, 'bar');
+    obj.foo = 23;
+    expect(24).equals(obj2.bar);
+  });
+
+  it("doesn't signal on assignment", () => {
+    var obj = {connections: {foo: {signalOnAssignment: false}}}, obj2 = {};
+    connect(obj, 'foo', obj2, 'bar');
+    obj.foo = 23;
+    expect(obj2.bar).equals(undefined);
+    expect("foo").not.has.property("$$foo")
+    signal(obj, "foo", 23);
+    expect(23).equals(obj2.bar);
+  });
+
+});
 
 
 // module('lively.bindings.tests.BindingTests').requires('lively.TestFramework', 'lively.bindings').toRun(function() {
@@ -581,34 +623,6 @@ describe("connect", () => {
 //     this.assertEquals(1, target2.value, 'target2');
 //   },
 
-//   test47DontSignalOnAssignment: function() {
-//     var obj = {triggerCount: 0}, obj2 = {};
-
-//     lively.bindings.connect(obj, 'foo', obj2, 'bar', {
-//       converter: function(val) {
-//       this.sourceObj.triggerCount++;
-//       return val;
-//       },
-//       signalOnAssignment: false
-//     });
-
-//     obj.foo = 23;
-//     this.assertEquals(undefined, obj2.bar, 'obj2 has value through connection');
-//     this.assertEquals(0, obj.triggerCount, 'triggered?');
-
-//     lively.bindings.signal(obj, 'foo', 24);
-//     this.assertEquals(24, obj2.bar, 'manually signal not working');
-//     this.assertEquals(1, obj.triggerCount, 'trigger count after manual signal');
-//   },
-
-//   test48ConnectionPointsCanPassOptionsToConnect: function() {
-//     var obj = {connections: {foo: {converter: function(x) { return x + 1; }}}},
-//       obj2 = {};
-
-//     lively.bindings.connect(obj, 'foo', obj2, 'bar');
-//     obj.foo = 23;
-//     this.assertEquals(24, obj2.bar);
-//   }
 // });
 
 // TestCase.subclass('lively.bindings.tests.BindingTests.ConnectionSerializationTest', {

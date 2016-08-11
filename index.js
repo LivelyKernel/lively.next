@@ -1,4 +1,4 @@
-import { string } from "lively.lang";
+import { string, arr } from "lively.lang";
 
 export { connect, disconnect, signal }
 
@@ -31,7 +31,7 @@ class AttributeConnection {
       if (spec.converter) this.setConverter(spec.converter);
       if (spec.updater) this.setUpdater(spec.updater);
       if (spec.varMapping) {
-        this.varMapping = Object.extend(spec.varMapping, this.varMapping);
+        this.varMapping = Object.assign(spec.varMapping, this.varMapping);
       }
     }
     return this;
@@ -135,7 +135,7 @@ class AttributeConnection {
     // Check for existing getters that might be there and not belong to
     // lively.bindings We deal with them in addSourceObjGetterAndSetter()
     var existingSetter = this.sourceObj.__lookupSetter__(this.sourceAttrName),
-      existingGetter = this.sourceObj.__lookupGetter__(this.sourceAttrName);
+        existingGetter = this.sourceObj.__lookupGetter__(this.sourceAttrName);
 
     // Check if a method is the source. We check both the value behind
     // sourceAttrName and $$sourceAttrName because when deserializing
@@ -146,7 +146,7 @@ class AttributeConnection {
       (this.getSourceValue() || this.getPrivateSourceValue());
 
     // method connect... FIXME refactori into own class!
-    if (Object.isFunction(methodOrValue) && !this.forceAttributeConnection) {
+    if (typeof methodOrValue === "function" && !this.forceAttributeConnection) {
       if (!methodOrValue.isWrapped) {
         this.addConnectionWrapper(this.sourceObj, this.sourceAttrName, methodOrValue);
       }
@@ -177,7 +177,7 @@ class AttributeConnection {
 
   update(newValue, oldValue) {
     // This method is optimized for Safari and Chrome.
-    // See lively.bindings.tests.BindingTests.BindingsProfiler
+    // See tests.BindingTests.BindingsProfiler
     // The following requirements exists:
     // - Complete Customization of control (how often, if at all, binding
     //   should be activated, parameters passed, delay,... )
@@ -185,7 +185,7 @@ class AttributeConnection {
     // - when updater is existing run converter only if update is proceeded
     // - bind is slow
     // - arguments is slow when it's items are accessed or it's converted
-    //   using Array.from. Note 2014-02-10: We currently need to modify the
+    //   using arr.from. Note 2014-02-10: We currently need to modify the
     //   argument array for allowing conversion.
 
     if (this.isActive/*this.isRecursivelyActivated()*/) return null;
@@ -205,7 +205,7 @@ class AttributeConnection {
       // that no bind is necessary and oldValue is accessible. Note that
       // when updater calls this method arguments can be more than just
       // the new value
-      var args = Array.from(arguments);
+      var args = arr.from(arguments);
       if (converter) {
         newValue = converter.call(connection, newValue, oldValue);
         args[0] = newValue;
@@ -226,8 +226,8 @@ class AttributeConnection {
       // FIXME: checks should not be scatter all over the code
       if (lively.Config.get('loadRewrittenCode') && e.unwindException)
         throw e.unwindException;
-      dbgOn(Config.debugConnect);
-      var world = Global.lively &&
+      var world = window.lively &&
+        lively.morphic &&
         lively.morphic.World &&
         lively.morphic.World.current();
       if (world) {
@@ -260,10 +260,10 @@ class AttributeConnection {
 
     // add new attr to the serialization ignore list
     if (!sourceObj.hasOwnProperty('doNotSerialize')) sourceObj.doNotSerialize = [];
-    sourceObj.doNotSerialize.pushIfNotIncluded(newAttrName);
+    arr.pushIfNotIncluded(sourceObj.doNotSerialize, newAttrName);
 
     if (!sourceObj.hasOwnProperty('doNotCopyProperties')) sourceObj.doNotCopyProperties = [];
-    sourceObj.doNotCopyProperties.pushIfNotIncluded(newAttrName);
+    arr.pushIfNotIncluded(sourceObj.doNotCopyProperties, newAttrName);
 
     if (existingGetter)
       sourceObj.__defineGetter__(newAttrName, existingGetter);
@@ -296,7 +296,7 @@ class AttributeConnection {
   }
 
   addConnectionWrapper(sourceObj, methodName, origMethod) {
-    if (!Object.isFunction(origMethod)) {
+    if (typeof origMethod !== "function") {
       throw new Error('addConnectionWrapper didnt get a method to wrap');
     }
 
@@ -337,12 +337,12 @@ class AttributeConnection {
     }
 
     if (srcObj.doNotSerialize && srcObj.doNotSerialize.include(helperAttrName)) {
-      srcObj.doNotSerialize = srcObj.doNotSerialize.without(helperAttrName);
+      srcObj.doNotSerialize = arr.without(srcObj.doNotSerialize, helperAttrName);
       if (srcObj.doNotSerialize.length == 0) delete srcObj.doNotSerialize;
     }
 
     if (srcObj.doNotCopyProperties && srcObj.doNotCopyProperties.include(helperAttrName)) {
-      srcObj.doNotCopyProperties = srcObj.doNotCopyProperties.without(helperAttrName);
+      srcObj.doNotCopyProperties = arr.without(srcObj.doNotCopyProperties, helperAttrName);
       if (srcObj.doNotCopyProperties.length == 0) delete srcObj.doNotCopyProperties;
     }
   }
@@ -378,7 +378,7 @@ class AttributeConnection {
 
   toString(optValue) {
     try {
-      return Strings.format(
+      return string.format(
         'AttributeConnection(%s.%s %s %s.%s)',
         this.getSourceObj(),
         this.getSourceAttrName(),
@@ -445,7 +445,7 @@ class AttributeConnection {
 
 //     function restore(id, fieldName) {
 //       if (!id) {
-//         console.warn('cannot deserialize ' + fieldName + ' when deserilaizing a lively.bindings.connect');
+//         console.warn('cannot deserialize ' + fieldName + ' when deserilaizing a connect');
 //         return
 //       }
 //       if (id.split('--')[0] == 'ElementConnection') { // FIXME brittle!!!
@@ -492,11 +492,11 @@ function connect(sourceObj, attrName, targetObj, targetMethodName, specOrConvert
     connectionPoint = connectionPoints && connectionPoints[attrName],
     klass = (connectionPoint && connectionPoint.map && lively.morphic && lively.morphic.GeometryConnection)
        || (connectionPoint && connectionPoint.connectionClassType && lively.Class.forName(connectionPoint.connectionClassType))
-       || lively.bindings.AttributeConnection,
+       || AttributeConnection,
     spec;
 
   // 2: connection settings: converter/updater/...
-  if (Object.isFunction(specOrConverter)) {
+  if (typeof specOrConverter === "function") {
     console.warn('Directly passing a converter function to connect() '
            + 'is deprecated! Use spec object instead!');
     spec = {converter: specOrConverter};
@@ -518,7 +518,7 @@ function connect(sourceObj, attrName, targetObj, targetMethodName, specOrConvert
   var result = connection.connect();
 
   // 4: notify source object if it has a #onConnect method
-  if (Object.isFunction(sourceObj.onConnect)) {
+  if (typeof sourceObj.onConnect === "function") {
     sourceObj.onConnect(attrName, targetObj, targetMethodName)
   }
 
@@ -551,7 +551,7 @@ function disconnectAll(sourceObj) {
 function once(sourceObj, attrName, targetObj, targetMethodName, spec) {
   spec = spec || {};
   spec.removeAfterUpdate = true;
-  return lively.bindings.connect(sourceObj, attrName, targetObj, targetMethodName, spec);
+  return connect(sourceObj, attrName, targetObj, targetMethodName, spec);
 }
 
 function signal(sourceObj, attrName, newVal) {
@@ -569,7 +569,7 @@ function callWhenNotNull(sourceObj, sourceProp, targetObj, targetSelector) {
   if (sourceObj[sourceProp] != null) {
     targetObj[targetSelector](sourceObj[sourceProp]);
   } else {
-    lively.bindings.connect(
+    connect(
       sourceObj, sourceProp, targetObj, targetSelector,
       {removeAfterUpdate: true});
   }
@@ -579,7 +579,7 @@ function callWhenPathNotNull(source, path, target, targetProp) {
   var helper = {
     key: path.pop(),
     whenDefined(context) {
-      lively.bindings.callWhenNotNull(context, this.key, target, targetProp)
+      callWhenNotNull(context, this.key, target, targetProp)
     }
   }
 
@@ -588,7 +588,7 @@ function callWhenPathNotNull(source, path, target, targetProp) {
       key: path.pop(),
       next: helper,
       whenDefined(context) {
-        lively.bindings.callWhenNotNull(context, this.key, this.next, 'whenDefined')
+        callWhenNotNull(context, this.key, this.next, 'whenDefined')
       }
     }
   }
@@ -598,10 +598,10 @@ function callWhenPathNotNull(source, path, target, targetProp) {
 
 function noUpdate(noUpdateSpec, func) {
   var globalNoUpdate = false, result;
-  if (!func && Object.isFunction(noUpdateSpec)) {
+  if (!func && typeof noUpdateSpec === "function") {
     func = noUpdateSpec; globalNoUpdate = true; }
   if (globalNoUpdate) { // rather a hack for now
-    var proto = lively.bindings.AttributeConnection.prototype;
+    var proto = AttributeConnection.prototype;
     if (!proto.isActive) proto.isActive = 0;
     proto.isActive++;
     try {
@@ -612,15 +612,15 @@ function noUpdate(noUpdateSpec, func) {
     }
   } else {
     var obj = noUpdateSpec.sourceObj,
-      attr = noUpdateSpec.sourceAttribute,
-      targetObj = noUpdateSpec.targetObj,
-      targetAttr = noUpdateSpec.targetAttribute,
-      filter = targetObj && targetAttr ?
-        function(ea) { return ea.getSourceAttrName() === attr
-                   && targetObj === ea.getTargetObj()
-                   && targetAttr === ea.getTargetMethodName(); }:
-        function(ea) { return ea.getSourceAttrName() === attr; },
-      conns = obj.attributeConnections.select(filter);
+        attr = noUpdateSpec.sourceAttribute,
+        targetObj = noUpdateSpec.targetObj,
+        targetAttr = noUpdateSpec.targetAttribute,
+        filter = targetObj && targetAttr ?
+          function(ea) { return ea.getSourceAttrName() === attr
+                             && targetObj === ea.getTargetObj()
+                             && targetAttr === ea.getTargetMethodName(); }:
+          function(ea) { return ea.getSourceAttrName() === attr; },
+        conns = obj.attributeConnections.select(filter);
     conns.invoke('activate');
     try {
       result = func();
