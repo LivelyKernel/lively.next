@@ -10,7 +10,7 @@ export class ObjectDrawer extends Morph {
       name: "object-drawer",
       position: pt(20, 20),
       extent: pt(4 * (140 + 10) + 15, 140),
-      fill: Color.red,
+      fill: Color.white,
       borderWidth: 1,
       borderColor: Color.gray,
       ...props
