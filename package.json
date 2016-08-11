@@ -6,6 +6,7 @@
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
     "lively.lang": "^0.7.0",
     "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
+    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "pepjs": "^0.4.1",
     "virtual-dom": "^2.1.1"
   },
@@ -39,7 +40,8 @@
     "packageMap": {
       "lively.serializer2": "./node_modules/lively.serializer2",
       "lively.graphics": "./node_modules/lively.graphics",
-      "lively.lang": "./node_modules/lively.lang"
+      "lively.lang": "./node_modules/lively.lang",
+      "lively.bindings": "./node_modules/lively.bindings"
     }
   },
   "scripts": {
