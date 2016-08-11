@@ -29,12 +29,12 @@ export async function initMaster(pkg, withChange = false) {
           mode: modes.file,
           content: "export const x = 1;\n"}],
         tree = await repo.createTree(changes),
-        commitHash = await repo.saveAs("commit", {tree, author, message});
+        commitHash = await repo.saveAs("commit", {tree, author, committer: author, message});
   await repo.updateRef("refs/heads/master", commitHash);
   if (withChange) {
     changes[0].content = "export const x = 2;\n";
     const tree2 = await repo.createTree(changes),
-        commitHash2 = await repo.saveAs("commit", {tree: tree2, author, message, parents: [commitHash]});
+        commitHash2 = await repo.saveAs("commit", {tree: tree2, author, committer: author, message, parents: [commitHash]});
     await repo.updateRef("refs/heads/test", commitHash2);
   }
 }

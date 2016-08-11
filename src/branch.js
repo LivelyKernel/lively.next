@@ -1,13 +1,7 @@
-import { mixins, modes, promisify, codec, bodec } from 'js-git-browser';
-import { gitHubToken, gitHubURL } from './github-integration.js';
-import { packageGitHead, localGitHead } from './local-git-integration.js';
-import { diffStr } from "./diff.js";
+import { codec, bodec } from "js-git-browser";
 
-const repoForPackage = {};
-
-function getAuthor() { // -> {name: string, email: string}
-  return {name: "John Doe", email: "john@example.org"};
-}
+import commit, { packageHead } from "./commit.js";
+import repository from "./repo.js";
 
 // type EntryType = "tree" | "commit" | "tag" | "blob"
 
@@ -23,184 +17,52 @@ export default class Branch {
   constructor(name, pkg) { // ChangeSetName, PackageAddress
     this.name = name;
     this.pkg = pkg;
+    this._head = null;
   }
   
-  async repo() { // -> Repository
-    if (this.pkg in repoForPackage) {
-      return repoForPackage[this.pkg];
-    }
-    // local IndexedDB
-    const repo = {};
-    await new Promise((resolve, reject) => {
-      mixins.indexed.init(err => err ? reject(err) : resolve());
-    });
-    mixins.indexed(repo, this.pkg);
-    
-    // GitHub fall through
-    const url = await gitHubURL(this.pkg);
-    if (url != null) {
-      const remote = {};
-      mixins.github(remote, url, await gitHubToken());
-      mixins.readCombiner(remote);
-      mixins.sync(repo, remote);
-      mixins.fallthrough(repo, remote);
-    }
-    
-    // Other plugins
-    mixins.createTree(repo);
-    mixins.memCache(repo);
-    mixins.readCombiner(repo);
-    mixins.walkers(repo);
-    mixins.formats(repo);
-    promisify(repo);
-    return repoForPackage[this.pkg] = repo;
+  async head() { // -> Commit
+    if (this._head) return this._head;
+    const repo = await repository(this.pkg),
+          h = await repo.readRef(`refs/heads/${this.name}`);
+    return this._head = t(await commit(this.pkg, h));
   }
   
-  async commit(hash) { // Hash -> Commit
-    const repo = await this.repo(),
-          commit = await repo.loadAs("commit", hash);
-    commit.hash = hash;
-    return commit;
-  }
-  
-  tree(hash) { // Hash -> Promise<Hash>
-    return this.commit(hash).then(c => c.tree);
-  }
-  
-  async head() { // -> Hash
-    const repo = await this.repo();
-    return repo.readRef(`refs/heads/${this.name}`);
-  }
-  
-  headCommit() { // -> Promise<Commit>
-    return this.head().then(head => this.commit(head));
-  }
-  
-  headTree() { // -> Promise<Hash>
-    return this.head().then(head => this.tree(head));
-  }
-  
-  parent() { // () -> Promise<Hash>
-    return this.headCommit().then(commit => commit.parents[0]);
-  }
-  
-  parentCommit() { // () -> Promise<Commit>
-    return this.parent().then(p => this.commit(p));
-  }
-  
-  async parentTree() { // () -> Hash
-    return this.parent().then(p => this.tree(p));
-  }
-
-  async filesForTree(tree, withDir) {
-    // Tree, boolean -> {[RelPath]: Hash}
-    const repo = await this.repo();
-    const treeStream = await repo.treeWalk(tree),
-          files = {};
-    let obj;
-    while (obj = await treeStream.read()) {
-      const path = obj.path.replace(/^\//, "");
-      if (withDir && obj.mode === modes.tree) {
-        files[path] = obj.hash;
-      }
-      if (obj.mode !== modes.file) continue;
-      files[path] = obj.hash;
-    }
-    return files;
-  }
-  
-  async files(withDir = false) { // boolean? -> {[RelPath]: Hash}
-    const tree = await this.headTree();
-    if (!tree) throw new Error("File tree not found in git");
-    return this.filesForTree(tree, withDir);
-  }
-  
-  async changedFiles(withDir) { // boolean? -> {[RelPath]: Hash}
-    const repo = await this.repo(),
-          files = await this.files(withDir),
-          parentTree = await this.parentTree();
-    if (!parentTree) throw new Error("File tree not found in git");
-    const parentFiles = await this.filesForTree(parentTree, withDir),
-          changedFiles = {};
-    Object.keys(files).forEach(relPath => {
-      if (files[relPath] != parentFiles[relPath]) {
-        changedFiles[relPath] = files[relPath];
-      }
-    });
-    return changedFiles;
-  }
-
-  async diffFile(relPath) {
-    const repo = await this.repo(),
-          file = await this.getFileContent(relPath),
-          parentTree = await this.parentTree();
-    if (!parentTree) throw new Error("File tree not found in git");
-    const parentFiles = await this.filesForTree(parentTree),
-          parentFile = await repo.loadAs("text", parentFiles[relPath]);
-    return diffStr(parentFile, file);
-  }
-  
-  async createFrom(baseHead) { // Hash -> ()
-    // create a commit and a ref for this branch based on other branch
-    const repo = await this.repo();
-    const tree = await this.tree(baseHead),
-          author = Object.assign(getAuthor(), {date: new Date()}),
-          message = "created changeset",
-          commitHash = await repo.saveAs("commit", {tree, author, message, parents: [baseHead]});
-    return repo.updateRef(`refs/heads/${this.name}`, commitHash);
-  }
-  
-  async createFromCS(csName) { // ChangeSetName -> ()
-    // create a commit and a ref for this branch based on other branch
-    const repo = await this.repo(),
-          baseHead = await repo.readRef(`refs/heads/${csName}`);
-    if (!baseHead) throw new Error(`Could not find branch ${csName}`);
-    return this.createFrom(baseHead);
-  }
-
   async createFromHead() { // () -> ()
-    // create a commit and a ref for this branch based on other branch
-    let baseHead = await packageGitHead(this.pkg);
-    if (!baseHead) {
-      baseHead = await localGitHead(this.pkg);
-    }
-    if (!baseHead) {
-      return this.createFromCS("master");
-    }
-    return this.createFrom(baseHead);
+    const repo = await repository(this.pkg),
+          prevHead = await packageHead(this.pkg);
+    this._head = t(await prevHead.createChangeSetCommit());
+    return repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
   }
   
-  async fileExists(relPath) { // RelPath -> boolean?
-    const files = await this.files();
-    return !!files[relPath];
+  files(withDir) { // boolean? -> {[RelPath]: Hash}
+    return this.head().then(head => head.files(withDir));
   }
 
-  async getFileContent(relPath) { // RelPath -> string?
-    const repo = await this.repo(),
-          files = await this.files();
-    if (!files[relPath]) return null;
-    return await repo.loadAs("text", files[relPath]);
+  changedFiles(withDir) { // boolean? -> Promise<{[RelPath]: Hash}>
+    return this.head().then(head => head.changedFiles(withDir));
+  }
+
+  diffFile(relPath) { // RelPath -> Promise<string?>
+    return this.head().then(head => head.diffFile(relPath));
+  }
+  
+  fileExists(relPath) { // RelPath -> Promise<boolean?>
+    return this.head().then(head => head.fileExists(relPath));
+  }
+
+  getFileContent(relPath) { // RelPath -> Promise<string?>
+    return this.head().then(head => head.getFileContent(relPath));
   }
 
   async setFileContent(relPath, content) { // string, string -> ()
     // add file as a new commit based on parent and replace current head
-    const prevContent = await this.getFileContent(relPath);
-    if (prevContent == content) return;
-    const repo = await this.repo(),
-          base = await this.headCommit(),
-          author = Object.assign(getAuthor(), {date: new Date()}),
-          message = "work in progress",
-          changes = [{
-            path: relPath,
-            mode: modes.file,
-            content}];
-    changes.base = await this.headTree();
-    const tree = await repo.createTree(changes),
-          commitHash = await repo.saveAs("commit", {tree, author, message, parents: base.parents});
-    return repo.updateRef(`refs/heads/${this.name}`, commitHash);
+    const repo = await repository(this.pkg),
+          head = await this.head();
+    this._head = t(await head.setFileContent(relPath, content));
+    return repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
   }
 
-  delete(db) {
+  delete(db) { // Database -> Promise<()>
     return new Promise((resolve, reject) => {
       const key = this.pkg,
             trans = db.transaction(["refs"], "readwrite"),
@@ -216,7 +78,7 @@ export default class Branch {
   }
 
   async fromObject(obj) { // { ".": Hash, [Hash]: Entry } -> Branch
-    const repo = await this.repo();
+    const repo = await repository(this.pkg);
     for (const hash in obj) {
       if (hash === ".") {
         await repo.updateRef(`refs/heads/${this.name}`, obj[hash]);
@@ -229,9 +91,9 @@ export default class Branch {
   }
   
   async toObject() { // -> { ".": Hash, [Hash]: Entry }
-    const repo = await this.repo(),
-          changed = await this.changedFiles(true),
-          headCommit = await this.headCommit(),
+    const repo = await repository(this.pkg),
+          headCommit = await this.head(),
+          changed = await headCommit.changedFiles(true),
           headHash = headCommit.hash,
           result = {};
     for (const relPath in changed) {

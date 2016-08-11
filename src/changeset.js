@@ -4,7 +4,7 @@ import { module, getPackages, importPackage } from "lively.modules";
 
 import { install, uninstall } from "../index.js";
 import Branch from "./branch.js";
-
+import { packageHead } from "./commit.js";
 
 let current = null; // null (none) | ChangeSet
 let changesets; // undefined (uninitialized) | Array<ChangeSet>
@@ -165,29 +165,31 @@ export function currentChangeSet() { // () -> ChangeSet?
   return current;
 }
 
-async function switchPackage(pkg, prev, next) {
+async function switchCommits(prev, next) {
+  // Commit, Commit -> ()
+  const prevFiles = await prev.files();
+  const nextFiles = await next.files();
+  for (const relPath in prevFiles) {
+    const prevHash = prevFiles[relPath],
+          nextHash = nextFiles[relPath],
+          mod = `${prev.pkg}/${relPath}`;
+    if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded()) {
+      const newSource = await next.getFileContent(relPath);
+      await module(mod)
+        .changeSource(newSource, {targetModule: mod, doEval: true})
+        .catch(e => console.error(e));
+    }
+  }
+}
+
+async function switchChangeSets(pkg, prev, next) {
   // PackageAddress, ChangeSet, ChangeSet -> ()
   let prevB = prev && prev.branches.find(b => b.pkg === pkg),
       nextB = next && next.branches.find(b => b.pkg === pkg);
   if (!prevB && !nextB) return; // no changes in this package
-  if (!prevB) prevB = new Branch("master", pkg);
-  if (!nextB) nextB = new Branch("master", pkg);
-  const prevFiles = await prevB.files();
-  const nextFiles = await nextB.files();
-  for (const relPath in prevFiles) {
-    const prevHash = prevFiles[relPath],
-          nextHash = nextFiles[relPath],
-          mod = `${pkg}/${relPath}`;
-    if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded()) {
-      let newSource;
-      if (nextB.name === "master") {
-        newSource = await System.resource(mod).read();
-      } else {
-        newSource = await nextB.getFileContent(relPath);
-      }
-      await module(mod).changeSource(newSource, {targetModule: mod, doEval: true}).catch(e => console.error(e));
-    }
-  }
+  const prevC = prevB ? prevB.head() : packageHead(pkg);
+  const nextC = nextB ? nextB.head() : packageHead(pkg);
+  return switchCommits((await prevC), (await nextC));
 }
 
 function fetchFromChangeset(proceed, load) {
@@ -216,7 +218,7 @@ export async function setCurrentChangeSet(csName) {
   current = next;
   const toLoad = next ? next.branches.reduce((prev, b) => (prev[b.pkg] = true, prev), {}) : {};
   for (const pkg of getPackages()) {
-    await switchPackage(pkg.address, old, next);
+    await switchChangeSets(pkg.address, old, next);
     delete toLoad[pkg.address];
   }
   for (const pkg in toLoad) {
