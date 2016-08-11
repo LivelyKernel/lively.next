@@ -118,7 +118,8 @@ export class Browser extends Window {
   }
 
   build() {
-    var style = {borderWidth: 1, borderColor: Color.gray};
+    var style = {borderWidth: 1, borderColor: Color.gray},
+        textStyle = {...style, type: "text", fixedWidth: true, fixedHeight: true, clipMode: "auto"};
     return morph({
       ...style,
       layout: new GridLayout({
@@ -127,7 +128,7 @@ export class Browser extends Window {
       submorphs: [
         {name: "packageList", type: "list", ...style},
         {name: "moduleList", type: "list", ...style},
-        {name: "sourceEditor", type: "text", fixedWidth: true, fixedHeight: true, clipMode: "auto", ...style, doSave() { this.owner.owner/*FIXME*/.save(); }}
+        {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner/*FIXME*/.save(); }}
       ]
     });
   }
