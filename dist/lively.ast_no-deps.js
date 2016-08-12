@@ -12131,7 +12131,7 @@ module.exports = function(acorn) {
     options = options || {};
     var traversal = options.traversal || 'preorder'; // also: postorder
 
-    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.visitors.withMemberExpression);
+    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
     var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
       func(node, state, depth, type);return orig(node, depth + 1, cont);
     } : function (orig, type, node, depth, cont) {
@@ -12170,8 +12170,8 @@ module.exports = function(acorn) {
 
   function findNodesIncluding(parsed, pos, test, base) {
     var nodes = [];
-    base = base || acorn.walk.make({});
-    Object.keys(acorn.walk.base).forEach(function (name) {
+    base = base || walk.make(walk.visitors.withMemberExpression);
+    Object.keys(walk.base).forEach(function (name) {
       var orig = base[name];
       base[name] = function (node, state, cont) {
         lively_lang.arr.pushIfNotIncluded(nodes, node);
