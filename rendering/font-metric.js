@@ -85,16 +85,17 @@ export default class FontMetric {
   }
 
   sizeForStr(fontFamily, fontSize, str) {
-    var height = 0, width = 0;
+    var height = 0, width = 0,
+        defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
     for (let line of str.split('\n')) {
-      let lineHeight = 0, lineWidth = 0;
+      let lineHeight = defaultLineHeight, lineWidth = 0;
       for (let char of line.split('')) {
         let { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
         if (charHeight > lineHeight) lineHeight = charHeight;
         lineWidth += charWidth;
       }
       if (lineWidth > width) width = lineWidth;
-      height += lineHeight || this.sizeFor(fontFamily, fontSize, " ").height;
+      height += lineHeight;
     }
     return { height: height, width: width };
   }
@@ -119,10 +120,11 @@ export default class FontMetric {
   }
 
   sizeListForStr(fontFamily, fontSize, str) {
-    var sizeList = [], totalHeight = 0, index = 0;
+    var sizeList = [], totalHeight = 0, index = 0,
+        defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
     for (let line of str.split('\n')) {
       let lineSizeList = [],
-          lineHeight = this.sizeFor(fontFamily, fontSize, " ").height,
+          lineHeight = defaultLineHeight,
           lineWidth = 0;
       for (let char of line.split('')) {
         let { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
@@ -133,7 +135,7 @@ export default class FontMetric {
       lineSizeList.push({ index: index++, position: pt(lineWidth, totalHeight), width: 0}); // newline
       lineSizeList.map(c => c.height = lineHeight);
       sizeList.push(lineSizeList);
-      totalHeight += lineHeight || this.sizeFor(fontFamily, fontSize, " ").height;
+      totalHeight += lineHeight;
     }
     return sizeList;
   }
@@ -145,5 +147,9 @@ export default class FontMetric {
       result[char] = this.sizeFor(fontFamily, fontSize, char)
     }
     return result;
+  }
+
+  defaultLineHeight(fontFamily, fontSize) {
+    return this.sizeFor(fontFamily, fontSize, " ").height;
   }
 }

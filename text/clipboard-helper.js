@@ -9,13 +9,13 @@ export class ClipboardHelper extends Morph {
   render(renderer) {
     return h('textarea', {
       ...defaultAttributes(this),
-      resize: "none",
       value: " ",
       style: {
         position: "absolute",
         width: "0px",
         height: "0px",
         overflow: "hidden",
+        resize: "none",
         padding: "0px",
         border: "0px"
       }});
