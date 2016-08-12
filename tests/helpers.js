@@ -3,7 +3,7 @@ import { mixins, modes, promisify } from "js-git-browser";
 import { registerPackage, removePackage } from "lively.modules";
 import { removeDir, createFiles } from "lively.modules/tests/helpers.js";
 
-import { createChangeSet, setCurrentChangeSet } from "../src/changeset.js";
+import { createChangeSet } from "../src/changeset.js";
 
 async function repoForPackage(pkg) {
   const repo = {};
@@ -54,7 +54,7 @@ export const
 export async function initChangeSet(withChange = false) {
   await initMaster(pkgDir, withChange);
   const cs = await createChangeSet("test");
-  await setCurrentChangeSet("test");
+  await cs.activate();
   return cs;
 }
 

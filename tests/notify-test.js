@@ -4,25 +4,27 @@ import { expect } from "mocha-es6";
 import { subscribe, unsubscribe } from "lively.notifications";
 import { module } from "lively.modules";
 
-import { createChangeSet, localChangeSets, setCurrentChangeSet, notify } from "../src/changeset.js";
+import { createChangeSet, localChangeSets, deactivateAll, notify } from "../src/changeset.js";
 import { fileA, createPackage, deletePackage, initChangeSet } from "./helpers.js";
 
 describe("notify", () => {
   
-  let added, changed, current, deleted;
+  let added, changed, activated, deactivated, deleted;
   
   function onAdd(msg) { added.push(msg); }
   function onChange(msg) { changed.push(msg); }
-  function onCurrent(msg) { current.push(msg); }
+  function onActivate(msg) { activated.push(msg); }
+  function onDeactivate(msg) { deactivated.push(msg); }
   function onDelete(msg) { deleted.push(msg); }
   
   beforeEach(async () => {
     await createPackage();
-    await setCurrentChangeSet(null);
-    added = [], changed = [], current = [], deleted = [];
+    await deactivateAll();
+    added = [], changed = [], activated = [], deactivated = [], deleted = [];
     subscribe("lively.changesets/added", onAdd);
     subscribe("lively.changesets/changed", onChange);
-    subscribe("lively.changesets/switchedcurrent", onCurrent);
+    subscribe("lively.changesets/activated", onActivate);
+    subscribe("lively.changesets/deactivated", onDeactivate);
     subscribe("lively.changesets/deleted", onDelete);
   });
 
@@ -33,7 +35,7 @@ describe("notify", () => {
     await deletePackage();
     unsubscribe("lively.changesets/added", onAdd);
     unsubscribe("lively.changesets/changed", onChange);
-    unsubscribe("lively.changesets/switchedcurrent", onCurrent);
+    unsubscribe("lively.changesets/switchedcurrent", onActivate);
     unsubscribe("lively.changesets/deleted", onDelete);
   });
 
@@ -73,18 +75,28 @@ describe("notify", () => {
     ]);
   });
 
-  it("when switching changesets", async () => {
+  it("when activating changesets", async () => {
     const cs = await createChangeSet("test"),
           cs2 = await createChangeSet("test2");
-    expect(current).to.deep.equal([]);
-    await setCurrentChangeSet("test");
-    expect(current).to.containSubset([
+    expect(activated).to.deep.equal([]);
+    await cs.activate();
+    expect(activated).to.containSubset([
       {changeset: "test"}
     ]);
-    await setCurrentChangeSet("test2");
-    expect(current).to.containSubset([
+    await cs2.activate();
+    expect(activated).to.containSubset([
       {changeset: "test"},
-      {changeset: "test2", before: "test"}
+      {changeset: "test2"}
+    ]);
+  });
+  
+  it("when deactivating changesets", async () => {
+    const cs = await createChangeSet("test");
+    expect(deactivated).to.deep.equal([]);
+    await cs.activate();
+    await cs.deactivate();
+    expect(deactivated).to.containSubset([
+      {changeset: "test"}
     ]);
   });
 });

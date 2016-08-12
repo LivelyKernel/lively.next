@@ -1,7 +1,8 @@
 /* global fetch */
-import { modes } from 'js-git-browser';
+import { modes } from "js-git-browser";
+import { module } from "lively.modules";
 
-import repository from './repo.js';
+import repository from "./repo.js";
 import { diffStr } from "./diff.js";
 
 function getAuthor() { // -> {name: string, email: string}
@@ -151,6 +152,23 @@ class Commit {
           data = {tree, author, committer: author, message, parents: this.parents},
           commitHash = await repo.saveAs("commit", data);
     return new Commit(this.pkg, commitHash, data);
+  }
+  
+  async activate(prev) { // () -> ()
+    if (this.hash == prev.hash) return;
+    const prevFiles = await prev.files(),
+          nextFiles = await this.files();
+    for (const relPath in prevFiles) {
+      const prevHash = prevFiles[relPath],
+            nextHash = nextFiles[relPath],
+            mod = `${this.pkg}/${relPath}`;
+      if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded()) {
+        const newSource = await this.getFileContent(relPath);
+        await module(mod)
+          .changeSource(newSource, {targetModule: mod, doEval: true})
+          .catch(e => console.error(e));
+      }
+    }
   }
 
   toString() { // -> String

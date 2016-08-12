@@ -1,4 +1,5 @@
 import { codec, bodec } from "js-git-browser";
+import { emit } from 'lively.notifications';
 
 import commit, { packageHead } from "./commit.js";
 import repository from "./repo.js";
@@ -24,13 +25,13 @@ export default class Branch {
     if (this._head) return this._head;
     const repo = await repository(this.pkg),
           h = await repo.readRef(`refs/heads/${this.name}`);
-    return this._head = t(await commit(this.pkg, h));
+    return this._head = await commit(this.pkg, h);
   }
   
   async createFromHead() { // () -> ()
     const repo = await repository(this.pkg),
           prevHead = await packageHead(this.pkg);
-    this._head = t(await prevHead.createChangeSetCommit());
+    this._head = await prevHead.createChangeSetCommit();
     return repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
   }
   
@@ -46,10 +47,6 @@ export default class Branch {
     return this.head().then(head => head.diffFile(relPath));
   }
   
-  fileExists(relPath) { // RelPath -> Promise<boolean?>
-    return this.head().then(head => head.fileExists(relPath));
-  }
-
   getFileContent(relPath) { // RelPath -> Promise<string?>
     return this.head().then(head => head.getFileContent(relPath));
   }
@@ -58,8 +55,9 @@ export default class Branch {
     // add file as a new commit based on parent and replace current head
     const repo = await repository(this.pkg),
           head = await this.head();
-    this._head = t(await head.setFileContent(relPath, content));
-    return repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
+    this._head = await head.setFileContent(relPath, content);
+    await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
+    emit("lively.changesets/changed", {changeset: this.name, path: relPath});
   }
 
   delete(db) { // Database -> Promise<()>

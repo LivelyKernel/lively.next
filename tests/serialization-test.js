@@ -3,7 +3,7 @@
 import { expect } from "mocha-es6";
 
 import { module } from "lively.modules";
-import { createChangeSet, localChangeSets, setCurrentChangeSet } from "../src/changeset.js";
+import { createChangeSet, localChangeSets, deactivateAll } from "../src/changeset.js";
 import { fileA, createPackage, deletePackage, initChangeSet } from "./helpers.js";
 
 describe("serialize", () => {
@@ -11,7 +11,7 @@ describe("serialize", () => {
   let cs;
   beforeEach(async () => {
     await createPackage();
-    setCurrentChangeSet(null);
+    await deactivateAll();
     cs = await initChangeSet();
   });
 
@@ -30,7 +30,7 @@ describe("serialize", () => {
     expect(changedSrc).to.be.eql("export const x = 1;\n");
     const cs2 = await createChangeSet("test");
     await cs2.fromObject(obj);
-    await setCurrentChangeSet("test");
+    await cs2.activate();
     const changedSrc2 = await module(fileA).source();
     expect(changedSrc2).to.be.eql("export const x = 2;\n");
     await cs2.delete();

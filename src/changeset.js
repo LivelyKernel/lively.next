@@ -1,12 +1,12 @@
+/* global Map */
 import { arr } from 'lively.lang';
 import { emit } from 'lively.notifications';
 import { module, getPackages, importPackage } from "lively.modules";
 
-import { install, uninstall } from "../index.js";
+import { activeCommit, install, uninstall } from "../index.js";
 import Branch from "./branch.js";
 import { packageHead } from "./commit.js";
 
-let current = null; // null (none) | ChangeSet
 let changesets; // undefined (uninitialized) | Array<ChangeSet>
 
 class ChangeSet {
@@ -15,44 +15,21 @@ class ChangeSet {
     // string, Array<{pkg: PackageAddress}> -> ChangeSet
     this.name = name;
     this.branches = pkgs.map(pkg => new Branch(name, pkg.pkg));
+    this.active = false;
   }
   
-  resolve(path) { // Path -> [Branch, RelPath] | [null, null]
-    const mod = module(path),
-          pkg = mod.package().address,
-          branch = this.branches.find(b => b.pkg === pkg);
-    if (!branch) return [null, null];
-    return [branch, mod.pathInPackage().replace(/^\.\//, '')];
-  }
-
-  fileExists(path) { // Path -> boolean?
-    const [branch, relPath] = this.resolve(path);
-    if (!branch) return null;
-    return branch.fileExists(relPath);
-  }
-
-  getFileContent(path) { // Path -> string?
-    const [branch, relPath] = this.resolve(path);
-    if (!branch) return null;
-    return branch.getFileContent(relPath);
+  getBranch(pkg) { // PackageAddress -> Branch?
+    return this.branches.find(b => b.pkg == pkg);
   }
   
-  async createBranch(path) { // Path -> Branch?
-    const pkg = module(path).package().address,
-          branch = new Branch(this.name, pkg);
-    await branch.createFromHead();
-    this.branches.push(branch);
-    return branch;
-  }
-
-  async setFileContent(path, content) { // Path, string -> boolean
-    let [branch, relPath] = this.resolve(path);
+  async getOrCreateBranch(pkg) { // PackageAddress -> Branch
+    let branch = this.getBranch(pkg);
     if (!branch) {
-      await this.createBranch(path);
-      return this.setFileContent(path, content);
+      branch = new Branch(this.name, pkg);
+      await branch.createFromHead();
+      this.branches.push(branch);
     }
-    emit("lively.changesets/changed", {changeset: this.name, path: relPath});
-    return branch.setFileContent(relPath, content);
+    return branch;
   }
 
   pushToGithub() {
@@ -83,8 +60,8 @@ class ChangeSet {
   }
   
   async delete() {
-    if (this === current) {
-      await setCurrentChangeSet(null);
+    if (this.isActive()) {
+      await this.deactivate();
     }
     changesets = changesets.filter(cs => cs !== this);
     const db = await new Promise((resolve, reject) => {
@@ -98,12 +75,38 @@ class ChangeSet {
     emit("lively.changesets/deleted", {changeset: this.name});
   }
   
-  isCurrent() { // -> bool
-    return this === current;
+  isActive() { // -> bool
+    return this.active;
   }
   
-  setCurrent() { // -> Promise
-    return setCurrentChangeSet(this.name);
+  async activate() { // () -> ()
+    if (this.isActive()) return;
+    install();
+    const prev = new Map();
+    for (const branch of this.branches) {
+      prev[branch] = await activeCommit(branch.pkg);
+    }
+    this.active = true;
+    for (const branch of this.branches) {
+      const next = await activeCommit(branch.pkg);
+      await next.activate(prev[branch]);
+    }
+    emit("lively.changesets/activated", {changeset: this.name});
+  }
+  
+  async deactivate() { // () -> ()
+    if (!this.isActive()) return;
+    this.active = false;
+    for (const branch of this.branches) {
+      const prev = await branch.head(),
+            next = await activeCommit(branch.pkg);
+      await next.activate(prev);
+    }
+    const cs = await localChangeSets();
+    if (cs.filter(c => c.isActive()).length === 0) {
+      uninstall();
+    }
+    emit("lively.changesets/deactivated", {changeset: this.name});
   }
   
   toString() { // -> String
@@ -161,71 +164,7 @@ export async function localChangeSets() { // () => Array<ChangeSet>
   return changesets = Object.keys(groups).map(name => new ChangeSet(name, groups[name]));
 }
 
-export function currentChangeSet() { // () -> ChangeSet?
-  return current;
-}
-
-async function switchCommits(prev, next) {
-  // Commit, Commit -> ()
-  const prevFiles = await prev.files();
-  const nextFiles = await next.files();
-  for (const relPath in prevFiles) {
-    const prevHash = prevFiles[relPath],
-          nextHash = nextFiles[relPath],
-          mod = `${prev.pkg}/${relPath}`;
-    if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded()) {
-      const newSource = await next.getFileContent(relPath);
-      await module(mod)
-        .changeSource(newSource, {targetModule: mod, doEval: true})
-        .catch(e => console.error(e));
-    }
-  }
-}
-
-async function switchChangeSets(pkg, prev, next) {
-  // PackageAddress, ChangeSet, ChangeSet -> ()
-  let prevB = prev && prev.branches.find(b => b.pkg === pkg),
-      nextB = next && next.branches.find(b => b.pkg === pkg);
-  if (!prevB && !nextB) return; // no changes in this package
-  const prevC = prevB ? prevB.head() : packageHead(pkg);
-  const nextC = nextB ? nextB.head() : packageHead(pkg);
-  return switchCommits((await prevC), (await nextC));
-}
-
-function fetchFromChangeset(proceed, load) {
-  const cs = currentChangeSet();
-  if (!cs) return proceed(load);
-  return cs.getFileContent(load.name).then(content => {
-    return content === null ? proceed(load) : content;
-  });
-}
-
-export async function setCurrentChangeSet(csName) {
-  // ChangeSetName? -> ChangeSet
-  const old = currentChangeSet();
-  let next;
-  if (!csName) {
-    next = null;
-  } else {
-    next = (await localChangeSets()).find(cs => cs.name === csName);
-  }
-  if (next === old) return;
-  if (next) {
-    install();
-  } else {
-    uninstall();
-  }
-  current = next;
-  const toLoad = next ? next.branches.reduce((prev, b) => (prev[b.pkg] = true, prev), {}) : {};
-  for (const pkg of getPackages()) {
-    await switchChangeSets(pkg.address, old, next);
-    delete toLoad[pkg.address];
-  }
-  for (const pkg in toLoad) {
-    if (toLoad[pkg]) await importPackage(pkg);
-  }
-  emit("lively.changesets/switchedcurrent", {
-    changeset: csName || null,
-    before: old ? old.name : null
-  });
+export async function deactivateAll() {
+  const cs = await localChangeSets();
+  for (const c of cs) { await c.deactivate(); }
 }
