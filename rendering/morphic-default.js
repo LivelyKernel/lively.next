@@ -18,7 +18,7 @@ export function defaultStyle(morph) {
     transform: `translate(${position.x - origin.x}px, ${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`,
     transformOrigin: `${origin.x}px ${origin.y}px`,
     opacity,
-    display: visible ? "" : "none",
+    display: visible ? "inline" : "none",
     width: width + 'px', height: height + 'px',
     background: fill ? fill.toString() : "",
     ...((clipMode == "hidden") ? 
