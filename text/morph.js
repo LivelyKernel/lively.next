@@ -171,6 +171,14 @@ export class Text extends Morph {
     return fontMetric.indexFromPoint(fontFamily, fontSize, textString, adjustedPt);
   }
 
+  pointFromIndex(index) {
+     var  { padding, scroll, fontMetric, fontFamily, fontSize, textString } = this,
+          point = fontMetric.pointFromIndex(fontFamily, fontSize, textString, index),
+          paddingPt = pt(padding.left(), padding.top()),
+          adjustedPt = point.subPt(paddingPt).addPt(scroll);
+    return adjustedPt;
+  }
+
   onMouseDown(evt) { this.onMouseMove(evt); }
 
   onMouseMove(evt) {
