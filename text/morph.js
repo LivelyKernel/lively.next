@@ -165,18 +165,22 @@ export class Text extends Morph {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
+  indexFromPoint(point) {
+    var { padding, scroll, fontMetric, fontFamily, fontSize, textString } = this,
+        paddingPt = pt(padding.left(), padding.top()),
+        adjustedPt = this.localize(point.subPt(paddingPt).addPt(scroll));
+    return fontMetric.indexFromPoint(fontFamily, fontSize, textString, adjustedPt);
+  }
+
   onMouseDown(evt) { this.onMouseMove(evt); }
 
   onMouseMove(evt) {
     var { clickedOnMorph, clickedOnPosition } = evt.state;
     if (clickedOnMorph === this) {
-      var { fontFamily, fontSize, textString, fontMetric, selection, padding } = this,
-          offset = pt(padding.left(), padding.top()),
-          startPos = this.localize(clickedOnPosition.subPt(offset)),
-          endPos = this.localize(evt.position.subPt(offset)),
+      var { selection } = this,
           { start: curStart, end: curEnd } = selection,
-          start = fontMetric.indexFromPoint(fontFamily, fontSize, textString, startPos),
-          end = fontMetric.indexFromPoint(fontFamily, fontSize, textString, endPos);
+          start = this.indexFromPoint(clickedOnPosition),
+          end = this.indexFromPoint(evt.position)
       if (start > end)
         [start, end] = [end, start];
       if (end !== curEnd || start !== curStart)
