@@ -1,4 +1,5 @@
-import { pt } from "lively.graphics";
+import { pt, rect } from "lively.graphics";
+import { arr } from "lively.lang";
 
 export default class FontMetric {
 
@@ -117,6 +118,15 @@ export default class FontMetric {
       return x >= start && x <= end;
     });
     return char ? char.index : line[line.length-1].index;
+  }
+
+  pointFromIndex(fontFamily, fontSize, str, index) {
+    var substr = str.substring(0, index + 1),
+        sizeMap = this.sizeListForStr(fontFamily, fontSize, substr),
+        lineSizeMap = arr.last(sizeMap),
+        { position: { x, y }, width, height } = arr.last(lineSizeMap),
+        boundingRect = rect(x, y, width, height);
+    return boundingRect.center();
   }
 
   sizeListForStr(fontFamily, fontSize, str) {
