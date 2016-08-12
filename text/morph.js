@@ -1,6 +1,6 @@
 /*global System*/
 import { string } from "lively.lang";
-import { Color, pt } from "lively.graphics";
+import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph } from "../index.js";
 import { ClipboardHelper } from "./clipboard-helper.js";
 import Selection from "./selection.js";
@@ -25,7 +25,7 @@ export class Text extends Morph {
       clipMode: "hidden",
       textString: "",
       fixedWidth: false, fixedHeight: false,
-      padding: { top: 0, right: 0, bottom: 0, left: 0 },
+      padding: 0,
       draggable: false,
       _selection: { start: 0, end: 0 },
       fontFamily: "Sans-Serif",
@@ -75,49 +75,10 @@ export class Text extends Morph {
     this._needsFit = true;
   }
 
-  get padding() {
-    var _this = this;
-    return {
-      get top() { return _this.paddingTop; },
-      set top(v) { _this.paddingTop = v; },
-      get right() { return _this.paddingRight; },
-      set right(v) { _this.paddingRight = v; },
-      get bottom() { return _this.paddingBottom; },
-      set bottom(v) { _this.paddingBottom = v; },
-      get left() { return _this.paddingLeft; },
-      set left(v) { _this.paddingLeft = v; },
-    }
-  }
+  get padding() { return this.getProperty("padding") }
 
   set padding(value) {
-    if (typeof value === "number") {
-      this.paddingTop = this.paddingRight = this.paddingBottom = this.paddingLeft = value;
-    } else {
-      ({ top: this.paddingTop, right: this.paddingRight, bottom: this.paddingBottom, left: this.paddingLeft }) = value;
-    }
-  }
-
-  get paddingTop() { return this.getProperty("paddingTop") }
-  set paddingTop(value) {
-    this.addValueChange("paddingTop", typeof value === "number" ? value : 0);
-    this._needsFit = true;
-  }
-
-  get paddingRight() { return this.getProperty("paddingRight") }
-  set paddingRight(value) {
-    this.addValueChange("paddingRight", typeof value === "number" ? value : 0);
-    this._needsFit = true;
-  }
-
-  get paddingBottom() { return this.getProperty("paddingBottom") }
-  set paddingBottom(value) {
-    this.addValueChange("paddingBottom",typeof value === "number" ? value : 0);
-    this._needsFit = true;
-  }
-
-  get paddingLeft() { return this.getProperty("paddingLeft") }
-  set paddingLeft(value) {
-    this.addValueChange("paddingLeft", typeof value === "number" ? value : 0);
+    this.addValueChange("padding", typeof value === "number" ? Rectangle.inset(value) : value);
     this._needsFit = true;
   }
 
@@ -195,9 +156,9 @@ export class Text extends Morph {
         {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(fontFamily, fontSize, placeholder || " "),
         {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, textString);
     if (!fixedHeight)
-      this.height = Math.max(placeholderHeight, height) + padding.top + padding.bottom;
+      this.height = Math.max(placeholderHeight, height) + padding.top() + padding.bottom();
     if (!fixedWidth)
-      this.width = Math.max(placeholderWidth, width) + padding.left + padding.right;
+      this.width = Math.max(placeholderWidth, width) + padding.left() + padding.right();
   }
 
   fitIfNeeded() {
@@ -209,8 +170,8 @@ export class Text extends Morph {
   onMouseMove(evt) {
     var { clickedOnMorph, clickedOnPosition } = evt.state;
     if (clickedOnMorph === this) {
-      var { fontFamily, fontSize, textString, fontMetric, selection, paddingLeft, paddingTop } = this,
-          offset = pt(paddingLeft, paddingTop),
+      var { fontFamily, fontSize, textString, fontMetric, selection, padding } = this,
+          offset = pt(padding.left(), padding.top()),
           startPos = this.localize(clickedOnPosition.subPt(offset)),
           endPos = this.localize(evt.position.subPt(offset)),
           { start: curStart, end: curEnd } = selection,

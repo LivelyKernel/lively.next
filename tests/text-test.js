@@ -15,7 +15,7 @@ function text(string, props) {
     fontFamily: "Arial",
     fontSize: 10,
     extent: pt(100,100),
-    padding: { top: 1, right: 1, bottom: 1, left: 1 },
+    padding: Rectangle.inset(1,1,1,1),
     ...props
   });
 }
