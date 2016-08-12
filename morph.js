@@ -822,6 +822,13 @@ export class Image extends Morph {
 }
 
 export class Path extends Morph {
+  
+  constructor(props) {
+    super({
+      vertices: [],
+      ...props
+    })
+  }
 
   get borderStyle() { return this.getProperty("borderStyle") }
   set borderStyle(value) { this.addValueChange("borderStyle", value) }
