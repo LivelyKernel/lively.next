@@ -56,12 +56,24 @@ export class World extends Morph {
     var removeHalo = evt.halo && !evt.targetMorphs.find(morph => morph.isHaloItem);
     if (removeHalo) {
       evt.halo.remove();
-      if (evt.isCommandKey()) {
-        if (evt.halo.target.owner) {
-          this.showHaloFor(evt.halo.target.owner, evt.domEvt.pointerId);
-        }
+      // switch immediately to a different morph
+      addHalo = !target.isHalo && target.halosEnabled && evt.isCommandKey();
+      if (addHalo) {
+        this.showHaloFor(target, evt.domEvt.pointerId);
+        return;
+      }
+      // propagate to halo to owner
+      addHalo = target == evt.halo && evt.isCommandKey() && evt.halo.target.owner;
+      if (addHalo) {
+        this.showHaloFor(evt.halo.target.owner, evt.domEvt.pointerId);
+        return
       }
       return;
+    }
+    
+    removeHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
+    if (removeHalo) {
+      evt.layoutHalo.remove();
     }
 
     if (evt.isAltDown() && config.altClickDefinesThat) {
@@ -107,6 +119,14 @@ export class World extends Morph {
 
   showHaloFor(morph, pointerId) {
     return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
+  }
+  
+  layoutHaloForPointerId(pointerId) {
+    return this.submorphs.find(m => m.isLayoutHalo && m.state.pointerId === pointerId);
+  }
+  
+  showLayoutHaloFor(morph, pointerId) {
+    return this.addMorph(morph.layout.inspect(pointerId));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
