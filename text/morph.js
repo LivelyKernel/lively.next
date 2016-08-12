@@ -34,7 +34,6 @@ export class Text extends Morph {
     });
     this.fit();
     this._needsFit = false;
-    this._needsSelect = false;
 
     // Note: clipboardHelper may already exist if this Text morph was copied
     this.clipboardHelper || this.addMorph(new ClipboardHelper());

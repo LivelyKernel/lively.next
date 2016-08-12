@@ -10,7 +10,6 @@ export default class Selection {
   set range(rangeObj) {
     let morph = this.textMorph;
     morph._selection = rangeObj;
-    morph._needsSelect = true;
   }
 
   get start() { return this.range.start; }
