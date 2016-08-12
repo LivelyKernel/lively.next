@@ -305,13 +305,14 @@ class SimulatedDOMEvent {
 
 export class Event {
 
-  constructor(type, domEvt, dispatcher, targetMorphs, hand, halo) {
+  constructor(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
     this.type = type;
     this.domEvt = domEvt;
     this.dispatcher = dispatcher;
     this.targetMorphs = targetMorphs;
     this.hand = hand;
     this.halo = halo;
+    this.layoutHalo = layoutHalo;
     this.stopped = false;
     this.onDispatchCallbacks = [];
     this.onAfterDispatchCallbacks = [];
@@ -407,8 +408,8 @@ export class Event {
 
 }
 
-function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
-  var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo)
+function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
+  var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.draggedMorph = targetMorph;
       state.lastDragPosition = evt.position;
@@ -416,26 +417,26 @@ function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
     })
     .onStop(() => {
       state.draggedMorph = null;
-      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo));
+      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo));
     });
   return evt;
 }
 
-function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
-  var evt = new Event("drag", domEvt, dispatcher, [state.draggedMorph], hand, halo)
+function dragEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
+  var evt = new Event("drag", domEvt, dispatcher, [state.draggedMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.dragDelta = evt.position.subPt(state.lastDragPosition);
     })
     .onAfterDispatch(() => state.lastDragPosition = evt.position)
     .onStop(() => {
       state.draggedMorph = null;
-      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo));
+      dispatcher.schedule(dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo));
     });
   return evt;
 }
 
-function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo) {
-  var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph || targetMorph], hand, halo)
+function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
+  var evt = new Event("dragend", domEvt, dispatcher, [state.draggedMorph || targetMorph], hand, halo, layoutHalo)
     .onDispatch(() => state.dragDelta = evt.position.subPt(state.lastDragPosition))
     .onAfterDispatch(() => {
       state.draggedMorph = null;
@@ -528,7 +529,8 @@ export class EventDispatcher {
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
         hand = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
         halo = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
-        defaultEvent = new Event(type, domEvt, this, eventTargets, hand, halo),
+        layoutHalo = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
+        defaultEvent = new Event(type, domEvt, this, eventTargets, hand, halo, layoutHalo),
         events = [defaultEvent],
         later = [];
 
@@ -571,12 +573,12 @@ export class EventDispatcher {
 
         // drag release
         if (state.draggedMorph) {
-          events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo));
+          events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
 
         // grap release
         } else if (hand.carriesMorphs()) {
-          events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo));
+          events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
         }
         break;
@@ -591,7 +593,7 @@ export class EventDispatcher {
 
         } else if (state.draggedMorph) {
           defaultEvent.targetMorphs = [this.world];
-          events.push(dragEvent(domEvt, this, targetMorph, state, hand, halo));
+          events.push(dragEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
 
         // Start dragging when we are holding the hand pressed and and move it
         // beyond targetMorph.dragTriggerDistance
@@ -606,9 +608,9 @@ export class EventDispatcher {
           if (dist > dragTarget.dragTriggerDistance) {
             // FIXME should grab really be triggered through drag?
             if (dragTarget.grabbable) {
-              events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo));
+              events.push(new Event("grab", domEvt, this, [dragTarget], hand, halo, layoutHalo));
             } else if (dragTarget.draggable) {
-              events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo));
+              events.push(dragStartEvent(domEvt, this, dragTarget, state, hand, halo, layoutHalo));
             }
             defaultEvent.targetMorphs = [this.world];
           }
@@ -635,10 +637,10 @@ export class EventDispatcher {
 
         var hoveredOverMorphs = [targetMorph].concat(targetMorph.ownerChain()).reverse(),
             hoverOutEvents = arr.withoutAll(state.hover.hoveredOverMorphs, hoveredOverMorphs)
-              .map(m => new Event("hoverout", domEvt, this, [m], hand, halo)
+              .map(m => new Event("hoverout", domEvt, this, [m], hand, halo, layoutHalo)
                           .onDispatch(() => arr.remove(state.hover.hoveredOverMorphs, m))),
             hoverInEvents = arr.withoutAll(hoveredOverMorphs, state.hover.hoveredOverMorphs)
-              .map(m => new Event("hoverin", domEvt, this, [m], hand, halo)
+              .map(m => new Event("hoverin", domEvt, this, [m], hand, halo, layoutHalo)
                           .onDispatch(() => arr.pushIfNotIncluded(state.hover.hoveredOverMorphs, m)))
         events = hoverOutEvents.concat(hoverInEvents);
         break;
@@ -653,7 +655,7 @@ export class EventDispatcher {
           // marked as hovered in
           if (state.hover.unresolvedPointerOut) {
             return Promise.all(state.hover.hoveredOverMorphs.map(m =>
-              this.schedule(new Event("hoverout", domEvt, this, [m], hand, halo)
+              this.schedule(new Event("hoverout", domEvt, this, [m], hand, halo, layoutHalo)
                               .onAfterDispatch(() => arr.remove(state.hover.hoveredOverMorphs, m)))));
 
           }
@@ -662,13 +664,13 @@ export class EventDispatcher {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "focus": case "blur":
-        events = [new Event(type, domEvt, this, [targetMorph], hand, halo)
+        events = [new Event(type, domEvt, this, [targetMorph], hand, halo, layoutHalo)
           .onDispatch(() => state.focusedMorph = type === "focus" ? targetMorph : null)]
         break;
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "scroll":
-        events = [new Event(type, domEvt, this, [targetMorph], hand, halo)
+        events = [new Event(type, domEvt, this, [targetMorph], hand, halo, layoutHalo)
           .onDispatch(() => targetMorph.scroll = pt(domEvt.target.scrollLeft, domEvt.target.scrollTop))]
         break;
 
