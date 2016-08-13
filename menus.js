@@ -57,6 +57,7 @@ export class Menu extends Morph {
 
   constructor(props) {
     super({
+      dropShadow: true,
       title: null,
       padding: 3,
       borderWidth: 1,
