@@ -112,12 +112,10 @@ export class Window extends Morph {
   resizer() {
     return this.getSubmorphNamed("resizer") || {
       name: "resizer",
-      styleClasses: ["morph", "fa", "fa-chevron-down"],
+      nativeCursor: "nwse-resize",
       extent: pt(20,20),
-      origin: pt(10,10),
       opacity: 0.5,
-      fill: Color.gray.withA(0),
-      rotation: num.toRadians(-45),
+      fill: Color.transparent,
       bottomRight: this.extent,
       onDrag(evt) {
         this.owner.resizeBy(evt.state.dragDelta);
