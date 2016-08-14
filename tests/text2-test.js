@@ -24,37 +24,41 @@ function text(string, props) {
 var env;
 
 var fontMetricForTest = {
+  height: 10, width: 10,
   sizeForStr(fontFamily, fontSize, text) {
     // ea char 10*10
     var lines = string.lines(text),
         maxCols = arr.max(lines, line => line.length).length;
-    return {width: maxCols*10, height: lines.length*10}
+    return {width: maxCols*this.width, height: lines.length*this.height}
+  },
+  sizeFor(fontFamily, fontSize, text) {
+    return {width: this.width, height: this.height}
   }
 }
 
 describe("text", () => {
 
   describe("fit", () => {
-    
+
     it("computes size on construction", () => {
       var t = text("hello", {fixedWidth: false, fixedHeight: false}),
           {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: false});
       expect(height).equals(10);
       expect(width).equals(5*10);
     });
-  
+
     it("computes only width", () => {
       var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: true});
       expect(height).equals(100);
       expect(width).equals(5*10);
     });
-  
+
     it("computes only height", () => {
       var {extent: {x: width, y: height}} = text("hello", {fixedWidth: true, fixedHeight: false});
       expect(height).equals(10);
       expect(width).equals(100);
     });
-  
+
     it("leaves extent as is with fixed sizing", () => {
       var {extent} = text("hello", {fixedWidth: true, fixedHeight: true});
       expect(extent).equals(pt(100,100));
@@ -62,9 +66,24 @@ describe("text", () => {
 
   });
 
-  describe("document pos -> pixel pos", () => {
-    
-  })
+  describe("compute pixel positions", () => {
+
+    it("text pos -> pixel pos", () => {
+      var t = text("hello\n world", {});
+      expect(t.renderer.pixelPositionFor(t, {row: 0, column: 0}, pt(0,0)));
+      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 0}, pt(0,10)));
+      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 1}, pt(10,10)));
+    });
+
+    it("text index -> pixel pos", () => {
+      var t = text("hello\n world", {});
+      expect(t.renderer.pixelPositionForIndex(t, 0, pt(0,0)));
+      expect(t.renderer.pixelPositionForIndex(t, 6, pt(0,10)));
+      expect(t.renderer.pixelPositionForIndex(t, 7, pt(10,10)));
+    });
+
+  });
+
 });
 
 
@@ -86,14 +105,14 @@ describe("text", () => {
 //   describe("rendering", () => {
 
 //     it("scrolls", () => {
-      
+
 //     });
 
 //   });
 
 
 //   describe("input events", () => {
-  
+
 //     it("text entry via keydown", async () => {
 //       expect(text).property("textString").equals("text");
 //       env.eventDispatcher.simulateDOMEvents({target: text, type: "focus" });
@@ -106,7 +125,7 @@ describe("text", () => {
 //       );
 //       expect(text).property("textString").equals("lol\ntext");
 //     });
-  
+
 //     it("backspace", async () => {
 //       expect(text).property("textString").equals("text");
 //       env.eventDispatcher.simulateDOMEvents({target: text, type: "focus" });
@@ -128,7 +147,7 @@ describe("text", () => {
 //       );
 //       expect(text).property("textString").equals("lol text");
 //     });
-  
+
 //     it("entry clears selection", async () => {
 //       expect(text).property("textString").equals("text");
 //       env.eventDispatcher.simulateDOMEvents({target: text, type: "focus" });
@@ -141,7 +160,7 @@ describe("text", () => {
 //       );
 //       expect(text).property("textString").equals("wow");
 //     });
-  
+
 //     it("click sets cursor", () => {
 //       var clickPos = pt(215, 200),
 //           { fontFamily, fontSize, textString } = text;
@@ -153,7 +172,7 @@ describe("text", () => {
 //       expect(clickIndex).not.equal(0);
 //       expect(text).property("selection").property("range").deep.equals({ start: clickIndex, end: clickIndex });
 //     });
-  
+
 //     it("drag sets selection", () => {
 //         var dragEndPos = pt(215, 200),
 //           { fontFamily, fontSize, textString } = text;

@@ -18,10 +18,7 @@ export class Text2 extends Morph {
       fixedHeight: false,
       ...props
     });
-    this.state = {
-      renderer: new DocumentRenderer(fontMetric || this.env.fontMetric),
-      layout: null
-    }
+    this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.fit();
   }
 
@@ -46,13 +43,13 @@ export class Text2 extends Morph {
   }
 
   render(renderer) {
-    return this.state.renderer.renderMorph(this);
+    return this.renderer.renderMorph(this);
   }
 
   fit() {
     let {fixedWidth, fixedHeight} = this;
-    if ((fixedHeight && fixedWidth) || !this.state/*not init'ed yet*/) return;
-    let {width, height} = this.state.renderer.fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
+    if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
+    let {width, height} = this.renderer.fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.textString);
     if (!fixedHeight && !fixedWidth) this.extent = pt(width, height);
     else if (!fixedHeight) this.height = height;
     else if (!fixedWidth) this.width = width;

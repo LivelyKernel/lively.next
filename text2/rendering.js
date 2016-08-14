@@ -1,19 +1,12 @@
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
 import { arr } from "lively.lang";
+import { pt, Rectangle } from "lively.graphics";
 
-class Line {
+class RenderedChunk {
 
   constructor(text, fontFamily, fontSize, fontMetric) {
-    this.text = text;
-    this.fontFamily = fontFamily;
-    this.fontSize = fontSize;
-    this.fontMetric = fontMetric;
-    this.width = null;
-    this.height = null;
-    this.lineLayoutComputed = false;
-    this.charLayoutComputed = false;
-    this.rendered = null;
+    this.updateText(text, fontFamily, fontSize, fontMetric);
   }
 
   updateText(text, fontFamily, fontSize, fontMetric) {
@@ -22,61 +15,116 @@ class Line {
      && this.fontSize === fontSize
      && this.fontMetric === fontMetric) return;
 
-    this.charLayoutComputed = false;
-    this.lineLayoutComputed = false;
+    this.charBoundsComputed = false;
+    this.charBounds = [];
+    this.boundsComputed = false;
     this.rendered = null;
     this.text = text;
     this.fontFamily = fontFamily;
     this.fontSize = fontSize;
     this.fontMetric = fontMetric;
+    this._width = null;
+    this._height = null;
     return this;
   }
 
-  computeLineLayout() {
+  get height() {
+    if (!this.boundsComputed) this.computeBounds();
+    return this._height;
+  }
+
+  get width() {
+    if (!this.boundsComputed) this.computeBounds();
+    return this._width;
+  }
+
+  computeBounds() {
     let {height, width} = this.fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.text);
-    this.height = height;
-    this.width = width;
-    this.lineLayoutComputed = true;
+    this._height = height;
+    this._width = width;
+    this.boundsComputed = true;
     return this;
+  }
+
+  computeCharBounds() {
+    var {charBounds, text} = this
+    let nCols = text.length;
+    charBounds.length = nCols;
+    for (let col = 0, x = 0; col < nCols; col++) {
+      var size = this.fontMetric.sizeFor(this.fontFamily, this.fontSize, text[col]);
+      size.x = x; size.y = 0;
+      this.charBounds[col] = size;
+      x += size.width;
+    }
   }
 
   render() {
     if (this.rendered) return this.rendered;
-    if (!this.lineLayoutComputed) this.computeLineLayout();
+    if (!this.boundsComputed) this.computeBounds();
     return this.rendered = h("span", {
       style: {pointerEvents: "none", position: "absolute"},
     }, [this.text]);
   }
 
+  xOffsetFor(column) {
+    if (!this.charBoundsComputed) this.computeCharBounds();
+    var bounds = this.charBounds[column] || this.charBounds[this.charBounds.length-1];
+    return bounds ? bounds.x : 0;
+  }
 }
 
 export default class TextRenderer {
 
-  constructor() {
+  constructor(fontMetric) {
+    this.layoutComputed = false;
     this.lines = [];
+    this.fontMetric = fontMetric;
   }
 
-  updateText(string, fontFamily, fontSize, fontMetric) {
+  updateLines(string, fontFamily, fontSize, fontMetric) {
     let lines = lively.lang.string.lines(string),
         nRows = lines.length;
+    // for now: 1 line = 1 chunk
     for (let row = 0; row < nRows; row++) {
       this.lines[row] = this.lines[row] ?
         this.lines[row].updateText(lines[row], fontFamily, fontSize, fontMetric) :
-        new Line(lines[row], fontFamily, fontSize, fontMetric);
+        new RenderedChunk(lines[row], fontFamily, fontSize, fontMetric);
     }
-    this.lines.splice(nRows, this.lines.length - nRows)
+    this.lines.splice(nRows, this.lines.length - nRows);
+    this.layoutComputed = true;
     return this;
   }
 
-  renderMorph(morph) {
+  updateFromMorphIfNecessary(morph) {
+    if (this.layoutComputed) return;
     var {fontFamily, fontSize, textString} = morph;
-    this.updateText(textString, fontFamily, fontSize);
+    this.updateLines(textString, fontFamily, fontSize, this.fontMetric);
+  }
 
+  renderMorph(morph) {
+    this.updateFromMorphIfNecessary(morph);
     return h('div.text-layer',
       {},
       arr.interpose(this.lines.map(line => line.render()), h("br")))
   }
 
+  pixelPositionFor(morph, {row, column}) {
+    this.updateFromMorphIfNecessary(morph);
+    var line = this.lines[row];
+    if (!line) throw new Error(`position ${row}/${column} out of bounds`);
+    var y = 0; for (var i = 0; i < row; i++) y += this.lines[i].height
+    return pt(line.xOffsetFor(column), y);
+  }
+
+  pixelPositionForIndex(morph, index) {
+    var row, col;
+    for (row = 0; row < this.lines.length; row++) {
+      var textLength = this.lines[row].text.length;
+      if (index <= textLength) { col = index; break; }
+      index -= textLength + 1;
+    }
+    return this.pixelPositionFor(morph, {row, col});
+  }
 }
 
 
