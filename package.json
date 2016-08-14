@@ -1,6 +1,7 @@
 {
   "name": "lively-system-interface",
   "version": "0.1.0",
+  "repository": "https://github.com/LivelyKernel/lively-system-interface",
   "dependencies": {
     "lively.modules": "*",
     "lively.resources": "*",
