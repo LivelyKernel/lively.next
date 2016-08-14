@@ -61,8 +61,9 @@ class RenderedChunk {
   render() {
     if (this.rendered) return this.rendered;
     if (!this.boundsComputed) this.computeBounds();
-    return this.rendered = h("span", {
-      style: {pointerEvents: "none", position: "absolute"},
+    var {fontSize, fontFamily} = this;
+    return this.rendered = h("div", {
+      style: {pointerEvents: "none", fontSize: fontSize + "px", fontFamily}
     }, [this.text]);
   }
 
@@ -110,11 +111,22 @@ export default class TextRenderer {
     this.updateLines(textString, fontFamily, fontSize, this.fontMetric);
   }
 
-  renderMorph(morph) {
+  renderMorph(renderer, morph) {
     this.updateFromMorphIfNecessary(morph);
-    return h('div.text-layer',
-      {},
-      arr.interpose(this.lines.map(line => line.render()), h("br")))
+
+    return h("div", {
+      ...defaultAttributes(morph),
+      style: {
+        ...defaultStyle(morph),
+        cursor: morph.nativeCursor === "auto" ? (morph.readOnly ? "default" : "text") : morph.nativeCursor
+      }
+    }, [
+
+      h('div.text-layer', {
+        style: {pointerEvents: "none"}
+      }, arr.interpose(this.lines.map(line => line.render())))
+
+    ].concat(renderer.renderSubmorphs(morph)));
   }
 
   pixelPositionFor(morph, {row, column}) {
@@ -148,6 +160,17 @@ export default class TextRenderer {
     }
 
     return {row, column: line.columnForXOffset(x)};
+  }
+
+  textBounds(morph) {
+    this.updateFromMorphIfNecessary(morph);
+    let textWidth = 0, textHeight = 0;
+    for (let row = 0; row < this.lines.length; row++) {
+      var {width, height} = this.lines[row];
+      textWidth = Math.max(width, textWidth);
+      textHeight += height;
+    }
+    return new Rectangle(0,0, textWidth, textHeight);
   }
 }
 
