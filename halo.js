@@ -121,60 +121,49 @@ class NameHalo extends HaloItem {
       this.validityIndicator.get("validityIcon").styleClasses = ["fa", "fa-exclamation-circle"];
     }
   }
-  
+
   alignInHalo() {
     this.nameHolder.textString = this.halo.target.name;
     this.nameHolder.fit();
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
     this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
   }
-  
+
   onKeyDown(evt) {
     if ("Enter" == evt.keyString()) {
       this.updateName(this.nameHolder.textString);
       evt.stop();
     }
   }
-  
+
   onMouseDown() {
     this.toggleActive(true)
   }
-  
+
   onKeyUp(evt) {
     const newName = this.nameHolder.textString,
           owner = this.halo.target.owner;
-    this.toggleNameValid(!owner || !owner.getSubmorphNamed(newName) || 
+    this.toggleNameValid(!owner || !owner.getSubmorphNamed(newName) ||
                           this.halo.target.name == newName);
   }
 }
 
-class HaloPropertyDisplay extends Morph {
+class HaloPropertyDisplay extends Text {
 
-  get defaultPosition() { return pt(0,-22); }
+  get defaultPosition() { return pt(0,-25); }
 
   constructor(halo) {
     super({
       name: "propertyDisplay",
-      fill: Color.lightGray.withA(0.5),
+      fill: Color.black.withA(0.5),
       borderRadius: 15,
-      extent: pt(100, 20),
+      padding: 5,
       position: this.defaultPosition,
       visible: false,
-      reactsToPointer: false,
-      halo
-    });
-
-    this.addMorph({
-      type: "text",
-      name: "textField",
-      fontColor: Color.darkGray,
       readOnly: true,
-      position: pt(6,3),
-      extent: pt(90, 14),
-      fixedWidth: false,
-      fill: Color.red.withA(0),
       fontSize: 12,
-      reactsToPointer: false
+      fontColor: Color.white,
+      halo
     });
   }
 
@@ -185,14 +174,12 @@ class HaloPropertyDisplay extends Morph {
   displayProperty(val) {
     val = String(val);
     this.visible = true;
-    this.get("textField").textString = val;
-    // FIXME: What we actually want is morph layouting
-    this.width = 12 + this.get("textField").width;
+    this.textString = val;
     var activeButton = this.halo.activeButton;
     if (activeButton &&
         activeButton.topLeft.x < (this.width + 10) &&
         activeButton.topLeft.y < 0) {
-      this.position = pt(activeButton.topRight.x + 10,-22);
+      this.position = pt(activeButton.topRight.x + 10, -25);
     } else {
       this.position = this.defaultPosition;
     }
@@ -238,7 +225,7 @@ export class Halo extends Morph {
     owner.addMorphAt(this, 0);
     this.alignWithTarget();
   }
-  
+
   nameHalo() {
     return this.getSubmorphNamed("name") || this.addMorph(new NameHalo({halo: this, name: "name"}));
   }
@@ -276,11 +263,11 @@ export class Halo extends Morph {
         halo.activeButton = null;
         halo.alignWithTarget();
       },
-      
+
       adaptAppearance(proportional) {
         if (proportional) {
           this.styleClasses = ["halo-item", "fa", "fa-expand"];
-          this.rotation = -Math.PI / 2; 
+          this.rotation = -Math.PI / 2;
         } else {
           this.styleClasses = ["halo-item", "fa", "fa-crop"];
           this.rotation = 0;
@@ -347,7 +334,7 @@ export class Halo extends Morph {
         this.halo.toggleDropIndicator(dropTarget && dropTarget != this.world(), dropTarget);
         return dropTarget && dropTarget.name;
       },
-      
+
       init(hand) {
         var undo = this.halo.target.undoStart("grab-halo");
         undo.addTarget(this.halo.target.owner);
@@ -359,7 +346,7 @@ export class Halo extends Morph {
       update() {
         this.halo.alignWithTarget();
       },
-      
+
       stop(hand) {
         var undo = this.halo.target.undoInProgress,
             dropTarget = this.morphBeneath(hand.position);
@@ -374,7 +361,7 @@ export class Halo extends Morph {
       onDragStart(evt) {
         this.init(evt.hand)
       },
-      
+
       onDragEnd(evt) {
         this.stop(evt.hand)
       }
@@ -503,7 +490,7 @@ export class Halo extends Morph {
       adaptAppearance(scaling) {
         this.styleClasses = ["halo-item", "fa", scaling ? "fa-search-plus" : "fa-repeat"];
       },
-      
+
       // events
       onDragStart(evt) {
         this.adaptAppearance(evt.isShiftDown());
@@ -672,7 +659,7 @@ export class Halo extends Morph {
       }
       this.alignWithTarget();
     } else {
-      this.buttonControls.map(b => b.onKeyDown(evt)); 
+      this.buttonControls.map(b => b.onKeyDown(evt));
     }
   }
 
