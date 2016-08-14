@@ -1,5 +1,6 @@
 import { pt, Color } from "lively.graphics";
 import { arr, grid, properties } from "lively.lang";
+import { GridLayoutHalo } from "./halo.js";
 import { Morph } from "./index.js";
 
 class Layout {
@@ -243,36 +244,89 @@ export class GridLayout extends Layout {
     this.columnCount--;
     this.applyTo(this.container);
   }
-
-  adjustColumnStretch(col, delta) {
-    if (this.colSizing[col + 1]) {
-      delta = Math.min(delta, this.colSizing[col + 1].proportion);
-      this.colSizing[col].proportion += delta;
-      this.colSizing[col + 1].proportion -= delta;
+  
+  adjustRowMin(row, delta) {
+    this.adjustMin({row, delta})
+  }
+  
+  adjustColumnMin(col, delta) {
+    this.adjustMin({col, delta})
+  }
+  
+  adjustMin({row, col, delta}) {
+    var sizing = row != null ? this.rowSizing[row] : this.colSizing[col],
+        space = row != null ? this.rowHeights[row] : this.colWidths[col];
+    if (sizing.min + delta < 0) {
+      sizing.min = 0;
+    } else if (sizing.min + delta > space) {
+      sizing.min = space;
     } else {
-      this.colSizing.forEach((sizing, c) => {
-        if (!sizing.fixed && c < col) sizing.proportion /= (1 + delta);
-      });
-      this.colSizing[col].proportion = (this.colSizing[col].proportion + delta) / (1 + delta);
-      this.container.width += this.container.width * delta;
+      sizing.min += delta;
     }
     this.applyTo(this.container);
   }
-
-  adjustRowStretch(row, delta) {
-    if (this.rowSizing[row + 1]) {
-      delta = Math.min(delta, this.rowSizing[row + 1].proportion);
-      this.rowSizing[row].proportion += delta;
-      this.rowSizing[row + 1].proportion -= delta;
-    } else {
-      this.rowSizing.forEach((sizing, r) => {
-        if (!sizing.fixed && r < row) {
-          this.rowSizing[r].proportion /= (1 + delta);
+  
+  setFixed({row, col, fixed}) {
+    var sizings = col != null ? this.colSizing : this.rowSizing,
+        sizing = sizings[col != null ? col : row],
+        space = col != null ? this.colWidths[col] : this.rowHeights[row],
+        orthogonalSpace = col != null ? this.container.width : this.container.height;
+    if (fixed && !sizing.fixed) {
+      // the axis became fixed, so distribute proportion to all other proportions accordingly
+      sizing.fixed = space;
+      sizings.forEach(s => {
+        if (sizing != s) {
+          s.proportion /= 1 - sizing.proportion;
         }
       });
-      this.rowSizing[row].proportion = (this.rowSizing[row].proportion + delta) / (1 + delta);
-      this.container.height += this.container.height * delta;
+      sizing.proportion = 0;
+    } else if (!fixed && sizing.fixed) {
+      // the axis was turned dynamic again, steal proportion from all other axis accordingly
+      sizing.fixed = false;
+      sizing.proportion = space / (orthogonalSpace - arr.sum(sizings.map(s => s.fixed)));
+      sizings.forEach(s => {
+        if (sizing != s) {
+          s.proportion -= s.proportion * sizing.proportion;
+        }
+      });
     }
+    this.applyTo(this.container);
+  }
+  
+  adjustStretch(sizings, idx, delta, length) {
+    var sizing = sizings[idx],
+        dynamicLength = length - arr.sum(sizings.map(s => s.fixed)),
+        dynamicProportion = dynamicLength / length,
+        nextDynamicSizing;
+     if (sizing.fixed) {
+      sizing.fixed += delta;
+      length += delta;
+     } else if (nextDynamicSizing = sizings.slice(idx + 1).find(s => !s.fixed)) {
+      delta = Math.min(delta / length, nextDynamicSizing.proportion);
+      sizing.proportion += delta;
+      nextDynamicSizing.proportion -= delta; 
+    } else {
+      if (sizing.proportion * dynamicLength + delta < 0)
+        delta = -sizing.proportion * dynamicLength;
+      sizings.forEach((sizing, i) => {
+        if (!sizing.fixed && i < idx) {
+          sizings[i].proportion /= 1 + (delta / length / dynamicProportion);
+        }
+      });
+      sizing.proportion = 1 - arr.sum(sizings.filter(s => s != sizing && !s.fixed)
+                                             .map(s => s.proportion))
+      length += delta;
+    }
+    return length;
+  }
+  
+  adjustRowStretch(row, delta) {
+    this.container.height = this.adjustStretch(this.rowSizing, row, delta, this.container.height);
+    this.applyTo(this.container);
+  }
+  
+  adjustColumnStretch(col, delta) {
+    this.container.width = this.adjustStretch(this.colSizing, col, delta, this.container.width);
     this.applyTo(this.container);
   }
 
