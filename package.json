@@ -1,6 +1,10 @@
 {
   "name": "lively.installer",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.installer"
+  },
   "systemjs": {
     "map": {
       "child_process": {
