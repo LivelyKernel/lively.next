@@ -263,28 +263,72 @@ describe("layout", () => {
     });
 
     it("can vary the proportional width and height of rows and columns", () => {
-      m.layout.adjustColumnStretch(0, 0.2);
+      m.layout.adjustColumnStretch(0, 60);
       expect(m.layout.colSizing[0].proportion).equals(1/3 + 0.2)
       expect(m.layout.colSizing[1].proportion).equals(1/3 - 0.2)
-      m.layout.adjustRowStretch(0, 0.2);
+      m.layout.adjustRowStretch(0, 60);
       expect(m.layout.rowSizing[0].proportion).equals(1/3 + 0.2)
       expect(m.layout.rowSizing[1].proportion).equals(1/3 - 0.2)
-      m.layout.adjustColumnStretch(0, 1.0)
+      m.layout.adjustColumnStretch(0, 300)
       expect(m.layout.colSizing[0].proportion).equals(2/3);
       expect(m.layout.colSizing[1].proportion).equals(0);
-      m.layout.adjustRowStretch(0, 1.0)
+      m.layout.adjustRowStretch(0, 300)
       expect(m.layout.rowSizing[0].proportion).equals(2/3);
       expect(m.layout.rowSizing[1].proportion).equals(0);
       expect(m.layout.rowHeights[0]).equals(m.layout.rowSizing[0].proportion * 300);
       expect(m.layout.rowHeights[1]).equals(m.layout.rowSizing[1].proportion * 300);
     });
     
-    it("can vary the proportion of the last row / column", () => {
-      m.layout.adjustColumnStretch(2, 1/3);
+    it("can vary proportion of the last column", () => {
+      m.layout.adjustColumnStretch(2, 100);
       expect(m.layout.colSizing[0].proportion).equals(1/4);
       expect(m.layout.colSizing[1].proportion).equals(1/4);
       expect(m.layout.colSizing[2].proportion).equals(1/2);
       expect(m.width).equals(4/3 * 300);
+    })
+    
+    it("widens container when varying fixed width column", () => {
+      m.layout.setFixed({col: 2, fixed: true});
+      m.layout.adjustColumnStretch(2, 100);
+      expect(m.layout.colSizing[2].fixed).equals(200);
+      expect(m.width).equals(400);
+    })
+    
+    it("can vary the fixed space of axis", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new GridLayout({grid:
+                               /* 50px */
+                          [[null, "m1", null], /* 50 px*/
+                           ["m2", null, null],
+                           [null, null,"m3"]],
+                           colSizing: {1: {fixed: 50}},
+                           rowSizing: {0: {fixed: 50}}});
+      m.layout.adjustColumnStretch(1, 50);
+      expect(m.layout.colSizing[1].fixed).equals(100);
+      expect(m.layout.colSizing[0].proportion).equals(1/2);
+      expect(m.layout.colSizing[2].proportion).equals(1/2);
+      m.layout.setFixed({col: 0, fixed: true});
+      expect(m.layout.colSizing[0].fixed).equals(125);
+      expect(m.layout.colSizing[2].proportion).equals(1);
+    })
+    
+    it("can vary proportions correctly in presence of fixed axis", () => {
+      var [m1,m2,m3] = m.submorphs;
+      m.layout = new GridLayout({grid:
+                         /* 50px */
+                    [[null, "m1", null, null], /* 50 px*/
+                     ["m2", null, null, null],
+                     [null, null,"m3",  null]]});
+      m.layout.setFixed({col: 2, fixed: 100});
+      m.layout.setFixed({col: 1, fixed: 100});
+      m.layout.adjustColumnStretch(0, 60);
+      expect(m.layout.colSizing[0].proportion).equals(1/2 + 0.2)
+      expect(m.layout.colSizing[3].proportion).closeTo(1/2 - 0.2, 0.01)
+      var m2Width = m2.width;
+      m.layout.adjustColumnStretch(3, 60);
+      expect(m2.width).equals(m2Width);
+      m.layout.adjustColumnStretch(3, -160);
+      expect(m2.width).equals(m2Width);
     })
 
     it("can add rows and columns", () => {
@@ -308,6 +352,11 @@ describe("layout", () => {
        m.layout.removeRow(2);
        expect(m2.position).equals(pt(0, 150));
     });
+    
+    it("removes removed submorphs from layout", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m1.remove();
+      expect(m.layout.grid[0][1]).to.be.null;
+    });
   });
-
 })
