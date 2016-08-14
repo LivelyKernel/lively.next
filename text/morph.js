@@ -165,29 +165,35 @@ export class Text extends Morph {
   }
 
   indexFromPoint(point) {
-    var { padding, scroll, fontMetric, fontFamily, fontSize, textString } = this,
-        paddingPt = pt(padding.left(), padding.top()),
-        adjustedPt = this.localize(point.subPt(paddingPt).addPt(scroll));
-    return fontMetric.indexFromPoint(fontFamily, fontSize, textString, adjustedPt);
+    var { fontMetric, fontFamily, fontSize, textString } = this;
+    return fontMetric.indexFromPoint(fontFamily, fontSize, textString, point);
   }
 
   pointFromIndex(index) {
-     var  { padding, scroll, fontMetric, fontFamily, fontSize, textString } = this,
-          point = fontMetric.pointFromIndex(fontFamily, fontSize, textString, index),
-          paddingPt = pt(padding.left(), padding.top()),
-          adjustedPt = point.subPt(paddingPt).addPt(scroll);
-    return adjustedPt;
+    var { fontMetric, fontFamily, fontSize, textString } = this;
+    return fontMetric.pointFromIndex(fontFamily, fontSize, textString, index);
   }
 
-  onMouseDown(evt) { this.onMouseMove(evt); }
+  padAndScroll(point) {
+    var  { padding, scroll } = this,
+          paddingPt = pt(padding.left(), padding.top());
+    return point.subPt(paddingPt).addPt(scroll);
+  }
+
+  onMouseDown(evt) {
+    this.onMouseMove(evt);
+    // Move clipboard helper so that scroll doesn't change when it gains focus
+    this.clipboardHelper.position =
+      this.pointFromIndex(this.selection.start);
+  }
 
   onMouseMove(evt) {
     var { clickedOnMorph, clickedOnPosition } = evt.state;
     if (clickedOnMorph === this) {
       var { selection } = this,
           { start: curStart, end: curEnd } = selection,
-          start = this.indexFromPoint(clickedOnPosition),
-          end = this.indexFromPoint(evt.position)
+          start = this.indexFromPoint(this.padAndScroll(this.localize(clickedOnPosition))),
+          end = this.indexFromPoint(this.padAndScroll(this.localize(evt.position)))
       if (start > end)
         [start, end] = [end, start];
       if (end !== curEnd || start !== curStart)
