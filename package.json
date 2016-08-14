@@ -1,6 +1,10 @@
 {
   "name": "lively.morphic",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.morphic"
+  },
   "dependencies": {
     "bowser": "^1.4.1",
     "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
