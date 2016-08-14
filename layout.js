@@ -9,9 +9,34 @@ class Layout {
     this.active = false;
   }
 
-  onSubmorphResized(morph, submorph) {}
-  onSubmorphAdded(morph, submorph) {}
-  onSubmorphRemoved(morph, submoroh) {}
+  onSubmorphResized(morph, submorph) { this.applyTo(morph) }
+  onSubmorphAdded(morph, submorph) { this.applyTo(morph) }
+  onSubmorphRemoved(morph, submorph) { this.applyTo(morph) }
+  
+  onChange(morph, change) {
+    if (change.prop == "submorphs") {
+      switch (change.selector) {
+        case "removeMorph":
+          this.onSubmorphRemoved(morph, change.args[0]);
+          break;
+        case "insertMorphAt":
+          this.onSubmorphAdded(morph, change.args[0]);
+          break;
+      }
+    }
+    this.applyTo(morph);
+  }
+  
+  affectsLayout({prop}) {
+    return ["position", "scale", "rotation"].includes(prop);
+  }
+
+  onSubmorphChange(morph, submorph, change) {
+    if ("extent" == change.prop) this.onSubmorphResized(morph, submorph);
+    if (this.affectsLayout(change)) this.applyTo(morph);
+  }
+  
+  inspect(pointerId) {}
 }
 
 export class VerticalLayout extends Layout {
@@ -121,6 +146,20 @@ export class GridLayout extends Layout {
     this.adjustExtents();
     this.adjustPositions();
     this.active = false;
+  }
+  
+  onSubmorphRemoved(container, removedMorph) {
+    this.morphToCells
+        .get(removedMorph)
+        .forEach(({row, col}) => {
+      this.grid[row][col] = null;
+    })
+    this.morphToCells.delete(removedMorph);
+    //this.applyTo(container);
+  }
+  
+  inspect(pointerId) {
+    return new GridLayoutHalo(this.container, pointerId);
   }
 
   initSizing(count, sizingParams) {
