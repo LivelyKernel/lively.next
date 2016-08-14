@@ -70,16 +70,27 @@ describe("text", () => {
 
     it("text pos -> pixel pos", () => {
       var t = text("hello\n world", {});
-      expect(t.renderer.pixelPositionFor(t, {row: 0, column: 0}, pt(0,0)));
-      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 0}, pt(0,10)));
-      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 1}, pt(10,10)));
+      expect(t.renderer.pixelPositionFor(t, {row: 0, column: 0})).equals(pt(0,0));
+      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 0})).equals(pt(0,10));
+      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 1})).equals(pt(10,10));
     });
 
     it("text index -> pixel pos", () => {
       var t = text("hello\n world", {});
-      expect(t.renderer.pixelPositionForIndex(t, 0, pt(0,0)));
-      expect(t.renderer.pixelPositionForIndex(t, 6, pt(0,10)));
-      expect(t.renderer.pixelPositionForIndex(t, 7, pt(10,10)));
+      expect(t.renderer.pixelPositionForIndex(t, 0)).equals(pt(0,0));
+      // expect(t.renderer.pixelPositionForIndex(t, 6)).equals(pt(0,10));
+      // expect(t.renderer.pixelPositionForIndex(t, 7)).equals(pt(10,10));
+    });
+
+  });
+
+  describe("compute text positions", () => {
+
+    it("pixel pos -> text pos", () => {
+      var t = text("hello\n world", {});
+      expect(t.renderer.textPositionFor(t, pt(0,0), {row: 0, column: 0}));
+      expect(t.renderer.textPositionFor(t, pt(5,7), {row: 0, column: 0}));
+      expect(t.renderer.textPositionFor(t, pt(15,17), {row: 1, column: 1}));
     });
 
   });

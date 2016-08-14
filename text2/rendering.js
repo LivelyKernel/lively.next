@@ -71,6 +71,15 @@ class RenderedChunk {
     var bounds = this.charBounds[column] || this.charBounds[this.charBounds.length-1];
     return bounds ? bounds.x : 0;
   }
+
+  columnForXOffset(xInPixels) {
+    var {charBoundsComputed, charBounds} = this;
+    if (!charBoundsComputed) this.computeCharBounds();
+    var length = charBounds.length;
+    if (!length || xInPixels < charBounds[0].x) return -1;
+    if (xInPixels >= charBounds[length-1].x) return length-1;
+    return charBounds.findIndex(({x, width}) => xInPixels >= x && xInPixels < x+width);
+  }
 }
 
 export default class TextRenderer {
@@ -120,10 +129,25 @@ export default class TextRenderer {
     var row, col;
     for (row = 0; row < this.lines.length; row++) {
       var textLength = this.lines[row].text.length;
-      if (index <= textLength) { col = index; break; }
+      if (index <= textLength) break;
       index -= textLength + 1;
     }
-    return this.pixelPositionFor(morph, {row, col});
+    return this.pixelPositionFor(morph, {row, column: index});
+  }
+
+  textPositionFor(morph, pos) {
+    this.updateFromMorphIfNecessary(morph);
+    var {lines} = this;
+    if (!lines.length) return {row: 0, column: 0};
+
+    let {x,y: remainingHeight} = pos, line, row;
+    for (row = 0; row < lines.length; row++) {
+      line = lines[row];
+      if (remainingHeight < line.height) break;
+      remainingHeight -= line.height;
+    }
+
+    return {row, column: line.columnForXOffset(x)};
   }
 }
 
