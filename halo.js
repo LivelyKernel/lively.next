@@ -667,7 +667,7 @@ class HaloPropertyDisplay extends Text {
 
   get isHaloItem() { return true; }
 
-  displayedValue() { return this.get("textField").textString; }
+  displayedValue() { return this.textString; }
 
   displayProperty(val) {
     val = String(val);

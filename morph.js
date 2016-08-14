@@ -84,7 +84,8 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
-    if (change.prop == "layout") change.value.applyTo(this);
+    if (change.prop == "layout") 
+        change.value && change.value.applyTo(this);
     this.layout && this.layout.onChange(this, change);
   }
 
