@@ -1,5 +1,5 @@
 import { Morph } from "../index.js";
-import { defaultAttributes } from "../rendering/morphic-default.js";
+import { defaultAttributes, defaultStyle } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
 
 export class ClipboardHelper extends Morph {
@@ -11,6 +11,7 @@ export class ClipboardHelper extends Morph {
       ...defaultAttributes(this),
       value: " ",
       style: {
+        ...defaultStyle(this),
         position: "absolute",
         width: "0px",
         height: "0px",
