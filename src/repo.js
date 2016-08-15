@@ -1,7 +1,24 @@
+/* global fetch */
+
 import { mixins, promisify } from "js-git-browser";
-import { gitHubToken, gitHubURL } from "./github-integration.js";
+import { getGitHubToken } from "./settings.js";
 
 const repoForPackage = {};
+
+async function gitHubURL(pkg) { // PackageAddress -> string?
+  const packageConfig = `${pkg}/package.json`;
+  try {
+    const res = await fetch(packageConfig),
+          conf = await res.json();
+    if (!conf || !conf.repository) return null;
+    const url = conf.repository.url || conf.repository,
+          match = url.match(/github.com[:\/](.*?)(?:\.git)?$/);
+    if (!match) return null;
+    return match[1];
+  } catch (e) {
+    return null;
+  }
+}
 
 export default async function repository(pkg) { // -> Repository
   if (pkg in repoForPackage) {
@@ -18,7 +35,7 @@ export default async function repository(pkg) { // -> Repository
   const url = await gitHubURL(pkg);
   if (url != null) {
     const remote = {};
-    mixins.github(remote, url, await gitHubToken());
+    mixins.github(remote, url, await getGitHubToken());
     mixins.readCombiner(remote);
     mixins.sync(repo, remote);
     mixins.fallthrough(repo, remote);

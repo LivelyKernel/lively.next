@@ -5,10 +5,7 @@ import { module } from "lively.modules";
 import repository from "./repo.js";
 import { diffStr } from "./diff.js";
 import { targetChangeSet } from "./changeset.js";
-
-function getAuthor() { // -> {name: string, email: string}
-  return {name: "John Doe", email: "john@example.org"};
-}
+import { getAuthor } from "./settings.js";
 
 function getDate() { // -> {seconds: number, offset: number}
   const d = new Date();

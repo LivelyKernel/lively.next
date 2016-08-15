@@ -2,7 +2,7 @@ import { module, installHook, removeHook, isHookInstalled } from "lively.modules
 
 import { createChangeSet, localChangeSets, targetChangeSet, deactivateAll, notify } from "./src/changeset.js";
 import commit, { packageHead } from "./src/commit.js";
-
+import { getAuthor, setAuthor, setGitHubToken } from "./src/settings.js";
 
 function resolve(path) { // Path -> [PackageAddress, RelPath]
   const mod = module(path),
@@ -52,4 +52,4 @@ export function uninstall() {
   removeHook("resource", resourceFromChangeSet);
 }
 
-export { createChangeSet, localChangeSets, commit, deactivateAll, notify };
+export { createChangeSet, localChangeSets, commit, deactivateAll, notify, getAuthor, setAuthor, setGitHubToken };
