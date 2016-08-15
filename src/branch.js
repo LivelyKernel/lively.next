@@ -113,4 +113,15 @@ export default class Branch {
     return result;
   }
 
+  async pushToGitHub() {
+    const repo = await repository(this.pkg),
+          headCommit = await this.head();
+    await repo.send(`refs/heads/${this.name}`);
+    await repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
+  }
+
+  pullFromGitHub() {
+    //TODO
+  }
+
 }

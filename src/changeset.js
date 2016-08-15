@@ -33,14 +33,6 @@ class ChangeSet {
     return branch;
   }
 
-  pushToGithub() {
-    //TODO
-  }
-
-  pullFromGithub() {
-    //TODO
-  }
-
   async fromObject(obj) {
     this.name = obj["."];
     this.branches = await Promise.all(
