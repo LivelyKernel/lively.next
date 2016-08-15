@@ -1,7 +1,7 @@
 import { module, installHook, removeHook, isHookInstalled } from "lively.modules";
 
-import { createChangeSet, localChangeSets, deactivateAll, notify } from "./src/changeset.js";
-import { packageHead } from "./src/commit.js";
+import { createChangeSet, localChangeSets, targetChangeSet, deactivateAll, notify } from "./src/changeset.js";
+import commit, { packageHead } from "./src/commit.js";
 
 
 function resolve(path) { // Path -> [PackageAddress, RelPath]
@@ -32,12 +32,10 @@ function resourceFromChangeSet(proceed, url) {
     async write(content) {
       const [pkg, path] = resolve(url);
       if (pkg == "no group") return proceed(url).read();
-      const cs = await localChangeSets();
-      for (let i = cs.length - 1; i >= 0; i--) {
-        if (cs[i].isActive()) {
-          const branch = await cs[i].getOrCreateBranch(pkg);
-          return branch.setFileContent(path, content);
-        }
+      const cs = await targetChangeSet();
+      if (cs) {
+        const branch = await cs.getOrCreateBranch(pkg);
+        return branch.setFileContent(path, content);
       }
       return proceed(url).write(content);
     }
@@ -54,4 +52,4 @@ export function uninstall() {
   removeHook("resource", resourceFromChangeSet);
 }
 
-export { createChangeSet, localChangeSets, deactivateAll, notify };
+export { createChangeSet, localChangeSets, commit, deactivateAll, notify };

@@ -79,6 +79,10 @@ class ChangeSet {
     return this.active;
   }
   
+  isWrittenTo() { // -> Promise<bool>
+    return targetChangeSet().then(target => target === this);
+  }
+  
   async activate() { // () -> ()
     if (this.isActive()) return;
     install();
@@ -162,6 +166,15 @@ export async function localChangeSets() { // () => Array<ChangeSet>
   const allChangeSets = refs.map(parseChangeSetRef).filter(t => !!t),
         groups = arr.groupBy(allChangeSets, ({cs}) => cs);
   return changesets = Object.keys(groups).map(name => new ChangeSet(name, groups[name]));
+}
+
+export function targetChangeSet() { // -> Promise<ChangeSet?>
+  return localChangeSets().then(changesets => {
+    for (let i = changesets.length - 1; i >= 0; i--) {
+      if (changesets[i].isActive()) return changesets[i];
+    }
+    return null;
+  });
 }
 
 export async function deactivateAll() {

@@ -4,9 +4,15 @@ import { module } from "lively.modules";
 
 import repository from "./repo.js";
 import { diffStr } from "./diff.js";
+import { targetChangeSet } from "./changeset.js";
 
 function getAuthor() { // -> {name: string, email: string}
   return {name: "John Doe", email: "john@example.org"};
+}
+
+function getDate() { // -> {seconds: number, offset: number}
+  const d = new Date();
+  return {seconds: d.valueOf() / 1000, offset: d.getTimezoneOffset()};
 }
 
 export default async function commit(pkg, hash) {
@@ -117,7 +123,7 @@ class Commit {
   async createChangeSetCommit() { // Hash -> ()
     // create a commit and a ref for this branch based on other branch
     const repo = await repository(this.pkg),
-          author = Object.assign(getAuthor(), {date: new Date()}),
+          author = Object.assign(getAuthor(), {date: getDate()}),
           message = "created changeset",
           commitHash = await repo.saveAs("commit", {
             tree: this.tree, author, committer: author, message, parents: [this.hash]});
@@ -141,7 +147,7 @@ class Commit {
     const prevContent = await this.getFileContent(relPath);
     if (prevContent == content) return this;
     const repo = await repository(this.pkg),
-          author = Object.assign(getAuthor(), {date: new Date()}),
+          author = Object.assign(getAuthor(), {date: getDate()}),
           message = "work in progress",
           changes = [{
             path: relPath,
@@ -169,6 +175,15 @@ class Commit {
           .catch(e => console.error(e));
       }
     }
+  }
+  
+  async isWrittenTo() { // -> Promise<bool>
+    const target = await targetChangeSet();
+    if (!target) return false;
+    const branch = target.getBranch(this.pkg);
+    if (!branch) return false;
+    const head = await branch.head();
+    return head && head.hash === this.hash;
   }
 
   toString() { // -> String
