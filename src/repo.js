@@ -1,7 +1,7 @@
 /* global fetch */
 
 import { mixins, promisify } from "js-git-browser";
-import { getGitHubToken } from "./settings.js";
+import { getOrAskGitHubToken } from "./settings.js";
 
 const repoForPackage = {};
 
@@ -35,7 +35,7 @@ export default async function repository(pkg) { // -> Repository
   const url = await gitHubURL(pkg);
   if (url != null) {
     const remote = {};
-    mixins.github(remote, url, await getGitHubToken());
+    mixins.github(remote, url, await getOrAskGitHubToken());
     mixins.readCombiner(remote);
     mixins.sync(repo, remote);
     mixins.fallthrough(repo, remote);

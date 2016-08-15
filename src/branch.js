@@ -59,6 +59,15 @@ export default class Branch {
     await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
     emit("lively.changesets/changed", {changeset: this.name, path: relPath});
   }
+  
+  async commitChanges(message) { // string -> ()
+    const repo = await repository(this.pkg),
+          head = await this.head(),
+          committedHead = await head.createCommit(message);
+    this._head = await committedHead.createChangeSetCommit();
+    await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
+    emit("lively.changesets/changed", {changeset: this.name});
+  }
 
   delete(db) { // Database -> Promise<()>
     return new Promise((resolve, reject) => {

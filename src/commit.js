@@ -117,11 +117,20 @@ class Commit {
     return diffStr(parentFile, file);
   }
   
-  async createChangeSetCommit() { // Hash -> ()
+  async createCommit(message) { // string -> Commit
+    // return new commit based on current parent and tree
+    const repo = await repository(this.pkg),
+          author = Object.assign(getAuthor(), {date: getDate()}),
+          data = {tree: this.tree, author, committer: author, message, parents: this.parents},
+          commitHash = await repo.saveAs("commit", data);
+    return new Commit(this.pkg, commitHash, data);
+  }
+  
+  async createChangeSetCommit() { // () -> ()
     // create a commit and a ref for this branch based on other branch
     const repo = await repository(this.pkg),
           author = Object.assign(getAuthor(), {date: getDate()}),
-          message = "created changeset",
+          message = "work in progress",
           commitHash = await repo.saveAs("commit", {
             tree: this.tree, author, committer: author, message, parents: [this.hash]});
     return commit(this.pkg, commitHash);

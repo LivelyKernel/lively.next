@@ -2,6 +2,7 @@
 import { arr } from 'lively.lang';
 import { emit } from 'lively.notifications';
 import { module, getPackages, importPackage } from "lively.modules";
+import { mixins } from "js-git-browser";
 
 import { activeCommit, install, uninstall } from "../index.js";
 import Branch from "./branch.js";
@@ -119,15 +120,16 @@ class ChangeSet {
 }
 
 export async function createChangeSet(name) { // ChangeSetName => ChangeSet
-  let existing = true;
+  await new Promise((resolve, reject) => { // initialize DB
+    mixins.indexed.init(err => err ? reject(err) : resolve());
+  });
   const db = await new Promise((resolve, reject) => {
     const req = window.indexedDB.open("tedit", 1);
     req.onsuccess = evt => resolve(evt.target.result);
-    req.onupgradeneeded = evt => existing = false;
     req.onerror = err => reject(err);
   });
   const branches = [];
-  for (let pkg of (existing ? getPackages() : [])) {
+  for (let pkg of getPackages()) {
     const k = await new Promise((resolve, reject) => {
       const trans = db.transaction(["refs"], "readonly"),
             store = trans.objectStore("refs"),
@@ -153,14 +155,14 @@ function parseChangeSetRef(url) {
 
 export async function localChangeSets() { // () => Array<ChangeSet>
   if (changesets !== undefined) return changesets;
-  let existing = true;
+  await new Promise((resolve, reject) => { // initialize DB
+    mixins.indexed.init(err => err ? reject(err) : resolve());
+  });
   const db = await new Promise((resolve, reject) => {
     const req = window.indexedDB.open("tedit", 1);
     req.onsuccess = evt => resolve(evt.target.result);
-    req.onupgradeneeded = evt => existing = false;
     req.onerror = err => reject(err);
   });
-  if (!existing) return changesets = [];
   const refs = await new Promise((resolve, reject) => {
     const trans = db.transaction(["refs"], "readonly"),
           store = trans.objectStore("refs"),

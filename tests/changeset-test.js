@@ -104,6 +104,21 @@ describe("basics", () => {
     expect(await System.import(fileA)).to.containSubset({x: 2});
   });
   
+  it("can create new commits", async () => {
+    const cs = await initChangeSet();
+    await module(fileA).changeSource("export const x = 3;\n");
+    const head = await cs.branches[0].head(),
+          p = await head.parent();
+    expect(p.message).to.be.eql("initial commit");
+    await cs.branches[0].commitChanges("done work");
+    const newHead = await cs.branches[0].head(),
+          newC = await newHead.parent(),
+          oldC = await newC.parent();
+    expect(newHead.message).to.be.eql("work in progress");
+    expect(newC.message).to.be.eql("done work");
+    expect(oldC.message).to.be.eql("initial commit");
+  });
+  
   describe("supports multiple changesets", () => {
     it("writes to a", async () => {
       const cs = await initChangeSet(true);
