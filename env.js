@@ -25,12 +25,20 @@ export class MorphicEnv {
     return env;
   }
 
-  static popDefault(env) {
+  static popDefault() {
     if (!this._envs) this._envs = [];
     return this._envs.pop();
   }
 
   constructor(domEnv = defaultDOMEnv()) {
+    this.fontMetric = null;
+    this.renderer = null;
+    this.eventDispatcher = null;
+    this.world = null;
+
+    this.objPool = null;
+    this.synchronizer = null;
+
     if (typeof domEnv.then === "function") {
       this._waitForDOMEnv = domEnv.then(env => {
         this._waitForDOMEnv = null;
@@ -38,20 +46,13 @@ export class MorphicEnv {
       }).catch(err => console.error(`Error initializing MorphicEnv with dom env: ${err.stack}`));
     } else this.initWithDOMEnv(domEnv);
 
-    this.renderer = null;
-    this.eventDispatcher = null;
-    this.world = null;
-    
-    this.objPool = null;
-    this.synchronizer = null;
     this.changeManager = new ChangeManager();
     this.undoManager = new UndoManager();
   }
 
   initWithDOMEnv(domEnv) {
     this.domEnv = domEnv;
-    this.fontMetric = new FontMetric();
-    this.fontMetric.install(domEnv.document, domEnv.document.body)
+    this.fontMetric = FontMetric.forDOMEnv(domEnv);
   }
 
   uninstallWorldRelated() {
@@ -61,7 +62,10 @@ export class MorphicEnv {
 
   uninstall() {
     this.uninstallWorldRelated();
-    this.fontMetric && this.fontMetric.uninstall();
+    if (this.fontMetric) {
+      this.fontMetric.uninstall();
+      this.fontMetric = null;
+    }
     this.domEnv && this.domEnv.destroy();
   }
 
@@ -80,7 +84,7 @@ export class MorphicEnv {
     this.uninstallWorldRelated();
     this.world = world;
     this.renderer = new Renderer(world, rootNode, this.domEnv).startRenderWorldLoop();
-    this.eventDispatcher = new EventDispatcher(this.domEnv.window, world).install();
+    this.eventDispatcher = new EventDispatcher(this.domEnv.window, world).install(rootNode);
     world.makeDirty();
     
     return world.whenRendered().then(() => this);

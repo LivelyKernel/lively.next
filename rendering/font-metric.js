@@ -14,8 +14,7 @@ export default class FontMetric {
       if (!domEnv && typeof document === "undefined")
         throw new Error("Cannot initialize FontMetric without document");
       if (!domEnv) domEnv = {document}
-      this._fontMetric = new FontMetric();
-      this._fontMetric.install(domEnv.document, domEnv.document.body);
+      this._fontMetric = this.forDOMEnv(domEnv);
     }
     return this._fontMetric;
   }
@@ -25,6 +24,12 @@ export default class FontMetric {
       this._fontMetric.uninstall();
       this._fontMetric = null;
     }
+  }
+
+  static forDOMEnv({document}) {
+    var fontMetric = new FontMetric();
+    fontMetric.install(document, document.body);
+    return fontMetric;
   }
 
   constructor() {
