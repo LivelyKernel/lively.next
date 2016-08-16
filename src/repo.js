@@ -47,7 +47,7 @@ function serverRemote(pkg) {
 
 export default async function repository(pkg, withGitHub = false) {
   // PackageAddress, bool? -> Repository
-  if (pkg in repoForPackage) {
+  if (pkg in repoForPackage && (!withGitHub || repoForPackage[pkg].send)) {
     return repoForPackage[pkg];
   }
   // local IndexedDB
