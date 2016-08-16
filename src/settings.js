@@ -30,5 +30,5 @@ export async function getOrAskGitHubToken() {
 }
 
 export function setGitHubToken(token) { // string -> ()
-  window.localStorage.getItem(TOKEN_KEY, token);
+  window.localStorage.setItem(TOKEN_KEY, token);
 }
