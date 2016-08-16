@@ -26,7 +26,7 @@ describe("text", () => {
 
   beforeEach(async () => {
     env = new MorphicEnv(await createDOMEnvironment());
-    if (!inBrowser) done();
+    if (!inBrowser) this.timeout(5000);
   })
 
   afterEach(() => {
