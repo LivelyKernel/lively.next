@@ -1,6 +1,6 @@
 /* global fetch */
 
-import { mixins, promisify, gitHubRequest } from "js-git-browser";
+import { mixins, promisify, gitHubRequest, bodec, codec, inflate } from "js-git-browser";
 import { getOrAskGitHubToken } from "./settings.js";
 
 const repoForPackage = {};
@@ -20,8 +20,33 @@ async function gitHubURL(pkg) { // PackageAddress -> string?
   }
 }
 
-export default async function repository(pkg) {
-  // PackageAddress -> Repository
+function serverRemote(pkg) {
+  // PackageAddress -> { readRef, loadAs }
+  return {
+    async readRef(ref, callback) {
+      try {
+        const response = await fetch(`${pkg}/.git/refs/${ref}`),
+              hash = await response.text();
+        callback(null, hash.trim());
+      } catch (err) { callback(err); }
+    },
+    async loadAs(type, hash, callback) {
+      try {
+        const path = `${pkg}/.git/objects/${hash.substr(0, 2)}/${hash.substr(2)}`,
+              response = await fetch(path),
+              buffer = await response.arrayBuffer(),
+              binary = inflate(new Uint8Array(buffer)),
+              raw = codec.deframe(binary);
+        if (raw.type !== type) throw new TypeError("Type mismatch");
+        const body = codec.decoders[raw.type](raw.body);
+        callback(null, body);
+      } catch (err) { callback(err); }
+    }
+  };
+}
+
+export default async function repository(pkg, withGitHub = false) {
+  // PackageAddress, bool? -> Repository
   if (pkg in repoForPackage) {
     return repoForPackage[pkg];
   }
@@ -36,10 +61,12 @@ export default async function repository(pkg) {
   const url = await gitHubURL(pkg);
   if (url != null) {
     const remote = {};
-    mixins.github(remote, url, await getOrAskGitHubToken());
-    mixins.readCombiner(remote);
-    mixins.sync(repo, remote);
-    mixins.fallthrough(repo, remote);
+    if (withGitHub) {
+      mixins.github(remote, url, await getOrAskGitHubToken());
+      mixins.readCombiner(remote);
+      mixins.sync(repo, remote);
+    }
+    mixins.fallthrough(repo, serverRemote(pkg));
   }
   
   // Other plugins
