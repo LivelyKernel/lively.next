@@ -1,5 +1,5 @@
 import { arr, obj } from "lively.lang";
-import { pt, Color } from "lively.graphics";
+import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window } from "./index.js";
 import { GridLayout } from "lively.morphic/layout.js";
 
@@ -91,7 +91,9 @@ export class Workspace extends Window {
         type: "text",
         textString: props.content || "3 + 4",
         fixedWidth: true,
-        fixedHeight: true
+        fixedHeight: true,
+        clipMode: "auto",
+        padding: Rectangle.inset(4, 2, 4, 2)
       }),
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
