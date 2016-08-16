@@ -428,18 +428,18 @@ describe("contains point", () => {
   });
 
   it("testMorphsContainingPointWithAddMorphFront", function() {
-      var world = morph({type: "world", extent: pt(300,300)}),
-          morph1 = morph({position: pt(0, 0), extent: pt(100, 100)}),
-          morph2 = morph({position: pt(0, 0), extent: pt(100, 100)});
+    var world = morph({type: "world", extent: pt(300,300)}),
+        morph1 = morph({position: pt(0, 0), extent: pt(100, 100)}),
+        morph2 = morph({position: pt(0, 0), extent: pt(100, 100)});
 
-      world.addMorph(morph1);
-      world.addMorphBack(morph2);
+    world.addMorph(morph1);
+    world.addMorphBack(morph2);
 
-      var result = world.morphsContainingPoint(pt(1,1));
-      expect(3).equals(result.length);
+    var result = world.morphsContainingPoint(pt(1,1));
+    expect(3).equals(result.length);
 
-      expect(morph1).equals(result[0],'for ' + pt(1,1));
-      expect(morph2).equals(result[1],'for ' + pt(1,1));
+    expect(morph1).equals(result[0],'for ' + pt(1,1));
+    expect(morph2).equals(result[1],'for ' + pt(1,1));
   });
 
   it("testMorphsContainingPointDoesNotIncludeOffsetedOwner", function() {
