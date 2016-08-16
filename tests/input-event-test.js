@@ -61,8 +61,8 @@ describe("events", function() {
 
 
   beforeEach(async () => {
-    // env = new MorphicEnv(await createDOMEnvironment());
-    env = new MorphicEnv();
+    env = new MorphicEnv(await createDOMEnvironment());
+    // env = new MorphicEnv();
     MorphicEnv.pushDefault(env);
     await env.setWorld(createDummyWorld());
   });
