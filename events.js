@@ -14,8 +14,6 @@ const domEventsWeListenTo = [
   {type: 'pointerout',  capturing: false},
   {type: 'keydown',     capturing: false},
   {type: 'keyup',       capturing: false},
-  {type: 'blur',        capturing: true},
-  {type: 'focus',       capturing: true},
   {type: 'contextmenu', capturing: false},
   {type: 'cut',         capturing: false},
   {type: 'copy',        capturing: false},
@@ -72,16 +70,12 @@ const mouseEvents = [
   'mousewheel'
 ];
 
-const keyboardEvents = [
-  'keydown',
-  'keyup',
-  'keypress'
-];
+const keyboardEvents = ["keydown", "keyup", "keypress"];
 
 const focusTargetingEvents = [
-  'cut',
-  'copy',
-  'paste',
+  "keydown", "keyup", "keypress",
+  "input", "compositionStart", "compositionUpdate", "compositionEnd",
+  "cut", "copy", "paste",
 ];
 
 
@@ -445,6 +439,23 @@ function dragEndEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layout
   return evt;
 }
 
+function focusEvents(dispatcher, targetMorph) {
+  var state = dispatcher.eventState;
+
+  if (state.focusedMorph === targetMorph) return [];
+
+  var domEvt = null, hand = null, halo = null, layoutHalo = null, events = [];
+
+  state.focusedMorph && events.push(
+    new Event("blur", domEvt, this, [state.focusedMorph], hand, halo, layoutHalo)
+      .onDispatch(() => state.focusedMorph = null));
+
+  events.push(
+    new Event("focus", domEvt, this, [targetMorph], hand, halo, layoutHalo)
+      .onDispatch(() => state.focusedMorph = targetMorph));
+
+  return events;
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // dispatcher: mapping DOM events to morph, invoking morph
@@ -493,6 +504,15 @@ export class EventDispatcher {
       lastDragPosition: null,
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
     };
+  }
+
+  focusMorph(morph) {
+    this.keyInputHelper && this.keyInputHelper.focus();
+    focusEvents(this, morph).forEach(evt => this.dispatchEvent(evt));
+  }
+
+  isMorphFocused(morph) {
+    return this.eventState.focusedMorph === morph;
   }
 
   whenIdle() {
@@ -558,9 +578,11 @@ export class EventDispatcher {
           } catch (e) {}
         }
 
-        // We remember the morph that we clicked on until we get an up event.
-        // This allows us to act on this info later
+        // we manually manage focus on clicks
         defaultEvent.onDispatch(() => {
+          this.focusMorph(targetMorph);
+          // We remember the morph that we clicked on until we get an up event.
+          // This allows us to act on this info later
           state.clickedOnMorph = targetMorph;
           state.clickedOnPosition = defaultEvent.position;
         });
@@ -663,9 +685,14 @@ export class EventDispatcher {
         break;
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      case "focus": case "blur":
+      // Note: these events can be used manually. If you just want to focus
+      // a morph use morph.focus()
+      case "blur":
         events = [new Event(type, domEvt, this, [targetMorph], hand, halo, layoutHalo)
-          .onDispatch(() => state.focusedMorph = type === "focus" ? targetMorph : null)]
+                  .onDispatch(() => state.focusedMorph = null)]
+        break;
+      case "focus":
+        events = focusEvents(this, targetMorph);
         break;
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -709,10 +736,15 @@ export class EventDispatcher {
   }
 
   dispatchDOMEvent(domEvt) {
-    var targetNode = domEvt.target,
-        targetId = targetNode.id,
-        targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId) ||
-                      (focusTargetingEvents.includes(domEvt.type) && this.eventState.focusedMorph);
+    var targetMorph;
+    if (focusTargetingEvents.includes(domEvt.type)) {
+      targetMorph = this.eventState.focusedMorph || this.world;
+    } else {
+      var targetNode = domEvt.target,
+          targetId = targetNode.id;
+      targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
+    }
+
     if (!targetMorph) {
       // console.warn(`No target morph when dispatching DOM event ${domEvt.type}`);
       return;

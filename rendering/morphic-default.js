@@ -12,7 +12,7 @@ export function defaultStyle(morph) {
     clipMode, reactsToPointer, focusable,
     owner
   } = morph;
-  
+
   return {
     position: "absolute",
     transform: `translate(${position.x - origin.x}px, ${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`,
@@ -39,9 +39,8 @@ export function defaultAttributes(morph) {
     key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
-    draggable: false,
-    tabIndex: morph.focusable ? 1 : -1,
-   };
+    draggable: false
+  };
 }
 
 function shadowCss(morph) {

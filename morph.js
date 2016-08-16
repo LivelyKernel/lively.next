@@ -697,11 +697,15 @@ export class Morph {
   onScroll(evt) {}
 
   focus() {
-    this._wantsFocus = true;
-    this._dirty = true;
+    var eventDispatcher = this.env.eventDispatcher;
+    eventDispatcher && eventDispatcher.focusMorph(this);
   }
   onFocus(evt) {}
   onBlur(evt) {}
+  isFocused() {
+    var eventDispatcher = this.env.eventDispatcher;
+    return eventDispatcher && eventDispatcher.isMorphFocused(this);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
@@ -758,18 +762,13 @@ export class Morph {
 
   aboutToRender(renderer) {
     // FIXME focus + scroll are DOM-specific => move to renderer
-    if (this._wantsFocus || this.isClip())
+    if (this.isClip())
       renderer.afterRenderCallTargets.push(this);
 
     this._dirty = false;
   }
 
   onAfterRender(node) {
-    if (this._wantsFocus && node) {
-      node.focus();
-      this._wantsFocus = false;
-    }
-
     if (this.isClip() && node) {
       const {x: scrollX, y: scrollY} = this.scroll;
       node.scrollLeft = scrollX;

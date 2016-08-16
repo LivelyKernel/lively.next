@@ -60,12 +60,24 @@ describe("events", function() {
     this.timeout(10000);
 
 
-  beforeEach(async () => (env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()))).setWorld(createDummyWorld()));
-  afterEach(() =>  MorphicEnv.popDefault().uninstall());
+  beforeEach(async () => {
+    // env = new MorphicEnv(await createDOMEnvironment());
+    env = new MorphicEnv();
+    MorphicEnv.pushDefault(env);
+    await env.setWorld(createDummyWorld());
+  });
+
+  afterEach(() => {
+    MorphicEnv.popDefault().uninstall()
+  });
 
   it("mousedown on submorph", () => {
     env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: submorph2});
-    assertEventLogContains(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
+    assertEventLogContains([
+      "onFocus-submorph2",
+      "onMouseDown-world",
+      "onMouseDown-submorph1",
+      "onMouseDown-submorph2"]);
   });
 
   it("stop event", () => {
@@ -74,7 +86,10 @@ describe("events", function() {
       eventLog.push("onMouseDown-submorph1");
     }
     env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: submorph2});
-    assertEventLogContains(["onMouseDown-world", "onMouseDown-submorph1"]);
+    assertEventLogContains([
+      "onFocus-submorph2",
+      "onMouseDown-world",
+      "onMouseDown-submorph1"]);
   });
 
   it("world has hand and moves it", () => {
@@ -85,7 +100,7 @@ describe("events", function() {
   it("drag morph", () => {
     submorph2.grabbable = false;
     env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: submorph2, position: pt(20, 25)});
-    assertEventLogContains(["onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
+    assertEventLogContains(["onFocus-submorph2", "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
 
     env.eventDispatcher.simulateDOMEvents({type: "pointermove", target: submorph2, position: pt(30, 33)});
     assertEventLogContains(["onMouseMove-world", "onDragStart-submorph2"]);
@@ -123,7 +138,7 @@ describe("events", function() {
       {type: "pointerdown", target: submorph2, position: morphPos.addXY(5,5)},
       {type: "pointermove", target: submorph2, position: morphPos.addXY(10,10)});
     assertEventLogContains([
-      "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
+      "onFocus-submorph2", "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
       "onMouseMove-world", "onGrab-submorph2"]);
     expect(world.hands[0].carriesMorphs()).equals(true);
     var offsetWhenGrabbed = submorph2.position;
@@ -218,29 +233,50 @@ describe("events", function() {
 
   });
 
-  describe("key events", () => {
+  describe("keys", () => {
 
     it("focus + blur", async () => {
-      env.eventDispatcher.simulateDOMEvents(
-        {target: submorph1, type: "focus"},
-        {target: submorph1, type: "blur"});
-      assertEventLogContains(["onFocus-submorph1", "onBlur-submorph1"]);
+      await env.eventDispatcher.simulateDOMEvents({target: submorph1, type: "focus"});
+      assertEventLogContains(["onFocus-submorph1"]);
+      expect().assert(submorph1.isFocused(), "submorph1 not focused");
+      expect().assert(!submorph2.isFocused(), "submorph2 focused");
+
+      await env.eventDispatcher.simulateDOMEvents({target: submorph1, type: "blur"});
+      assertEventLogContains(["onBlur-submorph1"]);
+      expect().assert(!submorph1.isFocused(), "submorph1 still focused");
+      expect().assert(!submorph2.isFocused(), "submorph2 focused 2");
     });
 
+/*
+    env = new MorphicEnv();
+    MorphicEnv.pushDefault(env);
+    await env.setWorld(createDummyWorld());
+
+    MorphicEnv.popDefault().uninstall()
+*/
+
     it("key down", async () => {
-      env.eventDispatcher.simulateDOMEvents({target: submorph1, type: "keydown", ctrlKey: true, keyCode: 65});
-      assertEventLogContains(["onKeyDown-world", "onKeyDown-submorph1"]);
+      submorph2.focus();
+      await env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, keyCode: 65});
+      assertEventLogContains([
+        "onFocus-submorph2",
+        "onKeyDown-world",
+        "onKeyDown-submorph1",
+        "onKeyDown-submorph2"
+      ]);
     });
 
     it("key down keystring", async () => {
+      submorph1.focus();
       var pressed; submorph1.onKeyDown = evt => pressed = evt.keyString();
-      env.eventDispatcher.simulateDOMEvents({target: submorph1, type: "keydown", ctrlKey: true, keyCode: 65});
+      env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, keyCode: 65});
       expect(pressed).match(/Control-A/)
     });
 
     it("key up keystring", async () => {
+      submorph1.focus();
       var pressed; submorph1.onKeyUp = evt => pressed = evt.keyString();
-      env.eventDispatcher.simulateDOMEvents({target: submorph1, type: "keyup", altKey: true, shiftKey: true, keyCode: 88});
+      env.eventDispatcher.simulateDOMEvents({type: "keyup", altKey: true, shiftKey: true, keyCode: 88});
       expect(pressed).equals("Alt-Shift-X")
     });
 
@@ -269,6 +305,7 @@ describe("events", function() {
     it("click", async () => {
       await env.eventDispatcher.simulateDOMEvents({type: "click", position: pt(25,25)});
       assertEventLogContains([
+        "onFocus-submorph2",
         "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2",
         "onMouseUp-world", "onMouseUp-submorph1", "onMouseUp-submorph2"]);
     });
