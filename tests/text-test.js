@@ -72,9 +72,12 @@ describe("rendered text", () => {
 
   var world, text;
   function createDummyWorld() {
-    world = new World({name: "world", extent: pt(300,300), submorphs: [
-      {name: "a text", type: "text", extent: pt(50,50), position: pt(200,200), fill: Color.white, textString: "text"}
-    ]})
+    world = new World({name: "world", extent: pt(300,300), submorphs: [{
+      name: "a text", type: "text",
+      extent: pt(50,50), position: pt(10,10),
+      fill: Color.gray.lighter(2),
+      textString: "text"
+    }]});
     text = world.get("a text");
     return world;
   }
@@ -155,12 +158,12 @@ describe("rendered text", () => {
     });
   
     it("drag sets selection", () => {
-        var dragEndPos = pt(215, 200),
-          { fontFamily, fontSize, textString } = text;
-      expect(text).property("selection").property("range").deep.equals({ start: 0, end: 0 });
+      var dragEndPos = pt(10+15, 10),
+          {fontFamily, fontSize, textString} = text;
+      expect(text).property("selection").property("range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "pointerdown", position: pt(200, 200)},
-        {target: text, type: "pointermove", position: pt(220, 200)}, // simulate overshoot
+        {target: text, type: "pointerdown", position: pt(10, 10)},
+        {target: text, type: "pointermove", position: pt(10+20, 10)}, // simulate overshoot
         {target: text, type: "pointermove", position: dragEndPos},
         {target: text, type: "pointerup", position: dragEndPos}
       );
@@ -171,7 +174,3 @@ describe("rendered text", () => {
   });
 
 });
-
-
-
-

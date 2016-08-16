@@ -258,6 +258,94 @@ export var Keys = {
 }
 
 
+class DOMKeyInputHelper {
+
+  constructor(eventDispatcher) {
+    this.eventDispatcher = eventDispatcher;
+    this.rootNode = null;
+    this.textareaNode = null;
+    this.handlerFunctions = [];
+    this.isInstalled = false;
+  }
+
+  install(rootNode) {
+    if (this.isInstalled) {
+      if (this.rootNode === rootNode) return;
+      this.uninstall();
+    }
+
+    this.isInstalled = true;
+    this.rootNode = rootNode;
+
+    rootNode.tabIndex = 1; // focusable so that we can relay the focus to the textarea
+
+    var focusSpec = {type: "focus", node: rootNode, fn: evt => this.textareaNode.focus(), capturing: true}
+    this.handlerFunctions.push(focusSpec);
+    rootNode.addEventListener(focusSpec.type, focusSpec.fn, focusSpec.capturing);
+
+    // var blurSpec = {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true}
+    // this.handlerFunctions.push(blurSpec);
+    // domNode.addEventListener(blurSpec.type, blurSpec.fn, blurSpec.capturing);
+
+    var doc = rootNode.ownerDocument,
+        textareaNode = this.textareaNode = doc.createElement("textarea");
+    textareaNode.style = `
+      position: absolute;
+      width: 0px; height: 0px;
+      z-index: 0;
+      opacity: 0;
+      background: transparent;
+      -moz-appearance: none;
+      appearance: none;
+      border: none;
+      resize: none;
+      outline: none;
+      overflow: hidden;
+      font: inherit;
+      padding: 0 1px;
+      margin: 0 -1px;
+      text-indent: -1em;
+      -ms-user-select: text;
+      -moz-user-select: text;
+      -webkit-user-select: text;
+      user-select: text;
+      /*with pre-line chrome inserts &nbsp; instead of space*/
+      white-space: pre!important;`;
+
+    if (bowser.tablet || bowser.mobile)
+      textareaNode.setAttribute("x-palm-disable-auto-cap", true);
+
+    textareaNode.setAttribute("wrap", "off");
+    textareaNode.setAttribute("autocorrect", "off");
+    textareaNode.setAttribute("autocapitalize", "off");
+    textareaNode.setAttribute("spellcheck", false);
+    textareaNode.value = "";
+    rootNode.insertBefore(textareaNode, rootNode.firstChild);
+
+    return this;
+  }
+
+  uninstall() {
+    this.isInstalled = false;
+
+    this.handlerFunctions.forEach(({node, type, fn, capturing}) =>
+      node.removeEventListener(type, fn, capturing));
+
+    var n = this.textareaNode;
+    n && n.parentNode && n.parentNode.removeChild(n)
+    this.rootNode = null;
+
+    return this;
+  }
+
+  focus() { this.textareaNode && this.textareaNode.focus(); }
+  blur() { this.textareaNode && this.textareaNode.blur(); }
+  onKeyDown(evt) { return this.eventDispatcher.dispatchDOMEvent(evt); }
+  onKeyUp(evt) { return this.eventDispatcher.dispatchDOMEvent(evt); }
+  onInput(evt) { return this.eventDispatcher.dispatchDOMEvent(evt); }
+}
+
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Event objects
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -297,6 +385,8 @@ class SimulatedDOMEvent {
   stopPropagation() {}
 }
 
+
+
 export class Event {
 
   constructor(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
@@ -330,8 +420,8 @@ export class Event {
 
   stop() {
     this.stopped = true;
-    this.domEvt.stopPropagation();
-    this.domEvt.preventDefault();
+    this.domEvt && this.domEvt.stopPropagation();
+    this.domEvt && this.domEvt.preventDefault();
     this.onStopCallbacks.forEach(ea => ea());
   }
 
@@ -348,6 +438,7 @@ export class Event {
   // }
 
   get position() {
+    if (!this.domEvt) return pt(0,0);
     var worldNode = this.domEvt.target;
     while (worldNode) {
       if (worldNode.id === this.world.id) break;
@@ -382,23 +473,23 @@ export class Event {
   // mouse buttons, see
   // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
   leftMouseButtonPressed() {
-    return (this.domEvt.buttons || 0) & 1;
+    return this.domEvt ? (this.domEvt.buttons || 0) & 1 : false;
   }
 
   rightMouseButtonPressed() {
-    return (this.domEvt.buttons || 0) & 2;
+    return this.domEvt ? (this.domEvt.buttons || 0) & 2 : false;
   }
 
   middleMouseButtonPressed() {
-    return (this.domEvt.buttons || 0) & 4;
+    return this.domEvt ? (this.domEvt.buttons || 0) & 4 : false;
   }
 
-  isCommandKey() { return Keys.isCommandKey(this.domEvt); }
-  isShiftDown() { return Keys.isShiftDown(this.domEvt); }
-  isCtrlDown() {return Keys.isCtrlDown(this.domEvt);}
-  isAltDown() { return Keys.isAltDown(this.domEvt); }
+  isCommandKey() { return this.domEvt && Keys.isCommandKey(this.domEvt); }
+  isShiftDown() { return this.domEvt && Keys.isShiftDown(this.domEvt); }
+  isCtrlDown() {return this.domEvt && Keys.isCtrlDown(this.domEvt);}
+  isAltDown() { return this.domEvt && Keys.isAltDown(this.domEvt); }
 
-  keyString(opts) { return Keys.pressedKeyString(this.domEvt, opts); }
+  keyString(opts) { return this.domEvt && Keys.pressedKeyString(this.domEvt, opts); }
 
 }
 
@@ -490,9 +581,11 @@ export class EventDispatcher {
   constructor(domEventEmitter, world) {
     this.activations = 0;
     this.emitter = domEventEmitter;
+    this.keyInputHelper = null;
     this.world = world;
     this.installed = false;
     this.handlerFunctions = [];
+
     // A place where info about previous events can be stored, e.g. for tracking
     // what was clicked on
     this.eventState = {
@@ -519,22 +612,33 @@ export class EventDispatcher {
     return promise.waitFor(() => this.activations === 0);
   }
 
-  install() {
+  install(rootNode) {
     if (this.installed) return this;
     this.installed = true;
+    var { emitter } = this;
+
     domEventsWeListenTo.forEach(({type, capturing}) => {
       let fn = evt => this.dispatchDOMEvent(evt);
-      this.handlerFunctions.push({ type, fn, capturing });
-      this.emitter.addEventListener(type, fn, capturing);
+      this.handlerFunctions.push({node: emitter, type, fn, capturing});
+      emitter.addEventListener(type, fn, capturing);
     });
+
+    this.keyInputHelper = new DOMKeyInputHelper(this).install(rootNode);
+
     return this;
   }
 
   uninstall() {
     this.installed = false;
-    this.handlerFunctions.forEach(({ type, fn, capturing }) =>
-      this.emitter.removeEventListener(type, fn, capturing));
-    this.handlerFunctions = [];
+
+    var handlerFunctions = this.handlerFunctions;
+    handlerFunctions.forEach(({node, type, fn, capturing}) =>
+      node.removeEventListener(type, fn, capturing));
+    handlerFunctions.length = 0;
+
+    this.keyInputHelper && this.keyInputHelper.uninstall();
+    this.keyInputHelper = null;
+
     return this;
   }
 
@@ -766,23 +870,41 @@ export class EventDispatcher {
     var doc = (this.emitter.document || this.emitter.ownerDocument);
     for (let spec of eventSpecs) {
       let {target, position, type} = spec;
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // find the target..
+
+      // keyboard events always go to the keyInput textarea node
+      if (focusTargetingEvents.includes(type)) {
+        if (!this.keyInputHelper.textareaNode)
+          throw new Error(`Cannot simulate event of type ${type}, no keyInputHelper installed!`);
+        spec = {...spec, target: this.keyInputHelper.textareaNode};
+      }
+
       if (!target) {
         if (!position) target = this.world;
         else target = this.world.morphsContainingPoint(position)[0];
       }
-      if (target.isMorph) {
+      if (target.isMorph)
         spec = {...spec, target: doc.getElementById(target.id)};
-      }
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // position
       if (spec.position) {
         var {offsetLeft, offsetTop} = cumulativeOffset(doc.getElementById(this.world.id));
         spec.position = spec.position.addXY(offsetLeft, offsetTop);
       }
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // scroll events
       if (type === "scroll" && ("scrollLeft" in spec || "scrollRight" in spec)) {
         spec.target.scrollLeft = spec.scrollLeft || 0;
         spec.target.scrollTop = spec.scrollTop || 0;
       }
+
       this.dispatchDOMEvent(new SimulatedDOMEvent(spec))
     }
     return this;
   }
+
 }

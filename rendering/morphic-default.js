@@ -21,7 +21,7 @@ export function defaultStyle(morph) {
     display: visible ? "inline" : "none",
     width: width + 'px', height: height + 'px',
     background: fill ? fill.toString() : "",
-    ...((clipMode == "hidden") ? 
+    ...((clipMode == "hidden") ?
           {border: `${borderWidth}px solid ${borderColor ? borderColor.toString() : "transparent"}`} :
           {"box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`}),
     borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,

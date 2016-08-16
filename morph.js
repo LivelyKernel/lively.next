@@ -673,6 +673,7 @@ export class Morph {
 
   onKeyDown(evt) {}
   onKeyUp(evt) {}
+
   onContextMenu(evt) {}
   onCut(evt) {}
   onCopy(evt) {}
