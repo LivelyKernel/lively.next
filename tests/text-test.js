@@ -157,7 +157,7 @@ describe("rendered text", () => {
           dragOvershotPos = pt(10+20, 10),
           dragEndPos = pt(10+15, 10),
           {fontFamily, fontSize, textString} = text;
-      expect(text).property("selection").property("range").deep.equals({start: 0, end: 0});
+      expect(text).deep.property("selection.range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointerdown", target: text, position: dragStartPos},
         {type: "pointermove", target: text, position: dragOvershotPos}, // simulate overshoot
@@ -166,7 +166,7 @@ describe("rendered text", () => {
       );
       var dragEndIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(dragEndPos));
       expect(dragEndIndex).not.equal(0);
-      expect(text).property("selection").property("range").deep.equals({ start: 0, end: dragEndIndex });
+      expect(text).deep.property("selection.range").deep.equals({start: 0, end: dragEndIndex});
     });
   });
 

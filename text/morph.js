@@ -86,9 +86,7 @@ export class Text extends Morph {
   }
 
   get fontColor() { return this.getProperty("fontColor") }
-  set fontColor(value) {
-    this.addValueChange("fontColor", value);
-  }
+  set fontColor(value) { this.addValueChange("fontColor", value); }
 
   get placeholder() { return this.getProperty("placeholder") }
   set placeholder(value) {
@@ -140,7 +138,7 @@ export class Text extends Morph {
   }
 
   fit() {
-    var { fixedHeight, fixedWidth, padding } = this;
+    var {fixedHeight, fixedWidth, padding} = this;
     if (fixedHeight && fixedWidth) return;
 
     var {fontMetric, fontFamily, fontSize, placeholder, textString} = this,
@@ -157,12 +155,12 @@ export class Text extends Morph {
   }
 
   indexFromPoint(point) {
-    var { fontMetric, fontFamily, fontSize, textString } = this;
+    var {fontMetric, fontFamily, fontSize, textString} = this;
     return fontMetric.indexFromPoint(fontFamily, fontSize, textString, point);
   }
 
   pointFromIndex(index) {
-    var { fontMetric, fontFamily, fontSize, textString } = this;
+    var {fontMetric, fontFamily, fontSize, textString} = this;
     return fontMetric.pointFromIndex(fontFamily, fontSize, textString, index);
   }
 
@@ -179,9 +177,9 @@ export class Text extends Morph {
   }
 
   scrollToSelection() {
-    var { scroll, selection, padding } = this,
-          paddedBounds = this.innerBounds().insetByRect(padding),
-          selPt = this.addPaddingAndScroll(this.pointFromIndex(selection.start));
+    var {scroll, selection, padding} = this,
+        paddedBounds = this.innerBounds().insetByRect(padding),
+        selPt = this.addPaddingAndScroll(this.pointFromIndex(selection.start));
     if (!paddedBounds.containsPoint(selPt)) {
       this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
     }
