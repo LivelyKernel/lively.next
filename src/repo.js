@@ -1,6 +1,6 @@
 /* global fetch */
 
-import { mixins, promisify } from "js-git-browser";
+import { mixins, promisify, gitHubRequest } from "js-git-browser";
 import { getOrAskGitHubToken } from "./settings.js";
 
 const repoForPackage = {};
@@ -20,7 +20,8 @@ async function gitHubURL(pkg) { // PackageAddress -> string?
   }
 }
 
-export default async function repository(pkg) { // -> Repository
+export default async function repository(pkg) {
+  // PackageAddress -> Repository
   if (pkg in repoForPackage) {
     return repoForPackage[pkg];
   }
@@ -49,4 +50,17 @@ export default async function repository(pkg) { // -> Repository
   mixins.formats(repo);
   promisify(repo);
   return repoForPackage[pkg] = repo;
+}
+
+export async function gitHubBranches(pkg) {
+  // PackageAddress -> Array<{name: BranchName, hash: Hash}>
+  const url = await gitHubURL(pkg);
+  if (!url) throw new Error("Could not determine GitHub URL");
+  const req = gitHubRequest(url, await getOrAskGitHubToken());
+  return new Promise((resolve, reject) => {
+    req("GET", "/repos/:root/branches", (err, xhr, response) => {
+      if (err) return reject(err);
+      resolve(response.map(b => ({name: b.name, hash: b.commit.sha})));
+    });
+  });
 }

@@ -6,6 +6,7 @@ import repository from "./repo.js";
 import { diffStr } from "./diff.js";
 import { targetChangeSet } from "./changeset.js";
 import { getAuthor } from "./settings.js";
+import { activeCommit } from "../index.js";
 
 function getDate() { // -> {seconds: number, offset: number}
   const d = new Date();
@@ -166,7 +167,8 @@ class Commit {
     return new Commit(this.pkg, commitHash, data);
   }
   
-  async activate(prev) { // () -> ()
+  async activate(prev) { // Commit? -> ()
+    if (!prev) prev = await activeCommit(this.pkg);
     if (this.hash == prev.hash) return;
     const prevFiles = await prev.files(),
           nextFiles = await this.files();
@@ -174,7 +176,7 @@ class Commit {
       const prevHash = prevFiles[relPath],
             nextHash = nextFiles[relPath],
             mod = `${this.pkg}/${relPath}`;
-      if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded()) {
+      if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded() && (/\.js$/i).test(relPath)) {
         const newSource = await this.getFileContent(relPath);
         await module(mod)
           .changeSource(newSource, {targetModule: mod, doEval: true})
@@ -183,13 +185,8 @@ class Commit {
     }
   }
   
-  async isWrittenTo() { // -> Promise<bool>
-    const target = await targetChangeSet();
-    if (!target) return false;
-    const branch = target.getBranch(this.pkg);
-    if (!branch) return false;
-    const head = await branch.head();
-    return head && head.hash === this.hash;
+  isActive() { // -> Promise<bool>
+    return activeCommit(this.pkg).then(c => c && c.hash == this.hash);
   }
 
   toString() { // -> String

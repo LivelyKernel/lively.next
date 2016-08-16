@@ -3,6 +3,7 @@ import { module, installHook, removeHook, isHookInstalled } from "lively.modules
 import { createChangeSet, localChangeSets, targetChangeSet, deactivateAll, notify } from "./src/changeset.js";
 import commit, { packageHead } from "./src/commit.js";
 import { getAuthor, setAuthor, setGitHubToken } from "./src/settings.js";
+import { gitHubBranches } from "./src/repo.js";
 
 function resolve(path) { // Path -> [PackageAddress, RelPath]
   const mod = module(path),
@@ -19,6 +20,16 @@ export async function activeCommit(pkg) { // PackageAddress -> Commit
     }
   }
   return packageHead(pkg);
+}
+
+export async function getOrCreateChangeSet(name) {
+  // ChangeSetName -> ChangeSet
+  const changesets = await localChangeSets();
+  let cs = changesets.find(cs => cs.name == name);
+  if (!cs) {
+    cs = await createChangeSet(name);
+  }
+  return cs;
 }
 
 function resourceFromChangeSet(proceed, url) {
@@ -52,4 +63,4 @@ export function uninstall() {
   removeHook("resource", resourceFromChangeSet);
 }
 
-export { createChangeSet, localChangeSets, commit, deactivateAll, notify, getAuthor, setAuthor, setGitHubToken };
+export { createChangeSet, localChangeSets, commit, deactivateAll, notify, getAuthor, setAuthor, setGitHubToken, gitHubBranches };

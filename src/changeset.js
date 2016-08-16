@@ -2,7 +2,7 @@
 import { arr } from 'lively.lang';
 import { emit } from 'lively.notifications';
 import { module, getPackages, importPackage } from "lively.modules";
-import { mixins } from "js-git-browser";
+import { mixins, gitHubRequest } from "js-git-browser";
 
 import { activeCommit, install, uninstall } from "../index.js";
 import Branch from "./branch.js";
@@ -31,6 +31,15 @@ class ChangeSet {
       this.branches.push(branch);
     }
     return branch;
+  }
+  
+  async setupBranch(pkg, hash) {
+    let branch = this.getBranch(pkg);
+    if (!branch) {
+      branch = new Branch(this.name, pkg);
+      this.branches.push(branch);
+    }
+    return branch.setHead(hash);
   }
 
   async fromObject(obj) {

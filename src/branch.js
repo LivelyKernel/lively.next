@@ -28,11 +28,19 @@ export default class Branch {
     return this._head = await commit(this.pkg, h);
   }
   
+  async setHead(hash) { // Hash -> ()
+    const repo = await repository(this.pkg);
+    this._head = null;
+    await repo.updateRef(`refs/heads/${this.name}`, hash);
+    emit("lively.changesets/changed", {changeset: this.name});
+  }
+  
   async createFromHead() { // () -> ()
     const repo = await repository(this.pkg),
           prevHead = await packageHead(this.pkg);
     this._head = await prevHead.createChangeSetCommit();
-    return repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
+    await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
+    emit("lively.changesets/changed", {changeset: this.name});
   }
   
   files(withDir) { // boolean? -> {[RelPath]: Hash}
@@ -118,10 +126,6 @@ export default class Branch {
           headCommit = await this.head();
     await repo.send(`refs/heads/${this.name}`);
     await repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
-  }
-
-  pullFromGitHub() {
-    //TODO
   }
 
 }
