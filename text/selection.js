@@ -1,6 +1,6 @@
 "format esm";
 
-export default class Selection {
+export class Selection {
 
   constructor(textMorph) {
     this.textMorph = textMorph;
