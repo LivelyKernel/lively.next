@@ -125,6 +125,7 @@ function createDummyWorld() {
 describe("rendered text", () => {
 
   beforeEach(async () => {
+    if (!inBrowser) this.timeout(5000);
     env = new MorphicEnv(await createDOMEnvironment());
     env.domEnv.document.body.style = "margin: 0";
     MorphicEnv.pushDefault(env);
@@ -218,17 +219,18 @@ describe("rendered text", () => {
     });
 
     it("drag sets selection", () => {
-      var dragEndPos = pt(10+15, 10),
+      var dragStartPos = pt(10, 10),
+          dragOvershotPos = pt(10+20, 10),
+          dragEndPos = pt(10+15, 10),
           {fontFamily, fontSize, textString} = text;
       expect(text).deep.property("selection.range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "pointerdown", position: pt(10, 10)},
-        {target: text, type: "pointermove", position: pt(10+20, 10)}, // simulate overshoot
-        {target: text, type: "pointermove", position: dragEndPos},
-        {target: text, type: "pointerup", position: dragEndPos});
-
-      var dragEndIndex = env.fontMetric.indexFromPoint(
-        fontFamily, fontSize, textString, text.localize(dragEndPos));
+        {type: "pointerdown", target: text, position: dragStartPos},
+        {type: "pointermove", target: text, position: dragOvershotPos}, // simulate overshoot
+        {type: "pointermove", target: text, position: dragEndPos},
+        {type: "pointerup", target: text, position: dragEndPos}
+      );
+      var dragEndIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(dragEndPos));
       expect(dragEndIndex).not.equal(0);
       expect(text).deep.property("selection.range").deep.equals({start: 0, end: dragEndIndex});
     });
