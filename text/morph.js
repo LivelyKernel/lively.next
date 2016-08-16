@@ -1,9 +1,9 @@
 /*global System*/
-import { string } from "lively.lang";
+import { string, obj } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph } from "../index.js";
 import { Selection } from "./selection.js";
-import { renderText } from "./rendering.js";
+import DocumentRenderer from "./rendering.js";
 
 export class Text extends Morph {
 
@@ -19,6 +19,11 @@ export class Text extends Morph {
   }
 
   constructor(props) {
+    var fontMetric;
+    if (props.fontMetric) {
+      fontMetric = props.fontMetric
+      props = obj.dissoc(props, ["fontMetric"]);
+    }
     super({
       readOnly: false,
       clipMode: "hidden",
@@ -31,13 +36,22 @@ export class Text extends Morph {
       fontSize: 12,
       ...props
     });
+    this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.fit();
     this._needsFit = false;
   }
 
-  get fontMetric() { return this.env.fontMetric; }
-
   get isText() { return true }
+
+  onChange(change) {
+    super.onChange(change);
+    if (change.prop === "textString"
+     || change.prop === "fontFamily"
+     || change.prop === "fontSize"
+     || change.prop === "fixedWidth"
+     || change.prop === "fixedHeight")
+       this.renderer && (this.renderer.layoutComputed = false);
+  }
 
   get textString() { return this.getProperty("textString") }
   set textString(value) {
@@ -99,6 +113,12 @@ export class Text extends Morph {
 
   get selection() { return new Selection(this) }
 
+  get clipMode()  { return this.getProperty("clipMode"); }
+  set clipMode(value)  {
+    this.addValueChange("clipMode", value);
+    this.fixedWidth = this.fixedHeight = this.isClip();
+  }
+
   insertText(pos, str) {
     var str = String(str),
         oldText = this.textString,
@@ -134,20 +154,16 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    return renderText(renderer, this);
+    return this.renderer.renderMorph(renderer, this);
   }
 
   fit() {
-    var {fixedHeight, fixedWidth, padding} = this;
-    if (fixedHeight && fixedWidth) return;
-
-    var {fontMetric, fontFamily, fontSize, placeholder, textString} = this,
-        {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(fontFamily, fontSize, placeholder || " "),
-        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, textString);
-    if (!fixedHeight)
-      this.height = Math.max(placeholderHeight, height) + padding.top() + padding.bottom();
-    if (!fixedWidth)
-      this.width = Math.max(placeholderWidth, width) + padding.left() + padding.right();
+    let {fixedWidth, fixedHeight} = this;
+    if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
+    let textBounds = this.renderer.textBounds(this);
+    if (!fixedHeight && !fixedWidth) this.extent = textBounds.extent();
+    else if (!fixedHeight) this.height = textBounds.height;
+    else if (!fixedWidth) this.width = textBounds.width;
   }
 
   fitIfNeeded() {
@@ -155,13 +171,16 @@ export class Text extends Morph {
   }
 
   indexFromPoint(point) {
-    var {fontMetric, fontFamily, fontSize, textString} = this;
-    return fontMetric.indexFromPoint(fontFamily, fontSize, textString, point);
+    var pos = this.renderer.textPositionFor(this, point);
+    var lines = this.textString.split("\n");
+    var index = 0;
+    for (var i = 0; i < Math.min(pos.row, lines.length); i++) index += lines[i].length;
+    index += pos.column;
+    return index;
   }
 
   pointFromIndex(index) {
-    var {fontMetric, fontFamily, fontSize, textString} = this;
-    return fontMetric.pointFromIndex(fontFamily, fontSize, textString, index);
+    return this.renderer.pixelPositionForIndex(this, index);
   }
 
   paddingAndScrollOffset() {
