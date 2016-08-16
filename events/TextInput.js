@@ -62,7 +62,7 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     this.eventHandlers = [
-      {type: "focus", node: rootNode, fn: evt => this.textareaNode.focus(), capturing: true},
+      {type: "focus", node: rootNode, fn: evt => this.textareaNode.focus(), capturing: false},
       // {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true},
       {type: "keydown", node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "keyup",   node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
@@ -71,7 +71,7 @@ export default class TextInput {
       {type: "paste",   node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false}
     ]
     this.eventHandlers.forEach(({type, node, fn, capturing}) =>
-      rootNode.addEventListener(type, fn, capturing));
+      node.addEventListener(type, fn, capturing));
 
     return this;
   }
