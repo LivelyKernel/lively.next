@@ -33,13 +33,14 @@ class ChangeSet {
     return branch;
   }
   
-  async setupBranch(pkg, hash) {
+  async pullBranchFromGitHub(pkg, hash) {
     let branch = this.getBranch(pkg);
     if (!branch) {
       branch = new Branch(this.name, pkg);
       this.branches.push(branch);
     }
-    return branch.setHead(hash);
+    await branch.setHead(hash);
+    return branch.pullFromGitHub();
   }
 
   async fromObject(obj) {

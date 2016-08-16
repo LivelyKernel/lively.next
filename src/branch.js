@@ -122,10 +122,15 @@ export default class Branch {
   }
 
   async pushToGitHub() {
-    const repo = await repository(this.pkg),
+    const repo = await repository(this.pkg, true),
           headCommit = await this.head();
     await repo.send(`refs/heads/${this.name}`);
-    await repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
+    return repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
+  }
+  
+  async pullFromGitHub() {
+    const repo = await repository(this.pkg, true);
+    return repo.fetch(`refs/heads/${this.name}`, 30);
   }
 
 }
