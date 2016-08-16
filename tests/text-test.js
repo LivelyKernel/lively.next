@@ -99,62 +99,56 @@ describe("rendered text", () => {
   
     it("text entry via keydown", async () => {
       expect(text).property("textString").equals("text");
-      env.eventDispatcher.simulateDOMEvents({target: text, type: "focus" });
-      await text.whenRendered();
+      text.focus();
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "keydown", key: 'l'},
-        {target: text, type: "keydown", key: 'o'},
-        {target: text, type: "keydown", key: 'l'},
-        {target: text, type: "keydown", key: 'Enter'}
-      );
+        {type: "keydown", key: 'l'},
+        {type: "keydown", key: 'o'},
+        {type: "keydown", key: 'l'},
+        {type: "keydown", key: 'Enter'});
       expect(text).property("textString").equals("lol\ntext");
     });
   
     it("backspace", async () => {
       expect(text).property("textString").equals("text");
-      env.eventDispatcher.simulateDOMEvents({target: text, type: "focus" });
-      await text.whenRendered();
+      text.focus();
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "keydown", key: 'l'},
-        {target: text, type: "keydown", key: 'o'},
-        {target: text, type: "keydown", key: 'l'},
-        {target: text, type: "keydown", key: 'w'},
-        {target: text, type: "keydown", key: 'u'},
-        {target: text, type: "keydown", key: 't'}
-      );
+        {type: "keydown", key: 'l'},
+        {type: "keydown", key: 'o'},
+        {type: "keydown", key: 'l'},
+        {type: "keydown", key: 'w'},
+        {type: "keydown", key: 'u'},
+        {type: "keydown", key: 't'});
+
       expect(text).property("textString").equals("lolwuttext");
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "keydown", keyCode: 8},
-        {target: text, type: "keydown", keyCode: 8},
-        {target: text, type: "keydown", keyCode: 8},
-        {target: text, type: "keydown", key: ' '}
-      );
+        {type: "keydown", keyCode: 8},
+        {type: "keydown", keyCode: 8},
+        {type: "keydown", keyCode: 8},
+        {type: "keydown", key: ' '});
+
       expect(text).property("textString").equals("lol text");
     });
   
     it("entry clears selection", async () => {
       expect(text).property("textString").equals("text");
-      env.eventDispatcher.simulateDOMEvents({target: text, type: "focus" });
-      await text.whenRendered();
-      text.selection.range = { start: 0, end: 4 };
+      text.focus();
+      text.selection.range = {start: 0, end: 4};
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "keydown", key: 'w'},
-        {target: text, type: "keydown", key: 'o'},
-        {target: text, type: "keydown", key: 'w'}
-      );
+        {type: "keydown", key: 'w'},
+        {type: "keydown", key: 'o'},
+        {type: "keydown", key: 'w'});
+
       expect(text).property("textString").equals("wow");
     });
   
     it("click sets cursor", () => {
-      var clickPos = pt(215, 200),
-          { fontFamily, fontSize, textString } = text;
+      var clickPos = pt(215, 200), {fontFamily, fontSize, textString} = text;
       expect(text).property("selection").property("range").deep.equals({ start: 0, end: 0 });
-      env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "click", position: clickPos }
-      );
+      env.eventDispatcher.simulateDOMEvents({target: text, type: "click", position: clickPos});
+
       var clickIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(clickPos));
       expect(clickIndex).not.equal(0);
-      expect(text).property("selection").property("range").deep.equals({ start: clickIndex, end: clickIndex });
+      expect(text).property("selection").property("range").deep.equals({start: clickIndex, end: clickIndex});
     });
   
     it("drag sets selection", () => {
@@ -162,10 +156,10 @@ describe("rendered text", () => {
           {fontFamily, fontSize, textString} = text;
       expect(text).property("selection").property("range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents(
-        {target: text, type: "pointerdown", position: pt(10, 10)},
-        {target: text, type: "pointermove", position: pt(10+20, 10)}, // simulate overshoot
-        {target: text, type: "pointermove", position: dragEndPos},
-        {target: text, type: "pointerup", position: dragEndPos}
+        {type: "pointerdown", position: pt(10, 10)},
+        {type: "pointermove", position: pt(10+20, 10)}, // simulate overshoot
+        {type: "pointermove", position: dragEndPos},
+        {type: "pointerup", position: dragEndPos}
       );
       var dragEndIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(dragEndPos));
       expect(dragEndIndex).not.equal(0);

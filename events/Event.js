@@ -1,8 +1,9 @@
-import { arr, obj } from "lively.lang";
+import { obj } from "lively.lang";
 import { pt } from "lively.graphics";
 import Keys from './Keys.js';
 
 export function cumulativeElementOffset(element) {
+  // computes offset in pixels of element from the top left screen position
   var offsetTop = 0, offsetLeft = 0;
   do {
     offsetTop += element.offsetTop  || 0;
@@ -15,43 +16,6 @@ export function cumulativeElementOffset(element) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // event constants and type detection
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-export const domEventsWeListenTo = [
-  {type: 'pointerdown', capturing: false},
-  {type: 'pointerup',   capturing: false},
-  {type: 'pointermove', capturing: false},
-  {type: 'pointerover', capturing: false},
-  {type: 'pointerout',  capturing: false},
-  {type: 'keydown',     capturing: false},
-  {type: 'keyup',       capturing: false},
-  {type: 'contextmenu', capturing: false},
-  {type: 'cut',         capturing: false},
-  {type: 'copy',        capturing: false},
-  {type: 'paste',       capturing: false},
-  {type: 'scroll',      capturing: true}
-]
-
-export const typeToMethodMap = {
-  'pointerdown': "onMouseDown",
-  'pointerup':   "onMouseUp",
-  'pointermove': "onMouseMove",
-  'hoverin':     "onHoverIn",
-  'hoverout':    "onHoverOut",
-  'drag':        "onDrag",
-  'dragstart':   "onDragStart",
-  'dragend':     "onDragEnd",
-  'grab':        "onGrab",
-  'drop':        "onDrop",
-  'keydown':     "onKeyDown",
-  'keyup':       "onKeyUp",
-  'blur':        "onBlur",
-  'focus':       "onFocus",
-  'contextmenu': "onContextMenu",
-  'cut':         "onCut",
-  'copy':        "onCopy",
-  'paste':       "onPaste",
-  'scroll':       "onScroll"
-}
 
 export const pointerEvents = [
   "pointerover",
@@ -82,13 +46,6 @@ export const mouseEvents = [
 
 export const keyboardEvents = ["keydown", "keyup", "keypress"];
 
-export const focusTargetingEvents = [
-  "keydown", "keyup", "keypress",
-  "input", "compositionStart", "compositionUpdate", "compositionEnd",
-  "cut", "copy", "paste",
-];
-
-
 export class Event {
 
   constructor(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
@@ -113,11 +70,11 @@ export class Event {
   get state() { return this.dispatcher.eventState; }
 
   isMouseEvent() {
-    return arr.include(pointerEvents, this.type) || arr.include(mouseEvents, this.type)
+    return pointerEvents.includes(this.type) || mouseEvents.includes(this.type);
   }
 
   isKeyboardEvent() {
-    return !this.isMouseEvent() && arr.include(keyboardEvents, this.type);
+    return !this.isMouseEvent() && keyboardEvents.includes(this.type);
   }
 
   stop() {
@@ -128,16 +85,6 @@ export class Event {
   }
 
   get targetMorph() { return this.targetMorphs[0]; }
-
-  // evt.getTargetMorph = function() {
-  //     var node = evt.target;
-  //     while (node) {
-  //         if (node.getAttribute
-  //         && node.getAttribute('data-lively-node-type') === 'morph-node') break;
-  //         node = node.parentNode;
-  //     }
-  //     return node && lively.$(node).data('morph');
-  // }
 
   get position() {
     if (!this.domEvt) return pt(0,0);

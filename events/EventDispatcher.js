@@ -4,12 +4,54 @@ import TextInput from './TextInput.js';
 
 import {
   Event, SimulatedDOMEvent,
-  domEventsWeListenTo,
-  typeToMethodMap,
-  focusTargetingEvents,
   cumulativeElementOffset
 } from './Event.js';
 
+const domEventsWeListenTo = [
+  {type: 'pointerdown', capturing: false},
+  {type: 'pointerup',   capturing: false},
+  {type: 'pointermove', capturing: false},
+  {type: 'pointerover', capturing: false},
+  {type: 'pointerout',  capturing: false},
+  // {type: 'keydown',     capturing: false},
+  // {type: 'keyup',       capturing: false},
+  {type: 'contextmenu', capturing: false},
+  // {type: 'cut',         capturing: false},
+  // {type: 'copy',        capturing: false},
+  // {type: 'paste',       capturing: false},
+  {type: 'scroll',      capturing: true}
+]
+
+const typeToMethodMap = {
+  'pointerdown': "onMouseDown",
+  'pointerup':   "onMouseUp",
+  'pointermove': "onMouseMove",
+  'hoverin':     "onHoverIn",
+  'hoverout':    "onHoverOut",
+  'drag':        "onDrag",
+  'dragstart':   "onDragStart",
+  'dragend':     "onDragEnd",
+  'grab':        "onGrab",
+  'drop':        "onDrop",
+  'keydown':     "onKeyDown",
+  'keyup':       "onKeyUp",
+  'blur':        "onBlur",
+  'focus':       "onFocus",
+  'contextmenu': "onContextMenu",
+  'cut':         "onCut",
+  'copy':        "onCopy",
+  'paste':       "onPaste",
+  'scroll':       "onScroll"
+}
+
+const focusTargetingEvents = [
+  "keydown", "keyup", "keypress",
+  "input", "compositionStart", "compositionUpdate", "compositionEnd",
+  "cut", "copy", "paste",
+];
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helpers
 
 function dragStartEvent(domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
   var evt = new Event("dragstart", domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
@@ -66,10 +108,6 @@ function focusEvents(dispatcher, targetMorph) {
   return events;
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// dispatcher: mapping DOM events to morph, invoking morph
-// event handling methods
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 /*
 

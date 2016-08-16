@@ -6,7 +6,7 @@ export default class TextInput {
     this.eventDispatcher = eventDispatcher;
     this.rootNode = null;
     this.textareaNode = null;
-    this.handlerFunctions = [];
+    this.eventHandlers = [];
     this.isInstalled = false;
   }
 
@@ -21,13 +21,8 @@ export default class TextInput {
 
     rootNode.tabIndex = 1; // focusable so that we can relay the focus to the textarea
 
-    var focusSpec = {type: "focus", node: rootNode, fn: evt => this.textareaNode.focus(), capturing: true}
-    this.handlerFunctions.push(focusSpec);
-    rootNode.addEventListener(focusSpec.type, focusSpec.fn, focusSpec.capturing);
-
-    // var blurSpec = {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true}
-    // this.handlerFunctions.push(blurSpec);
-    // domNode.addEventListener(blurSpec.type, blurSpec.fn, blurSpec.capturing);
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // textarea element that acts as an event proxy
 
     var doc = rootNode.ownerDocument,
         textareaNode = this.textareaNode = doc.createElement("textarea");
@@ -64,13 +59,27 @@ export default class TextInput {
     textareaNode.value = "";
     rootNode.insertBefore(textareaNode, rootNode.firstChild);
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // event handlers
+    this.eventHandlers = [
+      {type: "focus", node: rootNode, fn: evt => this.textareaNode.focus(), capturing: true},
+      // {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true},
+      {type: "keydown", node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "keyup",   node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "cut",     node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "copy",    node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "paste",   node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false}
+    ]
+    this.eventHandlers.forEach(({type, node, fn, capturing}) =>
+      rootNode.addEventListener(type, fn, capturing));
+
     return this;
   }
 
   uninstall() {
     this.isInstalled = false;
 
-    this.handlerFunctions.forEach(({node, type, fn, capturing}) =>
+    this.eventHandlers.forEach(({node, type, fn, capturing}) =>
       node.removeEventListener(type, fn, capturing));
 
     var n = this.textareaNode;
@@ -82,7 +91,4 @@ export default class TextInput {
 
   focus() { this.textareaNode && this.textareaNode.focus(); }
   blur() { this.textareaNode && this.textareaNode.blur(); }
-  onKeyDown(evt) { return this.eventDispatcher.dispatchDOMEvent(evt); }
-  onKeyUp(evt) { return this.eventDispatcher.dispatchDOMEvent(evt); }
-  onInput(evt) { return this.eventDispatcher.dispatchDOMEvent(evt); }
 }
