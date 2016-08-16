@@ -2,8 +2,7 @@
 import { string } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph } from "../index.js";
-import { ClipboardHelper } from "./clipboard-helper.js";
-import Selection from "./selection.js";
+import { Selection } from "./selection.js";
 import { renderText } from "./rendering.js";
 
 export class Text extends Morph {
@@ -34,14 +33,9 @@ export class Text extends Morph {
     });
     this.fit();
     this._needsFit = false;
-
-    // Note: clipboardHelper may already exist if this Text morph was copied
-    this.clipboardHelper || this.addMorph(new ClipboardHelper());
   }
 
   get fontMetric() { return this.env.fontMetric; }
-
-  get clipboardHelper() { return this.submorphs.filter(m => m.isClipboardHelper)[0]; }
 
   get isText() { return true }
 
@@ -58,9 +52,7 @@ export class Text extends Morph {
     this.addValueChange("readOnly", value);
   }
 
-  get hasFocus() { return this.clipboardHelper._hasFocus; }
-
-  get rejectsInput() { return this.readOnly || !this.hasFocus }
+  rejectsInput() { return this.readOnly || !this.isFocused() }
 
   get fixedWidth() { return this.getProperty("fixedWidth") }
   set fixedWidth(value) {
@@ -197,9 +189,6 @@ export class Text extends Morph {
 
   onMouseDown(evt) {
     this.onMouseMove(evt);
-    // Move clipboard helper so that scroll doesn't change when it gains focus
-    this.clipboardHelper.position =
-      this.pointFromIndex(this.selection.start);
   }
 
   onMouseMove(evt) {
@@ -222,10 +211,11 @@ export class Text extends Morph {
     }
   }
 
-  async onKeyDown(evt) {
+  onKeyDown(evt) {
     var keyString = evt.keyString(),
         key = evt.domEvt.key,
         sel = this.selection;
+
     switch (keyString) {
       case 'Command-C': case 'Command-X': case 'Command-V':
         break; // handled by onCut()/onPaste()
@@ -237,14 +227,18 @@ export class Text extends Morph {
 
       case 'Command-D':
         evt.stop();
-        var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
-        this.world()[result.isError ? "logError" : "setStatusMessage"](result.value);
+        (async () => {
+          var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
+          this.world()[result.isError ? "logError" : "setStatusMessage"](result.value);
+        })();
         break;
 
       case 'Command-P':
         evt.stop();
-        var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
-        this.textString = this.textString.slice(0, sel.end) + result.value + this.textString.slice(sel.end);
+        (async () => {
+          var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
+          this.textString = this.textString.slice(0, sel.end) + result.value + this.textString.slice(sel.end);
+        })();
         break;
 
       case 'Command-S':
@@ -253,7 +247,7 @@ export class Text extends Morph {
         break;
 
       case 'Backspace':
-        if (this.rejectsInput) break;
+        if (this.rejectsInput()) break;
         evt.stop();
         sel.isCollapsed && sel.start && sel.start--;
         sel.text = "";
@@ -261,7 +255,7 @@ export class Text extends Morph {
         break;
 
       case 'Del': // forward-delete
-        if (this.rejectsInput) break;
+        if (this.rejectsInput()) break;
         evt.stop();
         sel.isCollapsed && sel.end++;
         sel.text = "";
@@ -288,7 +282,7 @@ export class Text extends Morph {
         break;
 
       default:
-        if (this.rejectsInput) break;
+        if (this.rejectsInput()) break;
         evt.stop();
         switch (key) {
           case 'Enter':
@@ -310,7 +304,7 @@ export class Text extends Morph {
   doSave() { /*...*/ }
 
   onCut(evt) {
-    if (this.rejectsInput) return;
+    if (this.rejectsInput()) return;
     this.onCopy(evt);
     var sel = this.selection;
     sel.text = "";
@@ -318,13 +312,13 @@ export class Text extends Morph {
   }
 
   onCopy(evt) {
-    if (!this.hasFocus) return;
+    if (!this.isFocused()) return;
     evt.stop();
     evt.domEvt.clipboardData.setData("text", this.selection.text);
   }
 
   onPaste(evt) {
-    if (this.rejectsInput) return;
+    if (this.rejectsInput()) return;
     evt.stop();
     var sel = this.selection;
     sel.text = evt.domEvt.clipboardData.getData("text");
@@ -332,7 +326,6 @@ export class Text extends Morph {
   }
 
   onFocus(evt) {
-    this.clipboardHelper.focus();
     this.makeDirty();
   }
 
