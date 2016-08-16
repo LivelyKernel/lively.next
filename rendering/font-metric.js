@@ -123,11 +123,11 @@ export default class FontMetric {
   pointFromIndex(fontFamily, fontSize, str, index) {
     var substr = str.substr(0, index + 1),
         sizeList = arr.flatten(this.sizeListForStr(fontFamily, fontSize, substr)),
-        indexInSizeList = sizeList.length >= 2 ? sizeList.length - 2 : 0,
+        indexInSizeList = (str.length === substr.length ? sizeList.length - 1: (sizeList.length >= 2 ? sizeList.length - 2 : 0)),
         charInfo = sizeList[indexInSizeList],
         { position: { x, y }, width, height } = charInfo,
         boundingRect = rect(x, y, width || 1, height);
-    return boundingRect.center();
+    return boundingRect.bottomLeft();
   }
 
   sizeListForStr(fontFamily, fontSize, str) {

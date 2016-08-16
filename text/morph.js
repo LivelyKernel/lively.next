@@ -174,10 +174,25 @@ export class Text extends Morph {
     return fontMetric.pointFromIndex(fontFamily, fontSize, textString, index);
   }
 
-  padAndScroll(point) {
-    var  { padding, scroll } = this,
-          paddingPt = pt(padding.left(), padding.top());
-    return point.subPt(paddingPt).addPt(scroll);
+  paddingAndScrollOffset() {
+    return this.padding.topLeft().subPt(this.scroll);
+  }
+
+  addPaddingAndScroll(point) {
+    return point.addPt(this.paddingAndScrollOffset());
+  }
+
+  removePaddingAndScroll(point) {
+    return point.subPt(this.paddingAndScrollOffset());
+  }
+
+  scrollToSelection() {
+    var { scroll, selection, padding } = this,
+          paddedBounds = this.innerBounds().insetByRect(padding),
+          selPt = this.addPaddingAndScroll(this.pointFromIndex(selection.start));
+    if (!paddedBounds.containsPoint(selPt)) {
+      this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
+    }
   }
 
   onMouseDown(evt) {
@@ -192,8 +207,8 @@ export class Text extends Morph {
     if (clickedOnMorph === this) {
       var { selection } = this,
           { start: curStart, end: curEnd } = selection,
-          start = this.indexFromPoint(this.padAndScroll(this.localize(clickedOnPosition))),
-          end = this.indexFromPoint(this.padAndScroll(this.localize(evt.position)))
+          start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
+          end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
       if (start > end)
         [start, end] = [end, start];
       if (end !== curEnd || start !== curStart)
@@ -288,6 +303,8 @@ export class Text extends Morph {
         }
         sel.collapse(sel.start + 1);
     }
+
+    this.scrollToSelection();
   }
 
   doSave() { /*...*/ }
