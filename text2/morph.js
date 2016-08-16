@@ -24,13 +24,23 @@ export class Text2 extends Morph {
 
   get isText() { return true }
 
-  get textString() { return this.getProperty("textString") }
+  onChange(change) {
+    super.onChange(change);
+    if (change.prop === "textString"
+     || change.prop === "fontFamily"
+     || change.prop === "fontSize"
+     || change.prop === "fixedWidth"
+     || change.prop === "fixedHeight")
+       this.renderer && (this.renderer.layoutComputed = false);
+  }
+
+  get textString() { return this.getProperty("textString"); }
   set textString(value) {
     this.addValueChange("textString", value);
     this.fit();
   }
 
-  get fontFamily() { return this.getProperty("fontFamily") }
+  get fontFamily() { return this.getProperty("fontFamily"); }
   set fontFamily(value) {
     this.addValueChange("fontFamily", value);
     this.fit();
@@ -40,6 +50,12 @@ export class Text2 extends Morph {
   set fontSize(value) {
     this.addValueChange("fontSize", value);
     this.fit();
+  }
+
+  get clipMode()  { return this.getProperty("clipMode"); }
+  set clipMode(value)  {
+    this.addValueChange("clipMode", value);
+    this.fixedWidth = this.fixedHeight = this.isClip();
   }
 
   render(renderer) {
@@ -55,4 +71,7 @@ export class Text2 extends Morph {
     else if (!fixedWidth) this.width = textBounds.width;
   }
 
+  onMouseDown(evt) {
+    
+  }
 }

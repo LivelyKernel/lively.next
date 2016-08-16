@@ -1,6 +1,6 @@
 /*global System, declare, it, xit, describe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
-// import { MorphicEnv } from "../index.js";
+import { MorphicEnv, World } from "../index.js";
 import { string, arr } from "lively.lang";
 import { Text2 } from "../text2/morph.js";
 import { expect } from "mocha-es6";
@@ -78,8 +78,8 @@ describe("text", () => {
     it("text index -> pixel pos", () => {
       var t = text("hello\n world", {});
       expect(t.renderer.pixelPositionForIndex(t, 0)).equals(pt(0,0));
-      // expect(t.renderer.pixelPositionForIndex(t, 6)).equals(pt(0,10));
-      // expect(t.renderer.pixelPositionForIndex(t, 7)).equals(pt(10,10));
+      expect(t.renderer.pixelPositionForIndex(t, 6)).equals(pt(0,10));
+      expect(t.renderer.pixelPositionForIndex(t, 7)).equals(pt(10,10));
     });
 
   });
@@ -95,8 +95,68 @@ describe("text", () => {
 
   });
 
+  describe("selection", () => {
+
+    it("uninitialized", () => {
+      var t = text("hello\n world", {});
+      expect(t.selection).containSubset({start: {row: 0, column: 0}, end: {row: 0, column: 0}})
+    });
+
+  });
+
 });
 
+
+var world, text;
+function createDummyWorld() {
+  world = new World({name: "world", extent: pt(300,300), submorphs: [{
+    name: "text",
+    type: Text2,
+    position: pt(10.10),
+    fill: Color.gray.lighter(2),
+    textString: "text\nfor tests"
+  }]})
+  text = world.get("text");
+  return world;
+}
+
+describe("rendered text", () => {
+
+  beforeEach(async () => {
+    env = new MorphicEnv(await createDOMEnvironment());
+    env.domEnv.document.body.style = "margin: 0";
+    MorphicEnv.pushDefault(env);
+    await env.setWorld(createDummyWorld());
+  });
+
+  afterEach(() =>
+    MorphicEnv.popDefault().uninstall()
+    );
+
+  describe("clipped", () => {
+
+    it("only renders visible part of scrolled text", async () => {
+      var lineHeight = text.renderer.lines[0].height;
+      Object.assign(text, {
+        clipMode: "auto",
+        extent: pt(100,2*lineHeight), position: pt(0,0),
+        textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
+        scroll: pt(0, lineHeight*2-1)
+      });
+
+      await text.whenRendered();
+
+      var node = env.renderer.getNodeForMorph(text),
+          b = node.querySelector(".text-layer").getBoundingClientRect(),
+          textBounds = new Rectangle(b.left, b.top, b.width, b.height);
+
+      expect(textBounds.top()).equals(-2*lineHeight+1, "text layer not scrolled");
+      expect(textBounds.height).equals(lineHeight*10, "text layer does not have size of all lines");
+      expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
+    });
+
+  });
+});
 
 // xdescribe("rendered text", () => {
 
@@ -201,7 +261,3 @@ describe("text", () => {
 //   });
 
 // });
-
-
-
-

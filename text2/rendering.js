@@ -112,21 +112,66 @@ export default class TextRenderer {
   }
 
   renderMorph(renderer, morph) {
-    this.updateFromMorphIfNecessary(morph);
-
     return h("div", {
       ...defaultAttributes(morph),
       style: {
         ...defaultStyle(morph),
-        cursor: morph.nativeCursor === "auto" ? (morph.readOnly ? "default" : "text") : morph.nativeCursor
+        cursor: morph.nativeCursor === "auto" ?
+          (morph.readOnly ? "default" : "text") :
+          morph.nativeCursor
       }
-    }, [
+    }, [this.renderTextLayer(morph)].concat(renderer.renderSubmorphs(morph)));
+  }
 
-      h('div.text-layer', {
-        style: {pointerEvents: "none"}
-      }, arr.interpose(this.lines.map(line => line.render())))
+  renderTextLayer(morph) {
+    this.updateFromMorphIfNecessary(morph);
 
-    ].concat(renderer.renderSubmorphs(morph)));
+    let {lines} = this,
+        textWidth = 0, textHeight = 0,
+        {y: visibleTop} = morph.scroll,
+        visibleBottom = visibleTop + morph.height,
+        lastVisibleLineBottom = 0,
+        row = 0,
+        spacerBefore,
+        renderedLines = [],
+        spacerAfter;
+
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row],
+          newTextHeight = textHeight + height;
+      if (newTextHeight >= visibleTop) break;
+      textWidth = Math.max(width, textWidth);
+      textHeight += height;
+    }
+
+    spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
+
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row];
+      if (textHeight > visibleBottom) break;
+      renderedLines.push(lines[row].render());
+
+      textWidth = Math.max(width, textWidth);
+      textHeight += height;
+    }
+
+    lastVisibleLineBottom = textHeight;
+
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row];
+      textWidth = Math.max(width, textWidth);
+      textHeight += height;
+    }
+
+    spacerAfter = h("div", {style: {height: textHeight-lastVisibleLineBottom+"px", width: textWidth+"px"}});
+
+
+    return h('div.text-layer', {
+      style: {
+        pointerEvents: "none", whiteSpace: "pre",
+        width: textWidth+"px", height: textHeight+"px"
+      }
+    }, [spacerBefore].concat(renderedLines).concat(spacerAfter));
   }
 
   pixelPositionFor(morph, {row, column}) {
