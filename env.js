@@ -3,7 +3,7 @@ import { Renderer } from "./rendering/renderer.js";
 import FontMetric from "./rendering/font-metric.js";
 import { ChangeManager } from "./changes.js";
 import { UndoManager } from "./undo.js";
-import { EventDispatcher } from "./events.js";
+import EventDispatcher from "./events/EventDispatcher.js";
 
 
 // MorphicEnv.reset();
