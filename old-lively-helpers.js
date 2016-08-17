@@ -26,7 +26,9 @@ function addMorphicSetupMethods(htmlMorph) {
   htmlMorph.doNotSerialize = ["env"];
   htmlMorph.addScript(function cleanupNewMorphicWorld() {
     if (this.env) {
-      this.env.uninstall();
+      try {
+        this.env.uninstall()
+      } catch (e) { console.error(e); }
       this.env.constructor.reset();
     }
     this.setHTML('');
