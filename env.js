@@ -11,7 +11,15 @@ import EventDispatcher from "./events/EventDispatcher.js";
 export class MorphicEnv {
 
   static reset() {
-    this._envs = [];
+    while (true) {
+      var env = this.popDefault();
+      if (!env) break;
+      try {
+        env.uninstall()
+      } catch (err) {
+        console.error(`Error uninstalling MorphicEnv: ${err.stack || err}`);
+      }
+    }
   }
 
   static default() {
