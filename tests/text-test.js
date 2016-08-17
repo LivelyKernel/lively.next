@@ -16,7 +16,7 @@ function text(string, props) {
     fontFamily: "Arial",
     fontSize: 10,
     extent: pt(100,100),
-    padding: Rectangle.inset(1,1,1,1),
+    fontMetric: fontMetricForTest,
     ...props
   });
 }
@@ -69,17 +69,21 @@ describe("text", () => {
   describe("compute pixel positions", () => {
 
     it("text pos -> pixel pos", () => {
-      var t = text("hello\n world", {});
+      var t = text("hello\n lively\nworld", {});
       expect(t.renderer.pixelPositionFor(t, {row: 0, column: 0})).equals(pt(0,0));
       expect(t.renderer.pixelPositionFor(t, {row: 1, column: 0})).equals(pt(0,10));
       expect(t.renderer.pixelPositionFor(t, {row: 1, column: 1})).equals(pt(10,10));
+      expect(t.renderer.pixelPositionFor(t, {row: 3, column: 2})).equals(pt(20,20));
+      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 100})).equals(pt(60,10));
+      expect(t.renderer.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(40,20));
     });
 
     it("text index -> pixel pos", () => {
-      var t = text("hello\n world", {});
+      var t = text("hello\n lively\nworld", {});
       expect(t.renderer.pixelPositionForIndex(t, 0)).equals(pt(0,0));
       expect(t.renderer.pixelPositionForIndex(t, 6)).equals(pt(0,10));
       expect(t.renderer.pixelPositionForIndex(t, 7)).equals(pt(10,10));
+      expect(t.renderer.pixelPositionForIndex(t, 100)).equals(pt(40,20));
     });
 
   });

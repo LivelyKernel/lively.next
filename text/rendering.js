@@ -177,11 +177,11 @@ export default class TextRenderer {
 
     if (start > end) ([end, start] = [start, end]);
 
-    var lines = this.lines.map(({text}) => text),
-        startTextPos = indexToPosition(start, lines),
-        endTextPos = indexToPosition(end, lines),
-        startPos = this.pixelPositionFor(morph, startTextPos),
-        endPos = this.pixelPositionFor(morph, endTextPos),
+    var lines         = this.lines.map(({text}) => text),
+        startTextPos  = indexToPosition(start, lines),
+        endTextPos    = indexToPosition(end, lines),
+        startPos      = this.pixelPositionFor(morph, startTextPos),
+        endPos        = this.pixelPositionFor(morph, endTextPos),
         endLineHeight = this.lines[endTextPos.row].height;
 
     // collapsed selection -> cursor
@@ -267,18 +267,21 @@ export default class TextRenderer {
 
   pixelPositionFor(morph, {row, column}) {
     this.updateFromMorphIfNecessary(morph);
+    var maxLength = this.lines.length-1;
+    if (row > maxLength) row = maxLength
     var line = this.lines[row];
-    if (!line) throw new Error(`position ${row}/${column} out of bounds`);
-    var y = 0; for (var i = 0; i < row; i++) y += this.lines[i].height
+    if (!line) return pt(0,0);
+    let y = 0, i = 0; for (; i < row; i++) y += this.lines[i].height;
     return pt(line.xOffsetFor(column), y);
   }
 
   pixelPositionForIndex(morph, index) {
-    var row, col;
-    for (row = 0; row < this.lines.length; row++) {
-      var textLength = this.lines[row].text.length;
+    let newlineLength = 1, /*fixme make work for cr lf windows...*/
+        row, col, lines = this.lines;
+    for (row = 0; row < lines.length; row++) {
+      var textLength = lines[row].text.length;
       if (index <= textLength) break;
-      index -= textLength + 1;
+      index -= textLength + newlineLength;
     }
     return this.pixelPositionFor(morph, {row, column: index});
   }
