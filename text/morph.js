@@ -346,4 +346,17 @@ export class Text extends Morph {
   }
 
   onBlur(evt) { this.makeDirty(); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // debugging
+  inspect() {
+    var inspected = `<${this.name}>`,
+        {range: {start,end}, text} = this.selection
+    inspected += `\n  selection: ${start} -> ${end} ${text}`
+    inspected += "\n  " + this.renderer.lines.map(({height, width, text}, i) => {
+      return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${text}`
+    }).join("\n  ");
+    return inspected += `\n</${this.name}>`
+  }
+
 }
