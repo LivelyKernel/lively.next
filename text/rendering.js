@@ -15,6 +15,7 @@ function positionToIndex({row, column}, lines, startRow = 0) {
 
 function indexToPosition(index, lines, startRow = 0) {
   // indexToPosition(0, ["fooo", "barrrr"])
+  if (lines.length === 0) return {row: 0, column: 0};
   var newlineLength = 1; /*fixme make work for cr lf windows...*/
   for (var i = startRow, l = lines.length; i < l; i++) {
     index -= lines[i].length + newlineLength;
@@ -32,6 +33,17 @@ function selectionLayerPart(startPos, endPos) {
       left: startPos.x + "px", top: startPos.y+"px",
       width: (endPos.x-startPos.x) + "px", height: (endPos.y-startPos.y)+"px",
       backgroundColor: "#bed8f7", zIndex: -1
+    }
+  })
+}
+
+function cursor(pos, height) {
+    return h('div.selection-layer', {
+    style: {
+      pointerEvents: "none", position: "absolute",
+      left: pos.x + "px", top: pos.y + "px",
+      width: "2px", height: height + "px",
+      backgroundColor: "black", zIndex: -1
     }
   })
 }
@@ -162,7 +174,6 @@ export default class TextRenderer {
     // FIXME just hacked together... needs cleanup!!!
 
     var {start, end} = morph.selection;
-    if (start === end) return [];
 
     if (start > end) ([end, start] = [start, end]);
 
@@ -173,6 +184,11 @@ export default class TextRenderer {
         endPos = this.pixelPositionFor(morph, endTextPos),
         endLineHeight = this.lines[endTextPos.row].height;
 
+    // collapsed selection -> cursor
+    if (start === end) {
+      if (morph.rejectsInput()) return [];
+      return [cursor(startPos, this.fontMetric.defaultLineHeight(morph.fontFamily, morph.fontSize))];
+    }
     // single line -> one rectangle
     if (startTextPos.row === endTextPos.row) {
       return [selectionLayerPart(startPos, endPos.addXY(0, endLineHeight))]
