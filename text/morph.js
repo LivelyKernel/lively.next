@@ -208,17 +208,20 @@ export class Text extends Morph {
   }
 
   onMouseMove(evt) {
-    var { clickedOnMorph, clickedOnPosition } = evt.state;
-    if (clickedOnMorph === this) {
-      var { selection } = this,
-          { start: curStart, end: curEnd } = selection,
-          start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
-          end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
-      if (start > end)
-        [start, end] = [end, start];
-      if (end !== curEnd || start !== curStart)
-        selection.range = { start: start, end: end };
-    }
+    var {clickedOnMorph, clickedOnPosition} = evt.state;
+    if (clickedOnMorph !== this) return;
+
+    var {selection} = this,
+        {start: curStart, end: curEnd} = selection,
+        start = this.indexFromPoint(this.localize(clickedOnPosition)),
+        end = this.indexFromPoint(this.localize(evt.position))
+        // start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
+        // end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
+
+    if (start > end)
+      [start, end] = [end, start];
+    if (end !== curEnd || start !== curStart)
+      selection.range = {start: start, end: end};
   }
 
   onKeyUp(evt) {
@@ -354,7 +357,7 @@ export class Text extends Morph {
         {range: {start,end}, text} = this.selection
     inspected += `\n  selection: ${start} -> ${end} ${text}`
     inspected += "\n  " + this.renderer.lines.map(({height, width, text}, i) => {
-      return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${text}`
+      return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${obj.inspect(text)}`
     }).join("\n  ");
     return inspected += `\n</${this.name}>`
   }

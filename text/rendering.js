@@ -3,10 +3,12 @@ import { h } from "virtual-dom";
 import { arr, string } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
 
+const newline = "\n",
+      newlineLength = 1; /*fixme make work for cr lf windows...*/
+
 function positionToIndex({row, column}, lines, startRow = 0) {
   // positionToIndex({row: 1, column: 1}, ["fooo", "barrrr"])
-  var newlineLength = 1, /*fixme make work for cr lf windows...*/
-      index = 0;
+  let index = 0;
   row = Math.min(row, lines.length);
   for (var i = startRow; i < row; ++i)
     index += lines[i].length + newlineLength;
@@ -16,7 +18,6 @@ function positionToIndex({row, column}, lines, startRow = 0) {
 function indexToPosition(index, lines, startRow = 0) {
   // indexToPosition(0, ["fooo", "barrrr"])
   if (lines.length === 0) return {row: 0, column: 0};
-  var newlineLength = 1; /*fixme make work for cr lf windows...*/
   for (var i = startRow, l = lines.length; i < l; i++) {
     index -= lines[i].length + newlineLength;
     if (index < 0)
@@ -92,14 +93,14 @@ class RenderedChunk {
   }
 
   computeCharBounds() {
-    var {charBounds, text} = this
+    var {charBounds, text, fontFamily, fontSize, fontMetric} = this;
+    text += newline;
     let nCols = text.length;
     charBounds.length = nCols;
     for (let col = 0, x = 0; col < nCols; col++) {
-      var size = this.fontMetric.sizeFor(this.fontFamily, this.fontSize, text[col]);
-      size.x = x; size.y = 0;
-      this.charBounds[col] = size;
-      x += size.width;
+      var {width,height} = fontMetric.sizeFor(fontFamily, fontSize, text[col]);
+      this.charBounds[col] = {x, y: 0, width,height};
+      x += width;
     }
   }
 
@@ -122,7 +123,7 @@ class RenderedChunk {
     var {charBoundsComputed, charBounds} = this;
     if (!charBoundsComputed) this.computeCharBounds();
     var length = charBounds.length;
-    if (!length || xInPixels < charBounds[0].x) return -1;
+    if (!length || xInPixels < charBounds[0].x) return 0;
     if (xInPixels >= charBounds[length-1].x) return length-1;
     return charBounds.findIndex(({x, width}) => xInPixels >= x && xInPixels < x+width);
   }
@@ -276,8 +277,7 @@ export default class TextRenderer {
   }
 
   pixelPositionForIndex(morph, index) {
-    let newlineLength = 1, /*fixme make work for cr lf windows...*/
-        row, col, lines = this.lines;
+    let row, col, lines = this.lines;
     for (row = 0; row < lines.length; row++) {
       var textLength = lines[row].text.length;
       if (index <= textLength) break;
@@ -292,6 +292,7 @@ export default class TextRenderer {
     if (!lines.length) return {row: 0, column: 0};
 
     let {x,y: remainingHeight} = pos, line, row;
+    if (remainingHeight < 0) remainingHeight = 0;
     for (row = 0; row < lines.length; row++) {
       line = lines[row];
       if (remainingHeight < line.height) break;

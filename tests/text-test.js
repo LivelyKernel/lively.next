@@ -71,11 +71,12 @@ describe("text", () => {
     it("text pos -> pixel pos", () => {
       var t = text("hello\n lively\nworld", {});
       expect(t.renderer.pixelPositionFor(t, {row: 0, column: 0})).equals(pt(0,0));
+      expect(t.renderer.pixelPositionFor(t, {row: 0, column: 5})).equals(pt(50,0));
       expect(t.renderer.pixelPositionFor(t, {row: 1, column: 0})).equals(pt(0,10));
       expect(t.renderer.pixelPositionFor(t, {row: 1, column: 1})).equals(pt(10,10));
       expect(t.renderer.pixelPositionFor(t, {row: 3, column: 2})).equals(pt(20,20));
-      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 100})).equals(pt(60,10));
-      expect(t.renderer.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(40,20));
+      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 100})).equals(pt(70,10));
+      expect(t.renderer.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(50,20));
     });
 
     it("text index -> pixel pos", () => {
@@ -83,7 +84,7 @@ describe("text", () => {
       expect(t.renderer.pixelPositionForIndex(t, 0)).equals(pt(0,0));
       expect(t.renderer.pixelPositionForIndex(t, 6)).equals(pt(0,10));
       expect(t.renderer.pixelPositionForIndex(t, 7)).equals(pt(10,10));
-      expect(t.renderer.pixelPositionForIndex(t, 100)).equals(pt(40,20));
+      expect(t.renderer.pixelPositionForIndex(t, 100)).equals(pt(50,20));
     });
 
   });
@@ -212,14 +213,15 @@ describe("rendered text", function () {
 
     it("click sets cursor", () => {
       // text.globalBounds() // => {x: 10.1, y: 0, width: 42.75, height: 28}
+
       var clickPos = pt(10+15, 0),
           {fontFamily, fontSize, textString} = text;
-      expect(text).property("selection").property("range").deep.equals({start: 0, end: 0});
+      expect(text).deep.property("selection.range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents({target: text, type: "click", position: clickPos});
 
       var clickIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(clickPos));
       expect(clickIndex).not.equal(0);
-      expect(text).property("selection").property("range").deep.equals({start: clickIndex, end: clickIndex});
+      expect(text).deep.property("selection.range").deep.equals({start: clickIndex, end: clickIndex});
     });
 
     it("drag sets selection", () => {
