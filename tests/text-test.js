@@ -101,7 +101,7 @@ describe("text", () => {
 
   describe("selection", () => {
 
-    it("uninitialized", () => {
+    xit("uninitialized", () => {
       var t = text("hello\n world", {});
       expect(t.selection).containSubset({start: {row: 0, column: 0}, end: {row: 0, column: 0}})
     });
@@ -126,10 +126,11 @@ function createDummyWorld() {
   return world;
 }
 
-describe("rendered text", () => {
+describe("rendered text", function () {
+
+  if (!inBrowser) this.timeout(5000);
 
   beforeEach(async () => {
-    if (!inBrowser) this.timeout(5000);
     env = new MorphicEnv(await createDOMEnvironment());
     env.domEnv.document.body.style = "margin: 0";
     MorphicEnv.pushDefault(env);
@@ -169,18 +170,16 @@ describe("rendered text", () => {
   describe("input events", () => {
 
     it("text entry via keydown", async () => {
-      expect(text).property("textString").equals("text");
       text.focus();
       env.eventDispatcher.simulateDOMEvents(
         {type: "keydown", key: 'l'},
         {type: "keydown", key: 'o'},
         {type: "keydown", key: 'l'},
         {type: "keydown", key: 'Enter'});
-      expect(text).property("textString").equals("lol\ntext");
+      expect(text).property("textString").equals("lol\ntext\nfor tests");
     });
 
     it("backspace", async () => {
-      expect(text).property("textString").equals("text");
       text.focus();
       env.eventDispatcher.simulateDOMEvents(
         {type: "keydown", key: 'l'},
@@ -190,18 +189,17 @@ describe("rendered text", () => {
         {type: "keydown", key: 'u'},
         {type: "keydown", key: 't'});
 
-      expect(text).property("textString").equals("lolwuttext");
+      expect(text).property("textString").equals("lolwuttext\nfor tests");
       env.eventDispatcher.simulateDOMEvents(
         {type: "keydown", keyCode: 8},
         {type: "keydown", keyCode: 8},
         {type: "keydown", keyCode: 8},
         {type: "keydown", key: ' '});
 
-      expect(text).property("textString").equals("lol text");
+      expect(text).property("textString").equals("lol text\nfor tests");
     });
 
     it("entry clears selection", async () => {
-      expect(text).property("textString").equals("text");
       text.focus();
       text.selection.range = {start: 0, end: 4};
       env.eventDispatcher.simulateDOMEvents(
@@ -209,12 +207,14 @@ describe("rendered text", () => {
         {type: "keydown", key: 'o'},
         {type: "keydown", key: 'w'});
 
-      expect(text).property("textString").equals("wow");
+      expect(text).property("textString").equals("wow\nfor tests");
     });
 
     it("click sets cursor", () => {
-      var clickPos = pt(215, 200), {fontFamily, fontSize, textString} = text;
-      expect(text).property("selection").property("range").deep.equals({ start: 0, end: 0 });
+      // text.globalBounds() // => {x: 10.1, y: 0, width: 42.75, height: 28}
+      var clickPos = pt(10+15, 0),
+          {fontFamily, fontSize, textString} = text;
+      expect(text).property("selection").property("range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents({target: text, type: "click", position: clickPos});
 
       var clickIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(clickPos));

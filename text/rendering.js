@@ -106,10 +106,10 @@ class RenderedChunk {
   render() {
     if (this.rendered) return this.rendered;
     if (!this.boundsComputed) this.computeBounds();
-    var {fontSize, fontFamily} = this;
+    var {fontSize, fontFamily, text} = this;
     return this.rendered = h("div", {
       style: {pointerEvents: "none", fontSize: fontSize + "px", fontFamily}
-    }, [this.text]);
+    }, [text || h("br")]);
   }
 
   xOffsetFor(column) {
