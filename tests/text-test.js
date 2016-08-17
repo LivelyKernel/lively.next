@@ -1,4 +1,4 @@
-/*global System, declare, it, xit, describe, beforeEach, afterEach, before, after*/
+/*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
 import { Text, World } from "../index.js";
@@ -9,6 +9,9 @@ import { arr, string } from "lively.lang";
 // FIXME! FontMetric should work in nodejs with jsdom as well!!!
 var inBrowser = System.get("@system-env").browser ? it :
   (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
+
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Suite ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
 
 function text(string, props) {
   return new Text({
@@ -114,22 +117,21 @@ describe("text", () => {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var world, text;
-function createDummyWorld() {
-  world = new World({name: "world", extent: pt(300,300), submorphs: [{
-    name: "text",
-    type: Text,
-    position: pt(10.10),
-    fill: Color.gray.lighter(2),
-    textString: "text\nfor tests"
-  }]})
-  text = world.get("text");
-  return world;
-}
 
-describe("rendered text", function () {
+describeInBrowser("rendered text", () => {
 
-  if (!inBrowser) this.timeout(5000);
+  var world, text;
+  function createDummyWorld() {
+    world = new World({name: "world", extent: pt(300,300), submorphs: [{
+      name: "text",
+      type: Text,
+      position: pt(10.10),
+      fill: Color.gray.lighter(2),
+      textString: "text\nfor tests"
+    }]})
+    text = world.get("text");
+    return world;
+  }
 
   beforeEach(async () => {
     env = new MorphicEnv(await createDOMEnvironment());
@@ -142,30 +144,25 @@ describe("rendered text", function () {
     MorphicEnv.popDefault().uninstall()
   );
 
-  describe("clipped", () => {
-
-    it("only renders visible part of scrolled text", async () => {
-      var lineHeight = text.renderer.lines[0].height;
-      Object.assign(text, {
-        clipMode: "auto",
-        extent: pt(100,2*lineHeight), position: pt(0,0),
-        textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
-        scroll: pt(0, lineHeight*2-1)
-      });
-
-      await text.whenRendered();
-
-      var node = env.renderer.getNodeForMorph(text),
-          b = node.querySelector(".text-layer").getBoundingClientRect(),
-          textBounds = new Rectangle(b.left, b.top, b.width, b.height);
-
-      expect(textBounds.top()).equals(-2*lineHeight+1, "text layer not scrolled");
-      expect(textBounds.height).equals(lineHeight*10, "text layer does not have size of all lines");
-      expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
+  it("only renders visible part of scrolled text", async () => {
+    var lineHeight = text.renderer.lines[0].height;
+    Object.assign(text, {
+      clipMode: "auto",
+      extent: pt(100,2*lineHeight), position: pt(0,0),
+      textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
+      scroll: pt(0, lineHeight*2-1)
     });
 
-  });
+    await text.whenRendered();
 
+    var node = env.renderer.getNodeForMorph(text),
+        b = node.querySelector(".text-layer").getBoundingClientRect(),
+        textBounds = new Rectangle(b.left, b.top, b.width, b.height);
+
+    expect(textBounds.top()).equals(-2*lineHeight+1, "text layer not scrolled");
+    expect(textBounds.height).equals(lineHeight*10, "text layer does not have size of all lines");
+    expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
+  });
 
 
   describe("input events", () => {
@@ -206,19 +203,27 @@ describe("rendered text", function () {
       env.eventDispatcher.simulateDOMEvents(
         {type: "keydown", key: 'w'},
         {type: "keydown", key: 'o'},
-        {type: "keydown", key: 'w'});
+  {type: "keydown", key: 'w'});
 
-      expect(text).property("textString").equals("wow\nfor tests");
+expect(text).property("textString").equals("wow\nfor tests");
     });
 
-    it("click sets cursor", () => {
-      // text.globalBounds() // => {x: 10.1, y: 0, width: 42.75, height: 28}
+  });
 
-      var clickPos = pt(10+15, 0),
+  describe("mouse events", () => {
+
+    it("click sets cursor", () => {
+
+// var row = 1;
+// var {height, width} = text.renderer.lines[1];
+// var lineY = text.renderer.lines.slice(0,row).map(ea => ea.height).sum()
+// var {x,y} = text.position
+// show(new Rectangle(x,y+lineY, width, height))
+
+      var clickPos = pt(10+15, text.bounds().height / 2 + 3), // second line
           {fontFamily, fontSize, textString} = text;
       expect(text).deep.property("selection.range").deep.equals({start: 0, end: 0});
       env.eventDispatcher.simulateDOMEvents({target: text, type: "click", position: clickPos});
-
       var clickIndex = env.fontMetric.indexFromPoint(fontFamily, fontSize, textString, text.localize(clickPos));
       expect(clickIndex).not.equal(0);
       expect(text).deep.property("selection.range").deep.equals({start: clickIndex, end: clickIndex});
