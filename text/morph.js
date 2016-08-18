@@ -1,9 +1,10 @@
 /*global System*/
-import { string } from "lively.lang";
+import { string, obj } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph } from "../index.js";
 import { Selection } from "./selection.js";
-import { renderText } from "./rendering.js";
+import DocumentRenderer from "./rendering.js";
+import TextDocument from "./document.js";
 
 export class Text extends Morph {
 
@@ -18,11 +19,13 @@ export class Text extends Morph {
     });
   }
 
-  constructor(props) {
+  constructor(props = {}) {
+    var {fontMetric, textString} = props;
+    if (fontMetric) props = obj.dissoc(props, ["fontMetric"]);
+    if (typeof textString !== "undefined") props = obj.dissoc(props, ["textString"])
     super({
       readOnly: false,
       clipMode: "hidden",
-      textString: "",
       fixedWidth: false, fixedHeight: false,
       padding: 0,
       draggable: false,
@@ -31,15 +34,26 @@ export class Text extends Morph {
       fontSize: 12,
       ...props
     });
+    this.document = new TextDocument();
+    this.textString = textString || "";
+    this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.fit();
     this._needsFit = false;
   }
 
-  get fontMetric() { return this.env.fontMetric; }
-
   get isText() { return true }
 
-  get textString() { return this.getProperty("textString") }
+  onChange(change) {
+    super.onChange(change);
+    if (change.prop === "textString"
+     || change.prop === "fontFamily"
+     || change.prop === "fontSize"
+     || change.prop === "fixedWidth"
+     || change.prop === "fixedHeight")
+       this.renderer && (this.renderer.layoutComputed = false);
+  }
+
+  get textString() { return this.document ? this.document.textString : "" }
   set textString(value) {
     let oldText = this.textString;
     oldText && this.deleteText(0, oldText.length);
@@ -67,7 +81,6 @@ export class Text extends Morph {
   }
 
   get padding() { return this.getProperty("padding") }
-
   set padding(value) {
     this.addValueChange("padding", typeof value === "number" ? Rectangle.inset(value) : value);
     this._needsFit = true;
@@ -99,25 +112,33 @@ export class Text extends Morph {
 
   get selection() { return new Selection(this) }
 
-  insertText(pos, str) {
-    var str = String(str),
-        oldText = this.textString,
-        newText = oldText ? oldText.substr(0, pos) + str + oldText.substr(pos) : str;
-    this._needsFit = true;
+  get clipMode()  { return this.getProperty("clipMode"); }
+  set clipMode(value)  {
+    this.addValueChange("clipMode", value);
+    this.fixedWidth = this.fixedHeight = this.isClip();
+  }
 
+  insertText(index, string) {
+    var doc = this.document,
+        pos = doc.indexToPosition(index);
+    doc.insert(string, pos);
+
+    this._needsFit = true;
     this.addValueChange(
-      "textString", newText,
-      {action: "insert", pos: pos, str: str});
+      "textString", doc.textString,
+      {action: "insert", index, string});
   }
 
   deleteText(start, end) {
-    var oldText = this.textString,
-        newText = oldText.substr(0, start) + oldText.substr(end);
-    this._needsFit = true;
+    var doc = this.document,
+        startPos = doc.indexToPosition(start),
+        endPos = doc.indexToPosition(end);
+    doc.remove(startPos, endPos);
 
+    this._needsFit = true;
     this.addValueChange(
-      "textString", newText,
-      {action: "delete", start: start, end: end});
+      "textString", doc.textString,
+      {action: "delete", start, end});
   }
 
   selectionOrLineString() {
@@ -134,20 +155,16 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    return renderText(renderer, this);
+    return this.renderer.renderMorph(renderer, this);
   }
 
   fit() {
-    var {fixedHeight, fixedWidth, padding} = this;
-    if (fixedHeight && fixedWidth) return;
-
-    var {fontMetric, fontFamily, fontSize, placeholder, textString} = this,
-        {height: placeholderHeight, width: placeholderWidth} = fontMetric.sizeForStr(fontFamily, fontSize, placeholder || " "),
-        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, textString);
-    if (!fixedHeight)
-      this.height = Math.max(placeholderHeight, height) + padding.top() + padding.bottom();
-    if (!fixedWidth)
-      this.width = Math.max(placeholderWidth, width) + padding.left() + padding.right();
+    let {fixedWidth, fixedHeight} = this;
+    if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
+    let textBounds = this.renderer.textBounds(this);
+    if (!fixedHeight && !fixedWidth) this.extent = textBounds.extent();
+    else if (!fixedHeight) this.height = textBounds.height;
+    else if (!fixedWidth) this.width = textBounds.width;
   }
 
   fitIfNeeded() {
@@ -155,13 +172,11 @@ export class Text extends Morph {
   }
 
   indexFromPoint(point) {
-    var {fontMetric, fontFamily, fontSize, textString} = this;
-    return fontMetric.indexFromPoint(fontFamily, fontSize, textString, point);
+    return this.renderer.textIndexFor(this, point);
   }
 
   pointFromIndex(index) {
-    var {fontMetric, fontFamily, fontSize, textString} = this;
-    return fontMetric.pointFromIndex(fontFamily, fontSize, textString, index);
+    return this.renderer.pixelPositionForIndex(this, index);
   }
 
   paddingAndScrollOffset() {
@@ -176,6 +191,7 @@ export class Text extends Morph {
     return point.subPt(this.paddingAndScrollOffset());
   }
 
+  // FIXME!
   scrollToSelection() {
     var {scroll, selection, padding} = this,
         paddedBounds = this.innerBounds().insetByRect(padding),
@@ -190,17 +206,18 @@ export class Text extends Morph {
   }
 
   onMouseMove(evt) {
-    var { clickedOnMorph, clickedOnPosition } = evt.state;
-    if (clickedOnMorph === this) {
-      var { selection } = this,
-          { start: curStart, end: curEnd } = selection,
-          start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
-          end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
-      if (start > end)
-        [start, end] = [end, start];
-      if (end !== curEnd || start !== curStart)
-        selection.range = { start: start, end: end };
-    }
+    var {clickedOnMorph, clickedOnPosition} = evt.state;
+    if (clickedOnMorph !== this) return;
+
+    var {selection, scroll} = this,
+        {start: curStart, end: curEnd} = selection,
+        start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
+        end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
+
+    if (start > end)
+      [start, end] = [end, start];
+    if (end !== curEnd || start !== curStart)
+      selection.range = {start: start, end: end};
   }
 
   onKeyUp(evt) {
@@ -328,4 +345,18 @@ export class Text extends Morph {
   }
 
   onBlur(evt) { this.makeDirty(); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // debugging
+
+  inspect() {
+    var inspected = `<${this.name}>`,
+        {range: {start,end}, text} = this.selection
+    inspected += `\n  selection: ${start} -> ${end} ${text}`
+    inspected += "\n  " + this.renderer.lines.map(({height, width, text}, i) => {
+      return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${obj.inspect(text)}`
+    }).join("\n  ");
+    return inspected += `\n</${this.name}>`
+  }
+
 }
