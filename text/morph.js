@@ -170,12 +170,7 @@ export class Text extends Morph {
   }
 
   indexFromPoint(point) {
-    var pos = this.renderer.textPositionFor(this, point),
-        lines = this.textString.split("\n"),
-        index = 0;
-    for (var i = 0; i < Math.min(pos.row, lines.length); i++) index += lines[i].length;
-    index += pos.column;
-    return index;
+    return this.renderer.textIndexFor(this, point);
   }
 
   pointFromIndex(index) {
