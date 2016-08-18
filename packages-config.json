@@ -71,5 +71,10 @@
   {
     "name": "lively.notifications",
     "repoURL": "https://github.com/LivelyKernel/lively.notifications"
+  },
+  {
+    "name": "lively.changesets",
+    "repoURL": "https://github.com/LivelyKernel/lively.changesets"
   }
+
 ]
