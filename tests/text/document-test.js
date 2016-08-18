@@ -52,9 +52,25 @@ describe("text doc", () => {
       doc = TextDocument.fromString("hello\nworld")
       );
   
+    it("into empty doc", () => {
+      doc = new TextDocument();
+      doc.insert("test", {row: 0, column: 0});
+      expect(doc.textString).equals("test");
+    });
+
     it("simple", () => {
       doc.insert("test", {row: 0, column: 2});
       expect(doc.textString).equals("hetestllo\nworld");
+    });
+
+    it("behind end", () => {
+      doc.insert("test", {row: 5, column: 0});
+      expect(doc.textString).equals("hello\nworld\n\n\n\ntest");
+    });
+
+    it("after last column", () => {
+      doc.insert("test", {row: 0, column: 10});
+      expect(doc.textString).equals("hello     test\nworld");
     });
 
     it("at end of line", () => {

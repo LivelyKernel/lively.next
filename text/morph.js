@@ -4,6 +4,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
+import TextDocument from "./document.js";
 
 export class Text extends Morph {
 
@@ -18,16 +19,13 @@ export class Text extends Morph {
     });
   }
 
-  constructor(props) {
-    var fontMetric;
-    if (props.fontMetric) {
-      fontMetric = props.fontMetric
-      props = obj.dissoc(props, ["fontMetric"]);
-    }
+  constructor(props = {}) {
+    var {fontMetric, textString} = props;
+    if (fontMetric) props = obj.dissoc(props, ["fontMetric"]);
+    if (typeof textString !== "undefined") props = obj.dissoc(props, ["textString"])
     super({
       readOnly: false,
       clipMode: "hidden",
-      textString: "",
       fixedWidth: false, fixedHeight: false,
       padding: 0,
       draggable: false,
@@ -36,6 +34,8 @@ export class Text extends Morph {
       fontSize: 12,
       ...props
     });
+    this.document = new TextDocument();
+    this.textString = textString || "";
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.fit();
     this._needsFit = false;
@@ -53,7 +53,7 @@ export class Text extends Morph {
        this.renderer && (this.renderer.layoutComputed = false);
   }
 
-  get textString() { return this.getProperty("textString") }
+  get textString() { return this.document ? this.document.textString : "" }
   set textString(value) {
     let oldText = this.textString;
     oldText && this.deleteText(0, oldText.length);
@@ -118,25 +118,27 @@ export class Text extends Morph {
     this.fixedWidth = this.fixedHeight = this.isClip();
   }
 
-  insertText(pos, str) {
-    var str = String(str),
-        oldText = this.textString,
-        newText = oldText ? oldText.substr(0, pos) + str + oldText.substr(pos) : str;
-    this._needsFit = true;
+  insertText(index, string) {
+    var doc = this.document,
+        pos = doc.indexToPosition(index);
+    doc.insert(string, pos);
 
+    this._needsFit = true;
     this.addValueChange(
-      "textString", newText,
-      {action: "insert", pos: pos, str: str});
+      "textString", doc.textString,
+      {action: "insert", index, string});
   }
 
   deleteText(start, end) {
-    var oldText = this.textString,
-        newText = oldText.substr(0, start) + oldText.substr(end);
-    this._needsFit = true;
+    var doc = this.document,
+        startPos = doc.indexToPosition(start),
+        endPos = doc.indexToPosition(end);
+    doc.remove(startPos, endPos);
 
+    this._needsFit = true;
     this.addValueChange(
-      "textString", newText,
-      {action: "delete", start: start, end: end});
+      "textString", doc.textString,
+      {action: "delete", start, end});
   }
 
   selectionOrLineString() {

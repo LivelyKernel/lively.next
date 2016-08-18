@@ -2,7 +2,7 @@ const newline = "\n",
       newlineLength = newline.length;
 
 export default class TextDocument {
-  
+
   static fromString(string) {
     var doc = new TextDocument();
     doc.textString = string;
@@ -12,7 +12,7 @@ export default class TextDocument {
   constructor(lines = []) {
     this.lines = lines;
   }
-  
+
   parseIntoLines(string) {
     return string.split(newline)
   }
@@ -31,7 +31,7 @@ export default class TextDocument {
       index += lines[i].length + (i === maxLength ? 0 : newlineLength);
     return index + column;
   }
-  
+
   indexToPosition(index, startRow = 0) {
     // TextDocument.fromString("hello\nworld").indexToPosition(8)
     var lines = this.lines;
@@ -46,12 +46,21 @@ export default class TextDocument {
 
   insert(string, pos) {
     var { lines } = this,
-        insertionLines = this.parseIntoLines(string),
-        before = lines[pos.row].slice(0, pos.column),
-        after = lines[pos.row].slice(pos.column);
+        line = lines[pos.row],
+        insertionLines = this.parseIntoLines(string);
+
+    if (!line) line = lines[pos.row] = "";
+
+    if (pos.column > line.length)
+        line += " ".repeat(pos.column - line.length);
+
+    var before = line.slice(0, pos.column),
+        after = line.slice(pos.column);
+
     lines[pos.row] = before + insertionLines.shift();
     if (insertionLines.length > 0)
       lines.splice(pos.row+1, 0, ...insertionLines);
+
     lines[pos.row + insertionLines.length] = lines[pos.row + insertionLines.length] + after;
   }
 
