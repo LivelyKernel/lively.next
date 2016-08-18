@@ -1,4 +1,4 @@
-/*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
+/*global System, declare, it, xit, describe, describeInBrowser, xdescribe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv, World } from "../index.js";
 import { string, arr } from "lively.lang";
@@ -9,6 +9,9 @@ import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 // FIXME! FontMetric should work in nodejs with jsdom as well!!!
 var inBrowser = System.get("@system-env").browser ? it :
   (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
+
+var describeInBrowser = System.get("@system-env").browser ? describe :
+  (title, fn) => { console.warn(`Suite ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
 
 function text(string, props) {
   return new Text2({
@@ -120,7 +123,7 @@ function createDummyWorld() {
   return world;
 }
 
-describe("rendered text", () => {
+describeInBrowser("rendered text", () => {
 
   beforeEach(async () => {
     env = new MorphicEnv(await createDOMEnvironment());
