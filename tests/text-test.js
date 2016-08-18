@@ -41,6 +41,8 @@ var fontMetricForTest = {
 
 describe("text", () => {
 
+  if (!inBrowser) this.timeout(5000);
+
   describe("fit", () => {
 
     it("computes size on construction", () => {
