@@ -53,13 +53,6 @@ export class Text extends Morph {
        this.renderer && (this.renderer.layoutComputed = false);
   }
 
-  get textString() { return this.document ? this.document.textString : "" }
-  set textString(value) {
-    let oldText = this.textString;
-    oldText && this.deleteText(0, oldText.length);
-    this.insertText(0, value);
-  }
-
   get readOnly() { return this.getProperty("readOnly"); }
   set readOnly(value) {
     this.nativeCursor = value ? "default" : "auto";
@@ -74,13 +67,13 @@ export class Text extends Morph {
     this._needsFit = true;
   }
 
-  get fixedHeight() { return this.getProperty("fixedHeight") }
+  get fixedHeight() { return this.getProperty("fixedHeight"); }
   set fixedHeight(value) {
     this.addValueChange("fixedHeight", value);
     this._needsFit = true;
   }
 
-  get padding() { return this.getProperty("padding") }
+  get padding() { return this.getProperty("padding"); }
   set padding(value) {
     this.addValueChange("padding", typeof value === "number" ? Rectangle.inset(value) : value);
     this._needsFit = true;
@@ -101,21 +94,20 @@ export class Text extends Morph {
   get fontColor() { return this.getProperty("fontColor") }
   set fontColor(value) { this.addValueChange("fontColor", value); }
 
-  get placeholder() { return this.getProperty("placeholder") }
-  set placeholder(value) {
-    this.addValueChange("placeholder", value);
-    this._needsFit = true;
-  }
-
-  get _selection() { return this.getProperty("_selection") }
-  set _selection(value) { this.addValueChange("_selection", value); }
-
-  get selection() { return new Selection(this) }
-
   get clipMode()  { return this.getProperty("clipMode"); }
   set clipMode(value)  {
     this.addValueChange("clipMode", value);
     this.fixedWidth = this.fixedHeight = this.isClip();
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // document changes
+
+  get textString() { return this.document ? this.document.textString : "" }
+  set textString(value) {
+    let oldText = this.textString;
+    oldText && this.deleteText(0, oldText.length);
+    this.insertText(0, value);
   }
 
   insertText(index, string) {
@@ -141,22 +133,32 @@ export class Text extends Morph {
       {action: "delete", start, end});
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // selection
+
+  get _selection() { return this.getProperty("_selection") }
+  set _selection(value) { this.addValueChange("_selection", value); }
+  get selection() { return new Selection(this) }
+
   selectionOrLineString() {
     var sel = this.selection;
     if (sel.text) return sel.text;
-    var line = string.lineIndexComputer(this.textString)(sel.start),
-        [start, end] = string.lineNumberToIndexesComputer(this.textString)(line);
-    return this.textString.slice(start, end).trim();
+    var doc = this.document;
+    return doc.getLine(doc.indexToPosition(sel.start).row);
   }
 
-  aboutToRender(renderer) {
-    super.aboutToRender(renderer);
-    this.fitIfNeeded();
+  // FIXME!
+  scrollToSelection() {
+    var {scroll, selection, padding} = this,
+        paddedBounds = this.innerBounds().insetByRect(padding),
+        selPt = this.addPaddingAndScroll(this.pointFromIndex(selection.start));
+    if (!paddedBounds.containsPoint(selPt)) {
+      this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
+    }
   }
 
-  render(renderer) {
-    return this.renderer.renderMorph(renderer, this);
-  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // text layout related
 
   fit() {
     let {fixedWidth, fixedHeight} = this;
@@ -191,15 +193,20 @@ export class Text extends Morph {
     return point.subPt(this.paddingAndScrollOffset());
   }
 
-  // FIXME!
-  scrollToSelection() {
-    var {scroll, selection, padding} = this,
-        paddedBounds = this.innerBounds().insetByRect(padding),
-        selPt = this.addPaddingAndScroll(this.pointFromIndex(selection.start));
-    if (!paddedBounds.containsPoint(selPt)) {
-      this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
-    }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // rendering
+
+  aboutToRender(renderer) {
+    super.aboutToRender(renderer);
+    this.fitIfNeeded();
   }
+
+  render(renderer) {
+    return this.renderer.renderMorph(renderer, this);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // mouse events
 
   onMouseDown(evt) {
     this.onMouseMove(evt);
@@ -219,6 +226,9 @@ export class Text extends Morph {
     if (end !== curEnd || start !== curStart)
       selection.range = {start: start, end: end};
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // keyboard events
 
   onKeyUp(evt) {
     switch (evt.keyString()) {
