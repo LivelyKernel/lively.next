@@ -84,6 +84,8 @@ class RenderedChunk {
     return this._width;
   }
 
+  get length() { return this.text.length; }
+
   computeBounds() {
     let {height, width} = this.fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.text);
     this._height = height;
@@ -277,13 +279,8 @@ export default class TextRenderer {
   }
 
   pixelPositionForIndex(morph, index) {
-    let row, col, lines = this.lines;
-    for (row = 0; row < lines.length; row++) {
-      var textLength = lines[row].text.length;
-      if (index <= textLength) break;
-      index -= textLength + newlineLength;
-    }
-    return this.pixelPositionFor(morph, {row, column: index});
+    var pos = indexToPosition(index, this.lines);
+    return this.pixelPositionFor(morph, pos);
   }
 
   textPositionFor(morph, pos) {
@@ -300,6 +297,11 @@ export default class TextRenderer {
     }
 
     return {row, column: line.columnForXOffset(x)};
+  }
+
+  textIndexFor(morph, point) {
+    var pos = this.textPositionFor(morph, point);
+    return positionToIndex(pos, this.lines);
   }
 
   textBounds(morph) {
