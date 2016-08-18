@@ -1,4 +1,4 @@
-/*global System, declare, it, xit, describe, beforeEach, afterEach, before, after*/
+/*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv, World } from "../index.js";
 import { string, arr } from "lively.lang";
@@ -95,7 +95,7 @@ describe("text", () => {
 
   });
 
-  describe("selection", () => {
+  xdescribe("selection", () => {
 
     it("uninitialized", () => {
       var t = text("hello\n world", {});
