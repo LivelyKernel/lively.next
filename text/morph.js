@@ -224,7 +224,7 @@ export class Text extends Morph {
     if (start > end)
       [start, end] = [end, start];
     if (end !== curEnd || start !== curStart)
-      selection.range = {start: start, end: end};
+      selection.range = {start, end};
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

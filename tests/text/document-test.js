@@ -5,7 +5,15 @@ import { expect } from "mocha-es6";
 // import { arr, string } from "lively.lang";
 
 describe("text doc", () => {
-  
+
+  it("line access", () => {
+    var doc = TextDocument.fromString("hello\nworld");
+    expect(doc.getLine(0)).equals("hello");
+    expect(doc.getLine(1)).equals("world");
+    expect(doc.getLine(3)).equals("world");
+    expect(doc.getLine(-2)).equals("hello");
+  });
+
   it("created using text string", () => {
     var doc = TextDocument.fromString("hello\nworld");
     expect(doc.lines).equals(["hello", "world"]);

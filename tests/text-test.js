@@ -128,14 +128,23 @@ describe("text layout", () => {
 
   });
 
-  describe("selection", () => {
+});
 
-    xit("uninitialized", () => {
-      var t = text("hello\n world", {});
-      expect(t.selection).containSubset({start: {row: 0, column: 0}, end: {row: 0, column: 0}})
-    });
 
+describe("text selection", () => {
+
+  it("selection / line string", () => {
+    var t = text("hello\n world", {});
+    t.selection.range = {start: 7, end: 7};
+    expect(t.selectionOrLineString()).equals(" world");
+    t.selection.range = {start: 7, end: 9};
+    expect(t.selectionOrLineString()).equals("wo");
   });
+
+//   xit("uninitialized", () => {
+//     var t = text("hello\n world", {});
+//     expect(t.selection).containSubset({start: {row: 0, column: 0}, end: {row: 0, column: 0}})
+//   });
 
 });
 

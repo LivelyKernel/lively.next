@@ -21,6 +21,11 @@ export default class TextDocument {
   set textString(string) { this.lines = this.parseIntoLines(string); }
   get stringLength() { return this.textString.length; }
 
+  getLine(row) {
+    var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
+    return this.lines[safeRow];
+  }
+
   positionToIndex({row, column}, startRow = 0) {
     let index = 0,
         lines = this.lines,
