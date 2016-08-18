@@ -1,15 +1,16 @@
 /* global fetch */
 
 import { mixins, promisify, gitHubRequest, bodec, codec, inflate } from "js-git-browser";
-import { getOrAskGitHubToken } from "./settings.js";
+import { getGitHubToken, getOrAskGitHubToken } from "./settings.js";
 
 const repoForPackage = {};
 
 async function gitHubURL(pkg) { // PackageAddress -> string?
   const packageConfig = `${pkg}/package.json`;
   try {
-    const res = await fetch(packageConfig),
-          conf = await res.json();
+    const res = await fetch(packageConfig);
+    if (res.status == 404) return null;
+    const conf = await res.json();
     if (!conf || !conf.repository) return null;
     const url = conf.repository.url || conf.repository,
           match = url.match(/github.com[:\/](.*?)(?:\.git)?$/);
@@ -25,16 +26,18 @@ function serverRemote(pkg) {
   return {
     async readRef(ref, callback) {
       try {
-        const response = await fetch(`${pkg}/.git/refs/${ref}`),
-              hash = await response.text();
+        const response = await fetch(`${pkg}/.git/refs/${ref}`);
+        if (response.status == 404) return callback(null, undefined);
+        const hash = await response.text();
         callback(null, hash.trim());
       } catch (err) { callback(err); }
     },
     async loadAs(type, hash, callback) {
       try {
         const path = `${pkg}/.git/objects/${hash.substr(0, 2)}/${hash.substr(2)}`,
-              response = await fetch(path),
-              buffer = await response.arrayBuffer(),
+              response = await fetch(path);
+        if (response.status == 404) return callback(null, undefined);
+        const buffer = await response.arrayBuffer(),
               binary = inflate(new Uint8Array(buffer)),
               raw = codec.deframe(binary);
         if (raw.type !== type) throw new TypeError("Type mismatch");
@@ -45,9 +48,15 @@ function serverRemote(pkg) {
   };
 }
 
-export default async function repository(pkg, withGitHub = false) {
+export function enableGitHub() {
+  if (getGitHubToken() !== "<secret>") return;
+  repoForPackage = {};
+  return getOrAskGitHubToken();
+}
+
+export default async function repository(pkg) {
   // PackageAddress, bool? -> Repository
-  if (pkg in repoForPackage && (!withGitHub || repoForPackage[pkg].send)) {
+  if (pkg in repoForPackage) {
     return repoForPackage[pkg];
   }
   // local IndexedDB
@@ -56,23 +65,24 @@ export default async function repository(pkg, withGitHub = false) {
     mixins.indexed.init(err => err ? reject(err) : resolve());
   });
   mixins.indexed(repo, pkg);
+
+  // Server git repo
+  mixins.fallthrough(repo, serverRemote(pkg));
   
   // GitHub fall through
-  const url = await gitHubURL(pkg);
-  if (url != null) {
+  if (getGitHubToken() !== "<secret>") {
+    const url = await gitHubURL(pkg);
+    if (!url) throw new Error("Could not determine GitHub URL");
     const remote = {};
-    if (withGitHub) {
-      mixins.github(remote, url, await getOrAskGitHubToken());
-      mixins.readCombiner(remote);
-      mixins.sync(repo, remote);
-    }
-    mixins.fallthrough(repo, serverRemote(pkg));
+    mixins.github(remote, url, await getOrAskGitHubToken());
+    mixins.readCombiner(remote);
+    mixins.sync(repo, remote);
+    mixins.fallthrough(repo, remote);
   }
   
   // Other plugins
   mixins.createTree(repo);
   mixins.memCache(repo);
-  mixins.readCombiner(repo);
   mixins.walkers(repo);
   mixins.formats(repo);
   promisify(repo);
@@ -81,6 +91,7 @@ export default async function repository(pkg, withGitHub = false) {
 
 export async function gitHubBranches(pkg) {
   // PackageAddress -> Array<{name: BranchName, hash: Hash}>
+  await enableGitHub();
   const url = await gitHubURL(pkg);
   if (!url) throw new Error("Could not determine GitHub URL");
   const req = gitHubRequest(url, await getOrAskGitHubToken());

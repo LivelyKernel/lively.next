@@ -2,7 +2,7 @@ import { codec, bodec } from "js-git-browser";
 import { emit } from 'lively.notifications';
 
 import commit, { packageHead } from "./commit.js";
-import repository from "./repo.js";
+import repository, { enableGitHub } from "./repo.js";
 
 // type EntryType = "tree" | "commit" | "tag" | "blob"
 
@@ -122,15 +122,11 @@ export default class Branch {
   }
 
   async pushToGitHub() {
-    const repo = await repository(this.pkg, true),
+    await enableGitHub();
+    const repo = await repository(this.pkg),
           headCommit = await this.head();
     await repo.send(`refs/heads/${this.name}`);
     return repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
   }
   
-  async pullFromGitHub() {
-    const repo = await repository(this.pkg, true);
-    return repo.fetch(`refs/heads/${this.name}`, 30);
-  }
-
 }

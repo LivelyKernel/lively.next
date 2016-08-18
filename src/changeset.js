@@ -5,6 +5,7 @@ import { module, getPackages, importPackage } from "lively.modules";
 import { mixins, gitHubRequest } from "js-git-browser";
 
 import { activeCommit, install, uninstall } from "../index.js";
+import { enableGitHub } from "./repo.js";
 import Branch from "./branch.js";
 import { packageHead } from "./commit.js";
 
@@ -34,13 +35,13 @@ class ChangeSet {
   }
   
   async pullBranchFromGitHub(pkg, hash) {
+    await enableGitHub();
     let branch = this.getBranch(pkg);
     if (!branch) {
       branch = new Branch(this.name, pkg);
       this.branches.push(branch);
     }
-    await branch.setHead(hash);
-    return branch.pullFromGitHub();
+    return branch.setHead(hash);
   }
 
   async fromObject(obj) {
