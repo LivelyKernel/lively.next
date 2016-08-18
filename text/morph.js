@@ -147,11 +147,11 @@ export class Text extends Morph {
     return doc.getLine(doc.indexToPosition(sel.start).row);
   }
 
-  // FIXME!
   scrollToSelection() {
-    var {scroll, selection, padding} = this,
+    var { scroll, selection, padding, renderer } = this,
         paddedBounds = this.innerBounds().insetByRect(padding),
-        selPt = this.addPaddingAndScroll(this.pointFromIndex(selection.start));
+        charBounds = renderer.boundsForIndex(this, selection.start),
+        selPt = this.addPaddingAndScroll(charBounds.bottomRight());
     if (!paddedBounds.containsPoint(selPt)) {
       this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
     }

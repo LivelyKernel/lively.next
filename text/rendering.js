@@ -116,9 +116,13 @@ class RenderedChunk {
     }, [text || h("br")]);
   }
 
-  xOffsetFor(column) {
+  boundsFor(column) {
     if (!this.charBoundsComputed) this.computeCharBounds();
-    var bounds = this.charBounds[column] || this.charBounds[this.charBounds.length-1];
+    return this.charBounds[column] || this.charBounds[this.charBounds.length-1];
+  }
+
+  xOffsetFor(column) {
+    var bounds = this.boundsFor(column);
     return bounds ? bounds.x : 0;
   }
 
@@ -140,8 +144,8 @@ export default class TextRenderer {
     this.fontMetric = fontMetric;
   }
 
-  updateLines(string, fontFamily, fontSize, fontMetric) {
-    let lines = lively.lang.string.lines(string),
+  updateLines(str, fontFamily, fontSize, fontMetric) {
+    let lines = string.lines(str),
         nRows = lines.length;
     // for now: 1 line = 1 chunk
     for (let row = 0; row < nRows; row++) {
@@ -272,14 +276,9 @@ export default class TextRenderer {
     }, [spacerBefore].concat(renderedLines).concat(spacerAfter));
   }
 
-  pixelPositionFor(morph, {row, column}) {
-    this.updateFromMorphIfNecessary(morph);
-    var maxLength = this.lines.length-1;
-    if (row > maxLength) row = maxLength
-    var line = this.lines[row];
-    if (!line) return pt(0,0);
-    let y = 0, i = 0; for (; i < row; i++) y += this.lines[i].height;
-    return pt(line.xOffsetFor(column), y);
+  pixelPositionFor(morph, pos) {
+    var { x, y } = this.boundsFor(morph, pos);
+    return pt(x, y);
   }
 
   pixelPositionForIndex(morph, index) {
@@ -317,6 +316,24 @@ export default class TextRenderer {
       textHeight += height;
     }
     return new Rectangle(0,0, textWidth, textHeight);
+  }
+
+  boundsFor(morph, {row, column}) {
+    this.updateFromMorphIfNecessary(morph);
+    var maxLength = this.lines.length-1;
+    if (row > maxLength) row = maxLength
+    var line = this.lines[row],
+        charBounds = line[column];
+    if (!line) return pt(0,0);
+    let y = 0, i = 0; for (; i < row; i++) y += this.lines[i].height;
+    let { x, width, height } = line.boundsFor(column);
+    return new Rectangle(x, y, width, height);
+  }
+
+  boundsForIndex(morph, index) {
+    this.updateFromMorphIfNecessary(morph);
+    var pos = indexToPosition(index, this.lines);
+    return this.boundsFor(morph, pos);
   }
 }
 
