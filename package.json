@@ -34,7 +34,7 @@
     "url": "git+https://github.com/LivelyKernel/lively.changesets.git"
   },
   "dependencies": {
-    "lively.modules": "0.5.14",
+    "lively.modules": "0.5.25",
     "lively.notifications": "^0.3.2",
     "lively.lang": "^0.6.0",
     "lively-system-interface": "LivelyKernel/lively-system-interface",
