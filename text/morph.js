@@ -189,6 +189,7 @@ export class Text extends Morph {
     return point.subPt(this.paddingAndScrollOffset());
   }
 
+  // FIXME!
   scrollToSelection() {
     var {scroll, selection, padding} = this,
         paddedBounds = this.innerBounds().insetByRect(padding),
@@ -206,12 +207,12 @@ export class Text extends Morph {
     var {clickedOnMorph, clickedOnPosition} = evt.state;
     if (clickedOnMorph !== this) return;
 
-    var {selection} = this,
+    var {selection, scroll} = this,
         {start: curStart, end: curEnd} = selection,
-        start = this.indexFromPoint(this.localize(clickedOnPosition)),
-        end = this.indexFromPoint(this.localize(evt.position))
-        // start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
-        // end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
+        //start = this.indexFromPoint(this.localize(clickedOnPosition).addPt(scroll)),
+        //end = this.indexFromPoint(this.localize(evt.position).addPt(scroll))
+        start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
+        end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
 
     if (start > end)
       [start, end] = [end, start];

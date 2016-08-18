@@ -26,23 +26,24 @@ function indexToPosition(index, lines, startRow = 0) {
   return {row: l-1, column: lines[l-1].length};
 }
 
-
-function selectionLayerPart(startPos, endPos) {
-  return h('div.selection-layer', {
+// TODO: Would probably be cleaner to apply padding to a div containing the "entire" selection layer...
+function selectionLayerPart(startPos, endPos, padding = Rectangle.inset(0,0,0,0)) {
+  return h('div.selection-layer-part', {
     style: {
       pointerEvents: "none", position: "absolute",
-      left: startPos.x + "px", top: startPos.y+"px",
+      left: startPos.x + padding.left() + "px", top: startPos.y + padding.top() + "px",
       width: (endPos.x-startPos.x) + "px", height: (endPos.y-startPos.y)+"px",
       backgroundColor: "#bed8f7", zIndex: -1
     }
   })
 }
 
-function cursor(pos, height) {
-    return h('div.selection-layer', {
+// TODO: Would probably be cleaner to apply padding to a div containing the "entire" selection layer...
+function cursor(pos, height, padding = Rectangle.inset(0,0,0,0)) {
+    return h('div.selection-layer-part', {
     style: {
       pointerEvents: "none", position: "absolute",
-      left: pos.x + "px", top: pos.y + "px",
+      left: pos.x + padding.left() + "px", top: pos.y + padding.top() + "px",
       width: "2px", height: height + "px",
       backgroundColor: "black", zIndex: -1
     }
@@ -176,7 +177,8 @@ export default class TextRenderer {
   renderSelectionLayer(morph) {
     // FIXME just hacked together... needs cleanup!!!
 
-    var {start, end} = morph.selection;
+    var {start, end} = morph.selection,
+        {padding, fontFamily, fontSize} = morph;
 
     if (start > end) ([end, start] = [start, end]);
 
@@ -190,11 +192,11 @@ export default class TextRenderer {
     // collapsed selection -> cursor
     if (start === end) {
       if (morph.rejectsInput()) return [];
-      return [cursor(startPos, this.fontMetric.defaultLineHeight(morph.fontFamily, morph.fontSize))];
+      return [cursor(startPos, this.fontMetric.defaultLineHeight(fontFamily, fontSize), padding)];
     }
     // single line -> one rectangle
     if (startTextPos.row === endTextPos.row) {
-      return [selectionLayerPart(startPos, endPos.addXY(0, endLineHeight))]
+      return [selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding)]
     }
 
     var endPosLine1 = pt(morph.width, startPos.y+this.lines[startTextPos.row].height),
@@ -203,8 +205,8 @@ export default class TextRenderer {
     // two lines -> two rectangles
     if (startTextPos.row+1 === endTextPos.row) {
       return [
-        selectionLayerPart(startPos, endPosLine1),
-        selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight))];
+        selectionLayerPart(startPos, endPosLine1, padding),
+        selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), padding)];
     }
 
     var endPosMiddle = pt(morph.width, endPos.y),
@@ -212,9 +214,9 @@ export default class TextRenderer {
 
     // 3+ lines -> three rectangles
     return [
-      selectionLayerPart(startPos, endPosLine1),
-      selectionLayerPart(startPosLine2, endPosMiddle),
-      selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight))];
+      selectionLayerPart(startPos, endPosLine1, padding),
+      selectionLayerPart(startPosLine2, endPosMiddle, padding),
+      selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), padding)];
 
   }
 
@@ -225,6 +227,7 @@ export default class TextRenderer {
         textWidth = 0, textHeight = 0,
         {y: visibleTop} = morph.scroll,
         visibleBottom = visibleTop + morph.height,
+        {padding} = morph,
         lastVisibleLineBottom = 0,
         row = 0,
         spacerBefore,
@@ -263,7 +266,8 @@ export default class TextRenderer {
     return h('div.text-layer', {
       style: {
         pointerEvents: "none", whiteSpace: "pre",
-        width: textWidth+"px", height: textHeight+"px"
+        width: textWidth+"px", height: textHeight+"px",
+        padding: `${padding.top()}px ${padding.right()}px ${padding.bottom()}px ${padding.left()}px`
       }
     }, [spacerBefore].concat(renderedLines).concat(spacerAfter));
   }
