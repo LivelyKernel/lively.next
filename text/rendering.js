@@ -44,13 +44,14 @@ class RenderedChunk {
     return this;
   }
 
-  compatibleWith(text2, fontFamily2, fontSize2, fontMetric2, fontColor2) {
-    var {text, config: {fontFamily, fontSize, fontMetric, fontColor}} = this;
+  compatibleWith(text2, fontFamily2, fontSize2, fontMetric2, fontColor2, fontKerning2) {
+    var {text, config: {fontFamily, fontSize, fontMetric, fontColor, fontKerning}} = this;
     return text       === text2
         && fontFamily === fontFamily2
         && fontSize   === fontSize2
         && fontColor  === fontColor2
-        && fontMetric === fontMetric2;
+        && fontMetric === fontMetric2
+        && fontKerning === fontKerning2;
   }
 
   get height() {
@@ -93,7 +94,10 @@ class RenderedChunk {
 
   render() {
     if (this.rendered) return this.rendered;
-    var {config: {fontSize, fontFamily, fontColor}, text} = this;
+    var {config: {fontSize, fontFamily, fontColor, fontKerning}, text, width, height} = this,
+        textNodes = text ? fontKerning ? text
+                                       : text.split("").map(c => h("span", c))
+                         : h("br");
     fontColor = fontColor || "";
 
     return this.rendered = h("div", {
@@ -101,9 +105,10 @@ class RenderedChunk {
         pointerEvents: "none",
         fontSize: fontSize + "px",
         fontFamily,
+        lineHeight: "initial",
         color: fontColor.isColor ? fontColor.toString() : String(fontColor)
       }
-    }, [text || h("br")]);
+    }, textNodes);
   }
 
   boundsFor(column) {
@@ -136,7 +141,7 @@ export default class TextLayout {
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
-    let {fontFamily, fontSize, fontColor, document} = morph,
+    let {fontFamily, fontSize, fontColor, fontKerning, document} = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
         nRows = lines.length;
@@ -144,8 +149,8 @@ export default class TextLayout {
     // for now: 1 line = 1 chunk
     for (let row = 0; row < nRows; row++) {
       var chunk = this.chunks[row];
-      if (!chunk || !chunk.compatibleWith(lines[row], fontFamily, fontSize, fontColor, fontMetric))
-        this.chunks[row] = new RenderedChunk(lines[row], {fontFamily, fontSize, fontColor, fontMetric});
+      if (!chunk || !chunk.compatibleWith(lines[row], fontFamily, fontSize, fontColor, fontKerning, fontMetric))
+        this.chunks[row] = new RenderedChunk(lines[row], {fontFamily, fontSize, fontColor, fontKerning, fontMetric});
     }
 
     this.chunks.splice(nRows, this.chunks.length - nRows);
