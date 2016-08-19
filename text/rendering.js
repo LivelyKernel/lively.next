@@ -303,7 +303,7 @@ export default class TextLayout {
   }
 
 
-  pixelPositionFor(morph, {row, column}) {
+  boundsFor(morph, {row, column}) {
     this.updateFromMorphIfNecessary(morph);
     let chunks = this.chunks,
         maxLength = chunks.length-1,
@@ -311,9 +311,9 @@ export default class TextLayout {
         line = chunks[safeRow];
 
     if (!line) return pt(0,0);
+
     for (var y = 0, i = 0; i < safeRow; i++)
       y += chunks[i].height;
-    return pt(line.xOffsetFor(column), y);
     let { x, width, height } = line.boundsFor(column);
     return new Rectangle(x, y, width, height);
   }
