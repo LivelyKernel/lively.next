@@ -162,8 +162,8 @@ export class ChangeManager {
     } else {
       this.changes.push(change);
       morph._rev = ++this.revision;
-      signalChange(this, change, morph);
     }
+    signalChange(this, change, morph);
 
     return change;
   }
