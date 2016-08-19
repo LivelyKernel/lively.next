@@ -6,26 +6,6 @@ import { pt, Rectangle } from "lively.graphics";
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
-function positionToIndex({row, column}, lines, startRow = 0) {
-  // positionToIndex({row: 1, column: 1}, ["fooo", "barrrr"])
-  let index = 0;
-  row = Math.min(row, lines.length);
-  for (var i = startRow; i < row; ++i)
-    index += lines[i].length + newlineLength;
-  return index + column;
-}
-
-function indexToPosition(index, lines, startRow = 0) {
-  // indexToPosition(0, ["fooo", "barrrr"])
-  if (lines.length === 0) return {row: 0, column: 0};
-  for (var i = startRow, l = lines.length; i < l; i++) {
-    index -= lines[i].length + newlineLength;
-    if (index < 0)
-      return {row: i, column: index + lines[i].length + newlineLength};
-  }
-  return {row: l-1, column: lines[l-1].length};
-}
-
 // TODO: Would probably be cleaner to apply padding to a div containing the "entire" selection layer...
 function selectionLayerPart(startPos, endPos, padding = Rectangle.inset(0,0,0,0)) {
   return h('div.selection-layer-part', {
@@ -136,35 +116,37 @@ class RenderedChunk {
   }
 }
 
-export default class TextRenderer {
+export default class TextLayout {
 
   constructor(fontMetric) {
     this.layoutComputed = false;
-    this.lines = [];
+    this.chunks = [];
     this.fontMetric = fontMetric;
-  }
-
-  updateLines(str, fontFamily, fontSize, fontMetric) {
-    let lines = string.lines(str),
-        nRows = lines.length;
-    // for now: 1 line = 1 chunk
-    for (let row = 0; row < nRows; row++) {
-      this.lines[row] = this.lines[row] ?
-        this.lines[row].updateText(lines[row], fontFamily, fontSize, fontMetric) :
-        new RenderedChunk(lines[row], fontFamily, fontSize, fontMetric);
-    }
-    this.lines.splice(nRows, this.lines.length - nRows);
-    this.layoutComputed = true;
-    return this;
   }
 
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
-    var {fontFamily, fontSize, textString} = morph;
-    this.updateLines(textString, fontFamily, fontSize, this.fontMetric);
+
+    let {fontFamily, fontSize, fontColor, document} = morph,
+        fontMetric = this.fontMetric,
+        lines = document.lines,
+        nRows = lines.length;
+
+    // for now: 1 line = 1 chunk
+    for (let row = 0; row < nRows; row++) {
+      var chunk = this.chunks[row];
+      if (!chunk || !chunk.compatibleWith(lines[row], fontFamily, fontSize, fontColor, fontMetric))
+        this.chunks[row] = new RenderedChunk(lines[row], {fontFamily, fontSize, fontColor, fontMetric});
+    }
+
+    this.chunks.splice(nRows, this.chunks.length - nRows);
+    this.layoutComputed = true;
+    return this;
   }
 
   renderMorph(renderer, morph) {
+    this.updateFromMorphIfNecessary(morph);
+
     return h("div", {
       ...defaultAttributes(morph),
       style: {
@@ -182,28 +164,32 @@ export default class TextRenderer {
     // FIXME just hacked together... needs cleanup!!!
 
     var {start, end} = morph.selection,
-        {padding, fontFamily, fontSize} = morph;
+        {padding, document} = morph;
 
-    if (start > end) ([end, start] = [start, end]);
+    if (start > end) [end, start] = [start, end];
 
-    var lines         = this.lines.map(({text}) => text),
-        startTextPos  = indexToPosition(start, lines),
-        endTextPos    = indexToPosition(end, lines),
+    var chunks        = this.chunks,
+        startTextPos  = document.indexToPosition(start),
+        endTextPos    = document.indexToPosition(end),
         startPos      = this.pixelPositionFor(morph, startTextPos),
         endPos        = this.pixelPositionFor(morph, endTextPos),
-        endLineHeight = this.lines[endTextPos.row].height;
+        endLineHeight = chunks[endTextPos.row].height;
 
     // collapsed selection -> cursor
     if (start === end) {
       if (morph.rejectsInput()) return [];
-      return [cursor(startPos, this.fontMetric.defaultLineHeight(fontFamily, fontSize), padding)];
+      let {fontFamily, fontSize} = morph,
+          chunkAtCursor = chunks[startTextPos.row],
+          h = chunkAtCursor ? chunkAtCursor.height : this.fontMetric.defaultLineHeight(fontFamily, fontSize);
+      return [cursor(startPos, chunks[startTextPos.row].height, padding)];
     }
+
     // single line -> one rectangle
     if (startTextPos.row === endTextPos.row) {
       return [selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding)]
     }
 
-    var endPosLine1 = pt(morph.width, startPos.y+this.lines[startTextPos.row].height),
+    var endPosLine1 = pt(morph.width, startPos.y + chunks[startTextPos.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
@@ -225,9 +211,7 @@ export default class TextRenderer {
   }
 
   renderTextLayer(morph) {
-    this.updateFromMorphIfNecessary(morph);
-
-    let {lines} = this,
+    let {chunks} = this,
         textWidth = 0, textHeight = 0,
         {y: visibleTop} = morph.scroll,
         visibleBottom = visibleTop + morph.height,
@@ -238,8 +222,8 @@ export default class TextRenderer {
         renderedLines = [],
         spacerAfter;
 
-    for (;row < lines.length; row++) {
-      let {width, height} = lines[row],
+    for (;row < chunks.length; row++) {
+      let {width, height} = chunks[row],
           newTextHeight = textHeight + height;
       if (newTextHeight >= visibleTop) break;
       textWidth = Math.max(width, textWidth);
@@ -248,10 +232,10 @@ export default class TextRenderer {
 
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
-    for (;row < lines.length; row++) {
-      let {width, height} = lines[row];
+    for (;row < chunks.length; row++) {
+      let {width, height} = chunks[row];
       if (textHeight > visibleBottom) break;
-      renderedLines.push(lines[row].render());
+      renderedLines.push(chunks[row].render());
 
       textWidth = Math.max(width, textWidth);
       textHeight += height;
@@ -259,8 +243,8 @@ export default class TextRenderer {
 
     lastVisibleLineBottom = textHeight;
 
-    for (;row < lines.length; row++) {
-      let {width, height} = lines[row];
+    for (;row < chunks.length; row++) {
+      let {width, height} = chunks[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -282,19 +266,19 @@ export default class TextRenderer {
   }
 
   pixelPositionForIndex(morph, index) {
-    var pos = indexToPosition(index, this.lines);
+    var pos = morph.document.indexToPosition(index);
     return this.pixelPositionFor(morph, pos);
   }
 
   textPositionFor(morph, pos) {
     this.updateFromMorphIfNecessary(morph);
-    var {lines} = this;
-    if (!lines.length) return {row: 0, column: 0};
+    var {chunks} = this;
+    if (!chunks.length) return {row: 0, column: 0};
 
     let {x,y: remainingHeight} = pos, line, row;
     if (remainingHeight < 0) remainingHeight = 0;
-    for (row = 0; row < lines.length; row++) {
-      line = lines[row];
+    for (row = 0; row < chunks.length; row++) {
+      line = chunks[row];
       if (remainingHeight < line.height) break;
       remainingHeight -= line.height;
     }
@@ -304,35 +288,39 @@ export default class TextRenderer {
 
   textIndexFor(morph, point) {
     var pos = this.textPositionFor(morph, point);
-    return positionToIndex(pos, this.lines);
+    return morph.document.positionToIndex(pos);
   }
 
   textBounds(morph) {
     this.updateFromMorphIfNecessary(morph);
     let textWidth = 0, textHeight = 0;
-    for (let row = 0; row < this.lines.length; row++) {
-      var {width, height} = this.lines[row];
+    for (let row = 0; row < this.chunks.length; row++) {
+      var {width, height} = this.chunks[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
     return new Rectangle(0,0, textWidth, textHeight);
   }
 
-  boundsFor(morph, {row, column}) {
+
+  pixelPositionFor(morph, {row, column}) {
     this.updateFromMorphIfNecessary(morph);
-    var maxLength = this.lines.length-1;
-    if (row > maxLength) row = maxLength
-    var line = this.lines[row],
-        charBounds = line[column];
+    let chunks = this.chunks,
+        maxLength = chunks.length-1,
+        safeRow = Math.max(0, Math.min(maxLength, row)),
+        line = chunks[safeRow];
+
     if (!line) return pt(0,0);
-    let y = 0, i = 0; for (; i < row; i++) y += this.lines[i].height;
+    for (var y = 0, i = 0; i < safeRow; i++)
+      y += chunks[i].height;
+    return pt(line.xOffsetFor(column), y);
     let { x, width, height } = line.boundsFor(column);
     return new Rectangle(x, y, width, height);
   }
 
   boundsForIndex(morph, index) {
     this.updateFromMorphIfNecessary(morph);
-    var pos = indexToPosition(index, this.lines);
+    var pos = morph.document.indexToPosition(index);
     return this.boundsFor(morph, pos);
   }
 }

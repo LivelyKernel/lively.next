@@ -11,13 +11,15 @@ export default class TextDocument {
 
   constructor(lines = []) {
     this.lines = lines;
+    this.newline = newline;
+    this.newlineLength = newlineLength;
   }
 
   parseIntoLines(string) {
-    return string.split(newline)
+    return string.split(this.newline)
   }
 
-  get textString() { return this.lines.join(newline); }
+  get textString() { return this.lines.join(this.newline); }
   set textString(string) { this.lines = this.parseIntoLines(string); }
   get stringLength() { return this.textString.length; }
 
@@ -33,7 +35,7 @@ export default class TextDocument {
     row = Math.min(row, maxLength);
     column = Math.min(column, lines[row].length);
     for (var i = startRow; i < row; ++i)
-      index += lines[i].length + (i === maxLength ? 0 : newlineLength);
+      index += lines[i].length + (i === maxLength ? 0 : this.newlineLength);
     return index + column;
   }
 
@@ -42,9 +44,9 @@ export default class TextDocument {
     var lines = this.lines;
     if (lines.length === 0) return {row: 0, column: 0};
     for (var i = startRow, l = lines.length; i < l; i++) {
-      index -= lines[i].length + newlineLength;
+      index -= lines[i].length + this.newlineLength;
       if (index < 0)
-        return {row: i, column: index + lines[i].length + newlineLength};
+        return {row: i, column: index + lines[i].length + this.newlineLength};
     }
     return {row: l-1, column: lines[l-1].length};
   }
