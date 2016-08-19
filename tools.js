@@ -93,7 +93,8 @@ export class Workspace extends Window {
         fixedWidth: true,
         fixedHeight: true,
         clipMode: "auto",
-        padding: Rectangle.inset(4, 2, 4, 2)
+        padding: Rectangle.inset(4, 2, 4, 2),
+        fontFamily: "Monaco, monospace"
       }),
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
@@ -120,7 +121,7 @@ export class Browser extends Window {
 
   build() {
     var style = {borderWidth: 1, borderColor: Color.gray},
-        textStyle = {...style, type: "text", fixedWidth: true, fixedHeight: true, clipMode: "auto"};
+        textStyle = {...style, type: "text", fixedWidth: true, fixedHeight: true, clipMode: "auto", fontFamily: "Monaco, monospace"};
     return morph({
       ...style,
       layout: new GridLayout({
