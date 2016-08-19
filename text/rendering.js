@@ -37,12 +37,10 @@ class RenderedChunk {
     this.config = config;
     this.text = text;
 
-    this.charBoundsComputed = false;
-    this.charBounds = [];
-    this.boundsComputed = false;
-    this.rendered = null;
-    this._width = null;
-    this._height = null;
+    this.rendered = undefined;
+    this._charBounds = undefined;
+    this._width = undefined;
+    this._height = undefined;
     return this;
   }
 
@@ -56,16 +54,21 @@ class RenderedChunk {
   }
 
   get height() {
-    if (!this.boundsComputed) this.computeBounds();
+    if (this._height === undefined) this.computeBounds();
     return this._height;
   }
 
   get width() {
-    if (!this.boundsComputed) this.computeBounds();
+    if (this._width === undefined) this.computeBounds();
     return this._width;
   }
 
   get length() { return this.text.length; }
+
+  get charBounds() {
+    if (this._charBounds === undefined) this.computeCharBounds();
+    return this._charBounds;
+  }
 
   computeBounds() {
     let {text, config: {fontFamily, fontSize, fontMetric}} = this,
@@ -73,25 +76,23 @@ class RenderedChunk {
 
     this._height = height;
     this._width = width;
-    this.boundsComputed = true;
     return this;
   }
 
   computeCharBounds() {
-    var {charBounds, text, config: {fontFamily, fontSize, fontMetric}} = this;
+    let {text, config: {fontFamily, fontSize, fontMetric}} = this;
     text += newline;
-    let nCols = text.length;
-    charBounds.length = nCols;
+    let nCols = text.length,
+        _charBounds = this._charBounds = new Array(nCols);
     for (let col = 0, x = 0; col < nCols; col++) {
-      var {width,height} = fontMetric.sizeFor(fontFamily, fontSize, text[col]);
-      this.charBounds[col] = {x, y: 0, width,height};
+      let {width,height} = fontMetric.sizeFor(fontFamily, fontSize, text[col]);
+      _charBounds[col] = {x, y: 0, width, height};
       x += width;
     }
   }
 
   render() {
     if (this.rendered) return this.rendered;
-    if (!this.boundsComputed) this.computeBounds();
     var {config: {fontSize, fontFamily, fontColor}, text} = this;
     fontColor = fontColor || "";
 
@@ -106,8 +107,8 @@ class RenderedChunk {
   }
 
   boundsFor(column) {
-    if (!this.charBoundsComputed) this.computeCharBounds();
-    return this.charBounds[column] || this.charBounds[this.charBounds.length-1];
+    var charBounds = this.charBounds
+    return charBounds[column] || charBounds[charBounds.length-1];
   }
 
   xOffsetFor(column) {
@@ -116,9 +117,8 @@ class RenderedChunk {
   }
 
   columnForXOffset(xInPixels) {
-    var {charBoundsComputed, charBounds} = this;
-    if (!charBoundsComputed) this.computeCharBounds();
-    var length = charBounds.length;
+    var {charBounds} = this,
+        length = charBounds.length;
     if (!length || xInPixels < charBounds[0].x) return 0;
     if (xInPixels >= charBounds[length-1].x) return length-1;
     return charBounds.findIndex(({x, width}) => xInPixels >= x && xInPixels < x+width);
