@@ -20,23 +20,24 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString} = props;
-    if (fontMetric) props = obj.dissoc(props, ["fontMetric"]);
-    if (typeof textString !== "undefined") props = obj.dissoc(props, ["textString"])
+    var {fontMetric, textString, selectable, _selection} = props;
+    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "_selection"])
     super({
       readOnly: false,
+      draggable: false,
       clipMode: "hidden",
       fixedWidth: false, fixedHeight: false,
       padding: 0,
-      draggable: false,
-      _selection: { start: 0, end: 0 },
       fontFamily: "Sans-Serif",
       fontSize: 12,
+      fontColor: Color.black,
       ...props
     });
     this.document = new TextDocument();
     this.textString = textString || "";
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
+    this._selection = _selection || {start: 0, end: 0};
+    this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.fit();
     this._needsFit = false;
   }
@@ -60,6 +61,12 @@ export class Text extends Morph {
   }
 
   rejectsInput() { return this.readOnly || !this.isFocused() }
+
+  get selectable() { return this.getProperty("selectable"); }
+  set selectable(value) {
+    this.addValueChange("selectable", value);
+    if (!value) this.selection.collapse();
+  }
 
   get fixedWidth() { return this.getProperty("fixedWidth") }
   set fixedWidth(value) {
@@ -214,7 +221,7 @@ export class Text extends Morph {
 
   onMouseMove(evt) {
     var {clickedOnMorph, clickedOnPosition} = evt.state;
-    if (clickedOnMorph !== this) return;
+    if (clickedOnMorph !== this || !this.selectable) return;
 
     var {selection, scroll} = this,
         {start: curStart, end: curEnd} = selection,
