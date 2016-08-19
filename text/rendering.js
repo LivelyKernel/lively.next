@@ -13,7 +13,7 @@ function selectionLayerPart(startPos, endPos, padding = Rectangle.inset(0,0,0,0)
       pointerEvents: "none", position: "absolute",
       left: startPos.x + padding.left() + "px", top: startPos.y + padding.top() + "px",
       width: (endPos.x-startPos.x) + "px", height: (endPos.y-startPos.y)+"px",
-      backgroundColor: "#bed8f7", zIndex: -1
+      backgroundColor: "#bed8f7", zIndex: -3
     }
   })
 }
@@ -25,7 +25,7 @@ function cursor(pos, height, padding = Rectangle.inset(0,0,0,0)) {
       pointerEvents: "none", position: "absolute",
       left: pos.x + padding.left() + "px", top: pos.y + padding.top() + "px",
       width: "2px", height: height + "px",
-      backgroundColor: "black", zIndex: -1
+      backgroundColor: "black", zIndex: -2
     }
   })
 }
@@ -165,8 +165,10 @@ export default class TextLayout {
           morph.nativeCursor
       }
     }, this.renderSelectionLayer(morph)
+        .concat(morph.debug ? this.renderDebugLayer(morph) : [])
         .concat(this.renderTextLayer(morph))
-        .concat(renderer.renderSubmorphs(morph)));
+        .concat(renderer.renderSubmorphs(morph))
+      );
   }
 
   renderSelectionLayer(morph) {
@@ -267,6 +269,56 @@ export default class TextLayout {
         padding: `${padding.top()}px ${padding.right()}px ${padding.bottom()}px ${padding.left()}px`
       }
     }, [spacerBefore].concat(renderedLines).concat(spacerAfter));
+  }
+
+  renderDebugLayer(morph) {
+    let {chunks} = this,
+        {y: visibleTop} = morph.scroll,
+        visibleBottom = visibleTop + morph.height,
+        {padding} = morph,
+        debugHighlights = [],
+        paddingLeft = padding.left(),
+        textHeight = padding.top(),
+        textWidth = 0;
+
+    for (let row = 0; row < chunks.length; row++) {
+      let {width, height, charBounds} = chunks[row];
+      for (let col = 0; col < charBounds.length; col++) {
+        let {x, width, height} = charBounds[col];
+        x += paddingLeft;
+        debugHighlights.push(h("div", {
+          style: {
+            position: "absolute",
+            left: x+"px",
+            top: textHeight+"px",
+            width: width+"px",
+            height: height+"px",
+            outline: "1px solid orange",
+            pointerEvents: "none",
+            zIndex: -1
+          }
+        }))
+      }
+
+      textHeight += height;
+      textWidth = Math.max(textWidth, width);
+      if (textHeight < visibleTop || textHeight > visibleBottom) continue;
+    }
+
+    debugHighlights.push(h("div", {
+      style: {
+        position: "absolute",
+        left: padding.left()+"px",
+        top: padding.top()+"px",
+        width: textWidth+"px",
+        height: textHeight+"px",
+        outline: "1px solid red",
+        pointerEvents: "none",
+        zIndex: -1
+      }
+    }));
+
+    return debugHighlights
   }
 
   pixelPositionFor(morph, pos) {
