@@ -1,3 +1,4 @@
+/*global WeakMap*/
 import { arr, string } from "lively.lang";
 
 function newKeyIn(obj, base = "_") {
@@ -8,24 +9,25 @@ function newKeyIn(obj, base = "_") {
   return key;
 }
 
-function signalChange(changeManager, change, morph) {
-
-  // if (!morph.isHand)
-  //   console.log(`[change] ${morph._rev} ${change.target.id.slice(0,7)}.${change.prop} -> ${String(change.value).slice(0,100)}`);
-
+function informMorph(changeManager, change, morph) {
   try {
-    if (changeManager.changeListeners.length)
-      changeManager.changeListeners.forEach(listener => listener(change));
-
     morph.onChange(change);
-
     var owner = morph.owner;
     while (owner) {
       owner.onSubmorphChange(change, morph);
       owner = owner.owner;
     }
   } catch (err) {
-    console.error(`Error signaling morph change: ${err.stack}`)
+    console.error(`Error in informMorph: ${err.stack}`)
+  }
+}
+
+function informListeners(changeManager, change) {
+  try {
+    if (changeManager.changeListeners.length)
+      changeManager.changeListeners.forEach(listener => listener(change));
+  } catch (err) {
+    console.error(`Error in informListeners: ${err.stack}`)
   }
 }
 
@@ -33,6 +35,7 @@ function signalChange(changeManager, change, morph) {
 class Change {
   constructor(target) {
     this.target = target;
+    this.group = null;
   }
   get type() { return "abstract change" }
   apply() { throw new Error("Not yet implemented"); }
@@ -47,7 +50,10 @@ export class GroupChange extends Change {
 
   consumesChanges() { return true }
 
-  addChange(c) { this.changes.push(c); }
+  addChange(c) {
+    this.changes.push(c);
+    c.group = this;
+  }
 
   apply() {
     this.changes.slice().forEach(change => change.apply());
@@ -162,8 +168,9 @@ export class ChangeManager {
     } else {
       this.changes.push(change);
       morph._rev = ++this.revision;
+      informListeners(this, change)
     }
-    signalChange(this, change, morph);
+    informMorph(this, change, morph);
 
     return change;
   }

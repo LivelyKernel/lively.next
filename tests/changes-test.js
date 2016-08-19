@@ -8,7 +8,9 @@ import { num, arr } from "lively.lang";
 
 var env;
 
-describe("changes", () => {
+describe("changes", function () {
+
+  this.timeout(5000);
 
   beforeEach(() => env = MorphicEnv.pushDefault(new MorphicEnv()));
   afterEach(() =>  MorphicEnv.popDefault().uninstall());
