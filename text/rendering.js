@@ -32,27 +32,27 @@ function cursor(pos, height, padding = Rectangle.inset(0,0,0,0)) {
 
 class RenderedChunk {
 
-  constructor(text, fontFamily, fontSize, fontMetric) {
-    this.updateText(text, fontFamily, fontSize, fontMetric);
-  }
-
-  updateText(text, fontFamily, fontSize, fontMetric) {
-    if (text === this.text
-     && this.fontFamily === fontFamily
-     && this.fontSize === fontSize
-     && this.fontMetric === fontMetric) return this;
+  constructor(text, config) {
+    // config: {fontFamily, fontSize, fontMetric, fontColor}
+    this.config = config;
+    this.text = text;
 
     this.charBoundsComputed = false;
     this.charBounds = [];
     this.boundsComputed = false;
     this.rendered = null;
-    this.text = text;
-    this.fontFamily = fontFamily;
-    this.fontSize = fontSize;
-    this.fontMetric = fontMetric;
     this._width = null;
     this._height = null;
     return this;
+  }
+
+  compatibleWith(text2, fontFamily2, fontSize2, fontMetric2, fontColor2) {
+    var {text, config: {fontFamily, fontSize, fontMetric, fontColor}} = this;
+    return text       === text2
+        && fontFamily === fontFamily2
+        && fontSize   === fontSize2
+        && fontColor  === fontColor2
+        && fontMetric === fontMetric2;
   }
 
   get height() {
@@ -68,7 +68,9 @@ class RenderedChunk {
   get length() { return this.text.length; }
 
   computeBounds() {
-    let {height, width} = this.fontMetric.sizeForStr(this.fontFamily, this.fontSize, this.text);
+    let {text, config: {fontFamily, fontSize, fontMetric}} = this,
+        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, text);
+
     this._height = height;
     this._width = width;
     this.boundsComputed = true;
@@ -76,7 +78,7 @@ class RenderedChunk {
   }
 
   computeCharBounds() {
-    var {charBounds, text, fontFamily, fontSize, fontMetric} = this;
+    var {charBounds, text, config: {fontFamily, fontSize, fontMetric}} = this;
     text += newline;
     let nCols = text.length;
     charBounds.length = nCols;
@@ -90,9 +92,16 @@ class RenderedChunk {
   render() {
     if (this.rendered) return this.rendered;
     if (!this.boundsComputed) this.computeBounds();
-    var {fontSize, fontFamily, text} = this;
+    var {config: {fontSize, fontFamily, fontColor}, text} = this;
+    fontColor = fontColor || "";
+
     return this.rendered = h("div", {
-      style: {pointerEvents: "none", fontSize: fontSize + "px", fontFamily}
+      style: {
+        pointerEvents: "none",
+        fontSize: fontSize + "px",
+        fontFamily,
+        color: fontColor.isColor ? fontColor.toString() : String(fontColor)
+      }
     }, [text || h("br")]);
   }
 

@@ -45,13 +45,14 @@ export class Text extends Morph {
   get isText() { return true }
 
   onChange(change) {
-    super.onChange(change);
     if (change.prop === "textString"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
+     || change.prop === "fontColor" // FIXME
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight")
        this.renderer && (this.renderer.layoutComputed = false);
+    super.onChange(change);
   }
 
   get readOnly() { return this.getProperty("readOnly"); }
