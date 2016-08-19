@@ -39,6 +39,7 @@ export default class FontMetric {
 
   install(doc, parentEl) {
     this.element = doc.createElement("div");
+    this.element.name = "fontMetric";
     this.setMeasureNodeStyles(this.element.style, true);
     parentEl.appendChild(this.element);
   }
