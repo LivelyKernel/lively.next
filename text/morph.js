@@ -1,7 +1,7 @@
 /*global System*/
 import { string, obj } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
-import { Morph } from "../index.js";
+import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
@@ -20,8 +20,8 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, _selection} = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "_selection"])
+    var {fontMetric, textString, selectable, selection} = props;
+    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection"])
     super({
       readOnly: false,
       draggable: false,
@@ -34,10 +34,10 @@ export class Text extends Morph {
       ...props
     });
     this.document = new TextDocument();
-    this.textString = textString || "";
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
-    this._selection = _selection || {start: 0, end: 0};
+    this._selection = new Selection(this, selection);
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
+    this.textString = textString || "";
     this.fit();
     this._needsFit = false;
   }
@@ -113,53 +113,71 @@ export class Text extends Morph {
 
   get textString() { return this.document ? this.document.textString : "" }
   set textString(value) {
-    let oldText = this.textString;
-    oldText && this.deleteText(0, oldText.length);
-    this.insertText(0, value);
+    this.document.textString = String(value);
+    this.selection = {start: 0, end: 0};
+    this.addValueChange("textString", value);
   }
 
-  insertText(index, string) {
-    var doc = this.document,
-        pos = doc.indexToPosition(index);
-    doc.insert(string, pos);
-
-    this._needsFit = true;
-    this.addValueChange(
-      "textString", doc.textString,
-      {action: "insert", index, string});
+  getLine(row) {
+    if (typeof row !== "number") this.cursorPosition.row
+    var doc = this.document;
+    return doc.getLine(row);
   }
 
-  deleteText(start, end) {
-    var doc = this.document,
-        startPos = doc.indexToPosition(start),
-        endPos = doc.indexToPosition(end);
-    doc.remove(startPos, endPos);
+  insertTextAndSelect(text, pos = null) {
+    text = String(text);
+    if (pos) this.selection.range = this.insertText(text, pos);
+    else this.selection.text = text;
+  }
 
+  insertText(text, pos = null) {
+    text = String(text);
+    var range = this.document.insert(text, pos || this.selection.end);
     this._needsFit = true;
     this.addValueChange(
-      "textString", doc.textString,
-      {action: "delete", start, end});
+      "textString", this.document.textString,
+      {action: "insertText", text, pos});
+    return range;
+  }
+
+  deleteText(range) {
+    this.document.remove(range);
+    this._needsFit = true;
+    this.addValueChange(
+      "textString", this.document.textString,
+      {action: "deleteText", range});
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 
-  get _selection() { return this.getProperty("_selection") }
-  set _selection(value) { this.addValueChange("_selection", value); }
-  get selection() { return new Selection(this) }
+  get selection() { return this._selection; }
+  set selection(range) { return this._selection.range = range; }
+
+  get cursorPosition() { return this.selection.start; }
+
+  selectAll() {
+    this.selection.range = {start: {row: 0, column: 0}, end: this.document.endPosition};
+    return this.selection;
+  }
+
+  selectLine(row) {
+    if (typeof row !== "number") row = this.cursorPosition.row
+    this.selection.range = {start: {row, column: 0}, end: {row, column: this.getLine(row).length}};
+    return this.selection;
+  }
 
   selectionOrLineString() {
-    var sel = this.selection;
-    if (sel.text) return sel.text;
-    var doc = this.document;
-    return doc.getLine(doc.indexToPosition(sel.start).row);
+    var {text, start} = this.selection;
+    if (text) return text;
+    return this.getLine(start.row);
   }
 
   scrollToSelection() {
     var { scroll, selection, padding, renderer } = this,
         paddedBounds = this.innerBounds().insetByRect(padding),
-        charBounds = renderer.boundsForIndex(this, selection.start),
-        selPt = this.addPaddingAndScroll(charBounds.bottomRight());
+        charBounds =   renderer.boundsFor(this, selection.start),
+        selPt =        this.addPaddingAndScroll(charBounds.bottomRight());
     if (!paddedBounds.containsPoint(selPt)) {
       this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
     }
@@ -181,12 +199,12 @@ export class Text extends Morph {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
   }
 
-  indexFromPoint(point) {
-    return this.renderer.textIndexFor(this, point);
+  textPositionFromPoint(point) {
+    return this.renderer.textPositionFor(this, point);
   }
 
-  pointFromIndex(index) {
-    return this.renderer.pixelPositionForIndex(this, index);
+  indexFromPoint(point) {
+    return this.renderer.textIndexFor(this, point);
   }
 
   paddingAndScrollOffset() {
@@ -221,18 +239,21 @@ export class Text extends Morph {
   }
 
   onMouseMove(evt) {
+    if (!evt.leftMouseButtonPressed()) return;
     var {clickedOnMorph, clickedOnPosition} = evt.state;
     if (clickedOnMorph !== this || !this.selectable) return;
 
-    var {selection, scroll} = this,
-        {start: curStart, end: curEnd} = selection,
-        start = this.indexFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
-        end = this.indexFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
+    var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
+        end = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
 
-    if (start > end)
-      [start, end] = [end, start];
-    if (end !== curEnd || start !== curStart)
-      selection.range = {start, end};
+// console.log("%s => %s\n%s => %s",
+//   this.localize(clickedOnPosition), JSON.stringify(start),
+//   this.localize(evt.position), JSON.stringify(end));
+
+    var from =this.selection.toString();
+    this.selection.range = {start, end};
+
+// show(`[mouse selection] ${from} -> ${this.selection}`)
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -247,76 +268,67 @@ export class Text extends Morph {
   onKeyDown(evt) {
     var keyString = evt.keyString(),
         key = evt.domEvt.key,
-        sel = this.selection;
+        sel = this.selection,
+        handled = true,
+        world = this.world();
 
     switch (keyString) {
       case 'Command-C': case 'Command-X': case 'Command-V':
+        handled = false;
         break; // handled by onCut()/onPaste()
 
-      case 'Command-A':
-        evt.stop();
-        sel.range = { start: 0, end: this.textString.length };
-        break;
+      case 'Command-A': this.selectAll(); break;
 
       case 'Command-D':
-        evt.stop();
         (async () => {
-          var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
-          this.world()[result.isError ? "logError" : "setStatusMessage"](result.value);
+          if (this.selection.isEmpty()) this.selectLine();
+          var result = await lively.vm.runEval(this.selection.text, {System, targetModule: "lively://test-text/1"});
+          evt.world[result.isError ? "logError" : "setStatusMessage"](result.value);
         })();
         break;
 
       case 'Command-P':
-        evt.stop();
         (async () => {
-          var result = await lively.vm.runEval(this.selectionOrLineString(), {System, targetModule: "lively://test-text/1"});
-          this.textString = this.textString.slice(0, sel.end) + result.value + this.textString.slice(sel.end);
+          if (this.selection.isEmpty()) this.selectLine();
+          var result = await lively.vm.runEval(this.selection.text, {System, targetModule: "lively://test-text/1"});
+          sel.collapseToEnd();
+          this.insertTextAndSelect(result.value);
         })();
         break;
 
-      case 'Command-S':
-        evt.stop();
-        this.doSave();
-        break;
+      case 'Command-S': this.doSave(); break;
 
       case 'Backspace':
         if (this.rejectsInput()) break;
-        evt.stop();
-        sel.isCollapsed && sel.start && sel.start--;
+        if (sel.isEmpty()) sel.growLeft(1);
         sel.text = "";
         sel.collapse();
         break;
 
       case 'Del': // forward-delete
         if (this.rejectsInput()) break;
-        evt.stop();
-        sel.isCollapsed && sel.end++;
+        if (sel.isEmpty()) sel.growRight(1);
         sel.text = "";
         sel.collapse();
         break;
 
-      case 'Left': case 'Right':
-        evt.stop();
-        sel.start += (keyString === 'Right' ? 1 : (sel.start > 0 ? -1 : 0));
+      case 'Left': sel.growLeft(1); sel.collapse(); break;
+      case 'Right': sel.growRight(1); sel.collapseToEnd(); break;
+
+      case 'Up':
+        var {row, column} = sel.start;
+        sel.start = {row: row-1, column};
         sel.collapse();
         break;
-
-      case 'Up': case 'Down':
-        evt.stop();
-        var text = this.textString,
-            line = string.lineIndexComputer(text)(sel.start),
-            otherLine = line + (keyString === "Down" ? 1 : -1),
-            rangeComp = string.lineNumberToIndexesComputer(text),
-            [lineStart, lineEnd] = rangeComp(line),
-            otherLineRange = rangeComp(otherLine),
-            [otherLineStart, otherLineEnd] = otherLineRange || [lineStart, lineEnd];
-        sel.start = Math.min(otherLineStart + (sel.start - lineStart), otherLineEnd-1);
-        sel.collapse();
+        
+      case 'Down':
+        var {row, column} = sel.start;
+        sel.start = {row: row+1, column};
+        sel.collapseToEnd();
         break;
 
       default:
         if (this.rejectsInput()) break;
-        evt.stop();
         switch (key) {
           case 'Enter':
             sel.text = "\n"; break;
@@ -328,8 +340,10 @@ export class Text extends Morph {
             if (key.length === 1) sel.text = key;
             else return; // ignored key
         }
-        sel.collapse(sel.start + 1);
+        sel.collapseToEnd();
     }
+
+    if (handled) evt.stop();
 
     this.scrollToSelection();
   }
@@ -355,26 +369,22 @@ export class Text extends Morph {
     evt.stop();
     var sel = this.selection;
     sel.text = evt.domEvt.clipboardData.getData("text");
-    sel.collapse(sel.end);
+    sel.collapseToEnd();
   }
 
-  onFocus(evt) {
-    this.makeDirty();
-  }
-
+  onFocus(evt) { this.makeDirty(); }
   onBlur(evt) { this.makeDirty(); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
 
   inspect() {
-    var inspected = `<${this.name}>`,
-        {range: {start,end}, text} = this.selection
-    inspected += `\n  selection: ${start} -> ${end} ${text}`
-    inspected += "\n  " + this.renderer.lines.map(({height, width, text}, i) => {
-      return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${obj.inspect(text)}`
-    }).join("\n  ");
-    return inspected += `\n</${this.name}>`
+    return `<${this.name}>`
+         + `\n  ${this.selection}`
+         + "\n  " + this.renderer.lines.map(({height, width, text}, i) => {
+              return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${obj.inspect(text)}`
+            }).join("\n  ")
+         + `\n</${this.name}>`;
   }
 
 }
