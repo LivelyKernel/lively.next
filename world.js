@@ -173,6 +173,8 @@ export class World extends Morph {
 
   setStatusMessage(msg, color, delay = 5000, optStyle = {}) {
     // world.setStatusMessage("test", Color.green)
+    msg = String(msg);
+
     console[color == Color.red ? "error" : "log"](msg);
 
     if (!config.verboseLogging) return null;
