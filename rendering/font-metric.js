@@ -34,6 +34,7 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = [];
+    this.kerningMap = [];
     this.element = null;
   }
 
@@ -89,6 +90,24 @@ export default class FontMetric {
     if (!this.charMap[fontFamily][fontSize][char])
       this.charMap[fontFamily][fontSize][char] = this.measure(fontFamily, fontSize, char);
     return this.charMap[fontFamily][fontSize][char];
+  }
+
+  // FIXME do browsers implement contextual kerning??
+  kerningFor(fontFamily, fontSize, {left, right}) {
+    var charPairStr = `${left}${right}`;
+    if (!this.kerningMap[fontFamily]) {
+      this.kerningMap[fontFamily] = [];
+    }
+    if (!this.kerningMap[fontFamily][fontSize]) {
+      this.kerningMap[fontFamily][fontSize] = [];
+    }
+    if (!this.kerningMap[fontFamily][fontSize][charPairStr]) {
+      let { width: leftWidth }  = this.sizeFor(fontFamily, fontSize, left),
+          { width: rightWidth } = this.sizeFor(fontFamily, fontSize, right),
+          { width: totalWidth } = this.measure(fontFamily, fontSize, charPairStr);
+      this.kerningMap[fontFamily][fontSize][charPairStr] = totalWidth - leftWidth - rightWidth;
+    }
+    return this.kerningMap[fontFamily][fontSize][charPairStr];
   }
 
   sizeForStr(fontFamily, fontSize, str) {
