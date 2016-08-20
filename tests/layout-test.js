@@ -194,7 +194,6 @@ describe("layout", () => {
       expect(m2.position).equals(pt(100, 200));
       m.layout.assign(m1, {row: 0, col: [0,1,2]});
       expect(m1.position).equals(pt(0,0));
-      expect(() => m.layout.assign(m3, {row: [0,2], col: 1})).to.throw(RangeError);
     });
 
     it("updates layout on changed extent", () => {
