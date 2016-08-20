@@ -129,6 +129,54 @@ export class TilingLayout extends Layout {
   }
 }
 
+export class CellGroup {
+  
+  constructor({morph, cells, layout}) {
+    this.state = {morph, cells: cells.map(cell => ({...cell, bounds: layout.computeCellBounds(cell)})), layout};
+  }
+  
+  get morph() { return this.state.morph; }
+  get cells() { return this.state.cells; }
+  get layout() { return this.state.layout; }
+  
+  get rows() { return arr.uniq(this.cells.map(cell => cell.row)); }
+  get cols() { return arr.uniq(this.cells.map(cell => cell.col)); }
+  
+  fixpoint(part) {
+    switch (part) {
+      case "topLeft":
+        return this.cells.reduce((a,b) => 
+                  a.row <= b.row && a.col <= b.col ? a : b);
+      case "bottomRight":
+        return this.cells.reduce((a,b) => 
+                  a.row >= b.row && a.col >= b.col ? a : b);
+      default:
+        throw new Error("No fixpoint available for: " + part);
+    }
+    part = this.bounds().partNamed(part);
+    return this.cells.find(cell => cell.bounds.containsPoint(part));
+  }
+  
+  bounds() {
+    return this.cells
+                .map(cell => this.layout.computeCellBounds(cell))
+                .reduce((a,b) => a.union(b));
+  }
+  
+  includes(cell) {
+    return this.cells.find(({row, col}) => row == cell.row && col == cell.col);
+  }
+  
+  addCell(cell) {
+    this.cells.push({bounds: this.layout.computeCellBounds(cell), ...cell});
+  }
+  
+  removeCell(cell) {
+    if (this.cells.length > 1) arr.remove(this.cells, this.includes(cell));
+  }
+  
+}
+
 export class GridLayout extends Layout {
 
   constructor(props) {
@@ -147,6 +195,31 @@ export class GridLayout extends Layout {
     this.adjustExtents();
     this.adjustPositions();
     this.active = false;
+  }
+  
+  computeCellBounds({row, col}) {
+    const extent = pt(this.colWidths[col] + 1, 
+                      this.rowHeights[row] + 1),
+          position = pt(arr.sum(this.colWidths.slice(0, col)),
+                        arr.sum(this.rowHeights.slice(0, row)));
+    return position.extent(extent);
+  }
+  
+  getCellGroups() {
+    const cellGroups = [];
+    
+    grid.forEach(this.grid, (morph, row, col) => {
+      if (morph) {
+        var g = cellGroups.find(g => g.morph == morph);
+        if (g) { 
+          g.addCell({row, col});
+          return;
+        }
+      }
+      cellGroups.push(new CellGroup({morph, cells: [{row, col}], layout: this}));
+    });
+    
+    return cellGroups;
   }
   
   onSubmorphRemoved(container, removedMorph) {
@@ -343,18 +416,18 @@ export class GridLayout extends Layout {
   }
 
   assign(submorph, {row, col}) {
-    if (Array.isArray(row) && !row.reduce((curr, next) => curr + 1 == next ? next : false))
-      throw new RangeError("Can only assign morph to consecutive increasin cells: " + row);
-    if (Array.isArray(col) && !col.reduce((curr, next) => curr + 1 == next ? next : false))
-      throw new RangeError("Can only assign morph to consecutively increasing columns: " + col);
-
     this.grid = grid.map(this.grid, (m, r, c) => {
-        if (m === submorph || this.container.getSubmorphNamed(m) === submorph) return null;
+        if (m === submorph || this.container.getSubmorphNamed(m) === submorph) return submorph;
         const rowMatch = r == row || Array.isArray(row) && row.includes(r),
               colMatch = c == col || Array.isArray(col) && col.includes(c);
         if (rowMatch && colMatch) return submorph;
         return m;
     });
+    this.applyTo(this.container);
+  }
+  
+  clear({row, col}) {
+    this.grid[row][col] = null;
     this.applyTo(this.container);
   }
 
@@ -419,7 +492,7 @@ export class GridLayout extends Layout {
     });
 
     const remaining = this.container.submorphs.filter(m => !layoutedMorphs.includes(m));
-    if (remaining.length > 0) {
+    if (remaining.length > 0 && this.getCellGroups().find(g => !g.morph)) {
         this.autoAssign(remaining);
         this.adjustPositions();
     }
@@ -427,9 +500,10 @@ export class GridLayout extends Layout {
 
   autoAssign(morphs) {
     morphs.forEach(m => {
-      var row = 0, col = 0, closestDist = Infinity;
+      var row = 0, col = 0, closestDist = Infinity, found = false;
       grid.forEach(this.grid, (v, y, x) => {
         if (!v) {
+            found = true;
             var distToCell = pt(arr.sum(this.colWidths.slice(0, x)),
                                 arr.sum(this.rowHeights.slice(0, y))).dist(m.position);
             if (distToCell < closestDist) {
@@ -439,7 +513,7 @@ export class GridLayout extends Layout {
             }
         }
       });
-      this.assign(m, {row, col})
+      found && this.assign(m, {row, col})
     });
   }
 
