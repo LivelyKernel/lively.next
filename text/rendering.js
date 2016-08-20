@@ -174,37 +174,35 @@ export default class TextLayout {
   renderSelectionLayer(morph) {
     // FIXME just hacked together... needs cleanup!!!
 
-    var {start, end} = morph.selection,
+    var {start, end} = morph.selection.range,
         {padding, document} = morph;
 
-    if (start > end) [end, start] = [start, end];
-
     var chunks        = this.chunks,
-        startTextPos  = document.indexToPosition(start),
-        endTextPos    = document.indexToPosition(end),
-        startPos      = this.pixelPositionFor(morph, startTextPos),
-        endPos        = this.pixelPositionFor(morph, endTextPos),
-        endLineHeight = chunks[endTextPos.row].height;
+        startPos      = this.pixelPositionFor(morph, start),
+        endPos        = this.pixelPositionFor(morph, end),
+        endLineHeight = chunks[end.row].height;
 
     // collapsed selection -> cursor
-    if (start === end) {
+
+
+    if (morph.selection.isEmpty()) {
       if (morph.rejectsInput()) return [];
       let {fontFamily, fontSize} = morph,
-          chunkAtCursor = chunks[startTextPos.row],
+          chunkAtCursor = chunks[start.row],
           h = chunkAtCursor ? chunkAtCursor.height : this.fontMetric.defaultLineHeight(fontFamily, fontSize);
-      return [cursor(startPos, chunks[startTextPos.row].height, padding)];
+      return [cursor(startPos, chunks[start.row].height, padding)];
     }
 
     // single line -> one rectangle
-    if (startTextPos.row === endTextPos.row) {
+    if (start.row === end.row) {
       return [selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding)]
     }
 
-    var endPosLine1 = pt(morph.width, startPos.y + chunks[startTextPos.row].height),
+    var endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
-    if (startTextPos.row+1 === endTextPos.row) {
+    if (start.row+1 === end.row) {
       return [
         selectionLayerPart(startPos, endPosLine1, padding),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), padding)];
