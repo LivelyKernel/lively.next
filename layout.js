@@ -417,10 +417,13 @@ export class GridLayout extends Layout {
 
   assign(submorph, {row, col}) {
     this.grid = grid.map(this.grid, (m, r, c) => {
-        if (m === submorph || this.container.getSubmorphNamed(m) === submorph) return submorph;
         const rowMatch = r == row || Array.isArray(row) && row.includes(r),
-              colMatch = c == col || Array.isArray(col) && col.includes(c);
-        if (rowMatch && colMatch) return submorph;
+              colMatch = c == col || Array.isArray(col) && col.includes(c),
+              match = rowMatch && colMatch,
+              alreadyAssigned = m === submorph || 
+                                this.container.getSubmorphNamed(m) === submorph;
+        if (alreadyAssigned && !match) return null;
+        if (match) return submorph;
         return m;
     });
     this.applyTo(this.container);
