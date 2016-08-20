@@ -96,10 +96,18 @@ export class GridLayoutHalo extends Morph {
     this.initRowGuides();
   }
   
+  get cells() {
+    return grid.map(this.target.grid, (m, row, col) => {
+      return {morph: m, bounds: this.target.computeCellBounds({row, col}), row, col};
+    }).flatten();
+  }
+  
   initCellGuides() {
-    grid.forEach(this.target.grid, (value, row, col) => {
-      this.addMorph(this.cellGuide({col, row}));
-    });
+    
+    this.target.getCellGroups().forEach(group => {
+      this.addMorph(this.cellGuide(group));
+    })
+    
     this.addMorph(this.resizer());
   }
   
@@ -280,7 +288,6 @@ export class GridLayoutHalo extends Morph {
                   this.target.adjustColumnStretch(col, delta.x); 
                 } else {
                   this.target.adjustRowStretch(row, delta.y);
-                   
                 }
                 self.alignWithTarget();
             },
@@ -474,24 +481,66 @@ export class GridLayoutHalo extends Morph {
             }
           });
   }
+  
+  cellResizer(cellGroup, corner) {
+    var self = this,
+        adjacentCorner = corner == "topLeft" ? "bottomRight" : "topLeft",
+        getCorner = (c) => { return cellGroup.bounds().partNamed(c) }
+    return new Ellipse({
+      borderWidth: 1, 
+      visible: false,
+      borderColor: Color.black, 
+      nativeCursor: "nwse-resize",
+      removeCell(cell) {
+        self.target.clear(cell)
+        cellGroup.removeCell(cell);
+        self.alignWithTarget();
+      },
+      addCell(cell) {
+        cellGroup.addCell(cell);
+        self.target.assign(cellGroup.morph, {row: cellGroup.rows, col: cellGroup.cols});
+        self.alignWithTarget();
+      },
+      start() {
+        this.fixpointCell = cellGroup.fixpoint(adjacentCorner);
+        this.draggedDelta = getCorner(corner)
+        this.debugMorph = self.addMorph(new Morph({fill: Color.orange.withA(0.5)}));
+      },
+      update(delta) {
+        this.draggedDelta =  this.draggedDelta.addPt(delta);
+        const coveringRect = Rectangle.unionPts([this.draggedDelta]).union(this.fixpointCell.bounds);
+        this.debugMorph.setBounds(coveringRect);
+        self.cells.forEach((cell, i) => {
+                    const coverage = coveringRect.intersection(cell.bounds).area() / cell.bounds.area();
+                    if (cellGroup.includes(cell) && coverage < 0.1) this.removeCell(cell);
+                    if (!cellGroup.includes(cell) && coverage > 1/3) this.addCell(cell);
+                  });
+      },
+      onDragEnd(evt) {
+        this.debugMorph.remove();
+      },
+      onDragStart(evt) {
+        this.start(evt.position);
+      },
+      onDrag(evt) {
+        this.update(evt.state.dragDelta)
+      }
+    });
+  }
 
-  cellGuide({row, col}) {
-    // FIXME: allow cell guides to stretch multiple cells
-    const self = this;
+  cellGuide(cellGroup) {
+    const self = this,
+          topLeft = this.cellResizer(cellGroup, "topLeft"),
+          bottomRight = this.cellResizer(cellGroup, "bottomRight");
+    
     return this.addGuide(new Morph({
       fill: Color.transparent,
       borderColor: Color.orange,
       borderWidth: 2,
       isHaloItem: true,
       isCell: true,
-      submorphs: [
-        {type: "ellipse", name: "topLeft", borderWidth: 1, visible: false,
-         borderColor: Color.black, nativeCursor: "nwse-resize",
-         onDrag: (evt) => {}},
-        {type: "ellipse", name: "bottomRight", nativeCursor: "nwse-resize",
-         borderWidth: 1, borderColor: Color.black, visible: false,
-         onDrag: (evt) => {}}
-      ],
+      draggable: false,
+      submorphs: [ topLeft, bottomRight ],
       onMouseDown(evt) {
         this.becomeActive();
       },
@@ -515,11 +564,9 @@ export class GridLayoutHalo extends Morph {
         console.log(droppedMorph);
       },
       alignWithTarget() {
-        this.extent = pt(self.target.colWidths[col] + 1, self.target.rowHeights[row] + 1);
-        this.position = pt(arr.sum(self.target.colWidths.slice(0, col)),
-                           arr.sum(self.target.rowHeights.slice(0, row)));
-        this.getSubmorphNamed("topLeft").center = this.innerBounds().topLeft();
-        this.getSubmorphNamed("bottomRight").center = this.innerBounds().bottomRight();
+        this.setBounds(cellGroup.bounds());
+        topLeft.center = this.innerBounds().topLeft();
+        bottomRight.center = this.innerBounds().bottomRight();
       }
     }));
   }
