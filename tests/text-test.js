@@ -25,6 +25,9 @@ function text(string, props) {
   });
 }
 
+function range(startRow, startCol, endRow, endCol) {
+  return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
+}
 
 var fontMetric = {
   height: 14, width: 6,
@@ -62,82 +65,15 @@ async function destroyMorphicEnv() {
   MorphicEnv.popDefault().uninstall();
 }
 
-describe("text layout", () => {
-
-  describe("fit", () => {
-
-    it("computes size on construction", () => {
-      var t = text("hello", {fixedWidth: false, fixedHeight: false}),
-          {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: false});
-      expect(height).equals(fontMetric.height);
-      expect(width).equals(5*fontMetric.width);
-    });
-
-    it("computes only width", () => {
-      var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: true});
-      expect(height).equals(100);
-      expect(width).equals(5*fontMetric.width);
-    });
-
-    it("computes only height", () => {
-      var {extent: {x: width, y: height}} = text("hello", {fixedWidth: true, fixedHeight: false});
-      expect(height).equals(fontMetric.height);
-      expect(width).equals(100);
-    });
-
-    it("leaves extent as is with fixed sizing", () => {
-      var {extent} = text("hello", {fixedWidth: true, fixedHeight: true});
-      expect(extent).equals(pt(100,100));
-    });
-
-  });
-
-  describe("compute pixel positions", () => {
-
-    it("text pos -> pixel pos", () => {
-      var t = text("hello\n lively\nworld", {});
-      var {height:h, width:w} = fontMetric;
-      expect(t.renderer.pixelPositionFor(t, {row: 0, column: 0}))    .equals(pt(0,   0));
-      expect(t.renderer.pixelPositionFor(t, {row: 0, column: 5}))    .equals(pt(5*w, 0));
-      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 0}))    .equals(pt(0,   h));
-      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 1}))    .equals(pt(1*w, h));
-      expect(t.renderer.pixelPositionFor(t, {row: 3, column: 2}))    .equals(pt(2*w, 2*h));
-      expect(t.renderer.pixelPositionFor(t, {row: 1, column: 100}))  .equals(pt(7*w, h));
-      expect(t.renderer.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(5*w, 2*h));
-    });
-
-    it("text index -> pixel pos", () => {
-      var t = text("hello\n lively\nworld", {});
-      var {height:h, width:w} = fontMetric;
-      expect(t.renderer.pixelPositionForIndex(t, 0)).equals(pt(0,0));
-      expect(t.renderer.pixelPositionForIndex(t, 6)).equals(pt(0,h));
-      expect(t.renderer.pixelPositionForIndex(t, 7)).equals(pt(w,h));
-      expect(t.renderer.pixelPositionForIndex(t, 100)).equals(pt(5*w,2*h));
-    });
-
-  });
-
-  describe("compute text positions", () => {
-
-    it("pixel pos -> text pos", () => {
-      var t = text("hello\n world", {});
-      expect(t.renderer.textPositionFor(t, pt(0,0), {row: 0, column: 0}));
-      expect(t.renderer.textPositionFor(t, pt(5,7), {row: 0, column: 0}));
-      expect(t.renderer.textPositionFor(t, pt(15,17), {row: 1, column: 1}));
-    });
-
-  });
-
-});
-
 
 describe("text selection", () => {
 
   it("selection / line string", () => {
     var t = text("hello\n world", {});
-    t.selection.range = {start: 7, end: 7};
+    
+    t.selection = range(1,1,1,1);
     expect(t.selectionOrLineString()).equals(" world");
-    t.selection.range = {start: 7, end: 9};
+    t.selection = range(1,1,1,3);
     expect(t.selectionOrLineString()).equals("wo");
   });
 
@@ -217,7 +153,7 @@ describe("text key events", () => {
 
   it("entry clears selection", async () => {
     sut.focus();
-    sut.selection.range = {start: 0, end: 4};
+    sut.selection = range(0,0,0,4);
     env.eventDispatcher.simulateDOMEvents(
       {type: "keydown", key: 'w'},
       {type: "keydown", key: 'o'},
@@ -237,26 +173,23 @@ describe("text mouse events", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*3+2, y+fontMetric.height*2 - 5); // second line
 
-    expect(sut.selection.range).deep.equals({start: 0, end: 0});
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
     env.eventDispatcher.simulateDOMEvents({target: sut, type: "click", position: clickPos});
 
     var clickIndex = sut.document.positionToIndex({row: 1, column: 3});
-    expect(clickIndex).not.equal(0);
-    expect(sut.selection.range).deep.equals({start: clickIndex, end: clickIndex});
+    expect(clickIndex).equals(8);
+    expect(sut.selection).stringEquals("Selection(1/3 -> 1/3)");
   });
 
   it("drag sets selection", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         {width: charW, height: charH} = fontMetric;
 
-// destroyMorphicEnv()
-// createMorphicEnv()
-
     var dragStartPos =    pt(charW-2, charH-2),
         dragOvershotPos = pt(3*charW+10, charH*2+10),
         dragEndPos =      pt(3*charW+2, charH*2-charH/2);
 
-    expect(sut.selection.range).deep.equals({start: 0, end: 0});
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {type: "pointerdown", target: sut, position: dragStartPos},
@@ -266,8 +199,8 @@ describe("text mouse events", () => {
     );
 
     var dragEndIndex = sut.document.positionToIndex({row: 1, column: 1});
-    expect(dragEndIndex).not.equal(0);
-    expect(sut.selection.range).deep.equals({start: 0, end: dragEndIndex});
+    expect(dragEndIndex).equals(6);
+    expect(sut.selection).stringEquals("Selection(0/0 -> 1/1)");
   });
 
 });
