@@ -1,8 +1,10 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import TextDocument from "../../text/document.js";
 import { expect } from "mocha-es6";
-// import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
-// import { arr, string } from "lively.lang";
+
+function range(startRow, startCol, endRow, endCol) {
+  return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
+}
 
 describe("text doc", () => {
 
@@ -28,11 +30,18 @@ describe("text doc", () => {
     expect(doc.stringLength).equals(15);
   });
 
+  it("end position", () => {
+    var doc = TextDocument.fromString("hello\nworld\nfoo");
+    expect(doc.endPosition).deep.equals({row: 2, column: 3});
+  });
+
   it("position to index", () => {
     var doc = TextDocument.fromString("hello\nworld\nfoo");
+    expect(doc.positionToIndex({row:-4, column: 0})).equals(0);
     expect(doc.positionToIndex({row: 0, column: 0})).equals(0);
     expect(doc.positionToIndex({row: 0, column: 5})).equals(5);
     expect(doc.positionToIndex({row: 0, column: 6})).equals(5);
+    expect(doc.positionToIndex({row: 1, column:-3})).equals(6);
     expect(doc.positionToIndex({row: 1, column: 0})).equals(6);
     expect(doc.positionToIndex({row: 1, column: 5})).equals(11);
     expect(doc.positionToIndex({row: 2, column: 0})).equals(12);
@@ -43,6 +52,7 @@ describe("text doc", () => {
 
   it("index to position", () => {
     var doc = TextDocument.fromString("hello\nworld\nfoo");
+    expect(doc.indexToPosition(-10)).deep.equals({row: 0, column: 0});
     expect(doc.indexToPosition(0)).deep.equals({row: 0, column: 0});
     expect(doc.indexToPosition(5)).deep.equals({row: 0, column: 5});
     expect(doc.indexToPosition(6)).deep.equals({row: 1, column: 0});
@@ -54,12 +64,9 @@ describe("text doc", () => {
   });
 
   describe("insertion", () => {
-    
-    var doc;
-    beforeEach(() =>
-      doc = TextDocument.fromString("hello\nworld")
-      );
-  
+
+    var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld"));
+
     it("into empty doc", () => {
       doc = new TextDocument();
       doc.insert("test", {row: 0, column: 0});
@@ -69,6 +76,11 @@ describe("text doc", () => {
     it("simple", () => {
       doc.insert("test", {row: 0, column: 2});
       expect(doc.textString).equals("hetestllo\nworld");
+    });
+
+    it("nothing", () => {
+      doc.insert("", {row: 0, column: 2});
+      expect(doc.textString).equals("hello\nworld");
     });
 
     it("behind end", () => {
@@ -100,68 +112,89 @@ describe("text doc", () => {
   });
 
   describe("remove", () => {
-    
-    var doc;
-    beforeEach(() =>
-      doc = TextDocument.fromString("hello\nworld")
-      );
-  
+
+    var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld"));
+
     it("nothing", () => {
-      doc.remove({row: 0, column: 2}, {row: 0, column: 2});
+      doc.remove(range(0, 2, 0, 2));
       expect(doc.textString).equals("hello\nworld");
     });
 
     it("one char", () => {
-      doc.remove({row: 0, column: 1}, {row: 0, column: 2});
+      doc.remove(range(0, 1, 0, 2));
       expect(doc.textString).equals("hllo\nworld");
     });
 
     it("at beginning of line", () => {
-      doc.remove({row: 0, column: 0}, {row: 0, column: 2});
+      doc.remove(range(0, 0, 0, 2));
       expect(doc.textString).equals("llo\nworld");
     });
 
     it("with too large column", () => {
-      doc.remove({row: 0, column: 4}, {row: 0, column: 20});
+      doc.remove(range(0, 4, 0, 20));
       expect(doc.textString).equals("hell\nworld");
     });
 
     it("with too small column", () => {
-      doc.remove({row: 0, column: -3}, {row: 0, column: 1});
+      doc.remove(range(0, -3, 0, 1));
       expect(doc.textString).equals("ello\nworld");
     });
 
     it("line content", () => {
-      doc.remove({row: 0, column: 0}, {row: 0, column: 5});
+      doc.remove(range(0, 0, 0, 5));
       expect(doc.textString).equals("\nworld");
     });
 
     it("line end", () => {
-      doc.remove({row: 0, column: 4}, {row: 1, column: 1});
+      doc.remove(range(0, 4, 1, 1));
       expect(doc.textString).equals("hellorld");
     });
 
     it("entire line", () => {
-      doc.remove({row: 0, column: 0}, {row: 1, column: 0});
+      doc.remove(range(0, 0, 1, 0));
       expect(doc.textString).equals("world");
     });
 
     it("multiple lines", () => {
       doc.textString = "hello\ntest\n\nworld";
-      doc.remove({row: 0, column: 2}, {row: 3, column: 2});
+      doc.remove(range(0, 2, 3, 2));
       expect(doc.textString).equals("herld");
     });
 
     it("reversed, same line", () => {
-      doc.remove({row: 0, column: 4}, {row: 0, column: 2});
+      doc.remove(range(0, 4, 0, 2));
       expect(doc.textString).equals("heo\nworld");
     });
 
     it("reversed, cross lines", () => {
-      doc.remove({row: 0, column: 2}, {row: 1, column: 4});
+      doc.remove(range(0, 2, 1, 4));
       expect(doc.textString).equals("hed");
     });
 
   });
 
+  describe("text in range", () => {
+
+    var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld\n123"));
+
+    it("single line", () => expect(doc.textInRange(range(0,1,0,5))).equals("ello"));
+    it("empty range", () => expect(doc.textInRange(range(0,1,0,1))).equals("") .equals(""));
+    it("reverse", () => expect(doc.textInRange(range(0,5,0,1))).equals("ello"));
+    it("across one lines", () => expect(doc.textInRange(range(0,4,1,2))).equals("o\nwo"));
+    it("across mulitple lines", () => expect(doc.textInRange(range(0,4,2,2))).equals("o\nworld\n12"));
+    it("including newline", () => expect(doc.textInRange(range(0,4,1,0))).equals("o\n"));
+
+    it("replaces text range single line", () => {
+      var newRange = doc.setTextInRange("foo\nbar", range(0,2,0,4));
+      expect(doc.textString).equals("hefoo\nbaro\nworld\n123");
+      expect(newRange).deep.equals(range(0,2,1,3));
+    });
+
+    it("replaces text range across multiple lines", () => {
+      var newRange = doc.setTextInRange("foo\nbar", range(0,4,2,2));
+      expect(doc.textString).equals("hellfoo\nbar3");
+      expect(newRange).deep.equals(range(0,4,1,3));
+    });
+
+  });
 });
