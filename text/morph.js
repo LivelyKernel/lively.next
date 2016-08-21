@@ -154,7 +154,7 @@ export class Text extends Morph {
   get selection() { return this._selection; }
   set selection(range) { return this._selection.range = range; }
 
-  get cursorPosition() { return this.selection.start; }
+  get cursorPosition() { return this.selection.lead; }
 
   selectAll() {
     this.selection.range = {start: {row: 0, column: 0}, end: this.document.endPosition};
@@ -312,8 +312,8 @@ export class Text extends Morph {
         sel.collapse();
         break;
 
-      case 'Left': sel.growLeft(1); sel.collapse(); break;
-      case 'Right': sel.growRight(1); sel.collapseToEnd(); break;
+      case 'Left': if (sel.isEmpty()) sel.growLeft(1); sel.collapse(); break;
+      case 'Right': if (sel.isEmpty()) sel.growRight(1); sel.collapseToEnd(); break;
 
       case 'Up':
         var {row, column} = sel.start;

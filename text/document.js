@@ -77,16 +77,13 @@ export default class TextDocument {
     return {row, column}
   }
 
-  clipRangeToLines({start, end}) {
+  textInRange({start, end}) {
+    start = this.clipPositionToLines(start);
+    end = this.clipPositionToLines(end);
     if (lessPosition(end, start)) [start, end] = [end, start];
-    return {
-      start: this.clipPositionToLines(start),
-      end: this.clipPositionToLines(end)
-    }
-  }
 
-  textInRange(range) {
-    let {start: {row, column}, end: {row: endRow, column: endColumn}} = this.clipRangeToLines(range),
+    let {row, column} = start, 
+        {row: endRow, column: endColumn} = end,
         lines = this.lines;
 
     if (row === endRow)

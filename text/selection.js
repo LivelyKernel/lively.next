@@ -50,22 +50,29 @@ export class Selection {
 
   constructor(textMorph, range) {
     this.textMorph = textMorph;
+    this.isReverse = false;
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
   }
 
   get range() { return this._range; }
   set range(range) {
+    if (!range) return;
+    let {start, end} = range;
+    if (start === undefined || end === undefined) return;
+
     var d = this.textMorph.document;
-
-    if (range && typeof range.start === "number")
-      range.start = d.indexToPosition(range.start);
-
-    if (range && typeof range.end === "number")
-      range.end = d.indexToPosition(range.end);
-
+    if (typeof start === "number") range.start = start = d.indexToPosition(start);
+    if (typeof end === "number") range.end = end = d.indexToPosition(end);
     if (!Range.isValidLiteral(range)) return;
 
-    range = new Range(d.clipRangeToLines(range));
+    start = d.clipPositionToLines(start);
+    end = d.clipPositionToLines(end);
+
+    var isReverse = this.isReverse = lessPosition(end, start);
+    if (isReverse) [start, end] = [end, start];
+
+    range.start = start;
+    range.end = end;
     if (!range.isRange) range = new Range(range);
 
     if (range.equals(this._range)) return;
@@ -81,9 +88,11 @@ export class Selection {
   get end() { return this.range.end }
   set end(val) { this.range = {start: this.start, end: val}; }
 
-  get text() {
-    return this.textMorph.document.textInRange(this.range);
-  }
+  get anchor() { return this.isReverse ? this.range.end : this.range.start }
+  get lead() { return this.isReverse ? this.range.start : this.range.end }
+
+  get text() { return this.textMorph.document.textInRange(this.range); }
+
   set text(val) {
     let {range, textMorph} = this;
     if (!this.isEmpty())
@@ -94,6 +103,7 @@ export class Selection {
       {start: range.start, end: range.start}
   }
 
+  reverse() { this.isReverse = !this.isReverse; }
   isEmpty() { return this.range.isEmpty(); }
 
   collapse(pos = this.start) { this.range = {start: pos, end: pos}; }
@@ -114,7 +124,10 @@ export class Selection {
   }
 
   toString() {
-    let {text, range: {start: {row, column}, end: {row: endRow, column: endColumn}}} = this;
+    let {text, range: {start, end}} = this;
+    if (this.isReverse) [start, end] = [end, start];
+    let {row, column} = start,
+        {row: endRow, column: endColumn} = end;
     // return `Selection(${row}/${column} -> ${endRow}/${endColumn}, ${string.truncate(text.replace(/\n/g, ""), 30)})`;
     return `Selection(${row}/${column} -> ${endRow}/${endColumn})`;
   }

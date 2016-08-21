@@ -65,4 +65,17 @@ describe("text selection", () => {
     expect(sel.range).equals(range(0,3,0,3), "7");
   });
 
+  it("directed selection", () => {
+    var text = new Text({textString: "hello\nworld"}),
+        sel = text.selection;
+    sel.range = {start: 3, end: 5}
+    expect(sel.lead).deep.equals({row: 0, column: 5});
+    expect(sel.anchor).deep.equals({row: 0, column: 3});
+    expect(text.cursorPosition).deep.equals({row: 0, column: 5});
+    sel.reverse();
+    expect(sel.lead).deep.equals({row: 0, column: 3});
+    expect(sel.anchor).deep.equals({row: 0, column: 5});
+    expect(text.cursorPosition).deep.equals({row: 0, column: 3});
+  });
+
 });

@@ -174,29 +174,27 @@ export default class TextLayout {
   renderSelectionLayer(morph) {
     // FIXME just hacked together... needs cleanup!!!
 
-    var {start, end} = morph.selection.range,
+    var {start, end, isReverse, lead} = morph.selection,
         {padding, document} = morph;
 
     var chunks        = this.chunks,
         startPos      = this.pixelPositionFor(morph, start),
         endPos        = this.pixelPositionFor(morph, end),
+        cursorPos     = isReverse ? startPos : endPos,
         endLineHeight = chunks[end.row].height;
 
     // collapsed selection -> cursor
 
 
-    if (morph.selection.isEmpty()) {
-      if (morph.rejectsInput()) return [];
-      let {fontFamily, fontSize} = morph,
-          chunkAtCursor = chunks[start.row],
-          h = chunkAtCursor ? chunkAtCursor.height : this.fontMetric.defaultLineHeight(fontFamily, fontSize);
-      return [cursor(startPos, chunks[start.row].height, padding)];
-    }
+    if (morph.selection.isEmpty())
+      return morph.rejectsInput() ?
+        [] : [cursor(cursorPos, chunks[lead.row].height, padding)];
 
     // single line -> one rectangle
-    if (start.row === end.row) {
-      return [selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding)]
-    }
+    if (start.row === end.row)
+      return [
+        selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding),
+        cursor(cursorPos, chunks[lead.row].height, padding)]
 
     var endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
@@ -205,7 +203,8 @@ export default class TextLayout {
     if (start.row+1 === end.row) {
       return [
         selectionLayerPart(startPos, endPosLine1, padding),
-        selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), padding)];
+        selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), padding),
+        cursor(cursorPos, chunks[lead.row].height, padding)];
     }
 
     var endPosMiddle = pt(morph.width, endPos.y),
@@ -215,7 +214,8 @@ export default class TextLayout {
     return [
       selectionLayerPart(startPos, endPosLine1, padding),
       selectionLayerPart(startPosLine2, endPosMiddle, padding),
-      selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), padding)];
+      selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), padding),
+      cursor(cursorPos, chunks[lead.row].height, padding)];
 
   }
 
