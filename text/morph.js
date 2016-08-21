@@ -372,8 +372,14 @@ export class Text extends Morph {
     sel.collapseToEnd();
   }
 
-  onFocus(evt) { this.makeDirty(); }
-  onBlur(evt) { this.makeDirty(); }
+  onFocus(evt) {
+    this.makeDirty();
+    this.selection.cursorBlinkStart();
+  }
+  onBlur(evt) {
+    this.makeDirty();
+    this.selection.cursorBlinkStop();
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging

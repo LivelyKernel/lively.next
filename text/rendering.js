@@ -19,13 +19,14 @@ function selectionLayerPart(startPos, endPos, padding = Rectangle.inset(0,0,0,0)
 }
 
 // TODO: Would probably be cleaner to apply padding to a div containing the "entire" selection layer...
-function cursor(pos, height, padding = Rectangle.inset(0,0,0,0)) {
+function cursor(pos, height, padding = Rectangle.inset(0,0,0,0), visible) {
     return h('div.selection-layer-part', {
     style: {
       pointerEvents: "none", position: "absolute",
-      left: pos.x + padding.left() + "px", top: pos.y + padding.top() + "px",
+      left: pos.x -1 + padding.left() + "px", top: pos.y + padding.top() + "px",
       width: "2px", height: height + "px",
-      backgroundColor: "black", zIndex: -2
+      backgroundColor: "black", zIndex: -1,
+      display: visible ? "" : "none"
     }
   })
 }
@@ -174,7 +175,7 @@ export default class TextLayout {
   renderSelectionLayer(morph) {
     // FIXME just hacked together... needs cleanup!!!
 
-    var {start, end, isReverse, lead} = morph.selection,
+    var {start, end, isReverse, lead, cursorVisible} = morph.selection,
         {padding, document} = morph;
 
     var chunks        = this.chunks,
@@ -184,17 +185,16 @@ export default class TextLayout {
         endLineHeight = chunks[end.row].height;
 
     // collapsed selection -> cursor
-
+    cursorVisible = cursorVisible && !morph.rejectsInput()
 
     if (morph.selection.isEmpty())
-      return morph.rejectsInput() ?
-        [] : [cursor(cursorPos, chunks[lead.row].height, padding)];
+      return [cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding),
-        cursor(cursorPos, chunks[lead.row].height, padding)]
+        cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)]
 
     var endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
@@ -204,7 +204,7 @@ export default class TextLayout {
       return [
         selectionLayerPart(startPos, endPosLine1, padding),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), padding),
-        cursor(cursorPos, chunks[lead.row].height, padding)];
+        cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
     }
 
     var endPosMiddle = pt(morph.width, endPos.y),
@@ -215,7 +215,7 @@ export default class TextLayout {
       selectionLayerPart(startPos, endPosLine1, padding),
       selectionLayerPart(startPosLine2, endPosMiddle, padding),
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), padding),
-      cursor(cursorPos, chunks[lead.row].height, padding)];
+      cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
 
   }
 
@@ -293,7 +293,7 @@ export default class TextLayout {
             height: height+"px",
             outline: "1px solid orange",
             pointerEvents: "none",
-            zIndex: -1
+            zIndex: -2
           }
         }))
       }
@@ -312,7 +312,7 @@ export default class TextLayout {
         height: textHeight+"px",
         outline: "1px solid red",
         pointerEvents: "none",
-        zIndex: -1
+        zIndex: -2
       }
     }));
 

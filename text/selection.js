@@ -1,5 +1,6 @@
 import { lessPosition, eqPosition } from "./position.js"
 import { string } from "lively.lang";
+import config from "../config.js";
 
 export class Range {
 
@@ -52,6 +53,8 @@ export class Selection {
     this.textMorph = textMorph;
     this.isReverse = false;
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
+    this.cursorVisible = true;
+    this.cursorBlinkProcess = null;
   }
 
   get range() { return this._range; }
@@ -121,6 +124,23 @@ export class Selection {
         startIndex = d.positionToIndex(this.start),
         endIndex = Math.max(startIndex, d.positionToIndex(this.end) + n);
     this.end = d.indexToPosition(endIndex);
+  }
+
+  cursorBlinkStart() {
+    this.cursorBlinkStop();
+    var timeout = config.text.cursorBlinkPeriod;
+    if (timeout)
+      this.cursorBlinkProcess = setInterval(() => {
+        this.cursorVisible = !this.cursorVisible;
+        this.textMorph.makeDirty();
+      }, timeout*1000);
+  }
+
+  cursorBlinkStop() {
+    if (this.cursorBlinkProcess)
+      clearInterval(this.cursorBlinkProcess);
+    this.cursorBlinkProcess = null;
+    this.cursorVisible = true;
   }
 
   toString() {
