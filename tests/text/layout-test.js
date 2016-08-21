@@ -88,10 +88,11 @@ describe("text layout", () => {
     });
 
     it("pixel pos -> text pos", () => {
-      expect(t.textPositionFromPoint(pt(0,0),         {row: 0, column: 0}));
-      expect(t.textPositionFromPoint(pt(w-1,h/2),     {row: 0, column: 0}));
-      expect(t.textPositionFromPoint(pt(w+1,h+1),     {row: 1, column: 1}));
-      expect(t.textPositionFromPoint(pt(w*2+1,h*2+1), {row: 2, column: 2}));
+      expect(t.textPositionFromPoint(pt(0,0)))            .deep.equals({row: 0, column: 0});
+      expect(t.textPositionFromPoint(pt(w-1,h/2)))        .deep.equals({row: 0, column: 1});
+      expect(t.textPositionFromPoint(pt(w+1,h+1)))        .deep.equals({row: 1, column: 1});
+      expect(t.textPositionFromPoint(pt(w*2+1,h*2+1)))    .deep.equals({row: 2, column: 2});
+      expect(t.textPositionFromPoint(pt(w*2+w/2+1,h*2+1))).deep.equals({row: 2, column: 3}, "right side of char -> next pos")
     });
 
   });

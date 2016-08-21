@@ -118,11 +118,23 @@ class RenderedChunk {
   }
 
   columnForXOffset(xInPixels) {
-    var {charBounds} = this,
-        length = charBounds.length;
-    if (!length || xInPixels < charBounds[0].x) return 0;
-    if (xInPixels >= charBounds[length-1].x) return length-1;
-    return charBounds.findIndex(({x, width}) => xInPixels >= x && xInPixels < x+width);
+    let {charBounds} = this,
+        length = charBounds.length,
+        first = charBounds[0],
+        last = charBounds[length-1];
+
+    // everything to the left of the first char + half its width is col 0
+    if (!length || xInPixels <= first.x+Math.round(first.width/2)) return 0;
+
+    // everything to the right of the last char + half its width is last col
+    if (xInPixels > last.x+Math.round(last.width/2)) return length-1;
+
+    // find col so that x between right side of char[col-1] and left side of char[col]
+    for (var i = length-2; i >= 0; i--) {
+      let {x, width} = charBounds[i];
+      if (xInPixels >= x + Math.round(width/2)) return i+1;
+    }
+    return 0;
   }
 }
 
