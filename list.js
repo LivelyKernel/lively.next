@@ -180,40 +180,6 @@ export class List extends Morph {
     }
 
     itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
-
-    // if (this.layoutPolicy == "horizontal") {
-    //   var maxHeight = 0,
-    //       pos = pt(0, 0);
-
-    //   this.items.forEach(item => {
-    //     this.addMorph(item);
-    //     item.position = pos;
-    //     pos = item.topRight;
-    //     maxHeight = Math.max(item.height, maxHeight);
-    //   });
-
-    //   this.extent = pt(pos.x, maxHeight);
-
-    //   return;
-    // }
-
-    // if (this.layoutPolicy == "vertical") {
-    //   var maxWidth = 0,
-    //       pos = pt(0, 0);
-
-    //   this.items.forEach(item => {
-    //     this.addMorph(item);
-    //     item.position = pos;
-    //     pos = item.bottomLeft;
-    //     maxWidth = Math.max(item.width, maxWidth);
-    //   });
-
-    //   this.extent = pt(maxWidth, pos.y);
-
-    //   return;
-    // }
-
-    // throw new Error("Unsupported Layout " + this.layoutPolicy);
   }
 
   onScroll() {
