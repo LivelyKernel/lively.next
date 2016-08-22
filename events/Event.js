@@ -176,6 +176,7 @@ export class SimulatedDOMEvent {
       pointerId: undefined,
       buttons: -1,
       keyCode: undefined,
+      keyString: "",
       keyIdentifier: undefined,
       altKey: false,
       ctrlKey: false,

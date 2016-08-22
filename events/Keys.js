@@ -47,7 +47,7 @@ For more information about SproutCore, visit http://www.sproutcore.com
     FUNCTION_KEYS : {
       8  : "Backspace",
       9  : "Tab",
-      13 : "Return",
+      13 : "Enter",
       19 : "Pause",
       27 : "Esc",
       32 : "Space",
@@ -121,7 +121,7 @@ For more information about SproutCore, visit http://www.sproutcore.com
   Object.assign(ret, ret.FUNCTION_KEYS)
 
   // aliases
-  ret.enter = ret["return"];
+  ret["return"] = ret.enter;
   ret.escape = ret.esc;
   ret.del = ret["delete"];
 
@@ -162,13 +162,16 @@ var Keys = {
       // reverse mapping, key -> code
       key = key.toLowerCase();
       if (keyCodeCache[key]) return keyCodeCache[key];
-      var base = Keys.classifier;
+      var classifier = Keys.classifier,
+          base = classifier;
       // "MODIFIER_KEYS","FUNCTION_KEYS","PRINTABLE_KEYS"
-      if (type) base = Keys.classifier[type];
-      for (var code in base)
-        if (key === base[code].toLowerCase())
-          return keyCodeCache[key] = typeof code === 'string' ?
-            parseInt(code, 10) : code;
+      if (type) base = classifier[type];
+      for (var code in base) {
+        var code = Number(code);
+        if (key === String(base[code]).toLowerCase()
+         || code === classifier[key]/*alias*/)
+          return keyCodeCache[key] = code;
+      }
     }
   })(),
 
@@ -254,6 +257,8 @@ var Keys = {
 
   eventToKeyString(evt, options) {
     // options: ignoreModifiersIfNoCombo, ignoreKeys
+    if (typeof evt.keyCode === "undefined" && evt.keyString)
+      evt.keyCode = Keys.getKeyCodeForKey(evt.keyString);
     var hash = Keys.computeHashIdOfEvent(evt),
         mod = Keys.classifier.KEY_MODS[hash];
     if (!mod || mod === "input-") mod = "";
@@ -262,5 +267,9 @@ var Keys = {
   }
 
 }
+
+// Keys.eventToKeyString({type: "keydown", keyString: "Enter"})
+Keys.getKeyCodeForKey("Enter")
+Keys.getKeyCodeForKey("Enter", "FUNCTION_KEYS")
 
 export default Keys;

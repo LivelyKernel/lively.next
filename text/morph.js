@@ -180,9 +180,8 @@ export class Text extends Morph {
         paddedBounds = this.innerBounds().insetByRect(padding),
         charBounds =   renderer.boundsFor(this, selection.start),
         selPt =        this.addPaddingAndScroll(charBounds.bottomRight());
-    if (!paddedBounds.containsPoint(selPt)) {
+    if (!paddedBounds.containsPoint(selPt))
       this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
-    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

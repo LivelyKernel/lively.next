@@ -40,11 +40,11 @@ describe("Keys", () => {
 
     it("space", () =>
       expect(event(" "))
-        .containSubset({isModified: false, isFunctionKey: false, keyCode: 32, keyString: " "}))
+        .containSubset({isModified: false, isFunctionKey: true, keyCode: 32, keyString: " "}))
 
     it("modified space", () =>
       expect(event("Alt- "))
-        .containSubset({isModified: true, isFunctionKey: false, keyCode: 32, keyString: " ", altKey: true}))
+        .containSubset({isModified: true, isFunctionKey: true, keyCode: 32, keyString: " ", altKey: true}))
 
     it("just modified", () =>
       expect(event("Shift"))

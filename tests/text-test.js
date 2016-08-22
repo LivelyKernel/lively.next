@@ -123,30 +123,30 @@ describe("text key events", () => {
 
   it("text entry via keydown", async () => {
     sut.focus();
-    env.eventDispatcher.simulateDOMEvents(
-      {type: "keydown", key: 'l'},
-      {type: "keydown", key: 'o'},
-      {type: "keydown", key: 'l'},
-      {type: "keydown", key: 'Enter'});
+    await env.eventDispatcher.simulateDOMEvents(
+      {type: "input", data: 'l'},
+      {type: "input", data: 'o'},
+      {type: "input", data: 'l'},
+      {type: "keydown", keyString: "Enter"});
     expect(sut).property("textString").equals("lol\ntext\nfor tests");
   });
 
   it("backspace", async () => {
     sut.focus();
     env.eventDispatcher.simulateDOMEvents(
-      {type: "keydown", key: 'l'},
-      {type: "keydown", key: 'o'},
-      {type: "keydown", key: 'l'},
-      {type: "keydown", key: 'w'},
-      {type: "keydown", key: 'u'},
-      {type: "keydown", key: 't'});
+      {type: "input", data: 'l'},
+      {type: "input", data: 'o'},
+      {type: "input", data: 'l'},
+      {type: "input", data: 'w'},
+      {type: "input", data: 'u'},
+      {type: "input", data: 't'});
 
     expect(sut).property("textString").equals("lolwuttext\nfor tests");
     env.eventDispatcher.simulateDOMEvents(
       {type: "keydown", keyCode: 8},
       {type: "keydown", keyCode: 8},
       {type: "keydown", keyCode: 8},
-      {type: "keydown", key: ' '});
+      {type: "input", data: ' '});
 
     expect(sut).property("textString").equals("lol text\nfor tests");
   });
@@ -155,9 +155,9 @@ describe("text key events", () => {
     sut.focus();
     sut.selection = range(0,0,0,4);
     env.eventDispatcher.simulateDOMEvents(
-      {type: "keydown", key: 'w'},
-      {type: "keydown", key: 'o'},
-      {type: "keydown", key: 'w'});
+      {type: "input", data: 'w'},
+      {type: "input", data: 'o'},
+      {type: "input", data: 'w'});
     expect(sut).property("textString").equals("wow\nfor tests");
   });
 
@@ -200,7 +200,7 @@ describe("text mouse events", () => {
 
     var dragEndIndex = sut.document.positionToIndex({row: 1, column: 1});
     expect(dragEndIndex).equals(6);
-    expect(sut.selection).stringEquals("Selection(0/0 -> 1/1)");
+    expect(sut.selection).stringEquals("Selection(0/0 -> 1/2)");
   });
 
 });
