@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>composition example</title>
+  </head>
+  <body>
+    <textarea id="text" style="width: 300px; height: 300px"></textarea>
+    <input type="button" id="clearButton" value="clear"></input>
+    <div id="log"></div>
+
+    <script src="node_modules/lively.lang/dist/lively.lang.dev.js"></script>
+    <script src="node_modules/bowser/bowser.js"></script>
+
+    <script>
+function log(msg) {
+  logEl.insertAdjacentHTML("afterBegin", `<pre>${msg}</pre>`);
+  lively.lang.fun.debounceNamed("insert border", 100, function() {
+    logEl.insertAdjacentHTML("afterBegin", `<hr>`);
+  })()
+}
+
+function clear() {
+  logEl.innerHTML = "";
+  text.focus();
+}
+
+function printEvent(evt) {
+  var type = evt.type, report = "";
+  if (type.includes("composition")) {
+    report += "data: " + evt.data;
+    if (type === "compositionend") {
+      report += ` text data: ${text_processInput(text.value)}`
+    } else if (type === "compositionupdate") {
+      report += ` inComposition.lastValue` + inComposition.lastValue;
+    }
+  } else if (type === "input") {
+    report += "data: " + evt.data;
+    report += ` isComposing: ` + evt.isComposing;
+    report += ` inComposition: ` + !!inComposition;
+    report += ` text_data: ${text_processInput(text.value)}`
+    text_resetValue();
+  } else {
+    report += `which: ${evt.which} / ${String.fromCharCode(evt.which)}`
+    report += ` keyCode: ${evt.keyCode} / ${String.fromCharCode(evt.keyCode)}`
+    report += " key: " + lively.lang.string.print(evt.key)
+    report += " keyString: " + lively.lang.string.print(evt.keyString)
+    report += " code: " + evt.code
+  }
+  report = `[${type}] ${report}`;
+  
+  log(report)
+}
+
+
+
+function text_resetValue() {
+  if (inComposition) return;
+  text.value = PLACEHOLDER;
+}
+
+function text_resetSelection(isEmpty) {
+  if (inComposition) return;
+
+  // this prevents infinite recursion on safari 8 
+  // see https://github.com/ajaxorg/ace/issues/2114
+  selectionReset = true;
+  inComposition = true;
+  
+  var selectionStart = isEmpty ? 2 : 1;
+  var selectionEnd = 2;
+
+  // on firefox this throws if textarea is hidden
+  try {
+    text.setSelectionRange(selectionStart, selectionEnd);
+  } catch(e){}
+  
+  inComposition = false;
+}
+
+var text_isAllSelected = function() {
+  return text.selectionStart === 0 && text.selectionEnd === text.value.length;
+};
+
+function text_processInput(data) {
+  // if (pasted) {
+  //     resetSelection();
+  //     if (data)
+  //         host.onPaste(data);
+  //     pasted = false;
+  // } else
+  if (data == PLACEHOLDER.charAt(0)) {
+    return "__DEL__";
+  } else {
+    if (data.substring(0, 2) == PLACEHOLDER)
+      data = data.substr(2);
+    else if (data.charAt(0) == PLACEHOLDER.charAt(0))
+      data = data.substr(1);
+    else if (data.charAt(data.length - 1) == PLACEHOLDER.charAt(0))
+      data = data.slice(0, -1);
+    // can happen if undo in textarea isn't stopped
+    if (data.charAt(data.length - 1) == PLACEHOLDER.charAt(0))
+      data = data.slice(0, -1);
+      
+    return data;
+  }
+}
+
+
+
+
+var PLACEHOLDER = "\x01\x01",
+    logComposition    = true,
+    logEl             = document.getElementById("log"),
+    text              = document.getElementById("text"),
+    inComposition     = false;
+
+
+
+text.addEventListener('compositionstart', function (ev) {
+	logComposition && printEvent(ev);
+	inComposition = {};
+});
+
+text.addEventListener('compositionend', function (ev) {
+	inComposition = false;
+	logComposition && printEvent(ev);
+});
+
+text.addEventListener('compositionupdate', function (ev) {
+  var val = text.value.replace(/\x01/g, "");
+  if (inComposition.lastValue === val) return;
+  inComposition.lastValue = val;
+	logComposition && printEvent(ev);
+});
+
+text.addEventListener('focus', function(ev) { text_resetSelection(); })
+
+var selectionReset = false;
+text.addEventListener('select', function(evt) {
+  // if (copied) {
+  //   copied = false;
+  // } else
+  if (selectionReset) {
+    selectionReset = false;
+    return;
+  }
+  if (text_isAllSelected(text)) {
+    log("[select] select all")
+    // host.selectAll();
+  }
+  text_resetSelection();
+});
+
+text.addEventListener('input', printEvent);
+text.addEventListener('keypress', printEvent);
+text.addEventListener('keydown', printEvent);
+text.addEventListener('keyup', printEvent);
+
+
+
+
+text.focus();
+text.value = PLACEHOLDER;
+document.getElementById("clearButton").addEventListener("click", clear);
+
+    </script>
+  </body>
+</html>
