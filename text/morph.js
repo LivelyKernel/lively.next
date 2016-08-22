@@ -311,7 +311,7 @@ export class Text extends Morph {
         sel.collapse();
         break;
 
-      case 'Del': // forward-delete
+      case 'Delete': // forward-delete
         if (this.rejectsInput()) break;
         if (sel.isEmpty()) sel.growRight(1);
         sel.text = "";
