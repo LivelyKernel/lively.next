@@ -79,7 +79,7 @@ export default class FontMetric {
 
   sizeFor(fontFamily, fontSize, char) {
     if (char.length > 1)
-      return this.sizeForStr(fontFamily, fontSize, char);
+      return this.sizeForStr(fontFamily, fontSize, false, char);
 
     if (!this.charMap[fontFamily]) {
       this.charMap[fontFamily] = [];
@@ -90,6 +90,28 @@ export default class FontMetric {
     if (!this.charMap[fontFamily][fontSize][char])
       this.charMap[fontFamily][fontSize][char] = this.measure(fontFamily, fontSize, char);
     return this.charMap[fontFamily][fontSize][char];
+  }
+
+  sizeForStr(fontFamily, fontSize, fontKerning, str) {
+    var height = 0, width = 0,
+        defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
+    for (let line of str.split('\n')) {
+      let lineHeight = defaultLineHeight, lineWidth = 0,
+          chars = line.split(''), nChars = chars.length;
+      for (let charIndex = 0; charIndex < nChars; charIndex++) {
+        let char = chars[charIndex],
+          { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
+        if (charHeight > lineHeight) lineHeight = charHeight;
+        if (fontKerning && charIndex < nChars - 1) {
+          let nextChar = chars[charIndex+1];
+          charWidth += this.kerningFor(fontFamily, fontSize, char, nextChar);
+        }
+        lineWidth += charWidth;
+      }
+      if (lineWidth > width) width = lineWidth;
+      height += lineHeight;
+    }
+    return { height: height, width: width };
   }
 
   // FIXME? do browsers implement contextual kerning?
@@ -108,22 +130,6 @@ export default class FontMetric {
       this.kerningMap[fontFamily][fontSize][charPairStr] = totalWidth - leftWidth - rightWidth;
     }
     return this.kerningMap[fontFamily][fontSize][charPairStr];
-  }
-
-  sizeForStr(fontFamily, fontSize, str) {
-    var height = 0, width = 0,
-        defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
-    for (let line of str.split('\n')) {
-      let lineHeight = defaultLineHeight, lineWidth = 0;
-      for (let char of line.split('')) {
-        let { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
-        if (charHeight > lineHeight) lineHeight = charHeight;
-        lineWidth += charWidth;
-      }
-      if (lineWidth > width) width = lineWidth;
-      height += lineHeight;
-    }
-    return { height: height, width: width };
   }
 
   indexFromPoint(fontFamily, fontSize, str, point) {

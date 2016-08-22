@@ -72,8 +72,8 @@ class RenderedChunk {
   }
 
   computeBounds() {
-    let {text, config: {fontFamily, fontSize, fontMetric}} = this,
-        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, text);
+    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this,
+        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, fontKerning, text);
 
     this._height = height;
     this._width = width;
