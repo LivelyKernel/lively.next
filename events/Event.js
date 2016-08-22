@@ -1,3 +1,4 @@
+import bowser from "bowser";
 import { obj } from "lively.lang";
 import { pt } from "lively.graphics";
 import Keys from './Keys.js';
@@ -66,6 +67,7 @@ export class Event {
   onAfterDispatch(cb) { this.onAfterDispatchCallbacks.push(cb); return this; }
   onStop(cb) { this.onStopCallbacks.push(cb); return this; }
 
+  get data() { return this.domEvt.data; }
   get world() { return this.dispatcher.world; }
   get state() { return this.dispatcher.eventState; }
 
@@ -133,12 +135,22 @@ export class Event {
     return this.domEvt ? (this.domEvt.buttons || 0) & 4 : false;
   }
 
-  isCommandKey() { return this.domEvt && Keys.isCommandKey(this.domEvt); }
-  isShiftDown() { return this.domEvt && Keys.isShiftDown(this.domEvt); }
-  isCtrlDown() {return this.domEvt && Keys.isCtrlDown(this.domEvt);}
-  isAltDown() { return this.domEvt && Keys.isAltDown(this.domEvt); }
+  isCommandKey() {
+    var domEvt = this.domEvt;
+    if (!domEvt) return false;
+    var isCmd = false;
+    if (!bowser.mac)
+        isCmd = isCmd || domEvt.ctrlKey;
+    if (bowser.tablet || bowser.tablet)
+        isCmd = isCmd || false/*FIXME!*/
+    return isCmd || domEvt.metaKey || domEvt.keyIdentifier === 'Meta';
+  }
 
-  keyString(opts) { return this.domEvt && Keys.pressedKeyString(this.domEvt, opts); }
+  isShiftDown(domEvt) { return this.domEvt && !!this.domEvt.shiftKey }
+  isCtrlDown(domEvt) { return this.domEvt && !!this.domEvt.ctrlKey }
+  isAltDown(domEvt) { return this.domEvt && !!this.domEvt.altKey }
+
+  keyString(opts) { return this.domEvt && Keys.eventToKeyString(this.domEvt, opts); }
 
 }
 

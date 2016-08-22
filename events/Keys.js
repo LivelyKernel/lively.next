@@ -1,172 +1,266 @@
 import bowser from "bowser";
 import { arr } from "lively.lang";
 
-var Keys = {
+var KeyClassifier = (function() {
+/*! @license
+==========================================================================
+SproutCore -- JavaScript Application Framework
+copyright 2006-2009, Sprout Systems Inc., Apple Inc. and contributors.
 
-  KEY_BACKSPACE: 8,
-  KEY_TAB:     9,
-  KEY_RETURN:   13,
-  KEY_ESC:    27,
-  KEY_LEFT:    37,
-  KEY_UP:      38,
-  KEY_RIGHT:  39,
-  KEY_DOWN:    40,
-  KEY_DELETE:   46,
-  KEY_HOME:    36,
-  KEY_END:    35,
-  KEY_PAGEUP:   33,
-  KEY_PAGEDOWN: 34,
-  KEY_INSERT:   45,
-  KEY_SPACEBAR: 32,
-  KEY_SHIFT:  16,
-  KEY_CTRL:    17,
-  KEY_ALT:    18,
-  KEY_CMD:    91,
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
 
-  isCommandKey(domEvt) {
-      var isCmd = false;
-      if (!bowser.mac)
-          isCmd = isCmd || domEvt.ctrlKey;
-      if (bowser.tablet || bowser.tablet)
-          isCmd = isCmd || false/*FIXME!*/
-      return isCmd || domEvt.metaKey || domEvt.keyIdentifier === 'Meta';
-  },
-  isShiftDown(domEvt) { return !!domEvt.shiftKey },
-  isCtrlDown(domEvt) { return !!domEvt.ctrlKey },
-  isAltDown(domEvt) { return !!domEvt.altKey },
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-  manualKeyIdentifierLookup: (() => {
-    // this is a fallback for browsers whose key events do not have a
-    // "keyIdentifier" property.
-    // FIXME: as of 12/30/2013 this is only tested on MacOS
-    var keyCodeIdentifiers = {
-      8: {identifier: "Backspace"},
-      9: {identifier: "Tab"},
-      13: {identifier: "Enter"},
-      16: {identifier: "Shift"},
-      17: {identifier: "Control"},
-      18: {identifier: "Alt"},
-      27: {identifier: "Esc"},
-      32: {identifier: "Space"},
-      37: {identifier: "Left"},
-      38: {identifier: "Up"},
-      39: {identifier: "Right"},
-      40: {identifier: "Down"},
-      46: {identifier: "Del"},
-      48: {identifier: "0", shifted: ")"},
-      49: {identifier: "1", shifted: "!"},
-      50: {identifier: "2", shifted: "@"},
-      51: {identifier: "3", shifted: "#"},
-      52: {identifier: "4", shifted: "$"},
-      53: {identifier: "5", shifted: "%"},
-      54: {identifier: "6", shifted: "^"},
-      55: {identifier: "7", shifted: "&"},
-      56: {identifier: "8", shifted: "*"},
-      57: {identifier: "9", shifted: "("},
-      91: {identifier: "Command"},
-      93: {identifier: "Command"},
-      112: {identifier: "F1"},
-      113: {identifier: "F2"},
-      114: {identifier: "F3"},
-      115: {identifier: "F4"},
-      116: {identifier: "F5"},
-      117: {identifier: "F6"},
-      118: {identifier: "F7"},
-      119: {identifier: "F8"},
-      120: {identifier: "F9"},
-      121: {identifier: "F10"},
-      122: {identifier: "F11"},
-      123: {identifier: "F12"},
-      186: {identifier: ";", shifted:":"},
-      187: {identifier: "=", shifted:"+"},
-      188: {identifier: ",", shifted:"<"},
-      189: {identifier: "-", shifted:"_"},
-      190: {identifier: ".", shifted:">"},
-      191: {identifier: "/", shifted:"?"},
-      192: {identifier: "`", shifted:"~"},
-      219: {identifier: "[", shifted:"{"},
-      220: {identifier: "\\", shifted:"|"},
-      221: {identifier: "]", shifted:"}"},
-      222: {identifier: "'", shifted:"\""},
-      224: {identifier: "Command"},
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+SproutCore and the SproutCore logo are trademarks of Sprout Systems, Inc.
+
+For more information about SproutCore, visit http://www.sproutcore.com
+
+
+==========================================================================
+@license */
+
+// Most of the "KeyClassifier" code is taken from SproutCore with a few changes.
+  var ret = {
+    MODIFIER_KEYS: {
+      16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta'
+    },
+
+    KEY_MODS: {
+      "control": 1, "ctrl": 1, "alt": 2, "option" : 2, "shift": 4,
+      "super": 8, "win": 8, "meta": 8, "command": 8, "cmd": 8
+    },
+
+    FUNCTION_KEYS : {
+      8  : "Backspace",
+      9  : "Tab",
+      13 : "Return",
+      19 : "Pause",
+      27 : "Esc",
+      32 : "Space",
+      33 : "PageUp",
+      34 : "PageDown",
+      35 : "End",
+      36 : "Home",
+      37 : "Left",
+      38 : "Up",
+      39 : "Right",
+      40 : "Down",
+      44 : "Print",
+      45 : "Insert",
+      46 : "Delete",
+      96 : "Numpad0",
+      97 : "Numpad1",
+      98 : "Numpad2",
+      99 : "Numpad3",
+      100: "Numpad4",
+      101: "Numpad5",
+      102: "Numpad6",
+      103: "Numpad7",
+      104: "Numpad8",
+      105: "Numpad9",
+      '-13': "NumpadEnter",
+      112: "F1",
+      113: "F2",
+      114: "F3",
+      115: "F4",
+      116: "F5",
+      117: "F6",
+      118: "F7",
+      119: "F8",
+      120: "F9",
+      121: "F10",
+      122: "F11",
+      123: "F12",
+      144: "Numlock",
+      145: "Scrolllock"
+    },
+
+    PRINTABLE_KEYS: {
+      32: ' ',  48: '0',  49: '1',  50: '2',  51: '3',  52: '4', 53:  '5',
+      54: '6',  55: '7',  56: '8',  57: '9',  59: ';',  61: '=', 65:  'a',
+      66: 'b',  67: 'c',  68: 'd',  69: 'e',  70: 'f',  71: 'g', 72:  'h',
+      73: 'i',  74: 'j',  75: 'k',  76: 'l',  77: 'm',  78: 'n', 79:  'o',
+      80: 'p',  81: 'q',  82: 'r',  83: 's',  84: 't',  85: 'u', 86:  'v',
+      87: 'w',  88: 'x',  89: 'y',  90: 'z', 107: '+', 109: '-', 110: '.',
+      186: ';', 187: '=', 188: ',', 189: '-', 190: '.', 191: '/', 192: '`',
+      219: '[', 220: '\\',221: ']', 222: "'", 111: '/', 106: '*'
     }
-    return function(domEvt) {
-      var id, c = domEvt.keyCode,
-          shifted = this.isShiftDown(domEvt),
-          ctrl = this.isCtrlDown(domEvt),
-          cmd = this.isCommandKey(domEvt),
-          alt = this.isAltDown(domEvt);
-      if ((c >= 65 && c <= 90)) {
-        id = String.fromCharCode(c).toUpperCase();
-      } else {
-        var codeId = keyCodeIdentifiers[c];
-        if (codeId === undefined) id = "???";
-        else {
-          id = shifted && codeId.shifted ?
-            codeId.shifted : codeId.identifier
-        }
-      }
-      if (shifted && c !== 16) id = 'Shift-' + id;
-      if (alt && c !== 18) id = 'Alt-' + id;
-      if (ctrl) id = 'Control-' + id;
-      if (cmd && c !== 91 && c !== 93 && c !== 224) id = 'Command-' + id;
-      return id
-    }
-  })(),
+  };
 
-  unicodeUnescape: (() => {
-    var unicodeDecodeRe = /u\+?([\d\w]{4})/gi;
-    function unicodeReplacer(match, grp) { return String.fromCharCode(parseInt(grp, 16)); }
-    return function(id) { return id ? id.replace(unicodeDecodeRe, unicodeReplacer) : null; }
-  })(),
-
-  decodeKeyIdentifier(keyEvt) {
-    // trying to find out what the String representation of the key pressed
-    // in key event is.
-    // Uses keyIdentifier which can be Unicode like "U+0021"
-    var key = this.unicodeUnescape(keyEvt.keyIdentifier);
-    if (key === 'Meta') key = "Command";
-    if (key === ' ') key = "Space";
-    if (keyEvt.keyCode === this.KEY_BACKSPACE) key = "Backspace";
-    return key;
-  },
-
-  pressedKeyString(domEvt, options) {
-    // returns a human readable presentation of the keys pressed in the
-    // event like Shift-Alt-X
-    // options: {
-    //   ignoreModifiersIfNoCombo: Bool, // if true don't print single mod like "Alt"
-    //   ignoreKeys: Array // list of strings -- key(combos) to ignore
-    // }
-    options = options || {};
-    if (domEvt.keyIdentifier === undefined) {
-      var id = this.manualKeyIdentifierLookup(domEvt);
-      if (options.ignoreModifiersIfNoCombo
-       && [16,17,18,91,93,224].includes(domEvt.keyCode)
-       && !id.includes('-')) return "";
-      if (options.ignoreKeys && options.ignoreKeys.includes(id)) return '';
-      return id;
-    }
-    var keyParts = [];
-    // modifiers
-    if (domEvt.metaKey || domEvt.keyIdentifier === 'Meta') keyParts.push('Command');
-    if (this.isCtrlDown(domEvt)) keyParts.push('Control');
-    if (this.isAltDown(domEvt)) keyParts.push('Alt');
-    if (this.isShiftDown(domEvt)) keyParts.push('Shift');
-    // key
-    var id;
-    if (domEvt.keyCode === this.KEY_TAB) id = 'Tab';
-    else if (domEvt.keyCode === this.KEY_ESC) id = 'Esc';
-    else if (domEvt.keyCode === this.KEY_DELETE) id = 'Del';
-    else id = this.decodeKeyIdentifier(domEvt);
-    if (options.ignoreModifiersIfNoCombo) {
-      if (keyParts.length >= 1 && keyParts.includes(id)) return '';
-    };
-    keyParts.push(id);
-    var result = arr.uniq(arr.compact(keyParts)).join('-');
-    if (options.ignoreKeys && options.ignoreKeys.includes(result)) return '';
-    return result;
+  // A reverse map of FUNCTION_KEYS
+  var name, i;
+  for (i in ret.FUNCTION_KEYS) {
+    name = ret.FUNCTION_KEYS[i].toLowerCase();
+    ret[name] = parseInt(i, 10);
   }
+
+  // A reverse map of PRINTABLE_KEYS
+  for (i in ret.PRINTABLE_KEYS) {
+    name = ret.PRINTABLE_KEYS[i].toLowerCase();
+    ret[name] = parseInt(i, 10);
+  }
+
+  // Add the MODIFIER_KEYS, FUNCTION_KEYS and PRINTABLE_KEYS to the KEY
+  // variables as well.
+  Object.assign(ret, ret.MODIFIER_KEYS)
+  Object.assign(ret, ret.PRINTABLE_KEYS)
+  Object.assign(ret, ret.FUNCTION_KEYS)
+
+  // aliases
+  ret.enter = ret["return"];
+  ret.escape = ret.esc;
+  ret.del = ret["delete"];
+
+  // workaround for firefox bug
+  ret[173] = '-';
+
+  (function() {
+    var mods = ["alt", "command", "ctrl", "shift"];
+    for (var i = Math.pow(2, mods.length); i--;) {
+      ret.KEY_MODS[i] = mods.filter(function(x) {
+        return i & ret.KEY_MODS[x];
+      }).join("-") + "-";
+    }
+  })();
+
+  ret.KEY_MODS[0] = "";
+  ret.KEY_MODS[-1] = "input-";
+
+  return ret;
+})();
+
+
+
+var Keys = {
+  classifier: KeyClassifier,
+
+  keyCodeToString(keyCode) {
+    // Language-switching keystroke in Chrome/Linux emits keyCode 0.
+    var keyString = Keys.classifier[keyCode];
+    if (typeof keyString != "string")
+      keyString = String.fromCharCode(keyCode);
+    return keyString.toLowerCase();
+  },
+
+  getKeyCodeForKey: (() => {
+    var keyCodeCache = {};
+    return function getKeyCodeForKey(key, type) {
+      // reverse mapping, key -> code
+      key = key.toLowerCase();
+      if (keyCodeCache[key]) return keyCodeCache[key];
+      var base = Keys.classifier;
+      // "MODIFIER_KEYS","FUNCTION_KEYS","PRINTABLE_KEYS"
+      if (type) base = Keys.classifier[type];
+      for (var code in base)
+        if (key === base[code].toLowerCase())
+          return keyCodeCache[key] = typeof code === 'string' ?
+            parseInt(code, 10) : code;
+    }
+  })(),
+
+  isFunctionKey(string) {
+    return !!Keys.getKeyCodeForKey(string, 'FUNCTION_KEYS');
+  },
+
+  isModifierKey(string) {
+    return !!Keys.getKeyCodeForKey(string, 'MODIFIER_KEYS');
+  },
+
+  isPrintableKey(string) {
+    return !!Keys.getKeyCodeForKey(string, 'PRINTABLE_KEYS');
+  },
+
+  keyStringToEventSpec(key) {
+    // key sth like alt-f, output an keyevent-like object
+
+    // 1. create a key event object. We first gather what properties need to be
+    // passed to the event creator in terms of the keyboard state
+
+    let spec = {
+        keyString: '',
+        keyCode: 0,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+        metaKey: false,
+        altGraphKey: false,
+        isFunctionKey: false,
+        isModified: false
+    };
+
+    // 2. Are any modifier keys pressed?
+    let keyMods = key.split(/[\-]/),
+        trailing = arr.last(keyMods),
+        modsToEvent = {
+          shift: "shiftKey",
+          control: "ctrlKey",
+          ctrl: "ctrlKey",
+          alt: "altKey",
+          meta: "metaKey",
+          command: "metaKey",
+          cmd: "metaKey"
+        }
+
+    keyMods.forEach(mod => {
+      var modEventFlag = modsToEvent[mod.toLowerCase()];
+      if (!modEventFlag) return;
+      spec.isModified = true;
+      spec[modEventFlag] = true;
+    });
+
+    // 3. determine the key code and key string of the event.
+    spec.isFunctionKey = Keys.isFunctionKey(trailing);
+    if (spec.isFunctionKey) {
+      spec.keyCode = Keys.getKeyCodeForKey(trailing, 'FUNCTION_KEYS');
+      var printed = Keys.classifier.PRINTABLE_KEYS[spec.keyCode];
+      if (printed) spec.keyString = printed;
+    } else if (spec.isModified) {
+      if (keyMods.length > 1) {
+        spec.keyCode = trailing.toUpperCase().charCodeAt(0);
+        var printed = Keys.classifier.PRINTABLE_KEYS[spec.keyCode];
+        if (printed) spec.keyString = printed.toUpperCase();
+      }
+    } else {
+      spec.keyCode = trailing.toUpperCase().charCodeAt(0);
+      spec.keyString = trailing.toUpperCase();
+    }
+
+    return spec;
+  },
+
+  computeHashIdOfEvent(evt) {
+    let {keyCode, ctrlKey, altKey, shiftKey, metaKey} = evt,
+        {FUNCTION_KEYS, PRINTABLE_KEYS} = Keys.classifier,
+        hashId = 0 | (ctrlKey ? 1 : 0) | (altKey ? 2 : 0) | (shiftKey ? 4 : 0) | (metaKey ? 8 : 0);
+
+    if (!hashId && !(keyCode in FUNCTION_KEYS) && !(keyCode in PRINTABLE_KEYS)) hashId = -1;
+
+    return hashId;
+  },
+
+  eventToKeyString(evt, options) {
+    // options: ignoreModifiersIfNoCombo, ignoreKeys
+    var hash = Keys.computeHashIdOfEvent(evt),
+        mod = Keys.classifier.KEY_MODS[hash];
+    if (!mod || mod === "input-") mod = "";
+    var keyString = evt.keyCode ? mod + Keys.classifier[evt.keyCode] : mod.replace(/-$/, "");
+    return keyString.replace(/(^|-)([a-z])/g, (_, start, char) => start+char.toUpperCase())
+  }
+
 }
 
 export default Keys;
