@@ -7,48 +7,53 @@ import {
   cumulativeElementOffset
 } from './Event.js';
 
+// note: keydown, keyup, cut, copy, paste, compositionstart, compositionend,
+// compositionupdate, input are listened to by the text input helper
 const domEventsWeListenTo = [
   {type: 'pointerdown', capturing: false},
   {type: 'pointerup',   capturing: false},
   {type: 'pointermove', capturing: false},
   {type: 'pointerover', capturing: false},
   {type: 'pointerout',  capturing: false},
-  // {type: 'keydown',     capturing: false},
-  // {type: 'keyup',       capturing: false},
   {type: 'contextmenu', capturing: false},
-  // {type: 'cut',         capturing: false},
-  // {type: 'copy',        capturing: false},
-  // {type: 'paste',       capturing: false},
   {type: 'scroll',      capturing: true}
-]
+];
 
 const typeToMethodMap = {
-  'pointerdown': "onMouseDown",
-  'pointerup':   "onMouseUp",
-  'pointermove': "onMouseMove",
-  'hoverin':     "onHoverIn",
-  'hoverout':    "onHoverOut",
-  'drag':        "onDrag",
-  'dragstart':   "onDragStart",
-  'dragend':     "onDragEnd",
-  'grab':        "onGrab",
-  'drop':        "onDrop",
-  'keydown':     "onKeyDown",
-  'keyup':       "onKeyUp",
-  'blur':        "onBlur",
-  'focus':       "onFocus",
-  'contextmenu': "onContextMenu",
-  'cut':         "onCut",
-  'copy':        "onCopy",
-  'paste':       "onPaste",
-  'scroll':       "onScroll"
+  "pointerdown":       "onMouseDown",
+  "pointerup":         "onMouseUp",
+  "pointermove":       "onMouseMove",
+  "hoverin":           "onHoverIn",
+  "hoverout":          "onHoverOut",
+  "drag":              "onDrag",
+  "dragstart":         "onDragStart",
+  "dragend":           "onDragEnd",
+  "grab":              "onGrab",
+  "drop":              "onDrop",
+  "keydown":           "onKeyDown",
+  "keyup":             "onKeyUp",
+  "input":             "onTextInput",
+  "compositionstart":  "onCompositionStart",
+  "compositionupdate": "onCompositionUpdate",
+  "compositionend":    "onCompositionEnd",
+  "blur":              "onBlur",
+  "focus":             "onFocus",
+  "contextmenu":       "onContextMenu",
+  "cut":               "onCut",
+  "copy":              "onCopy",
+  "paste":             "onPaste",
+  "scroll":            "onScroll"
 }
 
 const focusTargetingEvents = [
   "keydown", "keyup", "keypress",
-  "input", "compositionStart", "compositionUpdate", "compositionEnd",
+  "input", "compositionstart", "compositionupdate", "compositionend",
   "cut", "copy", "paste",
 ];
+
+const textOnlyEvents = [
+  "input", "compositionstart", "compositionupdate", "compositionend"
+]
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helpers
@@ -204,15 +209,15 @@ export default class EventDispatcher {
     // dom events get mapped to those morph events, zero to many.
     // Also for some kinds of event we need to accumulate
 
-    var type = domEvt.type,
-        state = this.eventState,
+    var type         = domEvt.type,
+        state        = this.eventState,
         eventTargets = [targetMorph].concat(targetMorph.ownerChain()),
-        hand = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
-        halo = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
-        layoutHalo = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
+        hand         = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
+        halo         = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
+        layoutHalo   = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
         defaultEvent = new Event(type, domEvt, this, eventTargets, hand, halo, layoutHalo),
-        events = [defaultEvent],
-        later = [];
+        events       = [defaultEvent],
+        later        = [];
 
 
     switch (type) {
@@ -361,6 +366,11 @@ export default class EventDispatcher {
           .onDispatch(() => targetMorph.scroll = pt(domEvt.target.scrollLeft, domEvt.target.scrollTop))]
         break;
 
+      case "input": case "compositionstart": case "compositionupdate": case "compositionend":
+        // text only
+        if (!targetMorph.isText) events = [];
+        else defaultEvent.targetMorphs = [targetMorph];
+        break;
     }
 
     return {events, later};

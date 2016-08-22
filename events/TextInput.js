@@ -1,34 +1,49 @@
 import bowser from "bowser";
 
+const placeholderValue = "\x01\x01",
+      placeholderRe = new RegExp("\x01", "g");
+
 export default class TextInput {
 
   constructor(eventDispatcher) {
     this.eventDispatcher = eventDispatcher;
-    this.rootNode = null;
-    this.textareaNode = null;
-    this.eventHandlers = [];
-    this.isInstalled = false;
+    
+    this.domState = {
+      rootNode: null,
+      textareaNode: null,
+      eventHandlers: [],
+      isInstalled: false
+    }
+
+    this.inputState = {
+      composition: null
+    }
   }
 
-  install(rootNode) {
-    if (this.isInstalled) {
-      if (this.rootNode === rootNode) return;
+  install(newRootNode) {
+    let domState = this.domState,
+        {isInstalled, rootNode} = domState;
+
+    if (isInstalled) {
+      if (rootNode === newRootNode) return;
       this.uninstall();
     }
 
-    this.isInstalled = true;
-    this.rootNode = rootNode;
+    domState.isInstalled = true;
+    domState.rootNode = newRootNode;
 
-    rootNode.tabIndex = 1; // focusable so that we can relay the focus to the textarea
+    newRootNode.tabIndex = 1; // focusable so that we can relay the focus to the textarea
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // textarea element that acts as an event proxy
 
-    var doc = rootNode.ownerDocument,
-        textareaNode = this.textareaNode = doc.createElement("textarea");
+    var doc = newRootNode.ownerDocument,
+        textareaNode = domState.textareaNode = doc.createElement("textarea");
+
     textareaNode.style = `
       position: absolute;
-      width: 0px; height: 0px;
+      /*extent cannot be 0, input won't work correctly in Chrome 52.0*/
+      width: 20px; height: 20px;
       z-index: 0;
       opacity: 0;
       background: transparent;
@@ -57,38 +72,98 @@ export default class TextInput {
     textareaNode.setAttribute("autocapitalize", "off");
     textareaNode.setAttribute("spellcheck", false);
     textareaNode.value = "";
-    rootNode.insertBefore(textareaNode, rootNode.firstChild);
+    newRootNode.insertBefore(textareaNode, newRootNode.firstChild);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
-    this.eventHandlers = [
-      {type: "focus", node: rootNode, fn: evt => this.textareaNode.focus(), capturing: false},
+    domState.eventHandlers = [
+      {type: "focus", node: newRootNode, fn: evt => this.onFocus(evt), capturing: false},
       // {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true},
-      {type: "keydown", node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "keyup",   node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "cut",     node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "copy",    node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "paste",   node: this.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false}
+      {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "cut",     node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "copy",    node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "paste",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+
+      {type: "compositionstart",  node: domState.textareaNode, fn: evt => this.onCompositionStart(evt), capturing: false},
+      {type: "compositionend",    node: domState.textareaNode, fn: evt => this.onCompositionEnd(evt), capturing: false},
+      {type: "compositionupdate", node: domState.textareaNode, fn: evt => this.onCompositionUpdate(evt), capturing: false},
+      {type: "input",             node: domState.textareaNode, fn: evt => this.onInput(evt), capturing: false},
     ]
-    this.eventHandlers.forEach(({type, node, fn, capturing}) =>
+    domState.eventHandlers.forEach(({type, node, fn, capturing}) =>
       node.addEventListener(type, fn, capturing));
 
     return this;
   }
 
   uninstall() {
-    this.isInstalled = false;
+    var domState = this.domState;
 
-    this.eventHandlers.forEach(({node, type, fn, capturing}) =>
+    domState.isInstalled = false;
+
+    domState.eventHandlers.forEach(({node, type, fn, capturing}) =>
       node.removeEventListener(type, fn, capturing));
 
-    var n = this.textareaNode;
+    var n = domState.textareaNode;
     n && n.parentNode && n.parentNode.removeChild(n)
-    this.rootNode = null;
+    domState.rootNode = null;
 
     return this;
   }
 
-  focus() { this.textareaNode && this.textareaNode.focus(); }
-  blur() { this.textareaNode && this.textareaNode.blur(); }
+  resetValue() {
+    var n = this.domState.textareaNode;
+    n && (n.value = placeholderValue);
+  }
+
+  readValue() {
+    var n = this.domState.textareaNode;
+    return n ? n.value.replace(placeholderRe, "") : "";
+
+  //   if (!n) return "";
+  //   var val = n.value;
+  //   var placeholder1 = placeholderValue.charAt(0);
+  // // if (val == placeholder1) return "DELETE";
+  //   if (val.substring(0, 2) == placeholderValue)
+  //     val = val.substr(2);
+  //   else if (val.charAt(0) == placeholder1)
+  //     val = val.substr(1);
+  //   else if (val.charAt(val.length - 1) == placeholder1)
+  //     val = val.slice(0, -1);
+  //   // can happen if undo in textarea isn't stopped
+  //   if (val.charAt(val.length - 1) == placeholder1)
+  //     val = val.slice(0, -1);
+  //   return val;
+
+  }
+
+  focus() { this.domState.textareaNode && this.domState.textareaNode.focus(); }
+  blur() { this.domState.textareaNode && this.domState.textareaNode.blur(); }
+  
+  onFocus(evt) {
+    this.domState.textareaNode.focus();
+    this.inputState.composition = null;
+  }
+  
+  onInput(evt) {
+    if (this.inputState.composition) return;
+    if (!evt.data) evt.data = this.readValue();
+    this.resetValue();
+    this.eventDispatcher.dispatchDOMEvent(evt);
+  }
+
+  onCompositionStart(evt) {
+    this.inputState.composition = {};
+  }
+
+  onCompositionUpdate(evt) {
+    var {composition: c} = this.inputState,
+        val = this.readValue();
+    if (c.lastValue === val) return;
+    c.lastValue = val;
+  }
+
+  onCompositionEnd(evt) {
+    this.inputState.composition = null;
+  }
 }

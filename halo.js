@@ -1186,13 +1186,13 @@ export class Halo extends Morph {
 
   onKeyDown(evt) {
     var offsets = {
-      "Up": pt(0,-1),
-      "Shift-Up": pt(0,-1),
-      "Down": pt(0,1),
-      "Shift-Down": pt(0,1),
-      "Left": pt(-1, 0),
-      "Shift-Left": pt(-1, 0),
-      "Right": pt(1, 0),
+      "Up":          pt(0,-1),
+      "Shift-Up":    pt(0,-1),
+      "Down":        pt(0,1),
+      "Shift-Down":  pt(0,1),
+      "Left":        pt(-1, 0),
+      "Shift-Left":  pt(-1, 0),
+      "Right":       pt(1, 0),
       "Shift-Right": pt(1, 0),
     }, delta;
     if (this.changingName) return;

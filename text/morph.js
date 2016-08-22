@@ -5,6 +5,7 @@ import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
+import KeyHandler from "./keyhandler.js";
 
 export class Text extends Morph {
 
@@ -35,6 +36,7 @@ export class Text extends Morph {
     });
     this.document = new TextDocument();
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
+    // this.keyHandler = new KeyHandler(this);
     this._selection = new Selection(this, selection);
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
@@ -259,6 +261,10 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // keyboard events
 
+  simulateKeys(keyString) {
+    this.keyHandler.simulateKeys(keyString);
+  }
+
   onKeyUp(evt) {
     switch (evt.keyString()) {
       case 'Command-D': case 'Command-P': evt.stop(); break;
@@ -327,25 +333,32 @@ export class Text extends Morph {
         sel.collapseToEnd();
         break;
 
+      case 'Enter':
+        if (!this.rejectsInput()) { sel.text = "\n"; sel.collapseToEnd(); } break;
+      case 'Space':
+        if (!this.rejectsInput()) { sel.text = " "; sel.collapseToEnd(); } break;
+      case 'Tab':
+        if (!this.rejectsInput()) { sel.text = "\t"; sel.collapseToEnd(); } break;
+
       default:
-        if (this.rejectsInput()) break;
-        switch (key) {
-          case 'Enter':
-            sel.text = "\n"; break;
-          case 'Space':
-            sel.text = " "; break;
-          case 'Tab':
-            sel.text = "\t"; break;
-          default:
-            if (key.length === 1) sel.text = key;
-            else return; // ignored key
-        }
-        sel.collapseToEnd();
+        handled = false;
     }
 
-    if (handled) evt.stop();
+    if (handled) {
+      evt.stop();
+      this.selection.cursorBlinkStart();
+      this.scrollToSelection();
+    }
 
+  }
+
+  onTextInput(evt) {
+    if (this.rejectsInput()) return;
+    var sel = this.selection;
+    sel.text = evt.data;
+    sel.collapseToEnd();
     this.scrollToSelection();
+    this.selection.cursorBlinkStart();
   }
 
   doSave() { /*...*/ }
