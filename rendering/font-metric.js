@@ -92,8 +92,8 @@ export default class FontMetric {
     return this.charMap[fontFamily][fontSize][char];
   }
 
-  // FIXME do browsers implement contextual kerning??
-  kerningFor(fontFamily, fontSize, {left, right}) {
+  // FIXME? do browsers implement contextual kerning?
+  kerningFor(fontFamily, fontSize, left, right) {
     var charPairStr = `${left}${right}`;
     if (!this.kerningMap[fontFamily]) {
       this.kerningMap[fontFamily] = [];
