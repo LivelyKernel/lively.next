@@ -28,7 +28,7 @@ function text(string, props) {
 
 var fontMetric = {
   height: 14, width: 6,
-  sizeForStr(fontFamily, fontSize, text) {
+  sizeForStr(fontFamily, fontSize, fontKerning, text) {
     // ea char 10*10
     var lines = string.lines(text),
         maxCols = arr.max(lines, line => line.length).length;
@@ -36,7 +36,8 @@ var fontMetric = {
   },
   sizeFor(fontFamily, fontSize, text) {
     return {width: this.width, height: this.height}
-  }
+  },
+  kerningFor(fontFamily, fontSize, left, right) { return 0 },
 }
 
 
