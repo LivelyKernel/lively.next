@@ -270,7 +270,7 @@ describe("events", function() {
       submorph1.focus();
       var pressed; submorph1.onKeyDown = evt => pressed = evt.keyString();
       env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, keyCode: 65});
-      expect(pressed).match(/Control-A/)
+      expect(pressed).equals("Ctrl-A")
     });
 
     it("key up keystring", async () => {

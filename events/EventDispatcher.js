@@ -442,7 +442,7 @@ export default class EventDispatcher {
 
       // keyboard events always go to the keyInput textarea node
       if (focusTargetingEvents.includes(type)) {
-        if (!this.keyInputHelper.textareaNode)
+        if (!this.keyInputHelper.domState.textareaNode)
           throw new Error(`Cannot simulate event of type ${type}, no keyInputHelper installed!`);
         spec = {...spec, target: this.keyInputHelper.textareaNode};
       }
