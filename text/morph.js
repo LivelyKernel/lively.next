@@ -5,7 +5,7 @@ import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-import KeyHandler from "./keyhandler.js";
+// import KeyHandler from "./keyhandler.js";
 
 export class Text extends Morph {
 
