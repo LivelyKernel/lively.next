@@ -31,7 +31,7 @@ export class Text extends Morph {
       fontFamily: "Sans-Serif",
       fontSize: 12,
       fontColor: Color.black,
-      fontKerning: false,
+      fontKerning: true,
       ...props
     });
     this.document = new TextDocument();
