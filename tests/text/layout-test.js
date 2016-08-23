@@ -2,7 +2,7 @@
 import { Text } from "../../index.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
-import { arr, string } from "lively.lang";
+import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 
 function text(string, props) {
   return new Text({
@@ -16,20 +16,6 @@ function text(string, props) {
   });
 }
 
-
-var fontMetric = {
-  height: 14, width: 6,
-  sizeForStr(fontFamily, fontSize, fontKerning, text) {
-    // ea char 10*10
-    var lines = string.lines(text),
-        maxCols = arr.max(lines, line => line.length).length;
-    return {width: maxCols*this.width, height: lines.length*this.height}
-  },
-  sizeFor(fontFamily, fontSize, text) {
-    return {width: this.width, height: this.height}
-  },
-  kerningFor(fontFamily, fontSize, left, right) { return 0 }
-}
 
 describe("text layout", () => {
 
