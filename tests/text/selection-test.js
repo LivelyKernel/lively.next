@@ -3,10 +3,26 @@ import { Selection } from "../../text/selection.js";
 import TextDocument from "../../text/document.js";
 import { Text } from "../../text/morph.js";
 import { expect } from "mocha-es6";
+import { arr, string } from "lively.lang";
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
 }
+
+var fontMetric = {
+  height: 14, width: 6,
+  sizeForStr(fontFamily, fontSize, fontKerning, text) {
+    // ea char 10*10
+    var lines = string.lines(text),
+        maxCols = arr.max(lines, line => line.length).length;
+    return {width: maxCols*this.width, height: lines.length*this.height}
+  },
+  sizeFor(fontFamily, fontSize, text) {
+    return {width: this.width, height: this.height}
+  },
+  kerningFor(fontFamily, fontSize, left, right) { return 0 },
+}
+
 
 describe("text selection", () => {
 
@@ -22,7 +38,7 @@ describe("text selection", () => {
   });
 
   it("sets text", () => {
-    var text = new Text({textString: "hello\nworld"}),
+    var text = new Text({textString: "hello\nworld", fontMetric}),
         sel = new Selection(text, range(0,1,1,1));
     sel.text = "foo\nbar";
     expect(sel.text).equals("foo\nbar");
@@ -66,7 +82,7 @@ describe("text selection", () => {
   });
 
   it("directed selection", () => {
-    var text = new Text({textString: "hello\nworld"}),
+    var text = new Text({textString: "hello\nworld", fontMetric}),
         sel = text.selection;
     sel.range = {start: 3, end: 5}
     expect(sel.lead).deep.equals({row: 0, column: 5});
