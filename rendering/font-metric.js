@@ -34,11 +34,13 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = [];
+    this.kerningMap = [];
     this.element = null;
   }
 
   install(doc, parentEl) {
     this.element = doc.createElement("div");
+    this.element.name = "fontMetric";
     this.setMeasureNodeStyles(this.element.style, true);
     parentEl.appendChild(this.element);
   }
@@ -77,7 +79,7 @@ export default class FontMetric {
 
   sizeFor(fontFamily, fontSize, char) {
     if (char.length > 1)
-      return this.sizeForStr(fontFamily, fontSize, char);
+      return this.sizeForStr(fontFamily, fontSize, false, char);
 
     if (!this.charMap[fontFamily]) {
       this.charMap[fontFamily] = [];
@@ -90,20 +92,44 @@ export default class FontMetric {
     return this.charMap[fontFamily][fontSize][char];
   }
 
-  sizeForStr(fontFamily, fontSize, str) {
+  sizeForStr(fontFamily, fontSize, fontKerning, str) {
     var height = 0, width = 0,
         defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
     for (let line of str.split('\n')) {
-      let lineHeight = defaultLineHeight, lineWidth = 0;
-      for (let char of line.split('')) {
-        let { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
+      let lineHeight = defaultLineHeight, lineWidth = 0,
+          chars = line.split(''), nChars = chars.length;
+      for (let charIndex = 0; charIndex < nChars; charIndex++) {
+        let char = chars[charIndex],
+          { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
         if (charHeight > lineHeight) lineHeight = charHeight;
+        if (fontKerning && charIndex < nChars - 1) {
+          let nextChar = chars[charIndex+1];
+          charWidth += this.kerningFor(fontFamily, fontSize, char, nextChar);
+        }
         lineWidth += charWidth;
       }
       if (lineWidth > width) width = lineWidth;
       height += lineHeight;
     }
     return { height: height, width: width };
+  }
+
+  // FIXME? do browsers implement contextual kerning?
+  kerningFor(fontFamily, fontSize, left, right) {
+    var charPairStr = `${left}${right}`;
+    if (!this.kerningMap[fontFamily]) {
+      this.kerningMap[fontFamily] = [];
+    }
+    if (!this.kerningMap[fontFamily][fontSize]) {
+      this.kerningMap[fontFamily][fontSize] = [];
+    }
+    if (!this.kerningMap[fontFamily][fontSize][charPairStr]) {
+      let { width: leftWidth }  = this.sizeFor(fontFamily, fontSize, left),
+          { width: rightWidth } = this.sizeFor(fontFamily, fontSize, right),
+          { width: totalWidth } = this.measure(fontFamily, fontSize, charPairStr);
+      this.kerningMap[fontFamily][fontSize][charPairStr] = totalWidth - leftWidth - rightWidth;
+    }
+    return this.kerningMap[fontFamily][fontSize][charPairStr];
   }
 
   indexFromPoint(fontFamily, fontSize, str, point) {

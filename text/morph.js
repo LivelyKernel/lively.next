@@ -32,6 +32,7 @@ export class Text extends Morph {
       fontFamily: "Sans-Serif",
       fontSize: 12,
       fontColor: Color.black,
+      fontKerning: true,
       ...props
     });
     this.document = new TextDocument();
@@ -52,7 +53,8 @@ export class Text extends Morph {
      || change.prop === "fontSize"
      || change.prop === "fontColor" // FIXME
      || change.prop === "fixedWidth"
-     || change.prop === "fixedHeight")
+     || change.prop === "fixedHeight"
+     || change.prop === "fontKerning")
        this.renderer && (this.renderer.layoutComputed = false);
     super.onChange(change);
   }
@@ -103,6 +105,9 @@ export class Text extends Morph {
 
   get fontColor() { return this.getProperty("fontColor") }
   set fontColor(value) { this.addValueChange("fontColor", value); }
+
+  get fontKerning() { return this.getProperty("fontKerning") }
+  set fontKerning(value) { this.addValueChange("fontKerning", value); }
 
   get clipMode()  { return this.getProperty("clipMode"); }
   set clipMode(value)  {

@@ -81,20 +81,9 @@ const defaultCSS = `
     }
 }
 
-span.selected {
-  background: #ACCEF7;
-  line-height: normal;
-}
-
-span.cursor {
-  width: 0px;
-  display: inline-block;
-  outline: 1px solid black;
-  line-height: normal;
-}
-
-div.text span {
+div.text-layer span {
   pointer-events: none;
+  line-height: normal;
 }
 
 `;
