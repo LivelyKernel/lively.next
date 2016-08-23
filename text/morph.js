@@ -118,6 +118,7 @@ export class Text extends Morph {
     this.document.textString = String(value);
     this.selection = {start: 0, end: 0};
     this.addValueChange("textString", value);
+    this._needsFit = true;
   }
 
   getLine(row) {

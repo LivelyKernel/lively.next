@@ -113,6 +113,15 @@ describe("rendered text", () => {
     expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
   });
 
+  it("can resize on content change", async () => {
+    sut.textString = "Hello hello";
+    await sut.whenRendered();
+    expect(sut.width).equals(11*fontMetric.width);
+    sut.textString = "foo";
+    await sut.whenRendered();
+    expect(sut.width).equals(3*fontMetric.width);
+  });
+
 });
 
 
