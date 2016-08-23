@@ -187,7 +187,13 @@ var Keys = {
     return !!Keys.getKeyCodeForKey(string, 'PRINTABLE_KEYS');
   },
 
+  canonicalizeKeyString(string) {
+    return Keys.eventToKeyString(Keys.keyStringToEventSpec(string));
+  },
+
   keyStringToEventSpec(key) {
+    // key="Ctrl-Shift"
+
     // key sth like alt-f, output an keyevent-like object
 
     // 1. create a key event object. We first gather what properties need to be
@@ -207,7 +213,6 @@ var Keys = {
 
     // 2. Are any modifier keys pressed?
     let keyMods = key.split(/[\-]/),
-        trailing = arr.last(keyMods),
         modsToEvent = {
           shift: "shiftKey",
           control: "ctrlKey",
@@ -218,25 +223,29 @@ var Keys = {
           cmd: "metaKey"
         }
 
-    keyMods.forEach(mod => {
-      var modEventFlag = modsToEvent[mod.toLowerCase()];
-      if (!modEventFlag) return;
+    for (let i = keyMods.length - 1; i >= 0; i--) {
+      let mod = keyMods[i],
+          modEventFlag = modsToEvent[mod.toLowerCase()];
+      if (!modEventFlag) continue;
+      keyMods.splice(i, 1);
       spec.isModified = true;
       spec[modEventFlag] = true;
-    });
+    }
 
+    // only modifiers
+    if (!keyMods.length) return spec;
+    if (keyMods.length > 1) {
+      console.warn(`Strange key "${key}" encountered in keyStringToEventSpec, parsing probably failed`);
+    }
+
+    var trailing = arr.last(keyMods);
+    
     // 3. determine the key code and key string of the event.
     spec.isFunctionKey = Keys.isFunctionKey(trailing);
     if (spec.isFunctionKey) {
       spec.keyCode = Keys.getKeyCodeForKey(trailing, 'FUNCTION_KEYS');
       var printed = Keys.classifier.PRINTABLE_KEYS[spec.keyCode];
       if (printed) spec.keyString = printed;
-    } else if (spec.isModified) {
-      if (keyMods.length > 1) {
-        spec.keyCode = trailing.toUpperCase().charCodeAt(0);
-        var printed = Keys.classifier.PRINTABLE_KEYS[spec.keyCode];
-        if (printed) spec.keyString = printed.toUpperCase();
-      }
     } else {
       spec.keyCode = trailing.toUpperCase().charCodeAt(0);
       spec.keyString = trailing.toUpperCase();
