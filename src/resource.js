@@ -4,14 +4,11 @@ import { install as installHook, remove as removeHook, isInstalled as isHookInst
 function fetchResource(proceed, load) {
   const System = this,
         res = System.resource(load.name);
-  if (load.name.match(/^lively:\/\//)) {
-    load.metadata.format = "esm";
-  }
 
-  if (res) {
-    return res.read();
-  }
-  return proceed(load);
+  if (load.name.match(/^lively:\/\//))
+    load.metadata.format = "esm";
+
+  return res ? res.read() : proceed(load);
 }
 
 function livelyProtocol(proceed, url) {
