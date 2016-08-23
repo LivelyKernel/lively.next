@@ -288,7 +288,8 @@ export class Text extends Morph {
       case 'Command-D':
         (async () => {
           if (this.selection.isEmpty()) this.selectLine();
-          var result = await lively.vm.runEval(this.selection.text, {System, targetModule: "lively://test-text/1"});
+          var result = await lively.vm.runEval(this.selection.text, {
+            System, targetModule: "lively://lively.next-prototype_2016_08_23/" + this.id});
           evt.world[result.isError ? "logError" : "setStatusMessage"](result.value);
         })();
         break;
@@ -296,7 +297,8 @@ export class Text extends Morph {
       case 'Command-P':
         (async () => {
           if (this.selection.isEmpty()) this.selectLine();
-          var result = await lively.vm.runEval(this.selection.text, {System, targetModule: "lively://test-text/1"});
+          var result = await lively.vm.runEval(this.selection.text, {
+            System, targetModule: "lively://lively.next-prototype_2016_08_23/" + this.id});
           sel.collapseToEnd();
           this.insertTextAndSelect(result.value);
         })();
