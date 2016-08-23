@@ -210,10 +210,6 @@ export class Text extends Morph {
     return this.renderer.textPositionFor(this, point);
   }
 
-  indexFromPoint(point) {
-    return this.renderer.textIndexFor(this, point);
-  }
-
   paddingAndScrollOffset() {
     return this.padding.topLeft().subPt(this.scroll);
   }

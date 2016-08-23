@@ -116,7 +116,6 @@ export default class FontMetric {
 
   // FIXME? do browsers implement contextual kerning?
   kerningFor(fontFamily, fontSize, left, right) {
-
     var charPairStr = `${left}${right}`,
         indexStr = `_${charPairStr}`;
     if (!this.kerningMap[fontFamily]) {
@@ -132,56 +131,6 @@ export default class FontMetric {
       this.kerningMap[fontFamily][fontSize][indexStr] = totalWidth - leftWidth - rightWidth;
     }
     return this.kerningMap[fontFamily][fontSize][indexStr];
-  }
-
-  indexFromPoint(fontFamily, fontSize, str, point) {
-    var sizeMap = this.sizeListForStr(fontFamily, fontSize, str),
-        { x, y } = point,
-        line = sizeMap.find(l => {
-          let char = l[0],
-              start = char.position.y,
-              end = start + char.height;
-          return y >= start && y <= end;
-        });
-    if (!line) return str.length;
-
-    let char = line.find(c => {
-      let start = c.position.x,
-          end = start + c.width;
-      return x >= start && x <= end;
-    });
-    return char ? char.index : line[line.length-1].index;
-  }
-
-  pointFromIndex(fontFamily, fontSize, str, index) {
-    var substr = str.substr(0, index + 1),
-        sizeList = arr.flatten(this.sizeListForStr(fontFamily, fontSize, substr)),
-        indexInSizeList = (str.length === substr.length ? sizeList.length - 1: (sizeList.length >= 2 ? sizeList.length - 2 : 0)),
-        charInfo = sizeList[indexInSizeList],
-        { position: { x, y }, width, height } = charInfo,
-        boundingRect = rect(x, y, width || 1, height);
-    return boundingRect.bottomLeft();
-  }
-
-  sizeListForStr(fontFamily, fontSize, str) {
-    var sizeList = [], totalHeight = 0, index = 0,
-        defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
-    for (let line of str.split('\n')) {
-      let lineSizeList = [],
-          lineHeight = defaultLineHeight,
-          lineWidth = 0;
-      for (let char of line.split('')) {
-        let { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
-        if (charHeight > lineHeight) lineHeight = charHeight;
-        lineSizeList.push({ index: index++, position: pt(lineWidth, totalHeight), width: charWidth }) // note: height will be set later
-        lineWidth += charWidth;
-      }
-      lineSizeList.push({ index: index++, position: pt(lineWidth, totalHeight), width: 0}); // newline
-      lineSizeList.map(c => c.height = lineHeight);
-      sizeList.push(lineSizeList);
-      totalHeight += lineHeight;
-    }
-    return sizeList;
   }
 
   asciiSizes(fontFamily, fontSize) {
