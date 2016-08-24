@@ -221,6 +221,14 @@ var Keys = {
           cmd: "metaKey"
         }
 
+    // input event
+    if (keyMods[0] === "input" && keyMods.length === 2) {
+      spec.keyCombo = key;
+      spec.keyString = keyMods[1];
+      if (spec.keyString.length === 1) spec.keyCode = spec.keyString.charCodeAt(0);
+      return spec;
+    }
+
     for (let i = keyMods.length - 1; i >= 0; i--) {
       let mod = keyMods[i],
           modEventFlag = modsToEvent[mod.toLowerCase()];
@@ -297,7 +305,7 @@ var Keys = {
         {PRINTABLE_KEYS, FUNCTION_KEYS} = Keys.classifier,
         hashId = 0 | (ctrlKey ? 1 : 0) | (altKey ? 2 : 0) | (shiftKey ? 4 : 0) | (metaKey ? 8 : 0);
 
-    if (!hashId && (!(keyCode in FUNCTION_KEYS) || letterRe.test(keyString))) hashId = -1;
+    if (hashId === 0 && (!(keyCode in FUNCTION_KEYS) || (keyString && letterRe.test(keyString)))) hashId = -1;
 
     return hashId;
   },
@@ -307,9 +315,8 @@ var Keys = {
   },
 
   canonicalizeEvent(evt) {
-    var stringified = this.eventToKeyCombo(evt);
-    return evt._isLivelyKeyEventSpec ? evt :
-      {...this.keyComboToEventSpec(stringified), _keyCombo: stringified}
+    return evt._isLivelyKeyEventSpec ?
+      evt : Keys.keyComboToEventSpec(Keys.eventToKeyCombo(evt));
   }
 
 }
