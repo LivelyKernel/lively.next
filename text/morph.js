@@ -70,7 +70,7 @@ export class Text extends Morph {
     this.addValueChange("readOnly", value);
   }
 
-  rejectsInput() { return this.readOnly || !this.isFocused() }
+  rejectsInput() { return this.readOnly /*|| !this.isFocused()*/ }
 
   get selectable() { return this.getProperty("selectable"); }
   set selectable(value) {
