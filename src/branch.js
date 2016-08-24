@@ -123,8 +123,8 @@ export default class Branch {
 
   async pushToGitHub() {
     await enableGitHub();
-    const repo = await repository(this.pkg),
-          headCommit = await this.head();
+    const repo = await repository(this.pkg);
+    let headCommit = await this.head();
     if (headCommit.message == "work in progress") {
       headCommit = await headCommit.parent();
     }
