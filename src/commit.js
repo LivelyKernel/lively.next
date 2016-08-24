@@ -79,7 +79,9 @@ class Commit {
   }
   
   parent() { // () -> Promise<Commit>
-    return commit(this.pkg, this.parents[0]);
+    return this.parents[0]
+            ? commit(this.pkg, this.parents[0])
+            : Promise.resolve(null);
   }
 
   async files(withDir) { // boolean -> {[RelPath]: Hash}
