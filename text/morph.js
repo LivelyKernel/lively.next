@@ -5,9 +5,7 @@ import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-import { KeyHandler } from "../events/keyhandler.js";
-import Keys from "../events/Keys.js";
-import { CommandHandler } from "../commands.js";
+import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
 
 const defaultKeyHandler = new KeyHandler();
 
@@ -282,100 +280,21 @@ export class Text extends Morph {
   }
 
   onKeyDown(evt) {
-    var keyString = evt.keyCombo(),
-        key = evt.domEvt.key,
-        sel = this.selection,
-        handled = true,
-        world = this.world();
-
-    switch (keyString) {
-      case 'Command-C': case 'Command-X': case 'Command-V':
-        handled = false;
-        break; // handled by onCut()/onPaste()
-
-      case 'Command-A': this.selectAll(); break;
-
-      case 'Command-D':
-        (async () => {
-          if (this.selection.isEmpty()) this.selectLine();
-          var result = await lively.vm.runEval(this.selection.text, {
-            System, targetModule: "lively://lively.next-prototype_2016_08_23/" + this.id});
-          evt.world[result.isError ? "logError" : "setStatusMessage"](result.value);
-        })();
-        break;
-
-      case 'Command-P':
-        (async () => {
-          if (this.selection.isEmpty()) this.selectLine();
-          var result = await lively.vm.runEval(this.selection.text, {
-            System, targetModule: "lively://lively.next-prototype_2016_08_23/" + this.id});
-          sel.collapseToEnd();
-          this.insertTextAndSelect(result.value);
-        })();
-        break;
-
-      case 'Command-S': this.doSave(); break;
-
-      case 'Backspace':
-        if (this.rejectsInput()) break;
-        if (sel.isEmpty()) sel.growLeft(1);
-        sel.text = "";
-        sel.collapse();
-        break;
-
-      case 'Delete': // forward-delete
-        if (this.rejectsInput()) break;
-        if (sel.isEmpty()) sel.growRight(1);
-        sel.text = "";
-        sel.collapse();
-        break;
-
-      case 'Left': if (sel.isEmpty()) sel.growLeft(1); sel.collapse(); break;
-      case 'Right': if (sel.isEmpty()) sel.growRight(1); sel.collapseToEnd(); break;
-
-      case 'Up':
-        var {row, column} = sel.start;
-        sel.start = {row: row-1, column};
-        sel.collapse();
-        break;
-        
-      case 'Down':
-        var {row, column} = sel.start;
-        sel.start = {row: row+1, column};
-        sel.collapseToEnd();
-        break;
-
-      case 'Enter':
-        if (!this.rejectsInput()) { sel.text = "\n"; sel.collapseToEnd(); } break;
-      case 'Space':
-        if (!this.rejectsInput()) { sel.text = " "; sel.collapseToEnd(); } break;
-      case 'Tab':
-        if (!this.rejectsInput()) { sel.text = "\t"; sel.collapseToEnd(); } break;
-
-      default:
-        handled = false;
-    }
-
-    if (handled) {
-      evt.stop();
+    if (invokeKeyHandlers(this, evt, true/*no input evts*/)) {
       this.selection.cursorBlinkStart();
       this.scrollToSelection();
     }
-
   }
 
   onTextInput(evt) {
-    if (this.rejectsInput()) return;
-    var sel = this.selection;
-    sel.text = evt.data;
-    sel.collapseToEnd();
-    this.scrollToSelection();
-    this.selection.cursorBlinkStart();
+    if (invokeKeyHandlers(this, evt, false/*no input evts*/)) {
+      this.selection.cursorBlinkStart();
+      this.scrollToSelection();
+    }
   }
 
-  invokeKeyHandlersWithEvent(evt, opts) {
-    opts = {onlyCommandOrFunctionKey: false, ...opts};
-    return KeyHandler.invokeKeyHandlersWithEvent(this, evt, opts);
+  invokeKeyHandlers(evt, noInputEvents = false) {
+    return invokeKeyHandlers(this, evt, noInputEvents);
   }
 
   doSave() { /*...*/ }
