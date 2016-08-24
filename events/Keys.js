@@ -1,6 +1,8 @@
 import bowser from "bowser";
 import { arr } from "lively.lang";
 
+const letterRe = /[a-z]/i;
+
 var KeyClassifier = (function() {
 /*! @license
 ==========================================================================
@@ -91,34 +93,35 @@ For more information about SproutCore, visit http://www.sproutcore.com
 
     PRINTABLE_KEYS: {
       32: ' ',  48: '0',  49: '1',  50: '2',  51: '3',  52: '4', 53:  '5',
-      54: '6',  55: '7',  56: '8',  57: '9',  59: ';',  61: '=', 65:  'a',
-      66: 'b',  67: 'c',  68: 'd',  69: 'e',  70: 'f',  71: 'g', 72:  'h',
-      73: 'i',  74: 'j',  75: 'k',  76: 'l',  77: 'm',  78: 'n', 79:  'o',
-      80: 'p',  81: 'q',  82: 'r',  83: 's',  84: 't',  85: 'u', 86:  'v',
-      87: 'w',  88: 'x',  89: 'y',  90: 'z', 107: '+', 109: '-', 110: '.',
+      54: '6',  55: '7',  56: '8',  57: '9',  59: ';',  61: '=', 65:  'A',
+      66: 'B',  67: 'C',  68: 'D',  69: 'E',  70: 'F',  71: 'G', 72:  'H',
+      73: 'I',  74: 'J',  75: 'K',  76: 'L',  77: 'M',  78: 'N', 79:  'O',
+      80: 'P',  81: 'Q',  82: 'R',  83: 'S',  84: 'T',  85: 'U', 86:  'V',
+      87: 'W',  88: 'X',  89: 'Y',  90: 'Z', 107: '+', 109: '-', 110: '.',
       186: ';', 187: '=', 188: ',', 189: '-', 190: '.', 191: '/', 192: '`',
       219: '[', 220: '\\',221: ']', 222: "'", 111: '/', 106: '*'
     }
   };
 
+
+  var {MODIFIER_KEYS, PRINTABLE_KEYS, FUNCTION_KEYS, KEY_MODS} = ret;
+
   // A reverse map of FUNCTION_KEYS
   var name, i;
-  for (i in ret.FUNCTION_KEYS) {
-    name = ret.FUNCTION_KEYS[i].toLowerCase();
+  for (i in FUNCTION_KEYS) {
+    name = FUNCTION_KEYS[i].toLowerCase();
     ret[name] = parseInt(i, 10);
   }
 
   // A reverse map of PRINTABLE_KEYS
-  for (i in ret.PRINTABLE_KEYS) {
-    name = ret.PRINTABLE_KEYS[i].toLowerCase();
+  for (i in PRINTABLE_KEYS) {
+    name = PRINTABLE_KEYS[i];
     ret[name] = parseInt(i, 10);
   }
 
   // Add the MODIFIER_KEYS, FUNCTION_KEYS and PRINTABLE_KEYS to the KEY
   // variables as well.
-  Object.assign(ret, ret.MODIFIER_KEYS)
-  Object.assign(ret, ret.PRINTABLE_KEYS)
-  Object.assign(ret, ret.FUNCTION_KEYS)
+  Object.assign(ret, MODIFIER_KEYS, PRINTABLE_KEYS, FUNCTION_KEYS);
 
   // aliases
   ret["return"] = ret.enter;
@@ -130,15 +133,12 @@ For more information about SproutCore, visit http://www.sproutcore.com
 
   (function() {
     var mods = ["alt", "command", "ctrl", "shift"];
-    for (var i = Math.pow(2, mods.length); i--;) {
-      ret.KEY_MODS[i] = mods.filter(function(x) {
-        return i & ret.KEY_MODS[x];
-      }).join("-") + "-";
-    }
+    for (var i = Math.pow(2, mods.length); i--;)
+      KEY_MODS[i] = mods.filter(x => i & KEY_MODS[x]).join("-") + "-";
   })();
 
-  ret.KEY_MODS[0] = "";
-  ret.KEY_MODS[-1] = "input-";
+  KEY_MODS[0] = "";
+  KEY_MODS[-1] = "input-";
 
   return ret;
 })();
@@ -153,7 +153,7 @@ var Keys = {
     var keyString = Keys.classifier[keyCode];
     if (typeof keyString != "string")
       keyString = String.fromCharCode(keyCode);
-    return keyString.toLowerCase();
+    return keyString;
   },
 
   getKeyCodeForKey: (() => {
@@ -187,12 +187,8 @@ var Keys = {
     return !!Keys.getKeyCodeForKey(string, 'PRINTABLE_KEYS');
   },
 
-  canonicalizeKeyString(string) {
-    return Keys.eventToKeyString(Keys.keyStringToEventSpec(string));
-  },
-
-  keyStringToEventSpec(key) {
-    // key="Ctrl-Shift"
+  keyComboToEventSpec(key, flags) {
+    // key="A"
 
     // key sth like alt-f, output an keyevent-like object
 
@@ -200,15 +196,18 @@ var Keys = {
     // passed to the event creator in terms of the keyboard state
 
     let spec = {
-        keyString: '',
-        keyCode: 0,
-        ctrlKey: false,
-        shiftKey: false,
-        altKey: false,
-        metaKey: false,
-        altGraphKey: false,
-        isFunctionKey: false,
-        isModified: false
+      _isLivelyKeyEventSpec: true,
+      keyString: '',
+      keyCode: 0,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      altGraphKey: false,
+      isFunctionKey: false,
+      isModified: false,
+      hashId: -1,
+      ...flags
     };
 
     // 2. Are any modifier keys pressed?
@@ -233,52 +232,86 @@ var Keys = {
     }
 
     // only modifiers
-    if (!keyMods.length) return spec;
+    if (!keyMods.length) {
+      spec.hashId = Keys.computeHashIdOfEvent(spec);
+      return spec;
+    }
+
     if (keyMods.length > 1) {
-      console.warn(`Strange key "${key}" encountered in keyStringToEventSpec, parsing probably failed`);
+      console.warn(`Strange key "${key}" encountered in keyComboToEventSpec, parsing probably failed`);
     }
 
     var trailing = arr.last(keyMods);
-    
+
     // 3. determine the key code and key string of the event.
     spec.isFunctionKey = Keys.isFunctionKey(trailing);
     if (spec.isFunctionKey) {
       spec.keyCode = Keys.getKeyCodeForKey(trailing, 'FUNCTION_KEYS');
       var printed = Keys.classifier.PRINTABLE_KEYS[spec.keyCode];
       if (printed) spec.keyString = printed;
-    } else {
-      spec.keyCode = trailing.toUpperCase().charCodeAt(0);
+    } else if (spec.isModified) {
       spec.keyString = trailing.toUpperCase();
+      spec.keyCode = spec.keyString.charCodeAt(0);
+    } else {
+      spec.keyString = trailing;
+      spec.keyCode = trailing.charCodeAt(0);
     }
 
+    spec.hashId = Keys.computeHashIdOfEvent(spec);
     return spec;
   },
 
+  eventToKeyCombo(evt, options) {
+    // evt = spec
+    // evt = Keys.keyComboToEventSpec("Esc")
+    // Keys.eventToKeyCombo(Keys.keyComboToEventSpec("A"))
+
+    var {ignoreModifiersIfNoCombo, ignoreKeys} = {
+      ignoreModifiersIfNoCombo: false,
+      ignoreKeys: [], ...options
+    };
+
+    var {keyCode, keyString, data} = evt;
+
+    // deal with input events: They are considered coming from verbatim key
+    // presses which might not be real but we maintain the data this way
+    if (typeof data === "string") return "input-" + data;
+
+    if (typeof keyCode === "undefined" && keyString)
+      evt.keyCode = letterRe.test(keyString) ?
+        keyString.charCodeAt(0) :
+        Keys.getKeyCodeForKey(keyString);
+
+    var hash = evt.hasOwnProperty("hashId") ? evt.hashId : Keys.computeHashIdOfEvent(evt),
+        mod = Keys.classifier.KEY_MODS[hash];
+
+    if (mod === "input-") return mod + (keyString ? keyString: Keys.keyCodeToString(keyCode));
+
+    var keyString = keyCode ? mod + Keys.keyCodeToString(keyCode) : mod.replace(/-$/, "");
+
+    return keyString.replace(/(^|-)([a-z])/g, (_, start, char) => start+char.toUpperCase());
+  },
+
   computeHashIdOfEvent(evt) {
-    let {keyCode, ctrlKey, altKey, shiftKey, metaKey} = evt,
-        {FUNCTION_KEYS, PRINTABLE_KEYS} = Keys.classifier,
+    let {keyCode, ctrlKey, altKey, shiftKey, metaKey, keyString} = evt,
+        {PRINTABLE_KEYS, FUNCTION_KEYS} = Keys.classifier,
         hashId = 0 | (ctrlKey ? 1 : 0) | (altKey ? 2 : 0) | (shiftKey ? 4 : 0) | (metaKey ? 8 : 0);
 
-    if (!hashId && !(keyCode in FUNCTION_KEYS) && !(keyCode in PRINTABLE_KEYS)) hashId = -1;
+    if (!hashId && (!(keyCode in FUNCTION_KEYS) || letterRe.test(keyString))) hashId = -1;
 
     return hashId;
   },
 
-  eventToKeyString(evt, options) {
-    // options: ignoreModifiersIfNoCombo, ignoreKeys
-    if (typeof evt.keyCode === "undefined" && evt.keyString)
-      evt.keyCode = Keys.getKeyCodeForKey(evt.keyString);
-    var hash = Keys.computeHashIdOfEvent(evt),
-        mod = Keys.classifier.KEY_MODS[hash];
-    if (!mod || mod === "input-") mod = "";
-    var keyString = evt.keyCode ? mod + Keys.classifier[evt.keyCode] : mod.replace(/-$/, "");
-    return keyString.replace(/(^|-)([a-z])/g, (_, start, char) => start+char.toUpperCase())
+  canonicalizeKeyCombo(string) {
+    return Keys.eventToKeyCombo(Keys.keyComboToEventSpec(string));
+  },
+
+  canonicalizeEvent(evt) {
+    var stringified = this.eventToKeyCombo(evt);
+    return evt._isLivelyKeyEventSpec ? evt :
+      {...this.keyComboToEventSpec(stringified), _keyCombo: stringified}
   }
 
 }
-
-// Keys.eventToKeyString({type: "keydown", keyString: "Enter"})
-Keys.getKeyCodeForKey("Enter")
-Keys.getKeyCodeForKey("Enter", "FUNCTION_KEYS")
 
 export default Keys;

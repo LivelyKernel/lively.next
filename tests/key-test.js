@@ -13,7 +13,7 @@ describe("Keys", () => {
     
     it("char", () =>
       expect(event("a"))
-        .containSubset({isModified: false, keyCode: 65, keyString: "A", shiftKey: false}))
+        .containSubset({isModified: false, keyCode: 97, keyString: "a", shiftKey: false, hashId: -1}))
 
     it("upper case char", () =>
       expect(event("A"))
@@ -61,7 +61,8 @@ describe("Keys", () => {
   describe("modifier hash", () => {
 
     it("non modified (space)", () => expect(hash(event(" "))).equals(0));
-    it("non modified (char)", () =>  expect(hash(event("a"))).equals(0));
+    it("non modified (char)", () =>  expect(hash(event("a"))).equals(-1));
+    it("enter", () =>                expect(hash(event("Enter"))).equals(0));
     it("single modifier 1", () =>    expect(hash(event("alt-a"))).equals(2));
     it("single modifier 2", () =>    expect(hash(event("shift-a"))).equals(4));
     it("single modifier 3", () =>    expect(hash(event("cmd-a"))).equals(8));
@@ -78,19 +79,28 @@ describe("Keys", () => {
     it("ctrl-shift", () =>      expect(canonicalize("ctrl-shift")).equals("Ctrl-Shift"));
     it("shift-control", () =>   expect(canonicalize("shift-control")).equals("Ctrl-Shift"));
     it("shift-control-a", () => expect(canonicalize("shift-control-a")).equals("Ctrl-Shift-A"));
-    it("A", () =>               expect(canonicalize("A")).equals("A"));
-    it("a", () =>               expect(canonicalize("a")).equals("A"));
+    it("A", () =>               expect(canonicalize("A")).equals("input-A"));
+    it("a", () =>               expect(canonicalize("a")).equals("input-a"));
     it("esc", () =>             expect(canonicalize("esc")).equals("Esc"));
     it("Escape", () =>          expect(canonicalize("Escape")).equals("Esc"));
   });
 
   describe("evt => key string", () => {
     
-    it("char", () =>                expect(stringify(event("s"))).equals("S"));
+    it("char", () =>                expect(stringify(event("s"))).equals("input-s"));
     it("modified + shifted", () =>  expect(stringify(event("Shift-cmd-s"))).equals("Command-Shift-S"));
     it("modified", () =>            expect(stringify(event("Command-s"))).equals("Command-S"));
     it("only modified", () =>       expect(stringify(event("alt"))).equals("Alt"));
     it("only modifier again", () => expect(stringify(event("Alt"))).equals("Alt"));
 
-  })
+  });
+
+  describe("input evt => key string", () => {
+    
+    it("s", () => expect(stringify({type: "input", data: "s"})).equals("input-s"));
+    it("S", () => expect(stringify({type: "input", data: "S"})).equals("input-S"));
+    it("multiple chars", () => expect(stringify({type: "input", data: "Test"})).equals("input-Test"));
+
+  });
+
 });
