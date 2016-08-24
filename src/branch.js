@@ -125,6 +125,9 @@ export default class Branch {
     await enableGitHub();
     const repo = await repository(this.pkg),
           headCommit = await this.head();
+    if (headCommit.message == "work in progress") {
+      headCommit = await headCommit.parent();
+    }
     await repo.send(`refs/heads/${this.name}`);
     return repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
   }
