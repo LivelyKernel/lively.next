@@ -5,9 +5,9 @@ import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-import KeyHandler from "./keyhandler.js";
-import CommandHandler from "../CommandHandler.js";
+import { KeyHandler } from "../events/keyhandler.js";
 import Keys from "../events/Keys.js";
+import { CommandHandler } from "../commands.js";
 
 const defaultKeyHandler = new KeyHandler();
 
@@ -267,8 +267,12 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // keyboard events
 
+  get keyhandlers() {
+    return [defaultKeyHandler].concat(this._keyhandlers)
+  }
+
   simulateKeys(keyString) {
-    this.keyHandler.simulateKeys(keyString);
+    KeyHandler.simulateKeys(this, keyString);
   }
 
   onKeyUp(evt) {
@@ -367,6 +371,11 @@ export class Text extends Morph {
     sel.collapseToEnd();
     this.scrollToSelection();
     this.selection.cursorBlinkStart();
+  }
+
+  invokeKeyHandlersWithEvent(evt, opts) {
+    opts = {onlyCommandOrFunctionKey: false, ...opts};
+    return KeyHandler.invokeKeyHandlersWithEvent(this, evt, opts);
   }
 
   doSave() { /*...*/ }
