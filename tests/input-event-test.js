@@ -266,16 +266,16 @@ describe("events", function() {
       ]);
     });
 
-    it("key down keystring", async () => {
+    it("key down keyCombo", async () => {
       submorph1.focus();
-      var pressed; submorph1.onKeyDown = evt => pressed = evt.keyString();
+      var pressed; submorph1.onKeyDown = evt => pressed = evt.keyCombo;
       env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, keyCode: 65});
       expect(pressed).equals("Ctrl-A")
     });
 
-    it("key up keystring", async () => {
+    it("key up keyCombo", async () => {
       submorph1.focus();
-      var pressed; submorph1.onKeyUp = evt => pressed = evt.keyString();
+      var pressed; submorph1.onKeyUp = evt => pressed = evt.keyCombo;
       env.eventDispatcher.simulateDOMEvents({type: "keyup", altKey: true, shiftKey: true, keyCode: 88});
       expect(pressed).equals("Alt-Shift-X")
     });
