@@ -116,8 +116,8 @@ class Commit {
   async diffFile(relPath) { // RelPath -> string
     const file = await this.getFileContent(relPath),
           parent = await this.parent(),
-          parentFile = await parent.getFileContent(relPath);
-    return diffStr(parentFile, file);
+          parentFile = parent && (await parent.getFileContent(relPath));
+    return diffStr(parentFile || '', file || '');
   }
   
   async createCommit(message) { // string -> Commit
