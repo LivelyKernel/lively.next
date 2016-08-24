@@ -272,11 +272,11 @@ export class Text extends Morph {
   }
 
   simulateKeys(keyString) {
-    KeyHandler.simulateKeys(this, keyString);
+    simulateKeys(this, keyString);
   }
 
   onKeyUp(evt) {
-    switch (evt.keyCombo()) {
+    switch (evt.keyCombo) {
       case 'Command-D': case 'Command-P': evt.stop(); break;
     }
   }

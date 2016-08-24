@@ -123,7 +123,7 @@ describe("text key events", () => {
       {type: "input", data: 'l'},
       {type: "input", data: 'o'},
       {type: "input", data: 'l'},
-      {type: "keydown", keyString: "Enter"});
+      {type: "keydown", keyCode: 13});
     expect(sut).property("textString").equals("lol\ntext\nfor tests");
   });
 

@@ -188,8 +188,6 @@ var Keys = {
   },
 
   keyComboToEventSpec(key, flags) {
-    // key="A"
-
     // key sth like alt-f, output an keyevent-like object
 
     // 1. create a key event object. We first gather what properties need to be
@@ -207,6 +205,7 @@ var Keys = {
       isFunctionKey: false,
       isModified: false,
       hashId: -1,
+      keyCombo: undefined,
       ...flags
     };
 
@@ -234,6 +233,7 @@ var Keys = {
     // only modifiers
     if (!keyMods.length) {
       spec.hashId = Keys.computeHashIdOfEvent(spec);
+      spec.keyCombo = Keys.eventToKeyCombo(spec);
       return spec;
     }
 
@@ -258,20 +258,20 @@ var Keys = {
     }
 
     spec.hashId = Keys.computeHashIdOfEvent(spec);
+    spec.keyCombo = Keys.eventToKeyCombo(spec);
     return spec;
   },
 
   eventToKeyCombo(evt, options) {
-    // evt = spec
-    // evt = Keys.keyComboToEventSpec("Esc")
-    // Keys.eventToKeyCombo(Keys.keyComboToEventSpec("A"))
-
+    // stringify event to a key or key combo
     var {ignoreModifiersIfNoCombo, ignoreKeys} = {
       ignoreModifiersIfNoCombo: false,
       ignoreKeys: [], ...options
     };
 
-    var {keyCode, keyString, data} = evt;
+    var {keyCode, which, keyString, data} = evt;
+    keyCode = keyCode || which;
+
 
     // deal with input events: They are considered coming from verbatim key
     // presses which might not be real but we maintain the data this way

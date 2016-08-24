@@ -59,6 +59,7 @@ export class Event {
     this.halo = halo;
     this.layoutHalo = layoutHalo;
     this.stopped = false;
+    this._keyCombo = undefined;
     this.onDispatchCallbacks = [];
     this.onAfterDispatchCallbacks = [];
     this.onStopCallbacks = [];
@@ -152,7 +153,8 @@ export class Event {
   isCtrlDown(domEvt) { return this.domEvt && !!this.domEvt.ctrlKey }
   isAltDown(domEvt) { return this.domEvt && !!this.domEvt.altKey }
 
-  keyCombo(opts) { return this.domEvt && Keys.eventToKeyCombo(this.domEvt, opts); }
+  get keyCombo() { return this._keyCombo || (this._keyCombo = Keys.eventToKeyCombo(this.domEvt)); }
+  set keyCombo(keyCombo) { return this._keyCombo = keyCombo; }
 
 }
 
@@ -165,7 +167,6 @@ export class KeyEvent extends Event {
     Object.assign(this, Keys.canonicalizeEvent(domEvt));
   }
 
-  keyCombo(opts) { return opts ? super.keyCombo(opts) : this._keyCombo; /*from canonicalizeEvent*/ }
 }
 
 export class SimulatedDOMEvent {
