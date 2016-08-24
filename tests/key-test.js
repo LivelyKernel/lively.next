@@ -1,11 +1,14 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
-import Keys from "../events/Keys.js";
 
-var event = Keys.keyComboToEventSpec;
-var hash = Keys.computeHashIdOfEvent;
-var stringify = Keys.eventToKeyCombo;
-var canonicalize = Keys.canonicalizeKeyCombo;
+
+import Keys from "../events/Keys.js";
+let {
+  keyComboToEventSpec: event,
+  computeHashIdOfEvent: hash,
+  eventToKeyCombo: stringify,
+  canonicalizeKeyCombo: canonicalize
+} = Keys;
 
 describe("Keys", () => {
   
@@ -103,4 +106,30 @@ describe("Keys", () => {
 
   });
 
+});
+
+
+
+import { KeyHandler } from "../events/keyhandler.js";
+
+describe("key bindings", () => {
+  
+  it("binds and looks up commands", () => {
+    var handler = new KeyHandler();
+    handler.bindKey("a", "test");
+    handler.bindKey("ctrl-a", {command: "test-2", prop: 23});
+    handler.keyBindings
+    expect(handler.lookup("a")).deep.equals({command: "test"});
+    expect(handler.lookup("control-a")).deep.equals({command: "test-2", prop: 23});
+    expect(handler.lookup("b")).equals(undefined);
+  });
+
+  it("modifies commands", () => { expect().assert(false) });
+  it("removes commands", () => { expect().assert(false) });
+  it("binds commands to platforms", () => { expect().assert(false) });
+  it("defines multiple bindings via |", () => { expect().assert(false) });
+  it("defines multiple bindings via array", () => { expect().assert(false) });
+  it("defines key chains", () => { expect().assert(false) });
+  it("defines command and then key chains it over", () => { expect().assert(false) });
+  it("removes key chain entirely", () => { expect().assert(false) });
 });

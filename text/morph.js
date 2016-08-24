@@ -7,7 +7,7 @@ import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
 
-const defaultKeyHandler = new KeyHandler();
+const defaultKeyHandler = KeyHandler.withDefaultBindings();
 
 export class Text extends Morph {
 
