@@ -11,5 +11,6 @@ export var dummyFontMetric = {
   sizeFor(fontFamily, fontSize, text) {
     return {width: this.width, height: this.height}
   },
-  kerningFor(fontFamily, fontSize, left, right) { return 0 },
+  kerningFor: () => 0,
+  ligatureAdjustmentFor: () => 0
 }

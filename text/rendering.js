@@ -97,7 +97,6 @@ class RenderedChunk {
           let prevChar = text[col-1];
           ligatureOffset = fontMetric.ligatureAdjustmentFor(fontFamily, fontSize, prevChar, char, nextChar);
         }
-        console.log(`${kerning}/${ligatureOffset}`)
         width += kerning + ligatureOffset;
       }
       _charBounds[col] = {x, y: 0, width, height};
