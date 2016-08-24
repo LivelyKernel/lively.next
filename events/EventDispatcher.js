@@ -3,8 +3,9 @@ import { pt } from "lively.graphics";
 import TextInput from './TextInput.js';
 
 import {
-  Event, SimulatedDOMEvent,
-  cumulativeElementOffset
+  Event, KeyEvent, SimulatedDOMEvent,
+  cumulativeElementOffset,
+  keyLikeEvents
 } from './Event.js';
 
 // note: keydown, keyup, cut, copy, paste, compositionstart, compositionend,
@@ -147,6 +148,10 @@ export default class EventDispatcher {
     this.installed = false;
     this.handlerFunctions = [];
 
+    this.resetState();
+  }
+
+  resetState() {
     // A place where info about previous events can be stored, e.g. for tracking
     // what was clicked on
     this.eventState = {
@@ -157,7 +162,12 @@ export default class EventDispatcher {
       dragDelta: null,
       lastDragPosition: null,
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
+      keyInputState: {}
     };
+  }
+
+  resetKeyInputState() {
+    this.eventState.keyInputState = {};
   }
 
   focusMorph(morph) {
@@ -215,7 +225,8 @@ export default class EventDispatcher {
         hand         = domEvt.pointerId ? this.world.handForPointerId(domEvt.pointerId) : null,
         halo         = domEvt.pointerId ? this.world.haloForPointerId(domEvt.pointerId) : null,
         layoutHalo   = domEvt.pointerId ? this.world.layoutHaloForPointerId(domEvt.pointerId) : null,
-        defaultEvent = new Event(type, domEvt, this, eventTargets, hand, halo, layoutHalo),
+        klass        = keyLikeEvents.includes(type) ? KeyEvent : Event,
+        defaultEvent = new klass(type, domEvt, this, eventTargets, hand, halo, layoutHalo),
         events       = [defaultEvent],
         later        = [];
 

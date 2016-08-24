@@ -5,7 +5,11 @@ import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-// import KeyHandler from "./keyhandler.js";
+import KeyHandler from "./keyhandler.js";
+import CommandHandler from "../CommandHandler.js";
+import Keys from "../events/Keys.js";
+
+const defaultKeyHandler = new KeyHandler();
 
 export class Text extends Morph {
 
@@ -37,7 +41,8 @@ export class Text extends Morph {
     });
     this.document = new TextDocument();
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
-    // this.keyHandler = new KeyHandler(this);
+    this._keyhandlers = []; // defaultKeyHandler is fallback
+    // this.commands = new CommandHandler();
     this._selection = new Selection(this, selection);
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
@@ -267,13 +272,13 @@ export class Text extends Morph {
   }
 
   onKeyUp(evt) {
-    switch (evt.keyString()) {
+    switch (evt.keyCombo()) {
       case 'Command-D': case 'Command-P': evt.stop(); break;
     }
   }
 
   onKeyDown(evt) {
-    var keyString = evt.keyString(),
+    var keyString = evt.keyCombo(),
         key = evt.domEvt.key,
         sel = this.selection,
         handled = true,

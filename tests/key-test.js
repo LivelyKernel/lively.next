@@ -2,10 +2,10 @@
 import { expect } from "mocha-es6";
 import Keys from "../events/Keys.js";
 
-var event = Keys.keyStringToEventSpec;
+var event = Keys.keyComboToEventSpec;
 var hash = Keys.computeHashIdOfEvent;
-var stringify = Keys.eventToKeyString;
-var canonicalize = Keys.canonicalizeKeyString;
+var stringify = Keys.eventToKeyCombo;
+var canonicalize = Keys.canonicalizeKeyCombo;
 
 describe("Keys", () => {
   

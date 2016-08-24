@@ -675,7 +675,7 @@ class NameHalo extends HaloItem {
   }
 
   onKeyDown(evt) {
-    if ("Enter" == evt.keyString()) {
+    if ("Enter" == evt.keyCombo()) {
       this.updateName(this.nameHolder.textString);
       evt.stop();
     }
@@ -1196,7 +1196,7 @@ export class Halo extends Morph {
       "Shift-Right": pt(1, 0),
     }, delta;
     if (this.changingName) return;
-    if (delta = offsets[evt.keyString()]) {
+    if (delta = offsets[evt.keyCombo()]) {
       evt.stop();
       if (evt.isShiftDown()) {
         this.target.resizeBy(delta);

@@ -46,6 +46,7 @@ export const mouseEvents = [
 ];
 
 export const keyboardEvents = ["keydown", "keyup", "keypress"];
+export const keyLikeEvents = keyboardEvents.concat("input", "compositionstart", "compositionupdate", "compositionend")
 
 export class Event {
 
@@ -70,6 +71,7 @@ export class Event {
   get data() { return this.domEvt.data; }
   get world() { return this.dispatcher.world; }
   get state() { return this.dispatcher.eventState; }
+  get keyInputState() { return this.state.keyInputState }
 
   isMouseEvent() {
     return pointerEvents.includes(this.type) || mouseEvents.includes(this.type);
@@ -150,8 +152,20 @@ export class Event {
   isCtrlDown(domEvt) { return this.domEvt && !!this.domEvt.ctrlKey }
   isAltDown(domEvt) { return this.domEvt && !!this.domEvt.altKey }
 
-  keyString(opts) { return this.domEvt && Keys.eventToKeyString(this.domEvt, opts); }
+  keyCombo(opts) { return this.domEvt && Keys.eventToKeyCombo(this.domEvt, opts); }
 
+}
+
+
+export class KeyEvent extends Event {
+
+  constructor(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo) {
+    console.assert(keyLikeEvents.includes(type), "not a keyboard event: " + type);
+    super(type, domEvt, dispatcher, targetMorphs, hand, halo, layoutHalo);
+    Object.assign(this, Keys.canonicalizeEvent(domEvt));
+  }
+
+  keyCombo(opts) { return opts ? super.keyCombo(opts) : this._keyCombo; /*from canonicalizeEvent*/ }
 }
 
 export class SimulatedDOMEvent {
