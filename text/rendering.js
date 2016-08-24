@@ -87,9 +87,19 @@ class RenderedChunk {
     let nCols = text.length,
         _charBounds = this._charBounds = new Array(nCols);
     for (let col = 0, x = 0; col < nCols; col++) {
-      let {width,height} = fontMetric.sizeFor(fontFamily, fontSize, text[col]);
-      if (fontKerning && col < nCols - 2) // last column is newline
-        width += fontMetric.kerningFor(fontFamily, fontSize, text[col], text[col+1]);
+      let char = text[col],
+          {width,height} = fontMetric.sizeFor(fontFamily, fontSize, char);
+      if (fontKerning) { // last column is newline
+        let nextChar = text[col+1],
+            kerning = fontMetric.kerningFor(fontFamily, fontSize, char, nextChar),
+            ligatureOffset = 0;
+        if (col % 2 === 0) {
+          let prevChar = text[col-1];
+          ligatureOffset = fontMetric.ligatureAdjustmentFor(fontFamily, fontSize, prevChar, char, nextChar);
+        }
+        console.log(`${kerning}/${ligatureOffset}`)
+        width += kerning + ligatureOffset;
+      }
       _charBounds[col] = {x, y: 0, width, height};
       x += width;
     }

@@ -1,5 +1,5 @@
 import { pt, rect } from "lively.graphics";
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
 
 export default class FontMetric {
 
@@ -102,9 +102,15 @@ export default class FontMetric {
         let char = chars[charIndex],
           { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
         if (charHeight > lineHeight) lineHeight = charHeight;
-        if (fontKerning && charIndex < nChars - 1) {
-          let nextChar = chars[charIndex+1];
-          charWidth += this.kerningFor(fontFamily, fontSize, char, nextChar);
+        if (fontKerning) {
+          let nextChar = chars[charIndex+1],
+              kerning  = this.kerningFor(fontFamily, fontSize, char, nextChar),
+              ligatureOffset = 0;
+          if (charIndex % 2 === 0) {
+            let prevChar = chars[charIndex-1];
+            ligatureOffset = this.ligatureAdjustmentFor(fontFamily, fontSize, prevChar, char, nextChar);
+          }
+          charWidth += kerning + ligatureOffset;
         }
         lineWidth += charWidth;
       }
@@ -116,8 +122,9 @@ export default class FontMetric {
 
   // FIXME? do browsers implement contextual kerning?
   kerningFor(fontFamily, fontSize, left, right) {
-    var charPairStr = `${left}${right}`,
-        indexStr = `_${charPairStr}`;
+    var measureStr = `${left}${right}`,
+        indexStr = `_${measureStr}`;
+    if (measureStr.length !== 2 || string.lines(measureStr).length !== 1) return 0;
     if (!this.kerningMap[fontFamily]) {
       this.kerningMap[fontFamily] = [];
     }
@@ -125,10 +132,28 @@ export default class FontMetric {
       this.kerningMap[fontFamily][fontSize] = [];
     }
     if (this.kerningMap[fontFamily][fontSize][indexStr] === undefined) {
-      let { width: leftWidth }  = this.sizeFor(fontFamily, fontSize, left),
-          { width: rightWidth } = this.sizeFor(fontFamily, fontSize, right),
-          { width: totalWidth } = this.measure(fontFamily, fontSize, charPairStr);
+      let leftWidth = this.sizeFor(fontFamily, fontSize, left).width,
+          rightWidth = this.sizeFor(fontFamily, fontSize, right).width,
+          totalWidth = this.measure(fontFamily, fontSize, measureStr).width;
       this.kerningMap[fontFamily][fontSize][indexStr] = totalWidth - leftWidth - rightWidth;
+    }
+    return this.kerningMap[fontFamily][fontSize][indexStr];
+  }
+
+  ligatureAdjustmentFor(fontFamily, fontSize, pre, anchor, next) {
+    var measureStr = `${pre}${anchor}${next}`,
+        indexStr = `_${measureStr}`;
+    if (measureStr.length !== 3 || string.lines(measureStr).length !== 1) return 0;
+    if (!this.kerningMap[fontFamily]) {
+      this.kerningMap[fontFamily] = [];
+    }
+    if (!this.kerningMap[fontFamily][fontSize]) {
+      this.kerningMap[fontFamily][fontSize] = [];
+    }
+    if (this.kerningMap[fontFamily][fontSize][indexStr] === undefined) {
+      let unadjustedWidth = this.sizeForStr(fontFamily, fontSize, true, measureStr).width,
+          measuredWidth = this.measure(fontFamily, fontSize, measureStr).width;
+      this.kerningMap[fontFamily][fontSize][indexStr] = measuredWidth - unadjustedWidth;
     }
     return this.kerningMap[fontFamily][fontSize][indexStr];
   }
