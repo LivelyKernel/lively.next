@@ -77,7 +77,9 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     domState.eventHandlers = [
-      {type: "focus", node: newRootNode, fn: evt => { evt.preventDefault(); this.onFocus(evt); setTimeout(() => this.focus(), 0); }, capturing: true},
+      bowser.firefox ? 
+        {type: "focus", node: newRootNode, fn: evt => { evt.preventDefault(); this.onFocus(evt); setTimeout(() => this.focus(), 0); }, capturing: true} :
+        {type: "focus", node: newRootNode, fn: evt => this.onFocus(evt), capturing: false},
       // {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true},
       {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
