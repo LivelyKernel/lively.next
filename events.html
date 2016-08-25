@@ -136,7 +136,6 @@ function printEvent(evt) {
     report += ` text_data: ${text_processInput(text.value)}`
     text_resetValue();
   } else {
-    console.log(evt)
     report += `which: ${evt.which} / ${String.fromCharCode(evt.which)}`
     report += ` keyCode: ${evt.keyCode} / ${String.fromCharCode(evt.keyCode)}`
     report += ` location: ${evt.location}`
