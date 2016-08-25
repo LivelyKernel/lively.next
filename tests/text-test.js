@@ -123,7 +123,7 @@ describe("text key events", () => {
       {type: "input", data: 'l'},
       {type: "input", data: 'o'},
       {type: "input", data: 'l'},
-      {type: "keydown", keyCode: 13});
+      {type: "keydown", keyCode: "Enter"});
     expect(sut).property("textString").equals("lol\ntext\nfor tests");
   });
 
@@ -139,9 +139,9 @@ describe("text key events", () => {
 
     expect(sut).property("textString").equals("lolwuttext\nfor tests");
     env.eventDispatcher.simulateDOMEvents(
-      {type: "keydown", keyCode: 8},
-      {type: "keydown", keyCode: 8},
-      {type: "keydown", keyCode: 8},
+      {type: "keydown", key: "Backspace"},
+      {type: "keydown", key: "Backspace"},
+      {type: "keydown", key: "Backspace"},
       {type: "input", data: ' '});
 
     expect(sut).property("textString").equals("lol text\nfor tests");
