@@ -31,7 +31,9 @@ export default class Branch {
   async setHead(hash) { // Hash -> ()
     const repo = await repository(this.pkg);
     this._head = null;
-    await repo.updateRef(`refs/heads/${this.name}`, hash);
+    const prevHead = await commit(this.pkg, hash);
+    this._head = await prevHead.createChangeSetCommit();
+    await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
     emit("lively.changesets/changed", {changeset: this.name});
   }
   
