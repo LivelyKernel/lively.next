@@ -19,7 +19,7 @@ var commands = [
 
   {
     name: "select all",
-    exec: function(morph) { return true; 
+    exec: function(morph) {
       morph.selectAll();
       return true;
     }
