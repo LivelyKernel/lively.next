@@ -104,7 +104,8 @@ export default class FontMetric {
         if (charHeight > lineHeight) lineHeight = charHeight;
         if (fontKerning) {
           let nextChar = chars[charIndex+1],
-              kerning  = this.kerningFor(fontFamily, fontSize, char, nextChar),
+              prevChar = chars[charIndex-1],
+              kerning  = this.kerningFor(fontFamily, fontSize, ...chars.slice(0, charIndex+2)),
               ligatureOffset = 0;
           if (charIndex % 2 === 0) {
             let prevChar = chars[charIndex-1];
@@ -121,10 +122,12 @@ export default class FontMetric {
   }
 
   // FIXME? do browsers implement contextual kerning?
-  kerningFor(fontFamily, fontSize, left, right) {
-    var measureStr = `${left}${right}`,
+  kerningFor(fontFamily, fontSize, ...chars) {
+    var left = chars.slice(0, -1).join(''),
+        right = chars.slice(-1).join(''),
+        measureStr = `${left}${right}`,
         indexStr = `_${measureStr}`;
-    if (measureStr.length !== 2 || string.lines(measureStr).length !== 1) return 0;
+    if (measureStr.length < 2 || string.lines(measureStr).length !== 1) return 0;
     if (!this.kerningMap[fontFamily]) {
       this.kerningMap[fontFamily] = [];
     }
@@ -132,7 +135,7 @@ export default class FontMetric {
       this.kerningMap[fontFamily][fontSize] = [];
     }
     if (this.kerningMap[fontFamily][fontSize][indexStr] === undefined) {
-      let leftWidth = this.sizeFor(fontFamily, fontSize, left).width,
+      let leftWidth = this.measure(fontFamily, fontSize, left).width,
           rightWidth = this.sizeFor(fontFamily, fontSize, right).width,
           totalWidth = this.measure(fontFamily, fontSize, measureStr).width;
       this.kerningMap[fontFamily][fontSize][indexStr] = totalWidth - leftWidth - rightWidth;
@@ -140,7 +143,9 @@ export default class FontMetric {
     return this.kerningMap[fontFamily][fontSize][indexStr];
   }
 
-  ligatureAdjustmentFor(fontFamily, fontSize, pre, anchor, next) {
+  ligatureAdjustmentFor() { return 0 }
+
+  _ligatureAdjustmentFor(fontFamily, fontSize, pre, anchor, next) {
     var measureStr = `${pre}${anchor}${next}`,
         indexStr = `_${measureStr}`;
     if (measureStr.length !== 3 || string.lines(measureStr).length !== 1) return 0;

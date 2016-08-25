@@ -91,7 +91,8 @@ class RenderedChunk {
           {width,height} = fontMetric.sizeFor(fontFamily, fontSize, char);
       if (fontKerning) { // last column is newline
         let nextChar = text[col+1],
-            kerning = fontMetric.kerningFor(fontFamily, fontSize, char, nextChar),
+          prevChar = text[col-1],
+            kerning = fontMetric.kerningFor(fontFamily, fontSize, ...text.slice(0, col+2)),
             ligatureOffset = 0;
         if (col % 2 === 0) {
           let prevChar = text[col-1];
