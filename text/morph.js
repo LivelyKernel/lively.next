@@ -185,6 +185,7 @@ export class Text extends Morph {
   }
 
   scrollToSelection() {
+    if (this.clipMode !== "auto" && this.clipMode !== "scroll") return;
     var { scroll, selection, padding, renderer } = this,
         paddedBounds = this.innerBounds().insetByRect(padding),
         charBounds =   renderer.boundsFor(this, selection.start),
@@ -199,10 +200,10 @@ export class Text extends Morph {
   fit() {
     let {fixedWidth, fixedHeight} = this;
     if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
-    let textBounds = this.renderer.textBounds(this);
-    if (!fixedHeight && !fixedWidth) this.extent = textBounds.extent();
-    else if (!fixedHeight) this.height = textBounds.height;
-    else if (!fixedWidth) this.width = textBounds.width;
+    let textBounds = this.renderer.textBounds(this),
+        padding = this.padding;
+    if (!fixedHeight) this.height = textBounds.height + padding.top() + padding.bottom();
+    if (!fixedWidth) this.width = textBounds.width + padding.left() + padding.right();
   }
 
   fitIfNeeded() {
