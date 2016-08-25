@@ -9,12 +9,13 @@ function ensureSpaces(s) { return s.length ? s : ' '; }
 export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   evt = Keys.canonicalizeEvent(evt);
 
-  let {hashId, keyString, data} = evt,
+  let {keyCombo, key, data} = evt,
       toExecute,
       success = false,
-      {keyhandlers, commands} = morph
+      {keyhandlers, commands} = morph,
+      isInputEvent = keyCombo.startsWith("input-");
 
-  if (noInputEvents && hashId === -1) return false;
+  if (noInputEvents && isInputEvent) return false;
 
   if (!commands) commands = defaultCommandHandler;
   for (var i = keyhandlers.length; i--;) {
@@ -28,14 +29,14 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
     success = command === "null" ? true : commands.exec(command, morph, args, evt);
 
     // do not stop input events to not break repeating
-    if (success && evt && hashId != -1 && !passEvent)
+    if (success && evt && !isInputEvent && !passEvent)
       typeof evt.stop === "function" && evt.stop();
 
     if (success) break;
   }
 
-  if (!success && hashId == -1) {
-    success = commands.exec("insertstring", morph, {string: data || keyString}, evt);
+  if (!success && isInputEvent) {
+    success = commands.exec("insertstring", morph, {string: data || key}, evt);
   }
 
   return success;
@@ -61,13 +62,13 @@ export function simulateKey(morph, keyComboString) {
 
 
 var keyBindings = {
-  'Command-C': {command: "clipboard copy", passEvent: true},
-  'Command-X': {command: "clipboard cut", passEvent: true},
-  'Command-V': {command: "clipboard paste", passEvent: true},
-  'Command-A': "select all",
-  'Command-D': "doit",
-  'Command-P': "printit",
-  'Command-S': "saveit",
+  'Meta-C': {command: "clipboard copy", passEvent: true},
+  'Meta-X': {command: "clipboard cut", passEvent: true},
+  'Meta-V': {command: "clipboard paste", passEvent: true},
+  'Meta-A': "select all",
+  'Meta-D': "doit",
+  'Meta-P': "printit",
+  'Meta-S': "saveit",
   'Backspace': "delete backwards",
   'Delete':    "delete",
   'Left':      "move cursor left",
@@ -148,6 +149,7 @@ export class KeyHandler {
         cmd = this.lookup(keyCombo, keyInputState);
     // only modify key chain if we found command
     if (cmd && keyInputState) keyInputState.keyChain = cmd.keyChain || "";
+
     return cmd;
   }
 

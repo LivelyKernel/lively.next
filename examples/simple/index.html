@@ -16,8 +16,8 @@
     <script>
       Promise.resolve()
         // FIXME!!!
-        .then(() => lively.modules.importPackage('http://localhost:9001/node_modules/lively-system-interface/'))
-        .then(() => lively.modules.importPackage('.'))
+        .then(function () { return lively.modules.importPackage('http://localhost:9001/node_modules/lively-system-interface/'); })
+        .then(function () { return lively.modules.importPackage('.'); })
         .then(function() { console.log("loaded"); })
         .catch(function(err) { console.error(err); })
     </script>

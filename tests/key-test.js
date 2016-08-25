@@ -16,47 +16,51 @@ describe("Keys", () => {
     
     it("char", () =>
       expect(event("a"))
-        .containSubset({isModified: false, keyCode: 97, keyString: "a", shiftKey: false, hashId: -1}))
+        .containSubset({isModified: false, key: "a", shiftKey: false}))
 
     it("upper case char", () =>
       expect(event("A"))
-        .containSubset({isModified: false, keyCode: 65, keyString: "A", shiftKey: false}))
+        .containSubset({isModified: false, key: "A", shiftKey: false}))
 
     it("shifted", () =>
       expect(event("Shift-a"))
-        .containSubset({isModified: true, keyCode: 65, shiftKey: true}))
+        .containSubset({isModified: true, key: "A", shiftKey: true}))
 
     it("esc key", () =>
       expect(event("Esc"))
-        .containSubset({isModified: false, keyCode: 27, shiftKey: false}))
+        .containSubset({isModified: false, key: "Escape", shiftKey: false, isFunctionKey: true}))
 
     it("modified esc key", () =>
       expect(event("Shift-Alt-Esc"))
-        .containSubset({isModified: true, isFunctionKey: true, keyCode: 27, shiftKey: true, altKey: true}))
+        .containSubset({isModified: true, isFunctionKey: true, key: "Escape", shiftKey: true, altKey: true}))
 
     it("function key", () =>
       expect(event("F1"))
-        .containSubset({isModified: false, isFunctionKey: true, keyCode: 112, keyString: ""}))
+        .containSubset({isModified: false, isFunctionKey: true, key: "F1"}))
+
+    it("meta key", () =>
+      expect(event("cmd"))
+        .containSubset({isModified: true, isFunctionKey: false, key: "Meta", metaKey: true}))
 
     it("modified function key", () =>
       expect(event("cmd-F1"))
-        .containSubset({isModified: true, isFunctionKey: true, keyCode: 112, metaKey: true}))
+        .containSubset({isModified: true, isFunctionKey: true, key: "F1", metaKey: true}))
 
     it("space", () =>
       expect(event(" "))
-        .containSubset({isModified: false, isFunctionKey: true, keyCode: 32, keyString: " "}))
+        .containSubset({isModified: false, isFunctionKey: true, key: " ", keyCombo: "Space"}))
 
     it("modified space", () =>
       expect(event("Alt- "))
-        .containSubset({isModified: true, isFunctionKey: true, keyCode: 32, keyString: " ", altKey: true}))
+        .containSubset({isModified: true, isFunctionKey: true, key: " ", altKey: true}))
 
     it("just modified", () =>
       expect(event("Shift"))
-        .containSubset({isModified: true, isFunctionKey: false, keyCode: 0, keyString: "", shiftKey: true}))
+        .containSubset({isModified: true, isFunctionKey: false, key: "Shift", shiftKey: true}))
 
     it("just modified 2", () =>
       expect(event("Ctrl-Shift"))
-        .containSubset({isModified: true, isFunctionKey: false, keyCode: 0, keyString: "", shiftKey: true, ctrlKey: true}))
+        .containSubset({isModified: true, isFunctionKey: false, key: "Shift", shiftKey: true, ctrlKey: true}))
 
   });
 
@@ -84,26 +88,41 @@ describe("Keys", () => {
     it("shift-control-a", () => expect(canonicalize("shift-control-a")).equals("Ctrl-Shift-A"));
     it("A", () =>               expect(canonicalize("A")).equals("input-A"));
     it("a", () =>               expect(canonicalize("a")).equals("input-a"));
-    it("esc", () =>             expect(canonicalize("esc")).equals("Esc"));
-    it("Escape", () =>          expect(canonicalize("Escape")).equals("Esc"));
+    it("esc", () =>             expect(canonicalize("esc")).equals("Escape"));
+    it("Escape", () =>          expect(canonicalize("Escape")).equals("Escape"));
   });
 
   describe("evt => key string", () => {
     
     it("char", () =>                expect(stringify(event("s"))).equals("input-s"));
-    it("modified + shifted", () =>  expect(stringify(event("Shift-cmd-s"))).equals("Command-Shift-S"));
-    it("modified", () =>            expect(stringify(event("Command-s"))).equals("Command-S"));
+    it("modified + shifted", () =>  expect(stringify(event("Shift-cmd-s"))).equals("Meta-Shift-S"));
+    it("modified", () =>            expect(stringify(event("Command-s"))).equals("Meta-S"));
+    it("ctrl+meta", () =>           expect(stringify(event("ctrl-Command-s"))).equals("Ctrl-Meta-S"));
     it("only modified", () =>       expect(stringify(event("alt"))).equals("Alt"));
     it("only modifier again", () => expect(stringify(event("Alt"))).equals("Alt"));
 
   });
 
   describe("input evt => key string", () => {
-    
     it("s", () => expect(stringify({type: "input", data: "s"})).equals("input-s"));
     it("S", () => expect(stringify({type: "input", data: "S"})).equals("input-S"));
     it("multiple chars", () => expect(stringify({type: "input", data: "Test"})).equals("input-Test"));
+  });
 
+  describe("key evt => key spec", () => {
+    it("s", () => expect(stringify({type: "keydown", key: "s"})).equals("input-s"));
+    it("S", () => expect(stringify({type: "keydown", key: "S"})).equals("input-S"));
+    it("meta-S", () => expect(stringify({type: "keydown", metaKey: true, key: "s"})).equals("Meta-S"));
+    it("shift-S", () => expect(stringify({type: "keydown", shiftKey: true, key: "s"})).equals("Shift-S"));
+    it("shift-alt-S", () => expect(stringify({type: "keydown", altKey: true, shiftKey: true, key: "s"})).equals("Alt-Shift-S"));
+  });
+
+  // for Safari, doesn't support key standard
+  describe("key evt with keyIdentifier => key spec", () => {
+    it("s", () => expect(stringify({type: "keydown", keyIdentifier: "U+0053"})).equals("input-s"));
+    it("S", () => expect(stringify({type: "keydown", shiftKey: true, keyIdentifier: "U+0053"})).equals("Shift-S"));
+    it("Meta", () => expect(stringify({type: "keydown", keyIdentifier: "Meta"})).equals("Meta"));
+    it("Meta-s", () => expect(stringify({type: "keydown", metaKey: true, keyIdentifier: "U+0053"})).equals("Meta-S"));
   });
 
 });
@@ -189,9 +208,9 @@ describe("key bindings", () => {
   });
 
   it("defines command that removes key chains", () => {
+    handler = new KeyHandler()
     handler.bindKey("ctrl-a ctrl-b", "test-1");
     handler.bindKey("ctrl-a", "test-2");
-    handler.keyBindings
     expect(handler.lookup("ctrl-a")).deep.equals({command: "test-2"}, "1");
     expect(handler.lookup("ctrl-b", {keyChain: canonicalize("ctrl-a")})).equals(undefined, "2");
   });
