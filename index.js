@@ -37,8 +37,14 @@ function resourceFromChangeSet(proceed, url) {
     async read() {
       const [pkg, path] = resolve(url);
       if (pkg == "no group") return proceed(url).read();
-      const commit = await activeCommit(pkg);
-      return commit.getFileContent(path);
+      const cs = await localChangeSets();
+      for (let i = cs.length - 1; i >= 0; i--) {
+        if (cs[i].isActive()) {
+          const branch = cs[i].getBranch(pkg);
+          if (branch) return branch.getFileContent(path);
+        }
+      }
+      return proceed(url).read();
     },
     async write(content) {
       const [pkg, path] = resolve(url);
