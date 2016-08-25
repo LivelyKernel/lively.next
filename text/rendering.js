@@ -194,18 +194,15 @@ export default class TextLayout {
   renderSelectionLayer(morph) {
     // FIXME just hacked together... needs cleanup!!!
 
-    var {start, end, isReverse, lead, cursorVisible} = morph.selection,
-        {padding, document} = morph;
-
-    var chunks        = this.chunks,
-        startPos      = this.pixelPositionFor(morph, start),
-        endPos        = this.pixelPositionFor(morph, end),
-        cursorPos     = isReverse ? startPos : endPos,
-        endLineHeight = chunks[end.row].height;
+    let {start, end, isReverse, lead, cursorVisible} = morph.selection,
+        {padding, document} = morph,
+        chunks              = this.chunks,
+        startPos            = this.pixelPositionFor(morph, start),
+        endPos              = this.pixelPositionFor(morph, end),
+        cursorPos           = isReverse ? startPos : endPos,
+        endLineHeight       = chunks[end.row].height;
 
     // collapsed selection -> cursor
-    cursorVisible = cursorVisible && !morph.rejectsInput()
-
     if (morph.selection.isEmpty())
       return [cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
 
@@ -215,7 +212,7 @@ export default class TextLayout {
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding),
         cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)]
 
-    var endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
+    let endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
@@ -226,7 +223,7 @@ export default class TextLayout {
         cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
     }
 
-    var endPosMiddle = pt(morph.width, endPos.y),
+    let endPosMiddle = pt(morph.width, endPos.y),
         startPosLast = pt(0, endPos.y);
 
     // 3+ lines -> three rectangles

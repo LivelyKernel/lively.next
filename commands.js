@@ -42,8 +42,8 @@ var commands = [
       if (morph.selection.isEmpty()) morph.selectLine();
       var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
           result = await lively.vm.runEval(morph.selection.text, opts);
-      this.selection.collapseToEnd();
-      this.insertTextAndSelect(result.value);
+      morph.selection.collapseToEnd();
+      morph.insertTextAndSelect(result.value);
       return result;
     }
   },
@@ -144,9 +144,15 @@ export class CommandHandler {
 
   exec(command, morph, args, evt) {
     let name = !command || typeof command === "string" ? command : command.command,
-        cmd = command && commands.find(ea => ea.name === name);
-    return !cmd || typeof cmd.exec !== "function" ?
-            false : cmd.exec(morph, args, evt);
+        cmd = command && commands.find(ea => ea.name === name),
+        result = !cmd || typeof cmd.exec !== "function" ?
+          false : cmd.exec(morph, args, evt);
+    if (result && typeof result.catch === "function")
+      result.catch(err => {
+        console.error(`Error in interactive command ${name}: ${err.stack}`);
+        throw err;
+      });
+    return result;
   }
 
 }

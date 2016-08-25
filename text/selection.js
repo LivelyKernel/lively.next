@@ -53,7 +53,7 @@ export class Selection {
     this.textMorph = textMorph;
     this.isReverse = false;
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
-    this.cursorVisible = true;
+    this._cursorVisible = true;
     this.cursorBlinkProcess = null;
   }
 
@@ -113,25 +113,31 @@ export class Selection {
   collapseToEnd() { this.collapse(this.end); }
 
   growLeft(n) {
-    var {textMorph: {document: d}} = this,
+    let {textMorph: {document: d}} = this,
         endIndex = d.positionToIndex(this.end),
         startIndex = Math.min(endIndex, d.positionToIndex(this.start) - n);
     this.start = d.indexToPosition(startIndex);
   }
 
   growRight(n) {
-    var {textMorph: {document: d}} = this,
+    let {textMorph: {document: d}} = this,
         startIndex = d.positionToIndex(this.start),
         endIndex = Math.max(startIndex, d.positionToIndex(this.end) + n);
     this.end = d.indexToPosition(endIndex);
   }
 
+  get cursorVisible() {
+    return this._cursorVisible
+        && this.textMorph.isFocused()
+        && !this.textMorph.rejectsInput()
+  }
+
   cursorBlinkStart() {
     this.cursorBlinkStop();
-    var timeout = config.text.cursorBlinkPeriod;
+    let timeout = config.text.cursorBlinkPeriod;
     if (timeout)
       this.cursorBlinkProcess = setInterval(() => {
-        this.cursorVisible = !this.cursorVisible;
+        this._cursorVisible = !this._cursorVisible;
         this.textMorph.makeDirty();
       }, timeout*1000);
   }
@@ -140,7 +146,7 @@ export class Selection {
     if (this.cursorBlinkProcess)
       clearInterval(this.cursorBlinkProcess);
     this.cursorBlinkProcess = null;
-    this.cursorVisible = true;
+    this._cursorVisible = true;
   }
 
   toString() {

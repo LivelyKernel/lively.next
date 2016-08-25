@@ -1,5 +1,6 @@
 import Keys from "./Keys.js";
 import bowser from "bowser";
+import { arr } from "lively.lang";
 import { defaultCommandHandler } from "../commands.js";
 
 function ensureSpaces(s) { return s.length ? s : ' '; }
@@ -117,12 +118,13 @@ function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   switch (platform) {
     case 'ios':          return binding.ios || binding.mac;
     case 'mac':          return binding.mac || binding.ios;
+    case 'win':
     case 'windows':
-    case 'windowsphone': return binding.windows;
-    case 'linux':        return binding.linux || binding.windows;
-    case 'chromeos':     return binding.chromeos || binding.linux || binding.windows;
-    case 'android':      return binding.android || binding.linux || binding.windows;
-    default:             return binding.linux || binding.windows
+    case 'windowsphone': return binding.win      || binding.windows;
+    case 'linux':        return binding.linux    || binding.win     || binding.windows;
+    case 'chromeos':     return binding.chromeos || binding.linux   || binding.win || binding.windows;
+    case 'android':      return binding.android  || binding.linux   || binding.win || binding.windows;
+    default:             return binding.linux    || binding.win     || binding.windows
   }
 }
 
@@ -141,44 +143,37 @@ export class KeyHandler {
   }
 
   handleKeyboard(morph, evt) {
-    return this.lookup(evt.keyCombo, evt.keyInputState, evt);
+    // Mutates evt.keyInputState.keyChain
+    let {keyCombo, keyInputState} = evt,
+        cmd = this.lookup(keyCombo, keyInputState);
+    // only modify key chain if we found command
+    if (cmd && keyInputState) keyInputState.keyChain = cmd.keyChain || "";
+    return cmd;
   }
 
-  lookup(keyCombo, keyInputState = {}, evt = null) {
+  lookup(keyCombo, keyInputState = {}) {
     // tries to find suitable command name or object for keyCombo in
-    // this.keyBindings. Uses keyInputState for keychains. If key chaining is
-    // detected, mutates keyInputState
+    // this.keyBindings. Uses keyInputState for keychains.
 
     keyCombo = Keys.canonicalizeKeyCombo(keyCombo);
     var keyChain = keyInputState.keyChain || "";
 
     var command = this.keyBindings[keyCombo];
     if (keyChain) {
-      keyInputState.keyChain = keyChain += " " + keyCombo;
-      command = keyBindings[keyChain] || command;
+      keyChain += " " + keyCombo;
+      command = this.keyBindings[keyChain] || command;
     }
-    
+
     if (command && command === "chainKeys") {
-      keyChain = keyInputState.keyChain = keyChain || keyCombo;
+      keyChain = keyChain || keyCombo;
       return {command: "null", keyChain};
     }
     
-    if (keyChain) {
-      let {hashId, keyString, keyCode} = evt || Keys.keyComboToEventSpec(keyCombo)
-      if ((!hashId || hashId == 4) && keyString.length == 1)
-        keyChain = keyInputState.keyChain = keyChain.slice(0, -keyCombo.length - 1); // wait for input
-      else if (hashId == -1 || keyCode > 0)
-        keyChain = keyInputState.keyChain = ""; // reset keyChain
-    }
-
-    return !command ? undefined :
-      (typeof command === "object" ?
-        (keyChain ? {...command, keyChain} : command) :
-        (keyChain ? {command, keyChain} : {command}));
+    return !command ? undefined : typeof command === "object" ? {...command} : {command};
   }
 
   bindKey(keyCombo, command) {
-    if (typeof keyCombo == "object" && keyCombo)
+    if (typeof keyCombo == "object" && keyCombo && !Array.isArray(keyCombo))
       keyCombo = findKeysForPlatform(keyCombo, this.platform);
 
     if (!keyCombo) return;
@@ -203,17 +198,46 @@ export class KeyHandler {
         chain += " ";
       }
 
-      this.addCommandToBinding(Keys.canonicalizeKeyCombo(keyPart), command);
+      this.addCommandToBinding(chain + Keys.canonicalizeKeyCombo(keyPart), command);
+    });
+  
+    this.cleanupUnusedKeyChains();
+  }
+
+  unbindKey(keyCombo) { this.bindKey(keyCombo, null); }
+
+  cleanupUnusedKeyChains() {
+    var keys = Object.keys(this.keyBindings),
+        chainedKeys = keys.filter(key => this.keyBindings[key] === "chainKeys");
+    chainedKeys = arr.sortBy(chainedKeys, ea => ea.length).reverse();
+    // remove all chainKeys bindings that doesn't point to a real binding
+    chainedKeys.forEach(key => {
+      if (keys.some(other => key !== other && other.startsWith(key))) return;
+      delete this.keyBindings[key];
+      arr.remove(keys, key);
+      arr.remove(chainedKeys, key);
     });
   }
 
   addCommand(command) {
-    if (!command || command.bindKey) return;
+    return !command || !command.bindKey ?
+      undefined : this.addCommandToBinding(command.bindKey, command);
   }
 
   addCommandToBinding(keyCombo, command) {
+
+    // remove overwritten keychains
+    var prev = this.keyBindings[keyCombo];
+    if (prev === "chainKeys" && command != "chainKeys") {
+      Object.keys(this.keyBindings).forEach(key => {
+        if (key.startsWith(keyCombo))
+          delete this.keyBindings[key];
+      });
+    }
+
     if (!command) delete this.keyBindings[keyCombo];
     else this.keyBindings[keyCombo] = command;
+    if (command !== "chainKeys") this.cleanupUnusedKeyChains();
   }
 
 }
