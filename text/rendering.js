@@ -295,19 +295,21 @@ export default class TextLayout {
         {padding} = morph,
         debugHighlights = [],
         paddingLeft = padding.left(),
-        textHeight = padding.top(),
+        paddingTop = padding.top(),
+        textHeight = 0,
         textWidth = 0;
 
     for (let row = 0; row < chunks.length; row++) {
       let {width, height, charBounds} = chunks[row];
       for (let col = 0; col < charBounds.length; col++) {
-        let {x, width, height} = charBounds[col];
+        let {x, width, height} = charBounds[col],
+                y = textHeight + paddingTop;
         x += paddingLeft;
         debugHighlights.push(h("div", {
           style: {
             position: "absolute",
             left: x+"px",
-            top: textHeight+"px",
+            top: y+"px",
             width: width+"px",
             height: height+"px",
             outline: "1px solid orange",
