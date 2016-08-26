@@ -200,13 +200,27 @@ export class Text extends Morph {
     this.scrollPositionIntoView(this.cursorPosition);
   }
 
-  scrollPositionIntoView(pos) {
+  scrollPositionIntoView(pos, offset = pt(0,0)) {
     if (!this.isClip()) return;
     var { scroll, padding } = this,
         paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
-        charBounds =   this.charBoundsFromTextPosition(pos);
-    var delta = paddedBounds.translateForInclusion(charBounds).topLeft().subPt(charBounds.topLeft())
-    this.scroll = this.scroll.subPt(delta);
+        charBounds =   this.charBoundsFromTextPosition(pos),
+        delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
+    this.scroll = this.scroll.addPt(delta).addPt(offset);
+  }
+
+  alignRow(row, how = "center") {
+    // how = "center", "bottom", "top";
+    if (!this.isClip()) return;
+    var { scroll, padding } = this,
+        paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
+        charBounds =   this.charBoundsFromTextPosition({row, column: 0}),
+        deltaY = how === "top" || how === "bottom" ?
+          paddedBounds[how]() - charBounds[how]() :
+          how === "center" ?
+            paddedBounds[how]().y - charBounds[how]().y : 0;
+    if (deltaY)
+      this.scroll = this.scroll.addXY(0, -deltaY)
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -215,7 +229,7 @@ export class Text extends Morph {
   fit() {
     let {fixedWidth, fixedHeight} = this;
     if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
-    let textBounds = this.renderer.textBounds(this),
+    let textBounds = this.textBounds(),
         padding = this.padding;
     if (!fixedHeight) this.height = textBounds.height + padding.top() + padding.bottom();
     if (!fixedWidth) this.width = textBounds.width + padding.left() + padding.right();
