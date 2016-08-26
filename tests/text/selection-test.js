@@ -10,7 +10,11 @@ function range(startRow, startCol, endRow, endCol) {
 }
 
 
+var text;
+
 describe("text selection", () => {
+
+  beforeEach(() => text = new Text({textString: "hello\nworld", fontMetric}));
 
   it("has a range", () => {
     var doc = TextDocument.fromString("hello\nworld");
@@ -24,8 +28,7 @@ describe("text selection", () => {
   });
 
   it("sets text", () => {
-    var text = new Text({textString: "hello\nworld", fontMetric}),
-        sel = new Selection(text, range(0,1,1,1));
+    var sel = new Selection(text, range(0,1,1,1));
     sel.text = "foo\nbar";
     expect(sel.text).equals("foo\nbar");
     expect(text.textString).equals("hfoo\nbarorld");
@@ -33,8 +36,7 @@ describe("text selection", () => {
   });
 
   it("growLeft", () => {
-    var doc = TextDocument.fromString("hello\nworld"),
-        sel = new Selection({document: doc}, range(0,0,1,1));
+    var sel = new Selection(text, range(0,0,1,1));
     sel.growLeft(10);
     expect(sel.range).equals(range(0,0,1,1), "out of bounds 1");
     sel.range = range(0,4,1,1);
@@ -49,8 +51,7 @@ describe("text selection", () => {
   });
 
   it("growRight", () => {
-    var doc = TextDocument.fromString("hello\nworld"),
-        sel = new Selection({document: doc}, range(0,3,0,4));
+    var sel = new Selection(text, range(0,3,0,4));
     sel.growRight(1);
     expect(sel.range).equals(range(0,3,0,5), "1");
     sel.growRight(1);
@@ -68,8 +69,7 @@ describe("text selection", () => {
   });
 
   it("directed selection", () => {
-    var text = new Text({textString: "hello\nworld", fontMetric}),
-        sel = text.selection;
+    var sel = text.selection;
     sel.range = {start: 3, end: 5}
     expect(sel.lead).deep.equals({row: 0, column: 5});
     expect(sel.anchor).deep.equals({row: 0, column: 3});
@@ -80,4 +80,15 @@ describe("text selection", () => {
     expect(text.cursorPosition).deep.equals({row: 0, column: 3});
   });
 
+  describe("select to", () => {
+
+    it("set lead for reverse select", () => {
+      var sel = text.selection;
+      sel.range = range(0,1,0,3);
+      sel.lead = {column: 0, row: 0};
+      expect(sel).stringEquals("Selection(0/1 -> 0/0)");
+      expect(sel.range).stringEquals("Range(0/0 -> 0/1)");
+    });
+
+  });
 });

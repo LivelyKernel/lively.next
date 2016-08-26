@@ -71,6 +71,7 @@ export class Selection {
     start = d.clipPositionToLines(start);
     end = d.clipPositionToLines(end);
 
+show("%o %o", start, end)
     var isReverse = this.isReverse = lessPosition(end, start);
     if (isReverse) [start, end] = [end, start];
 
@@ -92,7 +93,17 @@ export class Selection {
   set end(val) { this.range = {start: this.start, end: val}; }
 
   get anchor() { return this.isReverse ? this.range.end : this.range.start }
+  set anchor(pos) {
+    var r = this.isReverse;
+    this.range[r ? "end" : "start"] = pos;
+    this.isReverse = r;
+  }
   get lead() { return this.isReverse ? this.range.start : this.range.end }
+  set lead(pos) {
+    var r = this.isReverse;
+    this.range[r ? "start" : "end"] = pos;
+    this.isReverse = r;
+  }
 
   get text() { return this.textMorph.document.textInRange(this.range); }
 
@@ -150,10 +161,8 @@ export class Selection {
   }
 
   toString() {
-    let {text, range: {start, end}} = this;
-    if (this.isReverse) [start, end] = [end, start];
-    let {row, column} = start,
-        {row: endRow, column: endColumn} = end;
+    let {row, column} = this.anchor,
+        {row: endRow, column: endColumn} = this.lead;
     // return `Selection(${row}/${column} -> ${endRow}/${endColumn}, ${string.truncate(text.replace(/\n/g, ""), 30)})`;
     return `Selection(${row}/${column} -> ${endRow}/${endColumn})`;
   }
