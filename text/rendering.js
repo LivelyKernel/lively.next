@@ -85,8 +85,8 @@ class RenderedChunk {
 
   computeCharBounds() {
     let { _charBounds, text, config: { fontFamily, fontSize, fontMetric, fontKerning } } = this;
-    text += "\u200b";
-    this._charBounds = fontMetric.charBoundsForStr(fontFamily, fontSize, fontKerning, text);
+    text += newline;
+    this._charBounds = fontMetric.charBoundsFor(fontFamily, fontSize, fontKerning, text);
   }
 
   render() {

@@ -34,7 +34,11 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = [];
-    this.element = null;
+    this.element = this.cachedBounds
+                 = this.cachedBoundsFontFamily
+                 = this.cachedBoundsFontSize
+                 = null;
+    this.cachedBoundsStr = "";
   }
 
   install(doc, parentEl) {
@@ -76,25 +80,40 @@ export default class FontMetric {
     }
   }
 
-  charBoundsForStr(fontFamily, fontSize, fontKerning, str) {
+  charBoundsFor(fontFamily, fontSize, fontKerning, str) {
     let nCols = str.length,
-        bounds = new Array(nCols);
+        bounds = new Array(nCols),
+        { cachedBounds, cachedBoundsFontFamily, cachedBoundsFontSize, cachedBoundsStr } = this,
+        nCacheCols = cachedBoundsStr.length,
+        useCache = cachedBounds &&
+                   cachedBoundsFontFamily === fontFamily &&
+                   cachedBoundsFontSize === fontSize,
+        w_width = this.sizeFor(fontFamily, fontSize, 'w').width,
+        i_width = this.sizeFor(fontFamily, fontSize, 'i').width,
+        fontIsProportional = (w_width !== i_width);
     for (let col = 0, x = 0; col < nCols; col++) {
-      let width, height,
-          w_width = this.sizeFor(fontFamily, fontSize, 'w').width,
-          i_width = this.sizeFor(fontFamily, fontSize, 'i').width,
-          fontIsProportional = (w_width !== i_width);
+      let width, height, char = str[col];
       if (fontIsProportional && fontKerning) {
-        let prefix = str.substr(0, col+1),
-            { width: prefixWidth, height: prefixHeight } = this.measure(fontFamily, fontSize, prefix);
-        width = prefixWidth - x;
-        height = prefixHeight;
+        useCache = useCache && char === cachedBoundsStr[col];
+        if (useCache) {
+          ({ width, height } = cachedBounds[col]);
+        } else {
+          let prefix = str.substr(0, col+1),
+              { width: prefixWidth, height: prefixHeight } = this.measure(fontFamily, fontSize, prefix);
+          width = prefixWidth - x;
+          height = prefixHeight;
+        }
       } else {
-        let char = str[col];
         ({ width, height } = this.sizeFor(fontFamily, fontSize, char));
       }
       bounds[col] = { x, y: 0, width, height };
       x += width;
+    }
+    if (fontKerning) {
+      this.cachedBounds = bounds;
+      this.cachedBoundsStr = str;
+      this.cachedBoundsFontFamily = fontFamily;
+      this.cachedBoundsFontSize = fontSize;
     }
     return bounds;
   }
