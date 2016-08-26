@@ -62,11 +62,11 @@ function serverShellRemote(pkg) {
     async loadAs(type, hash, callback) {
       try {
         const typeR = await lively.shell.run(`git cat-file -t ${hash}`, {cwd});
-        if (typeR.status !== 0) return callback(null, undefined);
+        if (typeR.code !== 0) return callback(null, undefined);
         const type = typeR.stdout.trim();
-        const dataR = await lively.shell.run(`git cat-file ${type} ${hash}`, {cwd});
-        if (dataR.status !== 0) return callback(null, undefined);
-        const bytes = bodec.fromRaw(dataR.stdout);
+        const dataR = await lively.shell.run(`git cat-file ${type} ${hash} | base64`, {cwd});
+        if (dataR.code !== 0) return callback(null, undefined);
+        const bytes = bodec.fromBase64(dataR.stdout);
         callback(null, codec.decoders[type](bytes));
       } catch (err) { callback(err); }
     }
