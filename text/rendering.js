@@ -45,14 +45,14 @@ class RenderedChunk {
     return this;
   }
 
-  compatibleWith(text2, fontFamily2, fontSize2, fontMetric2, fontColor2, fontKerning2) {
-    var {text, config: {fontFamily, fontSize, fontMetric, fontColor, fontKerning}} = this;
-    return text       === text2
-        && fontFamily === fontFamily2
-        && fontSize   === fontSize2
-        && fontColor  === fontColor2
-        && fontMetric === fontMetric2
-        && fontKerning === fontKerning2;
+  compatibleWith(text2, config2) {
+    var {text, config} = this;
+    return text               === text2
+        && config.fontFamily  === config2.fontFamily
+        && config.fontSize    === config2.fontSize
+        && config.fontColor   === config2.fontColor
+        && config.fontMetric  === config2.fontMetric
+        && config.fontKerning === config2.fontKerning;
   }
 
   get height() {
@@ -157,9 +157,11 @@ export default class TextLayout {
 
     // for now: 1 line = 1 chunk
     for (let row = 0; row < nRows; row++) {
-      var chunk = this.chunks[row];
-      if (!chunk || !chunk.compatibleWith(lines[row], fontFamily, fontSize, fontColor, fontKerning, fontMetric))
-        this.chunks[row] = new RenderedChunk(lines[row], {fontFamily, fontSize, fontColor, fontKerning, fontMetric});
+      var chunk = this.chunks[row],
+          text = lines[row],
+          config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning };
+      if (!chunk || !chunk.compatibleWith(text, config))
+        this.chunks[row] = new RenderedChunk(text, config);
     }
 
     this.chunks.splice(nRows, this.chunks.length - nRows);
