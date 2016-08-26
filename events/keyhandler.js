@@ -89,6 +89,9 @@ var keyBindings = [
   {keys: {win: "Shift-End", mac: "Shift-End|Ctrl-Shift-E"}, command: "select to line end"},
   {keys: {win: "End", mac: "End|Ctrl-E"}, command: {command: "select to line end", args: {collapse: true}}},
 
+  {keys: {win: "PageDown", mac: "PageDown|Ctrl-V"}, command: "goto page down"},
+  {keys: {win: "PageUp", mac: "PageUp|Alt-V"}, command: "goto page up"},
+
   {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n"}}}, // FIXME windowss
   {keys: 'Space',       command: {command: "insertstring", args: {string: " "}}},
   {keys: 'Tab',         command: {command: "insertstring", args: {string: "\t"}}},

@@ -123,6 +123,30 @@ var commands = [
   },
 
   {
+    name: "goto page down",
+    exec: function(morph) {
+      morph.scrollPageDown()
+      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, morph.height),
+          textPos = morph.textPositionFromPoint(pos);
+      morph.cursorPosition = textPos;
+      morph.scrollCursorIntoView();
+      return true;
+    }
+  },
+
+  {
+    name: "goto page up",
+    exec: function(morph) {
+      morph.scrollPageDown()
+      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, -morph.height),
+          textPos = morph.textPositionFromPoint(pos);
+      morph.cursorPosition = textPos;
+      morph.scrollCursorIntoView();
+      return true;
+    }
+  },
+
+  {
     name: "select line",
     exec: function(morph) {
       var sel = morph.selection,
