@@ -57,7 +57,7 @@ describe("text selection", () => {
 
   it("selection / line string", () => {
     var t = text("hello\n world", {});
-    
+
     t.selection = range(1,1,1,1);
     expect(t.selectionOrLineString()).equals(" world");
     t.selection = range(1,1,1,3);
@@ -114,7 +114,7 @@ describe("rendered text", () => {
 
 describe("scroll", () => {
 
-  beforeEach(() => createMorphicEnv());  
+  beforeEach(() => createMorphicEnv());
   afterEach(() => destroyMorphicEnv());
 
   it("cursor into view", () => {
@@ -124,6 +124,7 @@ describe("scroll", () => {
       extent: pt(100,2*lineHeight),
       textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
     });
+    expect(sut.scrollExtent).equals(pt(100, sut.document.lines.length * lineHeight));
     sut.cursorPosition = { column: 0, row: 3 }
     sut.scrollCursorIntoView();
     expect(sut.scroll).equals(pt(0,lineHeight*2));

@@ -116,6 +116,11 @@ export class Text extends Morph {
     this.fixedWidth = this.fixedHeight = this.isClip();
   }
 
+  textBounds() { return this.renderer.textBounds(this); }
+  get scrollExtent() {
+    return this.textBounds().extent().maxPt(super.scrollExtent);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
 
