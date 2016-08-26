@@ -137,6 +137,52 @@ export class Selection {
         endIndex = Math.max(startIndex, d.positionToIndex(this.end) + n),
         r = this.isReverse();
     this.end = d.indexToPosition(endIndex);
+    this._isReverse = r;
+    return this;
+  }
+
+
+  selectAll() {
+    this.range = {start: {row: 0, column: 0}, end: this.textMorph.document.endPosition};
+    return this;
+  }
+
+  selectLine(row) {
+    if (typeof row !== "number") row = this.lead.row;
+    this.range = {start: {row, column: 0}, end: {row, column: this.textMorph.getLine(row).length}};
+    return this;
+  }
+
+  selectLeft(n = 1) {
+    if (this.isEmpty()) { this.growLeft(n); this.reverse(); }
+    else this.isReverse() ? this.growLeft(n) : this.growRight(-n);
+    return this;
+  }
+  selectRight(n = 1) { this.isReverse() ? this.growLeft(-n) : this.growRight(n); return this; }
+  selectUp(n = 1) {
+    var goalColumn = this._goalColumn;
+    this.lead = {row: this.lead.row-n, column: goalColumn};
+    this._goalColumn = goalColumn;
+    return this;
+  }
+  selectDown(n = 1) { return this.selectUp(-n); }
+
+  goUp(n = 1) {
+    var goalColumn = this._goalColumn;
+    this.lead = {row: this.lead.row-n, column: goalColumn};
+    this.anchor = this.lead;
+    this._goalColumn = goalColumn;
+  }
+  goDown(n = 1) { this.goUp(-n); }
+
+  goLeft(n = 1) {
+    this.isEmpty() && this.growLeft(n);
+    this.collapse();
+  }
+
+  goRight(n = 1) {
+    this.isEmpty() && this.growRight(n);
+    this.collapseToEnd();
   }
 
   get cursorVisible() {

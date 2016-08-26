@@ -164,22 +164,21 @@ export class Text extends Morph {
   set selection(range) { return this._selection.range = range; }
 
   get cursorPosition() { return this.selection.lead; }
+  set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
 
   selectAll() {
-    this.selection.range = {start: {row: 0, column: 0}, end: this.document.endPosition};
+    this.selection.selectAll();
     return this.selection;
   }
 
   selectLine(row) {
-    if (typeof row !== "number") row = this.cursorPosition.row
-    this.selection.range = {start: {row, column: 0}, end: {row, column: this.getLine(row).length}};
+    this.selection.selectLine(row);
     return this.selection;
   }
 
   selectionOrLineString() {
     var {text, start} = this.selection;
-    if (text) return text;
-    return this.getLine(start.row);
+    return text ? text : this.getLine(start.row);
   }
 
   scrollToSelection() {
