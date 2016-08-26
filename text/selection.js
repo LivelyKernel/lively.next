@@ -51,7 +51,8 @@ export class Selection {
 
   constructor(textMorph, range) {
     this.textMorph = textMorph;
-    this.isReverse = false;
+    this._goalColumn = undefined;
+    this._isReverse = false;
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
     this._cursorVisible = true;
     this.cursorBlinkProcess = null;
@@ -71,8 +72,7 @@ export class Selection {
     start = d.clipPositionToLines(start);
     end = d.clipPositionToLines(end);
 
-show("%o %o", start, end)
-    var isReverse = this.isReverse = lessPosition(end, start);
+    var isReverse = this._isReverse = lessPosition(end, start);
     if (isReverse) [start, end] = [end, start];
 
     range.start = start;
@@ -83,26 +83,24 @@ show("%o %o", start, end)
 
     this._range = range;
     this.textMorph && this.textMorph.makeDirty && this.textMorph.makeDirty();
+    this._goalColumn = this.lead.column;
+
     // console.log(`selection changed: ${this}`);
   }
 
   get start() { return this.range.start; }
-  set start(val) { this.range = {start: val, end: this.end}; }
+  set start(val) { this.range = Range.fromPositions(val, this.end); }
 
   get end() { return this.range.end }
-  set end(val) { this.range = {start: this.start, end: val}; }
+  set end(val) { this.range = Range.fromPositions(this.start, val); }
 
-  get anchor() { return this.isReverse ? this.range.end : this.range.start }
+  get anchor() { return this.isReverse() ? this.range.end : this.range.start }
   set anchor(pos) {
-    var r = this.isReverse;
-    this.range[r ? "end" : "start"] = pos;
-    this.isReverse = r;
+    this.range = {start: pos, end: this.lead};
   }
-  get lead() { return this.isReverse ? this.range.start : this.range.end }
+  get lead() { return this.isReverse() ? this.range.start : this.range.end }
   set lead(pos) {
-    var r = this.isReverse;
-    this.range[r ? "start" : "end"] = pos;
-    this.isReverse = r;
+    this.range = {start: this.anchor, end: pos}
   }
 
   get text() { return this.textMorph.document.textInRange(this.range); }
@@ -117,23 +115,27 @@ show("%o %o", start, end)
       {start: range.start, end: range.start}
   }
 
-  reverse() { this.isReverse = !this.isReverse; }
+  reverse() { this._isReverse = !this.isEmpty() && !this._isReverse; return this; }
   isEmpty() { return this.range.isEmpty(); }
 
-  collapse(pos = this.start) { this.range = {start: pos, end: pos}; }
-  collapseToEnd() { this.collapse(this.end); }
+  collapse(pos = this.start) { this.range = {start: pos, end: pos}; return this; }
+  collapseToEnd() { this.collapse(this.end); return this; }
 
   growLeft(n) {
     let {textMorph: {document: d}} = this,
         endIndex = d.positionToIndex(this.end),
-        startIndex = Math.min(endIndex, d.positionToIndex(this.start) - n);
+        startIndex = Math.min(endIndex, d.positionToIndex(this.start) - n),
+        r = this.isReverse();
     this.start = d.indexToPosition(startIndex);
+    this._isReverse = r;
+    return this;
   }
 
   growRight(n) {
     let {textMorph: {document: d}} = this,
         startIndex = d.positionToIndex(this.start),
-        endIndex = Math.max(startIndex, d.positionToIndex(this.end) + n);
+        endIndex = Math.max(startIndex, d.positionToIndex(this.end) + n),
+        r = this.isReverse();
     this.end = d.indexToPosition(endIndex);
   }
 
