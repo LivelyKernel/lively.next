@@ -77,6 +77,26 @@ export default class FontMetric {
     }
   }
 
+  charBoundsForStr(fontFamily, fontSize, fontKerning, str) {
+    let nCols = str.length,
+        bounds = new Array(nCols);
+    for (let col = 0, x = 0; col < nCols; col++) {
+      let width, height;
+      if (fontKerning) {
+        let prefix = str.substr(0, col+1),
+            { width: prefixWidth, height: prefixHeight } = this.measure(fontFamily, fontSize, prefix);
+        width = prefixWidth - x;
+        height = prefixHeight;
+      } else {
+        let char = str[col];
+        ({ width, height } = this.sizeFor(fontFamily, fontSize, char));
+      }
+      bounds[col] = { x, y: 0, width, height };
+      x += width;
+    }
+    return bounds;
+  }
+
   sizeFor(fontFamily, fontSize, char) {
     if (char.length > 1)
       return this.sizeForStr(fontFamily, fontSize, false, char);

@@ -73,36 +73,20 @@ class RenderedChunk {
   }
 
   computeBounds() {
-    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this,
-        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, fontKerning, text);
-
+    let width = 0, height = 0;
+    this.charBounds.map(char => {
+      width += char.width;
+      height = Math.max(height, char.height);
+    });
     this._height = height;
     this._width = width;
     return this;
   }
 
   computeCharBounds() {
-    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this;
-    text += newline;
-    let nCols = text.length,
-        _charBounds = this._charBounds = new Array(nCols);
-    for (let col = 0, x = 0; col < nCols; col++) {
-      let char = text[col],
-          {width,height} = fontMetric.sizeFor(fontFamily, fontSize, char);
-      if (fontKerning) { // last column is newline
-        let nextChar = text[col+1],
-          prevChar = text[col-1],
-            kerning = fontMetric.kerningFor(fontFamily, fontSize, ...text.slice(0, col+2)),
-            ligatureOffset = 0;
-        if (col % 2 === 0) {
-          let prevChar = text[col-1];
-          ligatureOffset = fontMetric.ligatureAdjustmentFor(fontFamily, fontSize, prevChar, char, nextChar);
-        }
-        width += kerning + ligatureOffset;
-      }
-      _charBounds[col] = {x, y: 0, width, height};
-      x += width;
-    }
+    let { _charBounds, text, config: { fontFamily, fontSize, fontMetric, fontKerning } } = this;
+    text += "\u200b";
+    this._charBounds = fontMetric.charBoundsForStr(fontFamily, fontSize, fontKerning, text);
   }
 
   render() {
