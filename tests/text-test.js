@@ -112,6 +112,28 @@ describe("rendered text", () => {
 });
 
 
+describe("scroll", () => {
+
+  beforeEach(() => createMorphicEnv());  
+  afterEach(() => destroyMorphicEnv());
+
+  it("cursor into view", () => {
+    var lineHeight = fontMetric.height
+    Object.assign(sut, {
+      clipMode: "auto",
+      extent: pt(100,2*lineHeight),
+      textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
+    });
+    sut.cursorPosition = { column: 0, row: 3 }
+    sut.scrollCursorIntoView();
+    expect(sut.scroll).equals(pt(0,lineHeight*2));
+    sut.cursorPosition = {column: 0, row: 0};
+    sut.scrollCursorIntoView();
+    expect(sut.scroll).equals(pt(0,0))
+  });
+
+});
+
 describe("text key events", () => {
 
   beforeEach(() => createMorphicEnv());

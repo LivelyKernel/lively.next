@@ -191,14 +191,17 @@ export class Text extends Morph {
     return text ? text : this.getLine(start.row);
   }
 
-  scrollToSelection() {
-    if (this.clipMode !== "auto" && this.clipMode !== "scroll") return;
-    var { scroll, selection, padding, renderer } = this,
-        paddedBounds = this.innerBounds().insetByRect(padding),
-        charBounds =   renderer.boundsFor(this, selection.start),
-        selPt =        this.addPaddingAndScroll(charBounds.bottomRight());
-    if (!paddedBounds.containsPoint(selPt))
-      this.scroll = scroll.addPt(selPt.subPt(paddedBounds.bottomRight()));
+  scrollCursorIntoView() {
+    this.scrollPositionIntoView(this.cursorPosition);
+  }
+
+  scrollPositionIntoView(pos) {
+    if (!this.isClip()) return;
+    var { scroll, padding } = this,
+        paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
+        charBounds =   this.charBoundsFromTextPosition(pos);
+    var delta = paddedBounds.translateForInclusion(charBounds).topLeft().subPt(charBounds.topLeft())
+    this.scroll = this.scroll.subPt(delta);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -219,6 +222,10 @@ export class Text extends Morph {
 
   textPositionFromPoint(point) {
     return this.renderer.textPositionFor(this, point);
+  }
+
+  charBoundsFromTextPosition(pos) {
+    return this.renderer.boundsFor(this, pos);
   }
 
   paddingAndScrollOffset() {
@@ -290,14 +297,14 @@ export class Text extends Morph {
   onKeyDown(evt) {
     if (invokeKeyHandlers(this, evt, true/*no input evts*/)) {
       this.selection.cursorBlinkStart();
-      this.scrollToSelection();
+      this.scrollCursorIntoView();
     }
   }
 
   onTextInput(evt) {
     if (invokeKeyHandlers(this, evt, false/*no input evts*/)) {
       this.selection.cursorBlinkStart();
-      this.scrollToSelection();
+      this.scrollCursorIntoView();
     }
   }
 

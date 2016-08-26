@@ -348,12 +348,12 @@ export default class TextLayout {
     return this.pixelPositionFor(morph, pos);
   }
 
-  textPositionFor(morph, pos) {
+  textPositionFor(morph, point) {
     this.updateFromMorphIfNecessary(morph);
     var {chunks} = this;
     if (!chunks.length) return {row: 0, column: 0};
 
-    let {x,y: remainingHeight} = pos, line, row;
+    let {x,y: remainingHeight} = point, line, row;
     if (remainingHeight < 0) remainingHeight = 0;
     for (row = 0; row < chunks.length; row++) {
       line = chunks[row];

@@ -178,11 +178,20 @@ export class Morph {
   }
 
   get clipMode()       { return this.getProperty("clipMode"); }
-  set clipMode(value)  { this.addValueChange("clipMode", value); }
+  set clipMode(value)  {
+    this.addValueChange("clipMode", value);
+    if (!this.isClip()) this.scroll = pt(0,0);
+  }
   isClip() { return this.clipMode !== "visible"; }
 
   get scroll()       { return this.getProperty("scroll"); }
-  set scroll(value)  { this.addValueChange("scroll", value); }
+  set scroll(value)  { this.addValueChange("scroll", this.isClip() ? value : pt(0,0)); }
+  scrollDown(n) { this.scroll = this.scroll.addXY(0, n); }
+  scrollUp(n) { this.scrollDown(-n); }
+  scrollLeft(n) { this.scroll = this.scroll.addXY(n, 0); }
+  scrollRight(n) { this.scrollLeft(-n); }
+  scrollPageDown(n) { this.scrollDown(this.height); }
+  scrollPageUp(n) { this.scrollUp(this.height); }
 
   get draggable()       { return this.getProperty("draggable"); }
   set draggable(value)  { this.addValueChange("draggable", value); }
