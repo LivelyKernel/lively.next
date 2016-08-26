@@ -80,6 +80,28 @@ describe("text selection", () => {
     expect(text.cursorPosition).deep.equals({row: 0, column: 3});
   });
 
+  describe("goal column", () => {
+
+    it("jumps to goal column on move", () => {
+      text.textString = "1234\n1\n1234"
+      text.cursorPosition = {row: 0, column: 3};
+      text.selection.goDown();
+      expect(text.cursorPosition).deep.equals({row: 1, column: 1});
+      text.selection.goDown();
+      expect(text.cursorPosition).deep.equals({row: 2, column: 3});
+    });
+
+    it("jumps to goal column on select", () => {
+      text.textString = "1234\n1\n1234"
+      text.cursorPosition = {row: 0, column: 3};
+      text.selection.selectDown();
+      expect(text.selection).stringEquals("Selection(0/3 -> 1/1)");
+      text.selection.selectDown();
+      expect(text.selection).stringEquals("Selection(0/3 -> 2/3)");
+    });
+
+  });
+
   describe("select to", () => {
 
     it("set lead for reverse select", () => {
@@ -88,6 +110,14 @@ describe("text selection", () => {
       sel.lead = {column: 0, row: 0};
       expect(sel).stringEquals("Selection(0/1 -> 0/0)");
       expect(sel.range).stringEquals("Range(0/0 -> 0/1)");
+    });
+
+    it("set lead for reverse select line up", () => {
+      var sel = text.selection;
+      sel.range = range(1,5,1,2);
+      sel.lead = {column: 1, row: 0};
+      expect(sel).stringEquals("Selection(1/5 -> 0/1)");
+      expect(sel.range).stringEquals("Range(0/1 -> 1/5)");
     });
 
   });
