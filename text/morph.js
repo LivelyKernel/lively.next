@@ -128,9 +128,19 @@ export class Text extends Morph {
   }
 
   getLine(row) {
-    if (typeof row !== "number") this.cursorPosition.row
+    if (typeof row !== "number") this.cursorPosition.row;
     var doc = this.document;
     return doc.getLine(row);
+  }
+
+  lineRange(row, ignoreLeadingWhitespace = true) {
+    if (typeof row !== "number") this.cursorPosition.row;
+    var line = this.getLine(row),
+        range = {start: {column: 0, row}, end: {column: line.length, row}},
+        leadingSpace = line.match(/^\s*/);
+    if (leadingSpace[0].length && ignoreLeadingWhitespace)
+      range.start.column += leadingSpace[0].length;
+    return range;
   }
 
   insertTextAndSelect(text, pos = null) {
