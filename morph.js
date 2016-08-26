@@ -185,7 +185,19 @@ export class Morph {
   isClip() { return this.clipMode !== "visible"; }
 
   get scroll()       { return this.getProperty("scroll"); }
-  set scroll(value)  { this.addValueChange("scroll", this.isClip() ? value : pt(0,0)); }
+  set scroll({x,y})  {
+    if (!this.isClip()) return;
+    var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
+    x = Math.max(0, Math.min(maxScrollX, x));
+    y = Math.max(0, Math.min(maxScrollY, y));
+    this.addValueChange("scroll", pt(x,y));
+  }
+  get scrollExtent() {
+    return (this.submorphs.length ?
+      this.innerBounds().union(this.submorphBounds(new Transform())) :
+      this.innerBounds()).extent();
+  }
+
   scrollDown(n) { this.scroll = this.scroll.addXY(0, n); }
   scrollUp(n) { this.scrollDown(-n); }
   scrollLeft(n) { this.scroll = this.scroll.addXY(n, 0); }

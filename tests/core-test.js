@@ -101,6 +101,23 @@ describe("setup with renderer and events", function () {
 
   describe("scroll", () => {
 
+    it("scroll extent", () => {
+      expect(submorph1.scrollExtent).equals(pt(100,100), "1");
+      submorph1.clipMode = "auto";
+      expect(submorph1.scrollExtent).equals(pt(100,100), "2");
+      submorph2.extent = pt(200,200);
+      expect(submorph1.scrollExtent).equals(submorph2.bounds().bottomRight(), "3");
+    });
+
+    it("scroll is bounded", () => {
+      submorph1.clipMode = "auto";
+      submorph2.extent = pt(200,200);
+      submorph1.scroll = pt(100000,100000);
+      expect(submorph1.scroll).equals(submorph2.bounds().bottomRight().subPt(submorph1.extent), "1");
+      submorph1.scroll = pt(-100000,-100000);
+      expect(submorph1.scroll).equals(pt(0,0), "2");
+    });
+
     it("clip morph can specify scroll", async () => {
       submorph1.clipMode = "auto";
       submorph2.extent = pt(200,200);
