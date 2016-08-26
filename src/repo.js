@@ -48,6 +48,31 @@ function serverRemote(pkg) {
   };
 }
 
+function serverShellRemote(pkg) {
+  // PackageAddress -> { readRef, loadAs }
+  const cwd = lively.shell.WORKSPACE_LK + "/" + pkg.substr(System.baseURL.length);
+  return {
+    async readRef(ref, callback) {
+      try {
+        const response = await lively.shell.run(`git show-ref -s ${ref}`, {cwd});
+        if (response.code !== 0) return callback(null, undefined);
+        callback(null, response.stdout.trim());
+      } catch (err) { callback(err); }
+    },
+    async loadAs(type, hash, callback) {
+      try {
+        const typeR = await lively.shell.run(`git cat-file -t ${hash}`, {cwd});
+        if (typeR.status !== 0) return callback(null, undefined);
+        const type = typeR.stdout.trim();
+        const dataR = await lively.shell.run(`git cat-file ${type} ${hash}`, {cwd});
+        if (dataR.status !== 0) return callback(null, undefined);
+        const bytes = bodec.fromRaw(dataR.stdout);
+        callback(null, codec.decoders[type](bytes));
+      } catch (err) { callback(err); }
+    }
+  };
+}
+
 export function enableGitHub() {
   if (getGitHubToken() !== "<secret>") return;
   repoForPackage = {};
@@ -67,7 +92,7 @@ export default async function repository(pkg) {
   mixins.indexed(repo, pkg);
 
   // Server git repo
-  mixins.fallthrough(repo, serverRemote(pkg));
+  mixins.fallthrough(repo, serverShellRemote(pkg));
   
   // GitHub fall through
   if (getGitHubToken() !== "<secret>") {
