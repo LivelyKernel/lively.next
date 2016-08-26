@@ -116,6 +116,7 @@ export class Selection {
   }
 
   reverse() { this._isReverse = !this.isEmpty() && !this._isReverse; return this; }
+  isReverse() { return this._isReverse && !this.isEmpty(); }
   isEmpty() { return this.range.isEmpty(); }
 
   collapse(pos = this.start) { this.range = {start: pos, end: pos}; return this; }
