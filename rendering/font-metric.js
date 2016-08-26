@@ -81,8 +81,11 @@ export default class FontMetric {
     let nCols = str.length,
         bounds = new Array(nCols);
     for (let col = 0, x = 0; col < nCols; col++) {
-      let width, height;
-      if (fontKerning) {
+      let width, height,
+          w_width = this.sizeFor(fontFamily, fontSize, 'w').width,
+          i_width = this.sizeFor(fontFamily, fontSize, 'i').width,
+          fontIsProportional = (w_width !== i_width);
+      if (fontIsProportional && fontKerning) {
         let prefix = str.substr(0, col+1),
             { width: prefixWidth, height: prefixHeight } = this.measure(fontFamily, fontSize, prefix);
         width = prefixWidth - x;
