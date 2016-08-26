@@ -61,24 +61,38 @@ export function simulateKey(morph, keyComboString) {
 
 
 
-var keyBindings = {
-  'Meta-C': {command: "clipboard copy", passEvent: true},
-  'Meta-X': {command: "clipboard cut", passEvent: true},
-  'Meta-V': {command: "clipboard paste", passEvent: true},
-  'Meta-A': "select all",
-  'Meta-D': "doit",
-  'Meta-P': "printit",
-  'Meta-S': "saveit",
-  'Backspace': "delete backwards",
-  'Delete':    "delete",
-  'Left':      "move cursor left",
-  'Right':     "move cursor right",
-  'Up':        "move cursor up",
-  'Down':      "move cursor down",
-  'Enter':     {command: "insertstring", args: {string: "\n"}}, // FIXME windows
-  'Space':     {command: "insertstring", args: {string: " "}},
-  'Tab':       {command: "insertstring", args: {string: "\t"}},
-}
+var keyBindings = [
+  {keys: {mac: 'Meta-C', win: 'Ctrl-C'}, command: {command: "clipboard copy", passEvent: true}},
+  {keys: {mac: 'Meta-X', win: 'Ctrl-X'}, command: {command: "clipboard cut", passEvent: true}},
+  {keys: {mac: 'Meta-V', win: 'Ctrl-V'}, command: {command: "clipboard paste", passEvent: true}},
+  {keys: {mac: 'Meta-A', win: 'Ctrl-A'}, command: "select all"},
+  {keys: {mac: 'Meta-D', win: 'Ctrl-D'}, command: "doit"},
+  {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
+  {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "saveit"},
+
+  {keys: 'Backspace',   command: "delete backwards"},
+  {keys: 'Delete',      command: "delete"},
+
+  {keys: {win: 'Left', mac: 'Left|Ctrl-B'},       command: "move cursor left"},
+  {keys: {win: 'Right', mac: 'Right|Ctrl-F'},     command: "move cursor right"},
+  {keys: {win: 'Up', mac: 'Up|Ctrl-P'},           command: "move cursor up"},
+  {keys: {win: 'Down', mac: 'Down|Ctrl-N'},       command: "move cursor down"},
+
+  {keys: 'Shift-Left',  command: "select left"},
+  {keys: 'Shift-Right', command: "select right"},
+  {keys: 'Shift-Up',    command: "select up"},
+  {keys: 'Shift-Down',  command: "select down"},
+
+  {keys: {win: "Ctrl-Shift-L", mac: 'Meta-L'},  command: "select line"},
+  {keys: {win: "Shift-Home", mac: "Shift-Home|Ctrl-Shift-A"}, command: "select to line start"},
+  {keys: {win: "Home", mac: "Home|Ctrl-A"}, command: {command: "select to line start", args: {collapse: true}}},
+  {keys: {win: "Shift-End", mac: "Shift-End|Ctrl-Shift-E"}, command: "select to line end"},
+  {keys: {win: "End", mac: "End|Ctrl-E"}, command: {command: "select to line end", args: {collapse: true}}},
+
+  {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n"}}}, // FIXME windowss
+  {keys: 'Space',       command: {command: "insertstring", args: {string: " "}}},
+  {keys: 'Tab',         command: {command: "insertstring", args: {string: "\t"}}},
+]
 
 function bowserOS() {
   if (bowser.mac)          return "mac";
@@ -133,8 +147,8 @@ export class KeyHandler {
 
   static withDefaultBindings() {
     var handler = new this;
-    Object.keys(keyBindings).forEach(key =>
-      handler.bindKey(key, keyBindings[key]));
+    keyBindings.forEach(({command, keys}) =>
+      handler.bindKey(keys, command));
     return handler
   }
 

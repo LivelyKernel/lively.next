@@ -1,5 +1,7 @@
 /*global System*/
 
+import { eqPosition } from "./text/position.js"
+
 var commands = [
   
   {
@@ -82,42 +84,75 @@ var commands = [
 
   {
     name: "move cursor left",
-    exec: function(morph) {
-      var sel = morph.selection;
-      sel.isEmpty() && sel.growLeft(1);
-      sel.collapse();
-      return true;
-    }
+    exec: function(morph) { morph.selection.goLeft(1); return true; }
   },
 
   {
     name: "move cursor right",
-    exec: function(morph) {
-      var sel = morph.selection;
-      sel.isEmpty() && sel.growRight(1);
-      sel.collapseToEnd();
-      return true;
-    }
+    exec: function(morph) { morph.selection.goRight(1); return true; }
   },
 
   {
     name: "move cursor up",
+    exec: function(morph) { morph.selection.goUp(); return true; }
+  },
+
+  {
+    name: "move cursor down",
+    exec: function(morph) { morph.selection.goDown(1); return true; }
+  },
+
+  {
+    name: "select left",
+    exec: function(morph) { morph.selection.selectLeft(1); return true; }
+  },
+
+  {
+    name: "select right",
+    exec: function(morph) { morph.selection.selectRight(1); return true; }
+  },
+
+  {
+    name: "select up",
+    exec: function(morph) { morph.selection.selectUp(1); return true; }
+  },
+
+  {
+    name: "select down",
+    exec: function(morph) { morph.selection.selectDown(1); return true; }
+  },
+
+  {
+    name: "select line",
     exec: function(morph) {
-      let sel = morph.selection,
-          {row, column} = sel.start;
-      sel.start = {row: row-1, column};
-      sel.collapse();
+      var sel = morph.selection,
+          row = sel.lead.row,
+          fullLine = morph.lineRange(row, false);
+      sel.range = sel.range.equals(fullLine) ? morph.lineRange(row, true) : fullLine;
       return true;
     }
   },
 
   {
-    name: "move cursor down",
-    exec: function(morph) {
-      let sel = morph.selection,
-          {row, column} = sel.start;
-      sel.start = {row: row+1, column};
-      sel.collapseToEnd();
+    name: "select to line start",
+    exec: function(morph, opts = {collapse: false}) {
+      var sel = morph.selection,
+          cursor = sel.lead,
+          line = morph.lineRange(cursor.row, true);
+      sel.lead = eqPosition(cursor, line.start) ? {column: 0, row: cursor.row} : line.start;
+      opts && opts.collapse && (sel.anchor = sel.lead)
+      return true;
+    }
+  },
+
+  {
+    name: "select to line end",
+    exec: function(morph, opts = {collapse: false}) {
+      var sel = morph.selection,
+          cursor = sel.lead,
+          line = morph.lineRange(cursor.row, true);
+      sel.lead = line.end;
+      opts && opts.collapse && (sel.anchor = sel.lead)
       return true;
     }
   },
