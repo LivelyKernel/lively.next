@@ -118,6 +118,41 @@ function decodeKeyIdentifier(identifier, keyCode) {
 }
 
 
+function identifyKeyFromCode({code}) {
+  // works on Chrome and Safari
+  // https://developer.mozilla.org/en/docs/Web/API/KeyboardEvent/code
+  // For certain inputs evt.key or keyCode will return the inserted char, not
+  // the key pressed. For keybindings it is nicer to have the actual key,
+  // however
+
+  if (typeof code !== "string") return null
+  
+  if (code.startsWith("Key")) return code.slice(3);
+  if (code.startsWith("Numpad")) return code;
+  if (code.startsWith("Digit")) return code.slice(5);
+  if (code.startsWith("Arrow")) return code.slice(5);
+  if (code.match(/^F[0-9]{1-2}$/)) return code;
+  
+  switch (code) {
+    case"Insert":
+    case "Home":
+    case"PageUp":
+    case"PageDown":       return code;
+    case 'Help':          return "Insert"
+    case 'Equal':         return "=";
+    case 'IntlBackslash': return "\\";
+    case 'Equal':         return "=";
+    case "Minus":         return "-";
+    case "BracketRight":  return "]";
+    case "BracketLeft":   return "[";
+    case "Quote":         return  "'";
+    case 'Backquote':     return "`";
+    case 'Semicolon':     return ";";
+  }
+
+  return null;
+}
+
 
 var Keys = {
 
@@ -226,6 +261,8 @@ var Keys = {
     var mod = KEY_MODS[computeHashIdOfEvent(evt)];
 
     if (mod === "input-") return mod + key;
+
+    if (evt.code) key = identifyKeyFromCode(evt) || key;
 
     var keyCombo = !key || isModifier(key) ? mod.replace(/-$/, "") : mod + key;
 
