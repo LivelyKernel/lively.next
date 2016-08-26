@@ -7,8 +7,6 @@ import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
 
-const defaultKeyHandler = KeyHandler.withDefaultBindings();
-
 export class Text extends Morph {
 
   static makeLabel(string, props) {
@@ -267,7 +265,7 @@ export class Text extends Morph {
   // keyboard events
 
   get keyhandlers() {
-    return [defaultKeyHandler].concat(this._keyhandlers)
+    return [KeyHandler.withDefaultBindings()].concat(this._keyhandlers)
   }
 
   simulateKeys(keyString) {
