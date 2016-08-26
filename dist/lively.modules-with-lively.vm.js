@@ -5088,12 +5088,14 @@
     'use strict';
     var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
     var events = exports.events = {
-        makeEmitter: isNode ? function (obj) {
+        makeEmitter: isNode ? function (obj, options) {
             if (obj.on && obj.removeListener)
                 return obj;
             var events = require('events');
             require('util')._extend(obj, events.EventEmitter.prototype);
             events.EventEmitter.call(obj);
+            if (options && options.maxListenerLimit)
+                obj.setMaxListeners(options.maxListenerLimit);
             return obj;
         } : function (obj) {
             if (obj.on && obj.removeListener)
@@ -6070,11 +6072,15 @@
         if (env !== undefined) {
           return env;
         }
-        return env = { emitter: lively_lang.events.makeEmitter({}), notifications: [] };
+        return env = {
+          emitter: lively_lang.events.makeEmitter({}, { maxListenerLimit: 10000 }),
+          notifications: []
+        };
       } else {
         system = System;
       }
     }
+
     var livelyEnv = system.get("@lively-env");
     var options = void 0;
     if (livelyEnv === undefined) {
@@ -6088,7 +6094,7 @@
     }
     if (!options.emitter) {
       Object.assign(options, {
-        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({})),
+        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({}, { maxListenerLimit: 10000 })),
         notifications: system["__lively.notifications_notifications"] || (system["__lively.notifications_notifications"] = [])
       });
     }
@@ -18330,7 +18336,7 @@ module.exports = function(acorn) {
     options = options || {};
     var traversal = options.traversal || 'preorder'; // also: postorder
 
-    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.visitors.withMemberExpression);
+    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
     var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
       func(node, state, depth, type);return orig(node, depth + 1, cont);
     } : function (orig, type, node, depth, cont) {
@@ -18369,8 +18375,8 @@ module.exports = function(acorn) {
 
   function findNodesIncluding(parsed, pos, test, base) {
     var nodes = [];
-    base = base || acorn.walk.make({});
-    Object.keys(acorn.walk.base).forEach(function (name) {
+    base = base || walk.make(walk.visitors.withMemberExpression);
+    Object.keys(walk.base).forEach(function (name) {
       var orig = base[name];
       base[name] = function (node, state, cont) {
         lively_lang.arr.pushIfNotIncluded(nodes, node);
@@ -25750,19 +25756,13 @@ var categorizer = Object.freeze({
                 metadata: { format: "esm" }
               };
 
-              if (System.get(moduleId)) {
-                _context2.next = 4;
-                break;
-              }
+              // translate the source and produce a {declare: FUNCTION, localDeps:
+              // [STRING]} object
 
-              _context2.next = 4;
-              return System.import(moduleId);
-
-            case 4:
-              _context2.next = 6;
+              _context2.next = 3;
               return instrumentSourceOfEsmModuleLoad(System, load);
 
-            case 6:
+            case 3:
               updateData = _context2.sent;
 
 
@@ -25780,70 +25780,70 @@ var categorizer = Object.freeze({
               _iteratorNormalCompletion = true;
               _didIteratorError = false;
               _iteratorError = undefined;
-              _context2.prev = 13;
+              _context2.prev = 10;
               _iterator = updateData.localDeps[Symbol.iterator]();
 
-            case 15:
+            case 12:
               if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                _context2.next = 28;
+                _context2.next = 25;
                 break;
               }
 
               depName = _step.value;
-              _context2.next = 19;
+              _context2.next = 16;
               return System.normalize(depName, load.name);
 
-            case 19:
+            case 16:
               depId = _context2.sent;
               depModule = module$2(System, depId);
-              _context2.next = 23;
+              _context2.next = 20;
               return depModule.load();
 
-            case 23:
+            case 20:
               exports = _context2.sent;
 
               deps.push({ name: depName, fullname: depId, module: depModule, exports: exports });
 
-            case 25:
+            case 22:
               _iteratorNormalCompletion = true;
-              _context2.next = 15;
+              _context2.next = 12;
               break;
 
-            case 28:
-              _context2.next = 34;
+            case 25:
+              _context2.next = 31;
               break;
 
-            case 30:
-              _context2.prev = 30;
-              _context2.t0 = _context2["catch"](13);
+            case 27:
+              _context2.prev = 27;
+              _context2.t0 = _context2["catch"](10);
               _didIteratorError = true;
               _iteratorError = _context2.t0;
 
-            case 34:
-              _context2.prev = 34;
-              _context2.prev = 35;
+            case 31:
+              _context2.prev = 31;
+              _context2.prev = 32;
 
               if (!_iteratorNormalCompletion && _iterator.return) {
                 _iterator.return();
               }
 
-            case 37:
-              _context2.prev = 37;
+            case 34:
+              _context2.prev = 34;
 
               if (!_didIteratorError) {
-                _context2.next = 40;
+                _context2.next = 37;
                 break;
               }
 
               throw _iteratorError;
 
-            case 40:
-              return _context2.finish(37);
-
-            case 41:
+            case 37:
               return _context2.finish(34);
 
-            case 42:
+            case 38:
+              return _context2.finish(31);
+
+            case 39:
 
               // hmm... for house keeping... not really needed right now, though
               prevLoad = System.loads && System.loads[load.name];
@@ -25889,12 +25889,12 @@ var categorizer = Object.freeze({
 
               return _context2.abrupt("return", result);
 
-            case 51:
+            case 48:
             case "end":
               return _context2.stop();
           }
         }
-      }, _callee2, this, [[13, 30, 34, 42], [35,, 37, 41]]);
+      }, _callee2, this, [[10, 27, 31, 39], [32,, 34, 38]]);
     }));
 
     return function moduleSourceChangeEsm(_x6, _x7, _x8, _x9) {
@@ -26267,7 +26267,7 @@ var categorizer = Object.freeze({
     packageInSystem.main = main;
 
     // System.packages doesn't allow us to store our own properties
-    var p = getPackage(System, packageURL);
+    var p = getPackage$1(System, packageURL);
     p.mergeWithConfig(packageInSystem);
 
     var packageApplyResult = livelyConfig ? applyLivelyConfig(System, livelyConfig, p) : { subPackages: [] };
@@ -26353,7 +26353,7 @@ var categorizer = Object.freeze({
       if (subpackageURL) {
         if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
         System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
-        return getPackage(System, subpackageURL);
+        return getPackage$1(System, subpackageURL);
       }
     }
 
@@ -26362,7 +26362,7 @@ var categorizer = Object.freeze({
     // lookup
     var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
     System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
-    return getPackage(System, subpackageURL);
+    return getPackage$1(System, subpackageURL);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26658,7 +26658,7 @@ var categorizer = Object.freeze({
     return Package;
   }();
 
-  function getPackage(System, packageURL) {
+  function getPackage$1(System, packageURL) {
     var url = normalizePackageURL(System, packageURL);
     return packageStore(System).hasOwnProperty(url) ? packageStore(System)[url] : addToPackageStore(System, new Package(System, url));
   }
@@ -26668,16 +26668,16 @@ var categorizer = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function importPackage$1(System, packageURL) {
-    return getPackage(System, packageURL).import();
+    return getPackage$1(System, packageURL).import();
   }
   function registerPackage$1(System, packageURL, packageLoadStack) {
-    return getPackage(System, packageURL).register(packageLoadStack);
+    return getPackage$1(System, packageURL).register(packageLoadStack);
   }
   function removePackage$1(System, packageURL) {
-    return getPackage(System, packageURL).remove();
+    return getPackage$1(System, packageURL).remove();
   }
   function reloadPackage$1(System, packageURL) {
-    return getPackage(System, packageURL).reload();
+    return getPackage$1(System, packageURL).reload();
   }
 
   function groupIntoPackages(System, moduleNames, packageNames) {
@@ -27126,10 +27126,10 @@ var categorizer = Object.freeze({
               switch (_context7.prev = _context7.next) {
                 case 0:
                   _context7.next = 2;
-                  return moduleSourceChange$1(this.System, this.id, newSource, this.format(), options);
+                  return this.System.resource(this.id).write(newSource);
 
                 case 2:
-                  return _context7.abrupt("return", this.System.resource(this.id).write(newSource));
+                  return _context7.abrupt("return", moduleSourceChange$1(this.System, this.id, newSource, this.format(), options));
 
                 case 3:
                 case "end":
@@ -27938,20 +27938,16 @@ var categorizer = Object.freeze({
     return ModuleInterface;
   }();
 
-  function fetch_resource(proceed, load) {
+  function fetchResource(proceed, load) {
     var System = this,
         res = System.resource(load.name);
-    if (load.name.match(/^lively:\/\//)) {
-      load.metadata.format = "esm";
-    }
 
-    if (res) {
-      return res.read();
-    }
-    return proceed(load);
+    if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
+
+    return res ? res.read() : proceed(load);
   }
 
-  function lively_protocol(proceed, url) {
+  function livelyProtocol(proceed, url) {
     if (!url.match(/^lively:\/\//)) return proceed(url);
     var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
         worldId = match[1],
@@ -27975,11 +27971,11 @@ var categorizer = Object.freeze({
     if (!System.resource) {
       System.resource = lively_resources.resource;
     }
-    if (!isHookInstalled$1(System, "fetch", fetch_resource)) {
-      installHook$1(System, "fetch", fetch_resource);
+    if (!isHookInstalled$1(System, "fetch", fetchResource)) {
+      installHook$1(System, "fetch", fetchResource);
     }
-    if (!isHookInstalled$1(System, "resource", lively_protocol)) {
-      installHook$1(System, "resource", lively_protocol);
+    if (!isHookInstalled$1(System, "resource", livelyProtocol)) {
+      installHook$1(System, "resource", livelyProtocol);
     }
   }
 
@@ -28285,6 +28281,9 @@ var categorizer = Object.freeze({
   function getPackages() {
     return getPackages$1(exports.System);
   }
+  function getPackage(packageURL) {
+    return getPackage$1(exports.System, packageURL);
+  }
   function applyPackageConfig(packageConfig, packageURL) {
     return applyConfig(exports.System, packageConfig, packageURL);
   }
@@ -28324,6 +28323,7 @@ var categorizer = Object.freeze({
   exports.removePackage = removePackage;
   exports.reloadPackage = reloadPackage;
   exports.getPackages = getPackages;
+  exports.getPackage = getPackage;
   exports.applyPackageConfig = applyPackageConfig;
   exports.searchInPackage = searchInPackage;
   exports.moduleSourceChange = moduleSourceChange;
