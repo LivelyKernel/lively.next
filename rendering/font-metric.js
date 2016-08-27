@@ -34,11 +34,8 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = [];
-    this.element = this.cachedBounds
-                 = this.cachedBoundsFontFamily
-                 = this.cachedBoundsFontSize
-                 = null;
-    this.cachedBoundsStr = "";
+    this.element = null;
+    this.cachedBoundsInfo = {};
   }
 
   install(doc, parentEl) {
@@ -83,25 +80,20 @@ export default class FontMetric {
   charBoundsFor(fontFamily, fontSize, fontKerning, str) {
     let nCols = str.length,
         bounds = new Array(nCols),
-        { cachedBounds, cachedBoundsFontFamily, cachedBoundsFontSize, cachedBoundsStr } = this,
-        nCacheCols = cachedBoundsStr.length,
-        useCache = cachedBounds &&
-                   cachedBoundsFontFamily === fontFamily &&
-                   cachedBoundsFontSize === fontSize,
-        w_width = this.sizeFor(fontFamily, fontSize, 'w').width,
-        i_width = this.sizeFor(fontFamily, fontSize, 'i').width,
-        fontIsProportional = (w_width !== i_width);
+        { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, fontFamily: cachedFontFamily, fontSize: cachedFontSize } } = this,
+        useCache = cachedBounds && cachedFontFamily === fontFamily && cachedFontSize === fontSize,
+        fontIsProportional = this.isProportional(fontFamily),
+        adjustSpacing = fontIsProportional && fontKerning;
     for (let col = 0, x = 0; col < nCols; col++) {
       let width, height, char = str[col];
-      if (fontIsProportional && fontKerning) {
-        useCache = useCache && char === cachedBoundsStr[col];
-        if (useCache) {
+      if (adjustSpacing) {
+        useCache = useCache && char === cachedStr[col];
+        if (useCache)
           ({ width, height } = cachedBounds[col]);
-        } else {
-          let prefix = str.substr(0, col+1),
-              { width: prefixWidth, height: prefixHeight } = this.measure(fontFamily, fontSize, prefix);
-          width = prefixWidth - x;
-          height = prefixHeight;
+        else {
+          let prefix = str.substr(0, col+1);
+          ({ width, height } = this.measure(fontFamily, fontSize, prefix));
+          width -= x;
         }
       } else {
         ({ width, height } = this.sizeFor(fontFamily, fontSize, char));
@@ -109,13 +101,14 @@ export default class FontMetric {
       bounds[col] = { x, y: 0, width, height };
       x += width;
     }
-    if (fontKerning) {
-      this.cachedBounds = bounds;
-      this.cachedBoundsStr = str;
-      this.cachedBoundsFontFamily = fontFamily;
-      this.cachedBoundsFontSize = fontSize;
-    }
+    if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, fontFamily, fontSize };
     return bounds;
+  }
+
+  isProportional(fontFamily) {
+    let w_width = this.sizeFor(fontFamily, 12, 'w').width,
+        i_width = this.sizeFor(fontFamily, 12, 'i').width;
+    return w_width !== i_width;
   }
 
   sizeFor(fontFamily, fontSize, char) {
