@@ -451,7 +451,7 @@ export class Text extends Morph {
   inspect() {
     return `<${this.name}>`
          + `\n  ${this.selection}`
-         + "\n  " + this.renderer.lines.map(({height, width, text}, i) => {
+         + "\n  " + this.renderer.chunks.map(({height, width, text}, i) => {
               return `[${i}] ${width.toFixed(0)}x${height.toFixed(0)} ${obj.inspect(text)}`
             }).join("\n  ")
          + `\n</${this.name}>`;
