@@ -96,7 +96,7 @@ export class Text extends Morph {
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this._keyhandlers = []; // defaultKeyHandler is fallback
     // this.commands = new CommandHandler();
-    this._selection = new Selection(this, selection);
+    this._selection = selection ? new Selection(this, selection) : null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
@@ -257,8 +257,8 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 
-  get selection() { return this._selection; }
-  set selection(range) { return this._selection.range = range; }
+  get selection() { return this._selection || (this._selection = new Selection(this)); }
+  set selection(range) { return this.selection.range = range; }
 
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }

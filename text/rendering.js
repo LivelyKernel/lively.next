@@ -194,6 +194,8 @@ export default class TextLayout {
   renderSelectionLayer(morph) {
     // FIXME just hacked together... needs cleanup!!!
 
+    if (!morph._selection) return [];
+
     let {start, end, lead, cursorVisible} = morph.selection,
         isReverse           = morph.selection.isReverse(),
         {padding, document} = morph,
