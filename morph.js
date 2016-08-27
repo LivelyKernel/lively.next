@@ -90,7 +90,7 @@ export class Morph {
   }
 
   onSubmorphChange(change, submorph) {
-    this.layout && this.layout.onSubmorphChange(this, submorph, change);
+    this.layout && typeof this.layout.onSubmorphChange === "function" && this.layout.onSubmorphChange(this, submorph, change);
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
