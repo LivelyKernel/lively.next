@@ -142,7 +142,6 @@ export class Selection {
     return this;
   }
 
-
   selectAll() {
     this.range = {start: {row: 0, column: 0}, end: this.textMorph.document.endPosition};
     return this;
@@ -169,11 +168,6 @@ export class Selection {
   selectDown(n = 1) { return this.selectUp(-n); }
 
   goUp(n = 1) {
-    if (!this.isEmpty()) {
-      n >= 1 ? this.collapse() : this.collapseToEnd();
-      return n > 1 ? this.goUp(n-1) : n < 1 ? this.goUp(n+1) : this;
-    }
-
     var goalColumn = this._goalColumn;
     this.lead = {row: this.lead.row-n, column: goalColumn};
     this.anchor = this.lead;
