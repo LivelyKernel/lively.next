@@ -169,21 +169,29 @@ export class Selection {
   selectDown(n = 1) { return this.selectUp(-n); }
 
   goUp(n = 1) {
+    if (!this.isEmpty()) {
+      n >= 1 ? this.collapse() : this.collapseToEnd();
+      return n > 1 ? this.goUp(n-1) : n < 1 ? this.goUp(n+1) : this;
+    }
+
     var goalColumn = this._goalColumn;
     this.lead = {row: this.lead.row-n, column: goalColumn};
     this.anchor = this.lead;
     this._goalColumn = goalColumn;
+    return this;
   }
-  goDown(n = 1) { this.goUp(-n); }
+  goDown(n = 1) { return this.goUp(-n); }
 
   goLeft(n = 1) {
     this.isEmpty() && this.growLeft(n);
     this.collapse();
+    return this;
   }
 
   goRight(n = 1) {
     this.isEmpty() && this.growRight(n);
     this.collapseToEnd();
+    return this;
   }
 
   get cursorVisible() {
