@@ -84,7 +84,7 @@ class RenderedChunk {
   }
 
   computeCharBounds() {
-    let { _charBounds, text, config: { fontFamily, fontSize, fontMetric, fontKerning } } = this;
+    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this;
     text += newline;
     this._charBounds = fontMetric.charBoundsFor(fontFamily, fontSize, fontKerning, text);
   }
