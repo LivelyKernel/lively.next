@@ -21,12 +21,11 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, selection} = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection"])
+    var {fontMetric, textString, selectable, selection, clipMode} = props;
+    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode"])
     super({
       readOnly: false,
       draggable: false,
-      clipMode: "hidden",
       fixedWidth: false, fixedHeight: false,
       padding: 0,
       fontFamily: "Sans-Serif",
@@ -42,6 +41,7 @@ export class Text extends Morph {
     this._selection = new Selection(this, selection);
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
+    if (clipMode) this.clipMode = clipMode;
     this.fit();
     this._needsFit = false;
   }
