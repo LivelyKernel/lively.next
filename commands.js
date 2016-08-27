@@ -129,30 +129,6 @@ var commands = [
   },
 
   {
-    name: "goto page down",
-    exec: function(morph) {
-      morph.scrollPageDown()
-      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, morph.height),
-          textPos = morph.textPositionFromPoint(pos);
-      morph.cursorPosition = textPos;
-      morph.scrollCursorIntoView();
-      return true;
-    }
-  },
-
-  {
-    name: "goto page up",
-    exec: function(morph) {
-      morph.scrollPageDown()
-      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, -morph.height),
-          textPos = morph.textPositionFromPoint(pos);
-      morph.cursorPosition = textPos;
-      morph.scrollCursorIntoView();
-      return true;
-    }
-  },
-
-  {
     name: "select line",
     exec: function(morph) {
       var sel = morph.selection,
@@ -185,6 +161,68 @@ var commands = [
       opts && opts.collapse && (sel.anchor = sel.lead)
       return true;
     }
+  },
+
+  {
+    name: "goto page down",
+    exec: function(morph) {
+      morph.scrollPageDown()
+      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, morph.height),
+          textPos = morph.textPositionFromPoint(pos);
+      morph.cursorPosition = textPos;
+      morph.scrollCursorIntoView();
+      return true;
+    }
+  },
+
+  {
+    name: "goto page up",
+    exec: function(morph) {
+      morph.scrollPageDown()
+      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, -morph.height),
+          textPos = morph.textPositionFromPoint(pos);
+      morph.cursorPosition = textPos;
+      morph.scrollCursorIntoView();
+      return true;
+    }
+  },
+
+  {
+    name: "goto line",
+    exec: async function(morph) {
+      var row = Number(await morph.world().prompt("Enter line number"));
+      if (!isNaN(row)) {
+        morph.cursorPosition = {row, column: 0};
+        morph.scrollCursorIntoView();
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "realign top-bottom-center",
+    doc: "Cycles through centering the cursor position, aligning it at the top, aligning it at the bottom.",
+    exec: function(morph) {
+      var charBounds = morph.charBoundsFromTextPosition(morph.cursorPosition),
+          pos = charBounds.topLeft(),
+          h = morph.height - charBounds.height,
+          scroll = morph.scroll;
+      if (Math.abs(pos.y - scroll.y) < 2) {
+          scroll.y = pos.y - h;
+      } else if (Math.abs(pos.y - scroll.y - h * 0.5) < 2) {
+          scroll.y = pos.y;
+      } else {
+          scroll.y = pos.y - h * 0.5;
+      }
+      morph.scroll = pt(scroll.x, scroll.y);
+      return true;
+    }
+  },
+
+  {
+    name: "reverse selection",
+    doc: "switches the selection lead and anchor",
+    exec: function(morph) { morph.selection.reverse(); return true; }
   },
 
   {

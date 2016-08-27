@@ -91,6 +91,9 @@ var keyBindings = [
 
   {keys: {win: "PageDown", mac: "PageDown|Ctrl-V"}, command: "goto page down"},
   {keys: {win: "PageUp", mac: "PageUp|Alt-V"}, command: "goto page up"},
+  {keys: "Ctrl-L", command: "realign top-bottom-center"},
+  {keys: {win: "Ctrl-Shift-L", mac: "Ctrl-Shift-L|Alt-G G"}, command: "goto line"},
+  {keys: "Ctrl-X Ctrl-X", command: "reverse selection"},
 
   {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n"}}}, // FIXME windowss
   {keys: 'Space',       command: {command: "insertstring", args: {string: " "}}},
