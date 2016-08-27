@@ -1,4 +1,4 @@
-import { obj } from "lively.lang";
+import { obj, string } from "lively.lang";
 import { pt, Color, Point, Rectangle, rect } from "lively.graphics";
 import { morph, Morph, MorphicEnv } from "./index.js";
 
@@ -13,7 +13,7 @@ export function show(target) {
   if (target.isRectangle) return showRect(world, target);
   if (typeof Element !== "undefined" && target instanceof Element) return showRect(world, Rectangle.fromElement(target));
 
-  return world.setStatusMessage(obj.inspect(target, {maxDepth: 1}));
+  return world.setStatusMessage(string.formatFromArray(Array.from(arguments)));
 }
 
 function showRect(world, rect) {
