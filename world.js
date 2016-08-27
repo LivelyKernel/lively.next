@@ -222,6 +222,7 @@ export class World extends Morph {
   }
 }
 
+
 class AbstractPrompt extends Morph {
 
   constructor(props = {}) {
@@ -238,7 +239,7 @@ class AbstractPrompt extends Morph {
 
   setLabel(label) {
     this.get("label").textString = label;
-    this.layout();
+    this.applyLayout();
   }
 
   resolve(arg) { this.state.answer.resolve(arg); }
@@ -250,7 +251,7 @@ class AbstractPrompt extends Morph {
   }
 
   build() { throw new Error("Not yet implemented"); }
-  layout() {  throw new Error("Not yet implemented"); }
+  applyLayout() { throw new Error("Not yet implemented"); }
 }
 
 class InformPrompt extends AbstractPrompt {
@@ -261,7 +262,7 @@ class InformPrompt extends AbstractPrompt {
     connect(this.get("okBtn"), 'fire', this, 'resolve');
   }
 
-  layout() {
+  applyLayout() {
     var label = this.get("label"),
         okBtn = this.get("okBtn");
     if (label.width > this.width) this.width = label.width;
@@ -291,7 +292,7 @@ class TextPrompt extends AbstractPrompt {
 
   resolve() { super.resolve(this.get("input").textString); }
 
-  layout() {
+  applyLayout() {
     var label = this.get("label"),
         input = this.get("input"),
         okBtn = this.get("okBtn"),
