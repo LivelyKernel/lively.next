@@ -1,6 +1,7 @@
 import { arr, num, obj } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 import { morph, Morph, Ellipse, Text } from "./index.js";
+import { signal } from "lively.bindings";
 
 export class Window extends Morph {
 
@@ -140,7 +141,7 @@ export class Window extends Morph {
     this.addMorph(targetMorph, this.resizer());
     targetMorph.setBounds(this.innerBounds().withTopLeft(pt(0,25)));
   }
-  
+
   toggleMinimize() {
     this.styleClasses = ["morph", "smooth-extent"]
     if (this.minimized) {
@@ -186,15 +187,14 @@ export class Window extends Morph {
     this.styleClasses = ["morph"];
   }
 
-  
+
 }
 
 export class Button extends Morph {
-  
+
   constructor(props) {
     super({
       draggable: false,
-      action: () => this.world().setStatusMessage(this.name + " clicked!"),
       borderRadius: 15,
       extent: pt(100,24),
       borderWidth: 1,
@@ -211,7 +211,7 @@ export class Button extends Morph {
     });
     this.submorphs[0].center = this.innerBounds().center();
   }
-  
+
   get label() { return this.get("label").textString; }
   set label(label) { this.get("label").textString = label; }
   set action(value) { this.addValueChange("action", value); }
@@ -228,23 +228,26 @@ export class Button extends Morph {
     }
     this.addValueChange("active", value);
   }
-  
+
+  trigger() {
+    try {
+      signal(this, "fire");
+      typeof this.action == "function" && this.action();
+    } catch (err) {
+      var w = this.world();
+      if (w) w.logError(err);
+      else console.error(err);
+    }
+  }
+
   onMouseDown(evt) {
     if (this.active) {
       this.fill = Color.rgb(161,173,188);
-      try {
-        if (typeof this.action !== "function")
-          throw new Error(`Button ${this.name} as no executable action!`)
-        this.action();
-      } catch (err) {
-        var w = this.world();
-        if (w) w.logError(err);
-        else console.error(err);
-      } 
+      this.trigger();
     }
   }
-  
+
   onMouseUp(evt) {
-    if (this.active) this.fill = Color.rgb(213,228,248); 
+    if (this.active) this.fill = Color.rgb(213,228,248);
   }
 }
