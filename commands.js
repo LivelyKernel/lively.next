@@ -6,29 +6,31 @@ var commands = [
   
   {
     name: "clipboard copy",
+    doc: "placeholder for native copy",
     exec: function() { return true; }
   },
 
   {
     name: "clipboard cut",
+    doc: "placeholder for native cut",
     exec: function() { return true; }
   },
 
   {
     name: "clipboard paste",
+    doc: "placeholder for native paste",
     exec: function() { return true; }
   },
 
   {
     name: "select all",
-    exec: function(morph) {
-      morph.selectAll();
-      return true;
-    }
+    doc: "Selects entire text contents.",
+    exec: function(morph) { morph.selectAll(); return true; }
   },
 
   {
     name: "doit",
+    doc: "Evaluates the selecte code or the current line and report the result",
     exec: async function(morph) {
       if (morph.selection.isEmpty()) morph.selectLine();
       var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
@@ -40,6 +42,7 @@ var commands = [
 
   {
     name: "printit",
+    doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
     exec: async function(morph) {
       if (morph.selection.isEmpty()) morph.selectLine();
       var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
@@ -52,14 +55,13 @@ var commands = [
 
   {
     name: "saveit",
-    exec: function(morph) {
-      morph.doSave();
-      return true;
-    }
+    doc: "...",
+    exec: function(morph) { morph.doSave(); return true; }
   },
 
   {
     name: "delete backwards",
+    doc: "Delete the character in front of the cursor or the selection.",
     exec: function(morph) {
       if (morph.rejectsInput()) return false;
       var sel = morph.selection;
@@ -72,6 +74,7 @@ var commands = [
 
   {
     name: "delete",
+    doc: "Delete the character following the cursor or the selection.",
     exec: function(morph) {
       var sel = morph.selection;
       if (morph.rejectsInput()) return false;
@@ -84,16 +87,19 @@ var commands = [
 
   {
     name: "move cursor left",
+    doc: "Move the cursor 1 character left. At the beginning of a line move the cursor up. If a selection is active, collapse the selection left.",
     exec: function(morph) { morph.selection.goLeft(1); return true; }
   },
 
   {
     name: "move cursor right",
+    doc: "Move the cursor 1 character right. At the end of a line move the cursor down. If a selection is active, collapse the selection right.",
     exec: function(morph) { morph.selection.goRight(1); return true; }
   },
 
   {
     name: "move cursor up",
+    doc: "Move the cursor 1 line. At the end of a line move the cursor down. If a selection is active, collapse the selection right.",
     exec: function(morph) { morph.selection.goUp(); return true; }
   },
 
