@@ -194,6 +194,7 @@ var commands = [
       if (!isNaN(row)) {
         morph.cursorPosition = {row, column: 0};
         morph.scrollCursorIntoView();
+        morph.focus();
       }
       return true;
     }
