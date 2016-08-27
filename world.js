@@ -1,11 +1,11 @@
 import { Color, pt } from "lively.graphics";
-import { arr } from "lively.lang";
+import { arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
-import { morph } from "./index.js";
-import { Morph } from "./morph.js";
+import { morph, Morph, Text } from "./index.js";
+import { connect, disconnectAll } from "lively.bindings";
 
 
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
@@ -70,7 +70,7 @@ export class World extends Morph {
       }
       return;
     }
-    
+
     removeHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
     if (removeHalo) {
       evt.layoutHalo.remove();
@@ -120,11 +120,11 @@ export class World extends Morph {
   showHaloFor(morph, pointerId) {
     return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
   }
-  
+
   layoutHaloForPointerId(pointerId) {
     return this.submorphs.find(m => m.isLayoutHalo && m.state.pointerId === pointerId);
   }
-  
+
   showLayoutHaloFor(morph, pointerId) {
     return this.addMorph(morph.layout.inspect(pointerId));
   }
@@ -200,7 +200,121 @@ export class World extends Morph {
     return msgMorph;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // dialogs
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  inform(message = "no message") {
+    var dialog = this.addMorph(new InformPrompt({label: message}))
+    dialog.center = this.innerBounds().center();
+    return dialog.activate()
+  }
+
+  prompt(message, defaultInputOrOptions) {
+    // that.prompt("test")
+    // options = {
+    //   input: STRING, -- optional, prefilled input string
+    //   historyId: STRING, -- id to identify the input history for this prompt
+    //   useLastInput: BOOLEAN -- use history for default input?
+    // }
+    var dialog = this.addMorph(new TextPrompt({label: message}))
+    dialog.center = this.innerBounds().center();
+    return dialog.activate()
+  }
 }
+
+class AbstractPrompt extends Morph {
+
+  constructor(props = {}) {
+    var {label} = props;
+    props = obj.dissoc(props, ["label", "autoRemove"])
+    super({fill: Color.gray.lighter(), extent: pt(300,80), props});
+    this.build();
+    this.setLabel(label);
+    this.state = {answer: promise.deferred()}
+    var autoRemove = props.hasOwnProperty("autoRemove") ? props.autoRemove : true;
+    if (autoRemove)
+      this.state.answer.promise.then(() => this.remove(), err => this.remove());
+  }
+
+  setLabel(label) {
+    this.get("label").textString = label;
+    this.layout();
+  }
+
+  resolve(arg) { this.state.answer.resolve(arg); }
+  reject(reason) { this.state.answer.reject(reason); }
+
+  async activate() {
+    this.focus();
+    return this.state.answer.promise;
+  }
+
+  build() { throw new Error("Not yet implemented"); }
+  layout() {  throw new Error("Not yet implemented"); }
+}
+
+class InformPrompt extends AbstractPrompt {
+
+  build() {
+    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
+    connect(this.get("okBtn"), 'fire', this, 'resolve');
+  }
+
+  layout() {
+    var label = this.get("label"),
+        okBtn = this.get("okBtn");
+    if (label.width > this.width) this.width = label.width;
+    okBtn.topRight = pt(this.width, label.bottom);
+    this.height = okBtn.bottom;
+  }
+
+  onKeyDown(evt) {
+    switch (evt.keyCombo) {
+      case 'Escape': case 'Enter': this.resolve(); evt.stop(); break;
+    }
+  }
+
+}
+
+
+class TextPrompt extends AbstractPrompt {
+
+  build() {
+    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});
+    this.get("input") || this.addMorph(Text.makeInputLine({name: "input"}));
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
+    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
+    connect(this.get("okBtn"), 'fire', this, 'resolve');
+    connect(this.get("cancelBtn"), 'fire', this, 'reject');
+  }
+
+  resolve() { super.resolve(this.get("input").textString); }
+
+  layout() {
+    var label = this.get("label"),
+        input = this.get("input"),
+        okBtn = this.get("okBtn"),
+        cancelBtn = this.get("cancelBtn");
+    if (label.width > this.width) this.width = label.width;
+    input.width = this.width;
+    input.top = label.bottom;
+    cancelBtn.topRight = pt(this.width, input.bottom);
+    okBtn.topRight = cancelBtn.topLeft;
+    this.height = okBtn.bottom;
+  }
+
+  onKeyDown(evt) {
+    switch (evt.keyCombo) {
+      case 'Enter': this.resolve(); evt.stop(); break;
+      case 'Escape': this.reject(); evt.stop(); break;
+    }
+  }
+
+  focus() { this.get("input").focus(); }
+}
+
+
 
 export class Hand extends Morph {
 
