@@ -207,10 +207,8 @@ export class Text extends Morph {
 
   get textString() { return this.document ? this.document.textString : "" }
   set textString(value) {
-    this.document.textString = String(value);
-    this.selection = {start: 0, end: 0};
-    this.addValueChange("textString", value);
-    this._needsFit = true;
+    this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
+    this.insertText(value, {column: 0, row: 0});
   }
 
   getLine(row) {
@@ -226,7 +224,7 @@ export class Text extends Morph {
         leadingSpace = line.match(/^\s*/);
     if (leadingSpace[0].length && ignoreLeadingWhitespace)
       range.start.column += leadingSpace[0].length;
-    return range;
+    return new Range(range);
   }
 
   insertTextAndSelect(text, pos = null) {
@@ -235,22 +233,25 @@ export class Text extends Morph {
     else this.selection.text = text;
   }
 
-  insertText(text, pos = null) {
+  insertText(text, pos = this.cursorPosition) {
     text = String(text);
-    var range = this.document.insert(text, pos || this.selection.end);
+    var range = this.document.insert(text, pos);
     this._needsFit = true;
     this.addValueChange(
       "textString", this.document.textString,
       {action: "insertText", text, pos});
-    return range;
+    this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
+    return new Range(range);
   }
 
   deleteText(range) {
+    range = range.isRange ? range : new Range(range);
     this.document.remove(range);
     this._needsFit = true;
     this.addValueChange(
       "textString", this.document.textString,
       {action: "deleteText", range});
+    this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
