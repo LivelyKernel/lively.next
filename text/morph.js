@@ -1,16 +1,56 @@
 /*global System*/
-import { string, obj } from "lively.lang";
+import { string, obj, arr } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
-import { Selection } from "./selection.js";
+import { Selection, Range } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
 
-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME for makeInputLine
 import { signal } from "lively.bindings";
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import { eqPosition, lessPosition, lessEqPosition } from "./position.js";
+
+class Anchor {
+  constructor(id = string.newUUID(), pos = {column: 0, row: 0}) {
+    this.id = id;
+    this.position = pos;
+  }
+
+  get isAnchor() { return true; }
+
+  onDelete(range) {
+    if (lessPosition(this.position, range.start)) return;
+
+    if (lessEqPosition(range.start, this.position)
+     && lessEqPosition(this.position, range.end)) { this.position = range.start; return; }
+
+    let {row, column} = this.position,
+        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
+        deltaRows = endRow - startRow,
+        deltaColumns = endRow !== this.position.row ?
+          0 : startRow === endRow ?
+            endColumn - startColumn : endColumn;
+    this.position = {column: column - deltaColumns, row: row - deltaRows}
+  }
+
+  onInsert(range) {
+    if (lessPosition(this.position, range.start)) return;
+    let {row, column} = this.position,
+        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
+        deltaRows = endRow - startRow,
+        deltaColumns = startRow !== this.position.row ?
+          0 : startRow === endRow ?
+            endColumn - startColumn : endColumn;
+    this.position = {column: column + deltaColumns, row: row + deltaRows}
+  }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export class Text extends Morph {
 
   static makeLabel(string, props) {
@@ -127,6 +167,27 @@ export class Text extends Morph {
 
   get fontKerning() { return this.getProperty("fontKerning") }
   set fontKerning(value) { this.addValueChange("fontKerning", value); }
+
+  get anchors() { return this._anchors || (this._anchors = []); }
+  addAnchor(a) {
+    if (!a) return;
+    if (a.isAnchor) {/*...*/}
+    else {
+      if (typeof a === "string")
+        a = {id: a, row: 0, column: 0};
+      let {id, column, row} = a;
+      a = this.anchors.find(ea => ea.id === a.id)
+       || new Anchor(id, row || column ? {row, column} : null);
+    }
+    arr.pushIfNotIncluded(this.anchors, a);
+    return a;
+  }
+  removeAnchor(anchor) {
+    this._anchors = this.anchors.filter(
+      typeof anchor === "string" ?
+        ea => ea.id !== anchor :
+        ea => ea !== anchor);
+  }
 
   get clipMode()  { return this.getProperty("clipMode"); }
   set clipMode(value)  {

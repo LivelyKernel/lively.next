@@ -72,7 +72,51 @@ describe("text selection", () => {
 });
 
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+describe("anchors", () => {
+  
+  it("adds anchor by id", () => {
+    var t = text("hello\nworld", {}),
+        a = t.addAnchor({id: "test", column: 1, row: 1});
+    expect(t.anchors).to.have.length(1);
+    expect(t.addAnchor({id: "test"})).equals(a);
+    expect(t.anchors).to.have.length(1);
+    t.removeAnchor(a);
+    expect(t.anchors).to.have.length(0);
+    t.addAnchor({id: "test"})
+    expect(t.anchors).to.have.length(1);
+    t.removeAnchor("test");
+    expect(t.anchors).to.have.length(0);
+  });
+
+  it("insert moves anchors around", () => {
+    var t = text("hello\nworld", {}),
+        a = t.addAnchor({id: "test", column: 1, row: 1});
+    t.insertText("abc", {row: 1, column: 0});
+    expect(a.position).deep.equals({row: 1, column: 4}, "1 before anchor");
+    t.insertText("xy", {row: 1, column: 4});
+    expect(a.position).deep.equals({row: 1, column: 6}, "2 directly before anchor");
+    t.insertText("123", {row: 1, column: 7});
+    expect(a.position).deep.equals({row: 1, column: 6}, "3 after anchor");
+    t.insertText("123", {row: 0, column: 0});
+    expect(a.position).deep.equals({row: 1, column: 6}, "4 line before anchor");
+    t.insertText("123\n456", {row: 0, column: 0});
+    expect(a.position).deep.equals({row: 2, column: 6}, "5 new line before anchor");
+  });
+
+  it("delete moves anchors around", () => {
+    var t = text("hello\nworld", {}),
+        a = t.addAnchor({id: "test", column: 1, row: 1});
+    t.deleteText(range(1,0,1,1));
+    expect(a.position).deep.equals({row: 1, column: 0}, "1 before anchor");
+    t.deleteText(range(0,2,1,0));
+    expect(a.position).deep.equals({row: 0, column: 2}, "2 line before");
+    t.deleteText(range(0,2,0,5));
+    expect(a.position).deep.equals({row: 0, column: 2}, "3 after anchor");
+    t.deleteText(range(0,1,0,5));
+    expect(a.position).deep.equals({row: 0, column: 1}, "4 crossing anchor");
+  });
+
+});
 
 
 describe("rendered text", () => {

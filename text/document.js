@@ -133,6 +133,8 @@ export default class TextDocument {
   }
 
   remove({start, end}) {
+    if (!this.lines.length) return;
+
     if (lessPosition(end, start)) [start, end] = [end, start];
 
     let {row: fromRow, column: fromCol} = start,
