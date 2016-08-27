@@ -238,5 +238,12 @@ describe("key bindings", () => {
     expect(handler.lookup("ctrl-c", {keyChain: canonicalize("ctrl-a")})).deep.equals({command: "test"}, "2");
   });
 
+  it("transparently looks up input keys", () => {
+    handler = new KeyHandler()
+    handler.bindKey("Alt-G G", "test");
+    expect(handler.lookup("g", {keyChain: canonicalize("alt-g")})).deep.equals({command: "test"});
+    expect(handler.lookup("G", {keyChain: canonicalize("alt-g")})).deep.equals({command: "test"});
+  });
+
 
 });

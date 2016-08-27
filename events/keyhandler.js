@@ -177,10 +177,22 @@ export class KeyHandler {
     keyCombo = Keys.canonicalizeKeyCombo(keyCombo);
     var keyChain = keyInputState.keyChain || "";
 
-    var command = this.keyBindings[keyCombo];
+    // for simple input test both upper and lowercase
+    var combos = [keyCombo];
+    if (!command && keyCombo.startsWith("input-")) {
+      var upper = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before+key.toUpperCase()),
+          lower = keyCombo.replace(/^(input-)(.*)$/, (_, before, key) => before+key.toLowerCase());
+      combos.push(upper, lower);
+    }
+
+    var command = combos.map(keyCombo => this.keyBindings[keyCombo])[0];
+
     if (keyChain) {
-      keyChain += " " + keyCombo;
-      command = this.keyBindings[keyChain] || command;
+      var chainCombo = combos.find(keyCombo => this.keyBindings[keyChain + " " + keyCombo]);
+      if (chainCombo) {
+        keyChain += " " + chainCombo;
+        command = this.keyBindings[keyChain] || command;
+      }
     }
 
     if (command && command === "chainKeys") {
