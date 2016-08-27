@@ -7,6 +7,10 @@ import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
 
+
+// FIXME for makeInputLine
+import { signal } from "lively.bindings";
+
 export class Text extends Morph {
 
   static makeLabel(string, props) {
@@ -18,6 +22,20 @@ export class Text extends Morph {
       readOnly: true,
       ...props
     });
+  }
+
+  static makeInputLine(props) {
+    var t = new Text({type: "text", extent: pt(100, 20), clipMode: "auto", ...props})
+    t.onInput = function(input) {
+      signal(this, "input", input);
+    }
+    t.onKeyDown = function(evt) {
+      switch (evt.keyCombo) {
+        case 'Enter': this.onInput(this.textString); evt.stop(); return;
+        default: return this.constructor.prototype.onKeyDown.call(this, evt);
+      }
+    }
+    return t;
   }
 
   constructor(props = {}) {
