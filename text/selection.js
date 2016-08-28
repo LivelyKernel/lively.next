@@ -53,6 +53,10 @@ export class Selection {
     this.textMorph = textMorph;
     this._goalColumn = undefined;
     this._isReverse = false;
+
+    this.startAnchor = textMorph.addAnchor("selection-start");
+    this.endAnchor = textMorph.addAnchor("selection-end");
+
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
     this._cursorVisible = true;
     this.cursorBlinkProcess = null;
@@ -85,7 +89,13 @@ export class Selection {
     this.textMorph && this.textMorph.makeDirty && this.textMorph.makeDirty();
     this._goalColumn = this.lead.column;
 
+    this.startAnchor.position = range.start;
+    this.endAnchor.position = range.end;
     // console.log(`selection changed: ${this}`);
+  }
+
+  updateFromAnchors() {
+    this.range = {start: this.startAnchor.position, end: this.endAnchor.position};
   }
 
   get start() { return this.range.start; }
@@ -106,13 +116,13 @@ export class Selection {
   get text() { return this.textMorph.document.textInRange(this.range); }
 
   set text(val) {
-    let {range, textMorph} = this;
+    let {range: {start, end}, textMorph} = this;
     if (!this.isEmpty())
-      textMorph.deleteText(range);
+      textMorph.deleteText({start, end});
 
     this.range = val.length ?
-      textMorph.insertText(val, range.start) :
-      {start: range.start, end: range.start}
+      textMorph.insertText(val, start) :
+      {start: start, end: start};
   }
 
   reverse() { this._isReverse = !this.isEmpty() && !this._isReverse; return this; }

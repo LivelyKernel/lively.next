@@ -17,14 +17,14 @@ describe("text selection", () => {
   beforeEach(() => text = new Text({textString: "hello\nworld", fontMetric}));
 
   it("has a range", () => {
-    var doc = TextDocument.fromString("hello\nworld");
-    expect(new Selection({document: doc}).range.toString()).equals("Range(0/0 -> 0/0)");
+    expect(new Selection(text).range.toString()).equals("Range(0/0 -> 0/0)");
   });
 
   it("gets text", () => {
-    var doc = TextDocument.fromString("hello\nworld");
-    expect(new Selection({document: doc}).text).equals("");
-    expect(new Selection({document: doc}, range(0,1,1,1)).text).equals("ello\nw");
+    var sel = new Selection(text);
+    expect(sel.text).equals("");
+    sel.range = range(0,1,1,1);
+    expect(sel.text).equals("ello\nw");
   });
 
   it("sets text", () => {
@@ -119,6 +119,31 @@ describe("text selection", () => {
       expect(sel).stringEquals("Selection(1/5 -> 0/1)");
       expect(sel.range).stringEquals("Range(0/1 -> 1/5)");
     });
+
+  });
+
+  describe("is anchored", () => {
+
+    it("moves on insert", () => {
+      text.selection = range(0,3, 0, 5);
+      expect(text.selection.text).stringEquals("lo", "1 setup");
+
+      text.insertText("abc", {column: 1, row: 0});
+      expect(text.textString).equals("habcello\nworld");
+      expect(text.selection.text).equals("lo", "2 after insert");
+      expect(text.selection).stringEquals("Selection(0/6 -> 0/8)");
+
+      text.deleteText(range(0,0, 0,3));
+      expect(text.selection.text).equals("lo", "3 after delete");
+      expect(text.selection).stringEquals("Selection(0/3 -> 0/5)");
+
+      text.deleteText(range(0,2, 0,4));
+      expect(text.selection.text).equals("o", "4 after delete into");
+      expect(text.selection).stringEquals("Selection(0/2 -> 0/3)", "4 after delete into");
+
+      text.deleteText(range(0,1, 1,0));
+      expect(text.selection).stringEquals("Selection(0/1 -> 0/1)", " 5after delete crossing selection");
+    p});
 
   });
 });

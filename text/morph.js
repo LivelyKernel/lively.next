@@ -252,6 +252,7 @@ export class Text extends Morph {
       "textString", this.document.textString,
       {action: "insertText", text, pos});
     this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
+    this._selection && this.selection.updateFromAnchors();
     return new Range(range);
   }
 
@@ -263,6 +264,7 @@ export class Text extends Morph {
       "textString", this.document.textString,
       {action: "deleteText", range});
     this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
+    this._selection && this.selection.updateFromAnchors();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
