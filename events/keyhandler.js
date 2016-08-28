@@ -88,12 +88,20 @@ var keyBindings = [
   {keys: {win: "Home", mac: "Home|Ctrl-A"}, command: {command: "select to line start", args: {collapse: true}}},
   {keys: {win: "Shift-End", mac: "Shift-End|Ctrl-Shift-E"}, command: "select to line end"},
   {keys: {win: "End", mac: "End|Ctrl-E"}, command: {command: "select to line end", args: {collapse: true}}},
+  {keys: "Ctrl-X Ctrl-X", command: "reverse selection"},
 
-  {keys: {win: "PageDown", mac: "PageDown|Ctrl-V"}, command: "goto page down"},
-  {keys: {win: "PageUp", mac: "PageUp|Alt-V"}, command: "goto page up"},
+  {keys: {win: "PageDown", mac: "PageDown|Ctrl-V"},      command: "goto page down"},
+  {keys: {win: "PageUp", mac: "PageUp|Alt-V"},           command: "goto page up"},
+  {keys: {win: "Shift-PageDown", mac: "Shift-PageDown"}, command: "goto page down and select"},
+  {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
+
+  {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: "goto start and select"},
+  {keys: {win: "Ctrl-Shift-End", mac: "Meta-Shift-Down"},          command: "goto end and select"},
+  {keys: {win: "Ctrl-Home", mac: "Meta-Up|Meta-Home|Alt-Shift-,"}, command: "goto start"},
+  {keys: {win: "Ctrl-End", mac: "Meta-Down|Meta-End|Alt-Shift-."}, command: "goto end"},
+
   {keys: "Ctrl-L", command: "realign top-bottom-center"},
   {keys: {win: "Ctrl-Shift-L", mac: "Ctrl-Shift-L|Alt-G G"}, command: "goto line"},
-  {keys: "Ctrl-X Ctrl-X", command: "reverse selection"},
 
   {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n"}}}, // FIXME windowss
   {keys: 'Space',       command: {command: "insertstring", args: {string: " "}}},

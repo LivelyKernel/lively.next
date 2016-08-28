@@ -129,6 +129,24 @@ var commands = [
   },
 
   {
+    name: "select to start",
+    exec: function(morph) {
+      morph.selection.lead = {row: 0, column: 0};
+      morph.scrollCursorIntoView();
+      return true;
+    }
+  },
+
+  {
+    name: "select to end",
+    exec: function(morph) {
+      morph.selection.lead = morph.document.endPosition;
+      morph.scrollCursorIntoView();
+      return true;
+    }
+  },
+
+  {
     name: "select line",
     exec: function(morph) {
       var sel = morph.selection,
@@ -164,27 +182,43 @@ var commands = [
   },
 
   {
-    name: "goto page down",
-    exec: function(morph) {
-      morph.scrollPageDown()
-      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, morph.height),
-          textPos = morph.textPositionFromPoint(pos);
-      morph.cursorPosition = textPos;
-      morph.scrollCursorIntoView();
-      return true;
-    }
+    name: "goto page up",
+    exec: function(morph) { morph.pageUpOrDown({direction: "up", select: false}); return true; }
   },
 
   {
-    name: "goto page up",
-    exec: function(morph) {
-      morph.scrollPageDown()
-      var pos = morph.renderer.pixelPositionFor(morph, morph.cursorPosition).addXY(0, -morph.height),
-          textPos = morph.textPositionFromPoint(pos);
-      morph.cursorPosition = textPos;
-      morph.scrollCursorIntoView();
-      return true;
-    }
+    name: "goto page down",
+    exec: function(morph) { morph.pageUpOrDown({direction: "down", select: false}); return true; }
+  },
+
+  {
+    name: "goto page up and select",
+    exec: function(morph) { morph.pageUpOrDown({direction: "up", select: true}); return true; }
+  },
+
+  {
+    name: "goto page down and select",
+    exec: function(morph) { morph.pageUpOrDown({direction: "down", select: true}); return true; }
+  },
+
+  {
+    name: "goto start",
+    exec: function(morph) { morph.gotoStartOrEnd({direction: "start", select: false}); return true; }
+  },
+
+  {
+    name: "goto end",
+    exec: function(morph) { morph.gotoStartOrEnd({direction: "end", select: false}); return true; }
+  },
+
+  {
+    name: "goto start and select",
+    exec: function(morph) { morph.gotoStartOrEnd({direction: "start", select: true}); return true; }
+  },
+
+  {
+    name: "goto end and select",
+    exec: function(morph) { morph.gotoStartOrEnd({direction: "end", select: true}); return true; }
   },
 
   {

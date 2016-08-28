@@ -460,6 +460,26 @@ export class Text extends Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // command helper
+
+  pageUpOrDown(opts = {direction: "up", select: false}) {
+    var {direction, select} = opts;
+    this[direction === "down" ? "scrollPageDown" : "scrollPageUp"]();
+    var offset = pt(0, (direction === "down" ? 1 : -1) * this.height),
+        pos = this.renderer.pixelPositionFor(this, this.cursorPosition).addPt(offset),
+        textPos = this.textPositionFromPoint(pos);
+    if (!opts || !opts.select) this.cursorPosition = textPos;
+    else this.selection.lead = textPos;
+  }
+
+  gotoStartOrEnd(opts = {direction: "start", select: false}) {
+    var {direction, select} = opts || {},
+        pos = direction === "start" ? {row: 0, column: 0} : this.document.endPosition
+    this.selection.lead = pos;
+    if (!select) this.selection.anchor = this.selection.lead;
+    this.scrollCursorIntoView();
+  }
+
   // debugging
 
   inspect() {
