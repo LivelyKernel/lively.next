@@ -84,7 +84,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
-    if (change.prop == "layout") 
+    if (change.prop == "layout")
         change.value && change.value.applyTo(this);
     this.layout && this.layout.onChange(this, change);
   }
@@ -100,8 +100,9 @@ export class Morph {
     return this.env.changeManager.addValueChange(this, prop, value, meta);
   }
 
-  addMethodCallChangeDoing(receiver, selector, args, prop, value, doFn) {
-    return this.env.changeManager.addMethodCallChangeDoing(this, receiver, selector, args, prop, value, doFn)
+  addMethodCallChangeDoing(spec, doFn) {
+    // spec = {target, selector, args, undo}
+    return this.env.changeManager.addMethodCallChangeDoing(spec, this, doFn);
   }
 
   groupChangesWhile(groupChange, whileFn) {
@@ -161,7 +162,7 @@ export class Morph {
 
   get fill()           { return this.getProperty("fill"); }
   set fill(value)      { this.addValueChange("fill", value); }
-  
+
   get opacity()         { return this.getProperty("opacity"); }
   set opacity(value)    { this.addValueChange("opacity", value); }
 
@@ -383,7 +384,7 @@ export class Morph {
     this._cachedBounds = null;
 
     var prevOwner = submorph.owner,
-        submorphs = this.submorphs;
+        submorphs = this.getProperty("submorphs");
 
     // modify the submorphs array
     index = Math.min(submorphs.length, Math.max(0, index));
@@ -395,26 +396,29 @@ export class Morph {
     }
     submorphs.splice(index, 0, submorph);
 
-    this.addMethodCallChangeDoing(
-      this,              /*receiver*/
-      "addMorphAt",      /*selector*/
-      [submorph, index], /*args*/
-      "submorphs",       /*prop*/
-      submorphs          /*value*/,
-      () => {
-        var tfm;
-        if (prevOwner && prevOwner !== this) {
-        // since morph transforms are local to a morphs owner we need to
-        // compute a new transform for the morph inside the new owner so that the
-        // morphs does not appear to change its position / rotation / scale
-          tfm = submorph.transformForNewOwner(this);
-          submorph.remove();
-        }
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addMorphAt",
+      args: [submorph, index],
+      undo: {
+        target: this,
+        selector: "removeMorph",
+        args: [submorph],
+      }
+    }, () => {
+      var tfm;
+      if (prevOwner && prevOwner !== this) {
+      // since morph transforms are local to a morphs owner we need to
+      // compute a new transform for the morph inside the new owner so that the
+      // morphs does not appear to change its position / rotation / scale
+        tfm = submorph.transformForNewOwner(this);
+        submorph.remove();
+      }
 
-        // set new owner
-        submorph._owner = this;
-        if (tfm) submorph.setTransform(tfm);
-      });
+      // set new owner
+      submorph._owner = this;
+      if (tfm) submorph.setTransform(tfm);
+    });
 
     return submorph;
   }
@@ -438,19 +442,22 @@ export class Morph {
     var index = this.submorphs.indexOf(morph);
     if (index === -1) return;
 
-    var submorphs = this.submorphs;
+    var submorphs = this.getProperty("submorphs");
     submorphs.splice(index, 1);
 
-    this.addMethodCallChangeDoing(
-      this,           /*receiver*/
-      "removeMorph",  /*selector*/
-      [morph],        /*args*/
-      "submorphs",    /*prop*/
-      submorphs,      /*value*/
-      () => {
-        this._cachedBounds = null;
-        morph._owner = null;
-      });
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "removeMorph",
+      args: [morph],
+      undo: {
+        target: this,
+        selector: "addMorphAt",
+        args: [morph, index],
+      }
+    }, () => {
+      this._cachedBounds = null;
+      morph._owner = null;
+    });
   }
 
   remove() {
@@ -838,7 +845,7 @@ export class Image extends Morph {
 }
 
 export class Path extends Morph {
-  
+
   constructor(props) {
     super({
       vertices: [],

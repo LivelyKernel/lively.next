@@ -102,7 +102,7 @@ describe("changes", function () {
         m2.addMorph({});
         env.changeManager.removeChangeListener(onChange);
         m2.fill = Color.green;
-        expect(changes).containSubset([{prop: "fill"}, {prop: "submorphs"}]);
+        expect(changes).containSubset([{prop: "fill"}, {selector: "addMorphAt"}]);
       });
 
       it("record async", () => {
@@ -164,7 +164,7 @@ describe("changes", function () {
         expect(changes1).containSubset([
           {prop: "fill"},
           {prop: "fill"},
-          {prop: "submorphs"}]);
+          {selector: "addMorphAt"}]);
 
         expect(changes2).containSubset([{prop: "rotation"}]);
 

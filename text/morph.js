@@ -248,9 +248,18 @@ export class Text extends Morph {
     text = String(text);
     var range = this.document.insert(text, pos);
     this._needsFit = true;
-    this.addValueChange(
-      "textString", this.document.textString,
-      {action: "insertText", text, pos});
+
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "insertText",
+      args: [text, pos],
+      undo: {
+        target: this,
+        selector: "deleteText",
+        args: [range],
+      }
+    }, () => {});
+
     this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
     this._selection && this.selection.updateFromAnchors();
     return new Range(range);
@@ -258,11 +267,21 @@ export class Text extends Morph {
 
   deleteText(range) {
     range = range.isRange ? range : new Range(range);
+    var text = this.document.textInRange(range)
     this.document.remove(range);
     this._needsFit = true;
-    this.addValueChange(
-      "textString", this.document.textString,
-      {action: "deleteText", range});
+
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "deleteText",
+      args: [range],
+      undo: {
+        target: this,
+        selector: "insertText",
+        args: [text, range.start],
+      }
+    }, () => {});
+
     this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
     this._selection && this.selection.updateFromAnchors();
   }

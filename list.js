@@ -85,13 +85,17 @@ export class List extends Morph {
         index = Math.min(items.length, Math.max(0, index));
     items.splice(index, 0, asItem(item));
 
-    this.addMethodCallChangeDoing(
-      this,          /*receiver*/
-      "addItemAt",   /*selector*/
-      [item, index], /*args*/
-      "items",       /*prop*/
-      items,        /*value*/
-      () => this.update());
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addItemAt",
+      args: [item, index],
+      undo: {
+        target: this,
+        selector: "removeItem",
+        args: [item],
+      }
+    }, () => this.update());
+
   }
 
   removeItem(itemOrValue) {
@@ -102,13 +106,17 @@ export class List extends Morph {
 
     items.splice(index, 1);
 
-    this.addMethodCallChangeDoing(
-      this,         /*receiver*/
-      "removeItem", /*selector*/
-      [item],       /*args*/
-      "items",      /*prop*/
-      items,        /*value*/
-      () => this.update());
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "removeItem",
+      args: [item],
+      undo: {
+        target: this,
+        selector: "addItemAt",
+        args: [item, index],
+      }
+    }, () => this.update());
+
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

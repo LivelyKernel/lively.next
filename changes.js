@@ -93,26 +93,26 @@ export class MethodCallChange extends GroupChange {
 
   get type() { return "method-call" }
 
-  constructor(target, receiver, selector, args, prop, value, meta) {
+  constructor(target, selector, args, undo) {
     this.changes = [];
     this.target = target;
-    this.receiver = receiver;
     this.selector = selector;
     this.args = args;
-    this.prop = prop;
-    this.value = value;
-    this.prevValue = null;
-    this.meta = meta;
+    this.undo = undo;
   }
 
   apply() {
-    var {target, receiver, selector, args} = this;
-    receiver[selector].apply(receiver, args);
+    var {target, selector, args} = this;
+    target[selector].apply(target, args);
   }
 
   reverseApply() {
-    var {target, prop, prevValue} = this;
-    target[prop] = prevValue;
+    if (!this.undo) return;
+    if (typeof this.undo === "function") this.undo();
+    else {
+      var {target, selector, args} = this.undo;
+      target[selector].apply(target, args);
+    }
   }
 
 }
@@ -131,7 +131,7 @@ export class ChangeManager {
     this.changeListeners = [];
     this.changeRecordersPerMorph = new WeakMap();
     this.changeRecorders = {};
-    
+
     this.changeGroupStack = [];
   }
 
@@ -147,8 +147,10 @@ export class ChangeManager {
     return this._record(morph, change);
   }
 
-  addMethodCallChangeDoing(morph, receiver, selector, args, prop, value, doFn) {
-    var change = new MethodCallChange(morph, receiver, selector, args, prop, value);
+  addMethodCallChangeDoing(spec, morph, doFn) {
+    var {target, selector, args, undo} = spec;
+    if (!undo) undo = () => console.warn(`No undo recorded for ${target}.${selector}`);
+    var change = new MethodCallChange(target, selector, args, undo);
     morph.groupChangesWhile(change, doFn);
     return change;
   }
