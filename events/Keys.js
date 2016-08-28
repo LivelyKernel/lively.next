@@ -138,6 +138,8 @@ function identifyKeyFromCode({code}) {
     case "Home":
     case"PageUp":
     case"PageDown":       return code;
+    case 'Period':        return "."
+    case 'Comma':         return ","
     case 'Help':          return "Insert"
     case 'Equal':         return "=";
     case 'IntlBackslash': return "\\";
