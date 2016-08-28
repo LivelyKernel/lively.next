@@ -24,7 +24,8 @@ class Anchor {
   get isAnchor() { return true; }
 
   onDelete(range) {
-    if (lessPosition(this.position, range.start)) return;
+    if (eqPosition(range.start, range.end)
+     && lessPosition(this.position, range.start)) return;
 
     if (lessEqPosition(range.start, this.position)
      && lessEqPosition(this.position, range.end)) { this.position = range.start; return; }
@@ -47,6 +48,11 @@ class Anchor {
           0 : startRow === endRow ?
             endColumn - startColumn : endColumn;
     this.position = {column: column + deltaColumns, row: row + deltaRows}
+  }
+
+  toString() {
+    var {id, position: {row, column}} = this;
+    return `Anchor(${id} ${row}/${column})`;
   }
 }
 
@@ -169,19 +175,24 @@ export class Text extends Morph {
   set fontKerning(value) { this.addValueChange("fontKerning", value); }
 
   get anchors() { return this._anchors || (this._anchors = []); }
-  addAnchor(a) {
-    if (!a) return;
-    if (a.isAnchor) {/*...*/}
-    else {
-      if (typeof a === "string")
-        a = {id: a, row: 0, column: 0};
-      let {id, column, row} = a;
-      a = this.anchors.find(ea => ea.id === a.id)
-       || new Anchor(id, row || column ? {row, column} : null);
+  addAnchor(anchor) {
+    if (!anchor) return;
+    if (typeof anchor === "string") {
+      anchor = {id: anchor, row: 0, column: 0};
     }
-    arr.pushIfNotIncluded(this.anchors, a);
-    return a;
+
+    if (!anchor.isAnchor) {
+      let {id, column, row} = anchor;
+      anchor = new Anchor(id, row || column ? {row, column} : undefined);
+    }
+
+    if (anchor.id && this.anchors.some(ea => ea.id === anchor.id))
+      throw new Error(`Anchor with id ${anchor.id} already exists`);
+
+    this.anchors.push(anchor);
+    return anchor;
   }
+
   removeAnchor(anchor) {
     this._anchors = this.anchors.filter(
       typeof anchor === "string" ?
