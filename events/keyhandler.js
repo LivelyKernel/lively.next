@@ -65,6 +65,10 @@ var keyBindings = [
   {keys: {mac: 'Meta-C', win: 'Ctrl-C'}, command: {command: "clipboard copy", passEvent: true}},
   {keys: {mac: 'Meta-X', win: 'Ctrl-X'}, command: {command: "clipboard cut", passEvent: true}},
   {keys: {mac: 'Meta-V', win: 'Ctrl-V'}, command: {command: "clipboard paste", passEvent: true}},
+
+  {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'}, command: "text undo"},
+  {keys: {mac: 'Meta-Shift-Z'}, command: "text redo"},
+
   {keys: {mac: 'Meta-A', win: 'Ctrl-A'}, command: "select all"},
   {keys: {mac: 'Meta-D', win: 'Ctrl-D'}, command: "doit"},
   {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},

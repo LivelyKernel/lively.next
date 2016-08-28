@@ -23,6 +23,18 @@ var commands = [
   },
 
   {
+    name: "text undo",
+    doc: "undo text changes",
+    exec: function(morph) { morph.textUndo(); return true; }
+  },
+
+  {
+    name: "text redo",
+    doc: "redo text changes",
+    exec: function(morph) { morph.textRedo(); return true; }
+  },
+
+  {
     name: "select all",
     doc: "Selects entire text contents.",
     exec: function(morph) { morph.selectAll(); return true; }

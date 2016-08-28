@@ -6,6 +6,7 @@ import { Selection, Range } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
+import { UndoManager } from "../undo.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME for makeInputLine
@@ -100,6 +101,7 @@ export class Text extends Morph {
     });
     this.document = new TextDocument();
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
+    this.undoManager = new UndoManager();
     this._keyhandlers = []; // defaultKeyHandler is fallback
     // this.commands = new CommandHandler();
     this._selection = selection ? new Selection(this, selection) : null;
@@ -245,6 +247,8 @@ export class Text extends Morph {
   }
 
   insertText(text, pos = this.cursorPosition) {
+    this.undoManager.undoStart(this, "insertText");
+
     text = String(text);
     var range = this.document.insert(text, pos);
     this._needsFit = true;
@@ -262,11 +266,19 @@ export class Text extends Morph {
 
     this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
     this._selection && this.selection.updateFromAnchors();
+
+    this.undoManager.undoStop();
+
     return new Range(range);
   }
 
   deleteText(range) {
     range = range.isRange ? range : new Range(range);
+
+    if (range.isEmpty()) return;
+
+    this.undoManager.undoStart(this, "insertText");
+
     var text = this.document.textInRange(range)
     this.document.remove(range);
     this._needsFit = true;
@@ -284,6 +296,8 @@ export class Text extends Morph {
 
     this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
     this._selection && this.selection.updateFromAnchors();
+
+    this.undoManager.undoStop();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -499,6 +513,18 @@ export class Text extends Morph {
     this.scrollCursorIntoView();
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // text undo / redo
+
+  textUndo() {
+    this.undoManager.undo();
+  }
+
+  textRedo() {
+    this.undoManager.redo();
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
 
   inspect() {
