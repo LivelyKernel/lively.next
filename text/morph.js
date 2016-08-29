@@ -223,7 +223,7 @@ export class Text extends Morph {
                          textBounds.height + padding.top() + padding.bottom());
     }
   get scrollExtent() {
-    return this.textBounds().extent().maxPt(super.scrollExtent);
+    return this.paddedTextBounds().extent().maxPt(super.scrollExtent);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

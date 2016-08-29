@@ -236,9 +236,9 @@ export default class TextLayout {
   renderTextLayer(morph) {
     let {chunks} = this,
         textWidth = 0, textHeight = 0,
-        {y: visibleTop} = morph.scroll,
-        visibleBottom = visibleTop + morph.height,
-        {padding} = morph,
+        {padding, scroll, height} = morph,
+        {y: visibleTop} = scroll.subPt(padding.topLeft()),
+        visibleBottom = visibleTop + height,
         lastVisibleLineBottom = 0,
         row = 0,
         spacerBefore,
