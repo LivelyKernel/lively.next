@@ -214,6 +214,14 @@ export class Text extends Morph {
   textBounds() {
     return this.renderer ? this.renderer.textBounds(this) : new Rectangle(0,0,0,0);
   }
+  paddedTextBounds() {
+    let textBounds = this.textBounds(),
+        { padding } = this;
+    return new Rectangle(textBounds.x - padding.left(),
+                         textBounds.y - padding.top(),
+                         textBounds.width + padding.left() + padding.right(),
+                         textBounds.height + padding.top() + padding.bottom());
+    }
   get scrollExtent() {
     return this.textBounds().extent().maxPt(super.scrollExtent);
   }
@@ -360,10 +368,9 @@ export class Text extends Morph {
   fit() {
     let {fixedWidth, fixedHeight} = this;
     if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
-    let textBounds = this.textBounds(),
-        padding = this.padding;
-    if (!fixedHeight) this.height = textBounds.height + padding.top() + padding.bottom();
-    if (!fixedWidth) this.width = textBounds.width + padding.left() + padding.right();
+    let paddedTextBounds = this.paddedTextBounds();
+    if (!fixedHeight) this.height = paddedTextBounds.height;
+    if (!fixedWidth) this.width = paddedTextBounds.width;
   }
 
   fitIfNeeded() {
