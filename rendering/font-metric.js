@@ -1,5 +1,5 @@
 import { pt, rect } from "lively.graphics";
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
 
 export default class FontMetric {
 
@@ -34,8 +34,8 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = [];
-    this.kerningMap = [];
     this.element = null;
+    this.cachedBoundsInfo = {};
   }
 
   install(doc, parentEl) {
@@ -77,9 +77,42 @@ export default class FontMetric {
     }
   }
 
+  charBoundsFor(fontFamily, fontSize, fontKerning, str) {
+    let nCols = str.length,
+        bounds = new Array(nCols),
+        { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, fontFamily: cachedFontFamily, fontSize: cachedFontSize } } = this,
+        useCache = cachedBounds && cachedFontFamily === fontFamily && cachedFontSize === fontSize,
+        fontIsProportional = this.isProportional(fontFamily),
+        adjustSpacing = fontIsProportional && fontKerning;
+    for (let col = 0, x = 0; col < nCols; col++) {
+      let width, height, char = str[col];
+      if (adjustSpacing) {
+        useCache = useCache && char === cachedStr[col];
+        if (useCache)
+          ({ width, height } = cachedBounds[col]);
+        else {
+          let prefix = str.substr(0, col+1);
+          ({ width, height } = this.measure(fontFamily, fontSize, prefix));
+          width -= x;
+        }
+      } else {
+        ({ width, height } = this.sizeFor(fontFamily, fontSize, char));
+      }
+      bounds[col] = { x, y: 0, width, height };
+      x += width;
+    }
+    if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, fontFamily, fontSize };
+    return bounds;
+  }
+
+  isProportional(fontFamily) {
+    let w_width = this.sizeFor(fontFamily, 12, 'w').width,
+        i_width = this.sizeFor(fontFamily, 12, 'i').width;
+    return w_width !== i_width;
+  }
+
   sizeFor(fontFamily, fontSize, char) {
-    if (char.length > 1)
-      return this.sizeForStr(fontFamily, fontSize, false, char);
+    if (char.length > 1) return this.measure(fontFamily, fontSize, char);
 
     if (!this.charMap[fontFamily]) {
       this.charMap[fontFamily] = [];
@@ -90,47 +123,6 @@ export default class FontMetric {
     if (!this.charMap[fontFamily][fontSize][char])
       this.charMap[fontFamily][fontSize][char] = this.measure(fontFamily, fontSize, char);
     return this.charMap[fontFamily][fontSize][char];
-  }
-
-  sizeForStr(fontFamily, fontSize, fontKerning, str) {
-    var height = 0, width = 0,
-        defaultLineHeight = this.defaultLineHeight(fontFamily, fontSize);
-    for (let line of str.split('\n')) {
-      let lineHeight = defaultLineHeight, lineWidth = 0,
-          chars = line.split(''), nChars = chars.length;
-      for (let charIndex = 0; charIndex < nChars; charIndex++) {
-        let char = chars[charIndex],
-          { height: charHeight, width: charWidth } = this.sizeFor(fontFamily, fontSize, char);
-        if (charHeight > lineHeight) lineHeight = charHeight;
-        if (fontKerning && charIndex < nChars - 1) {
-          let nextChar = chars[charIndex+1];
-          charWidth += this.kerningFor(fontFamily, fontSize, char, nextChar);
-        }
-        lineWidth += charWidth;
-      }
-      if (lineWidth > width) width = lineWidth;
-      height += lineHeight;
-    }
-    return { height: height, width: width };
-  }
-
-  // FIXME? do browsers implement contextual kerning?
-  kerningFor(fontFamily, fontSize, left, right) {
-    var charPairStr = `${left}${right}`,
-        indexStr = `_${charPairStr}`;
-    if (!this.kerningMap[fontFamily]) {
-      this.kerningMap[fontFamily] = [];
-    }
-    if (!this.kerningMap[fontFamily][fontSize]) {
-      this.kerningMap[fontFamily][fontSize] = [];
-    }
-    if (this.kerningMap[fontFamily][fontSize][indexStr] === undefined) {
-      let { width: leftWidth }  = this.sizeFor(fontFamily, fontSize, left),
-          { width: rightWidth } = this.sizeFor(fontFamily, fontSize, right),
-          { width: totalWidth } = this.measure(fontFamily, fontSize, charPairStr);
-      this.kerningMap[fontFamily][fontSize][indexStr] = totalWidth - leftWidth - rightWidth;
-    }
-    return this.kerningMap[fontFamily][fontSize][indexStr];
   }
 
   asciiSizes(fontFamily, fontSize) {

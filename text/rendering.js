@@ -45,14 +45,14 @@ class RenderedChunk {
     return this;
   }
 
-  compatibleWith(text2, fontFamily2, fontSize2, fontMetric2, fontColor2, fontKerning2) {
-    var {text, config: {fontFamily, fontSize, fontMetric, fontColor, fontKerning}} = this;
-    return text       === text2
-        && fontFamily === fontFamily2
-        && fontSize   === fontSize2
-        && fontColor  === fontColor2
-        && fontMetric === fontMetric2
-        && fontKerning === fontKerning2;
+  compatibleWith(text2, config2) {
+    var {text, config} = this;
+    return text               === text2
+        && config.fontFamily  === config2.fontFamily
+        && config.fontSize    === config2.fontSize
+        && config.fontColor   === config2.fontColor
+        && config.fontMetric  === config2.fontMetric
+        && config.fontKerning === config2.fontKerning;
   }
 
   get height() {
@@ -73,9 +73,11 @@ class RenderedChunk {
   }
 
   computeBounds() {
-    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this,
-        {height, width} = fontMetric.sizeForStr(fontFamily, fontSize, fontKerning, text);
-
+    let width = 0, height = 0;
+    this.charBounds.map(char => {
+      width += char.width;
+      height = Math.max(height, char.height);
+    });
     this._height = height;
     this._width = width;
     return this;
@@ -84,15 +86,7 @@ class RenderedChunk {
   computeCharBounds() {
     let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this;
     text += newline;
-    let nCols = text.length,
-        _charBounds = this._charBounds = new Array(nCols);
-    for (let col = 0, x = 0; col < nCols; col++) {
-      let {width,height} = fontMetric.sizeFor(fontFamily, fontSize, text[col]);
-      if (fontKerning && col < nCols - 2) // last column is newline
-        width += fontMetric.kerningFor(fontFamily, fontSize, text[col], text[col+1]);
-      _charBounds[col] = {x, y: 0, width, height};
-      x += width;
-    }
+    this._charBounds = fontMetric.charBoundsFor(fontFamily, fontSize, fontKerning, text);
   }
 
   render() {
@@ -163,9 +157,11 @@ export default class TextLayout {
 
     // for now: 1 line = 1 chunk
     for (let row = 0; row < nRows; row++) {
-      var chunk = this.chunks[row];
-      if (!chunk || !chunk.compatibleWith(lines[row], fontFamily, fontSize, fontColor, fontKerning, fontMetric))
-        this.chunks[row] = new RenderedChunk(lines[row], {fontFamily, fontSize, fontColor, fontKerning, fontMetric});
+      var chunk = this.chunks[row],
+          text = lines[row],
+          config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning };
+      if (!chunk || !chunk.compatibleWith(text, config))
+        this.chunks[row] = new RenderedChunk(text, config);
     }
 
     this.chunks.splice(nRows, this.chunks.length - nRows);
