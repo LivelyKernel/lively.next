@@ -6,24 +6,22 @@ import { pt, Rectangle } from "lively.graphics";
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
-// TODO: Would probably be cleaner to apply padding to a div containing the "entire" selection layer...
-function selectionLayerPart(startPos, endPos, padding = Rectangle.inset(0,0,0,0)) {
+function selectionLayerPart(startPos, endPos) {
   return h('div.selection-layer-part', {
     style: {
       pointerEvents: "none", position: "absolute",
-      left: startPos.x + padding.left() + "px", top: startPos.y + padding.top() + "px",
+      left: startPos.x + "px", top: startPos.y + "px",
       width: (endPos.x-startPos.x) + "px", height: (endPos.y-startPos.y)+"px",
       backgroundColor: "#bed8f7", zIndex: -3
     }
   })
 }
 
-// TODO: Would probably be cleaner to apply padding to a div containing the "entire" selection layer...
-function cursor(pos, height, padding = Rectangle.inset(0,0,0,0), visible) {
+function cursor(pos, height, visible) {
     return h('div.selection-layer-part', {
     style: {
       pointerEvents: "none", position: "absolute",
-      left: pos.x -1 + padding.left() + "px", top: pos.y + padding.top() + "px",
+      left: pos.x -1 + "px", top: pos.y + "px",
       width: "2px", height: height + "px",
       backgroundColor: "black", zIndex: -1,
       display: visible ? "" : "none"
@@ -196,20 +194,21 @@ export default class TextLayout {
         isReverse           = morph.selection.isReverse(),
         {padding, document} = morph,
         chunks              = this.chunks,
-        startPos            = this.pixelPositionFor(morph, start),
-        endPos              = this.pixelPositionFor(morph, end),
+        paddingOffset       = padding.topLeft(),
+        startPos            = this.pixelPositionFor(morph, start).addPt(paddingOffset),
+        endPos              = this.pixelPositionFor(morph, end).addPt(paddingOffset),
         cursorPos           = isReverse ? startPos : endPos,
         endLineHeight       = chunks[end.row].height;
 
     // collapsed selection -> cursor
     if (morph.selection.isEmpty())
-      return [cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
+      return [cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
-        selectionLayerPart(startPos, endPos.addXY(0, endLineHeight), padding),
-        cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)]
+        selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
+        cursor(cursorPos, chunks[lead.row].height, cursorVisible)]
 
     let endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
@@ -217,9 +216,9 @@ export default class TextLayout {
     // two lines -> two rectangles
     if (start.row+1 === end.row) {
       return [
-        selectionLayerPart(startPos, endPosLine1, padding),
-        selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight), padding),
-        cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
+        selectionLayerPart(startPos, endPosLine1),
+        selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
+        cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
     }
 
     let endPosMiddle = pt(morph.width, endPos.y),
@@ -227,10 +226,10 @@ export default class TextLayout {
 
     // 3+ lines -> three rectangles
     return [
-      selectionLayerPart(startPos, endPosLine1, padding),
-      selectionLayerPart(startPosLine2, endPosMiddle, padding),
-      selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight), padding),
-      cursor(cursorPos, chunks[lead.row].height, padding, cursorVisible)];
+      selectionLayerPart(startPos, endPosLine1),
+      selectionLayerPart(startPosLine2, endPosMiddle),
+      selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
+      cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
 
   }
 
