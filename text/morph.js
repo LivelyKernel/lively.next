@@ -115,7 +115,8 @@ export class Text extends Morph {
   get isText() { return true }
 
   onChange(change) {
-    if (change.prop === "textString"
+    if (change.selector === "insertText"
+     || change.selector === "deleteText"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
      || change.prop === "fontColor" // FIXME
@@ -188,8 +189,10 @@ export class Text extends Morph {
       anchor = new Anchor(id, row || column ? {row, column} : undefined);
     }
 
-    if (anchor.id && this.anchors.some(ea => ea.id === anchor.id))
-      throw new Error(`Anchor with id ${anchor.id} already exists`);
+    var existing = anchor.id && this.anchors.find(ea => ea.id === anchor.id);
+    if (existing) {
+      return Object.assign(existing, anchor);
+    }
 
     this.anchors.push(anchor);
     return anchor;
@@ -247,11 +250,10 @@ export class Text extends Morph {
   }
 
   insertText(text, pos = this.cursorPosition) {
-    this.undoManager.undoStart(this, "insertText");
-
     text = String(text);
     var range = this.document.insert(text, pos);
-    this._needsFit = true;
+
+    this.undoManager.undoStart(this, "insertText");
 
     this.addMethodCallChangeDoing({
       target: this,
@@ -262,10 +264,11 @@ export class Text extends Morph {
         selector: "deleteText",
         args: [range],
       }
-    }, () => {});
-
-    this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
-    this._selection && this.selection.updateFromAnchors();
+    }, () => {
+      this._needsFit = true;
+      this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
+      this._selection && this.selection.updateFromAnchors();
+    });
 
     this.undoManager.undoStop();
 
@@ -517,7 +520,25 @@ export class Text extends Morph {
   // text undo / redo
 
   textUndo() {
-    this.undoManager.undo();
+    var undo = this.undoManager.undo(),
+        changes = undo.changes.slice(),
+        change = changes.pop(),
+        range = change.selector === "insertText" ?
+          Range.at(change.args[1]) :
+          change.selector === "deleteText" ?
+            new Range(change.args[0]) :
+            Range.at(this.cursorPosition);
+
+    for (var i = changes.length - 1; i >= 0; i--) {
+      var change = changes[i];
+      if (change.selector === "insertText") {
+        range = range.without(change.undo.args[0]);
+      } else if (change.selector === "deleteText") {
+        range = range.merge(change.args[0]);
+      }
+    }
+
+    this.selection = range;
   }
 
   textRedo() {

@@ -48,9 +48,11 @@ export class UndoManager {
     this.undos = [];
     this.redos = [];
     this.undoInProgress = null;
+    this.applyCount = 0;
   }
 
   undoStart(morph, name) {
+    if (this.applyCount) return;
     if (this.undoInProgress) {
       console.warn(`There is already an undo recorded`)
       return;
@@ -72,13 +74,18 @@ export class UndoManager {
     var undo = this.undos.pop();
     if (!undo) return;
     this.redos.unshift(undo);
-    return undo.reverseApply();
+    this.applyCount++;
+    try { undo.reverseApply(); }
+    finally { this.applyCount--; }
+    return undo;
   }
 
   redo() {
     var redo = this.redos.shift();
     if (!redo) return;
     this.undos.push(redo);
-    return redo.apply();
+    try { redo.apply() }
+    finally { this.applyCount--; }
+    return redo;
   }
 }
