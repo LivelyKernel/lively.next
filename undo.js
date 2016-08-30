@@ -25,8 +25,7 @@ class Undo {
 
   stopRecording() {
     var {name, recorder: {id, changes}, targets: [morph]} = this;
-    changes.push(...morph.recordChangesStop(id));
-    this.changes = changes;
+    this.changes = morph.recordChangesStop(id);
   }
 
   apply() {
