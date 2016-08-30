@@ -6,6 +6,7 @@ import { Selection, Range } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
+import { defaultCommandHandler } from "../commands.js";
 import { UndoManager } from "../undo.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -251,6 +252,14 @@ export class Text extends Morph {
     return new Range(range);
   }
 
+  getWord(pos = this.cursorPosition) {
+    // TODO
+  }
+
+  wordRange(pos = this.cursorPosition) {
+    // TODO
+  }
+
   insertTextAndSelect(text, pos = null) {
     text = String(text);
     if (pos) this.selection.range = this.insertText(text, pos);
@@ -413,7 +422,11 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
-    this.onMouseMove(evt);
+    switch (evt.state.clicks) {
+      case 2:   break; // TODO
+      case 3:   defaultCommandHandler.exec("select line", this, [], evt); break;
+      default:  this.onMouseMove(evt);
+    }
   }
 
   onMouseMove(evt) {
@@ -424,14 +437,8 @@ export class Text extends Morph {
     var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
         end = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
 
-// console.log("%s => %s\n%s => %s",
-//   this.localize(clickedOnPosition), JSON.stringify(start),
-//   this.localize(evt.position), JSON.stringify(end));
-
-    var from =this.selection.toString();
+    var from = this.selection.toString();
     this.selection.range = {start, end};
-
-// show(`[mouse selection] ${from} -> ${this.selection}`)
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
