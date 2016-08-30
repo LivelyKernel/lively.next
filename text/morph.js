@@ -526,30 +526,52 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // text undo / redo
 
-  textUndo() {
-    var undo = this.undoManager.undo(),
-        changes = undo.changes.slice(),
-        change = changes.pop(),
+  computeTextRangeForChanges(changes) {
+    if (!changes.length) return Range.at(this.cursorPosition);
+
+    var change = changes[0],
         range = change.selector === "insertText" ?
-          Range.at(change.args[1]) :
+          insertRange(change.args[0], change.args[1]) :
           change.selector === "deleteText" ?
-            new Range(change.args[0]) :
+            Range.at(change.args[0].start) :
             Range.at(this.cursorPosition);
 
-    for (var i = changes.length - 1; i >= 0; i--) {
+    for (var i = 1; i < changes.length; i++) {
       var change = changes[i];
-      if (change.selector === "insertText") {
-        range = range.without(change.undo.args[0]);
-      } else if (change.selector === "deleteText") {
-        range = range.merge(change.args[0]);
-      }
+      range = change.selector === "deleteText" ?
+        range.without(change.args[0]) :
+        change.selector === "insertText" ?
+          range.merge(insertRange(change.args[0], change.args[1])) :
+          range;
     }
 
-    this.selection = range;
+    return range;
+    
+    function insertRange(text, pos) {
+      var lines = TextDocument.parseIntoLines(text), range;
+
+      if (lines.length === 1)
+        return Range.fromPositions(
+          pos, {row: pos.row, column: pos.column+lines[0].length});
+
+      if (lines.length > 1)
+        return Range.fromPositions(
+          pos, {row: pos.row+lines.length-1, column: arr.last(lines).length});
+
+      return Range.at(pos);
+    }
+  }
+
+  textUndo() {
+    var undo = this.undoManager.undo(),
+        changes = undo.changes.slice().reverse().map(ea => ea.undo);
+    this.selection = this.computeTextRangeForChanges(changes);
   }
 
   textRedo() {
-    this.undoManager.redo();
+    var redo = this.undoManager.redo(),
+        changes = redo.changes.slice();
+    this.selection = this.computeTextRangeForChanges(changes);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

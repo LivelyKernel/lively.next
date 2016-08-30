@@ -2,6 +2,7 @@ import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.j
 import { string } from "lively.lang";
 import config from "../config.js";
 
+var newline = "\n";
 
 export class Range {
 

@@ -22,12 +22,23 @@ describe("undo", () => {
     expect(text.selection).stringEquals("Selection(1/0 -> 1/0)");
   });
 
-  xit("can undo and redo simple insert", () => {
+  it("can undo and redo simple insert", () => {
     text.insertText("foo", {row: 1, column: 0});
     text.textUndo();
     text.textRedo();
     expect(text.textString).equals("hello\nfooworld");
     expect(text.selection).stringEquals("Selection(1/0 -> 1/3)");
+  });
+
+  it("undo then redo", () => {
+    text.insertText("foo", {row: 1, column: 0});
+    text.insertText(" bar", {row: 1, column: 3});
+    expect(text.textString).equals("hello\nfoo barworld");
+
+    text.textUndo(); text.textUndo();
+    text.textRedo(); text.textRedo();
+    expect(text.textString).equals("hello\nfoo barworld");
+    expect(text.selection).stringEquals("Selection(1/3 -> 1/7)");
   });
 
 });

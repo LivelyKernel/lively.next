@@ -12,18 +12,16 @@ export default class TextDocument {
     return doc;
   }
 
+  static get newline() { return newline; }
+  static get newlineLength() { return newlineLength; }
+  static parseIntoLines(text) { return text.split(this.newline); }
+
   constructor(lines = []) {
     this.lines = lines;
-    this.newline = newline;
-    this.newlineLength = newlineLength;
-  }
-
-  parseIntoLines(string) {
-    return string.split(this.newline)
   }
 
   get textString() { return this.lines.join(this.newline); }
-  set textString(string) { this.lines = this.parseIntoLines(string); }
+  set textString(string) { this.lines = TextDocument.parseIntoLines(string); }
   get stringLength() { return this.textString.length; }
 
   get endPosition() {
@@ -106,7 +104,7 @@ export default class TextDocument {
     let {lines} = this,
         {row, column} = pos,
         line = lines[row],
-        insertionLines = this.parseIntoLines(string);
+        insertionLines = TextDocument.parseIntoLines(string);
 
     if (!line) line = lines[row] = "";
 
