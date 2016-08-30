@@ -20,7 +20,7 @@ export default class TextDocument {
     this.lines = lines;
   }
 
-  get textString() { return this.lines.join(this.newline); }
+  get textString() { return this.lines.join(TextDocument.newline); }
   set textString(string) { this.lines = TextDocument.parseIntoLines(string); }
   get stringLength() { return this.textString.length; }
 
@@ -43,7 +43,7 @@ export default class TextDocument {
         lines = this.lines,
         maxLength = lines.length-1;
     for (var i = startRow; i < row; i++)
-      index += lines[i].length + (i === maxLength ? 0 : this.newlineLength);
+      index += lines[i].length + (i === maxLength ? 0 : TextDocument.newlineLength);
     return index + column;
   }
 
@@ -53,9 +53,9 @@ export default class TextDocument {
     var lines = this.lines;
     if (lines.length === 0) return {row: 0, column: 0};
     for (var i = startRow, l = lines.length; i < l; i++) {
-      index -= lines[i].length + this.newlineLength;
+      index -= lines[i].length + TextDocument.newlineLength;
       if (index < 0)
-        return {row: i, column: index + lines[i].length + this.newlineLength};
+        return {row: i, column: index + lines[i].length + TextDocument.newlineLength};
     }
     return {row: l-1, column: lines[l-1].length};
   }
@@ -90,8 +90,8 @@ export default class TextDocument {
 
     let result = lines[row].slice(column);
     for (let i = row+1; i < endRow; i++)
-      result += newline + lines[i];
-    return result + newline + lines[endRow].slice(0, endColumn);
+      result += TextDocument.newline + lines[i];
+    return result + TextDocument.newline + lines[endRow].slice(0, endColumn);
   }
 
   setTextInRange(string, range) {
