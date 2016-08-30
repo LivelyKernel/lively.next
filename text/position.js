@@ -26,3 +26,11 @@ export function lessEqPosition(p1, p2) {
 export function eqPosition(p1, p2) {
   return comparePosition(p1, p2) === 0;
 }
+
+export function minPosition(p1, p2) {
+  return lessPosition(p1, p2) ? p1 : p2;
+}
+
+export function maxPosition(p1, p2) {
+  return lessPosition(p1, p2) ? p2 : p1;
+}
