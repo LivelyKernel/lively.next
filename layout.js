@@ -15,15 +15,13 @@ class Layout {
   onSubmorphRemoved(morph, submorph) { this.applyTo(morph) }
   
   onChange(morph, change) {
-    if (change.prop == "submorphs") {
-      switch (change.selector) {
-        case "removeMorph":
-          this.onSubmorphRemoved(morph, change.args[0]);
-          break;
-        case "insertMorphAt":
-          this.onSubmorphAdded(morph, change.args[0]);
-          break;
-      }
+    switch (change.selector) {
+      case "removeMorph":
+        this.onSubmorphRemoved(morph, change.args[0]);
+        break;
+      case "insertMorphAt":
+        this.onSubmorphAdded(morph, change.args[0]);
+        break;
     }
     this.applyTo(morph);
   }
