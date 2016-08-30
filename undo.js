@@ -84,6 +84,7 @@ export class UndoManager {
     var redo = this.redos.shift();
     if (!redo) return;
     this.undos.push(redo);
+    this.applyCount++;
     try { redo.apply() }
     finally { this.applyCount--; }
     return redo;
