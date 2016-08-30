@@ -374,27 +374,20 @@ export class Morph {
       throw new Error(`${submorph} cannot be added as a submorph to ${this}`)
 
     // sanity check
-    if (submorph.isMorph && submorph.isAncestorOf(this)) {
-      this.env.world.logError(new Error(`addMorph: Circular relationships between morphs not allowed\ntried to add ${submorph} to ${this}`));
-      return null;
+    if (submorph.isMorph) {
+      if (submorph.isAncestorOf(this)) {
+        this.env.world.logError(new Error(`addMorph: Circular relationships between morphs not allowed\ntried to add ${submorph} to ${this}`));
+        return null;
+      }
+      if (submorph === this) {
+        this.env.world.logError(new Error(`addMorph: Trying to add itself as a submorph: ${this}`));
+        return null;
+      }
     }
 
     if (!submorph.isMorph) submorph = morph(submorph);
 
     this._cachedBounds = null;
-
-    var prevOwner = submorph.owner,
-        submorphs = this.getProperty("submorphs");
-
-    // modify the submorphs array
-    index = Math.min(submorphs.length, Math.max(0, index));
-    // is the morph already in submorphs? Remove it and fix index
-    var existingIndex = submorphs.indexOf(submorph);
-    if (existingIndex !== -1) {
-      submorphs.splice(existingIndex, 1);
-      if (existingIndex < index) index--;
-    }
-    submorphs.splice(index, 0, submorph);
 
     this.addMethodCallChangeDoing({
       target: this,
@@ -406,7 +399,9 @@ export class Morph {
         args: [submorph],
       }
     }, () => {
-      var tfm;
+      var prevOwner = submorph.owner,
+          submorphs = this.getProperty("submorphs").slice(), tfm;
+
       if (prevOwner && prevOwner !== this) {
       // since morph transforms are local to a morphs owner we need to
       // compute a new transform for the morph inside the new owner so that the
@@ -415,10 +410,22 @@ export class Morph {
         submorph.remove();
       }
 
+      // modify the submorphs array
+      index = Math.min(submorphs.length, Math.max(0, index));
+      // is the morph already in submorphs? Remove it and fix index
+      var existingIndex = submorphs.indexOf(submorph);
+      if (existingIndex !== -1) {
+        submorphs.splice(existingIndex, 1);
+        if (existingIndex < index) index--;
+      }
+      submorphs.splice(index, 0, submorph);
+
       // set new owner
       submorph._owner = this;
       if (tfm) submorph.setTransform(tfm);
+      this._currentState["submorphs"] = submorphs;
     });
+
 
     return submorph;
   }
