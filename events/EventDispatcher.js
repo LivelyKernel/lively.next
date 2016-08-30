@@ -56,6 +56,9 @@ const textOnlyEvents = [
   "input", "compositionstart", "compositionupdate", "compositionend"
 ]
 
+// maximum interval (in milliseconds) between double/triple clicks
+const repeatClickInterval = 500;
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helpers
 
@@ -261,13 +264,23 @@ export default class EventDispatcher {
           // This allows us to act on this info later
           state.clickedOnMorph = targetMorph;
           state.clickedOnPosition = defaultEvent.position;
+
+          let { clickedOnMorph, clickedOnPosition, clickedAtTime } = state.prevClick,
+              clickInterval = Date.now() - clickedAtTime,
+              repeatedClick = clickedOnMorph === targetMorph && clickInterval < repeatClickInterval;
+          if (repeatedClick) state.clicks += 1; else state.clicks = 1;
         });
         break;
 
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointerup":
-        defaultEvent.onDispatch(() => state.clickedOnMorph = null);
+        defaultEvent.onDispatch(() => {
+          let { clickedOnMorph, clickedOnPosition } = state,
+              clickedAtTime = Date.now();
+          state.prevClick = { clickedOnMorph, clickedOnPosition, clickedAtTime };
+          state.clickedOnMorph = null;
+        });
 
         // drag release
         if (state.draggedMorph) {
