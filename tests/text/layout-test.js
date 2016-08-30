@@ -4,6 +4,8 @@ import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 
+const padding = 20;
+
 function text(string, props) {
   return new Text({
     name: "text",
@@ -11,6 +13,7 @@ function text(string, props) {
     fontFamily: "Monaco, monospace",
     fontSize: 10,
     extent: pt(100,100),
+    padding,
     fontMetric,
     ...props
   });
@@ -24,19 +27,19 @@ describe("text layout", () => {
     it("computes size on construction", () => {
       var t = text("hello", {fixedWidth: false, fixedHeight: false}),
           {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: false});
-      expect(height).equals(fontMetric.height);
-      expect(width).equals(5*fontMetric.width);
+      expect(height).equals(fontMetric.height + 2*padding);
+      expect(width).equals(5*fontMetric.width + 2*padding);
     });
 
     it("computes only width", () => {
       var {extent: {x: width, y: height}} = text("hello", {fixedWidth: false, fixedHeight: true});
       expect(height).equals(100);
-      expect(width).equals(5*fontMetric.width);
+      expect(width).equals(5*fontMetric.width + 2*padding);
     });
 
     it("computes only height", () => {
       var {extent: {x: width, y: height}} = text("hello", {fixedWidth: true, fixedHeight: false});
-      expect(height).equals(fontMetric.height);
+      expect(height).equals(fontMetric.height + 2*padding);
       expect(width).equals(100);
     });
 

@@ -13,13 +13,16 @@ var inBrowser = System.get("@system-env").browser ? it :
 var describeInBrowser = System.get("@system-env").browser ? describe :
   (title, fn) => { console.warn(`Suite ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
 
+const padding = 20;
+
 function text(string, props) {
   return new Text({
     name: "text",
     textString: string,
-    fontFamily: "Monaco, monospace",
+    fontFamily: "Monaco, monosonpace",
     fontSize: 10,
     extent: pt(100,100),
+    padding,
     fontMetric,
     ...props
   });
@@ -130,7 +133,7 @@ describe("rendered text", () => {
       clipMode: "auto",
       extent: pt(100,2*lineHeight), position: pt(0,0),
       textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
-      scroll: pt(0, lineHeight*2-1)
+      scroll: pt(0, lineHeight*2+padding-1)
     });
 
     await sut.whenRendered();
@@ -139,18 +142,18 @@ describe("rendered text", () => {
         b = node.querySelector(".text-layer").getBoundingClientRect(),
         textBounds = new Rectangle(b.left, b.top, b.width, b.height);
 
-    expect(textBounds.top()).equals(-2*lineHeight+1, "text layer not scrolled");
-    expect(textBounds.height).equals(lineHeight*10, "text layer does not have size of all lines");
+    expect(textBounds.top()).equals(-2*lineHeight-padding+1, "text layer not scrolled");
+    expect(textBounds.height).equals(lineHeight*10 + 2*padding, "text layer does not have size of all lines");
     expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
   });
 
   it("can resize on content change", async () => {
     sut.textString = "Hello hello";
     await sut.whenRendered();
-    expect(sut.width).equals(11*fontMetric.width);
+    expect(sut.width).equals(11*fontMetric.width + 2*padding);
     sut.textString = "foo";
     await sut.whenRendered();
-    expect(sut.width).equals(3*fontMetric.width);
+    expect(sut.width).equals(3*fontMetric.width + 2*padding);
   });
 
 });
@@ -165,13 +168,13 @@ describe("scroll", () => {
     var lineHeight = fontMetric.height
     Object.assign(sut, {
       clipMode: "auto",
-      extent: pt(100,2*lineHeight),
+      extent: pt(100,2*lineHeight+2*padding),
       textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
     });
-    expect(sut.scrollExtent).equals(pt(100, sut.document.lines.length * lineHeight));
+    expect(sut.scrollExtent).equals(pt(100, sut.document.lines.length * lineHeight + 2*padding, "scrollExtent not as expected"));
     sut.cursorPosition = { column: 0, row: 3 }
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,lineHeight*2));
+    expect(sut.scroll).equals(pt(0,lineHeight*2-padding));
     sut.cursorPosition = {column: 0, row: 0};
     sut.scrollCursorIntoView();
     expect(sut.scroll).equals(pt(0,0))
@@ -234,7 +237,7 @@ describe("text mouse events", () => {
 
   it("click sets cursor", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*3+2, y+fontMetric.height*2 - 5); // second line
+        clickPos = pt(x+fontMetric.width*3 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line
 
     expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
     env.eventDispatcher.simulateDOMEvents({target: sut, type: "click", position: clickPos});
@@ -248,9 +251,9 @@ describe("text mouse events", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         {width: charW, height: charH} = fontMetric;
 
-    var dragStartPos =    pt(charW-2, charH-2),
-        dragOvershotPos = pt(3*charW+10, charH*2+10),
-        dragEndPos =      pt(3*charW+2, charH*2-charH/2);
+    var dragStartPos =    pt(charW+padding-2, charH+padding-2),
+        dragOvershotPos = pt(3*charW+padding+10, charH*2+padding+10),
+        dragEndPos =      pt(3*charW+padding+2, charH*2+padding-charH/2);
 
     expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
 
