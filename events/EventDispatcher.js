@@ -161,6 +161,7 @@ export default class EventDispatcher {
       focusedMorph: null,
       clickedOnPosition: null,
       clickedOnMorph: null,
+      prevClick: null,
       draggedMorph: null,
       dragDelta: null,
       lastDragPosition: null,
@@ -265,10 +266,14 @@ export default class EventDispatcher {
           state.clickedOnMorph = targetMorph;
           state.clickedOnPosition = defaultEvent.position;
 
-          let { clickedOnMorph, clickedOnPosition, clickedAtTime } = state.prevClick,
-              clickInterval = Date.now() - clickedAtTime,
-              repeatedClick = clickedOnMorph === targetMorph && clickInterval < repeatClickInterval;
-          if (repeatedClick) state.clicks += 1; else state.clicks = 1;
+          let repeatedClick = false;
+          if (state.prevClick) {
+            let { clickedOnMorph, clickedOnPosition, clickedAtTime } = state.prevClick,
+              clickInterval = Date.now() - clickedAtTime;
+            repeatedClick = clickedOnMorph === targetMorph && clickInterval < repeatClickInterval;
+          }
+          if (repeatedClick) state.clicks += 1;
+          else state.clicks = 1;
         });
         break;
 
