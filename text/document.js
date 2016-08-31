@@ -32,6 +32,26 @@ export default class TextDocument {
     } : {row: 0, column: 0}
   }
 
+  static getWordInStringAtIndex(string, index) {
+    if (string.trim().length === 0) return string; // string is entirely whitespace
+    var left  = string.slice(0, index+1),
+        right = string.slice(index),
+        whitespaceAtIndex = string.charAt(index).match(/\s/),
+        startRegex = new RegExp(`\\${whitespaceAtIndex ? "s" : "S"}+\$`),
+        endRegex = new RegExp(`\\${whitespaceAtIndex ? "S" : "s"}`),
+        start = left.search(startRegex),
+        end   = right.search(endRegex);
+    if (start === -1) start = 0;
+    if (end === -1) end = right.length;
+    return string.slice(start, end+index);
+  }
+
+  getWordAt(pos = {row: 0, column: 0}) {
+    var { row, column } = pos,
+        line = this.getLine(row);
+    return this.constructor.getWordInStringAtIndex(line, column);
+  }
+
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
     return this.lines[safeRow];
