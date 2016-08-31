@@ -269,4 +269,30 @@ describe("text mouse events", () => {
     expect(sut.selection).stringEquals("Selection(0/0 -> 1/2)");
   });
 
+  it("double-click selects word", () => {
+    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
+        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+
+    env.eventDispatcher.simulateDOMEvents(
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos});
+
+    expect(sut.selection).stringEquals("Selection(1/0 -> 1/3)");
+  });
+
+  it("triple-click selects line", () => {
+    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
+        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+
+    env.eventDispatcher.simulateDOMEvents(
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos});
+
+    expect(sut.selection).stringEquals("Selection(1/0 -> 1/9)");
+  });
 });
