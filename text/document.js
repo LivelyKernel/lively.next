@@ -1,5 +1,5 @@
-import { string } from "lively.lang";
-import { lessPosition, eqPosition } from "./position.js"
+import { string, arr } from "lively.lang";
+import { lessPosition, lessEqPosition, eqPosition } from "./position.js"
 
 const newline = "\n",
       newlineLength = newline.length;
@@ -165,6 +165,72 @@ export default class TextDocument {
 
     lines[fromRow] = lines[fromRow].slice(0, fromCol) + lines[toRow].slice(toCol);
     lines.splice(fromRow+1, toRow - fromRow);
+  }
+
+  wordsOfLine(row) {
+    var line = this.lines[row] || "",
+        words = [], word;
+    for (var i = 0; i < line.length; i++) {
+      if (line[i].match(/\s/)) {
+        if (word) {
+          word.range.end.column = i;
+          words.push(word);
+          word = null;
+        }
+      } else {
+        word = (word || {index: words.length, string: "", range: {start: {row, column: i}, end: {row, column: i}}});
+        word.string += line[i];
+      }
+    }
+    if (word) { word.range.end.column = i; words.push(word); }
+    return words;
+  }
+
+  wordAt({row, column}, words = this.wordsOfLine(row)) {
+    return words.find(ea => {
+      var {range: {start: {column: startCol}, end: {column: endCol}}} = ea;
+      return startCol <= column && column <= endCol;
+    }) || {range: {start: {column, row}, end: {column, row}}, string: ""};
+  }
+
+  wordLeft(pos) {
+    var {row, column} = pos,
+        words = this.wordsOfLine(row);
+
+    // nothing on this line, find previous word of a line above
+    if (!words.length || lessEqPosition(pos, words[0].range.start)) {
+      while (--row >= 0) {
+        words = this.wordsOfLine(row);
+        if (words.length) return arr.last(words);
+      }
+      return {range: {start: pos, end: pos}, string: ""};
+    }
+    
+    var word = this.wordAt(pos);
+    // if there is a word at pos and pos = beginning of word we return the word
+    // to the left, otherwise word
+    if (word.string)
+      return eqPosition(word.range.start, pos) ? words[word.index-1] : word;
+
+    // no word at pos, find the next left word next to pos
+    return words.slice().reverse().find(word => word.range.end.column <= column) || {range: {start: pos, end: pos}, string: ""};
+  }
+
+  wordRight(pos) {
+    var {column, row} = pos,
+        words = this.wordsOfLine(pos.row);
+    if (!words.length || lessEqPosition(arr.last(words).range.end, pos)) {
+      while (++row < this.lines.length) {
+        words = this.wordsOfLine(row);
+        if (words.length) return words[0];
+      }
+      return {range: {start: pos, end: pos}, string: ""};
+    }
+    var word = this.wordAt(pos);
+    if (word.string) {
+      return eqPosition(word.range.end, pos) ? words[word.index+1] : word;
+    }
+    return words.find(word => word.range.start.column >= column) || {range: {start: pos, end: pos}, string: ""};
   }
 
   copy() { return new TextDocument(this.lines.slice()); }

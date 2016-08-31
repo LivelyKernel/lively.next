@@ -141,7 +141,7 @@ export class UndoManager {
     if (!redo) return;
     this.undos.push(redo);
     this.applyCount++;
-    try { redo.apply() }
+    try { redo.apply(); }
     finally { this.applyCount--; }
     return redo;
   }

@@ -16,6 +16,52 @@ describe("text doc", () => {
     expect(doc.getLine(-2)).equals("hello");
   });
 
+  describe("words", () => {
+    
+    var doc;
+
+    beforeEach(() => doc = TextDocument.fromString("Hello world\n 123 3  4\n"));
+
+    it("of line", () => {
+      expect(doc.wordsOfLine(1)).deep.equals([
+        {index: 0, range: range(1,1,1,4), string: "123"},
+        {index: 1, range: range(1,5,1,6), string: "3" },
+        {index: 2, range: range(1,8,1,9), string: "4"}
+      ]);
+    });
+
+    it("word at", () => {
+      expect(doc.wordAt({column: 2, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "inside");
+      expect(doc.wordAt({column: 1, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "at beginning");
+      expect(doc.wordAt({column: 4, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "at end");
+      expect(doc.wordAt({column: 5, row: 1})).deep.equals({index: 1, range: range(1,5,1,6), string: "3"}, "at beginning 2");
+      expect(doc.wordAt({column: 0, row: 1})).deep.equals({          range: range(1,0,1,0), string: ""}, "at line beginning");
+      expect(doc.wordAt({column: 9, row: 1})).deep.equals({index: 2, range: range(1,8,1,9), string: "4"}, "at line end");
+      expect(doc.wordAt({column: 7, row: 1})).deep.equals({          range: range(1,7,1,7), string: ""}, "empty");
+    });
+
+    it("word left", () => {
+      expect(doc.wordLeft({column: 0, row: 1})).deep.equals({index: 1, range: range(0,6,0,11), string: "world"}, "line start");
+      expect(doc.wordLeft({column: 1, row: 1})).deep.equals({index: 1, range: range(0,6,0,11), string: "world"}, "beginning of word");
+      expect(doc.wordLeft({column: 2, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "in word");
+      expect(doc.wordLeft({column: 4, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "at end of word");
+      expect(doc.wordLeft({column: 5, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "at beginning of second word");
+      expect(doc.wordLeft({column: 7, row: 1})).deep.equals({index: 1, range: range(1,5,1,6), string: "3"}, "in emptiness");
+      expect(doc.wordLeft({column: 0, row: 0})).deep.equals({          range: range(0,0,0,0), string: ""}, "at text start");
+    });
+
+    it("word right", () => {
+      expect(doc.wordRight({column: 0, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "line start");
+      expect(doc.wordRight({column: 1, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "at beginning of first word");
+      expect(doc.wordRight({column: 2, row: 1})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "in first word");
+      expect(doc.wordRight({column: 4, row: 1})).deep.equals({index: 1, range: range(1,5,1,6), string: "3"}, "at end of first word");
+      expect(doc.wordRight({column: 7, row: 1})).deep.equals({index: 2, range: range(1,8,1,9), string: "4"}, "in emptiness");
+      expect(doc.wordRight({column: 11, row: 0})).deep.equals({index: 0, range: range(1,1,1,4), string: "123"}, "at line end");
+      expect(doc.wordRight({column: 9, row: 1})).deep.equals({           range: range(1,9,1,9), string: ""}, "at text end");
+    });
+
+  });
+
   it("created using text string", () => {
     var doc = TextDocument.fromString("hello\nworld");
     expect(doc.lines).equals(["hello", "world"]);

@@ -245,5 +245,4 @@ describe("key bindings", () => {
     expect(handler.lookup("G", {keyChain: canonicalize("alt-g")})).deep.equals({command: "test"});
   });
 
-
 });

@@ -251,7 +251,12 @@ export class Text extends Morph {
     return doc.getLine(row);
   }
 
-  lineRange(row, ignoreLeadingWhitespace = true) {
+  wordsOfLine(row = this.cursorPosition.row) { return this.document.wordsOfLine(row); }
+  wordAt(pos = this.cursorPosition) { return this.document.wordAt(pos); }
+  wordLeft(pos = this.cursorPosition) { return this.document.wordLeft(pos); }
+  wordRight(pos = this.cursorPosition) { return this.document.wordRight(pos); }
+
+  lineRange(row = this.cursorPosition.row, ignoreLeadingWhitespace = true) {
     if (typeof row !== "number") this.cursorPosition.row;
     var line = this.getLine(row),
         range = {start: {column: 0, row}, end: {column: line.length, row}},

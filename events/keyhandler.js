@@ -87,6 +87,11 @@ var keyBindings = [
   {keys: 'Shift-Up',    command: "select up"},
   {keys: 'Shift-Down',  command: "select down"},
 
+  {keys: 'Alt-Right|Alt-F',              command: "goto word right"},
+  {keys: 'Alt-Left|Alt-B',               command: "goto word left"},
+  {keys: 'Alt-Shift-Right|Alt-Shift-F',  command: {command: "goto word right", args: {select: true}}},
+  {keys: 'Alt-Shift-Left|Alt-Shift-B',   command: {command: "goto word left", args: {select: true}}},
+
   {keys: {win: "Ctrl-Shift-L", mac: 'Meta-L'},  command: "select line"},
   {keys: {win: "Shift-Home", mac: "Shift-Home|Ctrl-Shift-A"}, command: "select to line start"},
   {keys: {win: "Home", mac: "Home|Ctrl-A"}, command: {command: "select to line start", args: {collapse: true}}},
