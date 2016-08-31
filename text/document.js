@@ -32,7 +32,7 @@ export default class TextDocument {
     } : {row: 0, column: 0}
   }
 
-  static getWordInStringAtIndex(string, index) {
+  static locateWordInStringAt(string, index) {
     if (string.trim().length === 0) return string; // string is entirely whitespace
     var left  = string.slice(0, index+1),
         right = string.slice(index),
@@ -43,13 +43,14 @@ export default class TextDocument {
         end   = right.search(endRegex);
     if (start === -1) start = 0;
     if (end === -1) end = right.length;
-    return string.slice(start, end+index);
+    end += index;
+    return { start, end };
   }
 
-  getWordAt(pos = {row: 0, column: 0}) {
+  locateWordAt(pos = {row: 0, column: 0}) {
     var { row, column } = pos,
         line = this.getLine(row);
-    return this.constructor.getWordInStringAtIndex(line, column);
+    return this.constructor.locateWordInStringAt(line, column);
   }
 
   getLine(row) {
