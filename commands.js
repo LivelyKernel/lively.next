@@ -194,6 +194,17 @@ var commands = [
   },
 
   {
+    name: "select word",
+    exec: function(morph) {
+      var sel = morph.selection,
+          cursor = sel.lead,
+          wordRange = morph.wordRangeAt(cursor);
+      sel.range = wordRange;
+      return true;
+    }
+  },
+
+  {
     name: "goto page up",
     exec: function(morph) { morph.pageUpOrDown({direction: "up", select: false}); return true; }
   },

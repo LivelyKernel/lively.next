@@ -104,7 +104,7 @@ export class Text extends Morph {
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.undoManager = new UndoManager();
     this._keyhandlers = []; // defaultKeyHandler is fallback
-    // this.commands = new CommandHandler();
+    this.commands = defaultCommandHandler,
     this._selection = selection ? new Selection(this, selection) : null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
@@ -252,12 +252,16 @@ export class Text extends Morph {
     return new Range(range);
   }
 
-  getWord(pos = this.cursorPosition) {
-    // TODO
+  wordAt(pos = this.cursorPosition) {
+    var { start, end } = this.document.locateWordAt(pos),
+        line = this.document.getLine(pos.row);
+    return line.slice(start, end);
   }
 
-  wordRange(pos = this.cursorPosition) {
-    // TODO
+  wordRangeAt(pos = this.cursorPosition) {
+    var { start, end } = this.document.locateWordAt(pos),
+        { row } = pos;
+    return new Range({ start: {row, column: start}, end: {row, column: end}});
   }
 
   insertTextAndSelect(text, pos = null) {
@@ -422,9 +426,10 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
+    var { commands } = this;
     switch (evt.state.clicks) {
-      case 2:   break; // TODO
-      case 3:   defaultCommandHandler.exec("select line", this, [], evt); break;
+      case 2:   commands.exec("select word", this, [], evt); break;
+      case 3:   commands.exec("select line", this, [], evt); break;
       default:  this.onMouseMove(evt);
     }
   }

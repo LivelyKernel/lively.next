@@ -57,7 +57,7 @@ const textOnlyEvents = [
 ]
 
 // maximum interval (in milliseconds) between double/triple clicks
-const repeatClickInterval = 500;
+const repeatClickInterval = 250;
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helpers
