@@ -274,13 +274,18 @@ var commands = [
 
   {
     name: "insertstring",
-    exec: function(morph, args) {
-      var isValid = args && (typeof args.string === "string" && args.string.length);
+    exec: function(morph, args = {string: null, undoGroup: false}) {
+      var {string, undoGroup} = args,
+          isValid = typeof string === "string" && string.length;
       if (!isValid) console.warn(`command insertstring called with not string value`);
       if (morph.rejectsInput() || !isValid) return false;
       let sel = morph.selection;
-      sel.text = args.string;
+      sel.text = string;
       sel.collapseToEnd();
+      if (typeof undoGroup === "number")
+        morph.undoManager.groupLater(undoGroup);
+      else if (undoGroup)
+        morph.undoManager.group();
       return true;
     }
   }

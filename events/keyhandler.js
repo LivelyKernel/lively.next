@@ -36,7 +36,7 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   }
 
   if (!success && isInputEvent) {
-    success = commands.exec("insertstring", morph, {string: data || key}, evt);
+    success = commands.exec("insertstring", morph, {string: data || key, undoGroup: 600/*ms*/}, evt);
   }
 
   return success;
@@ -107,9 +107,9 @@ var keyBindings = [
   {keys: "Ctrl-L", command: "realign top-bottom-center"},
   {keys: {win: "Ctrl-Shift-L", mac: "Ctrl-Shift-L|Alt-G G"}, command: "goto line"},
 
-  {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n"}}}, // FIXME windowss
-  {keys: 'Space',       command: {command: "insertstring", args: {string: " "}}},
-  {keys: 'Tab',         command: {command: "insertstring", args: {string: "\t"}}},
+  {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n", undoGroup: true}}}, // FIXME windowss
+  {keys: 'Space',       command: {command: "insertstring", args: {string: " ", undoGroup: true}}},
+  {keys: 'Tab',         command: {command: "insertstring", args: {string: "\t", undoGroup: true}}},
 ]
 
 function bowserOS() {
