@@ -308,6 +308,28 @@ var commands = [
   },
 
   {
+    name: "goto word left",
+    exec: function(morph, args = {select: false}) {
+      morph.wordLeft(morph)
+      var {range} = morph.wordLeft();
+      morph.selection.lead = range.start;
+      if (!args.select) morph.selection.anchor = range.start;
+      return true;
+    }
+  },
+
+  {
+    name: "goto word right",
+    exec: function(morph, args = {select: false}) {
+      morph.wordLeft(morph)
+      var {range} = morph.wordRight();
+      morph.selection.lead = range.end;
+      if (!args.select) morph.selection.anchor = range.end;
+      return true;
+    }
+  },
+
+  {
     name: "realign top-bottom-center",
     doc: "Cycles through centering the cursor position, aligning it at the top, aligning it at the bottom.",
     exec: function(morph) {
