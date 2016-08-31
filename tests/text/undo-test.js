@@ -44,9 +44,9 @@ describe("undo", () => {
 
   it("groups undos", () => {
     expect(text.undoManager.undos).have.length(1);
-    text.groupTextUndoChanges();
+    text.undoManager.group();
     text.insertText("a"); text.insertText("b"); text.insertText("c");
-    text.groupTextUndoChanges();
+    text.undoManager.group();
     expect(text.undoManager.undos).have.length(2);
     text.textUndo();
     expect(text.textString).equals("hello\nworld");
@@ -56,7 +56,7 @@ describe("undo", () => {
   });
 
   it("groups debounced", async () => {
-    text.groupTextUndoChanges();
+    text.undoManager.group();
     text.insertText("a");
     text.undoManager.groupLater();
     setTimeout(() => text.insertText("b"), 5);
@@ -66,7 +66,7 @@ describe("undo", () => {
   });
 
   it("groups debounced cancel", async () => {
-    text.groupTextUndoChanges();
+    text.undoManager.group();
     text.insertText("a");
     text.undoManager.groupLater();
     setTimeout(() => text.insertText("b"), 5);

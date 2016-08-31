@@ -576,10 +576,6 @@ export class Text extends Morph {
     this.selection = this.computeTextRangeForChanges(changes);
   }
 
-  groupTextUndoChanges() {
-    this.undoManager.group();
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
 
