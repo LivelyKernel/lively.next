@@ -53,9 +53,7 @@ class Undo {
   addTarget(t) { arr.pushIfNotIncluded(this.targets, t); }
 
   addUndos(undos) {
-    undos = undos.concat(this)
-      .filter(ea => ea.recorded())
-      .sortBy(({no}) => no);
+    undos = arr.sortBy(undos.concat(this).filter(ea => ea.recorded()), ({no}) => no);
     if (!undos.length) return;
     this.changes = arr.flatmap(undos, ({changes}) => changes);
     this.timestamp = undos[0].timestamp;
