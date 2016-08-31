@@ -246,10 +246,8 @@ var commands = [
   {
     name: "select word",
     exec: function(morph) {
-      var sel = morph.selection,
-          cursor = sel.lead,
-          wordRange = morph.wordRangeAt(cursor);
-      sel.range = wordRange;
+      var sel = morph.selection;
+      sel.range = morph.wordAt(sel.lead).range;
       return true;
     }
   },

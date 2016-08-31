@@ -266,18 +266,6 @@ export class Text extends Morph {
     return new Range(range);
   }
 
-  wordAt(pos = this.cursorPosition) {
-    var { start, end } = this.document.delimitWordAt(pos),
-        line = this.document.getLine(pos.row);
-    return line.slice(start, end);
-  }
-
-  wordRangeAt(pos = this.cursorPosition) {
-    var { start, end } = this.document.delimitWordAt(pos),
-        { row } = pos;
-    return new Range({ start: {row, column: start}, end: {row, column: end}});
-  }
-
   insertTextAndSelect(text, pos = null) {
     text = String(text);
     if (pos) this.selection.range = this.insertText(text, pos);
