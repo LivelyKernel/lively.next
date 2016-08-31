@@ -1,19 +1,31 @@
 /*global System*/
 
+import { arr } from "lively.lang";
+import { Range } from "./text/selection.js"
 import { eqPosition } from "./text/position.js"
 
+// commands.find(ea => ea.name === "transpose chars").exec(that)
+
 var commands = [
-  
+
   {
     name: "clipboard copy",
     doc: "placeholder for native copy",
-    exec: function() { return true; }
+    exec: function(morph) {
+      if (morph.selection.isEmpty())
+        morph.selectLine(morph.cursorPosition.row);
+      return true;
+    }
   },
 
   {
     name: "clipboard cut",
     doc: "placeholder for native cut",
-    exec: function() { return true; }
+    exec: function(morph) {
+      if (morph.selection.isEmpty())
+        morph.selectLine(morph.cursorPosition.row);
+      return true;
+    }
   },
 
   {
