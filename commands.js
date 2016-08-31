@@ -110,6 +110,44 @@ var commands = [
   },
 
   {
+    name: "indent",
+    exec: function(morph) {
+      morph.undoManager.group();
+      morph.withSelectedLinesDo((line, range) => morph.insertText(morph.tab, range.start));
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "outdent",
+    exec: function(morph) {
+      morph.undoManager.group();
+      morph.withSelectedLinesDo((line, range) => {
+        if (line.startsWith(morph.tab))
+          morph.deleteText({start: range.start, end: {row: range.start.row, column: morph.tab.length}})
+      });
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "transpose chars",
+    exec: function(morph) {
+      if (morph.selection.isEmpty()) {
+        var {row, column} = morph.cursorPosition,
+            range = Range.create(row, column-1, row, column+1),
+            line = morph.getLine(row),
+            left = line[column-1],
+            right = line[column];
+        if (left && right) morph.replace(range, right + left, true);
+      }
+      return true;
+    }
+  },
+
+  {
     name: "move cursor left",
     doc: "Move the cursor 1 character left. At the beginning of a line move the cursor up. If a selection is active, collapse the selection left.",
     exec: function(morph) { morph.selection.goLeft(1); return true; }

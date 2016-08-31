@@ -110,6 +110,11 @@ var keyBindings = [
   {keys: 'Enter',       command: {command: "insertstring", args: {string: "\n", undoGroup: true}}}, // FIXME windowss
   {keys: 'Space',       command: {command: "insertstring", args: {string: " ", undoGroup: true}}},
   {keys: 'Tab',         command: {command: "insertstring", args: {string: "\t", undoGroup: true}}},
+  
+  {keys: {win: 'Ctrl-]', max: 'Meta-]'},         command: "indent"},
+  {keys: {win: 'Ctrl-[', max: 'Meta-['},         command: "outdent"},
+
+  {keys: {mac: 'Ctrl-X Ctrl-T'},         command: "transpose chars"}
 ]
 
 function bowserOS() {
