@@ -324,6 +324,45 @@ export class Text extends Morph {
     this.undoManager.undoStop();
   }
 
+  replace(range, text, undoGroup = false) {
+    if (undoGroup) this.undoManager.group();
+    this.deleteText(range);
+    var range = this.insertText(text, range.start);
+    if (undoGroup) this.undoManager.group();
+    return range;
+  }
+
+  modifyLines(startRow, endRow, modifyFn) {
+    var lines = arr.range(startRow, endRow).map(row => this.getLine(row)),
+        modifiedText = lines.map(modifyFn).join("\n") + "\n";
+    this.deleteText({start: {row: startRow, column: 0}, end: {row: endRow+1, column: 0}})
+    this.insertText(modifiedText, {row: startRow, column: 0});
+  }
+
+  modifySelectedLines(modifyFn) {
+    var range = this.selection.isEmpty() ?
+      this.lineRange(undefined, false) :
+      this.selection.range;
+    return this.modifyLines(range.start.row, range.end.row, modifyFn);
+  }
+
+  withLinesDo(startRow, endRow, doFunc) {
+    arr.range(startRow, endRow).forEach(row => {
+      var line = this.getLine(row),
+          range = Range.create(row, 0, row, line.length);
+      doFunc(line, range);
+    });
+  }
+
+  withSelectedLinesDo(doFunc) {
+    var range = this.selection.isEmpty() ?
+      this.lineRange(undefined, false) :
+      this.selection.range;
+    var {start: {row: startRow}, end: {row: endRow, column: endColumn}} = range;
+    // if selection is only in the beginning of last line don't include it
+    return this.withLinesDo(startRow, endColumn === 0 ? endRow-1 : endRow, doFunc);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 

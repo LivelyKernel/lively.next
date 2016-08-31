@@ -74,6 +74,17 @@ describe("text selection", () => {
 
 });
 
+describe("text operations", () => {
+
+  it("selection / line string", () => {
+    var t = text("hello\n world", {});
+    t.selection = range(0,2,0,4);
+    t.withSelectedLinesDo((line, range) => t.insertText(" ", range.start));
+    expect(t.textString).equals(" hello\n world");
+    expect(t.selection.text).equals("ll");
+  });
+
+});
 
 describe("anchors", () => {
   
