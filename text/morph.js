@@ -253,13 +253,13 @@ export class Text extends Morph {
   }
 
   wordAt(pos = this.cursorPosition) {
-    var { start, end } = this.document.locateWordAt(pos),
+    var { start, end } = this.document.delimitWordAt(pos),
         line = this.document.getLine(pos.row);
     return line.slice(start, end);
   }
 
   wordRangeAt(pos = this.cursorPosition) {
-    var { start, end } = this.document.locateWordAt(pos),
+    var { start, end } = this.document.delimitWordAt(pos),
         { row } = pos;
     return new Range({ start: {row, column: start}, end: {row, column: end}});
   }

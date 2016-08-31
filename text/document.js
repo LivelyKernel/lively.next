@@ -32,7 +32,7 @@ export default class TextDocument {
     } : {row: 0, column: 0}
   }
 
-  static locateWordInStringAt(string, index) {
+  static delimitWordInStringAt(string, index) {
     if (string.trim().length === 0) return string; // string is entirely whitespace
     var left  = string.slice(0, index+1),
         right = string.slice(index),
@@ -47,10 +47,10 @@ export default class TextDocument {
     return { start, end };
   }
 
-  locateWordAt(pos = {row: 0, column: 0}) {
+  delimitWordAt(pos = {row: 0, column: 0}) {
     var { row, column } = pos,
         line = this.getLine(row);
-    return this.constructor.locateWordInStringAt(line, column);
+    return this.constructor.delimitWordInStringAt(line, column);
   }
 
   getLine(row) {
