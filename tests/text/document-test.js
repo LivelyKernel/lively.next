@@ -63,6 +63,19 @@ describe("text doc", () => {
     expect(doc.indexToPosition(16)).deep.equals({row: 2, column: 3});
   });
 
+  it("delimit word at position", () => {
+    var doc = TextDocument.fromString("hello  world\nlol");
+    expect(doc.delimitWordAt({row: 0, column: 0})).deep.equals({start: 0, end: 5});
+    expect(doc.delimitWordAt({row: 0, column: 1})).deep.equals({start: 0, end: 5});
+    expect(doc.delimitWordAt({row: 0, column: 4})).deep.equals({start: 0, end: 5});
+    expect(doc.delimitWordAt({row: 0, column: 5})).deep.equals({start: 5, end: 7});
+    expect(doc.delimitWordAt({row: 0, column: 6})).deep.equals({start: 5, end: 7});
+    expect(doc.delimitWordAt({row: 0, column: 7})).deep.equals({start: 7, end: 12});
+    expect(doc.delimitWordAt({row: 0, column: 11})).deep.equals({start: 7, end: 12});
+    expect(doc.delimitWordAt({row: 1, column: 0})).deep.equals({start: 0, end: 3});
+    expect(doc.delimitWordAt({row: 1, column: 2})).deep.equals({start: 0, end: 3});
+  });
+
   describe("insertion", () => {
 
     var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld"));
