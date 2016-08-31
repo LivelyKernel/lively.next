@@ -4,7 +4,9 @@ var config = {
   verboseLogging: true,
   maxStatusMessages: 5,
   text: {
-    cursorBlinkPeriod: .5
+    cursorBlinkPeriod: .5,
+    useSoftTabs: true,
+    tabWidth: 2
   }
 }
 

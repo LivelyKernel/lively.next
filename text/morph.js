@@ -1,4 +1,5 @@
 /*global System*/
+import config from "../config.js";
 import { string, obj, arr } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
@@ -98,6 +99,8 @@ export class Text extends Morph {
       fontSize: 12,
       fontColor: Color.black,
       fontKerning: true,
+      useSoftTabs: config.text.useSoftTabs || true,
+      tabWidth: config.text.tabWidth || 2,
       ...props
     });
     this.document = new TextDocument();
@@ -226,6 +229,12 @@ export class Text extends Morph {
   get scrollExtent() {
     return this.paddedTextBounds().extent().maxPt(super.scrollExtent);
   }
+
+  get useSoftTabs()  { return this.getProperty("useSoftTabs"); }
+  set useSoftTabs(value)  { this.addValueChange("useSoftTabs", value); }
+  get tabWidth()  { return this.getProperty("tabWidth"); }
+  set tabWidth(value)  { this.addValueChange("tabWidth", value); }
+  get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
