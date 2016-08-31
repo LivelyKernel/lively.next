@@ -247,28 +247,6 @@ describe("text mouse events", () => {
     expect(sut.selection).stringEquals("Selection(1/3 -> 1/3)");
   });
 
-  it("drag sets selection", () => {
-    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        {width: charW, height: charH} = fontMetric;
-
-    var dragStartPos =    pt(charW+padding-2, charH+padding-2),
-        dragOvershotPos = pt(3*charW+padding+10, charH*2+padding+10),
-        dragEndPos =      pt(3*charW+padding+2, charH*2+padding-charH/2);
-
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
-
-    env.eventDispatcher.simulateDOMEvents(
-      {type: "pointerdown", target: sut, position: dragStartPos},
-      {type: "pointermove", target: sut, position: dragOvershotPos}, // simulate overshoot
-      {type: "pointermove", target: sut, position: dragEndPos},
-      {type: "pointerup", target: sut, position: dragEndPos}
-    );
-
-    var dragEndIndex = sut.document.positionToIndex({row: 1, column: 1});
-    expect(dragEndIndex).equals(6);
-    expect(sut.selection).stringEquals("Selection(0/0 -> 1/2)");
-  });
-
   it("double-click selects word", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
@@ -295,4 +273,75 @@ describe("text mouse events", () => {
 
     expect(sut.selection).stringEquals("Selection(1/0 -> 1/9)");
   });
+
+  it("4-click sets cursor", () => {
+    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
+        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+
+    env.eventDispatcher.simulateDOMEvents(
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos});
+
+    expect(sut.selection).stringEquals("Selection(1/2 -> 1/2)");
+  });
+
+  it("5-click selects word", () => {
+    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
+        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+
+    env.eventDispatcher.simulateDOMEvents(
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos});
+
+    expect(sut.selection).stringEquals("Selection(1/0 -> 1/3)");
+  });
+
+  it("6-click selects line", () => {
+    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
+        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+
+    env.eventDispatcher.simulateDOMEvents(
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos},
+      {target: sut, type: "click", position: clickPos});
+
+    expect(sut.selection).stringEquals("Selection(1/0 -> 1/9)");
+  });
+
+  it("drag sets selection", () => {
+    var {position: {x,y}, fontFamily, fontSize, textString} = sut,
+        {width: charW, height: charH} = fontMetric;
+
+    var dragStartPos =    pt(charW+padding-2, charH+padding-2),
+        dragOvershotPos = pt(3*charW+padding+10, charH*2+padding+10),
+        dragEndPos =      pt(3*charW+padding+2, charH*2+padding-charH/2);
+
+    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+
+    env.eventDispatcher.simulateDOMEvents(
+      {type: "pointerdown", target: sut, position: dragStartPos},
+      {type: "pointermove", target: sut, position: dragOvershotPos}, // simulate overshoot
+      {type: "pointermove", target: sut, position: dragEndPos},
+      {type: "pointerup", target: sut, position: dragEndPos}
+    );
+
+    var dragEndIndex = sut.document.positionToIndex({row: 1, column: 1});
+    expect(dragEndIndex).equals(6);
+    expect(sut.selection).stringEquals("Selection(0/0 -> 1/2)");
+  });
+
 });
