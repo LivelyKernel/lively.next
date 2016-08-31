@@ -165,7 +165,7 @@ describe("scroll", () => {
   afterEach(() => destroyMorphicEnv());
 
   it("cursor into view", () => {
-    var lineHeight = fontMetric.height
+    var lineHeight = fontMetric.height;
     Object.assign(sut, {
       clipMode: "auto",
       extent: pt(100,2*lineHeight+2*padding),

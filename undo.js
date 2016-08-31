@@ -1,44 +1,67 @@
-import { obj, arr, events } from "lively.lang";
+import { obj, arr, events, fun } from "lively.lang";
 
 class Undo {
 
-  constructor(name, targets = []) {
+  constructor(name, targets = [], no = 0) {
     this.name = name;
     this.targets = targets;
     this.recorder = null;
     this.changes = null;
+    this.timestamp = null;
+    this.no = no;
   }
 
+  recorded() { return !!this.changes; }
+  isRecording() { return !!this.recorder; }
+
   startRecording() {
-    if (this.recorder) {
+    if (this.recorded() || this.isRecording())
       throw new Error("Undo already recorded / recording");
-    }
-    if (!this.targets.length) {
+    if (!this.targets.length)
       throw new Error("Undo has no target morphs");
-    }
+
+    this.timestamp = Date.now();
     var morph = this.targets[0];
     this.recorder = morph.recordChangesStart(({target}) =>
       !target.isUsedAsEpiMorph() && this.targets.some(undoTarget =>
         undoTarget === target || undoTarget.isAncestorOf(target)));
+
     return this;
   }
 
   stopRecording() {
     var {name, recorder: {id, changes}, targets: [morph]} = this;
     this.changes = morph.recordChangesStop(id);
+    this.targets = null;
+    this.recorder = null;
   }
 
   apply() {
+    if (!this.recorded())
+      throw new Error("Cannot apply undo that has no changes recorded yet");
     this.changes.slice().forEach(change => change.apply());
     return this;
   }
 
   reverseApply() {
+    if (!this.recorded())
+      throw new Error("Cannot reverseApply undo that has no changes recorded yet");
     this.changes.slice().reverse().forEach(change => change.reverseApply());
     return this;
   }
 
   addTarget(t) { arr.pushIfNotIncluded(this.targets, t); }
+
+  addUndos(undos) {
+    undos = undos.concat(this)
+      .filter(ea => ea.recorded())
+      .sortBy(({no}) => no);
+    if (!undos.length) return;
+    this.changes = arr.flatmap(undos, ({changes}) => changes);
+    this.timestamp = undos[0].timestamp;
+    this.no = undos[0].no;
+    this.name = undos.map(({name}) => name).join("-");
+  }
 }
 
 
@@ -49,6 +72,37 @@ export class UndoManager {
     this.redos = [];
     this.undoInProgress = null;
     this.applyCount = 0;
+    this.counter = 0;
+    this.grouping = {
+      current: [],
+      debounce: null,
+      debouncedCanceled: false,
+      debounceTime: 31
+    }
+  }
+
+  group() {
+    this.groupLaterCancel();
+    if (!this.grouping.current.length) return;
+    var grouped = this.grouping.current.slice(1);
+    this.grouping.current[0].addUndos(grouped);
+    this.undos = arr.withoutAll(this.undos, grouped);
+    this.grouping.current = [];
+  }
+
+  groupLaterCancel() {
+    var state = this.grouping;
+    if (!state.debounce) return;
+    state.debouncedCanceled = true;
+    this.grouping = {current: state.current, debounce: null, debouncedCanceled: false};
+  }
+
+  groupLater(time) {
+    var state = this.grouping;
+    (state.debounce || (state.debounce = fun.debounce(time || state.debounceTime, () => {
+      state.debounce = null;
+      state.debouncedCanceled || this.group();
+    })))();
   }
 
   undoStart(morph, name) {
@@ -57,7 +111,7 @@ export class UndoManager {
       console.warn(`There is already an undo recorded`)
       return;
     }
-    return this.undoInProgress = new Undo(name, [morph]).startRecording();
+    return this.undoInProgress = new Undo(name, [morph], this.counter++).startRecording();
   }
 
   undoStop() {
@@ -66,13 +120,16 @@ export class UndoManager {
     undo.stopRecording();
     this.undoInProgress = null;
     this.undos.push(undo);
+    this.grouping.current.push(undo);
     if (this.redos.length) this.redos.length = 0;
     return undo;
   }
 
   undo() {
+    this.undoStop();
     var undo = this.undos.pop();
     if (!undo) return;
+    arr.remove(this.grouping.current, undo);
     this.redos.unshift(undo);
     this.applyCount++;
     try { undo.reverseApply(); }
@@ -81,6 +138,7 @@ export class UndoManager {
   }
 
   redo() {
+    this.undoStop();
     var redo = this.redos.shift();
     if (!redo) return;
     this.undos.push(redo);

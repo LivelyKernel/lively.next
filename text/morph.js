@@ -459,7 +459,7 @@ export class Text extends Morph {
   }
 
   onTextInput(evt) {
-    if (invokeKeyHandlers(this, evt, false/*no input evts*/)) {
+    if (invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
       this.selection.cursorBlinkStart();
       this.scrollCursorIntoView();
     }
@@ -563,15 +563,21 @@ export class Text extends Morph {
   }
 
   textUndo() {
-    var undo = this.undoManager.undo(),
-        changes = undo.changes.slice().reverse().map(ea => ea.undo);
+    var undo = this.undoManager.undo();
+    if (!undo) return; // no undo left
+    var changes = undo.changes.slice().reverse().map(ea => ea.undo);
     this.selection = this.computeTextRangeForChanges(changes);
   }
 
   textRedo() {
-    var redo = this.undoManager.redo(),
-        changes = redo.changes.slice();
+    var redo = this.undoManager.redo();
+    if (!redo) return; // nothing to redo
+    var changes = redo.changes.slice();
     this.selection = this.computeTextRangeForChanges(changes);
+  }
+
+  groupTextUndoChanges() {
+    this.undoManager.group();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
