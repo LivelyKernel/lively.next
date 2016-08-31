@@ -427,10 +427,10 @@ export class Text extends Morph {
 
   onMouseDown(evt) {
     var { commands } = this;
-    switch (evt.state.clicks) {
+    switch (evt.state.clicks % 3) {
+      case 1:   this.onMouseMove(evt); break;
       case 2:   commands.exec("select word", this, [], evt); break;
-      case 3:   commands.exec("select line", this, [], evt); break;
-      default:  this.onMouseMove(evt);
+      case 0:   commands.exec("select line", this, [], evt); break;
     }
   }
 
