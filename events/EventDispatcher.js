@@ -1,5 +1,6 @@
 import { arr, promise } from "lively.lang";
 import { pt } from "lively.graphics";
+import config from "../config.js";
 import TextInput from './TextInput.js';
 
 import {
@@ -55,9 +56,6 @@ const focusTargetingEvents = [
 const textOnlyEvents = [
   "input", "compositionstart", "compositionupdate", "compositionend"
 ]
-
-// maximum interval (in milliseconds) between double/triple clicks
-const repeatClickInterval = 250;
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // helpers
@@ -270,7 +268,7 @@ export default class EventDispatcher {
           if (state.prevClick) {
             let { clickedOnMorph, clickedOnPosition, clickedAtTime } = state.prevClick,
               clickInterval = Date.now() - clickedAtTime;
-            repeatedClick = clickedOnMorph === targetMorph && clickInterval < repeatClickInterval;
+            repeatedClick = clickedOnMorph === targetMorph && clickInterval < config.repeatClickInterval;
           }
           if (repeatedClick) state.clicks += 1;
           else state.clicks = 1;
