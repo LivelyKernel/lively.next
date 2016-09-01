@@ -7,7 +7,7 @@ import { Selection, Range } from "./selection.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
-import { defaultCommandHandler } from "../commands.js";
+import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -107,7 +107,7 @@ export class Text extends Morph {
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.undoManager = new UndoManager();
     this._keyhandlers = []; // defaultKeyHandler is fallback
-    this.commands = defaultCommandHandler,
+    this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new Selection(this, selection) : null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
@@ -467,12 +467,7 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
-    var { commands } = this;
-    switch (evt.state.clicks % 3) {
-      case 1:   this.onMouseMove(evt); break;
-      case 2:   commands.exec("select word", this, [], evt); break;
-      case 0:   commands.exec("select line", this, [], evt); break;
-    }
+    this.clickhandler.handle(this, evt);
   }
 
   onMouseMove(evt) {
