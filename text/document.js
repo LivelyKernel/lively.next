@@ -1,5 +1,5 @@
 import { string, arr } from "lively.lang";
-import { lessPosition, lessEqPosition, eqPosition } from "./position.js"
+import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js"
 
 const newline = "\n",
       newlineLength = newline.length;
@@ -131,13 +131,13 @@ export default class TextDocument {
   }
 
   remove({start, end}) {
-    if (!this.lines.length) return;
+    var {lines} = this;
+    if (!lines.length) return;
 
     if (lessPosition(end, start)) [start, end] = [end, start];
 
-    let {row: fromRow, column: fromCol} = start,
-        {row: toRow, column: toCol} = end,
-        {lines} = this;
+    let {row: fromRow, column: fromCol} = maxPosition(start, {column: 0, row: 0}),
+        {row: toRow, column: toCol} = minPosition(end, this.endPosition);
 
     if (fromCol < 0) fromCol = 0;
     if (toCol < 0) toCol = 0;

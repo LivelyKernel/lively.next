@@ -2,7 +2,7 @@
 
 import { arr } from "lively.lang";
 import { Range } from "./text/selection.js"
-import { eqPosition } from "./text/position.js"
+import { eqPosition, lessPosition } from "./text/position.js"
 
 // commands.find(ea => ea.name === "transpose chars").exec(that)
 
@@ -306,9 +306,105 @@ var commands = [
   },
 
   {
+    name: "join line",
+    exec: function(morph, args = {withLine: "before"}) {
+      var {row} = morph.cursorPosition;
+      if (args.withLine === "before" && row <= 0) return true
+      if (args.withLine === "after" && row >= morph.document.endPosition.row) return true;
+      var firstRow = args.withLine === "before" ? row-1 : row,
+          otherRow = args.withLine === "before" ? row : row+1,
+          firstLine = morph.getLine(firstRow),
+          otherLine = morph.getLine(otherRow),
+          joined = firstLine + otherLine + "\n";
+      morph.replace({start: {column: 0, row: firstRow}, end: {column: 0, row: otherRow+1}}, joined, true);
+      morph.cursorPosition = {row: firstRow, column: firstLine.length}
+      return true;
+    }
+  },
+
+  {
+    name: "duplicate line or selection",
+    exec: function(morph) {
+      morph.undoManager.group();
+      var pos = morph.selection.end;
+      if (morph.selection.isEmpty()) {
+        morph.insertText(morph.getLine(pos.row) + "\n", {column: 0, row: pos.row+1});
+      } else {
+        var range = morph.selection.range;
+        morph.insertText(morph.selection.text, pos);
+        morph.selection = range;
+      }
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "delete emtpy line or until end of line",
+    exec: function(morph) {
+      var pos = morph.cursorPosition,
+          line = morph.getLine(pos.row);
+      if (eqPosition(morph.document.endPosition, pos)) return true;
+      morph.undoManager.group();
+      if (!line.trim())
+        morph.deleteText({start: {row: pos.row, column: 0}, end: {row: pos.row+1, column: 0}});
+      else
+        morph.deleteText({start: pos, end: {row: pos.row, column: line.length}});
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "delete left until beginning of line",
+    exec: function(morph) {
+      if (!morph.selection.isEmpty()) {
+        morph.selection.text = "";
+        return true;
+      }
+      var range = morph.lineRange(),
+          pos = morph.cursorPosition;
+      // already at beginning of line
+      if (eqPosition({row: pos.row, column: 0}, pos))
+        return true;
+      var start = eqPosition(range.start, pos) ?
+        {row: pos.row, column: 0}: range.start;
+      morph.deleteText({start, end: pos});
+      return true;
+    }
+  },
+
+  {
+    name: "move lines up",
+    exec: function(morph) {
+      var {start, end} = morph.selection;
+      if (start.row <= 0) return true;
+      var lineBefore = morph.getLine(start.row-1);
+      morph.undoManager.group();
+      morph.insertText(lineBefore + "\n", {row: end.row+1, column: 0});
+      morph.deleteText({start: {row: start.row-1, column: 0}, end: {row: start.row, column: 0}});
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "move lines down",
+    exec: function(morph) {
+      var {start, end} = morph.selection;
+      if (start.row >= morph.document.endPosition.row) return true;
+      var lineAfter = morph.getLine(start.row+1);
+      morph.undoManager.group();
+      morph.deleteText({start: {row: end.row+1, column: 0}, end: {row: end.row+2, column: 0}});
+      morph.insertText(lineAfter + "\n", {row: start.row, column: 0});
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
     name: "goto word left",
     exec: function(morph, args = {select: false}) {
-      morph.wordLeft(morph)
       var {range} = morph.wordLeft();
       morph.selection.lead = range.start;
       if (!args.select) morph.selection.anchor = range.start;
@@ -319,10 +415,31 @@ var commands = [
   {
     name: "goto word right",
     exec: function(morph, args = {select: false}) {
-      morph.wordLeft(morph)
       var {range} = morph.wordRight();
       morph.selection.lead = range.end;
       if (!args.select) morph.selection.anchor = range.end;
+      return true;
+    }
+  },
+
+  {
+    name: "remove word right",
+    exec: function(morph) {
+      morph.undoManager.group();
+      var {range: {end}} = morph.wordRight();
+      morph.deleteText({start: morph.cursorPosition, end})
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "remove word left",
+    exec: function(morph) {
+      morph.undoManager.group();
+      var {range: {start}} = morph.wordLeft();
+      morph.deleteText({start, end: morph.cursorPosition})
+      morph.undoManager.group();
       return true;
     }
   },

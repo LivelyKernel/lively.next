@@ -91,17 +91,30 @@ var keyBindings = [
   {keys: 'Alt-Left|Alt-B',               command: "goto word left"},
   {keys: 'Alt-Shift-Right|Alt-Shift-F',  command: {command: "goto word right", args: {select: true}}},
   {keys: 'Alt-Shift-Left|Alt-Shift-B',   command: {command: "goto word left", args: {select: true}}},
+  {keys: 'Alt-Backspace',                command: "remove word left"},
+  {keys: 'Alt-D',                        command: "remove word right"},
 
+  {keys: "Ctrl-X Ctrl-X", command: "reverse selection"},
   {keys: {win: "Ctrl-Shift-L", mac: 'Meta-L'},  command: "select line"},
   {keys: {win: "Shift-Home", mac: "Shift-Home|Ctrl-Shift-A"}, command: "select to line start"},
   {keys: {win: "Home", mac: "Home|Ctrl-A"}, command: {command: "select to line start", args: {collapse: true}}},
   {keys: {win: "Shift-End", mac: "Shift-End|Ctrl-Shift-E"}, command: "select to line end"},
   {keys: {win: "End", mac: "End|Ctrl-E"}, command: {command: "select to line end", args: {collapse: true}}},
-  {keys: "Ctrl-X Ctrl-X", command: "reverse selection"},
+
+  {keys: "Ctrl-C J",                                     command: {command: "join line", args: {withLine: "before"}}},
+  {keys: "Ctrl-C Shift-J",                               command: {command: "join line", args: {withLine: "after"}}},
+  {keys: {win: "Ctrl-Shift-D", mac: "Meta-Shift-D"},     command: "duplicate line or selection"},
+  {keys: {win: "Ctrl-Backspace", mac: "Meta-Backspace"}, command: "delete left until beginning of line"},
+  {keys: "Ctrl-K",                                       command: "delete emtpy line or until end of line"},
+
+  {keys: {win: "Ctrl-Alt-Up|Ctrl-Alt-P", mac: "Ctrl-Meta-Up|Ctrl-Meta-P"}, command: "move lines up"},
+  {keys: {win: "Ctrl-Alt-Down|Ctrl-Alt-N", mac: "Ctrl-Meta-Down|Ctrl-Meta-N"}, command: "move lines down"},
 
   {keys: {win: "PageDown", mac: "PageDown|Ctrl-V"},      command: "goto page down"},
   {keys: {win: "PageUp", mac: "PageUp|Alt-V"},           command: "goto page up"},
   {keys: {win: "Shift-PageDown", mac: "Shift-PageDown"}, command: "goto page down and select"},
+  {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
+
   {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
 
   {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: "goto start and select"},
