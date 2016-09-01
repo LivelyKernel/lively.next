@@ -168,7 +168,7 @@ describe("text selection", () => {
 
   describe("is anchored", () => {
 
-    it("moves on insert", () => {
+    it("moves with insert and delete", () => {
       text.selection = range(0,3, 0, 5);
       expect(text.selection.text).stringEquals("lo", "1 setup");
 
@@ -187,7 +187,15 @@ describe("text selection", () => {
 
       text.deleteText(range(0,1, 1,0));
       expect(text.selection).stringEquals("Selection(0/1 -> 0/1)", " 5after delete crossing selection");
-    p});
+    });
+
+    it("anchor stays when following text is deleted", () => {
+      text.textString = "a\nb\nc\nd";
+      text.cursorPosition = {row: 1, column: 1};
+      text.deleteText({start: {row: 2, column: 0}, end: {row: 3, column: 0}});
+      expect(text.textString).equals("a\nb\nd");
+      expect(text.selection).stringEquals("Selection(1/1 -> 1/1)");
+    });
 
   });
 });

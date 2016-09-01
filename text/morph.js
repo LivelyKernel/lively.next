@@ -27,8 +27,7 @@ class Anchor {
   get isAnchor() { return true; }
 
   onDelete(range) {
-    if (eqPosition(range.start, range.end)
-     && lessPosition(this.position, range.start)) return;
+    if (lessEqPosition(this.position, range.start)) return;
 
     if (lessEqPosition(range.start, this.position)
      && lessEqPosition(this.position, range.end)) { this.position = range.start; return; }
