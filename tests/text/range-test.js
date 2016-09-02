@@ -45,4 +45,27 @@ describe("range", () => {
 
   });
 
+  describe("intersect", () => {
+
+    it("bordered", () =>
+      expect(Range.create(0,0, 1, 4).intersect(Range.create(1, 4, 1, 5)))
+        .stringEquals("Range(1/4 -> 1/4)"));
+
+    it("bordered reverse", () =>
+      expect(Range.create(1, 4, 1, 5).intersect(Range.create(0,3, 1, 4)))
+        .stringEquals("Range(1/4 -> 1/4)"));
+
+    it("overlapping ", () =>
+      expect(Range.create(0,0, 1, 4).intersect(Range.create(1, 2, 1, 5)))
+        .stringEquals("Range(1/2 -> 1/4)"));
+
+    it("overlapping reverse", () =>
+      expect(Range.create(1, 2, 1, 5).intersect(Range.create(0,3, 1, 4)))
+        .stringEquals("Range(1/2 -> 1/4)"));
+
+    it("non overlapping", () =>
+      expect(Range.create(1, 2, 1, 5).intersect(Range.create(1, 6, 1, 8)))
+        .equals(null));
+
+  });
 });
