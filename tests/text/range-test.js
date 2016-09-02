@@ -48,23 +48,31 @@ describe("range", () => {
   describe("intersect", () => {
 
     it("bordered", () =>
-      expect(Range.create(0,0, 1, 4).intersect(Range.create(1, 4, 1, 5)))
+      expect(Range.create(0,0, 1,4).intersect(Range.create(1,4, 1,5)))
         .stringEquals("Range(1/4 -> 1/4)"));
 
     it("bordered reverse", () =>
-      expect(Range.create(1, 4, 1, 5).intersect(Range.create(0,3, 1, 4)))
+      expect(Range.create(1,4, 1,5).intersect(Range.create(0,3, 1,4)))
         .stringEquals("Range(1/4 -> 1/4)"));
 
     it("overlapping ", () =>
-      expect(Range.create(0,0, 1, 4).intersect(Range.create(1, 2, 1, 5)))
+      expect(Range.create(0,0, 1,4).intersect(Range.create(1,2, 1,5)))
         .stringEquals("Range(1/2 -> 1/4)"));
 
     it("overlapping reverse", () =>
-      expect(Range.create(1, 2, 1, 5).intersect(Range.create(0,3, 1, 4)))
+      expect(Range.create(1,2, 1,5).intersect(Range.create(0,3, 1,4)))
         .stringEquals("Range(1/2 -> 1/4)"));
 
+    it("enclosing", () =>
+      expect(Range.create(0,0, 1,4).intersect(Range.create(0,2, 1,2)))
+        .stringEquals("Range(0/2 -> 1/2)"));
+
+    it("enclosing reverse", () =>
+      expect(Range.create(0,2, 1,2).intersect(Range.create(0,0, 1,4)))
+        .stringEquals("Range(0/2 -> 1/2)"));
+
     it("non overlapping", () =>
-      expect(Range.create(1, 2, 1, 5).intersect(Range.create(1, 6, 1, 8)))
+      expect(Range.create(1,2, 1,5).intersect(Range.create(1,6, 1,8)))
         .equals(null));
 
   });
