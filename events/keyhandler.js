@@ -75,10 +75,10 @@ var keyBindings = [
   {keys: 'Backspace',   command: "delete backwards"},
   {keys: 'Delete',      command: "delete"},
 
-  {keys: {win: 'Left', mac: 'Left|Ctrl-B'},       command: "move cursor left"},
-  {keys: {win: 'Right', mac: 'Right|Ctrl-F'},     command: "move cursor right"},
-  {keys: {win: 'Up', mac: 'Up|Ctrl-P'},           command: "move cursor up"},
-  {keys: {win: 'Down', mac: 'Down|Ctrl-N'},       command: "move cursor down"},
+  {keys: {win: 'Left', mac: 'Left|Ctrl-B'},       command: "go left"},
+  {keys: {win: 'Right', mac: 'Right|Ctrl-F'},     command: "go right"},
+  {keys: {win: 'Up', mac: 'Up|Ctrl-P'},           command: "go up"},
+  {keys: {win: 'Down', mac: 'Down|Ctrl-N'},       command: "go down"},
 
   {keys: 'Shift-Left',  command: "select left"},
   {keys: 'Shift-Right', command: "select right"},

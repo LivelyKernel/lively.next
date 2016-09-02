@@ -148,26 +148,46 @@ var commands = [
   },
 
   {
-    name: "move cursor left",
+    name: "go left",
     doc: "Move the cursor 1 character left. At the beginning of a line move the cursor up. If a selection is active, collapse the selection left.",
-    exec: function(morph) { morph.selection.goLeft(1); return true; }
+    exec: function(morph) {
+      morph.activeMark ?
+        morph.selection.selectLeft(1) :
+        morph.selection.goLeft(1);
+      return true;
+    }
   },
 
   {
-    name: "move cursor right",
+    name: "go right",
     doc: "Move the cursor 1 character right. At the end of a line move the cursor down. If a selection is active, collapse the selection right.",
-    exec: function(morph) { morph.selection.goRight(1); return true; }
+    exec: function(morph) {
+      morph.activeMark ?
+        morph.selection.selectRight(1) :
+        morph.selection.goRight(1);
+      return true;
+    }
   },
 
   {
-    name: "move cursor up",
+    name: "go up",
     doc: "Move the cursor 1 line. At the end of a line move the cursor down. If a selection is active, collapse the selection right.",
-    exec: function(morph) { morph.selection.goUp(); return true; }
+    exec: function(morph) {
+      morph.activeMark ?
+        morph.selection.selectUp(1) :
+        morph.selection.goUp();
+      return true;
+    }
   },
 
   {
-    name: "move cursor down",
-    exec: function(morph) { morph.selection.goDown(1); return true; }
+    name: "go down",
+    exec: function(morph) {
+      morph.activeMark ?
+        morph.selection.selectDown(1) :
+        morph.selection.goDown(1);
+      return true;
+    }
   },
 
   {
@@ -467,7 +487,32 @@ var commands = [
   {
     name: "reverse selection",
     doc: "switches the selection lead and anchor",
-    exec: function(morph) { morph.selection.reverse(); return true; }
+    exec: function(morph) {
+      var sel = morph.selection;
+      if (sel.isEmpty()) {
+        var m = morph.popSavedMark();
+        if (m) {
+          morph.saveMark(morph.cursorPosition);
+          sel.lead = m.position;
+        }
+      } else sel.reverse();
+      return true;
+    }
+  },
+
+  {
+    name: "set active mark",
+    doc: "....",
+    exec: function(morph) {
+      var m = morph.activeMark, sel = morph.selection;
+      if (!m && sel.isEmpty()) morph.activeMark = morph.cursorPosition;
+      else {
+        morph.saveMark(m || sel.anchor);
+        morph.activeMark = null; 
+        if (!sel.isEmpty()) sel.anchor = sel.lead;
+      }
+      return true;
+    }
   },
 
   {

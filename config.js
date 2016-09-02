@@ -7,7 +7,9 @@ var config = {
   text: {
     cursorBlinkPeriod: .5,
     useSoftTabs: true,
-    tabWidth: 2
+    tabWidth: 2,
+    markStackSize: 16,
+    undoLevels: 50
   }
 }
 

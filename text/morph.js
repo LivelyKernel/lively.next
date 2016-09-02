@@ -57,6 +57,7 @@ export class Text extends Morph {
       styleRanges: [{range: new Range({start: {row: 0, column: 0}, end: {row: 0, column: 1}}), style: {fontColor: Color.red}}],
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
+      savedMarks: [],
       ...props
     });
     this.document = new TextDocument();
@@ -165,6 +166,64 @@ export class Text extends Morph {
         ea => ea !== anchor);
   }
 
+  get savedMarks() { return this.getProperty("savedMarks") || []; }
+  set savedMarks(val) {
+    var savedMarks = this.savedMarks;
+    val = val.map(ea => ea.isAnchor ? ea : this.addAnchor({...ea, id: "saved-mark-" + string.newUUID()}));
+    var toRemove = this.savedMarks.filter(ea => !val.includes(ea))
+    if (val > config.text.markStackSize)
+      toRemove.push(...val.splice(0, val.length - config.text.markStackSize));
+    toRemove.map(ea => this.removeAnchor(ea));
+    return this.addValueChange("savedMarks", val);
+  }
+
+  get activeMark() { return this.getProperty("activeMark"); }
+  get activeMarkPosition() { var m = this.activeMark; return m ? m.position : null; }
+  set activeMark(val) {
+    if (val) val = this.addAnchor(val.isAnchor ? val : {...val, id: "saved-mark-" + string.newUUID()});
+    else {
+      var m = this.activeMark;
+      if (!this.savedMarks.includes(m))
+        this.removeAnchor(m);
+    }
+    this.addValueChange("activeMark", val);
+  }
+
+  saveMark(p = this.cursorPosition, activate) {
+    var prevMark = this.activeMark;
+    if (prevMark)
+      this.savedMarks = this.savedMarks.concat(prevMark);
+    if (activate) this.activeMark = p;
+    else this.savedMarks = this.savedMarks.concat(p);
+  }
+
+  popSavedMark() {
+    var mark = this.activeMark;
+    if (mark) { this.activeMark = null; return mark; }
+    var last = arr.last(this.savedMarks);
+    this.savedMarks = this.savedMarks.slice(0, -1);
+    return last;
+  }
+
+  get lastSavedMark() { return this.activeMark || arr.last(this.savedMarks); }
+
+  savedMarkForSelection(replacement) {
+    // find the mark in $emacsMarkRing corresponding to the current
+    // selection
+    var {selection: sel, savedMarks} = this,
+        multiRangeLength = this.multiSelect ?
+            this.multiSelect.getAllRanges().length : 1,
+        selIndex = sel.index || 0,
+        markIndex = savedMarks.length - (multiRangeLength - selIndex),
+        lastMark = savedMarks[markIndex] || sel.anchor;
+    if (replacement && "row" in replacement && "column" in replacement) {
+      this.savedMarks = savedMarks.slice(0, markIndex)
+                          .concat(replacement)
+                          .concat(savedMarks.slice(markIndex+1))
+    }
+    return lastMark;
+  }
+
   get clipMode()  { return this.getProperty("clipMode"); }
   set clipMode(value)  {
     this.addValueChange("clipMode", value);
@@ -181,7 +240,7 @@ export class Text extends Morph {
                          textBounds.y - padding.top(),
                          textBounds.width + padding.left() + padding.right(),
                          textBounds.height + padding.top() + padding.bottom());
-    }
+  }
   get scrollExtent() {
     return this.paddedTextBounds().extent().maxPt(super.scrollExtent);
   }

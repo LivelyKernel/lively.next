@@ -356,3 +356,38 @@ describe("text mouse events", () => {
   });
 
 });
+
+describe("saved marks", () => {
+
+  var t;  
+  beforeEach(() => t = text("hello\n world"));
+
+  it("activates mark to select", () => {
+    t.cursorPosition = t.activeMark = {row: 0, column: 1};
+    t.execCommand("go right"); t.execCommand("go right");
+    expect(t.selection).stringEquals("Selection(0/1 -> 0/3)");
+  });
+
+  it("reverse selection with mark", () => {
+    t.saveMark({row: 0, column: 1});
+    t.cursorPosition = {row: 0, column: 4};
+    t.execCommand("reverse selection");
+    expect(t.selection).stringEquals("Selection(0/4 -> 0/1)");
+  });
+
+  it("activate mark by setting mark", () => {
+    t.execCommand("go right"); t.execCommand("set active mark");
+    t.execCommand("go right"); t.execCommand("go right");
+    expect(t.activeMarkPosition).deep.equals({row: 0, column: 1})
+    expect(t.selection).stringEquals("Selection(0/1 -> 0/3)");
+  });
+
+  it("set active mark deactivates selection", () => {
+    t.selection = range(0,1,0,4);
+    t.execCommand("set active mark");
+    expect(t.activeMark).equals(null);
+    expect(t.selection).stringEquals("Selection(0/4 -> 0/4)");
+    expect(t.lastSavedMark.position).deep.equals({row: 0, column: 1});
+  });
+
+});
