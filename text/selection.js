@@ -118,6 +118,22 @@ export class Range {
     return Range.fromPositions(otherRange.end, this.end);
   }
 
+  intersectionWith(that) {
+    if (!that.isRange) that = new Range(that);
+    var comparison = Range.compare(this, that),
+        a = comparison < 0 ? this : that,
+        b = comparison < 0 ? that : this;
+    switch (Math.abs(comparison)) {
+      case 0:
+      case 1: return new Range(a);
+      case 2:
+      case 3: return new Range(b);
+      case 4: return Range.fromPositions(b.start, a.end);
+      case 5: return Range.at(b.start);
+      case 6: return null;
+    }
+  }
+
   toString() {
     let {start: {row, column}, end: {row: endRow, column: endColumn}} = this;
     return `Range(${row}/${column} -> ${endRow}/${endColumn})`;
