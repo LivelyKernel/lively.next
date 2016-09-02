@@ -10,13 +10,27 @@ export class Range {
 
   static compare(a, b) {
     // Compares two ranges.
-    // -6: a.end < b.start
-    // -5: a.end < b.start and a.end = b.start
-    // -4: a.end < b.start and a.end < b.end
-    // -3: a.end < b.start and a.end = b.end
-    // -2: a.end < b.start and a.end > b.end
+    // -6: a.start < b.start and a.end < b.start
+    //        a: [  ]
+    //        b:     [  ]
+    // -5: a.start < b.start and a.end = b.start
+    //        a: [  ]
+    //        b:    [  ]
+    // -4: a.start < b.start and a.end < b.end
+    //        a: [  ]
+    //        b:  [  ]
+    // -3: a.start < b.start and a.end = b.end
+    //        a: [  ]
+    //        b:  [ ]
+    // -2: a.start < b.start and a.end > b.end
+    //        a: [  ]
+    //        b:  []
     // -1: a.start = b.start and a.end < b.end
+    //        a: [ ]
+    //        b: [  ]
     //  0: a.start = b.start and a.end = b.end
+    //        a: [  ]
+    //        b: [  ]
     // 1-6: reversed
 
     var {start: startA, end: endA} = a,
