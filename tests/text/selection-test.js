@@ -1,5 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { Selection, Range } from "../../text/selection.js";
+import { Selection } from "../../text/selection.js";
+import { Range } from "../../text/range.js";
 import TextDocument from "../../text/document.js";
 import { Text } from "../../text/morph.js";
 import { expect } from "mocha-es6";

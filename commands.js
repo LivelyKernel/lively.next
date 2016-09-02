@@ -1,7 +1,7 @@
 /*global System*/
 
 import { arr } from "lively.lang";
-import { Range } from "./text/selection.js"
+import { Range } from "./text/range.js"
 import { eqPosition, lessPosition } from "./text/position.js"
 
 // commands.find(ea => ea.name === "transpose chars").exec(that)

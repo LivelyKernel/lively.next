@@ -3,7 +3,8 @@ import config from "../config.js";
 import { string, obj, arr } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
-import { Selection, Range } from "./selection.js";
+import { Selection } from "./selection.js";
+import { Range } from "./range.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
@@ -98,6 +99,7 @@ export class Text extends Morph {
       fontSize: 12,
       fontColor: Color.black,
       fontKerning: true,
+      styleRanges: [{range: new Range({start: {row: 0, column: 0}, end: {row: 0, column: 1}}), style: {fontColor: Color.red}}],
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       ...props
