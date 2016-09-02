@@ -115,7 +115,7 @@ export class Range {
     return Range.fromPositions(otherRange.end, this.end);
   }
 
-  intersectionWith(that) {
+  intersect(that) {
     if (!that.isRange) that = new Range(that);
     var comparison = Range.compare(this, that),
         a = comparison < 0 ? this : that,
