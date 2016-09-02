@@ -3,6 +3,7 @@ import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
+import { defaultCommandHandler } from "./commands.js";
 import config from "./config.js";
 
 
@@ -819,6 +820,15 @@ export class Morph {
   render(renderer) { return renderer.renderMorph(this); }
 
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // commands
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  execCommand(command, args, evt) {
+    var handler = this.commands || defaultCommandHandler;
+    return handler.exec(command, this, args, evt);
+  }
 
 }
 

@@ -1,7 +1,6 @@
 import Keys from "./Keys.js";
 import bowser from "bowser";
 import { arr } from "lively.lang";
-import { defaultCommandHandler } from "../commands.js";
 
 function ensureSpaces(s) { return s.length ? s : ' '; }
 
@@ -12,12 +11,11 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   let {keyCombo, key, data} = evt,
       toExecute,
       success = false,
-      {keyhandlers, commands} = morph,
+      {keyhandlers} = morph,
       isInputEvent = keyCombo.startsWith("input-");
 
   if (noInputEvents && isInputEvent) return false;
 
-  if (!commands) commands = defaultCommandHandler;
   for (var i = keyhandlers.length; i--;) {
     toExecute = keyhandlers[i].handleKeyboard(morph, evt);
 
@@ -26,7 +24,7 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
     let {command, args, passEvent} = toExecute;
 
     // allow keyboardHandler to consume keys
-    success = command === "null" ? true : commands.exec(command, morph, args, evt);
+    success = command === "null" ? true : morph.execCommand(command, args, evt);
 
     // do not stop input events to not break repeating
     if (success && evt && !isInputEvent && !passEvent)
@@ -36,7 +34,7 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   }
 
   if (!success && isInputEvent) {
-    success = commands.exec("insertstring", morph, {string: data || key, undoGroup: 600/*ms*/}, evt);
+    success = morph.execCommand("insertstring", {string: data || key, undoGroup: 600/*ms*/}, evt);
   }
 
   return success;
