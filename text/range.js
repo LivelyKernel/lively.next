@@ -131,6 +131,30 @@ export class Range {
     }
   }
 
+  subtract(that) {
+    if (!that.isRange) that = new Range(that);
+    var comparison = Range.compare(this, that);
+    switch (comparison) {
+      case -6:
+      case -5:
+      case  5:
+      case  6: return [new Range(this)];
+
+      case -1:
+      case  0:
+      case  2:
+      case  3: return [Range.at(this.start)];
+
+      case  1:
+      case  4: return [Range.fromPositions(that.end, this.end)];
+
+      case -4:
+      case -3: return [Range.fromPositions(this.start, that.start)];
+
+      case -2: return [Range.fromPositions(this.start, that.start), Range.fromPositions(that.end, this.end)];
+    }
+  }
+
   toString() {
     let {start: {row, column}, end: {row: endRow, column: endColumn}} = this;
     return `Range(${row}/${column} -> ${endRow}/${endColumn})`;

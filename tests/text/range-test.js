@@ -80,4 +80,40 @@ describe("range", () => {
         .stringEquals("Range(1/5 -> 1/5)"));
 
   });
+
+  describe("subtract", () => {
+
+    it("bordered", () =>
+      expect(Range.create(0,0, 1,4).subtract(Range.create(1,4, 1,5)))
+        .deep.equals([Range.create(0,0, 1,4)]));
+
+    it("bordered reverse", () =>
+      expect(Range.create(1,4, 1,5).subtract(Range.create(0,0, 1,4)))
+        .deep.equals([Range.create(1,4, 1,5)]));
+
+    it("overlapping ", () =>
+      expect(Range.create(0,0, 1,4).subtract(Range.create(1,2, 1,5)))
+        .deep.equals([Range.create(0,0, 1,2)]));
+
+    it("overlapping reverse", () =>
+      expect(Range.create(1,2, 1,5).subtract(Range.create(0,0, 1,4)))
+        .deep.equals([Range.create(1,4, 1,5)]));
+
+    it("enclosing", () =>
+      expect(Range.create(0,0, 1,4).subtract(Range.create(0,2, 1,2)))
+        .deep.equals([Range.create(0,0, 0,2), Range.create(1,2, 1,4)]));
+
+    it("enclosing reverse", () =>
+      expect(Range.create(0,2, 1,2).subtract(Range.create(0,0, 1,4)))
+        .deep.equals([Range.create(0,2, 0,2)]));
+
+    it("non-overlapping", () =>
+      expect(Range.create(1,2, 1,5).subtract(Range.create(1,6, 1,8)))
+        .deep.equals([Range.create(1,2, 1,5)]));
+
+    it("non-overlapping reverse", () =>
+      expect(Range.create(1,6, 1,8).subtract(Range.create(1,2, 1,5)))
+        .deep.equals([Range.create(1,6, 1,8)]));
+
+  });
 });
