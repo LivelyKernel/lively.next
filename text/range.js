@@ -111,7 +111,7 @@ export class Range {
     if (Math.abs(compared) >= 5)
       return this;
     if (compared < 0)
-      return Range.fromPositions(this.start, otherRange.end);
+      return Range.fromPositions(this.start, otherRange.start);
     return Range.fromPositions(otherRange.end, this.end);
   }
 

@@ -29,11 +29,11 @@ describe("range", () => {
 
   });
 
-  describe("subtract", () => {
+  describe("without", () => {
 
     it("overlapping", () =>
       expect(Range.create(0,0, 1, 4).without(Range.create(1, 2, 1, 5)))
-        .stringEquals("Range(0/0 -> 1/5)"));
+        .stringEquals("Range(0/0 -> 1/2)"));
 
     it("non-overlapping 1", () =>
       expect(Range.create(0,0, 1, 1).without(Range.create(1, 2, 1, 5)))
