@@ -71,9 +71,13 @@ describe("range", () => {
       expect(Range.create(0,2, 1,2).intersect(Range.create(0,0, 1,4)))
         .stringEquals("Range(0/2 -> 1/2)"));
 
-    it("non overlapping", () =>
+    it("non-overlapping", () =>
       expect(Range.create(1,2, 1,5).intersect(Range.create(1,6, 1,8)))
-        .equals(null));
+        .stringEquals("Range(1/5 -> 1/5)"));
+
+    it("non-overlapping reverse", () =>
+      expect(Range.create(1,6, 1,8).intersect(Range.create(1,2, 1,5)))
+        .stringEquals("Range(1/5 -> 1/5)"));
 
   });
 });

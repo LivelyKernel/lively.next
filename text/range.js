@@ -127,7 +127,7 @@ export class Range {
       case 3: return new Range(b);
       case 4: return Range.fromPositions(b.start, a.end);
       case 5: return Range.at(b.start);
-      case 6: return null;
+      case 6: return Range.at(a.end);
     }
   }
 
