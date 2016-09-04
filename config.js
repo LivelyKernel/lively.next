@@ -86,7 +86,7 @@ var config = {
 
       {keys: "Ctrl-Space", command: "toggle active mark"},
 
-
+      {keys: "Esc|Ctrl-G", command: "cancel input"}
     ]
   }
 }

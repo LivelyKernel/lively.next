@@ -539,8 +539,22 @@ var commands = [
         morph.undoManager.group();
       return true;
     }
-  }
+  },
 
+  {
+    name: "cancel input",
+    exec: function(morph, args, count, evt) {
+      if (evt && evt.keyInputState) {
+        evt.keyInputState.count = undefined;
+        evt.keyInputState.keyCHain = "";
+      }
+      if (!morph.selection.isEmpty())
+        morph.selection.anchor = morph.selection.lead;
+      if (morph.activeMark)
+        morph.activeMark = null;
+      return true;
+    }
+  }
 ]
 
 
