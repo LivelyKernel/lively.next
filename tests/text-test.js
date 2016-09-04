@@ -391,3 +391,34 @@ describe("saved marks", () => {
   });
 
 });
+
+describe("text movement and selection commands", () => {
+
+  
+  describe("paragraphs", () => {
+
+    var t;
+    beforeEach(() => t = text("\n\naaa\n\nbbbb\n\n\n\nccc\nccc\n\n\n"));
+    // 0 = empty
+    // 1 = empty
+    // 2 = aaa
+    // 3 = empty
+    // 4 = bbbb
+    // 5 = empty
+    // 6 = empty
+    // 7 = empty
+    // 8 = ccc
+    // 9 = ccc
+    // 10-12 = empty
+
+    it("moves to paragraph borders", () => {
+      t.cursorPosition = {row: 0, column: 0};
+      t.execCommand("goto paragraph above");
+      expect(t.selection).stringEquals("Selection(0/0 -> 0/0)");
+      t.execCommand("goto paragraph below");
+      expect(t.selection).stringEquals("Selection(3/0 -> 3/0)");
+    });
+
+  });
+
+});

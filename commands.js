@@ -278,22 +278,40 @@ var commands = [
 
   {
     name: "goto start",
-    exec: function(morph) { morph.gotoStartOrEnd({direction: "start", select: !!morph.activeMark}); return true; }
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      morph.gotoStartOrEnd({...opts, direction: "start"});
+      return true;
+    }
   },
 
   {
     name: "goto end",
-    exec: function(morph) { morph.gotoStartOrEnd({direction: "end", select: !!morph.activeMark}); return true; }
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      morph.gotoStartOrEnd({...opts, direction: "end"});
+      return true;
+    }
   },
 
   {
-    name: "goto start and select",
-    exec: function(morph) { morph.gotoStartOrEnd({direction: "start", select: true}); return true; }
+    name: "goto paragraph above",
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      var pRange = morph.paragraphRangeAbove(morph.cursorPosition.row);
+      pRange.start.row--;
+      morph.selection.lead = pRange.start;
+      if (!opts.select) morph.collapseSelection();
+      return true;
+    }
   },
 
   {
-    name: "goto end and select",
-    exec: function(morph) { morph.gotoStartOrEnd({direction: "end", select: true}); return true; }
+    name: "goto paragraph below",
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      var pRange = morph.paragraphRangeBelow(morph.cursorPosition.row);
+      pRange.end.row++;
+      morph.selection.lead = pRange.end;
+      if (!opts.select) morph.collapseSelection();
+      return true;
+    }
   },
 
   {

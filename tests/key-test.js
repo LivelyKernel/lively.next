@@ -1,7 +1,6 @@
 /*global declare, it, describe, beforeEach, afterEach*/
 import { expect } from "mocha-es6";
 
-
 import Keys from "../events/Keys.js";
 let {
   keyComboToEventSpec: event,

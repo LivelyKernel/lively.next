@@ -65,6 +65,9 @@ var config = {
       {keys: {win: "Shift-PageDown", mac: "Shift-PageDown"}, command: "goto page down and select"},
       {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
 
+      {keys: "Ctrl-Up", command: "goto paragraph above"},
+      {keys: "Ctrl-Down", command: "goto paragraph below"},
+
       {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
 
       {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: "goto start and select"},

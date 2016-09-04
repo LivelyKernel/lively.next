@@ -277,6 +277,7 @@ export class Text extends Morph {
     var doc = this.document;
     return doc.getLine(row);
   }
+  isLineEmpty(row) { return !this.getLine(row).trim(); }
 
   wordsOfLine(row = this.cursorPosition.row) { return this.document.wordsOfLine(row); }
   wordAt(pos = this.cursorPosition) { return this.document.wordAt(pos); }
@@ -400,6 +401,12 @@ export class Text extends Morph {
 
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
+  get documentEndPosition() { return this.document.endPosition; }
+
+  collapseSelection() {
+    this.selection.collapse(this.selection.lead);
+    return this.selection;
+  }
 
   selectAll() {
     this.selection.selectAll();
@@ -594,10 +601,53 @@ export class Text extends Morph {
 
   gotoStartOrEnd(opts = {direction: "start", select: false}) {
     var {direction, select} = opts || {},
-        pos = direction === "start" ? {row: 0, column: 0} : this.document.endPosition
+        pos = direction === "start" ? {row: 0, column: 0} : this.documentEndPosition;
     this.selection.lead = pos;
     if (!select) this.selection.anchor = this.selection.lead;
     this.scrollCursorIntoView();
+  }
+
+  paragraphRangeAbove(row) {
+    var startLineIsEmpty = this.isLineEmpty(row),
+        rowInParagraph;
+    if (startLineIsEmpty) { // we need to go above to find the paragraph start
+      for (var i = row - 1; i >= 0; i--)
+        if (!this.isLineEmpty(i)) { rowInParagraph = i; break; }
+      if (rowInParagraph === undefined) return {start: {row, column: 0}, end: {row, column: 0}};
+    } else rowInParagraph = row;
+    return this.paragraphRange(rowInParagraph);
+  }
+
+  paragraphRangeBelow(row) {
+    var startLineIsEmpty = this.isLineEmpty(row),
+        rowInParagraph,
+        endPos = this.documentEndPosition;
+
+    if (startLineIsEmpty) { // we need to go above to find the paragraph start
+      for (var i = row+1; i <= endPos.row; i++)
+        if (!this.isLineEmpty(i)) { rowInParagraph = i; break; }
+      if (rowInParagraph === undefined) return {start: {row, column: 0}, end: {row, column: 0}};
+    } else rowInParagraph = row;
+
+    return this.paragraphRange(rowInParagraph);
+  }
+
+  paragraphRange(row) {
+    if (this.isLineEmpty(row)) return {start: {row, column: 0}, end: {row, column: 0}}
+
+    var endPos = this.documentEndPosition,
+        pragraphEnd;
+
+    for (var i = row+1; i <= endPos.row; i++)
+      if (this.isLineEmpty(i)) { pragraphEnd = {row: i-1, column: this.getLine(i-1).length}; break; }
+    if (!pragraphEnd) pragraphEnd = endPos;
+
+    var start;
+    for (var i = pragraphEnd.row - 1; i >= 0; i--)
+      if (this.isLineEmpty(i)) { start = {row: i+1, column: 0}; break; }
+    if (!start) start = {row: 0, column: 0};
+
+    return {start, end: pragraphEnd};
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
