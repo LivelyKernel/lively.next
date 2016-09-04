@@ -211,24 +211,6 @@ var commands = [
   },
 
   {
-    name: "select to start",
-    exec: function(morph) {
-      morph.selection.lead = {row: 0, column: 0};
-      morph.scrollCursorIntoView();
-      return true;
-    }
-  },
-
-  {
-    name: "select to end",
-    exec: function(morph) {
-      morph.selection.lead = morph.document.endPosition;
-      morph.scrollCursorIntoView();
-      return true;
-    }
-  },
-
-  {
     name: "select line",
     exec: function(morph) {
       var sel = morph.selection,
@@ -240,25 +222,27 @@ var commands = [
   },
 
   {
-    name: "select to line start",
-    exec: function(morph, opts = {collapse: false}) {
-      var sel = morph.selection,
+    name: "goto line start",
+    exec: function(morph, opts = {select: false}) {
+      var select = opts.select || !!morph.activeMark,
+          sel = morph.selection,
           cursor = sel.lead,
           line = morph.lineRange(cursor.row, true);
       sel.lead = eqPosition(cursor, line.start) ? {column: 0, row: cursor.row} : line.start;
-      opts && opts.collapse && (sel.anchor = sel.lead)
+      !select && (sel.anchor = sel.lead);
       return true;
     }
   },
 
   {
-    name: "select to line end",
-    exec: function(morph, opts = {collapse: false}) {
-      var sel = morph.selection,
+    name: "goto line end",
+    exec: function(morph, opts = {select: false}) {
+      var select = opts.select || !!morph.activeMark,
+          sel = morph.selection,
           cursor = sel.lead,
           line = morph.lineRange(cursor.row, true);
       sel.lead = line.end;
-      opts && opts.collapse && (sel.anchor = sel.lead)
+      !select && (sel.anchor = sel.lead);
       return true;
     }
   },
@@ -274,12 +258,12 @@ var commands = [
 
   {
     name: "goto page up",
-    exec: function(morph) { morph.pageUpOrDown({direction: "up", select: false}); return true; }
+    exec: function(morph) { morph.pageUpOrDown({direction: "up", select: !!morph.activeMark}); return true; }
   },
 
   {
     name: "goto page down",
-    exec: function(morph) { morph.pageUpOrDown({direction: "down", select: false}); return true; }
+    exec: function(morph) { morph.pageUpOrDown({direction: "down", select: !!morph.activeMark}); return true; }
   },
 
   {
@@ -294,12 +278,12 @@ var commands = [
 
   {
     name: "goto start",
-    exec: function(morph) { morph.gotoStartOrEnd({direction: "start", select: false}); return true; }
+    exec: function(morph) { morph.gotoStartOrEnd({direction: "start", select: !!morph.activeMark}); return true; }
   },
 
   {
     name: "goto end",
-    exec: function(morph) { morph.gotoStartOrEnd({direction: "end", select: false}); return true; }
+    exec: function(morph) { morph.gotoStartOrEnd({direction: "end", select: !!morph.activeMark}); return true; }
   },
 
   {
@@ -315,9 +299,11 @@ var commands = [
   {
     name: "goto line",
     exec: async function(morph) {
-      var row = Number(await morph.world().prompt("Enter line number"));
+      var select = !!morph.activeMark,
+          row = Number(await morph.world().prompt("Enter line number"));
       if (!isNaN(row)) {
-        morph.cursorPosition = {row, column: 0};
+        if (select) morph.selection.lead = {row, column: 0}
+        else morph.cursorPosition = {row, column: 0};
         morph.scrollCursorIntoView();
         morph.focus();
       }
@@ -425,9 +411,10 @@ var commands = [
   {
     name: "goto word left",
     exec: function(morph, args = {select: false}) {
-      var {range} = morph.wordLeft();
+      var select = args.select || !!morph.activeMark,
+          {range} = morph.wordLeft();
       morph.selection.lead = range.start;
-      if (!args.select) morph.selection.anchor = range.start;
+      if (!select) morph.selection.anchor = range.start;
       return true;
     }
   },
@@ -435,9 +422,10 @@ var commands = [
   {
     name: "goto word right",
     exec: function(morph, args = {select: false}) {
-      var {range} = morph.wordRight();
+      var select = args.select || !!morph.activeMark,
+          {range} = morph.wordRight();
       morph.selection.lead = range.end;
-      if (!args.select) morph.selection.anchor = range.end;
+      if (!select) morph.selection.anchor = range.end;
       return true;
     }
   },
@@ -501,16 +489,35 @@ var commands = [
   },
 
   {
-    name: "set active mark",
+    name: "toggle active mark",
     doc: "....",
-    exec: function(morph) {
-      var m = morph.activeMark, sel = morph.selection;
-      if (!m && sel.isEmpty()) morph.activeMark = morph.cursorPosition;
-      else {
-        morph.saveMark(m || sel.anchor);
-        morph.activeMark = null; 
-        if (!sel.isEmpty()) sel.anchor = sel.lead;
+    handlesCount: true,
+    exec: function(morph, args, count) {
+      var m = morph.activeMark,
+          sel = morph.selection,
+          selected = !sel.isEmpty();
+
+      // Ctrl-U Ctrl-Space = jump to last active mark and pop it from stack
+      if (count === 4) {
+        let lastMark = morph.popSavedMark();
+        if (lastMark) {
+          sel.lead = lastMark.position;
+          if (!selected) sel.anchor = sel.lead;
+        }
+        return true;
       }
+
+      // no active mark? set it to the current position
+      if (!m && !selected) {
+        morph.activeMark = sel.lead;
+        return true;
+      }
+      
+      // otherwise save mark, deactivate it, and remove any selection that
+      // there might be
+      morph.saveMark(m || sel.anchor);
+      morph.activeMark = null;
+      if (selected) sel.anchor = sel.lead;
       return true;
     }
   },
@@ -518,6 +525,7 @@ var commands = [
   {
     name: "insertstring",
     exec: function(morph, args = {string: null, undoGroup: false}) {
+      morph.saveActiveMarkAndDeactivate();
       var {string, undoGroup} = args,
           isValid = typeof string === "string" && string.length;
       if (!isValid) console.warn(`command insertstring called with not string value`);
