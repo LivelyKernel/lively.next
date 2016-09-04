@@ -166,6 +166,10 @@ export class Text extends Morph {
         ea => ea !== anchor);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // marks: text position that are saved and can be retrieved
+  // the activeMark affects movement commands: when it's active movement will
+  // select
   get savedMarks() { return this.getProperty("savedMarks") || []; }
   set savedMarks(val) {
     var savedMarks = this.savedMarks;
@@ -191,10 +195,18 @@ export class Text extends Morph {
 
   saveMark(p = this.cursorPosition, activate) {
     var prevMark = this.activeMark;
-    if (prevMark)
+    if (prevMark && prevMark !== p && !prevMark.equalsPosition(p))
       this.savedMarks = this.savedMarks.concat(prevMark);
     if (activate) this.activeMark = p;
     else this.savedMarks = this.savedMarks.concat(p);
+  }
+
+  saveActiveMarkAndDeactivate() {
+    var m = this.activeMark;
+    if (m) {
+      this.saveMark(m);
+      this.activeMark = null;
+    }
   }
 
   popSavedMark() {
@@ -554,6 +566,7 @@ export class Text extends Morph {
     evt.stop();
     var sel = this.selection;
     sel.text = evt.domEvt.clipboardData.getData("text");
+    this.saveMark(sel.start);
     sel.collapseToEnd();
   }
 
@@ -610,7 +623,7 @@ export class Text extends Morph {
     }
 
     return range;
-    
+
     function insertRange(text, pos) {
       var lines = TextDocument.parseIntoLines(text), range;
 
