@@ -482,6 +482,7 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
+    this.activeMark && (this.activeMark = null);
     this.clickhandler.handle(this, evt);
   }
 
