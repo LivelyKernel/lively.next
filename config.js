@@ -82,8 +82,8 @@ var config = {
       {keys: 'Space', command: {command: "insertstring", args: {string: " ", undoGroup: true}}},
       {keys: 'Tab',   command: {command: "insertstring", args: {string: "\t", undoGroup: true}}},
 
-      {keys: {win: 'Ctrl-]', max: 'Meta-]'}, command: "indent"},
-      {keys: {win: 'Ctrl-[', max: 'Meta-['}, command: "outdent"},
+      {keys: {win: 'Ctrl-]', mac: 'Meta-]'}, command: "indent"},
+      {keys: {win: 'Ctrl-[', mac: 'Meta-['}, command: "outdent"},
 
       {keys: {mac: 'Ctrl-X Ctrl-T'}, command: "transpose chars"},
 
