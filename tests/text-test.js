@@ -87,7 +87,7 @@ describe("text operations", () => {
 });
 
 describe("anchors", () => {
-  
+
   it("adds anchor by id", () => {
     var t = text("hello\nworld", {}),
         a = t.addAnchor({id: "test", column: 1, row: 1});
@@ -359,7 +359,7 @@ describe("text mouse events", () => {
 
 describe("saved marks", () => {
 
-  var t;  
+  var t;
   beforeEach(() => t = text("hello\n world"));
 
   it("activates mark to select", () => {

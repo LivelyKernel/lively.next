@@ -33,7 +33,13 @@ var KEY_MODS = (() => {
   return base;
 })();
 
+var isNumber = (() => {
+  var numberRe = /^[0-9]+$/;
+  return (key) => numberRe.test(key);
+})();
+
 function isModifier(key) {
+  if (isNumber(key)) return false;
   key = key.replace(/-$/, "").toLowerCase();
   return arr.withoutAll(Object.keys(KEY_MODS), ["", "input-"]).includes(key);
 }

@@ -192,6 +192,8 @@ describe("key bindings", () => {
   });
 
   it("adds bindings to key chain", () => {
+    handler = new KeyHandler()
+
     handler.bindKey("ctrl-a ctrl-b", "test");
     expect(handler.lookup("ctrl-a")).deep.equals({command: "null", keyChain: canonicalize("ctrl-a")}, "1");
     expect(handler.lookup("ctrl-b", {keyChain: canonicalize("ctrl-a")})).deep.equals({command: "test"}, "2");
@@ -208,7 +210,6 @@ describe("key bindings", () => {
   });
 
   it("defines command that removes key chains", () => {
-    handler = new KeyHandler()
     handler.bindKey("ctrl-a ctrl-b", "test-1");
     handler.bindKey("ctrl-a", "test-2");
     expect(handler.lookup("ctrl-a")).deep.equals({command: "test-2"}, "1");
@@ -223,14 +224,12 @@ describe("key bindings", () => {
   });
 
   it("removes key chain entirely 2", () => {
-    handler = new KeyHandler()
     handler.bindKey("ctrl-a ctrl-b", "test");
     handler.unbindKey("ctrl-a ctrl-b");
     expect(handler.keyBindings).deep.equals({});
   });
 
   it("keeps key chain on removal when other chained commands exist", () => {
-    handler = new KeyHandler()
     handler.bindKey("ctrl-a ctrl-b", "test");
     handler.bindKey("ctrl-a ctrl-c", "test");
     handler.unbindKey("ctrl-a ctrl-b");
@@ -239,10 +238,18 @@ describe("key bindings", () => {
   });
 
   it("transparently looks up input keys", () => {
-    handler = new KeyHandler()
     handler.bindKey("Alt-G G", "test");
     expect(handler.lookup("g", {keyChain: canonicalize("alt-g")})).deep.equals({command: "test"});
     expect(handler.lookup("G", {keyChain: canonicalize("alt-g")})).deep.equals({command: "test"});
+  });
+
+  it("adds count on ctrl-number press", () => {
+    expect(handler.lookup("Ctrl-1")).deep.equals({command: "null", count: 1});
+    expect(handler.lookup("Ctrl-2", {count: 1})).deep.equals({command: "null", count: 12});
+  });
+
+  it("maps ctrl-u as universal argument = count 4", () => {
+    expect(handler.lookup("Ctrl-U")).deep.equals({command: "null", count: 4, keyChain: "Ctrl-U"});
   });
 
 });

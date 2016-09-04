@@ -164,12 +164,16 @@ export default class EventDispatcher {
       dragDelta: null,
       lastDragPosition: null,
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
-      keyInputState: {}
+      keyInputState: null
     };
+    this.resetKeyInputState()
   }
 
   resetKeyInputState() {
-    this.eventState.keyInputState = {};
+    this.eventState.keyInputState = {
+      keyChain: undefined,
+      count: undefined
+    }
   }
 
   focusMorph(morph) {

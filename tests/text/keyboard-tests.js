@@ -48,4 +48,9 @@ describe("text key input", () => {
     expect(t.cursorPosition).deep.equals({row: 0, column: 5});
   });
 
+  it("key input with count", () => {
+    t.simulateKeys("Ctrl-3 a");
+    expect(t.textString).equals("aaahello\n world");
+  });
+
 });

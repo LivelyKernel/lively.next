@@ -18,31 +18,40 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   if (noInputEvents && isInputEvent) return false;
 
   for (var i = keyhandlers.length; i--;) {
-    toExecute = keyhandlers[i].handleKeyboard(morph, evt);
+    toExecute = keyhandlers[i].eventCommandLookup(morph, evt);
 
     if (!toExecute || !toExecute.command) continue;
 
-    let {command, args, passEvent} = toExecute;
+    let {command, args, passEvent, count} = toExecute;
 
     // allow keyboardHandler to consume keys
-    success = command === "null" ? true : morph.execCommand(command, args, evt);
+    success = command === "null" ? true : morph.execCommand(command, args, count, evt);
 
     // do not stop input events to not break repeating
     if (success && evt && !isInputEvent && !passEvent)
       typeof evt.stop === "function" && evt.stop();
 
+    // reset count on success
+    if (success && evt && evt.keyInputState && command !== "null")
+      evt.keyInputState.count = undefined;
+
     if (success) break;
   }
 
   if (!success && isInputEvent) {
-    success = morph.execCommand("insertstring", {string: data || key, undoGroup: 600/*ms*/}, evt);
+    var count = evt && evt.keyInputState ? evt.keyInputState.count : undefined;
+    success = morph.execCommand("insertstring", {string: data || key, undoGroup: 600/*ms*/}, count, evt);
+    if (success && evt && evt.keyInputState)
+      evt.keyInputState.count = undefined;
   }
 
   return success;
 }
 
 
-export function simulateKeys(morph, keyComboString) {
+export function simulateKeys(
+  morph, keyComboString,
+  keyInputState = {keyChain: undefined, count: undefined}) {
   // keyComboString like "a b ctrl-c"
   // there can be multiple pressed keys separated by spaces. To simulate a
   // space press use a double space. split up the individual keys and
@@ -122,22 +131,38 @@ export class KeyHandler {
     this.keyBindings = {};
   }
 
-  handleKeyboard(morph, evt) {
-    // Mutates evt.keyInputState.keyChain
+  eventCommandLookup(morph, evt) {
+    // Mutates evt.keyInputState keyChain / count
+
     let {keyCombo, keyInputState} = evt,
         cmd = this.lookup(keyCombo, keyInputState);
-    // only modify key chain if we found command
-    if (cmd && keyInputState) keyInputState.keyChain = cmd.keyChain || "";
+
+    // only modify keyInputState if necessary
+    if (cmd && keyInputState) {
+      keyInputState.keyChain = cmd.keyChain || "";
+      keyInputState.count = cmd.hasOwnProperty("count") ? cmd.count : undefined;
+    }
 
     return cmd;
   }
 
-  lookup(keyCombo, keyInputState = {}) {
+  lookup(keyCombo, keyInputState = {keyChain: undefined, count: undefined}) {
     // tries to find suitable command name or object for keyCombo in
     // this.keyBindings. Uses keyInputState for keychains.
 
     keyCombo = Keys.canonicalizeKeyCombo(keyCombo);
-    var keyChain = keyInputState.keyChain || "";
+    var keyChain = keyInputState.keyChain || "",
+        count = keyInputState.count;
+
+    if (!keyChain && keyCombo.startsWith("Ctrl-")) {
+      let countMatch = keyCombo.match(/^Ctrl-([0-9]+)/);
+      if (countMatch) {
+        let numArg = parseInt((typeof count === "number" ? count : "") + countMatch[1]);
+        return {command: "null", count: numArg};
+      }
+      // universal argument
+      if (keyCombo === "Ctrl-U") return {command: "null", count: 4, keyChain: keyCombo};
+    }
 
     // for simple input test both upper and lowercase
     var combos = [keyCombo];
@@ -159,10 +184,15 @@ export class KeyHandler {
 
     if (command && command === "chainKeys") {
       keyChain = keyChain || keyCombo;
-      return {command: "null", keyChain};
+      var result = {command: "null", keyChain}
+      if (count !== undefined) result.count = count;
+      return result;
     }
-    
-    return !command ? undefined : typeof command === "object" ? {...command} : {command};
+
+    if (!command) return undefined;
+    var result = typeof command === "object" ? {...command} : {command};
+    if (count !== undefined) result.count = count;
+    return result;
   }
 
   bindKey(keyCombo, command) {
@@ -173,7 +203,7 @@ export class KeyHandler {
 
     if (typeof command == "function")
       return this.addCommand({exec: command, bindKey: keyCombo, name: command.name || keyCombo});
-    
+
     var allCombos = Array.isArray(keyCombo) ?
       keyCombo : keyCombo.includes("|") ?
         keyCombo.split("|") : [keyCombo];
@@ -193,7 +223,7 @@ export class KeyHandler {
 
       this.addCommandToBinding(chain + Keys.canonicalizeKeyCombo(keyPart), command);
     });
-  
+
     this.cleanupUnusedKeyChains();
   }
 

@@ -825,9 +825,9 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // commands
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  execCommand(command, args, evt) {
+  execCommand(command, args, count, evt) {
     var handler = this.commands || defaultCommandHandler;
-    return handler.exec(command, this, args, evt);
+    return handler.exec(command, this, args, count, evt);
   }
 
 }

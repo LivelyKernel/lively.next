@@ -1,7 +1,8 @@
 import { string } from "lively.lang";
-import { lessPosition, lessEqPosition } from "./position.js";
+import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
 
 export class Anchor {
+
   constructor(id = string.newUUID(), pos = {column: 0, row: 0}) {
     this.id = id;
     this.position = pos;
@@ -33,6 +34,12 @@ export class Anchor {
           0 : startRow === endRow ?
             endColumn - startColumn : endColumn;
     this.position = {column: column + deltaColumns, row: row + deltaRows}
+  }
+
+  equalsPosition(posOrAnchor) {
+    if (!posOrAnchor) return false;
+    if (posOrAnchor.isAnchor) return eqPosition(this.position, posOrAnchor.position);
+    return eqPosition(this.position, posOrAnchor);
   }
 
   toString() {
