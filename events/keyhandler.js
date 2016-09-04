@@ -59,14 +59,13 @@ export function simulateKeys(
   var pressedKeys = keyComboString.length === 1 ?
       [keyComboString] :
       keyComboString.split(/ /g).map(ensureSpaces)
-  pressedKeys.forEach(ea => simulateKey(morph, ea));
+  pressedKeys.forEach(ea => simulateKey(morph, ea, keyInputState));
 }
 
 
-export function simulateKey(morph, keyComboString) {
-  return invokeKeyHandlers(morph, Keys.keyComboToEventSpec(keyComboString));
+export function simulateKey(morph, keyComboString, keyInputState) {
+  return invokeKeyHandlers(morph, {...Keys.keyComboToEventSpec(keyComboString), keyInputState});
 }
-
 
 function bowserOS() {
   if (bowser.mac)          return "mac";
