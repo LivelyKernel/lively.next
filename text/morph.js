@@ -7,14 +7,13 @@ import { Selection } from "./selection.js";
 import { Range } from "./range.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-import { KeyHandler, simulateKeys, invokeKeyHandlers } from "../events/keyhandler.js";
+import { KeyHandler } from "../events/keyhandler.js";
 import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 import { Anchor } from "./anchors.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export class Text extends Morph {
 
   static makeLabel(string, props) {
@@ -63,7 +62,6 @@ export class Text extends Morph {
     this.document = new TextDocument();
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.undoManager = new UndoManager();
-    this._keyhandlers = []; // defaultKeyHandler is fallback
     this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new Selection(this, selection) : null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
@@ -521,35 +519,25 @@ export class Text extends Morph {
   // keyboard events
 
   get keyhandlers() {
-    return [KeyHandler.withDefaultBindings()].concat(this._keyhandlers)
+    return [KeyHandler.withBindings(config.text.defaultKeyBindings)];
   }
 
   simulateKeys(keyString) {
-    simulateKeys(this, keyString);
-  }
-
-  onKeyUp(evt) {
-    switch (evt.keyCombo) {
-      case 'Command-D': case 'Command-P': evt.stop(); break;
-    }
+    KeyHandler.simulateKeys(this, keyString);
   }
 
   onKeyDown(evt) {
-    if (invokeKeyHandlers(this, evt, true/*no input evts*/)) {
+    if (KeyHandler.invokeKeyHandlers(this, evt, true/*no input evts*/)) {
       this.selection.cursorBlinkStart();
       this.scrollCursorIntoView();
     }
   }
 
   onTextInput(evt) {
-    if (invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
+    if (KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
       this.selection.cursorBlinkStart();
       this.scrollCursorIntoView();
     }
-  }
-
-  invokeKeyHandlers(evt, noInputEvents = false) {
-    return invokeKeyHandlers(this, evt, noInputEvents);
   }
 
   doSave() { /*...*/ }

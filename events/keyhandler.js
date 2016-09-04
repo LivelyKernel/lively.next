@@ -1,12 +1,10 @@
 import Keys from "./Keys.js";
 import bowser from "bowser";
 import { arr } from "lively.lang";
-import config from "../config.js";
 
 function ensureSpaces(s) { return s.length ? s : ' '; }
 
-
-export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
+function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   evt = Keys.canonicalizeEvent(evt);
 
   let {keyCombo, key, data} = evt,
@@ -49,7 +47,7 @@ export function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 }
 
 
-export function simulateKeys(
+function simulateKeys(
   morph, keyComboString,
   keyInputState = {keyChain: undefined, count: undefined}) {
   // keyComboString like "a b ctrl-c"
@@ -63,7 +61,7 @@ export function simulateKeys(
 }
 
 
-export function simulateKey(morph, keyComboString, keyInputState) {
+function simulateKey(morph, keyComboString, keyInputState) {
   return invokeKeyHandlers(morph, {...Keys.keyComboToEventSpec(keyComboString), keyInputState});
 }
 
@@ -118,11 +116,26 @@ function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
 
 export class KeyHandler {
 
-  static withDefaultBindings() {
-    var handler = new this;
-    config.text.defaultKeyBindings.forEach(({command, keys}) =>
+  static invokeKeyHandlers(morph, evt, noInputEvents = false) {
+    return invokeKeyHandlers(morph, evt, noInputEvents);
+  }
+
+  static simulateKeys(morph, keyCombo, keyInputState) {
+    return simulateKeys(morph, keyCombo, keyInputState);
+  }
+
+  static withBindings(listOfBindings, platform) {
+    // listOfBindings is a list of objects that should have at least fields keys and command
+    // e.g. {keys: "Ctrl-A", command: "selectall"}
+    // you can make platform specific bindings like
+    // {keys: {mac: "Meta-A", win: "Ctrl-A"}, command: "selectall"}
+    // command can be an object specifying additional properties like "args"
+    // that are being passed to the command handler when the command is executed,
+    // e.g. {command: {command: "goto line start", args: {select: true}}, keys: "Shift-Home"}
+    var handler = new this(platform);
+    listOfBindings.forEach(({command, keys}) =>
       handler.bindKey(keys, command));
-    return handler
+    return handler;
   }
 
   constructor(platform = bowserOS()) {
@@ -148,8 +161,8 @@ export class KeyHandler {
   lookup(keyCombo, keyInputState = {keyChain: undefined, count: undefined}) {
     // tries to find suitable command name or object for keyCombo in
     // this.keyBindings. Uses keyInputState for keychains.
-
     keyCombo = Keys.canonicalizeKeyCombo(keyCombo);
+
     var keyChain = keyInputState.keyChain || "",
         count = keyInputState.count;
 

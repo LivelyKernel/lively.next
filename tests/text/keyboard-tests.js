@@ -24,14 +24,14 @@ describe("text key input", () => {
   describe("key handler invocation", () => {
 
     it("input event", () => {
-      t.invokeKeyHandlers({type: "input", data: "x"});
+      t.onTextInput({type: "input", data: "x"});
       expect(t.textString).equals("xhello\n world");
-      t.invokeKeyHandlers({type: "input", data: "X"});
+      t.onTextInput({type: "input", data: "X"});
       expect(t.textString).equals("xXhello\n world");
     });
 
     it("no input event", () => {
-      t.invokeKeyHandlers({type: "input", data: "x"}, {onlyCommandOrFunctionKey: true});
+      t.onKeyDown({type: "input", data: "x"});
       expect(t.textString).equals("hello\n world");
     });
 
