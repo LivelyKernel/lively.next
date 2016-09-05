@@ -692,6 +692,14 @@ export class Text extends Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // serialization
+    exportToJSON(options) {
+      return Object.assign(super.exportToJSON(options), {
+        textString: this.textString
+      });
+    }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
 
   inspect() {
