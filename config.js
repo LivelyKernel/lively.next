@@ -85,6 +85,10 @@ var config = {
       {keys: {win: 'Ctrl-]', mac: 'Meta-]'}, command: "indent"},
       {keys: {win: 'Ctrl-[', mac: 'Meta-['}, command: "outdent"},
 
+      {keys: {win: 'Ctrl-Enter', mac: 'Meta-Enter'}, command: {command: "insert line", args: {where: "below"}}},
+      {keys: 'Shift-Enter',                          command: {command: "insert line", args: {where: "above"}}},
+      {keys: 'Ctrl-O',                               command: "split line"},
+
       {keys: {mac: 'Ctrl-X Ctrl-T'}, command: "transpose chars"},
 
       {keys: "Ctrl-Space", command: "toggle active mark"},

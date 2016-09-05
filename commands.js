@@ -347,6 +347,29 @@ var commands = [
   },
 
   {
+    name: "split line",
+    exec: function(morph) {
+      var pos = morph.cursorPosition,
+          indent = morph.getLine(pos.row).match(/^\s*/)[0].length;
+      morph.insertText("\n" + " ".repeat(indent), pos);
+      morph.cursorPosition = pos;
+      return true;
+    }
+  },
+
+  {
+    name: "insert line",
+    exec: function(morph, opts = {where: "above"}) {
+      var {row} = morph.cursorPosition,
+          indent = morph.getLine(row).match(/^\s*/)[0].length;
+      if (opts.where === "below") row++;
+      morph.insertText(" ".repeat(indent) + "\n", {column: 0, row});
+      morph.cursorPosition = {column: indent, row}
+      return true;
+    }
+  },
+
+  {
     name: "duplicate line or selection",
     exec: function(morph) {
       morph.undoManager.group();
