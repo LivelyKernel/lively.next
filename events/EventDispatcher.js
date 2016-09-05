@@ -504,4 +504,12 @@ export default class EventDispatcher {
     return this;
   }
 
+  doCopy(content) {
+    // via document.execCommand, might not work
+    // usage:
+    //   await $world.env.eventDispatcher.doCopy("foo124");
+    return this.keyInputHelper.doCopy(content);
+  }
+  doPaste() { return this.keyInputHelper.doPaste(); }
+
 }

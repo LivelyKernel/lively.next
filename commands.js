@@ -19,6 +19,17 @@ var commands = [
   },
 
   {
+    name: "manual clipboard copy",
+    doc: "attempts to copy selection via browser interface",
+    exec: function(morph) {
+      var sel = morph.selection,
+          text = sel.isEmpty() ? morph.getLine(sel.lead.row) : sel.text;
+      morph.env.eventDispatcher.doCopy(text);
+      return true;
+    }
+  },
+
+  {
     name: "clipboard cut",
     doc: "placeholder for native cut",
     exec: function(morph) {

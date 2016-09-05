@@ -13,6 +13,7 @@ var config = {
     undoLevels: 50,
     defaultKeyBindings: [
       {keys: {mac: 'Meta-C', win: 'Ctrl-C'}, command: {command: "clipboard copy", passEvent: true}},
+      {keys: "Alt-W",                        command: "manual clipboard copy"},
       {keys: {mac: 'Meta-X', win: 'Ctrl-X'}, command: {command: "clipboard cut", passEvent: true}},
       {keys: {mac: 'Meta-V', win: 'Ctrl-V'}, command: {command: "clipboard paste", passEvent: true}},
 
