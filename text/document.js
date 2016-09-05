@@ -148,9 +148,11 @@ export default class TextDocument {
 
   wordsOfLine(row) {
     var line = this.lines[row] || "",
-        words = [], word;
+        words = [], word,
+        isWordDelimiter = char => /[^a-z0-9_]/i.test(char);
+
     for (var i = 0; i < line.length; i++) {
-      if (line[i].match(/\s/)) {
+      if (isWordDelimiter(line[i])) {
         if (word) {
           word.range.end.column = i;
           words.push(word);

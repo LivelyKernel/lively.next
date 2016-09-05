@@ -1,3 +1,4 @@
+import { promise } from "lively.lang";
 import bowser from "bowser";
 
 const placeholderValue = "\x01\x01",

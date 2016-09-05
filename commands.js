@@ -259,15 +259,6 @@ var commands = [
   },
 
   {
-    name: "select word",
-    exec: function(morph) {
-      var sel = morph.selection;
-      sel.range = morph.wordAt(sel.lead).range;
-      return true;
-    }
-  },
-
-  {
     name: "goto page up",
     exec: function(morph) { morph.pageUpOrDown({direction: "up", select: !!morph.activeMark}); return true; }
   },
@@ -456,6 +447,24 @@ var commands = [
       morph.deleteText({start: {row: end.row+1, column: 0}, end: {row: end.row+2, column: 0}});
       morph.insertText(lineAfter + "\n", {row: start.row, column: 0});
       morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "select word",
+    exec: function(morph) {
+      var sel = morph.selection;
+      sel.range = morph.wordAt(sel.lead).range;
+      return true;
+    }
+  },
+
+  {
+    name: "select word right",
+    exec: function(morph) {
+      var sel = morph.selection;
+      sel.anchor = morph.wordRight(sel.end).range.end;
       return true;
     }
   },

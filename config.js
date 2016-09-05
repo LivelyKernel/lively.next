@@ -44,6 +44,7 @@ var config = {
       {keys: 'Alt-Shift-Left|Alt-Shift-B',   command: {command: "goto word left", args: {select: true}}},
       {keys: 'Alt-Backspace',                command: "remove word left"},
       {keys: 'Alt-D',                        command: "remove word right"},
+      {keys: 'Alt-Shift-2',                  command: "select word right"},
 
       {keys: "Ctrl-X Ctrl-X",                                     command: "reverse selection"},
       {keys: {win: "Ctrl-Shift-L", mac: 'Meta-L'},                command: "select line"},
@@ -71,8 +72,8 @@ var config = {
 
       {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
 
-      {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: "goto start and select"},
-      {keys: {win: "Ctrl-Shift-End", mac: "Meta-Shift-Down"},          command: "goto end and select"},
+      {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: {command: "goto start", args: {select: true}}},
+      {keys: {win: "Ctrl-Shift-End", mac: "Meta-Shift-Down"},          command: {command: "goto end", args: {select: true}}},
       {keys: {win: "Ctrl-Home", mac: "Meta-Up|Meta-Home|Alt-Shift-,"}, command: "goto start"},
       {keys: {win: "Ctrl-End", mac: "Meta-Down|Meta-End|Alt-Shift-."}, command: "goto end"},
 

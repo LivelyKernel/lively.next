@@ -696,6 +696,8 @@ export class Morph {
   get dragTriggerDistance() { return 0; }
 
   onMouseDown(evt) {
+    // FIXME this doesn't belong here. Event dispatch related code should go
+    // into events/dispatcher.js
     if (this === evt.targetMorph) {
       setTimeout(() => {
         if (this.grabbable && !evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs())
