@@ -135,6 +135,22 @@ describe("create or extend classes", function() {
     foo.m = () => 24;
     expect(foo.m()).equals(24);
   });
+  
+  it("overridden instance methods can be removed", async function() {
+    await evalClass("class Foo { m() { return 23; } }")
+    const Foo2 = await evalClass("class Foo2 extends Foo { m() { return 42; } }"),
+          foo = new Foo2();
+    expect(foo.m()).equals(42);
+    await evalClass("class Foo2 extends Foo { }");
+    expect(foo.m()).equals(23);
+  });
+
+  it("class methods can be removed", async function() {
+    const Foo = await evalClass("class Foo { static m() { return 23; } }")
+    expect(Foo.m()).equals(23);
+    await evalClass("class Foo { }");
+    expect(Foo.m).to.be.undefined
+  });
 
   describe("compat with conventional class function", () => {
 
