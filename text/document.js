@@ -16,8 +16,9 @@ export default class TextDocument {
   static get newlineLength() { return newlineLength; }
   static parseIntoLines(text) { return text.split(this.newline); }
 
-  constructor(lines = []) {
+  constructor(lines = [], styleRanges = []) {
     this.lines = lines;
+    styleRanges.map(range => this.addStyleRange(range));
   }
 
   get textString() { return this.lines.join(TextDocument.newline); }
@@ -30,6 +31,13 @@ export default class TextDocument {
       row: lines.length-1,
       column: lines[lines.length-1].length
     } : {row: 0, column: 0}
+  }
+
+  get styleRanges() { return this.styleRanges }
+
+  addStyleRange(range) {
+    this.styleRanges.push(range);
+    // TODO: Consolidate/deduplicate ranges
   }
 
   getLine(row) {

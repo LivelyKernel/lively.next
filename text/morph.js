@@ -42,8 +42,8 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, selection, clipMode} = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode"])
+    var {fontMetric, textString, selectable, selection, clipMode, styleRanges } = props;
+    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode", "styleRanges"])
     super({
       readOnly: false,
       draggable: false,
@@ -53,7 +53,6 @@ export class Text extends Morph {
       fontSize: 12,
       fontColor: Color.black,
       fontKerning: true,
-      styleRanges: [{range: new Range({start: {row: 0, column: 0}, end: {row: 0, column: 1}}), style: {fontColor: Color.red}}],
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
@@ -67,6 +66,7 @@ export class Text extends Morph {
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
+    if (styleRanges) styleRanges.map(range => this.addStyleRange(range));
     this.fit();
     this._needsFit = false;
   }
@@ -389,6 +389,12 @@ export class Text extends Morph {
     var {start: {row: startRow}, end: {row: endRow, column: endColumn}} = range;
     // if selection is only in the beginning of last line don't include it
     return this.withLinesDo(startRow, endColumn === 0 ? endRow-1 : endRow, doFunc);
+  }
+
+  get styleRanges() { return this.document.styleRanges }
+
+  addStyleRange(range) {
+    this.document.addStyleRange(range);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
