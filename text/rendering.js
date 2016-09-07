@@ -2,6 +2,7 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { h } from "virtual-dom";
 import { arr, string } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
+import { Range } from "./range.js";
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
@@ -29,10 +30,93 @@ function cursor(pos, height, visible) {
   })
 }
 
+
+class ChunkLine {
+
+  constructor(text, config) {
+    this.rendered = undefined;
+    this.updateChunksIfNecessary(text, config);
+    return this;
+  }
+
+  get height() {
+    return arr.max(this.chunks.map(chunk => chunk.height));
+  }
+
+  get width() {
+    return arr.sum(this.chunks.map(chunk => chunk.width));
+  }
+
+  updateChunksIfNecessary(text, config) {
+    // FIXME!
+    this.text = text;
+    this.config = config;
+
+    this.chunks = [new RenderedChunk(text, config)];
+
+    // // For testing...
+    // let halfway = Math.floor(text.length/2);
+    // this.chunks = [new RenderedChunk(text.slice(0, halfway), config),
+    //               new RenderedChunk(text.slice(halfway), config)];
+  }
+
+  boundsFor(column) {
+    let startPixel = 0,
+        startCol = 0;
+    for (let chunk of this.chunks) {
+      let { text, width } = chunk,
+          cols = text.length,
+          endCol = startCol + cols;
+      if (column >= startCol && column <= endCol) {
+        let {x, y, width, height} = chunk.boundsFor(column - startCol);
+        return { x: x + startPixel, y, width, height };
+      }
+      startPixel += width;
+      startCol += cols;
+    }
+  }
+
+  columnForXOffset(xInPixels) {
+    let startPixel = 0,
+        startCol = 0;
+    for (let chunk of this.chunks) {
+      let { text, width } = chunk,
+          cols = text.length,
+          endPixel = startPixel + width;
+      if (xInPixels >= startPixel && xInPixels <= endPixel)
+        return startCol + chunk.columnForXOffset(xInPixels - startPixel);
+      startPixel += width;
+      startCol += cols;
+    }
+    return startCol;
+  }
+
+  get allCharBounds() {
+    let prefixWidth = 0;
+    return this.chunks.map(chunk => {
+      let { charBounds, width } = chunk,
+          offsetCharBounds = charBounds.map(bounds => ({ x: bounds.x + prefixWidth, y: bounds.y, width: bounds.width, height: bounds.height }));
+      prefixWidth += width;
+      return offsetCharBounds;
+    });
+  }
+
+  render(left, top) {
+    if (this.rendered) return this.rendered;
+    let { chunks, height, width } = this;
+    return this.rendered = chunks.map(chunk => {
+      let oldLeft = left;
+      left += chunk.width;
+      return chunk.render(oldLeft, top);
+    });
+  }
+
+}
+
+
 class RenderedChunk {
 
   constructor(text, config) {
-    // config: {fontFamily, fontSize, fontMetric, fontColor}
     this.config = config;
     this.text = text;
 
@@ -87,20 +171,23 @@ class RenderedChunk {
     this._charBounds = fontMetric.charBoundsFor(fontFamily, fontSize, fontKerning, text);
   }
 
-  render() {
+  render(left, top) {
     if (this.rendered) return this.rendered;
     var {config: {fontSize, fontFamily, fontColor, fontKerning}, text, width, height} = this,
         textNodes = text ? fontKerning ? text
                                        : text.split("").map(c => h("span", c))
                          : h("br");
     fontColor = fontColor || "";
+    left += "px";
+    top += "px";
 
     return this.rendered = h("div", {
       style: {
-        pointerEvents: "none",
+        position: "absolute",
+        left,
+        top,
         fontSize: fontSize + "px",
         fontFamily,
-        lineHeight: "initial",
         color: fontColor.isColor ? fontColor.toString() : String(fontColor)
       }
     }, textNodes);
@@ -141,7 +228,7 @@ export default class TextLayout {
 
   constructor(fontMetric) {
     this.layoutComputed = false;
-    this.chunks = [];
+    this.chunkLines = [];
     this.fontMetric = fontMetric;
   }
 
@@ -153,16 +240,15 @@ export default class TextLayout {
         lines = document.lines,
         nRows = lines.length;
 
-    // for now: 1 line = 1 chunk
+    // FIXME!
     for (let row = 0; row < nRows; row++) {
-      var chunk = this.chunks[row],
-          text = lines[row],
+      var text = lines[row],
+          textRange = Range.fromPositions({row, column: 0}, {row, column: text.length-1}),
           config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning };
-      if (!chunk || !chunk.compatibleWith(text, config))
-        this.chunks[row] = new RenderedChunk(text, config);
+      this.chunkLines[row] = new ChunkLine(text, config);
     }
+    this.chunkLines.splice(nRows, this.chunkLines.length - nRows);
 
-    this.chunks.splice(nRows, this.chunks.length - nRows);
     this.layoutComputed = true;
     return this;
   }
@@ -193,24 +279,24 @@ export default class TextLayout {
     let {start, end, lead, cursorVisible} = morph.selection,
         isReverse           = morph.selection.isReverse(),
         {padding, document} = morph,
-        chunks              = this.chunks,
+        chunkLines          = this.chunkLines,
         paddingOffset       = padding.topLeft(),
         startPos            = this.pixelPositionFor(morph, start).addPt(paddingOffset),
         endPos              = this.pixelPositionFor(morph, end).addPt(paddingOffset),
         cursorPos           = isReverse ? startPos : endPos,
-        endLineHeight       = chunks[end.row].height;
+        endLineHeight       = chunkLines[end.row].height;
 
     // collapsed selection -> cursor
     if (morph.selection.isEmpty())
-      return [cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
+      return [cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, chunks[lead.row].height, cursorVisible)]
+        cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)]
 
-    let endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
+    let endPosLine1 = pt(morph.width, startPos.y + chunkLines[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
@@ -218,7 +304,7 @@ export default class TextLayout {
       return [
         selectionLayerPart(startPos, endPosLine1),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
+        cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)];
     }
 
     let endPosMiddle = pt(morph.width, endPos.y),
@@ -229,12 +315,12 @@ export default class TextLayout {
       selectionLayerPart(startPos, endPosLine1),
       selectionLayerPart(startPosLine2, endPosMiddle),
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
-      cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
+      cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)];
 
   }
 
   renderTextLayer(morph) {
-    let {chunks} = this,
+    let {chunkLines} = this,
         textWidth = 0, textHeight = 0,
         {padding, scroll, height} = morph,
         {y: visibleTop} = scroll.subPt(padding.topLeft()),
@@ -243,10 +329,12 @@ export default class TextLayout {
         row = 0,
         spacerBefore,
         renderedLines = [],
-        spacerAfter;
+        spacerAfter,
+        lineLeft = padding.left(),
+        lineTop = padding.top();
 
-    for (;row < chunks.length; row++) {
-      let {width, height} = chunks[row],
+    for (;row < chunkLines.length; row++) {
+      let {width, height} = chunkLines[row],
           newTextHeight = textHeight + height;
       if (newTextHeight >= visibleTop) break;
       textWidth = Math.max(width, textWidth);
@@ -255,19 +343,20 @@ export default class TextLayout {
 
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
-    for (;row < chunks.length; row++) {
-      let {width, height} = chunks[row];
+    for (;row < chunkLines.length; row++) {
+      let {width, height} = chunkLines[row];
       if (textHeight > visibleBottom) break;
-      renderedLines.push(chunks[row].render());
+      renderedLines.push(chunkLines[row].render(lineLeft, lineTop));
 
       textWidth = Math.max(width, textWidth);
       textHeight += height;
+      lineTop += height;
     }
 
     lastVisibleLineBottom = textHeight;
 
-    for (;row < chunks.length; row++) {
-      let {width, height} = chunks[row];
+    for (;row < chunkLines.length; row++) {
+      let {width, height} = chunkLines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -284,7 +373,7 @@ export default class TextLayout {
   }
 
   renderDebugLayer(morph) {
-    let {chunks} = this,
+    let {chunkLines} = this,
         {y: visibleTop} = morph.scroll,
         visibleBottom = visibleTop + morph.height,
         {padding} = morph,
@@ -294,24 +383,26 @@ export default class TextLayout {
         textHeight = 0,
         textWidth = 0;
 
-    for (let row = 0; row < chunks.length; row++) {
-      let {width, height, charBounds} = chunks[row];
-      for (let col = 0; col < charBounds.length; col++) {
-        let {x, width, height} = charBounds[col],
-                y = textHeight + paddingTop;
-        x += paddingLeft;
-        debugHighlights.push(h("div", {
-          style: {
-            position: "absolute",
-            left: x+"px",
-            top: y+"px",
-            width: width+"px",
-            height: height+"px",
-            outline: "1px solid orange",
-            pointerEvents: "none",
-            zIndex: -2
-          }
-        }))
+    for (let row = 0; row < chunkLines.length; row++) {
+      let {width, height, allCharBounds} = chunkLines[row];
+      for (let charBounds of allCharBounds) {
+        for (let col = 0; col < charBounds.length; col++) {
+          let {x, width, height} = charBounds[col],
+                  y = textHeight + paddingTop;
+          x += paddingLeft;
+          debugHighlights.push(h("div", {
+            style: {
+              position: "absolute",
+              left: x+"px",
+              top: y+"px",
+              width: width+"px",
+              height: height+"px",
+              outline: "1px solid orange",
+              pointerEvents: "none",
+              zIndex: -2
+            }
+          }))
+        }
       }
 
       textHeight += height;
@@ -347,13 +438,13 @@ export default class TextLayout {
 
   textPositionFor(morph, point) {
     this.updateFromMorphIfNecessary(morph);
-    var {chunks} = this;
-    if (!chunks.length) return {row: 0, column: 0};
+    var {chunkLines} = this;
+    if (!chunkLines.length) return {row: 0, column: 0};
 
     let {x,y: remainingHeight} = point, line, row;
     if (remainingHeight < 0) remainingHeight = 0;
-    for (row = 0; row < chunks.length; row++) {
-      line = chunks[row];
+    for (row = 0; row < chunkLines.length; row++) {
+      line = chunkLines[row];
       if (remainingHeight < line.height) break;
       remainingHeight -= line.height;
     }
@@ -369,8 +460,8 @@ export default class TextLayout {
   textBounds(morph) {
     this.updateFromMorphIfNecessary(morph);
     let textWidth = 0, textHeight = 0;
-    for (let row = 0; row < this.chunks.length; row++) {
-      var {width, height} = this.chunks[row];
+    for (let row = 0; row < this.chunkLines.length; row++) {
+      var {width, height} = this.chunkLines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -380,15 +471,15 @@ export default class TextLayout {
 
   boundsFor(morph, {row, column}) {
     this.updateFromMorphIfNecessary(morph);
-    let chunks = this.chunks,
-        maxLength = chunks.length-1,
+    let chunkLines = this.chunkLines,
+        maxLength = chunkLines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
-        line = chunks[safeRow];
+        line = chunkLines[safeRow];
 
     if (!line) return pt(0,0);
 
     for (var y = 0, i = 0; i < safeRow; i++)
-      y += chunks[i].height;
+      y += chunkLines[i].height;
     let { x, width, height } = line.boundsFor(column);
     return new Rectangle(x, y, width, height);
   }
