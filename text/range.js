@@ -1,5 +1,5 @@
 import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
-
+import { Anchor } from "./anchors.js";
 
 export class Range {
 
@@ -166,16 +166,32 @@ export class Range {
 export const defaultRange = new Range()
 
 
-// export class StyleRange {
-  
-//   constructor(style = {}, range) {
-//     super(range);
-//     this.style = style;
-//   }
-  
-//   applyTo(otherRange) {
-//     // Styles from otherRange will be applied to (and override) any overlapping section of this range; will return 1-3 new ranges
-    
-    
-//   }
-// }
+export class StyleRange {
+
+  constructor(style = {}, range) {
+    this.style = style;
+    this.start = new Anchor(undefined, range.start);
+    this.end = new Anchor(undefined, range.end);
+  }
+
+  // applyTo(otherRange) {
+  //   // Styles from otherRange will be applied to (and override) any overlapping section of this range; will return 1-3 new ranges
+  // }
+
+  get range() {
+    let { start, end } = this;
+    return Range.fromPositions(start.position, end.position);
+  }
+
+  onInsert(range) {
+    this.start.onInsert(range);
+    this.end.onInsert(range);
+  }
+
+  onDelete(range) {
+    this.start.onDelete(range);
+    this.end.onDelete(range);
+  }
+
+  intersect(range) { return this.range.intersect(range) }
+}

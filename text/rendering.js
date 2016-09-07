@@ -2,7 +2,7 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { h } from "virtual-dom";
 import { arr, string } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
-import { Range } from "./range.js";
+import { Range, StyleRange } from "./range.js";
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
@@ -33,9 +33,9 @@ function cursor(pos, height, visible) {
 
 class ChunkLine {
 
-  constructor(text, config) {
+  constructor(text, config, lineRange) {
     this.rendered = undefined;
-    this.updateChunksIfNecessary(text, config);
+    this.updateChunksIfNecessary(text, config, lineRange);
     return this;
   }
 
@@ -47,12 +47,33 @@ class ChunkLine {
     return arr.sum(this.chunks.map(chunk => chunk.width));
   }
 
-  updateChunksIfNecessary(text, config) {
+  updateChunksIfNecessary(text, config, lineRange) {
     // FIXME!
+    let { styleRanges, fontFamily, fontSize, fontColor, fontKerning, fontMetric } = config,
+        defaultStyle = { fontFamily, fontSize, fontColor, fontKerning },
+        defaultStyleRange = new StyleRange(defaultStyle, lineRange),
+        styleRangesWithDefault = [defaultStyleRange].concat(styleRanges),
+        chunks = [];
+    for (let styleRange of styleRangesWithDefault) {
+      let intersection = styleRange.intersect(lineRange);
+      if (!intersection.isEmpty() || text === "") {
+        let startCol = intersection.start.column,
+            endCol = intersection.end.column,
+            style = styleRange.style,
+            chunkText = text.slice(startCol, endCol),
+            chunkConfig = Object.assign(style, {fontMetric});
+        chunks.push(new RenderedChunk(chunkText, chunkConfig));
+      } else {
+        alert(`${lineRange}, ${styleRange.range}`);
+      }
+    }
+    this.chunks = chunks;
+
     this.text = text;
     this.config = config;
+    this.lineRange = lineRange;
 
-    this.chunks = [new RenderedChunk(text, config)];
+    //this.chunks = [new RenderedChunk(text, config)];
 
     // // For testing...
     // let halfway = Math.floor(text.length/2);
@@ -249,14 +270,15 @@ export default class TextLayout {
     let {fontFamily, fontSize, fontColor, fontKerning, document} = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
+        styleRanges = document.styleRanges,
         nRows = lines.length;
 
     // FIXME!
     for (let row = 0; row < nRows; row++) {
       var text = lines[row],
-          textRange = Range.fromPositions({row, column: 0}, {row, column: text.length-1}),
-          config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning };
-      this.chunkLines[row] = new ChunkLine(text, config);
+          lineRange = Range.fromPositions({row, column: 0}, {row, column: text.length}),
+          config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning, styleRanges };
+      this.chunkLines[row] = new ChunkLine(text, config, lineRange);
     }
     this.chunkLines.splice(nRows, this.chunkLines.length - nRows);
 

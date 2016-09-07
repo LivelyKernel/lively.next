@@ -4,7 +4,7 @@ import { string, obj, arr } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
-import { Range } from "./range.js";
+import { Range, StyleRange } from "./range.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import { KeyHandler } from "../events/keyhandler.js";

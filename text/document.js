@@ -110,7 +110,7 @@ export default class TextDocument {
   }
 
   insert(string, pos) {
-    let {lines} = this,
+    let {lines, styleRanges} = this,
         {row, column} = pos,
         line = lines[row],
         insertionLines = TextDocument.parseIntoLines(string);
@@ -136,7 +136,10 @@ export default class TextDocument {
 
     lines[row + insertionLines.length] = lines[row + insertionLines.length] + after;
 
-    return {start: pos, end}
+    let insertionRange = {start: pos, end};
+    styleRanges.map(ea => ea.onInsert(insertionRange));
+
+    return insertionRange;
   }
 
   remove({start, end}) {
