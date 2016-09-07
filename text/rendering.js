@@ -61,14 +61,20 @@ class ChunkLine {
   }
 
   boundsFor(column) {
-    let startPixel = 0,
-        startCol = 0;
-    for (let chunk of this.chunks) {
-      let { text, width } = chunk,
+    let startCol = 0,
+        startPixel = 0,
+        { chunks } = this,
+        lastIndex = chunks.length-1;
+    for (let i = 0; ; i++) {
+      let chunk = chunks[i],
+          { text, width } = chunk,
           cols = text.length,
           endCol = startCol + cols;
-      if (column >= startCol && column <= endCol) {
-        let {x, y, width, height} = chunk.boundsFor(column - startCol);
+      if ((column >= startCol && column < endCol)
+          || i === lastIndex) {
+        let columnInChunk = column - startCol,
+            {x, y, width, height} = chunk.boundsFor(columnInChunk),
+            offsetX = x + startPixel;
         return { x: x + startPixel, y, width, height };
       }
       startPixel += width;
@@ -78,17 +84,22 @@ class ChunkLine {
 
   columnForXOffset(xInPixels) {
     let startPixel = 0,
-        startCol = 0;
-    for (let chunk of this.chunks) {
-      let { text, width } = chunk,
+        startCol = 0,
+        { chunks } = this,
+        lastIndex = chunks.length-1,
+        found = false;
+    for (let i = 0; ; i++) {
+      let chunk = chunks[i],
+          { text, width } = chunks[i],
           cols = text.length,
           endPixel = startPixel + width;
-      if (xInPixels >= startPixel && xInPixels <= endPixel)
+      if ((xInPixels >= startPixel && xInPixels < endPixel)
+          || i === lastIndex) {
         return startCol + chunk.columnForXOffset(xInPixels - startPixel);
+      }
       startPixel += width;
       startCol += cols;
     }
-    return startCol;
   }
 
   get allCharBounds() {

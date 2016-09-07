@@ -139,7 +139,7 @@ describe("rendered text", () => {
   afterEach(() => destroyMorphicEnv());
 
   inBrowser("only renders visible part of scrolled text", async () => {
-    var lineHeight = sut.renderer.chunks[0].height;
+    var lineHeight = sut.renderer.chunkLines[0].height;
     Object.assign(sut, {
       clipMode: "auto",
       extent: pt(100,2*lineHeight), position: pt(0,0),
