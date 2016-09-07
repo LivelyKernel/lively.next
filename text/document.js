@@ -18,6 +18,7 @@ export default class TextDocument {
 
   constructor(lines = [], styleRanges = []) {
     this.lines = lines;
+    this._styleRanges = [];
     styleRanges.map(range => this.addStyleRange(range));
   }
 
@@ -33,10 +34,10 @@ export default class TextDocument {
     } : {row: 0, column: 0}
   }
 
-  get styleRanges() { return this.styleRanges }
+  get styleRanges() { return this._styleRanges }
 
   addStyleRange(range) {
-    this.styleRanges.push(range);
+    this._styleRanges.push(range);
     // TODO: Consolidate/deduplicate ranges
   }
 
