@@ -275,6 +275,8 @@ export class Text extends Morph {
     this.insertText(value, {column: 0, row: 0});
   }
 
+ textInRange(range) { return this.document.textInRange(range); }
+
   getLine(row) {
     if (typeof row !== "number") this.cursorPosition.row;
     var doc = this.document;
@@ -335,9 +337,9 @@ export class Text extends Morph {
     if (range.isEmpty()) return;
 
     this.undoManager.undoStart(this, "insertText");
-
-    var text = this.document.textInRange(range)
-    this.document.remove(range);
+    var doc = this.document,
+        text = doc.textInRange(range);
+    doc.remove(range);
     this._needsFit = true;
 
     this.addMethodCallChangeDoing({
