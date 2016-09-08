@@ -25,8 +25,8 @@ var config = {
       {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
       {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "saveit"},
 
-      {keys: 'Backspace', command: "delete backwards"},
-      {keys: 'Delete',    command: "delete"},
+      {keys: 'Backspace',                           command: "delete backwards"},
+      {keys: {win: 'Delete', mac: 'Delete|Ctrl-D'}, command: "delete"},
 
       {keys: {win: 'Left', mac: 'Left|Ctrl-B'},   command: "go left"},
       {keys: {win: 'Right', mac: 'Right|Ctrl-F'}, command: "go right"},
@@ -42,8 +42,9 @@ var config = {
       {keys: 'Alt-Left|Alt-B',               command: "goto word left"},
       {keys: 'Alt-Shift-Right|Alt-Shift-F',  command: {command: "goto word right", args: {select: true}}},
       {keys: 'Alt-Shift-Left|Alt-Shift-B',   command: {command: "goto word left", args: {select: true}}},
-      {keys: 'Alt-Backspace',                command: "remove word left"},
-      {keys: 'Alt-D',                        command: "remove word right"},
+      {keys: 'Alt-Backspace',                command: "delete word left"},
+      {keys: 'Alt-D',                        command: "delete word right"},
+      {keys: 'Alt-Ctrl-K',                   command: "delete word right"/*actualle delete sexp!*/},
       {keys: 'Alt-Shift-2',                  command: "select word right"},
 
       {keys: "Ctrl-X Ctrl-X",                                     command: "reverse selection"},

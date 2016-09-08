@@ -394,11 +394,12 @@ var commands = [
       var pos = morph.cursorPosition,
           line = morph.getLine(pos.row);
       if (eqPosition(morph.document.endPosition, pos)) return true;
+      var range = line.trim() ?
+        {start: pos, end: {row: pos.row, column: line.length}} :
+        {start: {row: pos.row, column: 0}, end: {row: pos.row+1, column: 0}};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
       morph.undoManager.group();
-      if (!line.trim())
-        morph.deleteText({start: {row: pos.row, column: 0}, end: {row: pos.row+1, column: 0}});
-      else
-        morph.deleteText({start: pos, end: {row: pos.row, column: line.length}});
+      morph.deleteText(range);
       morph.undoManager.group();
       return true;
     }
@@ -411,14 +412,16 @@ var commands = [
         morph.selection.text = "";
         return true;
       }
-      var range = morph.lineRange(),
-          pos = morph.cursorPosition;
+      var lineRange = morph.lineRange(),
+          end = morph.cursorPosition;
       // already at beginning of line
-      if (eqPosition({row: pos.row, column: 0}, pos))
-        return true;
-      var start = eqPosition(range.start, pos) ?
-        {row: pos.row, column: 0}: range.start;
-      morph.deleteText({start, end: pos});
+      if (eqPosition({row: end.row, column: 0}, end)) return true;
+
+      var start = eqPosition(lineRange.start, end) ?
+            {row: end.row, column: 0}: lineRange.start,
+          range = {start, end};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
+      morph.deleteText(range);
       return true;
     }
   },
@@ -492,22 +495,26 @@ var commands = [
   },
 
   {
-    name: "remove word right",
+    name: "delete word right",
     exec: function(morph) {
       morph.undoManager.group();
-      var {range: {end}} = morph.wordRight();
-      morph.deleteText({start: morph.cursorPosition, end})
+      var {range: {end}} = morph.wordRight(),
+          range = {start: morph.cursorPosition, end};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
+      morph.deleteText(range);
       morph.undoManager.group();
       return true;
     }
   },
 
   {
-    name: "remove word left",
+    name: "delete word left",
     exec: function(morph) {
       morph.undoManager.group();
-      var {range: {start}} = morph.wordLeft();
-      morph.deleteText({start, end: morph.cursorPosition})
+      var {range: {start}} = morph.wordLeft(),
+          range = {start, end: morph.cursorPosition};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
+      morph.deleteText(range);
       morph.undoManager.group();
       return true;
     }
@@ -603,6 +610,16 @@ var commands = [
   },
 
   {
+    name: "increase font size",
+    exec: function(morph) { morph.fontSize++; return true; }
+  },
+
+  {
+    name: "decrease font size",
+    exec: function(morph) { morph.fontSize--; return true; }
+  },
+
+  {
     name: "cancel input",
     exec: function(morph, args, count, evt) {
       if (evt && evt.keyInputState) {
@@ -616,6 +633,7 @@ var commands = [
       return true;
     }
   }
+
 ]
 
 
