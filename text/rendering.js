@@ -52,22 +52,9 @@ class ChunkLine {
     let { styleRanges, fontFamily, fontSize, fontColor, fontKerning, fontMetric } = config,
         defaultStyle = { fontFamily, fontSize, fontColor, fontKerning },
         defaultStyleRange = new StyleRange(defaultStyle, lineRange),
-        chunks = [],
-        flattenedStyleRanges = [defaultStyleRange];
-    for (let styleRange of styleRanges) {
-      let newRanges = [];
-      flattenedStyleRanges.forEach(range => newRanges.push(...range.applyStylesFrom(styleRange)));
-      flattenedStyleRanges = newRanges;
-    }
-    console.log(flattenedStyleRanges[0].end)
-    this.chunks = flattenedStyleRanges.map(range => {
-      let startCol = range.start.column,
-          endCol = range.end.column,
-          style = range.style,
-          chunkText = text.slice(startCol, endCol),
-          chunkConfig = Object.assign(style, {fontMetric});
-      return new RenderedChunk(chunkText, chunkConfig);
-    });
+        flattenedStyleRanges = StyleRange.flatten(defaultStyleRange, ...styleRanges);
+
+    this.chunks = flattenedStyleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
 
     this.text = text;
     this.config = config;
@@ -140,6 +127,15 @@ class ChunkLine {
 
 
 class RenderedChunk {
+
+  static fromStyleRange(lineText, fontMetric, styleRange) {
+    let { start, end, style } = styleRange,
+        startCol = start.column,
+        endCol = end.column,
+        chunkText = lineText.slice(startCol, endCol),
+        chunkConfig = Object.assign(style, {fontMetric});
+    return new RenderedChunk(chunkText, chunkConfig);
+  }
 
   constructor(text, config) {
     this.config = config;
