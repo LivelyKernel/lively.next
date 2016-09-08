@@ -136,10 +136,7 @@ export default class TextDocument {
 
     lines[row + insertionLines.length] = lines[row + insertionLines.length] + after;
 
-    let insertionRange = {start: pos, end};
-    styleRanges.map(ea => ea.onInsert(insertionRange));
-
-    return insertionRange;
+    return {start: pos, end};
   }
 
   remove({start, end}) {

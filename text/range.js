@@ -1,5 +1,6 @@
 import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
 import { Anchor } from "./anchors.js";
+import { obj } from "lively.lang";
 
 export class Range {
 
@@ -166,32 +167,27 @@ export class Range {
 export const defaultRange = new Range()
 
 
-export class StyleRange {
+export class StyleRange extends Range {
 
   constructor(style = {}, range) {
+    super(range);
     this.style = style;
-    this.start = new Anchor(undefined, range.start);
-    this.end = new Anchor(undefined, range.end);
   }
 
-  // applyTo(otherRange) {
-  //   // Styles from otherRange will be applied to (and override) any overlapping section of this range; will return 1-3 new ranges
-  // }
-
-  get range() {
-    let { start, end } = this;
-    return Range.fromPositions(start.position, end.position);
+  applyStylesFrom(otherRange) {
+    // Styles from otherRange will be applied to (and override) any overlapping section of this range; will return 1-3 new ranges
+    let intersection = this.intersect(otherRange),
+        outputStyleRanges;
+    if (!intersection.isEmpty()) {
+      let thisStyle = this.style,
+          otherStyle = otherRange.style,
+          mergedStyle = obj.merge(thisStyle, otherStyle),
+          restyledRange = new StyleRange(mergedStyle, intersection),
+          leftoverRanges = this.subtract(intersection).map(range => new StyleRange(thisStyle, range));
+      outputStyleRanges = [restyledRange, ...leftoverRanges];
+    } else {
+      outputStyleRanges = [this];
+    }
+    return Range.sort(outputStyleRanges);
   }
-
-  onInsert(range) {
-    this.start.onInsert(range);
-    this.end.onInsert(range);
-  }
-
-  onDelete(range) {
-    this.start.onDelete(range);
-    this.end.onDelete(range);
-  }
-
-  intersect(range) { return this.range.intersect(range) }
 }

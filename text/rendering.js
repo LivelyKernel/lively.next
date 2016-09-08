@@ -52,33 +52,26 @@ class ChunkLine {
     let { styleRanges, fontFamily, fontSize, fontColor, fontKerning, fontMetric } = config,
         defaultStyle = { fontFamily, fontSize, fontColor, fontKerning },
         defaultStyleRange = new StyleRange(defaultStyle, lineRange),
-        styleRangesWithDefault = [defaultStyleRange].concat(styleRanges),
-        chunks = [];
-    for (let styleRange of styleRangesWithDefault) {
-      let intersection = styleRange.intersect(lineRange);
-      if (!intersection.isEmpty() || text === "") {
-        let startCol = intersection.start.column,
-            endCol = intersection.end.column,
-            style = styleRange.style,
-            chunkText = text.slice(startCol, endCol),
-            chunkConfig = Object.assign(style, {fontMetric});
-        chunks.push(new RenderedChunk(chunkText, chunkConfig));
-      } else {
-        alert(`${lineRange}, ${styleRange.range}`);
-      }
+        chunks = [],
+        flattenedStyleRanges = [defaultStyleRange];
+    for (let styleRange of styleRanges) {
+      let newRanges = [];
+      flattenedStyleRanges.forEach(range => newRanges.push(...range.applyStylesFrom(styleRange)));
+      flattenedStyleRanges = newRanges;
     }
-    this.chunks = chunks;
+    console.log(flattenedStyleRanges[0].end)
+    this.chunks = flattenedStyleRanges.map(range => {
+      let startCol = range.start.column,
+          endCol = range.end.column,
+          style = range.style,
+          chunkText = text.slice(startCol, endCol),
+          chunkConfig = Object.assign(style, {fontMetric});
+      return new RenderedChunk(chunkText, chunkConfig);
+    });
 
     this.text = text;
     this.config = config;
     this.lineRange = lineRange;
-
-    //this.chunks = [new RenderedChunk(text, config)];
-
-    // // For testing...
-    // let halfway = Math.floor(text.length/2);
-    // this.chunks = [new RenderedChunk(text.slice(0, halfway), config),
-    //               new RenderedChunk(text.slice(halfway), config)];
   }
 
   boundsFor(column) {
