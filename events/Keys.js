@@ -162,6 +162,26 @@ function identifyKeyFromCode({code}) {
 }
 
 
+function dedasherize(keyCombo) {
+  // splits string like Meta-x or Ctrl-- into its parts
+  // dedasherize("Ctrl--") => ["Ctrl", "-"]
+  var parts = [];
+  while (true) {
+    var idx = keyCombo.indexOf("-");
+    if (idx === -1) {
+      if (keyCombo) parts.push(keyCombo);
+      return parts;
+    }
+    if (idx === 0) {
+      parts.push(keyCombo[0]);
+      keyCombo = keyCombo.slice(2);
+    } else {
+      parts.push(keyCombo.slice(0, idx));
+      keyCombo = keyCombo.slice(idx+1)
+    }
+  }
+}
+
 var Keys = {
 
   computeHashIdOfEvent,
@@ -188,7 +208,7 @@ var Keys = {
     };
 
     // 2. Are any modifier keys pressed?
-    let keyMods = keyCombo.split(/[\-]/),
+    let keyMods = dedasherize(keyCombo),
         modsToEvent = {
           shift: "shiftKey",
           control: "ctrlKey",
@@ -218,7 +238,7 @@ var Keys = {
     // only modifiers
     if (!keyMods.length) {
       spec.keyCombo = Keys.eventToKeyCombo(spec);
-      spec.key = arr.last(spec.keyCombo.split("-"));
+      spec.key = arr.last(dedasherize(spec.keyCombo));
       return spec;
     }
 
