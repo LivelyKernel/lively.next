@@ -96,6 +96,10 @@ var config = {
 
       {keys: "Ctrl-Space", command: "toggle active mark"},
 
+      
+      {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
+      {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
+
       {keys: "Esc|Ctrl-G", command: "cancel input"}
     ]
   }
