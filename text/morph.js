@@ -395,7 +395,7 @@ export class Text extends Morph {
       this.selection.range;
     var {start: {row: startRow}, end: {row: endRow, column: endColumn}} = range;
     // if selection is only in the beginning of last line don't include it
-    return this.withLinesDo(startRow, endColumn === 0 ? endRow-1 : endRow, doFunc);
+    return this.withLinesDo(startRow, endColumn === 0 && endRow > startRow ? endRow-1 : endRow, doFunc);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
