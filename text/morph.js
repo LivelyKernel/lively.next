@@ -29,6 +29,11 @@ export class Text extends Morph {
 
   static makeInputLine(props) {
     var t = new Text({type: "text", extent: pt(100, 20), clipMode: "auto", ...props})
+    t.onChange = function(change) {
+      if (change.selector === 'insertText' || change.selector === 'deleteText')
+        signal(this, "inputChanged", this.textString);
+      return this.constructor.prototype.onChange.call(this, change);
+    }
     t.onInput = function(input) {
       signal(this, "input", input);
     }
