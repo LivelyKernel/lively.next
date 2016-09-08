@@ -2,7 +2,8 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { h } from "virtual-dom";
 import { arr, string } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
-import { Range, StyleRange } from "./range.js";
+import { Range } from "./range.js";
+import { StyleRange } from "./style.js";
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
