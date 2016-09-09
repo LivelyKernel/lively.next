@@ -277,7 +277,9 @@ export class Text extends Morph {
     this.insertText(value, {column: 0, row: 0});
   }
 
- textInRange(range) { return this.document.textInRange(range); }
+  textInRange(range) { return this.document.textInRange(range); }
+  charRight({row, column} = this.cursorPosition) { return this.getLine(row).slice(column, column+1); }
+  charLeft({row, column} = this.cursorPosition) { return this.getLine(row).slice(column-1, column); }
 
   getLine(row) {
     if (typeof row !== "number") this.cursorPosition.row;
@@ -384,10 +386,10 @@ export class Text extends Morph {
   }
 
   withLinesDo(startRow, endRow, doFunc) {
-    arr.range(startRow, endRow).forEach(row => {
+    return arr.range(startRow, endRow).map(row => {
       var line = this.getLine(row),
           range = Range.create(row, 0, row, line.length);
-      doFunc(line, range);
+      return doFunc(line, range);
     });
   }
 

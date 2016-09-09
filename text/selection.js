@@ -115,10 +115,14 @@ export class Selection {
     return this;
   }
 
-  selectLine(row) {
-    if (typeof row !== "number") row = this.lead.row;
+  selectLine(row = this.lead.row) {
     this.range = {start: {row, column: 0}, end: {row, column: this.textMorph.getLine(row).length}};
     return this;
+  }
+
+  gotoLineEnd(row = this.lead.row) {
+    var pos = {row, column: this.textMorph.getLine(row).length};
+    this.range = {start: pos, end: pos};
   }
 
   selectLeft(n = 1) {
