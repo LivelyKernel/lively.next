@@ -827,9 +827,12 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // commands
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  get commandHandler() {
+    return this.commands || defaultCommandHandler;
+  }
+
   execCommand(command, args, count, evt) {
-    var handler = this.commands || defaultCommandHandler;
-    return handler.exec(command, this, args, count, evt);
+    return this.commandHandler.exec(command, this, args, count, evt);
   }
 
 }

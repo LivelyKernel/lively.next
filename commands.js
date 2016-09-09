@@ -641,9 +641,22 @@ var commands = [
 
 export class CommandHandler {
 
+  constructor() {
+    this.history = [];
+    this.maxHistorySize = 300;
+  }
+
+  addToHistory(cmdName) {;
+    this.history.push(cmdName);
+    if (this.history.length > this.maxHistorySize)
+      this.history.splice(0, this.history.length - this.maxHistorySize);
+  }
+
   exec(command, morph, args, count, evt) {
     let name = !command || typeof command === "string" ? command : command.command,
         cmd = command && commands.find(ea => ea.name === name);
+
+    this.addToHistory(name);
 
     var result;
     if (cmd && typeof cmd.exec === "function") {
