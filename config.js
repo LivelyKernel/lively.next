@@ -11,9 +11,13 @@ var config = {
     tabWidth: 2,
     markStackSize: 16,
     undoLevels: 50,
+    clipboardBufferLength: 15,
     defaultKeyBindings: [
       {keys: {mac: 'Meta-C', win: 'Ctrl-C'}, command: {command: "clipboard copy", passEvent: true}},
+      {keys: "Ctrl-W",                       command: {command: "manual clipboard copy", args: {"delete": true}}},
       {keys: "Alt-W",                        command: "manual clipboard copy"},
+      {keys: "Ctrl-Y",                       command: "manual clipboard paste"},
+      {keys: "Alt-Y",                        command: {command: "manual clipboard paste", args: {killRingCycleBack: true}}},
       {keys: {mac: 'Meta-X', win: 'Ctrl-X'}, command: {command: "clipboard cut", passEvent: true}},
       {keys: {mac: 'Meta-V', win: 'Ctrl-V'}, command: {command: "clipboard paste", passEvent: true}},
 

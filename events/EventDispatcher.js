@@ -2,6 +2,7 @@ import { arr, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import config from "../config.js";
 import TextInput from './TextInput.js';
+import KillRing from './KillRing.js';
 
 import {
   Event, KeyEvent, SimulatedDOMEvent,
@@ -115,7 +116,6 @@ function focusEvents(dispatcher, targetMorph) {
   return events;
 }
 
-
 /*
 
 The event dispatcher controls what events get send to morphs and what the basic
@@ -148,6 +148,7 @@ export default class EventDispatcher {
     this.world = world;
     this.installed = false;
     this.handlerFunctions = [];
+    this.killRing = new KillRing(config.text.clipboardBufferLength);
 
     this.resetState();
   }

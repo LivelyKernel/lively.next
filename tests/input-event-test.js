@@ -340,3 +340,44 @@ describe("event simulation", () => {
   });
 
 });
+
+import KillRing from "../events/KillRing.js";
+describe("kill ring", () => {
+
+  it("max size", async () => {
+    var kr = new KillRing(3);
+    kr.add("a");
+    kr.add("b");
+    kr.add("c");
+    kr.add("d");
+    expect(kr.buffer).equals(["b", "c", "d"]);
+  });
+
+  it("rotates", async () => {
+    var kr = new KillRing(3);
+    kr.add("a");
+    kr.add("b");
+    kr.add("c");
+    expect(kr.yank()).equals("c");
+    kr.back();
+    kr.back();
+    expect(kr.yank()).equals("a");
+    kr.back();
+    expect(kr.yank()).equals("c");
+  });
+
+  it("add resets rotate", async () => {
+    var kr = new KillRing(5);
+    kr.add("a");
+    kr.add("b");
+    kr.add("c");
+    kr.back();
+    kr.back();
+    kr.add("d");
+    expect(kr.yank()).equals("d");
+    kr.back();
+    expect(kr.yank()).equals("c");
+  });
+
+  
+});

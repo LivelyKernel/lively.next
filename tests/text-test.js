@@ -391,8 +391,44 @@ describe("saved marks", () => {
 
 });
 
-describe("text movement and selection commands", () => {
+describe("clipboard buffer / kill ring", () => {
 
+  var t, browserExtension;
+  beforeEach(() => {
+    t = text("a\nb\nc\n");
+    browserExtension = lively.browserExtension;
+    delete lively.browserExtension;
+  });
+  afterEach(() => lively.browserExtension = browserExtension)
+
+  it("copy saves to clipboard buffer", async () => {
+    t = text("a\nb\nc\n")
+    t.selection = range(0,0,0,1);
+    t.execCommand("manual clipboard copy");
+    t.selection = range(1,0,1,1);
+    t.execCommand("manual clipboard copy");
+    t.selection = range(2,0,2,1);
+    t.execCommand("manual clipboard copy");
+
+    t.selection = range(3,0,3,0);
+    await t.execCommand("manual clipboard paste");
+    expect(t.selection.text).equals("c");
+    await t.execCommand("manual clipboard paste", {killRingCycleBack: true});
+    expect(t.selection.text).equals("b");
+    await t.execCommand("manual clipboard paste", {killRingCycleBack: true});
+    expect(t.selection.text).equals("a");
+    await t.execCommand("manual clipboard paste");
+    expect(t.selection.text).equals("a");
+
+    t.selection = range(2,0,2,1);
+    t.execCommand("manual clipboard copy");
+    await t.execCommand("manual clipboard paste");
+    expect(t.selection.text).equals("c");
+  });
+
+});
+
+describe("text movement and selection commands", () => {
   
   describe("paragraphs", () => {
 

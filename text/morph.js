@@ -560,7 +560,14 @@ export class Text extends Morph {
   onCopy(evt) {
     if (!this.isFocused()) return;
     evt.stop();
-    evt.domEvt.clipboardData.setData("text", this.selection.text);
+    var sel = this.selection;
+    this.env.eventDispatcher.killRing.add(sel.text);
+    evt.domEvt.clipboardData.setData("text", sel.text);
+    if (!sel.isEmpty()) {
+      this.activeMark = null;
+      this.saveMark(sel.anchor);
+      sel.collapse(sel.lead);
+    }
   }
 
   onPaste(evt) {

@@ -21,10 +21,21 @@ var commands = [
   {
     name: "manual clipboard copy",
     doc: "attempts to copy selection via browser interface",
-    exec: function(morph) {
+    exec: function(morph, opts = {delete: false}) {
       var sel = morph.selection,
-          text = sel.isEmpty() ? morph.getLine(sel.lead.row) : sel.text;
+          range = sel.isEmpty() ? Range.fromPositions(morph.cursorPosition, morph.lastSavedMark || morph.cursorPosition) : sel.range,
+          text = morph.textInRange(range);
+
       morph.env.eventDispatcher.doCopy(text);
+      morph.env.eventDispatcher.killRing.add(text);
+      if (opts["delete"])
+        morph.deleteText(range);
+      else if (!sel.isEmpty()) {
+        morph.activeMark = null;
+        morph.saveMark(sel.anchor);
+        sel.collapse(sel.lead);
+      }
+
       return true;
     }
   },
@@ -43,6 +54,36 @@ var commands = [
     name: "clipboard paste",
     doc: "placeholder for native paste",
     exec: function() { return true; }
+  },
+
+  {
+    name: "manual clipboard paste",
+    doc: "attempts to paste from the clipboard to lively – currently requires browser extension!",
+    exec: async function(morph, opts = {killRingCycleBack: false}) {
+      var pasted, kr = morph.env.eventDispatcher.killRing;
+
+      if (opts.killRingCycleBack && (arr.last(morph.commandHandler.history) || "").includes("clipboard paste"))
+        pasted = kr.back();
+      
+      if (!pasted && kr.isCycling())
+        pasted = kr.yank();
+
+      if (!pasted && lively.browserExtension) {
+        pasted = await lively.browserExtension.doPaste();
+      }
+
+      if (!pasted) {
+        try {
+          pasted = await morph.env.eventDispatcher.doPaste();
+        } catch (e) { console.warn("paste failed: " + e); }
+      }
+
+      if (!pasted) pasted = kr.yank();
+
+      if (pasted) morph.selection.text = pasted;
+
+      return true;
+    }
   },
 
   {
