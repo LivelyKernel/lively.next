@@ -1,7 +1,8 @@
 import { codec, bodec } from "js-git-browser";
 import { emit } from 'lively.notifications';
 
-import commit, { packageHead } from "./commit.js";
+import commit from "./commit.js";
+import activeCommit from "./index.js";
 import repository, { enableGitHub } from "./repo.js";
 
 // type EntryType = "tree" | "commit" | "tag" | "blob"
@@ -37,9 +38,10 @@ export default class Branch {
     emit("lively.changesets/changed", {changeset: this.name});
   }
   
-  async createFromHead() { // () -> ()
+  async createFromActive() { // () -> ()
     const repo = await repository(this.pkg),
-          prevHead = await packageHead(this.pkg);
+          active = await activeCommit(this.pkg),
+          prevHead = await active.stableBase();
     this._head = await prevHead.createChangeSetCommit();
     await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
     emit("lively.changesets/changed", {changeset: this.name});

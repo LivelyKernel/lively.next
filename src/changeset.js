@@ -28,7 +28,7 @@ class ChangeSet {
     let branch = this.getBranch(pkg);
     if (!branch) {
       branch = new Branch(this.name, pkg);
-      await branch.createFromHead();
+      await branch.createFromActive();
       this.branches.push(branch);
     }
     return branch;

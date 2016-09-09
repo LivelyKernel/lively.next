@@ -83,6 +83,13 @@ class Commit {
             ? commit(this.pkg, this.parents[0])
             : Promise.resolve(null);
   }
+  
+  stableBase() { // () -> Promise<Commit>
+    if (this.message != "work in progress") {
+      return Promise.resolve(this);
+    }
+    return this.parent().then(p => p.stableBase());
+  }
 
   async files(withDir) { // boolean -> {[RelPath]: Hash}
     const repo = await repository(this.pkg);
