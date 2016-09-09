@@ -25,8 +25,9 @@ var config = {
       {keys: {mac: 'Meta-Shift-Z'},          command: "text redo"},
 
       {keys: {mac: 'Meta-A', win: 'Ctrl-A'}, command: "select all"},
-      {keys: {mac: 'Meta-D', win: 'Ctrl-D'}, command: "doit"},
+      {keys: {mac: 'Meta-D', win:  'Ctrl-D'}, command: "doit"},
       {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
+      {keys: {mac: 'Meta-I', win: 'Ctrl-I'}, command: "inspectit"},
       {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "saveit"},
 
       {keys: 'Backspace',                           command: "delete backwards"},
@@ -60,7 +61,7 @@ var config = {
 
       {keys: "Ctrl-C J",                                     command: {command: "join line", args: {withLine: "before"}}},
       {keys: "Ctrl-C Shift-J",                               command: {command: "join line", args: {withLine: "after"}}},
-      {keys: {win: "Ctrl-Shift-D", mac: "Meta-Shift-D"},     command: "duplicate line or selection"},
+      {keys: {win: "Ctrl-Shift-D", mac: "Meta-Shift-D|Ctrl-C P"},     command: "duplicate line or selection"},
       {keys: {win: "Ctrl-Backspace", mac: "Meta-Backspace"}, command: "delete left until beginning of line"},
       {keys: "Ctrl-K",                                       command: "delete emtpy line or until end of line"},
 
@@ -71,6 +72,15 @@ var config = {
       {keys: {win: "PageUp", mac: "PageUp|Alt-V"},           command: "goto page up"},
       {keys: {win: "Shift-PageDown", mac: "Shift-PageDown"}, command: "goto page down and select"},
       {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
+
+      {keys: {win: "Ctrl-Left", mac: "Meta-Left"},               command: "goto matching left"},
+      {keys: {win: "Ctrl-Shift-Left", mac: "Meta-Shift-Left"},   command: {command: "goto matching left", args: {select: true}}},
+      {keys: {win: "Ctrl-Right", mac: "Meta-Right"},             command: "goto matching right"},
+      {keys: {win: "Ctrl-Shift-Right", mac: "Meta-Shift-Right"}, command: {command: "goto matching right", args: {select: true}}},
+      
+      // FIXME this is actually fwd/bwd sexp
+      {keys: "Alt-Ctrl-B", command: "goto matching left"},
+      {keys: "Alt-Ctrl-F", command: "goto matching right"},
 
       {keys: "Ctrl-Up", command: "goto paragraph above"},
       {keys: "Ctrl-Down", command: "goto paragraph below"},
@@ -104,7 +114,10 @@ var config = {
       {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
       {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
 
-      {keys: "Esc|Ctrl-G", command: "cancel input"}
+      {keys: "Esc|Ctrl-G", command: "cancel input"},
+
+
+      {keys: "Meta-Shift-L /  D", command: "comment box"}
     ]
   }
 }
