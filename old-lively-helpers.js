@@ -1,7 +1,7 @@
 // For getting a new Morphic world setup in old Lively
 import { num, arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { morph, MorphicEnv } from "lively.morphic";
+import { morph, MorphicEnv, show } from "lively.morphic";
 import { ObjectDrawer, Workspace } from "lively.morphic/tools.js";
 import { Window } from "lively.morphic/widgets.js";
 
@@ -13,9 +13,15 @@ export function setupMorphicWorldOn(htmlMorph) {
         submorphs: [
           new ObjectDrawer({env, position: pt(20,10)}),
           {env, type: "List", items: Array.range(0,150).map(n => `item ${n}`), extent: pt(200, 300), position: pt(200,200), borderWidth: 1, borderColor: Color.gray},
-          new Workspace({env, extent: pt(200, 300), position: pt(400,200)})
+          new Workspace({env, extent: pt(200, 300), position: pt(400,200), content: lively.LocalStorage.get("lively.morphic workspace") || ""})
         ]});
   env.setWorldRenderedOn(world, rootNode)
+
+  world.submorphs[2].targetMorph.doSave = function() {
+    show("saved")
+    lively.LocalStorage.set("lively.morphic workspace", this.textString);
+  }
+
 
   // FIXME currently used for show()
   window.$$world = world;
