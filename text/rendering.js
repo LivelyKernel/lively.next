@@ -191,8 +191,10 @@ class RenderedChunk {
 
   render(left, top) {
     if (this.rendered) return this.rendered;
-    var {config: {style: {fontSize, fontFamily, fontColor, fixedCharacterSpacing}},
-         text, width, height} = this,
+    var { config: {style: {fontSize, fontFamily, fontColor,
+                          fontWeight, fontStyle, textDecoration,
+                          fixedCharacterSpacing}},
+          text, width, height} = this,
         textNodes = text ?
                       fixedCharacterSpacing ?
                         text.split("").map(c => h("span", c)) :
@@ -209,6 +211,9 @@ class RenderedChunk {
         top,
         fontSize: fontSize + "px",
         fontFamily,
+        fontWeight,
+        fontStyle,
+        textDecoration,
         color: fontColor.isColor ? fontColor.toString() : String(fontColor)
       }
     }, textNodes);
@@ -256,7 +261,8 @@ export default class TextLayout {
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
-    let {fontFamily, fontSize, fontColor, fixedCharacterSpacing, document} = morph,
+    let {fontFamily, fontSize, fontColor, fontWeight, fontStyle,
+         textDecoration, fixedCharacterSpacing, document} = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
         styleRanges = document.styleRanges,
@@ -265,8 +271,17 @@ export default class TextLayout {
     // FIXME!
     for (let row = 0; row < nRows; row++) {
       var text = lines[row],
-          lineRange = Range.fromPositions({row, column: 0}, {row, column: text.length}),
-          config = { fontMetric, defaultStyle: { fontFamily, fontSize, fontColor, fixedCharacterSpacing }, styleRanges };
+          lineRange = Range.fromPositions({row, column: 0},
+                                          {row, column: text.length}),
+          config = { fontMetric,
+                     defaultStyle: { fontFamily,
+                                     fontSize,
+                                     fontColor,
+                                     fontWeight,
+                                     fontStyle,
+                                     textDecoration,
+                                     fixedCharacterSpacing },
+                     styleRanges };
       this.chunkLines[row] = new ChunkLine(text, config, lineRange);
     }
     this.chunkLines.splice(nRows, this.chunkLines.length - nRows);

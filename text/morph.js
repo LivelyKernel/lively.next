@@ -53,6 +53,9 @@ export class Text extends Morph {
       fontFamily: "Sans-Serif",
       fontSize: 12,
       fontColor: Color.black,
+      fontWeight: "normal",
+      fontStyle: "normal",
+      textDecoration: "none",
       fixedCharacterSpacing: false,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
@@ -77,9 +80,13 @@ export class Text extends Morph {
   onChange(change) {
     if (change.selector === "insertText"
      || change.selector === "deleteText"
+     || change.selector === "addStyleRange"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
      || change.prop === "fontColor" // FIXME
+     || change.prop === "fontWeight"
+     || change.prop === "fontStyle"
+     || change.prop === "textDecoration"
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
      || change.prop === "fixedCharacterSpacing")
@@ -133,6 +140,15 @@ export class Text extends Morph {
 
   get fontColor() { return this.getProperty("fontColor") }
   set fontColor(value) { this.addValueChange("fontColor", value); }
+
+  get fontWeight() { return this.getProperty("fontWeight") }
+  set fontWeight(value) { this.addValueChange("fontWeight", value); }
+
+  get fontStyle() { return this.getProperty("fontStyle") }
+  set fontStyle(value) { this.addValueChange("fontStyle", value); }
+
+  get textDecoration() { return this.getProperty("textDecoration") }
+  set textDecoration(value) { this.addValueChange("textDecoration", value); }
 
   get fixedCharacterSpacing() { return this.getProperty("fixedCharacterSpacing") }
   set fixedCharacterSpacing(value) { this.addValueChange("fixedCharacterSpacing", value); }
