@@ -1,16 +1,13 @@
 import { Range } from "./range.js";
+import { Anchor } from "./anchors.js";
 import { obj, arr } from "lively.lang";
 
 
 export class StyleRange {
 
-  constructor(style = {}, range) {
-    this.style = style;
-    this.range = range;
+  static fromPositions(style = {}, start, end) {
+    return new this(style, Range.fromPositions(start, end));
   }
-
-  get start() { return this.range.start }
-  get end() { return this.range.end }
 
   static flatten(base, ...rest) {
     let flattened = base ? [base] : [];
@@ -35,6 +32,41 @@ export class StyleRange {
       outputStyleRanges = [a];
     }
     return Range.sort(outputStyleRanges);
+  }
+
+  constructor(style = {}, range) {
+    this.style = style;
+    this.range = range;
+  }
+
+  get start() { return this.startAnchor.position }
+  get end() { return this.endAnchor.position }
+
+  set start(start) {
+    this.startAnchor = new Anchor(undefined, start);
+  }
+  set end(end) {
+    this.endAnchor = new Anchor(undefined, end);
+  }
+
+  get range() {
+    let { start, end } = this;
+    return Range.fromPositions(start, end);
+  }
+  set range(range) {
+    let { start, end } = range;
+    this.start = start;
+    this.end = end;
+  }
+
+  onInsert(range) {
+    this.startAnchor.onInsert(range);
+    this.endAnchor.onInsert(range);
+  }
+
+  onDelete(range) {
+    this.startAnchor.onDelete(range);
+    this.endAnchor.onDelete(range);
   }
 
 }

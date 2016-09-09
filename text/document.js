@@ -136,11 +136,14 @@ export default class TextDocument {
 
     lines[row + insertionLines.length] = lines[row + insertionLines.length] + after;
 
-    return {start: pos, end};
+    let insertionRange = {start: pos, end};
+    styleRanges.forEach(ea => ea.onInsert(insertionRange));
+
+    return insertionRange;
   }
 
   remove({start, end}) {
-    var {lines} = this;
+    var {lines, styleRanges} = this;
     if (!lines.length) return;
 
     if (lessPosition(end, start)) [start, end] = [end, start];
@@ -153,6 +156,8 @@ export default class TextDocument {
 
     lines[fromRow] = lines[fromRow].slice(0, fromCol) + lines[toRow].slice(toCol);
     lines.splice(fromRow+1, toRow - fromRow);
+
+    styleRanges.forEach(ea => ea.onDelete({start, end}));
   }
 
   wordsOfLine(row) {
