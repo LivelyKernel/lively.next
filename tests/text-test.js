@@ -393,13 +393,20 @@ describe("saved marks", () => {
 
 describe("clipboard buffer / kill ring", () => {
 
+  beforeEach(() => createMorphicEnv());
+  afterEach(() => destroyMorphicEnv());
+
   var t, browserExtension;
-  beforeEach(() => {
+  beforeEach(async () => {
+    await createMorphicEnv();
     t = text("a\nb\nc\n");
     browserExtension = lively.browserExtension;
     delete lively.browserExtension;
   });
-  afterEach(() => lively.browserExtension = browserExtension)
+  afterEach(() => {
+    lively.browserExtension = browserExtension;
+    return destroyMorphicEnv();
+  })
 
   it("copy saves to clipboard buffer", async () => {
     t = text("a\nb\nc\n")
