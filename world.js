@@ -1,6 +1,6 @@
 import { Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
-import { Halo } from "./halo.js"
+import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
