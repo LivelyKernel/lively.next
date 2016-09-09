@@ -1,8 +1,8 @@
 /*global System*/
 
-import { arr } from "lively.lang";
-import { Range } from "./text/range.js"
-import { eqPosition, lessPosition } from "./text/position.js"
+import { arr, obj, string } from "lively.lang";
+import { Range } from "./range.js"
+import { eqPosition, lessPosition } from "./position.js"
 
 // commands.find(ea => ea.name === "transpose chars").exec(that)
 
@@ -102,31 +102,6 @@ var commands = [
     name: "select all",
     doc: "Selects entire text contents.",
     exec: function(morph) { morph.selectAll(); return true; }
-  },
-
-  {
-    name: "doit",
-    doc: "Evaluates the selecte code or the current line and report the result",
-    exec: async function(morph) {
-      if (morph.selection.isEmpty()) morph.selectLine();
-      var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
-          result = await lively.vm.runEval(morph.selection.text, opts);
-      morph.world()[result.isError ? "logError" : "setStatusMessage"](result.value);
-      return result;
-    }
-  },
-
-  {
-    name: "printit",
-    doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
-    exec: async function(morph) {
-      if (morph.selection.isEmpty()) morph.selectLine();
-      var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
-          result = await lively.vm.runEval(morph.selection.text, opts);
-      morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(result.value);
-      return result;
-    }
   },
 
   {
@@ -562,6 +537,50 @@ var commands = [
   },
 
   {
+    name: "goto matching right",
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      var pairs = opts.pairs || {
+        "{": "}",
+        "[": "]",
+        "(": ")",
+        "<": ">",
+        "`": "`",
+        "'": "'",
+        '"' : '"'
+      }
+      var found = morph.findMatchingForward(morph.cursorPosition, "right", pairs) ||
+                  morph.findMatchingForward(morph.cursorPosition, "left", pairs);
+      if (found) {
+        morph.selection.lead = found;
+        if (!opts.select) morph.selection.anchor = morph.selection.lead;
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "goto matching left",
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      var pairs = opts.pairs || {
+        "}": "{",
+        "]": "[",
+        ")": "(",
+        ">": "<",
+        "`": "`",
+        "'": "'",
+        '"': "'"
+      }
+      var found = morph.findMatchingBackward(morph.cursorPosition, "left", pairs) ||
+                  morph.findMatchingBackward(morph.cursorPosition, "right", pairs);
+      if (found) {
+        morph.selection.lead = found;
+        if (!opts.select) morph.selection.anchor = morph.selection.lead;
+      }
+      return true;
+    }
+  },
+
+  {
     name: "realign top-bottom-center",
     doc: "Cycles through centering the cursor position, aligning it at the top, aligning it at the bottom.",
     exec: function(morph) {
@@ -677,51 +696,103 @@ var commands = [
 
 ]
 
-
-
-
-export class CommandHandler {
-
-  constructor() {
-    this.history = [];
-    this.maxHistorySize = 300;
-  }
-
-  addToHistory(cmdName) {;
-    this.history.push(cmdName);
-    if (this.history.length > this.maxHistorySize)
-      this.history.splice(0, this.history.length - this.maxHistorySize);
-  }
-
-  exec(command, morph, args, count, evt) {
-    let name = !command || typeof command === "string" ? command : command.command,
-        cmd = command && commands.find(ea => ea.name === name);
-
-    this.addToHistory(name);
-
-    var result;
-    if (cmd && typeof cmd.exec === "function") {
-      result = cmd.exec(morph, args, cmd.handlesCount ? count : undefined, evt);
-    }
-
-    // to not swallow errors
-    if (result && typeof result.catch === "function") {
-      result.catch(err => {
-        console.error(`Error in interactive command ${name}: ${err.stack}`);
-        throw err;
-      });
-    }
-
-    // handle count by repeating command
-    if (result && typeof count === "number" && count > 1 && !cmd.handlesCount) {
-      return typeof result.then === "function" ?
-        result.then(() => this.exec(command, morph, args, count-1, evt)) :
-        this.exec(command, morph, args, count-1, evt);
-    }
-
-    return result;
-  }
-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// FIXME move this stuff below into a JS related module
+function doEval(morph) {
+  var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
+  if (!evalStrategies)
+    throw new Error("doit not possible: lively.vm eval-strategies not available!")
+  var code = morph.selection.isEmpty() ? morph.getLine(morph.cursorPosition.row) : morph.selection.text,
+      evalStrategy = new evalStrategies.LivelyVmEvalStrategy(),
+      opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id, context: morph};
+  return evalStrategy.runEval(code, opts);
 }
 
-export var defaultCommandHandler = new CommandHandler();
+commands.push(
+
+  {
+    name: "doit",
+    doc: "Evaluates the selecte code or the current line and report the result",
+    exec: async function(morph) {
+      if (morph.selection.isEmpty()) morph.selectLine();
+      var result = await doEval(morph);
+      morph.world()[result.isError ? "logError" : "setStatusMessage"](result.value + '\n' + obj.inspect(result.value, {maxDepth: 1}));
+      return result;
+    }
+  },
+
+  {
+    name: "printit",
+    doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
+    exec: async function(morph) {
+      if (morph.selection.isEmpty()) morph.selectLine();
+      var result = await doEval(morph);
+      morph.selection.collapseToEnd();
+      morph.insertTextAndSelect(result.value);
+      return result;
+    }
+  },
+
+  {
+    name: "inspectit",
+    doc: "...",
+    handlesCount: true,
+    exec: async function(morph, _, count = 1) {
+      var result = await doEval(morph);
+      morph.selection.collapseToEnd();
+      morph.insertTextAndSelect(obj.inspect(result.value, {maxDepth: count}));
+      return result;
+    }
+  },
+
+  {
+    name: "comment box",
+    exec: function(morph, _, count) {
+      morph.undoManager.group();
+
+      if (morph.selection.isEmpty()) {
+        morph.insertText("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+        morph.undoManager.group();
+        return true;
+      }
+
+      var range = morph.selection.range,
+          lines = morph.withSelectedLinesDo(line => line),
+          indent = [range.start.column].concat(lines.map(function(line) { return line.match(/^\s*/); }).flatten().compact().pluck('length')).min(),
+          length = lines.pluck('length').max() - indent,
+          fence = Array(Math.ceil(length / 2) + 1).join('-=') + '-';
+
+      // comment range
+      // morph.toggleCommentLines();
+      morph.collapseSelection();
+
+      // insert upper fence
+      morph.cursorPosition = {row: range.start.row, column: 0}
+      if (count)
+        morph.insertText(string.indent("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-" + '\n', ' ', indent));
+      else
+        morph.insertText(string.indent(fence + '\n', ' ', indent));
+      // morph.selection.goUp();
+      // morph.toggleCommentLines();
+      // insert fence below
+      morph.cursorPosition = {row: range.end.row+2, column: 0};
+
+      morph.insertText(string.indent(fence + '\n', ' ', indent));
+
+      // morph.selection.goUp();
+      // morph.selection.gotoLineEnd();
+      // morph.toggleCommentLines();
+
+      // select it all
+      morph.selection.range = {start: {row: range.start.row, column: 0}, end: morph.cursorPosition};
+      morph.undoManager.group();      
+
+      return true;
+    },
+    multiSelectAction: "forEach",
+    handlesCount: true
+  }
+);
+
+
+export default commands;

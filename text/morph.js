@@ -12,7 +12,7 @@ import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 import { Anchor } from "./anchors.js";
 import { signal } from "lively.bindings"; // for makeInputLine
-
+import commands from "./commands.js";
 
 export class Text extends Morph {
 
@@ -265,6 +265,8 @@ export class Text extends Morph {
   get tabWidth()  { return this.getProperty("tabWidth"); }
   set tabWidth(value)  { this.addValueChange("tabWidth", value); }
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
+
+  get commands() { return commands.concat(this._commands || []); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes

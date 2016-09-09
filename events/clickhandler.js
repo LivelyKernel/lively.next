@@ -1,4 +1,3 @@
-import { defaultCommandHandler } from "../commands.js";
 import { arr } from "lively.lang";
 
 
@@ -50,7 +49,7 @@ export class ClickHandler {
         command = this.getBinding(normalizedClickCount);
     if (command) {
       if (typeof(command) === "function") command(morph, evt);
-      else defaultCommandHandler.exec(command, morph, [], evt);
+      else morph.commandHandler.exec(command, morph, [], evt);
     }
   }
 }

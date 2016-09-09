@@ -10,9 +10,8 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   let {keyCombo, key, data} = evt,
       toExecute,
       success = false,
-      {keyhandlers} = morph,
+      keyhandlers = morph.keyhandlers,
       isInputEvent = keyCombo.startsWith("input-");
-
   if (noInputEvents && isInputEvent) return false;
 
   for (var i = keyhandlers.length; i--;) {
@@ -36,7 +35,7 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
     if (success) break;
   }
 
-  if (!success && isInputEvent) {
+  if (!success && isInputEvent && morph.onTextInput) {
     var count = evt && evt.keyInputState ? evt.keyInputState.count : undefined;
     success = morph.execCommand("insertstring", {string: data || key, undoGroup: 600/*ms*/}, count, evt);
     if (success && evt && evt.keyInputState)

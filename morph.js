@@ -3,9 +3,11 @@ import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
-import { defaultCommandHandler } from "./commands.js";
 import config from "./config.js";
+import CommandHandler from "./CommandHandler.js";
+import { KeyHandler } from "./events/keyhandler.js";
 
+const defaultCommandHandler = new CommandHandler();
 
 const defaultProperties = {
   visible: true,
@@ -827,8 +829,39 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // commands
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  get commands() { return this._commands || []; }
+  set commands(cmds) {
+    if (this._commands) this.removeCommands(this._commands);
+    this.addCommands(cmds);
+  }
+  addCommands(cmds) {
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addCommands",
+      args: [cmds],
+      undo: {target: this, selector: "removeCommands", args: [cmds]}
+    }, () => {
+      this.removeCommands(cmds);
+      this._commands = (this._commands || []).concat(cmds);
+    });
+  }
+
+  removeCommands(cmdsOrNames) {
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "removeCommands",
+      args: [cmdsOrNames],
+      undo: {target: this, selector: "addCommands", args: [cmdsOrNames]}
+    }, () => {
+      var names = cmdsOrNames.map(ea => typeof ea === "string" ? ea : ea.name),
+          commands = (this._commands || []).filter(({name}) => !names.includes(name));
+      if (!commands.length) delete this._commands;
+      else this._commands = commands;
+    });
+  }
+
   get commandHandler() {
-    return this.commands || defaultCommandHandler;
+    return this._commandHandler || defaultCommandHandler;
   }
 
   execCommand(command, args, count, evt) {
