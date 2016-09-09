@@ -528,11 +528,7 @@ export class Text extends Morph {
   // keyboard events
 
   get keyhandlers() {
-    return [KeyHandler.withBindings(config.text.defaultKeyBindings)];
-  }
-
-  simulateKeys(keyString) {
-    KeyHandler.simulateKeys(this, keyString);
+    return [KeyHandler.withBindings(config.text.defaultKeyBindings)].concat(this._keyhandlers || []);
   }
 
   onKeyDown(evt) {

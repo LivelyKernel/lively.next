@@ -711,7 +711,27 @@ export class Morph {
   onMouseUp(evt) {}
   onMouseMove(evt) {}
 
-  onKeyDown(evt) {}
+  addKeyBindings(bindings) {
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addKeyBindings",
+      args: [bindings],
+      undo: null
+    }, () => {
+      if (!this._keyhandlers) this._keyhandlers = [];
+      if (!this._keyhandlers.length) this._keyhandlers.push(new KeyHandler())
+      var handler = arr.last(this._keyhandlers);
+      bindings.forEach(({command, keys}) => handler.bindKey(keys, command));
+    });
+  }
+
+  get keyhandlers() { return this._keyhandlers || []; }
+  simulateKeys(keyString) { KeyHandler.simulateKeys(this, keyString); }
+  onKeyDown(evt) {
+    if (KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
+      evt.stop();
+    }
+  }
   onKeyUp(evt) {}
 
   onContextMenu(evt) {}
