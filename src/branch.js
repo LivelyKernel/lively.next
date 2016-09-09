@@ -2,7 +2,7 @@ import { codec, bodec } from "js-git-browser";
 import { emit } from 'lively.notifications';
 
 import commit from "./commit.js";
-import { activeCommit } from "./index.js";
+import { activeCommit } from "../index.js";
 import repository, { enableGitHub } from "./repo.js";
 
 // type EntryType = "tree" | "commit" | "tag" | "blob"
