@@ -2,10 +2,10 @@ import { arr, string } from "lively.lang"
 
 export var dummyFontMetric = {
   height: 14, width: 6,
-  sizeFor(fontFamily, fontSize, text) {
+  sizeFor(style, text) {
     return {width: this.width, height: this.height}
   },
-  charBoundsFor(fontFamily, fontSize, fontKerning, text) {
+  charBoundsFor(style, adjustSpacing, text) {
     var prevX = 0;
     return text.split('').map(function (char, col) {
       let x = prevX,
@@ -14,7 +14,5 @@ export var dummyFontMetric = {
       prevX += width;
       return { x, y: 0, width, height };
     }, this);
-  },
-  kerningFor: () => 0,
-  ligatureAdjustmentFor: () => 0
+  }
 }

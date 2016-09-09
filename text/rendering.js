@@ -190,7 +190,7 @@ class RenderedChunk {
   computeCharBounds() {
     let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this;
     text += newline;
-    this._charBounds = fontMetric.charBoundsFor(fontFamily, fontSize, fontKerning, text);
+    this._charBounds = fontMetric.charBoundsFor({fontFamily, fontSize}, fontKerning, text);
   }
 
   render(left, top) {

@@ -157,7 +157,7 @@ export class List extends Morph {
 
   update() {
     var itemHeight = this._itemHeight
-                 || (this._itemHeight = this.env.fontMetric.sizeFor(this.fontFamily, this.fontSize, "X").height),
+                 || (this._itemHeight = this.env.fontMetric.sizeFor({fontFamily: this.fontFamily, fontSize: this.fontSize}, "X").height),
         {
           items, itemMorphs, listItemContainer,
           selectedIndexes,
