@@ -5,7 +5,7 @@ export var dummyFontMetric = {
   sizeFor(style, text) {
     return {width: this.width, height: this.height}
   },
-  charBoundsFor(style, adjustSpacing, text) {
+  charBoundsFor(style, text) {
     var prevX = 0;
     return text.split('').map(function (char, col) {
       let x = prevX,

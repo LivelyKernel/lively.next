@@ -1,6 +1,6 @@
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
-import { arr, string } from "lively.lang";
+import { arr, string, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
 import { Range } from "./range.js";
 import { StyleRange } from "./style.js";
@@ -50,8 +50,7 @@ class ChunkLine {
 
   updateChunksIfNecessary(text, config, lineRange) {
     // FIXME!
-    let { styleRanges, fontFamily, fontSize, fontColor, fontKerning, fontMetric } = config,
-        defaultStyle = { fontFamily, fontSize, fontColor, fontKerning },
+    let { defaultStyle, styleRanges, fontMetric } = config,
         defaultStyleRange = new StyleRange(defaultStyle, lineRange),
         flattenedStyleRanges = StyleRange.flatten(defaultStyleRange, ...styleRanges);
 
@@ -134,7 +133,7 @@ class RenderedChunk {
         startCol = start.column,
         endCol = end.column,
         chunkText = lineText.slice(startCol, endCol),
-        chunkConfig = Object.assign(style, {fontMetric});
+        chunkConfig = {style, fontMetric};
     return new RenderedChunk(chunkText, chunkConfig);
   }
 
@@ -151,12 +150,9 @@ class RenderedChunk {
 
   compatibleWith(text2, config2) {
     var {text, config} = this;
-    return text               === text2
-        && config.fontFamily  === config2.fontFamily
-        && config.fontSize    === config2.fontSize
-        && config.fontColor   === config2.fontColor
-        && config.fontMetric  === config2.fontMetric
-        && config.fontKerning === config2.fontKerning;
+    return text                   === text2
+        && config.fontMetric      === config2.fontMetric
+        && obj.equals(config.style, config2.style);
   }
 
   get height() {
@@ -188,17 +184,20 @@ class RenderedChunk {
   }
 
   computeCharBounds() {
-    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this;
+    let {text, config: {style, fontMetric}} = this;
     text += newline;
-    this._charBounds = fontMetric.charBoundsFor({fontFamily, fontSize}, fontKerning, text);
+    this._charBounds = fontMetric.charBoundsFor(style, text);
   }
 
   render(left, top) {
     if (this.rendered) return this.rendered;
-    var {config: {fontSize, fontFamily, fontColor, fontKerning}, text, width, height} = this,
-        textNodes = text ? fontKerning ? text
-                                       : text.split("").map(c => h("span", c))
-                         : h("br");
+    var {config: {style: {fontSize, fontFamily, fontColor, fixedCharacterSpacing}},
+         text, width, height} = this,
+        textNodes = text ?
+                      fixedCharacterSpacing ?
+                        text.split("").map(c => h("span", c)) :
+                        text :
+                      h("br");
     fontColor = fontColor || "";
     left += "px";
     top += "px";
@@ -257,7 +256,7 @@ export default class TextLayout {
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
-    let {fontFamily, fontSize, fontColor, fontKerning, document} = morph,
+    let {fontFamily, fontSize, fontColor, fixedCharacterSpacing, document} = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
         styleRanges = document.styleRanges,
@@ -267,7 +266,7 @@ export default class TextLayout {
     for (let row = 0; row < nRows; row++) {
       var text = lines[row],
           lineRange = Range.fromPositions({row, column: 0}, {row, column: text.length}),
-          config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning, styleRanges };
+          config = { fontMetric, defaultStyle: { fontFamily, fontSize, fontColor, fixedCharacterSpacing }, styleRanges };
       this.chunkLines[row] = new ChunkLine(text, config, lineRange);
     }
     this.chunkLines.splice(nRows, this.chunkLines.length - nRows);

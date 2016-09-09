@@ -1,6 +1,7 @@
 import { pt, rect } from "lively.graphics";
 import { arr, string, obj } from "lively.lang";
 
+const charSizeProperties = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "textDecoration"];
 
 export default class FontMetric {
 
@@ -82,13 +83,13 @@ export default class FontMetric {
     }
   }
 
-  charBoundsFor(style, adjustSpacing, str) {
+  charBoundsFor(style, str) {
     let nCols = str.length,
         bounds = new Array(nCols),
         { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, style: cachedStyle } } = this,
         useCache = cachedBounds && obj.equals(cachedStyle, style),
-        fontIsProportional = this.isProportional(style.fontFamily);
-    adjustSpacing = fontIsProportional && adjustSpacing;
+        fontIsProportional = this.isProportional(style.fontFamily),
+        adjustSpacing = fontIsProportional && !style.fixedCharacterSpacing;
     for (let col = 0, x = 0; col < nCols; col++) {
       let width, height, char = str[col];
       if (adjustSpacing) {
@@ -119,6 +120,9 @@ export default class FontMetric {
 
   sizeFor(style, char) {
     if (char.length > 1) return this.measure(style, char);
+
+    // Select style properties relevant to individual character size
+    style = obj.select(style, charSizeProperties);
 
     if (!this.charMap[style]) {
       this.charMap[style] = [];

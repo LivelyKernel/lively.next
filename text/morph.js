@@ -53,7 +53,7 @@ export class Text extends Morph {
       fontFamily: "Sans-Serif",
       fontSize: 12,
       fontColor: Color.black,
-      fontKerning: true,
+      fixedCharacterSpacing: false,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
@@ -82,7 +82,7 @@ export class Text extends Morph {
      || change.prop === "fontColor" // FIXME
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
-     || change.prop === "fontKerning")
+     || change.prop === "fixedCharacterSpacing")
        this.renderer && (this.renderer.layoutComputed = false);
     super.onChange(change);
   }
@@ -134,8 +134,8 @@ export class Text extends Morph {
   get fontColor() { return this.getProperty("fontColor") }
   set fontColor(value) { this.addValueChange("fontColor", value); }
 
-  get fontKerning() { return this.getProperty("fontKerning") }
-  set fontKerning(value) { this.addValueChange("fontKerning", value); }
+  get fixedCharacterSpacing() { return this.getProperty("fixedCharacterSpacing") }
+  set fixedCharacterSpacing(value) { this.addValueChange("fixedCharacterSpacing", value); }
 
   get anchors() { return this._anchors || (this._anchors = []); }
   addAnchor(anchor) {
