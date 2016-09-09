@@ -88,12 +88,12 @@ export class Morph {
 
   onChange(change) {
     if (change.prop == "layout")
-        change.value && change.value.applyTo(this);
-    this.layout && this.layout.onChange(this, change);
+        change.value && change.value.apply();
+    this.layout && this.layout.onChange(change);
   }
 
   onSubmorphChange(change, submorph) {
-    this.layout && typeof this.layout.onSubmorphChange === "function" && this.layout.onSubmorphChange(this, submorph, change);
+    this.layout && typeof this.layout.onSubmorphChange === "function" && this.layout.onSubmorphChange(submorph, change);
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -143,7 +143,10 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get layout()         { return this.getProperty("layout") }
-  set layout(value)    { this.addValueChange("layout", value); }
+  set layout(value)    { 
+    if (value) value.container = this;
+    this.addValueChange("layout", value);
+  }
 
   get name()           { return this.getProperty("name"); }
   set name(value)      { this.addValueChange("name", value); }
