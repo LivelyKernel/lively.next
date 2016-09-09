@@ -80,7 +80,7 @@ export default class TextDocument {
     end = this.clipPositionToLines(end);
     if (lessPosition(end, start)) [start, end] = [end, start];
 
-    let {row, column} = start, 
+    let {row, column} = start,
         {row: endRow, column: endColumn} = end,
         lines = this.lines;
 
@@ -186,7 +186,7 @@ export default class TextDocument {
       }
       return {range: {start: pos, end: pos}, string: ""};
     }
-    
+
     var word = this.wordAt(pos);
     // if there is a word at pos and pos = beginning of word we return the word
     // to the left, otherwise word
@@ -212,6 +212,58 @@ export default class TextDocument {
       return eqPosition(word.range.end, pos) ? words[word.index+1] : word;
     }
     return words.find(word => word.range.start.column >= column) || {range: {start: pos, end: pos}, string: ""};
+  }
+
+
+  scanForward(startPos, matchFn) {
+    var {
+          endPosition: {row: endRow, column: endColumn},
+          lines
+        } = this,
+        {row, column} = startPos
+
+    // first line
+    for (let col = column, line = lines[row]; col < line.length; col++) {
+      let char = line[col], pos = {row, column: col},
+          result = matchFn(char, pos);
+      if (result) return result;
+    }
+
+    // the rest
+    for (let r = row+1; r < lines.length; r++) {
+      let line = lines[r];
+      for (let col = 0; col < line.length; col++) {
+        let char = line[col], pos = {row: r, column: col},
+            result = matchFn(char, pos);
+        if (result) return result;
+      }
+    }
+
+    return null;
+  }
+
+  scanBackward(startPos, matchFn) {
+    var lines = this.lines,
+        {row, column} = startPos
+
+    // first line
+    for (let col = column-1, line = lines[row]; col >= 0; col--) {
+      let char = line[col], pos = {row, column: col},
+          result = matchFn(char, pos);
+      if (result) return result;
+    }
+
+    // the rest
+    for (let r = row-1; r >= 0; r--) {
+      let line = lines[r];
+      for (let col = line.length-1; col >= 0; col--) {
+        let char = line[col], pos = {row: r, column: col},
+            result = matchFn(char, pos);
+        if (result) return result;
+      }
+    }
+
+    return null;
   }
 
   copy() { return new TextDocument(this.lines.slice()); }
