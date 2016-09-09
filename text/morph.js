@@ -553,8 +553,12 @@ export class Text extends Morph {
   doSave() { /*...*/ }
 
   onCut(evt) {
-    if (this.rejectsInput()) return;
-    this.onCopy(evt);
+    if (this.rejectsInput() || !this.isFocused()) return;
+    evt.stop();
+    var sel = this.selection;
+    this.env.eventDispatcher.killRing.add(sel.text);
+    evt.domEvt.clipboardData.setData("text", sel.text);
+    this.activeMark = null;
     var sel = this.selection;
     sel.text = "";
     sel.collapse();
@@ -569,7 +573,7 @@ export class Text extends Morph {
     if (!sel.isEmpty()) {
       this.activeMark = null;
       this.saveMark(sel.anchor);
-      sel.collapse(sel.lead);
+      this.collapseSelection();
     }
   }
 
