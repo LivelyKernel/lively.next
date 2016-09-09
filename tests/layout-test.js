@@ -2,10 +2,11 @@
 import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { Morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from "../index.js";
+import { LayoutCell } from "../layout.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num, arr } from "lively.lang";
 
-var world, m, env;
+var world, m, env, grid, layout;
 
 function createDummyWorld() {
   world = new Morph({
@@ -23,6 +24,13 @@ function createDummyWorld() {
   m = world.submorphs[0];
   return world;
 }
+
+function closeToPoint(p1,p2) {
+  var {x,y} = p1;
+  expect(x).closeTo(p2.x, 0.1, "x");
+  expect(y).closeTo(p2.y, 0.1, "y");
+}
+
 
 describe("layout", () => {
 
@@ -135,6 +143,81 @@ describe("layout", () => {
     });
 
   });
+  
+  describe("layout cells", () => {
+    
+    beforeEach((() => {
+      m = new Morph({bounds: rect(0,0,300,300)});
+      m.layout = new GridLayout({grid: [[null, "m1", null],
+                                      ["m2", null, null],
+                                      [null, null,"m3"]]});
+      layout = m.layout;
+      layout.apply()
+      grid = m.layout.grid;
+    }))
+    
+    it("connects cells in a grid", () => {
+      expect(grid.right.bottom.right.bottom
+                 .left.top.left.top).equals(grid);
+    });
+    
+    it("computes its bounds", () => {
+      expect(grid.row(1).col(2).bounds()).equals(pt(200, 100).extent(pt(100,100)));
+    });
+    
+    it("connects cells to other cells", () => {
+      var a = grid.row(1).col(2),
+          b = grid.row(0).col(2),
+          bGroup = b.group;
+      expect(layout.cellGroups.length).equals(9);
+      expect(a.group.cells).equals([a]);
+      expect(layout.cellGroups.includes(bGroup)).to.be.true;
+      a.group.connect(b);
+      expect(a.group.cells).equals([a,b]);
+      expect(a.group).equals(b.group);
+      expect(bGroup.cells).equals([]);
+      expect(layout.cellGroups.includes(bGroup)).to.be.false;
+      expect(layout.cellGroups.length).equals(8);
+    });
+    
+    it("computes the group's bounds", () => {
+      var a = grid.row(1).col(2),
+          b = grid.row(0).col(2);
+      a.group.connect(b);
+      expect(a.group.bounds()).equals(rect(200,0,100,200));
+    });
+    
+    it("inserts rows and columns of cells", () => {
+      grid.row(1).addBefore();
+      grid.col(1).addBefore();
+      expect(grid.col(1).items.length).equals(4);
+      expect(grid.row(1).items.length).equals(4);
+    });
+    
+    it("can fix its height or width", () => {
+      grid.col(1).fixed = true;
+      grid.row(1).fixed = true;
+      layout.container.resizeBy(pt(100,100));
+      expect(grid.col(0).row(0).adjustedProportion.width).closeTo(1/2, 0.0001);
+      expect(grid.col(0).row(0).dynamicWidth).equals(300);
+      closeToPoint(grid.col(1).row(1).bounds().extent(), pt(100,100));
+      closeToPoint(grid.col(0).row(0).bounds().extent(), pt(150,150));
+    });
+    
+    it("can change its height or width proportion", () => {
+      grid.col(1).adjustProportion(1/6)
+      grid.row(1).adjustProportion(1/6)
+      expect(grid.col(1).row(1).bounds().extent()).equals(pt(150,150));
+      expect(grid.col(0).row(0).bounds().extent()).equals(pt(100,100));
+      expect(grid.col(2).row(2).bounds().extent()).equals(pt(50,50));
+    });
+    
+    it("propagates sizing changes to neighbors", () => {
+      grid.col(1).adjustProportion(1/6)
+      expect(grid.col(0).proportion).equals(1/3);
+      expect(grid.col(2).proportion).equals(1/6);
+    });
+  })
 
   describe("grid layout", () => {
 
@@ -142,10 +225,12 @@ describe("layout", () => {
        m.layout = null
        m.width = 300;
        m.height = 300;
-       m.layout = new GridLayout({grid:
+       m.layout = new GridLayout({
+                          grid:
                           [[null, "m1", null],
                            ["m2", null, null],
                            [null, null,"m3"]]});
+       m.layout.apply();
      });
 
     it("aligns submorphs along a grid", () => {
@@ -157,7 +242,9 @@ describe("layout", () => {
 
     it("appends missing cells", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid:
+      m.layout = new GridLayout({
+                          container: m,
+                          grid:
                           [[null, "m1"],
                            ["m2"],
                            [null, null,"m3"]]});
@@ -172,7 +259,7 @@ describe("layout", () => {
       m1.position = pt(288, 20);
       m2.position = pt(15,20);
       m3.position = pt(10, 220);
-      m.layout = new GridLayout({columnCount: 3, rowCount: 3});
+      m.layout = new GridLayout({container: m, columnCount: 3, rowCount: 3});
       expect(m2.position).equals(pt(0,0));
       expect(m3.position).equals(pt(0, 200));
       expect(m1.position).equals(pt(200,0));
@@ -180,7 +267,9 @@ describe("layout", () => {
 
     it("allows morphs to take up multiple cells", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid:
+      m.layout = new GridLayout({
+                          container: m,
+                          grid:
                           [[null, "m1", null],
                            ["m2", "m2", null],
                            [null, null,"m3"]]});
@@ -189,11 +278,18 @@ describe("layout", () => {
 
     it("allows morphs to be reassigned to cells", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout.assign(m2, {row: 2, col: 1});
-      expect(m.layout.grid[1][0]).equals(null);
+      var group = m.layout.row(2).col(1).group;
+      group.morph = m2;
+      m.layout.apply()
+      expect(m.layout.row(1).col(0).group.morph).equals(null);
       expect(m2.position).equals(pt(100, 200));
-      m.layout.assign(m1, {row: 0, col: [0,1,2]});
+      group = m.layout.row(0).col(0).group;
+      group.connect(m.layout.col(0).row(1));
+      group.connect(m.layout.col(0).row(2));
+      group.morph = m1;
+      m.layout.apply()
       expect(m1.position).equals(pt(0,0));
+      expect(m1.height).equals(300);
     });
 
     it("updates layout on changed extent", () => {
@@ -214,27 +310,32 @@ describe("layout", () => {
 
     it("allows rows and columns to be fixed", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid:
+      m.layout = new GridLayout({
+                          container: m,
+                          grid:
                                /* 50px */
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
-                           [null, null,"m3"]],
-                           colSizing: {1: {fixed: 50}},
-                           rowSizing: {0: {fixed: 50}}});
-      expect(m1.position).equals(pt(125, 0));
+                           [null, null,"m3"]]});
+      m.layout.col(1).fixed = 50;
+      m.layout.row(0).fixed = 50;
+      m.layout.apply();
       expect(m2.position).equals(pt(0, 50));
       expect(m3.position).equals(pt(175, 175));
+      expect(m1.position.x).closeTo(125, 0.0001);
+      expect(m1.position.y).equals(0);
     });
 
     it("can set minimum spacing for columns and rows", () => {
       const [m1, m2, m3] = m.submorphs;
-      m.layout = new GridLayout({grid:
+      m.layout = new GridLayout({container: m, 
+                          grid:
                                /* 50px */
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
-                           [null, null,"m3"]],
-                           colSizing: {0: {min: 50}},
-                           rowSizing: {0: {min: 50}}});
+                           [null, null,"m3"]]});
+      m.layout.col(0).min = 50;
+      m.layout.row(0).min = 50;
       m.extent = pt(25, 25); // too small!
       expect(m.extent).equals(pt(50,50));
       expect(m1.position).equals(pt(50, 0));
@@ -255,41 +356,42 @@ describe("layout", () => {
       m.layout = new GridLayout({grid:
                           [[null, "m1", null],
                           ["m2", "m2", "m3"],
-                          [null, null, "m3"]]});
+                          [null, null, "m3"]],
+                          container: m});
       expect(m1.extent).equals(pt(100, 100));
       expect(m2.extent).equals(pt(200, 100));
       expect(m3.extent).equals(pt(100, 200));
     });
 
     it("can vary the proportional width and height of rows and columns", () => {
-      m.layout.adjustColumnStretch(0, 60);
-      expect(m.layout.colSizing[0].proportion).equals(1/3 + 0.2)
-      expect(m.layout.colSizing[1].proportion).equals(1/3 - 0.2)
-      m.layout.adjustRowStretch(0, 60);
-      expect(m.layout.rowSizing[0].proportion).equals(1/3 + 0.2)
-      expect(m.layout.rowSizing[1].proportion).equals(1/3 - 0.2)
-      m.layout.adjustColumnStretch(0, 300)
-      expect(m.layout.colSizing[0].proportion).equals(2/3);
-      expect(m.layout.colSizing[1].proportion).equals(0);
-      m.layout.adjustRowStretch(0, 300)
-      expect(m.layout.rowSizing[0].proportion).equals(2/3);
-      expect(m.layout.rowSizing[1].proportion).equals(0);
-      expect(m.layout.rowHeights[0]).equals(m.layout.rowSizing[0].proportion * 300);
-      expect(m.layout.rowHeights[1]).equals(m.layout.rowSizing[1].proportion * 300);
+      m.layout.col(0).adjustStretch(60);
+      expect(m.layout.col(0).proportion).equals(1/3 + 0.2)
+      expect(m.layout.col(1).proportion).equals(1/3 - 0.2)
+      m.layout.row(0).adjustStretch(60);
+      expect(m.layout.row(0).proportion).equals(1/3 + 0.2)
+      expect(m.layout.row(1).proportion).equals(1/3 - 0.2)
+      m.layout.col(0).adjustStretch(300)
+      expect(m.layout.col(0).proportion).equals(2/3);
+      expect(m.layout.col(1).proportion).equals(0);
+      m.layout.row(0).adjustStretch(300)
+      expect(m.layout.row(0).proportion).equals(2/3);
+      expect(m.layout.row(1).proportion).equals(0);
+      expect(m.layout.row(0).col(0).height).equals(m.layout.row(0).proportion * 300);
+      expect(m.layout.row(1).col(0).height).equals(m.layout.row(1).proportion * 300);
     });
     
     it("can vary proportion of the last column", () => {
-      m.layout.adjustColumnStretch(2, 100);
-      expect(m.layout.colSizing[0].proportion).equals(1/4);
-      expect(m.layout.colSizing[1].proportion).equals(1/4);
-      expect(m.layout.colSizing[2].proportion).equals(1/2);
+      m.layout.col(2).adjustStretch(100);
+      expect(m.layout.col(0).proportion).equals(1/4);
+      expect(m.layout.col(1).proportion).equals(1/4);
+      expect(m.layout.col(2).proportion).equals(1/2);
       expect(m.width).equals(4/3 * 300);
     })
     
     it("widens container when varying fixed width column", () => {
-      m.layout.setFixed({col: 2, fixed: true});
-      m.layout.adjustColumnStretch(2, 100);
-      expect(m.layout.colSizing[2].fixed).equals(200);
+      m.layout.col(2).fixed = true;
+      m.layout.col(2).adjustStretch(100);
+      expect(m.layout.col(2).fixed).equals(200);
       expect(m.width).equals(400);
     })
     
@@ -300,34 +402,54 @@ describe("layout", () => {
                           [[null, "m1", null], /* 50 px*/
                            ["m2", null, null],
                            [null, null,"m3"]],
-                           colSizing: {1: {fixed: 50}},
-                           rowSizing: {0: {fixed: 50}}});
-      m.layout.adjustColumnStretch(1, 50);
-      expect(m.layout.colSizing[1].fixed).equals(100);
-      expect(m.layout.colSizing[0].proportion).equals(1/2);
-      expect(m.layout.colSizing[2].proportion).equals(1/2);
-      m.layout.setFixed({col: 0, fixed: true});
-      expect(m.layout.colSizing[0].fixed).equals(125);
-      expect(m.layout.colSizing[2].proportion).equals(1);
+                           container: m});
+      m.layout.col(1).fixed = 50;
+      m.layout.row(0).fixed = 50;
+      m.layout.col(1).adjustStretch(50);
+      expect(m.layout.col(1).fixed).equals(100);
+      expect(m.layout.col(0).adjustedProportion).closeTo(1/2, 0.0001);
+      expect(m.layout.col(2).adjustedProportion).closeTo(1/2, 0.0001);
+      m.layout.col(0).fixed = true;
+      expect(m.layout.col(0).fixed).closeTo(125, 0.0001);
+      expect(m.layout.col(2).adjustedProportion).closeTo(1, 0.00001);
     })
     
     it("can vary proportions correctly in presence of fixed axis", () => {
       var [m1,m2,m3] = m.submorphs;
       m.layout = new GridLayout({grid:
-                         /* 50px */
-                    [[null, "m1", null, null], /* 50 px*/
+                         /* 100px 100px */
+                    [[null, "m1", null, null],
                      ["m2", null, null, null],
-                     [null, null,"m3",  null]]});
-      m.layout.setFixed({col: 2, fixed: 100});
-      m.layout.setFixed({col: 1, fixed: 100});
-      m.layout.adjustColumnStretch(0, 60);
-      expect(m.layout.colSizing[0].proportion).equals(1/2 + 0.2)
-      expect(m.layout.colSizing[3].proportion).closeTo(1/2 - 0.2, 0.01)
-      var m2Width = m2.width;
-      m.layout.adjustColumnStretch(3, 60);
-      expect(m2.width).equals(m2Width);
-      m.layout.adjustColumnStretch(3, -160);
-      expect(m2.width).equals(m2Width);
+                     [null, null, null, "m3"]]});
+      m.width = 400;
+      m.layout.col(2).fixed = 100;
+      m.layout.col(1).fixed = 100;
+      expect(m.layout.col(3).adjustedProportion).equals(1/2)
+      expect(m.layout.col(0).adjustedProportion).equals(1/2)
+      m.layout.col(0).adjustStretch(50);
+      m.layout.apply();
+      expect(m2.width).closeTo(150, 0.0001);
+      expect(m3.width).equals(50);
+      m.layout.col(3).adjustStretch(60);
+      m.layout.apply()
+      expect(m2.width).closeTo(150, 0.0001);
+      expect(m3.width).closeTo(110, 0.0001);
+      m.layout.col(3).adjustStretch(-60);
+      m.layout.apply();
+      expect(m2.width).closeTo(150, 0.0001);
+      expect(m3.width).closeTo(50, 0.0001);
+      m.layout.col(3).adjustStretch(-50); // 0
+      m.layout.apply();
+      expect(m.layout.col(3).adjustedProportion).equals(0);
+      expect(m.layout.col(0).adjustedProportion).closeTo(1, 0.0001);
+      expect(m2.width).closeTo(150, 0.0001);
+      expect(m3.width).equals(0);
+      m.layout.col(3).adjustStretch(-50);  // prevent
+      m.layout.apply();
+      expect(m3.width).equals(0);
+      expect(m2.width).closeTo(150, 0.0001);
+      expect(m.layout.col(3).adjustedProportion).equals(0);
+      expect(m.layout.col(0).adjustedProportion).closeTo(1, 0.0001);
     })
 
     it("can add rows and columns", () => {
@@ -336,8 +458,9 @@ describe("layout", () => {
           //  ["m2", null, X, null],
           //  [null, null, X,"m3"]]
       const [m1, m2, m3] = m.submorphs;
-      m.layout.addRowBefore(1);
-      m.layout.addColumnBefore(2);
+      m.layout.row(1).addBefore();
+      m.layout.col(2).addBefore();
+      m.layout.apply();
       expect(m1.position).equals(pt((300 / 4),0));
       expect(m2.position).equals(pt(0, 2 * (300 / 4)));
       expect(m3.position).equals(pt(3 * (300 / 4), 3 * (300 / 4)));
@@ -347,15 +470,17 @@ describe("layout", () => {
           // [[null, null],
           //  ["m2", null]]
        const [m1, m2, m3] = m.submorphs;
-       m.layout.removeColumn(1);
-       m.layout.removeRow(2);
+       m.layout.col(1).remove();
+       m.layout.row(2).remove();
+       m.layout.apply();
+       expect(m.width).equals(300);
        expect(m2.position).equals(pt(0, 150));
     });
     
     it("removes removed submorphs from layout", () => {
       const [m1, m2, m3] = m.submorphs;
       m1.remove();
-      expect(m.layout.grid[0][1]).to.be.null;
+      expect(m.layout.row(0).col(1).group.morph).to.be.null;
     });
   });
 })
