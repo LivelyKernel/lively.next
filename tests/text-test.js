@@ -457,3 +457,28 @@ describe("text movement and selection commands", () => {
   });
 
 });
+
+describe("searching", () => {
+
+  describe("find matching", () => {
+    var openPairs = {"{": "}","[": "]"},
+        closePairs = (() => {
+          var closePairs = {};
+          Object.keys(openPairs).forEach(left => closePairs[openPairs[left]] = left);
+          return closePairs
+        })(), t;
+    
+    beforeEach(() => t = text(" { [{\n }\n  }"));
+
+    it("forward right", () => {
+      expect(t.findMatchingForward({row: 0, column: 1}, "right", openPairs)).deep.equals({row: 2, column: 3});
+      expect(t.findMatchingForward({row: 0, column: 0}, "right", openPairs)).deep.equals(null);
+      expect(t.findMatchingForward({row: 0, column: 3}, "right", openPairs)).deep.equals(null);
+    });
+
+    it("forward left", () => {
+      expect(t.findMatchingForward({row: 0, column: 2}, "left", openPairs)).deep.equals({row: 2, column: 2});
+      expect(t.findMatchingForward({row: 0, column: 1}, "left", openPairs)).deep.equals(null);
+    });
+  });
+});

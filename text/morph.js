@@ -706,6 +706,45 @@ export class Text extends Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // search
+
+  findMatchingForward(pos, side = "right", pairs = {}) {
+    // searching for closing char, counting open and closing
+    // side is the char we want to match "right" or "left" of pos?
+    // pairs can be a JS object like {"[": "]", "<": ">"}
+    var openChar = this[side === "right" ? "charRight" : "charLeft"](pos),
+        closeChar = pairs[openChar];
+    if (!closeChar) return null;
+
+    var counter = side === "right" ? -1 : 0;
+    return this.document.scanForward(pos, (char, pos) => {
+      if (char === closeChar) {
+        if (counter === 0) return side === "right" ? {row: pos.row, column: pos.column+1} : pos;
+        else counter--;
+      }
+      else if (char === openChar) counter++;
+      return null;
+    });
+  }
+
+  findMatchingBackward(pos, side = "right", pairs = {}) {
+    // see findMatchingForward
+    var openChar = this[side === "right" ? "charRight" : "charLeft"](pos),
+        closeChar = pairs[openChar];
+    if (!closeChar) return null;
+
+    var counter = side === "left" ? -1 : 0;
+    return this.document.scanBackward(pos, (char, pos) => {
+      if (char === closeChar) {
+        if (counter === 0) return side === "right" ? {row: pos.row, column: pos.column+1} : pos;
+        else counter--;
+      }
+      else if (char === openChar) counter++;
+      return null;
+    });
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
     exportToJSON(options) {
       return Object.assign(super.exportToJSON(options), {
