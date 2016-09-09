@@ -1,6 +1,6 @@
 import { Morph, Text } from "./index.js"
-import { pt, Color } from "lively.graphics";
-import { arr } from "lively.lang";
+import { pt, Color, Rectangle } from "lively.graphics";
+import { arr, fun } from "lively.lang";
 import { signal } from "lively.bindings";
 
 function asItem(obj) {
@@ -55,16 +55,20 @@ export class List extends Morph {
   get layoutPolicy() { return this.getProperty("layoutPolicy"); }
   set layoutPolicy(value) { this.addValueChange("layoutPolicy", value); }
 
-  get fontFamily() { return this.getProperty("fontFamily"); }
+  get fontFamily() { this.invalidateCache(); return this.getProperty("fontFamily"); }
   set fontFamily(value) { this.addValueChange("fontFamily", value); }
 
-  get fontSize() { return this.getProperty("fontSize"); }
+  get fontSize() { this.invalidateCache(); return this.getProperty("fontSize"); }
   set fontSize(value) { this.addValueChange("fontSize", value); }
 
   get items() { return this.getProperty("items"); }
   set items(items) {
     this.addValueChange("items", items.map(asItem));
     this.groupChangesWhile(undefined, () => this.update());
+  }
+
+  invalidateCache() {
+    delete this._itemHeight;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -122,6 +126,8 @@ export class List extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 
+  get selectedIndex() { return this.selectedIndexes[0]; }
+  set selectedIndex(i) { return this.selectedIndexes = typeof i === "number" ? [i] : []; }
   get selectedIndexes() { return this.getProperty("selectedIndexes") || []; }
   set selectedIndexes(indexes) {
     var maxLength = this.items.length;
@@ -155,10 +161,14 @@ export class List extends Morph {
 
   get itemMorphs() { return this.listItemContainer.submorphs; }
 
+  get itemHeight() {
+    return this._itemHeight
+       || (this._itemHeight = this.env.fontMetric.sizeFor(this.fontFamily, this.fontSize, "X").height);
+  }
+
   update() {
-    var itemHeight = this._itemHeight
-                 || (this._itemHeight = this.env.fontMetric.sizeFor(this.fontFamily, this.fontSize, "X").height),
-        {
+    var {
+          itemHeight,
           items, itemMorphs, listItemContainer,
           selectedIndexes,
           scroll: {x: left, y: top},
@@ -190,8 +200,20 @@ export class List extends Morph {
     itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
   }
 
+  scrollIndexIntoView(idx) {
+    var {itemHeight, width, scroll} = this,
+        itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
+        visibleBounds = this.innerBounds().translatedBy(scroll),
+        offsetX = 0, offsetY = 0
+    if (itemBounds.bottom() > visibleBounds.bottom())
+      offsetY = itemBounds.bottom() - visibleBounds.bottom()
+    if (itemBounds.top() < visibleBounds.top())
+      offsetY = itemBounds.top() - visibleBounds.top()
+    this.scroll = scroll.addXY(offsetX, offsetY);
+  }
+
   onScroll() {
-    this.update();
+    fun.debounceNamed(this.id + "scroll", 81, () => this.update(), true)();
   }
 
 }
