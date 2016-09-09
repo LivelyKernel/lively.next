@@ -1,6 +1,7 @@
 import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
 import { Range, defaultRange } from "./range.js";
 import config from "../config.js";
+import { signal } from "lively.bindings";
 
 var newline = "\n";
 
@@ -44,12 +45,13 @@ export class Selection {
     if (range.equals(this._range)) return;
 
     this._range = range;
-    this.textMorph && this.textMorph.makeDirty && this.textMorph.makeDirty();
     this._goalColumn = this.lead.column;
 
     this.startAnchor.position = range.start;
     this.endAnchor.position = range.end;
-    // console.log(`selection changed: ${this}`);
+
+    this.textMorph.makeDirty();
+    signal(this.textMorph, "selectionChange");
   }
 
   updateFromAnchors() {

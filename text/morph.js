@@ -79,8 +79,9 @@ export class Text extends Morph {
   get isText() { return true }
 
   onChange(change) {
-    if (change.selector === "insertText"
-     || change.selector === "deleteText"
+    var textChange = change.selector === "insertText"
+                  || change.selector === "deleteText";
+    if (textChange
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
      || change.prop === "fontColor" // FIXME
@@ -88,7 +89,9 @@ export class Text extends Morph {
      || change.prop === "fixedHeight"
      || change.prop === "fontKerning")
        this.renderer && (this.renderer.layoutComputed = false);
+
     super.onChange(change);
+    textChange && signal(this, "textChange");
   }
 
   get readOnly() { return this.getProperty("readOnly"); }
