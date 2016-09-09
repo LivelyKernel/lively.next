@@ -1,4 +1,4 @@
-import { pt, Color } from "lively.graphics";
+import { pt, Color, rect } from "lively.graphics";
 import { arr, grid, properties, num } from "lively.lang";
 import { GridLayoutHalo, FlexLayoutHalo } from "./halo/layout.js";
 import { Morph } from "./index.js";
@@ -180,7 +180,7 @@ export class CellGroup {
   disconnect(cell, newGroup=null) {
     // remove partial row and col ?
     cell.group = newGroup || new CellGroup({morph: null, layout: this.layout, cell});
-    this.cells.remove(cell);
+    arr.remove(this.cells, cell);
     if (this.cells.length < 1 && this.layout) this.layout.removeGroup(this);
   }
   
@@ -518,24 +518,24 @@ export class LayoutCell {
   get staticWidth() { return this.fixed.width || (this.min.width > (this.proportion.width * this.container.width)) }
   
   get totalStaticWidth() { 
-    return [this, ...this.before, ...this.after].map(c => {
+    return arr.sum([this, ...this.before, ...this.after].map(c => {
       if (c.staticWidth) {
         return c.fixed.width || c.min.width;
       } else {
         return 0;
       }
-    }).sum(); }
+    })) }
     
   get staticHeight() { return this.fixed.height || (this.min.height > (this.proportion.height * this.container.height)) }
                              
   get totalStaticHeight() {
-    return [this, ...this.above, ...this.below].map(c => {
+    return arr.sum([this, ...this.above, ...this.below].map(c => {
       if (c.staticHeight) {
         return c.fixed.height || c.min.height;
       } else {
         return 0;
       }
-    }).sum();
+    }));
   }
   
   get dynamicWidth() { 
@@ -547,10 +547,10 @@ export class LayoutCell {
   }
   
   get inactiveProportion() {
-    return {width: [this, ...this.before, ...this.after].map(c => 
-                      (c.staticWidth && c.proportion.width) || 0).sum(),
-            height: [this, ...this.above, ...this.below].map(c => 
-                      (c.staticHeight && c.proportion.height) || 0).sum()}
+    return {width: arr.sum([this, ...this.before, ...this.after].map(c => 
+                            (c.staticWidth && c.proportion.width) || 0)),
+            height: arr.sum([this, ...this.above, ...this.below].map(c => 
+                            (c.staticHeight && c.proportion.height) || 0))}
   }
   
   get adjustedProportion() {
@@ -577,8 +577,8 @@ export class LayoutCell {
   }
   
   get position() {
-    return pt(this.before.map(c => c.width).sum(),
-              this.above.map(c => c.height).sum());
+    return pt(arr.sum(this.before.map(c => c.width)),
+              arr.sum(this.above.map(c => c.height)));
   }
   
   bounds() {
@@ -618,7 +618,7 @@ export class GridLayout extends Layout {
   }
   
   removeGroup(group) {
-    this.cellGroups.remove(group);
+    arr.remove(this.cellGroups, group);
   }
 
   apply() {

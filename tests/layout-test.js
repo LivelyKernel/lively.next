@@ -3,7 +3,7 @@ import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { Morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from "../index.js";
 import { LayoutCell } from "../layout.js";
-import { pt, Color, Rectangle } from "lively.graphics";
+import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { num, arr } from "lively.lang";
 
 var world, m, env, grid, layout;
