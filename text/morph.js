@@ -398,6 +398,8 @@ export class Text extends Morph {
     this.document.addStyleRange(range);
   }
 
+  resetStyleRanges() { this.document.resetStyleRanges() }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 

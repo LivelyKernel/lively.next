@@ -41,6 +41,8 @@ export default class TextDocument {
     // TODO: Consolidate/deduplicate ranges
   }
 
+  resetStyleRanges() { this._styleRanges = [] }
+
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
     return this.lines[safeRow];
