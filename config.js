@@ -120,7 +120,9 @@ var config = {
       {keys: "Meta-Shift-L /  D", command: "comment box"},
 
       {keys: {windows: "Ctrl-.", mac: "Meta-."}, command: '[IyGotoChar] activate'},
-      {keys: {windows: "Ctrl-,", mac: "Meta-,"}, command: {command: '[IyGotoChar] activate', args: {backwards: true}}}
+      {keys: {windows: "Ctrl-,", mac: "Meta-,"}, command: {command: '[IyGotoChar] activate', args: {backwards: true}}},
+
+      {keys: "Alt-Shift-Space|Alt-Space|Meta-Shift-P", command: "text completion"}
 
     ]
   }

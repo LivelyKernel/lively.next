@@ -801,4 +801,7 @@ commands.push(
 import { activate as iyGotoCharActivate } from "./iy-goto-char.js"
 commands.push(iyGotoCharActivate);
 
+import { completionCommands } from "./completion.js"
+commands.push(...completionCommands);
+
 export default commands;

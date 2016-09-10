@@ -1,0 +1,76 @@
+/*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
+import { Text, World, MorphicEnv } from "../../index.js";
+import { CompletionController, WordCompleter, DynamicJavaScriptCompleter } from "../../text/completion.js";
+import { expect } from "mocha-es6";
+import { dummyFontMetric as fontMetric } from "./test-helpers.js";
+import { createDOMEnvironment } from "../../rendering/dom-helper.js";
+
+var text;
+
+describe("completion controller", () => {
+
+  beforeEach(() => text = new Text({textString: "abc\nafg\n", fontMetric}));
+  
+  it("computes word completions", async () => {
+    text.cursorPosition = {row: 2, column: 0}
+    var controller = new CompletionController(text, [new WordCompleter()]),
+        {items} = await controller.completionListSpec();
+    expect(items).containSubset([{string: "afg"}, {string: "abc"}]);
+  });
+
+  it("computes dynamic JS completions", async () => {
+    text.textString = "this.";
+    text.gotoStartOrEnd({direction: "end"});
+    var controller = new CompletionController(text, [new DynamicJavaScriptCompleter()]),
+        {items} = await controller.completionListSpec();
+    expect(items).containSubset([{value: {completion: "textString"}}]);
+  });
+  
+})
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+
+var world;
+function createDummyWorld() {
+  world = new World({name: "world", extent: pt(300,300), submorphs: [
+    text = new Text({textString: "abc\nafg\n", fontMetric, extent: pt(400,300)})]})
+  return world;
+}
+
+var env;
+async function createMorphicEnv() {
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.domEnv.document.body.style = "margin: 0";
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(createDummyWorld());
+}
+async function destroyMorphicEnv() {
+  MorphicEnv.popDefault().uninstall();
+}
+
+
+describe("completion widget", () => {
+
+  beforeEach(() => createMorphicEnv());
+  afterEach(() => destroyMorphicEnv());
+
+  it("opens it", async () => {
+    await text.simulateKeys("Alt-Space");
+    var menu = world.get("text completion menu");
+    expect(menu.get("list").items).containSubset([{string: "abc"}, {string: "afg"}])
+  });
+
+  it("is correct aligned", async () => {
+    text.cursorDown(2)
+    text.insertText("a");
+    await text.simulateKeys("Alt-Space");
+    var menu = world.get("text completion menu");
+    expect(menu.get("input").textString).equals("a", "input line content doesn't show prefix");
+    var pos = text.charBoundsFromTextPosition(text.cursorPosition).topLeft();
+    expect(menu.position.x).closeTo(pos.x, 1, "menu position")
+    expect(menu.position.y).closeTo(pos.y, 1, "menu position")
+  });
+})
