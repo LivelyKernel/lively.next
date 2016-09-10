@@ -11,15 +11,36 @@ export default class CommandHandler {
       this.history.splice(0, this.history.length - this.maxHistorySize);
   }
 
-  exec(command, morph, args, count, evt) {
-    let name = !command || typeof command === "string" ? command : command.command,
-        cmd = command && morph.commands.find(ea => ea.name === name);
+  exec(commandOrName, morph, args, count, evt) {
+    // commandOrName can be
+    // 1. a string, naming a command in morphs.commands
+    // 2. a spec object like {command: "cmd name", args: {...}, handlesCount: BOOL, }
+    // 3. a proper command object {name: STRING, exec: FUNCTION, ....}
 
-    this.addToHistory(name);
+    var name, command;
+
+    if (!commandOrName) return null;
+
+    if (typeof commandOrName === "string") name = commandOrName;
+    if (typeof commandOrName.command === "string") name = commandOrName.command;
+
+    if (commandOrName.exec) {
+      command = commandOrName;
+      name = command.name;
+    }
+
+    if (!command) command = morph.commands.find(ea => ea.name === name);
+
+    if (!command) {
+      console.warn(`Cannot find command ${name}`);
+      return null;
+    }
+
+    name && this.addToHistory(name);
 
     var result;
-    if (cmd && typeof cmd.exec === "function") {
-      result = cmd.exec(morph, args, cmd.handlesCount ? count : undefined, evt);
+    if (command && typeof command.exec === "function") {
+      result = command.exec(morph, args, command.handlesCount ? count : undefined, evt);
     }
 
     // to not swallow errors
@@ -31,7 +52,7 @@ export default class CommandHandler {
     }
 
     // handle count by repeating command
-    if (result && typeof count === "number" && count > 1 && !cmd.handlesCount) {
+    if (result && typeof count === "number" && count > 1 && !command.handlesCount) {
       return typeof result.then === "function" ?
         result.then(() => this.exec(command, morph, args, count-1, evt)) :
         this.exec(command, morph, args, count-1, evt);
