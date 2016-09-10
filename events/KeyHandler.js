@@ -46,7 +46,7 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 }
 
 
-function simulateKeys(
+async function simulateKeys(
   morph, keyComboString,
   keyInputState = {keyChain: undefined, count: undefined}) {
   // keyComboString like "a b ctrl-c"
@@ -56,7 +56,8 @@ function simulateKeys(
   var pressedKeys = keyComboString.length === 1 ?
       [keyComboString] :
       keyComboString.split(/ /g).map(ensureSpaces)
-  pressedKeys.forEach(ea => simulateKey(morph, ea, keyInputState));
+  for (let keys of pressedKeys)
+    await simulateKey(morph, keys, keyInputState);
 }
 
 

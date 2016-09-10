@@ -726,7 +726,7 @@ export class Morph {
   }
 
   get keyhandlers() { return this._keyhandlers || []; }
-  simulateKeys(keyString) { KeyHandler.simulateKeys(this, keyString); }
+  simulateKeys(keyString) { return KeyHandler.simulateKeys(this, keyString); }
   onKeyDown(evt) {
     if (KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
       evt.stop();
