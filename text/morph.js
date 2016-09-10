@@ -314,6 +314,9 @@ export class Text extends Morph {
 
   insertText(text, pos = this.cursorPosition) {
     text = String(text);
+
+    if (!text.length) return Range.fromPositions(pos, pos);
+
     var range = this.document.insert(text, pos);
 
     this.undoManager.undoStart(this, "insertText");

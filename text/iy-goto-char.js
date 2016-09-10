@@ -63,7 +63,7 @@ class IyGotoCharKeyHandler extends KeyHandler {
     // subsequent invocations: when the same char is pressed, move to the
     // next found location of that char, other wise deactivate this mode
 
-    var debug = true,
+    var debug = false,
         keyCombo = evt.keyCombo,
         isInputKey = keyCombo.startsWith("input-");
 

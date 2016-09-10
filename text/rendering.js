@@ -145,6 +145,10 @@ export default class TextLayout {
     this.fontMetric = fontMetric;
   }
 
+  defaultCharSize(morph) {
+    return this.fontMetric.sizeFor(morph.fontFamily, morph.fontSize, "X");
+  }
+
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
@@ -198,17 +202,23 @@ export default class TextLayout {
         startPos            = this.pixelPositionFor(morph, start).addPt(paddingOffset),
         endPos              = this.pixelPositionFor(morph, end).addPt(paddingOffset),
         cursorPos           = isReverse ? startPos : endPos,
-        endLineHeight       = chunks[end.row].height;
+        defaultHeight       = null,
+        endLineHeight       = end.row in chunks ?
+                                chunks[end.row].height :
+                                (defaultHeight = this.defaultCharSize(morph).height),
+        leadLineHeight      = lead.row in chunks ?
+                                chunks[lead.row].height :
+                                defaultHeight || (defaultHeight = this.defaultCharSize(morph).height);
 
     // collapsed selection -> cursor
     if (morph.selection.isEmpty())
-      return [cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
+      return [cursor(cursorPos, leadLineHeight, cursorVisible)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, chunks[lead.row].height, cursorVisible)]
+        cursor(cursorPos, leadLineHeight, cursorVisible)]
 
     let endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
@@ -218,7 +228,7 @@ export default class TextLayout {
       return [
         selectionLayerPart(startPos, endPosLine1),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
+        cursor(cursorPos, leadLineHeight, cursorVisible)];
     }
 
     let endPosMiddle = pt(morph.width, endPos.y),
@@ -229,7 +239,7 @@ export default class TextLayout {
       selectionLayerPart(startPos, endPosLine1),
       selectionLayerPart(startPosLine2, endPosMiddle),
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
-      cursor(cursorPos, chunks[lead.row].height, cursorVisible)];
+      cursor(cursorPos, leadLineHeight, cursorVisible)];
 
   }
 
