@@ -543,10 +543,7 @@ var commands = [
         "{": "}",
         "[": "]",
         "(": ")",
-        "<": ">",
-        "`": "`",
-        "'": "'",
-        '"' : '"'
+        "<": ">"
       }
       var found = morph.findMatchingForward(morph.cursorPosition, "right", pairs) ||
                   morph.findMatchingForward(morph.cursorPosition, "left", pairs);
@@ -565,10 +562,7 @@ var commands = [
         "}": "{",
         "]": "[",
         ")": "(",
-        ">": "<",
-        "`": "`",
-        "'": "'",
-        '"': "'"
+        ">": "<"
       }
       var found = morph.findMatchingBackward(morph.cursorPosition, "left", pairs) ||
                   morph.findMatchingBackward(morph.cursorPosition, "right", pairs);
