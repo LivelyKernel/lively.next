@@ -415,6 +415,11 @@ export class Text extends Morph {
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
   get documentEndPosition() { return this.document.endPosition; }
 
+  cursorUp(n = 1) { return this.selection.goUp(n); }
+  cursorDown(n = 1) { return this.selection.goDown(n); }
+  cursorLeft(n = 1) { return this.selection.goLeft(n); }
+  cursorRight(n = 1) { return this.selection.goRight(n); }
+
   collapseSelection() {
     this.selection.collapse(this.selection.lead);
     return this.selection;
