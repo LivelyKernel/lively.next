@@ -76,13 +76,10 @@ export class Selection {
   get text() { return this.textMorph.document.textInRange(this.range); }
 
   set text(val) {
-    let {range: {start, end}, textMorph} = this;
-    if (!this.isEmpty())
-      textMorph.deleteText({start, end});
-
-    this.range = val.length ?
-      textMorph.insertText(val, start) :
-      {start: start, end: start};
+    let {range, textMorph} = this,
+        reversed = this.isReverse();
+    this.range = textMorph.replace(range, val);
+    if (reversed) this.reverse();
   }
 
   reverse() { this._isReverse = !this.isEmpty() && !this._isReverse; return this; }

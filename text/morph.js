@@ -366,7 +366,7 @@ export class Text extends Morph {
     this.undoManager.undoStop();
   }
 
-  replace(range, text, undoGroup = false) {
+  replace(range, text, undoGroup = true) {
     if (undoGroup) this.undoManager.group();
     this.deleteText(range);
     var range = this.insertText(text, range.start);
