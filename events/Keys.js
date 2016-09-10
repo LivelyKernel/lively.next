@@ -92,7 +92,7 @@ var FUNCTION_KEYS  = [
 function canonicalizeFunctionKey(key) {
   key = key.toLowerCase();
   switch (key) {
-    case 'space': key = " "; break;
+    case 'space': key = "space"; break;
     case 'esc': key = "escape"; break;
     case 'return': key = "enter"; break;
     case 'arrowleft': key = "left"; break;
@@ -256,7 +256,7 @@ var Keys = {
       spec.isFunctionKey = true;
       spec.key = fnKey
     } else if (spec.isModified) {
-      spec.key = trailing.toUpperCase();
+      spec.key = string.capitalize(trailing);
     } else {
       spec.key = trailing;
     }
@@ -296,8 +296,7 @@ var Keys = {
 
     var keyCombo = !key || isModifier(key) ? mod.replace(/-$/, "") : mod + key;
 
-    if (keyCombo.endsWith(" ")) keyCombo = keyCombo.replace(/ $/, "space");
-    if (keyCombo.match(/enter$/)) keyCombo = keyCombo.replace(/ $/, "space");
+    if (keyCombo.match(/\s$/)) keyCombo = keyCombo.replace(/\s$/, "Space");
 
     return keyCombo.replace(/(^|-)([a-z])/g, (_, start, char) => start+char.toUpperCase());
   },
