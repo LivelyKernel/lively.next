@@ -116,8 +116,11 @@ var config = {
 
       {keys: "Esc|Ctrl-G", command: "cancel input"},
 
+      {keys: "Meta-Shift-L /  D", command: "comment box"},
 
-      {keys: "Meta-Shift-L /  D", command: "comment box"}
+      {keys: {windows: "Ctrl-.", mac: "Meta-."}, command: '[IyGotoChar] activate'},
+      {keys: {windows: "Ctrl-,", mac: "Meta-,"}, command: {command: '[IyGotoChar] activate', args: {backwards: true}}}
+
     ]
   }
 }

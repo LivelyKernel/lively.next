@@ -489,3 +489,24 @@ describe("searching", () => {
     });
   });
 });
+
+import bowser from "bowser";
+
+describe("iy", () => {
+  
+  var t = beforeEach(() => t = text("1 2 3 4\n 1 2 3 4"));
+  var meta = bowser.mac ? "Meta" : "Ctrl";
+  
+  it("jumps forward", () => {
+    t.simulateKeys(meta + "-. input-3");
+    expect(t.selection).stringEquals("Selection(0/5 -> 0/5)");
+    t.simulateKeys("input-3");
+    expect(t.selection).stringEquals("Selection(1/6 -> 1/6)");
+    t.simulateKeys(meta + "-, input-2 input-2");
+    expect(t.selection).stringEquals("Selection(0/3 -> 0/3)");
+    // deactivate by pressing another key and allowing it to do its normal thing
+    t.simulateKeys("x");
+    expect(t.textString).equals("1 2x 3 4\n 1 2 3 4")
+  });
+
+});

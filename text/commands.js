@@ -788,5 +788,7 @@ commands.push(
   }
 );
 
+import { activate as iyGotoCharActivate } from "./iy-goto-char.js"
+commands.push(iyGotoCharActivate);
 
 export default commands;
