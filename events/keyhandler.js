@@ -113,7 +113,7 @@ function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   }
 }
 
-export class KeyHandler {
+export default class KeyHandler {
 
   static invokeKeyHandlers(morph, evt, noInputEvents = false) {
     return invokeKeyHandlers(morph, evt, noInputEvents);

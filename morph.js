@@ -5,7 +5,7 @@ import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
-import { KeyHandler } from "./events/keyhandler.js";
+import KeyHandler from "./events/KeyHandler.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -854,6 +854,7 @@ export class Morph {
     if (this._commands) this.removeCommands(this._commands);
     this.addCommands(cmds);
   }
+
   addCommands(cmds) {
     this.addMethodCallChangeDoing({
       target: this,

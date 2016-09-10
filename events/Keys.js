@@ -204,6 +204,7 @@ var Keys = {
       altGraphKey: false,
       isFunctionKey: false,
       isModified: false,
+      onlyModifiers: false,
       ...flags
     };
 
@@ -239,6 +240,7 @@ var Keys = {
     if (!keyMods.length) {
       spec.keyCombo = Keys.eventToKeyCombo(spec);
       spec.key = arr.last(dedasherize(spec.keyCombo));
+      spec.onlyModifiers = true;
       return spec;
     }
 

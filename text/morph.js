@@ -7,7 +7,7 @@ import { Selection } from "./selection.js";
 import { Range } from "./range.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-import { KeyHandler } from "../events/keyhandler.js";
+import KeyHandler from "../events/KeyHandler.js";
 import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 import { Anchor } from "./anchors.js";
