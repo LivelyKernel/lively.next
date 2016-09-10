@@ -1,6 +1,6 @@
 import { Morph, Text } from "./index.js"
 import { pt, Color, Rectangle } from "lively.graphics";
-import { arr, fun } from "lively.lang";
+import { arr, fun, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
 function asItem(obj) {
@@ -150,6 +150,10 @@ export class List extends Morph {
     this.selectedIndexes = [itemMorph.itemIndex];
   }
 
+  gotoIndex(i) {
+    this.scrollIndexIntoView(this.selectedIndex = i);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
 
@@ -214,6 +218,144 @@ export class List extends Morph {
 
   onScroll() {
     fun.debounceNamed(this.id + "scroll", 81, () => this.update(), true)();
+  }
+
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import { connect } from "lively.bindings";
+import FontMetric from "./rendering/font-metric.js";
+
+export class FilterableList extends Morph {
+  
+  constructor(props = {}) {
+    super({borderWidth: 1, borderColor: Color.gray});
+
+    var fontFamily = props.fontFamily || "Arial",
+        fontSize = props.fontSize || 11,
+        inputHeight = this.env.fontMetric.sizeFor(fontSize, fontSize, "X").height + 2*2,
+        input = props.input || "",
+        ext = props.extent || (props.extent = pt(400, 360)),
+        inputText = Text.makeInputLine({
+          name: "input",
+          extent: pt(ext.x, inputHeight),
+          textString: input,
+          fill: null,
+          borderWidth: 1, borderColor: Color.gray,
+          padding: Rectangle.inset(2),
+          fontSize, fontFamily
+        }),
+        list = new List({
+          name: "list", items: [],
+          position: pt(0, inputHeight), extent: pt(ext.x, ext.y-inputHeight),
+          fill: null,
+          fontSize, fontFamily
+        })
+
+    props = obj.dissoc(props, ["fontFamily", "fontSize", "input"])
+
+    this.submorphs = [inputText, list];
+    this.state = {allItems: null}
+    Object.assign(this, {items: [], ...props});
+
+    connect(this.get("input"), "inputChanged", this, "updateFilter");
+    
+    this.addKeyBindings([
+      {keys: "Down|Ctrl-N", command: "arrow down"},
+      {keys: "Up|Ctrl-P", command: "arrow up"},
+      {keys: "Ctrl-V|PageDown", command: "page down"},
+      {keys: "Alt-V|PageUp", command: "page up"},
+      {keys: "Alt-Shift-,", command: "goto first item"},
+      {keys: "Alt-Shift-.", command: "goto last item"},
+      {keys: "Enter", command: "accept input"},
+      {keys: "Escape|Ctrl-G", command: "cancel"}
+    ]);
+  }
+
+  set items(items) {
+    var l = this.get("list");
+    l.items = items;
+    this.state.allItems = l.items;
+    this.updateFilter();
+  }
+
+  get selection() { return this.get("list").selection; }
+  set selection(x) { this.get("list").selection = x; }
+  get selectedIndex() { return this.get("list").selectedIndex; }
+  set selectedIndex(x) { this.get("list").selectedIndex = x; }
+
+  updateFilter() {
+    var filterText = this.get("input").textString,
+        filterTokens = filterText.split(/\s+/).map(ea => ea.toLowerCase()),
+        filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token)));
+    this.get("list").items = filteredItems;
+  }
+
+  get commands()  {
+    var list = this.get("list");
+    return super.commands.concat([
+      {
+        name: "accept input",
+        exec: (morph) => {
+          signal(morph, "accepted", list.selection);
+          return true;
+        }
+      },
+
+      {
+        name: "cancel",
+        exec: (morph) => {
+          signal(morph, "canceled");
+          return true;
+        }
+      },
+
+      {
+        name: "page up",
+        exec: (morph) => {
+          var index = list.selectedIndex,
+              newIndex = Math.max(0, index - Math.round(list.height / list.itemHeight));
+          list.gotoIndex(newIndex);
+          return true;
+        }
+      },
+    
+      {
+        name: "page down",
+        exec: (morph) => {
+          var index = list.selectedIndex,
+              newIndex = Math.min(list.items.length-1, index + Math.round(list.height / list.itemHeight))
+          list.gotoIndex(newIndex);
+          return true;
+        }
+      },
+    
+      {
+        name: "goto first item",
+        exec: (morph) => { list.gotoIndex(0); return true; }
+      },
+      
+      {
+        name: "goto last item",
+        exec: (morph) => { list.gotoIndex(list.items.length-1); return true; }
+      },
+      
+      {
+        name: "arrow up",
+        exec: (morph) => { list.gotoIndex((list.selectedIndex || list.items.length) - 1); return true; }
+      },
+      
+      {
+        name: "arrow down",
+        exec: (morph) => {
+          var index = list.selectedIndex,
+              newIndex = ((typeof index === "number" ? index : -1) + 1) % list.items.length;
+          list.gotoIndex(newIndex);
+          return true;
+        }
+      }
+    ])
   }
 
 }
