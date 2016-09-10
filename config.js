@@ -26,6 +26,7 @@ var config = {
 
       {keys: {mac: 'Meta-A', win: 'Ctrl-A'}, command: "select all"},
       {keys: {mac: 'Meta-D', win:  'Ctrl-D'}, command: "doit"},
+      {keys: {mac: "Meta-Shift-L X B"},      command: "eval all"},
       {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
       {keys: {mac: 'Meta-I', win: 'Ctrl-I'}, command: "inspectit"},
       {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "saveit"},

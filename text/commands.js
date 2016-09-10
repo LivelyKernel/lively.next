@@ -692,11 +692,11 @@ var commands = [
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME move this stuff below into a JS related module
-function doEval(morph) {
+function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range) {
   var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
   if (!evalStrategies)
     throw new Error("doit not possible: lively.vm eval-strategies not available!")
-  var code = morph.selection.isEmpty() ? morph.getLine(morph.cursorPosition.row) : morph.selection.text,
+  var code = morph.textInRange(range),
       evalStrategy = new evalStrategies.LivelyVmEvalStrategy(),
       opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id, context: morph};
   return evalStrategy.runEval(code, opts);
@@ -710,7 +710,17 @@ commands.push(
     exec: async function(morph) {
       if (morph.selection.isEmpty()) morph.selectLine();
       var result = await doEval(morph);
-      morph.world()[result.isError ? "logError" : "setStatusMessage"](result.value + '\n' + obj.inspect(result.value, {maxDepth: 1}));
+      morph.world()[result.isError ? "logError" : "setStatusMessage"](obj.inspect(result.value, {maxDepth: 1}));
+      return result;
+    }
+  },
+
+  {
+    name: "eval all",
+    doc: "Evaluates the entire text contents",
+    exec: async function(morph) {
+      var result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition});
+      morph.world()[result.isError ? "logError" : "setStatusMessage"](String(result.value));
       return result;
     }
   },
