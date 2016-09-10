@@ -85,7 +85,7 @@ describe("event basics", function() {
       "onMouseDown-world",
       "onMouseDown-submorph1"]);
   });
-  
+
 });
 
 
@@ -115,17 +115,17 @@ describe("pointer event related", function() {
       submorph2.grabbable = false;
       env.eventDispatcher.simulateDOMEvents({type: "pointerdown", target: submorph2, position: pt(20, 25)});
       assertEventLogContains(["onFocus-submorph2", "onMouseDown-world", "onMouseDown-submorph1", "onMouseDown-submorph2"]);
-  
+
       env.eventDispatcher.simulateDOMEvents({type: "pointermove", target: submorph2, position: pt(30, 33)});
       assertEventLogContains(["onMouseMove-world", "onDragStart-submorph2"]);
-  
+
       env.eventDispatcher.simulateDOMEvents({type: "pointermove", target: submorph2, position: pt(34, 36)});
       assertEventLogContains(["onMouseMove-world", "onDrag-submorph2"]);
-  
+
       env.eventDispatcher.simulateDOMEvents({type: "pointerup", target: submorph2, position: pt(34, 36)});
       assertEventLogContains(["onMouseUp-world", "onDragEnd-submorph2"]);
     });
-    
+
     it("computes drag delta", async () => {
       var m = world.addMorph(morph({extent: pt(50,50), fill: Color.pink, grabbable: false}));
       await m.whenRendered()
@@ -145,13 +145,32 @@ describe("pointer event related", function() {
 
   });
 
+  describe("click counting", () => {
+
+    function click(type = "pointerdown", position = pt(20, 25)) {
+      return env.eventDispatcher.simulateDOMEvents({type, target: submorph2, position});
+    }
+
+    it("accumulates and is time based", async () => {
+      var state = env.eventDispatcher.eventState;
+      expect(state.clickCount).equals(0);
+      await click(); expect(state.clickCount).equals(1);
+      await click("pointerup"); expect(state.clickCount).equals(0);
+      await click(); expect(state.clickCount).equals(2);
+      await click("pointerup"); expect(state.clickCount).equals(0);
+      await promise.delay(400);
+      await click(); expect(state.clickCount).equals(1);
+    });
+
+  });
+
 
   describe("grab / drop", () => {
-    
+
     it("morph", async () => {
       submorph2.grabbable = true;
       var morphPos = submorph2.globalPosition;
-  
+
       // grab
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointerdown", target: submorph2, position: morphPos.addXY(5,5)},
@@ -161,7 +180,7 @@ describe("pointer event related", function() {
         "onMouseMove-world", "onGrab-submorph2"]);
       expect(world.hands[0].carriesMorphs()).equals(true);
       var offsetWhenGrabbed = submorph2.position;
-  
+
       // drop
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointermove", target: submorph2, position: morphPos.addXY(15,15)},
@@ -183,7 +202,7 @@ describe("pointer event related", function() {
         }];
       var [m1, m2] = world.submorphs;
       var prevGlobalPos = m2.globalPosition;
-  
+
       world.renderAsRoot(env.renderer);
       env.eventDispatcher.simulateDOMEvents(
         {type: "pointerdown", target: m2, position: pt(60,60)},
@@ -260,7 +279,7 @@ describe("pointer event related", function() {
 
 
 describe("scroll events", () => {
-  
+
 
   beforeEach(async () => {
     await setup();
@@ -341,7 +360,10 @@ describe("event simulation", () => {
 
 });
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 import KillRing from "../events/KillRing.js";
+
 describe("kill ring", () => {
 
   it("max size", async () => {
@@ -379,5 +401,5 @@ describe("kill ring", () => {
     expect(kr.yank()).equals("c");
   });
 
-  
+
 });

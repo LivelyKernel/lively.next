@@ -45,7 +45,7 @@ export class ClickHandler {
   }
 
   handle(morph, evt) {
-    var normalizedClickCount = this.normalizeClickCount(evt.state.clicks),
+    var normalizedClickCount = this.normalizeClickCount(evt.state.clickCount),
         command = this.getBinding(normalizedClickCount);
     if (command) {
       if (typeof(command) === "function") command(morph, evt);
