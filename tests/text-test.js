@@ -408,7 +408,7 @@ describe("clipboard buffer / kill ring", () => {
     return destroyMorphicEnv();
   })
 
-  it("copy saves to clipboard buffer", async () => {
+  inBrowser("copy saves to clipboard buffer", async () => {
     t = text("a\nb\nc\n")
     t.selection = range(0,0,0,1);
     t.execCommand("manual clipboard copy");

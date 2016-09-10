@@ -267,7 +267,7 @@ describe("text doc", () => {
         seen.push(char);
         return char === "2" ? {pos, char} : null;
       })).deep.equals({pos: {row: 0, column: 2}, char: "2"});
-      expect(seen).equals(["f", " ", "4", "3", "2"]);
+      expect(seen).equals([" ", "4", "3", "2"]);
     });
     
     it("scans backward failing", () => {
