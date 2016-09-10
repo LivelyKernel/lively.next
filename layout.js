@@ -338,7 +338,7 @@ export class LayoutColumn extends LayoutAxis {
   }
   
   set fixed(active) {
-    const fixedWidth = typeof active == "number" ? active : this.origin.width;
+    const fixedWidth = typeof active == "number" ? active : active && this.origin.width;
     this.items.forEach(c => { c.fixed.width = fixedWidth });
   }
   
@@ -416,7 +416,7 @@ export class LayoutRow extends LayoutAxis {
   get fixed() { return this.origin.fixed.height }
   
   set fixed(active) {
-    const fixedHeight = typeof active == "number" ? active : this.origin.height
+    const fixedHeight = typeof active == "number" ? active : active && this.origin.height
     this.items.forEach(c => { 
       c.fixed.height = fixedHeight;
     });
