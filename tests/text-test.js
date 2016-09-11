@@ -488,24 +488,55 @@ describe("searching", () => {
       expect(t.findMatchingForward({row: 0, column: 1}, "left", openPairs)).deep.equals(null);
     });
   });
+
+  describe("text search", () => {
+    
+    var t; beforeEach(() => t = text("123 Hello\nhello\nworld\n"));
+
+    it("string search forward", () => {
+      expect(t.search("He")).deep.equals({range: range(0,4,0,6), match: "He"}, "1");
+      expect(t.search("He", {start: {row: 0, column: 4}})).containSubset({range: range(0,4,0,6)}, "2");
+      expect(t.search("He", {start: {row: 0, column: 5}})).containSubset({match: "he"}, "3");
+      expect(t.search("He", {start: {row: 0, column: 5}, caseSensitive: true})).equals(null, "4");
+      expect(t.search("o\nhe")).deep.equals({range: range(0,8,1,2), match: "o\nhe"}, "3", "5");
+    });
+
+    it("re search forward", () => {
+      expect(t.search(/He[^\s]+/)).containSubset({range: range(0,4,0,9), match: "Hello"}, "1");
+      expect(t.search(/He[^\s]+\nhello/)).equals(null, "2");
+      expect(t.search(/He[^\s]+\nhello/m)).containSubset({range: range(0,4,1,5), match: "Hello\nhello"}, "3");
+    });
+
+    it("string search backward", () => {
+      expect(t.search("Hello", {backwards: true, start: {row: 2, column: 0}})).deep.equals({match: "hello", range: range(1,0,1,5)}, "1");
+      expect(t.search("Hello", {backwards: true, start: {row: 1, column: 5}})).deep.equals({match: "hello", range: range(1,0,1,5)}, "2");
+      expect(t.search("Hello\nhello", {backwards: true, start: {row: 2, column: 0}})).containSubset({match: "Hello\nhello"}, "3");
+    });
+
+    it("re search backward", () => {
+      expect(t.search(/He[^\s]+/, {backwards: true, start: {row: 2, column: 0}})).containSubset({range: range(1,0,1,5), match: "hello"}, "1");
+    });
+
+  });
+
 });
 
 import bowser from "bowser";
 
 describe("iy", () => {
   
-  var t = beforeEach(() => t = text("1 2 3 4\n 1 2 3 4"));
-  var meta = bowser.mac ? "Meta" : "Ctrl";
+  var meta = bowser.mac ? "Meta" : "Ctrl", t;
+  beforeEach(() => t = text("1 2 3 4\n 1 2 3 4"));
   
-  it("jumps forward", () => {
-    t.simulateKeys(meta + "-. input-3");
+  it("jumps forward", async () => {
+    await t.simulateKeys(meta + "-. input-3");
     expect(t.selection).stringEquals("Selection(0/5 -> 0/5)");
-    t.simulateKeys("input-3");
+    await t.simulateKeys("input-3");
     expect(t.selection).stringEquals("Selection(1/6 -> 1/6)");
-    t.simulateKeys(meta + "-, input-2 input-2");
+    await t.simulateKeys(meta + "-, input-2 input-2");
     expect(t.selection).stringEquals("Selection(0/3 -> 0/3)");
     // deactivate by pressing another key and allowing it to do its normal thing
-    t.simulateKeys("x");
+    await t.simulateKeys("x");
     expect(t.textString).equals("1 2x 3 4\n 1 2 3 4")
   });
 

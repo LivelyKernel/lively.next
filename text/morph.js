@@ -11,6 +11,7 @@ import KeyHandler from "../events/KeyHandler.js";
 import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 import { Anchor } from "./anchors.js";
+import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
 
@@ -757,6 +758,10 @@ export class Text extends Morph {
       else if (char === openChar) counter++;
       return null;
     });
+  }
+
+  search(needle, options = {start: this.cursorPosition, backwards: false, caseSensitive: false}) {
+    return new TextSearcher(this).search({needle, ...options});
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
