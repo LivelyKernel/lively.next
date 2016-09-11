@@ -825,4 +825,7 @@ commands.push(iyGotoCharActivate);
 import { completionCommands } from "./completion.js"
 commands.push(...completionCommands);
 
+import { searchCommands } from "./search.js"
+commands.push(...searchCommands);
+
 export default commands;
