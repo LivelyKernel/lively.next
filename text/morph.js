@@ -291,7 +291,7 @@ export class Text extends Morph {
   set tabWidth(value)  { this.addValueChange("tabWidth", value); }
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
-  get commands() { return commands.concat(this._commands || []); }
+  get commands() { return (this._commands || []).concat(commands); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
