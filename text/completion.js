@@ -12,9 +12,6 @@ export class Completer {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { LivelyVmEvalStrategy } from "lively.vm/lib/eval-strategies.js"
-var evalStrategy = new LivelyVmEvalStrategy();
-
 export class DynamicJavaScriptCompleter {
 
   isValidPrefix(prefix) {
@@ -26,6 +23,12 @@ export class DynamicJavaScriptCompleter {
         roughPrefix = sel.isEmpty() ? textMorph.getLine(sel.lead.row).slice(0, sel.lead.column) : sel.text;
 
     if (!this.isValidPrefix(roughPrefix)) return [];
+
+    // FIXME this should got into a seperate JavaScript support module where
+    // the dependency can be properly declared
+    var mod = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
+    if (!mod) return [];
+    var evalStrategy = new mod.LivelyVmEvalStrategy();
 
     let opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + textMorph.id, context: textMorph},
         completionRequest = await evalStrategy.keysOfObject(roughPrefix, opts),
