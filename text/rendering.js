@@ -29,6 +29,21 @@ function cursor(pos, height, visible) {
   })
 }
 
+function renderMarkerPart(renderer, morph, start, end, style) {
+  var {x,y} = renderer.boundsFor(morph, start),
+      {height, x: endX} = renderer.boundsFor(morph, end);
+  return h("div.marker-layer-part", {
+    style: {
+      zIndex: -4,
+      ...style,
+      position: "absolute",
+      left: x + "px", top: y + "px",
+      height: height + "px",
+      width: endX-x + "px"
+    }
+  });
+}
+
 class RenderedChunk {
 
   constructor(text, config) {
@@ -184,6 +199,7 @@ export default class TextLayout {
       }
     }, this.renderSelectionLayer(morph)
         .concat(morph.debug ? this.renderDebugLayer(morph) : [])
+        .concat(this.renderMarkerLayer(morph))
         .concat(this.renderTextLayer(morph))
         .concat(renderer.renderSubmorphs(morph))
       );
@@ -241,6 +257,33 @@ export default class TextLayout {
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
       cursor(cursorPos, leadLineHeight, cursorVisible)];
 
+  }
+
+  renderMarkerLayer(morph) {
+    let markers = morph._markers, parts = [];
+    if (!markers) return parts;
+
+    for (let m of markers) {
+      let {style, range: {start, end}} = m;
+
+      // single line
+      if (start.row === end.row) {
+        parts.push(renderMarkerPart(this, morph, start, end, style));
+      }
+
+      // multiple lines
+      // first line
+      parts.push(renderMarkerPart(this, morph, start, morph.lineRange(start.row).end, style));
+      // lines in the middle
+      for (var row = start.row+1; row <= end.row-1; row++) {
+        let {start: lineStart, end: lineEnd} = morph.lineRange(row);
+        parts.push(renderMarkerPart(this, morph, lineStart, lineEnd, style));
+      }
+      // last line
+      parts.push(renderMarkerPart(this, morph, {row: end.row, column: 0}, end, style));
+    }
+
+    return parts;
   }
 
   renderTextLayer(morph) {

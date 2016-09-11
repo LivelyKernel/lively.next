@@ -70,6 +70,8 @@ export class Text extends Morph {
     this.undoManager = new UndoManager();
     this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new Selection(this, selection) : null;
+    this._anchors = null;
+    this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
@@ -172,6 +174,24 @@ export class Text extends Morph {
       typeof anchor === "string" ?
         ea => ea.id !== anchor :
         ea => ea !== anchor);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // markers, text ranges with styles that are rendered
+  get markers() { return this._markers; }
+  addMarker(marker) {
+    // id, range, style
+    if (!this._markers) this._markers = [];
+    this.removeMarker(marker.id);
+    this._markers.push(marker);
+    this.makeDirty();
+    return marker;
+  }
+  removeMarker(marker) {
+    if (!this._markers) return;
+    var id = typeof marker === "string" ? marker : marker.id;
+    this._markers = this.markers.filter(ea => ea.id !== id);
+    this.makeDirty();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
