@@ -1,6 +1,7 @@
 /*global System*/
 
 import { arr, obj, string } from "lively.lang";
+import { pt, Rectangle } from "lively.graphics"
 import { Range } from "./range.js"
 import { eqPosition, lessPosition } from "./position.js"
 
