@@ -271,6 +271,7 @@ export default class TextLayout {
       // single line
       if (start.row === end.row) {
         parts.push(renderMarkerPart(this, morph, start, end, style));
+        continue;
       }
 
       // multiple lines
