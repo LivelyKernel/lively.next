@@ -306,7 +306,6 @@ export class LayoutColumn extends LayoutAxis {
   get isStatic() { return this.origin.staticWidth }
   
   attachTo(col) {
-    console.log(col);
     arr.zip(this.items, col.items)
        .forEach(([a, b]) => {
          a.right = b;
@@ -494,20 +493,22 @@ export class LayoutCell {
   }
   
   col(idx) {
-    var cell = this;
-    while (idx > 0) {
+    var cell = this, i = idx;
+    while (i > 0 && cell) {
       cell = cell.right;
-      idx--;
+      i--;
     }
+    if (!cell) throw Error(`${idx} out of bounds! Last column was ${idx - i - 1}`);
     return new LayoutColumn(cell);
   }
   
   row(idx) {
-    var cell = this;
-    while (idx > 0) {
+    var cell = this, i = idx;
+    while (i > 0 && cell) {
       cell = cell.bottom;
-      idx--;
+      i--;
     }
+    if (!cell) throw Error(`${idx} out of bounds! Last row was ${idx - i - 1}`);
     return new LayoutRow(cell);
   }
   
