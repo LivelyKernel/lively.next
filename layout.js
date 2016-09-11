@@ -677,7 +677,7 @@ export class GridLayout extends Layout {
       }
       return row.map(v => {
         if (v && !v.isMorph){ 
-          return this.container.getSubmorphNamed(v)
+          return this.container.getSubmorphNamed(v) || v
         } else {
           return v
         }
