@@ -2,7 +2,7 @@
 import { Text, World, MorphicEnv } from "../../index.js";
 import { CompletionController, WordCompleter, DynamicJavaScriptCompleter } from "../../text/completion.js";
 import { expect } from "mocha-es6";
-import { dummyFontMetric as fontMetric } from "./test-helpers.js";
+import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 
 var text;
