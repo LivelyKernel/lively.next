@@ -162,17 +162,25 @@ export class CellGroup {
   get layout() { return this.state.layout; }
   
   bounds() {
-    return this.cells
-               .map(cell => cell.bounds())
-               .reduce((a,b) => a.union(b));
+    if (this.cells.length > 0) {
+      return this.cells
+                 .map(cell => cell.bounds())
+                 .reduce((a,b) => a.union(b));
+    } else {
+      return rect(0,0,0,0);
+    }
   }
   
   includes(cell) {
-    return this.cells.find(({row, col}) => row == cell.row && col == cell.col);
+    return this.cells.find(c => c == cell);
   }
   
   connect(cell) {
     // connect partial row and col ?
+    if (this.morph == undefined) {
+      console.log(cell.group.morph)
+      this.morph = cell.group.morph;
+    }
     cell.group && cell.group.disconnect(cell, this);
     this.cells.push(cell);
   }
@@ -190,20 +198,20 @@ export class CellGroup {
     })
   }
   
-  topLeft() {
+  get topLeft() {
     return this.cells.find(cell => 
         (cell.left == null || cell.left.group != this) && 
         (cell.top == null || cell.top.group != this));
   }
   
-  bottomRight() {
+  get bottomRight() {
     return this.cells.find(cell => 
         (cell.right == null || cell.right.group != this) && 
         (cell.bottom == null || cell.bottom.group != this));
   }
   
   position() {
-    return this.topLeft().position();
+    return this.topLeft.position();
   }
   
 }
@@ -226,6 +234,10 @@ class LayoutAxis {
   
   get before() { throw Error("before() not implemented!") }
   get after() { throw Error("after() not implemented!") }
+  
+  getRoot() { 
+    return (this.axisBefore[0] || this).items[0];
+  }
 
   adjustProportion(delta) {
     var dynamicProportion = this.dynamicLength / this.containerLength,
@@ -256,10 +268,9 @@ class LayoutAxis {
   }
   
   equalizeDynamicAxis() {
-    var dynamicAxis = this.otherAxis.filter(a => !a.fixed).length;
-    if (!this.fixed) dynamicAxis++;
+    var dynamicAxis = this.otherAxis.length + 1;
     this.otherAxis.forEach(a => {
-      if (!a.fixed) a.proportion = 1 / dynamicAxis;
+      a.proportion = 1 / dynamicAxis;
     });
     this.proportion = 1 / dynamicAxis;
   }
@@ -269,6 +280,7 @@ class LayoutAxis {
     this.before && this.before.attachTo(newAxis);
     newAxis.attachTo(this);
     this.equalizeDynamicAxis();
+    this.layout.grid = this.getRoot();
   }
   
   addAfter() {
@@ -276,6 +288,7 @@ class LayoutAxis {
     this.after && newAxis.attachTo(this.after);
     this.attachTo(newAxis);
     this.equalizeDynamicAxis();
+    this.layout.grid = this.getRoot();
   }
   
 }
@@ -337,8 +350,12 @@ export class LayoutColumn extends LayoutAxis {
   }
   
   set fixed(active) {
-    const fixedWidth = typeof active == "number" ? active : active && this.origin.width;
-    this.items.forEach(c => { c.fixed.width = fixedWidth });
+    const fixedWidth = typeof active == "number" ? active : active && this.origin.width,
+          l = this.length;
+    this.items.forEach(c => {
+      c.fixed.width = fixedWidth;
+    });
+    if (!fixedWidth) this.adjustStretch(l - this.length);
   }
   
   set proportion(prop) {
@@ -611,8 +628,8 @@ export class GridLayout extends Layout {
   col(idx) { return this.grid.col(idx) }
   row(idx) { return this.grid.row(idx) }
   
-  get rowCount() { return this.grid.row(0).items.length }
-  get columnCount() { return this.grid.col(0).items.length }
+  get rowCount() { return this.grid.col(0).items.length }
+  get columnCount() { return this.grid.row(0).items.length }
   
   addGroup(group) {
     this.cellGroups.push(group);
