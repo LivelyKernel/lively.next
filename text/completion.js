@@ -176,7 +176,9 @@ export class CompletionController {
   async computeCompletions(prefix) {
     var completions = [];
     for (var c of this.completers)
-      completions = completions.concat(await c.compute(this.textMorph, prefix));
+      try {
+        completions = completions.concat(await c.compute(this.textMorph, prefix));
+      } catch (e) {}
 
     var infoCol = completions.reduce((maxCol, ea) => Math.max(ea.completion.length, maxCol), 0),
         maxCol = infoCol;
@@ -239,7 +241,8 @@ export class CompletionController {
 
     this.textMorph.world().addMorph(menu);
     menu.selectedIndex = 0;
-    menu.get("input").selectAll();
+    // menu.get("input").selectAll();
+    prefix.length && menu.get("input").gotoStartOrEnd({direction: "end"});
     menu.get("input").focus();
   }
 
