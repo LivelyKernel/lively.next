@@ -709,8 +709,14 @@ commands.push(
     doc: "Evaluates the selecte code or the current line and report the result",
     exec: async function(morph) {
       if (morph.selection.isEmpty()) morph.selectLine();
-      var result = await doEval(morph);
-      morph.world()[result.isError ? "logError" : "setStatusMessage"](obj.inspect(result.value, {maxDepth: 1}));
+      var result, err;
+      try {
+        result = await doEval(morph);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      err ?
+        morph.world().logError(err) : 
+        morph.world().setStatusMessage(obj.inspect(result.value, {maxDepth: 1}));
       return result;
     }
   },
@@ -719,8 +725,14 @@ commands.push(
     name: "eval all",
     doc: "Evaluates the entire text contents",
     exec: async function(morph) {
-      var result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition});
-      morph.world()[result.isError ? "logError" : "setStatusMessage"](String(result.value));
+      var result, err;
+      try {
+        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition});
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      err ?
+        morph.world().logError(err) : 
+        morph.world().setStatusMessage(obj.inspect(result.value, {maxDepth: 1}));
       return result;
     }
   },
@@ -730,9 +742,13 @@ commands.push(
     doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
     exec: async function(morph) {
       if (morph.selection.isEmpty()) morph.selectLine();
-      var result = await doEval(morph);
+      var result, err;
+      try {
+        result = await doEval(morph);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(result.value);
+      morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
       return result;
     }
   },
@@ -742,9 +758,13 @@ commands.push(
     doc: "...",
     handlesCount: true,
     exec: async function(morph, _, count = 1) {
-      var result = await doEval(morph);
+      var result, err;
+      try {
+        result = await doEval(morph);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(obj.inspect(result.value, {maxDepth: count}));
+      morph.insertTextAndSelect(err ? err.stack || String(err) : obj.inspect(result.value, {maxDepth: count}));
       return result;
     }
   },
