@@ -3,9 +3,12 @@ import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
 
 export class Anchor {
 
-  constructor(id = string.newUUID(), pos = {column: 0, row: 0}) {
+  constructor(id = string.newUUID(), pos = {column: 0, row: 0}, insertBehavior = "move") {
     this.id = id;
     this.position = pos;
+    // behavior when inserted directly at this.position:
+    // stay = position unchanged, move = position moves to end of insertion
+    this.insertBehavior = insertBehavior;
   }
 
   get isAnchor() { return true; }
@@ -27,6 +30,7 @@ export class Anchor {
 
   onInsert(range) {
     if (lessPosition(this.position, range.start)) return;
+    if (eqPosition(this.position, range.start) && this.insertBehavior === "stay") return;
     let {row, column} = this.position,
         {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
         deltaRows = endRow - startRow,

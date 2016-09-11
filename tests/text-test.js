@@ -117,6 +117,15 @@ describe("anchors", () => {
     expect(a.position).deep.equals({row: 2, column: 6}, "5 new line before anchor");
   });
 
+  it("insertion stay behavior", () => {
+    var t = text("hello\nworld", {}),
+        a = t.addAnchor({id: "test", column: 1, row: 1, insertBehavior: "stay"});
+    t.insertText("abc", {row: 1, column: 0});
+    expect(a.position).deep.equals({row: 1, column: 4}, "1 before anchor");
+    t.insertText("xy", {row: 1, column: 4});
+    expect(a.position).deep.equals({row: 1, column: 4}, "2 directly before anchor");
+  });
+
   it("delete moves anchors around", () => {
     var t = text("hello\nworld", {}),
         a = t.addAnchor({id: "test", column: 1, row: 1});

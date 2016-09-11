@@ -145,6 +145,8 @@ export class Text extends Morph {
   get fontKerning() { return this.getProperty("fontKerning") }
   set fontKerning(value) { this.addValueChange("fontKerning", value); }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // anchors – positions in text that move when text is changed
   get anchors() { return this._anchors || (this._anchors = []); }
   addAnchor(anchor) {
     if (!anchor) return;
@@ -154,7 +156,7 @@ export class Text extends Morph {
 
     if (!anchor.isAnchor) {
       let {id, column, row} = anchor;
-      anchor = new Anchor(id, row || column ? {row, column} : undefined);
+      anchor = new Anchor(id, row || column ? {row, column} : undefined, anchor.insertBehavior || "move");
     }
 
     var existing = anchor.id && this.anchors.find(ea => ea.id === anchor.id);
@@ -165,7 +167,6 @@ export class Text extends Morph {
     this.anchors.push(anchor);
     return anchor;
   }
-
   removeAnchor(anchor) {
     this._anchors = this.anchors.filter(
       typeof anchor === "string" ?
