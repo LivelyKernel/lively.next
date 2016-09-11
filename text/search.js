@@ -41,8 +41,8 @@ export class TextSearcher {
 
     var search;
     if (needle instanceof RegExp) {
-      var flags = needle.flags.split("");
-      var multiline = flags.includes("m"); flags.splice(flags.indexOf("m"), 1);
+      var flags = (needle.flags || "").split("");
+      var multiline = !!needle.multiline; flags.splice(flags.indexOf("m"), 1);
       if (!caseSensitive && !flags.includes("i")) flags.push("i");
       needle = new RegExp('^' + needle.source.replace(/^\^+/, ""), flags.join(""));
       search = this.reSearch.bind(this, this.doc.lines, needle, multiline);

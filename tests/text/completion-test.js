@@ -1,5 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { Text, World, MorphicEnv } from "../../index.js";
+import { pt, Rectangle } from "lively.graphics";
 import { CompletionController, WordCompleter, DynamicJavaScriptCompleter } from "../../text/completion.js";
 import { expect } from "mocha-es6";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
@@ -19,6 +20,7 @@ describe("completion controller", () => {
   });
 
   it("computes dynamic JS completions", async () => {
+    if (!System.get(System.decanonicalize("lively.vm/index.js"))) return;
     text.textString = "this.";
     text.gotoStartOrEnd({direction: "end"});
     var controller = new CompletionController(text, [new DynamicJavaScriptCompleter()]),
@@ -60,7 +62,7 @@ describe("completion widget", () => {
   it("opens it", async () => {
     await text.simulateKeys("Alt-Space");
     var menu = world.get("text completion menu");
-    expect(menu.get("list").items).containSubset([{string: "abc"}, {string: "afg"}])
+    expect(menu.get("list").items.map(({value: {completion}}) => completion).slice(0, 2)).deep.equals(["abc", "afg"])
   });
 
   it("is correct aligned", async () => {
