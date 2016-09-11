@@ -430,6 +430,17 @@ export class Text extends Morph {
     return this.withLinesDo(startRow, endColumn === 0 && endRow > startRow ? endRow-1 : endRow, doFunc);
   }
 
+  get whatsVisible() {
+    var startRow = this.renderer.firstVisibleLine,
+        endRow = this.renderer.lastVisibleLine,
+        lines = this.document.lines;
+    return {
+      lines: startRow === undefined || endRow === undefined ?
+              lines : lines.slice(startRow, endRow),
+      startRow, endRow
+    }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 

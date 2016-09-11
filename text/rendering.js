@@ -158,6 +158,8 @@ export default class TextLayout {
     this.layoutComputed = false;
     this.chunks = [];
     this.fontMetric = fontMetric;
+    this.firstVisibleLine = undefined;
+    this.lastVisibleLine = undefined;
   }
 
   defaultCharSize(morph) {
@@ -306,6 +308,7 @@ export default class TextLayout {
       textHeight += height;
     }
 
+    this.firstVisibleLine = row;
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
     for (;row < chunks.length; row++) {
@@ -317,6 +320,7 @@ export default class TextLayout {
       textHeight += height;
     }
 
+    this.lastVisibleLine = row;
     lastVisibleLineBottom = textHeight;
 
     for (;row < chunks.length; row++) {
