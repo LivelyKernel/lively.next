@@ -1,5 +1,7 @@
 export const Token = {
   keyword: "keyword",
+  constant: "constant",
+  global: "global",
   id: "id",
   numeric: "numeric",
   string: "string",
@@ -7,7 +9,7 @@ export const Token = {
   default: "default"
 };
 
-// type Token = "keyword" | "id" | "numeric" | "string" | "comment" | "default"
+// type Token = "keyword" | "constant" | "global" | "id" | "numeric" | "string" | "comment" | "default"
 
 // type Style = { [string]: any };
 
