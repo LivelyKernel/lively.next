@@ -178,7 +178,6 @@ export class CellGroup {
   connect(cell) {
     // connect partial row and col ?
     if (this.morph == undefined) {
-      console.log(cell.group.morph)
       this.morph = cell.group.morph;
     }
     cell.group && cell.group.disconnect(cell, this);
