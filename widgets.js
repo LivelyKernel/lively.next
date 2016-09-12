@@ -209,7 +209,6 @@ export class Button extends Morph {
       }],
       ...props,
     });
-    this.submorphs[0].fontColor = this.active ? Color.almostBlack : Color.gray;
     this.relayout();
 
     connect(this, "change", this, "relayout", {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
@@ -219,14 +218,16 @@ export class Button extends Morph {
   get activeStyle() {
     return {
       borderColor: Color.gray,
-      fill: Color.rgb(240,240,240)
+      fill: Color.rgb(240,240,240),
+      fontColor: Color.almostBlack
     }
   }
 
   get inactiveStyle() {
     return {
       borderColor: Color.darkGray,
-      fill: Color.gray
+      fill: Color.gray,
+      fontColor: Color.darkGray
     }
   }
 
@@ -253,6 +254,8 @@ export class Button extends Morph {
   set fontFamily(fontFamily) { this.submorphs[0].fontFamily = fontFamily; this.relayout(); }
   get fontSize() { return this.submorphs[0].fontSize; }
   set fontSize(fontSize) { this.submorphs[0].fontSize = fontSize; this.relayout(); }
+  get fontColor() { return this.submorphs[0].fontColor; }
+  set fontColor(color) { this.submorphs[0].fontColor = color; }
   set padding(value) { this.addValueChange("padding", value); this.relayout(); }
   get padding() { return this.getProperty("padding"); }
 
