@@ -222,11 +222,27 @@ export class CompletionController {
         {items, maxCol} = await this.computeCompletions(prefix),
         charBounds = m.env.fontMetric.sizeFor(fontFamily, fontSize, "M"),
         minWidth = 300,
+        width = Math.max(minWidth, charBounds.width*maxCol),
+        minHeight = 70, maxHeight = 700,
         fullHeight = charBounds.height*items.length+charBounds.height+10,
-        width = Math.max(minWidth, charBounds.width*maxCol);
+        height = Math.max(minHeight, Math.min(maxHeight, fullHeight)),
+        bounds = position.extent(pt(width, height));
+
+    // ensure menu is visible
+    var world = m.world(),
+        visibleBounds = world.visibleBounds();
+    if (bounds.bottom() > visibleBounds.bottom()) {
+      var delta = bounds.bottom() - visibleBounds.bottom();
+      if (delta > bounds.height-50) delta = bounds.height-50;
+      bounds.height -= delta;
+    }
+    if (!visibleBounds.containsRect(bounds))
+      bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(menuBounds).topLeft())
+
     return {
       fontFamily, fontSize,
-      position, extent: pt(width, Math.min(500, fullHeight)),
+      position: bounds.topLeft(),
+      extent: bounds.extent(),
       items, input: prefix,
       name: "text completion menu"
     }
@@ -242,9 +258,10 @@ export class CompletionController {
     connect(menu, "canceled", menu, "remove");
     connect(menu, "remove", this.textMorph, "focus");
 
-    this.textMorph.world().addMorph(menu);
+    var world = this.textMorph.world();
+    world.addMorph(menu);
+
     menu.selectedIndex = 0;
-    // menu.get("input").selectAll();
     prefix.length && menu.get("input").gotoStartOrEnd({direction: "end"});
     menu.get("input").focus();
   }

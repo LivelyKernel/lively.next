@@ -277,7 +277,7 @@ export class World extends Morph {
 }
 
 
-class AbstractPrompt extends Morph {
+export class AbstractPrompt extends Morph {
 
   constructor(props = {}) {
     var {label} = props;
@@ -308,7 +308,7 @@ class AbstractPrompt extends Morph {
   applyLayout() { throw new Error("Not yet implemented"); }
 }
 
-class InformPrompt extends AbstractPrompt {
+export class InformPrompt extends AbstractPrompt {
 
   build() {
     this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});
@@ -333,7 +333,7 @@ class InformPrompt extends AbstractPrompt {
 }
 
 
-class TextPrompt extends AbstractPrompt {
+export class TextPrompt extends AbstractPrompt {
 
   build() {
     this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});

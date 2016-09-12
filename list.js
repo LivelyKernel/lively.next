@@ -234,12 +234,9 @@ export class FilterableList extends Morph {
 
     var fontFamily = props.fontFamily || "Arial",
         fontSize = props.fontSize || 11,
-        inputHeight = this.env.fontMetric.sizeFor(fontSize, fontSize, "X").height + 2*2,
         input = props.input || "",
-        ext = props.extent || (props.extent = pt(400, 360)),
         inputText = Text.makeInputLine({
           name: "input",
-          extent: pt(ext.x, inputHeight),
           textString: input,
           fill: null,
           borderWidth: 1, borderColor: Color.gray,
@@ -248,16 +245,22 @@ export class FilterableList extends Morph {
         }),
         list = new List({
           name: "list", items: [],
-          position: pt(0, inputHeight), extent: pt(ext.x, ext.y-inputHeight),
           fill: null,
+          clipMode: "auto",
           fontSize, fontFamily
         })
 
-    props = obj.dissoc(props, ["fontFamily", "fontSize", "input"])
+    props = obj.dissoc(props, ["fontFamily", "fontSize", "input"]);
 
     this.submorphs = [inputText, list];
     this.state = {allItems: null}
-    Object.assign(this, {items: [], ...props});
+    Object.assign(this, {
+      items: [],
+      extent: props.bounds ? props.bounds.extent() : pt(400, 360),
+      ...props
+    });
+
+    this.relayout();
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
     
@@ -271,6 +274,20 @@ export class FilterableList extends Morph {
       {keys: "Enter", command: "accept input"},
       {keys: "Escape|Ctrl-G", command: "cancel"}
     ]);
+  }
+
+  onChange(change) {
+    // if (change.prop === "extent") this.relayout();
+    return super.onChange(change);
+  }
+
+  relayout() {
+    var i = this.get("input"),
+        l = this.get("list"),
+        inputHeight = i.env.fontMetric.sizeFor(i.fontFamily, i.fontSize, "X").height + 2*2,
+        ext = this.extent;
+    i.setBounds(new Rectangle(0,0, this.width, inputHeight));
+    l.setBounds(new Rectangle(0, inputHeight, ext.x, ext.y-inputHeight));
   }
 
   set items(items) {
