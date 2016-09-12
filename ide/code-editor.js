@@ -9,6 +9,7 @@ import JavaScriptMode from "./modes/javascript.js";
 import PlainMode from "./modes/plain.js";
 import ChromeTheme from "./themes/chrome.js";
 import TomorrowNightTheme from "./themes/tomorrow-night.js";
+import GithubTheme from "./themes/github.js";
 
 const modes = {
   "plain": PlainMode,
@@ -17,7 +18,8 @@ const modes = {
 
 const themes = {
   "chrome": ChromeTheme,
-  "tomorrowNight": TomorrowNightTheme
+  "tomorrowNight": TomorrowNightTheme,
+  "github" : GithubTheme
 }; // {[string] -> Mode}
 
 export default class CodeEditor extends Morph {

@@ -6,7 +6,8 @@ export const Token = {
   numeric: "numeric",
   string: "string",
   comment: "comment",
-  default: "default"
+  default: "default",
+  dynamic: "dynamic"
 };
 
 // type Token = "keyword" | "constant" | "global" | "id" | "numeric" | "string" | "comment" | "default"

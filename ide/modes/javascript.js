@@ -3,7 +3,8 @@ import { Token, Mode } from "../highlighting.js";
 const words = {
   keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default"],
   constant: ["null", "undefined", "true", "false"],
-  global: ["this", "window", "alert", "console", "JSON", "Math", "fetch", "parseInt", "parseFloat", "String", "Number", "Array", "Object", "Function", "Date"]
+  global: ["window", "alert", "console", "JSON", "Math", "fetch", "parseInt", "parseFloat", "String", "Number", "Array", "Object", "Function", "Date"],
+  dynamic: ["this", "super"]
 };
 
 export default class JavaScriptMode extends Mode {
@@ -72,6 +73,9 @@ export default class JavaScriptMode extends Mode {
         }
         if (this.checkWord("global", str)) {
           return Token.global;
+        }
+        if (this.checkWord("dynamic", str)) {
+          return Token.dynamic;
         }
         if (/[0-9a-zA-Z_\$]/.test(str[0])) { //TODO unicode
           this.state = "id";
@@ -164,6 +168,13 @@ export default class JavaScriptMode extends Mode {
           return Token.global;
         }
         return Token.global;
+      
+      case "dynamic":
+        if (--this.left === 0) {
+          this.state = "default";
+          return Token.dynamic;
+        }
+        return Token.dynamic;
     }
     return Token.default;
   }
