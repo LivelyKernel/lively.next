@@ -53,13 +53,9 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
-    if (props.env) props = obj.dissoc(props, ["env"]);
-    if (props.bounds) {
-      this.setBounds(props.bounds);
-      props = obj.dissoc(props, ["bounds"]);
-    }
-    if (props.type) props = obj.dissoc(props, ["type"]);
-    Object.assign(this, props);
+    if (props.submorphs) this.submorphs = props.submorphs;
+    if (props.bounds) this.setBounds(props.bounds);
+    Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds"]));
   }
 
   get __only_serialize__() { return Object.keys(this._currentState); }
