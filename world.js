@@ -10,6 +10,55 @@ import { connect, disconnectAll } from "lively.bindings";
 
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
 
+var worldCommands = [
+  {
+    name: "show halo for focused morph",
+    exec: (world) => {
+      var morph = world.focusedMorph;
+      world.showHaloFor(morph, world.firstHand.pointerId);
+      return true;
+    }
+  },
+
+  {
+    name: "escape",
+    exec: (world) => {
+      var halos = world.halos();
+      halos.forEach(h => h.remove());
+      arr.last(halos) && arr.last(halos).target.focus();
+      return false;
+    }
+  },
+
+  {
+    name: "move halo target",
+    exec: (world, opts = {direction: "", offset: 1}) => {
+      var halo = world.halos()[0];
+      if (!halo) return false;
+
+      var {direction, offset} = opts,
+          t = halo.target;
+      offset = offset || 1;
+      switch (direction) {
+        case "left": t.moveBy(pt(-offset, 0)); break;
+        case "right": t.moveBy(pt(offset, 0)); break;
+        case "up": t.moveBy(pt(0, -offset)); break;
+        case "down": t.moveBy(pt(0, offset)); break;
+      }
+      halo.alignWithTarget();
+
+      return true;
+    }
+  },
+
+  {
+    name: "resize to fit window",
+    exec: (world) => {
+      world.extent = world.windowBounds().extent();
+      return true; }
+  }
+]
+
 export class World extends Morph {
 
   constructor(props) {
@@ -36,9 +85,15 @@ export class World extends Morph {
     return this.submorphs.filter(ea => ea.isHand);
   }
 
+  get firstHand() { return this.hands[0]; }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  get focusedMorph() {
+    return this.env.eventDispatcher.eventState.focusedMorph;
+  }
 
   onMouseMove(evt) {
     evt.hand.update(evt);
@@ -107,6 +162,10 @@ export class World extends Morph {
     }));
   }
 
+  get commands() {
+    return worldCommands.concat(super.commands);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // halos
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -117,15 +176,15 @@ export class World extends Morph {
     return this.submorphs.find(m => m.isHalo && m.state.pointerId === pointerId);
   }
 
-  showHaloFor(morph, pointerId) {
+  showHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
   }
 
-  layoutHaloForPointerId(pointerId) {
+  layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.submorphs.find(m => m.isLayoutHalo && m.state.pointerId === pointerId);
   }
 
-  showLayoutHaloFor(morph, pointerId) {
+  showLayoutHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.addMorph(morph.layout.inspect(pointerId));
   }
 
