@@ -50,7 +50,7 @@ class ChunkLine {
 
   updateChunksIfNecessary(text, config, lineRange) {
     // FIXME!
-    let { defaultStyle, fontMetric, styleRanges } = config,
+    let { fontMetric, styleRanges } = config,
         chunkStyleRanges = [];
     styleRanges.forEach(ea => {
       let { style, range } = ea,
@@ -269,8 +269,7 @@ export default class TextLayout {
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
-    let {fontFamily, fontSize, fontColor, fontWeight, fontStyle,
-         textDecoration, fixedCharacterSpacing, document} = morph,
+    let { document } = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
         styleRanges = document.styleRanges,
@@ -282,13 +281,6 @@ export default class TextLayout {
           lineRange = Range.fromPositions({row, column: 0},
                                           {row, column: text.length}),
           config = { fontMetric,
-                     defaultStyle: { fontFamily,
-                                     fontSize,
-                                     fontColor,
-                                     fontWeight,
-                                     fontStyle,
-                                     textDecoration,
-                                     fixedCharacterSpacing },
                      styleRanges };
       this.chunkLines[row] = new ChunkLine(text, config, lineRange);
     }
