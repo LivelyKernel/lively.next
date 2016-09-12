@@ -1,5 +1,6 @@
 import { string, arr } from "lively.lang";
-import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js"
+import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js";
+import { StyleRange } from "./style.js";
 
 const newline = "\n",
       newlineLength = newline.length;
@@ -37,11 +38,18 @@ export default class TextDocument {
   get styleRanges() { return this._styleRanges }
 
   addStyleRange(range) {
-    this._styleRanges.push(range);
+    this._styleRanges = StyleRange.mergeInto(this._styleRanges, range);
     // TODO: Consolidate/deduplicate ranges
   }
 
   resetStyleRanges() { this._styleRanges = [] }
+
+  setDefaultStyle(style) {
+    let start = { row: 0, column: -1},
+        end = this.endPosition,
+        defaultStyleRange = StyleRange.fromPositions(style, start, end);
+    this.addStyleRange(defaultStyleRange);
+  }
 
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);

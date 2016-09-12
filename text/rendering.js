@@ -50,11 +50,19 @@ class ChunkLine {
 
   updateChunksIfNecessary(text, config, lineRange) {
     // FIXME!
-    let { defaultStyle, styleRanges, fontMetric } = config,
-        defaultStyleRange = new StyleRange(defaultStyle, lineRange),
-        flattenedStyleRanges = StyleRange.flatten(defaultStyleRange, ...styleRanges);
+    let { defaultStyle, fontMetric, styleRanges } = config,
+        chunkStyleRanges = [];
+    styleRanges.forEach(ea => {
+      let { style, range } = ea,
+          intersection = lineRange.intersect(range);
+      if (intersection.start.row === intersection.end.row &&
+          intersection.start.row === lineRange.start.row)
+        chunkStyleRanges.push(new StyleRange(style, intersection));
+    });
+    chunkStyleRanges = Range.sort(chunkStyleRanges);
 
-    this.chunks = flattenedStyleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
+
+    this.chunks = chunkStyleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
 
     this.text = text;
     this.config = config;

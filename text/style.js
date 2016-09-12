@@ -9,29 +9,36 @@ export class StyleRange {
     return new this(style, Range.fromPositions(start, end));
   }
 
-  static flatten(base, ...rest) {
-    let flattened = base ? [base] : [];
-    for (let thatStyleRange of rest) {
-      flattened = arr.flatten(flattened.map(thisStyleRange => StyleRange.merge(thisStyleRange, thatStyleRange)));
-    }
-    return flattened;
+  static mergeInto(others, newRange) {
+    let a = others[0], b = newRange
+    if (!a) return [newRange];
+    ({ a, b } = StyleRange.merge(a, b));
+    let remaining = others.slice(1);
+    if (b.length)
+      b = arr.flatten(b.map(ea => StyleRange.mergeInto(remaining, ea)));
+    else b = remaining;
+    return a.concat(b);
   }
 
   static merge(a, b) {
     // Styles from "b" will be applied to (and override) any overlapping section of "a"; will return 1-3 new ranges
     let { style: style_a, range: range_a } = a,
         { style: style_b, range: range_b } = b,
-        intersection = range_a.intersect(range_b),
-        outputStyleRanges;
+        intersection = range_a.intersect(range_b);
     if (!intersection.isEmpty()) {
       let mergedStyle = obj.merge(style_a, style_b),
           restyledRange = new StyleRange(mergedStyle, intersection),
-          leftoverRanges = range_a.subtract(intersection).map(range => new StyleRange(style_a, range));
-      outputStyleRanges = [restyledRange, ...leftoverRanges];
-    } else {
-      outputStyleRanges = [a];
-    }
-    return Range.sort(outputStyleRanges);
+          leftover_a = range_a.subtract(intersection)
+                              .filter(r => !r.isEmpty())
+                              .map(range => new StyleRange(style_a, range)),
+          leftover_b = range_b.subtract(intersection)
+                              .filter(r => !r.isEmpty())
+                              .map(range => new StyleRange(style_b, range));
+          return { a: [...leftover_a, restyledRange], b: leftover_b };
+          // TODO: Join adjacent ranges with equivalent styles
+
+    } else return { a: [a], b: [b] };
+
   }
 
   constructor(style = {}, range) {

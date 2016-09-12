@@ -70,6 +70,7 @@ export class Text extends Morph {
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
+    this.setDefaultStyle();
     if (styleRanges) styleRanges.map(range => this.addStyleRange(range));
     this.fit();
     this._needsFit = false;
@@ -81,14 +82,14 @@ export class Text extends Morph {
     if (change.selector === "insertText"
      || change.selector === "deleteText"
      || change.selector === "addStyleRange"
+     || change.prop === "fixedWidth"
+     || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
      || change.prop === "fontColor" // FIXME
      || change.prop === "fontWeight"
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
-     || change.prop === "fixedWidth"
-     || change.prop === "fixedHeight"
      || change.prop === "fixedCharacterSpacing")
        this.renderer && (this.renderer.layoutComputed = false);
     super.onChange(change);
@@ -127,31 +128,46 @@ export class Text extends Morph {
   }
 
   get fontFamily() { return this.getProperty("fontFamily") }
-  set fontFamily(value) {
-    this.addValueChange("fontFamily", value);
-    this._needsFit = true;
+  set fontFamily(fontFamily) {
+    this.addValueChange("fontFamily", fontFamily);
+    this.setDefaultStyle({fontFamily});
   }
 
   get fontSize() { return this.getProperty("fontSize") }
-  set fontSize(value) {
-    this.addValueChange("fontSize", value);
-    this._needsFit = true;
+  set fontSize(fontSize) {
+    this.addValueChange("fontSize", fontSize);
+    this.setDefaultStyle({fontSize});
   }
 
   get fontColor() { return this.getProperty("fontColor") }
-  set fontColor(value) { this.addValueChange("fontColor", value); }
+  set fontColor(fontColor) {
+    this.addValueChange("fontColor", fontColor);
+    this.setDefaultStyle({fontColor});
+  }
 
   get fontWeight() { return this.getProperty("fontWeight") }
-  set fontWeight(value) { this.addValueChange("fontWeight", value); }
+  set fontWeight(fontWeight) {
+    this.addValueChange("fontWeight", fontWeight);
+    this.setDefaultStyle({fontWeight});
+  }
 
   get fontStyle() { return this.getProperty("fontStyle") }
-  set fontStyle(value) { this.addValueChange("fontStyle", value); }
+  set fontStyle(fontStyle) {
+    this.addValueChange("fontStyle", fontStyle);
+    this.setDefaultStyle({fontStyle});
+  }
 
   get textDecoration() { return this.getProperty("textDecoration") }
-  set textDecoration(value) { this.addValueChange("textDecoration", value); }
+  set textDecoration(textDecoration) {
+    this.addValueChange("textDecoration", textDecoration);
+    this.setDefaultStyle({textDecoration});
+  }
 
   get fixedCharacterSpacing() { return this.getProperty("fixedCharacterSpacing") }
-  set fixedCharacterSpacing(value) { this.addValueChange("fixedCharacterSpacing", value); }
+  set fixedCharacterSpacing(fixedCharacterSpacing) {
+    this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
+    this.setDefaultStyle({fixedCharacterSpacing});
+  }
 
   get anchors() { return this._anchors || (this._anchors = []); }
   addAnchor(anchor) {
@@ -408,10 +424,37 @@ export class Text extends Morph {
     return this.withLinesDo(startRow, endColumn === 0 ? endRow-1 : endRow, doFunc);
   }
 
+  get styleProps() {
+    return obj.select(this, ["fontFamily",
+        "fontSize", "fontColor", "fontWeight", "fontStyle",
+        "textDecoration", "fixedCharacterSpacing"]);
+  }
+
   get styleRanges() { return this.document.styleRanges }
 
   addStyleRange(range) {
+
+    this.undoManager.undoStart(this, "addStyleRange");
+
     this.document.addStyleRange(range);
+
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addStyleRange",
+      args: [range],
+      // FIXME!
+      // undo: {
+      //   target: this,
+      // }
+    }, () => {});
+
+    this.undoManager.undoStop();
+  }
+
+  setDefaultStyle(style = this.styleProps) {
+    let { document, renderer } = this;
+    document && document.setDefaultStyle(style);
+    this._needsFit = true;
   }
 
   resetStyleRanges() { this.document.resetStyleRanges() }
