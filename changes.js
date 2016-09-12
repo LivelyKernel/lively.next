@@ -9,9 +9,20 @@ function newKeyIn(obj, base = "_") {
   return key;
 }
 
+function signalBindings(morph, name, value) {
+  // optimized lively.bindings.signal
+  var conns = morph.attributeConnections;
+  if (!conns) return
+  conns = conns.slice();
+  for (var i = 0; i < conns.length; i++)
+    if (conns[i].sourceAttrName === name)
+      conns[i].update(value)
+}
+
 function informMorph(changeManager, change, morph) {
   try {
     morph.onChange(change);
+    signalBindings(morph, "change", change);
     var owner = morph.owner;
     while (owner) {
       owner.onSubmorphChange(change, morph);
