@@ -131,33 +131,28 @@ export class World extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  visibleBounds() {
-    // FIXME, see below
-    return this.innerBounds()
+  visibleBounds () {
+    // the bounds call seems to slow down halos...
+    return this.windowBounds().intersection(this.innerBounds());
   }
 
-  // visibleBounds () {
-  //   // the bounds call seems to slow down halos...
-  //   return this.windowBounds().intersection(this.innerBounds());
-  // }
-
-  // windowBounds(optWorldDOMNode) {
-  //   if (this.cachedWindowBounds) return this.cachedWindowBounds;
-  //   var canvas = optWorldDOMNode || this.renderContext().getMorphNode(),
-  //     topmost = document.documentElement,
-  //     body = document.body,
-  //     scale = 1 / this.getScale(),
-  //     topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
-  //     width, height;
-  //   if (UserAgent.isTouch || UserAgent.isMobile){
-  //     width = window.innerWidth * scale;
-  //     height = window.innerHeight * scale;
-  //   } else {
-  //     width = topmost.clientWidth * scale;
-  //     height = topmost.clientHeight * scale;
-  //   }
-  //   return this.cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
-  // }
+  windowBounds(optWorldDOMNode) {
+    if (this._cachedWindowBounds) return this._cachedWindowBounds;
+    var canvas = optWorldDOMNode || this.env.renderer.domNode,
+        topmost = canvas.ownerDocument.documentElement,
+        body = canvas.ownerDocument.body,
+        scale = 1 / this.scale,
+        topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
+        width, height;
+    if (false && (UserAgent.isTouch || UserAgent.isMobile)){
+      width = window.innerWidth * scale;
+      height = window.innerHeight * scale;
+    } else {
+      width = topmost.clientWidth * scale;
+      height = topmost.clientHeight * scale;
+    }
+    return this._cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // status messages
