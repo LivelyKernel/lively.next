@@ -520,6 +520,15 @@ export class Morph {
     return this.owner ? this.owner.world() : null;
   }
 
+  openInWorld() {
+    var world = this.world() || this.env.world;
+    if (!world) {
+      console.warn(`Cannot open morph ${this}, world morph not found;`)
+      return this;
+    }
+    return world.addMorph(this);
+  }
+
   isAncestorOf(aMorph) {
     // check if aMorph is somewhere in my submorph tree
     var owner = aMorph.owner;
