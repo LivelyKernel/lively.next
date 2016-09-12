@@ -1,7 +1,7 @@
 import { Rectangle, pt, Color } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings"
 import { obj } from "lively.lang";
-import { Morph, Text } from "../index.js";
+import { Morph, Text, Button } from "../index.js";
 import { show } from "lively.morphic";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -81,6 +81,10 @@ export class SearchWidget extends Morph {
 
     super({
       name: "search widget",
+      borderWidth: 1,
+      borderColor: Color.gray,
+      borderRadius: 3,
+      fill: Color.white.withA(.6),
       ...obj.dissoc(props, ["target", "fontFamily", "fontSize", "input"])
     });
 
@@ -88,7 +92,21 @@ export class SearchWidget extends Morph {
     this.height = inputHeight;
 
     this.targetText = target;
-    
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-    
+
+    var labelStyle = {fontFamily: "sans-serif", fontSize: 11},
+        label = this.addMorph(Text.makeLabel("Enter search term:", {name: "label", ...labelStyle, topLeft: pt(4,4)})),
+        acceptButton = this.addMorph(new Button({name: "acceptButton", label: "✔", ...labelStyle})).fit(),
+        cancelButton = this.addMorph(new Button({name: "cancelButton", label: "X", ...labelStyle})).fit(),
+        nextButton = this.addMorph(new Button({name: "nextButton", label: "⬇", ...labelStyle})).fit(),
+        prevButton = this.addMorph(new Button({name: "prevButton", label: "⬆", ...labelStyle})).fit();
+
+    connect(acceptButton, "fire", this, "execCommand", {converter: () => "accept search"});
+    connect(cancelButton, "fire", this, "execCommand", {converter: () => "cancel search"});
+    connect(nextButton, "fire", this, "execCommand", {converter: () => "search next"});
+    connect(prevButton, "fire", this, "execCommand", {converter: () => "search prev"});
+
     var inputMorph = this.addMorph(
       Text.makeInputLine({
         name: "input",
@@ -101,9 +119,12 @@ export class SearchWidget extends Morph {
       }));
 
     if (input) this.input = input;
-
     connect(inputMorph, "inputChanged", this, "search");
-    
+
+    this.relayout();
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     this.state = {
       backwards: false,
       before: null,
@@ -112,12 +133,14 @@ export class SearchWidget extends Morph {
       last: null
     }
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     this.addCommands([
       {name: "accept search", exec: () => { this.acceptSearch(); return true; }},
       {name: "cancel search", exec: () => { this.cancelSearch(); return true; }},
       {name: "search next", exec: () => { this.searchNext(); return true; }},
       {name: "search prev", exec: () => { this.searchPrev(); return true; }}
-    ])
+    ]);
 
     // override existing commands
     inputMorph.addCommands([
@@ -134,6 +157,24 @@ export class SearchWidget extends Morph {
       {keys: {win: "Ctrl-F|Ctrl-S|Ctrl-G", mac: "Meta-F|Ctrl-S|Meta-G"}, command: "search next"},
       {keys: {win: "Ctrl-Shift-F|Ctrl-R|Ctrl-Shift-G", mac: "Meta-Shift-F|Ctrl-R|Meta-Shift-G"}, command: "search prev"}
     ]);
+  }
+
+  relayout() {
+    let acceptButton = this.get("acceptButton"),
+        cancelButton = this.get("cancelButton"),
+        prevButton = this.get("prevButton"),
+        nextButton = this.get("nextButton"),
+        inputMorph = this.get("input");
+
+    acceptButton.extent = pt(20, prevButton.height);
+    cancelButton.extent = pt(20, prevButton.height);
+    cancelButton.topRight = this.innerBounds().topRight().addXY(-2,2)
+    acceptButton.topRight = cancelButton.topLeft.addXY(-4,0);
+    prevButton.topRight = acceptButton.topLeft.addXY(-10, 0);
+    nextButton.topRight = prevButton.topLeft.addXY(-3,0);
+    inputMorph.width = this.width - 10;
+    inputMorph.topCenter = this.innerBounds().topCenter().withY(cancelButton.bottom+3);
+    this.height = inputMorph.bottom + 3;
   }
 
   focus() {
@@ -252,6 +293,7 @@ export class SearchWidget extends Morph {
         state = this.state;
     world.addMorph(this);
     this.topRight = text.globalBounds().topRight();
+    this.whenRendered().then(() => this.relayout());
 
     var {scroll, selection: sel} = text;
     state.position = sel.lead;
