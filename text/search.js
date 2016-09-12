@@ -139,7 +139,14 @@ export class SearchWidget extends Morph {
       {name: "accept search", exec: () => { this.acceptSearch(); return true; }},
       {name: "cancel search", exec: () => { this.cancelSearch(); return true; }},
       {name: "search next", exec: () => { this.searchNext(); return true; }},
-      {name: "search prev", exec: () => { this.searchPrev(); return true; }}
+      {name: "search prev", exec: () => { this.searchPrev(); return true; }},
+      {name: "yank next word from text", exec: () => {
+        var text = this.targetText;
+        var word = text.wordRight();
+        var string = text.textInRange({start: text.cursorPosition, end: word.range.end});
+        this.input += string;
+        return true;
+      }},
     ]);
 
     // override existing commands
@@ -153,6 +160,7 @@ export class SearchWidget extends Morph {
 
     this.addKeyBindings([
       {keys: "Enter", command: "accept search"},
+      {keys: "Ctrl-W", command: "yank next word from text"},
       {keys: "Escape|Ctrl-G", command: "cancel search"},
       {keys: {win: "Ctrl-F|Ctrl-S|Ctrl-G", mac: "Meta-F|Ctrl-S|Meta-G"}, command: "search next"},
       {keys: {win: "Ctrl-Shift-F|Ctrl-R|Ctrl-Shift-G", mac: "Meta-Shift-F|Ctrl-R|Meta-Shift-G"}, command: "search prev"}
@@ -283,7 +291,7 @@ export class SearchWidget extends Morph {
   addSearchMarkersForPreview(found) {
     found && this.whenRendered().then(() => {
       this.addSearchMarkers(found);
-      text.removeMarker("search-highlight-cursor");
+      this.targetText.removeMarker("search-highlight-cursor");
     });
   }
 
