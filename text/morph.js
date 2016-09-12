@@ -20,7 +20,7 @@ export class Text extends Morph {
   static makeLabel(string, props) {
     return new Text({
       textString: string,
-      fontFamily: "Helvetica Neue, Arial",
+      fontFamily: "Helvetica Neue, Arial, sans-serif",
       fontColor: Color.black,
       fontSize: 11,
       readOnly: true,
