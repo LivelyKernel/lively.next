@@ -42,15 +42,6 @@ export default class TextDocument {
     // TODO: Consolidate/deduplicate ranges
   }
 
-  resetStyleRanges() { this._styleRanges = [] }
-
-  setDefaultStyle(style) {
-    let start = { row: 0, column: -1},
-        end = this.endPosition,
-        defaultStyleRange = StyleRange.fromPositions(style, start, end);
-    this.addStyleRange(defaultStyleRange);
-  }
-
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
     return this.lines[safeRow];
@@ -148,7 +139,6 @@ export default class TextDocument {
 
     let insertionRange = {start: pos, end};
     styleRanges.forEach(ea => ea.onInsert(insertionRange));
-
     return insertionRange;
   }
 
@@ -168,6 +158,7 @@ export default class TextDocument {
     lines.splice(fromRow+1, toRow - fromRow);
 
     styleRanges.forEach(ea => ea.onDelete({start, end}));
+    this._styleRanges = styleRanges.filter(ea => !ea.isEmpty());
   }
 
   wordsOfLine(row) {

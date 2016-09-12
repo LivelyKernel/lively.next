@@ -66,6 +66,8 @@ export class StyleRange {
     this.end = end;
   }
 
+  isEmpty() { return this.range.isEmpty(); }
+
   onInsert(range) {
     this.startAnchor.onInsert(range);
     this.endAnchor.onInsert(range);

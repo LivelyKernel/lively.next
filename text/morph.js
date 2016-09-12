@@ -446,18 +446,23 @@ export class Text extends Morph {
       // undo: {
       //   target: this,
       // }
-    }, () => {});
+    }, () => { this._needsFit = true; });
 
     this.undoManager.undoStop();
   }
 
   setDefaultStyle(style = this.styleProps) {
-    let { document, renderer } = this;
-    document && document.setDefaultStyle(style);
-    this._needsFit = true;
+    let { document } = this;
+    if (!document) return;
+    let start = { row: 0, column: -1},
+        end = document.endPosition,
+        defaultStyleRange = StyleRange.fromPositions(style, start, end);
+    this.addStyleRange(defaultStyleRange);
   }
 
-  resetStyleRanges() { this.document.resetStyleRanges() }
+  resetStyleRanges() {
+    this.setDefaultStyle();
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
