@@ -1,6 +1,6 @@
-import { string, arr } from "lively.lang";
+import { string, arr, Closure } from "lively.lang";
 
-export { connect, disconnect, signal }
+export { connect, disconnect, disconnectAll, once, signal, noUpdate }
 
 class AttributeConnection {
 
@@ -72,7 +72,7 @@ class AttributeConnection {
   getConverter() {
     if (!this.converterString) return null;
     if (!this.converter)
-      this.converter = lively.Closure.fromSource(this.converterString, this.varMapping).recreateFunc();
+      this.converter = Closure.fromSource(this.converterString, this.varMapping).recreateFunc();
     return this.converter;
   }
 
@@ -84,7 +84,7 @@ class AttributeConnection {
   getUpdater() {
     if (!this.updaterString) return null;
     if (!this.updater) {
-      this.updater = lively.Closure.fromSource(this.updaterString, this.varMapping).recreateFunc();
+      this.updater = Closure.fromSource(this.updaterString, this.varMapping).recreateFunc();
     }
     return this.updater;
   }
@@ -159,19 +159,18 @@ class AttributeConnection {
 
   disconnect() {
     var obj = this.sourceObj;
-    if (!obj || !obj.attributeConnections) return this.removeSourceObjGetterAndSetter();
-    obj.attributeConnections = obj.attributeConnections.reject(function(con) {
-      return this.isSimilarConnection(con);
-    }, this);
-    var connectionsWithSameSourceAttr = obj.attributeConnections.select(function(con) {
-      return this.getSourceAttrName() == con.getSourceAttrName();
-    }, this);
-    if (obj.attributeConnections.length == 0) {
+    if (!obj || !obj.attributeConnections)
+      return this.removeSourceObjGetterAndSetter();
+
+    obj.attributeConnections = obj.attributeConnections.filter(con =>
+      !this.isSimilarConnection(con));
+    var connectionsWithSameSourceAttr = obj.attributeConnections.filter(con =>
+      this.getSourceAttrName() == con.getSourceAttrName());
+    if (obj.attributeConnections.length == 0)
       delete obj.attributeConnections;
-    }
-    if (connectionsWithSameSourceAttr.length == 0) {
+    if (connectionsWithSameSourceAttr.length == 0)
       this.removeSourceObjGetterAndSetter();
-    }
+
     return null;
   }
 
@@ -336,12 +335,12 @@ class AttributeConnection {
       srcObj[realAttrName] = srcObj[realAttrName].originalFunction
     }
 
-    if (srcObj.doNotSerialize && srcObj.doNotSerialize.include(helperAttrName)) {
+    if (srcObj.doNotSerialize && srcObj.doNotSerialize.includes(helperAttrName)) {
       srcObj.doNotSerialize = arr.without(srcObj.doNotSerialize, helperAttrName);
       if (srcObj.doNotSerialize.length == 0) delete srcObj.doNotSerialize;
     }
 
-    if (srcObj.doNotCopyProperties && srcObj.doNotCopyProperties.include(helperAttrName)) {
+    if (srcObj.doNotCopyProperties && srcObj.doNotCopyProperties.includes(helperAttrName)) {
       srcObj.doNotCopyProperties = arr.without(srcObj.doNotCopyProperties, helperAttrName);
       if (srcObj.doNotCopyProperties.length == 0) delete srcObj.doNotCopyProperties;
     }
@@ -532,7 +531,7 @@ function connect(sourceObj, attrName, targetObj, targetMethodName, specOrConvert
 function disconnect(sourceObj, attrName, targetObj, targetMethodName) {
   if (!sourceObj.attributeConnections) return;
 
-  sourceObj.attributeConnections.clone().forEach(function(con) {
+  sourceObj.attributeConnections.slice().forEach(function(con) {
     if (con.getSourceAttrName() == attrName
     &&  con.getTargetObj() === targetObj
     &&  con.getTargetMethodName() == targetMethodName) con.disconnect(); });
