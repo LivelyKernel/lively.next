@@ -186,7 +186,19 @@ export class CompletionController {
     var infoCol = completions.reduce((maxCol, ea) => Math.max(ea.completion.length, maxCol), 0),
         maxCol = infoCol;
 
-    var items = arr.uniqBy(arr.sortByKey(completions, "priority"), (a,b) => a.completion === b.completion)
+    // if multiple options with same completion exist, uniq by the highest priority
+    // note: there is a lively.lang bug that breaks groupBy if key === constructor...!
+    var groups = new Map();
+    completions.forEach(ea => {
+      var group = groups.get(ea.completion);
+      if (!group) { group = []; groups.set(ea.completion, group); }
+      group.push(ea);
+    });
+    var withHighestPriority = [];
+    for (let val of groups.values())
+      withHighestPriority.push(arr.last(arr.sortByKey(val, "priority")))
+
+    var items = arr.sortByKey(withHighestPriority, "priority")
       .reverse()
       .map(ea => {
         var info = (ea.info || "");
