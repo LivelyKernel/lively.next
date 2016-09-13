@@ -34,9 +34,15 @@ function cursor(pos, height, visible) {
 
 class ChunkLine {
 
+  static chunksFrom(text, config) {
+    let { fontMetric, styleRanges } = config;
+    styleRanges = text ? styleRanges.filter(ea => !ea.isEmpty()) :
+                         styleRanges.slice(0,1);
+    return styleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
+  }
+
   constructor(text, config) {
-    this.rendered = undefined;
-    this.updateChunksIfNecessary(text, config);
+    this.chunks = this.constructor.chunksFrom(text, config);
     return this;
   }
 
@@ -48,13 +54,16 @@ class ChunkLine {
     return arr.sum(this.chunks.map(chunk => chunk.width));
   }
 
-  updateChunksIfNecessary(text, config) {
-    // FIXME!
-    this.text = text;
-    this.config = config;
-
-    let { fontMetric, styleRanges } = config;
-    this.chunks = styleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
+  compatibleWith(text2, config2) {
+    let chunks2 = this.constructor.chunksFrom(text2, config2),
+        { chunks } = this;
+    if (chunks.length !== chunks2.length) return false
+    for (let i = 0; i < chunks.length; i++) {
+      let chunk = chunks[i],
+          { text: text2, config: config2 } = chunks2[i];
+      if (!chunk.compatibleWith(text2, config2)) return false;
+    }
+    return true;
   }
 
   boundsFor(column) {
@@ -109,16 +118,15 @@ class ChunkLine {
     });
   }
 
-  render(left, top) {
+  render() {
     if (this.rendered) return this.rendered;
     let { chunks, height, width } = this;
-    return this.rendered = chunks.map(chunk => {
-      let oldLeft = left;
-      left += chunk.width;
-      return chunk.render(oldLeft, top);
-    });
+    return this.rendered = h("div", { style: {
+        position: "relative",
+        lineHeight: 1
+      }
+    }, chunks.map(ea => ea.render()));
   }
-
 }
 
 
@@ -185,7 +193,7 @@ class RenderedChunk {
     this._charBounds = fontMetric.charBoundsFor(style, text);
   }
 
-  render(left, top) {
+  render() {
     if (this.rendered) return this.rendered;
     var { config: {style: {fontSize, fontFamily, fontColor,
                           fontWeight, fontStyle, textDecoration,
@@ -197,14 +205,10 @@ class RenderedChunk {
                         text :
                       h("br");
     fontColor = fontColor || "";
-    left += "px";
-    top += "px";
 
-    return this.rendered = h("div", {
+    return this.rendered = h("span", {
       style: {
-        position: "absolute",
-        left,
-        top,
+        lineHeight: 1,
         fontSize: fontSize + "px",
         fontFamily,
         fontWeight,
@@ -263,12 +267,13 @@ export default class TextLayout {
         styleRanges = document.styleRanges,
         nRows = lines.length;
 
-    // FIXME!
     for (let row = 0; row < nRows; row++) {
       let lineStyleRanges = document.styleRangesByLine[row],
           text = lines[row],
-          config = { fontMetric, styleRanges: lineStyleRanges };
-      this.chunkLines[row] = new ChunkLine(text, config);
+          config = { fontMetric, styleRanges: lineStyleRanges },
+          chunkLine = this.chunkLines[row];
+      if (!chunkLine || !chunkLine.compatibleWith(text, config))
+        this.chunkLines[row] = new ChunkLine(text, config);
     }
     this.chunkLines.splice(nRows, this.chunkLines.length - nRows);
 
