@@ -646,8 +646,8 @@ export class Morph {
     // search below, search siblings, search upwards
     if (!name) return null;
     try {
-      return (this.getNameTest(this, name) && this)
-          || this.getSubmorphNamed(name)
+      return this.getSubmorphNamed(name)
+          || (this.getNameTest(this, name) && this)
           || this.getOwnerNamed(name);
     } catch(e) {
       if (e.constructor == RangeError && e.message == "Maximum call stack size exceeded") {
