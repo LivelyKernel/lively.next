@@ -34,9 +34,9 @@ function cursor(pos, height, visible) {
 
 class ChunkLine {
 
-  constructor(text, config, lineRange) {
+  constructor(text, config) {
     this.rendered = undefined;
-    this.updateChunksIfNecessary(text, config, lineRange);
+    this.updateChunksIfNecessary(text, config);
     return this;
   }
 
@@ -48,25 +48,13 @@ class ChunkLine {
     return arr.sum(this.chunks.map(chunk => chunk.width));
   }
 
-  updateChunksIfNecessary(text, config, lineRange) {
+  updateChunksIfNecessary(text, config) {
     // FIXME!
-    let { fontMetric, styleRanges } = config,
-        chunkStyleRanges = [];
-    styleRanges.forEach(ea => {
-      let { style, range } = ea,
-          intersection = lineRange.intersect(range);
-      if (intersection.start.row === intersection.end.row &&
-          intersection.start.row === lineRange.start.row)
-        chunkStyleRanges.push(new StyleRange(style, intersection));
-    });
-    chunkStyleRanges = Range.sort(chunkStyleRanges);
-
-
-    this.chunks = chunkStyleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
-
     this.text = text;
     this.config = config;
-    this.lineRange = lineRange;
+
+    let { fontMetric, styleRanges } = config;
+    this.chunks = styleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
   }
 
   boundsFor(column) {
@@ -277,12 +265,10 @@ export default class TextLayout {
 
     // FIXME!
     for (let row = 0; row < nRows; row++) {
-      var text = lines[row],
-          lineRange = Range.fromPositions({row, column: 0},
-                                          {row, column: text.length}),
-          config = { fontMetric,
-                     styleRanges };
-      this.chunkLines[row] = new ChunkLine(text, config, lineRange);
+      let lineStyleRanges = document.styleRangesByLine[row],
+          text = lines[row],
+          config = { fontMetric, styleRanges: lineStyleRanges };
+      this.chunkLines[row] = new ChunkLine(text, config);
     }
     this.chunkLines.splice(nRows, this.chunkLines.length - nRows);
 
