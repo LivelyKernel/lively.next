@@ -141,10 +141,12 @@ export class SearchWidget extends Morph {
       {name: "search next", exec: () => { this.searchNext(); return true; }},
       {name: "search prev", exec: () => { this.searchPrev(); return true; }},
       {name: "yank next word from text", exec: () => {
-        var text = this.targetText;
-        var word = text.wordRight();
+        var text = this.targetText,
+            word = text.wordRight(),
+            input = this.get("input");
+        if (!input.selection.isEmpty()) input.selection.text = "";
         var string = text.textInRange({start: text.cursorPosition, end: word.range.end});
-        this.input += string;
+        input.textString += string;
         return true;
       }},
     ]);
