@@ -6,6 +6,9 @@ import { expect } from "mocha-es6";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 
+var inBrowser = System.get("@system-env").browser ? it :
+  (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
+
 var text;
 
 describe("completion controller", () => {
@@ -37,7 +40,7 @@ describe("completion controller", () => {
 
 var world;
 function createDummyWorld() {
-  world = new World({name: "world", extent: pt(300,300), submorphs: [
+  world = new World({name: "world", extent: pt(500,300), submorphs: [
     text = new Text({textString: "abc\nafg\n", fontMetric, extent: pt(400,300)})]})
   return world;
 }
@@ -65,7 +68,7 @@ describe("completion widget", () => {
     expect(menu.get("list").items.map(({value: {completion}}) => completion).slice(0, 2)).deep.equals(["abc", "afg"])
   });
 
-  it("is correct aligned", async () => {
+  inBrowser("is correct aligned", async () => {
     text.cursorDown(2)
     text.insertText("a");
     await text.simulateKeys("Alt-Space");
