@@ -358,7 +358,7 @@ var commands = [
           otherRow = args.withLine === "before" ? row : row+1,
           firstLine = morph.getLine(firstRow),
           otherLine = morph.getLine(otherRow),
-          joined = firstLine + otherLine + "\n";
+          joined = firstLine + otherLine.replace(/^\s+/, "") + "\n";
       morph.replace({start: {column: 0, row: firstRow}, end: {column: 0, row: otherRow+1}}, joined, true);
       morph.cursorPosition = {row: firstRow, column: firstLine.length}
       return true;
