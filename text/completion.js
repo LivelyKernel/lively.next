@@ -229,15 +229,17 @@ export class CompletionController {
         bounds = position.extent(pt(width, height));
 
     // ensure menu is visible
-    var world = m.world(),
-        visibleBounds = world.visibleBounds();
-    if (bounds.bottom() > visibleBounds.bottom()) {
-      var delta = bounds.bottom() - visibleBounds.bottom();
-      if (delta > bounds.height-50) delta = bounds.height-50;
-      bounds.height -= delta;
+    var world = m.world();
+    if (world) {
+      var visibleBounds = world.visibleBounds();
+      if (bounds.bottom() > visibleBounds.bottom()) {
+        var delta = bounds.bottom() - visibleBounds.bottom();
+        if (delta > bounds.height-50) delta = bounds.height-50;
+        bounds.height -= delta;
+      }
+      if (!visibleBounds.containsRect(bounds))
+        bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(bounds).topLeft());
     }
-    if (!visibleBounds.containsRect(bounds))
-      bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(menuBounds).topLeft())
 
     return {
       fontFamily, fontSize,
