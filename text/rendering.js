@@ -47,7 +47,7 @@ class RenderedLine {
   }
 
   resetCache() {
-    this.rendered = this._height = this._width = undefined;
+    this.rendered = this._charBounds = this._height = this._width = undefined;
   }
 
   get height() {
@@ -104,55 +104,50 @@ class RenderedLine {
   }
 
   boundsFor(column) {
-    let startCol = 0,
-        startPixel = 0,
-        { chunks } = this,
-        lastIndex = chunks.length-1;
-    for (let i = 0; ; i++) {
-      let chunk = chunks[i],
-          { text, width } = chunk,
-          cols = text.length,
-          endCol = startCol + cols;
-      if ((column >= startCol && column < endCol)
-          || i === lastIndex) {
-        let columnInChunk = column - startCol,
-            {x, y, width, height} = chunk.boundsFor(columnInChunk),
-            offsetX = x + startPixel;
-        return { x: x + startPixel, y, width, height };
-      }
-      startPixel += width;
-      startCol += cols;
-    }
+    var charBounds = this.charBounds;
+    return charBounds[column] || charBounds[charBounds.length-1];
   }
 
   columnForXOffset(xInPixels) {
-    let startPixel = 0,
-        startCol = 0,
-        { chunks } = this,
-        lastIndex = chunks.length-1,
-        found = false;
-    for (let i = 0; ; i++) {
-      let chunk = chunks[i],
-          { text, width } = chunks[i],
-          cols = text.length,
-          endPixel = startPixel + width;
-      if ((xInPixels >= startPixel && xInPixels < endPixel)
-          || i === lastIndex) {
-        return startCol + chunk.columnForXOffset(xInPixels - startPixel);
-      }
-      startPixel += width;
-      startCol += cols;
+    let {charBounds} = this,
+        length = charBounds.length,
+        first = charBounds[0],
+        last = charBounds[length-1];
+
+    // everything to the left of the first char + half its width is col 0
+    if (!length || xInPixels <= first.x+Math.round(first.width/2)) return 0;
+
+    // everything to the right of the last char + half its width is last col
+    if (xInPixels > last.x+Math.round(last.width/2)) return length-1;
+
+    // find col so that x between right side of char[col-1] and left side of char[col]
+    for (var i = length-2; i >= 0; i--) {
+      let {x, width} = charBounds[i];
+      if (xInPixels >= x + Math.round(width/2)) return i+1;
     }
+    return 0;
   }
 
-  get allCharBounds() {
-    let prefixWidth = 0;
-    return this.chunks.map(chunk => {
-      let { charBounds, width } = chunk,
-          offsetCharBounds = charBounds.map(bounds => ({ x: bounds.x + prefixWidth, y: bounds.y, width: bounds.width, height: bounds.height }));
-      prefixWidth += width;
-      return offsetCharBounds;
-    });
+  get charBounds() {
+    if (this._charBounds === undefined) this.computeCharBounds();
+    return this._charBounds;
+  }
+
+  computeCharBounds() {
+    let prefixWidth = 0,
+        {chunks} = this,
+        nChunks = chunks.length;
+    this._charBounds = [];
+    for (let i = 0; i < nChunks; i++) {
+      let chunk = chunks[i],
+          { charBounds, width } = chunk,
+          offsetCharBounds =
+            charBounds.map(bounds => { let {x, y, width, height} = bounds;
+                                       return {x: x + prefixWidth, y, width, height}});
+        prefixWidth += width;
+        if (i < nChunks - 1) offsetCharBounds.splice(-1, 1);
+        offsetCharBounds.map(ea => this._charBounds.push(ea));
+    }
   }
 
   render() {
@@ -254,36 +249,6 @@ class RenderedChunk {
         color: fontColor.isColor ? fontColor.toString() : String(fontColor)
       }
     }, textNodes);
-  }
-
-  boundsFor(column) {
-    var charBounds = this.charBounds
-    return charBounds[column] || charBounds[charBounds.length-1];
-  }
-
-  xOffsetFor(column) {
-    var bounds = this.boundsFor(column);
-    return bounds ? bounds.x : 0;
-  }
-
-  columnForXOffset(xInPixels) {
-    let {charBounds} = this,
-        length = charBounds.length,
-        first = charBounds[0],
-        last = charBounds[length-1];
-
-    // everything to the left of the first char + half its width is col 0
-    if (!length || xInPixels <= first.x+Math.round(first.width/2)) return 0;
-
-    // everything to the right of the last char + half its width is last col
-    if (xInPixels > last.x+Math.round(last.width/2)) return length-1;
-
-    // find col so that x between right side of char[col-1] and left side of char[col]
-    for (var i = length-2; i >= 0; i--) {
-      let {x, width} = charBounds[i];
-      if (xInPixels >= x + Math.round(width/2)) return i+1;
-    }
-    return 0;
   }
 }
 
@@ -451,25 +416,23 @@ export default class TextLayout {
         textWidth = 0;
 
     for (let row = 0; row < lines.length; row++) {
-      let {width, height, allCharBounds} = lines[row];
-      for (let charBounds of allCharBounds) {
-        for (let col = 0; col < charBounds.length; col++) {
-          let {x, width, height} = charBounds[col],
-                  y = textHeight + paddingTop;
-          x += paddingLeft;
-          debugHighlights.push(h("div", {
-            style: {
-              position: "absolute",
-              left: x+"px",
-              top: y+"px",
-              width: width+"px",
-              height: height+"px",
-              outline: "1px solid orange",
-              pointerEvents: "none",
-              zIndex: -2
-            }
-          }))
-        }
+      let {width, height, charBounds} = lines[row];
+      for (let col = 0; col < charBounds.length; col++) {
+        let {x, width, height} = charBounds[col],
+                y = textHeight + paddingTop;
+        x += paddingLeft;
+        debugHighlights.push(h("div", {
+          style: {
+            position: "absolute",
+            left: x+"px",
+            top: y+"px",
+            width: width+"px",
+            height: height+"px",
+            outline: "1px solid orange",
+            pointerEvents: "none",
+            zIndex: -2
+          }
+        }))
       }
 
       textHeight += height;
