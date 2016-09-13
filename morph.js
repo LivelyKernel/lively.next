@@ -1,5 +1,5 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
-import { string, obj, arr, num, promise, tree } from "lively.lang";
+import { string, obj, arr, num, promise, tree, properties } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
@@ -53,6 +53,7 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
+    this._animations = [];
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
     Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds"]));
@@ -137,6 +138,15 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  animate(anim) {
+    const props = properties.without(anim, ["easing", "onFinish"]);
+    if (properties.allProperties(props, (p) => this[p] == props[p])) return;
+    if (!this._animations.find(a => obj.equals(anim, a))) {
+      this._animations.push(anim);
+      this.makeDirty();
+    } 
+  }
 
   get layout()         { return this.getProperty("layout") }
   set layout(value)    { 
@@ -661,7 +671,7 @@ export class Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // nameing
+  // naming
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get(name) {

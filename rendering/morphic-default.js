@@ -1,36 +1,84 @@
 import {diff, patch, create} from "virtual-dom";
-import { num } from "lively.lang";
-import { Transform } from "lively.graphics"
+import { num, obj, arr, properties } from "lively.lang";
+import { Transform, Color } from "lively.graphics";
+import Velocity from "velocity";
+
+function animate(morph, node, anim) {
+  const animation = properties.without(anim, ["easing", "onFinish"]);
+  Velocity && Velocity.animate(node, 
+          getAnimationProps(animation), 
+          {easing: anim.easing || "easeInOutQuint"})
+          .then(() => {
+            Object.assign(morph, animation);
+            anim.onFinish && anim.onFinish();
+          });
+}
+
+function getTransform({position, origin, rotation, scale}) {
+  return position && origin && {transform: `translate(${position.x - origin.x}px, ${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`};
+}
+
+function getTransformOrigin({origin}) {
+  return origin && {transformOrigin: `${origin.x}px ${origin.y}px`};
+}
+
+function getDisplay({visible}) {
+  return (visible != null) && {display: visible ? "inline" : "none"};
+}
+
+function getBorderRadius({borderRadius: br}) {
+  return br && {borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`};
+}
+
+function getBorderStyle({clipMode, borderWidth, borderColor}) {
+  return (clipMode == "hidden") ?
+          borderWidth && {border: `${borderWidth}px solid ${borderColor ? borderColor.toString() : "transparent"}`} :
+          borderWidth && {"box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`}
+}
+
+function getFillStyle({fill}) {
+  return fill && {backgroundColor: fill.toString(), 
+                  backgroundColorGreen: fill.g,
+                  backgroundColorRed: fill.r,
+                  backgroundColorBlue: fill.b,
+                  backgroundColorAlpha: fill.a}
+}
+
+function getExtentStyle({width, height}) {
+  return width && height && {width: width + 'px', height: height + 'px'};
+}
+
+function getShadowStyle(morph) {
+  return morph.dropShadow && {WebkitFilter: shadowCss(morph)}
+}
+
+function getAnimationProps(morph) {
+  return {
+    ...getTransform(morph),
+    ...getTransformOrigin(morph),
+    ...getDisplay(morph),
+    ...getExtentStyle(morph),
+    ...getFillStyle(morph),
+    ...getBorderStyle(morph),
+    ...getBorderRadius(morph),
+    ...getShadowStyle(morph),
+    ...(morph.opacity != null && {opacity: morph.opacity})
+  }
+}
 
 export function defaultStyle(morph) {
+
   const {
-    visible,
-    position: {x,y},
-    extent: {x: width, y: height},
-    origin, opacity, position, scale, rotation,
-    fill, borderWidth, borderColor, borderRadius: br,
-    clipMode, reactsToPointer, focusable,
-    owner
+    opacity, clipMode, reactsToPointer,
+    nativeCursor     
   } = morph;
 
   return {
+    ...getAnimationProps(morph),
     position: "absolute",
-    transform: `translate(${position.x - origin.x}px, ${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`,
-    transformOrigin: `${origin.x}px ${origin.y}px`,
-    opacity,
-    display: visible ? "inline" : "none",
-    width: width + 'px', height: height + 'px',
-    background: fill ? fill.toString() : "",
-    ...((clipMode == "hidden") ?
-          {border: `${borderWidth}px solid ${borderColor ? borderColor.toString() : "transparent"}`} :
-          {"box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`}),
-    borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`,
     overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",
-    cursor: morph.nativeCursor,
-    ...(morph.dropShadow ? {
-      WebkitFilter: shadowCss(morph)
-    } : null)
+    cursor: nativeCursor
   };
 }
 
@@ -48,8 +96,16 @@ ScrollHook.prototype.hook = function(node, propertyName, previousValue) {
 }
 
 export function defaultAttributes(morph) {
-
+  const Animation = function() {};
+  Animation.prototype.hook = (node) => {
+    var anim;
+    while (anim = morph._animations.pop()) {
+      animate(morph, node, anim);
+    }
+  }
+  
   return {
+    animation: new Animation(),
     key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
