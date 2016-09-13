@@ -21,30 +21,46 @@ export class Mode {
     throw new Error("not implemented");
   }
   
-  process(str) { // string -> Token
+  process() { // -> Token
     // process next character, updating internal state
     // and returning token for that character
     throw new Error("not implemented");
   }
   
-  highlight(str) {
-    const z = { row: 0, column: 0 },
-          tokens = [{token: Token.default, from: z, to: z}],
-          self = this;
-
-    function process(str, row, column) {
-      const lastToken = tokens[tokens.length - 1];
-      lastToken.to = {row, column};
-      if (str.length === 0) return;
-      const token = self.process(str);
-      if (token !== lastToken.token) {
-        tokens.push({token, from: {row, column}, to: {row, column}});
+  next() { // -> char
+    return this.str[this.idx];
+  }
+  
+  checkChars(chars) { // string -> boolean
+    if (this.idx + chars.length - 1 >= this.str.length) return false;
+    for (let i = 0; i < chars.length; i++) {
+      if (this.str[i + this.idx] !== chars[i]) {
+        return false;
       }
-      return str[0] == "\n" ? process(str.substr(1), row + 1, 0)
-                            : process(str.substr(1), row, column + 1);
     }
+    return true;
+  }
+  
+  highlight(str) { // string -> Array<Token>
+    let tokens = [], lastToken = {}, row = 0, column = 0;
+    this.str = str;
+    this.idx = 0;
     this.reset();
-    process(str, 0, 0);
+    while (this.idx < this.str.length) {
+      lastToken.to = {row, column};
+      const token = this.process();
+      if (token !== lastToken.token) {
+        lastToken = {token, from: {row, column}, to: {row, column}};
+        tokens.push(lastToken);
+      }
+      if (this.next() === "\n") {
+        row++; column = 0;
+      } else {
+        column++;
+      }
+      this.idx++;
+    }
+    lastToken.to = {row, column};
     return tokens;
   }
 }

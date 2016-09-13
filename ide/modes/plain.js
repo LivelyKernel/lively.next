@@ -4,7 +4,7 @@ export default class PlainMode extends Mode {
   reset() {
     // noop
   }
-  process(char) { // string -> Token
+  process() { // -> Token
     return Token.default;
   }
 }

@@ -15,69 +15,72 @@ export default class JavaScriptMode extends Mode {
     this.commentEnding = false;
     this.level = 0;
   }
-  checkWord(type, str) {
-    const found = words[type].find(w => str.startsWith(w));
-    if (found) {
-      this.state = type;
-      this.left = found.length - 1;
-      return true;
+  checkWord(type) {
+    const found = words[type].find(w => this.checkChars(w));
+    if (!found) return false;
+    const cAfter = this.idx + found.length;
+    if (this.str.length > cAfter && /[0-9a-zA-Z_\$]/.test(this.str[cAfter])) {
+      return false; // char after kw (assumes keywords don't have a common prefix)
     }
-    return false;
+    this.state = type;
+    this.left = found.length - 1;
+    return true;
   }
-  process(str) { // string -> Token
+  process() { // -> Token
+    const c = this.next();
     switch (this.state) {
       case "templateint": // template interpolation
-        if (str[0] == "}" && this.level == 1) {
+        if (c === "}" && this.level === 1) {
           this.state = "template";
           return Token.default;
         }
-        if (str[0] == "`") {
+        if (c === "`") {
           this.state = "template2";
           return Token.string;
         }
       case "default":
-        if (/[0-9]/.test(str[0])) {
+        if (/[0-9]/.test(c)) {
           return Token.numeric;
         }
-        if (str[0] == "'") {
+        if (c === "'") {
           this.state = "sstring";
           return Token.string;
         }
-        if (str[0] == '"') {
+        if (c === '"') {
           this.state = "dstring";
           return Token.string;
         }
-        if (str[0] == "`") {
+        if (c=== "`") {
           this.state = "template";
           return Token.string;
         }
-        if (str[0] == "{") {
+        if (c === "{") {
           this.level++;
         }
-        if (str[0] == "}") {
+        if (c === "}") {
           this.level--;
         }
-        if (str.startsWith("/*")) {
+        if (this.checkChars("/*")) {
           this.state = "comment";
           return Token.comment;
         }
-        if (str.startsWith("//")) {
+        if (this.checkChars("//")) {
           this.state = "linecomment";
           return Token.comment;
         }
-        if (this.checkWord("keyword", str)) {
+        if (this.checkWord("keyword")) {
           return Token.keyword;
         }
-        if (this.checkWord("constant", str)) {
+        if (this.checkWord("constant")) {
           return Token.constant;
         }
-        if (this.checkWord("global", str)) {
+        if (this.checkWord("global")) {
           return Token.global;
         }
-        if (this.checkWord("dynamic", str)) {
+        if (this.checkWord("dynamic")) {
           return Token.dynamic;
         }
-        if (/[0-9a-zA-Z_\$]/.test(str[0])) { //TODO unicode
+        if (/[0-9a-zA-Z_\$]/.test(c)) { //TODO unicode
           this.state = "id";
           return Token.id;
         }
@@ -86,9 +89,9 @@ export default class JavaScriptMode extends Mode {
       case "sstring":
         if (this.skipNext) {
           this.skipNext = false;
-        } else if (str[0] == "\\") {
+        } else if (c === "\\") {
           this.skipNext = true;
-        } else if (str[0] == "'") {
+        } else if (c === "'") {
           this.state = "default"; 
         }
         return Token.string;
@@ -96,9 +99,9 @@ export default class JavaScriptMode extends Mode {
       case "dstring":
         if (this.skipNext) {
           this.skipNext = false;
-        } else if (str[0] == "\\") {
+        } else if (c === "\\") {
           this.skipNext = true;
-        } else if (str[0] == '"') {
+        } else if (c === '"') {
           this.state = "default"; 
         }
         return Token.string;
@@ -106,11 +109,11 @@ export default class JavaScriptMode extends Mode {
       case "template":
         if (this.skipNext) {
           this.skipNext = false;
-        } else if (str[0] == "\\") {
+        } else if (c === "\\") {
           this.skipNext = true;
-        } else if (str[0] == '`') {
+        } else if (c === '`') {
           this.state = "default"; 
-        } else if (str.startsWith("${")) {
+        } else if (this.checkChars("${")) {
           this.level = 0;
           this.state = "templateint";
           return Token.default;
@@ -120,9 +123,9 @@ export default class JavaScriptMode extends Mode {
       case "template2": // template-within-a-template
         if (this.skipNext) {
           this.skipNext = false;
-        } else if (str[0] == "\\") {
+        } else if (c === "\\") {
           this.skipNext = true;
-        } else if (str[0] == '`') {
+        } else if (c === '`') {
           this.state = "templateint"; 
         }
         return Token.string;
@@ -130,52 +133,61 @@ export default class JavaScriptMode extends Mode {
       case "comment":
         if (this.commentEnding) {
           this.state = "default";
-        } else if (/^\*\//.test(str)) {
+        } else if (this.checkChars("*/")) {
           this.commentEnding = true;
         }
         return Token.comment;
         
       case "linecomment":
-        if (str[0] == '\n') {
+        if (c === '\n') {
           this.state = "default";
         }
         return Token.comment;
 
       case "id":
-        if (/[0-9a-zA-Z_\$]/.test(str[0])) { //TODO unicode
+        if (/[0-9a-zA-Z_\$]/.test(c)) { //TODO unicode
           return Token.id;
         }
         this.state = "default";
-        return this.process(str);
+        return this.process();
         
       case "keyword":
         if (--this.left === 0) {
           this.state = "default";
-          return Token.keyword;
         }
         return Token.keyword;
         
       case "constant":
         if (--this.left === 0) {
           this.state = "default";
-          return Token.constant;
         }
         return Token.constant;
 
       case "global":
         if (--this.left === 0) {
           this.state = "default";
-          return Token.global;
         }
         return Token.global;
       
       case "dynamic":
         if (--this.left === 0) {
           this.state = "default";
-          return Token.dynamic;
         }
         return Token.dynamic;
     }
     return Token.default;
   }
 }
+
+/*
+Profiling code:
+
+import JavaScriptMode from "lively.morphic/ide/modes/javascript.js";
+const mode = new JavaScriptMode(),
+     src = await System.resource("lively.morphic/menus.js").read();
+mode.reset();
+const start = Date.now();
+mode.highlight(src);
+const timeMS = Date.now() - start;
+timeMS
+*/
