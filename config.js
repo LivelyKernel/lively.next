@@ -91,6 +91,9 @@ var config = {
 
       {keys: "Esc|Ctrl-G", command: "cancel input"}
     ]
+  },
+  codeEditor: {
+    defaultTheme: "chrome"
   }
 }
 

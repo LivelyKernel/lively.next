@@ -1,5 +1,6 @@
 import { arr, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
+import config from "../config.js";
 
 import { Morph, Text, Menu } from "../index.js";
 import { StyleRange } from "../text/style.js";
@@ -45,7 +46,7 @@ export default class CodeEditor extends Morph {
       ...obj.dissoc(props, ["textString", "mode", "theme"])
     });
     this.mode = props.mode || "plain";
-    this.theme = props.theme || "chrome";
+    this.theme = props.theme || config.codeEditor.defaultTheme;
     this.requestHighlight(true);
 
     // FIXME lively.bindings does not seem to work:
