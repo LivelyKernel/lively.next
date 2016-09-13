@@ -771,6 +771,36 @@ commands.push(
   },
 
   {
+    name: "toggle comment",
+    exec: function(morph) {
+
+      var doc = morph.document,
+          sel = morph.selection;
+
+      if (sel.isEmpty())
+        morph.selectLine(sel.lead.row);
+      else if (sel.end.column === 0)
+        sel.growRight(-1);
+
+      var lines = doc.lines.slice(sel.start.row, sel.end.row+1),
+          isCommented = lines.every(line => line.match(/^\s*(\/\/|$)/));
+
+      if (isCommented)
+        lines = lines.map(line => line.replace(/^(\s*)\/\/\s?(.*)/, "$1$2").trimRight());
+      else {
+        var indentDepth = lines.reduce((indentDepth, line) => !line.trim() ? indentDepth : Math.min(indentDepth, line.match(/^\s*/)[0].length), Infinity),
+            indentDepth = indentDepth === Infinity ? 0 : indentDepth,
+            indent = (morph.useSoftTabs ? ' ' : '\t').repeat(indentDepth);
+        lines = lines.map(line => line.replace(/^(\s*)(.*)/, (_, space, rest) => `${indent}// ${space.slice(indent.length)}${rest}`));
+      }
+
+      sel.text = lines.join(doc.constructor.newline);
+
+      return true;
+    }
+  },
+
+  {
     name: "comment box",
     exec: function(morph, _, count) {
       morph.undoManager.group();

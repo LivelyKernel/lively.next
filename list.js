@@ -228,7 +228,7 @@ import { connect } from "lively.bindings";
 import FontMetric from "./rendering/font-metric.js";
 
 export class FilterableList extends Morph {
-  
+
   constructor(props = {}) {
     super({borderWidth: 1, borderColor: Color.gray});
 
