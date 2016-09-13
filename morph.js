@@ -516,13 +516,16 @@ export class Morph {
     return this.owner ? this.owner.world() : null;
   }
 
-  openInWorld() {
+  openInWorld(pos) {
     var world = this.world() || this.env.world;
     if (!world) {
       console.warn(`Cannot open morph ${this}, world morph not found;`)
       return this;
     }
-    return world.addMorph(this);
+    world.addMorph(this);
+    if (pos) this.position = pos;
+    else this.center = world.visibleBounds().center();
+    return this;
   }
 
   isAncestorOf(aMorph) {
