@@ -135,15 +135,15 @@ class RenderedLine {
 
   computeCharBounds() {
     let prefixWidth = 0,
-        {chunks} = this,
+        {chunks, height: lineHeight } = this,
         nChunks = chunks.length;
     this._charBounds = [];
     for (let i = 0; i < nChunks; i++) {
       let chunk = chunks[i],
-          { charBounds, width } = chunk,
+          { charBounds, width, height } = chunk,
           offsetCharBounds =
-            charBounds.map(bounds => { let {x, y, width, height} = bounds;
-                                       return {x: x + prefixWidth, y, width, height}});
+            charBounds.map(bounds => { let {x, y, width} = bounds;
+                                       return {x: x + prefixWidth, y, width, height: lineHeight}});
         prefixWidth += width;
         if (i < nChunks - 1) offsetCharBounds.splice(-1, 1);
         offsetCharBounds.map(ea => this._charBounds.push(ea));
@@ -153,11 +153,9 @@ class RenderedLine {
   render() {
     if (this.rendered) return this.rendered;
     let { chunks, height, width } = this;
-    return this.rendered = h("div", { style: {
-        position: "relative",
-        lineHeight: 1
-      }
-    }, chunks.map(ea => ea.render()));
+    height += "px";
+    return this.rendered = h("div", { style: { height, lineHeight: height } },
+                             chunks.map(ea => ea.render()));
   }
 }
 
@@ -240,7 +238,6 @@ class RenderedChunk {
 
     return this.rendered = h("span", {
       style: {
-        lineHeight: 1,
         fontSize: fontSize + "px",
         fontFamily,
         fontWeight,
