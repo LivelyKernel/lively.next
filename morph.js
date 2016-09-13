@@ -655,7 +655,7 @@ export class Morph {
           + "likely source of the problem is using 'get' as part of\n"
           + "toString, because 'get' calls 'getOwnerNamed', which\n"
           + "calls 'toString' on this. Try using 'getSubmorphNamed' instead,\n"
-          + "which only searches in this' children.");
+          + "which only searches in this' children.\nOriginal error:\n" + e.stack);
       }
       throw e
     }
