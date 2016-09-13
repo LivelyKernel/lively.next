@@ -55,25 +55,8 @@ export default class CodeEditor extends Morph {
   
   highlight() {
     const txt = this.submorphs[0],
-          z = { row: 0, column: 0 },
-          tokens = [{token: Token.default, from: z, to: z}],
-          mode = this.mode;
-    
-    function process(str, row, column) {
-      const lastToken = tokens[tokens.length - 1];
-      lastToken.to = {row, column};
-      if (str.length === 0) return;
-      const token = mode.process(str);
-      if (token !== lastToken.token) {
-        tokens.push({token, from: {row, column}, to: {row, column}});
-      }
-      return str[0] == "\n" ? process(str.substr(1), row + 1, 0)
-                            : process(str.substr(1), row, column + 1);
-    }
-    mode.reset();
-    process(txt.textString, 0, 0);
+          tokens = this.mode.highlight(txt.textString);
     txt.resetStyleRanges();
-    // add style
     tokens.forEach(({token, from, to}) => {
       const style = this.theme.style(token),
             sr = StyleRange.fromPositions(style, from, to);
