@@ -443,7 +443,7 @@ export default class TextLayout {
         safeRow = Math.max(0, Math.min(maxLength, row)),
         line = chunks[safeRow];
 
-    if (!line) return pt(0,0);
+    if (!line) return new Rectangle(0,0,0,0);
 
     for (var y = 0, i = 0; i < safeRow; i++)
       y += chunks[i].height;
