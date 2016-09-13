@@ -47,11 +47,22 @@ class RenderedLine {
   }
 
   get height() {
-    return arr.max(this.chunks.map(chunk => chunk.height));
+    if (this._height === undefined) this.computeBounds();
+    return this._height;
   }
 
   get width() {
-    return arr.sum(this.chunks.map(chunk => chunk.width));
+    if (this._width === undefined) this.computeBounds();
+    return this._width;
+  }
+
+  computeBounds() {
+    this._width = this._height = 0;
+    this.chunks.map(chunk => {
+      this._width += chunk.width;
+      this._height = Math.max(this._height, chunk.height);
+    });
+    return this;
   }
 
   compatibleWith(text2, config2) {
