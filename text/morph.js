@@ -434,7 +434,8 @@ export class Text extends Morph {
 
   addStyleRange(range) {
 
-    this.undoManager.undoStart(this, "addStyleRange");
+    // FIXME: undos
+    // this.undoManager.undoStart(this, "addStyleRange");
 
     this.document.addStyleRange(range);
 
@@ -448,7 +449,7 @@ export class Text extends Morph {
       // }
     }, () => { this._needsFit = true; });
 
-    this.undoManager.undoStop();
+    //this.undoManager.undoStop();
   }
 
   setDefaultStyle(style = this.styleProps) {
