@@ -802,24 +802,37 @@ commands.push(
       var doc = morph.document,
           sel = morph.selection;
 
-      if (sel.isEmpty())
-        morph.selectLine(sel.lead.row);
-      else if (sel.end.column === 0)
+      if (!sel.isEmpty() && sel.end.column === 0)
         sel.growRight(-1);
 
-      var lines = doc.lines.slice(sel.start.row, sel.end.row+1),
-          isCommented = lines.every(line => line.match(/^\s*(\/\/|$)/));
+      var startRow = sel.start.row,
+          lines = doc.lines.slice(sel.start.row, sel.end.row+1),
+          isCommented = lines.every(line => line.trim() && line.match(/^\s*(\/\/|$)/));
 
-      if (isCommented)
-        lines = lines.map(line => line.replace(/^(\s*)\/\/\s?(.*)/, "$1$2").trimRight());
-      else {
+      morph.undoManager.group();
+      if (isCommented) {
+        lines.forEach((line, i) => {
+          var match = line.match(/^(\s*)(\/\/\s?)(.*)/);
+          if (match) {
+            var [_, before, comment, after] = match,
+                range = {
+                  start: {row: startRow+i, column: before.length},
+                  end: {row: startRow+i, column: before.length+comment.length}
+                };
+            morph.deleteText(range);
+          }
+        });
+
+      } else {
         var indentDepth = lines.reduce((indentDepth, line) => !line.trim() ? indentDepth : Math.min(indentDepth, line.match(/^\s*/)[0].length), Infinity),
             indentDepth = indentDepth === Infinity ? 0 : indentDepth,
             indent = (morph.useSoftTabs ? ' ' : '\t').repeat(indentDepth);
-        lines = lines.map(line => line.replace(/^(\s*)(.*)/, (_, space, rest) => `${indent}// ${space.slice(indent.length)}${rest}`));
+        lines.forEach((line, i) => {
+          var [_, space, rest] = line.match(/^(\s*)(.*)/);
+          morph.insertText(`${indent.slice(space.length)}// `, {row: startRow+i, column: 0})
+        });
       }
-
-      sel.text = lines.join(doc.constructor.newline);
+      morph.undoManager.group();
 
       return true;
     }
