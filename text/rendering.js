@@ -46,6 +46,10 @@ class RenderedLine {
     return this;
   }
 
+  resetCache() {
+    this.rendered = this._height = this._width = undefined;
+  }
+
   get height() {
     if (this._height === undefined) this.computeBounds();
     return this._height;
@@ -71,10 +75,32 @@ class RenderedLine {
     if (chunks.length !== chunks2.length) return false
     for (let i = 0; i < chunks.length; i++) {
       let chunk = chunks[i],
-          { text: text2, config: config2 } = chunks2[i];
-      if (!chunk.compatibleWith(text2, config2)) return false;
+          { text: chunkText2, config: chunkConfig2 } = chunks2[i];
+      if (!chunk.compatibleWith(chunkText2, chunkConfig2)) return false;
     }
     return true;
+  }
+
+  updateIfNecessary(text, config) {
+    let newChunks = this.constructor.chunksFrom(text, config),
+        {chunks: oldChunks} = this,
+        oldChunkCount = oldChunks.length,
+        newChunkCount = newChunks.length,
+        shouldReset = false;
+    for (let i = 0; i < newChunks.length; i++) {
+      let oldChunk = oldChunks[i],
+          newChunk = newChunks[i],
+          { text: newText, config: newConfig } = newChunk;
+      if (!oldChunk || !oldChunk.compatibleWith(newText, newConfig)) {
+        this.chunks[i] = newChunk;
+        shouldReset = true;
+      }
+    }
+    if (newChunkCount < oldChunkCount) {
+      this.chunks.splice(newChunkCount, oldChunkCount - newChunkCount);
+      shouldReset = true;
+    }
+    if (shouldReset) this.resetCache();
   }
 
   boundsFor(column) {
@@ -283,8 +309,10 @@ export default class TextLayout {
           text = lines[row],
           config = { fontMetric, styleRanges: lineStyleRanges },
           line = this.lines[row];
-      if (!line || !line.compatibleWith(text, config))
+      if (!line)
         this.lines[row] = new RenderedLine(text, config);
+      else
+        line.updateIfNecessary(text, config);
     }
     this.lines.splice(nRows, this.lines.length - nRows);
 
