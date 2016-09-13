@@ -15,10 +15,6 @@ const defaultCSS = `
   user-select: none;
 }
 
-.halo-guide {
-  -webkit-animation: fadein .5s;
-}
-
 .smooth-extent {
   -webkit-transition: width .15s, height .15s, transform .15s;
 }

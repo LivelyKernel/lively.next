@@ -666,7 +666,7 @@ export class Halo extends Morph {
         const position = this.localize(pt(0,0)),
               {width, height, extent} = this.world(),
               defaultGuideProps = {
-                     styleClasses: ["morph", "halo-guide"],
+                     opacity: 0,
                      borderStyle: "dashed",
                      position, extent,
                      borderWidth: 2,
@@ -686,7 +686,7 @@ export class Halo extends Morph {
              vertices: [pt(0,y), pt(width, y)]
            }));
          mesh = mesh || this.addMorphBack(
-           new Morph({name: "mesh",
+           new Morph({name: "mesh", visible: false,
                       onKeyUp: (evt) => this.toggleMesh(false),
                       extent, position: this.localize(pt(2,2)),
                       styleClasses: ["morph", "halo-mesh"], fill: null}));
@@ -696,10 +696,14 @@ export class Halo extends Morph {
         mesh.position = this.localize(pt(2,2));
         horizontal.vertices = [pt(0,y), pt(this.world().width, y)];
         vertical.vertices = [pt(x,0), pt(x, this.world().height)];
+        
+        mesh.animate({opacity: 1});
+        horizontal.animate({opacity: 1});
+        vertical.animate({opacity: 1});
     } else {
-      vertical && vertical.remove();
-      horizontal && horizontal.remove();
-      mesh && mesh.remove();
+      vertical && vertical.animate({opacity: 0, onFinish: () => vertical.remove()});
+      horizontal && horizontal.animate({opacity: 0, onFinish: () => horizontal.remove()});
+      mesh && horizontal.animate({opacity: 0, onFinish: () => mesh.remove()});
     }
     this.focus();
   }
@@ -709,8 +713,8 @@ export class Halo extends Morph {
     if (active) {
       var offset = this.extent.normalized().scaleByPt(pt(100,100));
       diagonal = diagonal || this.addMorphBack(new Path({
+          opacity: 0,
           name: "diagonal",
-          styleClasses: ["morph", "halo-guide"],
           borderStyle: "dashed",
           borderWidth: 2,
           gradient: guideGradient,
@@ -718,9 +722,10 @@ export class Halo extends Morph {
           extent: this.extent.addPt(offset.scaleBy(2)),
           vertices: [pt(0,0), this.extent.addPt(offset.scaleBy(2))]}));
         diagonal.setBounds(diagonal.position.extent(this.extent.addPt(diagonal.position.scaleBy(-2))))
+        diagonal.animate({opacity: 1});
         return diagonal.vertices[1];
     } else {
-      diagonal && diagonal.remove();
+      diagonal && diagonal.animate({opacity: 0, onFinish: () => diagonal.remove()});
     }
   }
 
@@ -734,7 +739,6 @@ export class Halo extends Morph {
     const originPos = this.getSubmorphNamed("origin").center,
           localize = (p) => rotationIndicator.localizePointFrom(p, this);
     rotationIndicator = rotationIndicator || this.addMorphBack(new Path({
-      styleClasses: ["morph", "halo-guide"],
       name: "rotationIndicator",
       borderColor: Color.red,
       vertices: []
@@ -747,7 +751,6 @@ export class Halo extends Morph {
     var dropIndicator = this.getSubmorphNamed("dropTargetIndicator");
     if (active && target && target != this.world()) {
         dropIndicator = dropIndicator || this.addMorphBack({
-                        styleClasses: ["morph", "halo-guide"],
                         name: "dropTargetIndicator",
                         fill: Color.orange.withA(0.5)});
         dropIndicator.position = this.localize(target.globalBounds().topLeft());
