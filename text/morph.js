@@ -455,7 +455,7 @@ export class Text extends Morph {
   setDefaultStyle(style = this.styleProps) {
     let { document } = this;
     if (!document) return;
-    let start = { row: 0, column: -1},
+    let start = { row: 0, column: -1 },
         end = document.endPosition,
         defaultStyleRange = StyleRange.fromPositions(style, start, end);
     this.addStyleRange(defaultStyleRange);

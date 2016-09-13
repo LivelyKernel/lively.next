@@ -2,6 +2,36 @@ import { Range } from "./range.js";
 import { Anchor } from "./anchors.js";
 import { obj, arr } from "lively.lang";
 
+import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
+
+
+class StyleAnchor extends Anchor {
+
+  onDelete(range) {
+    if (lessEqPosition(this.position, range.start)) return;
+
+    if (lessEqPosition(range.start, this.position)
+     && lessEqPosition(this.position, range.end)) { this.position = range.start; return; }
+
+    let {row, column} = this.position,
+        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
+        deltaRows = endRow - startRow,
+        deltaColumns = endRow === this.position.row ?
+                       endColumn - startColumn : 0
+    this.position = {column: column - deltaColumns, row: row - deltaRows}
+  }
+
+  onInsert(range) {
+    if (lessPosition(this.position, range.start)) return;
+    let {row, column} = this.position,
+        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
+        deltaRows = endRow - startRow,
+        deltaColumns = endColumn - startColumn;
+    this.position = {column: column + deltaColumns, row: row + deltaRows}
+  }
+
+}
+
 
 export class StyleRange {
 
@@ -17,7 +47,7 @@ export class StyleRange {
     if (b.length)
       b = arr.flatten(b.map(ea => StyleRange.mergeInto(remaining, ea)));
     else b = remaining;
-    return a.concat(b);
+    return Range.sort(a.concat(b));
   }
 
   static merge(a, b) {
@@ -50,10 +80,10 @@ export class StyleRange {
   get end() { return this.endAnchor.position }
 
   set start(start) {
-    this.startAnchor = new Anchor(undefined, start);
+    this.startAnchor = new StyleAnchor(undefined, start);
   }
   set end(end) {
-    this.endAnchor = new Anchor(undefined, end);
+    this.endAnchor = new StyleAnchor(undefined, end);
   }
 
   get range() {
