@@ -32,7 +32,7 @@ function cursor(pos, height, visible) {
 }
 
 
-class ChunkLine {
+class RenderedLine {
 
   static chunksFrom(text, config) {
     let { fontMetric, styleRanges } = config;
@@ -254,7 +254,7 @@ export default class TextLayout {
 
   constructor(fontMetric) {
     this.layoutComputed = false;
-    this.chunkLines = [];
+    this.lines = [];
     this.fontMetric = fontMetric;
   }
 
@@ -271,11 +271,11 @@ export default class TextLayout {
       let lineStyleRanges = document.styleRangesByLine[row],
           text = lines[row],
           config = { fontMetric, styleRanges: lineStyleRanges },
-          chunkLine = this.chunkLines[row];
-      if (!chunkLine || !chunkLine.compatibleWith(text, config))
-        this.chunkLines[row] = new ChunkLine(text, config);
+          line = this.lines[row];
+      if (!line || !line.compatibleWith(text, config))
+        this.lines[row] = new RenderedLine(text, config);
     }
-    this.chunkLines.splice(nRows, this.chunkLines.length - nRows);
+    this.lines.splice(nRows, this.lines.length - nRows);
 
     this.layoutComputed = true;
     return this;
@@ -307,24 +307,24 @@ export default class TextLayout {
     let {start, end, lead, cursorVisible} = morph.selection,
         isReverse           = morph.selection.isReverse(),
         {padding, document} = morph,
-        chunkLines          = this.chunkLines,
+        lines               = this.lines,
         paddingOffset       = padding.topLeft(),
         startPos            = this.pixelPositionFor(morph, start).addPt(paddingOffset),
         endPos              = this.pixelPositionFor(morph, end).addPt(paddingOffset),
         cursorPos           = isReverse ? startPos : endPos,
-        endLineHeight       = chunkLines[end.row].height;
+        endLineHeight       = lines[end.row].height;
 
     // collapsed selection -> cursor
     if (morph.selection.isEmpty())
-      return [cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)];
+      return [cursor(cursorPos, lines[lead.row].height, cursorVisible)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)]
+        cursor(cursorPos, lines[lead.row].height, cursorVisible)]
 
-    let endPosLine1 = pt(morph.width, startPos.y + chunkLines[start.row].height),
+    let endPosLine1 = pt(morph.width, startPos.y + lines[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
@@ -332,7 +332,7 @@ export default class TextLayout {
       return [
         selectionLayerPart(startPos, endPosLine1),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)];
+        cursor(cursorPos, lines[lead.row].height, cursorVisible)];
     }
 
     let endPosMiddle = pt(morph.width, endPos.y),
@@ -343,12 +343,12 @@ export default class TextLayout {
       selectionLayerPart(startPos, endPosLine1),
       selectionLayerPart(startPosLine2, endPosMiddle),
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
-      cursor(cursorPos, chunkLines[lead.row].height, cursorVisible)];
+      cursor(cursorPos, lines[lead.row].height, cursorVisible)];
 
   }
 
   renderTextLayer(morph) {
-    let {chunkLines} = this,
+    let {lines} = this,
         textWidth = 0, textHeight = 0,
         {padding, scroll, height} = morph,
         {y: visibleTop} = scroll.subPt(padding.topLeft()),
@@ -361,8 +361,8 @@ export default class TextLayout {
         lineLeft = padding.left(),
         lineTop = padding.top();
 
-    for (;row < chunkLines.length; row++) {
-      let {width, height} = chunkLines[row],
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row],
           newTextHeight = textHeight + height;
       if (newTextHeight >= visibleTop) break;
       textWidth = Math.max(width, textWidth);
@@ -371,10 +371,10 @@ export default class TextLayout {
 
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
-    for (;row < chunkLines.length; row++) {
-      let {width, height} = chunkLines[row];
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row];
       if (textHeight > visibleBottom) break;
-      renderedLines.push(chunkLines[row].render(lineLeft, lineTop));
+      renderedLines.push(lines[row].render(lineLeft, lineTop));
 
       textWidth = Math.max(width, textWidth);
       textHeight += height;
@@ -383,8 +383,8 @@ export default class TextLayout {
 
     lastVisibleLineBottom = textHeight;
 
-    for (;row < chunkLines.length; row++) {
-      let {width, height} = chunkLines[row];
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -401,7 +401,7 @@ export default class TextLayout {
   }
 
   renderDebugLayer(morph) {
-    let {chunkLines} = this,
+    let {lines} = this,
         {y: visibleTop} = morph.scroll,
         visibleBottom = visibleTop + morph.height,
         {padding} = morph,
@@ -411,8 +411,8 @@ export default class TextLayout {
         textHeight = 0,
         textWidth = 0;
 
-    for (let row = 0; row < chunkLines.length; row++) {
-      let {width, height, allCharBounds} = chunkLines[row];
+    for (let row = 0; row < lines.length; row++) {
+      let {width, height, allCharBounds} = lines[row];
       for (let charBounds of allCharBounds) {
         for (let col = 0; col < charBounds.length; col++) {
           let {x, width, height} = charBounds[col],
@@ -466,13 +466,13 @@ export default class TextLayout {
 
   textPositionFor(morph, point) {
     this.updateFromMorphIfNecessary(morph);
-    var {chunkLines} = this;
-    if (!chunkLines.length) return {row: 0, column: 0};
+    var {lines} = this;
+    if (!lines.length) return {row: 0, column: 0};
 
     let {x,y: remainingHeight} = point, line, row;
     if (remainingHeight < 0) remainingHeight = 0;
-    for (row = 0; row < chunkLines.length; row++) {
-      line = chunkLines[row];
+    for (row = 0; row < lines.length; row++) {
+      line = lines[row];
       if (remainingHeight < line.height) break;
       remainingHeight -= line.height;
     }
@@ -488,8 +488,8 @@ export default class TextLayout {
   textBounds(morph) {
     this.updateFromMorphIfNecessary(morph);
     let textWidth = 0, textHeight = 0;
-    for (let row = 0; row < this.chunkLines.length; row++) {
-      var {width, height} = this.chunkLines[row];
+    for (let row = 0; row < this.lines.length; row++) {
+      var {width, height} = this.lines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -499,15 +499,15 @@ export default class TextLayout {
 
   boundsFor(morph, {row, column}) {
     this.updateFromMorphIfNecessary(morph);
-    let chunkLines = this.chunkLines,
-        maxLength = chunkLines.length-1,
+    let {lines} = this,
+        maxLength = lines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
-        line = chunkLines[safeRow];
+        line = lines[safeRow];
 
     if (!line) return pt(0,0);
 
     for (var y = 0, i = 0; i < safeRow; i++)
-      y += chunkLines[i].height;
+      y += lines[i].height;
     let { x, width, height } = line.boundsFor(column);
     return new Rectangle(x, y, width, height);
   }
