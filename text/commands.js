@@ -703,13 +703,37 @@ function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : m
   return evalStrategy.runEval(code, opts);
 }
 
+function maybeSelectCommentOrLine(morph) {
+  // Dan's famous selection behvior! Here it goes...
+  /*   If you click to the right of '//' in the following...
+  'wrong' // 'try this'.slice(4)  //should print 'this'
+  'http://zork'.slice(7)          //should print 'zork'
+  */
+  // If click is in comment, just select that part
+  var sel = morph.selection,
+      {row, column} = sel.lead,
+      text = morph.selectionOrLineString();
+
+  if (!sel.isEmpty()) return;
+
+  // text now equals the text of the current line, now look for JS comment
+  var idx = text.indexOf('//');
+  if (idx === -1                          // Didn't find '//' comment
+      || column < idx                 // the click was before the comment
+      || (idx>0 && (':"'+"'").indexOf(text[idx-1]) >=0)    // weird cases
+      ) { morph.selectLine(row); return }
+
+  // Select and return the text between the comment slashes and end of method
+  sel.range = {start: {row, column: idx+2}, end: {row, column: text.length}};
+}
+
 commands.push(
 
   {
     name: "doit",
     doc: "Evaluates the selecte code or the current line and report the result",
     exec: async function(morph) {
-      if (morph.selection.isEmpty()) morph.selectLine();
+      maybeSelectCommentOrLine(morph);
       var result, err;
       try {
         result = await doEval(morph);
@@ -742,7 +766,7 @@ commands.push(
     name: "printit",
     doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
     exec: async function(morph) {
-      if (morph.selection.isEmpty()) morph.selectLine();
+      maybeSelectCommentOrLine(morph);
       var result, err;
       try {
         result = await doEval(morph);
@@ -759,6 +783,7 @@ commands.push(
     doc: "...",
     handlesCount: true,
     exec: async function(morph, _, count = 1) {
+      maybeSelectCommentOrLine(morph);
       var result, err;
       try {
         result = await doEval(morph);
