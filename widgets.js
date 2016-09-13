@@ -259,7 +259,6 @@ export class Button extends Morph {
   set padding(value) { this.addValueChange("padding", value); this.relayout(); }
   get padding() { return this.getProperty("padding"); }
 
-  set action(value) { this.addValueChange("action", value); }
   get action() { return this.getProperty("action"); }
   set action(value) { this.addValueChange("action", value); }
   get active() { return this.getProperty("active"); }
@@ -296,4 +295,43 @@ export class Button extends Morph {
   onMouseUp(evt) {
     if (this.active) Object.assign(this, this.activeStyle);
   }
+}
+
+export class CheckBox extends Morph {
+
+  constructor(props) {
+    super({
+      draggable: false,
+      extent: pt(18, 18),
+      borderWidth: 0,
+      active: true,
+      checked: false,
+      ...props,
+    });
+  }
+
+  get checked() { return this.getProperty("checked"); }
+  set checked(value) { this.addValueChange("checked", value); }
+  get active() { return this.getProperty("active"); }
+  set active(value) { this.addValueChange("active", value); }
+
+  trigger() {
+    try {
+      signal(this, "checked", !this.checked);
+      this.checked = !this.checked;
+    } catch (err) {
+      var w = this.world();
+      if (w) w.logError(err);
+      else console.error(err);
+    }
+  }
+  
+  onMouseDown(evt) {
+    if (this.active) this.trigger();
+  }
+  
+  render(renderer) {
+    return renderer.renderCheckBox(this);
+  }
+
 }
