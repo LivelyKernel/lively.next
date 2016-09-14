@@ -80,9 +80,7 @@ export default class TextInput {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // event handlers
     domState.eventHandlers = [
-      bowser.firefox ? 
-        {type: "focus", node: newRootNode, fn: evt => { evt.preventDefault(); this.onFocus(evt); setTimeout(() => this.focus(), 0); }, capturing: true} :
-        {type: "focus", node: newRootNode, fn: evt => this.onFocus(evt), capturing: false},
+      {type: "focus", node: newRootNode, fn: evt => this.onRootNodeFocus(evt), capturing: true},
       // {type: "blur", node: domNode, fn: evt => evt => domNode.focus(), capturing: true},
       {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
@@ -142,8 +140,18 @@ export default class TextInput {
 
   }
 
-  focus() { this.domState.textareaNode && this.domState.textareaNode.focus(); }
-  blur() { this.domState.textareaNode && this.domState.textareaNode.blur(); }
+  focus() {
+    var node = this.domState.textareaNode;
+    if (!node) return;
+    node.ownerDocument.activeElement !== node && node.focus();
+    if (bowser.firefox) // FF needs an extra invitation...
+      Promise.resolve().then(() => node.ownerDocument.activeElement !== node && node.focus());
+  }
+
+  blur() {
+    var node = this.domState.textareaNode;
+    node && node.blur();
+  }
 
   doCopy(content) {
     // attempt to manually copy to the clipboard
@@ -201,11 +209,11 @@ export default class TextInput {
     return deferred.promise;
   }
 
-  onFocus(evt) {
-    this.domState.textareaNode.focus();
+  onRootNodeFocus(evt) {
+    this.focus();
     this.inputState.composition = null;
   }
-  
+
   onInput(evt) {
     if (this.inputState.composition) return;
     if (!evt.data) evt.data = this.readValue();
