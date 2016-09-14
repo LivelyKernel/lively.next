@@ -1,6 +1,7 @@
 import { Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
+import { FilterableList } from "./list.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
@@ -259,41 +260,52 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  inform(message = "no message") {
-    var dialog = this.addMorph(new InformPrompt({label: message}))
-    dialog.center = this.innerBounds().center();
-    return dialog.activate()
+  openPrompt(promptMorph, opts = {requester: null}) {
+    var focused = this.focusedMorph;
+    this.addMorph(promptMorph);
+    promptMorph.center = requester ? requester.globalBounds().center() : this.visibleBounds().center();
+    return promise.finally(promptMorph.activate(), () => focused && focused.focus());
   }
 
-  prompt(message, defaultInputOrOptions) {
-    // that.prompt("test")
+  inform(label = "no message", opts = {requester: null}) {
+    return this.openPrompt(new InformPrompt({label, ...opts}), opts).activate();
+  }
+
+  prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false}) {
+    // this.world().prompt("test")
     // options = {
     //   input: STRING, -- optional, prefilled input string
     //   historyId: STRING, -- id to identify the input history for this prompt
     //   useLastInput: BOOLEAN -- use history for default input?
     // }
-    var dialog = this.addMorph(new TextPrompt({label: message}))
-    dialog.center = this.innerBounds().center();
-    return dialog.activate()
+    return this.openPrompt(new TextPrompt({label, ...opts}), opts);
   }
+
+  filterableListPrompt(label = "", items = [], opts = {requester: null, preselect: 0}) {
+    return this.openPrompt(new FilterableListPrompt({label, items, ...opts}), opts);
+  }
+
 }
 
 
 export class AbstractPrompt extends Morph {
 
   constructor(props = {}) {
-    var {label} = props;
-    props = obj.dissoc(props, ["label", "autoRemove"])
-    super({fill: Color.gray.lighter(), extent: pt(300,80), props});
+    super({
+      fill: Color.gray.lighter(), extent: pt(300,80),
+      borderWidth: 1, borderColor: Color.gray,
+      ...obj.dissoc(props, ["label", "autoRemove"])});
+
     this.build();
-    this.setLabel(label);
+    this.label = props.label || "no label";
     this.state = {answer: promise.deferred()}
     var autoRemove = props.hasOwnProperty("autoRemove") ? props.autoRemove : true;
     if (autoRemove)
-      this.state.answer.promise.then(() => this.remove(), err => this.remove());
+      promise.finally(this.state.answer.promise, () => this.remove());
   }
 
-  setLabel(label) {
+  get label() { return this.get("label").textString; }
+  set label(label) {
     this.get("label").textString = label;
     this.applyLayout();
   }
@@ -308,6 +320,14 @@ export class AbstractPrompt extends Morph {
 
   build() { throw new Error("Not yet implemented"); }
   applyLayout() { throw new Error("Not yet implemented"); }
+
+  onKeyDown(evt) {
+    switch (evt.keyCombo) {
+      case 'Enter': this.resolve(); evt.stop(); break;
+      case 'Escape': this.reject(); evt.stop(); break;
+    }
+  }
+
 }
 
 export class InformPrompt extends AbstractPrompt {
@@ -353,22 +373,53 @@ export class TextPrompt extends AbstractPrompt {
         input = this.get("input"),
         okBtn = this.get("okBtn"),
         cancelBtn = this.get("cancelBtn");
-    if (label.width > this.width) this.width = label.width;
-    input.width = this.width;
-    input.top = label.bottom;
-    cancelBtn.topRight = pt(this.width, input.bottom);
+    label.position = pt(1,1);
+    if (label.width > this.width) this.width = label.width+2;
+    input.width = this.width-2;
+    input.topLeft = label.bottomLeft;
+    cancelBtn.topRight = pt(this.width-1, input.bottom+1);
     okBtn.topRight = cancelBtn.topLeft;
     this.height = okBtn.bottom;
   }
 
-  onKeyDown(evt) {
-    switch (evt.keyCombo) {
-      case 'Enter': this.resolve(); evt.stop(); break;
-      case 'Escape': this.reject(); evt.stop(); break;
-    }
+  focus() { this.get("input").focus(); }
+}
+
+
+export class FilterableListPrompt extends AbstractPrompt {
+
+  constructor(props = {}) {
+    super(obj.dissoc(props, ["preselect", "items"]));
+    this.get("list").items = props.items || [];
+    if (typeof props.preselect === "number") 
+      this.get("list").selectedIndex = props.preselect;
   }
 
-  focus() { this.get("input").focus(); }
+  build() {
+    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true, selectable: false});
+    this.get("list") || this.addMorph(new FilterableList({name: "list"}));
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
+    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
+    connect(this.get("okBtn"), 'fire', this, 'resolve');
+    connect(this.get("cancelBtn"), 'fire', this, 'reject');
+  }
+
+  resolve() { super.resolve(this.get("list").selection); }
+
+  applyLayout() {
+    var label = this.get("label"),
+        list = this.get("list"),
+        okBtn = this.get("okBtn"),
+        cancelBtn = this.get("cancelBtn");
+    if (label.width > this.width) this.width = label.width;
+    list.width = this.width;
+    list.top = label.bottom;
+    cancelBtn.topRight = pt(this.width, list.bottom);
+    okBtn.topRight = cancelBtn.topLeft;
+    this.height = okBtn.bottom;
+  }
+
+  focus() { this.get("list").focus(); }
 }
 
 
