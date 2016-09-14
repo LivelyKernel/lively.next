@@ -329,21 +329,24 @@ export class FilterableList extends Morph {
     return super.onChange(change);
   }
 
+  focus() { this.get("input").focus(); }
+
   relayout() {
     var i = this.get("input"),
         l = this.get("list"),
         inputHeight = i.env.fontMetric.sizeFor(i.fontFamily, i.fontSize, "X").height + 2*2,
         ext = this.extent;
-    i.setBounds(new Rectangle(0,0, this.width, inputHeight));
+    i.setBounds(new Rectangle(0,0, ext.x, inputHeight));
     l.setBounds(new Rectangle(0, inputHeight, ext.x, ext.y-inputHeight));
   }
 
+  get items() { return this.state.allItems || []; }
   set items(items) {
     var l = this.get("list");
-    l.items = items;
-    this.state.allItems = l.items;
+    this.state.allItems = items.map(asItem);
     this.updateFilter();
   }
+  get visibleItems() { return this.get("list").items; }
 
   get selection() { return this.get("list").selection; }
   set selection(x) { this.get("list").selection = x; }
@@ -363,7 +366,8 @@ export class FilterableList extends Morph {
       {
         name: "accept input",
         exec: (morph) => {
-          signal(morph, "accepted", list.selection);
+//           signal(morph, "accepted", list.selection);
+          signal(morph, "accepted", list.selectedIndex in this.get("list").items ? list.selection: null);
           return true;
         }
       },
@@ -376,51 +380,8 @@ export class FilterableList extends Morph {
         }
       },
 
-      {
-        name: "page up",
-        exec: (morph) => {
-          var index = list.selectedIndex,
-              newIndex = Math.max(0, index - Math.round(list.height / list.itemHeight));
-          list.gotoIndex(newIndex);
-          return true;
-        }
-      },
-    
-      {
-        name: "page down",
-        exec: (morph) => {
-          var index = list.selectedIndex,
-              newIndex = Math.min(list.items.length-1, index + Math.round(list.height / list.itemHeight))
-          list.gotoIndex(newIndex);
-          return true;
-        }
-      },
-    
-      {
-        name: "goto first item",
-        exec: (morph) => { list.gotoIndex(0); return true; }
-      },
-      
-      {
-        name: "goto last item",
-        exec: (morph) => { list.gotoIndex(list.items.length-1); return true; }
-      },
-      
-      {
-        name: "arrow up",
-        exec: (morph) => { list.gotoIndex((list.selectedIndex || list.items.length) - 1); return true; }
-      },
-      
-      {
-        name: "arrow down",
-        exec: (morph) => {
-          var index = list.selectedIndex,
-              newIndex = ((typeof index === "number" ? index : -1) + 1) % list.items.length;
-          list.gotoIndex(newIndex);
-          return true;
-        }
-      }
-    ])
+      ...listCommands.map(cmd => ({...cmd, exec: (morph, opts, count) => cmd.exec(list, opts, count)}))
+    ]);
   }
 
 }
