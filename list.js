@@ -1,4 +1,4 @@
-import { Morph, Text } from "./index.js"
+import { Morph, Text, show } from "./index.js"
 import { pt, Color, Rectangle } from "lively.graphics";
 import { arr, fun, obj } from "lively.lang";
 import { signal } from "lively.bindings";
@@ -31,6 +31,54 @@ class ListItemMorph extends Text {
     this.owner.owner.selectItemMorph(this);
   }
 }
+
+var listCommands = [
+  {
+    name: "page up",
+    exec: (list) => {
+      var index = list.selectedIndex,
+          newIndex = Math.max(0, index - Math.round(list.height / list.itemHeight));
+      list.gotoIndex(newIndex);
+      return true;
+    }
+  },
+
+  {
+    name: "page down",
+    exec: (list) => {
+      var index = list.selectedIndex,
+          newIndex = Math.min(list.items.length-1, index + Math.round(list.height / list.itemHeight))
+      list.gotoIndex(newIndex);
+      return true;
+    }
+  },
+
+  {
+    name: "goto first item",
+    exec: (list) => { list.gotoIndex(0); return true; }
+  },
+  
+  {
+    name: "goto last item",
+    exec: (list) => { list.gotoIndex(list.items.length-1); return true; }
+  },
+  
+  {
+    name: "arrow up",
+    exec: (list) => { list.gotoIndex((list.selectedIndex || list.items.length) - 1); return true; }
+  },
+  
+  {
+    name: "arrow down",
+    exec: (list) => {
+      var index = list.selectedIndex,
+          newIndex = ((typeof index === "number" ? index : -1) + 1) % list.items.length;
+      list.gotoIndex(newIndex);
+      return true;
+    }
+  }
+];
+
 
 export class List extends Morph {
 
