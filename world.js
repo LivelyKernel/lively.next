@@ -54,8 +54,10 @@ var worldCommands = [
   {
     name: "resize to fit window",
     exec: (world) => {
+      delete world._cachedWindowBounds;
       world.extent = world.windowBounds().extent();
-      return true; }
+      return true;
+    }
   }
 ]
 
