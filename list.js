@@ -278,8 +278,6 @@ import FontMetric from "./rendering/font-metric.js";
 export class FilterableList extends Morph {
 
   constructor(props = {}) {
-    super({borderWidth: 1, borderColor: Color.gray});
-
     var fontFamily = props.fontFamily || "Arial",
         fontSize = props.fontSize || 11,
         input = props.input || "",
@@ -296,12 +294,14 @@ export class FilterableList extends Morph {
           fill: null,
           clipMode: "auto",
           fontSize, fontFamily
-        })
+        });
+
+    super({borderWidth: 1, borderColor: Color.gray, submorphs: [inputText, list]});
 
     props = obj.dissoc(props, ["fontFamily", "fontSize", "input"]);
 
-    this.submorphs = [inputText, list];
-    this.state = {allItems: null}
+    this.state = {allItems: null};
+
     Object.assign(this, {
       items: [],
       extent: props.bounds ? props.bounds.extent() : pt(400, 360),
@@ -311,7 +311,7 @@ export class FilterableList extends Morph {
     this.relayout();
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
-    
+
     this.addKeyBindings([
       {keys: "Down|Ctrl-N", command: "arrow down"},
       {keys: "Up|Ctrl-P", command: "arrow up"},
