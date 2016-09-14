@@ -519,6 +519,8 @@ export class Morph {
     return this.owner ? this.owner.world() : null;
   }
 
+  getWindow() { return this.isWindow ? this : this.ownerChain().filter(({isWindow}) => isWindow); }
+
   openInWorld(pos) {
     var world = this.world() || this.env.world;
     if (!world) {
