@@ -9,14 +9,17 @@ function newKeyIn(obj, base = "_") {
   return key;
 }
 
-function signalBindings(morph, name, value) {
+function signalBindings(morph, name, change) {
   // optimized lively.bindings.signal
   var conns = morph.attributeConnections;
   if (!conns) return
   conns = conns.slice();
-  for (var i = 0; i < conns.length; i++)
+  for (var i = 0; i < conns.length; i++) {
     if (conns[i].sourceAttrName === name)
-      conns[i].update(value)
+      conns[i].update(change);
+    if (change.prop && conns[i].sourceAttrName === change.prop)
+      conns[i].update(change.value);
+  }
 }
 
 function informMorph(changeManager, change, morph) {
