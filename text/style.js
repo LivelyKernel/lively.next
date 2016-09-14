@@ -39,6 +39,12 @@ export class StyleRange {
     return new this(style, Range.fromPositions(start, end));
   }
 
+  static create(style, startRow, startCol, endRow, endCol) {
+    return new this(style, {
+      start: {row: startRow, column: startCol},
+      end: {row: endRow, column: endCol}});
+  }
+
   static mergeInto(others, newRange) {
     let a = others[0], b = newRange
     if (!a) return [newRange];
