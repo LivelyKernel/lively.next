@@ -107,6 +107,8 @@ export class StyleRange {
   equals(other) { return this.range.equals(other.range)
                       && obj.equals(this.style, other.style); }
 
+  merge(other) { return this.constructor.merge(this, other) };
+
   onInsert(range) {
     this.startAnchor.onInsert(range);
     this.endAnchor.onInsert(range);
