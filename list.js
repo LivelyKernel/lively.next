@@ -189,7 +189,7 @@ export class List extends Morph {
   get selection() { return this.selections[0]; }
   set selection(itemOrValue) { this.selections = [itemOrValue]; }
 
-  get selections() { return this.selectedIndexes.map(i => this.items[i].value); }
+  get selections() { return this.selectedIndexes.map(i => this.items[i] && this.items[i].value); }
   set selections(sels) { this.selectedIndexes = sels.map(ea => this.findIndex(ea)); }
 
   get selectedItems() { return this.selectedIndexes.map(i => this.items[i]); }
