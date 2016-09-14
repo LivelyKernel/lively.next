@@ -164,11 +164,13 @@ class ModuleInterface {
   async changeSourceAction(changeFunc) {
     const source = await this.source(),
           newSource = await changeFunc(source);
-    return this.changeSource(newSource, {evaluate: true});
+    return this.changeSource(newSource, {doEval: true});
   }
 
   async changeSource(newSource, options) {
-    await this.System.resource(this.id).write(newSource);
+    if (!options || options.doSave !== false) {
+      await this.System.resource(this.id).write(newSource);
+    }
     return moduleSourceChange(this.System, this.id, newSource, this.format(), options);
   }
 
