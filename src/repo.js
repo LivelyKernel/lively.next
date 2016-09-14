@@ -97,12 +97,15 @@ export default async function repository(pkg) {
   // GitHub fall through
   if (getGitHubToken() !== "<secret>") {
     const url = await gitHubURL(pkg);
-    if (!url) throw new Error("Could not determine GitHub URL");
-    const remote = {};
-    mixins.github(remote, url, await getOrAskGitHubToken());
-    mixins.readCombiner(remote);
-    mixins.sync(repo, remote);
-    mixins.fallthrough(repo, remote);
+    if (!url) {
+      console.error("Could not determine GitHub URL");
+    } else {
+      const remote = {};
+      mixins.github(remote, url, await getOrAskGitHubToken());
+      mixins.readCombiner(remote);
+      mixins.sync(repo, remote);
+      mixins.fallthrough(repo, remote);
+    }
   }
   
   // Other plugins

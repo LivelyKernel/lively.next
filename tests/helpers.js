@@ -1,9 +1,11 @@
+/* global System */
 import { mixins, modes, promisify } from "js-git-browser";
 
 import { registerPackage, removePackage } from "lively.modules";
 import { removeDir, createFiles } from "lively.modules/tests/helpers.js";
 
-import { createChangeSet } from "../src/changeset.js";
+import { getOrCreateChangeSet } from "../index.js";
+import { createChangeSet, initChangeSets, localChangeSets } from "../src/changeset.js";
 
 async function repoForPackage(pkg) {
   const repo = {};
@@ -53,7 +55,11 @@ export const
 
 export async function initChangeSet(withChange = false) {
   await initMaster(pkgDir, withChange);
-  const cs = await createChangeSet("test");
+  const prevActive = (await localChangeSets()).filter(cs => cs.isActive());
+  await initChangeSets(); // have to reset active changesets
+  const newChangeSets = await localChangeSets();
+  prevActive.map(cs => newChangeSets.find(cs2 => cs.name === cs2.name).active = true);
+  const cs = await getOrCreateChangeSet("test");
   await cs.activate();
   return cs;
 }

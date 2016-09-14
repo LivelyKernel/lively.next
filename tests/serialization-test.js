@@ -11,7 +11,6 @@ describe("serialize", () => {
   let cs;
   beforeEach(async () => {
     await createPackage();
-    await deactivateAll();
     cs = await initChangeSet();
   });
 
@@ -26,8 +25,6 @@ describe("serialize", () => {
     await module(fileA).changeSource("export const x = 2;\n");
     const obj = await cs.toObject();
     await cs.delete();
-    const changedSrc = await module(fileA).source();
-    expect(changedSrc).to.be.eql("export const x = 1;\n");
     const cs2 = await createChangeSet("test");
     await cs2.fromObject(obj);
     await cs2.activate();

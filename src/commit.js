@@ -52,7 +52,7 @@ function gitMasterHead(pkg) {
     .catch(e => null);
 }
 
-export async function packageHead(pkg) { // PackageAddress -> Commit
+export async function packageHead(pkg) { // PackageAddress -> Commit?
   let baseHead = await packageGitHead(pkg);
   if (!baseHead) {
     baseHead = await localGitHead(pkg);
@@ -61,7 +61,8 @@ export async function packageHead(pkg) { // PackageAddress -> Commit
     baseHead = await gitMasterHead(pkg);
   }
   if (!baseHead) {
-    throw new Error("Unable to locate git commit for HEAD");
+    console.error("Unable to locate git commit for HEAD");
+    return null;
   }
   return commit(pkg, baseHead);
 }
@@ -176,8 +177,7 @@ class Commit {
     return new Commit(this.pkg, commitHash, data);
   }
   
-  async activate(prev) { // Commit? -> ()
-    if (!prev) prev = await activeCommit(this.pkg);
+  async activate(prev) { // Commit -> ()
     if (this.hash == prev.hash) return;
     const prevFiles = await prev.files(),
           nextFiles = await this.files();
@@ -188,7 +188,7 @@ class Commit {
       if (prevHash && nextHash && prevHash != nextHash && module(mod).isLoaded() && (/\.js$/i).test(relPath)) {
         const newSource = await this.getFileContent(relPath);
         await module(mod)
-          .changeSource(newSource, {targetModule: mod, doEval: true})
+          .changeSource(newSource, {targetModule: mod, doEval: true, doSave: false})
           .catch(e => console.error(e));
       }
     }

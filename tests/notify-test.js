@@ -19,7 +19,6 @@ describe("notify", () => {
   
   beforeEach(async () => {
     await createPackage();
-    await deactivateAll();
     added = [], changed = [], activated = [], deactivated = [], deleted = [];
     subscribe("lively.changesets/added", onAdd);
     subscribe("lively.changesets/changed", onChange);
@@ -45,14 +44,6 @@ describe("notify", () => {
     expect(added).to.containSubset([
       {changeset: "test"}
     ]);
-    await cs.delete();
-  });
-  
-  it("only if active changeset", async () => {
-    const cs = await createChangeSet("test");
-    expect(changed).to.deep.equal([]);
-    await module(fileA).changeSource("export const x = 2;\n");
-    expect(changed).to.deep.equal([]);
     await cs.delete();
   });
   

@@ -11,7 +11,7 @@ function resolve(path) { // Path -> [PackageAddress, RelPath]
   return [pkg, mod.pathInPackage().replace(/^\.\//, '')];
 }
 
-export async function activeCommit(pkg) { // PackageAddress -> Commit
+export async function activeCommit(pkg) { // PackageAddress -> Commit?
   const cs = await localChangeSets();
   for (let i = cs.length - 1; i >= 0; i--) {
     if (cs[i].isActive()) {
