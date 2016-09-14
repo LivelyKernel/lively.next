@@ -92,7 +92,7 @@ var FUNCTION_KEYS  = [
 function canonicalizeFunctionKey(key) {
   key = key.toLowerCase();
   switch (key) {
-    case 'space': key = " "; break;
+    case 'space': key = "space"; break;
     case 'esc': key = "escape"; break;
     case 'return': key = "enter"; break;
     case 'arrowleft': key = "left"; break;
@@ -162,6 +162,26 @@ function identifyKeyFromCode({code}) {
 }
 
 
+function dedasherize(keyCombo) {
+  // splits string like Meta-x or Ctrl-- into its parts
+  // dedasherize("Ctrl--") => ["Ctrl", "-"]
+  var parts = [];
+  while (true) {
+    var idx = keyCombo.indexOf("-");
+    if (idx === -1) {
+      if (keyCombo) parts.push(keyCombo);
+      return parts;
+    }
+    if (idx === 0) {
+      parts.push(keyCombo[0]);
+      keyCombo = keyCombo.slice(2);
+    } else {
+      parts.push(keyCombo.slice(0, idx));
+      keyCombo = keyCombo.slice(idx+1)
+    }
+  }
+}
+
 var Keys = {
 
   computeHashIdOfEvent,
@@ -184,11 +204,12 @@ var Keys = {
       altGraphKey: false,
       isFunctionKey: false,
       isModified: false,
+      onlyModifiers: false,
       ...flags
     };
 
     // 2. Are any modifier keys pressed?
-    let keyMods = keyCombo.split(/[\-]/),
+    let keyMods = dedasherize(keyCombo),
         modsToEvent = {
           shift: "shiftKey",
           control: "ctrlKey",
@@ -218,7 +239,8 @@ var Keys = {
     // only modifiers
     if (!keyMods.length) {
       spec.keyCombo = Keys.eventToKeyCombo(spec);
-      spec.key = arr.last(spec.keyCombo.split("-"));
+      spec.key = arr.last(dedasherize(spec.keyCombo));
+      spec.onlyModifiers = true;
       return spec;
     }
 
@@ -234,7 +256,7 @@ var Keys = {
       spec.isFunctionKey = true;
       spec.key = fnKey
     } else if (spec.isModified) {
-      spec.key = trailing.toUpperCase();
+      spec.key = string.capitalize(trailing);
     } else {
       spec.key = trailing;
     }
@@ -274,8 +296,7 @@ var Keys = {
 
     var keyCombo = !key || isModifier(key) ? mod.replace(/-$/, "") : mod + key;
 
-    if (keyCombo.endsWith(" ")) keyCombo = keyCombo.replace(/ $/, "space");
-    if (keyCombo.match(/enter$/)) keyCombo = keyCombo.replace(/ $/, "space");
+    if (keyCombo.match(/\s$/)) keyCombo = keyCombo.replace(/\s$/, "Space");
 
     return keyCombo.replace(/(^|-)([a-z])/g, (_, start, char) => start+char.toUpperCase());
   },

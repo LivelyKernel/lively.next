@@ -2,6 +2,7 @@ import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.j
 import { Range, defaultRange } from "./range.js";
 import { StyleRange } from "./style.js";
 import config from "../config.js";
+import { signal } from "lively.bindings";
 
 var newline = "\n";
 
@@ -45,12 +46,13 @@ export class Selection {
     if (range.equals(this._range)) return;
 
     this._range = range;
-    this.textMorph && this.textMorph.makeDirty && this.textMorph.makeDirty();
     this._goalColumn = this.lead.column;
 
     this.startAnchor.position = range.start;
     this.endAnchor.position = range.end;
-    // console.log(`selection changed: ${this}`);
+
+    this.textMorph.makeDirty();
+    signal(this.textMorph, "selectionChange");
   }
 
   updateFromAnchors() {
@@ -75,13 +77,10 @@ export class Selection {
   get text() { return this.textMorph.document.textInRange(this.range); }
 
   set text(val) {
-    let {range: {start, end}, textMorph} = this;
-    if (!this.isEmpty())
-      textMorph.deleteText({start, end});
-
-    this.range = val.length ?
-      textMorph.insertText(val, start) :
-      {start: start, end: start};
+    let {range, textMorph} = this,
+        reversed = this.isReverse();
+    this.range = textMorph.replace(range, val);
+    if (reversed) this.reverse();
   }
 
   reverse() { this._isReverse = !this.isEmpty() && !this._isReverse; return this; }
@@ -116,10 +115,14 @@ export class Selection {
     return this;
   }
 
-  selectLine(row) {
-    if (typeof row !== "number") row = this.lead.row;
+  selectLine(row = this.lead.row) {
     this.range = {start: {row, column: 0}, end: {row, column: this.textMorph.getLine(row).length}};
     return this;
+  }
+
+  gotoLineEnd(row = this.lead.row) {
+    var pos = {row, column: this.textMorph.getLine(row).length};
+    this.range = {start: pos, end: pos};
   }
 
   selectLeft(n = 1) {

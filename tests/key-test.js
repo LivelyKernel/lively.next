@@ -128,7 +128,7 @@ describe("Keys", () => {
 
 
 
-import { KeyHandler } from "../events/keyhandler.js";
+import KeyHandler from "../events/KeyHandler.js";
 
 describe("key bindings", () => {
   

@@ -2,6 +2,7 @@ import { arr, promise } from "lively.lang";
 import { pt } from "lively.graphics";
 import config from "../config.js";
 import TextInput from './TextInput.js';
+import KillRing from './KillRing.js';
 
 import {
   Event, KeyEvent, SimulatedDOMEvent,
@@ -115,7 +116,6 @@ function focusEvents(dispatcher, targetMorph) {
   return events;
 }
 
-
 /*
 
 The event dispatcher controls what events get send to morphs and what the basic
@@ -148,6 +148,7 @@ export default class EventDispatcher {
     this.world = world;
     this.installed = false;
     this.handlerFunctions = [];
+    this.killRing = new KillRing(config.text.clipboardBufferLength);
 
     this.resetState();
   }
@@ -159,6 +160,7 @@ export default class EventDispatcher {
       focusedMorph: null,
       clickedOnPosition: null,
       clickedOnMorph: null,
+      clickCount: 0,
       prevClick: null,
       draggedMorph: null,
       dragDelta: null,
@@ -268,14 +270,14 @@ export default class EventDispatcher {
           state.clickedOnMorph = targetMorph;
           state.clickedOnPosition = defaultEvent.position;
 
-          let repeatedClick = false;
+          let repeatedClick = false, prevClickCount = 0;
           if (state.prevClick) {
-            let { clickedOnMorph, clickedOnPosition, clickedAtTime } = state.prevClick,
+            let { clickedOnMorph, clickedOnPosition, clickedAtTime, clickCount } = state.prevClick,
               clickInterval = Date.now() - clickedAtTime;
             repeatedClick = clickedOnMorph === targetMorph && clickInterval < config.repeatClickInterval;
+            prevClickCount = clickCount
           }
-          if (repeatedClick) state.clicks += 1;
-          else state.clicks = 1;
+          state.clickCount = repeatedClick ? prevClickCount + 1 : 1;
         });
         break;
 
@@ -283,10 +285,11 @@ export default class EventDispatcher {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointerup":
         defaultEvent.onDispatch(() => {
-          let { clickedOnMorph, clickedOnPosition } = state,
+          let { clickedOnMorph, clickedOnPosition, clickCount } = state,
               clickedAtTime = Date.now();
-          state.prevClick = { clickedOnMorph, clickedOnPosition, clickedAtTime };
+          state.prevClick = { clickedOnMorph, clickedOnPosition, clickedAtTime, clickCount };
           state.clickedOnMorph = null;
+          state.clickCount = 0;
         });
 
         // drag release
@@ -503,5 +506,13 @@ export default class EventDispatcher {
     }
     return this;
   }
+
+  doCopy(content) {
+    // via document.execCommand, might not work
+    // usage:
+    //   await $world.env.eventDispatcher.doCopy("foo124");
+    return this.keyInputHelper.doCopy(content);
+  }
+  doPaste() { return this.keyInputHelper.doPaste(); }
 
 }

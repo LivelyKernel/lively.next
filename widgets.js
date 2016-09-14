@@ -1,7 +1,7 @@
 import { arr, num, obj } from "lively.lang";
-import { pt, Color } from "lively.graphics";
+import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Ellipse, Text } from "./index.js";
-import { signal } from "lively.bindings";
+import { signal, connect } from "lively.bindings";
 
 export class Window extends Morph {
 
@@ -199,34 +199,80 @@ export class Button extends Morph {
       extent: pt(100,24),
       borderWidth: 1,
       active: true,
-      ...obj.dissoc(props, ["label"]),
+      padding: Rectangle.inset(2),
+      submorphs: [{
+        type: "text",
+        name: "label",
+        readOnly: true,
+        selectable: false,
+        fill: Color.white.withA(0),
+      }],
+      ...props,
     });
-    this.addMorph({
-      type: "text",
-      name: "label",
-      readOnly: true,
-      fontColor: this.active ? Color.rgb(17,103,189) : Color.gray,
-      textString: props.label || "",
-      fill: Color.white.withA(0),
-    });
-    this.submorphs[0].center = this.innerBounds().center();
+    this.relayout();
+
+    connect(this, "change", this, "relayout", {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
+    connect(this.submorphs[0], "change", this, "relayout", {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
+  }
+
+  get activeStyle() {
+    return {
+      borderColor: Color.gray,
+      fill: Color.rgb(240,240,240),
+      fontColor: Color.almostBlack
+    }
+  }
+
+  get inactiveStyle() {
+    return {
+      borderColor: Color.darkGray,
+      fill: Color.gray,
+      fontColor: Color.darkGray
+    }
+  }
+
+  get triggerStyle() {
+    return {
+      fill: Color.rgb(161,161,161)
+    }
+  }
+
+  relayout() {
+    var padding = this.padding,
+        label = this.submorphs[0],
+        minHeight = label.height + padding.top() + padding.bottom(),
+        minWidth = label.width + padding.left() + padding.right();
+    if (minHeight > this.height) this.height = minHeight;
+    if (minWidth > this.width) this.width = minWidth;
+    label.center = this.innerBounds().center();
+    return this;
   }
 
   get label() { return this.get("label").textString; }
-  set label(label) { this.get("label").textString = label; }
+  set label(label) { this.get("label").textString = label; this.relayout(); }
+  get fontFamily() { return this.submorphs[0].fontFamily; }
+  set fontFamily(fontFamily) { this.submorphs[0].fontFamily = fontFamily; this.relayout(); }
+  get fontSize() { return this.submorphs[0].fontSize; }
+  set fontSize(fontSize) { this.submorphs[0].fontSize = fontSize; this.relayout(); }
+  get fontColor() { return this.submorphs[0].fontColor; }
+  set fontColor(color) { this.submorphs[0].fontColor = color; }
+  set padding(value) { this.addValueChange("padding", value); this.relayout(); }
+  get padding() { return this.getProperty("padding"); }
+
   set action(value) { this.addValueChange("action", value); }
   get action() { return this.getProperty("action"); }
   set action(value) { this.addValueChange("action", value); }
   get active() { return this.getProperty("active"); }
   set active(value) {
-    if (value) {
-      this.borderColor = Color.rgb(17,103,189);
-      this.fill = Color.rgb(213,228,248);
-    } else {
-      this.borderColor = Color.gray;
-      this.fill = Color.lightGray;
-    }
+    Object.assign(this, value ? this.activeStyle : this.inactiveStyle);
     this.addValueChange("active", value);
+  }
+
+  fit() {
+    var padding = this.padding,
+        label = this.submorphs[0];
+    this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
+    return this.relayout();
   }
 
   trigger() {
@@ -242,12 +288,12 @@ export class Button extends Morph {
 
   onMouseDown(evt) {
     if (this.active) {
-      this.fill = Color.rgb(161,173,188);
+      Object.assign(this, this.triggerStyle);
       this.trigger();
     }
   }
 
   onMouseUp(evt) {
-    if (this.active) this.fill = Color.rgb(213,228,248);
+    if (this.active) Object.assign(this, this.activeStyle);
   }
 }

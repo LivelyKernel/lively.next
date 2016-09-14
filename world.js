@@ -1,6 +1,6 @@
 import { Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
-import { Halo } from "./halo.js"
+import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
@@ -9,6 +9,55 @@ import { connect, disconnectAll } from "lively.bindings";
 
 
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
+
+var worldCommands = [
+  {
+    name: "show halo for focused morph",
+    exec: (world) => {
+      var morph = world.focusedMorph;
+      world.showHaloFor(morph, world.firstHand.pointerId);
+      return true;
+    }
+  },
+
+  {
+    name: "escape",
+    exec: (world) => {
+      var halos = world.halos();
+      halos.forEach(h => h.remove());
+      arr.last(halos) && arr.last(halos).target.focus();
+      return false;
+    }
+  },
+
+  {
+    name: "move halo target",
+    exec: (world, opts = {direction: "", offset: 1}) => {
+      var halo = world.halos()[0];
+      if (!halo) return false;
+
+      var {direction, offset} = opts,
+          t = halo.target;
+      offset = offset || 1;
+      switch (direction) {
+        case "left": t.moveBy(pt(-offset, 0)); break;
+        case "right": t.moveBy(pt(offset, 0)); break;
+        case "up": t.moveBy(pt(0, -offset)); break;
+        case "down": t.moveBy(pt(0, offset)); break;
+      }
+      halo.alignWithTarget();
+
+      return true;
+    }
+  },
+
+  {
+    name: "resize to fit window",
+    exec: (world) => {
+      world.extent = world.windowBounds().extent();
+      return true; }
+  }
+]
 
 export class World extends Morph {
 
@@ -36,9 +85,15 @@ export class World extends Morph {
     return this.submorphs.filter(ea => ea.isHand);
   }
 
+  get firstHand() { return this.hands[0]; }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  get focusedMorph() {
+    return this.env.eventDispatcher.eventState.focusedMorph;
+  }
 
   onMouseMove(evt) {
     evt.hand.update(evt);
@@ -107,6 +162,10 @@ export class World extends Morph {
     }));
   }
 
+  get commands() {
+    return worldCommands.concat(super.commands);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // halos
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -117,47 +176,42 @@ export class World extends Morph {
     return this.submorphs.find(m => m.isHalo && m.state.pointerId === pointerId);
   }
 
-  showHaloFor(morph, pointerId) {
+  showHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
   }
 
-  layoutHaloForPointerId(pointerId) {
+  layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.submorphs.find(m => m.isLayoutHalo && m.state.pointerId === pointerId);
   }
 
-  showLayoutHaloFor(morph, pointerId) {
+  showLayoutHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.addMorph(morph.layout.inspect(pointerId));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  visibleBounds() {
-    // FIXME, see below
-    return this.innerBounds()
+  visibleBounds () {
+    // the bounds call seems to slow down halos...
+    return this.windowBounds().intersection(this.innerBounds());
   }
 
-  // visibleBounds () {
-  //   // the bounds call seems to slow down halos...
-  //   return this.windowBounds().intersection(this.innerBounds());
-  // }
-
-  // windowBounds(optWorldDOMNode) {
-  //   if (this.cachedWindowBounds) return this.cachedWindowBounds;
-  //   var canvas = optWorldDOMNode || this.renderContext().getMorphNode(),
-  //     topmost = document.documentElement,
-  //     body = document.body,
-  //     scale = 1 / this.getScale(),
-  //     topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
-  //     width, height;
-  //   if (UserAgent.isTouch || UserAgent.isMobile){
-  //     width = window.innerWidth * scale;
-  //     height = window.innerHeight * scale;
-  //   } else {
-  //     width = topmost.clientWidth * scale;
-  //     height = topmost.clientHeight * scale;
-  //   }
-  //   return this.cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
-  // }
+  windowBounds(optWorldDOMNode) {
+    if (this._cachedWindowBounds) return this._cachedWindowBounds;
+    var canvas = optWorldDOMNode || this.env.renderer.domNode,
+        topmost = canvas.ownerDocument.documentElement,
+        body = canvas.ownerDocument.body,
+        scale = 1 / this.scale,
+        topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
+        width, height;
+    if (false && (UserAgent.isTouch || UserAgent.isMobile)){
+      width = window.innerWidth * scale;
+      height = window.innerHeight * scale;
+    } else {
+      width = topmost.clientWidth * scale;
+      height = topmost.clientHeight * scale;
+    }
+    return this._cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // status messages
@@ -223,7 +277,7 @@ export class World extends Morph {
 }
 
 
-class AbstractPrompt extends Morph {
+export class AbstractPrompt extends Morph {
 
   constructor(props = {}) {
     var {label} = props;
@@ -254,7 +308,7 @@ class AbstractPrompt extends Morph {
   applyLayout() { throw new Error("Not yet implemented"); }
 }
 
-class InformPrompt extends AbstractPrompt {
+export class InformPrompt extends AbstractPrompt {
 
   build() {
     this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});
@@ -279,7 +333,7 @@ class InformPrompt extends AbstractPrompt {
 }
 
 
-class TextPrompt extends AbstractPrompt {
+export class TextPrompt extends AbstractPrompt {
 
   build() {
     this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});

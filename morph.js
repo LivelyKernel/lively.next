@@ -3,9 +3,11 @@ import { string, obj, arr, num, promise, tree } from "lively.lang";
 import { renderRootMorph } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
-import { defaultCommandHandler } from "./commands.js";
 import config from "./config.js";
+import CommandHandler from "./CommandHandler.js";
+import KeyHandler from "./events/KeyHandler.js";
 
+const defaultCommandHandler = new CommandHandler();
 
 const defaultProperties = {
   visible: true,
@@ -51,13 +53,9 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
-    if (props.env) props = obj.dissoc(props, ["env"]);
-    if (props.bounds) {
-      this.setBounds(props.bounds);
-      props = obj.dissoc(props, ["bounds"]);
-    }
-    if (props.type) props = obj.dissoc(props, ["type"]);
-    Object.assign(this, props);
+    if (props.submorphs) this.submorphs = props.submorphs;
+    if (props.bounds) this.setBounds(props.bounds);
+    Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds"]));
   }
 
   get __only_serialize__() { return Object.keys(this._currentState); }
@@ -86,12 +84,12 @@ export class Morph {
 
   onChange(change) {
     if (change.prop == "layout")
-        change.value && change.value.applyTo(this);
-    this.layout && this.layout.onChange(this, change);
+        change.value && change.value.apply();
+    this.layout && this.layout.onChange(change);
   }
 
   onSubmorphChange(change, submorph) {
-    this.layout && typeof this.layout.onSubmorphChange === "function" && this.layout.onSubmorphChange(this, submorph, change);
+    this.layout && typeof this.layout.onSubmorphChange === "function" && this.layout.onSubmorphChange(submorph, change);
   }
 
   get changes() { return this.env.changeManager.changesFor(this); }
@@ -141,7 +139,10 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get layout()         { return this.getProperty("layout") }
-  set layout(value)    { this.addValueChange("layout", value); }
+  set layout(value)    { 
+    if (value) value.container = this;
+    this.addValueChange("layout", value);
+  }
 
   get name()           { return this.getProperty("name"); }
   set name(value)      { this.addValueChange("name", value); }
@@ -515,6 +516,18 @@ export class Morph {
     return this.owner ? this.owner.world() : null;
   }
 
+  openInWorld(pos) {
+    var world = this.world() || this.env.world;
+    if (!world) {
+      console.warn(`Cannot open morph ${this}, world morph not found;`)
+      return this;
+    }
+    world.addMorph(this);
+    if (pos) this.position = pos;
+    else this.center = world.visibleBounds().center();
+    return this;
+  }
+
   isAncestorOf(aMorph) {
     // check if aMorph is somewhere in my submorph tree
     var owner = aMorph.owner;
@@ -636,8 +649,8 @@ export class Morph {
     // search below, search siblings, search upwards
     if (!name) return null;
     try {
-      return (this.getNameTest(this, name) && this)
-          || this.getSubmorphNamed(name)
+      return this.getSubmorphNamed(name)
+          || (this.getNameTest(this, name) && this)
           || this.getOwnerNamed(name);
     } catch(e) {
       if (e.constructor == RangeError && e.message == "Maximum call stack size exceeded") {
@@ -645,7 +658,7 @@ export class Morph {
           + "likely source of the problem is using 'get' as part of\n"
           + "toString, because 'get' calls 'getOwnerNamed', which\n"
           + "calls 'toString' on this. Try using 'getSubmorphNamed' instead,\n"
-          + "which only searches in this' children.");
+          + "which only searches in this' children.\nOriginal error:\n" + e.stack);
       }
       throw e
     }
@@ -696,6 +709,8 @@ export class Morph {
   get dragTriggerDistance() { return 0; }
 
   onMouseDown(evt) {
+    // FIXME this doesn't belong here. Event dispatch related code should go
+    // into events/dispatcher.js
     if (this === evt.targetMorph) {
       setTimeout(() => {
         if (this.grabbable && !evt.state.draggedMorph && evt.state.clickedOnMorph === this && !evt.hand.carriesMorphs())
@@ -707,7 +722,27 @@ export class Morph {
   onMouseUp(evt) {}
   onMouseMove(evt) {}
 
-  onKeyDown(evt) {}
+  addKeyBindings(bindings) {
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addKeyBindings",
+      args: [bindings],
+      undo: null
+    }, () => {
+      if (!this._keyhandlers) this._keyhandlers = [];
+      if (!this._keyhandlers.length) this._keyhandlers.push(new KeyHandler())
+      var handler = arr.last(this._keyhandlers);
+      bindings.forEach(({command, keys}) => handler.bindKey(keys, command));
+    });
+  }
+
+  get keyhandlers() { return this._keyhandlers || []; }
+  simulateKeys(keyString) { return KeyHandler.simulateKeys(this, keyString); }
+  onKeyDown(evt) {
+    if (KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
+      evt.stop();
+    }
+  }
   onKeyUp(evt) {}
 
   onContextMenu(evt) {}
@@ -825,9 +860,44 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // commands
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  get commands() { return this._commands || []; }
+  set commands(cmds) {
+    if (this._commands) this.removeCommands(this._commands);
+    this.addCommands(cmds);
+  }
+
+  addCommands(cmds) {
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addCommands",
+      args: [cmds],
+      undo: {target: this, selector: "removeCommands", args: [cmds]}
+    }, () => {
+      this.removeCommands(cmds);
+      this._commands = (this._commands || []).concat(cmds);
+    });
+  }
+
+  removeCommands(cmdsOrNames) {
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "removeCommands",
+      args: [cmdsOrNames],
+      undo: {target: this, selector: "addCommands", args: [cmdsOrNames]}
+    }, () => {
+      var names = cmdsOrNames.map(ea => typeof ea === "string" ? ea : ea.name),
+          commands = (this._commands || []).filter(({name}) => !names.includes(name));
+      if (!commands.length) delete this._commands;
+      else this._commands = commands;
+    });
+  }
+
+  get commandHandler() {
+    return this._commandHandler || defaultCommandHandler;
+  }
+
   execCommand(command, args, count, evt) {
-    var handler = this.commands || defaultCommandHandler;
-    return handler.exec(command, this, args, count, evt);
+    return this.commandHandler.exec(command, this, args, count, evt);
   }
 
 }

@@ -1,8 +1,9 @@
 /*global System*/
 
-import { arr } from "lively.lang";
-import { Range } from "./text/range.js"
-import { eqPosition, lessPosition } from "./text/position.js"
+import { arr, obj, string } from "lively.lang";
+import { pt, Rectangle } from "lively.graphics"
+import { Range } from "./range.js"
+import { eqPosition, lessPosition } from "./position.js"
 
 // commands.find(ea => ea.name === "transpose chars").exec(that)
 
@@ -14,6 +15,28 @@ var commands = [
     exec: function(morph) {
       if (morph.selection.isEmpty())
         morph.selectLine(morph.cursorPosition.row);
+      return true;
+    }
+  },
+
+  {
+    name: "manual clipboard copy",
+    doc: "attempts to copy selection via browser interface",
+    exec: function(morph, opts = {delete: false}) {
+      var sel = morph.selection,
+          range = sel.isEmpty() ? Range.fromPositions(morph.cursorPosition, morph.lastSavedMark || morph.cursorPosition) : sel.range,
+          text = morph.textInRange(range);
+
+      morph.env.eventDispatcher.doCopy(text);
+      morph.env.eventDispatcher.killRing.add(text);
+      if (opts["delete"])
+        morph.deleteText(range);
+      else if (!sel.isEmpty()) {
+        morph.activeMark = null;
+        morph.saveMark(sel.anchor);
+        sel.collapse(sel.lead);
+      }
+
       return true;
     }
   },
@@ -35,6 +58,36 @@ var commands = [
   },
 
   {
+    name: "manual clipboard paste",
+    doc: "attempts to paste from the clipboard to lively – currently requires browser extension!",
+    exec: async function(morph, opts = {killRingCycleBack: false}) {
+      var pasted, kr = morph.env.eventDispatcher.killRing;
+
+      if (opts.killRingCycleBack && (arr.last(morph.commandHandler.history) || "").includes("clipboard paste"))
+        pasted = kr.back();
+      
+      if (!pasted && kr.isCycling())
+        pasted = kr.yank();
+
+      if (!pasted && lively.browserExtension) {
+        pasted = await lively.browserExtension.doPaste();
+      }
+
+      if (!pasted) {
+        try {
+          pasted = await morph.env.eventDispatcher.doPaste();
+        } catch (e) { console.warn("paste failed: " + e); }
+      }
+
+      if (!pasted) pasted = kr.yank();
+
+      if (pasted) morph.selection.text = pasted;
+
+      return true;
+    }
+  },
+
+  {
     name: "text undo",
     doc: "undo text changes",
     exec: function(morph) { morph.textUndo(); return true; }
@@ -50,31 +103,6 @@ var commands = [
     name: "select all",
     doc: "Selects entire text contents.",
     exec: function(morph) { morph.selectAll(); return true; }
-  },
-
-  {
-    name: "doit",
-    doc: "Evaluates the selecte code or the current line and report the result",
-    exec: async function(morph) {
-      if (morph.selection.isEmpty()) morph.selectLine();
-      var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
-          result = await lively.vm.runEval(morph.selection.text, opts);
-      morph.world()[result.isError ? "logError" : "setStatusMessage"](result.value);
-      return result;
-    }
-  },
-
-  {
-    name: "printit",
-    doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
-    exec: async function(morph) {
-      if (morph.selection.isEmpty()) morph.selectLine();
-      var opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id},
-          result = await lively.vm.runEval(morph.selection.text, opts);
-      morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(result.value);
-      return result;
-    }
   },
 
   {
@@ -248,15 +276,6 @@ var commands = [
   },
 
   {
-    name: "select word",
-    exec: function(morph) {
-      var sel = morph.selection;
-      sel.range = morph.wordAt(sel.lead).range;
-      return true;
-    }
-  },
-
-  {
     name: "goto page up",
     exec: function(morph) { morph.pageUpOrDown({direction: "up", select: !!morph.activeMark}); return true; }
   },
@@ -339,9 +358,32 @@ var commands = [
           otherRow = args.withLine === "before" ? row : row+1,
           firstLine = morph.getLine(firstRow),
           otherLine = morph.getLine(otherRow),
-          joined = firstLine + otherLine + "\n";
+          joined = firstLine + otherLine.replace(/^\s+/, "") + "\n";
       morph.replace({start: {column: 0, row: firstRow}, end: {column: 0, row: otherRow+1}}, joined, true);
       morph.cursorPosition = {row: firstRow, column: firstLine.length}
+      return true;
+    }
+  },
+
+  {
+    name: "split line",
+    exec: function(morph) {
+      var pos = morph.cursorPosition,
+          indent = morph.getLine(pos.row).match(/^\s*/)[0].length;
+      morph.insertText("\n" + " ".repeat(indent), pos);
+      morph.cursorPosition = pos;
+      return true;
+    }
+  },
+
+  {
+    name: "insert line",
+    exec: function(morph, opts = {where: "above"}) {
+      var {row} = morph.cursorPosition,
+          indent = morph.getLine(row).match(/^\s*/)[0].length;
+      if (opts.where === "below") row++;
+      morph.insertText(" ".repeat(indent) + "\n", {column: 0, row});
+      morph.cursorPosition = {column: indent, row}
       return true;
     }
   },
@@ -369,11 +411,12 @@ var commands = [
       var pos = morph.cursorPosition,
           line = morph.getLine(pos.row);
       if (eqPosition(morph.document.endPosition, pos)) return true;
+      var range = line.trim() ?
+        {start: pos, end: {row: pos.row, column: line.length}} :
+        {start: {row: pos.row, column: 0}, end: {row: pos.row+1, column: 0}};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
       morph.undoManager.group();
-      if (!line.trim())
-        morph.deleteText({start: {row: pos.row, column: 0}, end: {row: pos.row+1, column: 0}});
-      else
-        morph.deleteText({start: pos, end: {row: pos.row, column: line.length}});
+      morph.deleteText(range);
       morph.undoManager.group();
       return true;
     }
@@ -386,14 +429,16 @@ var commands = [
         morph.selection.text = "";
         return true;
       }
-      var range = morph.lineRange(),
-          pos = morph.cursorPosition;
+      var lineRange = morph.lineRange(),
+          end = morph.cursorPosition;
       // already at beginning of line
-      if (eqPosition({row: pos.row, column: 0}, pos))
-        return true;
-      var start = eqPosition(range.start, pos) ?
-        {row: pos.row, column: 0}: range.start;
-      morph.deleteText({start, end: pos});
+      if (eqPosition({row: end.row, column: 0}, end)) return true;
+
+      var start = eqPosition(lineRange.start, end) ?
+            {row: end.row, column: 0}: lineRange.start,
+          range = {start, end};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
+      morph.deleteText(range);
       return true;
     }
   },
@@ -427,6 +472,24 @@ var commands = [
   },
 
   {
+    name: "select word",
+    exec: function(morph) {
+      var sel = morph.selection;
+      sel.range = morph.wordAt(sel.lead).range;
+      return true;
+    }
+  },
+
+  {
+    name: "select word right",
+    exec: function(morph) {
+      var sel = morph.selection;
+      sel.anchor = morph.wordRight(sel.end).range.end;
+      return true;
+    }
+  },
+
+  {
     name: "goto word left",
     exec: function(morph, args = {select: false}) {
       var select = args.select || !!morph.activeMark,
@@ -449,23 +512,65 @@ var commands = [
   },
 
   {
-    name: "remove word right",
+    name: "delete word right",
     exec: function(morph) {
       morph.undoManager.group();
-      var {range: {end}} = morph.wordRight();
-      morph.deleteText({start: morph.cursorPosition, end})
+      var {range: {end}} = morph.wordRight(),
+          range = {start: morph.cursorPosition, end};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
+      morph.deleteText(range);
       morph.undoManager.group();
       return true;
     }
   },
 
   {
-    name: "remove word left",
+    name: "delete word left",
     exec: function(morph) {
       morph.undoManager.group();
-      var {range: {start}} = morph.wordLeft();
-      morph.deleteText({start, end: morph.cursorPosition})
+      var {range: {start}} = morph.wordLeft(),
+          range = {start, end: morph.cursorPosition};
+      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
+      morph.deleteText(range);
       morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: "goto matching right",
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      var pairs = opts.pairs || {
+        "{": "}",
+        "[": "]",
+        "(": ")",
+        "<": ">"
+      }
+      var found = morph.findMatchingForward(morph.cursorPosition, "right", pairs) ||
+                  morph.findMatchingForward(morph.cursorPosition, "left", pairs);
+      if (found) {
+        morph.selection.lead = found;
+        if (!opts.select) morph.selection.anchor = morph.selection.lead;
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "goto matching left",
+    exec: function(morph, opts = {select: !!morph.activeMark}) {
+      var pairs = opts.pairs || {
+        "}": "{",
+        "]": "[",
+        ")": "(",
+        ">": "<"
+      }
+      var found = morph.findMatchingBackward(morph.cursorPosition, "left", pairs) ||
+                  morph.findMatchingBackward(morph.cursorPosition, "right", pairs);
+      if (found) {
+        morph.selection.lead = found;
+        if (!opts.select) morph.selection.anchor = morph.selection.lead;
+      }
       return true;
     }
   },
@@ -560,6 +665,16 @@ var commands = [
   },
 
   {
+    name: "increase font size",
+    exec: function(morph) { morph.fontSize++; return true; }
+  },
+
+  {
+    name: "decrease font size",
+    exec: function(morph) { morph.fontSize--; return true; }
+  },
+
+  {
     name: "cancel input",
     exec: function(morph, args, count, evt) {
       if (evt && evt.keyInputState) {
@@ -573,40 +688,212 @@ var commands = [
       return true;
     }
   }
+
 ]
 
-
-
-
-export class CommandHandler {
-
-  exec(command, morph, args, count, evt) {
-    let name = !command || typeof command === "string" ? command : command.command,
-        cmd = command && commands.find(ea => ea.name === name);
-
-    var result;
-    if (cmd && typeof cmd.exec === "function") {
-      result = cmd.exec(morph, args, cmd.handlesCount ? count : undefined, evt);
-    }
-
-    // to not swallow errors
-    if (result && typeof result.catch === "function") {
-      result.catch(err => {
-        console.error(`Error in interactive command ${name}: ${err.stack}`);
-        throw err;
-      });
-    }
-
-    // handle count by repeating command
-    if (result && typeof count === "number" && count > 1 && !cmd.handlesCount) {
-      return typeof result.then === "function" ?
-        result.then(() => this.exec(command, morph, args, count-1, evt)) :
-        this.exec(command, morph, args, count-1, evt);
-    }
-
-    return result;
-  }
-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// FIXME move this stuff below into a JS related module
+function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range) {
+  var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
+  if (!evalStrategies)
+    throw new Error("doit not possible: lively.vm eval-strategies not available!")
+  var code = morph.textInRange(range),
+      evalStrategy = new evalStrategies.LivelyVmEvalStrategy(),
+      opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id, context: morph};
+  return evalStrategy.runEval(code, opts);
 }
 
-export var defaultCommandHandler = new CommandHandler();
+function maybeSelectCommentOrLine(morph) {
+  // Dan's famous selection behvior! Here it goes...
+  /*   If you click to the right of '//' in the following...
+  'wrong' // 'try this'.slice(4)  //should print 'this'
+  'http://zork'.slice(7)          //should print 'zork'
+  */
+  // If click is in comment, just select that part
+  var sel = morph.selection,
+      {row, column} = sel.lead,
+      text = morph.selectionOrLineString();
+
+  if (!sel.isEmpty()) return;
+
+  // text now equals the text of the current line, now look for JS comment
+  var idx = text.indexOf('//');
+  if (idx === -1                          // Didn't find '//' comment
+      || column < idx                 // the click was before the comment
+      || (idx>0 && (':"'+"'").indexOf(text[idx-1]) >=0)    // weird cases
+      ) { morph.selectLine(row); return }
+
+  // Select and return the text between the comment slashes and end of method
+  sel.range = {start: {row, column: idx+2}, end: {row, column: text.length}};
+}
+
+commands.push(
+
+  {
+    name: "doit",
+    doc: "Evaluates the selecte code or the current line and report the result",
+    exec: async function(morph) {
+      maybeSelectCommentOrLine(morph);
+      var result, err;
+      try {
+        result = await doEval(morph);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      err ?
+        morph.world().logError(err) : 
+        morph.world().setStatusMessage(obj.inspect(result.value, {maxDepth: 1}));
+      return result;
+    }
+  },
+
+  {
+    name: "eval all",
+    doc: "Evaluates the entire text contents",
+    exec: async function(morph) {
+      var result, err;
+      try {
+        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition});
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      err ?
+        morph.world().logError(err) : 
+        morph.world().setStatusMessage(obj.inspect(result.value, {maxDepth: 1}));
+      return result;
+    }
+  },
+
+  {
+    name: "printit",
+    doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
+    exec: async function(morph) {
+      maybeSelectCommentOrLine(morph);
+      var result, err;
+      try {
+        result = await doEval(morph);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      morph.selection.collapseToEnd();
+      morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
+      return result;
+    }
+  },
+
+  {
+    name: "inspectit",
+    doc: "...",
+    handlesCount: true,
+    exec: async function(morph, _, count = 1) {
+      maybeSelectCommentOrLine(morph);
+      var result, err;
+      try {
+        result = await doEval(morph);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      morph.selection.collapseToEnd();
+      morph.insertTextAndSelect(err ? err.stack || String(err) : obj.inspect(result.value, {maxDepth: count}));
+      return result;
+    }
+  },
+
+  {
+    name: "toggle comment",
+    exec: function(morph) {
+
+      var doc = morph.document,
+          sel = morph.selection;
+
+      if (!sel.isEmpty() && sel.end.column === 0)
+        sel.growRight(-1);
+
+      var startRow = sel.start.row,
+          lines = doc.lines.slice(sel.start.row, sel.end.row+1),
+          isCommented = lines.every(line => line.trim() && line.match(/^\s*(\/\/|$)/));
+
+      morph.undoManager.group();
+      if (isCommented) {
+        lines.forEach((line, i) => {
+          var match = line.match(/^(\s*)(\/\/\s?)(.*)/);
+          if (match) {
+            var [_, before, comment, after] = match,
+                range = {
+                  start: {row: startRow+i, column: before.length},
+                  end: {row: startRow+i, column: before.length+comment.length}
+                };
+            morph.deleteText(range);
+          }
+        });
+
+      } else {
+        var indentDepth = lines.reduce((indentDepth, line) => !line.trim() ? indentDepth : Math.min(indentDepth, line.match(/^\s*/)[0].length), Infinity),
+            indentDepth = indentDepth === Infinity ? 0 : indentDepth,
+            indent = (morph.useSoftTabs ? ' ' : '\t').repeat(indentDepth);
+        lines.forEach((line, i) => {
+          var [_, space, rest] = line.match(/^(\s*)(.*)/);
+          morph.insertText(`${indent.slice(space.length)}// `, {row: startRow+i, column: 0})
+        });
+      }
+      morph.undoManager.group();
+
+      return true;
+    }
+  },
+
+  {
+    name: "comment box",
+    exec: function(morph, _, count) {
+      morph.undoManager.group();
+
+      if (morph.selection.isEmpty()) {
+        morph.insertText("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+        morph.undoManager.group();
+        return true;
+      }
+
+      var range = morph.selection.range,
+          lines = morph.withSelectedLinesDo(line => line),
+          indent = [range.start.column].concat(lines.map(function(line) { return line.match(/^\s*/); }).flatten().compact().pluck('length')).min(),
+          length = lines.pluck('length').max() - indent,
+          fence = Array(Math.ceil(length / 2) + 1).join('-=') + '-';
+
+      // comment range
+      // morph.toggleCommentLines();
+      morph.collapseSelection();
+
+      // insert upper fence
+      morph.cursorPosition = {row: range.start.row, column: 0}
+      if (count)
+        morph.insertText(string.indent("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-" + '\n', ' ', indent));
+      else
+        morph.insertText(string.indent(fence + '\n', ' ', indent));
+      // morph.selection.goUp();
+      // morph.toggleCommentLines();
+      // insert fence below
+      morph.cursorPosition = {row: range.end.row+2, column: 0};
+
+      morph.insertText(string.indent(fence + '\n', ' ', indent));
+
+      // morph.selection.goUp();
+      // morph.selection.gotoLineEnd();
+      // morph.toggleCommentLines();
+
+      // select it all
+      morph.selection.range = {start: {row: range.start.row, column: 0}, end: morph.cursorPosition};
+      morph.undoManager.group();      
+
+      return true;
+    },
+    multiSelectAction: "forEach",
+    handlesCount: true
+  }
+);
+
+import { activate as iyGotoCharActivate } from "./iy-goto-char.js"
+commands.push(iyGotoCharActivate);
+
+import { completionCommands } from "./completion.js"
+commands.push(...completionCommands);
+
+import { searchCommands } from "./search.js"
+commands.push(...searchCommands);
+
+export default commands;

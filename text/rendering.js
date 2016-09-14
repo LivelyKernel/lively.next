@@ -31,6 +31,21 @@ function cursor(pos, height, visible) {
   })
 }
 
+function renderMarkerPart(renderer, morph, start, end, style) {
+  var {x,y} = renderer.boundsFor(morph, start),
+      {height, x: endX} = renderer.boundsFor(morph, end);
+  return h("div.marker-layer-part", {
+    style: {
+      zIndex: -4,
+      ...style,
+      position: "absolute",
+      left: x + "px", top: y + "px",
+      height: height + "px",
+      width: endX-x + "px"
+    }
+  });
+}
+
 
 class RenderedLine {
 
@@ -255,6 +270,12 @@ export default class TextLayout {
     this.layoutComputed = false;
     this.lines = [];
     this.fontMetric = fontMetric;
+    this.firstVisibleLine = undefined;
+    this.lastVisibleLine = undefined;
+  }
+
+  defaultCharSize(morph) {
+    return this.fontMetric.sizeFor(morph.fontFamily, morph.fontSize, "X");
   }
 
   updateFromMorphIfNecessary(morph) {
@@ -295,6 +316,7 @@ export default class TextLayout {
       }
     }, this.renderSelectionLayer(morph)
         .concat(morph.debug ? this.renderDebugLayer(morph) : [])
+        .concat(this.renderMarkerLayer(morph))
         .concat(this.renderTextLayer(morph))
         .concat(renderer.renderSubmorphs(morph))
       );
@@ -313,17 +335,23 @@ export default class TextLayout {
         startPos            = this.pixelPositionFor(morph, start).addPt(paddingOffset),
         endPos              = this.pixelPositionFor(morph, end).addPt(paddingOffset),
         cursorPos           = isReverse ? startPos : endPos,
-        endLineHeight       = lines[end.row].height;
+        defaultHeight       = null,
+        endLineHeight       = end.row in lines ?
+                                lines[end.row].height :
+                                (defaultHeight = this.defaultCharSize(morph).height),
+        leadLineHeight      = lead.row in lines ?
+                                lines[lead.row].height :
+                                defaultHeight || (defaultHeight = this.defaultCharSize(morph).height);
 
     // collapsed selection -> cursor
     if (morph.selection.isEmpty())
-      return [cursor(cursorPos, lines[lead.row].height, cursorVisible)];
+      return [cursor(cursorPos, leadLineHeight, cursorVisible)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, lines[lead.row].height, cursorVisible)]
+        cursor(cursorPos, leadLineHeight, cursorVisible)]
 
     let endPosLine1 = pt(morph.width, startPos.y + lines[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
@@ -333,7 +361,7 @@ export default class TextLayout {
       return [
         selectionLayerPart(startPos, endPosLine1),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, lines[lead.row].height, cursorVisible)];
+        cursor(cursorPos, leadLineHeight, cursorVisible)];
     }
 
     let endPosMiddle = pt(morph.width, endPos.y),
@@ -344,8 +372,36 @@ export default class TextLayout {
       selectionLayerPart(startPos, endPosLine1),
       selectionLayerPart(startPosLine2, endPosMiddle),
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
-      cursor(cursorPos, lines[lead.row].height, cursorVisible)];
+      cursor(cursorPos, leadLineHeight, cursorVisible)];
 
+  }
+
+  renderMarkerLayer(morph) {
+    let markers = morph._markers, parts = [];
+    if (!markers) return parts;
+
+    for (let m of markers) {
+      let {style, range: {start, end}} = m;
+
+      // single line
+      if (start.row === end.row) {
+        parts.push(renderMarkerPart(this, morph, start, end, style));
+        continue;
+      }
+
+      // multiple lines
+      // first line
+      parts.push(renderMarkerPart(this, morph, start, morph.lineRange(start.row).end, style));
+      // lines in the middle
+      for (var row = start.row+1; row <= end.row-1; row++) {
+        let {start: lineStart, end: lineEnd} = morph.lineRange(row);
+        parts.push(renderMarkerPart(this, morph, lineStart, lineEnd, style));
+      }
+      // last line
+      parts.push(renderMarkerPart(this, morph, {row: end.row, column: 0}, end, style));
+    }
+
+    return parts;
   }
 
   renderTextLayer(morph) {
@@ -370,6 +426,7 @@ export default class TextLayout {
       textHeight += height;
     }
 
+    this.firstVisibleLine = row;
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
     for (;row < lines.length; row++) {
@@ -382,6 +439,7 @@ export default class TextLayout {
       lineTop += height;
     }
 
+    this.lastVisibleLine = row;
     lastVisibleLineBottom = textHeight;
 
     for (;row < lines.length; row++) {
@@ -503,7 +561,7 @@ export default class TextLayout {
         safeRow = Math.max(0, Math.min(maxLength, row)),
         line = lines[safeRow];
 
-    if (!line) return pt(0,0);
+    if (!line) return new Rectangle(0,0,0,0);
 
     for (var y = 0, i = 0; i < safeRow; i++)
       y += lines[i].height;

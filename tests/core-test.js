@@ -477,3 +477,19 @@ describe("contains point", () => {
   });
 
 });
+
+describe("command and keybinding test", () => {
+  
+  it("add command and keybinding and invoke", () => {
+    var m = morph(), run = 0;
+    m.addKeyBindings([{keys: "input-a", command: "do stuff"}])
+    m.addCommands([{name: "do stuff", exec: () => run++}])
+    m.simulateKeys("a");
+    expect(run).equals(1, "command not run");
+
+    m.removeCommands(["do stuff"]);
+    m.simulateKeys("a");
+    expect(run).equals(1, "command run although it was rmoved")
+  });
+
+});

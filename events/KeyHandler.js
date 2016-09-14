@@ -10,9 +10,8 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
   let {keyCombo, key, data} = evt,
       toExecute,
       success = false,
-      {keyhandlers} = morph,
+      keyhandlers = morph.keyhandlers,
       isInputEvent = keyCombo.startsWith("input-");
-
   if (noInputEvents && isInputEvent) return false;
 
   for (var i = keyhandlers.length; i--;) {
@@ -36,7 +35,7 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
     if (success) break;
   }
 
-  if (!success && isInputEvent) {
+  if (!success && isInputEvent && morph.onTextInput) {
     var count = evt && evt.keyInputState ? evt.keyInputState.count : undefined;
     success = morph.execCommand("insertstring", {string: data || key, undoGroup: 600/*ms*/}, count, evt);
     if (success && evt && evt.keyInputState)
@@ -47,7 +46,7 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 }
 
 
-function simulateKeys(
+async function simulateKeys(
   morph, keyComboString,
   keyInputState = {keyChain: undefined, count: undefined}) {
   // keyComboString like "a b ctrl-c"
@@ -57,7 +56,8 @@ function simulateKeys(
   var pressedKeys = keyComboString.length === 1 ?
       [keyComboString] :
       keyComboString.split(/ /g).map(ensureSpaces)
-  pressedKeys.forEach(ea => simulateKey(morph, ea, keyInputState));
+  for (let keys of pressedKeys)
+    await simulateKey(morph, keys, keyInputState);
 }
 
 
@@ -114,7 +114,7 @@ function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   }
 }
 
-export class KeyHandler {
+export default class KeyHandler {
 
   static invokeKeyHandlers(morph, evt, noInputEvents = false) {
     return invokeKeyHandlers(morph, evt, noInputEvents);

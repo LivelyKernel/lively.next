@@ -1,3 +1,4 @@
+import { promise } from "lively.lang";
 import bowser from "bowser";
 
 const placeholderValue = "\x01\x01",
@@ -16,7 +17,9 @@ export default class TextInput {
     }
 
     this.inputState = {
-      composition: null
+      composition: null,
+      manualCopy: null,
+      manualPaste: null
     }
   }
 
@@ -84,8 +87,8 @@ export default class TextInput {
       {type: "keydown", node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "keyup",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
       {type: "cut",     node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "copy",    node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
-      {type: "paste",   node: domState.textareaNode, fn: evt => this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "copy",    node: domState.textareaNode, fn: evt => this.inputState.manualCopy ? this.inputState.manualCopy.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
+      {type: "paste",   node: domState.textareaNode, fn: evt => this.inputState.manualPaste ? this.inputState.manualPaste.onEvent(evt) : this.eventDispatcher.dispatchDOMEvent(evt), capturing: false},
 
       {type: "compositionstart",  node: domState.textareaNode, fn: evt => this.onCompositionStart(evt), capturing: false},
       {type: "compositionend",    node: domState.textareaNode, fn: evt => this.onCompositionEnd(evt), capturing: false},
@@ -141,7 +144,63 @@ export default class TextInput {
 
   focus() { this.domState.textareaNode && this.domState.textareaNode.focus(); }
   blur() { this.domState.textareaNode && this.domState.textareaNode.blur(); }
-  
+
+  doCopy(content) {
+    // attempt to manually copy to the clipboard
+    // this might fail for various strange browser reasons
+    // also it will probably steal the focus...
+    return this.execCommand("manualCopy", () => {
+      var el = this.domState.textareaNode;
+      el.value = content;
+      el.select();
+      el.ownerDocument.execCommand("copy");
+    });
+  }
+
+  doPaste() {
+    return this.execCommand("manualPaste", () => {
+      var el = this.domState.textareaNode;
+      el.value = "";
+      el.select();
+      el.ownerDocument.execCommand("paste");
+    });
+  }
+
+  async execCommand(stateName, execFn) {
+    if (!this.domState.isInstalled)
+      throw new Error("Cannot copy to clipboard – input helper is not installed into DOM!");
+
+    var state = this.inputState;
+    if (state[stateName]) {
+      try {
+        await state[stateName].promise;
+      } catch (e) {}
+    }
+
+    var deferred = promise.deferred(), isDone = false;
+    state[stateName] = {
+      onEvent: evt => {
+        if (isDone) return;
+        state[stateName] = null;
+        isDone = true;
+        deferred.resolve(evt);
+      },
+      promise: deferred.promise
+    }
+
+    execFn();
+
+    try {
+      await promise.waitFor(800, () => isDone);
+    } catch (e) {
+      state[stateName] = null;
+      isDone = true;
+      deferred.reject(e);
+    }
+
+    return deferred.promise;
+  }
+
   onFocus(evt) {
     this.domState.textareaNode.focus();
     this.inputState.composition = null;

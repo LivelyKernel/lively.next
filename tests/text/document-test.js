@@ -243,4 +243,35 @@ describe("text doc", () => {
     });
 
   });
+
+  describe("char-wise scanning", () => {
+
+    var doc; beforeEach(() => doc = TextDocument.fromString("1 23\n4\n foo\n5  "));
+    
+    it("scans forward", () => {
+      var seen = [];
+      expect(doc.scanForward({row: 0, column: 3}, (char, pos) => {
+        seen.push(char);
+        return char === "f" ? {pos, char} : null;
+      })).deep.equals({pos: {row: 2, column: 1}, char: "f"});
+      expect(seen).equals(["3", "4", " ", "f"]);
+    });
+
+    it("scans forward failing", () => {
+      expect(doc.scanForward({row: 0, column: 3}, (char, pos) => char === "x" ? 1 : 0)).equals(null);
+    });
+
+    it("scans backwards", () => {
+      var seen = [];
+      expect(doc.scanBackward({row: 2, column: 1}, (char, pos) => {
+        seen.push(char);
+        return char === "2" ? {pos, char} : null;
+      })).deep.equals({pos: {row: 0, column: 2}, char: "2"});
+      expect(seen).equals([" ", "4", "3", "2"]);
+    });
+    
+    it("scans backward failing", () => {
+      expect(doc.scanBackward({row: 0, column: 3}, (char, pos) => char === "x" ? 1 : 0)).equals(null);
+    });
+  });
 });

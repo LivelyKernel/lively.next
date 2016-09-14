@@ -8,19 +8,20 @@ import { Range } from "./range.js";
 import { StyleRange } from "./style.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
-import { KeyHandler } from "../events/keyhandler.js";
+import KeyHandler from "../events/KeyHandler.js";
 import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 import { Anchor } from "./anchors.js";
+import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
-
+import commands from "./commands.js";
 
 export class Text extends Morph {
 
   static makeLabel(string, props) {
     return new Text({
       textString: string,
-      fontFamily: "Helvetica Neue, Arial",
+      fontFamily: "Helvetica Neue, Arial, sans-serif",
       fontColor: Color.black,
       fontSize: 11,
       readOnly: true,
@@ -30,6 +31,11 @@ export class Text extends Morph {
 
   static makeInputLine(props) {
     var t = new Text({type: "text", extent: pt(100, 20), clipMode: "auto", ...props})
+    t.onChange = function(change) {
+      if (change.selector === 'insertText' || change.selector === 'deleteText')
+        signal(this, "inputChanged", this.textString);
+      return this.constructor.prototype.onChange.call(this, change);
+    }
     t.onInput = function(input) {
       signal(this, "input", input);
     }
@@ -67,6 +73,8 @@ export class Text extends Morph {
     this.undoManager = new UndoManager();
     this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new Selection(this, selection) : null;
+    this._anchors = null;
+    this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
@@ -79,8 +87,9 @@ export class Text extends Morph {
   get isText() { return true }
 
   onChange(change) {
-    if (change.selector === "insertText"
-     || change.selector === "deleteText"
+    var textChange = change.selector === "insertText"
+                  || change.selector === "deleteText";
+    if (textChange
      || change.selector === "addStyleRange"
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
@@ -92,7 +101,9 @@ export class Text extends Morph {
      || change.prop === "textDecoration"
      || change.prop === "fixedCharacterSpacing")
        this.renderer && (this.renderer.layoutComputed = false);
+
     super.onChange(change);
+    textChange && signal(this, "textChange");
   }
 
   get readOnly() { return this.getProperty("readOnly"); }
@@ -169,6 +180,8 @@ export class Text extends Morph {
     this.setDefaultStyle({fixedCharacterSpacing});
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // anchors – positions in text that move when text is changed
   get anchors() { return this._anchors || (this._anchors = []); }
   addAnchor(anchor) {
     if (!anchor) return;
@@ -178,7 +191,7 @@ export class Text extends Morph {
 
     if (!anchor.isAnchor) {
       let {id, column, row} = anchor;
-      anchor = new Anchor(id, row || column ? {row, column} : undefined);
+      anchor = new Anchor(id, row || column ? {row, column} : undefined, anchor.insertBehavior || "move");
     }
 
     var existing = anchor.id && this.anchors.find(ea => ea.id === anchor.id);
@@ -189,12 +202,29 @@ export class Text extends Morph {
     this.anchors.push(anchor);
     return anchor;
   }
-
   removeAnchor(anchor) {
     this._anchors = this.anchors.filter(
       typeof anchor === "string" ?
         ea => ea.id !== anchor :
         ea => ea !== anchor);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // markers, text ranges with styles that are rendered
+  get markers() { return this._markers; }
+  addMarker(marker) {
+    // id, range, style
+    if (!this._markers) this._markers = [];
+    this.removeMarker(marker.id);
+    this._markers.push(marker);
+    this.makeDirty();
+    return marker;
+  }
+  removeMarker(marker) {
+    if (!this._markers) return;
+    var id = typeof marker === "string" ? marker : marker.id;
+    this._markers = this.markers.filter(ea => ea.id !== id);
+    this.makeDirty();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -294,6 +324,8 @@ export class Text extends Morph {
   set tabWidth(value)  { this.addValueChange("tabWidth", value); }
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
+  get commands() { return (this._commands || []).concat(commands); }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
 
@@ -302,6 +334,10 @@ export class Text extends Morph {
     this.deleteText({start: {column: 0, row: 0}, end: this.document.endPosition});
     this.insertText(value, {column: 0, row: 0});
   }
+
+  textInRange(range) { return this.document.textInRange(range); }
+  charRight({row, column} = this.cursorPosition) { return this.getLine(row).slice(column, column+1); }
+  charLeft({row, column} = this.cursorPosition) { return this.getLine(row).slice(column-1, column); }
 
   getLine(row) {
     if (typeof row !== "number") this.cursorPosition.row;
@@ -333,6 +369,9 @@ export class Text extends Morph {
 
   insertText(text, pos = this.cursorPosition) {
     text = String(text);
+
+    if (!text.length) return Range.fromPositions(pos, pos);
+
     var range = this.document.insert(text, pos);
 
     this.undoManager.undoStart(this, "insertText");
@@ -363,9 +402,9 @@ export class Text extends Morph {
     if (range.isEmpty()) return;
 
     this.undoManager.undoStart(this, "insertText");
-
-    var text = this.document.textInRange(range)
-    this.document.remove(range);
+    var doc = this.document,
+        text = doc.textInRange(range);
+    doc.remove(range);
     this._needsFit = true;
 
     this.addMethodCallChangeDoing({
@@ -385,7 +424,7 @@ export class Text extends Morph {
     this.undoManager.undoStop();
   }
 
-  replace(range, text, undoGroup = false) {
+  replace(range, text, undoGroup = true) {
     if (undoGroup) this.undoManager.group();
     this.deleteText(range);
     var range = this.insertText(text, range.start);
@@ -408,10 +447,10 @@ export class Text extends Morph {
   }
 
   withLinesDo(startRow, endRow, doFunc) {
-    arr.range(startRow, endRow).forEach(row => {
+    return arr.range(startRow, endRow).map(row => {
       var line = this.getLine(row),
           range = Range.create(row, 0, row, line.length);
-      doFunc(line, range);
+      return doFunc(line, range);
     });
   }
 
@@ -421,7 +460,18 @@ export class Text extends Morph {
       this.selection.range;
     var {start: {row: startRow}, end: {row: endRow, column: endColumn}} = range;
     // if selection is only in the beginning of last line don't include it
-    return this.withLinesDo(startRow, endColumn === 0 ? endRow-1 : endRow, doFunc);
+    return this.withLinesDo(startRow, endColumn === 0 && endRow > startRow ? endRow-1 : endRow, doFunc);
+  }
+
+  get whatsVisible() {
+    var startRow = this.renderer.firstVisibleLine,
+        endRow = this.renderer.lastVisibleLine,
+        lines = this.document.lines;
+    return {
+      lines: startRow === undefined || endRow === undefined ?
+              lines : lines.slice(startRow, endRow),
+      startRow, endRow
+    }
   }
 
   get styleProps() {
@@ -474,6 +524,11 @@ export class Text extends Morph {
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
   get documentEndPosition() { return this.document.endPosition; }
+
+  cursorUp(n = 1) { return this.selection.goUp(n); }
+  cursorDown(n = 1) { return this.selection.goDown(n); }
+  cursorLeft(n = 1) { return this.selection.goLeft(n); }
+  cursorRight(n = 1) { return this.selection.goRight(n); }
 
   collapseSelection() {
     this.selection.collapse(this.selection.lead);
@@ -593,11 +648,7 @@ export class Text extends Morph {
   // keyboard events
 
   get keyhandlers() {
-    return [KeyHandler.withBindings(config.text.defaultKeyBindings)];
-  }
-
-  simulateKeys(keyString) {
-    KeyHandler.simulateKeys(this, keyString);
+    return [KeyHandler.withBindings(config.text.defaultKeyBindings)].concat(this._keyhandlers || []);
   }
 
   onKeyDown(evt) {
@@ -617,8 +668,12 @@ export class Text extends Morph {
   doSave() { /*...*/ }
 
   onCut(evt) {
-    if (this.rejectsInput()) return;
-    this.onCopy(evt);
+    if (this.rejectsInput() || !this.isFocused()) return;
+    evt.stop();
+    var sel = this.selection;
+    this.env.eventDispatcher.killRing.add(sel.text);
+    evt.domEvt.clipboardData.setData("text", sel.text);
+    this.activeMark = null;
     var sel = this.selection;
     sel.text = "";
     sel.collapse();
@@ -627,7 +682,14 @@ export class Text extends Morph {
   onCopy(evt) {
     if (!this.isFocused()) return;
     evt.stop();
-    evt.domEvt.clipboardData.setData("text", this.selection.text);
+    var sel = this.selection;
+    this.env.eventDispatcher.killRing.add(sel.text);
+    evt.domEvt.clipboardData.setData("text", sel.text);
+    if (!sel.isEmpty()) {
+      this.activeMark = null;
+      this.saveMark(sel.anchor);
+      this.collapseSelection();
+    }
   }
 
   onPaste(evt) {
@@ -764,6 +826,57 @@ export class Text extends Morph {
     var changes = redo.changes.slice();
     this.selection = this.computeTextRangeForChanges(changes);
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // search
+
+  findMatchingForward(pos, side = "right", pairs = {}) {
+    // searching for closing char, counting open and closing
+    // side is the char we want to match "right" or "left" of pos?
+    // pairs can be a JS object like {"[": "]", "<": ">"}
+    var openChar = this[side === "right" ? "charRight" : "charLeft"](pos),
+        closeChar = pairs[openChar];
+    if (!closeChar) return null;
+
+    var counter = side === "right" ? -1 : 0;
+    return this.document.scanForward(pos, (char, pos) => {
+      if (char === closeChar) {
+        if (counter === 0) return side === "right" ? {row: pos.row, column: pos.column+1} : pos;
+        else counter--;
+      }
+      else if (char === openChar) counter++;
+      return null;
+    });
+  }
+
+  findMatchingBackward(pos, side = "right", pairs = {}) {
+    // see findMatchingForward
+    var openChar = this[side === "right" ? "charRight" : "charLeft"](pos),
+        closeChar = pairs[openChar];
+    if (!closeChar) return null;
+
+    var counter = side === "left" ? -1 : 0;
+    return this.document.scanBackward(pos, (char, pos) => {
+      if (char === closeChar) {
+        if (counter === 0) return side === "right" ? {row: pos.row, column: pos.column+1} : pos;
+        else counter--;
+      }
+      else if (char === openChar) counter++;
+      return null;
+    });
+  }
+
+  search(needle, options = {start: this.cursorPosition, backwards: false, caseSensitive: false}) {
+    return new TextSearcher(this).search({needle, ...options});
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // serialization
+    exportToJSON(options) {
+      return Object.assign(super.exportToJSON(options), {
+        textString: this.textString
+      });
+    }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging

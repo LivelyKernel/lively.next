@@ -23,7 +23,7 @@ Object.assign(Morph.prototype, {
 
 var wbounds = world.bounds(), morphs = [];
 
-for (var i = 0; i < 1000; i++) {
+for (var i = 0; i < 300; i++) {
 
   var props = {
     time: Math.random()*10,
@@ -59,7 +59,7 @@ var time = Date.now();
   var time2 = Date.now();
   if (time2-time > 10*1000) {
     time = time2;
-    var rec = world.env.changeRecorder;
+    var rec = world.env.changeManager;
     console.log(`[changes] ${rec.revision} ${rec.changes.length}`);
     console.log(`${(rec.changes.length/30).toFixed(1)} changes/s`);
     rec.changes.length = 0;
