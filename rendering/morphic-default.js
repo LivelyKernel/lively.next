@@ -34,12 +34,33 @@ export function defaultStyle(morph) {
   };
 }
 
+// Sets the scroll later...
+// See https://github.com/Matt-Esch/virtual-dom/blob/dcb8a14e96a5f78619510071fd39a5df52d381b7/docs/hooks.md
+// for why this has to be a function of prototype
+function ScrollHook(morph) { this.morph = morph; }
+ScrollHook.prototype.hook = function(node, propertyName, previousValue) {
+  if (!this.morph.isClip()) return;
+  Promise.resolve().then(() => {
+    const {x, y} = this.morph.scroll;
+    node.scrollTop !== y && (node.scrollTop = y);
+    node.scrollLeft !== x && (node.scrollLeft = x);
+  });
+}
+
 export function defaultAttributes(morph) {
+
   return {
     key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
-    draggable: false
+    draggable: false,
+
+    // rk 2016-09-13: scroll issues: just setting the scroll on the DOM node
+    // doesn't work b/c of https://github.com/Matt-Esch/virtual-dom/issues/338
+    // check the pull request mentioned in the issue, once that's merged we
+    // might be able to remove the hook
+    // scrollLeft: morph.scroll.x, scrollTop: morph.scroll.y,
+    "set-scroll-hook": new ScrollHook(morph)
   };
 }
 
