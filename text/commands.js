@@ -824,12 +824,11 @@ commands.push(
         });
 
       } else {
-        var indentDepth = lines.reduce((indentDepth, line) => !line.trim() ? indentDepth : Math.min(indentDepth, line.match(/^\s*/)[0].length), Infinity),
-            indentDepth = indentDepth === Infinity ? 0 : indentDepth,
-            indent = (morph.useSoftTabs ? ' ' : '\t').repeat(indentDepth);
+        var minSpace = lines.reduce((minSpace, line) => !line.trim() ? minSpace : Math.min(minSpace, line.match(/^\s*/)[0].length), Infinity),
+            minSpace = minSpace === Infinity ? 0 : minSpace;
         lines.forEach((line, i) => {
           var [_, space, rest] = line.match(/^(\s*)(.*)/);
-          morph.insertText(`${indent.slice(space.length)}// `, {row: startRow+i, column: 0})
+          morph.insertText(`// `, {row: startRow+i, column: minSpace});
         });
       }
       morph.undoManager.group();
