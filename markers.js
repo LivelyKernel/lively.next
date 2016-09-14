@@ -7,11 +7,16 @@ export function show(target) {
 
   var world = MorphicEnv.default().world;
 
-  if (target === null || target === undefined) return;
+  if (target === null || target === undefined) target = String(target);
   if (target.isMorph) return showRect(target.world(), target.globalBounds());
   if (target.isPoint) return showRect(world, new Rectangle(target.x-5, target.y-5, 10,10));
   if (target.isRectangle) return showRect(world, target);
   if (typeof Element !== "undefined" && target instanceof Element) return showRect(world, Rectangle.fromElement(target));
+  if (typeof target === "number" || typeof target === "symbol" || typeof target === "boolean"
+    || (typeof Node !== "undefined" && target instanceof Node)
+    || target instanceof RegExp) target = String(target);
+  if (typeof target === "object") target = obj.inspect(target, {maxDepth: 1})
+  if (typeof target === "string" && arguments.length === 1) return world.setStatusMessage(target);
 
   return world.setStatusMessage(string.formatFromArray(Array.from(arguments)));
 }
