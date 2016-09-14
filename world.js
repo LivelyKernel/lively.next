@@ -263,7 +263,7 @@ export class World extends Morph {
   openPrompt(promptMorph, opts = {requester: null}) {
     var focused = this.focusedMorph;
     this.addMorph(promptMorph);
-    promptMorph.center = requester ? requester.globalBounds().center() : this.visibleBounds().center();
+    promptMorph.center = opts.requester ? opts.requester.globalBounds().center() : this.visibleBounds().center();
     return promise.finally(promptMorph.activate(), () => focused && focused.focus());
   }
 
