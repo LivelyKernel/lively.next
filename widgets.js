@@ -20,11 +20,16 @@ export class Window extends Morph {
     if (props.targetMorph) this.targetMorph = props.targetMorph;
   }
 
+  get isWindow() { return true }
+
+  relayout() {
+    this.titleLabel().center = pt(Math.max(this.extent.x / 2, 100), 10);
+  }
+
   resizeBy(delta) {
     this.styleClasses = ["morph"];
     super.resizeBy(delta);
-    // FIXME proper layouting
-    this.titleLabel().center = pt(Math.max(this.extent.x / 2, 100), 10);
+    this.relayout();
     var t = this.targetMorph;
     if (t) t.resizeBy(delta);
   }
@@ -126,7 +131,7 @@ export class Window extends Morph {
   }
 
   get title() { return this.titleLabel().textString; }
-  set title(title) { this.titleLabel().textString = title; }
+  set title(title) { this.titleLabel().textString = title; this.relayout(); }
 
   get targetMorph() { return arr.last(arr.withoutAll(this.submorphs, this.controls())); }
   set targetMorph(targetMorph) {
