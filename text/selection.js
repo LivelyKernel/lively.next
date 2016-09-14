@@ -1,5 +1,6 @@
 import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
 import { Range, defaultRange } from "./range.js";
+import { StyleRange } from "./style.js";
 import config from "../config.js";
 import { signal } from "lively.bindings";
 
@@ -180,6 +181,25 @@ export class Selection {
       clearInterval(this.cursorBlinkProcess);
     this.cursorBlinkProcess = null;
     this._cursorVisible = true;
+  }
+
+  set style(style) {
+    let {textMorph} = this,
+        styleRange = new StyleRange(style, this);
+    this.textMorph.addStyleRange(styleRange);
+  }
+
+  getStyleRanges() {
+    let {styleRanges} = this.textMorph.document,
+        result = [];
+    styleRanges.map(ea => {
+      let intersection = this.range.intersect(ea);
+      if (!intersection.isEmpty()) {
+        let styleRange = new StyleRange(ea.style, intersection);
+        result.push(styleRange);
+      }
+    });
+    return result;
   }
 
   toString() {

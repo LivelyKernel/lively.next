@@ -166,16 +166,4 @@ export class Range {
 export const defaultRange = new Range()
 
 
-// export class StyleRange {
-  
-//   constructor(style = {}, range) {
-//     super(range);
-//     this.style = style;
-//   }
-  
-//   applyTo(otherRange) {
-//     // Styles from otherRange will be applied to (and override) any overlapping section of this range; will return 1-3 new ranges
-    
-    
-//   }
-// }
+

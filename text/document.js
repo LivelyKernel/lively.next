@@ -1,5 +1,7 @@
 import { string, arr } from "lively.lang";
-import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js"
+import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js";
+import { Range } from "./range.js";
+import { StyleRange } from "./style.js";
 
 const newline = "\n",
       newlineLength = newline.length;
@@ -16,8 +18,11 @@ export default class TextDocument {
   static get newlineLength() { return newlineLength; }
   static parseIntoLines(text) { return text.split(this.newline); }
 
-  constructor(lines = []) {
+  constructor(lines = [], styleRanges = []) {
     this.lines = lines;
+    this._styleRanges = [];
+    this._styleRangesByLine = [];
+    styleRanges.map(range => this.addStyleRange(range));
   }
 
   get textString() { return this.lines.join(TextDocument.newline); }
@@ -31,6 +36,34 @@ export default class TextDocument {
       column: lines[lines.length-1].length
     } : {row: 0, column: 0}
   }
+
+  get styleRanges() { return this._styleRanges }
+
+  addStyleRange(range) {
+    this._styleRanges = StyleRange.mergeInto(this._styleRanges, range);
+    for (let row = range.start.row; row <= range.end.row; row++) {
+      this.updateLineStyleRanges(row);
+    }
+    // TODO: Consolidate/deduplicate ranges
+  }
+
+  updateLineStyleRanges(row) {
+    let { styleRanges } = this,
+        text = this.getLine(row),
+        start = { row, column: 0 },
+        end = { row, column: text ? text.length : 0 },
+        lineRange = Range.fromPositions(start, end),
+        lineStyleRanges = [];
+    styleRanges.forEach(ea => {
+      let { style, range } = ea,
+          intersection = lineRange.intersect(range);
+      if (intersection.start.row === lineRange.start.row)
+        lineStyleRanges.push(new StyleRange(style, intersection));
+    });
+    this._styleRangesByLine[row] = Range.sort(lineStyleRanges);
+  }
+
+  get styleRangesByLine() { return this._styleRangesByLine; }
 
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
@@ -101,7 +134,7 @@ export default class TextDocument {
   }
 
   insert(string, pos) {
-    let {lines} = this,
+    let {lines, styleRanges} = this,
         {row, column} = pos,
         line = lines[row],
         insertionLines = TextDocument.parseIntoLines(string);
@@ -123,15 +156,21 @@ export default class TextDocument {
       end.row++;
       end.column = insertionLines[i].length;
       lines.splice(row+1+i, 0, insertionLines[i]);
+      this._styleRangesByLine.splice(row+1+i, 0, []);
     }
 
     lines[row + insertionLines.length] = lines[row + insertionLines.length] + after;
 
-    return {start: pos, end}
+    let insertionRange = {start: pos, end};
+    styleRanges.forEach(ea => ea.onInsert(insertionRange));
+    for (let row = pos.row; row <= end.row; row++) {
+      this.updateLineStyleRanges(row);
+    }
+    return insertionRange;
   }
 
   remove({start, end}) {
-    var {lines} = this;
+    var {lines, styleRanges} = this;
     if (!lines.length) return;
 
     if (lessPosition(end, start)) [start, end] = [end, start];
@@ -144,6 +183,11 @@ export default class TextDocument {
 
     lines[fromRow] = lines[fromRow].slice(0, fromCol) + lines[toRow].slice(toCol);
     lines.splice(fromRow+1, toRow - fromRow);
+    this._styleRangesByLine.splice(fromRow+1, toRow - fromRow);
+
+    styleRanges.forEach(ea => ea.onDelete({start, end}));
+    this._styleRanges = styleRanges.filter(ea => !ea.isEmpty());
+    this.updateLineStyleRanges(fromRow);
   }
 
   wordsOfLine(row) {

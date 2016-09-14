@@ -5,6 +5,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
 import { Range } from "./range.js";
+import { StyleRange } from "./style.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import KeyHandler from "../events/KeyHandler.js";
@@ -48,8 +49,8 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, selection, clipMode} = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode"])
+    var {fontMetric, textString, selectable, selection, clipMode, styleRanges } = props;
+    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode", "styleRanges"])
     super({
       readOnly: false,
       draggable: false,
@@ -58,8 +59,10 @@ export class Text extends Morph {
       fontFamily: "Sans-Serif",
       fontSize: 12,
       fontColor: Color.black,
-      fontKerning: true,
-      styleRanges: [{range: new Range({start: {row: 0, column: 0}, end: {row: 0, column: 1}}), style: {fontColor: Color.red}}],
+      fontWeight: "normal",
+      fontStyle: "normal",
+      textDecoration: "none",
+      fixedCharacterSpacing: false,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
@@ -75,6 +78,8 @@ export class Text extends Morph {
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
+    this.setDefaultStyle();
+    if (styleRanges) styleRanges.map(range => this.addStyleRange(range));
     this.fit();
     this._needsFit = false;
   }
@@ -85,12 +90,16 @@ export class Text extends Morph {
     var textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
     if (textChange
+     || change.selector === "addStyleRange"
+     || change.prop === "fixedWidth"
+     || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
      || change.prop === "fontColor" // FIXME
-     || change.prop === "fixedWidth"
-     || change.prop === "fixedHeight"
-     || change.prop === "fontKerning")
+     || change.prop === "fontWeight"
+     || change.prop === "fontStyle"
+     || change.prop === "textDecoration"
+     || change.prop === "fixedCharacterSpacing")
        this.renderer && (this.renderer.layoutComputed = false);
 
     super.onChange(change);
@@ -130,22 +139,46 @@ export class Text extends Morph {
   }
 
   get fontFamily() { return this.getProperty("fontFamily") }
-  set fontFamily(value) {
-    this.addValueChange("fontFamily", value);
-    this._needsFit = true;
+  set fontFamily(fontFamily) {
+    this.addValueChange("fontFamily", fontFamily);
+    this.setDefaultStyle({fontFamily});
   }
 
   get fontSize() { return this.getProperty("fontSize") }
-  set fontSize(value) {
-    this.addValueChange("fontSize", value);
-    this._needsFit = true;
+  set fontSize(fontSize) {
+    this.addValueChange("fontSize", fontSize);
+    this.setDefaultStyle({fontSize});
   }
 
   get fontColor() { return this.getProperty("fontColor") }
-  set fontColor(value) { this.addValueChange("fontColor", value); }
+  set fontColor(fontColor) {
+    this.addValueChange("fontColor", fontColor);
+    this.setDefaultStyle({fontColor});
+  }
 
-  get fontKerning() { return this.getProperty("fontKerning") }
-  set fontKerning(value) { this.addValueChange("fontKerning", value); }
+  get fontWeight() { return this.getProperty("fontWeight") }
+  set fontWeight(fontWeight) {
+    this.addValueChange("fontWeight", fontWeight);
+    this.setDefaultStyle({fontWeight});
+  }
+
+  get fontStyle() { return this.getProperty("fontStyle") }
+  set fontStyle(fontStyle) {
+    this.addValueChange("fontStyle", fontStyle);
+    this.setDefaultStyle({fontStyle});
+  }
+
+  get textDecoration() { return this.getProperty("textDecoration") }
+  set textDecoration(textDecoration) {
+    this.addValueChange("textDecoration", textDecoration);
+    this.setDefaultStyle({textDecoration});
+  }
+
+  get fixedCharacterSpacing() { return this.getProperty("fixedCharacterSpacing") }
+  set fixedCharacterSpacing(fixedCharacterSpacing) {
+    this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
+    this.setDefaultStyle({fixedCharacterSpacing});
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // anchors – positions in text that move when text is changed
@@ -439,6 +472,47 @@ export class Text extends Morph {
               lines : lines.slice(startRow, endRow),
       startRow, endRow
     }
+  }
+
+  get styleProps() {
+    return obj.select(this, ["fontFamily",
+        "fontSize", "fontColor", "fontWeight", "fontStyle",
+        "textDecoration", "fixedCharacterSpacing"]);
+  }
+
+  get styleRanges() { return this.document.styleRanges }
+
+  addStyleRange(range) {
+
+    // FIXME: undos
+    // this.undoManager.undoStart(this, "addStyleRange");
+
+    this.document.addStyleRange(range);
+
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "addStyleRange",
+      args: [range],
+      // FIXME!
+      // undo: {
+      //   target: this,
+      // }
+    }, () => { this._needsFit = true; });
+
+    //this.undoManager.undoStop();
+  }
+
+  setDefaultStyle(style = this.styleProps) {
+    let { document } = this;
+    if (!document) return;
+    let start = { row: 0, column: -1 },
+        end = document.endPosition,
+        defaultStyleRange = StyleRange.fromPositions(style, start, end);
+    this.addStyleRange(defaultStyleRange);
+  }
+
+  resetStyleRanges() {
+    this.setDefaultStyle();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

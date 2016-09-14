@@ -1,7 +1,9 @@
 import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js";
 import { h } from "virtual-dom";
-import { arr, string } from "lively.lang";
+import { arr, string, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
+import { Range } from "./range.js";
+import { StyleRange } from "./style.js";
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
@@ -44,10 +46,147 @@ function renderMarkerPart(renderer, morph, start, end, style) {
   });
 }
 
-class RenderedChunk {
+
+class RenderedLine {
+
+  static chunksFrom(text, config) {
+    let { fontMetric, styleRanges } = config;
+    styleRanges = text ? styleRanges.filter(ea => !ea.isEmpty()) :
+                         styleRanges.slice(0,1);
+    return styleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
+  }
 
   constructor(text, config) {
-    // config: {fontFamily, fontSize, fontMetric, fontColor}
+    this.chunks = this.constructor.chunksFrom(text, config);
+    return this;
+  }
+
+  resetCache() {
+    this.rendered = this._charBounds = this._height = this._width = undefined;
+  }
+
+  get height() {
+    if (this._height === undefined) this.computeBounds();
+    return this._height;
+  }
+
+  get width() {
+    if (this._width === undefined) this.computeBounds();
+    return this._width;
+  }
+
+  computeBounds() {
+    this._width = this._height = 0;
+    this.chunks.map(chunk => {
+      this._width += chunk.width;
+      this._height = Math.max(this._height, chunk.height);
+    });
+    return this;
+  }
+
+  compatibleWith(text2, config2) {
+    let chunks2 = this.constructor.chunksFrom(text2, config2),
+        { chunks } = this;
+    if (chunks.length !== chunks2.length) return false
+    for (let i = 0; i < chunks.length; i++) {
+      let chunk = chunks[i],
+          { text: chunkText2, config: chunkConfig2 } = chunks2[i];
+      if (!chunk.compatibleWith(chunkText2, chunkConfig2)) return false;
+    }
+    return true;
+  }
+
+  updateIfNecessary(text, config) {
+    let newChunks = this.constructor.chunksFrom(text, config),
+        {chunks: oldChunks} = this,
+        oldChunkCount = oldChunks.length,
+        newChunkCount = newChunks.length,
+        shouldReset = false;
+    for (let i = 0; i < newChunks.length; i++) {
+      let oldChunk = oldChunks[i],
+          newChunk = newChunks[i],
+          { text: newText, config: newConfig } = newChunk;
+      if (!oldChunk || !oldChunk.compatibleWith(newText, newConfig)) {
+        this.chunks[i] = newChunk;
+        shouldReset = true;
+      }
+    }
+    if (newChunkCount < oldChunkCount) {
+      this.chunks.splice(newChunkCount, oldChunkCount - newChunkCount);
+      shouldReset = true;
+    }
+    if (shouldReset) this.resetCache();
+  }
+
+  boundsFor(column) {
+    var charBounds = this.charBounds;
+    return charBounds[column] || charBounds[charBounds.length-1];
+  }
+
+  columnForXOffset(xInPixels) {
+    let {charBounds} = this,
+        length = charBounds.length,
+        first = charBounds[0],
+        last = charBounds[length-1];
+
+    // everything to the left of the first char + half its width is col 0
+    if (!length || xInPixels <= first.x+Math.round(first.width/2)) return 0;
+
+    // everything to the right of the last char + half its width is last col
+    if (xInPixels > last.x+Math.round(last.width/2)) return length-1;
+
+    // find col so that x between right side of char[col-1] and left side of char[col]
+    for (var i = length-2; i >= 0; i--) {
+      let {x, width} = charBounds[i];
+      if (xInPixels >= x + Math.round(width/2)) return i+1;
+    }
+    return 0;
+  }
+
+  get charBounds() {
+    if (this._charBounds === undefined) this.computeCharBounds();
+    return this._charBounds;
+  }
+
+  computeCharBounds() {
+    let prefixWidth = 0,
+        {chunks, height: lineHeight } = this,
+        nChunks = chunks.length;
+    this._charBounds = [];
+    for (let i = 0; i < nChunks; i++) {
+      let chunk = chunks[i],
+          { charBounds, width, height } = chunk,
+          offsetCharBounds =
+            charBounds.map(bounds => { let {x, y, width} = bounds;
+                                       return {x: x + prefixWidth, y, width, height: lineHeight}});
+        prefixWidth += width;
+        if (i < nChunks - 1) offsetCharBounds.splice(-1, 1);
+        offsetCharBounds.map(ea => this._charBounds.push(ea));
+    }
+  }
+
+  render() {
+    if (this.rendered) return this.rendered;
+    let { chunks, height, width } = this;
+    height += "px";
+    return this.rendered = h("div", { style: { height, lineHeight: height } },
+                             chunks.map(ea => ea.render()));
+  }
+}
+
+
+class RenderedChunk {
+
+  static fromStyleRange(lineText, fontMetric, styleRange) {
+    let { start, end, style } = styleRange,
+        startCol = start.column,
+        endCol = end.column,
+        chunkText = lineText.slice(startCol, endCol),
+        chunkConfig = {style, fontMetric};
+    return new RenderedChunk(chunkText, chunkConfig);
+  }
+
+  constructor(text, config) {
     this.config = config;
     this.text = text;
 
@@ -60,12 +199,9 @@ class RenderedChunk {
 
   compatibleWith(text2, config2) {
     var {text, config} = this;
-    return text               === text2
-        && config.fontFamily  === config2.fontFamily
-        && config.fontSize    === config2.fontSize
-        && config.fontColor   === config2.fontColor
-        && config.fontMetric  === config2.fontMetric
-        && config.fontKerning === config2.fontKerning;
+    return text                   === text2
+        && config.fontMetric      === config2.fontMetric
+        && obj.equals(config.style, config2.style);
   }
 
   get height() {
@@ -97,58 +233,34 @@ class RenderedChunk {
   }
 
   computeCharBounds() {
-    let {text, config: {fontFamily, fontSize, fontMetric, fontKerning}} = this;
+    let {text, config: {style, fontMetric}} = this;
     text += newline;
-    this._charBounds = fontMetric.charBoundsFor(fontFamily, fontSize, fontKerning, text);
+    this._charBounds = fontMetric.charBoundsFor(style, text);
   }
 
   render() {
     if (this.rendered) return this.rendered;
-    var {config: {fontSize, fontFamily, fontColor, fontKerning}, text, width, height} = this,
-        textNodes = text ? fontKerning ? text
-                                       : text.split("").map(c => h("span", c))
-                         : h("br");
+    var { config: {style: {fontSize, fontFamily, fontColor,
+                          fontWeight, fontStyle, textDecoration,
+                          fixedCharacterSpacing}},
+          text, width, height} = this,
+        textNodes = text ?
+                      fixedCharacterSpacing ?
+                        text.split("").map(c => h("span", c)) :
+                        text :
+                      h("br");
     fontColor = fontColor || "";
 
-    return this.rendered = h("div", {
+    return this.rendered = h("span", {
       style: {
-        pointerEvents: "none",
         fontSize: fontSize + "px",
         fontFamily,
-        lineHeight: "initial",
+        fontWeight,
+        fontStyle,
+        textDecoration,
         color: fontColor.isColor ? fontColor.toString() : String(fontColor)
       }
     }, textNodes);
-  }
-
-  boundsFor(column) {
-    var charBounds = this.charBounds
-    return charBounds[column] || charBounds[charBounds.length-1];
-  }
-
-  xOffsetFor(column) {
-    var bounds = this.boundsFor(column);
-    return bounds ? bounds.x : 0;
-  }
-
-  columnForXOffset(xInPixels) {
-    let {charBounds} = this,
-        length = charBounds.length,
-        first = charBounds[0],
-        last = charBounds[length-1];
-
-    // everything to the left of the first char + half its width is col 0
-    if (!length || xInPixels <= first.x+Math.round(first.width/2)) return 0;
-
-    // everything to the right of the last char + half its width is last col
-    if (xInPixels > last.x+Math.round(last.width/2)) return length-1;
-
-    // find col so that x between right side of char[col-1] and left side of char[col]
-    for (var i = length-2; i >= 0; i--) {
-      let {x, width} = charBounds[i];
-      if (xInPixels >= x + Math.round(width/2)) return i+1;
-    }
-    return 0;
   }
 }
 
@@ -156,7 +268,7 @@ export default class TextLayout {
 
   constructor(fontMetric) {
     this.layoutComputed = false;
-    this.chunks = [];
+    this.lines = [];
     this.fontMetric = fontMetric;
     this.firstVisibleLine = undefined;
     this.lastVisibleLine = undefined;
@@ -169,21 +281,24 @@ export default class TextLayout {
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
-    let {fontFamily, fontSize, fontColor, fontKerning, document} = morph,
+    let { document } = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
+        styleRanges = document.styleRanges,
         nRows = lines.length;
 
-    // for now: 1 line = 1 chunk
     for (let row = 0; row < nRows; row++) {
-      var chunk = this.chunks[row],
+      let lineStyleRanges = document.styleRangesByLine[row],
           text = lines[row],
-          config = { fontMetric, fontFamily, fontSize, fontColor, fontKerning };
-      if (!chunk || !chunk.compatibleWith(text, config))
-        this.chunks[row] = new RenderedChunk(text, config);
+          config = { fontMetric, styleRanges: lineStyleRanges },
+          line = this.lines[row];
+      if (!line)
+        this.lines[row] = new RenderedLine(text, config);
+      else
+        line.updateIfNecessary(text, config);
     }
+    this.lines.splice(nRows, this.lines.length - nRows);
 
-    this.chunks.splice(nRows, this.chunks.length - nRows);
     this.layoutComputed = true;
     return this;
   }
@@ -215,17 +330,17 @@ export default class TextLayout {
     let {start, end, lead, cursorVisible} = morph.selection,
         isReverse           = morph.selection.isReverse(),
         {padding, document} = morph,
-        chunks              = this.chunks,
+        lines               = this.lines,
         paddingOffset       = padding.topLeft(),
         startPos            = this.pixelPositionFor(morph, start).addPt(paddingOffset),
         endPos              = this.pixelPositionFor(morph, end).addPt(paddingOffset),
         cursorPos           = isReverse ? startPos : endPos,
         defaultHeight       = null,
-        endLineHeight       = end.row in chunks ?
-                                chunks[end.row].height :
+        endLineHeight       = end.row in lines ?
+                                lines[end.row].height :
                                 (defaultHeight = this.defaultCharSize(morph).height),
-        leadLineHeight      = lead.row in chunks ?
-                                chunks[lead.row].height :
+        leadLineHeight      = lead.row in lines ?
+                                lines[lead.row].height :
                                 defaultHeight || (defaultHeight = this.defaultCharSize(morph).height);
 
     // collapsed selection -> cursor
@@ -238,7 +353,7 @@ export default class TextLayout {
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
         cursor(cursorPos, leadLineHeight, cursorVisible)]
 
-    let endPosLine1 = pt(morph.width, startPos.y + chunks[start.row].height),
+    let endPosLine1 = pt(morph.width, startPos.y + lines[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
 
     // two lines -> two rectangles
@@ -290,7 +405,7 @@ export default class TextLayout {
   }
 
   renderTextLayer(morph) {
-    let {chunks} = this,
+    let {lines} = this,
         textWidth = 0, textHeight = 0,
         {padding, scroll, height} = morph,
         {y: visibleTop} = scroll.subPt(padding.topLeft()),
@@ -299,10 +414,12 @@ export default class TextLayout {
         row = 0,
         spacerBefore,
         renderedLines = [],
-        spacerAfter;
+        spacerAfter,
+        lineLeft = padding.left(),
+        lineTop = padding.top();
 
-    for (;row < chunks.length; row++) {
-      let {width, height} = chunks[row],
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row],
           newTextHeight = textHeight + height;
       if (newTextHeight >= visibleTop) break;
       textWidth = Math.max(width, textWidth);
@@ -312,20 +429,21 @@ export default class TextLayout {
     this.firstVisibleLine = row;
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
-    for (;row < chunks.length; row++) {
-      let {width, height} = chunks[row];
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row];
       if (textHeight > visibleBottom) break;
-      renderedLines.push(chunks[row].render());
+      renderedLines.push(lines[row].render(lineLeft, lineTop));
 
       textWidth = Math.max(width, textWidth);
       textHeight += height;
+      lineTop += height;
     }
 
     this.lastVisibleLine = row;
     lastVisibleLineBottom = textHeight;
 
-    for (;row < chunks.length; row++) {
-      let {width, height} = chunks[row];
+    for (;row < lines.length; row++) {
+      let {width, height} = lines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -342,7 +460,7 @@ export default class TextLayout {
   }
 
   renderDebugLayer(morph) {
-    let {chunks} = this,
+    let {lines} = this,
         {y: visibleTop} = morph.scroll,
         visibleBottom = visibleTop + morph.height,
         {padding} = morph,
@@ -352,8 +470,8 @@ export default class TextLayout {
         textHeight = 0,
         textWidth = 0;
 
-    for (let row = 0; row < chunks.length; row++) {
-      let {width, height, charBounds} = chunks[row];
+    for (let row = 0; row < lines.length; row++) {
+      let {width, height, charBounds} = lines[row];
       for (let col = 0; col < charBounds.length; col++) {
         let {x, width, height} = charBounds[col],
                 y = textHeight + paddingTop;
@@ -405,13 +523,13 @@ export default class TextLayout {
 
   textPositionFor(morph, point) {
     this.updateFromMorphIfNecessary(morph);
-    var {chunks} = this;
-    if (!chunks.length) return {row: 0, column: 0};
+    var {lines} = this;
+    if (!lines.length) return {row: 0, column: 0};
 
     let {x,y: remainingHeight} = point, line, row;
     if (remainingHeight < 0) remainingHeight = 0;
-    for (row = 0; row < chunks.length; row++) {
-      line = chunks[row];
+    for (row = 0; row < lines.length; row++) {
+      line = lines[row];
       if (remainingHeight < line.height) break;
       remainingHeight -= line.height;
     }
@@ -427,8 +545,8 @@ export default class TextLayout {
   textBounds(morph) {
     this.updateFromMorphIfNecessary(morph);
     let textWidth = 0, textHeight = 0;
-    for (let row = 0; row < this.chunks.length; row++) {
-      var {width, height} = this.chunks[row];
+    for (let row = 0; row < this.lines.length; row++) {
+      var {width, height} = this.lines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
@@ -438,15 +556,15 @@ export default class TextLayout {
 
   boundsFor(morph, {row, column}) {
     this.updateFromMorphIfNecessary(morph);
-    let chunks = this.chunks,
-        maxLength = chunks.length-1,
+    let {lines} = this,
+        maxLength = lines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
-        line = chunks[safeRow];
+        line = lines[safeRow];
 
     if (!line) return new Rectangle(0,0,0,0);
 
     for (var y = 0, i = 0; i < safeRow; i++)
-      y += chunks[i].height;
+      y += lines[i].height;
     let { x, width, height } = line.boundsFor(column);
     return new Rectangle(x, y, width, height);
   }

@@ -1,5 +1,7 @@
 import { pt, rect } from "lively.graphics";
-import { arr, string } from "lively.lang";
+import { arr, string, obj } from "lively.lang";
+
+const charSizeProperties = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "textDecoration"];
 
 export default class FontMetric {
 
@@ -61,11 +63,15 @@ export default class FontMetric {
     style.overflow = isRoot ? "hidden" : "visible";
   }
 
-  measure(fontFamily, fontSize, char) {
-    var rect = null;
+  measure(style, char) {
+    var { fontFamily, fontSize, fontWeight, fontStyle, textDecoration } = style,
+        rect = null;
     this.element.innerHTML = char;
     this.element.style.fontFamily = fontFamily;
     this.element.style.fontSize = fontSize + "px";
+    this.element.style.fontWeight = fontWeight,
+    this.element.style.fontStyle = fontStyle,
+    this.element.style.textDecoration = textDecoration;
     try {
       rect = this.element.getBoundingClientRect();
     } catch(e) {
@@ -77,13 +83,13 @@ export default class FontMetric {
     }
   }
 
-  charBoundsFor(fontFamily, fontSize, fontKerning, str) {
+  charBoundsFor(style, str) {
     let nCols = str.length,
         bounds = new Array(nCols),
-        { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, fontFamily: cachedFontFamily, fontSize: cachedFontSize } } = this,
-        useCache = cachedBounds && cachedFontFamily === fontFamily && cachedFontSize === fontSize,
-        fontIsProportional = this.isProportional(fontFamily),
-        adjustSpacing = fontIsProportional && fontKerning;
+        { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, style: cachedStyle } } = this,
+        useCache = cachedBounds && obj.equals(cachedStyle, style),
+        fontIsProportional = this.isProportional(style.fontFamily),
+        adjustSpacing = fontIsProportional && !style.fixedCharacterSpacing;
     for (let col = 0, x = 0; col < nCols; col++) {
       let width, height, char = str[col];
       if (adjustSpacing) {
@@ -92,49 +98,52 @@ export default class FontMetric {
           ({ width, height } = cachedBounds[col]);
         else {
           let prefix = str.substr(0, col+1);
-          ({ width, height } = this.measure(fontFamily, fontSize, prefix));
+          ({ width, height } = this.measure(style, prefix));
           width -= x;
         }
       } else {
-        ({ width, height } = this.sizeFor(fontFamily, fontSize, char));
+        ({ width, height } = this.sizeFor(style, char));
       }
       bounds[col] = { x, y: 0, width, height };
       x += width;
     }
-    if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, fontFamily, fontSize };
+    if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, style };
     return bounds;
   }
 
   isProportional(fontFamily) {
-    let w_width = this.sizeFor(fontFamily, 12, 'w').width,
-        i_width = this.sizeFor(fontFamily, 12, 'i').width;
+    let style = { fontFamily, fontSize: 12 },
+        w_width = this.sizeFor(style, 'w').width,
+        i_width = this.sizeFor(style, 'i').width;
     return w_width !== i_width;
   }
 
-  sizeFor(fontFamily, fontSize, char) {
-    if (char.length > 1) return this.measure(fontFamily, fontSize, char);
+  sizeFor(style, char) {
+    if (char.length > 1) return this.measure(style, char);
 
-    if (!this.charMap[fontFamily]) {
-      this.charMap[fontFamily] = [];
+    // Select style properties relevant to individual character size
+    style = obj.select(style, charSizeProperties);
+
+    if (!this.charMap[style]) {
+      this.charMap[style] = [];
     }
-    if (!this.charMap[fontFamily][fontSize]) {
-      this.charMap[fontFamily][fontSize] = [];
-    }
-    if (!this.charMap[fontFamily][fontSize][char])
-      this.charMap[fontFamily][fontSize][char] = this.measure(fontFamily, fontSize, char);
-    return this.charMap[fontFamily][fontSize][char];
+    if (!this.charMap[style][char])
+      this.charMap[style][char] = this.measure(style, char);
+
+    return this.charMap[style][char];
   }
 
-  asciiSizes(fontFamily, fontSize) {
+  asciiSizes(style) {
     var result = {};
     for (var i = 32; i <= 126; i++) {
       var char = String.fromCharCode(i);
-      result[char] = this.sizeFor(fontFamily, fontSize, char)
+      result[char] = this.sizeFor(style, char)
     }
     return result;
   }
 
-  defaultLineHeight(fontFamily, fontSize) {
-    return this.sizeFor(fontFamily, fontSize, " ").height;
+  defaultLineHeight(style) {
+    return this.sizeFor(style, " ").height;
   }
+
 }
