@@ -63,10 +63,10 @@ export default class FontMetric {
     style.overflow = isRoot ? "hidden" : "visible";
   }
 
-  measure(style, char) {
+  measure(style, text) {
     var { fontFamily, fontSize, fontWeight, fontStyle, textDecoration } = style,
         rect = null;
-    this.element.innerHTML = char;
+    this.element.textContent = text;
     this.element.style.fontFamily = fontFamily;
     this.element.style.fontSize = fontSize + "px";
     this.element.style.fontWeight = fontWeight,
