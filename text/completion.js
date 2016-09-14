@@ -243,7 +243,7 @@ export class CompletionController {
     // ensure menu is visible
     var world = m.world();
     if (world) {
-      var visibleBounds = world.visibleBounds();
+      var visibleBounds = world.visibleBounds().insetBy(5);
       if (bounds.bottom() > visibleBounds.bottom()) {
         var delta = bounds.bottom() - visibleBounds.bottom();
         if (delta > bounds.height-50) delta = bounds.height-50;
@@ -267,7 +267,17 @@ export class CompletionController {
         menu = new FilterableList(spec),
         prefix = spec.input;
 
-    connect(menu, "accepted", this, "insertCompletion", {updater: function($upd) { $upd(this.sourceObj.selection, prefix); }, varMapping: {prefix}});
+    connect(menu, "accepted", this, "insertCompletion", {
+      updater: function($upd) {
+        var textToInsert, completion = this.sourceObj.selection;
+        if (completion) {
+          if (completion.prefix) prefix = completion.prefix;
+          textToInsert = completion.completion;
+        } else {
+          textToInsert = this.sourceObj.get("input").textString;
+        }
+        $upd(textToInsert, prefix);
+      }, varMapping: {prefix}});
     connect(menu, "accepted", menu, "remove");
     connect(menu, "canceled", menu, "remove");
     connect(menu, "remove", this.textMorph, "focus");
@@ -280,19 +290,16 @@ export class CompletionController {
     menu.get("input").focus();
   }
 
-  insertCompletion(selected, prefix) {
-    if (!selected) return;
+  insertCompletion(completion, prefix) {
     var m = this.textMorph,
         sel = m.selection;
     sel.collapseToEnd();
     var end = sel.lead;
 
-    if (selected.prefix) prefix = selected.prefix;
-
     prefix && m.cursorLeft(prefix.length);
     var start = m.cursorPosition;
     sel.range = {start, end};
-    sel.text = selected.completion;
+    sel.text = completion;
     sel.collapseToEnd();
   }
 
