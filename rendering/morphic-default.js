@@ -77,10 +77,4 @@ export function renderRootMorph(world, renderer) {
   }
 
   patch(domNode, patches);
-
-  while (renderer.afterRenderCallTargets.length) {
-    var morph = renderer.afterRenderCallTargets.shift(),
-        node = renderer.domEnvironment.document.getElementById(morph.id);
-    morph.onAfterRender(node);
-  }
 }

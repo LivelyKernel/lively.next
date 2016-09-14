@@ -831,29 +831,9 @@ export class Morph {
   }
 
   needsRerender() { return this._dirty; }
-
-  aboutToRender(renderer) {
-    // FIXME focus + scroll are DOM-specific => move to renderer
-    if (this.isClip())
-      renderer.afterRenderCallTargets.push(this);
-
-    this._dirty = false;
-  }
-
-  onAfterRender(node) {
-    if (this.isClip() && node) {
-      const {x: scrollX, y: scrollY} = this.scroll;
-      node.scrollLeft = scrollX;
-      node.scrollTop = scrollY;
-    }
-  }
-
-  whenRendered() {
-    return promise.waitFor(() => !this.needsRerender()).then(() => this);
-  }
-
+  aboutToRender(renderer) { this._dirty = false; }
+  whenRendered() { return promise.waitFor(() => !this.needsRerender()).then(() => this); }
   render(renderer) { return renderer.renderMorph(this); }
-
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 
 
