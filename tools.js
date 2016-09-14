@@ -154,23 +154,31 @@ export class Browser extends Window {
     if (!p) {
       this.get("moduleList").items = [];
       this.get("sourceEditor").textString = "";
+      this.title = "browser";
       return;
     }
-    
+
+    this.title = "browser – " + this.get("packageList").selection.name;
+
     this.get("moduleList").selection = null;
-    this.get("moduleList").items = p.modules.map(m => ({
+    this.get("moduleList").items = arr.sortBy(p.modules.map(m => ({
       string: m.name.slice(p.address.length).replace(/^\//, ""),
       value: m,
       isListItem: true
-    }));
+    })), ({string}) => string.toLowerCase());
   }
 
   async onModuleSelected(m) {
+    var pack = this.get("packageList").selection,
+        module = this.get("moduleList").selection;
+
     if (!m) {
       this.get("sourceEditor").textString = "";
+      this.title = "browser – " + pack && pack.name || "";
       return;
     }
-    
+
+    this.title = "browser – " + pack.name + module.name.slice(pack.address.length);
     var livelySystem = (await System.import("lively-system-interface")).localInterface;
     var source = await livelySystem.moduleRead(m.name);
     this.get("sourceEditor").textString = source;
