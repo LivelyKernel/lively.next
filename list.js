@@ -311,6 +311,7 @@ export class FilterableList extends Morph {
     this.relayout();
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
+    connect(this, "extent", this, "relayout");
 
     this.addKeyBindings([
       {keys: "Down|Ctrl-N", command: "arrow down"},
@@ -322,11 +323,6 @@ export class FilterableList extends Morph {
       {keys: "Enter", command: "accept input"},
       {keys: "Escape|Ctrl-G", command: "cancel"}
     ]);
-  }
-
-  onChange(change) {
-    // if (change.prop === "extent") this.relayout();
-    return super.onChange(change);
   }
 
   focus() { this.get("input").focus(); }
