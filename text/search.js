@@ -84,7 +84,7 @@ export class SearchWidget extends Morph {
       borderWidth: 1,
       borderColor: Color.gray,
       borderRadius: 3,
-      fill: Color.white.withA(.6),
+      fill: Color.white.withA(.8),
       ...obj.dissoc(props, ["target", "fontFamily", "fontSize", "input"])
     });
 
@@ -112,7 +112,7 @@ export class SearchWidget extends Morph {
         name: "input",
         extent: pt(this.width, inputHeight),
         textString: input,
-        fill: null,
+        fill: Color.white,
         borderWidth: 1, borderColor: Color.gray,
         padding: Rectangle.inset(2),
         fontSize, fontFamily
