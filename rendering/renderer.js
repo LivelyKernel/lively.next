@@ -199,6 +199,28 @@ export class Renderer {
         this.renderSubmorphs(image)
       ]);
   }
+  
+  renderCheckBox(checkbox) {
+    return h("div", {
+      ...defaultAttributes(checkbox),
+        style: defaultStyle(checkbox)
+      }, [
+        h("input", {
+          type: "checkbox",
+          checked: checkbox.checked,
+          disabled: !checkbox.active,
+          draggable: false,
+          style: {
+            "pointer-events": "none",
+            position: "relative",
+            top: "-3px",
+            left: "-4px",
+            width: "100%", height: "100%"
+          }
+        }),
+        this.renderSubmorphs(checkbox)
+      ]);
+  }
 
   renderPath(path) {
     const vertices = [],
