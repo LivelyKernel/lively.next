@@ -373,6 +373,7 @@ export class Text extends Morph {
     if (!text.length) return Range.fromPositions(pos, pos);
 
     var range = this.document.insert(text, pos);
+    this.renderer.shiftLinesIfNeeded(this, range, "insertText");
 
     this.undoManager.undoStart(this, "insertText");
 
@@ -402,9 +403,10 @@ export class Text extends Morph {
     if (range.isEmpty()) return;
 
     this.undoManager.undoStart(this, "insertText");
-    var doc = this.document,
+    var {document: doc, renderer} = this,
         text = doc.textInRange(range);
     doc.remove(range);
+    renderer.shiftLinesIfNeeded(this, range, "deleteText");
     this._needsFit = true;
 
     this.addMethodCallChangeDoing({

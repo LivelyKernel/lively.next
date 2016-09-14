@@ -278,6 +278,14 @@ export default class TextLayout {
     return this.fontMetric.sizeFor(morph.fontFamily, morph.fontSize, "X");
   }
 
+  shiftLinesIfNeeded(morph, {start, end}, changeType) {
+    var nRows = end.row - start.row,
+        nInsRows = changeType === "deleteText" ? 0 : nRows,
+        nDelRows = changeType === "deleteText" ? nRows : 0,
+        placeholderRows = Array(nInsRows);
+    this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
+  }
+
   updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return;
 
