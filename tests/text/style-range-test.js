@@ -9,7 +9,6 @@ describe("StyleRange", () => {
 
   var style_a = { fontColor: Color.red, fontStyle: "italic" },
       style_b = { fontColor: Color.blue, fontWeight: "bold" },
-      style_c = { fontColor: Color.green, fontSize: 12 },
       style_ab = { fontColor: Color.blue,
                    fontStyle: "italic", fontWeight: "bold" };
 
@@ -112,7 +111,8 @@ describe("StyleRange", () => {
 
   describe("mergeInto", () => {
 
-    var style_ac = { fontColor: Color.green, fontSize: 12,
+    var style_c = { fontColor: Color.green, fontSize: 12 },
+        style_ac = { fontColor: Color.green, fontSize: 12,
                     fontStyle: "italic" },
         style_ca = { fontColor: Color.red, fontSize: 12,
                      fontStyle: "italic" },
