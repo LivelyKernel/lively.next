@@ -19,7 +19,8 @@ const domEventsWeListenTo = [
   {type: 'pointerover', capturing: false},
   {type: 'pointerout',  capturing: false},
   {type: 'contextmenu', capturing: false},
-  {type: 'scroll',      capturing: true}
+  {type: 'scroll',      capturing: true},
+  {type: 'wheel',       capturing: false}
 ];
 
 const typeToMethodMap = {
@@ -45,7 +46,8 @@ const typeToMethodMap = {
   "cut":               "onCut",
   "copy":              "onCopy",
   "paste":             "onPaste",
-  "scroll":            "onScroll"
+  "scroll":            "onScroll",
+  "wheel" :            "onMouseWheel"
 }
 
 const focusTargetingEvents = [

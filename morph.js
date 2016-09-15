@@ -773,6 +773,18 @@ export class Morph {
 
   onScroll(evt) {}
 
+  onMouseWheel(evt) {
+    var scrollTarget = evt.targetMorphs.find(ea => ea.isClip());
+    if (this !== scrollTarget) return;
+    var newScrollTop = evt.domEvt.deltaY + this.scroll.y,
+        newScrollBottom = newScrollTop + this.height,
+        manualScroll;        
+    if (newScrollBottom >= this.scrollExtent.y) manualScroll = this.scroll.withY(this.scrollExtent.y);
+    else if (newScrollTop <= 0) manualScroll = 0;
+    if (manualScroll !== undefined) { this.scroll = manualScroll; evt.stop(); }
+  }
+
+
   focus() {
     var eventDispatcher = this.env.eventDispatcher;
     eventDispatcher && eventDispatcher.focusMorph(this);
