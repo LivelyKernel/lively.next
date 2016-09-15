@@ -8,7 +8,10 @@ var config = {
   globalKeyBindings: [
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Escape", command: "escape"},
-  
+    {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window"},
+
+    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: true}},
+    {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
 
     {keys: "Left",       command: {command: "move or resize halo target", args: {what: "move", direction: "left",  offset: 1}}},
     {keys: "Right",      command: {command: "move or resize halo target", args: {what: "move", direction: "right", offset: 1}}},

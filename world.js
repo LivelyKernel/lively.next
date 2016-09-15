@@ -12,6 +12,7 @@ import { connect, disconnectAll } from "lively.bindings";
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
 
 var worldCommands = [
+
   {
     name: "show halo for focused morph",
     exec: (world) => {
@@ -68,6 +69,36 @@ var worldCommands = [
           win = await world.filterableListPrompt("Choose window", wins, {preselect: 1, width: world.visibleBounds().extent().x * 1/3, fontSize: 20});
       if (win) { win.bringToFront(); win.focus(); }
       return true;
+    }
+  },
+
+  {
+    name: "close active window",
+    exec: world => {
+      var focused = world.focusedMorph,
+          win = focused && focused.getWindow();
+      if (win) {
+        world.undoStart("window close");
+        win.close();
+        world.undoStop("window close");
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "open workspace",
+    exec: world => {
+      world.addMorph(new Workspace({center: world.center})); 
+      return;
+    }
+  },
+
+  {
+    name: "open browser",
+    exec: world => {
+      world.addMorph(new Browser({center: world.center}));
+      return;
     }
   }
 ]
@@ -168,8 +199,8 @@ export class World extends Morph {
       title: "World menu", items: [
         ["undo", () => { this.env.undoManager.undo(); }],
         ["redo", () => { this.env.undoManager.redo(); }],
-        ["Workspace", () => { this.addMorph(new Workspace({center: this.center})); }],
-        ["Browser", () => { this.addMorph(new Browser({center: this.center})); }],
+        ["Workspace", () => this.execCommand("open workspace")],
+        ["Browser", () => this.execCommand("open browser")],
         ["ObjectDrawer", () => { this.addMorph(new ObjectDrawer({center: this.center})); }],
       ]
     }));
