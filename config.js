@@ -158,6 +158,9 @@ var config = {
       {keys: {win: "Ctrl-F|Ctrl-G|Ctrl-S|F3", mac: "Meta-F|Meta-G|Ctrl-S"}, command: "search in text"},
       {keys: {win: "Ctrl-Shift-F|Ctrl-Shift-G|Ctrl-R", mac: "Meta-Shift-F|Meta-Shift-G|Ctrl-R"}, command: {command: "search in text", args: {backwards: true}}}
     ]
+  },
+  codeEditor: {
+    defaultTheme: "chrome"
   }
 }
 

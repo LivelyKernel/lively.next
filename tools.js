@@ -2,6 +2,7 @@ import { arr, obj } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window } from "./index.js";
 import { GridLayout } from "lively.morphic/layout.js";
+import CodeEditor from "./ide/code-editor.js";
 
 export class ObjectDrawer extends Morph {
 
@@ -87,15 +88,11 @@ export class Workspace extends Window {
   constructor(props = {}) {
     super({
       title: "Workspace",
-      targetMorph: morph({
-        type: "text",
-        textString: props.content || "3 + 4",
-        fixedWidth: true,
-        fixedHeight: true,
-        clipMode: "auto",
-        padding: Rectangle.inset(4, 2, 4, 2),
-        fontFamily: "Monaco, monospace"
-      }),
+      targetMorph: {
+        type: CodeEditor,
+        textString: props.content || "var i = 2 + 3",
+        mode: "javascript"
+      },
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
     });
@@ -121,7 +118,7 @@ export class Browser extends Window {
 
   build() {
     var style = {borderWidth: 1, borderColor: Color.gray},
-        textStyle = {...style, type: "text", fixedWidth: true, fixedHeight: true, clipMode: "auto", fontFamily: "Monaco, monospace"};
+        textStyle = {...style, type: CodeEditor, mode: "javascript"};
     return morph({
       ...style,
       layout: new GridLayout({
@@ -130,7 +127,7 @@ export class Browser extends Window {
       submorphs: [
         {name: "packageList", type: "list", ...style},
         {name: "moduleList", type: "list", ...style},
-        {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner/*FIXME*/.save(); }}
+        {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner.owner/*FIXME*/.save(); }}
       ]
     });
   }
