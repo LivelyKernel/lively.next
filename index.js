@@ -1,60 +1,44 @@
 import { module, installHook, removeHook, isHookInstalled } from "lively.modules";
 
-import { createChangeSet, localChangeSets, targetChangeSet, deactivateAll, notify } from "./src/changeset.js";
-import commit, { packageHead } from "./src/commit.js";
+import { createChangeSet, localChangeSets, targetChangeSet } from "./src/changeset.js";
+import branch, { localBranchesOf } from "./src/branch.js";
+import commit, { activeCommit } from "./src/commit.js";
 import { getAuthor, setAuthor, setGitHubToken } from "./src/settings.js";
 import { gitHubBranches } from "./src/repo.js";
 
 function resolve(path) { // Path -> [PackageAddress, RelPath]
   const mod = module(path),
-        pkg = mod.package().address;
-  return [pkg, mod.pathInPackage().replace(/^\.\//, '')];
-}
-
-export async function activeCommit(pkg) { // PackageAddress -> Commit?
-  const cs = await localChangeSets();
-  for (let i = cs.length - 1; i >= 0; i--) {
-    if (cs[i].isActive()) {
-      const branch = cs[i].getBranch(pkg);
-      if (branch) return branch.head();
-    }
-  }
-  return packageHead(pkg);
-}
-
-export async function getOrCreateChangeSet(name) {
-  // ChangeSetName -> ChangeSet
-  const changesets = await localChangeSets();
-  let cs = changesets.find(cs => cs.name == name);
-  if (!cs) {
-    cs = await createChangeSet(name);
-  }
-  return cs;
+        pkg = mod.package();
+  if (!pkg) return ["no group", path];
+  return [pkg.address, mod.pathInPackage().replace(/^\.\//, '')];
 }
 
 function resourceFromChangeSet(proceed, url) {
   return {
-    async read() {
+    read() {
       const [pkg, path] = resolve(url);
       if (pkg == "no group") return proceed(url).read();
-      const cs = await localChangeSets();
-      for (let i = cs.length - 1; i >= 0; i--) {
-        if (cs[i].isActive()) {
-          const branch = cs[i].getBranch(pkg);
-          if (branch) return branch.getFileContent(path);
-        }
-      }
-      return proceed(url).read();
+      const c = activeCommit(pkg);
+      return c ? c.getFileContent(path) : proceed(url).read();
     },
     async write(content) {
       const [pkg, path] = resolve(url);
-      if (pkg == "no group") return proceed(url).read();
-      const cs = await targetChangeSet();
-      if (cs) {
-        const branch = await cs.getOrCreateBranch(pkg);
-        return branch.setFileContent(path, content);
+      if (pkg == "no group") return proceed(url).write(content);
+      const tcs = await targetChangeSet();
+      let branch;
+      if (tcs) {
+        branch = await tcs.getOrCreateBranch(pkg);
+      } else {
+        const c = activeCommit(pkg),
+              local = await localBranchesOf(pkg);
+        for (let l of local) {
+          const head = await l.head();
+          if (head.hash === c.hash) { branch = l; break; }
+        }
       }
-      return proceed(url).write(content);
+      if (!branch) return proceed(url).write(content);
+      const newC = await branch.setFileContent(path, content);
+      newC.setActive();
     }
   };
 }
@@ -69,4 +53,4 @@ export function uninstall() {
   removeHook("resource", resourceFromChangeSet);
 }
 
-export { createChangeSet, localChangeSets, commit, deactivateAll, notify, getAuthor, setAuthor, setGitHubToken, gitHubBranches };
+export { commit, branch, localBranchesOf, createChangeSet, localChangeSets, getAuthor, setAuthor, setGitHubToken, gitHubBranches };

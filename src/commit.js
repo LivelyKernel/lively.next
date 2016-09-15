@@ -4,20 +4,14 @@ import { module } from "lively.modules";
 
 import repository from "./repo.js";
 import { diffStr } from "./diff.js";
-import { targetChangeSet } from "./changeset.js";
 import { getAuthor } from "./settings.js";
-import { activeCommit } from "../index.js";
+import { install, uninstall } from "../index.js";
+
+let active; // PackageAddress -> Commit
 
 function getDate() { // -> {seconds: number, offset: number}
   const d = new Date();
   return {seconds: d.valueOf() / 1000, offset: d.getTimezoneOffset()};
-}
-
-export default async function commit(pkg, hash) {
-  // PackageAddress, Hash -> Commit
-  const repo = await repository(pkg),
-        data = await repo.loadAs("commit", hash);
-  return new Commit(pkg, hash, data);
 }
 
 function packageGitHead(pkg) { // PackageAddress -> Hash?
@@ -65,6 +59,20 @@ export async function packageHead(pkg) { // PackageAddress -> Commit?
     return null;
   }
   return commit(pkg, baseHead);
+}
+
+export function activeCommit(pkg) { // PackageAddress -> Commit?
+  if (active === undefined) {
+    active = {};
+  }
+  return active[pkg] || null;
+}
+
+export default async function commit(pkg, hash) {
+  // PackageAddress, Hash -> Commit
+  const repo = await repository(pkg),
+        data = await repo.loadAs("commit", hash);
+  return new Commit(pkg, hash, data);
 }
 
 class Commit {
@@ -137,7 +145,7 @@ class Commit {
     return new Commit(this.pkg, commitHash, data);
   }
   
-  async createChangeSetCommit() { // () -> ()
+  async createChangeSetCommit() { // () -> Commit
     // create a commit and a ref for this branch based on other branch
     const repo = await repository(this.pkg),
           author = Object.assign(getAuthor(), {date: getDate()}),
@@ -177,10 +185,18 @@ class Commit {
     return new Commit(this.pkg, commitHash, data);
   }
   
-  async activate(prev) { // Commit -> ()
-    if (this.hash == prev.hash) return;
-    const prevFiles = await prev.files(),
-          nextFiles = await this.files();
+  async activate() { // () -> ()
+    const prev = activeCommit();
+    if (prev && this.hash == prev.hash) return;
+    const nextFiles = await this.files();
+    let prevFiles;
+    if (prev) {
+      prevFiles = await prev.files();
+    } else {
+      prevFiles = Object.keys(nextFiles).reduce((o,k) => { o[k] = 0; return o}, {});
+    }
+    this.setActive();
+    install();
     for (const relPath in prevFiles) {
       const prevHash = prevFiles[relPath],
             nextHash = nextFiles[relPath],
@@ -194,11 +210,30 @@ class Commit {
     }
   }
   
-  isActive() { // -> Promise<bool>
-    return activeCommit(this.pkg).then(c => c && c.hash == this.hash);
+  setActive() {
+    active[this.pkg] = this;
+  }
+
+  async deactivate() { // () -> ()
+    const prevFiles = await this.files();
+    delete active[this.pkg];
+    for (const relPath in prevFiles) {
+      const prevHash = prevFiles[relPath],
+            mod = `${this.pkg}/${relPath}`;
+      if (module(mod).isLoaded() && (/\.js$/i).test(relPath)) {
+        await module(mod).reload({reset: true}).catch(e => console.error(e));
+      }
+    }
+    if (Object.keys(active).length === 0) {
+      uninstall();
+    }
+  }
+  
+  isActive() { // -> bool
+    return this.hash === activeCommit(this.pkg).hash;
   }
 
   toString() { // -> String
-    return `Commit(${this.pkg}, ${this.hash})`;
+    return `Commit(${this.pkg}, ${this.hash.substr(0, 8)})`;
   }
 }
