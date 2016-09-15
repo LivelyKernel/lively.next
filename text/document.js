@@ -39,6 +39,13 @@ export default class TextDocument {
 
   get styleRanges() { return this._styleRanges }
 
+  set styleRanges(styleRanges) {
+    this._styleRanges = styleRanges;
+    for (let row = 0; row < this.lines.length; row++) {
+      this.updateLineStyleRanges(row);
+    }
+  }
+
   addStyleRange(range) {
     this._styleRanges = StyleRange.mergeInto(this._styleRanges, range);
     for (let row = range.start.row; row <= range.end.row; row++) {

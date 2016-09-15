@@ -91,6 +91,7 @@ export class Text extends Morph {
                   || change.selector === "deleteText";
     if (textChange
      || change.selector === "addStyleRange"
+     || change.selector === "replaceStyleRanges"
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
@@ -483,6 +484,22 @@ export class Text extends Morph {
   }
 
   get styleRanges() { return this.document.styleRanges }
+
+  replaceStyleRanges(styleRanges) {
+    // FIXME: undos
+
+    this.document.styleRanges = styleRanges;
+
+    this.addMethodCallChangeDoing({
+      target: this,
+      selector: "replaceStyleRanges",
+      args: [styleRanges],
+      // FIXME!
+      // undo: {
+      //   target: this,
+      // }
+    }, () => { this._needsFit = true; });
+  }
 
   addStyleRange(range) {
 
