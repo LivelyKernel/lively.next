@@ -110,50 +110,64 @@ describe("StyleRange", () => {
   });
 
 
-  // describe("mergeInto", () => {
+  describe("mergeInto", () => {
 
-  //   var style_ac = { fontColor: Color.green, fontSize: 12,
-  //                   fontStyle: "italic" },
-  //       style_bc = { fontColor: Color.green, fontSize: 12,
-  //                   fontWeight: "bold" },
-  //       style_cb = { fontColor: Color.red,
-  //                   fontStyle: "italic", fontWeight: "bold" },
-  //       style_abc = { fontColor: Color.green, fontSize: 12,
-  //                     fontStyle: "italic", fontWeight: "bold" },
-  //       style_cba = { fontColor: Color.red, fontSize: 12,
-  //             fontStyle: "italic", fontWeight: "bold" },
+    var style_ac = { fontColor: Color.green, fontSize: 12,
+                    fontStyle: "italic" },
+        style_ca = { fontColor: Color.red, fontSize: 12,
+                     fontStyle: "italic" },
+        style_cb = { fontColor: Color.red,
+                    fontStyle: "italic", fontWeight: "bold" },
+        style_abc = { fontColor: Color.green, fontSize: 12,
+                      fontStyle: "italic", fontWeight: "bold" },
+        style_cba = { fontColor: Color.red, fontSize: 12,
+                      fontStyle: "italic", fontWeight: "bold" },
 
-  //       a = StyleRange.create(style_a, 0, 0, 1, 4),
-  //       b = StyleRange.create(style_b, 0, 2, 0, 10),
-  //       c = StyleRange.create(style_c, 0, 8, 1, 2),
-  //       test;
+        a = StyleRange.create(style_a, 0, 0, 1, 4),
+        b = StyleRange.create(style_b, 0, 2, 0, 10),
+        c = StyleRange.create(style_c, 0, 8, 1, 2),
+        test;
 
-  //   it("mergeInto a, b, c", () => {
-  //     test = StyleRange.mergeInto(
-  //                 StyleRange.mergeInto(
-  //                   StyleRange.mergeInto([], a), b), c);
+    it("mergeInto a, b, c", () => {
+      test = StyleRange.mergeInto(
+                  StyleRange.mergeInto(
+                    StyleRange.mergeInto([], a), b), c);
 
-  //     expect(test).property("length").equals(5);
-  //     expect(test).property(0).property("style").deep.equals(style_a);
-  //     expect(test).property(1).property("style").deep.equals(style_ab);
-  //     expect(test).property(2).property("style").deep.equals(style_abc);
-  //     expect(test).property(3).property("style").deep.equals(style_ac);
-  //     expect(test).property(4).property("style").deep.equals(style_a);
-  //   });
+      expect(test).property("length").equals(5);
 
-  //   it("mergeInto c, b, a", () => {
-  //     test = StyleRange.mergeInto(
-  //                 StyleRange.mergeInto(
-  //                   StyleRange.mergeInto([], c), b), a);
+      expect(test).property(0).property("style").deep.equals(style_a);
+      expect(test).property(1).property("style").deep.equals(style_ab);
+      expect(test).property(2).property("style").deep.equals(style_abc);
+      expect(test).property(3).property("style").deep.equals(style_ac);
+      expect(test).property(4).property("style").deep.equals(style_a);
 
-  //     expect(test).property("length").equals(7);
-  //     // expect(test).property(0).property("style").deep.equals(style_a);
-  //     // expect(test).property(1).property("style").deep.equals(style_cb);
-  //     // expect(test).property(2).property("style").deep.equals(style_ab);
-  //     // expect(test).property(3).property("style").deep.equals(style_cba);
-  //     // expect(test).property(4).property("style").deep.equals(style_c);
-  //     // expect(test).property(5).property("style").deep.equals(style_a);
-  //     // expect(test).property(6).property("style").deep.equals(style_a);
-  //   });
-  // });
+      expect(test).property(0).property("range").stringEquals("Range(0/0 -> 0/2)");
+      expect(test).property(1).property("range").stringEquals("Range(0/2 -> 0/8)");
+      expect(test).property(2).property("range").stringEquals("Range(0/8 -> 0/10)");
+      expect(test).property(3).property("range").stringEquals("Range(0/10 -> 1/2)");
+      expect(test).property(4).property("range").stringEquals("Range(1/2 -> 1/4)");
+    });
+
+    it("mergeInto c, b, a", () => {
+      test = StyleRange.mergeInto(
+                  StyleRange.mergeInto(
+                    StyleRange.mergeInto([], c), b), a);
+
+      expect(test).property("length").equals(5);
+
+      expect(test).property(0).property("style").deep.equals(style_a);
+      expect(test).property(1).property("style").deep.equals(style_cb);
+      expect(test).property(2).property("style").deep.equals(style_cba);
+      expect(test).property(3).property("style").deep.equals(style_ca);
+      expect(test).property(4).property("style").deep.equals(style_a);
+
+      expect(test).property(0).property("range").stringEquals("Range(0/0 -> 0/2)");
+      expect(test).property(1).property("range").stringEquals("Range(0/2 -> 0/8)");
+      expect(test).property(2).property("range").stringEquals("Range(0/8 -> 0/10)");
+      expect(test).property(3).property("range").stringEquals("Range(0/10 -> 1/2)");
+      expect(test).property(4).property("range").stringEquals("Range(1/2 -> 1/4)");
+    });
+
+  });
+
 });
