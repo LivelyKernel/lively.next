@@ -129,9 +129,10 @@ describe("StyleRange", () => {
         test;
 
     it("mergeInto a, b, c", () => {
-      test = StyleRange.mergeInto(
+      test = Range.sort(
+              StyleRange.mergeInto(
                   StyleRange.mergeInto(
-                    StyleRange.mergeInto([], a), b), c);
+                    StyleRange.mergeInto([], a), b), c));
 
       expect(test).property("length").equals(5);
 
@@ -149,9 +150,10 @@ describe("StyleRange", () => {
     });
 
     it("mergeInto c, b, a", () => {
-      test = StyleRange.mergeInto(
+      test = Range.sort(
+              StyleRange.mergeInto(
                   StyleRange.mergeInto(
-                    StyleRange.mergeInto([], c), b), a);
+                    StyleRange.mergeInto([], c), b), a));
 
       expect(test).property("length").equals(5);
 

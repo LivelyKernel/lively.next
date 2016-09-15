@@ -51,7 +51,7 @@ export class StyleRange {
     let { a, b } = StyleRange.merge(firstRange, newRange),
         remaining = others.slice(1);
     b.map(ea => { remaining = StyleRange.mergeInto(remaining, ea) });
-    return Range.sort(a.concat(remaining));
+    return a.concat(remaining);
   }
 
   static merge(a, b) {

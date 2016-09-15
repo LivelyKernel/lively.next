@@ -70,24 +70,22 @@ describe("rich text", () => {
       styleRanges;
 
     it("begins with default style range", () => {
-      styleRanges = sut.document.styleRanges;
+      styleRanges = sut.document.styleRangesByLine[0];
 
       expect(styleRanges).property("length").equals(1);
       expect(styleRanges).property(0).property("range")
-          .stringEquals("Range(0/-1 -> 0/5)");
+          .stringEquals("Range(0/0 -> 0/5)");
       expect(styleRanges).property(0).property("style")
           .deep.equals(defaultStyle);
     });
 
     it("addStyleRange merges style ranges", () => {
-      styleRanges = sut.document.styleRanges;
-
       sut.addStyleRange(a);
-      styleRanges = sut.document.styleRanges;
+      styleRanges = sut.document.styleRangesByLine[0];
 
       expect(styleRanges).property("length").equals(3);
       expect(styleRanges).property(0).property("range")
-          .stringEquals("Range(0/-1 -> 0/1)");
+          .stringEquals("Range(0/0 -> 0/1)");
       expect(styleRanges).property(1).property("range")
           .stringEquals("Range(0/1 -> 0/3)");
       expect(styleRanges).property(2).property("range")
@@ -100,11 +98,11 @@ describe("rich text", () => {
           .deep.equals(defaultStyle);
 
       sut.addStyleRange(b);
-      styleRanges = sut.document.styleRanges;
+      styleRanges = sut.document.styleRangesByLine[0];
 
       expect(styleRanges).property("length").equals(5);
       expect(styleRanges).property(0).property("range")
-          .stringEquals("Range(0/-1 -> 0/1)");
+          .stringEquals("Range(0/0 -> 0/1)");
       expect(styleRanges).property(1).property("range")
           .stringEquals("Range(0/1 -> 0/2)");
       expect(styleRanges).property(2).property("range")
