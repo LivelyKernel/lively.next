@@ -120,7 +120,9 @@ class RenderedLine {
 
   boundsFor(column) {
     var charBounds = this.charBounds;
-    return charBounds[column] || charBounds[charBounds.length-1];
+    return charBounds[column]
+        || charBounds[charBounds.length-1]
+        || {x: 0, y: 0, width: 0, height: 0};
   }
 
   columnForXOffset(xInPixels) {
