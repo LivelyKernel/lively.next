@@ -47,6 +47,8 @@ export default class TextDocument {
     // TODO: Consolidate/deduplicate ranges
   }
 
+  clearStyleRanges() { this._styleRanges = []; }
+
   updateLineStyleRanges(row) {
     let { styleRanges } = this,
         text = this.getLine(row),

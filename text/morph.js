@@ -514,6 +514,7 @@ export class Text extends Morph {
   }
 
   resetStyleRanges() {
+    this.document.clearStyleRanges();
     this.setDefaultStyle();
   }
 
