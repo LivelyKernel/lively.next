@@ -734,15 +734,15 @@ export class Morph {
       args: [bindings],
       undo: null
     }, () => {
-      if (!this._keyhandlers) this._keyhandlers = [];
-      if (!this._keyhandlers.length) this._keyhandlers.push(new KeyHandler())
-      var handler = arr.last(this._keyhandlers);
-      bindings.forEach(({command, keys}) => handler.bindKey(keys, command));
+      if (!this._keybindings) this._keybindings = [];
+      this._keybindings.unshift(...bindings);
     });
   }
-
-  get keyhandlers() { return this._keyhandlers || []; }
+  get keybindings() { return this._keybindings || []; }
+  set keybindings(bndgs) { return this._keybindings = bndgs; }
+  get keyhandlers() { return [KeyHandler.withBindings(this.keybindings)]; }
   simulateKeys(keyString) { return KeyHandler.simulateKeys(this, keyString); }
+
   onKeyDown(evt) {
     if (KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
       evt.stop();

@@ -12,7 +12,8 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
       success = false,
       keyhandlers = morph.keyhandlers,
       isInputEvent = keyCombo.startsWith("input-");
-  if (noInputEvents && isInputEvent) return false;
+
+  if (!keyhandlers || (noInputEvents && isInputEvent)) return false;
 
   for (var i = keyhandlers.length; i--;) {
     toExecute = keyhandlers[i].eventCommandLookup(morph, evt);

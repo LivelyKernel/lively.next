@@ -165,9 +165,9 @@ export class World extends Morph {
     }));
   }
 
-  get commands() {
-    return worldCommands.concat(super.commands);
-  }
+  get commands() { return worldCommands.concat(super.commands); }
+  get keybindings() { return super.keybindings.concat(config.globalKeyBindings); }
+  set keybindings(x) { super.keybindings = x }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // halos

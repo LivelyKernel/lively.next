@@ -649,9 +649,9 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // keyboard events
 
-  get keyhandlers() {
-    return [KeyHandler.withBindings(config.text.defaultKeyBindings)].concat(this._keyhandlers || []);
-  }
+  get keybindings() { return super.keybindings.concat(config.text.defaultKeyBindings); }
+  set keybindings(x) { super.keybindings = x }
+  get keyhandlers() { return (this._keyhandlers || []).concat(super.keyhandlers); }
 
   onKeyDown(evt) {
     if (KeyHandler.invokeKeyHandlers(this, evt, true/*no input evts*/)) {
