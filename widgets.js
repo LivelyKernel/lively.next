@@ -192,6 +192,9 @@ export class Window extends Morph {
     this.styleClasses = ["morph"];
   }
 
+  focus() {
+    this.targetMorph && this.targetMorph.focus();
+  }
 
 }
 

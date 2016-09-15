@@ -215,7 +215,7 @@ export class List extends Morph {
 
   get itemHeight() {
     return this._itemHeight
-       || (this._itemHeight = this.env.fontMetric.sizeFor({fontFamily: this.fontFamily, fontSize: this.fontSize}, "X").height);
+       || (this._itemHeight = this.env.fontMetric.sizeFor(this.fontFamily+this.fontSize, "O").height);
   }
 
   update() {

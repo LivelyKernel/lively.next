@@ -35,7 +35,7 @@ export default class FontMetric {
   }
 
   constructor() {
-    this.charMap = [];
+    this.charMap = {};
     this.element = null;
     this.cachedBoundsInfo = {};
   }
@@ -125,7 +125,7 @@ export default class FontMetric {
     style = obj.select(style, charSizeProperties);
 
     if (!this.charMap[style]) {
-      this.charMap[style] = [];
+      this.charMap[style] = {};
     }
     if (!this.charMap[style][char])
       this.charMap[style][char] = this.measure(style, char);

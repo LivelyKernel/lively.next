@@ -116,6 +116,10 @@ export class Browser extends Window {
     this.onLoad();
   }
 
+  focus() {
+    this.get("sourceEditor").focus();
+  }
+
   build() {
     var style = {borderWidth: 1, borderColor: Color.gray},
         textStyle = {...style, type: CodeEditor, mode: "javascript"};

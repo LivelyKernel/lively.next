@@ -32,43 +32,21 @@ var worldCommands = [
   },
 
   {
-    name: "move halo target",
-    exec: (world, opts = {direction: "", offset: 1}) => {
+    name: "move or resize halo target",
+    exec: (world, opts = {direction: "left", offset: 1, what: "move"}) => {
       var halo = world.halos()[0];
       if (!halo) return false;
 
-      var {direction, offset} = opts,
+      var {direction, offset, what} = opts,
           t = halo.target;
       offset = offset || 1;
       switch (direction) {
-        case "left": t.left -= offset; break;
-        case "right": t.left += offset; break;
-        case "up": t.top -= offset; break;
-        case "down": t.top += offset; break;
+        case "left": t[what === "move" ? "left" : "width"] -= offset; break;
+        case "right": t[what === "move" ? "left" : "width"] += offset; break;
+        case "up": t[what === "move" ? "top" : "height"] -= offset; break;
+        case "down": t[what === "move" ? "top" : "height"] += offset; break;
       }
       halo.alignWithTarget();
-
-      return true;
-    }
-  },
-
-  {
-    name: "resize halo target",
-    exec: (world, opts = {direction: "", amount: 1}) => {
-      var halo = world.halos()[0];
-      if (!halo) return false;
-
-      var {direction, amount} = opts,
-          t = halo.target;
-      amount = amount || 1;
-      switch (direction) {
-        case "left": that.width -= amount; break;
-        case "right": that.width += amount; break;
-        case "up": that.height -= amount; break;
-        case "down": that.height += amount; break;
-      }
-      halo.alignWithTarget();
-
       return true;
     }
   },
@@ -78,6 +56,17 @@ var worldCommands = [
     exec: (world) => {
       delete world._cachedWindowBounds;
       world.extent = world.windowBounds().extent();
+      return true;
+    }
+  },
+
+  {
+    name: "window switcher",
+    exec: async (world) => {
+      var wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
+            .map(win => ({isListItem: true, string: win.title || String(win), value: win})),
+          win = await world.filterableListPrompt("Choose window", wins, {preselect: 1, width: world.visibleBounds().extent().x * 1/3, fontSize: 20});
+      if (win) { win.bringToFront(); win.focus(); }
       return true;
     }
   }
@@ -317,7 +306,7 @@ export class AbstractPrompt extends Morph {
       borderWidth: 1, borderColor: Color.gray,
       ...obj.dissoc(props, ["label", "autoRemove"])});
 
-    this.build();
+    this.build(props);
     this.label = props.label || "no label";
     this.state = {answer: promise.deferred()}
     var autoRemove = props.hasOwnProperty("autoRemove") ? props.autoRemove : true;
@@ -416,9 +405,9 @@ export class FilterableListPrompt extends AbstractPrompt {
       this.get("list").selectedIndex = props.preselect;
   }
 
-  build() {
-    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true, selectable: false});
-    this.get("list") || this.addMorph(new FilterableList({name: "list"}));
+  build({fontSize, fontFamily}) {
+    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true, selectable: false, fontSize, fontFamily});
+    this.get("list") || this.addMorph(new FilterableList({name: "list", fontSize, fontFamily}));
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
