@@ -1,7 +1,6 @@
 import { pt, rect } from "lively.graphics";
 import { arr, string, obj } from "lively.lang";
 
-const charSizeProperties = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "textDecoration"];
 
 export default class FontMetric {
 
@@ -119,18 +118,22 @@ export default class FontMetric {
   }
 
   sizeFor(style, char) {
-    if (char.length > 1) return this.measure(style, char);
-
     // Select style properties relevant to individual character size
-    style = obj.select(style, charSizeProperties);
+    let { fontFamily, fontSize,
+          fontWeight, fontStyle, textDecoration } = style,
+        relevantStyle = { fontFamily, fontSize,
+                          fontWeight, fontStyle, textDecoration };
 
-    if (!this.charMap[style]) {
-      this.charMap[style] = {};
-    }
-    if (!this.charMap[style][char])
-      this.charMap[style][char] = this.measure(style, char);
+    if (char.length > 1) return this.measure(relevantStyle, char);
 
-    return this.charMap[style][char];
+    let styleKey = [fontFamily, fontSize, fontWeight, fontStyle, textDecoration].join('-');
+
+    if (!this.charMap[styleKey])
+      this.charMap[styleKey] = {};
+    if (!this.charMap[styleKey][char])
+      this.charMap[styleKey][char] = this.measure(relevantStyle, char);
+
+    return this.charMap[styleKey][char];
   }
 
   asciiSizes(style) {
