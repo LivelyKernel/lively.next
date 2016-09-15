@@ -29,3 +29,10 @@ var world = new World({
 MorphicEnv.default().setWorld(world);
 
 window.$$world = world;
+
+
+window.addEventListener('beforeunload', function(evt) {
+  var msg = "Really?";
+  evt.returnValue = msg;
+  return msg;
+}, true);
