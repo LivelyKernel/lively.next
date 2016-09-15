@@ -1,5 +1,5 @@
 import { arr, obj } from "lively.lang";
-import { pt, Rectangle } from "lively.graphics";
+import { pt, Rectangle, Color } from "lively.graphics";
 import config from "../config.js";
 
 import { connect } from "lively.bindings";
@@ -23,6 +23,7 @@ const themes = {
   "tomorrowNight": TomorrowNightTheme,
   "github" : GithubTheme
 }; // {[string] -> Mode}
+
 
 export default class CodeEditor extends Morph {
   constructor(props) {
@@ -58,13 +59,14 @@ export default class CodeEditor extends Morph {
   
   highlight() {
     const txt = this.submorphs[0],
-          tokens = this.mode.highlight(txt.textString);
-    txt.resetStyleRanges();
-    tokens.forEach(({token, from, to}) => {
-      const style = this.theme.style(token),
-            sr = StyleRange.fromPositions(style, from, to);
-      txt.addStyleRange(sr);
-    });
+          tokens = this.mode.highlight(txt.textString),
+          styleRanges = tokens.map(({token, from, to}) => {
+            const defaultStyle = this.submorphs[0].styleProps,
+                  themeStyle = this.theme.style(token),
+                  style = obj.merge(defaultStyle, themeStyle);
+            return StyleRange.fromPositions(style, from, to);
+          });
+    txt.replaceStyleRanges(styleRanges);
   }
   
   get textString() { return this.submorphs[0].textString; }
