@@ -46,14 +46,12 @@ export class StyleRange {
   }
 
   static mergeInto(others, newRange) {
-    let a = others[0], b = newRange
-    if (!a) return [newRange];
-    ({ a, b } = StyleRange.merge(a, b));
-    let remaining = others.slice(1);
-    if (b.length)
-      b = arr.flatten(b.map(ea => StyleRange.mergeInto(remaining, ea)));
-    else b = remaining;
-    return Range.sort(a.concat(b));
+    let firstRange = others[0];
+    if (!firstRange) return [newRange];
+    let { a, b } = StyleRange.merge(firstRange, newRange),
+        remaining = others.slice(1);
+    b.map(ea => { remaining = StyleRange.mergeInto(remaining, ea) });
+    return Range.sort(a.concat(remaining));
   }
 
   static merge(a, b) {
