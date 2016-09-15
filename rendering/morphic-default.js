@@ -1,17 +1,70 @@
 import {diff, patch, create} from "virtual-dom";
+import bowser from "bowser";
 import { num, obj, arr, properties } from "lively.lang";
 import { Transform, Color } from "lively.graphics";
 import Velocity from "velocity";
 
-function animate(morph, node, anim) {
-  const animation = properties.without(anim, ["easing", "onFinish"]);
-  Velocity && Velocity.animate(node, 
-          getAnimationProps(animation), 
-          {easing: anim.easing || "easeInOutQuint"})
-          .then(() => {
-            Object.assign(morph, animation);
-            anim.onFinish && anim.onFinish();
-          });
+export class AnimationQueue {
+  
+  constructor(morph) {
+    this.morph = morph;
+    this.animations = [];
+  }
+  
+  registerAnimation(config) {
+    const anim = new PropertyAnimation(this, this.morph, config);
+    if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
+      this.animations.push(anim);
+    }
+  }
+  
+  startAnimationsFor(node) { this.animations.forEach(anim => anim.start(node)); }
+  
+  removeAnimation(animation) {
+    this.animations.remove(animation);
+  }
+  
+}
+
+export class PropertyAnimation {
+  
+  constructor(queue, morph, config) {
+    this.queue = queue;
+    this.morph = morph;
+    this.config = config;
+  }
+  
+  equals(animation) {
+    return obj.equals(this.changedProps, animation.changedProps);
+  }
+  
+  get affectsMorph() {
+    return properties.any(this.changedProps, (changedProps, prop) => !obj.equals(changedProps[prop], this.morph[prop])); 
+  }
+  
+  get changedProps() {
+    return obj.dissoc(this.config, ["easing", "onFinish"]);
+  }
+  
+  get easing() { return this.config.easing || "easeInOutQuint" }
+  get onFinish() { return this.config.onFinish || (() => {})}
+  
+  start(node) {
+    if(Velocity && !this.active) {
+      this.active = true;
+      Velocity.animate(node, this.changedProps, 
+                       {easing: this.easing})
+              .then(() => {
+                Object.assign(this.morph, this.changedProps);
+                this.queue.removeAnimation(this);
+                this.onFinish();
+              });
+    } else {
+      // just skip the animation
+      Object.assign(this.morph, this.changedProps);
+    }
+  }
+  
 }
 
 function getTransform({position, origin, rotation, scale}) {
@@ -95,17 +148,17 @@ ScrollHook.prototype.hook = function(node, propertyName, previousValue) {
   });
 }
 
-export function defaultAttributes(morph) {
+function animationHook(morph) {
   const Animation = function() {};
   Animation.prototype.hook = (node) => {
-    var anim;
-    while (anim = morph._animations.pop()) {
-      animate(morph, node, anim);
-    }
+    morph._animationQueue.startAnimationsFor(node);
   }
-  
+  return new Animation();
+}
+
+export function defaultAttributes(morph) {
   return {
-    animation: new Animation(),
+    animation: animationHook(morph),
     key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),

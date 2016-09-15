@@ -5,6 +5,7 @@ import { GroupChange } from "../changes.js";
 import { expect } from "mocha-es6";
 import { pt, Color } from "lively.graphics";
 import { num, arr } from "lively.lang";
+import { PropertyAnimation } from "../rendering/morphic-default.js";
 
 var env;
 
@@ -173,7 +174,40 @@ describe("changes", function () {
       });
 
     });
-
+    
   });
+  
+  describe("animations", () => {
+    
+    it("enques a new animation when setting prop animated", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red}),
+          q = m._animationQueue;
+      m.animate({fill: Color.green, extent: pt(50,50), easing: "easInOut", onFinish: () => m.remove()});
+      expect(q.animations[0].changedProps).deep.equals({fill: Color.green, extent: pt(50,50)});
+    })
+    
+    it("does not enqueue the same prop animation more than once", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red}),
+          q = m._animationQueue,
+          a1 = {fill: Color.green, extent: pt(50,50), easing: "easeInOut", onFinish: () => m.remove()},
+          a2 = {fill: Color.green, extent: pt(50,50)};
+      m.animate(a1);
+      m.animate(a2);
+      expect(new PropertyAnimation(null, m, a1).equals(new PropertyAnimation(null, m, a2))).to.be.true;
+      expect(q.animations.length).equals(1);
+    })
+    
+    it("does not enqueue animations that have no effect", () => {
+      var m = morph({extent: pt(10,20), fill: Color.red}),
+          q = m._animationQueue,
+          a = {extent: pt(10,20), easing: "easeInOut", onFinish: () => m.remove()},
+          anim = new PropertyAnimation(null, m, a);
+      expect(anim.changedProps).deep.equals({extent: pt(10,20)})
+      expect(anim.affectsMorph).to.be.false;
+      m.animate(a);
+      expect(q.animations.length).equals(0);
+    })
+    
+  })
 
 });
