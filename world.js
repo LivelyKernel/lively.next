@@ -16,7 +16,7 @@ var worldCommands = [
     name: "show halo for focused morph",
     exec: (world) => {
       var morph = world.focusedMorph;
-      world.showHaloFor(morph, world.firstHand.pointerId);
+      world.showHaloFor(morph.getWindow() || morph, world.firstHand.pointerId);
       return true;
     }
   },
@@ -41,10 +41,31 @@ var worldCommands = [
           t = halo.target;
       offset = offset || 1;
       switch (direction) {
-        case "left": t.moveBy(pt(-offset, 0)); break;
-        case "right": t.moveBy(pt(offset, 0)); break;
-        case "up": t.moveBy(pt(0, -offset)); break;
-        case "down": t.moveBy(pt(0, offset)); break;
+        case "left": t.left -= offset; break;
+        case "right": t.left += offset; break;
+        case "up": t.top -= offset; break;
+        case "down": t.top += offset; break;
+      }
+      halo.alignWithTarget();
+
+      return true;
+    }
+  },
+
+  {
+    name: "resize halo target",
+    exec: (world, opts = {direction: "", amount: 1}) => {
+      var halo = world.halos()[0];
+      if (!halo) return false;
+
+      var {direction, amount} = opts,
+          t = halo.target;
+      amount = amount || 1;
+      switch (direction) {
+        case "left": that.width -= amount; break;
+        case "right": that.width += amount; break;
+        case "up": that.height -= amount; break;
+        case "down": that.height += amount; break;
       }
       halo.alignWithTarget();
 

@@ -641,31 +641,6 @@ export class Halo extends Morph {
     this.buttonControls.map(b => b.onKeyUp(evt));
   }
 
-  onKeyDown(evt) {
-    var offsets = {
-      "Up":          pt(0,-1),
-      "Shift-Up":    pt(0,-1),
-      "Down":        pt(0,1),
-      "Shift-Down":  pt(0,1),
-      "Left":        pt(-1, 0),
-      "Shift-Left":  pt(-1, 0),
-      "Right":       pt(1, 0),
-      "Shift-Right": pt(1, 0),
-    }, delta;
-    if (this.changingName) return;
-    if (delta = offsets[evt.keyCombo]) {
-      evt.stop();
-      if (evt.isShiftDown()) {
-        this.target.resizeBy(delta);
-      } else {
-        this.target.moveBy(delta);
-      }
-      this.alignWithTarget();
-    } else {
-      this.buttonControls.map(b => b.onKeyDown(evt));
-    }
-  }
-
   tranformMoveDeltaDependingOnHaloPosition(evt, moveDelta, cornerName) {
     // Griding and rounding might move the morph differently
     // so we have to recalculate the delta...
