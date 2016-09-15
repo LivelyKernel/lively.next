@@ -20,7 +20,13 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 
     if (!toExecute || !toExecute.command) continue;
 
-    let {command, args, passEvent, count} = toExecute;
+    let {command, args, passEvent, count, onlyWhenFocused} = toExecute;
+
+    if (onlyWhenFocused) {
+      var world = morph.world();
+      if (world && world.focusedMorph && world.focusedMorph !== morph)
+        continue;
+    }
 
     // allow keyboardHandler to consume keys
     success = command === "null" ? true : morph.execCommand(command, args, count, evt);
