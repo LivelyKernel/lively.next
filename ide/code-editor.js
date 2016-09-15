@@ -2,6 +2,7 @@ import { arr, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
 import config from "../config.js";
 
+import { connect } from "lively.bindings";
 import { Morph, Text, Menu } from "../index.js";
 import { StyleRange } from "../text/style.js";
 
@@ -41,7 +42,8 @@ export default class CodeEditor extends Morph {
             this.owner && this.owner.requestHighlight();
           }
           return Text.prototype.onChange.call(this, change);
-        }
+        },
+        doSave() { this.owner && this.owner.doSave(); }
       }],
       ...obj.dissoc(props, ["textString", "mode", "theme"])
     });
@@ -51,6 +53,7 @@ export default class CodeEditor extends Morph {
 
     // FIXME lively.bindings does not seem to work:
     // connect(this.submorphs[0], "input", this, "requestHighlight");
+    connect(this, "extent", this.submorphs[0], "extent");
   }
   
   highlight() {
@@ -91,6 +94,10 @@ export default class CodeEditor extends Morph {
     this.submorphs[0].resizeBy(delta);
   }
   
+  doSave() {}
+
+  focus() { this.submorphs[0].focus(); }
+
   onContextMenu(evt) {
     evt.stop();
     if (evt.state.menu) evt.state.menu.remove();

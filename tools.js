@@ -131,7 +131,7 @@ export class Browser extends Window {
       submorphs: [
         {name: "packageList", type: "list", ...style},
         {name: "moduleList", type: "list", ...style},
-        {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner.owner/*FIXME*/.save(); }}
+        {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner/*FIXME*/.save(); }}
       ]
     });
   }
