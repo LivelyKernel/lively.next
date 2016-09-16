@@ -824,7 +824,10 @@ commands.push(
         });
 
       } else {
-        var minSpace = lines.reduce((minSpace, line) => !line.trim() ? minSpace : Math.min(minSpace, line.match(/^\s*/)[0].length), Infinity),
+        var minSpace = lines.reduce((minSpace, line, i) =>
+              !line.trim() && (!sel.isEmpty() || sel.start.row !== sel.end.row) ?
+                minSpace :
+                Math.min(minSpace, line.match(/^\s*/)[0].length), Infinity),
             minSpace = minSpace === Infinity ? 0 : minSpace;
         lines.forEach((line, i) => {
           var [_, space, rest] = line.match(/^(\s*)(.*)/);
