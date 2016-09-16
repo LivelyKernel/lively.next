@@ -1,6 +1,6 @@
 import { arr, num, obj } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { morph, Morph, Ellipse, Text } from "./index.js";
+import { show, morph, Morph, Ellipse, Text } from "./index.js";
 import { signal, connect } from "lively.bindings";
 
 export class Window extends Morph {
@@ -16,22 +16,20 @@ export class Window extends Morph {
       ...obj.dissoc(props, ["title", "targetMorph"])
     });
     this.submorphs = this.submorphs.concat(this.controls());
-    this.title = props.title || this.name || "";
     if (props.targetMorph) this.targetMorph = props.targetMorph;
+    this.title = props.title || this.name || "";
+    connect(this, "extent", this, "relayout");
+    connect(this.titleLabel(), "extent", this, "relayout");
   }
 
   get isWindow() { return true }
 
   relayout() {
-    this.titleLabel().center = pt(Math.max(this.extent.x / 2, 100), 10);
-  }
-
-  resizeBy(delta) {
-    this.styleClasses = ["morph"];
-    super.resizeBy(delta);
-    this.relayout();
+    var bounds = this.innerBounds();
+    this.titleLabel().center = pt(Math.max(bounds.extent().x / 2, 100), 10);
+    this.resizer().bottomRight = bounds.bottomRight();
     var t = this.targetMorph;
-    if (t) t.resizeBy(delta);
+    t && t.setBounds(bounds.withTopLeft(pt(0,25)));
   }
 
   controls() {
@@ -110,8 +108,8 @@ export class Window extends Morph {
       grabbable: false,
       fill: Color.gray.withA(0),
       fontColor: Color.darkGray,
-      center: pt(this.extent.x / 2, 10),
-      reactsToPointer: false
+      reactsToPointer: false,
+      selectable: false
     };
   }
 
@@ -131,7 +129,7 @@ export class Window extends Morph {
   }
 
   get title() { return this.titleLabel().textString; }
-  set title(title) { this.titleLabel().textString = title; this.relayout(); }
+  set title(title) { this.titleLabel().textString = title; }
 
   get targetMorph() { return arr.last(arr.withoutAll(this.submorphs, this.controls())); }
   set targetMorph(targetMorph) {
@@ -144,7 +142,7 @@ export class Window extends Morph {
     if (!targetMorph.isMorph) targetMorph = morph(targetMorph); // spec
 
     this.addMorph(targetMorph, this.resizer());
-    targetMorph.setBounds(this.innerBounds().withTopLeft(pt(0,25)));
+    this.relayout();
   }
 
   toggleMinimize() {
@@ -198,21 +196,22 @@ export class Window extends Morph {
 
   isActive() {
     var w = this.world();
-    if (!w) return false;
-    if (arr.last(w.getWindows()) !== this) return false;
-    var focused = w.focusedMorph;
-    if (!focused) return false;
-    return focused === this || this.isAncestorOf(focused);
+    return w ? arr.last(w.getWindows()) === this : false;
   }
 
   activate() {
-    if (this.isActive()) return;
+    if (this.isActive()) {
+      this.focus();
+      return this;
+    }
+
     var w = this.world();
-    if (!w) this.openInWorld();
+    if (!w) this.openInWorld()
     w = this.world();
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
     this.bringToFront();
     this.focus();
+    return this;
   }
 
   deactivate() {
