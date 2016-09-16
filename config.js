@@ -81,10 +81,10 @@ var config = {
       {keys: 'Shift-Up',    command: "select up"},
       {keys: 'Shift-Down',  command: "select down"},
 
-      {keys: 'Alt-Right|Alt-F',              command: "goto word right"},
-      {keys: 'Alt-Left|Alt-B',               command: "goto word left"},
-      {keys: 'Alt-Shift-Right|Alt-Shift-F',  command: {command: "goto word right", args: {select: true}}},
-      {keys: 'Alt-Shift-Left|Alt-Shift-B',   command: {command: "goto word left", args: {select: true}}},
+      {keys: {win: 'Ctrl-Right', mac: 'Alt-Right|Alt-F'}, command: "goto word right"},
+      {keys: {win: 'Ctrl-Left', mac: 'Alt-Left|Alt-B'}, command: "goto word left"},
+      {keys: {win: 'Ctrl-Shift-Right', mac: 'Alt-Shift-Right|Alt-Shift-F'}, command: {command: "goto word right", args: {select: true}}},
+      {keys: {win: 'Ctrl-Shift-Left', mac: 'Alt-Shift-Left|Alt-Shift-B'}, command: {command: "goto word left", args: {select: true}}},
       {keys: 'Alt-Backspace',                command: "delete word left"},
       {keys: 'Alt-D',                        command: "delete word right"},
       {keys: 'Alt-Ctrl-K',                   command: "delete word right"/*actualle delete sexp!*/},
@@ -111,10 +111,10 @@ var config = {
       {keys: {win: "Shift-PageDown", mac: "Shift-PageDown"}, command: "goto page down and select"},
       {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
 
-      {keys: {win: "Ctrl-Left", mac: "Meta-Left"},               command: "goto matching left"},
-      {keys: {win: "Ctrl-Shift-Left", mac: "Meta-Shift-Left"},   command: {command: "goto matching left", args: {select: true}}},
-      {keys: {win: "Ctrl-Right", mac: "Meta-Right"},             command: "goto matching right"},
-      {keys: {win: "Ctrl-Shift-Right", mac: "Meta-Shift-Right"}, command: {command: "goto matching right", args: {select: true}}},
+      {keys: {win: "Alt-Left", mac: "Meta-Left"},               command: "goto matching left"},
+      {keys: {win: "Alt-Shift-Left", mac: "Meta-Shift-Left"},   command: {command: "goto matching left", args: {select: true}}},
+      {keys: {win: "Alt-Right", mac: "Meta-Right"},             command: "goto matching right"},
+      {keys: {win: "Alt-Shift-Right", mac: "Meta-Shift-Right"}, command: {command: "goto matching right", args: {select: true}}},
       
       // FIXME this is actually fwd/bwd sexp
       {keys: "Alt-Ctrl-B", command: "goto matching left"},
