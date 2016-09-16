@@ -70,7 +70,9 @@ var commands = [
         pasted = kr.yank();
 
       if (!pasted && lively.browserExtension) {
-        pasted = await lively.browserExtension.doPaste();
+        try {
+          pasted = await lively.browserExtension.doPaste();
+        } catch(err) { /*timeout err*/}
       }
 
       if (!pasted) {
