@@ -574,6 +574,12 @@ export class Text extends Morph {
     this.scrollPositionIntoView(this.cursorPosition);
   }
 
+  centerRow(row = this.cursorPosition.row, offset = pt(0,0)) {
+    var charBounds = this.charBoundsFromTextPosition({row, column: 0}),
+        pos = charBounds.leftCenter();
+    this.scroll = pos.addXY(0, -this.height/2).addPt(offset);
+  }
+
   scrollPositionIntoView(pos, offset = pt(0,0)) {
     if (!this.isClip()) return;
     var { scroll, padding } = this,
