@@ -686,7 +686,7 @@ export class Halo extends Morph {
              vertices: [pt(0,y), pt(width, y)]
            }));
          mesh = mesh || this.addMorphBack(
-           new Morph({name: "mesh", visible: false,
+           new Morph({name: "mesh", opacity: 0,
                       onKeyUp: (evt) => this.toggleMesh(false),
                       extent, position: this.localize(pt(2,2)),
                       styleClasses: ["morph", "halo-mesh"], fill: null}));
@@ -703,7 +703,7 @@ export class Halo extends Morph {
     } else {
       vertical && vertical.animate({opacity: 0, onFinish: () => vertical.remove()});
       horizontal && horizontal.animate({opacity: 0, onFinish: () => horizontal.remove()});
-      mesh && horizontal.animate({opacity: 0, onFinish: () => mesh.remove()});
+      mesh && mesh.animate({opacity: 0, onFinish: () => mesh.remove()});
     }
     this.focus();
   }
