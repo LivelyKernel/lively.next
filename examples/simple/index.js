@@ -1,6 +1,6 @@
 import { arr } from "lively.lang";
 import { pt, Color, Point } from "lively.graphics";
-import { Morph, World, List, Polygon, MorphicEnv } from "lively.morphic";
+import { Morph, World, List, Polygon, MorphicEnv, show } from "lively.morphic";
 import { Window, Button} from "lively.morphic/widgets.js";
 import { ObjectDrawer, Workspace } from "lively.morphic/tools.js";
 
@@ -24,7 +24,16 @@ var world = new World({
 
     new Workspace({extent: pt(200, 300), position: pt(800,200)})
   ]
+
 });
+
+world.submorphs[3].targetMorph.doSave = function() {
+  show("saved!");
+  localStorage.setItem('lively workspace', this.textString)
+}
+
+var code = localStorage.getItem('lively workspace');
+if (code) world.submorphs[3].targetMorph.textString = code;
 
 MorphicEnv.default().setWorld(world);
 
