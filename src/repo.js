@@ -79,41 +79,6 @@ export function enableGitHub() {
   return getOrAskGitHubToken();
 }
 
-export default async function repository(pkg) {
-  // PackageAddress, bool? -> Repository
-  if (pkg in repoForPackage) {
-    return repoForPackage[pkg];
-  }
-  // local IndexedDB
-  const repo = {};
-  await new Promise((resolve, reject) => {
-    mixins.indexed.init(err => err ? reject(err) : resolve());
-  });
-  mixins.indexed(repo, pkg);
-
-  // Server git repo
-  mixins.fallthrough(repo, serverShellRemote(pkg));
-  
-  // GitHub fall through
-  if (getGitHubToken() !== "<secret>") {
-    const url = await gitHubURL(pkg);
-    if (!url) throw new Error("Could not determine GitHub URL");
-    const remote = {};
-    mixins.github(remote, url, await getOrAskGitHubToken());
-    mixins.readCombiner(remote);
-    mixins.sync(repo, remote);
-    mixins.fallthrough(repo, remote);
-  }
-  
-  // Other plugins
-  mixins.createTree(repo);
-  mixins.memCache(repo);
-  mixins.walkers(repo);
-  mixins.formats(repo);
-  promisify(repo);
-  return repoForPackage[pkg] = repo;
-}
-
 export async function gitHubBranches(pkg) {
   // PackageAddress -> Array<{name: BranchName, hash: Hash}>
   await enableGitHub();
@@ -126,4 +91,53 @@ export async function gitHubBranches(pkg) {
       resolve(response.map(b => ({name: b.name, hash: b.commit.sha})));
     });
   });
+}
+
+let db;
+export function database() {
+  return new Promise((resolve, reject) => {
+    if (db !== undefined) return resolve(db);
+    mixins.indexed.init(err => {
+      if (err) return reject(err);
+      const repo = {};
+      mixins.indexed(repo, "prefix");
+      resolve(db = repo.db);
+    });
+  });
+}
+
+export default async function repository(pkg) {
+  // PackageAddress, bool? -> Repository
+  if (pkg in repoForPackage) {
+    return repoForPackage[pkg];
+  }
+  // local IndexedDB
+  const repo = {};
+  await database()
+  mixins.indexed(repo, pkg);
+
+  // Server git repo
+  mixins.fallthrough(repo, serverShellRemote(pkg));
+  
+  // GitHub fall through
+  if (getGitHubToken() !== "<secret>") {
+    const url = await gitHubURL(pkg);
+    if (!url) {
+      console.error("Could not determine GitHub URL");
+    } else {
+      const remote = {};
+      mixins.github(remote, url, await getOrAskGitHubToken());
+      mixins.readCombiner(remote);
+      mixins.sync(repo, remote);
+      mixins.fallthrough(repo, remote);
+    }
+  }
+  
+  // Other plugins
+  mixins.createTree(repo);
+  mixins.memCache(repo);
+  mixins.walkers(repo);
+  mixins.formats(repo);
+  promisify(repo);
+  return repoForPackage[pkg] = repo;
 }

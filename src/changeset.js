@@ -1,120 +1,82 @@
-/* global Map */
 import { arr } from 'lively.lang';
 import { emit } from 'lively.notifications';
-import { module, getPackages, importPackage } from "lively.modules";
-import { mixins, gitHubRequest } from "js-git-browser";
+import { getPackages } from "lively.modules";
 
-import { activeCommit, install, uninstall } from "../index.js";
-import { enableGitHub } from "./repo.js";
-import Branch from "./branch.js";
-import { packageHead } from "./commit.js";
+import branch, { localBranches } from "./branch.js";
+import { install } from "../index.js";
+
+const CHANGESETS_KEY = 'lively.changesets/changesets';
 
 let changesets; // undefined (uninitialized) | Array<ChangeSet>
 
+export default async function changeSet(name) {
+  const local = await localChangeSets();
+  let cs = local.find(cs => cs.name === name);
+  if (!cs) {
+    cs = new ChangeSet(name);
+    return adjustChangeSets(
+      () => { changesets.push(cs); },
+      () => { emit("lively.changesets/added", {changeset: name}); }
+    ).then(() => cs);
+  }
+  install();
+  return cs;
+}
+
 class ChangeSet {
 
-  constructor(name, pkgs) {
-    // string, Array<{pkg: PackageAddress}> -> ChangeSet
+  constructor(name) {
+    // string -> ChangeSet
     this.name = name;
-    this.branches = pkgs.map(pkg => new Branch(name, pkg.pkg));
-    this.active = false;
   }
   
-  getBranch(pkg) { // PackageAddress -> Branch?
-    return this.branches.find(b => b.pkg == pkg);
+  getBranches() { // () -> Promise<Array<Branch>>
+    return localBranches().then(branches =>
+      arr.flatmap(Object.keys(branches), k => branches[k])
+         .filter(b => b.name == this.name));
+  }
+  
+  getBranch(pkg) { // PackageAddress -> Promise<Branch?>
+    return localBranches().then(branches =>
+      branches[pkg] ? branches[pkg].find(b => b.name == this.name) : null);
   }
   
   async getOrCreateBranch(pkg) { // PackageAddress -> Branch
-    let branch = this.getBranch(pkg);
-    if (!branch) {
-      branch = new Branch(this.name, pkg);
-      await branch.createFromActive();
-      this.branches.push(branch);
+    let b = await this.getBranch(pkg);
+    if (!b) {
+      b = await branch(pkg, this.name);
+      await b.createFromActive();
     }
-    return branch;
+    return b;
   }
   
-  async pullBranchFromGitHub(pkg, hash) {
-    await enableGitHub();
-    let branch = this.getBranch(pkg);
-    if (!branch) {
-      branch = new Branch(this.name, pkg);
-      this.branches.push(branch);
-    }
-    return branch.setHead(hash);
-  }
-
-  async fromObject(obj) {
+  async fromObject(obj) { // { ".": ChangeSetName, [PackageAddress]: BranchExport } -> ()
     this.name = obj["."];
-    this.branches = await Promise.all(
-      Object.keys(obj)
-      .filter(pkg => pkg !== ".")
-      .map(pkg => new Branch(this.name, pkg))
-      .map(b => b.fromObject(obj[b.pkg])));
+    for (let pkg of Object.keys(obj).filter(pkg => pkg !== ".")) {
+      const b = await branch(pkg, this.name);
+      await b.fromObject(obj[pkg]);
+    }
     return this;
   }
   
-  async toObject() {
-    const result = {};
-    for (let branch of this.branches) {
+  async toObject() { // () -> { ".": ChangeSetName, [PackageAddress]: BranchExport }
+    const result = {},
+          branches = await this.getBranches();
+    for (let branch of branches) {
       result[branch.pkg] = await branch.toObject();
     }
     result["."] = this.name;
     return result;
   }
   
-  async delete() {
-    if (this.isActive()) {
-      await this.deactivate();
-    }
-    changesets = changesets.filter(cs => cs !== this);
-    const db = await new Promise((resolve, reject) => {
-      const req = window.indexedDB.open("tedit", 1);
-      req.onsuccess = evt => resolve(evt.target.result);
-      req.onerror = err => reject(err);
-    });
-    for (let branch of this.branches) {
-      await branch.delete(db);
-    }
-    emit("lively.changesets/deleted", {changeset: this.name});
-  }
-  
-  isActive() { // -> bool
-    return this.active;
-  }
-  
-  isWrittenTo() { // -> Promise<bool>
-    return targetChangeSet().then(target => target === this);
-  }
-  
-  async activate() { // () -> ()
-    if (this.isActive()) return;
-    install();
-    const prev = new Map();
-    for (const branch of this.branches) {
-      prev[branch] = await activeCommit(branch.pkg);
-    }
-    this.active = true;
-    for (const branch of this.branches) {
-      const next = await activeCommit(branch.pkg);
-      await next.activate(prev[branch]);
-    }
-    emit("lively.changesets/activated", {changeset: this.name});
-  }
-  
-  async deactivate() { // () -> ()
-    if (!this.isActive()) return;
-    this.active = false;
-    for (const branch of this.branches) {
-      const prev = await branch.head(),
-            next = await activeCommit(branch.pkg);
-      await next.activate(prev);
-    }
-    const cs = await localChangeSets();
-    if (cs.filter(c => c.isActive()).length === 0) {
-      uninstall();
-    }
-    emit("lively.changesets/deactivated", {changeset: this.name});
+  delete() { // () -> Promise<()>
+    return adjustChangeSets(
+      () => {
+        changesets = changesets.filter(cs => cs !== this);
+        return this.getBranches().then(branches => Promise.all(branches.map(b => b.delete())));
+      },
+      () => { emit("lively.changesets/deleted", {changeset: this.name}); }
+    );
   }
   
   toString() { // -> String
@@ -122,72 +84,68 @@ class ChangeSet {
   }
 }
 
-export async function createChangeSet(name) { // ChangeSetName => ChangeSet
-  await new Promise((resolve, reject) => { // initialize DB
-    mixins.indexed.init(err => err ? reject(err) : resolve());
-  });
-  const db = await new Promise((resolve, reject) => {
-    const req = window.indexedDB.open("tedit", 1);
-    req.onsuccess = evt => resolve(evt.target.result);
-    req.onerror = err => reject(err);
-  });
-  const branches = [];
-  for (let pkg of getPackages()) {
-    const k = await new Promise((resolve, reject) => {
-      const trans = db.transaction(["refs"], "readonly"),
-            store = trans.objectStore("refs"),
-            request = store.get(`${pkg.address}/refs/heads/${name}`);
-      request.onsuccess = evt => resolve(evt.target.result);
-      request.onerror = evt => reject(new Error(evt.value));
-    });
-    if (k) branches.push({pkg: pkg.address});
-  }
-  const cs = new ChangeSet(name, branches);
-  (await localChangeSets()).push(cs);
-  emit("lively.changesets/added", {changeset: name});
-  return cs;
-}
-
-function parseChangeSetRef(url) {
-  // string -> {cs: ChangeSetName, pkg: PackageAddress}?
-  const parts = url.split('/'),
-        l = parts.length;
-  if (l < 4 || parts[l-3] !== "refs" || parts[l-2] !== "heads") return null;
-  return {cs: parts[l - 1], pkg: parts.slice(0, l - 3).join('/')};
-}
-
-export async function localChangeSets() { // () => Array<ChangeSet>
-  if (changesets !== undefined) return changesets;
-  await new Promise((resolve, reject) => { // initialize DB
-    mixins.indexed.init(err => err ? reject(err) : resolve());
-  });
-  const db = await new Promise((resolve, reject) => {
-    const req = window.indexedDB.open("tedit", 1);
-    req.onsuccess = evt => resolve(evt.target.result);
-    req.onerror = err => reject(err);
-  });
-  const refs = await new Promise((resolve, reject) => {
-    const trans = db.transaction(["refs"], "readonly"),
-          store = trans.objectStore("refs"),
-          request = store.getAllKeys();
-    request.onsuccess = evt => resolve(evt.target.result);
-    request.onerror = evt => reject(new Error(evt.value));
-  });
-  const allChangeSets = refs.map(parseChangeSetRef).filter(t => !!t),
-        groups = arr.groupBy(allChangeSets, ({cs}) => cs);
-  return changesets = Object.keys(groups).map(name => new ChangeSet(name, groups[name]));
-}
-
-export function targetChangeSet() { // -> Promise<ChangeSet?>
-  return localChangeSets().then(changesets => {
-    for (let i = changesets.length - 1; i >= 0; i--) {
-      if (changesets[i].isActive()) return changesets[i];
+async function adjustChangeSets(doFunc, doneFunc, skipPrev) { // (() -> Promise?), (() -> A) -> A
+  const prev = {};
+  if (!skipPrev) {
+    for (let pkg of getPackages()) {
+      prev[pkg.address] = await targetBranchRead(pkg.address);
     }
-    return null;
-  });
+  }
+  const intermediate = doFunc();
+  if (typeof(intermediate) == "object" && intermediate.then) await intermediate;
+  const next = {};
+  for (let pkg of getPackages()) {
+    const prevB = prev[pkg.address],
+          nextB = await targetBranchRead(pkg.address);
+    if (prevB && !nextB) {
+      console.log(`deactivating ${prevB}`);
+      prevB.deactivate();
+    } else if (!prevB && nextB || prevB && nextB && prevB.name !== nextB.name) {
+      console.log(`activating ${nextB}`);
+      await nextB.activate();
+    }
+  }
+  window.localStorage.setItem(CHANGESETS_KEY, JSON.stringify(changesets.map(c => c.name)));
+  
+  return doneFunc();
 }
 
-export async function deactivateAll() {
+export async function importChangeSet(obj) { // { ".": ChangeSetName, [PackageAddress]: BranchExport } -> ()
+  const cs = await changeSet(obj["."]);
+  return adjustChangeSets(
+    () => { return cs.fromObject(obj); },
+    () => { emit("lively.changesets/imported", {changeset: cs.name}); }
+  ).then(() => cs);;
+}
+
+export async function initChangeSets() { // () => Promise<()>
+  return adjustChangeSets(
+    () => {
+      const json = window.localStorage.getItem(CHANGESETS_KEY) || "[]";
+      changesets = JSON.parse(json).map(csName => new ChangeSet(csName));
+    },
+    () => { emit("lively.changesets/initialized"); },
+    true
+  );
+}
+
+export function localChangeSets() { // () => Promise<Array<ChangeSet>>
+  if (changesets !== undefined) return Promise.resolve(changesets);
+  return initChangeSets().then(() => changesets);
+}
+
+export async function targetBranchRead(pkg) { // PackageAddress -> Branch?
   const cs = await localChangeSets();
-  for (const c of cs) { await c.deactivate(); }
+  for (let i = cs.length - 1; i >= 0; i--) {
+    const b = await cs[i].getBranch(pkg);
+    if (b) return b;
+  }
+  return null;
+}
+
+export function targetBranchWrite(pkg) { // PackageAddress -> Promise<ChangeSet?>
+  return localChangeSets().then(cs => {
+    if (cs.length === 0) return null;
+    return cs[cs.length - 1].getOrCreateBranch(pkg);
+  });
 }
