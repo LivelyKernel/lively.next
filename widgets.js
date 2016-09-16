@@ -146,34 +146,26 @@ export class Window extends Morph {
   }
 
   toggleMinimize() {
-    this.styleClasses = ["morph", "smooth-extent"]
     if (this.minimized) {
-      this.extent = this.cachedExtent;
+      this.animate({extent: this.cachedExtent, easing: "easeOutQuint"});
       this.resizer().visible = true
       this.minimized = false;
     } else {
       this.cachedExtent =  this.extent;
-      this.extent = pt(this.extent.x, 25);
+      this.animate({extent: pt(this.extent.x, 25), easing: "easeOutQuint"});
       this.resizer().visible = false;
       this.minimized = true;
     }
   }
 
   toggleMaximize() {
-    // FIXME: if the corresponding dom now is going to be
-    // respawned in the next render cycle by teh virtual-dom
-    // the animation will not be triggered, since a completely new
-    // node with the already changed values will appear. CSS animations
-    // will not trigger. Maybe move away from CSS animations to something
-    // more explicit, i.e. velocity.js?
-    this.styleClasses = ["morph", "smooth-extent"]
     if (this.maximized) {
-      this.setBounds(this.cachedBounds);
+      this.animate({bounds: this.cachedBounds});
       this.resizer().bottomRight = this.extent;
       this.maximized = false;
     } else {
       this.cachedBounds = this.bounds();
-      this.setBounds(this.world().bounds());
+      this.animate({bounds: this.world().bounds()});
       this.resizer().bottomRight = this.extent;
       this.resizer().visible = true;
       this.maximized = true;
