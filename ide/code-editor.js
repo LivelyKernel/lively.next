@@ -26,11 +26,13 @@ const themes = {
 
 
 export default class CodeEditor extends Morph {
+
   constructor(props) {
     super({
       extent: props.extent || pt(400,300),
       submorphs: [{
         type: "text",
+        name: "text",
         extent: props.extent || pt(400,300),
         textString: props.textString || "",
         fixedWidth: true,
@@ -69,8 +71,10 @@ export default class CodeEditor extends Morph {
     txt.replaceStyleRanges(styleRanges);
   }
   
-  get textString() { return this.submorphs[0].textString; }
-  set textString(str) { this.submorphs[0].textString = str; }
+  get text() { return this.submorphs[0]; }
+
+  get textString() { return this.text.textString; }
+  set textString(str) { this.text.textString = str; }
 
   get mode() { return this._mode; }
   set mode(mode) {
@@ -81,7 +85,7 @@ export default class CodeEditor extends Morph {
   get theme() { return this._theme; }
   set theme(theme) {
     this._theme = theme instanceof Theme ? theme : new (themes[theme]);
-    this.submorphs[0].fill = this._theme.background();
+    this.text.fill = this._theme.background();
     this.requestHighlight();
   }
   
@@ -93,12 +97,12 @@ export default class CodeEditor extends Morph {
 
   resizeBy(delta) {
     super.resizeBy(delta);
-    this.submorphs[0].resizeBy(delta);
+    this.text.resizeBy(delta);
   }
   
   doSave() {}
 
-  focus() { this.submorphs[0].focus(); }
+  focus() { this.text.focus(); }
 
   onContextMenu(evt) {
     evt.stop();
