@@ -81,6 +81,8 @@ var worldCommands = [
         world.undoStart("window close");
         win.close();
         world.undoStop("window close");
+        var next = arr.last(world.getWindows());
+        next && next.activate();
       }
       return true;
     }
@@ -97,7 +99,7 @@ var worldCommands = [
   {
     name: "open browser",
     exec: world => {
-      world.addMorph(new Browser({center: world.center}));
+      new Browser({center: world.center}).activate();
       return;
     }
   }
@@ -130,6 +132,9 @@ export class World extends Morph {
   }
 
   get firstHand() { return this.hands[0]; }
+
+  activeWindow() { return this.getWindows().reverse().find(ea => ea.isActive()); }
+  getWindows() { return this.submorphs.filter(ea => ea.isWindow); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events

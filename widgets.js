@@ -188,7 +188,7 @@ export class Window extends Morph {
   }
 
   onMouseDown(evt) {
-    this.bringToFront();
+    this.activate();
     this.styleClasses = ["morph"];
   }
 
@@ -196,6 +196,27 @@ export class Window extends Morph {
     this.targetMorph && this.targetMorph.focus();
   }
 
+  isActive() {
+    var w = this.world();
+    if (!w) return false;
+    if (arr.last(w.getWindows()) !== this) return false;
+    var focused = w.focusedMorph;
+    if (!focused) return false;
+    return focused === this || this.isAncestorOf(focused);
+  }
+
+  activate() {
+    if (this.isActive()) return;
+    var w = this.world();
+    if (!w) this.openInWorld();
+    w = this.world();
+    arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
+    this.bringToFront();
+    this.focus();
+  }
+
+  deactivate() {
+  }
 }
 
 export class Button extends Morph {
