@@ -76,6 +76,16 @@ var listCommands = [
       list.gotoIndex(newIndex);
       return true;
     }
+  },
+
+  {
+    name: "select via filter",
+    exec: async (list) => {
+      list.selection = await list.world().filterableListPrompt("Select item", list.items, {preselect: list.selectedIndex});
+      list.scrollSelectionIntoView();
+      list.update();
+      return true;
+    }
   }
 ];
 
@@ -252,6 +262,10 @@ export class List extends Morph {
     itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
   }
 
+  scrollSelectionIntoView() {
+    if (this.selection) this.scrollIndexIntoView(this.selectedIndex);
+  }
+
   scrollIndexIntoView(idx) {
     var {itemHeight, width, scroll} = this,
         itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
@@ -266,6 +280,27 @@ export class List extends Morph {
 
   onScroll() {
     fun.debounceNamed(this.id + "scroll", 81, () => this.update(), true)();
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // event handling
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  get keybindings() {
+    return [
+      {keys: "Down|Ctrl-N", command: "arrow down"},
+      {keys: "Up|Ctrl-P", command: "arrow up"},
+      {keys: "Ctrl-V|PageDown", command: "page down"},
+      {keys: "Alt-V|PageUp", command: "page up"},
+      {keys: "Alt-Shift-,", command: "goto first item"},
+      {keys: "Alt-Shift-.", command: "goto last item"},
+      {keys: "Enter", command: "accept input"},
+      {keys: "Escape|Ctrl-G", command: "cancel"},
+      {keys: "Alt-Space", command: "select via filter"},
+    ].concat(super.keybindings);
+  }
+
+  get commands() {
+    return listCommands;
   }
 
 }
@@ -312,17 +347,6 @@ export class FilterableList extends Morph {
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
     connect(this, "extent", this, "relayout");
-
-    this.addKeyBindings([
-      {keys: "Down|Ctrl-N", command: "arrow down"},
-      {keys: "Up|Ctrl-P", command: "arrow up"},
-      {keys: "Ctrl-V|PageDown", command: "page down"},
-      {keys: "Alt-V|PageUp", command: "page up"},
-      {keys: "Alt-Shift-,", command: "goto first item"},
-      {keys: "Alt-Shift-.", command: "goto last item"},
-      {keys: "Enter", command: "accept input"},
-      {keys: "Escape|Ctrl-G", command: "cancel"}
-    ]);
   }
 
   focus() { this.get("input").focus(); }
@@ -356,13 +380,25 @@ export class FilterableList extends Morph {
     this.get("list").items = filteredItems;
   }
 
+  get keybindings() {
+    return [
+      {keys: "Down|Ctrl-N", command: "arrow down"},
+      {keys: "Up|Ctrl-P", command: "arrow up"},
+      {keys: "Ctrl-V|PageDown", command: "page down"},
+      {keys: "Alt-V|PageUp", command: "page up"},
+      {keys: "Alt-Shift-,", command: "goto first item"},
+      {keys: "Alt-Shift-.", command: "goto last item"},
+      {keys: "Enter", command: "accept input"},
+      {keys: "Escape|Ctrl-G", command: "cancel"}
+    ].concat(super.keybindings);
+  }
+
   get commands()  {
     var list = this.get("list");
     return super.commands.concat([
       {
         name: "accept input",
         exec: (morph) => {
-//           signal(morph, "accepted", list.selection);
           signal(morph, "accepted", list.selectedIndex in this.get("list").items ? list.selection: null);
           return true;
         }
