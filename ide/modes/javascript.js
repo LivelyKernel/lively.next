@@ -26,11 +26,15 @@ export default class JavaScriptMode extends Mode {
     this.left = found.length - 1;
     return true;
   }
+  backToDefault() {
+    this.state = this.level >= 1 ? "templateint" : "default";
+  }
   process() { // -> Token
     const c = this.next();
     switch (this.state) {
       case "templateint": // template interpolation
         if (c === "}" && this.level === 1) {
+          this.level = 0;
           this.state = "template";
           return Token.default;
         }
@@ -92,7 +96,7 @@ export default class JavaScriptMode extends Mode {
         } else if (c === "\\") {
           this.skipNext = true;
         } else if (c === "'") {
-          this.state = "default"; 
+          this.backToDefault();
         }
         return Token.string;
 
@@ -102,7 +106,7 @@ export default class JavaScriptMode extends Mode {
         } else if (c === "\\") {
           this.skipNext = true;
         } else if (c === '"') {
-          this.state = "default"; 
+          this.backToDefault();
         }
         return Token.string;
 
@@ -112,7 +116,7 @@ export default class JavaScriptMode extends Mode {
         } else if (c === "\\") {
           this.skipNext = true;
         } else if (c === '`') {
-          this.state = "default"; 
+          this.backToDefault();
         } else if (this.checkChars("${")) {
           this.level = 0;
           this.state = "templateint";
@@ -132,7 +136,7 @@ export default class JavaScriptMode extends Mode {
         
       case "comment":
         if (this.commentEnding) {
-          this.state = "default";
+          this.backToDefault();
         } else if (this.checkChars("*/")) {
           this.commentEnding = true;
         }
@@ -140,7 +144,7 @@ export default class JavaScriptMode extends Mode {
         
       case "linecomment":
         if (c === '\n') {
-          this.state = "default";
+          this.backToDefault();
         }
         return Token.comment;
 
@@ -148,30 +152,30 @@ export default class JavaScriptMode extends Mode {
         if (/[0-9a-zA-Z_\$]/.test(c)) { //TODO unicode
           return Token.id;
         }
-        this.state = "default";
+        this.backToDefault();
         return this.process();
         
       case "keyword":
         if (--this.left === 0) {
-          this.state = "default";
+          this.backToDefault();
         }
         return Token.keyword;
         
       case "constant":
         if (--this.left === 0) {
-          this.state = "default";
+          this.backToDefault();
         }
         return Token.constant;
 
       case "global":
         if (--this.left === 0) {
-          this.state = "default";
+          this.backToDefault();
         }
         return Token.global;
       
       case "dynamic":
         if (--this.left === 0) {
-          this.state = "default";
+          this.backToDefault();
         }
         return Token.dynamic;
     }
