@@ -137,6 +137,35 @@ export class Browser extends Window {
   }
 
 
+  get keybindings() {
+    return [
+      {keys: "Alt-Up", command: "focus list with selection"},
+      {keys: "F1", command: "focus package list"},
+      {keys: "F2", command: "focus module list"},
+      {keys: "F3|Alt-Down", command: "focus source editor"},
+    ].concat(super.keybindings);
+  }
+
+  get commands() {
+    var pList = this.get("packageList"),
+        mList = this.get("moduleList"),
+        editor = this.get("sourceEditor");
+    return [
+      {name: "focus list with selection", exec: () => focusList(mList.selection ? mList : pList)},
+      {name: "focus package list", exec: () => focusList(pList)},
+      {name: "focus module list", exec: () => focusList(mList)},
+      {name: "focus source editor", exec: () => { editor.focus(); editor.show(); return true; }},
+    ]
+
+    function focusList(list) {
+      list.scrollSelectionIntoView();
+      list.update();
+      list.show();
+      list.focus();
+      return list
+    }
+  }
+
   reset() {
     connect(this.get("packageList"), "selection", this, "onPackageSelected");
     connect(this.get("moduleList"), 'selection', this, 'onModuleSelected');
