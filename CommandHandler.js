@@ -38,15 +38,23 @@ export default class CommandHandler {
 
     name && this.addToHistory(name);
 
-    var result;
+    var world = morph.world(), result;
+
     if (command && typeof command.exec === "function") {
-      result = command.exec(morph, args, command.handlesCount ? count : undefined, evt);
+        try {
+          result = command.exec(morph, args, command.handlesCount ? count : undefined, evt);
+        } catch(err) {
+          result = err;
+          var msg = `Error in interactive command ${name}: ${err.stack}`;
+          world ? world.logError(msg) : console.error(msg);
+        }
     }
 
     // to not swallow errors
     if (result && typeof result.catch === "function") {
       result.catch(err => {
-        console.error(`Error in interactive command ${name}: ${err.stack}`);
+        var msg = `Error in interactive command ${name}: ${err.stack}`;
+        world ? world.logError(msg) : console.error(msg);
         throw err;
       });
     }
