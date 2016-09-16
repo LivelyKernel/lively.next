@@ -5,11 +5,12 @@ import { FilterableList } from "./list.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
-import { morph, Morph, Text } from "./index.js";
+import { morph, Morph, Text, Window } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 
 
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
+import { CodeSearcher } from "./ide/code-search.js"
 
 var worldCommands = [
 
@@ -82,7 +83,8 @@ var worldCommands = [
         win.close();
         world.undoStop("window close");
         var next = arr.last(world.getWindows());
-        next && next.activate();
+        if (next) next.activate();
+        else world.focus();
       }
       return true;
     }
@@ -91,17 +93,20 @@ var worldCommands = [
   {
     name: "open workspace",
     exec: world => {
-      world.addMorph(new Workspace({center: world.center})); 
-      return;
+      return world.addMorph(new Workspace({center: world.center})); 
     }
   },
 
   {
     name: "open browser",
     exec: world => {
-      new Browser({center: world.center}).activate();
-      return;
+      return new Browser({center: world.center}).activate();
     }
+  },
+
+  {
+    name: "open code search",
+    exec: world => CodeSearcher.inWindow({title: "code search", extent: pt(800, 500)}).activate()
   }
 ]
 
@@ -135,6 +140,9 @@ export class World extends Morph {
 
   activeWindow() { return this.getWindows().reverse().find(ea => ea.isActive()); }
   getWindows() { return this.submorphs.filter(ea => ea.isWindow); }
+  openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
+    return new Window({...opts, extent: morph.extent.addXY(0, 25), targetMorph: morph});
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
@@ -437,8 +445,10 @@ export class FilterableListPrompt extends AbstractPrompt {
   constructor(props = {}) {
     super(obj.dissoc(props, ["preselect", "items"]));
     this.get("list").items = props.items || [];
-    if (typeof props.preselect === "number") 
+    if (typeof props.preselect === "number") {
       this.get("list").selectedIndex = props.preselect;
+      this.get("list").get("list").scrollSelectionIntoView();
+    }
   }
 
   build({fontSize, fontFamily}) {
