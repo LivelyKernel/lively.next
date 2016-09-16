@@ -485,6 +485,7 @@ export class Text extends Morph {
 
   get styleRanges() { return this.document.styleRanges }
 
+  // NOTE: assumes provided styleRanges are non-overlapping
   replaceStyleRanges(styleRanges) {
     // FIXME: undos
 

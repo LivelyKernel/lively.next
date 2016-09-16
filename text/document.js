@@ -39,11 +39,19 @@ export default class TextDocument {
 
   get styleRanges() { return this._styleRanges }
 
+  // NOTE: assumes provided styleRanges are non-overlapping
   set styleRanges(styleRanges) {
     this._styleRanges = styleRanges;
-    for (let row = 0; row < this.lines.length; row++) {
-      this.updateLineStyleRanges(row);
-    }
+    this._styleRangesByLine = this.lines.map(ea => []);
+    styleRanges.forEach(({style, start, end}) => {
+      for (let row = start.row; row <= end.row; row++) {
+        let text = this.lines[row],
+            startCol = row === start.row ? start.column : 0,
+            endCol = row === end.row ? end.column : text.length,
+            styleRange = StyleRange.fromPositions(style, {row, column: startCol}, {row, column: endCol});
+        this._styleRangesByLine[row].push(styleRange);
+      }
+    });
   }
 
   addStyleRange(range) {
