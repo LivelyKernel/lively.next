@@ -1,13 +1,13 @@
 import { arr } from 'lively.lang';
 import { codec, bodec } from "js-git-browser";
 import { emit } from 'lively.notifications';
-import { mixins } from "js-git-browser";
 
 import commit, { activeCommit, packageHead } from "./commit.js";
-import repository, { enableGitHub, gitHubBranches } from "./repo.js";
+import repository, { enableGitHub, gitHubBranches, database } from "./repo.js";
 
 let branches; // undefined (uninitialized) | { [PackageAddress]: Array<Branch> }
 
+// type BranchName = string
 // type EntryType = "tree" | "commit" | "tag" | "blob"
 
 function serialize(type, body) { // EntryType, any -> string
@@ -19,12 +19,14 @@ function deserialize(str) { // string -> {type: EntryType, body: any}
 }
 
 export default async function branch(pkg, name) {
+  // PackageAddress, BranchName -> Branch
   const localBranches = await localBranchesOf(pkg);
   let branch = localBranches.find(b => b.name == name);
   if (!branch) {
     branch = new Branch(pkg, name);
     if (!(pkg in branches)) branches[pkg] = [];
     branches[pkg].push(branch);
+    emit("lively.changesets/branchadded", {pkg, name});
   }
   return branch;
 }
@@ -36,7 +38,7 @@ class Branch {
     this._head = null;
   }
   
-  async head() { // -> Commit
+  async head() { // () -> Commit
     if (this._head) return this._head;
     const repo = await repository(this.pkg),
           h = await repo.readRef(`refs/heads/${this.name}`);
@@ -49,7 +51,7 @@ class Branch {
     const prevHead = await commit(this.pkg, hash);
     this._head = await prevHead.createChangeSetCommit();
     await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
-    emit("lively.changesets/changed", {changeset: this.name});
+    emit("lively.changesets/changed", {pkg: this.pkg, name: this.name});
   }
   
   async createFrom(commit) { // Commit -> ()
@@ -57,7 +59,14 @@ class Branch {
           prevHead = await commit.stableBase();
     this._head = await prevHead.createChangeSetCommit();
     await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
-    emit("lively.changesets/changed", {changeset: this.name});
+    emit("lively.changesets/changed", {pkg: this.pkg, name: this.name});
+  }
+  
+  async fork(name) { // BranchName -> Branch
+    const head = await this.head(),
+          newBranch = await branch(this.pkg, name);
+    await newBranch.createFrom(head);
+    return newBranch;
   }
   
   async createFromActive() { // () -> ()
@@ -93,7 +102,7 @@ class Branch {
           head = await this.head();
     this._head = await head.setFileContent(relPath, content);
     await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
-    emit("lively.changesets/changed", {changeset: this.name, path: relPath});
+    emit("lively.changesets/changed", {pkg: this.pkg, name: this.name, path: relPath});
     return this._head;
   }
   
@@ -103,13 +112,14 @@ class Branch {
           committedHead = await head.createCommit(message);
     this._head = await committedHead.createChangeSetCommit();
     await repo.updateRef(`refs/heads/${this.name}`, this._head.hash);
-    emit("lively.changesets/changed", {changeset: this.name});
+    emit("lively.changesets/changed", {pkg: this.pkg, name: this.name});
     return this._head;
   }
 
-  delete(db) { // Database -> Promise<()>
+  async delete() { // () -> ()
+    const db = await database();
     branches[this.pkg] = branches[this.pkg].filter(b => b !== this);
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const key = this.pkg,
             trans = db.transaction(["refs"], "readwrite"),
             store = trans.objectStore("refs"),
@@ -117,6 +127,7 @@ class Branch {
       request.onsuccess = evt => resolve(evt.target.result);
       request.onerror = evt => reject(new Error(evt.value));
     });
+    emit("lively.changesets/branchdeleted", {pkg: this.pkg, name: this.name});
   }
   
   toString() { // -> String
@@ -160,7 +171,8 @@ class Branch {
       headCommit = await headCommit.parent();
     }
     await repo.send(`refs/heads/${this.name}`);
-    return repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
+    await repo.updateRemoteRef(`refs/heads/${this.name}`, headCommit.hash);
+    emit("lively.changesets/branchpushed", {pkg: this.pkg, name: this.name});
   }
   
   async pullFromGitHub() {
@@ -168,25 +180,22 @@ class Branch {
     await enableGitHub();
     const remoteBranches = await gitHubBranches(this.pkg),
           remoteBranch = remoteBranches.find(b => b.name === this.name);
-    return this.setHead(remoteBranch.hash);
+    await this.setHead(remoteBranch.hash);
+    emit("lively.changesets/branchpulled", {pkg: this.pkg, name: this.name});
   }
 
   isActive() { // -> Promise<bool>
     return this.head().then(head => activeCommit(this.pkg).hash === head.hash);
   }
   
-  async activate() { // () -> ()
-    const head = await this.head();
-    await head.activate();
-    emit("lively.changesets/activated", {branch: this.name});
+  async activate() { // () -> Promise<()>
+    return this.head().then(head => head.activate());
   }
   
-  async deactivate() { // () -> ()
-    const head = await this.head();
-    await head.deactivate();
-    emit("lively.changesets/deactivated", {branch: this.name});
+  async deactivate() { // () -> Promise<()>
+    return this.head().then(head => head.deactivate());
   }
-  
+
 }
 
 function parseChangeSetRef(url) {
@@ -197,15 +206,8 @@ function parseChangeSetRef(url) {
   return new Branch(parts.slice(0, l - 3).join('/'), parts[l - 1]);
 }
 
-async function initBranches() { // () => ()
-  await new Promise((resolve, reject) => { // initialize DB
-    mixins.indexed.init(err => err ? reject(err) : resolve());
-  });
-  const db = await new Promise((resolve, reject) => {
-    const req = window.indexedDB.open("tedit", 1);
-    req.onsuccess = evt => resolve(evt.target.result);
-    req.onerror = err => reject(err);
-  });
+export async function initBranches() { // () => ()
+  const db = await database();
   const refs = await new Promise((resolve, reject) => {
     const trans = db.transaction(["refs"], "readonly"),
           store = trans.objectStore("refs"),
@@ -220,4 +222,9 @@ async function initBranches() { // () => ()
 export function localBranchesOf(pkg) { // PackageAddress => Promise<Array<Branch>>
   if (branches !== undefined) return Promise.resolve(branches[pkg] || []);
   return initBranches().then(() => branches[pkg] || []);
+}
+
+export function localBranches() { // () -> Promise<{ [PackageAddress]: Array<Branch> }>
+  if (branches !== undefined) return Promise.resolve(branches);
+  return initBranches().then(() => branches);
 }

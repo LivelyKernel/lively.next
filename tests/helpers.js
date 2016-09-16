@@ -4,8 +4,8 @@ import { mixins, modes, promisify } from "js-git-browser";
 import { registerPackage, removePackage } from "lively.modules";
 import { removeDir, createFiles } from "lively.modules/tests/helpers.js";
 
-import { getOrCreateChangeSet } from "../index.js";
-import { createChangeSet, initChangeSets, localChangeSets } from "../src/changeset.js";
+import changeSet from "../src/changeset.js";
+import { initBranches, localBranchesOf } from "../src/branch.js";
 
 async function repoForPackage(pkg) {
   const repo = {};
@@ -53,15 +53,16 @@ export const
   fileA = pkgDir + "/a.js",
   vmEditorMock = {updateModuleList: () => 0};
 
-export async function initChangeSet(withChange = false) {
+export async function initTestBranches(withChange = false) {
   await initMaster(pkgDir, withChange);
-  const prevActive = (await localChangeSets()).filter(cs => cs.isActive());
-  await initChangeSets(); // have to reset active changesets
-  const newChangeSets = await localChangeSets();
-  prevActive.map(cs => newChangeSets.find(cs2 => cs.name === cs2.name).active = true);
-  const cs = await getOrCreateChangeSet("test");
-  await cs.activate();
-  return cs;
+  await initBranches(); // have to reset branches
+  return localBranchesOf(pkgDir);
+}
+
+export async function initTestChangeSet(withChange = false) {
+  await initMaster(pkgDir, withChange);
+  await initBranches(); // have to reset branches
+  return changeSet("test");
 }
 
 export async function createPackage() {

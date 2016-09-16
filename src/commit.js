@@ -1,11 +1,12 @@
 /* global fetch */
 import { modes } from "js-git-browser";
 import { module } from "lively.modules";
+import { emit } from "lively.notifications";
 
 import repository from "./repo.js";
 import { diffStr } from "./diff.js";
 import { getAuthor } from "./settings.js";
-import { install, uninstall } from "../index.js";
+import { install } from "../index.js";
 
 let active; // PackageAddress -> Commit
 
@@ -186,8 +187,9 @@ class Commit {
   }
   
   async activate() { // () -> ()
-    const prev = activeCommit();
+    const prev = activeCommit(this.pkg);
     if (prev && this.hash == prev.hash) return;
+    console.log(`prev ${prev && prev.hash.substr(0,8)}`);
     const nextFiles = await this.files();
     let prevFiles;
     if (prev) {
@@ -208,6 +210,7 @@ class Commit {
           .catch(e => console.error(e));
       }
     }
+    emit("lively.changesets/activated", {pkg: this.pkg, hash: this.hash});
   }
   
   setActive() {
@@ -223,9 +226,6 @@ class Commit {
       if (module(mod).isLoaded() && (/\.js$/i).test(relPath)) {
         await module(mod).reload({reset: true}).catch(e => console.error(e));
       }
-    }
-    if (Object.keys(active).length === 0) {
-      uninstall();
     }
   }
   

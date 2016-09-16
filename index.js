@@ -1,7 +1,7 @@
 import { module, installHook, removeHook, isHookInstalled } from "lively.modules";
 
-import { createChangeSet, localChangeSets, targetChangeSet } from "./src/changeset.js";
-import branch, { localBranchesOf } from "./src/branch.js";
+import changeSet, { localChangeSets, targetBranchWrite } from "./src/changeset.js";
+import branch, { localBranches, localBranchesOf } from "./src/branch.js";
 import commit, { activeCommit } from "./src/commit.js";
 import { getAuthor, setAuthor, setGitHubToken } from "./src/settings.js";
 import { gitHubBranches } from "./src/repo.js";
@@ -24,11 +24,8 @@ function resourceFromChangeSet(proceed, url) {
     async write(content) {
       const [pkg, path] = resolve(url);
       if (pkg == "no group") return proceed(url).write(content);
-      const tcs = await targetChangeSet();
-      let branch;
-      if (tcs) {
-        branch = await tcs.getOrCreateBranch(pkg);
-      } else {
+      let branch = await targetBranchWrite(pkg);
+      if (!branch) {
         const c = activeCommit(pkg),
               local = await localBranchesOf(pkg);
         for (let l of local) {
@@ -53,4 +50,4 @@ export function uninstall() {
   removeHook("resource", resourceFromChangeSet);
 }
 
-export { commit, branch, localBranchesOf, createChangeSet, localChangeSets, getAuthor, setAuthor, setGitHubToken, gitHubBranches };
+export { changeSet, branch, commit, localBranches, localBranchesOf, localChangeSets, getAuthor, setAuthor, setGitHubToken, gitHubBranches };

@@ -79,6 +79,33 @@ export function enableGitHub() {
   return getOrAskGitHubToken();
 }
 
+export async function gitHubBranches(pkg) {
+  // PackageAddress -> Array<{name: BranchName, hash: Hash}>
+  await enableGitHub();
+  const url = await gitHubURL(pkg);
+  if (!url) throw new Error("Could not determine GitHub URL");
+  const req = gitHubRequest(url, await getOrAskGitHubToken());
+  return new Promise((resolve, reject) => {
+    req("GET", "/repos/:root/branches", (err, xhr, response) => {
+      if (err) return reject(err);
+      resolve(response.map(b => ({name: b.name, hash: b.commit.sha})));
+    });
+  });
+}
+
+let db;
+export function database() {
+  return new Promise((resolve, reject) => {
+    if (db !== undefined) return resolve(db);
+    mixins.indexed.init(err => {
+      if (err) return reject(err);
+      const repo = {};
+      mixins.indexed(repo, "prefix");
+      resolve(db = repo.db);
+    });
+  });
+}
+
 export default async function repository(pkg) {
   // PackageAddress, bool? -> Repository
   if (pkg in repoForPackage) {
@@ -86,9 +113,7 @@ export default async function repository(pkg) {
   }
   // local IndexedDB
   const repo = {};
-  await new Promise((resolve, reject) => {
-    mixins.indexed.init(err => err ? reject(err) : resolve());
-  });
+  await database()
   mixins.indexed(repo, pkg);
 
   // Server git repo
@@ -115,18 +140,4 @@ export default async function repository(pkg) {
   mixins.formats(repo);
   promisify(repo);
   return repoForPackage[pkg] = repo;
-}
-
-export async function gitHubBranches(pkg) {
-  // PackageAddress -> Array<{name: BranchName, hash: Hash}>
-  await enableGitHub();
-  const url = await gitHubURL(pkg);
-  if (!url) throw new Error("Could not determine GitHub URL");
-  const req = gitHubRequest(url, await getOrAskGitHubToken());
-  return new Promise((resolve, reject) => {
-    req("GET", "/repos/:root/branches", (err, xhr, response) => {
-      if (err) return reject(err);
-      resolve(response.map(b => ({name: b.name, hash: b.commit.sha})));
-    });
-  });
 }
