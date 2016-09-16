@@ -81,7 +81,8 @@ var listCommands = [
   {
     name: "select via filter",
     exec: async (list) => {
-      list.selection = await list.world().filterableListPrompt("Select item", list.items, {preselect: list.selectedIndex});
+      var preselect = list.selectedIndex || 0;
+      list.selection = await list.world().filterableListPrompt("Select item", list.items, {preselect, requester: list.getWindow() || list});
       list.scrollSelectionIntoView();
       list.update();
       return true;
@@ -124,6 +125,8 @@ export class List extends Morph {
     this.addValueChange("items", items.map(asItem));
     this.groupChangesWhile(undefined, () => this.update());
   }
+
+  get values() { return this.items.map(ea => ea.value); }
 
   invalidateCache() {
     delete this._itemHeight;
