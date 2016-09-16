@@ -1,6 +1,7 @@
-import { arr, obj } from "lively.lang";
+import { arr, obj, promise } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window } from "./index.js";
+import { FilterableList } from "./list.js";
 import { GridLayout } from "lively.morphic/layout.js";
 import CodeEditor from "./ide/code-editor.js";
 
@@ -106,6 +107,20 @@ import { connect, disconnect } from "lively.bindings";
 
 export class Browser extends Window {
 
+  static async browse(packageName, moduleName, textPosition = {row: 0, column: 0}, browserOrProps = {}) {
+    var browser = browserOrProps instanceof Browser ? browserOrProps : new this(browserOrProps);
+    browser.openInWorld(browser.position);
+    await browser.whenRendered();
+    if (packageName) await browser.selectPackageNamed(packageName);
+    if (packageName && moduleName) await browser.selectModuleNamed(moduleName);
+    if (textPosition) {
+      var text = browser.get("sourceEditor").text;
+      text.cursorPosition = textPosition;
+      text.centerRow(textPosition.row);
+    }
+    return browser;
+  }
+
   constructor(props) {
     super({
       name: "browser",
@@ -174,13 +189,49 @@ export class Browser extends Window {
     this.get("sourceEditor").textString = ""
   }
 
-  async onLoad() {
-    this.reset();
+  async allPackages() {
     var livelySystem = (await System.import("lively-system-interface")).localInterface;
-    this.get("packageList").items = livelySystem.getPackages().map(p => ({isListItem: true, string: p.name, value: p}));
+    return livelySystem.getPackages();
   }
 
-  onPackageSelected(p) {
+// await this.getWindow().modulesOfPackage(this.getWindow().get("packageList").selection)
+// this.getWindow().get("packageList").selection.address
+// await livelySystem.getPackage(this.getWindow().get("packageList").selection.address)
+
+  async modulesOfPackage(p) {
+    var livelySystem = (await System.import("lively-system-interface")).localInterface
+        p = await livelySystem.getPackage(p.address);
+    return p.modules.map(m => ({...m, package: p, nameInPackage: m.name.replace(p.address, "").replace(/^\//, "")}));
+  }
+
+  async allModules() {
+    var modules = [];
+    for (let p of await this.allPackages())
+      modules.push(...this.modulesOfPackage(p))
+    return modules;
+  }
+
+  async onLoad() {
+    this.reset();
+    this.get("packageList").items = (await this.allPackages()).map(p => ({isListItem: true, string: p.name, value: p}));
+  }
+
+  async selectPackageNamed(pName) {
+    var p = this.get("packageList").selection = this.get("packageList").values.find(({name}) => name === pName);
+    await this.get("moduleList").whenRendered();
+    return p;
+  }
+
+  async selectModuleNamed(mName) {
+    var m = this.get("moduleList").selection = this.get("moduleList").values.find(({nameInPackage}) => mName === nameInPackage);
+    await this.get("sourceEditor").text.whenRendered();
+    try { // FIXME, text.whenRendered() doesn't ensure that textString is available...
+      await promise.waitFor(1000, () => !!this.get("sourceEditor").text.textString);
+    } catch(err) {}
+    return m;
+  }
+
+  async onPackageSelected(p) {
     if (!p) {
       this.get("moduleList").items = [];
       this.get("sourceEditor").textString = "";
@@ -188,14 +239,14 @@ export class Browser extends Window {
       return;
     }
 
-    this.title = "browser – " + this.get("packageList").selection.name;
+    this.title = "browser – " + p.name;
 
+    this.get("packageList").scrollSelectionIntoView();
     this.get("moduleList").selection = null;
-    this.get("moduleList").items = arr.sortBy(p.modules.map(m => ({
-      string: m.name.slice(p.address.length).replace(/^\//, ""),
-      value: m,
-      isListItem: true
-    })), ({string}) => string.toLowerCase());
+
+    this.get("moduleList").items = arr.sortBy(
+      (await this.modulesOfPackage(p)).map(m => ({string: m.nameInPackage, value: m, isListItem: true})),
+      ({string}) => string.toLowerCase());
   }
 
   async onModuleSelected(m) {
@@ -208,10 +259,12 @@ export class Browser extends Window {
       return;
     }
 
-    this.title = "browser – " + pack.name + module.name.slice(pack.address.length);
+    this.get("moduleList").scrollSelectionIntoView();
+    this.title = "browser – " + pack.name + "/" + module.nameInPackage;
     var livelySystem = (await System.import("lively-system-interface")).localInterface;
     var source = await livelySystem.moduleRead(m.name);
     this.get("sourceEditor").textString = source;
+    this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
   }
 
   updateModuleList() {/*FIXME*/}
