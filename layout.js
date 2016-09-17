@@ -611,12 +611,10 @@ export class GridLayout extends Layout {
     this.cellGroups = [];
     this.config = config;
   }
-  
+
   initGrid() {
     const grid = this.ensureGrid(this.config),
-          rows = grid.map(row => {
-      return new LayoutRow(new LayoutCell({row, layout: this}));
-    });
+          rows = grid.map(row => new LayoutRow(new LayoutCell({row, layout: this})));
     rows.reduce((a, b) => a.attachTo(b));
     this.autoAssign(this.notInLayout);
     this.grid = rows[0].col(0);
@@ -674,9 +672,9 @@ export class GridLayout extends Layout {
     grid = grid.map(row => {
       if (row.length < columnCount)
         row = row.concat(arr.withN(columnCount - row.length, null));
-      return row.map(v => (v.isMorph && v) || this.container.getSubmorphNamed(v) || v);
+      return row.map(v => v ? (v.isMorph && v) || this.container.getSubmorphNamed(v) || v : v);
     });
-    
+
     return grid;
   }
 
