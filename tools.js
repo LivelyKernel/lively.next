@@ -1,6 +1,6 @@
 import { arr, obj, promise } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { morph, Morph, Window } from "./index.js";
+import { morph, Morph, Window, show } from "./index.js";
 import { FilterableList } from "./list.js";
 import { GridLayout } from "lively.morphic/layout.js";
 import CodeEditor from "./ide/code-editor.js";
@@ -121,10 +121,10 @@ export class Browser extends Window {
     return browser;
   }
 
-  constructor(props) {
+  constructor(props = {}) {
     super({
       name: "browser",
-      extent: pt(500,400),
+      extent: pt(700,600),
       ...props,
       targetMorph: this.build()
     });
@@ -136,21 +136,53 @@ export class Browser extends Window {
   }
 
   build() {
-    var style = {borderWidth: 1, borderColor: Color.gray},
-        textStyle = {...style, type: CodeEditor, mode: "javascript"};
-    return morph({
-      ...style,
-      layout: new GridLayout({
-        grid: [["packageList", "moduleList"],
-               ["sourceEditor", "sourceEditor"]]}),
-      submorphs: [
-        {name: "packageList", type: "list", ...style},
-        {name: "moduleList", type: "list", ...style},
-        {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner/*FIXME*/.save(); }}
-      ]
-    });
+    var style = {borderWidth: 1, borderColor: Color.gray, fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"},
+        textStyle = {borderWidth: 1, borderColor: Color.gray, fontSize: 12, type: CodeEditor, mode: "plain"},
+        container = morph({
+          ...style,
+          layout: new GridLayout({
+            grid: [["packageList", "moduleList"],
+                   ["sourceEditor", "sourceEditor"]]}),
+          submorphs: [
+            {name: "packageList", type: "list", ...style},
+            {name: "moduleList", type: "list", ...style},
+            {name: "sourceEditor", ...textStyle, doSave() { this.owner.owner/*FIXME*/.save(); }}
+          ]
+        });
+    // FIXME? how to specify that directly??
+    container.layout.grid.row(0).adjustProportion(-1/5);
+    return container;
   }
 
+
+  get keybindings() {
+    return [
+      {keys: "Alt-Up", command: "focus list with selection"},
+      {keys: "F1", command: "focus package list"},
+      {keys: "F2", command: "focus module list"},
+      {keys: "F3|Alt-Down", command: "focus source editor"},
+    ].concat(super.keybindings);
+  }
+
+  get commands() {
+    var pList = this.get("packageList"),
+        mList = this.get("moduleList"),
+        editor = this.get("sourceEditor");
+    return [
+      {name: "focus list with selection", exec: () => focusList(mList.selection ? mList : pList)},
+      {name: "focus package list", exec: () => focusList(pList)},
+      {name: "focus module list", exec: () => focusList(mList)},
+      {name: "focus source editor", exec: () => { editor.focus(); editor.show(); return true; }},
+    ]
+
+    function focusList(list) {
+      list.scrollSelectionIntoView();
+      list.update();
+      list.show();
+      list.focus();
+      return list
+    }
+  }
 
   get keybindings() {
     return [
