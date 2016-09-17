@@ -68,17 +68,15 @@ export class Text extends Morph {
       savedMarks: [],
       ...props
     });
-    this.document = new TextDocument();
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
+    this.changeDocument(TextDocument.fromString(textString || ""));
     this.undoManager = new UndoManager();
     this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new Selection(this, selection) : null;
     this._anchors = null;
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
-    this.textString = textString || "";
     if (clipMode) this.clipMode = clipMode;
-    this.setDefaultStyle();
     if (styleRanges) styleRanges.map(range => this.addStyleRange(range));
     this.fit();
     this._needsFit = false;
@@ -329,6 +327,13 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
+
+  changeDocument(doc) {
+    this.document = doc;
+    this.renderer.reset();
+    this.setDefaultStyle();
+    this.makeDirty();
+  }
 
   get textString() { return this.document ? this.document.textString : "" }
   set textString(value) {
@@ -895,6 +900,10 @@ export class Text extends Morph {
 
   search(needle, options = {start: this.cursorPosition, backwards: false, caseSensitive: false}) {
     return new TextSearcher(this).search({needle, ...options});
+  }
+
+  searchForAll(needle, options = {caseSensitive: false}) {
+    return new TextSearcher(this).searchForAll({needle, ...options});
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

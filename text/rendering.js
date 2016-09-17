@@ -268,9 +268,13 @@ class RenderedChunk {
 export default class TextLayout {
 
   constructor(fontMetric) {
+    this.reset(fontMetric);
+  }
+
+  reset(fontMetric) {
     this.layoutComputed = false;
     this.lines = [];
-    this.fontMetric = fontMetric;
+    if (fontMetric) this.fontMetric = fontMetric;
     this.firstVisibleLine = undefined;
     this.lastVisibleLine = undefined;
   }
@@ -297,7 +301,7 @@ export default class TextLayout {
         nRows = lines.length;
 
     for (let row = 0; row < nRows; row++) {
-      let lineStyleRanges = document.styleRangesByLine[row],
+      let lineStyleRanges = document.styleRangesByLine[row] || [],
           text = lines[row],
           config = { fontMetric, styleRanges: lineStyleRanges },
           line = this.lines[row];

@@ -4,6 +4,7 @@ import { obj, promise } from "lively.lang";
 import { Morph, Text, Button } from "../index.js";
 import { show } from "lively.morphic";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
+import { occurStartCommand } from "./occur.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
@@ -88,6 +89,19 @@ export class TextSearcher {
 
     return result === this.STOP ? null : result;
   }
+  
+  searchForAll(options) {
+    var results = [];
+    var i = 0;
+    while (true) {
+      if (i++ > 10000) throw new Error("endless loop")
+      var found = this.search(options)
+      if (!found) return results;
+      results.push(found);
+      options = {...options, start: options.backwards ? found.range.start : found.range.end}
+    }
+  }
+
 }
 
 
@@ -161,6 +175,11 @@ export class SearchWidget extends Morph {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     this.addCommands([
+      {name: "occur with search term", exec: () => {
+        this.targetText.addCommands([occurStartCommand]);
+        this.execCommand("cancel search");
+        return this.targetText.execCommand("occur", {needle: this.input});
+      }},
       {name: "accept search", exec: () => { this.acceptSearch(); return true; }},
       {name: "cancel search", exec: () => { this.cancelSearch(); return true; }},
       {name: "search next", exec: () => { this.searchNext(); return true; }},
@@ -187,6 +206,7 @@ export class SearchWidget extends Morph {
 
     this.addKeyBindings([
       {keys: "Enter", command: "accept search"},
+      {keys: "Ctrl-O", command: "occur with search term"},
       {keys: "Ctrl-W", command: "yank next word from text"},
       {keys: "Escape|Ctrl-G", command: "cancel search"},
       {keys: {win: "Ctrl-F|Ctrl-S|Ctrl-G", mac: "Meta-F|Ctrl-S|Meta-G"}, command: "search next"},
