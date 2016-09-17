@@ -49,6 +49,7 @@ export default class TextDocument {
             startCol = row === start.row ? start.column : 0,
             endCol = row === end.row ? end.column : text.length,
             styleRange = StyleRange.fromPositions(style, {row, column: startCol}, {row, column: endCol});
+        if (!this._styleRangesByLine[row]) this._styleRangesByLine[row] = [];
         this._styleRangesByLine[row].push(styleRange);
       }
     });
