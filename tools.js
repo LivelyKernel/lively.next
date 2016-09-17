@@ -109,7 +109,8 @@ export class Browser extends Window {
 
   static async browse(packageName, moduleName, textPosition = {row: 0, column: 0}, browserOrProps = {}) {
     var browser = browserOrProps instanceof Browser ? browserOrProps : new this(browserOrProps);
-    browser.openInWorld(browser.position);
+    if (!browser.world())
+      browser.openInWorldNearHand();
     await browser.whenRendered();
     if (packageName) await browser.selectPackageNamed(packageName);
     if (packageName && moduleName) await browser.selectModuleNamed(moduleName);

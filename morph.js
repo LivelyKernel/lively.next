@@ -521,8 +521,21 @@ export class Morph {
 
   getWindow() { return this.isWindow ? this : this.ownerChain().find(({isWindow}) => isWindow); }
 
-  openInWorld(pos) {
-    var world = this.world() || this.env.world;
+  openInWorldNear(pos, optWorld) {
+    var world = optWorld || this.world() || this.env.world;
+    if (!world) return;
+    this.center = pos;
+    this.setBounds(world.visibleBounds().translateForInclusion(this.bounds()))
+    return this.openInWorld(this.position);
+  }
+
+  openInWorldNearHand(optWorld) {
+    var world = optWorld || this.world() || this.env.world;
+    world ? this.openInWorldNear(world.firstHand.position) : undefined;
+  }
+
+  openInWorld(pos, optWorld) {
+    var world = optWorld || this.world() || this.env.world;
     if (!world) {
       console.warn(`Cannot open morph ${this}, world morph not found;`)
       return this;

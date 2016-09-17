@@ -200,16 +200,14 @@ export class Window extends Morph {
   }
 
   activate() {
-    if (this.isActive()) {
-      this.focus();
-      return this;
-    }
+    if (this.isActive()) { this.focus(); return this; }
 
-    var w = this.world();
-    if (!w) this.openInWorld()
-    w = this.world();
+    var w = this.world() || this.env.world;
+    if (!w) {
+      this.openInWorldNearHand()
+      w = this.world();
+    } else this.bringToFront();
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
-    this.bringToFront();
     this.focus();
     return this;
   }
