@@ -39,7 +39,8 @@ export default class CodeEditor extends Morph {
         fixedHeight: true,
         clipMode: "auto",
         padding: Rectangle.inset(4, 2, 4, 2),
-        fontFamily: "Monaco, monospace",
+        fontSize: props.fontSize || 12,
+        fontFamily: props.fontFamily || "Monaco, monospace",
         onChange(change) { // work-around for lively.bindings bug
           if (change.selector === "insertText" || change.selector === "deleteText") {
             this.owner && this.owner.requestHighlight();
