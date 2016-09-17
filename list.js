@@ -93,7 +93,7 @@ var listCommands = [
 
 export class List extends Morph {
 
-  constructor(props) {
+  constructor(props = {}) {
     super({
       layoutPolicy: "vertical",
       fontFamily: "Helvetica Neue, Arial, sans-serif",
@@ -101,6 +101,7 @@ export class List extends Morph {
       items: [],
       selectedIndexes: [],
       clipMode: "auto",
+      padding: props.padding || Rectangle.inset(3),
       ...props
     });
     this.update();
@@ -119,6 +120,9 @@ export class List extends Morph {
 
   get fontSize() { this.invalidateCache(); return this.getProperty("fontSize"); }
   set fontSize(value) { this.addValueChange("fontSize", value); }
+
+  get padding() { return this.getProperty("padding"); }
+  set padding(value) { this.addValueChange("padding", value); }
 
   get items() { return this.getProperty("items"); }
   set items(items) {
@@ -238,12 +242,16 @@ export class List extends Morph {
           selectedIndexes,
           scroll: {x: left, y: top},
           extent: {x: width, y: height},
-          fontSize, fontFamily
+          fontSize, fontFamily,
+          padding
         } = this,
-        firstItemIndex = Math.floor(top / itemHeight),
-        lastItemIndex = Math.ceil((top+height) / itemHeight);
+        padding = padding || Rectangle.inset(0),
+        padTop = padding.top(), padLeft = padding.left(),
+        padBottom = padding.bottom(), padRight = padding.right(),
+        firstItemIndex = Math.floor((top + padTop) / itemHeight),
+        lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
 
-    listItemContainer.extent = pt(this.width, itemHeight*items.length);
+    listItemContainer.extent = pt(this.width + padLeft + padRight, padTop + padBottom + itemHeight*items.length);
 
     for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
       var itemIndex = firstItemIndex+i,
@@ -258,7 +266,7 @@ export class List extends Morph {
       var itemMorph = itemMorphs[i] || (itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph({fontFamily, fontSize})));
 
       itemMorph.displayItem(item, itemIndex,
-        pt(0, itemHeight*(itemIndex)),
+        pt(padLeft, padTop+itemHeight*itemIndex),
         selectedIndexes.includes(itemIndex));
     }
 
