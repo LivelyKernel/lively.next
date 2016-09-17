@@ -30,7 +30,8 @@ export class Text extends Morph {
   }
 
   static makeInputLine(props) {
-    var t = new Text({type: "text", extent: pt(100, 20), clipMode: "auto", ...props})
+    var t = new Text({type: "text", extent: pt(100, 20), clipMode: "auto", ...props});
+    t.height = t.defaultLineHeight;
     t.onChange = function(change) {
       if (change.selector === 'insertText' || change.selector === 'deleteText')
         signal(this, "inputChanged", this.textString);
@@ -430,9 +431,11 @@ export class Text extends Morph {
     this._selection && this.selection.updateFromAnchors();
 
     this.undoManager.undoStop();
+
+    return text;
   }
 
-  replace(range, text, undoGroup = true) {
+  replace(range, text, undoGroup = false) {
     if (undoGroup) this.undoManager.group();
     this.deleteText(range);
     var range = this.insertText(text, range.start);
@@ -622,6 +625,11 @@ export class Text extends Morph {
 
   fitIfNeeded() {
     if (this._needsFit) { this.fit(); this._needsFit = false; }
+  }
+
+  get defaultLineHeight() {
+    var p = this.padding;
+    return p.top() + p.bottom() + this.renderer.fontMetric.defaultLineHeight({fontSize: this.fontSize, fontFamily: this.fontFamily})
   }
 
   textPositionFromPoint(point) {

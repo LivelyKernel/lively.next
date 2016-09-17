@@ -1,7 +1,7 @@
-import { Color, pt } from "lively.graphics";
+import { Rectangle, Color, pt } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
-import { FilterableList } from "./list.js"
+import { List, FilterableList } from "./list.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
@@ -9,7 +9,7 @@ import { morph, Morph, Text, Window } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
 import { CodeSearcher } from "./ide/code-search.js"
@@ -70,7 +70,15 @@ var worldCommands = [
     exec: async (world) => {
       var wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
             .map(win => ({isListItem: true, string: win.title || String(win), value: win})),
-          win = await world.filterableListPrompt("Choose window", wins, {preselect: 1, width: world.visibleBounds().extent().x * 1/3, fontSize: 20});
+          win = await world.filterableListPrompt(
+            "Choose window", wins, {
+              preselect: 1,
+              onSelection: sel => sel && sel.show(), 
+              width: world.visibleBounds().extent().x * 1/3,
+              labelFontSize: 16,
+              listFontSize: 18,
+              itemPadding: Rectangle.inset(4)
+            });
       if (win) { win.bringToFront(); win.focus(); }
       return true;
     }
@@ -441,8 +449,16 @@ export class World extends Morph {
     return this.openPrompt(new TextPrompt({label, ...opts}), opts);
   }
 
-  filterableListPrompt(label = "", items = [], opts = {requester: null, preselect: 0}) {
-    return this.openPrompt(new FilterableListPrompt({label, items, ...opts}), opts);
+  listPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0}) {
+    return this.openPrompt(new ListPrompt({
+      filterable: false, padding: Rectangle.inset(3),
+      label, items, ...opts}), opts);
+  }
+
+  filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0}) {
+    return this.openPrompt(new ListPrompt({
+      filterable: true, padding: Rectangle.inset(3),
+      label, items, ...opts}), opts);
   }
 
 }
@@ -546,20 +562,27 @@ export class TextPrompt extends AbstractPrompt {
 }
 
 
-export class FilterableListPrompt extends AbstractPrompt {
+export class ListPrompt extends AbstractPrompt {
 
   constructor(props = {}) {
-    super(obj.dissoc(props, ["preselect", "items"]));
+    super(obj.dissoc(props, ["preselect", "items", "onSelection"]));
     this.get("list").items = props.items || [];
     if (typeof props.preselect === "number") {
       this.get("list").selectedIndex = props.preselect;
-      this.get("list").get("list").scrollSelectionIntoView();
+      this.get("list").scrollSelectionIntoView();
     }
+    if (typeof props.onSelection === "function")
+      connect(this.get("list"), "selection", props, "onSelection");
   }
 
-  build({fontSize, fontFamily}) {
-    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true, selectable: false, fontSize, fontFamily});
-    this.get("list") || this.addMorph(new FilterableList({name: "list", fontSize, fontFamily}));
+  build({listFontSize, listFontFamily, labelFontSize, labelFontFamily, filterable, padding, itemPadding}) {
+    var ListClass = filterable ? FilterableList : List;
+    labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
+    labelFontSize = labelFontSize || 14;
+    listFontFamily = listFontFamily || labelFontFamily;
+    listFontSize = listFontSize || labelFontSize;
+    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily});
+    this.get("list") || this.addMorph(new ListClass({borderWidth: 1, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding}));
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');

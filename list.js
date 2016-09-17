@@ -97,14 +97,16 @@ var listCommands = [
 export class List extends Morph {
 
   constructor(props = {}) {
-    if (!props.bounds || !props.extent) props.extent = pt(400, 360);
+    if (!props.bounds && !props.extent) props.extent = pt(400, 360);
     super({
+      fill: Color.white,
       fontFamily: "Helvetica Neue, Arial, sans-serif",
       fontSize: 12,
       items: [],
       selectedIndexes: [],
       clipMode: "auto",
       padding: props.padding || Rectangle.inset(3),
+      itemPadding: props.itemPadding || Rectangle.inset(1),
       ...props
     });
     this.update();
@@ -131,6 +133,13 @@ export class List extends Morph {
   get padding() { return this.getProperty("padding"); }
   set padding(value) {
     this.addValueChange("padding", value);
+    this.groupChangesWhile(undefined, () => this.update());
+  }
+
+  get itemPadding() { return this.getProperty("itemPadding"); }
+  set itemPadding(value) {
+    this.addValueChange("itemPadding", value);
+    this.invalidateCache();
     this.groupChangesWhile(undefined, () => this.update());
   }
 
@@ -241,8 +250,11 @@ export class List extends Morph {
   get itemMorphs() { return this.listItemContainer.submorphs; }
 
   get itemHeight() {
-    return this._itemHeight
-       || (this._itemHeight = this.env.fontMetric.sizeFor(this.fontFamily+this.fontSize, "O").height);
+    if (this._itemHeight) return this._itemHeight;
+    var h = this.env.fontMetric.sizeFor(this.fontFamily+this.fontSize, "O").height;
+    var padding = this.itemPadding;
+    if (padding) h += padding.top() + padding.bottom();
+    return this._itemHeight = h;
   }
 
   update() {
@@ -256,7 +268,7 @@ export class List extends Morph {
           scroll: {x: left, y: top},
           extent: {x: width, y: height},
           fontSize, fontFamily,
-          padding
+          padding, itemPadding
         } = this,
         padding = padding || Rectangle.inset(0),
         padTop = padding.top(), padLeft = padding.left(),
@@ -264,7 +276,7 @@ export class List extends Morph {
         firstItemIndex = Math.floor((top + padTop) / itemHeight),
         lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
 
-    listItemContainer.extent = pt(this.width + padLeft + padRight, padTop + padBottom + itemHeight*items.length);
+    listItemContainer.extent = pt(this.width + padLeft + padRight, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
 
     for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
       var itemIndex = firstItemIndex+i,
@@ -283,7 +295,7 @@ export class List extends Morph {
       itemMorph.displayItem(item, itemIndex,
         pt(padLeft, padTop+itemHeight*itemIndex),
         selectedIndexes.includes(itemIndex),
-        {fontFamily, fontSize});
+        {fontFamily, fontSize, padding: itemPadding || Rectangle.inset(0)});
     }
 
     itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
@@ -341,21 +353,24 @@ export class FilterableList extends Morph {
 
   constructor(props = {}) {
     var fontFamily = props.fontFamily || "Helvetica Neue, Arial, sans-serif",
+        padding = props.padding,
+        itemPadding = props.itemPadding,
         fontSize = props.fontSize || 11,
         input = props.input || "",
         inputText = Text.makeInputLine({
           name: "input",
           textString: input,
-          fill: null,
           borderWidth: 1, borderColor: Color.gray,
           padding: Rectangle.inset(2),
           fontSize, fontFamily
         }),
         list = new List({
           name: "list", items: [],
-          fill: null,
           clipMode: "auto",
-          fontSize, fontFamily
+          fontSize, fontFamily,
+          padding, itemPadding,
+          borderWidth: props.borderWidth,
+          borderColor: props.borderColor
         });
 
     super({borderWidth: 1, borderColor: Color.gray, submorphs: [inputText, list]});
@@ -364,13 +379,15 @@ export class FilterableList extends Morph {
 
     this.state = {allItems: null};
 
-    if (!props.bounds || !props.extent) props.extent = pt(400, 360);
+    if (!props.bounds && !props.extent) props.extent = pt(400, 360);
 
-    Object.assign(this, {items: [], ...props});
+    Object.assign(this, {items: []}, props);
+
 
     this.relayout();
 
     connect(this.get("input"), "inputChanged", this, "updateFilter");
+    connect(this.get("list"), "selection", this, "selectionChanged");
     connect(this, "extent", this, "relayout");
   }
 
@@ -379,10 +396,10 @@ export class FilterableList extends Morph {
   relayout() {
     var i = this.get("input"),
         l = this.get("list"),
-        inputHeight = i.env.fontMetric.sizeFor(i.fontFamily, i.fontSize, "X").height + 2*2,
         ext = this.extent;
-    i.setBounds(new Rectangle(0,0, ext.x, inputHeight));
-    l.setBounds(new Rectangle(0, inputHeight, ext.x, ext.y-inputHeight));
+    l.width = i.width = this.width;
+    l.top = i.bottom;
+    l.height = this.height - i.height;
   }
 
   get items() { return this.state.allItems || []; }
@@ -397,6 +414,8 @@ export class FilterableList extends Morph {
   set selection(x) { this.get("list").selection = x; }
   get selectedIndex() { return this.get("list").selectedIndex; }
   set selectedIndex(x) { this.get("list").selectedIndex = x; }
+
+  selectionChanged(sel) { signal(this, "selection", sel); }
 
   scrollSelectionIntoView() { return this.get("list").scrollSelectionIntoView(); }
 
