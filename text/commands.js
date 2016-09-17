@@ -84,7 +84,11 @@ var commands = [
 
       if (!pasted) pasted = kr.yank();
 
-      if (pasted) morph.selection.text = pasted;
+      if (pasted) {
+        morph.undoManager.group();
+        morph.selection.text = pasted;
+        morph.undoManager.group();
+      }
 
       return true;
     }
@@ -664,14 +668,18 @@ var commands = [
           isValid = typeof string === "string" && string.length;
       if (!isValid) console.warn(`command insertstring called with not string value`);
       if (morph.rejectsInput() || !isValid) return false;
-      let sel = morph.selection;
+      let sel = morph.selection, isDelete = !sel.isEmpty();
+      if (isDelete) morph.undoManager.group();
       sel.text = string;
       sel.collapseToEnd();
-      if (typeof undoGroup === "number")
-        morph.undoManager.groupLater(undoGroup);
-      else if (undoGroup)
-        morph.undoManager.group();
+      if (isDelete) morph.undoManager.group();
+      if (undoGroup) {
+        if (!/^\s+$/.test(string) && typeof undoGroup === "number")
+          morph.undoManager.groupLater(undoGroup);
+        else
+          morph.undoManager.group();
       return true;
+      }
     }
   },
 
