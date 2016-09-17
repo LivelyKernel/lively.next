@@ -91,6 +91,68 @@ var worldCommands = [
   },
 
   {
+      name: "resize active window",
+      exec: function(world, opts = {how: null, window: null}) {
+  
+          var {window, how} = opts,
+              win = window || world.activeWindow();
+          if (!win) return;
+  
+          var worldB = world.visibleBounds().insetBy(20),
+              winB = win.bounds(),
+              bounds = worldB;
+  
+          // FIXME!
+          if (!win._normalBounds) win._normalBounds = winB;
+  
+          var thirdWMin = 750,
+              thirdW = Math.min(thirdWMin, Math.max(1000, bounds.width/3)),
+              thirdColBounds = bounds.withWidth(thirdW);
+  
+          if (!how) askForHow(); else doResize(how);
+  
+          return true;
+  
+          // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  
+          async function askForHow() {
+            var how = await world.filterableListPrompt("How to resize the window?", [
+              'full', 'fullscreen','center','right','left','bottom',
+              'top',"shrinkWidth", "growWidth","shrinkHeight",
+              "growHeight", 'col1','col2', 'col3', 'col4', 'col5',
+              'reset']);
+            how && doResize(how);
+          }
+  
+          function doResize(how) {
+              switch(how) {
+                  case 'full': case 'fullscreen': break;
+                  case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
+                  case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
+                  case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
+                  case 'col3': case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
+                  case 'col5': case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
+                  case 'col1': case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
+                  case 'bottom': bounds = bounds.withY(bounds.y + bounds.height/2);
+                  case 'top': bounds = bounds.withHeight(bounds.height/2); break;
+                  case 'col2': bounds = thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW); break;
+                  case 'col4': bounds = thirdColBounds.withTopRight(worldB.topCenter().scaleByPt(pt(1.666,1))).withWidth(thirdW); break;
+                  case 'halftop': bounds = winB.withY(bounds.top()).withHeight(bounds.height/2); break;
+                  case 'halfbottom': bounds = winB.withY(bounds.height/2).withHeight(bounds.height/2); break;
+                  case 'reset': bounds = win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center()); break;
+                  default: return;
+              }
+  
+              if (how === 'reset') delete win.normalBounds;
+  
+              win.setBounds(bounds);
+          }
+  
+          return true;
+      }
+  },
+  {
     name: "open workspace",
     exec: world => {
       return world.addMorph(new Workspace({center: world.center})); 

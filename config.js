@@ -41,6 +41,21 @@ var config = {
     {keys: "Alt-Shift-Down",   command: {command: "move or resize halo target", args: {what: "resize", direction: "down",  offset: 100}}},
 
     {keys: {win: "Ctrl-1", mac: "Meta-1"}, command: "window switcher"},
+
+    {keys: "Meta-Shift-L R E S 1", command: {command: "resize active window", args: {how: "col1"}}},
+    {keys: "Meta-Shift-L R E S 2", command: {command: "resize active window", args: {how: "col2"}}},
+    {keys: "Meta-Shift-L R E S 3", command: {command: "resize active window", args: {how: "col3"}}},
+    {keys: "Meta-Shift-L R E S 4", command: {command: "resize active window", args: {how: "col4"}}},
+    {keys: "Meta-Shift-L R E S 5", command: {command: "resize active window", args: {how: "col5"}}},
+    {keys: "Meta-Shift-L R E S C", command: {command: "resize active window", args: {how: "center"}}},
+    {keys: "Meta-Shift-L R E S L", command: {command: "resize active window", args: {how: "left"}}},
+    {keys: "Meta-Shift-L R E S R", command: {command: "resize active window", args: {how: "right"}}},
+    {keys: "Meta-Shift-L R E S F", command: {command: "resize active window", args: {how: "full"}}},
+    {keys: "Meta-Shift-L R E S T", command: {command: "resize active window", args: {how: "top"}}},
+    {keys: "Meta-Shift-L R E S H T", command: {command: "resize active window", args: {how: "halftop"}}},
+    {keys: "Meta-Shift-L R E S B", command: {command: "resize active window", args: {how: "bottom"}}},
+    {keys: "Meta-Shift-L R E S H B", command: {command: "resize active window", args: {how: "halfbottom"}}},
+    {keys: "Meta-Shift-L R E S Escape", command: {command: "resize active window", args: {how: "reset"}}},
   ],
   text: {
     cursorBlinkPeriod: .5,
