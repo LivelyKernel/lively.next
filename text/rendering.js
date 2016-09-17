@@ -51,8 +51,7 @@ class RenderedLine {
 
   static chunksFrom(text, config) {
     let { fontMetric, styleRanges } = config;
-    styleRanges = text ? styleRanges.filter(ea => !ea.isEmpty()) :
-                         styleRanges.slice(0,1);
+    styleRanges = text ? styleRanges.filter(ea => !ea.isEmpty()) : styleRanges.slice(0, 1);
     return styleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
   }
 
@@ -171,8 +170,9 @@ class RenderedLine {
     if (this.rendered) return this.rendered;
     let { chunks, height, width } = this;
     height += "px";
-    return this.rendered = h("div", { style: { height, lineHeight: height } },
-                             chunks.map(ea => ea.render()));
+    return this.rendered = h("div",
+      {style: {height, lineHeight: height}},
+     chunks.map(ea => ea.render()));
   }
 }
 
@@ -207,7 +207,7 @@ class RenderedChunk {
   }
 
   get height() {
-    if (this._height === undefined) this.computeBounds();
+    if (!this._height === undefined) this.computeBounds();
     return this._height;
   }
 
@@ -242,15 +242,13 @@ class RenderedChunk {
 
   render() {
     if (this.rendered) return this.rendered;
-    var { config: {style: {fontSize, fontFamily, fontColor,
-                          fontWeight, fontStyle, textDecoration,
-                          fixedCharacterSpacing}},
+    var {config:
+          {style: {fontSize, fontFamily, fontColor,
+                   fontWeight, fontStyle, textDecoration,
+                   fixedCharacterSpacing}},
           text, width, height} = this,
         textNodes = text ?
-                      fixedCharacterSpacing ?
-                        text.split("").map(c => h("span", c)) :
-                        text :
-                      h("br");
+          (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br");
     fontColor = fontColor || "";
 
     return this.rendered = h("span", {
@@ -260,7 +258,7 @@ class RenderedChunk {
         fontWeight,
         fontStyle,
         textDecoration,
-        color: fontColor.isColor ? fontColor.toString() : String(fontColor)
+        color: String(fontColor)
       }
     }, textNodes);
   }
