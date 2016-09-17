@@ -676,7 +676,7 @@ export class Text extends Morph {
 
   get keybindings() { return super.keybindings.concat(config.text.defaultKeyBindings); }
   set keybindings(x) { super.keybindings = x }
-  get keyhandlers() { return (this._keyhandlers || []).concat(super.keyhandlers); }
+  get keyhandlers() { return super.keyhandlers.concat(this._keyhandlers || []); }
 
   onKeyDown(evt) {
     if (KeyHandler.invokeKeyHandlers(this, evt, true/*no input evts*/)) {
