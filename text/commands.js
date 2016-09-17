@@ -460,16 +460,24 @@ var commands = [
     }
   },
 
+
   {
     name: "move lines down",
     exec: function(morph) {
-      var {start, end} = morph.selection;
+      var sel = morph.selection;
+      if (!sel.isEmpty() && sel.end.column === 0) sel.growRight(-1);
+      var range = sel.range, {start, end} = range;
       if (start.row >= morph.document.endPosition.row) return true;
-      var lineAfter = morph.getLine(start.row+1);
+
+      if (sel.isEmpty()) range = {start: {row: start.row, column: 0}, end: {row: start.row+1, column: 0}}
+      else if (end.column !== 0) range = {start, end: {row: end.row+1, column: 0}}
       morph.undoManager.group();
-      morph.deleteText({start: {row: end.row+1, column: 0}, end: {row: end.row+2, column: 0}});
-      morph.insertText(lineAfter + "\n", {row: start.row, column: 0});
+      var linesToMove = morph.deleteText(range);
+      morph.insertText(linesToMove, {row: start.row+1, column: 0});
       morph.undoManager.group();
+      
+      start.row++; end.row++
+      morph.selection = {start, end};
       return true;
     }
   },
