@@ -65,7 +65,7 @@ class NameHalo extends HaloItem {
         fill: Color.gray.withA(0),
         draggable: false,
         fill: Color.transparent,
-        fontColor: Color.garkgray});
+        fontColor: Color.darkgray});
 
     this.addMorph({
       draggable: false,
@@ -98,17 +98,18 @@ class NameHalo extends HaloItem {
   }
 
   toggleActive(active) {
+    if (this.halo.changingName === active) return;
+    this.halo.changingName = active;
     if (active) {
       this.borderWidth = 3;
-      this.halo.changingName = true;
       this.addMorph(this.validityIndicator);
-      this.alignInHalo();
+      setTimeout(() => this.nameHolder.selectAll());
+      
     } else {
       this.borderWidth = 0;
-      this.halo.changingName = false;
       this.validityIndicator.remove();
-      this.alignInHalo();
     }
+    this.alignInHalo();
   }
 
   toggleNameValid(valid) {
@@ -138,8 +139,8 @@ class NameHalo extends HaloItem {
     }
   }
 
-  onMouseDown() {
-    this.toggleActive(true)
+  onMouseUp() {
+    this.toggleActive(true);
   }
 
   onKeyUp(evt) {
