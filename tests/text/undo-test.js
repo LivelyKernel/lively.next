@@ -4,6 +4,7 @@ import { Text } from "../../text/morph.js";
 import { Range } from "../../text/selection.js";
 import { expect } from "mocha-es6";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import config from "../../config.js";
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
@@ -11,7 +12,9 @@ function range(startRow, startCol, endRow, endCol) {
 
 var text;
 
-describe("undo", () => {
+describe("undo", function() {
+
+  this.timeout(config.text.undoGroupDelay*2);
 
   beforeEach(() => text = new Text({textString: "hello\nworld", fontMetric}));
 
@@ -43,11 +46,11 @@ describe("undo", () => {
   });
 
   it("groups undos", () => {
-    expect(text.undoManager.undos).have.length(1);
+    expect(text.undoManager.undos).have.length(0);
     text.undoManager.group();
     text.insertText("a"); text.insertText("b"); text.insertText("c");
     text.undoManager.group();
-    expect(text.undoManager.undos).have.length(2);
+    expect(text.undoManager.undos).have.length(1);
     text.textUndo();
     expect(text.textString).equals("hello\nworld");
     text.textRedo();
@@ -62,7 +65,7 @@ describe("undo", () => {
     setTimeout(() => text.insertText("b"), 5);
     setTimeout(() => text.insertText("c"), 10);
     await promise.delay(text.undoManager.grouping.debounceTime);
-    expect(text.undoManager.undos).have.length(2);
+    expect(text.undoManager.undos).have.length(1);
   });
 
   it("groups debounced cancel", async () => {
@@ -71,9 +74,10 @@ describe("undo", () => {
     text.undoManager.groupLater();
     setTimeout(() => text.insertText("b"), 5);
     setTimeout(() => text.insertText("c"), 10);
+    setTimeout(() => window.show(lively.lang.obj.inspect(text.undoManager.grouping, {maxDepth: 1})), 15);
     setTimeout(() => text.undoManager.groupLaterCancel(), 15);
     await promise.delay(text.undoManager.grouping.debounceTime);
-    expect(text.undoManager.undos).have.length(1+3);
+    expect(text.undoManager.undos).have.length(3);
   });
 
 });

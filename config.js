@@ -59,6 +59,7 @@ var config = {
     {keys: "Meta-Shift-L R E S H B", command: {command: "resize active window", args: {how: "halfbottom"}}},
     {keys: "Meta-Shift-L R E S Escape", command: {command: "resize active window", args: {how: "reset"}}},
   ],
+
   text: {
     cursorBlinkPeriod: .5,
     useSoftTabs: true,
@@ -66,6 +67,8 @@ var config = {
     markStackSize: 16,
     undoLevels: 50,
     clipboardBufferLength: 15,
+    undoGroupDelay: 600/*ms, idle time after typing that groups the previous ungrouped edits into one*/,
+
     defaultKeyBindings: [
       {keys: {mac: 'Meta-C', win: 'Ctrl-C'}, command: {command: "clipboard copy", passEvent: true}},
       {keys: "Ctrl-W",                       command: {command: "manual clipboard copy", args: {"delete": true}}},

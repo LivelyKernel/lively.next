@@ -107,7 +107,7 @@ export class UndoManager {
     var state = this.grouping;
     if (!state.debounce) return;
     state.debouncedCanceled = true;
-    this.grouping = {current: state.current, debounce: null, debouncedCanceled: false};
+    this.grouping = {...state, debounce: null, debouncedCanceled: false};
   }
 
   groupLater(time) {

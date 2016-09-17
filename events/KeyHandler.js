@@ -1,5 +1,6 @@
 import Keys from "./Keys.js";
 import bowser from "bowser";
+import config from "../config.js";
 import { arr } from "lively.lang";
 
 function ensureSpaces(s) { return s.length ? s : ' '; }
@@ -44,7 +45,10 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 
   if (!success && isInputEvent && morph.onTextInput) {
     var count = evt && evt.keyInputState ? evt.keyInputState.count : undefined;
-    success = morph.execCommand("insertstring", {string: data || key, undoGroup: 600/*ms*/}, count, evt);
+    success = morph.execCommand("insertstring", {
+      string: data || key,
+      undoGroup: config.text.undoGroupDelay/*ms*/
+    }, count, evt);
     if (success && evt && evt.keyInputState)
       evt.keyInputState.count = undefined;
   }
