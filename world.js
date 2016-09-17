@@ -9,8 +9,11 @@ import { morph, Morph, Text, Window } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 import { ObjectDrawer, Workspace, Browser } from "./tools.js";
 import { CodeSearcher } from "./ide/code-search.js"
+import TestRunner from "lively.morphic/ide/test-runner.js"
 
 var worldCommands = [
 
@@ -162,13 +165,18 @@ var worldCommands = [
   {
     name: "open browser",
     exec: world => {
-      return new Browser({center: world.center}).activate();
+      return new Browser({extent: pt(700, 600), center: world.center}).activate();
     }
   },
 
   {
     name: "open code search",
     exec: world => CodeSearcher.inWindow({title: "code search", extent: pt(800, 500)}).activate()
+  },
+
+  {
+    name: "open test runner",
+    exec: world => TestRunner.open()
   }
 ]
 
@@ -276,6 +284,7 @@ export class World extends Morph {
         ["redo", () => { this.env.undoManager.redo(); }],
         ["Workspace", () => this.execCommand("open workspace")],
         ["Browser", () => this.execCommand("open browser")],
+        ["Test runner", () => this.execCommand("open test runner")],
         ["ObjectDrawer", () => { this.addMorph(new ObjectDrawer({center: this.center})); }],
       ]
     }));
