@@ -62,7 +62,7 @@ export class CodeSearcher extends FilterableList {
   }
 
   async searchAndUpdate(searchInput) {
-    var filterTokens = searchInput.split(/\s+/);
+    var filterTokens = searchInput.split(/\s+/).filter(ea => !!ea);
   
     var win = this.getWindow();
     if (win && win.targetMorph === this)
