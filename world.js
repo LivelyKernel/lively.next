@@ -94,6 +94,15 @@ var worldCommands = [
   },
 
   {
+    name: "toggle minimize active window",
+    exec: world => {
+      var win = world.activeWindow();
+      win && win.toggleMinimize();
+      return true;
+    }
+  },
+
+  {
       name: "resize active window",
       exec: function(world, opts = {how: null, window: null}) {
   

@@ -9,6 +9,7 @@ var config = {
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Escape", command: "escape"},
     {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window"},
+    {keys: "Alt-Shift-C", command: "toggle minimize active window"},
 
     {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
