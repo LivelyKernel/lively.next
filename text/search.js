@@ -3,12 +3,14 @@ import { connect, disconnect } from "lively.bindings"
 import { obj } from "lively.lang";
 import { Morph, Text, Button } from "../index.js";
 import { show } from "lively.morphic";
+import { lessPosition, minPosition, maxPosition } from "lively.morphic/text/position.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
 export class TextSearcher {
   constructor(morph) {
-    this.morph = morph
+    this.morph = morph;
+    this.STOP = {};
   }
 
   get doc() { return this.morph.document }
@@ -19,49 +21,72 @@ export class TextSearcher {
     return {range: {start, end}, match};
   }
 
-  stringSearch(lines, needle, caseSensitive, nLines, char, {row, column}) {
+  stringSearch(lines, needle, caseSensitive, nLines, inRange, char, pos) {
+
+    if (inRange) {
+      if (lessPosition(pos, inRange.start) || lessPosition(inRange.end, pos))
+        return this.STOP;
+    }
+
     if (!caseSensitive) char = char.toLowerCase();
     if (char !== needle[0]) return null;
-    var chunk = lines[row].slice(column)
+
+    var {row, column} = pos,
+        chunk = lines[row].slice(column)
                 + (nLines > 1 ? "\n" + lines.slice(row+1, (row+1)+(nLines-1)).join("\n") : ""),
         chunkToTest = caseSensitive ? chunk : chunk.toLowerCase();
-    if (chunkToTest.indexOf(needle) !== 0) return null;
-    return this.processFind({row, column}, chunk.slice(0, needle.length));
+
+    return chunkToTest.indexOf(needle) !== 0 ?
+      null :
+      this.processFind({row, column}, chunk.slice(0, needle.length));
   }
 
-  reSearch(lines, needle, multiline, char, {row, column}) {
-    // note reSearch currently does not work for multiple lines...
-    var chunk = lines[row].slice(column) + (multiline ? "\n" + lines.slice(row+1).join("\n") : ""),
+  reSearch(lines, needle, multiline, inRange, char, pos) {
+    if (inRange) {
+      if (lessPosition(pos, inRange.start) || lessPosition(inRange.end, pos))
+        return this.STOP;
+    }
+    
+    var {row, column} = pos,
+        chunk = lines[row].slice(column) + (multiline ? "\n" + lines.slice(row+1).join("\n") : ""),
         reMatch = chunk.match(needle);
     return reMatch ? this.processFind({row, column}, reMatch[0]) : null
   }
 
   search(options) {
-    let {start, needle, backwards, caseSensitive} = {
+    let {start, needle, backwards, caseSensitive, inRange} = {
       start: this.morph.cursorPosition,
       needle: "",
       backwards: false,
       caseSensitive: false,
+      inRange: null,
       ...options
     }
 
     if (!needle) return null;
 
+    if (inRange)
+      start = backwards ?
+        minPosition(inRange.end, start) :
+        maxPosition(inRange.start, start);
+
     var search;
     if (needle instanceof RegExp) {
-      var flags = (needle.flags || "").split("");
-      var multiline = !!needle.multiline; flags.splice(flags.indexOf("m"), 1);
+      var flags = (needle.flags || "").split(""),
+          multiline = !!needle.multiline; flags.splice(flags.indexOf("m"), 1);
       if (!caseSensitive && !flags.includes("i")) flags.push("i");
       needle = new RegExp('^' + needle.source.replace(/^\^+/, ""), flags.join(""));
-      search = this.reSearch.bind(this, this.doc.lines, needle, multiline);
+      search = this.reSearch.bind(this, this.doc.lines, needle, multiline, inRange);
     } else {
       needle = String(needle);
       if (!caseSensitive) needle = needle.toLowerCase();
       var nLines = needle.split(this.doc.constructor.newline).length
-      search = this.stringSearch.bind(this, this.doc.lines, needle, caseSensitive, nLines);
+      search = this.stringSearch.bind(this, this.doc.lines, needle, caseSensitive, nLines, inRange);
     }
 
-    return this.doc[backwards ? "scanBackward" : "scanForward"](start, search);
+    var result = this.doc[backwards ? "scanBackward" : "scanForward"](start, search);
+
+    return result === this.STOP ? null : result;
   }
 }
 

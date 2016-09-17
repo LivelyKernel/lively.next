@@ -526,6 +526,17 @@ describe("searching", () => {
       expect(t.search(/He[^\s]+/, {backwards: true, start: {row: 2, column: 0}})).containSubset({range: range(1,0,1,5), match: "hello"}, "1");
     });
 
+    it("in range", () => {
+      expect(t.search("l", {start: {row: 0, column: 0}, inRange: range(1,0,1,5)})).containSubset({range: range(1,2,1,3)}, "1")
+      expect(t.search("l", {start: {row: 1, column: 4}, inRange: range(1,0,1,5)})).equals(null, "2");
+      expect(t.search("l", {backwards: true, start: {row: 1, column: 1}, inRange: range(1,0,1,5)})).equals(null, "3");
+      expect(t.search("l", {backwards: true, start: {row: 3, column: 0}, inRange: range(1,0,1,5)})).containSubset({range: range(1,3,1,4)}, "4");
+
+      expect(t.search(/l/, {start: {row: 0, column: 0}, inRange: range(1,0,1,5)})).containSubset({range: range(1,2,1,3)}, "5")
+      expect(t.search(/l/, {start: {row: 1, column: 4}, inRange: range(1,0,1,5)})).equals(null, "6");
+      expect(t.search(/l/, {backwards: true, start: {row: 3, column: 0}, inRange: range(1,0,1,5)})).containSubset({range: range(1,3,1,4)}, "7");
+      expect(t.search(/l/, {backwards: true, start: {row: 1, column: 1}, inRange: range(1,0,1,5)})).equals(null, "8");
+    });
   });
 
 });
