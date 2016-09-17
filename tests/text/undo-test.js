@@ -74,7 +74,6 @@ describe("undo", function() {
     text.undoManager.groupLater();
     setTimeout(() => text.insertText("b"), 5);
     setTimeout(() => text.insertText("c"), 10);
-    setTimeout(() => window.show(lively.lang.obj.inspect(text.undoManager.grouping, {maxDepth: 1})), 15);
     setTimeout(() => text.undoManager.groupLaterCancel(), 15);
     await promise.delay(text.undoManager.grouping.debounceTime);
     expect(text.undoManager.undos).have.length(3);
