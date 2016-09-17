@@ -45,7 +45,7 @@ export default class CommandHandler {
           result = command.exec(morph, args, command.handlesCount ? count : undefined, evt);
         } catch(err) {
           result = err;
-          var msg = `Error in interactive command ${name}: ${err.stack}`;
+          var msg = `Error in interactive command ${name}: ${err.stack || err}`;
           world ? world.logError(msg) : console.error(msg);
         }
     }
@@ -53,7 +53,7 @@ export default class CommandHandler {
     // to not swallow errors
     if (result && typeof result.catch === "function") {
       result.catch(err => {
-        var msg = `Error in interactive command ${name}: ${err.stack}`;
+        var msg = `Error in interactive command ${name}: ${err.stack || err}`;
         world ? world.logError(msg) : console.error(msg);
         throw err;
       });
