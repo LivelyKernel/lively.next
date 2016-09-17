@@ -113,7 +113,7 @@ export class SearchWidget extends Morph {
   constructor(props = {}) {
     var target = props.targetText,
         fontSize = props.fontSize || 12,
-        fontFamily = props.fontFamily || "monospace",
+        fontFamily = props.fontFamily || "Monaco, monospace",
         input = props.input || "";
 
     if (!target) throw new Error("SearchWidget needs a target text morph!");
@@ -127,14 +127,11 @@ export class SearchWidget extends Morph {
       ...obj.dissoc(props, ["target", "fontFamily", "fontSize", "input"])
     });
 
-    var inputHeight = this.env.fontMetric.sizeFor(fontSize, fontSize, "X").height + 2*2;
-    this.height = inputHeight;
-
     this.targetText = target;
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-    
 
-    var labelStyle = {fontFamily: "sans-serif", fontSize: 11},
+    var labelStyle = {fontFamily: "Helvetica Neue, Arial, sans-serif", fontSize: 12},
         label = this.addMorph(Text.makeLabel("Enter search term:", {name: "label", ...labelStyle, topLeft: pt(4,4)})),
         acceptButton = this.addMorph(new Button({name: "acceptButton", label: "✔", ...labelStyle})).fit(),
         cancelButton = this.addMorph(new Button({name: "cancelButton", label: "X", ...labelStyle})).fit(),
@@ -149,7 +146,7 @@ export class SearchWidget extends Morph {
     var inputMorph = this.addMorph(
       Text.makeInputLine({
         name: "input",
-        extent: pt(this.width, inputHeight),
+        width: this.width,
         textString: input,
         fill: Color.white,
         borderWidth: 1, borderColor: Color.gray,
