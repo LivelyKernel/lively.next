@@ -18,7 +18,8 @@ class ListItemMorph extends Text {
     });
   }
 
-  displayItem(item, itemIndex, pos, isSelected = false) {
+  displayItem(item, itemIndex, pos, isSelected = false, props) {
+    if (props) Object.assign(this, props);
     this.itemIndex = itemIndex;
     this.textString = item.string || "no item.string";
     this.position = pos;
@@ -94,8 +95,8 @@ var listCommands = [
 export class List extends Morph {
 
   constructor(props = {}) {
+    if (!props.bounds || !props.extent) props.extent = pt(400, 360);
     super({
-      layoutPolicy: "vertical",
       fontFamily: "Helvetica Neue, Arial, sans-serif",
       fontSize: 12,
       items: [],
@@ -111,18 +112,25 @@ export class List extends Morph {
     return {selection: {signalOnAssignment: false}};
   }
 
-  // horizonal or vertical (tiling?)
-  get layoutPolicy() { return this.getProperty("layoutPolicy"); }
-  set layoutPolicy(value) { this.addValueChange("layoutPolicy", value); }
+  get fontFamily() { return this.getProperty("fontFamily"); }
+  set fontFamily(value) {
+    this.addValueChange("fontFamily", value);
+    this.invalidateCache();
+    this.groupChangesWhile(undefined, () => this.update());
+  }
 
-  get fontFamily() { this.invalidateCache(); return this.getProperty("fontFamily"); }
-  set fontFamily(value) { this.addValueChange("fontFamily", value); }
-
-  get fontSize() { this.invalidateCache(); return this.getProperty("fontSize"); }
-  set fontSize(value) { this.addValueChange("fontSize", value); }
+  get fontSize() { return this.getProperty("fontSize"); }
+  set fontSize(value) {
+    this.addValueChange("fontSize", value);
+    this.invalidateCache();
+    this.groupChangesWhile(undefined, () => this.update());
+  }
 
   get padding() { return this.getProperty("padding"); }
-  set padding(value) { this.addValueChange("padding", value); }
+  set padding(value) {
+    this.addValueChange("padding", value);
+    this.groupChangesWhile(undefined, () => this.update());
+  }
 
   get items() { return this.getProperty("items"); }
   set items(items) {
@@ -236,9 +244,12 @@ export class List extends Morph {
   }
 
   update() {
+    var items = this.items;
+    if (!items) return; // pre-initialize
+
     var {
           itemHeight,
-          items, itemMorphs, listItemContainer,
+          itemMorphs, listItemContainer,
           selectedIndexes,
           scroll: {x: left, y: top},
           extent: {x: width, y: height},
@@ -263,11 +274,14 @@ export class List extends Morph {
         break;
       }
 
-      var itemMorph = itemMorphs[i] || (itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph({fontFamily, fontSize})));
+      var itemMorph = itemMorphs[i]
+                  || (itemMorphs[i] = listItemContainer.addMorph(
+                        new ListItemMorph({fontFamily, fontSize})));
 
       itemMorph.displayItem(item, itemIndex,
         pt(padLeft, padTop+itemHeight*itemIndex),
-        selectedIndexes.includes(itemIndex));
+        selectedIndexes.includes(itemIndex),
+        {fontFamily, fontSize});
     }
 
     itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
@@ -324,7 +338,7 @@ import FontMetric from "./rendering/font-metric.js";
 export class FilterableList extends Morph {
 
   constructor(props = {}) {
-    var fontFamily = props.fontFamily || "Arial",
+    var fontFamily = props.fontFamily || "Helvetica Neue, Arial, sans-serif",
         fontSize = props.fontSize || 11,
         input = props.input || "",
         inputText = Text.makeInputLine({
@@ -348,11 +362,9 @@ export class FilterableList extends Morph {
 
     this.state = {allItems: null};
 
-    Object.assign(this, {
-      items: [],
-      extent: props.bounds ? props.bounds.extent() : pt(400, 360),
-      ...props
-    });
+    if (!props.bounds || !props.extent) props.extent = pt(400, 360);
+
+    Object.assign(this, {items: [], ...props});
 
     this.relayout();
 
@@ -383,6 +395,8 @@ export class FilterableList extends Morph {
   set selection(x) { this.get("list").selection = x; }
   get selectedIndex() { return this.get("list").selectedIndex; }
   set selectedIndex(x) { this.get("list").selectedIndex = x; }
+
+  scrollSelectionIntoView() { return this.get("list").scrollSelectionIntoView(); }
 
   updateFilter() {
     var filterText = this.get("input").textString,
