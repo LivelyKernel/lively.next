@@ -79,13 +79,28 @@ export class UndoManager {
     }
   }
 
-  group() {
+  group(prevUndo = null) {
     this.groupLaterCancel();
+
+    // If prevUndo is given, merge prevUndo and all newer undos into a single undo group
+    if (prevUndo && this.undos.includes(prevUndo))
+      this.grouping.current = this.undos.slice(this.undos.indexOf(prevUndo))
+        .concat(this.grouping.current)
+
     if (!this.grouping.current.length) return;
-    var grouped = this.grouping.current.slice(1);
-    this.grouping.current[0].addUndos(grouped);
+
+    var grouped = this.grouping.current.slice(1),
+        undoGroup = this.grouping.current[0];
+    undoGroup.addUndos(grouped);
     this.undos = arr.withoutAll(this.undos, grouped);
     this.grouping.current = [];
+  }
+
+  ensureNewGroup(morph, name = "new undo group") {
+    // puts currently ongoing undos into a group then creates and returns a new group
+    this.group();
+    this.undoStart(morph, name);
+    return this.undoStop();
   }
 
   groupLaterCancel() {
