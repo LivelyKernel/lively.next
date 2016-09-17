@@ -20,7 +20,7 @@ var commands = {
       var sel = morph.selection,
           {row, column} = sel.lead,
           select = !!morph.activeMark || !sel.isEmpty(),
-          start = options.backwards ? {row, column: column-1} : {row, column},
+          start = {row, column: column-1},
           pos = morph.document[options.backwards ? "scanBackward" : "scanForward"](
             start, (char, pos) => char === options.needle && !eqPosition(start, pos) ? pos : null);
 
@@ -54,7 +54,7 @@ class IyGotoCharKeyHandler extends KeyHandler {
   get isIyGoToChar() { return true; }
 
   uninstallFrom(morph) {
-    arr.remove(morph._keyhandlers || [], this)
+    arr.remove(morph._keyhandlers || [], this);
   }
 
   eventCommandLookup(morph, evt) {
