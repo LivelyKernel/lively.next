@@ -487,7 +487,7 @@ export class AbstractPrompt extends Morph {
   }
 
   resolve(arg) { this.state.answer.resolve(arg); }
-  reject(reason) { this.state.answer.reject(reason); }
+  reject(reason) { this.state.answer.resolve(undefined); }
 
   async activate() {
     this.focus();
