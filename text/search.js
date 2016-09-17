@@ -1,9 +1,9 @@
 import { Rectangle, pt, Color } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings"
-import { obj } from "lively.lang";
+import { obj, promise } from "lively.lang";
 import { Morph, Text, Button } from "../index.js";
 import { show } from "lively.morphic";
-import { lessPosition, minPosition, maxPosition } from "lively.morphic/text/position.js";
+import { lessPosition, minPosition, maxPosition } from "./position.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
@@ -178,9 +178,9 @@ export class SearchWidget extends Morph {
 
     // override existing commands
     inputMorph.addCommands([
-      {name: "realign top-bottom-center", exec: () => {
+      {name: "realign top-bottom-center", exec: async () => {
         this.targetText.execCommand("realign top-bottom-center");
-        this.addSearchMarkersForPreview(this.state.inProgress && this.state.inProgress.found);
+        this.addSearchMarkersForPreview(this.state.inProgress && this.state.inProgress.found, false);
         return true;
       }}
     ]);
@@ -314,11 +314,11 @@ export class SearchWidget extends Morph {
       }
     });
   }
-  
-  addSearchMarkersForPreview(found) {
+
+  addSearchMarkersForPreview(found, noCursor = true) {
     found && this.whenRendered().then(() => {
       this.addSearchMarkers(found);
-      this.targetText.removeMarker("search-highlight-cursor");
+      noCursor && this.targetText.removeMarker("search-highlight-cursor");
     });
   }
 

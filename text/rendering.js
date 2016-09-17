@@ -32,14 +32,15 @@ function cursor(pos, height, visible) {
 }
 
 function renderMarkerPart(renderer, morph, start, end, style) {
-  var {x,y} = renderer.boundsFor(morph, start),
+  var padding = morph.padding,
+      {x,y} = renderer.boundsFor(morph, start),
       {height, x: endX} = renderer.boundsFor(morph, end);
   return h("div.marker-layer-part", {
     style: {
       zIndex: -4,
       ...style,
       position: "absolute",
-      left: x + "px", top: y + "px",
+      left: padding.left()+x + "px", top: padding.top()+y + "px",
       height: height + "px",
       width: endX-x + "px"
     }
