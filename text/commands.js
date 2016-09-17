@@ -696,13 +696,17 @@ var commands = [
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME move this stuff below into a JS related module
-function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range) {
+function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, env) {
+  if (!env) env = morph.evalEnvironment; // FIXME!
+  if (!env) env = {}
   var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
   if (!evalStrategies)
     throw new Error("doit not possible: lively.vm eval-strategies not available!")
   var code = morph.textInRange(range),
       evalStrategy = new evalStrategies.LivelyVmEvalStrategy(),
-      opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + morph.id, context: morph};
+      targetModule = env.targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
+      sourceURL = targetModule + "_doit_" + Date.now(),
+      opts = {System, targetModule, context: env.context || morph, sourceURL};
   return evalStrategy.runEval(code, opts);
 }
 
@@ -735,11 +739,12 @@ commands.push(
   {
     name: "doit",
     doc: "Evaluates the selecte code or the current line and report the result",
-    exec: async function(morph) {
+    exec: async function(morph, opts) {
+      // opts = {targetModule}
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        result = await doEval(morph);
+        result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
@@ -752,10 +757,11 @@ commands.push(
   {
     name: "eval all",
     doc: "Evaluates the entire text contents",
-    exec: async function(morph) {
+    exec: async function(morph, opts) {
+      // opts = {targetModule}
       var result, err;
       try {
-        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition});
+        result = await doEval(morph, {start: {row: 0, column: 0}, end: morph.documentEndPosition}, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
@@ -768,11 +774,12 @@ commands.push(
   {
     name: "printit",
     doc: "Evaluates the selecte code or the current line and insert the result in a printed representation",
-    exec: async function(morph) {
+    exec: async function(morph, opts) {
+      // opts = {targetModule}
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        result = await doEval(morph);
+        result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
@@ -785,11 +792,12 @@ commands.push(
     name: "inspectit",
     doc: "...",
     handlesCount: true,
-    exec: async function(morph, _, count = 1) {
+    exec: async function(morph, opts, count = 1) {
+      // opts = {targetModule}
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
-        result = await doEval(morph);
+        result = await doEval(morph, undefined, opts);
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();

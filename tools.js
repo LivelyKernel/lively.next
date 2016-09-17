@@ -151,6 +151,12 @@ export class Browser extends Window {
         });
     // FIXME? how to specify that directly??
     container.layout.grid.row(0).adjustProportion(-1/5);
+    container.get("sourceEditor").text.__defineGetter__("evalEnvironment", () => {
+      if (!this.selectedModule) throw new Error("Browser has no module selected");
+      return {
+        targetModule: this.selectedModule.name
+      }
+    })
     return container;
   }
 
@@ -224,6 +230,11 @@ export class Browser extends Window {
   async allPackages() {
     var livelySystem = (await System.import("lively-system-interface")).localInterface;
     return livelySystem.getPackages();
+  }
+
+
+  get selectedModule() {
+    return this.get("moduleList").selection;
   }
 
 // await this.getWindow().modulesOfPackage(this.getWindow().get("packageList").selection)
