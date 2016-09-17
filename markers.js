@@ -127,7 +127,7 @@ export class StatusMessage extends Morph {
       clipMode: 'hidden',
       grabbing: false, dragging: true,
       borderRadius: 20, borderWidth: 5,
-      fill: null,
+      fill: Color.white,
       stayOpen: false,
       isMaximized: false,
       ...props,
@@ -138,14 +138,13 @@ export class StatusMessage extends Morph {
         name: 'messageText',
         type: "text",
         draggable: false,
-        bounds: pt(240, 65).extentAsRectangle().insetBy(10),
         fixedWidth: false, fixedHeight: false, clipMode: 'visible',
         fontSize: 14, fontFamily: "Monaco, Inconsolata, 'DejaVu Sans Mono', monospace"
       },
 
       {
         name: 'closeButton',
-        topRight: pt(240-15, 12), extent: pt(20,20),
+        extent: pt(20,20),
         fill: null,
         styleClasses: ["center-text", "fa", "fa-close"],
         nativeCursor: "pointer",
@@ -154,8 +153,13 @@ export class StatusMessage extends Morph {
 
     });
 
-
     this.setMessage(msg, color);
+    this.relayout();
+  }
+
+  relayout() {
+    this.get("messageText").setBounds(this.innerBounds().insetBy(10));
+    this.get("closeButton").topRight = this.innerBounds().topRight().addXY(-10,4);
   }
 
   isEpiMorph() { return true }
@@ -187,6 +191,7 @@ export class StatusMessage extends Morph {
     ext = this.extent.maxPt(ext);
     this.extent = ext;
     this.center = visibleBounds.center();
+    this.relayout();
   }
 
   onMouseUp(evt) {
