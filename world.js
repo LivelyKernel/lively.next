@@ -158,7 +158,7 @@ var worldCommands = [
   {
     name: "open workspace",
     exec: world => {
-      return world.addMorph(new Workspace({center: world.center})); 
+      return new Workspace({center: world.center}).activate(); 
     }
   },
 

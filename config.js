@@ -10,7 +10,7 @@ var config = {
     {keys: "Escape", command: "escape"},
     {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window"},
 
-    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: true}},
+    {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-Shift-F", mac: "Meta-Shift-F"}, command: {command: "open code search", onlyWhenFocused: false}},
 
