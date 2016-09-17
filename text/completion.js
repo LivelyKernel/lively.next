@@ -12,6 +12,14 @@ export class Completer {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+function buildEvalOpts(morph) {
+  // FIXME, also in text/commands
+  var env = morph.evalEnvironment || {};
+  if (!env.targetModule) env.targetModule = "lively://lively.next-prototype_2016_08_23/" + morph.id;
+  var sourceURL = targetModule + "_doit_" + Date.now();
+  return {System, context: morph, sourceURL, ...env}
+}
+
 export class DynamicJavaScriptCompleter {
 
   isValidPrefix(prefix) {
@@ -30,8 +38,7 @@ export class DynamicJavaScriptCompleter {
     if (!mod) return [];
     var evalStrategy = new mod.LivelyVmEvalStrategy();
 
-    let opts = {System, targetModule: "lively://lively.next-prototype_2016_08_23/" + textMorph.id, context: textMorph},
-        completionRequest = await evalStrategy.keysOfObject(roughPrefix, opts),
+    let completionRequest = await evalStrategy.keysOfObject(roughPrefix, buildEvalOpts(textMorph)),
         {completions, prefix} = completionRequest,
         count = completions.reduce((sum, [_, completions]) => sum+completions.length, 0),
         priority = 2000,
@@ -41,7 +48,6 @@ export class DynamicJavaScriptCompleter {
         }, []);
 
     // assign priority:
-
     processed.forEach((ea,i) => Object.assign(ea, {priority: priority+processed.length-i}));
     return processed
   }
@@ -258,7 +264,8 @@ export class CompletionController {
       position: bounds.topLeft(),
       extent: bounds.extent(),
       items, input: prefix,
-      name: "text completion menu"
+      name: "text completion menu",
+      borderColor: Color.gray, borderWidth: 1
     }
   }
 
