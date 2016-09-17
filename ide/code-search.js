@@ -13,7 +13,7 @@ export async function doSearch(searchTerm, excludes = [/systemjs-plugin-babel/])
       found = await system.localInterface.searchInAllPackages(searchTerm, {excludedModules: excludes}),
       items = found.reduce((result, ea) => {
         var nameAndLine = `${ea.module.package().name}${ea.module.pathInPackage().replace(/^\./, "")}:${ea.line}`;
-        result.maxModuleNameLength = Math.max(result.maxModuleNameLength, nameAndLine.length);
+        result.maxModuleNameLength = Math.max(result.maxModuleNameLength, nameAndLine.length) + 1;
         result.items.push({
           isListItem: true,
           get string() { return nameAndLine + string.pad(ea.lineString, result.maxModuleNameLength - nameAndLine.length, true); },
@@ -34,7 +34,7 @@ export class CodeSearcher extends FilterableList {
   }
 
   constructor(props = {}) {
-    super({extent: pt(400,500), fontFamily: "Monaco, monospace", fontSize: 11, ...props});
+    super({extent: pt(800,500), fontFamily: "Monaco, monospace", fontSize: 14, ...props});
     this.state.currentSearchTerm = "";
     this.state.currentFilters = "";
     connect(this, "accepted", this, "openBrowserForSelection");

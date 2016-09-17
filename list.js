@@ -83,7 +83,9 @@ var listCommands = [
     name: "select via filter",
     exec: async (list) => {
       var preselect = list.selectedIndex || 0;
-      list.selection = await list.world().filterableListPrompt("Select item", list.items, {preselect, requester: list.getWindow() || list});
+      list.selection = await list.world().filterableListPrompt(
+        "Select item", list.items,
+        {preselect, requester: list.getWindow() || list, itemPadding: Rectangle.inset(0,2)});
       list.scrollSelectionIntoView();
       list.update();
       return true;
