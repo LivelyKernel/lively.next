@@ -707,6 +707,10 @@ export class Morph {
     return this.owner.getOwnerNamed(name);
   }
 
+  getMorphWithId(id) {
+    return this.withAllSubmorphsDetect(({id: morphId}) => id === morphId);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
