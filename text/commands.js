@@ -1,8 +1,9 @@
 /*global System*/
 
-import { arr, obj, string } from "lively.lang";
+import { chain, arr, obj, string } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics"
 import { Range } from "./range.js"
+import { show } from "../index.js"
 import { eqPosition, lessPosition } from "./position.js"
 
 // commands.find(ea => ea.name === "transpose chars").exec(that)
@@ -843,20 +844,78 @@ commands.push(
   },
 
   {
+    name: "toggle block comment",
+    exec: function(morph) {
+      var existing = blockCommentInRangeOrPos();
+
+      morph.undoManager.group();
+      if (existing) {
+        var {start, end} = existing;
+        morph.deleteText({start: {row: end.row, column: end.column-2}, end});
+        morph.deleteText({start, end: {row: start.row, column: start.column+2}});
+
+      } else {
+        morph.insertText(`/*`, morph.selection.start);
+        morph.insertText(`*/`, morph.selection.end);
+        var select = !morph.selection.isEmpty();
+        morph.selection.growLeft(2);
+        if (!select) morph.selection.collapse();
+      }
+
+      morph.undoManager.group();
+
+      return true;
+
+
+      // FIXME use JS tokens for this thing...
+      function blockCommentInRangeOrPos() {
+        // blockCommentInRangeOrPos()
+
+        if (!morph.selection.isEmpty()) {
+          var selText = morph.selection.text;
+          return selText.slice(0,2) === "/*" && selText.slice(-2) === "*/" ?
+            morph.selection.range : null;
+        }
+
+        var pos = morph.cursorPosition;
+
+        var startLeft = morph.search("/*", {start: pos, backwards: true});
+        if (!startLeft) return null;
+        var endLeft = morph.search("*/", {start: pos, backwards: true});
+        // /*....*/ ... <|>
+        if (endLeft && lessPosition(startLeft, endLeft)) return null;
+        
+        var endRight = morph.search("*/", {start: pos});
+        if (!endRight) return null;
+        var startRight = morph.search("/*", {start: pos});
+        // <|> ... /*....*/
+        if (startRight && lessPosition(startRight, endRight)) return null;
+      
+        return {start: startLeft.range.start, end: endRight.range.end};
+      }
+    }
+  },
+
+  {
     name: "comment box",
     exec: function(morph, _, count) {
-      morph.undoManager.group();
+
+      var undo = morph.undoManager.ensureNewGroup(morph, "comment box");
 
       if (morph.selection.isEmpty()) {
         morph.insertText("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
-        morph.undoManager.group();
+        // undo = undo || arr.last(morph.undoManager.undos);
+        morph.execCommand("toggle comment");
+        morph.undoManager.group(undo);
         return true;
       }
 
       var range = morph.selection.range,
           lines = morph.withSelectedLinesDo(line => line),
-          indent = [range.start.column].concat(lines.map(function(line) { return line.match(/^\s*/); }).flatten().compact().pluck('length')).min(),
-          length = lines.pluck('length').max() - indent,
+          indent = arr.min([range.start.column].concat(
+            chain(lines).map(function(line) { return line.match(/^\s*/); })
+              .flatten().compact().pluck('length').value())),
+          length = arr.max(lines.map(ea => ea.length)) - indent,
           fence = Array(Math.ceil(length / 2) + 1).join('-=') + '-';
 
       // comment range
@@ -869,20 +928,20 @@ commands.push(
         morph.insertText(string.indent("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-" + '\n', ' ', indent));
       else
         morph.insertText(string.indent(fence + '\n', ' ', indent));
-      // morph.selection.goUp();
-      // morph.toggleCommentLines();
+      morph.selection.goUp();
+      morph.execCommand("toggle comment");
       // insert fence below
       morph.cursorPosition = {row: range.end.row+2, column: 0};
 
       morph.insertText(string.indent(fence + '\n', ' ', indent));
 
-      // morph.selection.goUp();
+      morph.selection.goUp();
       // morph.selection.gotoLineEnd();
-      // morph.toggleCommentLines();
+      morph.execCommand("toggle comment");
 
       // select it all
       morph.selection.range = {start: {row: range.start.row, column: 0}, end: morph.cursorPosition};
-      morph.undoManager.group();      
+      morph.undoManager.group(undo);
 
       return true;
     },
