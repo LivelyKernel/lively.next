@@ -179,6 +179,32 @@ var worldCommands = [
   },
 
   {
+    name: "choose and browse module",
+    exec: async world => {
+      var browser, focused = world.focusedMorph;
+      if (focused && focused.getWindow() instanceof Browser)
+        browser = focused.getWindow();
+
+      var livelySystem = (await System.import("lively-system-interface")).localInterface, // FIXME
+          modules = await livelySystem.getModules(),
+          items = [];
+      
+      for (let m of modules) {
+        var p = await livelySystem.getPackageForModule(m.name);
+        var shortName = m.name.slice(p.address.length).replace(/^\//, "");
+        items.push({isListItem: true, string: `${p.name}/${shortName}`, value: {package: p, module: m, shortName}})
+      }
+      items = arr.sortBy(items, ea => ea.string);
+
+      var selected = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
+
+      selected && (await Browser.browse(selected.package.name, selected.shortName, undefined, browser)).activate()
+
+      return true;
+    }
+  },
+
+  {
     name: "open code search",
     exec: world => CodeSearcher.inWindow({title: "code search", extent: pt(800, 500)}).activate()
   },
