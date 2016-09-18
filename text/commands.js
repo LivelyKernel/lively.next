@@ -719,6 +719,22 @@ var commands = [
   },
 
   {
+    name: "newline",
+    exec: function(morph) {
+      var {row} = morph.cursorPosition,
+          currentLine = morph.getLine(row),
+          indent = currentLine.match(/^\s*/)[0].length;
+      morph.undoManager.group();
+      if (!currentLine.trim() && indent) // remove trailing spaces of empty lines
+        var deleted = morph.deleteText({start: {row, column: 0}, end: {row, column: indent}});
+      morph.selection.text = morph.document.constructor.newline + " ".repeat(indent);
+      morph.selection.collapseToEnd();
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
     name: "insertstring",
     exec: function(morph, args = {string: null, undoGroup: false}) {
       morph.saveActiveMarkAndDeactivate();

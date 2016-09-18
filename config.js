@@ -153,7 +153,7 @@ var config = {
       {keys: "Ctrl-L",                                           command: "realign top-bottom-center"},
       {keys: {win: "Ctrl-Shift-L", mac: "Ctrl-Shift-L|Alt-G G"}, command: "goto line"},
 
-      {keys: 'Enter', command: {command: "insertstring", args: {string: "\n", undoGroup: true}}}, // FIXME windowss
+      {keys: 'Enter', command: "newline"},
       {keys: 'Space', command: {command: "insertstring", args: {string: " ", undoGroup: true}}},
       {keys: 'Tab',   command: {command: "insertstring", args: {string: "\t", undoGroup: true}}},
 
