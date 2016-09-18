@@ -61,7 +61,7 @@ describe("setup with renderer and events", function () {
       submorph1.rotateBy(num.toRadians(45));
       await submorph1.whenRendered();
       expect(env.renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
-        .match(/translate\(10px, 10px\)/)
+        .match(/translateX\(10px\)/).match(/translateY\(10px\)/)
         .match(/rotate\((45|44\.9+)deg\)/)
         .match(/scale\(1,\s*1\)/)
     });

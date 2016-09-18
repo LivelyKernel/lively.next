@@ -182,7 +182,7 @@ describe("changes", function () {
     it("enques a new animation when setting prop animated", () => {
       var m = morph({extent: pt(10,20), fill: Color.red}),
           q = m._animationQueue;
-      m.animate({fill: Color.green, extent: pt(50,50), easing: "easInOut", onFinish: () => m.remove()});
+      q.registerAnimation({fill: Color.green, extent: pt(50,50), easing: "easInOut", onFinish: () => m.remove()});
       expect(q.animations[0].changedProps).deep.equals({fill: Color.green, extent: pt(50,50)});
     })
     
@@ -191,8 +191,8 @@ describe("changes", function () {
           q = m._animationQueue,
           a1 = {fill: Color.green, extent: pt(50,50), easing: "easeInOut", onFinish: () => m.remove()},
           a2 = {fill: Color.green, extent: pt(50,50)};
-      m.animate(a1);
-      m.animate(a2);
+      q.registerAnimation(a1);
+      q.registerAnimation(a2);
       expect(new PropertyAnimation(null, m, a1).equals(new PropertyAnimation(null, m, a2))).to.be.true;
       expect(q.animations.length).equals(1);
     })
@@ -204,7 +204,7 @@ describe("changes", function () {
           anim = new PropertyAnimation(null, m, a);
       expect(anim.changedProps).deep.equals({extent: pt(10,20)})
       expect(anim.affectsMorph).to.be.false;
-      m.animate(a);
+      q.registerAnimation(a);
       expect(q.animations.length).equals(0);
     })
     
