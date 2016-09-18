@@ -444,7 +444,6 @@ var commands = [
       var start = eqPosition(lineRange.start, end) ?
             {row: end.row, column: 0}: lineRange.start,
           range = {start, end};
-      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
       morph.deleteText(range);
       return true;
     }
@@ -546,7 +545,6 @@ var commands = [
       morph.undoManager.group();
       var {range: {start}} = morph.wordLeft(),
           range = {start, end: morph.cursorPosition};
-      morph.env.eventDispatcher.doCopy(morph.textInRange(range));
       morph.deleteText(range);
       morph.undoManager.group();
       return true;
