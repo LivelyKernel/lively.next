@@ -317,23 +317,9 @@ export default class TestRunner extends HTMLMorph {
 
 
   async ensureMocha() {
-    // this.ensureMocha().then(show.curry("%s")).catch(show.curry("%s"));
-
-    var loaded = System.get(System.decanonicalize("mocha-es6"));
-    if (loaded) return Promise.resolve(loaded);
-
-    var {protocol, host} = document.location,
-        url = `${protocol}//${host}/node_modules/mocha-es6`,
-        file = url + "/mocha-es6.js";
-
-    System.config({
-      map: {"mocha-es6": file},
-      meta: {[file]: {format: "global", exports: "mochaEs6"}}
-    });
-
-    var mochaModule = await System.import(file);
-    if (!this.state.mocha) this.state.mocha = mochaModule.mocha;
-    return mochaModule;
+    var tester = await System.import("mocha-es6/index.js")
+    if (!this.state.mocha) this.state.mocha = tester.mocha;
+    return tester;
   }
 
 //
@@ -722,38 +708,7 @@ export default class TestRunner extends HTMLMorph {
 // });
 // 
 // 
-// // changed at Sun Jun 26 2016 19:14:13 GMT-0700 (PDT) by robertkrahn
-// this.addScript(function runTestAtPoint() {
-// 
-//   return new Promise((resolve, reject) => {
-// 
-//     var e = this.get("editor"),
-//         ast = e.withASTDo(),
-//         nodes = lively.ast.query.nodesAt(e.aceEditor.getCursorIndex(), ast)
-//           .select(n => n.type === "CallExpression" && n.callee.name && n.callee.name.match(/describe|it/) && n.arguments[0].type === "Literal")
-//           .map(n => ({
-//             type: n.callee.name.match(/describe/) ? "suite" : "test",
-//             title: n.arguments[0].value,
-//         }))
-// 
-//     if (!nodes.length) {
-//       reject("No test at " + JSON.stringify(e.aceEditor.getCursorPosition()))
-//     } else {
-//       var spec = {fullTitle: nodes.pluck("title").join(" "), type: nodes.last().type, file: this.state.selection.name}
-//       resolve(this.runTest(spec.file, spec));
-//     }
-//   });
-// });
-// 
-// 
-// // changed at Sun Jun 26 2016 19:14:13 GMT-0700 (PDT) by robertkrahn
-// this.addScript(function runTestsInCurrentFile() {
-// 
-//   return this.runTest(this.state.selection.name);
-// 
-// });
-// 
-// 
+
 // // changed at Sun Jun 26 2016 19:14:13 GMT-0700 (PDT) by robertkrahn
 // this.addScript(function runTestsOfPackage(packageAddress) {
 //   var ed = this.get("editor");
