@@ -808,6 +808,66 @@ function maybeSelectCommentOrLine(morph) {
   sel.range = {start: {row, column: idx+2}, end: {row, column: text.length}};
 }
 
+
+var printEvalResult = (function() {
+  var maxColLength = 300,
+      itSym = typeof Symbol !== "undefined" && Symbol.iterator;
+  return printInspect;
+
+  function printIterable(val, ignore) {
+    var isIterable = typeof val !== "string"
+                  && !Array.isArray(val)
+                  && itSym && typeof val[itSym] === "function";
+    if (!isIterable) return ignore;
+    var hasEntries = typeof val.entries === "function",
+        it = hasEntries ? val.entries() : val[itSym](),
+        values = [],
+        open = hasEntries ? "{" : "[", close = hasEntries ? "}" : "]",
+        name = val.constructor && val.constructor.name || "Iterable";
+    for (var i = 0, next; i < maxColLength; i++) {
+      next = it.next();
+      if (next.done) break;
+      values.push(next.value);
+    }
+    var printed = values.map(ea => hasEntries ?
+        `${printInspect(ea[0], 1)}: ${printInspect(ea[1], 1)}` :
+        printInspect(ea, 2)).join(", ");
+    return `${name}(${open}${printed}${close})`;
+  }
+
+  function inspectPrinter(val, ignore) {
+    if (!val) return ignore;
+    if (val.isMorph) return String(val);
+    if (val instanceof Promise) return "Promise()";
+    if (val instanceof Node) return String(val);
+    if (typeof ImageData !== "undefined" && val instanceof ImageData) return String(val);
+    var length = val.length || val.byteLength;
+    if (length !== undefined && length > maxColLength && val.slice) {
+      var printed = typeof val === "string" || val.byteLength ?
+                      String(val.slice(0, maxColLength)) :
+                      val.slice(0,maxColLength).map(string.print);
+      return "[" + printed + ",...]";
+    }
+    var iterablePrinted = printIterable(val, ignore);
+    if (iterablePrinted !== ignore) return iterablePrinted;
+    return ignore;
+  }
+
+  function printInspect(object, maxDepth) {
+    if (typeof maxDepth === "object")
+      maxDepth = maxDepth.maxDepth || 2;
+
+    if (!object) return String(object);
+    if (typeof object === "string") return '"' + (object.length > maxColLength ? (object.slice(0,maxColLength) + "...") : String(object)) + '"';
+    if (object instanceof Error) return object.stack || String(object);
+    if (!obj.isObject(object)) return String(object);
+    var inspected = obj.inspect(object, {customPrinter: inspectPrinter, maxDepth, printFunctionSource: true});
+    // return inspected;
+    return inspected === "{}" ? String(object) : inspected;
+  }
+
+})();
+
 commands.push(
 
   {
@@ -823,7 +883,7 @@ commands.push(
       } catch (e) { err = e; }
       err ?
         morph.world().logError(err) : 
-        morph.world().setStatusMessage(obj.inspect(result.value, {maxDepth: 1}));
+        morph.world().setStatusMessage(printEvalResult(result.value));
       return result;
     }
   },
@@ -840,7 +900,7 @@ commands.push(
       } catch (e) { err = e; }
       err ?
         morph.world().logError(err) : 
-        morph.world().setStatusMessage(obj.inspect(result.value, {maxDepth: 1}));
+        morph.world().setStatusMessage(String(result.value));
       return result;
     }
   },
@@ -875,7 +935,8 @@ commands.push(
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(err ? err.stack || String(err) : obj.inspect(result.value, {maxDepth: count}));
+      // morph.insertTextAndSelect(err ? err.stack || String(err) : obj.inspect(result.value, {maxDepth: count}));
+      morph.insertTextAndSelect(err ? err.stack || String(err) : printEvalResult(result.value, count));
       return result;
     }
   },
