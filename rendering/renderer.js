@@ -15,10 +15,6 @@ const defaultCSS = `
   user-select: none;
 }
 
-.smooth-extent {
-  -webkit-transition: width .15s, height .15s, transform .15s;
-}
-
 .halo-mesh {
   background-color:transparent;
   background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
@@ -27,7 +23,6 @@ const defaultCSS = `
   linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
   background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
   background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
-   -webkit-animation: fadein .5s;
 }
 
 .morph {
@@ -66,15 +61,6 @@ const defaultCSS = `
 	line-height: 24px !important;
 	text-align: center;
 	vertical-align: middle;
-}
-
-@-webkit-keyframes fadein { /* Safari and Chrome */
-    from {
-        opacity:0;
-    }
-    to {
-        opacity:1;
-    }
 }
 
 div.text-layer span {
@@ -247,11 +233,11 @@ export class Renderer {
 
   renderSvgMorph(morph, svg) {
     const {position, WebkitFilter, transform, transformOrigin,
-           display, top, left} = defaultStyle(morph),
+           display, top, left, opacity} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
     return h("div", {...defaultAttributes(morph),
-                     style: {transform, transformOrigin, position,
+                     style: {transform, transformOrigin, position, opacity,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg",

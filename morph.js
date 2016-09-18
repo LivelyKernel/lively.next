@@ -140,8 +140,10 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   
   animate(config) {
-    this._animationQueue.registerAnimation(config);
-    this.makeDirty();
+    const anim = this._animationQueue.registerAnimation(config);
+    if (!this._animationQueue.animationsActive) {
+      anim && anim.finish();
+    }
   }
 
   get layout()         { return this.getProperty("layout") }
@@ -1017,6 +1019,8 @@ export class Path extends Morph {
       ...props
     })
   }
+  
+  get isSvgMorph() { return true }
 
   get borderStyle() { return this.getProperty("borderStyle") }
   set borderStyle(value) { this.addValueChange("borderStyle", value) }
