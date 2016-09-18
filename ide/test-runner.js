@@ -9,7 +9,7 @@ export default class TestRunner extends HTMLMorph {
   
   static open(props) {
     var runner = new this({extent: pt(500,600), ...props});
-    return runner.env.world.openInWindow(runner, "test runner").activate();
+    return runner.env.world.openInWindow(runner, {title: "test runner", name: "test runner window"}).activate();
   }
 
   constructor(props) {
@@ -166,6 +166,7 @@ export default class TestRunner extends HTMLMorph {
     var prev = loadedTests.findIndex(ea => ea.file === url);
     if (prev > -1) loadedTests.splice(prev, 1, {file: url, tests});
     else loadedTests.push({file: url, tests});
+    this.state.mocha = mocha;
   }
 
 
@@ -315,7 +316,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
 
-  ensureMocha() {
+  async ensureMocha() {
     // this.ensureMocha().then(show.curry("%s")).catch(show.curry("%s"));
 
     var loaded = System.get(System.decanonicalize("mocha-es6"));
@@ -328,9 +329,11 @@ export default class TestRunner extends HTMLMorph {
     System.config({
       map: {"mocha-es6": file},
       meta: {[file]: {format: "global", exports: "mochaEs6"}}
-    })
+    });
 
-    return System.import(file);
+    var mochaModule = await System.import(file);
+    if (!this.state.mocha) this.state.mocha = mochaModule.mocha;
+    return mochaModule;
   }
 
 //
