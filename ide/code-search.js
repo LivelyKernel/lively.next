@@ -28,13 +28,15 @@ export async function doSearch(searchTerm, excludes = [/systemjs-plugin-babel/])
 
 export class CodeSearcher extends FilterableList {
 
-  static inWindow(props = {title: "code search"}) {
+  static inWindow(props = {title: "code search", targetBrowser: null}) {
     var searcher = new this(props);
-    return new Window({...props, extent: searcher.extent.addXY(0, 25), targetMorph: searcher});
+    return new Window({...obj.dissoc(props, "targetBrowser"), extent: searcher.extent.addXY(0, 25), targetMorph: searcher});
   }
 
   constructor(props = {}) {
-    super({extent: pt(800,500), fontFamily: "Monaco, monospace", fontSize: 14, ...props});
+    super({extent: pt(800,500), fontFamily: "Monaco, monospace", fontSize: 14, ...obj.dissoc(props, "targetBrowser")});
+    if (props.targetBrowser)
+      this.state.targetBrowser = props.targetBrowser.id;
     this.state.currentSearchTerm = "";
     this.state.currentFilters = "";
     connect(this, "accepted", this, "openBrowserForSelection");
@@ -87,11 +89,15 @@ export class CodeSearcher extends FilterableList {
   async openBrowserForSelection() {
     if (!this.selection) return;
     var {column, line, module} = this.selection,
+        browserOrProps = (this.state.targetBrowser ?
+          this.world().getMorphWithId(this.state.targetBrowser) : null)
+             || {center: this.globalBounds().center()}
         browser = await Browser.browse(
           module.package().name,
           module.pathInPackage().replace(/^\.\//, ""),
           {column, row: line-1},
-          {center: this.globalBounds().center()});
+          browserOrProps);
+    browser.state.associatedSearchPanel = this;
     return browser.activate();
   }
 

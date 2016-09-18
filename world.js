@@ -214,7 +214,15 @@ var worldCommands = [
 
   {
     name: "open code search",
-    exec: world => CodeSearcher.inWindow({title: "code search", extent: pt(800, 500)}).activate()
+    exec: world => {
+      var browser, focused = world.focusedMorph;
+      if (focused && focused.getWindow() instanceof Browser) {
+        browser = focused.getWindow();
+        if (browser.state.associatedSearchPanel)
+          return browser.state.associatedSearchPanel.getWindow().activate();
+      }
+      return CodeSearcher.inWindow({title: "code search", extent: pt(800, 500), targetBrowser: browser}).activate();
+    }
   },
 
   {

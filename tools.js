@@ -129,8 +129,11 @@ export class Browser extends Window {
       ...props,
       targetMorph: this.build()
     });
+    this.state = {associatedSearchPanel: null};
     this.onLoad();
   }
+
+  get isBrowser() { return true; }
 
   focus() {
     this.get("sourceEditor").focus();
