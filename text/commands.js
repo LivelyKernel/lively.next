@@ -661,6 +661,63 @@ var commands = [
   },
 
   {
+      name: "fit text to column",
+      handlesCount: true,
+      multiSelectAction: "forEach",
+      exec: (morph, opts, count) => {
+
+        // Takes a selection or the current line and will insert line breaks so
+        // that all selected lines are not longer than printMarginColumn or the
+        // specified count parameter. Breaks at word bounds.
+        if (args && args.count === 4/*Ctrl-U*/) { morph.execCommand('joinLines'); return; }
+
+        if (morph.selection.isEmpty()) morph.selectLine();
+        var sel                = morph.selection,
+            col                = args && args.count || /*morph.getOption('printMarginColumn') ||*/ 80,
+            rows               = sel.selectedRows,
+            range              = sel.range,
+            splitRe            = /[ ]+/g,
+            // splitRe            = /[^a-zA-Z_0-9\$\-!\?,\.]+/g,
+            whitespacePrefixRe = /^[\s\t]+/,
+            paragraphs         = string.paragraphs(
+                                    arr.range(rows.first, rows.last)
+                                        .map(row => morph.getLine(row))
+                                        .join('\n'), {keepEmptyLines: true}),
+            newString          = chain(paragraphs.map(fitParagraph)).flatten().value().join('\n');
+
+        morph.undoManager.group();
+        morph.replace(range, newString);
+        morph.undoManager.group();
+
+        return true;
+
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        function splitLineIntoChunks(line, whitespacePrefix, n) {
+          if (line.length <= col) return [whitespacePrefix + line.trim()];
+          var firstChunk    = line.slice(0, col),
+              splitMatch    = arr.last(string.reMatches(firstChunk, splitRe)),
+              lastWordSplit = splitMatch && splitMatch.start > 0 ? splitMatch.start : col,
+              first         = firstChunk.slice(0, lastWordSplit),
+              rest          = whitespacePrefix + (firstChunk.slice(lastWordSplit) + line.slice(col)).trimLeft();
+          return [first].concat(splitLineIntoChunks(rest, whitespacePrefix, n+1));
+        }
+
+        function fitRow(row) {
+          if (row.trim() === '') return [''];
+          var whitespacePrefixMatch = row.match(whitespacePrefixRe),
+              whitespacePrefix = whitespacePrefixMatch ? whitespacePrefixMatch[0] : '';
+          return splitLineIntoChunks(whitespacePrefix + row.trim(), whitespacePrefix);
+        }
+
+        function fitParagraph(para) {
+          return /^\s*$/.test(para) ?
+              para : fitRow(para.split('\n').join(' ')).join('\n') + '\n';
+        }
+      }
+  },
+
+  {
     name: "insertstring",
     exec: function(morph, args = {string: null, undoGroup: false}) {
       morph.saveActiveMarkAndDeactivate();
