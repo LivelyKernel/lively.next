@@ -147,12 +147,12 @@ export class Window extends Morph {
 
   toggleMinimize() {
     if (this.minimized) {
-      this.animate({extent: this.cachedExtent, easing: "easeOutQuint"});
+      this.animate({extent: this.cachedExtent, easing: "easeOutQuint", duration: 300});
       this.resizer().visible = true
       this.minimized = false;
     } else {
       this.cachedExtent =  this.extent;
-      this.animate({extent: pt(this.extent.x, 25), easing: "easeOutQuint"});
+      this.animate({extent: pt(this.extent.x, 25), easing: "easeOutQuint", duration: 300});
       this.resizer().visible = false;
       this.minimized = true;
     }
@@ -160,12 +160,12 @@ export class Window extends Morph {
 
   toggleMaximize() {
     if (this.maximized) {
-      this.animate({bounds: this.cachedBounds});
+      this.animate({bounds: this.cachedBounds, duration: 300});
       this.resizer().bottomRight = this.extent;
       this.maximized = false;
     } else {
       this.cachedBounds = this.bounds();
-      this.animate({bounds: this.world().bounds()});
+      this.animate({bounds: this.world().bounds(), duration: 300});
       this.resizer().bottomRight = this.extent;
       this.resizer().visible = true;
       this.maximized = true;

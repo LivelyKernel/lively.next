@@ -268,6 +268,7 @@ export class Halo extends Morph {
       },
 
       adaptAppearance(proportional) {
+        this.proportionalMode(proportional);
         if (proportional) {
           this.styleClasses = ["halo-item", "fa", "fa-expand"];
           this.rotation = -Math.PI / 2;
@@ -661,10 +662,10 @@ export class Halo extends Morph {
   toggleMesh(active) {
     var mesh = this.getSubmorphNamed("mesh"),
         horizontal = this.getSubmorphNamed("horizontal"),
-        vertical = this.getSubmorphNamed("vertical");
+        vertical = this.getSubmorphNamed("vertical"),
+        position = this.localize(pt(0,0));
     if (active) {
-        const position = this.localize(pt(0,0)),
-              {width, height, extent} = this.world(),
+        const {width, height, extent} = this.world(),
               defaultGuideProps = {
                      opacity: 0,
                      borderStyle: "dashed",
@@ -701,9 +702,14 @@ export class Halo extends Morph {
         horizontal.animate({opacity: 1});
         vertical.animate({opacity: 1});
     } else {
-      vertical && vertical.animate({opacity: 0, onFinish: () => vertical.remove()});
-      horizontal && horizontal.animate({opacity: 0, onFinish: () => horizontal.remove()});
-      mesh && mesh.animate({opacity: 0, onFinish: () => mesh.remove()});
+      if(vertical && horizontal && mesh) {
+        horizontal.position = position;
+        vertical.position = position;
+        mesh.position = position;
+        vertical.animate({opacity: 0, onFinish: () => vertical.remove()});
+        horizontal.animate({opacity: 0, onFinish: () => horizontal.remove()});
+        mesh.animate({opacity: 0, onFinish: () => mesh.remove()});
+      }
     }
     this.focus();
   }
@@ -722,10 +728,10 @@ export class Halo extends Morph {
           extent: this.extent.addPt(offset.scaleBy(2)),
           vertices: [pt(0,0), this.extent.addPt(offset.scaleBy(2))]}));
         diagonal.setBounds(diagonal.position.extent(this.extent.addPt(diagonal.position.scaleBy(-2))))
-        diagonal.animate({opacity: 1});
+        diagonal.animate({opacity: 1, duration: 500});
         return diagonal.vertices[1];
     } else {
-      diagonal && diagonal.animate({opacity: 0, onFinish: () => diagonal.remove()});
+      diagonal && diagonal.animate({opacity: 0, duration: 500, onFinish: () => diagonal.remove()});
     }
   }
 
