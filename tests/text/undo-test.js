@@ -79,4 +79,31 @@ describe("undo", function() {
     expect(text.undoManager.undos).have.length(3);
   });
 
+  it("creates a new undo group and does stuff with it", () => {
+    var undo = text.undoManager.ensureNewGroup(text);
+    expect(text.undoManager.undos).equals([undo], "pre undos");
+    expect(text.undoManager.grouping.current).equals([undo], "pre grouping");
+    text.insertText("a");
+    text.insertText("b");
+    text.undoManager.group(undo);
+    expect(text.undoManager.undos[0]).equals(undo, "undo not in undos");
+    expect(text.undoManager.undos).to.have.length(1, "undos");
+    expect(text.undoManager.undos[0].changes).to.have.length(2, "changes");
+    expect(text.undoManager.undos[0]).containSubset(
+      {changes: [{selector: "insertText"}, {selector: "insertText"}]}, "change details")
+  });
+
+  it("can group previous undo", () => {
+    // text = new Text({textString: "hello\nworld", fontMetric})
+    text.undoManager.group();
+    text.insertText("a");
+    text.undoManager.group();
+    text.insertText("b");
+    text.undoManager.group(text.undoManager.undos[0]);
+    expect(text.undoManager.undos).to.have.length(1);
+    expect(text.undoManager.undos[0].changes).to.have.length(2);
+    expect(text.undoManager.undos[0]).containSubset(
+      {changes: [{selector: "insertText"}, {selector: "insertText"}]})
+  });
+
 });

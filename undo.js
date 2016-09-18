@@ -60,12 +60,31 @@ class Undo {
     this.no = undos[0].no;
     this.name = undos.map(({name}) => name).join("-");
   }
+
+  toString() {
+    var {name, changes, no} = this,
+        isRecording = this.isRecording(),
+        changesString = !changes.length ? "no changes" :
+          "\n  " + changes.map(({selector, args, prop, value, target}) =>
+            selector ?
+              `${target}.${selector}(${args.map(printArg)})` :
+              `${target}.${prop} = ${printArg(value)}`).join("\n  ")
+    return `Undo(${no}:${name} ${isRecording? "RECORDING " : ""}${changesString})`;
+  }
 }
 
+function printArg(x) {
+  // short print
+  return obj.inspect(x, {maxDepth: 1}).replace(/\n/g, "").replace(/\s+/g, " ");
+}
 
 export class UndoManager {
 
   constructor() {
+    this.reset();
+  }
+
+  reset() {
     this.undos = [];
     this.redos = [];
     this.undoInProgress = null;
@@ -84,8 +103,8 @@ export class UndoManager {
 
     // If prevUndo is given, merge prevUndo and all newer undos into a single undo group
     if (prevUndo && this.undos.includes(prevUndo))
-      this.grouping.current = this.undos.slice(this.undos.indexOf(prevUndo))
-        .concat(this.grouping.current)
+      this.grouping.current = arr.uniq(this.undos.slice(this.undos.indexOf(prevUndo))
+                                .concat(this.grouping.current));
 
     if (!this.grouping.current.length) return;
 
@@ -159,5 +178,13 @@ export class UndoManager {
     try { redo.apply(); }
     finally { this.applyCount--; }
     return redo;
+  }
+
+  toString() {
+    var undosPrinted = this.undos.length === 0 ? "" :
+      `\n  ${this.undos.length > 20 ? "...\n  " : ""}${this.undos.slice(-20).join("\n  ")}`;
+    var undoInProgress = !!this.undoInProgress;
+    return `UndoManager(${this.undos.length} undos, ${this.redos.length} redos, ${undoInProgress ? ", UNDO IN PROGRESS" : ""}${undosPrinted})`
+
   }
 }
