@@ -445,8 +445,8 @@ export class World extends Morph {
     return promise.finally(promptMorph.activate(), () => focused && focused.focus());
   }
 
-  inform(label = "no message", opts = {requester: null}) {
-    return this.openPrompt(new InformPrompt({label, ...opts}), opts).activate();
+  inform(label = "no message", opts = {fontSize: 16, requester: null}) {
+    return this.openPrompt(new InformPrompt({label, ...opts}), opts);
   }
 
   prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false}) {
@@ -518,8 +518,8 @@ export class AbstractPrompt extends Morph {
 
 export class InformPrompt extends AbstractPrompt {
 
-  build() {
-    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});
+  build(props) {
+    this.get("label") || this.addMorph({fontSize: 16, padding: Rectangle.inset(3), fill: null, ...props,  name: "label", type: "text", textString: "", readOnly: true});
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
   }
