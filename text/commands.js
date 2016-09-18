@@ -732,7 +732,7 @@ var commands = [
       sel.collapseToEnd();
       if (isDelete) morph.undoManager.group();
       if (undoGroup) {
-        if (!/^\s+$/.test(string) && typeof undoGroup === "number")
+        if (!/^[\s\.,\?\+=]+$/.test(string) && typeof undoGroup === "number")
           morph.undoManager.groupLater(undoGroup);
         else
           morph.undoManager.group();
