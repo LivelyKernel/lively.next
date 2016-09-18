@@ -76,6 +76,10 @@ export class Selection {
 
   get text() { return this.textMorph.document.textInRange(this.range); }
 
+  get selectedRows() {
+    return {first: this.start.row, last: this.end.row}
+  }
+
   set text(val) {
     let {range, textMorph} = this,
         reversed = this.isReverse();
