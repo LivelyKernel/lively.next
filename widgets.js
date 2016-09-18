@@ -202,11 +202,11 @@ export class Window extends Morph {
   activate() {
     if (this.isActive()) { this.focus(); return this; }
 
-    var w = this.world() || this.env.world;
-    if (!w) {
+    if (!this.world()) {
       this.openInWorldNearHand()
-      w = this.world();
     } else this.bringToFront();
+    var w = this.world() || this.env.world;
+
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
     this.focus();
     return this;
