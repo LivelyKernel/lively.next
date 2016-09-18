@@ -102,6 +102,88 @@ export class Workspace extends Window {
 }
 
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Browser
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function commandsForBrowser(browser) {
+  var pList = browser.get("packageList"),
+      mList = browser.get("moduleList"),
+      editor = browser.get("sourceEditor");
+
+  return [
+    {name: "focus list with selection", exec: () => focusList(mList.selection ? mList : pList)},
+    {name: "focus package list", exec: () => focusList(pList)},
+    {name: "focus module list", exec: () => focusList(mList)},
+    {name: "focus source editor", exec: () => { editor.focus(); editor.show(); return true; }},
+
+    {name: "reload module", exec: async () => {
+      var m = browser.selectedModule;
+      if (!m) return browser.world().inform("No module selected", {requester: browser});
+      try {
+        await (await browser.systemInterface()).interactivelyReloadModule(null, m.name);
+      } catch(err) {
+        browser.world().inform(`Error while reloading ${m.name}:\n${err.stack}`, {requester: browser});
+        return true;
+      }
+      show(`Reloaded ${m.name}`);      
+      browser.selectModuleNamed(m.nameInPackage);
+      return true;
+    }},
+
+    {name: "run all tests in module",
+     exec: (browser) => {
+       var m = browser.selectedModule;
+        if (!m) return browser.world().inform("No module selected", {requester: browser});
+       return runTestsInModule(browser, m.name, null);
+     }},
+
+    {name: "run tests at point",
+     exec: async (browser) => {
+       var m = browser.selectedModule;
+        if (!m) return browser.world().inform("No module selected", {requester: browser});
+
+        var {parse, query: {nodesAt}} = await System.import("lively.ast");
+        var ed = browser.get("sourceEditor").text;
+        var source = ed.textString;
+        var parsed = parse(source);
+        var nodes = nodesAt(ed.document.positionToIndex(ed.cursorPosition), parsed)
+          .filter(n => n.type === "CallExpression" && n.callee.name && n.callee.name.match(/describe|it/) && n.arguments[0].type === "Literal")
+            .map(n => ({
+              type: n.callee.name.match(/describe/) ? "suite" : "test",
+              title: n.arguments[0].value,
+          }))
+
+        if (!nodes.length)
+          return browser.world().inform("No test at " + JSON.stringify(ed.cursorPosition), {requester: browser});
+
+       var spec = {fullTitle: arr.pluck(nodes, "title").join(" "), type: arr.last(nodes).type, file: m.name}
+       return runTestsInModule(browser, m.name, spec);
+     }}
+  ]
+
+
+  function focusList(list) {
+    list.scrollSelectionIntoView();
+    list.update();
+    list.show();
+    list.focus();
+    return list
+  }
+
+  function runTestsInModule(browser, moduleName, spec) {
+    var runner = browser.get("test runner window");
+    if (!runner)
+      runner = world.execCommand("open test runner");
+    if (runner.minimized)
+      runner.toggleMinimize();
+    return spec ?
+      runner.targetMorph[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
+      runner.targetMorph.runTestFile(moduleName);
+  }
+
+}
+
 
 import { connect, disconnect } from "lively.bindings";
 
@@ -164,64 +246,19 @@ export class Browser extends Window {
     return container;
   }
 
-
   get keybindings() {
     return [
       {keys: "Alt-Up", command: "focus list with selection"},
       {keys: "F1", command: "focus package list"},
       {keys: "F2", command: "focus module list"},
       {keys: "F3|Alt-Down", command: "focus source editor"},
+      {keys: "Alt-R", command: "reload module"},
+      {keys: "Ctrl-C Ctrl-T", command: "run all tests in module"},
+      {keys: "Ctrl-C T", command: "run tests at point"},
     ].concat(super.keybindings);
   }
 
-  get commands() {
-    var pList = this.get("packageList"),
-        mList = this.get("moduleList"),
-        editor = this.get("sourceEditor");
-    return [
-      {name: "focus list with selection", exec: () => focusList(mList.selection ? mList : pList)},
-      {name: "focus package list", exec: () => focusList(pList)},
-      {name: "focus module list", exec: () => focusList(mList)},
-      {name: "focus source editor", exec: () => { editor.focus(); editor.show(); return true; }},
-    ]
-
-    function focusList(list) {
-      list.scrollSelectionIntoView();
-      list.update();
-      list.show();
-      list.focus();
-      return list
-    }
-  }
-
-  get keybindings() {
-    return [
-      {keys: "Alt-Up", command: "focus list with selection"},
-      {keys: "F1", command: "focus package list"},
-      {keys: "F2", command: "focus module list"},
-      {keys: "F3|Alt-Down", command: "focus source editor"},
-    ].concat(super.keybindings);
-  }
-
-  get commands() {
-    var pList = this.get("packageList"),
-        mList = this.get("moduleList"),
-        editor = this.get("sourceEditor");
-    return [
-      {name: "focus list with selection", exec: () => focusList(mList.selection ? mList : pList)},
-      {name: "focus package list", exec: () => focusList(pList)},
-      {name: "focus module list", exec: () => focusList(mList)},
-      {name: "focus source editor", exec: () => { editor.focus(); editor.show(); return true; }},
-    ]
-
-    function focusList(list) {
-      list.scrollSelectionIntoView();
-      list.update();
-      list.show();
-      list.focus();
-      return list
-    }
-  }
+  get commands() { return commandsForBrowser(this); }
 
   reset() {
     connect(this.get("packageList"), "selection", this, "onPackageSelected");
@@ -231,10 +268,11 @@ export class Browser extends Window {
     this.get("sourceEditor").textString = ""
   }
 
-  async allPackages() {
-    var livelySystem = (await System.import("lively-system-interface")).localInterface;
-    return livelySystem.getPackages();
+  async systemInterface() {
+    return (await System.import("lively-system-interface")).localInterface;
   }
+
+  async allPackages() { return (await this.systemInterface()).getPackages(); }
 
 
   get selectedModule() {
@@ -246,8 +284,7 @@ export class Browser extends Window {
 // await livelySystem.getPackage(this.getWindow().get("packageList").selection.address)
 
   async modulesOfPackage(p) {
-    var livelySystem = (await System.import("lively-system-interface")).localInterface
-        p = await livelySystem.getPackage(p.address);
+    var p = await (await this.systemInterface()).getPackage(p.address);
     return p.modules.map(m => ({...m, package: p, nameInPackage: m.name.replace(p.address, "").replace(/^\//, "")}));
   }
 
@@ -308,8 +345,7 @@ export class Browser extends Window {
 
     this.get("moduleList").scrollSelectionIntoView();
     this.title = "browser – " + pack.name + "/" + module.nameInPackage;
-    var livelySystem = (await System.import("lively-system-interface")).localInterface;
-    var source = await livelySystem.moduleRead(m.name);
+    var source = await (await this.systemInterface()).moduleRead(m.name);
     this.get("sourceEditor").textString = source;
     this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
   }
@@ -321,8 +357,7 @@ export class Browser extends Window {
     if (!module) return show("Cannot save, no module selected");
 
     try {
-      var livelySystem = (await System.import("lively-system-interface")).localInterface;
-      await livelySystem.interactivelyChangeModule(
+      await (await this.systemInterface()).interactivelyChangeModule(
         this,
         module.name,
         this.get("sourceEditor").textString,
