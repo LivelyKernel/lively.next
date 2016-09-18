@@ -480,6 +480,7 @@ export class Morph {
   removeAllMorphs() { this.submorphs = []; }
 
   bringToFront() {
+    if (!this.owner) return;
     const submorphs = this.owner.submorphs,
           index = submorphs.indexOf(this);
     submorphs.splice(index,1);
@@ -793,12 +794,48 @@ export class Morph {
   onMouseWheel(evt) {
     var scrollTarget = evt.targetMorphs.find(ea => ea.isClip());
     if (this !== scrollTarget) return;
-    var newScrollTop = evt.domEvt.deltaY + this.scroll.y,
+    var {deltaY, deltaX} = evt.domEvt,
+        magnX = Math.abs(deltaX),
+        magnY = Math.abs(deltaY);
+
+
+    // This dance here is to avoid "overscroll", i.e. you scroll a clip morph
+    // and it reaches it's boundary. Normally the clip morphs up the scene graph
+    // would now be scrolled, e.g. the world, moving your view away from the morph
+    // you are looking at. This is highly undesirable.
+
+    var kind = "both directions";
+    if (magnX <= 2 && magnY <= 2) kind = "tiny";
+    else if (magnY / magnX <= 0.2) kind = "horizontal";
+    else if (magnX / magnY <= 0.2) kind = "vertical";
+
+
+    if (kind === "tiny") return;
+
+
+    var {x: scrollX, y: scrollY} = this.scroll,
+        newScrollTop = deltaY + scrollY,
+        newScrollLeft = deltaX + scrollX,
         newScrollBottom = newScrollTop + this.height,
-        manualScroll;        
-    if (newScrollBottom >= this.scrollExtent.y) manualScroll = this.scroll.withY(this.scrollExtent.y);
-    else if (newScrollTop <= 0) manualScroll = 0;
-    if (manualScroll !== undefined) { this.scroll = manualScroll; evt.stop(); }
+        newScrollRight = newScrollLeft + this.width,
+        newScrollX, newScrollY;
+
+    if (kind === "vertical" || kind === "both directions") {
+      if (newScrollBottom >= this.scrollExtent.y) newScrollY = this.scrollExtent.y-1;
+      else if (newScrollTop <= 0) newScrollY = 1;
+      if (newScrollY !== undefined) {
+        this.scroll = pt(scrollX, newScrollY);
+        evt.stop();
+      }
+
+    } else if (kind === "horizontal" || kind === "both directions") {
+      if (newScrollRight >= this.scrollExtent.x) newScrollX = this.scrollExtent.x-1;
+      else if (newScrollLeft <= 0) newScrollX = 1;    
+      if (newScrollX !== undefined) {
+        this.scroll = pt(newScrollX, scrollY);
+        evt.stop();
+      }
+    }
   }
 
 
