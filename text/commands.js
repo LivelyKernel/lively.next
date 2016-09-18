@@ -453,13 +453,15 @@ var commands = [
   {
     name: "move lines up",
     exec: function(morph) {
-      var {start, end} = morph.selection;
-      if (start.row <= 0) return true;
+      var sel = morph.selection;
+      if (!sel.isEmpty() && sel.end.column === 0) sel.growRight(-1);
+
+      var {start, end} = sel;
       var lineBefore = morph.getLine(start.row-1);
-      morph.undoManager.group();
+      var undo = morph.undoManager.ensureNewGroup(morph);
       morph.insertText(lineBefore + "\n", {row: end.row+1, column: 0});
       morph.deleteText({start: {row: start.row-1, column: 0}, end: {row: start.row, column: 0}});
-      morph.undoManager.group();
+      morph.undoManager.group(undo);
       return true;
     }
   },
@@ -471,17 +473,16 @@ var commands = [
       var sel = morph.selection;
       if (!sel.isEmpty() && sel.end.column === 0) sel.growRight(-1);
       var range = sel.range, {start, end} = range;
-      if (start.row >= morph.document.endPosition.row) return true;
 
       if (sel.isEmpty()) range = {start: {row: start.row, column: 0}, end: {row: start.row+1, column: 0}}
       else if (end.column !== 0) range = {start, end: {row: end.row+1, column: 0}}
-      morph.undoManager.group();
+
+      var undo = morph.undoManager.ensureNewGroup(morph);
       var linesToMove = morph.deleteText(range);
       morph.insertText(linesToMove, {row: start.row+1, column: 0});
-      morph.undoManager.group();
-      
-      start.row++; end.row++
-      morph.selection = {start, end};
+      morph.undoManager.group(undo);
+
+      morph.selection = {start: {...start, row: start.row+1}, end: {...end, row: end.row+1}};
       return true;
     }
   },
