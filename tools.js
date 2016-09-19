@@ -109,7 +109,8 @@ export class Workspace extends Window {
 function commandsForBrowser(browser) {
   var pList = browser.get("packageList"),
       mList = browser.get("moduleList"),
-      editor = browser.get("sourceEditor");
+      editor = browser.get("sourceEditor"),
+      world = browser.world();
 
   return [
     {name: "focus list with selection", exec: () => focusList(mList.selection ? mList : pList)},
@@ -132,14 +133,19 @@ function commandsForBrowser(browser) {
     }},
 
     {name: "load or add module", exec: async (browser) => {    
-      var p = browser.selectedPackage ? browser.selectedPackage.address : null;
+      var p = browser.selectedPackage;
       try {
-        var mods = await (await browser.systemInterface()).interactivelyAddModule(null, p, browser.world());
-      } catch(err) {
-        browser.world().inform(`Error while trying to load modules:\n${err.stack}`, {requester: browser});
-        return true;
+        var mods = await (await browser.systemInterface()).interactivelyAddModule(null, p ? p.address : null, browser.world());
+      } catch(e) {
+        e === "Canceled" ?
+          show(e) :
+          browser.world().inform(`Error while trying to load modules:\n${e.stack || e}`, {requester: browser});
+        return;
       }
-      show(`Loaded ${arr.pluck(mods, "name")}`);
+
+      mods.forEach(({name, error}) =>
+        error ? show(`Error while loading module ${name}: ${error.stack || error}`) :
+                show(`Module ${name} loaded`))
       await browser.updateModuleList(p);
       mods.length && browser.selectModuleNamed(mods[0].name);
       return true;
@@ -326,7 +332,7 @@ export class Browser extends Window {
   }
 
   async selectModuleNamed(mName) {
-    var m = this.get("moduleList").selection = this.get("moduleList").values.find(({nameInPackage}) => mName === nameInPackage);
+    var m = this.get("moduleList").selection = this.get("moduleList").values.find(({nameInPackage, name}) => mName === name || mName === nameInPackage);
     await this.get("sourceEditor").text.whenRendered();
     try { // FIXME, text.whenRendered() doesn't ensure that textString is available...
       await promise.waitFor(1000, () => !!this.get("sourceEditor").text.textString);
