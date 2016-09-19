@@ -126,8 +126,22 @@ function commandsForBrowser(browser) {
         browser.world().inform(`Error while reloading ${m.name}:\n${err.stack}`, {requester: browser});
         return true;
       }
-      show(`Reloaded ${m.name}`);      
+      show(`Reloaded ${m.name}`);
       browser.selectModuleNamed(m.nameInPackage);
+      return true;
+    }},
+
+    {name: "load or add module", exec: async (browser) => {    
+      var p = browser.selectedPackage ? browser.selectedPackage.address : null;
+      try {
+        var mods = await (await browser.systemInterface()).interactivelyAddModule(null, p, browser.world());
+      } catch(err) {
+        browser.world().inform(`Error while trying to load modules:\n${err.stack}`, {requester: browser});
+        return true;
+      }
+      show(`Loaded ${arr.pluck(mods, "name")}`);
+      await browser.updateModuleList(p);
+      mods.length && browser.selectModuleNamed(mods[0].name);
       return true;
     }},
 
@@ -253,6 +267,7 @@ export class Browser extends Window {
       {keys: "F2", command: "focus module list"},
       {keys: "F3|Alt-Down", command: "focus source editor"},
       {keys: "Alt-R", command: "reload module"},
+      {keys: "Alt-L", command: "load or add module"},
       {keys: "Ctrl-C Ctrl-T", command: "run all tests in module"},
       {keys: "Ctrl-C T", command: "run tests at point"},
     ].concat(super.keybindings);
@@ -277,6 +292,10 @@ export class Browser extends Window {
 
   get selectedModule() {
     return this.get("moduleList").selection;
+  }
+
+  get selectedPackage() {
+    return this.get("packageList").selection;
   }
 
 // await this.getWindow().modulesOfPackage(this.getWindow().get("packageList").selection)
@@ -327,10 +346,8 @@ export class Browser extends Window {
 
     this.get("packageList").scrollSelectionIntoView();
     this.get("moduleList").selection = null;
-
-    this.get("moduleList").items = arr.sortBy(
-      (await this.modulesOfPackage(p)).map(m => ({string: m.nameInPackage, value: m, isListItem: true})),
-      ({string}) => string.toLowerCase());
+    
+    await this.updateModuleList(p);
   }
 
   async onModuleSelected(m) {
@@ -350,7 +367,14 @@ export class Browser extends Window {
     this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
   }
 
-  updateModuleList() {/*FIXME*/}
+  async updateModuleList(p = this.selectedPackage) {
+    if (!p) return;
+    var mods = await this.modulesOfPackage(p);
+    this.get("moduleList").items = arr.sortBy(
+      mods.map(m => ({string: m.nameInPackage, value: m, isListItem: true})),
+      ({string}) => string.toLowerCase());
+    await this.get("moduleList").whenRendered();
+  }
 
   async save() {
     var module = this.get("moduleList").selection;
