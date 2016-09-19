@@ -13,6 +13,7 @@ var commands = [
   {
     name: "clipboard copy",
     doc: "placeholder for native copy",
+    scrollCursorIntoView: false,
     exec: function(morph) {
       if (morph.selection.isEmpty())
         morph.selectLine(morph.cursorPosition.row);
@@ -23,6 +24,7 @@ var commands = [
   {
     name: "manual clipboard copy",
     doc: "attempts to copy selection via browser interface",
+    scrollCursorIntoView: false,
     exec: function(morph, opts = {delete: false}) {
       var sel = morph.selection,
           range = sel.isEmpty() ? Range.fromPositions(morph.cursorPosition, morph.lastSavedMark || morph.cursorPosition) : sel.range,
@@ -109,12 +111,18 @@ var commands = [
   {
     name: "select all",
     doc: "Selects entire text contents.",
-    exec: function(morph) { morph.selectAll(); return true; }
+    scrollCursorIntoView: false,
+    exec: function(morph) {
+      morph.saveMark();
+      morph.selectAll();
+      return true;
+    }
   },
 
   {
     name: "saveit",
     doc: "...",
+    scrollCursorIntoView: false,
     exec: function(morph) { morph.doSave(); return true; }
   },
 
@@ -146,6 +154,7 @@ var commands = [
 
   {
     name: "indent",
+    scrollCursorIntoView: false,
     exec: function(morph) {
       morph.undoManager.group();
       morph.withSelectedLinesDo((line, range) => morph.insertText(morph.tab, range.start));
@@ -156,6 +165,7 @@ var commands = [
 
   {
     name: "outdent",
+    scrollCursorIntoView: false,
     exec: function(morph) {
       morph.undoManager.group();
       morph.withSelectedLinesDo((line, range) => {
@@ -672,6 +682,7 @@ var commands = [
   {
     name: "realign top-bottom-center",
     doc: "Cycles through centering the cursor position, aligning it at the top, aligning it at the bottom.",
+    scrollCursorIntoView: false,
     exec: function(morph) {
       var charBounds = morph.charBoundsFromTextPosition(morph.cursorPosition),
           pos = charBounds.topLeft(),
@@ -837,16 +848,19 @@ var commands = [
 
   {
     name: "increase font size",
+    scrollCursorIntoView: false,
     exec: function(morph) { morph.fontSize++; return true; }
   },
 
   {
     name: "decrease font size",
+    scrollCursorIntoView: false,
     exec: function(morph) { morph.fontSize--; return true; }
   },
 
   {
     name: "cancel input",
+    scrollCursorIntoView: false,
     exec: function(morph, args, count, evt) {
       if (evt && evt.keyInputState) {
         evt.keyInputState.count = undefined;
@@ -985,6 +999,7 @@ commands.push(
   {
     name: "eval all",
     doc: "Evaluates the entire text contents",
+    scrollCursorIntoView: false,
     exec: async function(morph, opts) {
       // opts = {targetModule}
       var result, err;

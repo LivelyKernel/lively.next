@@ -325,6 +325,15 @@ export class Text extends Morph {
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
   get commands() { return (this._commands || []).concat(commands); }
+  
+
+  execCommand(command, args, count, evt) {
+    return this.commandHandler.exec(command, this, args, count, evt, (_, command) => {
+      var scrollCursorIntoView = command.hasOwnProperty("scrollCursorIntoView") ?
+        command.scrollCursorIntoView : true;
+      scrollCursorIntoView && this.scrollCursorIntoView();
+    });
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
@@ -692,17 +701,12 @@ export class Text extends Morph {
   get keyhandlers() { return super.keyhandlers.concat(this._keyhandlers || []); }
 
   onKeyDown(evt) {
-    if (KeyHandler.invokeKeyHandlers(this, evt, true/*no input evts*/)) {
-      this.selection.cursorBlinkStart();
-      this.scrollCursorIntoView();
-    }
+    this.selection.cursorBlinkStart();
+    KeyHandler.invokeKeyHandlers(this, evt, true/*no input evts*/);
   }
 
   onTextInput(evt) {
-    if (KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/)) {
-      this.selection.cursorBlinkStart();
-      this.scrollCursorIntoView();
-    }
+    KeyHandler.invokeKeyHandlers(this, evt, false/*allow input evts*/);
   }
 
   doSave() { /*...*/ }
