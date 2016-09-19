@@ -454,13 +454,18 @@ export class World extends Morph {
   }
 
   prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false}) {
-    // this.world().prompt("test")
+    // this.world().prompt("test", {input: "123"})
     // options = {
     //   input: STRING, -- optional, prefilled input string
     //   historyId: STRING, -- id to identify the input history for this prompt
     //   useLastInput: BOOLEAN -- use history for default input?
     // }
     return this.openPrompt(new TextPrompt({label, ...opts}), opts);
+  }
+  
+  confirm(label, opts = {requester: null}) {
+    // await this.world().confirm("test")
+    return this.openPrompt(new ConfirmPrompt({label, ...opts}), opts);
   }
 
   listPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0}) {
@@ -523,7 +528,7 @@ export class AbstractPrompt extends Morph {
 export class InformPrompt extends AbstractPrompt {
 
   build(props) {
-    this.get("label") || this.addMorph({fontSize: 16, padding: Rectangle.inset(3), fill: null, ...props,  name: "label", type: "text", textString: "", readOnly: true});
+    this.get("label") || this.addMorph({fontSize: 16, padding: Rectangle.inset(3), fontSize: 14, fill: null, ...props,  name: "label", type: "text", textString: "", readOnly: true});
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
   }
@@ -531,6 +536,7 @@ export class InformPrompt extends AbstractPrompt {
   applyLayout() {
     var label = this.get("label"),
         okBtn = this.get("okBtn");
+    label.fit();
     if (label.width > this.width) this.width = label.width;
     okBtn.topRight = pt(this.width, label.bottom);
     this.height = okBtn.bottom;
@@ -545,11 +551,37 @@ export class InformPrompt extends AbstractPrompt {
 }
 
 
-export class TextPrompt extends AbstractPrompt {
+export class ConfirmPrompt extends AbstractPrompt {
 
   build() {
-    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: "", readOnly: true});
-    this.get("input") || this.addMorph(Text.makeInputLine({name: "input"}));
+    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), fontSize: 14, name: "label", type: "text", textString: "", readOnly: true});
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
+    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
+    connect(this.get("okBtn"), 'fire', this, 'resolve');
+    connect(this.get("cancelBtn"), 'fire', this, 'reject');
+  }
+
+  resolve() { super.resolve(true); }
+  reject() { super.resolve(false); }
+
+  applyLayout() {
+    var label = this.get("label"),
+        okBtn = this.get("okBtn"),
+        cancelBtn = this.get("cancelBtn");
+    label.fit();
+    label.position = pt(1,1);
+    if (label.width > this.width) this.width = label.width+2;
+    cancelBtn.topRight = pt(this.width-1, label.bottom+1);
+    okBtn.topRight = cancelBtn.topLeft;
+    this.height = okBtn.bottom + 3;
+  }
+}
+
+export class TextPrompt extends AbstractPrompt {
+
+  build({input}) {
+    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), fontSize: 14, name: "label", type: "text", textString: "", readOnly: true});
+    this.get("input") || this.addMorph(Text.makeInputLine({name: "input", textString: input || ""}));
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
@@ -563,13 +595,14 @@ export class TextPrompt extends AbstractPrompt {
         input = this.get("input"),
         okBtn = this.get("okBtn"),
         cancelBtn = this.get("cancelBtn");
+    label.fit();
     label.position = pt(1,1);
     if (label.width > this.width) this.width = label.width+2;
     input.width = this.width-2;
     input.topLeft = label.bottomLeft;
     cancelBtn.topRight = pt(this.width-1, input.bottom+1);
     okBtn.topRight = cancelBtn.topLeft;
-    this.height = okBtn.bottom;
+    this.height = okBtn.bottom + 3;
   }
 
   focus() { this.get("input").focus(); }
@@ -595,7 +628,7 @@ export class ListPrompt extends AbstractPrompt {
     labelFontSize = labelFontSize || 14;
     listFontFamily = listFontFamily || labelFontFamily;
     listFontSize = listFontSize || labelFontSize;
-    this.get("label") || this.addMorph({fill: null, name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily});
+    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily});
     this.get("list") || this.addMorph(new ListClass({borderWidth: 1, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding}));
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
@@ -623,12 +656,13 @@ export class ListPrompt extends AbstractPrompt {
         list = this.get("list"),
         okBtn = this.get("okBtn"),
         cancelBtn = this.get("cancelBtn");
+    label.fit();
     if (label.width > this.width) this.width = label.width;
     list.width = this.width;
     list.top = label.bottom;
     cancelBtn.topRight = pt(this.width, list.bottom);
     okBtn.topRight = cancelBtn.topLeft;
-    this.height = okBtn.bottom;
+    this.height = okBtn.bottom + 3;
   }
 
   focus() { this.get("list").focus(); }
