@@ -31,7 +31,9 @@ var worldCommands = [
     exec: (world) => {
       var halos = world.halos();
       halos.forEach(h => h.remove());
-      arr.last(halos) && arr.last(halos).target.focus();
+      var focusTarget = arr.last(halos) || world.focusedMorph || world;
+      focusTarget.focus();
+      world.show();
       return false;
     }
   },
@@ -271,7 +273,8 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get focusedMorph() {
-    return this.env.eventDispatcher.eventState.focusedMorph;
+    var focused = this.env.eventDispatcher.eventState.focusedMorph;
+    return focused && focused.world() === this ? focused : this;
   }
 
   onMouseMove(evt) {
