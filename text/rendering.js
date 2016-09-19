@@ -279,6 +279,16 @@ export default class TextLayout {
     this.lastVisibleLine = undefined;
   }
 
+  firstFullVisibleLine(morph) {
+    var bounds = this.boundsFor(morph, {row: this.firstVisibleLine, column: 0});
+    return this.firstVisibleLine + (bounds.top() < morph.scroll.y ? 1 : 0);
+  }
+
+  lastFullVisibleLine(morph) {
+    var bounds = this.boundsFor(morph, {row: this.lastVisibleLine, column: 0});
+    return this.lastVisibleLine + (bounds.bottom() > morph.scroll.y + morph.height ? -1 : 0);
+  }
+
   defaultCharSize(morph) {
     return this.fontMetric.sizeFor(morph.fontFamily, morph.fontSize, "X");
   }
@@ -443,13 +453,16 @@ export default class TextLayout {
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
 
     for (;row < lines.length; row++) {
-      let {width, height} = lines[row];
-      if (textHeight > visibleBottom) break;
+      let {width, height} = lines[row],
+          newTextHeight = textHeight + height;
+
       renderedLines.push(lines[row].render(lineLeft, lineTop));
 
       textWidth = Math.max(width, textWidth);
-      textHeight += height;
       lineTop += height;
+      textHeight += height;
+
+      if (textHeight >= visibleBottom) break;
     }
 
     this.lastVisibleLine = row;
