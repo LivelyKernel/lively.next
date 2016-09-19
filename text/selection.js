@@ -308,14 +308,27 @@ export class MultiSelection extends Selection {
   selectDown(n) { this.defaultSelection.selectDown(n); return this; }
 
   goUp(n) { return this.defaultSelection.goUp(n); return this; }
-  goDown(n) { return this.defaultSelection.goUp(n); return this; }
+  goDown(n) { return this.defaultSelection.goDown(n); return this; }
   goLeft(n) { return this.defaultSelection.goLeft(n); return this; }
   goRight(n) { return this.defaultSelection.goRight(n); return this; }
 
   get cursorVisible() { return this.defaultSelection.cursorVisible; }
 
-  cursorBlinkStart() { return this.defaultSelection.cursorBlinkStart(); }
-  cursorBlinkStop() { return this.defaultSelection.cursorBlinkStop(); }
+  cursorBlinkStart() {
+    this.cursorBlinkStop();
+    let timeout = config.text.cursorBlinkPeriod;
+    if (timeout)
+      this.cursorBlinkProcess = setInterval(() => {
+        this._cursorVisible = !this._cursorVisible;
+        this.selections.forEach(sel => sel._cursorVisible = this._cursorVisible);
+        this.textMorph.makeDirty();
+      }, timeout*1000);
+  }
+  
+  cursorBlinkStop() {
+    super.cursorBlinkStop();
+    this.selections.forEach(sel => sel._cursorVisible = true);
+  }
 
   set style(style) { this.defaultSelection.style = style; }
 
