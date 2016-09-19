@@ -66,7 +66,7 @@ var commands = [
     exec: async function(morph, opts = {killRingCycleBack: false}) {
       var pasted, kr = morph.env.eventDispatcher.killRing;
 
-      if (opts.killRingCycleBack && (arr.last(morph.commandHandler.history) || "").includes("clipboard paste"))
+      if (opts.killRingCycleBack && (arr.last(arr.pluck(morph.commandHandler.history, "name")) || "").includes("clipboard paste"))
         pasted = kr.back();
       
       if (!pasted && kr.isCycling())
