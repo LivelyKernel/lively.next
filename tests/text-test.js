@@ -163,7 +163,7 @@ describe("rendered text", () => {
         textBounds = new Rectangle(b.left, b.top, b.width, b.height);
 
     expect(textBounds.top()).equals(-2*lineHeight-padding+1, "text layer not scrolled");
-    expect(textBounds.height).equals(lineHeight*10 + 2*padding, "text layer does not have size of all lines");
+    expect(textBounds.height).equals(lineHeight*11 + 2*padding, "text layer does not have size of all lines");
     expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
   });
 
