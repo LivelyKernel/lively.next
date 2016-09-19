@@ -293,7 +293,7 @@ export class CompletionController {
     world.addMorph(menu);
 
     menu.selectedIndex = 0;
-    prefix.length && menu.get("input").gotoStartOrEnd({direction: "end"});
+    prefix.length && menu.get("input").gotoDocumentEnd();
     menu.get("input").focus();
   }
 

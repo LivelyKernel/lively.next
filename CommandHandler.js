@@ -23,15 +23,10 @@ export default class CommandHandler {
         .join("\n");
   }
 
-  exec(commandOrName, morph, args, count, evt, afterExecFn) {
-    // commandOrName can be
-    // 1. a string, naming a command in morphs.commands
-    // 2. a spec object like {command: "cmd name", args: {...}, handlesCount: BOOL, }
-    // 3. a proper command object {name: STRING, exec: FUNCTION, ....}
-
+  lookupCommand(commandOrName, morph) {
     var name, command;
 
-    if (!commandOrName) return null;
+    if (!commandOrName) return {};
 
     if (typeof commandOrName === "string") name = commandOrName;
     if (typeof commandOrName.command === "string") name = commandOrName.command;
@@ -42,9 +37,19 @@ export default class CommandHandler {
     }
 
     if (!command) command = morph.commands.find(ea => ea.name === name);
+    return {name, command};
+  }
+
+  exec(commandOrName, morph, args, count, evt) {
+    // commandOrName can be
+    // 1. a string, naming a command in morphs.commands
+    // 2. a spec object like {command: "cmd name", args: {...}, handlesCount: BOOL, }
+    // 3. a proper command object {name: STRING, exec: FUNCTION, ....}
+
+    var {name, command} = this.lookupCommand(commandOrName, morph);
 
     if (!command) {
-      console.warn(`Cannot find command ${name}`);
+      console.warn(`Cannot find command ${name || commandOrName}`);
       return null;
     }
 
@@ -52,14 +57,16 @@ export default class CommandHandler {
 
     var world = morph.world(), result;
 
-    if (command && typeof command.exec === "function") {
+    if (typeof command.exec === "function") {
         try {
-          result = command.exec(morph, args, command.handlesCount ? count : undefined, evt);
+          result = command.exec(morph, args, command.handlesCount ? count : undefined, evt)
         } catch(err) {
           result = err;
           var msg = `Error in interactive command ${name}: ${err.stack || err}`;
           world ? world.logError(msg) : console.error(msg);
         }
+    } else {
+      console.error(`command ${name} has no exec function!`);
     }
 
     // to not swallow errors
@@ -76,12 +83,6 @@ export default class CommandHandler {
       result = typeof result.then === "function" ?
         result.then(() => this.exec(command, morph, args, count-1, evt, null)) :
         this.exec(command, morph, args, count-1, evt, null);
-    }
-
-    if (result && typeof afterExecFn === "function") {
-      typeof result.then === "function" ?
-        result.then(result => afterExecFn(result, command, morph, args, count, evt)) :
-        afterExecFn(result, command, morph, args, count, evt);
     }
 
     return result;

@@ -2,6 +2,7 @@ import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.j
 import { Range, defaultRange } from "./range.js";
 import { StyleRange } from "./style.js";
 import config from "../config.js";
+import { string, arr } from "lively.lang";
 import { signal } from "lively.bindings";
 
 var newline = "\n";
@@ -14,12 +15,19 @@ export class Selection {
     this._goalColumn = undefined;
     this._isReverse = false;
 
-    this.startAnchor = textMorph.addAnchor("selection-start");
-    this.endAnchor = textMorph.addAnchor("selection-end");
+    var id = string.newUUID();
+    this.startAnchor = textMorph.addAnchor("selection-start-" + id);
+    this.endAnchor = textMorph.addAnchor("selection-end-" + id);
 
     this.range = Range.isValidLiteral(range) ? range : defaultRange;
     this._cursorVisible = true;
     this.cursorBlinkProcess = null;
+  }
+
+  uninstall() {
+    this.cursorBlinkStop();
+    this.textMorph.removeAnchor(this.startAnchor);
+    this.textMorph.removeAnchor(this.endAnchor);
   }
 
   get range() { return this._range; }
@@ -210,5 +218,117 @@ export class Selection {
     let {row, column} = this.anchor,
         {row: endRow, column: endColumn} = this.lead;
     return `Selection(${row}/${column} -> ${endRow}/${endColumn})`;
+  }
+}
+
+export class MultiSelection extends Selection {
+
+  constructor(textMorph, range) {
+    this.textMorph = textMorph;
+    this.selections = [new Selection(textMorph, range)];
+  }
+
+  uninstall() {
+    this.selections.forEach(ea => ea.uninstall());
+  }
+
+  get defaultSelection() { return arr.last(this.selections); }
+  removeSelections(startingAt = 1) {
+    var toRemove = this.selections.slice(startingAt)
+    toRemove.forEach(ea => ea.uninstall());
+    this.selections = arr.withoutAll(this.selections, toRemove);
+  }
+
+  disableMultiSelect() {
+    arr.without(this.selections, this.defaultSelection).forEach(ea => ea.uninstall());
+    this.selections = [this.defaultSelection];
+  }
+
+  get range() { return this.defaultSelection.range; }
+  set range(range) {
+    this.disableMultiSelect();
+    this.defaultSelection.range = range;
+  }
+
+  updateFromAnchors() {
+    this.selections.forEach(ea => ea.updateFromAnchors());
+  }
+
+  get start() { return this.defaultSelection.start; }
+  set start(val) { this.defaultSelection.start = val; }
+
+  get end() { return this.defaultSelection.end }
+  set end(val) { this.defaultSelection.end = val; }
+
+  get anchor() { return this.defaultSelection.anchor; }
+  set anchor(pos) { this.defaultSelection.anchor = pos; }
+  get lead() { return this.defaultSelection.lead; }
+  set lead(pos) { this.defaultSelection.lead = pos; }
+
+  get text() { return this.selections.map(sel => sel.text).join(""); }
+  set text(val) { this.selections.forEach(sel => sel.text = val); }
+
+  get selectedRows() { return this.defaultSelection.selectedRows; }
+
+
+  reverse() { this.defaultSelection.reverse(); }
+  isReverse() { return this.defaultSelection.isReverse(); }
+  isEmpty() { return this.defaultSelection.isEmpty(); }
+
+  collapse(pos) { this.defaultSelection.collapse(pos); return this; }
+  collapseToEnd() { this.defaultSelection.collapseToEnd(); return this; }
+
+  growLeft(n) { this.defaultSelection.growLeft(n); return this; }
+
+  growRight(n) { this.defaultSelection.growRight(n); return this; }
+
+  selectAll() {
+    this.disableMultiSelect();
+    this.defaultSelection.selectAll();
+    return this;
+  }
+
+  selectLine(row) { this.defaultSelection.selectLine(row); return this; }
+
+  gotoLineEnd(row) { this.defaultSelection.gotoLineEnd(row); }
+
+  selectLeft(n) { this.defaultSelection.selectLeft(n); return this; }
+  selectRight(n) { this.defaultSelection.selectRight(n); return this; }
+  selectUp(n) { this.defaultSelection.selectUp(n); return this; }
+  selectDown(n) { this.defaultSelection.selectDown(n); return this; }
+
+  goUp(n) { return this.defaultSelection.goUp(n); return this; }
+  goDown(n) { return this.defaultSelection.goUp(n); return this; }
+  goLeft(n) { return this.defaultSelection.goLeft(n); return this; }
+  goRight(n) { return this.defaultSelection.goRight(n); return this; }
+
+  get cursorVisible() { return this.defaultSelection.cursorVisible; }
+
+  cursorBlinkStart() { return this.defaultSelection.cursorBlinkStart(); }
+  cursorBlinkStop() { return this.defaultSelection.cursorBlinkStop(); }
+
+  set style(style) { this.defaultSelection.style = style; }
+
+  getStyleRanges() { return this.defaultSelection.getStyleRanges(); }
+
+  toString() {
+    return `MultiSelection(${this.selections.join(", ")})`;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
+  get ranges() { return this.selections.map(ea => ea.range); }
+  set ranges(ranges) {
+    for (var i = 0; i < ranges.length; i++) {
+      var sel = this.selections[i];
+      if (sel) sel.range = ranges[i];
+      else this.addRange(ranges[i]);
+    }
+    this.removeSelections(i);
+  }
+
+  addRange(range) {
+    this.selections.push(new Selection(this.textMorph, range));
+    return arr.last(this.selections).range;
   }
 }

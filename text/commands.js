@@ -217,6 +217,7 @@ var commands = [
   {
     name: "go up",
     doc: "Move the cursor 1 line. At the end of a line move the cursor down. If a selection is active, collapse the selection right.",
+    scrollCursorIntoView: true,
     exec: function(morph) {
       morph.activeMark ?
         morph.selection.selectUp(1) :
@@ -315,7 +316,7 @@ var commands = [
   {
     name: "goto start",
     exec: function(morph, opts = {select: !!morph.activeMark}) {
-      morph.gotoStartOrEnd({...opts, direction: "start"});
+      morph.gotoDocumentStart({...opts});
       return true;
     }
   },
@@ -323,7 +324,7 @@ var commands = [
   {
     name: "goto end",
     exec: function(morph, opts = {select: !!morph.activeMark}) {
-      morph.gotoStartOrEnd({...opts, direction: "end"});
+      morph.gotoDocumentEnd({...opts});
       return true;
     }
   },
@@ -841,8 +842,8 @@ var commands = [
           morph.undoManager.groupLater(undoGroup);
         else
           morph.undoManager.group();
-      return true;
       }
+      return true;
     }
   },
 
@@ -1210,5 +1211,21 @@ commands.push(...completionCommands);
 
 import { searchCommands } from "./search.js"
 commands.push(...searchCommands);
+
+// import { multiSelectCommands } from "./multi-select-commands.js"
+var multiSelectCommands = [
+
+  {
+    name: "multi select up",
+    exec: morph => {
+      var {row, column} = morph.selection.start;
+      if (row > 0)
+        morph.selection.addRange({start: {row: row-1, column}, end: {row: row-1, column}})
+      return true;
+    }
+  }
+
+]
+commands.push(...multiSelectCommands);
 
 export default commands;

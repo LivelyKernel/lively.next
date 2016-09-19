@@ -25,9 +25,10 @@ var worldCommands = [
           focused = world.focusedMorph || world,
           items = focused.commandsIncludingOwners.map((ea) => {
             var {target, command} = ea,
+                targetName = target.constructor.name,
                 keys = commandsToKeysFor(target)[command.name],
                 keysPrinted = keys ? ` [${keys.join(", ")}]` : "";
-            return {isListItem: true, string: `[${target}] ${command.name}${keysPrinted}`, value: ea}
+            return {isListItem: true, string: `[${targetName}] ${command.name}${keysPrinted}`, value: ea}
           }),
           {prompt, selected: [cmd]} = await world.filterableListPrompt("Run command", items, {extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
       world._cachedRunCommandPrompt = prompt;

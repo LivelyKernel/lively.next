@@ -4,13 +4,11 @@ import TextDocument from "../../text/document.js";
 import { Text } from "../../text/morph.js";
 import { expect } from "mocha-es6";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
 }
-
-
-var text;
 
 describe("text selection", () => {
 
@@ -18,6 +16,14 @@ describe("text selection", () => {
 
   it("has a range", () => {
     expect(new Selection(text).range.toString()).equals("Range(0/0 -> 0/0)");
+  });
+
+  it("selection / line string", () => {
+    var t = text("hello\n world", {});
+    t.selection = range(1,1,1,1);
+    expect(t.selectionOrLineString()).equals(" world");
+    t.selection = range(1,1,1,3);
+    expect(t.selectionOrLineString()).equals("wo");
   });
 
   it("gets text", () => {
@@ -154,4 +160,55 @@ describe("text selection", () => {
     });
 
   });
+});
+
+
+import { MultiSelection } from "lively.morphic/text/selection.js";
+
+describe("multi select", () => {
+
+  
+  function text(string, props) {
+    var t = new Text({
+      name: "text",
+      textString: string,
+      fontFamily: "Monaco, monosonpace",
+      fontSize: 10,
+      extent: pt(100,100),
+      padding: 3,
+      fontMetric,
+      ...props
+    });
+    t._selection = new MultiSelection(t);
+    return t;
+  }
+
+  it("add range", function() {
+    var t = text("foo bar");
+    t.selection.addRange(range(0,4,0,4));
+    expect(t.selection.ranges).to.have.length(2);
+  });
+
+  it("multiselect editing", function() {
+    var t = text("a1.a2\n    bb3.b4\n    cc5.c6");
+    // t = that
+    // t.textString = "a1.a2\n    bb3.b4\n    cc5.c6";
+    // t.selectAll()
+    t.gotoDocumentEnd();
+
+    t.execCommand("multi select up", null, 3);
+    expect(t.selection.ranges).to.have.length(3);
+    expect().assert(t.inMultiSelectMode());
+
+    t.execCommand("insertstring", {string: "x"});
+    expect(t.textString).equals("a1.a2x\n    bb3.b4x\n    cc5.c6x");
+    t.execCommand("delete backwards", null, 2);
+    expect(t.textString).equals("a1.a\n    bb3.b\n    cc5.c");
+    
+    expect(t.selection.ranges).to.have.length(3);
+    t.execCommand("select all");
+    expect().assert(!t.inMultiSelectMode());
+    expect(t.selection.ranges).to.have.length(1);
+  })
+
 });

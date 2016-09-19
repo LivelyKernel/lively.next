@@ -1,6 +1,6 @@
 /*global System*/
 import config from "../config.js";
-import { string, obj, arr } from "lively.lang";
+import { string, obj, arr, promise } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection } from "./selection.js";
@@ -327,12 +327,73 @@ export class Text extends Morph {
   get commands() { return (this._commands || []).concat(commands); }
   
 
-  execCommand(command, args, count, evt) {
-    return this.commandHandler.exec(command, this, args, count, evt, (_, command) => {
+  execCommand(commandOrName, args, count, evt) {
+    var {name, command} = this.commandHandler.lookupCommand(commandOrName, this);
+    if (!realCommand) return undefined;
+
+    var multiSelect = this.inMultiSelectMode(),
+        multiSelectAction = command.hasOwnProperty("multiSelectAction") ?
+          command.multiSelectAction : "forEach";
+
+    // first we deal with multi select, if the command doesn't handle it
+    // itsself. From inside here we just set the selection to each range in the
+    // multi selection and then let the comand run normally
+    if (multiSelect && multiSelectAction === "forEach") {
+      var origSelection = this._selection,
+          selections = this.selection.selections.slice().reverse();
+      this._selection = selections[0];
+
+      try {
+        var result = this.execCommand(commandOrName, args, count, evt);
+      } catch(err) {
+        this._selection = origSelection;
+        throw err;
+      }
+
+      if (!result) return result;
+      var results = [result];
+
+      if (typeof result.then === "function" && typeof result.catch === "function") {
+        return promise.finally(promise.chain([() => result].concat(
+            selections.slice(1).map(sel => () => {
+              this._selection = sel;
+              return Promise.resolve(this.execCommand(commandOrName, args, count, evt))
+                .then(result => results.push(result))
+            }))).then(() => results),
+            () => this._selection = origSelection);
+
+      } else {
+        try {
+          for (var sel of selections.slice(1)) {
+            this._selection = sel;
+            results.push(this.execCommand(commandOrName, args, count, evt))
+          }
+        } finally { this._selection = origSelection; }
+        return results;
+      }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // Here we know that we don't have to deal with multi select and directly
+    // call the command handler
+
+    var result = this.commandHandler.exec(commandOrName, this, args, count, evt);
+
+    if (result) {
+      if (typeof result.then === "function" && typeof result.catch === "function")
+        result.then(() => cleanupScroll(this))
+      else
+        cleanupScroll(this);
+    }
+
+    return result;
+
+    function cleanupScroll(morph) {
       var scrollCursorIntoView = command.hasOwnProperty("scrollCursorIntoView") ?
         command.scrollCursorIntoView : true;
-      scrollCursorIntoView && this.scrollCursorIntoView();
-    });
+      scrollCursorIntoView && morph.scrollCursorIntoView();
+    }
+
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -556,6 +617,10 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
 
+  inMultiSelectMode() {
+    return this.selection.selections && this.selection.selections.length > 1;
+  }
+
   get selection() { return this._selection || (this._selection = new Selection(this)); }
   set selection(range) { return this.selection.range = range; }
 
@@ -767,12 +832,14 @@ export class Text extends Morph {
     else this.selection.lead = textPos;
   }
 
-  gotoStartOrEnd(opts = {direction: "start", select: false}) {
-    var {direction, select} = opts || {},
-        pos = direction === "start" ? {row: 0, column: 0} : this.documentEndPosition;
-    this.selection.lead = pos;
-    if (!select) this.selection.anchor = this.selection.lead;
-    this.scrollCursorIntoView();
+  gotoDocumentStart(opts = {select: false}) {
+    this.selection.lead = {row: 0, column: 0};
+    if (!opts || !opts.select) this.selection.anchor = this.selection.lead;
+  }
+
+  gotoDocumentEnd(opts = {select: false}) {
+    this.selection.lead = this.documentEndPosition;
+    if (!opts || !opts.select) this.selection.anchor = this.selection.lead;
   }
 
   paragraphRangeAbove(row) {
