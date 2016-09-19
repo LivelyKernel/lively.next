@@ -1,5 +1,3 @@
-import { fuzzyParse, query } from "lively.ast";
-
 var warnStyle = {"border-bottom": "2px dotted orange"},
     errorStyle = {"background-color": "red"};
 
@@ -15,9 +13,14 @@ export default class JavaScriptChecker {
 
   parse(src, astType = null) {
     // astType = 'FunctionExpression' || astType == 'FunctionDeclaration' || null
+    
+    // FIXME!
+    var astModule = System.get(System.decanonicalize("lively.ast"));
+    if (!astModule) return null;
+
     var options = {withComments: true, allowReturnOutsideFunction: true};
     options.type = astType;
-    return fuzzyParse(src, options);
+    return astModule.fuzzyParse(src, options);
   }
 
   onDocumentChange(change, editor) {
@@ -37,6 +40,8 @@ export default class JavaScriptChecker {
     // var ast = new JavaScriptChecker().parse(morph.textString)
 
     var doc = morph.document;
+
+    var query = System.get(System.decanonicalize("lively.ast")).query; //a
 
     // if (codeEditor.getShowWarnings()) {
       var prevMarkers = (morph.markers || []).filter(({id}) => id.startsWith("js-checker-")),

@@ -27,7 +27,7 @@ var worldCommands = [
             var {target, command} = ea,
                 keys = commandsToKeysFor(target)[command.name],
                 keysPrinted = keys ? ` [${keys.join(", ")}]` : "";
-            return {isListItem: true, string: `[${target}] ${command.name}${keys}`, value: ea}
+            return {isListItem: true, string: `[${target}] ${command.name}${keysPrinted}`, value: ea}
           }),
           {prompt, selected: [cmd]} = await world.filterableListPrompt("Run command", items, {extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
       world._cachedRunCommandPrompt = prompt;
