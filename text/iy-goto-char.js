@@ -98,7 +98,7 @@ class IyGotoCharKeyHandler extends KeyHandler {
 
     return {
       command: commands.moveTo,
-      args: {backwards: this.backwards, needle: key, preventScroll: true, wrap: false}};
+      args: {backwards: this.backwards, needle: key}};
   }
 
 }
