@@ -493,10 +493,10 @@ export class AbstractPrompt extends Morph {
 
     this.build(props);
     this.label = props.label || "no label";
-    this.state = {answer: promise.deferred()}
-    var autoRemove = props.hasOwnProperty("autoRemove") ? props.autoRemove : true;
-    if (autoRemove)
-      promise.finally(this.state.answer.promise, () => this.remove());
+    this.state = {
+      answer: null,
+      autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
+    };
   }
 
   get label() { return this.get("label").textString; }
@@ -510,6 +510,9 @@ export class AbstractPrompt extends Morph {
 
   async activate() {
     this.focus();
+    this.state.answer = promise.deferred();
+    if (this.state.autoRemove)
+      promise.finally(this.state.answer.promise, () => this.remove());
     return this.state.answer.promise;
   }
 
@@ -622,7 +625,8 @@ export class ListPrompt extends AbstractPrompt {
       connect(this.get("list"), "selection", props, "onSelection");
   }
 
-  build({listFontSize, listFontFamily, labelFontSize, labelFontFamily, filterable, padding, itemPadding}) {
+  build({listFontSize, listFontFamily, labelFontSize, labelFontFamily, filterable, padding, itemPadding, extent}) {
+    this.extent = extent || pt(500,400);
     var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
     labelFontSize = labelFontSize || 14;
@@ -649,7 +653,7 @@ export class ListPrompt extends AbstractPrompt {
     return this.state.answer.resolve(answer);
   }
   
-  reject() { return this.state.answer.resolve({selected: [], filtered: [], status: "canceled"}); }
+  reject() { return this.state.answer.resolve({prompt: this, selected: [], filtered: [], status: "canceled"}); }
 
   applyLayout() {
     var label = this.get("label"),
@@ -660,9 +664,10 @@ export class ListPrompt extends AbstractPrompt {
     if (label.width > this.width) this.width = label.width;
     list.width = this.width;
     list.top = label.bottom;
-    cancelBtn.topRight = pt(this.width, list.bottom);
+    cancelBtn.bottomRight = pt(this.width, this.height-3);
     okBtn.topRight = cancelBtn.topLeft;
-    this.height = okBtn.bottom + 3;
+    // this.height = okBtn.bottom + 3;
+    list.height = this.height - list.top - cancelBtn.height - 3;
   }
 
   focus() { this.get("list").focus(); }
