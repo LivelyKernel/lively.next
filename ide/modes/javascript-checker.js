@@ -53,10 +53,10 @@ export default class JavaScriptChecker {
           });
       prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea))
     // }
-  
+
     if (ast.parseError/* && codeEditor.getShowErrors()*/) {
-      var {column, line} = ast.parseError.loc,
-          row = line-1;
+      var {column, line} = ast.parseError.loc, row = line-1;
+      var {column, row} = doc.indexToPosition(ast.parseError.pos)
       morph.addMarker({
         id: "js-syntax-error",
         range: {start: {column: column-1, row}, end: {column: column+1, row}},
