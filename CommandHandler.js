@@ -1,3 +1,9 @@
+import { obj, arr } from "lively.lang";
+
+function printArg(x) {
+  return obj.inspect(x, {maxDepth: 1}).replace(/\n/g, "").replace(/\s+/g, " ");
+}
+
 export default class CommandHandler {
 
   constructor() {
@@ -5,13 +11,19 @@ export default class CommandHandler {
     this.maxHistorySize = 300;
   }
 
-  addToHistory(cmdName) {;
+  addToHistory(cmdName) {
     this.history.push(cmdName);
     if (this.history.length > this.maxHistorySize)
       this.history.splice(0, this.history.length - this.maxHistorySize);
   }
 
-  exec(commandOrName, morph, args, count, evt) {
+  printHistory() {
+    return this.history.map(({name, target: {string: targetName}, args, count}) =>
+      `${name} ${args ? printArg(args) : ""}${typeof count === "number" ? ` x${count}` : ""} ${targetName}`)
+        .join("\n");
+  }
+
+  exec(commandOrName, morph, args, count, evt, afterExecFn) {
     // commandOrName can be
     // 1. a string, naming a command in morphs.commands
     // 2. a spec object like {command: "cmd name", args: {...}, handlesCount: BOOL, }
@@ -36,7 +48,7 @@ export default class CommandHandler {
       return null;
     }
 
-    name && this.addToHistory(name);
+    name && this.addToHistory({name, target: {string: String(morph), id: morph.id}, args, count, time: Date.now()});
 
     var world = morph.world(), result;
 
@@ -61,9 +73,15 @@ export default class CommandHandler {
 
     // handle count by repeating command
     if (result && typeof count === "number" && count > 1 && !command.handlesCount) {
-      return typeof result.then === "function" ?
-        result.then(() => this.exec(command, morph, args, count-1, evt)) :
-        this.exec(command, morph, args, count-1, evt);
+      result = typeof result.then === "function" ?
+        result.then(() => this.exec(command, morph, args, count-1, evt, null)) :
+        this.exec(command, morph, args, count-1, evt, null);
+    }
+
+    if (result && typeof afterExecFn === "function") {
+      typeof result.then === "function" ?
+        result.then(result => afterExecFn(result, command, morph, args, count, evt)) :
+        afterExecFn(result, command, morph, args, count, evt);
     }
 
     return result;
