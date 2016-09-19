@@ -1,4 +1,4 @@
-import { Token, Mode } from "../highlighting.js";
+import { Token, Highlighter } from "../highlighting.js";
 
 const words = {
   keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default"],
@@ -7,7 +7,7 @@ const words = {
   dynamic: ["this", "super"]
 };
 
-export default class JavaScriptMode extends Mode {
+export default class JavaScriptHighlighter extends Highlighter {
   reset() {
     this.state = "default";
     this.left = 0;

@@ -1,6 +1,6 @@
-import { Token, Mode } from "../highlighting.js";
+import { Token, Highlighter } from "../highlighting.js";
 
-export default class PlainMode extends Mode {
+export default class PlainHighlighter extends Highlighter {
   reset() {
     // noop
   }

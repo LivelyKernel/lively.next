@@ -243,7 +243,7 @@ export class Browser extends Window {
 
   build() {
     var style = {borderWidth: 1, borderColor: Color.gray, fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"},
-        textStyle = {borderWidth: 1, borderColor: Color.gray, fontSize: 12, type: CodeEditor, mode: "plain"},
+        textStyle = {borderWidth: 1, borderColor: Color.gray, fontSize: 12, type: CodeEditor, mode: "javascript"},
         container = morph({
           ...style,
           layout: new GridLayout({

@@ -1,4 +1,4 @@
-import { arr, obj } from "lively.lang";
+import { arr, obj, fun } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 import config from "../config.js";
 
@@ -6,23 +6,30 @@ import { connect } from "lively.bindings";
 import { Morph, Text, Menu } from "../index.js";
 import { StyleRange } from "../text/style.js";
 
-import { Token, Mode, Theme } from "./highlighting.js";
-import JavaScriptMode from "./modes/javascript.js";
-import PlainMode from "./modes/plain.js";
+import { Token, Highlighter, Theme } from "./highlighting.js";
+import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
+import JavaScriptChecker from "./modes/javascript-checker.js";
+import PlainHighlighter from "./modes/plain.js";
 import ChromeTheme from "./themes/chrome.js";
 import TomorrowNightTheme from "./themes/tomorrow-night.js";
 import GithubTheme from "./themes/github.js";
 
-const modes = {
-  "plain": PlainMode,
-  "javascript": JavaScriptMode
-}; // {[string] -> Mode}
+const highlighters = {
+  "plain": PlainHighlighter,
+  // "javascript": JavaScriptHighlighter
+  "javascript": PlainHighlighter
+}
+
+const checkers = {
+  "plain": null,
+  "javascript": JavaScriptChecker
+};
 
 const themes = {
   "chrome": ChromeTheme,
   "tomorrowNight": TomorrowNightTheme,
   "github" : GithubTheme
-}; // {[string] -> Mode}
+};
 
 
 export default class CodeEditor extends Morph {
@@ -41,12 +48,6 @@ export default class CodeEditor extends Morph {
         padding: Rectangle.inset(4, 2, 4, 2),
         fontSize: props.fontSize || 12,
         fontFamily: props.fontFamily || "Monaco, monospace",
-        onChange(change) { // work-around for lively.bindings bug
-          if (change.selector === "insertText" || change.selector === "deleteText") {
-            this.owner && this.owner.requestHighlight();
-          }
-          return Text.prototype.onChange.call(this, change);
-        },
         doSave() { this.owner && this.owner.doSave(); }
       }],
       ...obj.dissoc(props, ["textString", "mode", "theme"])
@@ -56,21 +57,25 @@ export default class CodeEditor extends Morph {
     this.requestHighlight(true);
 
     // FIXME lively.bindings does not seem to work:
-    // connect(this.submorphs[0], "input", this, "requestHighlight");
+    connect(this.submorphs[0], "change", this, "requestHighlight", {
+      updater: ($upd, {selector}) => selector === "insertText" || selector === "deleteText" ? $upd() : null
+    });
     connect(this, "extent", this.submorphs[0], "extent");
   }
   
   highlight() {
+    if (!this.theme) return;
     const txt = this.submorphs[0],
           tokens = this.mode.highlight(txt.textString),
           defaultStyle = this.submorphs[0].styleProps,
-          styleRanges = tokens.map(({token, from, to}) => {
-            const themeStyle = this.theme.style(token),
-                  style = obj.merge(defaultStyle, themeStyle);
-            return StyleRange.fromPositions(style, from, to);
-          });
-          styleRanges.push(StyleRange.create(defaultStyle, 0, -1, 0, 0));
+          styleRanges = tokens.map(({token, from, to}) =>
+            StyleRange.fromPositions({...defaultStyle, ...this.theme.style(token)}, from, to));
+    styleRanges.push(StyleRange.create(defaultStyle, 0, -1, 0, 0));
     txt.replaceStyleRanges(styleRanges);
+
+    if (this._checker) {
+      this._checker.onDocumentChange({}, this);
+    }
   }
   
   get text() { return this.submorphs[0]; }
@@ -80,7 +85,8 @@ export default class CodeEditor extends Morph {
 
   get mode() { return this._mode; }
   set mode(mode) {
-    this._mode = mode instanceof Mode ? mode : new (modes[mode]);
+    this._mode = mode instanceof Highlighter ? mode : new (highlighters[mode]);
+    this._checker = checkers[mode] && new checkers[mode]();
     this.requestHighlight();
   }
   
@@ -91,10 +97,9 @@ export default class CodeEditor extends Morph {
     this.requestHighlight();
   }
   
-  requestHighlight(immediate = false) {
-    clearTimeout(this._request);
-    if (immediate) return this.highlight();
-    this._request = setTimeout(() => this.highlight(), 100);
+  requestHighlight(immediate = false) {  
+    if (immediate) this.highlight();
+    else fun.throttleNamed(this.id + "-requestHighlight", 100, () => this.highlight())();
   }
 
   resizeBy(delta) {

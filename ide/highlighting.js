@@ -10,11 +10,8 @@ export const Token = {
   dynamic: "dynamic"
 };
 
-// type Token = "keyword" | "constant" | "global" | "id" | "numeric" | "string" | "comment" | "default"
 
-// type Style = { [string]: any };
-
-export class Mode {
+export class Highlighter {
   
   reset() {
     // reset internal state
