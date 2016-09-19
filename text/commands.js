@@ -863,11 +863,14 @@ var commands = [
   {
     name: "cancel input",
     scrollCursorIntoView: false,
+    multiSelectAction: "single",
     exec: function(morph, args, count, evt) {
       if (evt && evt.keyInputState) {
         evt.keyInputState.count = undefined;
         evt.keyInputState.keyCHain = "";
       }
+      morph.selection.disableMultiSelect
+        && morph.selection.disableMultiSelect();
       if (!morph.selection.isEmpty())
         morph.selection.anchor = morph.selection.lead;
       if (morph.activeMark)
@@ -1218,10 +1221,75 @@ var multiSelectCommands = [
 
   {
     name: "multi select up",
+    multiSelectAction: "single",
     exec: morph => {
       var {row, column} = morph.selection.start;
       if (row > 0)
         morph.selection.addRange({start: {row: row-1, column}, end: {row: row-1, column}})
+      return true;
+    }
+  },
+  
+  {
+    name: "multi select down",
+    multiSelectAction: "single",
+    exec: morph => {
+      var {row, column} = morph.selection.start,
+          {row: endRow} = morph.documentEndPosition;
+      if (row < endRow)
+        morph.selection.addRange({start: {row: row+1, column}, end: {row: row+1, column}})
+      return true;
+    }
+  },
+  
+  {
+    name: "multi select more forward",
+    multiSelectAction: "single",
+    exec: morph => {
+      var idx = morph.selection.selections.length-1,
+          last = morph.selection.selections[idx];
+      if (last.isEmpty()) return true;
+      var pos = last.end,
+          found = morph.search(last.text, {start: pos, backwards: false});
+      if (found) {
+        var existing = morph.selection.selections.findIndex(ea => ea.range.equals(found.range));
+        if (existing > -1) {
+          arr.swap(morph.selection.selections, existing, idx);
+          return morph.execCommand("multi select more forward");
+        } else  morph.selection.addRange(found.range);
+      }
+      return true;
+    }
+  },
+  
+  {
+    name: "multi select more backward",
+    multiSelectAction: "single",
+    exec: morph => {
+      var idx = morph.selection.selections.length-1,
+          last = morph.selection.selections[idx];
+      if (last.isEmpty()) return true;
+      var pos = last.start,
+          found = morph.search(last.text, {start: pos, backwards: true});
+          found
+      if (found) {
+        var existing = morph.selection.selections.findIndex(ea => ea.range.equals(found.range));
+        if (existing > -1) {
+          arr.swap(morph.selection.selections, existing, idx)
+          return morph.execCommand("multi select more backward")
+        } else  morph.selection.addRange(found.range);
+      }
+      return true;
+    }
+  },
+  
+  {
+    name: "multi select remove last range",
+    multiSelectAction: "single",
+    exec: morph => {
+      var l = morph.selection.selections.length;
+      if (l > 1)
+        morph.selection.removeSelections(l-1);
       return true;
     }
   }

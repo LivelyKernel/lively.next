@@ -104,6 +104,7 @@ export class Range {
   }
 
   without(otherRange) {
+    // returns this range without the "area" covered by the other
     if (!otherRange.isRange) otherRange = new Range(otherRange);
     var compared = Range.compare(this, otherRange);
     if (compared === 0)
@@ -132,6 +133,8 @@ export class Range {
   }
 
   subtract(that) {
+    // removes other range from this, splitting is possible, returns list of
+    // ranges
     if (!that.isRange) that = new Range(that);
     var comparison = Range.compare(this, that);
     switch (comparison) {

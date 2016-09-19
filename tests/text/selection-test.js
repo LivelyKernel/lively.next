@@ -1,10 +1,12 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { Selection } from "../../text/selection.js";
+import { Selection, MultiSelection } from "../../text/selection.js";
 import TextDocument from "../../text/document.js";
 import { Text } from "../../text/morph.js";
 import { expect } from "mocha-es6";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+
+import { Range } from "lively.morphic/text/range.js";
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
@@ -23,7 +25,7 @@ function text(string, props) {
     fontMetric,
     ...props
   });
-  t._selection = new MultiSelection(t);
+
   return t;
 }
 
@@ -180,21 +182,20 @@ describe("text selection", () => {
 });
 
 
-import { MultiSelection } from "lively.morphic/text/selection.js";
-
 describe("multi select", () => {
 
+  beforeEach(() => {
+    t = text("Hello World");
+    t._selection = new MultiSelection(t);
+  });
+
   it("add range", function() {
-    var t = text("foo bar");
     t.selection.addRange(range(0,4,0,4));
     expect(t.selection.ranges).to.have.length(2);
   });
 
   it("multiselect editing", function() {
-    var t = text("a1.a2\n    bb3.b4\n    cc5.c6");
-    // t = that
-    // t.textString = "a1.a2\n    bb3.b4\n    cc5.c6";
-    // t.selectAll()
+    t.textString = "a1.a2\n    bb3.b4\n    cc5.c6";
     t.gotoDocumentEnd();
 
     t.execCommand("multi select up", null, 3);
@@ -210,6 +211,31 @@ describe("multi select", () => {
     t.execCommand("select all");
     expect().assert(!t.inMultiSelectMode());
     expect(t.selection.ranges).to.have.length(1);
-  })
+  });
 
+  xit("select more like this", function() {
+    var t = text("a1.a2\n    bb3.b4\n    cc5.c6");
+    t.cursorPosition = {row: 1, column: 8};
+  });
+
+  describe("range merging", () => {
+  
+    it("same empty range", function() {
+      t.textString = "Hello\nWorld";
+      t.selection.addRange(range(0,4,0,4));
+      t.selection.addRange(range(0,4,0,4));
+      expect(t.selection.ranges).to.have.length(2);
+      expect(t.selection).stringEquals("MultiSelection(Selection(1/5 -> 1/5), Selection(0/4 -> 0/4))")
+    })
+
+    it("overlapping", function() {
+      t.textString = "Hello\nWorld";
+      t.selectLine(1)
+      t.selection.addRange(range(0,2,0,5));
+      expect(t.selection.ranges).to.have.length(2);
+      t.selection.addRange(range(0,2,1,0));
+      expect(t.selection.ranges).to.have.length(1);
+    });
+
+  })
 });
