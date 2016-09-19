@@ -341,6 +341,86 @@ var commands = [
   },
 
   {
+    name: 'move cursor to screen top in 1/3 steps',
+    readOnly: true,
+    exec: function(morph) {
+      var select = !!morph.activeMark,
+          currentPos = morph.cursorPosition,
+          firstRow = morph.renderer.firstFullyVisibleLine,
+          lastRow = morph.renderer.lastFullyVisibleLine,
+          middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
+          newPos = currentPos;
+      if (currentPos.row <= firstRow) return true;
+      if (currentPos.row <= middleRow) newPos.row = firstRow;
+      else if (currentPos.row <= lastRow) newPos.row = middleRow;
+      else newPos.row = lastRow;
+      morph.selection.lead = newPos;
+      if (!select) morph.selection.anchor = newPos;
+      return true;
+    }
+ },
+
+ {
+    name: 'move cursor to screen bottom in 1/3 steps',
+    readOnly: true,
+    exec: function(morph) {
+      var select = !!morph.activeMark,
+          currentPos = morph.cursorPosition,
+          firstRow = morph.renderer.firstFullyVisibleLine,
+          lastRow = morph.renderer.lastFullyVisibleLine,
+          middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
+          newPos = currentPos;
+      if (currentPos.row < firstRow) newPos.row = firstRow;
+      else if (currentPos.row < middleRow) newPos.row = middleRow;
+      else if (currentPos.row < lastRow) newPos.row = lastRow;
+      else return true;
+      morph.selection.lead = newPos;
+      if (!select) morph.selection.anchor = newPos;
+      return true;
+    }
+  },
+
+  {
+    name: 'move cursor to screen top in 1/3 steps',
+    readOnly: true,
+    exec: function(morph) {
+      var select = !!morph.activeMark,
+          currentPos = morph.cursorPosition,
+          firstRow = morph.renderer.firstFullyVisibleLine,
+          lastRow = morph.renderer.lastFullyVisibleLine,
+          middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
+          newPos = currentPos;
+      if (currentPos.row <= firstRow) return true;
+      if (currentPos.row <= middleRow) newPos.row = firstRow;
+      else if (currentPos.row <= lastRow) newPos.row = middleRow;
+      else newPos.row = lastRow;
+      morph.selection.lead = newPos;
+      if (!select) morph.selection.anchor = newPos;
+      return true;
+    }
+ },
+
+ {
+    name: 'move cursor to screen bottom in 1/3 steps',
+    readOnly: true,
+    exec: function(morph) {
+      var select = !!morph.activeMark,
+          currentPos = morph.cursorPosition,
+          firstRow = morph.renderer.firstFullyVisibleLine,
+          lastRow = morph.renderer.lastFullyVisibleLine,
+          middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
+          newPos = currentPos;
+      if (currentPos.row < firstRow) newPos.row = firstRow;
+      else if (currentPos.row < middleRow) newPos.row = middleRow;
+      else if (currentPos.row < lastRow) newPos.row = lastRow;
+      else return true;
+      morph.selection.lead = newPos;
+      if (!select) morph.selection.anchor = newPos;
+      return true;
+    }
+  },
+
+  {
     name: "goto line",
     exec: async function(morph) {
       var select = !!morph.activeMark,

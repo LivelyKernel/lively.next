@@ -5,6 +5,7 @@ var config = {
   verboseLogging: true,
   maxStatusMessages: 5,
   repeatClickInterval: 250, // max time between clicks for double-, triple-click
+
   globalKeyBindings: [
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Escape", command: "escape"},
@@ -130,6 +131,8 @@ var config = {
       {keys: {win: "PageUp", mac: "PageUp|Alt-V"},           command: "goto page up"},
       {keys: {win: "Shift-PageDown", mac: "Shift-PageDown"}, command: "goto page down and select"},
       {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
+      {keys: 'Alt-Ctrl-,'/*Alt-Ctrl-<*/,                     command: 'move cursor to screen top in 1/3 steps'},
+      {keys: 'Alt-Ctrl-.'/*Alt-Ctrl-<*/,                     command: 'move cursor to screen bottom in 1/3 steps'},
 
       {keys: {win: "Alt-Left", mac: "Meta-Left"},               command: "goto matching left"},
       {keys: {win: "Alt-Shift-Left", mac: "Meta-Shift-Left"},   command: {command: "goto matching left", args: {select: true}}},
@@ -143,7 +146,6 @@ var config = {
       {keys: "Ctrl-Up", command: "goto paragraph above"},
       {keys: "Ctrl-Down", command: "goto paragraph below"},
 
-      {keys: {win: "Shift-PageUp", mac: "Shift-PageUp"},     command: "goto page up and select"},
 
       {keys: {win: "Ctrl-Shift-Home", mac: "Meta-Shift-Up"},           command: {command: "goto start", args: {select: true}}},
       {keys: {win: "Ctrl-Shift-End", mac: "Meta-Shift-Down"},          command: {command: "goto end", args: {select: true}}},
