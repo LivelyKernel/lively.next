@@ -5,6 +5,7 @@ var config = {
   verboseLogging: true,
   maxStatusMessages: 5,
   repeatClickInterval: 250, // max time between clicks for double-, triple-click
+  showTooltipsAfter: 2,
 
   globalKeyBindings: [
     {keys: "Alt-X", command: "run command"},
@@ -194,7 +195,7 @@ var config = {
     ]
   },
   codeEditor: {
-    defaultTheme: "chrome"
+    defaultTheme: "github"
   }
 }
 

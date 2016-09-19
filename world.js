@@ -5,7 +5,7 @@ import { List, FilterableList } from "./list.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
-import { morph, Morph, Text, Window } from "./index.js";
+import { morph, Morph, Text, Window, TooltipViewer } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 
 
@@ -266,6 +266,7 @@ export class World extends Morph {
     super(props);
     this.addStyleClass("world");
     this._renderer = null; // assigned in rendering/renderer.js
+    this._tooltipViewer = new TooltipViewer(this);
   }
 
   get isWorld() { return true }
@@ -305,6 +306,7 @@ export class World extends Morph {
 
   onMouseMove(evt) {
     evt.hand.update(evt);
+    this._tooltipViewer.mouseMove(evt);
   }
 
   onMouseDown(evt) {

@@ -1,7 +1,8 @@
 import { arr, num, obj } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { show, morph, Morph, Ellipse, Text } from "./index.js";
+import { show, morph, Morph, Ellipse, Text, HorizontalLayout } from "./index.js";
 import { signal, connect } from "lively.bindings";
+import config from "./config.js";
 
 export class Window extends Morph {
 
@@ -352,4 +353,91 @@ export class CheckBox extends Morph {
     return renderer.renderCheckBox(this);
   }
 
+}
+
+export class TooltipViewer {
+  
+  constructor(world) {
+    this.currenMorph = world;
+  }
+  
+  mouseMove({targetMorph}) {
+    if(this.currentMorph != targetMorph) {
+      this.hoverOutOfMorph(this.currentMorph);
+      this.hoverIntoMorph(targetMorph);
+      this.currentMorph = targetMorph;
+    }
+  }
+     
+  hoverIntoMorph(morph) {
+    this.clearScheduledTooltip();
+    if (this.currentTooltip) {
+      this.showTooltipFor(morph);
+    } else {
+      this.scheduleTooltipFor(morph);
+    }
+  }
+  
+  hoverOutOfMorph(morph) {
+    const current = this.currentTooltip;
+    this.currentTooltip && this.currentTooltip.softRemove((tooltip) => {
+      this.clearTooltip(tooltip);
+    });
+  }
+  
+  scheduleTooltipFor(morph) {
+    this.timer = setTimeout(() => {
+        this.showTooltipFor(morph);
+      }, config.showTooltipsAfter * 1000);
+  }
+  
+  clearScheduledTooltip() {
+    clearTimeout(this.timer);
+  }
+  
+  clearTooltip(tooltip) {
+    if (this.currentTooltip == tooltip) {
+      this.currentTooltip = null;
+    }
+  }
+     
+  showTooltipFor(morph) {
+    if (morph.tooltip) {
+      this.currentTooltip && this.currentTooltip.remove();
+      this.currentTooltip = new Tooltip({
+        position: morph.globalBounds().bottomRight(),
+        description: morph.tooltip});
+      morph.world().addMorph(this.currentTooltip); 
+    }
+  }
+  
+}
+
+class Tooltip extends Morph {
+  
+  constructor(props) {
+    super({
+      ...props,
+      styleClasses: ["morph", "tooltip"],
+      draggable: false,
+      fill: Color.black.withA(.7),
+      borderRadius: 4,
+      layout: new HorizontalLayout({spacing: 5}),
+      submorphs: [new Text({
+        width: 200,
+        fixedWidth: props.description.length > 40,
+        textString: props.description,
+        fill: Color.transparent,
+        fontColor: Color.white,
+      })]
+    });
+  }
+  
+  softRemove(cb) {
+    this.animate({opacity: 0, onFinish: () => {
+      cb(this);
+      this.remove()
+    }});
+  }
+  
 }

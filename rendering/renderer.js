@@ -43,6 +43,10 @@ const defaultCSS = `
   zIndex: 1010
 }
 
+.tooltip {
+ z-index:  3;
+}
+
 .hand {
   z-index: 1;
 }
