@@ -83,11 +83,14 @@ var listCommands = [
     name: "select via filter",
     exec: async (list) => {
       var preselect = list.selectedIndex || 0;
-      list.selection = await list.world().filterableListPrompt(
+      var {selected: [sel]} = await list.world().filterableListPrompt(
         "Select item", list.items,
         {preselect, requester: list.getWindow() || list, itemPadding: Rectangle.inset(0,2)});
-      list.scrollSelectionIntoView();
-      list.update();
+      if (sel) {
+        list.selection = sel;
+        list.scrollSelectionIntoView();
+        list.update();
+      }
       return true;
     }
   }
@@ -422,8 +425,12 @@ export class FilterableList extends Morph {
   updateFilter() {
     var filterText = this.get("input").textString,
         filterTokens = filterText.split(/\s+/).map(ea => ea.toLowerCase()),
-        filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token)));
-    this.get("list").items = filteredItems;
+        filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token))),
+        list = this.get("list");
+        newSelectedIndexes = list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1)
+    list.items = filteredItems;
+    list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
+    this.scrollSelectionIntoView();
   }
 
   get keybindings() {

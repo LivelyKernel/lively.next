@@ -70,7 +70,7 @@ var worldCommands = [
     exec: async (world) => {
       var wins = world.submorphs.filter(({isWindow}) => isWindow).reverse()
             .map(win => ({isListItem: true, string: win.title || String(win), value: win})),
-          win = await world.filterableListPrompt(
+          answer = await world.filterableListPrompt(
             "Choose window", wins, {
               preselect: 1,
               onSelection: sel => sel && sel.show(), 
@@ -78,7 +78,8 @@ var worldCommands = [
               labelFontSize: 16,
               listFontSize: 18,
               itemPadding: Rectangle.inset(4)
-            });
+            }),
+          {selected: [win]} = answer;
       if (win) { win.bringToFront(); win.focus(); }
       return true;
     }
@@ -137,7 +138,7 @@ var worldCommands = [
   
   
           async function askForHow() {
-            var how = await world.filterableListPrompt("How to resize the window?", [
+            var {selected: [how]} = await world.filterableListPrompt("How to resize the window?", [
               'full', 'fullscreen','center','right','left','bottom',
               'top',"shrinkWidth", "growWidth","shrinkHeight",
               "growHeight", 'col1','col2', 'col3', 'col4', 'col5',
@@ -204,7 +205,7 @@ var worldCommands = [
       }
       items = arr.sortBy(items, ea => ea.string);
 
-      var selected = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
+      var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
 
       selected && (await Browser.browse(selected.package.name, selected.shortName, undefined, browser)).activate()
 
@@ -599,7 +600,20 @@ export class ListPrompt extends AbstractPrompt {
     connect(this.get("cancelBtn"), 'fire', this, 'reject');
   }
 
-  resolve() { super.resolve(this.get("list").selection); }
+  resolve() {
+    var answer = this.get("list") instanceof FilterableList ?
+      {
+        filtered: this.get("list").state.allItems,
+        selected: this.get("list").get("list").selections,
+        status: "accepted"
+      } : {
+        selected: this.get("list").selections,
+        status: "accepted"
+      }
+    return this.state.answer.resolve(answer);
+  }
+  
+  reject() { return this.state.answer.resolve({selected: [], filtered: [], status: "canceled"}); }
 
   applyLayout() {
     var label = this.get("label"),
