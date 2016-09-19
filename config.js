@@ -71,6 +71,7 @@ var config = {
     markStackSize: 16,
     undoLevels: 50,
     clipboardBufferLength: 15,
+    useMultiSelect: true,
     undoGroupDelay: 600/*ms, idle time after typing that groups the previous ungrouped edits into one*/,
 
     defaultKeyBindings: [

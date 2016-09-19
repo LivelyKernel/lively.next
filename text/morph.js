@@ -3,7 +3,7 @@ import config from "../config.js";
 import { string, obj, arr, promise } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
-import { Selection } from "./selection.js";
+import { Selection, MultiSelection } from "./selection.js";
 import { Range } from "./range.js";
 import { StyleRange } from "./style.js";
 import DocumentRenderer from "./rendering.js";
@@ -73,7 +73,7 @@ export class Text extends Morph {
     this.changeDocument(TextDocument.fromString(textString || ""));
     this.undoManager = new UndoManager();
     this.clickhandler = ClickHandler.withDefaultBindings(),
-    this._selection = selection ? new Selection(this, selection) : null;
+    this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
     this._anchors = null;
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
@@ -624,7 +624,7 @@ export class Text extends Morph {
     return this.selection.selections && this.selection.selections.length > 1;
   }
 
-  get selection() { return this._selection || (this._selection = new Selection(this)); }
+  get selection() { return this._selection || (this._selection = new (config.text.useMultiSelect ? MultiSelection : Selection)(this)); }
   set selection(range) { return this.selection.range = range; }
 
   get cursorPosition() { return this.selection.lead; }
