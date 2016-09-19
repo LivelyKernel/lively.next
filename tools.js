@@ -124,7 +124,7 @@ function commandsForBrowser(browser) {
       try {
         await (await browser.systemInterface()).interactivelyReloadModule(null, m.name);
       } catch(err) {
-        browser.world().inform(`Error while reloading ${m.name}:\n${err.stack}`, {requester: browser});
+        browser.world().inform(`Error while reloading ${m.name}:\n${err.stack || err}`, {requester: browser});
         return true;
       }
       show(`Reloaded ${m.name}`);

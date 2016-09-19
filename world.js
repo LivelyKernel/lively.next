@@ -18,6 +18,31 @@ import TestRunner from "lively.morphic/ide/test-runner.js"
 var worldCommands = [
 
   {
+    name: "run command",
+    exec: async world => {
+      var keyMaps = {},
+          commandsToKeys = {},
+          focused = world.focusedMorph || world,
+          items = focused.commandsIncludingOwners.map((ea) => {
+            var {target, command} = ea,
+                keys = commandsToKeysFor(target)[command.name],
+                keysPrinted = keys ? ` [${keys.join(", ")}]` : "";
+            return {isListItem: true, string: `[${target}] ${command.name}${keys}`, value: ea}
+          }),
+          {prompt, selected: [cmd]} = await world.filterableListPrompt("Run command", items, {extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
+      world._cachedRunCommandPrompt = prompt;
+      return cmd ? cmd.target.execCommand(cmd.command) : true;
+
+      function commandsToKeysFor(target) {
+        if (commandsToKeys[target.id]) return commandsToKeys[target.id];
+        var keyMap = keyMaps[target.id] || (keyMaps[target.id] = target.keyCommandMap);
+        return commandsToKeys[target.id] = arr.groupBy(Object.keys(keyMap), combo => keyMap[combo].name);
+      }
+
+    }
+  },
+
+  {
     name: "show halo for focused morph",
     exec: (world) => {
       var morph = world.focusedMorph;
@@ -475,6 +500,13 @@ export class World extends Morph {
   }
 
   filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0}) {
+    if (opts.prompt) {
+      var list = opts.prompt.get("list");
+      list.items = items;
+      list.selectedIndex = opts.preselect || 0;
+      return this.openPrompt(opts.prompt, opts);
+    }
+
     return this.openPrompt(new ListPrompt({
       filterable: true, padding: Rectangle.inset(3),
       label, items, ...opts}), opts);

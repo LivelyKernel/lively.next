@@ -7,6 +7,8 @@ var config = {
   repeatClickInterval: 250, // max time between clicks for double-, triple-click
 
   globalKeyBindings: [
+    {keys: "Alt-X", command: "run command"},
+
     {keys: "Meta-H", command: "show halo for focused morph"},
     {keys: "Escape", command: "escape"},
     {keys: {win: "Ctrl-Escape", mac: "Meta-Escape"}, command: "close active window"},
