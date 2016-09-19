@@ -329,29 +329,38 @@ export default class TextLayout {
   renderMorph(renderer, morph) {
     this.updateFromMorphIfNecessary(morph);
 
-    return h("div", {
-      ...defaultAttributes(morph),
-      style: {
-        ...defaultStyle(morph),
-        cursor: morph.nativeCursor === "auto" ?
-          (morph.readOnly ? "default" : "text") :
-          morph.nativeCursor
+    var selectionLayer = [];
+    if (morph.inMultiSelectMode()) {
+      var sels = morph.selection.selections;
+      for (var i = 0; i < sels.length; i++) {
+        selectionLayer.push(...this.renderSelectionLayer(morph, sels[i]))
       }
-    }, this.renderSelectionLayer(morph)
+    } else selectionLayer = this.renderSelectionLayer(morph, morph.selection);
+    
+
+    return h("div", {
+        ...defaultAttributes(morph),
+        style: {
+          ...defaultStyle(morph),
+          cursor: morph.nativeCursor === "auto" ?
+            (morph.readOnly ? "default" : "text") :
+            morph.nativeCursor
+        }
+      }, 
+      selectionLayer
         .concat(morph.debug ? this.renderDebugLayer(morph) : [])
         .concat(this.renderMarkerLayer(morph))
         .concat(this.renderTextLayer(morph))
-        .concat(renderer.renderSubmorphs(morph))
-      );
+        .concat(renderer.renderSubmorphs(morph)));
   }
 
-  renderSelectionLayer(morph) {
+  renderSelectionLayer(morph, selection) {
     // FIXME just hacked together... needs cleanup!!!
 
-    if (!morph._selection) return [];
+    if (!selection) return [];
 
-    let {start, end, lead, cursorVisible} = morph.selection,
-        isReverse           = morph.selection.isReverse(),
+    let {start, end, lead, cursorVisible} = selection,
+        isReverse           = selection.isReverse(),
         {padding, document} = morph,
         lines               = this.lines,
         paddingOffset       = padding.topLeft(),
@@ -367,7 +376,7 @@ export default class TextLayout {
                                 defaultHeight || (defaultHeight = this.defaultCharSize(morph).height);
 
     // collapsed selection -> cursor
-    if (morph.selection.isEmpty())
+    if (selection.isEmpty())
       return [cursor(cursorPos, leadLineHeight, cursorVisible)];
 
     // single line -> one rectangle
