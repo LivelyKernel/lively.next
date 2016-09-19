@@ -112,6 +112,7 @@ var commands = [
     name: "select all",
     doc: "Selects entire text contents.",
     scrollCursorIntoView: false,
+    multiSelectAction: "single",
     exec: function(morph) {
       morph.saveMark();
       morph.selectAll();

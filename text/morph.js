@@ -329,7 +329,7 @@ export class Text extends Morph {
 
   execCommand(commandOrName, args, count, evt) {
     var {name, command} = this.commandHandler.lookupCommand(commandOrName, this);
-    if (!realCommand) return undefined;
+    if (!command) return undefined;
 
     var multiSelect = this.inMultiSelectMode(),
         multiSelectAction = command.hasOwnProperty("multiSelectAction") ?
