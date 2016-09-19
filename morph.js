@@ -5,7 +5,7 @@ import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
-import KeyHandler from "./events/KeyHandler.js";
+import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -746,6 +746,7 @@ export class Morph {
   onMouseMove(evt) {}
 
   addKeyBindings(bindings) {
+    this._cachedKeyhandlers = null;
     this.addMethodCallChangeDoing({
       target: this,
       selector: "addKeyBindings",
@@ -757,8 +758,24 @@ export class Morph {
     });
   }
   get keybindings() { return this._keybindings || []; }
-  set keybindings(bndgs) { return this._keybindings = bndgs; }
-  get keyhandlers() { return [KeyHandler.withBindings(this.keybindings)]; }
+  set keybindings(bndgs) { this._cachedKeyhandlers = null; return this._keybindings = bndgs; }
+  get keyhandlers() {
+    return this._chachedKeyhandlers
+       || (this._cachedKeyhandlers = [KeyHandler.withBindings(this.keybindings)]);
+  }
+  get keyCommandMap() {
+    var platform = this.keyhandlers[0].platform;
+    return this.keybindings.reduce((keyMap, binding) => {
+      var keys = binding.keys,
+          platformKeys = findKeysForPlatform(keys, platform) || keys,
+          command = binding.command,
+          name = typeof command === "string" ? command : command.command || command.name;
+      return platformKeys.split("|").reduce((keyMap, combo) => {
+        keyMap[combo] = {name, command};
+        return keyMap;
+      }, keyMap);
+    }, {});
+  }
   simulateKeys(keyString) { return KeyHandler.simulateKeys(this, keyString); }
 
   onKeyDown(evt) {
@@ -915,6 +932,10 @@ export class Morph {
   set commands(cmds) {
     if (this._commands) this.removeCommands(this._commands);
     this.addCommands(cmds);
+  }
+  get commandsIncludingOwners() {
+    return arr.flatmap([this].concat(this.ownerChain()).reverse(), morph =>
+      arr.sortByKey(morph.commands, "name").map(command => ({target: morph, command})));
   }
 
   addCommands(cmds) {

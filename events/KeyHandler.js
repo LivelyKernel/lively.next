@@ -94,7 +94,7 @@ function bowserOS() {
   return "";
 }
 
-function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
+export function findKeysForPlatform(binding, platform/*bowser OS flag*/) {
   // bowser OS flags 2016-08-24:
   // bowser
   // mac
