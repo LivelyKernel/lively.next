@@ -30,6 +30,16 @@ export class Selection {
     this.textMorph.removeAnchor(this.endAnchor);
   }
 
+
+  mergeWith(otherSel) {
+    if (!otherSel || !otherSel.isSelection)
+        return false;
+    if (Math.abs(Range.compare(this.range, otherSel.range)) > 4)
+        return false;
+    this.range = this.range.merge(otherSel.range);
+    return true;
+  }
+
   get range() { return this._range; }
   set range(range) {
     if (!range) return;
@@ -316,7 +326,21 @@ export class MultiSelection extends Selection {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
+  mergeSelections() {
+    var sels = this.selections.slice();
+    for (var i = sels.length-1; i >= 0; i--) {
+      for (var j = sels.length-1; j >= 0; j--) {
+        if (i === j) continue;
+        if (sels[j].mergeWith(sels[i])) {
+          sels.splice(i, 1)
+          break;
+        }
+      }
+    }
+    this.selections = sels;
+  }
+
   get ranges() { return this.selections.map(ea => ea.range); }
   set ranges(ranges) {
     for (var i = 0; i < ranges.length; i++) {
@@ -325,10 +349,12 @@ export class MultiSelection extends Selection {
       else this.addRange(ranges[i]);
     }
     this.removeSelections(i);
+    this.mergeSelections();
   }
 
   addRange(range) {
     this.selections.push(new Selection(this.textMorph, range));
+    this.mergeSelections();
     return arr.last(this.selections).range;
   }
 }

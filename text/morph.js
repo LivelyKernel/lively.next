@@ -342,11 +342,14 @@ export class Text extends Morph {
       var origSelection = this._selection,
           selections = this.selection.selections.slice().reverse();
       this._selection = selections[0];
+      this._multiSelection = origSelection;
 
       try {
         var result = this.execCommand(commandOrName, args, count, evt);
       } catch(err) {
         this._selection = origSelection;
+        this._multiSelection = null;
+        this.selection.mergeSelections();
         throw err;
       }
 
@@ -360,7 +363,7 @@ export class Text extends Morph {
               return Promise.resolve(this.execCommand(commandOrName, args, count, evt))
                 .then(result => results.push(result))
             }))).then(() => results),
-            () => this._selection = origSelection);
+            () => { this._selection = origSelection; this._multiSelection = null; this.selection.mergeSelections(); });
 
       } else {
         try {
@@ -368,7 +371,7 @@ export class Text extends Morph {
             this._selection = sel;
             results.push(this.execCommand(commandOrName, args, count, evt))
           }
-        } finally { this._selection = origSelection; }
+        } finally { this._selection = origSelection; this._multiSelection = null; this.selection.mergeSelections(); }
         return results;
       }
     }
