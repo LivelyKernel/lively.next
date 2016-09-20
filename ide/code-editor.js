@@ -99,7 +99,7 @@ export default class CodeEditor extends Morph {
   
   requestHighlight(immediate = false) {  
     if (immediate) this.highlight();
-    else fun.throttleNamed(this.id + "-requestHighlight", 100, () => this.highlight())();
+    else fun.debounceNamed(this.id + "-requestHighlight", 500, () => this.highlight())();
   }
 
   resizeBy(delta) {
