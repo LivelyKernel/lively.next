@@ -201,7 +201,12 @@ var config = {
       {keys: "Alt-Ctrl-N", command: "multi select down"},
       {keys: "Ctrl-Shift-,", command: "multi select more backward"},
       {keys: "Ctrl-Shift-.", command: "multi select more forward"},
+      
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // ide related
+      {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
     ]
+
   },
   codeEditor: {
     defaultTheme: "github"

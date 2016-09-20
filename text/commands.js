@@ -1297,4 +1297,31 @@ var multiSelectCommands = [
 ]
 commands.push(...multiSelectCommands);
 
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var jsIdeCommands = [
+  {
+    name: "[javascript] list errors and warnings",
+    exec: async text => {
+      var markers = (text.markers || []).filter(({type}) => type === "js-undeclared-var" || type === "js-syntax-error");
+      if (!markers.length) { show("no warnings or errors"); return true; }
+
+      var items = markers.map(({range, type}) => {
+                    var string = `[${type.split("-").slice(1).join(" ")}] ${text.textInRange(range)}`
+                    return {isListItem: true, string, value: range}
+                  }),
+          {selected: [sel]} = await text.world().filterableListPrompt("jump to warning or error", items);
+          // var {selected: [sel]} = await text.world().filterableListPrompt("jump to warning or error", items);
+      if (sel) {
+        text.saveMark();
+        text.selection = sel;
+        text.centerRow(sel.start.row);
+      }
+      return true;
+    }
+  }
+]
+commands.push(...jsIdeCommands);
+
 export default commands;

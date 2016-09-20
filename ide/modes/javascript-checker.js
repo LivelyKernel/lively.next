@@ -49,7 +49,7 @@ export default class JavaScriptChecker {
           newMarkers = globals.map(({start, end, name, type}, i) => {
             start = doc.indexToPosition(start);
             end = doc.indexToPosition(end);
-            return morph.addMarker({id: "js-checker-" + i, style: warnStyle, range: {start, end}})
+            return morph.addMarker({id: "js-checker-" + i, style: warnStyle, range: {start, end}, type: "js-undeclared-var"})
           });
       prevMarkers.slice(newMarkers.length).forEach(ea => morph.removeMarker(ea))
     // }
@@ -60,8 +60,9 @@ export default class JavaScriptChecker {
       morph.addMarker({
         id: "js-syntax-error",
         range: {start: {column: column-1, row}, end: {column: column+1, row}},
-        style: errorStyle
-      })
+        style: errorStyle,
+        type: "js-syntax-error"
+      });
     } else {
       morph.removeMarker("js-syntax-error")
     }
