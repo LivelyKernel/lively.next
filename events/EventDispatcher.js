@@ -23,6 +23,12 @@ const domEventsWeListenTo = [
   {type: 'wheel',       capturing: false}
 ];
 
+const globalDomEventsWeListenTo = [
+  {type: 'resize', capturing: false, morphMethod: "onWindowResize"},
+  {type: 'orientationchange', capturing: false, morphMethod: "onWindowResize"},
+  {type: 'scroll', capturing: false, morphMethod: "onWindowScroll"}
+];
+
 const typeToMethodMap = {
   "pointerdown":       "onMouseDown",
   "pointerup":         "onMouseUp",
@@ -196,12 +202,19 @@ export default class EventDispatcher {
   install(rootNode) {
     if (this.installed) return this;
     this.installed = true;
-    var { emitter } = this;
+    var { emitter } = this,
+        globalEmitter = System.global/*FIXME?*/;
 
     domEventsWeListenTo.forEach(({type, capturing}) => {
       let fn = evt => this.dispatchDOMEvent(evt);
       this.handlerFunctions.push({node: emitter, type, fn, capturing});
       emitter.addEventListener(type, fn, capturing);
+    });
+
+    globalEmitter.addEventListener && globalDomEventsWeListenTo.forEach(({type, capturing, morphMethod}) => {
+      let fn = evt => this.dispatchDOMEvent(evt, this.world, morphMethod);
+      this.handlerFunctions.push({node: globalEmitter, type, fn, capturing});
+      globalEmitter.addEventListener(type, fn, capturing);
     });
 
     this.keyInputHelper = new TextInput(this).install(rootNode);
@@ -419,13 +432,16 @@ export default class EventDispatcher {
       .then(() => this.activations--, err => { this.activations--; throw err; })
   }
 
-  dispatchEvent(evt) {
-    var method = typeToMethodMap[evt.type], err;
+  dispatchEvent(evt, method) {
+    method = method || typeToMethodMap[evt.type];
+
     if (!method)
       throw new Error(`dispatchEvent: ${evt.type} not yet supported!`);
 
     evt.onDispatchCallbacks.forEach(ea => ea());
     this.activations++;
+
+    var err;
     for (var j = evt.targetMorphs.length-1; j >= 0; j--) {
       try {
         evt.targetMorphs[j][method](evt);
@@ -441,11 +457,10 @@ export default class EventDispatcher {
     if (err) throw err;
   }
 
-  dispatchDOMEvent(domEvt) {
-    var targetMorph;
-    if (focusTargetingEvents.includes(domEvt.type)) {
+  dispatchDOMEvent(domEvt, targetMorph, morphMethod) {
+    if (!targetMorph && focusTargetingEvents.includes(domEvt.type)) {
       targetMorph = this.eventState.focusedMorph || this.world;
-    } else {
+    } else if (!targetMorph) {
       var targetNode = domEvt.target,
           targetId = targetNode.id;
       targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
@@ -465,7 +480,7 @@ export default class EventDispatcher {
         .then(callback)
         .then(() => this.activations--, err => { this.activations--; throw err; })
     });
-    events.forEach(evt => this.dispatchEvent(evt));
+    events.forEach(evt => this.dispatchEvent(evt, morphMethod));
   }
 
   simulateDOMEvents(...eventSpecs) {

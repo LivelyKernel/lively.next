@@ -373,6 +373,13 @@ export class World extends Morph {
     }));
   }
 
+  onWindowScroll(evt) {}
+
+  onWindowResize(evt) {
+    this._cachedWindowBounds = null;
+    this.execCommand("resize to fit window");
+  }
+
   get commands() { return worldCommands.concat(super.commands); }
   get keybindings() { return super.keybindings.concat(config.globalKeyBindings); }
   set keybindings(x) { super.keybindings = x }
