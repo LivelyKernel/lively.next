@@ -16,3 +16,31 @@ export var dummyFontMetric = {
     }, this);
   }
 }
+
+export function expectSelection(chai) {
+
+  chai.Assertion.addChainableMethod('selectionEquals', function(obj) {
+    if (!this._obj || this._obj.isSelection)
+      return this.assert(false, 'not a selection ' + this._obj);
+
+    if (!obj || (!obj.isSelection && typeof obj !== 'string'))
+      return this.assert(false, 'not a selection ' + obj);
+
+    var expected  = String(obj),
+        actual    = String(this._obj);
+
+    var isOK = expected === actual;
+
+    if (!isOK) {
+      if (this._obj.isMultiSelection && this._obj.selections.length === 1)
+        isOK = String(this._obj.selections[0]) === expected
+    }
+  
+    return this.assert(
+      isOK,
+      'expected ' + actual + ' to equal' + expected,
+      'expected ' + actual + ' to not equal' + expected,
+      expected, actual, true/*show diff*/);
+  });
+
+}

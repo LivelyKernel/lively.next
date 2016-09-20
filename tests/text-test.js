@@ -2,9 +2,11 @@
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
 import { Text, World } from "../index.js";
-import { expect } from "mocha-es6";
+import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
-import { dummyFontMetric as fontMetric } from "./test-helpers.js";
+import { dummyFontMetric as fontMetric, expectSelection } from "./test-helpers.js";
+
+expectSelection(chai);
 
 // FIXME! FontMetric should work in nodejs with jsdom as well!!!
 var inBrowser = System.get("@system-env").browser ? it :
@@ -241,46 +243,46 @@ describe("text mouse events", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*3 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
     env.eventDispatcher.simulateDOMEvents({target: sut, type: "click", position: clickPos});
 
     var clickIndex = sut.document.positionToIndex({row: 1, column: 3});
     expect(clickIndex).equals(8);
-    expect(sut.selection).stringEquals("Selection(1/3 -> 1/3)");
+    expect(sut.selection).selectionEquals("Selection(1/3 -> 1/3)");
   });
 
   it("double-click selects word", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {target: sut, type: "click", position: clickPos},
       {target: sut, type: "click", position: clickPos});
 
-    expect(sut.selection).stringEquals("Selection(1/0 -> 1/3)");
+    expect(sut.selection).selectionEquals("Selection(1/0 -> 1/3)");
   });
 
   it("triple-click selects line", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {target: sut, type: "click", position: clickPos},
       {target: sut, type: "click", position: clickPos},
       {target: sut, type: "click", position: clickPos});
 
-    expect(sut.selection).stringEquals("Selection(1/0 -> 1/9)");
+    expect(sut.selection).selectionEquals("Selection(1/0 -> 1/9)");
   });
 
   it("4-click sets cursor", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {target: sut, type: "click", position: clickPos},
@@ -288,14 +290,14 @@ describe("text mouse events", () => {
       {target: sut, type: "click", position: clickPos},
       {target: sut, type: "click", position: clickPos});
 
-    expect(sut.selection).stringEquals("Selection(1/2 -> 1/2)");
+    expect(sut.selection).selectionEquals("Selection(1/2 -> 1/2)");
   });
 
   it("5-click selects word", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {target: sut, type: "click", position: clickPos},
@@ -304,14 +306,14 @@ describe("text mouse events", () => {
       {target: sut, type: "click", position: clickPos},
       {target: sut, type: "click", position: clickPos});
 
-    expect(sut.selection).stringEquals("Selection(1/0 -> 1/3)");
+    expect(sut.selection).selectionEquals("Selection(1/0 -> 1/3)");
   });
 
   it("6-click selects line", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {target: sut, type: "click", position: clickPos},
@@ -321,7 +323,7 @@ describe("text mouse events", () => {
       {target: sut, type: "click", position: clickPos},
       {target: sut, type: "click", position: clickPos});
 
-    expect(sut.selection).stringEquals("Selection(1/0 -> 1/9)");
+    expect(sut.selection).selectionEquals("Selection(1/0 -> 1/9)");
   });
 
   it("drag sets selection", () => {
@@ -332,7 +334,7 @@ describe("text mouse events", () => {
         dragOvershotPos = pt(3*charW+padding+10, charH*2+padding+10),
         dragEndPos =      pt(3*charW+padding+2, charH*2+padding-charH/2);
 
-    expect(sut.selection).stringEquals("Selection(0/0 -> 0/0)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
     env.eventDispatcher.simulateDOMEvents(
       {type: "pointerdown", target: sut, position: dragStartPos},
@@ -343,7 +345,7 @@ describe("text mouse events", () => {
 
     var dragEndIndex = sut.document.positionToIndex({row: 1, column: 1});
     expect(dragEndIndex).equals(6);
-    expect(sut.selection).stringEquals("Selection(0/0 -> 1/2)");
+    expect(sut.selection).selectionEquals("Selection(0/0 -> 1/2)");
   });
 
 });
@@ -355,28 +357,28 @@ describe("saved marks", () => {
   it("activates mark to select", () => {
     t.cursorPosition = t.activeMark = {row: 0, column: 1};
     t.execCommand("go right"); t.execCommand("go right");
-    expect(t.selection).stringEquals("Selection(0/1 -> 0/3)");
+    expect(t.selection).selectionEquals("Selection(0/1 -> 0/3)");
   });
 
   it("reverse selection with mark", () => {
     t.saveMark({row: 0, column: 1});
     t.cursorPosition = {row: 0, column: 4};
     t.execCommand("reverse selection");
-    expect(t.selection).stringEquals("Selection(0/4 -> 0/1)");
+    expect(t.selection).selectionEquals("Selection(0/4 -> 0/1)");
   });
 
   it("activate mark by setting mark", () => {
     t.execCommand("go right"); t.execCommand("toggle active mark");
     t.execCommand("go right"); t.execCommand("go right");
     expect(t.activeMarkPosition).deep.equals({row: 0, column: 1})
-    expect(t.selection).stringEquals("Selection(0/1 -> 0/3)");
+    expect(t.selection).selectionEquals("Selection(0/1 -> 0/3)");
   });
 
   it("toggle active mark deactivates selection", () => {
     t.selection = range(0,1,0,4);
     t.execCommand("toggle active mark");
     expect(t.activeMark).equals(null);
-    expect(t.selection).stringEquals("Selection(0/4 -> 0/4)");
+    expect(t.selection).selectionEquals("Selection(0/4 -> 0/4)");
     expect(t.lastSavedMark.position).deep.equals({row: 0, column: 1});
   });
 
