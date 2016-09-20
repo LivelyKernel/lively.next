@@ -39,7 +39,7 @@ class StyleMapper {
   }
   
   getShadowStyle(morph) {
-    return morph.dropShadow && {WebkitFilter: shadowCss(morph)}
+    return morph.dropShadow && {WebkitFilter: shadowCss(morph), filter: shadowCss(morph)}
   }
   
   maskProps(morph) {
