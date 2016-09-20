@@ -2,7 +2,7 @@ import { fun, arr, obj, promise, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window, show } from "../index.js";
 import { FilterableList } from "../list.js";
-import { Browser } from "../tools.js";
+import { Browser } from "./javascript-browser.js";
 import { connect, disconnectAll } from "lively.bindings"
 
 
@@ -91,7 +91,7 @@ export class CodeSearcher extends FilterableList {
     var {column, line, module} = this.selection,
         browserOrProps = (this.state.targetBrowser ?
           this.world().getMorphWithId(this.state.targetBrowser) : null)
-             || {center: this.globalBounds().center()}
+             || {center: this.globalBounds().center()},
         browser = await Browser.browse(
           module.package().name,
           module.pathInPackage().replace(/^\.\//, ""),

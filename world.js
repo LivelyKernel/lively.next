@@ -11,7 +11,8 @@ import { connect, disconnectAll } from "lively.bindings";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
-import { ObjectDrawer, Workspace, Browser } from "./tools.js";
+import { ObjectDrawer, Workspace } from "./tools.js";
+import { Browser } from "./ide/javascript-browser.js";
 import { CodeSearcher } from "./ide/code-search.js"
 import TestRunner from "lively.morphic/ide/test-runner.js"
 
