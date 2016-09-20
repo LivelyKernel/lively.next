@@ -469,7 +469,10 @@ export class Text extends Morph {
     }, () => {
       this._needsFit = true;
       this._anchors && this.anchors.forEach(ea => ea.onInsert(range));
-      this._selection && this.selection.updateFromAnchors();
+      // When auto multi select commands run, we replace the actual selection
+      // with individual normal selections
+      if (this._multiSelection) this._multiSelection.updateFromAnchors();
+      else if (this._selection) this.selection.updateFromAnchors();
     });
 
     this.undoManager.undoStop();
@@ -498,13 +501,14 @@ export class Text extends Morph {
         selector: "insertText",
         args: [text, range.start],
       }
-    }, () => {});
-
-    this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
-    this._selection && this.selection.updateFromAnchors();
-
-    this.undoManager.undoStop();
-
+    }, () => {
+      this._anchors && this.anchors.forEach(ea => ea.onDelete(range));
+      // When auto multi select commands run, we replace the actual selection
+      // with individual normal selections
+      if (this._multiSelection) this._multiSelection.updateFromAnchors();
+      else if (this._selection) this.selection.updateFromAnchors();
+      this.undoManager.undoStop();
+    });
     return text;
   }
 

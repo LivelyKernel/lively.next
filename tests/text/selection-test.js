@@ -215,9 +215,24 @@ describe("multi select", () => {
     expect(t.selection.ranges).to.have.length(1);
   });
 
-  xit("select more like this", function() {
-    var t = text("a1.a2\n    bb3.b4\n    cc5.c6");
-    t.cursorPosition = {row: 1, column: 8};
+  it("multi cursor editing on single line", () => {
+    t.textString = "aa aa bb";
+    t.selection.range = range(0,2,0,2);
+    t.selection.addRange(range(0,5,0,5));
+    t.execCommand("insertstring", {string: "x"})
+    expect(t.textString).equals("aax aax bb");
+    expect(t.selection.selections).to.have.length(2);
+    expect(t.selection.selections[0]).selectionEquals("Selection(0/3 -> 0/3)");
+    expect(t.selection.selections[1]).selectionEquals("Selection(0/7 -> 0/7)");
+  });
+
+  it("select more like this", function() {
+    var t = text("aa bb\n  aa cc");
+    t.selection.range = range(0,0,0,2);
+    t.execCommand("multi select more forward");    
+    expect(t.selection.selections).to.have.length(2);
+    expect(t.selection.selections[0]).selectionEquals("Selection(0/0 -> 0/2)");
+    expect(t.selection.selections[1]).selectionEquals("Selection(1/2 -> 1/4)");
   });
 
   describe("range merging", () => {
@@ -228,7 +243,7 @@ describe("multi select", () => {
       t.selection.addRange(range(0,4,0,4));
       expect(t.selection.ranges).to.have.length(2);
       expect(t.selection).stringEquals("MultiSelection(Selection(1/5 -> 1/5), Selection(0/4 -> 0/4))")
-    })
+    });
 
     it("overlapping", function() {
       t.textString = "Hello\nWorld";
