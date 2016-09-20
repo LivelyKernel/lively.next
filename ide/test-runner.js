@@ -322,49 +322,30 @@ export default class TestRunner extends HTMLMorph {
     return tester;
   }
 
-//
-//
-// // changed at Wed May 04 2016 04:20:54 GMT-0700 (PDT) by robertkrahn
-// this.addScript(function findEditorForFile(file) {
-//   var eds = $world.submorphs
-//               .filter(ea => ea.name && ea.name.startsWith("lively.vm-editor"))
-//               .pluck("targetMorph"),
-//       eds = eds.filter(ea => ea.visibleModules().includes(file));
-//
-//   if (!eds.length) {
-//     return Promise.reject(new Error("Cannot find lively.vm editor for file " + file));
-//   }
-//
-//   var ed = eds.find(ea => ea.state.selection && ea.state.selection.name === file) || eds[0];
-//   return Promise.resolve(ed);
-// });
-//
-//
 
-  jumpToTest(test, file) {
-
-    // this.jumpToTest({fullTitle: "completion finds inherited props"}, "http://localhost:9001/node_modules/lively.vm/tests/completion-test.js")
-    //   .catch(show.curry("%s"))
-
-    show(`jumpToTest ${test.fullTitle} in ${file}`)
-
-    // return this.findEditorForFile(file)
-    //   .then(e =>
-    //
-    //     e.uiSelect({type: "module", name: file})
-    //       .then(() => {
-    //         var ed = e.get("editor"),
-    //             tests = this.testsFromAST(ed.withASTDo()),
-    //             target = tests.find(ea => ea.fullTitle === test.fullTitle);
-    //         if (!target) throw new Error(`Cannot find test ${test.fullTitle} in file ${file}`)
-    //         ed.getSelection().setRange(ed.astNodeRange(target.node), true);
-    //         ed.aceEditor.renderer.scrollSelectionIntoView(ed.getSelection().anchor, ed.getSelection().lead);
-    //     }))
-    //   .catch(err => this.showError(err));
+  findBrowserForFile(file) {
+    var world = this.world(),
+        browsers = world.getWindows().filter(ea => ea.isBrowser),
+        browserWithFile = browsers.find(({selectedModule}) => selectedModule && selectedModule.name === file);
+    return browserWithFile || world.execCommand("open browser");
   }
 
-//
+  async jumpToTest(test, file) {
+    try {
+      var browser = await this.findBrowserForFile(file);
+      browser.activate();
+      await browser.searchForModuleAndSelect(file);
+      var ed = browser.get("sourceEditor");
+      ed = ed.text || ed;
 
+      var tests = this.testsFromSource(ed.textString),
+          target = tests.find(ea => ea.fullTitle === test.fullTitle);
+      if (!target) throw new Error(`Cannot find test ${test.fullTitle} in file ${file}`)
+
+      ed.selection = ed.astNodeRange(target.node);
+      ed.centerRow(ed.selection.start.row);
+    } catch (err) { this.showError(err); }
+  }
 
   onClickCollapseButton(target, file) {
 
@@ -419,11 +400,12 @@ export default class TestRunner extends HTMLMorph {
   }
 
 
-  onClickFile(file) {
-    show("clicked on " + file)
-    // return this.findEditorForFile(file)
-    //   .then(ed => ed.uiSelect(file))
-    //   .catch(err => this.showError(err));
+  async onClickFile(file) {
+    try {
+      var browser = await this.findBrowserForFile(file);
+      browser.activate();
+      await browser.searchForModuleAndSelect(file);
+    } catch (err) { this.showError(err); }
   }
 
   onClickSuite(suiteTitle, file) {
@@ -635,37 +617,55 @@ export default class TestRunner extends HTMLMorph {
 
   }
 
-//
-//
-// // changed at Wed May 04 2016 04:20:54 GMT-0700 (PDT) by robertkrahn
-// this.addScript(function testsFromAST(ast) {
-//   // Traverses the ast and constructs the nested mocha suites and tests as a list like
-//   // [{fullTitle: "completion", node: {/*...*/}, type: "suite"},
-//   //  {fullTitle: "completion can compute properties and method completions of an object", node: {/*...*/}, type: "test"},
-//   //  {fullTitle: "completion finds inherited props", node: {/*...*/}, type: "test"},
-//   //  {fullTitle: "completion of resolved promise", node: {/*...*/}, type: "test"}]
-//
-//   var testStack = [], testsAndSuites = [];
-//
-//   lively.ast.withMozillaAstDo(ast, null, (next, node, context, depth, path) => {
-//     if (node.type === "CallExpression" && node.callee.name && node.callee.name.match(/describe|it/)) {
-//       var spec = {
-//         title: node.arguments[0].value,
-//         type: node.callee.name.match(/describe/) ? "suite" : "test"
-//       }
-//       testStack.push(spec);
-//       var recorded = {fullTitle: arr.pluck(testStack, "title").join(" "), type: spec.type, node: node};
-//       testsAndSuites.push(recorded);
-//     }
-//     next();
-//     if (spec) {
-//       testStack.pop();
-//     }
-//   })
-//
-//   return testsAndSuites;
-// });
-//
+
+  testsFromSource(source) {
+    // Traverses the ast and constructs the nested mocha suites and tests as a list like
+    // [{fullTitle: "completion", node: {/*...*/}, type: "suite"},
+    //  {fullTitle: "completion can compute properties and method completions of an object", node: {/*...*/}, type: "test"},
+    //  {fullTitle: "completion finds inherited props", node: {/*...*/}, type: "test"},
+    //  {fullTitle: "completion of resolved promise", node: {/*...*/}, type: "test"}]
+  
+    var testStack = [], testsAndSuites = [];
+
+    var {parse} = System.get(System.decanonicalize("lively.ast")),
+        ast = parse(source);
+
+    lively.ast.acorn.walk.recursive(ast, {}, {
+      CallExpression: (node, state, c) => {
+        if (node.callee.name && node.callee.name.match(/describe|it/)) {
+          var spec = {
+            title: node.arguments[0].value,
+            type: node.callee.name.match(/describe/) ? "suite" : "test"
+          }
+          testStack.push(spec);
+          var recorded = {fullTitle: arr.pluck(testStack, "title").join(" "), type: spec.type, node: node};
+          testsAndSuites.push(recorded);
+        }
+        lively.ast.acorn.walk.base.CallExpression(node, state, c);
+        if (spec) {
+          testStack.pop();
+        }
+      }
+    }, ({...lively.ast.acorn.walk.base, SpreadProperty: function (node, st, c) {}}))
+
+    return testsAndSuites;
+
+    // lively.ast.withMozillaAstDo(ast, null, (next, node, context, depth, path) => {
+    //   if (node.type === "CallExpression" && node.callee.name && node.callee.name.match(/describe|it/)) {
+    //     var spec = {
+    //       title: node.arguments[0].value,
+    //       type: node.callee.name.match(/describe/) ? "suite" : "test"
+    //     }
+    //     testStack.push(spec);
+    //     var recorded = {fullTitle: arr.pluck(testStack, "title").join(" "), type: spec.type, node: node};
+    //     testsAndSuites.push(recorded);
+    //   }
+    //   next();
+    //   if (spec) {
+    //     testStack.pop();
+    //   }
+    // })
+  }
 
   uncollapseAll() {
     this.state.collapsedSuites = {};

@@ -898,6 +898,14 @@ export class Text extends Morph {
     return {start, end: pragraphEnd};
   }
 
+  astNodeRange(node) {
+    // node is expected to be in mozilla AST format, ie {type, start: INDEX, end: INDEX}
+    return {
+      start: this.document.indexToPosition(node.start),
+      end: this.document.indexToPosition(node.end)
+    };
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // text undo / redo
 

@@ -27,19 +27,17 @@ var commands = [
     scrollCursorIntoView: false,
     exec: function(morph, opts = {delete: false}) {
       var sel = morph.selection,
-          range = sel.isEmpty() ? Range.fromPositions(morph.cursorPosition, morph.lastSavedMark || morph.cursorPosition) : sel.range,
+          range = sel.isEmpty() ? morph.lineRange() : sel.range,
           text = morph.textInRange(range);
 
       morph.env.eventDispatcher.doCopy(text);
       morph.env.eventDispatcher.killRing.add(text);
+      morph.saveMark(sel.anchor);
+      morph.activeMark = null;
       if (opts["delete"])
         morph.deleteText(range);
-      else if (!sel.isEmpty()) {
-        morph.activeMark = null;
-        morph.saveMark(sel.anchor);
+      else if (!sel.isEmpty())
         sel.collapse(sel.lead);
-      }
-
       return true;
     }
   },
@@ -997,7 +995,7 @@ commands.push(
   {
     name: "doit",
     doc: "Evaluates the selecte code or the current line and report the result",
-    exec: async function(morph, opts) {
+    exec: async function(morph, opts, count = 1) {
       // opts = {targetModule}
       maybeSelectCommentOrLine(morph);
       var result, err;
@@ -1007,7 +1005,7 @@ commands.push(
       } catch (e) { err = e; }
       err ?
         morph.world().logError(err) : 
-        morph.world().setStatusMessage(printEvalResult(result.value));
+        morph.world().setStatusMessage(String(result.value) + "\n" + printEvalResult(result.value, count));
       return result;
     }
   },

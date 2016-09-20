@@ -1,7 +1,7 @@
 import { Color, pt, Rectangle } from "lively.graphics";
 import { arr, promise } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
-import { Window, morph } from "../index.js";
+import { Window, morph, show } from "../index.js";
 import { GridLayout } from "../layout.js";
 import CodeEditor from "./code-editor.js";
 
@@ -199,9 +199,6 @@ export class Browser extends Window {
     return (await System.import("lively-system-interface")).localInterface;
   }
 
-  async allPackages() { return (await this.systemInterface()).getPackages(); }
-
-
   get selectedModule() {
     return this.get("moduleList").selection;
   }
@@ -210,29 +207,18 @@ export class Browser extends Window {
     return this.get("packageList").selection;
   }
 
-// await this.getWindow().modulesOfPackage(this.getWindow().get("packageList").selection)
-// this.getWindow().get("packageList").selection.address
-// await livelySystem.getPackage(this.getWindow().get("packageList").selection.address)
-
   async modulesOfPackage(p) {
     var p = await (await this.systemInterface()).getPackage(p.address);
     return p.modules.map(m => ({...m, package: p, nameInPackage: m.name.replace(p.address, "").replace(/^\//, "")}));
   }
 
-  async allModules() {
-    var modules = [];
-    for (let p of await this.allPackages())
-      modules.push(...this.modulesOfPackage(p))
-    return modules;
-  }
-
   async onLoad() {
     this.reset();
-    this.get("packageList").items = (await this.allPackages()).map(p => ({isListItem: true, string: p.name, value: p}));
+    this.get("packageList").items = (await (await this.systemInterface()).getPackages()).map(p => ({isListItem: true, string: p.name, value: p}));
   }
 
   async selectPackageNamed(pName) {
-    var p = this.get("packageList").selection = this.get("packageList").values.find(({name}) => name === pName);
+    var p = this.get("packageList").selection = this.get("packageList").values.find(({address, name}) => address === pName || name === pName);
     await this.get("moduleList").whenRendered();
     return p;
   }
@@ -244,6 +230,25 @@ export class Browser extends Window {
       await promise.waitFor(1000, () => !!this.get("sourceEditor").text.textString);
     } catch(err) {}
     return m;
+  }
+
+  async searchForModuleAndSelect(moduleURI) {
+    // moduleURI = System.decanonicalize("lively.vm")
+    // var x= await (that.getWindow().searchForModuleAndSelect(System.decanonicalize("lively.vm")));
+
+    var {selectedModule, selectedPackage} = this;
+    if (selectedModule && selectedModule.name === moduleURI)
+      return selectedModule;
+
+    var system = await this.systemInterface(),
+        mods = await system.getModules(),
+        m = mods.find(({name}) => name === moduleURI),
+        p = m && await system.getPackageForModule(m.name);
+
+    if (!p) return null;
+    await this.selectPackageNamed(p.address);
+    await this.selectModuleNamed(m.name);
+    return this.selectedModule;    
   }
 
   async onPackageSelected(p) {
