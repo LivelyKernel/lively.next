@@ -485,7 +485,7 @@ export class Text extends Morph {
 
     if (range.isEmpty()) return;
 
-    this.undoManager.undoStart(this, "insertText");
+    this.undoManager.undoStart(this, "deleteText");
     var {document: doc, renderer} = this,
         text = doc.textInRange(range);
     doc.remove(range);
@@ -507,8 +507,8 @@ export class Text extends Morph {
       // with individual normal selections
       if (this._multiSelection) this._multiSelection.updateFromAnchors();
       else if (this._selection) this.selection.updateFromAnchors();
-      this.undoManager.undoStop();
     });
+    this.undoManager.undoStop();
     return text;
   }
 
