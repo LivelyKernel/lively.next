@@ -215,7 +215,7 @@ export class Renderer {
                     {namespace: "http://www.w3.org/2000/svg",
                      attributes:
                       {"sroke-width": path.borderWidth,
-                       stroke: path.gradient ? "url(#" + path.id + ")" : path.borderColor,
+                       stroke: path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor,
                        d: "M"+x1+","+y1+" "+"L"+x2+","+y2}});
 
     for (var i = 0; i < path.vertices.length - 1; i++) {
@@ -228,7 +228,7 @@ export class Renderer {
     const vertices = h("polygon",
                         {namespace: "http://www.w3.org/2000/svg",
                          attributes:
-                          {style: "fill:" + (polygon.gradient ? "url(#" + polygon.id + ")" : polygon.fill) +
+                          {style: "fill:" + (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill) +
                                   ";stroke-width:" + polygon.borderWidth +
                                   ";stroke:" + polygon.borderColor,
                            points: polygon.vertices.map(({x,y}) => x + "," + y).join(" ")}});
@@ -244,7 +244,7 @@ export class Renderer {
                      style: {transform, transformOrigin, position, opacity,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},
-              [h("svg", {namespace: "http://www.w3.org/2000/svg",
+              [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
                         style: {position: "absolute", "pointer-events": "none"},
                         attributes:
                          {width, height, "viewBox": [0,0,width,height].join(" "),
@@ -258,7 +258,7 @@ export class Renderer {
 function renderGradient(morph) {
   return h("defs", {namespace: "http://www.w3.org/2000/svg"},
                 h("linearGradient", {namespace: "http://www.w3.org/2000/svg",
-                                     attributes: {id: morph.id,
+                                     attributes: {id: "gradient-" + morph.id,
                                                   gradientUnits: "userSpaceOnUse"}
                                      },
                     morph.gradient.map(([k, c]) =>
