@@ -99,12 +99,14 @@ var commands = [
   {
     name: "text undo",
     doc: "undo text changes",
+    multiSelectAction: "single",
     exec: function(morph) { morph.textUndo(); return true; }
   },
 
   {
     name: "text redo",
     doc: "redo text changes",
+    multiSelectAction: "single",
     exec: function(morph) { morph.textRedo(); return true; }
   },
 
@@ -450,16 +452,25 @@ var commands = [
   {
     name: "join line",
     exec: function(morph, args = {withLine: "before"}) {
-      var {row} = morph.cursorPosition;
+      var {start, end, lead} = morph.selection;
+      if (!morph.selection.isEmpty()) {
+        if (start.row === end.row) return true;
+        var undo = morph.undoManager.ensureNewGroup(morph, "join line"),
+            joinPositions = arr.range(0, end.row-1 - start.row).map(_ => morph.joinLine(start.row));
+        morph.undoManager.group(undo);
+        if (morph.selection.isMultiSelection) {
+          morph.cursorPosition = joinPositions[0];
+          joinPositions.slice(1).forEach(pos => morph.selection.addRange({start: pos, end: pos}));
+        }
+        return true;
+      }
+      var {row} = lead;
       if (args.withLine === "before" && row <= 0) return true
       if (args.withLine === "after" && row >= morph.document.endPosition.row) return true;
-      var firstRow = args.withLine === "before" ? row-1 : row,
-          otherRow = args.withLine === "before" ? row : row+1,
-          firstLine = morph.getLine(firstRow),
-          otherLine = morph.getLine(otherRow),
-          joined = firstLine + otherLine.replace(/^\s+/, "") + "\n";
-      morph.replace({start: {column: 0, row: firstRow}, end: {column: 0, row: otherRow+1}}, joined, true);
-      morph.cursorPosition = {row: firstRow, column: firstLine.length}
+      morph.undoManager.group();
+      var firstRow = args.withLine === "before" ? row-1 : row;
+      morph.cursorPosition = morph.joinLine(firstRow);
+      morph.undoManager.group();
       return true;
     }
   },
@@ -761,11 +772,11 @@ var commands = [
         // Takes a selection or the current line and will insert line breaks so
         // that all selected lines are not longer than printMarginColumn or the
         // specified count parameter. Breaks at word bounds.
-        if (args && args.count === 4/*Ctrl-U*/) { morph.execCommand('joinLines'); return; }
+        if (count === 4/*Ctrl-U*/) return morph.execCommand('join line');
 
         if (morph.selection.isEmpty()) morph.selectLine();
         var sel                = morph.selection,
-            col                = args && args.count || /*morph.getOption('printMarginColumn') ||*/ 80,
+            col                = count || /*morph.getOption('printMarginColumn') ||*/ 80,
             rows               = sel.selectedRows,
             range              = sel.range,
             splitRe            = /[ ]+/g,

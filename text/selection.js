@@ -238,6 +238,8 @@ export class MultiSelection extends Selection {
     this.selections = [new Selection(textMorph, range)];
   }
 
+  get isMultiSelection() { return true; }
+
   uninstall() {
     this.selections.forEach(ea => ea.uninstall());
   }

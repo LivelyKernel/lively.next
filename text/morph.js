@@ -547,6 +547,16 @@ export class Text extends Morph {
     return this.withLinesDo(startRow, endColumn === 0 && endRow > startRow ? endRow-1 : endRow, doFunc);
   }
 
+  joinLine(row = this.cursorPosition.row) {
+    // joins line identified by row with following line
+    // returns the position inside the joined line where the join happened
+    var firstLine = this.getLine(row),
+        otherLine = this.getLine(row+1),
+        joined = firstLine + otherLine.replace(/^\s+/, "") + this.document.constructor.newline;
+    this.replace({start: {column: 0, row}, end: {column: 0, row: row+2}}, joined, true);
+    return {row, column: firstLine.length};
+  }
+
   get whatsVisible() {
     var startRow = this.renderer.firstVisibleLine,
         endRow = this.renderer.lastVisibleLine,
