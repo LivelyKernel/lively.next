@@ -51,7 +51,6 @@ class NameHalo extends HaloItem {
   constructor(props) {
 
     super({
-        tooltip: "Click to edit the morph's name",
         borderRadius: 15,
         fill: Color.gray.withA(.7),
         borderColor: Color.green,
@@ -60,7 +59,8 @@ class NameHalo extends HaloItem {
       });
 
     this.nameHolder = new Text({
-        leftCenter: pt(5,8),
+        padding: 2,
+        tooltip: "Click to edit the morph's name",
         fixedHeight: true,
         height: 20,
         fill: Color.gray.withA(0),
@@ -68,25 +68,19 @@ class NameHalo extends HaloItem {
         fill: Color.transparent,
         fontColor: Color.darkgray});
 
-    this.addMorph({
-      draggable: false,
-      height: 20, fill: Color.gray.transparent,
-      submorphs: [this.nameHolder]});
+    this.addMorph(this.nameHolder);
 
     this.validityIndicator = new Text({
+      origin: pt(-1,-1),
+      name: "validityIcon",
+      styleClasses: ["morph", "fa", "fa-check"],
       readOnly: true,
       draggable: false,
-      fill: Color.orange.withA(0),
+      fill: Color.transparent,
       fontColor: Color.green,
       fixedWidth: true,
       fixedHeight: true,
-      extent: pt(18,18),
-      submorphs: [{name: "validityIcon",
-                   draggable: false,
-                   styleClasses: ["morph", "fa", "fa-check"],
-                   center: pt(9,9),
-                   fill: Color.white.withA(0),
-                   extent: pt(18,18)}]});
+      extent: pt(20,20)});
 
     this.alignInHalo();
   }
@@ -118,11 +112,11 @@ class NameHalo extends HaloItem {
     if (valid) {
       this.borderColor = Color.green;
       this.validityIndicator.fontColor = Color.green;
-      this.validityIndicator.get("validityIcon").styleClasses = ["fa", "fa-check"];
+      this.validityIndicator.styleClasses = ["fa", "fa-check"];
     } else {
       this.borderColor = Color.red;
       this.validityIndicator.fontColor = Color.red;
-      this.validityIndicator.get("validityIcon").styleClasses = ["fa", "fa-exclamation-circle"];
+      this.validityIndicator.styleClasses = ["fa", "fa-exclamation-circle"];
     }
   }
 
