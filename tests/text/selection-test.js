@@ -2,9 +2,11 @@
 import { Selection, MultiSelection } from "../../text/selection.js";
 import TextDocument from "../../text/document.js";
 import { Text } from "../../text/morph.js";
-import { expect } from "mocha-es6";
-import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import { expect, chai } from "mocha-es6";
+import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+
+expectSelection(chai);
 
 import { Range } from "lively.morphic/text/range.js";
 
@@ -120,9 +122,9 @@ describe("text selection", () => {
       t.textString = "1234\n1\n1234"
       t.cursorPosition = {row: 0, column: 3};
       t.selection.selectDown();
-      expect(t.selection).stringEquals("Selection(0/3 -> 1/1)");
+      expect(t.selection).selectionEquals("Selection(0/3 -> 1/1)");
       t.selection.selectDown();
-      expect(t.selection).stringEquals("Selection(0/3 -> 2/3)");
+      expect(t.selection).selectionEquals("Selection(0/3 -> 2/3)");
     });
 
   });
@@ -133,7 +135,7 @@ describe("text selection", () => {
       var sel = t.selection;
       sel.range = range(0,1,0,3);
       sel.lead = {column: 0, row: 0};
-      expect(sel).stringEquals("Selection(0/1 -> 0/0)");
+      expect(sel).selectionEquals("Selection(0/1 -> 0/0)");
       expect(sel.range).stringEquals("Range(0/0 -> 0/1)");
     });
 
@@ -141,7 +143,7 @@ describe("text selection", () => {
       var sel = t.selection;
       sel.range = range(1,5,1,2);
       sel.lead = {column: 1, row: 0};
-      expect(sel).stringEquals("Selection(1/5 -> 0/1)");
+      expect(sel).selectionEquals("Selection(1/5 -> 0/1)");
       expect(sel.range).stringEquals("Range(0/1 -> 1/5)");
     });
 
@@ -156,18 +158,18 @@ describe("text selection", () => {
       t.insertText("abc", {column: 1, row: 0});
       expect(t.textString).equals("habcello\nworld");
       expect(t.selection.text).equals("lo", "2 after insert");
-      expect(t.selection).stringEquals("Selection(0/6 -> 0/8)");
+      expect(t.selection).selectionEquals("Selection(0/6 -> 0/8)");
 
       t.deleteText(range(0,0, 0,3));
       expect(t.selection.text).equals("lo", "3 after delete");
-      expect(t.selection).stringEquals("Selection(0/3 -> 0/5)");
+      expect(t.selection).selectionEquals("Selection(0/3 -> 0/5)");
 
       t.deleteText(range(0,2, 0,4));
       expect(t.selection.text).equals("o", "4 after delete into");
-      expect(t.selection).stringEquals("Selection(0/2 -> 0/3)", "4 after delete into");
+      expect(t.selection).selectionEquals("Selection(0/2 -> 0/3)", "4 after delete into");
 
       t.deleteText(range(0,1, 1,0));
-      expect(t.selection).stringEquals("Selection(0/1 -> 0/1)", " 5after delete crossing selection");
+      expect(t.selection).selectionEquals("Selection(0/1 -> 0/1)", " 5after delete crossing selection");
     });
 
     it("anchor stays when following text is deleted", () => {
@@ -175,7 +177,7 @@ describe("text selection", () => {
       t.cursorPosition = {row: 1, column: 1};
       t.deleteText({start: {row: 2, column: 0}, end: {row: 3, column: 0}});
       expect(t.textString).equals("a\nb\nd");
-      expect(t.selection).stringEquals("Selection(1/1 -> 1/1)");
+      expect(t.selection).selectionEquals("Selection(1/1 -> 1/1)");
     });
 
   });
@@ -234,6 +236,8 @@ describe("multi select", () => {
       t.selection.addRange(range(0,2,0,5));
       expect(t.selection.ranges).to.have.length(2);
       t.selection.addRange(range(0,2,1,0));
+      expect(t.selection.ranges).to.have.length(2);
+      t.selection.addRange(range(0,2,1,1));
       expect(t.selection.ranges).to.have.length(1);
     });
 

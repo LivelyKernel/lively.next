@@ -1,10 +1,12 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { Text } from "../../index.js";
-import { expect } from "mocha-es6";
+import { expect, chai } from "mocha-es6";
 import { arr } from "lively.lang";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
-import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
 import bowser from "bowser";
+
+expectSelection(chai);
 
 import { Occur, occurStartCommand } from "../../text/occur.js"
 
@@ -188,11 +190,11 @@ describe("iy", () => {
   
   it("jumps forward", async () => {
     await t.simulateKeys(meta + "-. input-3");
-    expect(t.selection).stringEquals("Selection(0/5 -> 0/5)");
+    expect(t.selection).selectionEquals("Selection(0/5 -> 0/5)");
     await t.simulateKeys("input-3");
-    expect(t.selection).stringEquals("Selection(1/6 -> 1/6)");
+    expect(t.selection).selectionEquals("Selection(1/6 -> 1/6)");
     await t.simulateKeys(meta + "-, input-2 input-2");
-    expect(t.selection).stringEquals("Selection(0/3 -> 0/3)");
+    expect(t.selection).selectionEquals("Selection(0/3 -> 0/3)");
     // deactivate by pressing another key and allowing it to do its normal thing
     await t.simulateKeys("x");
     expect(t.textString).equals("1 2x 3 4\n 1 2 3 4")

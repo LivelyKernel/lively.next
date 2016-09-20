@@ -2,8 +2,11 @@
 import { promise } from "lively.lang";
 import { Text } from "../../text/morph.js";
 import { Range } from "../../text/selection.js";
-import { expect } from "mocha-es6";
-import { dummyFontMetric as fontMetric } from "../test-helpers.js";
+import { expect, chai } from "mocha-es6";
+import { dummyFontMetric as fontMetric, expectSelection } from "../test-helpers.js";
+
+expectSelection(chai);
+
 import config from "../../config.js";
 
 function range(startRow, startCol, endRow, endCol) {
@@ -23,7 +26,7 @@ describe("undo", function() {
     expect(text.textString).equals("hello\nfooworld");
     text.textUndo();
     expect(text.textString).equals("hello\nworld");
-    expect(text.selection).stringEquals("Selection(1/0 -> 1/0)");
+    expect(text.selection).selectionEquals("Selection(1/0 -> 1/0)");
   });
 
   it("can undo and redo simple insert", () => {
@@ -31,7 +34,7 @@ describe("undo", function() {
     text.textUndo();
     text.textRedo();
     expect(text.textString).equals("hello\nfooworld");
-    expect(text.selection).stringEquals("Selection(1/0 -> 1/3)");
+    expect(text.selection).selectionEquals("Selection(1/0 -> 1/3)");
   });
 
   it("undo then redo", () => {
@@ -42,7 +45,7 @@ describe("undo", function() {
     text.textUndo(); text.textUndo();
     text.textRedo(); text.textRedo();
     expect(text.textString).equals("hello\nfoo barworld");
-    expect(text.selection).stringEquals("Selection(1/3 -> 1/7)");
+    expect(text.selection).selectionEquals("Selection(1/3 -> 1/7)");
   });
 
   it("groups undos", () => {
@@ -55,7 +58,7 @@ describe("undo", function() {
     expect(text.textString).equals("hello\nworld");
     text.textRedo();
     expect(text.textString).equals("abchello\nworld");
-    expect(text.selection).stringEquals("Selection(0/0 -> 0/3)");
+    expect(text.selection).selectionEquals("Selection(0/0 -> 0/3)");
   });
 
   it("groups debounced", async () => {

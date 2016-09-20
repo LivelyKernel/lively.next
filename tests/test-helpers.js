@@ -20,7 +20,7 @@ export var dummyFontMetric = {
 export function expectSelection(chai) {
 
   chai.Assertion.addChainableMethod('selectionEquals', function(obj) {
-    if (!this._obj || this._obj.isSelection)
+    if (!this._obj || !this._obj.isSelection)
       return this.assert(false, 'not a selection ' + this._obj);
 
     if (!obj || (!obj.isSelection && typeof obj !== 'string'))

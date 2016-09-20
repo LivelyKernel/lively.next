@@ -449,9 +449,9 @@ describe("text movement and selection commands", () => {
     it("moves to paragraph borders", () => {
       t.cursorPosition = {row: 0, column: 0};
       t.execCommand("goto paragraph above");
-      expect(t.selection).stringEquals("Selection(0/0 -> 0/0)");
+      expect(t.selection).selectionEquals("Selection(0/0 -> 0/0)");
       t.execCommand("goto paragraph below");
-      expect(t.selection).stringEquals("Selection(3/0 -> 3/0)");
+      expect(t.selection).selectionEquals("Selection(3/0 -> 3/0)");
     });
 
   });

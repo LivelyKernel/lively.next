@@ -24,12 +24,13 @@ export class Selection {
     this.cursorBlinkProcess = null;
   }
 
+  get isSelection() { return true; }
+
   uninstall() {
     this.cursorBlinkStop();
     this.textMorph.removeAnchor(this.startAnchor);
     this.textMorph.removeAnchor(this.endAnchor);
   }
-
 
   mergeWith(otherSel) {
     if (!otherSel || !otherSel.isSelection)
