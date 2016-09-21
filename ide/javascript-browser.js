@@ -137,7 +137,7 @@ export class Browser extends Window {
       ...props,
       targetMorph: this.build()
     });
-    this.state = {associatedSearchPanel: null};
+    this.state = {associatedSearchPanel: null, packageUpdateInProgress: null, moduleUpdateInProgress: null};
     this.onLoad();
   }
 
@@ -146,6 +146,9 @@ export class Browser extends Window {
   focus() {
     this.get("sourceEditor").focus();
   }
+
+  whenPackageUpdated() { return this.state.packageUpdateInProgress || Promise.resolve(); }
+  whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   build() {
     var style = {borderWidth: 1, borderColor: Color.gray, fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"},
@@ -163,12 +166,14 @@ export class Browser extends Window {
         });
     // FIXME? how to specify that directly??
     container.layout.grid.row(0).adjustProportion(-1/5);
-    container.get("sourceEditor").text.__defineGetter__("evalEnvironment", () => {
-      if (!this.selectedModule) throw new Error("Browser has no module selected");
+    container.get("sourceEditor").text.__defineGetter__("evalEnvironment", function () {
+      var browser = this.getWindow();
+      if (!browser.selectedModule) throw new Error("Browser has no module selected");
       return {
-        targetModule: this.selectedModule.name
+        targetModule: browser.selectedModule.name,
+        context: this.doitContext || this.owner.doitContext || this
       }
-    })
+    });
     return container;
   }
 
@@ -207,9 +212,21 @@ export class Browser extends Window {
     return this.get("packageList").selection;
   }
 
-  async modulesOfPackage(p) {
-    var p = await (await this.systemInterface()).getPackage(p.address);
-    return p.modules.map(m => ({...m, package: p, nameInPackage: m.name.replace(p.address, "").replace(/^\//, "")}));
+  async packageResources(p) {
+    // await this.packageResources(this.selectedPackage)
+    var system = await this.systemInterface(),
+        resourceURLs = await system.resourcesOfPackage(p.address),
+        loadedModules = arr.groupByKey(p.modules, "name");
+    return resourceURLs
+      // .filter(url => !url.endsWith("/"))
+      .filter(url => url.endsWith(".js") || url.endsWith(".json"))
+      .map(url => {
+        var nameInPackage = url.replace(p.address, "").replace(/^\//, "");
+        return url in loadedModules ?
+          {...loadedModules[url][0], isLoaded: true, nameInPackage} :
+          {isLoaded: false, name: url, nameInPackage}
+      })
+      .map(ea => ({...ea, package: p, nameInPackage: ea.nameInPackage}));
   }
 
   async onLoad() {
@@ -219,16 +236,13 @@ export class Browser extends Window {
 
   async selectPackageNamed(pName) {
     var p = this.get("packageList").selection = this.get("packageList").values.find(({address, name}) => address === pName || name === pName);
-    await this.get("moduleList").whenRendered();
+    await this.whenPackageUpdated();
     return p;
   }
 
   async selectModuleNamed(mName) {
     var m = this.get("moduleList").selection = this.get("moduleList").values.find(({nameInPackage, name}) => mName === name || mName === nameInPackage);
-    await this.get("sourceEditor").text.whenRendered();
-    try { // FIXME, text.whenRendered() doesn't ensure that textString is available...
-      await promise.waitFor(1000, () => !!this.get("sourceEditor").text.textString);
-    } catch(err) {}
+    await this.whenModuleUpdated();
     return m;
   }
 
@@ -252,24 +266,31 @@ export class Browser extends Window {
   }
 
   async onPackageSelected(p) {
-    if (!p) {
-      this.get("moduleList").items = [];
-      this.get("sourceEditor").textString = "";
-      this.title = "browser";
-      return;
+    if (!this.state.packageUpdateInProgress) {
+      var deferred = promise.deferred();
+      this.state.packageUpdateInProgress = deferred.promise;
     }
 
-    this.title = "browser – " + p.name;
-
-    this.get("packageList").scrollSelectionIntoView();
-    this.get("moduleList").selection = null;
-    
-    await this.updateModuleList(p);
+    try {
+      if (!p) {
+        this.get("moduleList").items = [];
+        this.get("sourceEditor").textString = "";
+        this.title = "browser";
+        return;
+      }
+  
+      this.title = "browser – " + p.name;
+  
+      this.get("packageList").scrollSelectionIntoView();
+      this.get("moduleList").selection = null;
+      
+      await this.updateModuleList(p);
+    } finally { deferred && deferred.resolve(p); }
   }
 
   async onModuleSelected(m) {
-    var pack = this.get("packageList").selection,
-        module = this.get("moduleList").selection;
+
+    var pack = this.get("packageList").selection;
 
     if (!m) {
       this.get("sourceEditor").textString = "";
@@ -277,19 +298,61 @@ export class Browser extends Window {
       return;
     }
 
-    this.get("moduleList").scrollSelectionIntoView();
-    this.title = "browser – " + pack.name + "/" + module.nameInPackage;
-    var source = await (await this.systemInterface()).moduleRead(m.name);
-    this.get("sourceEditor").textString = source;
-    this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
+    if (!this.state.moduleUpdateInProgress) {
+      var deferred = promise.deferred()
+      this.state.moduleUpdateInProgress = deferred.promise;
+    }
+
+    try {
+      var system = await this.systemInterface();
+  
+      if (!m.isLoaded && m.name.endsWith("js")) {
+        var err;
+        try {
+          await System.import(m.name);
+        } catch(e) { err = e; }
+  
+        if (err) this.world().logError(err);
+  
+        var p = await system.getPackage(pack.address),
+            isLoadedNow = p.modules.map(ea => ea.name).includes(m.name);
+
+        if (isLoadedNow) {
+          Object.assign(pack, p);
+          m.isLoaded = true;
+          // await this.selectPackageNamed(pack.address);
+          await this.updateModuleList();
+          this.state.moduleUpdateInProgress = null;
+          await this.selectModuleNamed(m.name);
+          m = this.selectedModule;
+          if (deferred)
+            this.state.moduleUpdateInProgress = deferred.promise;
+          return;
+        }
+      }
+  
+      this.get("moduleList").scrollSelectionIntoView();
+      this.title = "browser – " + pack.name + "/" + m.nameInPackage;
+      var source = await system.moduleRead(m.name);
+      this.get("sourceEditor").textString = source;
+      this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
+    } finally { deferred && deferred.resolve(m); }
   }
 
   async updateModuleList(p = this.selectedPackage) {
     if (!p) return;
-    var mods = await this.modulesOfPackage(p);
-    this.get("moduleList").items = arr.sortBy(
-      mods.map(m => ({string: m.nameInPackage, value: m, isListItem: true})),
-      ({string}) => string.toLowerCase());
+    var mods = await this.packageResources(p);
+
+    this.get("moduleList").items = mods
+      .sort((a, b) => {
+        if (a.isLoaded && !b.isLoaded) return -1;
+        if (!a.isLoaded && b.isLoaded) return 1;
+        if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
+        if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
+        return 1
+      })
+      .map(m => ({string: m.nameInPackage + (m.isLoaded ? "" : " [not loaded]"), value: m, isListItem: true}));
+
     await this.get("moduleList").whenRendered();
   }
 
@@ -297,15 +360,18 @@ export class Browser extends Window {
     var module = this.get("moduleList").selection;
     if (!module) return show("Cannot save, no module selected");
 
-    try {
-      await (await this.systemInterface()).interactivelyChangeModule(
-        this,
-        module.name,
-        this.get("sourceEditor").textString,
-        {targetModule: module.name, doEval: true});
-    
-    } catch (err) { return this.world().logError(err); }
+    var content = this.get("sourceEditor").textString,
+        system = await this.systemInterface();
 
-    this.world().setStatusMessage("saved " + module.name, Color.green);
+    try {
+      if (module.isLoaded) { // is loaded in runtime
+        await system.interactivelyChangeModule(
+          this, module.name, content,
+          {targetModule: module.name, doEval: true});      
+      } else await system.moduleWrite(module.name, content);
+    } catch(err) { return this.world().logError(err); }
+
+    this.world().setStatusMessage("saved " + module.nameInPackage, Color.green);
   }
+
 }
