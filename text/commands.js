@@ -694,6 +694,7 @@ var commands = [
     name: "realign top-bottom-center",
     doc: "Cycles through centering the cursor position, aligning it at the top, aligning it at the bottom.",
     scrollCursorIntoView: false,
+    multiSelectAction: "single",
     exec: function(morph) {
       var charBounds = morph.charBoundsFromTextPosition(morph.cursorPosition),
           pos = charBounds.topLeft(),
