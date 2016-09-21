@@ -16,7 +16,7 @@ function buildEvalOpts(morph) {
   // FIXME, also in text/commands
   var env = morph.evalEnvironment || {};
   if (!env.targetModule) env.targetModule = "lively://lively.next-prototype_2016_08_23/" + morph.id;
-  var sourceURL = targetModule + "_doit_" + Date.now();
+  var sourceURL = env.targetModule + "_doit_" + Date.now();
   return {System, context: morph, sourceURL, ...env}
 }
 
