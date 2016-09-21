@@ -294,8 +294,9 @@ export default class TextLayout {
   }
 
   shiftLinesIfNeeded(morph, {start, end}, changeType) {
-    var nRows = end.row - start.row,
-        nInsRows = changeType === "deleteText" ? 0 : nRows,
+    var nRows = end.row - start.row;
+    if (nRows === 0) return;
+    var nInsRows = changeType === "insertText" ? nRows : 0,
         nDelRows = changeType === "deleteText" ? nRows : 0,
         placeholderRows = Array(nInsRows);
     this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
