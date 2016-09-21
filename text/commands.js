@@ -1279,9 +1279,11 @@ var multiSelectCommands = [
       var idx = morph.selection.selections.length-1,
           last = morph.selection.selections[idx];
       if (last.isEmpty()) return true;
-      var pos = last.start,
-          found = morph.search(last.text, {start: pos, backwards: true});
-          found
+      var {row, column} = last.start,
+          // we offset the length of the selected text -1 from the position to
+          // not get a range that overlaps the existing selection, like
+          // when selcting xx[xx] and then searching backwards to get the first xx pair.
+          found = morph.search(last.text, {start: {row, column: column-(last.text.length-1)}, backwards: true});
       if (found) {
         var existing = morph.selection.selections.findIndex(ea => ea.range.equals(found.range));
         if (existing > -1) arr.swap(morph.selection.selections, existing, idx)
