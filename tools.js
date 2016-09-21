@@ -97,6 +97,12 @@ export class Workspace extends Window {
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
     });
+    this.targetMorph.text.__defineGetter__("evalEnvironment", function () {
+      return {
+        targetModule: "lively://lively.next-workspace/" + this.id,
+        context: this.doitContext || this.owner.doitContext || this
+      }
+    })
   }
 
 }
