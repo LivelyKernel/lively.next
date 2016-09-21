@@ -666,56 +666,60 @@ export class Halo extends Morph {
  }
 
   toggleMesh(active) {
-    var mesh = this.getSubmorphNamed("mesh"),
-        horizontal = this.getSubmorphNamed("horizontal"),
-        vertical = this.getSubmorphNamed("vertical"),
-        position = this.localize(pt(0,0));
+    var mesh = this.getSubmorphNamed("mesh"), 
+        horizontal, vertical;
+    mesh && mesh.alignWithHalo();
     if (active) {
         const {width, height, extent} = this.world(),
               defaultGuideProps = {
                      opacity: 0,
                      borderStyle: "dashed",
-                     position, extent,
+                     position: this.localize(pt(0,0)), 
+                     extent,
                      borderWidth: 2,
                      gradient: guideGradient},
                {x, y} = this.target.worldPoint(pt(0,0));
         // init
-         vertical = vertical || this.addMorphBack(
+         vertical = this.getSubmorphNamed("vertical") || this.addMorphBack(
            new Path({
              ...defaultGuideProps,
              name: "vertical",
              vertices: [pt(x,0), pt(x, height)]
            }));
-         horizontal = horizontal || this.addMorphBack(
+         horizontal = this.getSubmorphNamed("horizontal") || this.addMorphBack(
            new Path({
              ...defaultGuideProps,
              name: "horizontal",
              vertices: [pt(0,y), pt(width, y)]
            }));
-         mesh = mesh || this.addMorphBack(
-           new Morph({name: "mesh", opacity: 0,
-                      onKeyUp: (evt) => this.toggleMesh(false),
-                      extent, position: this.localize(pt(2,2)),
-                      styleClasses: ["morph", "halo-mesh"], fill: null}));
-        // update
-        horizontal.position = position;
-        vertical.position = position;
-        mesh.position = this.localize(pt(2,2));
-        horizontal.vertices = [pt(0,y), pt(this.world().width, y)];
-        vertical.vertices = [pt(x,0), pt(x, this.world().height)];
-        
-        mesh.animate({opacity: 1});
-        horizontal.animate({opacity: 1});
-        vertical.animate({opacity: 1});
+         mesh = mesh || this.addMorphBack(new Morph({
+            name: "mesh", opacity: 0,
+            onKeyUp: (evt) => this.toggleMesh(false),
+            extent, position: this.localize(pt(2,2)),
+            styleClasses: ["morph", "halo-mesh"], fill: null,
+            alignWithHalo: () => {
+              var {x, y} = this.target.worldPoint(pt(0,0)),
+                  {height, width} = this.world();
+              horizontal.position = this.localize(pt(0,0));
+              horizontal.vertices = [pt(0,y), pt(width, y)];
+              vertical.position = this.localize(pt(0,0));
+              vertical.vertices = [pt(x,0), pt(x, height)];
+              mesh.position = this.localize(pt(2,2));
+            },
+            show() {
+              mesh.animate({opacity: 1, duration: 500});
+              horizontal.animate({opacity: 1, duration: 500});
+              vertical.animate({opacity: 1, duration: 500});
+            },
+            hide: () => {
+              vertical.animate({opacity: 0});
+              horizontal.animate({opacity: 0});
+              mesh.animate({opacity: 0});
+            }
+          }));
+        mesh.show();
     } else {
-      if(vertical && horizontal && mesh) {
-        horizontal.position = position;
-        vertical.position = position;
-        mesh.position = position;
-        vertical.animate({opacity: 0, onFinish: () => vertical.remove()});
-        horizontal.animate({opacity: 0, onFinish: () => horizontal.remove()});
-        mesh.animate({opacity: 0, onFinish: () => mesh.remove()});
-      }
+      mesh && mesh.hide();
     }
     this.focus();
   }
