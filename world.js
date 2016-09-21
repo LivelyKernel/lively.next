@@ -420,8 +420,8 @@ export class World extends Morph {
         body = canvas.ownerDocument.body,
         scale = 1 / this.scale,
         topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
-        width = window.innerWidth * scale,
-        height = window.innerHeight * scale;
+        width = topmost.clientHeight * scale,
+        height = topmost.clientWidth * scale;
     return this._cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
   }
 
