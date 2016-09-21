@@ -893,16 +893,18 @@ var commands = [
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME move this stuff below into a JS related module
 function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, env) {
-  if (!env) env = morph.evalEnvironment; // FIXME!
-  if (!env) env = {}
-  var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
-  if (!evalStrategies)
+  var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js")),
+      evalStrategy = evalStrategies && new evalStrategies.LivelyVmEvalStrategy();;
+  if (!evalStrategy)
     throw new Error("doit not possible: lively.vm eval-strategies not available!")
-  var code = morph.textInRange(range),
-      evalStrategy = new evalStrategies.LivelyVmEvalStrategy(),
-      targetModule = env.targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
+
+  if (!env) env = morph.evalEnvironment || {}; // FIXME!
+  var {targetModule, context} = env,
+      code = morph.textInRange(range),
+      context = context || morph,
+      targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
       sourceURL = targetModule + "_doit_" + Date.now(),
-      opts = {System, targetModule, context: env.context || morph, sourceURL};
+      opts = {System, targetModule, context, sourceURL};
   return evalStrategy.runEval(code, opts);
 }
 
