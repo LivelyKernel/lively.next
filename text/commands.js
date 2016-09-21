@@ -1265,10 +1265,8 @@ var multiSelectCommands = [
           found = morph.search(last.text, {start: pos, backwards: false});
       if (found) {
         var existing = morph.selection.selections.findIndex(ea => ea.range.equals(found.range));
-        if (existing > -1) {
-          arr.swap(morph.selection.selections, existing, idx);
-          return morph.execCommand("multi select more forward");
-        } else  morph.selection.addRange(found.range);
+        if (existing > -1) arr.swap(morph.selection.selections, existing, idx);
+        else morph.selection.addRange(found.range);
       }
       return true;
     }
@@ -1286,10 +1284,8 @@ var multiSelectCommands = [
           found
       if (found) {
         var existing = morph.selection.selections.findIndex(ea => ea.range.equals(found.range));
-        if (existing > -1) {
-          arr.swap(morph.selection.selections, existing, idx)
-          return morph.execCommand("multi select more backward")
-        } else  morph.selection.addRange(found.range);
+        if (existing > -1) arr.swap(morph.selection.selections, existing, idx)
+        else  morph.selection.addRange(found.range);
       }
       return true;
     }
