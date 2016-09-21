@@ -80,7 +80,14 @@ class NameHalo extends HaloItem {
       fontColor: Color.green,
       fixedWidth: true,
       fixedHeight: true,
-      extent: pt(20,20)});
+      extent: pt(20,20),
+      onMouseDown: (evt) => {
+        if (!this.validName) {
+          this.halo.toggleMorphHighlighter(true, this.get(this.nameHolder.textString));
+          setTimeout(() => this.halo.toggleMorphHighlighter(false), 1000);
+        }
+      }
+      });
 
     this.alignInHalo();
   }
