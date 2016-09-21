@@ -223,14 +223,17 @@ var worldCommands = [
         browser = focused.getWindow();
 
       var livelySystem = (await System.import("lively-system-interface")).localInterface, // FIXME
-          modules = await livelySystem.getModules(),
+          pkgs = await livelySystem.getPackages(),
           items = [];
-      
-      for (let m of modules) {
-        var p = await livelySystem.getPackageForModule(m.name);
-        var shortName = m.name.slice(p.address.length).replace(/^\//, "");
-        items.push({isListItem: true, string: `${p.name}/${shortName}`, value: {package: p, module: m, shortName}})
+
+      for (let p of pkgs) {
+        for (let m of p.modules) {
+          // var shortName = m.name.slice(p.address.length).replace(/^\//, "");
+          var shortName = livelySystem.shortModuleName(m.name, p);
+          items.push({isListItem: true, string: `${p.name}/${shortName}`, value: {package: p, module: m, shortName}})
+        }
       }
+
       items = arr.sortBy(items, ea => ea.string);
 
       var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
