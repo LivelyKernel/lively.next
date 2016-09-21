@@ -420,14 +420,8 @@ export class World extends Morph {
         body = canvas.ownerDocument.body,
         scale = 1 / this.scale,
         topLeft = pt(body.scrollLeft - (canvas.offsetLeft || 0), body.scrollTop - (canvas.offsetTop || 0)),
-        width, height;
-    if (false && (UserAgent.isTouch || UserAgent.isMobile)){
-      width = window.innerWidth * scale;
-      height = window.innerHeight * scale;
-    } else {
-      width = topmost.clientWidth * scale;
-      height = topmost.clientHeight * scale;
-    }
+        width = window.innerWidth * scale,
+        height = window.innerHeight * scale;
     return this._cachedWindowBounds = topLeft.scaleBy(scale).extent(pt(width, height));
   }
 
@@ -476,11 +470,15 @@ export class World extends Morph {
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   openPrompt(promptMorph, opts = {requester: null}) {
-    var focused = this.focusedMorph;
+    var focused = this.focusedMorph, visBounds = this.visibleBounds();
     promptMorph.openInWorldNear(
       opts.requester ?
         opts.requester.globalBounds().center() :
-        this.visibleBounds().center(), this);
+        visBounds.center(), this);
+
+    if (promptMorph.height > visBounds.height)
+      promptMorph.height = visBounds.height - 5;
+
     return promise.finally(promptMorph.activate(), () => focused && focused.focus());
   }
 
@@ -539,6 +537,7 @@ export class AbstractPrompt extends Morph {
       answer: null,
       autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
     };
+    connect(this, "extent", this, "applyLayout");
   }
 
   get label() { return this.get("label").textString; }
