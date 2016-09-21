@@ -340,7 +340,7 @@ export class Halo extends Morph {
       tooltip: "Grab the morph",
       valueForPropertyDisplay() {
         dropTarget = this.morphBeneath(this.hand.position);
-        this.halo.toggleDropIndicator(dropTarget && dropTarget != this.world(), dropTarget);
+        this.halo.toggleMorphHighlighter(dropTarget && dropTarget != this.world(), dropTarget);
         return dropTarget && dropTarget.name;
       },
 
@@ -363,7 +363,7 @@ export class Halo extends Morph {
         hand.dropMorphsOn(dropTarget);
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
-        this.halo.toggleDropIndicator(false, dropTarget);
+        this.halo.toggleMorphHighlighter(false, dropTarget);
         this.halo.target.undoStop("grab-halo");
       },
 
@@ -770,16 +770,35 @@ export class Halo extends Morph {
     rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
   }
 
-  toggleDropIndicator(active, target) {
-    var dropIndicator = this.getSubmorphNamed("dropTargetIndicator");
+  morphHighlighter() {
+    var halo = this;
+    return this.getSubmorphNamed("morphHighlighter") || this.addMorphBack({
+          opacity: 0,
+          name: "morphHighlighter",
+          fill: Color.orange.withA(0.5),
+          alignWithHalo() {
+            if (this.target) {
+              this.position = halo.localize(this.target.globalBounds().topLeft());
+              this.extent = this.target.globalBounds().extent();
+            }
+          },
+          show(target) {
+            this.target = target;
+            this.animate({opacity: 1, duration: 500});
+          },
+          deactivate() {
+            this.animate({opacity: 0});
+          }
+        });
+  }
+
+  toggleMorphHighlighter(active, target) {
+    const morphHighlighter = this.morphHighlighter();
+    morphHighlighter.alignWithHalo();
     if (active && target && target != this.world()) {
-        dropIndicator = dropIndicator || this.addMorphBack({
-                        name: "dropTargetIndicator",
-                        fill: Color.orange.withA(0.5)});
-        dropIndicator.position = this.localize(target.globalBounds().topLeft());
-        dropIndicator.extent = target.globalBounds().extent();
+      morphHighlighter.show(target);
     } else {
-      dropIndicator && dropIndicator.remove();
+      morphHighlighter.deactivate();
     }
   }
 
