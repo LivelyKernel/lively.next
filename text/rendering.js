@@ -19,13 +19,14 @@ function selectionLayerPart(startPos, endPos) {
   })
 }
 
-function cursor(pos, height, visible) {
+function cursor(pos, height, visible, diminished, width) {
     return h('div.selection-layer-part', {
     style: {
       pointerEvents: "none", position: "absolute",
-      left: pos.x -1 + "px", top: pos.y + "px",
-      width: "2px", height: height + "px",
-      backgroundColor: "black", zIndex: -1,
+      left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
+      width: width + "px", height: height + "px",
+      backgroundColor: diminished ? "gray" : "black",
+      zIndex: -1,
       display: visible ? "" : "none"
     }
   })
@@ -330,13 +331,14 @@ export default class TextLayout {
   renderMorph(renderer, morph) {
     this.updateFromMorphIfNecessary(morph);
 
-    var selectionLayer = [];
+    var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
+        selectionLayer = [];
     if (morph.inMultiSelectMode()) {
-      var sels = morph.selection.selections;
-      for (var i = 0; i < sels.length; i++) {
-        selectionLayer.push(...this.renderSelectionLayer(morph, sels[i]))
-      }
-    } else selectionLayer = this.renderSelectionLayer(morph, morph.selection);
+      var sels = morph.selection.selections, i = 0;
+      for (; i < sels.length-1; i++)
+        selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], true/*diminished*/, 2))
+      selectionLayer.push(...this.renderSelectionLayer(morph, sels[i], false/*diminished*/, 4))
+    } else selectionLayer = this.renderSelectionLayer(morph, morph.selection, false, cursorWidth);
     
 
     return h("div", {
@@ -355,7 +357,7 @@ export default class TextLayout {
         .concat(renderer.renderSubmorphs(morph)));
   }
 
-  renderSelectionLayer(morph, selection) {
+  renderSelectionLayer(morph, selection, diminished = false, cursorWidth = 2) {
     // FIXME just hacked together... needs cleanup!!!
 
     if (!selection) return [];
@@ -378,13 +380,13 @@ export default class TextLayout {
 
     // collapsed selection -> cursor
     if (selection.isEmpty())
-      return [cursor(cursorPos, leadLineHeight, cursorVisible)];
+      return [cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
 
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, leadLineHeight, cursorVisible)]
+        cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)]
 
     let endPosLine1 = pt(morph.width, startPos.y + lines[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
@@ -394,7 +396,7 @@ export default class TextLayout {
       return [
         selectionLayerPart(startPos, endPosLine1),
         selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
-        cursor(cursorPos, leadLineHeight, cursorVisible)];
+        cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
     }
 
     let endPosMiddle = pt(morph.width, endPos.y),
@@ -405,7 +407,7 @@ export default class TextLayout {
       selectionLayerPart(startPos, endPosLine1),
       selectionLayerPart(startPosLine2, endPosMiddle),
       selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
-      cursor(cursorPos, leadLineHeight, cursorVisible)];
+      cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
 
   }
 
