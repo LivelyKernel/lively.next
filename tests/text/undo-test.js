@@ -29,12 +29,24 @@ describe("undo", function() {
     expect(text.selection).selectionEquals("Selection(1/0 -> 1/0)");
   });
 
-  it("can undo and redo simple insert", () => {
+  it("can undo and redo insert", () => {
     text.insertText("foo", {row: 1, column: 0});
     text.textUndo();
     text.textRedo();
     expect(text.textString).equals("hello\nfooworld");
     expect(text.selection).selectionEquals("Selection(1/0 -> 1/3)");
+  })
+  
+  it("can undo and redo delete", () => {
+    text.textString = "foo bar";
+    text.deleteText({start: {row: 0, column: 4}, end: {row: 0, column: 7}});
+    expect(text.textString).equals("foo ");
+    text.textUndo();
+    expect(text.textString).equals("foo bar");
+    expect(text.selection).selectionEquals("Selection(0/4 -> 0/7)");
+    text.textRedo();
+    expect(text.textString).equals("foo ");
+    expect(text.selection).selectionEquals("Selection(0/4 -> 0/4)");
   });
 
   it("undo then redo", () => {
