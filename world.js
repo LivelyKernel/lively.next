@@ -58,7 +58,7 @@ var worldCommands = [
     exec: (world) => {
       var halos = world.halos();
       halos.forEach(h => h.remove());
-      var focusTarget = arr.last(halos) || world.focusedMorph || world;
+      var focusTarget = (arr.last(halos) && arr.last(halos).target) || world.focusedMorph || world;
       focusTarget.focus();
       return false;
     }
