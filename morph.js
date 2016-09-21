@@ -201,9 +201,8 @@ export class Morph {
     var {x: maxScrollX, y: maxScrollY} = this.scrollExtent.subPt(this.extent);
     x = Math.max(0, Math.min(maxScrollX, x));
     y = Math.max(0, Math.min(maxScrollY, y));
-    var {x: prevX, y: prevY} = this.scroll;
-    if (x !== prevX || y !== prevY)
-      this.addValueChange("scroll", pt(x,y));
+    this.addValueChange("scroll", pt(x,y));
+    this.makeDirty();
   }
 
   get scrollExtent() {
