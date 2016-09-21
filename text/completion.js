@@ -298,16 +298,18 @@ export class CompletionController {
   }
 
   insertCompletion(completion, prefix) {
-    var m = this.textMorph,
-        sel = m.selection;
-    sel.collapseToEnd();
-    var end = sel.lead;
-
-    prefix && m.cursorLeft(prefix.length);
-    var start = m.cursorPosition;
-    sel.range = {start, end};
-    sel.text = completion;
-    sel.collapseToEnd();
+    var m = this.textMorph, doc = m.document,
+        selections = m.selection.isMultiSelection ?
+          m.selection.selections : [m.selection];
+    m.undoManager.group();
+    selections.forEach(sel => {
+      sel.collapseToEnd();
+      var end = sel.lead,
+          start = prefix ?
+            doc.indexToPosition(doc.positionToIndex(end) - prefix.length) : end;
+      m.replace({start, end}, completion);
+    });
+    m.undoManager.group();
   }
 
 }
@@ -315,6 +317,7 @@ export class CompletionController {
 
 export var completionCommands = [{
   name: "text completion",
+  multiSelectAction: "single",
   async exec(morph, opts) {
     var completer = new CompletionController(morph, defaultCompleters);
     await completer.openCompletionList();
