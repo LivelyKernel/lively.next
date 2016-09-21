@@ -137,7 +137,7 @@ export class Browser extends Window {
       ...props,
       targetMorph: this.build()
     });
-    this.state = {associatedSearchPanel: null, packageUpdateInProgress: null, moduleUpdateInProgress: null};
+    this.state = {packageUpdateInProgress: null, moduleUpdateInProgress: null};
     this.onLoad();
   }
 
@@ -285,7 +285,10 @@ export class Browser extends Window {
       this.get("moduleList").selection = null;
       
       await this.updateModuleList(p);
-    } finally { deferred && deferred.resolve(p); }
+    } finally {
+      this.state.packageUpdateInProgress = null;
+      deferred && deferred.resolve(p);
+    }
   }
 
   async onModuleSelected(m) {
@@ -336,7 +339,10 @@ export class Browser extends Window {
       var source = await system.moduleRead(m.name);
       this.get("sourceEditor").textString = source;
       this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
-    } finally { deferred && deferred.resolve(m); }
+    } finally {
+      this.state.moduleUpdateInProgress = null;
+      deferred && deferred.resolve(m);
+    }
   }
 
   async updateModuleList(p = this.selectedPackage) {
