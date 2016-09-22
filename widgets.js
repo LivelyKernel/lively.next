@@ -420,7 +420,7 @@ class Tooltip extends Morph {
       ...props,
       styleClasses: ["morph", "tooltip"],
       draggable: false,
-      fill: Color.black.withA(.7),
+      fill: Color.black.withA(.5),
       borderRadius: 4,
       layout: new HorizontalLayout({spacing: 5}),
       submorphs: [new Text({
