@@ -439,6 +439,9 @@ export class Morph {
       submorph._owner = this;
       if (tfm) submorph.setTransform(tfm);
       this._currentState["submorphs"] = submorphs;
+
+      this._submorphOrderChanged = true;
+      this.makeDirty();
     });
 
 

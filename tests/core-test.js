@@ -1,8 +1,7 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { createDOMEnvironment } from "../rendering/dom-helper.js";
-import { morph, MorphicEnv } from "../index.js";
+import { morph } from "../index.js";
 import { expect } from "mocha-es6";
-import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
+import { pt, rect, Color, Rectangle, Transform } from "lively.graphics";
 import { num } from "lively.lang";
 
 var env;
@@ -26,124 +25,6 @@ function createDummyWorld() {
   submorph3 = world.submorphs[1];
   return world;
 }
-
-
-describe("setup with renderer and events", function () {
-
-  // jsdom sometimes takes its time to initialize...
-  if (System.get("@system-env").node)
-    this.timeout(10000);
-
-  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
-  afterEach(() =>  MorphicEnv.popDefault().uninstall());
-
-
-  it("morph id is DOM node id", () => {
-    expect(world.id).equals(env.renderer.domNode.id);
-  });
-
-  it("renderer associates domNodewith morph", () => {
-    var node = env.renderer.getNodeForMorph(submorph2),
-        morph = env.renderer.getMorphForNode(node);
-    expect(morph).equals(submorph2, morph && morph.name);
-    expect(env.renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
-                           .childNodes[0]).equals(node); // brittle, might change...
-  });
-  
-  it("can be moved to the front", () => {
-    submorph1.bringToFront();
-    expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
-  });
-
-  describe("transforms", () => {
-
-    it("scale and rotation are rendered", async () => {
-      submorph1.rotateBy(num.toRadians(45));
-      await submorph1.whenRendered();
-      expect(env.renderer.getNodeForMorph(submorph1)).deep.property("style.transform")
-        .match(/translateX\(10px\)/).match(/translateY\(10px\)/)
-        .match(/rotate\((45|44\.9+)deg\)/)
-        .match(/scale\(1,\s*1\)/)
-    });
-
-    it("origin rendered via origin transform", async () => {
-      submorph1.origin = pt(20,10);
-      await submorph1.whenRendered();
-      expect(env.renderer.getNodeForMorph(submorph1))
-        .deep.property("style.transformOrigin").match(/20px 10px/);
-    });
-
-  });
-
-  describe("shapes", () => {
-
-    it("shape influences node style", () => {
-      const style = env.renderer.getNodeForMorph(ellipse).style;
-      expect(style.borderRadius).match(/50px/);
-      expect(style.position).equals("absolute");
-    });
-
-    it("morph type influences node structure", () => {
-      const ellipseNode = env.renderer.getNodeForMorph(ellipse),
-            imageNode = env.renderer.getNodeForMorph(image);
-      expect(ellipseNode.nodeName).equals("DIV");
-      expect(imageNode.childNodes[0].nodeName).equals("IMG");
-    });
-
-    it("morph type influences node attributes", () => {
-      const ellipseNode = env.renderer.getNodeForMorph(ellipse),
-            imageNode = env.renderer.getNodeForMorph(image);
-      expect(ellipseNode).not.to.have.property('src');
-      expect(imageNode.childNodes[0]).to.have.property('src');
-    });
-
-  });
-
-  describe("scroll", () => {
-
-    it("scroll extent", () => {
-      expect(submorph1.scrollExtent).equals(pt(100,100), "1");
-      submorph1.clipMode = "auto";
-      expect(submorph1.scrollExtent).equals(pt(100,100), "2");
-      submorph2.extent = pt(200,200);
-      expect(submorph1.scrollExtent).equals(submorph2.bounds().bottomRight(), "3");
-    });
-
-    it("scroll is bounded", () => {
-      submorph1.clipMode = "auto";
-      submorph2.extent = pt(200,200);
-      submorph1.scroll = pt(100000,100000);
-      expect(submorph1.scroll).equals(submorph2.bounds().bottomRight().subPt(submorph1.extent), "1");
-      submorph1.scroll = pt(-100000,-100000);
-      expect(submorph1.scroll).equals(pt(0,0), "2");
-    });
-
-    it("clip morph can specify scroll", async () => {
-      submorph1.clipMode = "auto";
-      submorph2.extent = pt(200,200);
-      submorph1.scroll = pt(40, 50);
-      await submorph1.whenRendered();
-      var node = env.renderer.getNodeForMorph(submorph1);
-      expect(node.scrollLeft).equals(40);
-      expect(node.scrollTop).equals(50);
-    });
-
-    it("inner morphs have correct transform", async () => {
-      submorph1.clipMode = "auto";
-      submorph2.extent = pt(200,200);
-      var submorph2Bounds = submorph2.globalBounds();
-      submorph1.scroll = pt(40, 50);
-      await submorph1.whenRendered();
-      expect(submorph1.globalBounds()).equals(rect(10,10, 100,100));
-      expect(submorph1.bounds()).equals(rect(10,10, 100,100));
-      expect(submorph2.globalBounds()).equals(submorph2Bounds.translatedBy(submorph1.scroll.negated()));
-      submorph1.scroll = pt(0,0);
-      expect(submorph2.globalBounds()).equals(submorph2Bounds);
-    });
-
-  });
-});
-
 
 describe("copy", () => {
 

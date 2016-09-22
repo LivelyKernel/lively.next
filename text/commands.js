@@ -6,6 +6,7 @@ import { Range } from "./range.js"
 import { show } from "../index.js"
 import { eqPosition, lessPosition } from "./position.js"
 
+
 // commands.find(ea => ea.name === "transpose chars").exec(that)
 
 var commands = [

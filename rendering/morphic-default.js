@@ -1,6 +1,6 @@
 import {diff, patch, create} from "virtual-dom";
 import bowser from "bowser";
-import { num, obj, arr, properties } from "lively.lang";
+import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt } from "lively.graphics";
 import Velocity from "velocity";
 
@@ -87,7 +87,7 @@ class VelocityStyleMapper extends StyleMapper {
   }
   
   getTransform({position, origin, rotation, scale}) {
-    var   translateX, translateY, rotateZ, scaleX, scaleY, velocityProps = {};
+    var translateX, translateY, rotateZ, scaleX, scaleY, velocityProps = {};
     
     if (position) {
       origin = origin || pt(0,0);
@@ -241,29 +241,50 @@ export function defaultStyle(morph) {
 }
 
 // Sets the scroll later...
+// See https://github.com/Matt-Esch/virtual-dom/issues/338 for why that is necessary.
 // See https://github.com/Matt-Esch/virtual-dom/blob/dcb8a14e96a5f78619510071fd39a5df52d381b7/docs/hooks.md
 // for why this has to be a function of prototype
-function ScrollHook(morph) { this.morph = morph; }
-ScrollHook.prototype.hook = function(node, propertyName, previousValue) {
-  if (!this.morph.isClip()) return;
-  Promise.resolve().then(() => {
-    const {x, y} = this.morph.scroll;
+function MorphAfterRenderHook(morph, renderer) { this.morph = morph; this.renderer = renderer; }
+MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue) {
+  // 1. wait for node to be really rendered, i.e. it's in DOM
+  // this.morph._dirty = false;
+  promise.waitFor(200, () => !!node.parentNode).then(() => {
+    // 2. update scroll of morph itself
+    if (this.morph.isClip()) this.updateScroll(this.morph, node);
+    // 3. Update scroll of DOM nodes of submorphs
+    if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
+      this.morph._submorphOrderChanged = false;
+      this.updateScrollOfSubmorphs(this.morph, this.renderer);
+    }
+    this.morph._rendering = false; // see morph.makeDirty();
+  });
+}
+MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
+  if (node) {
+    const {x, y} = morph.scroll;      
     node.scrollTop !== y && (node.scrollTop = y);
     node.scrollLeft !== x && (node.scrollLeft = x);
+  }
+}
+MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function(morph, renderer) {
+  morph.submorphs.forEach(m => {
+    if (m.isClip())
+      this.updateScroll(m, renderer.getNodeForMorph(m))
+    this.updateScrollOfSubmorphs(m, renderer);
   });
 }
 
-function animationHook(morph) {
-  const Animation = function() {};
-  Animation.prototype.hook = (node) => {
-    morph._animationQueue.startAnimationsFor(node);
-  }
-  return new Animation();
+
+
+// simple toplevel constructor, not a class and not wrapped for efficiency
+function Animation(morph) { this.morph = morph; };
+Animation.prototype.hook = function(node) {
+  this.morph._animationQueue.startAnimationsFor(node);
 }
 
-export function defaultAttributes(morph) {
+export function defaultAttributes(morph, renderer) {
   return {
-    animation: animationHook(morph),
+    animation: new Animation(morph),
     key: morph.id,
     id: morph.id,
     className: morph.styleClasses.join(" "),
@@ -274,7 +295,7 @@ export function defaultAttributes(morph) {
     // check the pull request mentioned in the issue, once that's merged we
     // might be able to remove the hook
     // scrollLeft: morph.scroll.x, scrollTop: morph.scroll.y,
-    "set-scroll-hook": new ScrollHook(morph)
+    "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer)
   };
 }
 
@@ -313,4 +334,3 @@ export function renderRootMorph(world, renderer) {
 
   patch(domNode, patches);
 }
-    this.morph._rendering = false; // see morph.makeDirty();

@@ -153,7 +153,7 @@ export class Renderer {
 
   renderMorph(morph) {
     return h("div", {
-      ...defaultAttributes(morph),
+      ...defaultAttributes(morph, this),
       style: defaultStyle(morph)
     }, this.renderSubmorphs(morph));
   }
@@ -170,7 +170,7 @@ export class Renderer {
 
   renderImage(image) {
     return h("div", {
-      ...defaultAttributes(image),
+      ...defaultAttributes(image, this),
         style: defaultStyle(image)
       }, [
         h("img", {
@@ -188,7 +188,7 @@ export class Renderer {
   
   renderCheckBox(checkbox) {
     return h("div", {
-      ...defaultAttributes(checkbox),
+      ...defaultAttributes(checkbox, this),
         style: defaultStyle(checkbox)
       }, [
         h("input", {
@@ -240,7 +240,7 @@ export class Renderer {
            display, top, left, opacity} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
-    return h("div", {...defaultAttributes(morph),
+    return h("div", {...defaultAttributes(morph, this),
                      style: {transform, transformOrigin, position, opacity,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},

@@ -342,7 +342,7 @@ export default class TextLayout {
     
 
     return h("div", {
-        ...defaultAttributes(morph),
+        ...defaultAttributes(morph, renderer),
         style: {
           ...defaultStyle(morph),
           cursor: morph.nativeCursor === "auto" ?
