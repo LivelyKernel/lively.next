@@ -1,6 +1,6 @@
 import { Ellipse, Morph, Path, Text, 
          HorizontalLayout, GridLayout, 
-         VerticalLayout, morph, Menu } from "./index.js"
+         VerticalLayout, morph, Menu } from "../index.js"
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
 

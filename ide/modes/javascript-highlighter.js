@@ -42,6 +42,12 @@ export default class JavaScriptHighlighter extends Highlighter {
           this.state = "template2";
           return Token.string;
         }
+        if (c === "{") {
+          this.level++;
+        }
+        if (c === "}") {
+          this.level--;
+        }
       case "default":
         if (/[0-9]/.test(c)) {
           return Token.numeric;
@@ -57,12 +63,6 @@ export default class JavaScriptHighlighter extends Highlighter {
         if (c=== "`") {
           this.state = "template";
           return Token.string;
-        }
-        if (c === "{") {
-          this.level++;
-        }
-        if (c === "}") {
-          this.level--;
         }
         if (this.checkChars("/*")) {
           this.state = "comment";
