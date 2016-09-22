@@ -20,7 +20,6 @@ class HaloItem extends Morph {
       borderRadius: 15,
       fill: Color.gray.withA(.7),
       grabbable: false,
-      location: null, // where to appear on target morph
       property: null, // what property of target to represent + modify
       extent: itemExtent,
       ...props
@@ -29,15 +28,6 @@ class HaloItem extends Morph {
   }
 
   get isHaloItem() { return true };
-
-  alignInHalo() {
-    const {x: width, y: height} = this.halo.extent,
-          {row, col} = this.location,
-          collWidth = Math.max((width + this.extent.x) / 3, 26),
-          rowHeight = Math.max(height / 3, 26),
-          pos = pt(collWidth * col, rowHeight * row).subPt(itemExtent);
-    this.setBounds(pos.extent(itemExtent));
-  }
 
   init() {}
   update() {}
@@ -155,12 +145,12 @@ class NameHalo extends HaloItem {
 
 class HaloPropertyDisplay extends Text {
 
-  get defaultPosition() { return pt(0,-25); }
+  get defaultPosition() { return pt(25,0); }
 
   constructor(halo) {
     super({
       name: "propertyDisplay",
-      fill: Color.black.withA(0.5),
+      fill: Color.black.withA(.5),
       borderRadius: 15,
       padding: 5,
       position: this.defaultPosition,
@@ -203,14 +193,45 @@ export class Halo extends Morph {
   constructor(pointerId, target) {
     super({
       styleClasses: ["morph", "halo"],
-      borderColor: Color.red,
-      borderWidth: 2,
-      fill: Color.transparent
+      fill: Color.transparent,
+    });
+    this.borderBox = this.addMorph({
+      name: "border-box", fill: Color.transparent, 
+      borderColor: Color.red, borderWidth: 2
     });
     this.state = {pointerId, target, draggedButton: null}
     this.initButtons();
     this.focus();
     this.alignWithTarget();
+    this.initLayout();
+  }
+  
+  initLayout() {
+    this.layout = new GridLayout({
+      autoAssign: false,
+      grid: [
+          [null,    null, "grab", null, "drag", null, "close"],
+          [null,    "box", "box", "box", "box", "box", null],
+          ["copy",  "box", "box", "box", "box", "box", "edit"],
+          [null,    "box", "box", "box", "box", "box", null],
+          ["style", "box", "box", "box", "box", "box", "inspect"],
+          [null,    "box", "box", "box", "box", "box", null],
+          ["rotate","box", "box", "box", "box", "box", "resize"],
+          [null,    "name","name","name","name","name", null]]});
+
+    this.layout.col(0).fixed = 26;
+    this.layout.col(2).fixed = 26;
+    this.layout.col(4).fixed = 26;
+    this.layout.col(6).fixed = 26;
+    
+    this.layout.row(0).fixed = 26;
+    this.layout.row(2).fixed = 26;
+    this.layout.row(4).fixed = 26;
+    this.layout.row(6).fixed = 26;
+    this.layout.row(7).fixed = 26;
+    
+    this.layout.col(1).row(7).group.align = "center";
+    this.layout.col(1).row(7).group.resize = false;
   }
 
   get isHalo() { return true }
@@ -240,7 +261,6 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
       name: "resize",
       styleClasses: ["halo-item", "fa", "fa-crop"],
-      location: {col: 3, row: 3},
       origin: pt(12, 12),
       property: 'extent',
       halo: this,
@@ -315,7 +335,6 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("close") || this.addMorph(new HaloItem({
       name: "close",
       styleClasses: ["halo-item", "fa", "fa-close"],
-      location: {col: 3, row: 0},
       draggable: false,
       halo: this,
       tooltip: "Remove this morph from the world",
@@ -335,7 +354,6 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("grab") || this.addMorph(new HaloItem({
       name: "grab",
       styleClasses: ["halo-item", "fa", "fa-hand-rock-o"],
-      location: {col: 1, row: 0},
       halo: this,
       tooltip: "Grab the morph",
       valueForPropertyDisplay() {
@@ -382,7 +400,6 @@ export class Halo extends Morph {
       name: "drag",
       styleClasses: ["halo-item", "fa", "fa-arrows"],
       property: 'position',
-      location: {col: 2, row: 0},
       halo: this,
       tooltip: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid.",
       valueForPropertyDisplay: () => this.target.position,
@@ -421,7 +438,6 @@ export class Halo extends Morph {
       name: "inspect",
       styleClasses: ["halo-item", "fa", "fa-eye"],
       draggable: false,
-      location: {col: 3, row: 2},
       halo: this,
       tooltip: "Inspect the morph's local state",
       onMouseDown: (evt) => {
@@ -435,7 +451,6 @@ export class Halo extends Morph {
       name: "edit",
       styleClasses: ["halo-item", "fa", "fa-pencil"],
       draggable: false,
-      location: {col: 3, row: 1},
       halo: this,
       tooltip: "Edit the morph's definition",
       onMouseDown: (evt) => {
@@ -454,7 +469,6 @@ export class Halo extends Morph {
       property: "rotation",
       tooltip: "Rotate morph",
       styleClasses: ["halo-item", "fa", "fa-repeat"],
-      location: {col: 0, row: 3},
       halo: this,
       valueForPropertyDisplay: () => scaleGauge ?
                                        this.target.scale.toFixed(4).toString() :
@@ -479,7 +493,7 @@ export class Halo extends Morph {
         var newRotation = initRotation + (angleToTarget - angle);
         newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
         this.halo.target.rotation = newRotation;
-        this.halo.alignWithTarget(this);
+        this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
       },
 
@@ -488,7 +502,7 @@ export class Halo extends Morph {
         angle = gauge.theta();
         initRotation = this.halo.target.rotation;
         this.halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0)), 0.1, 0.5);
-        this.halo.alignWithTarget(this);
+        this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
       },
 
@@ -507,6 +521,7 @@ export class Halo extends Morph {
 
       // events
       onDragStart(evt) {
+        this.halo.layout.col(0).row(6).group.morph = null;
         this.adaptAppearance(evt.isShiftDown());
         if (evt.isShiftDown()) {
           this.initScale(evt.position.subPt(this.halo.target.globalPosition));
@@ -526,6 +541,7 @@ export class Halo extends Morph {
       },
 
       onDragEnd(evt) {
+        this.halo.layout.col(0).row(6).group.morph = "rotate";
         this.adaptAppearance(evt.isShiftDown());
         this.stop();
       },
@@ -545,7 +561,6 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("copy") || this.addMorph(new HaloItem({
       name: "copy",
       styleClasses: ["halo-item", "fa", "fa-clone"],
-      location: {col: 0, row: 1},
       halo: this,
       tooltip: "Copy morph",
       init: (hand) => {
@@ -617,7 +632,6 @@ export class Halo extends Morph {
     return this.getSubmorphNamed("style") || this.addMorph(new HaloItem({
       name: "style",
       styleClasses: ["halo-item", "fa", "fa-picture-o"],
-      location: {col: 0, row: 2},
       halo: this,
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
@@ -802,18 +816,20 @@ export class Halo extends Morph {
     }
   }
 
-  alignWithTarget(skip) {
+  alignWithTarget() {
     const {x, y, width, height} = this.target.globalBounds(),
           origin = this.target.origin;
-    this.setBounds(rect(x,y, width, height));
+    this.setBounds(rect(x,y, width, height).insetBy(-26).intersection(this.target.world().innerBounds()));
+    this.borderBox.setBounds(this.localize(pt(x,y))
+                                 .extent(pt(width, height))
+                                 .intersection(this.innerBounds()));
     if (this.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
       this.activeButton.visible = true;
       this.updatePropertyDisplay(this.activeButton);
-      if (skip != this.activeButton) this.activeButton.alignInHalo();
     } else {
       if (this.changingName) this.nameHalo().toggleActive(false);
-      this.buttonControls.forEach(b => { b.visible = true; b.alignInHalo(); });
+      this.buttonControls.forEach(b => { b.visible = true;});
       this.propertyDisplay.disable();
     }
     this.originHalo().alignInHalo();
