@@ -86,7 +86,7 @@ var config = {
       {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'}, command: "text undo"},
       {keys: {mac: 'Meta-Shift-Z'},          command: "text redo"},
 
-      {keys: {mac: 'Meta-A', win: 'Ctrl-A'}, command: "select all"},
+      {keys: {mac: 'Meta-A|Ctrl-X H', win: 'Ctrl-A|Ctrl-X H'}, command: "select all"},
       {keys: {mac: 'Meta-D', win:  'Ctrl-D'}, command: "doit"},
       {keys: {mac: "Meta-Shift-L X B"},      command: "eval all"},
       {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
