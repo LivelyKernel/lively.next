@@ -174,7 +174,7 @@ export class SearchWidget extends Morph {
     this.addCommands([
       {name: "occur with search term", exec: () => {
         this.targetText.addCommands([occurStartCommand]);
-        this.execCommand("cancel search");
+        this.execCommand("accept search");
         return this.targetText.execCommand("occur", {needle: this.input});
       }},
       {name: "accept search", exec: () => { this.acceptSearch(); return true; }},
