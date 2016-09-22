@@ -130,14 +130,20 @@ export class TilingLayout extends Layout {
 
 export class CellGroup {
   
-  constructor({cell, morph, layout}) {
-    this.state = {cells: [cell], layout: layout, morph};
+  constructor({cell, morph, layout, align}) {
+    this.state = {cells: [cell], layout: layout, morph, align, resize: true};
     layout && layout.addGroup(this);
   }
   
   get morph() { 
     return this.state.morph;
   }
+  
+  get resize() { return this.state.resize }
+  set resize(forceBounds) { this.state.resize = forceBounds }
+  
+  get align() { return this.state.align || "topLeft" }
+  set align(orientation) { this.state.align = orientation }
   
   set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
@@ -154,7 +160,12 @@ export class CellGroup {
     if (this.layout && this.layout.container) {
       if (target && !target.isMorph) target = this.layout.container.getSubmorphNamed(target);
     }
-    target && target.setBounds(this.bounds());
+    if(target) {
+      const bounds = this.bounds();
+      if (this.resize) target.extent = bounds.extent();
+      target[this.align] = bounds[this.align]();
+    }
+    
   }
   
   get cells() { return this.state.cells; }
@@ -180,7 +191,11 @@ export class CellGroup {
     if (this.morph == undefined) {
       this.morph = cell.group.morph;
     }
-    cell.group && cell.group.disconnect(cell, this);
+    if(cell.group) {
+      cell.group.disconnect(cell, this);
+    } else {
+      cell.group = this;
+    }
     this.cells.push(cell);
   }
   
@@ -616,7 +631,7 @@ export class GridLayout extends Layout {
     const grid = this.ensureGrid(this.config),
           rows = grid.map(row => new LayoutRow(new LayoutCell({row, layout: this})));
     rows.reduce((a, b) => a.attachTo(b));
-    this.autoAssign(this.notInLayout);
+    this.config.autoAssign && this.autoAssign(this.notInLayout);
     this.grid = rows[0].col(0);
   }
   
