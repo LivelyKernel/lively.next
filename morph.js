@@ -49,7 +49,9 @@ export class Morph {
     this._env = env;
     this._rev = env.changeManager.revision;
     this._owner = null;
-    this._dirty = true; // for initial display
+    this._dirty = true; // for renderer, signals need  to re-render
+    this._rendering = false; // for knowing when rendering is done
+    this._submorphOrderChanged = false; // extra info for renderer
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._cachedBounds = null;
@@ -920,14 +922,18 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   makeDirty() {
+    // for notifying renderer that this morph needs to be updated. The flag is
+    // reset by aboutToRender() which then transitions the morph to the
+    // _rendering = true state. This gets reset in MorphAfterRenderHook when
+    // the render process is done
     if (this._dirty) return;
     this._dirty = true;
     if (this.owner) this.owner.makeDirty();
   }
 
   needsRerender() { return this._dirty; }
-  aboutToRender(renderer) { this._dirty = false; }
-  whenRendered() { return promise.waitFor(() => !this.needsRerender()).then(() => this); }
+  aboutToRender(renderer) { this._dirty = false; this._rendering = true; }
+  whenRendered() { return promise.waitFor(() => !this._dirty && !this._rendering).then(() => this); }
   render(renderer) { return renderer.renderMorph(this); }
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 

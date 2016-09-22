@@ -313,3 +313,4 @@ export function renderRootMorph(world, renderer) {
 
   patch(domNode, patches);
 }
+    this.morph._rendering = false; // see morph.makeDirty();
