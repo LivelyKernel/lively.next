@@ -400,6 +400,8 @@ export class Morph {
     }
 
     if (!submorph.isMorph) submorph = morph(submorph);
+    var existingIndex = this.submorphs.indexOf(submorph);
+    if (existingIndex > -1 && existingIndex === index) return;
 
     this._cachedBounds = null;
 
@@ -427,8 +429,7 @@ export class Morph {
       // modify the submorphs array
       index = Math.min(submorphs.length, Math.max(0, index));
       // is the morph already in submorphs? Remove it and fix index
-      var existingIndex = submorphs.indexOf(submorph);
-      if (existingIndex !== -1) {
+      if (existingIndex > -1) {
         submorphs.splice(existingIndex, 1);
         if (existingIndex < index) index--;
       }
@@ -489,11 +490,9 @@ export class Morph {
   removeAllMorphs() { this.submorphs = []; }
 
   bringToFront() {
-    if (!this.owner) return;
-    const submorphs = this.owner.submorphs,
-          index = submorphs.indexOf(this);
-    submorphs.splice(index,1);
-    this.owner.submorphs = submorphs.concat(this);
+    if (this.owner && arr.last(this.owner.submorphs) !== this)
+      this.owner.addMorph(this);
+    return this;
   }
 
   get owner() { return this._owner; }
