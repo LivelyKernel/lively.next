@@ -660,8 +660,8 @@ export class Text extends Morph {
     return this.selection;
   }
 
-  selectLine(row) {
-    this.selection.selectLine(row);
+  selectLine(row = this.cursorPosition.row, includingLineEnd = false) {
+    this.selection.selectLine(row, includingLineEnd);
     return this.selection;
   }
 

@@ -48,7 +48,7 @@ var commands = [
     doc: "placeholder for native cut",
     exec: function(morph) {
       if (morph.selection.isEmpty())
-        morph.selectLine(morph.cursorPosition.row);
+        morph.selectLine(morph.cursorPosition.row, true/*including line end*/);
       return true;
     }
   },

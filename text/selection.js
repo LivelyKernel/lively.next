@@ -138,8 +138,10 @@ export class Selection {
     return this;
   }
 
-  selectLine(row = this.lead.row) {
-    this.range = {start: {row, column: 0}, end: {row, column: this.textMorph.getLine(row).length}};
+  selectLine(row = this.lead.row, includingLineEnd = false) {
+    this.range = {
+    start: {row, column: 0},
+    end: {row: includingLineEnd ? row + 1 : row, column: includingLineEnd ? 0 : this.textMorph.getLine(row).length}};
     return this;
   }
 
@@ -301,7 +303,10 @@ export class MultiSelection extends Selection {
     return this;
   }
 
-  selectLine(row) { this.defaultSelection.selectLine(row); return this; }
+  selectLine(row, includingLineEnd) {
+    this.defaultSelection.selectLine(row, includingLineEnd);
+    return this;
+  }
 
   gotoLineEnd(row) { this.defaultSelection.gotoLineEnd(row); }
 
