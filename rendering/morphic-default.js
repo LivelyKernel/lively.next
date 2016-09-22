@@ -248,13 +248,15 @@ function MorphAfterRenderHook(morph, renderer) { this.morph = morph; this.render
 MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue) {
   // 1. wait for node to be really rendered, i.e. it's in DOM
   // this.morph._dirty = false;
-  promise.waitFor(200, () => !!node.parentNode).then(() => {
-    // 2. update scroll of morph itself
-    if (this.morph.isClip()) this.updateScroll(this.morph, node);
-    // 3. Update scroll of DOM nodes of submorphs
-    if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
-      this.morph._submorphOrderChanged = false;
-      this.updateScrollOfSubmorphs(this.morph, this.renderer);
+  promise.waitFor(200, () => !!node.parentNode).catch(err => false).then(isInDOM => {
+    if (isInDOM) {
+      // 2. update scroll of morph itself
+      if (this.morph.isClip()) this.updateScroll(this.morph, node);
+      // 3. Update scroll of DOM nodes of submorphs
+      if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
+        this.morph._submorphOrderChanged = false;
+        this.updateScrollOfSubmorphs(this.morph, this.renderer);
+      }
     }
     this.morph._rendering = false; // see morph.makeDirty();
   });
