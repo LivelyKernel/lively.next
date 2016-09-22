@@ -862,13 +862,13 @@ var commands = [
   {
     name: "increase font size",
     scrollCursorIntoView: false,
-    exec: function(morph) { morph.fontSize++; return true; }
+    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize++); return true; }
   },
 
   {
     name: "decrease font size",
     scrollCursorIntoView: false,
-    exec: function(morph) { morph.fontSize--; return true; }
+    exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize--); return true; }
   },
 
   {

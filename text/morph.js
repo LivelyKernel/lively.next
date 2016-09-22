@@ -689,6 +689,17 @@ export class Text extends Morph {
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
 
+  keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
+    // doFn has some effect on the text that might change the scrolled
+    // position, like changing the font size. This function ensures that the
+    // text position given will be at the same scroll offset after running the doFn
+    var {scroll, selection: {lead: pos}} = this,
+        offset = this.charBoundsFromTextPosition(pos).y - scroll.y;
+    try { doFn(); } finally {
+      this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset);
+    }
+  }
+
   alignRow(row, how = "center") {
     // how = "center", "bottom", "top";
     if (!this.isClip()) return;
