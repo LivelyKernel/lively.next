@@ -200,15 +200,16 @@ var config = {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // multi select bindings
-      {keys: "Ctrl-Shift-/|Ctrl-C Ctrl-Shift-,",   command: "multi select all"},
-      {keys: "Alt-Ctrl-P",   command: "multi select up"},
-      {keys: "Alt-Ctrl-N",   command: "multi select down"},
-      {keys: "Ctrl-Shift-,", command: "multi select more backward"},
-      {keys: "Ctrl-Shift-.", command: "multi select more forward"},
-      {keys: {mac: "Meta-Shift-,"}, command: "multi select focus backward"},
-      {keys: {mac: "Meta-Shift-."}, command: "multi select focus forward"},
-      {keys: "Ctrl-Shift-;", command: "multi select remove last range"},
-      {keys: "Alt-Ctrl-A",   command: "align cursors"},
+      {keys: "Ctrl-Shift-/|Ctrl-C Ctrl-Shift-,", command: "[multi select] all like this"},
+      {keys: "Alt-Ctrl-P",                       command: "[multi select] add cursor above"},
+      {keys: "Alt-Ctrl-N",                       command: "[multi select] add cursor below"},
+      {keys: "Ctrl-Shift-,",                     command: "[multi select] more like this backward"},
+      {keys: "Ctrl-Shift-.",                     command: "[multi select] more like this forward"},
+      {keys: {mac: "Meta-Shift-,"},              command: "[multi select] goto previous focused cursor"},
+      {keys: {mac: "Meta-Shift-."},              command: "[multi select] goto next focused cursor"},
+      {keys: "Ctrl-Shift-;",                     command: "[multi select] remove focused cursor"},
+      {keys: "Alt-Ctrl-A",                       command: "[multi select] align cursors"},
+      {keys: "Ctrl-X R",                         command: "[multi select] create rectangular selection"},
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
@@ -220,5 +221,7 @@ var config = {
     defaultTheme: "github"
   }
 }
+
+// $$world.withAllSubmorphsDo(ea =>delete ea._cachedKeyhandlers);
 
 export default config;

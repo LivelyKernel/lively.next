@@ -38,6 +38,8 @@ export class Selection {
     if (Math.abs(Range.compare(this.range, otherSel.range)) > 4)
         return false;
     this.range = this.range.merge(otherSel.range);
+    if (otherSel.isReverse() != this.isReverse())
+      this.reverse();
     return true;
   }
 

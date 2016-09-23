@@ -1294,7 +1294,7 @@ commands.push(...searchCommands);
 var multiSelectCommands = [
 
   {
-    name: "multi select up",
+    name: "[multi select] add cursor above",
     multiSelectAction: "single",
     exec: morph => {
       var {row, column} = morph.selection.start;
@@ -1305,7 +1305,7 @@ var multiSelectCommands = [
   },
   
   {
-    name: "multi select down",
+    name: "[multi select] add cursor below",
     multiSelectAction: "single",
     exec: morph => {
       var {row, column} = morph.selection.start,
@@ -1315,9 +1315,9 @@ var multiSelectCommands = [
       return true;
     }
   },
-  
+
   {
-    name: "multi select all",
+    name: "[multi select] all like this",
     multiSelectAction: "single",
     exec: morph => {
       var idx = morph.selection.selections.length-1,
@@ -1332,7 +1332,7 @@ var multiSelectCommands = [
   },
 
   {
-    name: "multi select more forward",
+    name: "[multi select] more like this forward",
     multiSelectAction: "single",
     exec: morph => {
       var idx = morph.selection.selections.length-1,
@@ -1350,7 +1350,7 @@ var multiSelectCommands = [
   },
   
   {
-    name: "multi select more backward",
+    name: "[multi select] more like this backward",
     multiSelectAction: "single",
     exec: morph => {
       var idx = morph.selection.selections.length-1,
@@ -1371,7 +1371,7 @@ var multiSelectCommands = [
   },
   
   {
-    name: "multi select remove last range",
+    name: "[multi select] remove focused cursor",
     multiSelectAction: "single",
     exec: morph => {
       var l = morph.selection.selections.length;
@@ -1382,7 +1382,7 @@ var multiSelectCommands = [
   },
 
   {
-    name: "multi select focus backward",
+    name: "[multi select] goto previous focused cursor",
     multiSelectAction: "single",
     exec: morph => {
       morph.selection.selections = lively.lang.arr.rotate(morph.selection.selections, -1);
@@ -1391,7 +1391,7 @@ var multiSelectCommands = [
   },
 
   {
-    name: "multi select focus forward",
+    name: "[multi select] goto next focused cursor",
     multiSelectAction: "single",
     exec: morph => {
       morph.selection.selections = lively.lang.arr.rotate(morph.selection.selections, 1);
@@ -1400,7 +1400,7 @@ var multiSelectCommands = [
   },
 
   {
-    name: "align cursors",
+    name: "[multi select] align cursors",
     multiSelectAction: "single",
     exec: morph => {
       var {selection: {selections}} = morph, l = selections.length;
@@ -1421,6 +1421,27 @@ var multiSelectCommands = [
         var {row, column} = sel.range.start;
         morph.insertText(" ".repeat(maxCol-column), {row, column})
       });
+      return true;
+    }
+  },
+
+  {
+    name: "[multi select] create rectangular selection",
+    multiSelectAction: "single",
+    exec: morph => {
+      morph.selection.disableMultiSelect();
+      if (morph.selection.isEmpty()) {
+        var from = morph.lastSavedMark && morph.lastSavedMark.position || this.lineRange().start,
+            to = morph.cursorPosition;
+      } else {
+        var {lead: to, anchor: from} = morph.selection;
+      }
+      morph.selection.collapse();
+      var startCol = from.column,
+          endCol = to.column;
+      arr.range(from.row, to.row).forEach(row =>
+        morph.getLine(row).length > Math.min(endCol, startCol) // only add if line has content at the column
+     && morph.selection.addRange({end: {row, column: endCol}, start: {row, column: startCol}}));
       return true;
     }
   }
