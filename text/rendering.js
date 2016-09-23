@@ -26,7 +26,7 @@ function cursor(pos, height, visible, diminished, width) {
       left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
       width: width + "px", height: height + "px",
       backgroundColor: diminished ? "gray" : "black",
-      zIndex: -1,
+      zIndex: 1,
       display: visible ? "" : "none"
     }
   })
