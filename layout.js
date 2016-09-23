@@ -623,6 +623,7 @@ export class GridLayout extends Layout {
 
   constructor(config) {
     super(config);
+    if (config.autoAssign == undefined) config.autoAssign = true;
     this.cellGroups = [];
     this.config = config;
   }
