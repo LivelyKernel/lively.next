@@ -19,11 +19,17 @@ export class Window extends Morph {
     this.submorphs = this.submorphs.concat(this.controls());
     if (props.targetMorph) this.targetMorph = props.targetMorph;
     this.title = props.title || this.name || "";
+    this.resetPropertyCache();
     connect(this, "extent", this, "relayout");
     connect(this.titleLabel(), "extent", this, "relayout");
   }
 
   get isWindow() { return true }
+
+  resetPropertyCache() {
+    // For remembering the position and extents of the window states
+    this.propertyCache = {nonMinizedBounds: null, nonMaximizedBounds: null, minimizedBounds: null};
+  }
 
   relayout() {
     var bounds = this.innerBounds();
@@ -34,28 +40,28 @@ export class Window extends Morph {
   }
 
   controls() {
-    return this.buttons()
-           .concat(this.titleLabel())
-           .concat(this.resizer());
+    return this.buttons().concat(this.titleLabel()).concat(this.resizer());
   }
 
   buttons() {
 
-    const extent = pt(13,13);
+    let defaultStyle = {
+      type: "ellipse",
+      extent: pt(13,13),
+      borderWith: 1,
+      onHoverIn() { this.submorphs[0].visible = true; },
+      onHoverOut() { this.submorphs[0].visible = false; }
+    }
 
     return [
 
       this.getSubmorphNamed("close") || {
-        type: "ellipse",
-        extent,
-        center: pt(15,13),
+        ...defaultStyle,
         name: "close",
-        borderWith: 1,
+        center: pt(15,13),
         borderColor: Color.darkRed,
         fill: Color.rgb(255,96,82),
         onMouseDown(evt) { this.owner.close(); },
-        onHoverIn() { this.submorphs[0].visible = true; },
-        onHoverOut() { this.submorphs[0].visible = false; },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
           styleClasses: ["morph", "fa", "fa-times"],
@@ -64,15 +70,11 @@ export class Window extends Morph {
       },
 
       this.getSubmorphNamed("minimize") || {
-        type: "ellipse",
-        extent,
+        ...defaultStyle,
         center: pt(35,13),
         name: "minimize",
-        borderWith: 1,
         borderColor: Color.brown,
         fill: Color.rgb(255,190,6),
-        onHoverIn() { this.submorphs[0].visible = true; },
-        onHoverOut() { this.submorphs[0].visible = false; },
         onMouseDown(evt) { this.owner.toggleMinimize(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
@@ -81,23 +83,19 @@ export class Window extends Morph {
       },
 
       this.getSubmorphNamed("maximize") || {
-        type: "ellipse",
-        extent,
+        ...defaultStyle,
         name: "maximize",
         center: pt(55,13),
-        borderWith: 1,
         borderColor: Color.darkGreen,
         fill: Color.green,
         onMouseDown(evt) { this.owner.toggleMaximize(); },
-        onHoverIn() { this.submorphs[0].visible = true; },
-        onHoverOut() { this.submorphs[0].visible = false; },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
           styleClasses: ["morph", "fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
         }]
-     }
+      }
 
-   ]
+    ]
   }
 
   titleLabel() {
@@ -147,27 +145,30 @@ export class Window extends Morph {
   }
 
   toggleMinimize() {
+    var cache = this.propertyCache,
+        bounds = this.bounds();
     if (this.minimized) {
-      this.animate({extent: this.cachedExtent, easing: "easeOutQuint", duration: 300});
-      this.resizer().visible = true
-      this.minimized = false;
+      // this.animate({extent: this.propertyCache.extent, easing: "easeOutQuint", duration: 300});
+      cache.minimizedBounds = bounds;
+      this.animate({bounds: cache.nonMinizedBounds || bounds, easing: "easeOutQuint", duration: 300});
     } else {
-      this.cachedExtent =  this.extent;
-      this.animate({extent: pt(this.extent.x, 25), easing: "easeOutQuint", duration: 300});
-      this.resizer().visible = false;
-      this.minimized = true;
+      cache.nonMinizedBounds = bounds;
+      cache.minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25));
+      this.animate({bounds: cache.minimizedBounds, easing: "easeOutQuint", duration: 300});
     }
+    this.minimized = !this.minimized;
+    this.resizer().visible = !this.minimized;
   }
 
   toggleMaximize() {
+    var cache = this.propertyCache;
     if (this.maximized) {
-      this.animate({bounds: this.cachedBounds, duration: 300});
+      this.animate({bounds: cache.nonMaximizedBounds, duration: 300});
       this.resizer().bottomRight = this.extent;
       this.maximized = false;
     } else {
-      this.cachedBounds = this.bounds();
-      this.animate({bounds: this.world().bounds(), duration: 300});
-      this.resizer().bottomRight = this.extent;
+      cache.nonMaximizedBounds = this.bounds();
+      this.animate({bounds: this.world().visibleBounds().insetBy(5), duration: 300});
       this.resizer().visible = true;
       this.maximized = true;
       this.minimized = false;
@@ -205,8 +206,7 @@ export class Window extends Morph {
     return this;
   }
 
-  deactivate() {
-  }
+  deactivate() {}
 }
 
 export class Button extends Morph {
