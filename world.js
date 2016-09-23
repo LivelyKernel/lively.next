@@ -360,7 +360,7 @@ export class World extends Morph {
         return;
       }
       // propagate to halo to owner
-      addHalo = target == evt.halo && evt.isCommandKey() && evt.halo.target.owner;
+      addHalo = target == evt.halo.borderBox && evt.isCommandKey() && evt.halo.target.owner;
       if (addHalo) {
         this.showHaloFor(evt.halo.target.owner, evt.domEvt.pointerId);
         return

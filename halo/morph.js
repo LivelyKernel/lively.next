@@ -196,6 +196,7 @@ export class Halo extends Morph {
       fill: Color.transparent,
     });
     this.borderBox = this.addMorph({
+      isHalo: true,
       name: "border-box", fill: Color.transparent, 
       borderColor: Color.red, borderWidth: 2
     });
