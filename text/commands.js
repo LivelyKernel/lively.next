@@ -860,6 +860,28 @@ var commands = [
   },
 
   {
+      name: "lowercase",
+      exec: (morph) => {
+        morph.undoManager.group();
+        if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
+        morph.selection.text = morph.selection.text.toLowerCase();
+        morph.undoManager.group();
+        return true;
+      }
+  },
+
+  {
+    name: "uppercase",
+    exec: (morph) => {
+      morph.undoManager.group();
+      if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
+      morph.selection.text = morph.selection.text.toUpperCase();
+      morph.undoManager.group();
+      return true;
+    }
+  },
+
+  {
     name: "newline",
     exec: function(morph) {
       var {row} = morph.cursorPosition,

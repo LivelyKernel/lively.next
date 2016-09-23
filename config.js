@@ -172,6 +172,8 @@ var config = {
       {keys: 'Ctrl-O',                               command: "split line"},
 
       {keys: {mac: 'Ctrl-X Ctrl-T'}, command: "transpose chars"},
+      {keys: {mac: 'Ctrl-C Ctrl-U'}, command: "uppercase"},
+      {keys: {mac: 'Ctrl-C Ctrl-L'}, command: "lowercase"},
 
       {keys: "Ctrl-Space", command: "toggle active mark"},
 
