@@ -475,6 +475,7 @@ export class Halo extends Morph {
                                        num.toDegrees(this.target.rotation).toFixed(1) + "°",
 
       init(angleToTarget) {
+        this.detachFromLayout();
         this.halo.target.undoStart("rotate-halo");
         this.halo.activeButton = this;
         angle = angleToTarget;
@@ -483,6 +484,7 @@ export class Halo extends Morph {
       },
 
       initScale(gauge) {
+        this.detachFromLayout();
         this.halo.activeButton = this;
         scaleGauge = gauge.scaleBy(1 / this.halo.target.scale);
         this.halo.toggleRotationIndicator(true, this);
@@ -507,6 +509,7 @@ export class Halo extends Morph {
       },
 
       stop() {
+        this.attachToLayout();
         scaleGauge = null;
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
@@ -519,9 +522,16 @@ export class Halo extends Morph {
         this.tooltip = scaling ? "Scale morph" : "Rotate morph";
       },
 
+      detachFromLayout() {
+        this.halo.layout.col(0).row(6).group.morph = null;
+      },
+      
+      attachToLayout() {
+        this.halo.layout.col(0).row(6).group.morph = "rotate";
+      },
+
       // events
       onDragStart(evt) {
-        this.halo.layout.col(0).row(6).group.morph = null;
         this.adaptAppearance(evt.isShiftDown());
         if (evt.isShiftDown()) {
           this.initScale(evt.position.subPt(this.halo.target.globalPosition));
@@ -541,7 +551,6 @@ export class Halo extends Morph {
       },
 
       onDragEnd(evt) {
-        this.halo.layout.col(0).row(6).group.morph = "rotate";
         this.adaptAppearance(evt.isShiftDown());
         this.stop();
       },
