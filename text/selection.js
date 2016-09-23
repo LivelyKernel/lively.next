@@ -280,7 +280,7 @@ export class MultiSelection extends Selection {
   get lead() { return this.defaultSelection.lead; }
   set lead(pos) { this.defaultSelection.lead = pos; }
 
-  get text() { return this.selections.map(sel => sel.text).join(""); }
+  get text() { return this.selections.map(sel => sel.text).join("\n"); }
   set text(val) { this.selections.forEach(sel => sel.text = val); }
 
   get selectedRows() { return this.defaultSelection.selectedRows; }

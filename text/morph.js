@@ -808,36 +808,34 @@ export class Text extends Morph {
 
   onCut(evt) {
     if (this.rejectsInput() || !this.isFocused()) return;
-    evt.stop();
-    var sel = this.selection;
-    this.env.eventDispatcher.killRing.add(sel.text);
-    evt.domEvt.clipboardData.setData("text", sel.text);
-    this.activeMark = null;
-    var sel = this.selection;
-    sel.text = "";
-    sel.collapse();
+    this.onCopy(evt, !this.rejectsInput())
   }
 
-  onCopy(evt) {
+  onCopy(evt, deleteCopiedText = false) {
     if (!this.isFocused()) return;
     evt.stop();
     var sel = this.selection;
-    this.env.eventDispatcher.killRing.add(sel.text);
     evt.domEvt.clipboardData.setData("text", sel.text);
-    if (!sel.isEmpty()) {
-      this.activeMark = null;
-      this.saveMark(sel.anchor);
-      this.collapseSelection();
-    }
+    this.execCommand("manual clipboard copy", {delete: deleteCopiedText, dontTryNativeClipboard: true})
   }
 
   onPaste(evt) {
     if (this.rejectsInput()) return;
     evt.stop();
-    var sel = this.selection;
-    sel.text = evt.domEvt.clipboardData.getData("text");
-    this.saveMark(sel.start);
-    sel.collapseToEnd();
+    if (this.inMultiSelectMode()) {
+      this.execCommand("manual clipboard paste")
+    } else {
+      var data = evt.domEvt.clipboardData.getData("text"),
+          sel = this.selection,
+          sels = sel.isMultiSelection ? sel.selections : [sel];
+      this.undoManager.group();
+      this.saveMark(sel.start);
+      sels.forEach(sel => {
+        sel.text = data;
+        sel.collapseToEnd();
+      });
+      this.undoManager.group();
+    }
   }
 
   onFocus(evt) {

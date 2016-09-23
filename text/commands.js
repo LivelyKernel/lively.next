@@ -26,19 +26,27 @@ var commands = [
     name: "manual clipboard copy",
     doc: "attempts to copy selection via browser interface",
     scrollCursorIntoView: false,
-    exec: function(morph, opts = {delete: false}) {
+    multiSelectAction: "single",
+    exec: (morph, opts = {delete: false, dontTryNativeClipboard: false}) => {
       var sel = morph.selection,
-          range = sel.isEmpty() ? morph.lineRange() : sel.range,
-          text = morph.textInRange(range);
-
-      morph.env.eventDispatcher.doCopy(text);
-      morph.env.eventDispatcher.killRing.add(text);
+          fullText = sel.text;
       morph.saveMark(sel.anchor);
       morph.activeMark = null;
-      if (opts["delete"])
-        morph.deleteText(range);
-      else if (!sel.isEmpty())
-        sel.collapse(sel.lead);
+
+      var sels = sel.isMultiSelection ? sel.selections.slice() : [sel]
+      sels.forEach(sel => {
+        var range = sel.isEmpty() ? morph.lineRange() : sel.range,
+            text = morph.textInRange(range);
+          morph.env.eventDispatcher.killRing.add(text);
+        if (opts["delete"])
+          morph.deleteText(range);
+        else if (!sel.isEmpty())
+          sel.collapse(sel.lead);
+      });
+
+      if (!opts.dontTryNativeClipboard)
+        morph.env.eventDispatcher.doCopy(fullText);
+
       return true;
     }
   },
@@ -62,8 +70,10 @@ var commands = [
   {
     name: "manual clipboard paste",
     doc: "attempts to paste from the clipboard to lively – currently requires browser extension!",
+    multiSelectAction: "single",
     exec: async function(morph, opts = {killRingCycleBack: false}) {
       var pasted, kr = morph.env.eventDispatcher.killRing;
+
 
       if (opts.killRingCycleBack && (arr.last(arr.pluck(morph.commandHandler.history, "name")) || "").includes("clipboard paste"))
         pasted = kr.back();
@@ -71,26 +81,55 @@ var commands = [
       if (!pasted && kr.isCycling())
         pasted = kr.yank();
 
-      if (!pasted && lively.browserExtension) {
-        try {
-          pasted = await lively.browserExtension.doPaste();
-        } catch(err) { /*timeout err*/}
-      }
+      // if (!pasted && lively.browserExtension) {
+      //   try {
+      //     pasted = await lively.browserExtension.doPaste();
+      //   } catch(err) { /*timeout err*/}
+      // }
 
-      if (!pasted) {
-        try {
-          pasted = await morph.env.eventDispatcher.doPaste();
-        } catch (e) { console.warn("paste failed: " + e); }
-      }
+      // if (!pasted) {
+      //   try {
+      //     pasted = await morph.env.eventDispatcher.doPaste();
+      //   } catch (e) { console.warn("paste failed: " + e); }
+      // }
 
       if (!pasted) pasted = kr.yank();
 
-      if (pasted) {
+      if (morph.selection.isMultiSelection) {        
         morph.undoManager.group();
-        morph.selection.text = pasted;
+        morph.selection.selections.slice(0,-1)
+          .reverse()
+          .map((sel, i) => {
+            var idx = (kr.pointer-1)-i;
+            if (idx < 0) idx = kr.buffer.length-1;
+            return {selection: sel, pasted: kr.buffer[idx] || ""};
+          })
+          .concat({selection: morph.selection.defaultSelection, pasted})
+          .forEach(({selection, pasted}) => selection.text = pasted)
         morph.undoManager.group();
+      } else {
+        if (pasted) {
+          morph.undoManager.group();
+          morph.selection.text = pasted;
+          morph.undoManager.group();
+        }
       }
 
+      return true;
+    }
+  },
+
+  {
+    name: "browse clipboard",
+    exec: async (morph) => {
+      var {pointer, buffer} = morph.env.eventDispatcher.killRing,
+          {selected} = await morph.world().filterableListPrompt(
+            "select items to paste", buffer, {preselect: pointer, multiSelect: true});
+      if (selected.length) {
+        morph.undoManager.group();
+        morph.insertTextAndSelect(selected.join("\n"));
+        morph.undoManager.group();
+      }
       return true;
     }
   },
