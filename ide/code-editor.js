@@ -16,8 +16,7 @@ import GithubTheme from "./themes/github.js";
 
 const highlighters = {
   "plain": PlainHighlighter,
-  // "javascript": JavaScriptHighlighter
-  "javascript": PlainHighlighter
+  "javascript": JavaScriptHighlighter
 }
 
 const checkers = {
