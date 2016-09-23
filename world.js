@@ -271,9 +271,14 @@ var worldCommands = [
 
       items = arr.sortBy(items, ea => ea.string);
 
-      var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700});
-
-      selected && (await Browser.browse(selected.package.name, selected.shortName, undefined, browser)).activate()
+      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true});
+      for (var i = 0; i < selected.length; i++) {
+        var {package: p, shortName} = selected[i],
+            b = await Browser.browse(
+              p.name, shortName, undefined,
+              i === 0 ? browser : undefined);
+        b.moveBy(pt(i*20, i*20));
+      }
 
       return true;
     }
@@ -546,7 +551,7 @@ export class World extends Morph {
       label, items, ...opts}), opts);
   }
 
-  filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0}) {
+  filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0, multiSelect: false}) {
     if (opts.prompt) {
       var list = opts.prompt.get("list");
       list.items = items;
@@ -705,7 +710,15 @@ export class ListPrompt extends AbstractPrompt {
       connect(this.get("list"), "selection", props, "onSelection");
   }
 
-  build({listFontSize, listFontFamily, labelFontSize, labelFontFamily, filterable, padding, itemPadding, extent}) {
+  build({listFontSize,
+         listFontFamily,
+         labelFontSize,
+         labelFontFamily,
+         filterable,
+         padding,
+         itemPadding,
+         extent,
+         multiSelect}) {
     this.extent = extent || pt(500,400);
     var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
@@ -713,7 +726,7 @@ export class ListPrompt extends AbstractPrompt {
     listFontFamily = listFontFamily || labelFontFamily;
     listFontSize = listFontSize || labelFontSize;
     this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily});
-    this.get("list") || this.addMorph(new ListClass({borderWidth: 1, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding}));
+    this.get("list") || this.addMorph(new ListClass({borderWidth: 1, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect}));
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');

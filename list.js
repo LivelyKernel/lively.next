@@ -13,8 +13,9 @@ class ListItemMorph extends Text {
 
   constructor(props) {
     super({
-      fixedWidth: true, fixedHeight: false, readOnly: true, selectable: false,
-      fill: null, textString: "", itemIndex: undefined, ...props
+      halosEnabled: false, readOnly: true, selectable: false,
+      fixedWidth: true, fixedHeight: false, fill: null,
+      textString: "", itemIndex: undefined, ...props
     });
   }
 
@@ -29,7 +30,7 @@ class ListItemMorph extends Text {
   }
 
   onMouseDown(evt) {
-    this.owner.owner.selectItemMorph(this);
+    this.owner.owner.onItemMorphClicked(evt, this);
   }
 }
 
@@ -66,15 +67,61 @@ var listCommands = [
   
   {
     name: "arrow up",
-    exec: (list) => { list.gotoIndex((list.selectedIndex || list.items.length) - 1); return true; }
+    exec: (list) => { list.gotoIndex(list.indexUp()); return true; }
   },
   
   {
     name: "arrow down",
     exec: (list) => {
-      var index = list.selectedIndex,
-          newIndex = ((typeof index === "number" ? index : -1) + 1) % list.items.length;
-      list.gotoIndex(newIndex);
+      list.gotoIndex(list.indexDown());
+      return true;
+    }
+  },
+
+  {
+    name: "select up",
+    exec: (list) => {
+      var selected = list.selectedIndexes;
+      if (!list.multiSelect || !selected.length)
+        return list.execCommand("arrow up");
+
+      var current = selected[0];
+      if (typeof current !== "number") list.selectedIndexes = [current];
+      else {
+        var up = list.indexUp(current);
+        if (selected.includes(current) && selected.includes(up)) {
+          list.selectedIndexes = selected.filter(ea => ea !== current)
+        } else {
+          list.selectedIndexes = [up].concat(selected.filter(ea => ea !== up))
+        }
+      }
+      return true;
+    }
+  },
+  
+  {
+    name: "select down",
+    exec: (list) => {
+      var selected = list.selectedIndexes;
+      if (!list.multiSelect || !selected.length)
+        return list.execCommand("arrow down");
+
+      var current = selected[0],
+          down = list.indexDown(current);
+      if (selected.includes(current) && selected.includes(down)) {
+        list.selectedIndexes = selected.filter(ea => ea !== current)
+      } else {
+        list.selectedIndexes = [down].concat(selected.filter(ea => ea !== down))
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "select all",
+    exec: (list) => {
+      list.selectedIndexes = arr.range(list.items.length-1, 0);
+      list.scrollIndexIntoView(list.selectedIndexes[0]);
       return true;
     }
   },
@@ -83,11 +130,12 @@ var listCommands = [
     name: "select via filter",
     exec: async (list) => {
       var preselect = list.selectedIndex || 0;
-      var {selected: [sel]} = await list.world().filterableListPrompt(
+      var {selected} = await list.world().filterableListPrompt(
         "Select item", list.items,
-        {preselect, requester: list.getWindow() || list, itemPadding: Rectangle.inset(0,2)});
-      if (sel) {
-        list.selection = sel;
+        {preselect, requester: list.getWindow() || list, itemPadding: Rectangle.inset(0,2), multiSelect: true});
+      if (selected.length) {
+        if (list.multiSelect) list.selections = selected;
+        else list.selection = selected[0];
         list.scrollSelectionIntoView();
         list.update();
       }
@@ -110,47 +158,63 @@ export class List extends Morph {
       clipMode: "auto",
       padding: props.padding || Rectangle.inset(3),
       itemPadding: props.itemPadding || Rectangle.inset(1),
+      multiSelect: false,
       ...props
     });
     this.update();
+  }
+
+  onChange(change) {
+    var {prop} = change;
+    if (prop === "fontFamily"
+     || prop === "fontSize"
+     || prop === "padding"
+     || prop === "itemPadding"
+     || prop === "items") this.update();
+    return super.onChange(change);
   }
 
   get connections() {
     return {selection: {signalOnAssignment: false}};
   }
 
+  get extent() { return this.getProperty("extent"); }
+  set extent(value) {
+    if (value.eqPt(this.extent)) return;
+    this.addValueChange("extent", value);
+    this.update();
+  }
+
   get fontFamily() { return this.getProperty("fontFamily"); }
   set fontFamily(value) {
     this.addValueChange("fontFamily", value);
     this.invalidateCache();
-    this.groupChangesWhile(undefined, () => this.update());
   }
 
   get fontSize() { return this.getProperty("fontSize"); }
   set fontSize(value) {
     this.addValueChange("fontSize", value);
     this.invalidateCache();
-    this.groupChangesWhile(undefined, () => this.update());
   }
 
   get padding() { return this.getProperty("padding"); }
   set padding(value) {
     this.addValueChange("padding", value);
-    this.groupChangesWhile(undefined, () => this.update());
   }
 
   get itemPadding() { return this.getProperty("itemPadding"); }
   set itemPadding(value) {
     this.addValueChange("itemPadding", value);
     this.invalidateCache();
-    this.groupChangesWhile(undefined, () => this.update());
   }
 
   get items() { return this.getProperty("items"); }
   set items(items) {
     this.addValueChange("items", items.map(asItem));
-    this.groupChangesWhile(undefined, () => this.update());
   }
+
+  get multiSelect() { return this.getProperty("multiSelect"); }
+  set multiSelect(bool) { this.addValueChange("multiSelect", bool); }
 
   get values() { return this.items.map(ea => ea.value); }
 
@@ -221,7 +285,7 @@ export class List extends Morph {
     this.addValueChange(
       "selectedIndexes",
       (indexes || []).filter(i => 0 <= i && i < maxLength));
-    this.groupChangesWhile(undefined, () => this.update());
+    this.update()
     signal(this, "selection", this.selection);
   }
 
@@ -237,8 +301,17 @@ export class List extends Morph {
     this.selectedIndexes = [itemMorph.itemIndex];
   }
 
-  gotoIndex(i) {
-    this.scrollIndexIntoView(this.selectedIndex = i);
+  gotoIndex(i) { this.scrollIndexIntoView(this.selectedIndex = i); }
+
+  indexUp(from) {
+    from = typeof from === "number" ? from : this.selectedIndex;
+    // wrap around:
+    return (from || this.items.length) - 1;
+  }
+
+  indexDown(index = this.selectedIndex) {
+    index = typeof index === "number" ? index : -1
+    return (index + 1) % this.items.length;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -254,7 +327,7 @@ export class List extends Morph {
 
   get itemHeight() {
     if (this._itemHeight) return this._itemHeight;
-    var h = this.env.fontMetric.sizeFor(this.fontFamily+this.fontSize, "O").height;
+    var h = this.env.fontMetric.defaultLineHeight({fontFamily: this.fontFamily, fontSize: this.fontSize});
     var padding = this.itemPadding;
     if (padding) h += padding.top() + padding.bottom();
     return this._itemHeight = h;
@@ -264,44 +337,46 @@ export class List extends Morph {
     var items = this.items;
     if (!items) return; // pre-initialize
 
-    var {
-          itemHeight,
-          itemMorphs, listItemContainer,
-          selectedIndexes,
-          scroll: {x: left, y: top},
-          extent: {x: width, y: height},
-          fontSize, fontFamily,
-          padding, itemPadding
-        } = this,
-        padding = padding || Rectangle.inset(0),
-        padTop = padding.top(), padLeft = padding.left(),
-        padBottom = padding.bottom(), padRight = padding.right(),
-        firstItemIndex = Math.floor((top + padTop) / itemHeight),
-        lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
-
-    listItemContainer.extent = pt(this.width + padLeft + padRight, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
-
-    for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
-      var itemIndex = firstItemIndex+i,
-          item = items[itemIndex];
-
-      if (!item) {
-        // if no items to display, remove remaining itemMorphs
-        itemMorphs.slice(i).forEach(itemMorph => itemMorph.remove());
-        break;
+    this.groupChangesWhile(undefined, () => {
+      var {
+            itemHeight,
+            itemMorphs, listItemContainer,
+            selectedIndexes,
+            scroll: {x: left, y: top},
+            extent: {x: width, y: height},
+            fontSize, fontFamily,
+            padding, itemPadding
+          } = this,
+          padding = padding || Rectangle.inset(0),
+          padTop = padding.top(), padLeft = padding.left(),
+          padBottom = padding.bottom(), padRight = padding.right(),
+          firstItemIndex = Math.floor((top + padTop) / itemHeight),
+          lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
+  
+      listItemContainer.extent = pt(this.width + padLeft + padRight, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
+  
+      for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
+        var itemIndex = firstItemIndex+i,
+            item = items[itemIndex];
+  
+        if (!item) {
+          // if no items to display, remove remaining itemMorphs
+          itemMorphs.slice(i).forEach(itemMorph => itemMorph.remove());
+          break;
+        }
+  
+        var itemMorph = itemMorphs[i]
+                    || (itemMorphs[i] = listItemContainer.addMorph(
+                          new ListItemMorph({fontFamily, fontSize})));
+  
+        itemMorph.displayItem(item, itemIndex,
+          pt(padLeft, padTop+itemHeight*itemIndex),
+          selectedIndexes.includes(itemIndex),
+          {fontFamily, fontSize, padding: itemPadding || Rectangle.inset(0)});
       }
-
-      var itemMorph = itemMorphs[i]
-                  || (itemMorphs[i] = listItemContainer.addMorph(
-                        new ListItemMorph({fontFamily, fontSize})));
-
-      itemMorph.displayItem(item, itemIndex,
-        pt(padLeft, padTop+itemHeight*itemIndex),
-        selectedIndexes.includes(itemIndex),
-        {fontFamily, fontSize, padding: itemPadding || Rectangle.inset(0)});
-    }
-
-    itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
+  
+      itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
+    });
   }
 
   scrollSelectionIntoView() {
@@ -324,15 +399,53 @@ export class List extends Morph {
     fun.debounceNamed(this.id + "scroll", 81, () => this.update(), true)();
   }
 
+  onItemMorphClicked(evt, itemMorph) {
+    var itemI = itemMorph.itemIndex,
+        {selectedIndexes} = this,
+        isClickOnSelected = selectedIndexes.includes(itemI),
+        indexes = [];
+    if (this.multiSelect) {
+      if (evt.isCommandKey()) {
+      
+        // deselect item
+        if (isClickOnSelected) {
+          indexes = selectedIndexes.filter(ea => ea != itemI);
+        } else {
+          // just add clicked item to selection list
+          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
+        }
+          
+
+      } else if (evt.isShiftDown()) {
+
+        if (isClickOnSelected) {
+          indexes = selectedIndexes.filter(ea => ea != itemI);
+        } else {
+          // select from last selected to clicked item
+          var from = selectedIndexes[0],
+              added = typeof from === "number" ? arr.range(itemI, from) : [itemI];
+          indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)))
+        }
+
+      } else {
+        indexes = [itemI];
+      }
+    } else indexes = [itemI];
+    this.selectedIndexes = indexes;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // event handling
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   get keybindings() {
     return [
-      {keys: "Down|Ctrl-N", command: "arrow down"},
       {keys: "Up|Ctrl-P", command: "arrow up"},
-      {keys: "Ctrl-V|PageDown", command: "page down"},
+      {keys: "Down|Ctrl-N", command: "arrow down"},
+      {keys: "Shift-Up", command: "select up"},
+      {keys: "Shift-Down", command: "select down"},
+      {keys: {win: "Ctrl-A", mac: "Meta-A"}, command: "select all"},
       {keys: "Alt-V|PageUp", command: "page up"},
+      {keys: "Ctrl-V|PageDown", command: "page down"},
       {keys: "Alt-Shift-,", command: "goto first item"},
       {keys: "Alt-Shift-.", command: "goto last item"},
       {keys: "Enter", command: "accept input"},
@@ -405,6 +518,9 @@ export class FilterableList extends Morph {
     l.height = this.height - i.height;
   }
 
+  get multiSelect() { return this.get("list").multiSelect; }
+  set multiSelect(multiSelect) { this.get("list").multiSelect = multiSelect; }
+
   get items() { return this.state.allItems || []; }
   set items(items) {
     var l = this.get("list");
@@ -426,7 +542,7 @@ export class FilterableList extends Morph {
     var filterText = this.get("input").textString,
         filterTokens = filterText.split(/\s+/).map(ea => ea.toLowerCase()),
         filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token))),
-        list = this.get("list");
+        list = this.get("list"),
         newSelectedIndexes = list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1)
     list.items = filteredItems;
     list.selectedIndexes = newSelectedIndexes.length ? newSelectedIndexes : filteredItems.length ? [0] : [];
@@ -435,10 +551,13 @@ export class FilterableList extends Morph {
 
   get keybindings() {
     return [
-      {keys: "Down|Ctrl-N", command: "arrow down"},
       {keys: "Up|Ctrl-P", command: "arrow up"},
-      {keys: "Ctrl-V|PageDown", command: "page down"},
+      {keys: "Down|Ctrl-N", command: "arrow down"},
+      {keys: "Shift-Up", command: "select up"},
+      {keys: "Shift-Down", command: "select down"},
+      {keys: {win: "Ctrl-A", mac: "Meta-A"}, command: "select all"},
       {keys: "Alt-V|PageUp", command: "page up"},
+      {keys: "Ctrl-V|PageDown", command: "page down"},
       {keys: "Alt-Shift-,", command: "goto first item"},
       {keys: "Alt-Shift-.", command: "goto last item"},
       {keys: "Enter", command: "accept input"},

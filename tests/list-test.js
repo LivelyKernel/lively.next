@@ -16,9 +16,6 @@ function createDummyWorld() {
 
 describe("lists", function () {
 
-  // beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
-  // afterEach(() =>  MorphicEnv.popDefault().uninstall());
-
   var list;
   beforeEach(() => {
     list = new List({extent: pt(100,100)});
@@ -54,51 +51,54 @@ describe("lists", function () {
       list.addItem("foo");
       list.addItem("bar");
       expect(list.itemMorphs).containSubset([{textString: "foo"}, {textString: "bar"}]);
-      expect(list.itemMorphs[0].topLeft).equals(pt(0,0));
-      expect(list.itemMorphs[1].topLeft).equals(list.itemMorphs[0].bottomLeft);
+      var [a, b] = list.itemMorphs;
+      expect(a.topLeft).equals(list.padding.topLeft());
+      expect(b.topLeft).equals(a.bottomLeft.addXY(0, a.padding.bottom() + b.padding.top()));
     });
 
     it("only renders necessary items", () => {
       list.items = arr.range(0,100);
-      var nVisible = Math.ceil(list.height / list.itemMorphs[0].height)
-      expect(list.itemMorphs.length).equals(nVisible);
+      list.openInWorld();      
+      var nVisible = Math.ceil(list.height / list.itemMorphs[0].height);
+      expect(list.itemMorphs.length).closeTo(nVisible, 1);
     });
     
   });
+  
+
+  describe("multi select", () => {
+
+    it("test01GetSelections", function() {
+        list.items = ['1', '2', '3'];
+        list.selection = '2';
+        expect(['2']).equals(list.selections);
+    });
+
+    it("test02TurnOnMultipleSelectionMode", function() {
+        list.items = ['1', '2', '3'];
+        list.selection = '2';
+        list.multiSelect = true;
+        list.selections = ['1','3'];
+        expect(['1', '3']).equals(list.selections);
+    });
+
+    it("test03SetSelection", function() {
+        list.items = ['1', '2', '3'];
+        list.multiSelect = true;
+        list.selection = '2';
+        list.execCommand("select down");
+        expect(['3', '2']).equals(list.selections);
+        list.selections = [];
+        expect([]).equals(list.selections);
+    });
+
+  });
+
 });
 
 
 // module('lively.morphic.tests.Lists').requires('lively.morphic.tests.Helper', 'lively.morphic.Layout').toRun(function() {
 
-// lively.morphic.tests.MorphTests.subclass('lively.morphic.tests.MultipleSelectionListTests',
-// 'testing', {
-//     test01GetSelections: function() {
-//         var list = new lively.morphic.List(new Rectangle(0, 0, 100, 100), ['1', '2', '3']);
-//         this.world.addMorph(list)
-//         list.setSelection('2');
-//         this.assertEqualState(['2'], list.getSelections());
-//     },
-
-//     test02TurnOnMultipleSelectionMode: function() {
-//         var list = new lively.morphic.List(new Rectangle (0, 0, 100, 100), ['1', '2', '3']);
-//         this.world.addMorph(list)
-//         list.enableMultipleSelections();
-//         list.setSelections(['1','3'])
-//         this.assertEqualState(['1', '3'], list.getSelections());
-//     },
-
-//     test03SetSelection: function() {
-//         var list = new lively.morphic.List(new Rectangle (0, 0, 100, 100), ['1', '2', '3']);
-//         list.enableMultipleSelections();
-//         list.setSelection('1')
-//         list.setSelection('3')
-//         list.setSelection(null)
-//         this.assertEqualState(['1', '3'], list.getSelections());
-//         list.clearSelections();
-//         this.assertEqualState([], list.getSelections());
-//     },
-
-// });
 
 // AsyncTestCase.subclass('lively.morphic.tests.Lists.MorphicList', lively.morphic.tests.MorphTests.prototype,
 // 'running', {
