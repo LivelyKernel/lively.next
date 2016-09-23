@@ -211,12 +211,12 @@ export class Halo extends Morph {
       autoAssign: false,
       grid: [
           [null,    null, "grab", null, "drag", null, "close"],
-          [null,    "box", "box", "box", "box", "box", null],
-          ["copy",  "box", "box", "box", "box", "box", "edit"],
-          [null,    "box", "box", "box", "box", "box", null],
-          ["style", "box", "box", "box", "box", "box", "inspect"],
-          [null,    "box", "box", "box", "box", "box", null],
-          ["rotate","box", "box", "box", "box", "box", "resize"],
+          [null,    null,  null,  null,  null,  null,  null],
+          ["copy",  null,  null,  null,  null,  null, "edit"],
+          [null,    null,  null,  null,  null,  null, null],
+          ["style", null,  null,  null,  null,  null, "inspect"],
+          [null,    null,  null,  null,  null,  null, null],
+          ["rotate",null,  null,  null,  null,  null, "resize"],
           [null,    "name","name","name","name","name", null]]});
 
     this.layout.col(0).fixed = 26;
