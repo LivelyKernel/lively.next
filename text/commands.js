@@ -1256,6 +1256,21 @@ var multiSelectCommands = [
   },
   
   {
+    name: "multi select all",
+    multiSelectAction: "single",
+    exec: morph => {
+      var idx = morph.selection.selections.length-1,
+          last = morph.selection.selections[idx];
+      if (last.isEmpty()) return true;
+      var found = morph.searchForAll(last.text, {start: {column: 0, row: 0}});
+      found.forEach(({range}) => morph.selection.addRange(range));
+      arr.remove(morph.selection.selections, last);
+      morph.selection.selections.push(last); // make it the first again      
+      return true;
+    }
+  },
+
+  {
     name: "multi select more forward",
     multiSelectAction: "single",
     exec: morph => {
@@ -1301,6 +1316,50 @@ var multiSelectCommands = [
       var l = morph.selection.selections.length;
       if (l > 1)
         morph.selection.removeSelections(l-1);
+      return true;
+    }
+  },
+
+  {
+    name: "multi select focus backward",
+    multiSelectAction: "single",
+    exec: morph => {
+      morph.selection.selections = lively.lang.arr.rotate(morph.selection.selections, -1);
+      return true;
+    }
+  },
+
+  {
+    name: "multi select focus forward",
+    multiSelectAction: "single",
+    exec: morph => {
+      morph.selection.selections = lively.lang.arr.rotate(morph.selection.selections, 1);
+      return true;
+    }
+  },
+
+  {
+    name: "align cursors",
+    multiSelectAction: "single",
+    exec: morph => {
+      var {selection: {selections}} = morph, l = selections.length;
+      if (l <= 1) return true;
+
+      var byRow = arr.groupBy(selections, sel => sel.range.start.row),
+          // eliminate other selections in same row that are farther left
+          leftOverSels = byRow.keys().map(row => {
+            var selsOfRow = byRow[row],
+                rightMostSel = arr.max(selsOfRow, ea => ea.range.start.column);
+            arr.without(selsOfRow, rightMostSel).forEach(sel => sel.range = rightMostSel.range);
+            return rightMostSel;
+          }),
+          // find the rightmost column
+          maxCol = arr.max(leftOverSels, ea => ea.range.start.column).range.start.column;
+      // for all selections farther left than maxCol, insert spaces to fill up to maxColl
+      leftOverSels.forEach(sel => {
+        var {row, column} = sel.range.start;
+        morph.insertText(" ".repeat(maxCol-column), {row, column})
+      });
       return true;
     }
   }

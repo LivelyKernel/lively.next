@@ -198,12 +198,16 @@ var config = {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // multi select bindings
-      {keys: "Alt-Ctrl-P", command: "multi select up"},
-      {keys: "Alt-Ctrl-N", command: "multi select down"},
+      {keys: "Ctrl-Shift-/|Ctrl-C Ctrl-Shift-,",   command: "multi select all"},
+      {keys: "Alt-Ctrl-P",   command: "multi select up"},
+      {keys: "Alt-Ctrl-N",   command: "multi select down"},
       {keys: "Ctrl-Shift-,", command: "multi select more backward"},
       {keys: "Ctrl-Shift-.", command: "multi select more forward"},
+      {keys: {mac: "Meta-Shift-,"}, command: "multi select focus backward"},
+      {keys: {mac: "Meta-Shift-."}, command: "multi select focus forward"},
       {keys: "Ctrl-Shift-;", command: "multi select remove last range"},
-      
+      {keys: "Alt-Ctrl-A",   command: "align cursors"},
+
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
       {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
