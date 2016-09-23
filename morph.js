@@ -253,7 +253,11 @@ export class Morph {
   set dropShadow(value) { this.addValueChange("dropShadow", value); }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
-  set styleClasses(value)  { this.addValueChange("styleClasses", value); }
+  set styleClasses(value)  {
+    // every morph is a css "morph"
+    if (!value.includes("morph")) value.push("morph");
+    this.addValueChange("styleClasses", value);
+  }
 
   addStyleClass(className)  { this.styleClasses = arr.uniq(this.styleClasses.concat(className)) }
   removeStyleClass(className)  { this.styleClasses = this.styleClasses.filter(ea => ea != className) }
