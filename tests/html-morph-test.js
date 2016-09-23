@@ -9,7 +9,7 @@ import { pt, Color, Rectangle } from "lively.graphics";
 
 var world, env;
 function createDummyWorld() {
-  return world = morph({type: "world", name: "world", extent: pt(300,300)});
+  return world = morph({type: "world", name: "world", extent: pt(300,300), env});
 }
 
 
@@ -23,7 +23,7 @@ describe("html morph", function () {
   afterEach(() =>  MorphicEnv.popDefault().uninstall());
 
   it("renders html", async () => {
-    var m = world.addMorph(new HTMLMorph({html: "<div>This is a <h2>test</h2></div>", document: env.domEnv.document}));
+    var m = world.addMorph(new HTMLMorph({html: "<div>This is a <h2>test</h2></div>", env}));
     await m.whenRendered();
     expect(m.domNode.innerHTML).equals("<div>This is a <h2>test</h2></div>", "initial rendering wrong");
     expect(m.domNode.parentNode).equals(env.renderer.getNodeForMorph(m), "rendered node not child node of morph node");

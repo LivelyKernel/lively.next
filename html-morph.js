@@ -25,7 +25,7 @@ class CustomVNode {
   }
 
   init() {
-    var domNode = createElement(this.renderMorph());
+    var domNode = createElement(this.renderMorph(), this.renderer.domEnvironment);
     // here we replace the placeholder node with our custom node, this only
     // needs to happen when we create the DOM node for the entire morph
     domNode.replaceChild(this.morph.domNode, domNode.childNodes[0]);
