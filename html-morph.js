@@ -1,4 +1,5 @@
 import { obj } from "lively.lang";
+import { pt } from "lively.graphics";
 import { Morph } from "./index.js";
 import vdom from "virtual-dom";
 var { diff, patch, h, create: createElement } = vdom
@@ -56,19 +57,15 @@ class CustomVNode {
 
 export class HTMLMorph extends Morph {
 
-  constructor(props = {}) {
-    if (props.document) this.document = props.document; // priority
-    super(props);
-  }
-
   get html() { return this.domNode.innerHTML; }
   set html(value) { this.domNode.innerHTML = value; }
 
   get domNode() { return this._domNode || (this._domNode = this.document.createElement("div")); }
   set domNode(node) { return this._domNode = node; }
 
-  get document() { return this._document || document; }
-  set document(doc) { return this._document = doc; }
+  get document() { return this.env.renderer.domEnvironment.document; }
+
+  get scrollExtent() { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
 
   render(renderer) {
     return new CustomVNode(this, renderer);
