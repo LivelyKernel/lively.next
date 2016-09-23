@@ -112,9 +112,9 @@ export class Renderer {
   }
 
   startRenderWorldLoop() {
+    var {requestAnimationFrame} = this.domEnvironment.window;
+    this.renderWorldLoopProcess = requestAnimationFrame(() => this.startRenderWorldLoop());
     this.worldMorph.renderAsRoot(this);
-    this.renderWorldLoopProcess = this.domEnvironment.window.requestAnimationFrame(() =>
-      this.startRenderWorldLoop());
     return this;
   }
 
