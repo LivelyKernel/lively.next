@@ -16,6 +16,8 @@ export default class ChromeTheme extends Theme {
       case Token.numeric: return { fontColor: Color.rgb(0, 0, 205), fontWeight: "bold" };
       case Token.string: return { fontColor: Color.rgbHex("#1a1aa6"), fontWeight: "bold" };
       case Token.comment: return { fontColor: Color.rgbHex("#236e24"), fontWeight: "bold" };
+      case Token.regex: return { fontColor: Color.rgbHex("#1a1aa6"), fontWeight: "bold" };
+      case Token.error: return { backgroundColor: Color.rgbHex("#ff4c4c"), fontWeight: "bold" };
       default: return { fontColor: Color.rgbHex("#333"), fontWeight: "bold" };
     }
   }

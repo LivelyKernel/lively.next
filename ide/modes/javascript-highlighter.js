@@ -13,7 +13,8 @@ export default class JavaScriptHighlighter extends Highlighter {
     this.left = 0;
     this.skipNext = false;
     this.commentEnding = false;
-    this.level = 0;
+    this.levels = [0];
+    this.rere = /\/[^\n \/]+\/[gimuy]*/g;
   }
   checkWord(type) {
     const found = words[type].find(w => this.checkChars(w));
@@ -26,29 +27,25 @@ export default class JavaScriptHighlighter extends Highlighter {
     this.left = found.length - 1;
     return true;
   }
-  backToDefault() {
-    this.state = this.level >= 1 ? "templateint" : "default";
-  }
   process() { // -> Token
     const c = this.next();
     switch (this.state) {
-      case "templateint": // template interpolation
-        if (c === "}" && this.level === 1) {
-          this.level = 0;
-          this.state = "template";
+      case "default":
+        if (c === "{") {
+          this.levels[this.levels.length - 1]++;
           return Token.default;
         }
-        if (c === "`") {
-          this.state = "template2";
-          return Token.string;
-        }
-        if (c === "{") {
-          this.level++;
-        }
         if (c === "}") {
-          this.level--;
+          if (this.levels.length === 1 && this.levels[0] <= 0) {
+            return Token.error;
+          } else if (this.levels[this.levels.length - 1] === 1) {
+            this.levels.pop();
+            this.state = "template";
+          } else {
+            this.levels[this.levels.length - 1]--;
+          }
+          return Token.default;
         }
-      case "default":
         if (/[0-9]/.test(c)) {
           return Token.numeric;
         }
@@ -67,6 +64,15 @@ export default class JavaScriptHighlighter extends Highlighter {
         if (this.checkChars("/*")) {
           this.state = "comment";
           return Token.comment;
+        }
+        if (c=== "/") {
+          this.rere.lastIndex = this.idx;
+          const m = this.rere.exec(this.str);
+          if (m) {
+            this.state = "regex";
+            this.left = m[0].length - 1;
+            return Token.regex;
+          }
         }
         if (this.checkChars("//")) {
           this.state = "linecomment";
@@ -96,7 +102,10 @@ export default class JavaScriptHighlighter extends Highlighter {
         } else if (c === "\\") {
           this.skipNext = true;
         } else if (c === "'") {
-          this.backToDefault();
+          this.state = "default";
+        } else if (c === '\n') {
+          this.state = "default";
+          return Token.error;
         }
         return Token.string;
 
@@ -106,7 +115,10 @@ export default class JavaScriptHighlighter extends Highlighter {
         } else if (c === "\\") {
           this.skipNext = true;
         } else if (c === '"') {
-          this.backToDefault();
+          this.state = "default";
+        } else if (c === '\n') {
+          this.state = "default";
+          return Token.error;
         }
         return Token.string;
 
@@ -116,27 +128,18 @@ export default class JavaScriptHighlighter extends Highlighter {
         } else if (c === "\\") {
           this.skipNext = true;
         } else if (c === '`') {
-          this.backToDefault();
+          this.state = "default";
         } else if (this.checkChars("${")) {
-          this.level = 0;
-          this.state = "templateint";
+          this.levels.push(0);
+          this.state = "default";
           return Token.default;
-        }
-        return Token.string;
-        
-      case "template2": // template-within-a-template
-        if (this.skipNext) {
-          this.skipNext = false;
-        } else if (c === "\\") {
-          this.skipNext = true;
-        } else if (c === '`') {
-          this.state = "templateint"; 
         }
         return Token.string;
         
       case "comment":
         if (this.commentEnding) {
-          this.backToDefault();
+          this.commentEnding = false;
+          this.state = "default";
         } else if (this.checkChars("*/")) {
           this.commentEnding = true;
         }
@@ -144,7 +147,7 @@ export default class JavaScriptHighlighter extends Highlighter {
         
       case "linecomment":
         if (c === '\n') {
-          this.backToDefault();
+          this.state = "default";
         }
         return Token.comment;
 
@@ -152,32 +155,39 @@ export default class JavaScriptHighlighter extends Highlighter {
         if (/[0-9a-zA-Z_\$]/.test(c)) { //TODO unicode
           return Token.id;
         }
-        this.backToDefault();
+          this.state = "default";
         return this.process();
         
       case "keyword":
         if (--this.left === 0) {
-          this.backToDefault();
+          this.state = "default";
         }
         return Token.keyword;
         
       case "constant":
         if (--this.left === 0) {
-          this.backToDefault();
+          this.state = "default";
         }
         return Token.constant;
 
       case "global":
         if (--this.left === 0) {
-          this.backToDefault();
+          this.state = "default";
         }
         return Token.global;
       
       case "dynamic":
         if (--this.left === 0) {
-          this.backToDefault();
+          this.state = "default";
         }
         return Token.dynamic;
+        
+      case "regex":
+        if (--this.left === 0) {
+          this.state = "default";
+        }
+        return Token.regex;
+        
     }
     return Token.default;
   }

@@ -7,7 +7,9 @@ export const Token = {
   string: "string",
   comment: "comment",
   default: "default",
-  dynamic: "dynamic"
+  dynamic: "dynamic",
+  regex: "regex",
+  error: "error"
 };
 
 

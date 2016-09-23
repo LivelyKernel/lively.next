@@ -245,12 +245,13 @@ class RenderedChunk {
   render() {
     if (this.rendered) return this.rendered;
     var {config:
-          {style: {fontSize, fontFamily, fontColor,
+          {style: {fontSize, fontFamily, fontColor, backgroundColor,
                    fontWeight, fontStyle, textDecoration,
                    fixedCharacterSpacing}},
           text, width, height} = this,
         textNodes = text ?
           (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br");
+    backgroundColor = backgroundColor || "",
     fontColor = fontColor || "";
 
     return this.rendered = h("span", {
@@ -260,7 +261,8 @@ class RenderedChunk {
         fontWeight,
         fontStyle,
         textDecoration,
-        color: String(fontColor)
+        color: String(fontColor),
+        backgroundColor: String(backgroundColor)
       }
     }, textNodes);
   }
