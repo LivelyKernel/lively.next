@@ -52,14 +52,12 @@ function renderMarkerPart(renderer, morph, start, end, style) {
 class RenderedLine {
 
   static chunksFrom(text, config) {
-    let {fontMetric, textAttributes} = config;
-    if (!text) return [RenderedChunk.fromTextAttribute(text, fontMetric, textAttributes[0])];
-    var chunks = [];
-    for (var i = 0; i < textAttributes.length; i++) {
-      var ea = textAttributes[i];
-      if (!ea.isEmpty())
-        chunks.push(RenderedChunk.fromTextAttribute(text, fontMetric, ea));
-    }
+    let {fontMetric, textAttributes} = config, chunks = [];
+    if (!text) return textAttributes.length ?
+      [RenderedChunk.fromTextAttribute(text, fontMetric, textAttributes[0])] : chunks;
+    for (let i = 0; i < textAttributes.length; i++)
+      if (!textAttributes[i].isEmpty())
+        chunks.push(RenderedChunk.fromTextAttribute(text, fontMetric, textAttributes[i]));
     return chunks;
   }
 
