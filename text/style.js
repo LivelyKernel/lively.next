@@ -33,7 +33,7 @@ class StyleAnchor extends Anchor {
 }
 
 
-export class StyleRange {
+export class TextAttribute {
 
   static fromPositions(style = {}, start, end) {
     return new this(style, Range.fromPositions(start, end));
@@ -48,9 +48,9 @@ export class StyleRange {
   static mergeInto(others, newRange) {
     let firstRange = others[0];
     if (!firstRange) return [newRange];
-    let { a, b } = StyleRange.merge(firstRange, newRange),
+    let { a, b } = TextAttribute.merge(firstRange, newRange),
         remaining = others.slice(1);
-    b.map(ea => { remaining = StyleRange.mergeInto(remaining, ea) });
+    b.map(ea => { remaining = TextAttribute.mergeInto(remaining, ea) });
     return a.concat(remaining);
   }
 
@@ -61,13 +61,13 @@ export class StyleRange {
         intersection = range_a.intersect(range_b);
     if (!intersection.isEmpty()) {
       let mergedStyle = obj.merge(style_a, style_b),
-          restyledRange = new StyleRange(mergedStyle, intersection),
+          restyledRange = new TextAttribute(mergedStyle, intersection),
           leftover_a = range_a.subtract(intersection)
                               .filter(r => !r.isEmpty())
-                              .map(range => new StyleRange(style_a, range)),
+                              .map(range => new TextAttribute(style_a, range)),
           leftover_b = range_b.subtract(intersection)
                               .filter(r => !r.isEmpty())
-                              .map(range => new StyleRange(style_b, range));
+                              .map(range => new TextAttribute(style_b, range));
           return { a: [...leftover_a, restyledRange], b: leftover_b };
           // TODO: Join adjacent ranges with equivalent styles
 

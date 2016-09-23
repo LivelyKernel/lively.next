@@ -3,7 +3,7 @@ import { h } from "virtual-dom";
 import { arr, string, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
 import { Range } from "./range.js";
-import { StyleRange } from "./style.js";
+import { TextAttribute } from "./style.js";
 
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
@@ -52,9 +52,15 @@ function renderMarkerPart(renderer, morph, start, end, style) {
 class RenderedLine {
 
   static chunksFrom(text, config) {
-    let { fontMetric, styleRanges } = config;
-    styleRanges = text ? styleRanges.filter(ea => !ea.isEmpty()) : styleRanges.slice(0, 1);
-    return styleRanges.map(ea => RenderedChunk.fromStyleRange(text, fontMetric, ea));
+    let {fontMetric, textAttributes} = config;
+    if (!text) return [RenderedChunk.fromTextAttribute(text, fontMetric, textAttributes[0])];
+    var chunks = [];
+    for (var i = 0; i < textAttributes.length; i++) {
+      var ea = textAttributes[i];
+      if (!ea.isEmpty())
+        chunks.push(RenderedChunk.fromTextAttribute(text, fontMetric, ea));
+    }
+    return chunks;
   }
 
   constructor(text, config) {
@@ -181,8 +187,8 @@ class RenderedLine {
 
 class RenderedChunk {
 
-  static fromStyleRange(lineText, fontMetric, styleRange) {
-    let { start, end, style } = styleRange,
+  static fromTextAttribute(lineText, fontMetric, textAttribute) {
+    let {start, end, style} = textAttribute,
         startCol = start.column,
         endCol = end.column,
         chunkText = lineText.slice(startCol, endCol),
@@ -311,13 +317,12 @@ export default class TextLayout {
     let { document } = morph,
         fontMetric = this.fontMetric,
         lines = document.lines,
-        styleRanges = document.styleRanges,
         nRows = lines.length;
 
     for (let row = 0; row < nRows; row++) {
-      let lineStyleRanges = document.styleRangesByLine[row] || [],
+      let textAttributes = document.textAttributesByLine[row] || [],
           text = lines[row],
-          config = { fontMetric, styleRanges: lineStyleRanges },
+          config = {fontMetric, textAttributes},
           line = this.lines[row];
       if (!line)
         this.lines[row] = new RenderedLine(text, config);

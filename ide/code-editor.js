@@ -4,7 +4,7 @@ import config from "../config.js";
 
 import { connect } from "lively.bindings";
 import { Morph, Text, Menu } from "../index.js";
-import { StyleRange } from "../text/style.js";
+import { TextAttribute } from "../text/style.js";
 
 import { Token, Highlighter, Theme } from "./highlighting.js";
 import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
@@ -67,14 +67,13 @@ export default class CodeEditor extends Morph {
     const txt = this.submorphs[0],
           tokens = this.mode.highlight(txt.textString),
           defaultStyle = this.submorphs[0].styleProps,
-          styleRanges = tokens.map(({token, from, to}) =>
-            StyleRange.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
-    styleRanges.push(StyleRange.create(defaultStyle, 0, -1, 0, 0));
-    txt.replaceStyleRanges(styleRanges);
+          textAttributes = tokens.map(({token, from, to}) =>
+            TextAttribute.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
+    textAttributes.push(TextAttribute.create(defaultStyle, 0, -1, 0, 0));
+    txt.replaceTextAttributes(textAttributes);
 
-    if (this._checker) {
+    if (this._checker)
       this._checker.onDocumentChange({}, this);
-    }
   }
   
   get text() { return this.submorphs[0]; }

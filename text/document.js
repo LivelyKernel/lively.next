@@ -1,7 +1,7 @@
 import { string, arr } from "lively.lang";
 import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js";
 import { Range } from "./range.js";
-import { StyleRange } from "./style.js";
+import { TextAttribute } from "./style.js";
 
 const newline = "\n",
       newlineLength = newline.length;
@@ -18,11 +18,11 @@ export default class TextDocument {
   static get newlineLength() { return newlineLength; }
   static parseIntoLines(text) { return text.split(this.newline); }
 
-  constructor(lines = [], styleRanges = []) {
+  constructor(lines = [], textAttributes = []) {
     this.lines = lines;
-    this._styleRanges = [];
-    this._styleRangesByLine = [];
-    styleRanges.map(range => this.addStyleRange(range));
+    this._textAttributes = [];
+    this._textAttributesByLine = [];
+    textAttributes.map(range => this.addTextAttribute(range));
   }
 
   get textString() { return this.lines.join(TextDocument.newline); }
@@ -37,51 +37,52 @@ export default class TextDocument {
     } : {row: 0, column: 0}
   }
 
-  get styleRanges() { return this._styleRanges }
+  get textAttributes() { return this._textAttributes; }
 
-  // NOTE: assumes provided styleRanges are non-overlapping
-  set styleRanges(styleRanges) {
-    this._styleRanges = styleRanges;
-    this._styleRangesByLine = this.lines.map(ea => []);
-    for (var i = 0; i < styleRanges.length; i++) {
-      let {style, start, end} = styleRanges[i];
+  // NOTE: assumes provided textAttributes are non-overlapping
+  set textAttributes(textAttributes) {
+    this._textAttributes = textAttributes;
+    this._textAttributesByLine = this.lines.map(ea => []);
+    for (var i = 0; i < textAttributes.length; i++) {
+      let {style, start, end} = textAttributes[i];
+
       for (let row = start.row; row <= end.row; row++) {
         let text = this.lines[row],
             startCol = row === start.row ? start.column : 0,
             endCol = row === end.row ? end.column : text.length,
-            styleRange = StyleRange.fromPositions(style, {row, column: startCol}, {row, column: endCol});
-        this._styleRangesByLine[row].push(styleRange);
+            textAttribute = TextAttribute.fromPositions(style, {row, column: startCol}, {row, column: endCol});
+        this._textAttributesByLine[row].push(textAttribute);
       }
     }
   }
 
-  addStyleRange(range) {
-    this._styleRanges = StyleRange.mergeInto(this._styleRanges, range);
+  addTextAttribute(range) {
+    this._textAttributes = TextAttribute.mergeInto(this._textAttributes, range);
     for (let row = range.start.row; row <= range.end.row; row++) {
-      this.updateLineStyleRanges(row);
+      this.updateLineTextAttributes(row);
     }
     // TODO: Consolidate/deduplicate ranges
   }
 
-  clearStyleRanges() { this._styleRanges = []; }
+  clearTextAttributes() { this._textAttributes = []; }
 
-  updateLineStyleRanges(row) {
-    let { styleRanges } = this,
+  updateLineTextAttributes(row) {
+    let { textAttributes } = this,
         text = this.lines[row] || "",
         start = {row, column: 0},
         end = {row, column: text ? text.length : 0},
         lineRange = Range.fromPositions(start, end),
-        lineStyleRanges = [];
-    for (var i = 0; i < styleRanges.length; i++) {
-      let {style, range} = styleRanges[i],
+        lineTextAttributes = [];
+    for (var i = 0; i < textAttributes.length; i++) {
+      let {style, range} = textAttributes[i],
           intersection = lineRange.intersect(range);
       if (intersection.start.row === lineRange.start.row)
-        lineStyleRanges.push(new StyleRange(style, intersection));
+        lineTextAttributes.push(new TextAttribute(style, intersection));
     }
-    this._styleRangesByLine[row] = Range.sort(lineStyleRanges);
+    this._textAttributesByLine[row] = Range.sort(lineTextAttributes);
   }
 
-  get styleRangesByLine() { return this._styleRangesByLine; }
+  get textAttributesByLine() { return this._textAttributesByLine; }
 
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
@@ -152,7 +153,7 @@ export default class TextDocument {
   }
 
   insert(string, pos) {
-    let {lines, styleRanges} = this,
+    let {lines, textAttributes} = this,
         {row, column} = pos,
         line = lines[row],
         insertionLines = TextDocument.parseIntoLines(string);
@@ -174,21 +175,21 @@ export default class TextDocument {
       end.row++;
       end.column = insertionLines[i].length;
       lines.splice(row+1+i, 0, insertionLines[i]);
-      this._styleRangesByLine.splice(row+1+i, 0, []);
+      this._textAttributesByLine.splice(row+1+i, 0, []);
     }
 
     lines[row + insertionLines.length] = lines[row + insertionLines.length] + after;
 
     let insertionRange = {start: pos, end};
-    styleRanges.forEach(ea => ea.onInsert(insertionRange));
+    textAttributes.forEach(ea => ea.onInsert(insertionRange));
     for (let row = pos.row; row <= end.row; row++) {
-      this.updateLineStyleRanges(row);
+      this.updateLineTextAttributes(row);
     }
     return insertionRange;
   }
 
   remove({start, end}) {
-    var {lines, styleRanges} = this;
+    var {lines, textAttributes} = this;
     if (!lines.length) return;
 
     if (lessPosition(end, start)) [start, end] = [end, start];
@@ -201,11 +202,11 @@ export default class TextDocument {
 
     lines[fromRow] = lines[fromRow].slice(0, fromCol) + lines[toRow].slice(toCol);
     lines.splice(fromRow+1, toRow - fromRow);
-    this._styleRangesByLine.splice(fromRow+1, toRow - fromRow);
+    this._textAttributesByLine.splice(fromRow+1, toRow - fromRow);
 
-    styleRanges.forEach(ea => ea.onDelete({start, end}));
-    this._styleRanges = styleRanges.filter(ea => !ea.isEmpty());
-    this.updateLineStyleRanges(fromRow);
+    textAttributes.forEach(ea => ea.onDelete({start, end}));
+    this._textAttributes = textAttributes.filter(ea => !ea.isEmpty());
+    this.updateLineTextAttributes(fromRow);
   }
 
   wordsOfLine(row) {

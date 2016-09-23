@@ -1,6 +1,6 @@
 import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
 import { Range, defaultRange } from "./range.js";
-import { StyleRange } from "./style.js";
+import { TextAttribute } from "./style.js";
 import config from "../config.js";
 import { string, arr } from "lively.lang";
 import { signal } from "lively.bindings";
@@ -212,18 +212,18 @@ export class Selection {
 
   set style(style) {
     let {textMorph} = this,
-        styleRange = new StyleRange(style, this);
-    this.textMorph.addStyleRange(styleRange);
+        textAttribute = new TextAttribute(style, this);
+    this.textMorph.addTextAttribute(textAttribute);
   }
 
-  getStyleRanges() {
-    let {styleRanges} = this.textMorph.document,
+  getTextAttributes() {
+    let {textAttributes} = this.textMorph.document,
         result = [];
-    styleRanges.map(ea => {
+    textAttributes.map(ea => {
       let intersection = this.range.intersect(ea);
       if (!intersection.isEmpty()) {
-        let styleRange = new StyleRange(ea.style, intersection);
-        result.push(styleRange);
+        let textAttribute = new TextAttribute(ea.style, intersection);
+        result.push(textAttribute);
       }
     });
     return result;
@@ -342,7 +342,7 @@ export class MultiSelection extends Selection {
 
   set style(style) { this.defaultSelection.style = style; }
 
-  getStyleRanges() { return this.defaultSelection.getStyleRanges(); }
+  getTextAttributes() { return this.defaultSelection.getTextAttributes(); }
 
   toString() {
     return `MultiSelection(${this.selections.join(", ")})`;

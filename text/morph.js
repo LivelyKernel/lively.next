@@ -5,7 +5,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
 import { Range } from "./range.js";
-import { StyleRange } from "./style.js";
+import { TextAttribute } from "./style.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import KeyHandler from "../events/KeyHandler.js";
@@ -49,8 +49,8 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, selection, clipMode, styleRanges } = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode", "styleRanges"])
+    var {fontMetric, textString, selectable, selection, clipMode, textAttributes } = props;
+    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes"])
     super({
       readOnly: false,
       draggable: false,
@@ -76,7 +76,7 @@ export class Text extends Morph {
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     if (clipMode) this.clipMode = clipMode;
-    if (styleRanges) styleRanges.map(range => this.addStyleRange(range));
+    if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
     this._needsFit = false;
   }
@@ -87,8 +87,8 @@ export class Text extends Morph {
     var textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
     if (textChange
-     || change.selector === "addStyleRange"
-     || change.selector === "replaceStyleRanges"
+     || change.selector === "addTextAttribute"
+     || change.selector === "replaceTextAttributes"
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
@@ -578,18 +578,18 @@ export class Text extends Morph {
         "textDecoration", "fixedCharacterSpacing"]);
   }
 
-  get styleRanges() { return this.document.styleRanges }
+  get textAttributes() { return this.document.textAttributes }
 
-  // NOTE: assumes provided styleRanges are non-overlapping
-  replaceStyleRanges(styleRanges) {
+  // NOTE: assumes provided textAttributes are non-overlapping
+  replaceTextAttributes(textAttributes) {
     // FIXME: undos
 
-    this.document.styleRanges = styleRanges;
+    this.document.textAttributes = textAttributes;
 
     this.addMethodCallChangeDoing({
       target: this,
-      selector: "replaceStyleRanges",
-      args: [styleRanges],
+      selector: "replaceTextAttributes",
+      args: [textAttributes],
       // FIXME!
       // undo: {
       //   target: this,
@@ -597,16 +597,16 @@ export class Text extends Morph {
     }, () => { this._needsFit = true; });
   }
 
-  addStyleRange(range) {
+  addTextAttribute(range) {
 
     // FIXME: undos
-    // this.undoManager.undoStart(this, "addStyleRange");
+    // this.undoManager.undoStart(this, "addTextAttribute");
 
-    this.document.addStyleRange(range);
+    this.document.addTextAttribute(range);
 
     this.addMethodCallChangeDoing({
       target: this,
-      selector: "addStyleRange",
+      selector: "addTextAttribute",
       args: [range],
       // FIXME!
       // undo: {
@@ -622,12 +622,12 @@ export class Text extends Morph {
     if (!document) return;
     let start = { row: 0, column: -1 },
         end = document.endPosition,
-        defaultStyleRange = StyleRange.fromPositions(style, start, end);
-    this.addStyleRange(defaultStyleRange);
+        defaultTextAttribute = TextAttribute.fromPositions(style, start, end);
+    this.addTextAttribute(defaultTextAttribute);
   }
 
-  resetStyleRanges() {
-    this.document.clearStyleRanges();
+  resetTextAttributes() {
+    this.document.clearTextAttributes();
     this.setDefaultStyle();
   }
 

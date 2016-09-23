@@ -1,11 +1,11 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { Range } from "../../text/range.js";
-import { StyleRange } from "../../text/style.js";
+import { TextAttribute } from "../../text/style.js";
 import { Color } from "lively.graphics";
 import { expect } from "mocha-es6";
 
 
-describe("StyleRange", () => {
+describe("TextAttribute", () => {
 
   var style_a = { fontColor: Color.red, fontStyle: "italic" },
       style_b = { fontColor: Color.blue, fontWeight: "bold" },
@@ -15,20 +15,20 @@ describe("StyleRange", () => {
   describe("merge", () => {
 
     it("bordered", () => {
-      var a = StyleRange.create(style_a, 0, 0, 1, 4),
-          b = StyleRange.create(style_b, 1, 4, 1, 5);
+      var a = TextAttribute.create(style_a, 0, 0, 1, 4),
+          b = TextAttribute.create(style_b, 1, 4, 1, 5);
       expect(a.merge(b)).deep.equals({a: [a], b: [b]});
     });
 
     it("bordered reverse", () => {
-      var a = StyleRange.create(style_a, 1, 4, 1, 5),
-          b = StyleRange.create(style_b, 0, 0, 1, 4);
+      var a = TextAttribute.create(style_a, 1, 4, 1, 5),
+          b = TextAttribute.create(style_b, 0, 0, 1, 4);
       expect(a.merge(b)).deep.equals({a: [a], b: [b]});
     });
 
     it("overlapping", () => {
-      var a = StyleRange.create(style_a, 0, 0, 1, 4),
-          b = StyleRange.create(style_b, 1, 2, 1, 5),
+      var a = TextAttribute.create(style_a, 0, 0, 1, 4),
+          b = TextAttribute.create(style_b, 1, 2, 1, 5),
           test = a.merge(b);
 
       expect(test).property("a").property("length").equals(2);
@@ -44,8 +44,8 @@ describe("StyleRange", () => {
     });
 
     it("overlapping reverse", () => {
-      var a = StyleRange.create(style_a, 1, 2, 1, 5),
-          b = StyleRange.create(style_b, 0, 0, 1, 4),
+      var a = TextAttribute.create(style_a, 1, 2, 1, 5),
+          b = TextAttribute.create(style_b, 0, 0, 1, 4),
           test = a.merge(b);
 
       expect(test).property("a").property("length").equals(2);
@@ -61,8 +61,8 @@ describe("StyleRange", () => {
     });
 
     it("nested", () => {
-      var a = StyleRange.create(style_a, 0, 0, 1, 4),
-          b = StyleRange.create(style_b, 0, 2, 1, 2),
+      var a = TextAttribute.create(style_a, 0, 0, 1, 4),
+          b = TextAttribute.create(style_b, 0, 2, 1, 2),
           test = a.merge(b);
 
       expect(test).property("a").property("length").equals(3);
@@ -78,8 +78,8 @@ describe("StyleRange", () => {
     });
 
     it("nested reverse", () => {
-      var a = StyleRange.create(style_a, 0, 2, 1, 2),
-          b = StyleRange.create(style_b, 0, 0, 1, 4),
+      var a = TextAttribute.create(style_a, 0, 2, 1, 2),
+          b = TextAttribute.create(style_b, 0, 0, 1, 4),
           test = a.merge(b);
 
       expect(test).property("a").property("length").equals(1);
@@ -95,14 +95,14 @@ describe("StyleRange", () => {
     });
 
     it("non-overlapping", () => {
-        var a = StyleRange.create(style_a, 1, 2, 1, 5),
-            b = StyleRange.create(style_b, 1, 6, 1, 8);
+        var a = TextAttribute.create(style_a, 1, 2, 1, 5),
+            b = TextAttribute.create(style_b, 1, 6, 1, 8);
         expect(a.merge(b)).deep.equals({a: [a], b: [b]});
     });
 
     it("non-overlapping reverse", () => {
-        var a = StyleRange.create(style_a, 1, 6, 1, 8),
-            b = StyleRange.create(style_b, 1, 2, 1, 5);
+        var a = TextAttribute.create(style_a, 1, 6, 1, 8),
+            b = TextAttribute.create(style_b, 1, 2, 1, 5);
         expect(a.merge(b)).deep.equals({a: [a], b: [b]});
     });
 
@@ -123,16 +123,16 @@ describe("StyleRange", () => {
         style_cba = { fontColor: Color.red, fontSize: 12,
                       fontStyle: "italic", fontWeight: "bold" },
 
-        a = StyleRange.create(style_a, 0, 0, 1, 4),
-        b = StyleRange.create(style_b, 0, 2, 0, 10),
-        c = StyleRange.create(style_c, 0, 8, 1, 2),
+        a = TextAttribute.create(style_a, 0, 0, 1, 4),
+        b = TextAttribute.create(style_b, 0, 2, 0, 10),
+        c = TextAttribute.create(style_c, 0, 8, 1, 2),
         test;
 
     it("mergeInto a, b, c", () => {
       test = Range.sort(
-              StyleRange.mergeInto(
-                  StyleRange.mergeInto(
-                    StyleRange.mergeInto([], a), b), c));
+              TextAttribute.mergeInto(
+                  TextAttribute.mergeInto(
+                    TextAttribute.mergeInto([], a), b), c));
 
       expect(test).property("length").equals(5);
 
@@ -151,9 +151,9 @@ describe("StyleRange", () => {
 
     it("mergeInto c, b, a", () => {
       test = Range.sort(
-              StyleRange.mergeInto(
-                  StyleRange.mergeInto(
-                    StyleRange.mergeInto([], c), b), a));
+              TextAttribute.mergeInto(
+                  TextAttribute.mergeInto(
+                    TextAttribute.mergeInto([], c), b), a));
 
       expect(test).property("length").equals(5);
 
