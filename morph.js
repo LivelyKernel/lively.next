@@ -771,7 +771,7 @@ export class Morph {
   get keybindings() { return this._keybindings || []; }
   set keybindings(bndgs) { this._cachedKeyhandlers = null; return this._keybindings = bndgs; }
   get keyhandlers() {
-    return this._chachedKeyhandlers
+    return this._cachedKeyhandlers
        || (this._cachedKeyhandlers = [KeyHandler.withBindings(this.keybindings)]);
   }
   get keyCommandMap() {
