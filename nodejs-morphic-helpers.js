@@ -65,7 +65,7 @@ async function openServerView(evalStrategy) {
   await createMorphicWorld(evalStrategy);
 
   wrapper.update();
-  wrapper.startStepping(900, "update");
+  // wrapper.startStepping(900, "update");
 
   return win;
 }
