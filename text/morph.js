@@ -70,7 +70,7 @@ export class Text extends Morph {
       ...props
     });
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
-    this.changeDocument(TextDocument.fromString(textString || ""));
+    this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
     this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
@@ -403,10 +403,11 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // document changes
 
-  changeDocument(doc) {
+  changeDocument(doc, resetStyle = false) {
     this.document = doc;
     this.renderer.reset();
-    this.setDefaultStyle();
+    if (resetStyle)
+      this.setDefaultStyle();
     this.makeDirty();
   }
 

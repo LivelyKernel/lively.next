@@ -110,7 +110,7 @@ export class Occur {
         occurDocument = this._document = new Document(lines);
     occurDocument._occur = this;
     occurDocument._occurMatchingLines = found;
-    this.textMorph.changeDocument(occurDocument);
+    this.textMorph.changeDocument(occurDocument, true);
     this.highlight(options.needle);
   }
 
