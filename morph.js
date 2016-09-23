@@ -778,6 +778,7 @@ export class Morph {
     return this._cachedKeyhandlers
        || (this._cachedKeyhandlers = [KeyHandler.withBindings(this.keybindings)]);
   }
+
   get keyCommandMap() {
     var platform = this.keyhandlers[0].platform;
     return this.keybindings.reduce((keyMap, binding) => {
@@ -791,6 +792,12 @@ export class Morph {
       }, keyMap);
     }, {});
   }
+
+  keysForCommand(commandName) {
+    var map = this.keyCommandMap;
+    return Object.keys(map).find(key => map[key].name === commandName);
+  }
+
   simulateKeys(keyString) { return KeyHandler.simulateKeys(this, keyString); }
 
   onKeyDown(evt) {
@@ -953,7 +960,7 @@ export class Morph {
     this.addCommands(cmds);
   }
   get commandsIncludingOwners() {
-    return arr.flatmap([this].concat(this.ownerChain()).reverse(), morph =>
+    return arr.flatmap([this].concat(this.ownerChain()), morph =>
       arr.sortByKey(morph.commands, "name").map(command => ({target: morph, command})));
   }
 

@@ -7,7 +7,7 @@ import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
 import { morph, Morph, Text, Window, TooltipViewer } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
-
+import KeyHandler from "./events/KeyHandler.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
 
@@ -21,26 +21,15 @@ var worldCommands = [
   {
     name: "run command",
     exec: async world => {
-      var keyMaps = {},
-          commandsToKeys = {},
-          focused = world.focusedMorph || world,
-          items = focused.commandsIncludingOwners.map((ea) => {
-            var {target, command} = ea,
+      var items = KeyHandler.generateCommandToKeybindingMap(world.focusedMorph || world, true).map(ea => {
+            var {keys, target, command: {name}} = ea,
                 targetName = target.constructor.name,
-                keys = commandsToKeysFor(target)[command.name],
                 keysPrinted = keys ? ` [${keys.join(", ")}]` : "";
-            return {isListItem: true, string: `[${targetName}] ${command.name}${keysPrinted}`, value: ea}
+            return {isListItem: true, string: `[${targetName}] ${name}${keysPrinted}`, value: ea};
           }),
           {prompt, selected: [cmd]} = await world.filterableListPrompt("Run command", items, {extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
       world._cachedRunCommandPrompt = prompt;
       return cmd ? cmd.target.execCommand(cmd.command) : true;
-
-      function commandsToKeysFor(target) {
-        if (commandsToKeys[target.id]) return commandsToKeys[target.id];
-        var keyMap = keyMaps[target.id] || (keyMaps[target.id] = target.keyCommandMap);
-        return commandsToKeys[target.id] = arr.groupBy(Object.keys(keyMap), combo => keyMap[combo].name);
-      }
-
     }
   },
 
@@ -406,12 +395,13 @@ export class World extends Morph {
     this.addMorph(evt.state.menu = new Menu({
       position: evt.position,
       title: "World menu", items: [
-        ["undo", () => { this.env.undoManager.undo(); }],
-        ["redo", () => { this.env.undoManager.redo(); }],
-        ["Workspace", () => this.execCommand("open workspace")],
-        ["Browser", () => this.execCommand("open browser")],
-        ["Test runner", () => this.execCommand("open test runner")],
-        ["ObjectDrawer", () => { this.addMorph(new ObjectDrawer({center: this.center})); }],
+        ["undo",                                                   () => this.env.undoManager.undo()],
+        ["redo",                                                   () => this.env.undoManager.redo()],
+        [`Workspace [${this.keysForCommand("open workspace")}]`,   () => this.execCommand("open workspace")],
+        [`Browser [${this.keysForCommand("open browser")}]`,       () => this.execCommand("open browser")],
+        [`Test runner`,                                            () => this.execCommand("open test runner")],
+        [`ObjectDrawer`,                                           () => this.addMorph(new ObjectDrawer({center: this.center}))],
+        [`Run command... [${this.keysForCommand("run command")}]`, () => this.execCommand("run command")],
       ]
     }));
   }

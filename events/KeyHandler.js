@@ -144,9 +144,24 @@ export default class KeyHandler {
     // that are being passed to the command handler when the command is executed,
     // e.g. {command: {command: "goto line start", args: {select: true}}, keys: "Shift-Home"}
     var handler = new this(platform);
-    listOfBindings.forEach(({command, keys}) =>
-      handler.bindKey(keys, command));
+    listOfBindings.forEach(({command, keys}) => handler.bindKey(keys, command));
     return handler;
+  }
+
+  static generateCommandToKeybindingMap(morph, includeOwnerCommands = false) {
+    var keyMaps = {}, commandsToKeys = {},
+        commands = includeOwnerCommands ?
+          morph.commandsIncludingOwners :
+          morph.commands.map(command => ({command, target: morph}));
+
+    return commands.map(({target, command}) =>
+      ({keys: commandsToKeysFor(target)[command.name], target, command}));
+
+    function commandsToKeysFor(target) {
+      if (commandsToKeys[target.id]) return commandsToKeys[target.id];
+      var keyMap = keyMaps[target.id] || (keyMaps[target.id] = target.keyCommandMap);
+      return commandsToKeys[target.id] = arr.groupBy(Object.keys(keyMap), combo => keyMap[combo].name);
+    }
   }
 
   constructor(platform = bowserOS()) {
