@@ -305,14 +305,15 @@ export class Button extends Morph {
   }
 
   onMouseDown(evt) {
-    if (this.active) {
+    if (this.active)
       Object.assign(this, this.triggerStyle);
-      this.trigger();
-    }
   }
 
   onMouseUp(evt) {
-    if (this.active) Object.assign(this, this.activeStyle);
+    if (this.active) {
+      Object.assign(this, this.activeStyle);
+      this.trigger();
+    }
   }
 }
 
