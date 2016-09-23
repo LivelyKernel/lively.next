@@ -18,13 +18,13 @@ export default class JavaScriptChecker {
     var astModule = System.get(System.decanonicalize("lively.ast"));
     if (!astModule) return null;
 
-    var options = {allowReturnOutsideFunction: true};
+    var options = {withComments: true, allowReturnOutsideFunction: true};
     options.type = astType;
     return astModule.fuzzyParse(src, options);
   }
 
   onDocumentChange(change, editor) {
-    this.updateAST(change, editor)
+    this.updateAST(change, editor);
   }
 
   updateAST(change, editor) {
@@ -41,7 +41,7 @@ export default class JavaScriptChecker {
 
     var doc = morph.document;
 
-    var query = System.get(System.decanonicalize("lively.ast")).query; //a
+    var query = System.get(System.decanonicalize("lively.ast")).query;
 
     // if (codeEditor.getShowWarnings()) {
       var prevMarkers = (morph.markers || []).filter(({id}) => id.startsWith("js-checker-")),
