@@ -13,7 +13,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   constructor(props) {
-    super({name: "test runner", ...props});
+    super({name: "test runner", clipMode: "auto", ...props});
     this.reset();
   }
 
