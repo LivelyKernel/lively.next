@@ -324,6 +324,7 @@ export default class EventDispatcher {
       case "pointermove":
         // Are we dragging a morph? If so the move gets only send to the world
         // and the drag only send to the dragged morph
+
         if (hand.carriesMorphs()) {
           defaultEvent.targetMorphs = [this.world];
 
@@ -461,8 +462,16 @@ export default class EventDispatcher {
     if (!targetMorph && focusTargetingEvents.includes(domEvt.type)) {
       targetMorph = this.eventState.focusedMorph || this.world;
     } else if (!targetMorph) {
-      var targetNode = domEvt.target,
-          targetId = targetNode.id;
+      // search for the target node that represents a morph: Not all nodes with
+      // event handlers might be rendered by morphs, e.g. in case of HTML morphs
+      var targetNode = domEvt.target;
+      while (true) {
+        var cssClasses = targetNode.className;
+        // Maybe better "is-morph-node" test?
+        if (cssClasses && cssClasses.includes("morph")) break;
+        if (!(targetNode = targetNode.parentNode)) return;
+      }
+      var targetId = targetNode.id;
       targetMorph = this.world.withAllSubmorphsDetect(sub => sub.id === targetId);
     }
 
