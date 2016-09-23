@@ -200,7 +200,7 @@ describe("multi select", () => {
     t.textString = "a1.a2\n    bb3.b4\n    cc5.c6";
     t.gotoDocumentEnd();
 
-    t.execCommand("multi select up", null, 3);
+    t.execCommand("[multi select] add cursor above", null, 3);
     expect(t.selection.ranges).to.have.length(3);
     expect().assert(t.inMultiSelectMode());
 
@@ -229,7 +229,7 @@ describe("multi select", () => {
   it("select more like this", function() {
     var t = text("aa bb\n  aa cc");
     t.selection.range = range(0,0,0,2);
-    t.execCommand("multi select more forward");    
+    t.execCommand("[multi select] more like this forward");
     expect(t.selection.selections).to.have.length(2);
     expect(t.selection.selections[0]).selectionEquals("Selection(0/0 -> 0/2)");
     expect(t.selection.selections[1]).selectionEquals("Selection(1/2 -> 1/4)");
