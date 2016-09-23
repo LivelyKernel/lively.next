@@ -196,10 +196,9 @@ export default class JavaScriptHighlighter extends Highlighter {
 /*
 Profiling code:
 
-import JavaScriptMode from "lively.morphic/ide/modes/javascript.js";
+import JavaScriptMode from "lively.morphic/ide/modes/javascript-highlighter.js";
 const mode = new JavaScriptMode(),
-     src = await System.resource("lively.morphic/menus.js").read();
-mode.reset();
+     src = await System.resource("https://dev.lively-web.org/node_modules/lively.morphic/morph.js").read();
 const start = Date.now();
 mode.highlight(src);
 const timeMS = Date.now() - start;

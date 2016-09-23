@@ -68,7 +68,7 @@ export default class CodeEditor extends Morph {
           tokens = this.mode.highlight(txt.textString),
           defaultStyle = this.submorphs[0].styleProps,
           styleRanges = tokens.map(({token, from, to}) =>
-            StyleRange.fromPositions({...defaultStyle, ...this.theme.style(token)}, from, to));
+            StyleRange.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
     styleRanges.push(StyleRange.create(defaultStyle, 0, -1, 0, 0));
     txt.replaceStyleRanges(styleRanges);
 

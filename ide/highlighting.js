@@ -66,6 +66,8 @@ export class Highlighter {
 
 export class Theme {
   
+  constructor() { this._cache = {}; }
+  
   background() { // -> Color
     throw new Error("not implemented");
   }
@@ -73,6 +75,10 @@ export class Theme {
   style(token) { // Token -> Style
     // return style for token
     throw new Error("not implemented");
+  }
+  
+  styleCached(token) {
+    return this._cache[token] || (this._cache[token] = this.style(token));
   }
   
 }
