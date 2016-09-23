@@ -1,6 +1,6 @@
 /*global System*/
 import config from "../config.js";
-import { string, obj, arr, promise } from "lively.lang";
+import { string, obj, arr, fun, promise } from "lively.lang";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
@@ -394,7 +394,8 @@ export class Text extends Morph {
     function cleanupScroll(morph) {
       var scrollCursorIntoView = command.hasOwnProperty("scrollCursorIntoView") ?
         command.scrollCursorIntoView : true;
-      scrollCursorIntoView && morph.scrollCursorIntoView();
+      if (scrollCursorIntoView)
+        fun.throttleNamed("execCommand-scrollCursorIntoView-" + morph.id, 100, () => morph.scrollCursorIntoView())();
     }
 
   }
