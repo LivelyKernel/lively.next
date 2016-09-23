@@ -16,6 +16,8 @@ export default class TomorrowNightTheme extends Theme {
       case Token.numeric: return { fontColor: Color.rgbHex("#e78c45"), fontWeight: "bold" };
       case Token.string: return { fontColor: Color.rgbHex("#b9ca4a"), fontWeight: "bold" };
       case Token.comment: return { fontColor: Color.rgbHex("#969896"), fontWeight: "bold" };
+      case Token.regex: return { fontColor: Color.rgbHex("#d54e53"), fontWeight: "bold" };
+      case Token.error: return { backgroundColor: Color.rgbHex("#641d1d"), fontWeight: "bold" };
       default: return { fontColor: Color.rgbHex("#dedede"), fontWeight: "bold" };
     }
   }
