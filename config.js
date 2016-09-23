@@ -18,6 +18,7 @@ var config = {
     {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
     {keys: "Alt-T", command: {command: "choose and browse module", onlyWhenFocused: false}},
+    {keys: "Alt-Shift-T", command: {command: "choose and browse package resources", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-Shift-F", mac: "Meta-Shift-F"}, command: {command: "open code search", onlyWhenFocused: false}},
 
     {keys: "Left",       command: {command: "move or resize halo target", args: {what: "move", direction: "left",  offset: 1}}},

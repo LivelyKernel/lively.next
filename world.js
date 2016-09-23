@@ -216,6 +216,42 @@ var worldCommands = [
   },
 
   {
+    name: "choose and browse package resources",
+    exec: async world => {
+      var browser, focused = world.focusedMorph;
+      if (focused && focused.getWindow() instanceof Browser)
+        browser = focused.getWindow();
+
+      var livelySystem = (await System.import("lively-system-interface")).localInterface, // FIXME
+          pkgs = await livelySystem.getPackages(),
+          pkgs = pkgs.filter(({address}) => "no group" !== address),
+          items = [];
+
+      for (let p of pkgs) {
+        items.push(...(await livelySystem.resourcesOfPackage(p))
+          .filter(({name}) => !name.endsWith("/"))
+          .sort((a, b) => {
+            if (a.isLoaded && !b.isLoaded) return -1;
+            if (!a.isLoaded && b.isLoaded) return 1;
+            if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
+            if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
+            return 1
+          })
+          .map(resource => {
+            var string = `[${p.name}] ${resource.nameInPackage}${resource.isLoaded ? "" : " [not loaded]"}`;
+            return {isListItem: true, string, value: resource}
+          }));
+      }
+
+      var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
+
+      selected && (await Browser.browse(selected.package.address, selected.name, undefined, browser)).activate()
+
+      return true;
+    }
+  },
+
+  {
     name: "choose and browse module",
     exec: async world => {
       var browser, focused = world.focusedMorph;
@@ -228,15 +264,14 @@ var worldCommands = [
 
       for (let p of pkgs) {
         for (let m of p.modules) {
-          // var shortName = m.name.slice(p.address.length).replace(/^\//, "");
           var shortName = livelySystem.shortModuleName(m.name, p);
-          items.push({isListItem: true, string: `${p.name}/${shortName}`, value: {package: p, module: m, shortName}})
+          items.push({isListItem: true, string: `[${p.name}] ${shortName}`, value: {package: p, module: m, shortName}})
         }
       }
 
       items = arr.sortBy(items, ea => ea.string);
 
-      var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
+      var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700});
 
       selected && (await Browser.browse(selected.package.name, selected.shortName, undefined, browser)).activate()
 

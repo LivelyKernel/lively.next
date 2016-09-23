@@ -214,19 +214,8 @@ export class Browser extends Window {
 
   async packageResources(p) {
     // await this.packageResources(this.selectedPackage)
-    var system = await this.systemInterface(),
-        resourceURLs = await system.resourcesOfPackage(p.address),
-        loadedModules = arr.groupByKey(p.modules, "name");
-    return resourceURLs
-      // .filter(url => !url.endsWith("/"))
-      .filter(url => url.endsWith(".js") || url.endsWith(".json"))
-      .map(url => {
-        var nameInPackage = url.replace(p.address, "").replace(/^\//, "");
-        return url in loadedModules ?
-          {...loadedModules[url][0], isLoaded: true, nameInPackage} :
-          {isLoaded: false, name: url, nameInPackage}
-      })
-      .map(ea => ({...ea, package: p, nameInPackage: ea.nameInPackage}));
+    return (await (await this.systemInterface()).resourcesOfPackage(p.address))
+      .filter(({name}) => name.endsWith(".js") || name.endsWith(".json"));
   }
 
   async onLoad() {
