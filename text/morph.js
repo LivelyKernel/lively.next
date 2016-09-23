@@ -829,9 +829,9 @@ export class Text extends Morph {
           sel = this.selection,
           sels = sel.isMultiSelection ? sel.selections : [sel];
       this.undoManager.group();
-      this.saveMark(sel.start);
       sels.forEach(sel => {
         sel.text = data;
+        this.saveMark(sel.start);
         sel.collapseToEnd();
       });
       this.undoManager.group();
