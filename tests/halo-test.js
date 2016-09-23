@@ -9,7 +9,7 @@ import { num } from "lively.lang";
 var world, submorph1, submorph2, eventDispatcher;
 function createDummyWorld() {
   world = morph({
-    type: "world", name: "world", extent: pt(300,300),
+    type: "world", name: "world", extent: pt(1000,1000),
     submorphs: [{
         name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
         submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
@@ -35,12 +35,13 @@ describe("halos", () => {
 
   it("halo items are placed correctly", () => {
     submorph1.origin = pt(20,30);
+    submorph1.position = pt(100,100);
     var halo = world.showHaloFor(submorph1),
         innerButton = halo.buttonControls.find(item =>
-        submorph1.bounds().containsPoint(item.globalBounds().center())
-        && item != halo.originHalo());
-    expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
-    expect(halo.originHalo().bounds().center()).equals(submorph1.origin);
+          submorph1.globalBounds().containsPoint(item.globalBounds().center())
+          && item != halo.originHalo());
+    expect(innerButton).equals(undefined, `halo item ${innerButton && innerButton.name} is inside the bounds of its target`);
+    expect(halo.originHalo().globalBounds().center()).equals(submorph1.worldPoint(pt(0,0)));
   });
   
   it("halo items never overlap each other", () => {
@@ -57,7 +58,6 @@ describe("halos", () => {
 
   it("name shows name", () => {
     var halo = world.showHaloFor(submorph1);
-    expect(halo.nameHalo().topCenter).equals(halo.innerBounds().bottomCenter().addPt(pt(0,2)));
     expect(halo.nameHalo().nameHolder.textString).equals(submorph1.name);
   })
 
@@ -101,11 +101,12 @@ describe("halos", () => {
 
   it("align to the morph extent while resizing", () => {
     submorph1.origin = pt(20,30);
+    submorph1.position = pt(100,100);
     var halo = world.showHaloFor(submorph1, "test-pointer-1"),
         resizeButton = halo.resizeHalo(),
         resizeButtonCenter = resizeButton.globalBounds().center();
     resizeButton.update(pt(42,42));
-    expect(halo.extent).equals(submorph1.extent);
+    expect(halo.borderBox.extent).equals(submorph1.extent);
   });
 
   it("active resize hides other halos and displays extent", () => {
@@ -228,7 +229,7 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1);
     halo.originHalo().update(pt(10,5));
     expect(submorph1.origin).equals(pt(30, 35));
-    expect(halo.originHalo().bounds().center()).equals(pt(30, 35));
+    expect(halo.originHalo().globalBounds().center()).equals(submorph1.worldPoint(pt(0,0)));
   });
 
   it("origin shifts origin according to global delta", () => {
@@ -305,10 +306,10 @@ describe("halos", () => {
         hand = world.handForPointerId("test-pointer");
     halo.grabHalo().init(hand)
     hand.update({halo, position: submorph1.globalBounds().center()});
-    expect(halo.position).equals(submorph2.globalBounds().topLeft());
+    expect(halo.borderBox.globalPosition).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(hand);
     halo.grabHalo().stop(hand)
-    expect(halo.position).equals(submorph2.globalBounds().topLeft());
+    expect(halo.borderBox.globalPosition).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(submorph1);
   });
 
@@ -320,7 +321,7 @@ describe("halos", () => {
     expect(copy).not.equals(submorph2);
     hand.position = submorph1.globalBounds().center();
     halo.copyHalo().update(hand)
-    expect(halo.position).equals(copy.globalBounds().topLeft());
+    expect(halo.borderBox.globalPosition).equals(copy.globalBounds().topLeft());
     expect(copy.owner).equals(submorph1);
   });
 
