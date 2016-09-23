@@ -1,10 +1,9 @@
-import { string } from "lively.lang";
 import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
 
 export class Anchor {
 
-  constructor(id = string.newUUID(), pos = {column: 0, row: 0}, insertBehavior = "move") {
-    this.id = id;
+  constructor(id, pos = {column: 0, row: 0}, insertBehavior = "move") {
+    this.id = id || "" + (this.constructor._id = (this.constructor._id || 0) + 1);
     this.position = pos;
     // behavior when inserted directly at this.position:
     // stay = position unchanged, move = position moves to end of insertion

@@ -18,7 +18,7 @@ export default class JavaScriptChecker {
     var astModule = System.get(System.decanonicalize("lively.ast"));
     if (!astModule) return null;
 
-    var options = {withComments: true, allowReturnOutsideFunction: true};
+    var options = {allowReturnOutsideFunction: true};
     options.type = astType;
     return astModule.fuzzyParse(src, options);
   }

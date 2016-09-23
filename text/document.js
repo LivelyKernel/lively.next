@@ -43,16 +43,16 @@ export default class TextDocument {
   set styleRanges(styleRanges) {
     this._styleRanges = styleRanges;
     this._styleRangesByLine = this.lines.map(ea => []);
-    styleRanges.forEach(({style, start, end}) => {
+    for (var i = 0; i < styleRanges.length; i++) {
+      let {style, start, end} = styleRanges[i];
       for (let row = start.row; row <= end.row; row++) {
         let text = this.lines[row],
             startCol = row === start.row ? start.column : 0,
             endCol = row === end.row ? end.column : text.length,
             styleRange = StyleRange.fromPositions(style, {row, column: startCol}, {row, column: endCol});
-        if (!this._styleRangesByLine[row]) this._styleRangesByLine[row] = [];
         this._styleRangesByLine[row].push(styleRange);
       }
-    });
+    }
   }
 
   addStyleRange(range) {
@@ -67,17 +67,17 @@ export default class TextDocument {
 
   updateLineStyleRanges(row) {
     let { styleRanges } = this,
-        text = this.getLine(row),
-        start = { row, column: 0 },
-        end = { row, column: text ? text.length : 0 },
+        text = this.lines[row] || "",
+        start = {row, column: 0},
+        end = {row, column: text ? text.length : 0},
         lineRange = Range.fromPositions(start, end),
         lineStyleRanges = [];
-    styleRanges.forEach(ea => {
-      let { style, range } = ea,
+    for (var i = 0; i < styleRanges.length; i++) {
+      let {style, range} = styleRanges[i],
           intersection = lineRange.intersect(range);
       if (intersection.start.row === lineRange.start.row)
         lineStyleRanges.push(new StyleRange(style, intersection));
-    });
+    }
     this._styleRangesByLine[row] = Range.sort(lineStyleRanges);
   }
 
