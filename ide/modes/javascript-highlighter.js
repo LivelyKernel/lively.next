@@ -1,7 +1,7 @@
 import { Token, Highlighter } from "../highlighting.js";
 
 const words = {
-  keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default"],
+  keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "from", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default"],
   constant: ["null", "undefined", "true", "false"],
   global: ["window", "alert", "console", "JSON", "Math", "fetch", "parseInt", "parseFloat", "String", "Number", "Array", "Object", "Function", "Date"],
   dynamic: ["this", "super"]
@@ -38,7 +38,7 @@ export default class JavaScriptHighlighter extends Highlighter {
         if (c === "}") {
           if (this.levels.length === 1 && this.levels[0] <= 0) {
             return Token.error;
-          } else if (this.levels[this.levels.length - 1] === 1) {
+          } else if (this.levels.length > 1 && this.levels[this.levels.length - 1] === 1) {
             this.levels.pop();
             this.state = "template";
           } else {

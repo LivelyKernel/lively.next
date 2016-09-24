@@ -182,4 +182,18 @@ describe("javascript highlighting", () => {
     ]);
   });
   
+  it("supports import statements", () => {
+    const src = `import { x } from "x.js";`;
+    expect(mode.highlight(src)).to.be.deep.equal([
+      {token: Token.keyword, from: {row: 0, column: 0}, to: {row: 0, column: 6}},
+      {token: Token.default, from: {row: 0, column: 6}, to: {row: 0, column: 9}},
+      {token: Token.id, from: {row: 0, column: 9}, to: {row: 0, column: 10}},
+      {token: Token.default, from: {row: 0, column: 10}, to: {row: 0, column: 13}},
+      {token: Token.keyword, from: {row: 0, column: 13}, to: {row: 0, column: 17}},
+      {token: Token.default, from: {row: 0, column: 17}, to: {row: 0, column: 18}},
+      {token: Token.string, from: {row: 0, column: 18}, to: {row: 0, column: 24}},
+      {token: Token.default, from: {row: 0, column: 24}, to: {row: 0, column: 25}}
+    ]);
+  });
+  
 });
