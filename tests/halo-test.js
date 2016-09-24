@@ -136,8 +136,6 @@ describe("halos", () => {
     halo.resizeHalo().update(pt(10,5), true);
     var d = halo.getSubmorphNamed("diagonal");
     expect(d).to.not.be.undefined;
-    closeToPoint(d.worldPoint(d.vertices[0]), halo.globalBounds().topLeft());
-    closeToPoint(d.worldPoint(d.vertices[1]), halo.globalBounds().bottomRight());
   });
 
   it("rotate rotates", () => {
