@@ -756,21 +756,23 @@ export class Halo extends Morph {
   }
 
   toggleDiagonal(active) {
-    var diagonal = this.getSubmorphNamed("diagonal");
+    var diagonal = this.getSubmorphNamed("diagonal"),
+        bounds = this.borderBox.bounds().scaleRectTo(this.innerBounds());
     if (active) {
-      var offset = this.extent.normalized().scaleByPt(pt(100,100));
-      diagonal = diagonal || this.addMorphBack(new Path({
+      if (diagonal) {
+        diagonal.setBounds(bounds);
+      } else {
+        diagonal = this.addMorphBack(new Path({
           opacity: 0,
           name: "diagonal",
           borderStyle: "dashed",
           borderWidth: 2,
+          bounds,
           gradient: guideGradient,
-          position: offset.negated(),
-          extent: this.extent.addPt(offset.scaleBy(2)),
-          vertices: [pt(0,0), this.extent.addPt(offset.scaleBy(2))]}));
-        diagonal.setBounds(diagonal.position.extent(this.extent.addPt(diagonal.position.scaleBy(-2))))
+          vertices: [pt(0,0), bounds.extent()]}));
         diagonal.animate({opacity: 1, duration: 500});
-        return diagonal.vertices[1];
+      }
+      return diagonal.vertices[1];
     } else {
       diagonal && diagonal.animate({opacity: 0, duration: 500, onFinish: () => diagonal.remove()});
     }
