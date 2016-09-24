@@ -10,6 +10,8 @@ import { scheduleModuleExportsChange } from "./import-export.js";
 async function moduleSourceChange(System, moduleId, newSource, format, options) {
   try {
     var changeResult;
+    System.debug && console.log(`[module change] ${moduleId} ${newSource.slice(0,50).replace(/\n/g, "")} ${format}`)
+
     if (!format || format === "es6" || format === "esm" || format === "register" || format === "defined") {
       changeResult = await moduleSourceChangeEsm(System, moduleId, newSource, options);
     } else if (format === "global") {

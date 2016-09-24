@@ -15,11 +15,11 @@ function remove(System, methodName, hookOrName) {
   var found = typeof hookOrName === "string" ?
     chain.find(wrapper => wrapper.hookFunc && wrapper.hookFunc.name === hookOrName) :
     chain.find(wrapper => wrapper.hookFunc === hookOrName);
-  
+
   if (!found) return false;
-  
+
   arr.remove(chain, found);
-  
+
   System[methodName] = chain.reduceRight((method, wrapper) =>
     fun.wrap(method, wrapper.hookFunc || wrapper));
 

@@ -60,6 +60,7 @@ function updateModuleExports(System, moduleId, keysAndValues) {
         });
       }
     }
+
     if (existingExports.length) {
       debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
       for (var i = 0, l = record.importers.length; i < l; i++) {
@@ -72,8 +73,13 @@ function updateModuleExports(System, moduleId, keysAndValues) {
               found = importerModule.dependencies.some((dep, i) => {
                 importerIndex = i;
                 return dep && dep.name === record.name
-              })
+              });
+
           if (found) {
+            if (debug) {
+              let mod = module(System, importerModule.name);
+              console.log(`[lively.vm es6 updateModuleExports] calling setters of ${mod["package"]().name}${mod.pathInPackage().replace(/^./, "")}`);
+            }
             importerModule.setters[importerIndex](record.exports);
           }
 
