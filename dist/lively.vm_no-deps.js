@@ -311,6 +311,7 @@
       klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
+      if (superclass !== Object) Object.setPrototypeOf ? Object.setPrototypeOf(klass, superclass) : klass.__proto__ = superclass;
     }
     return superclass;
   }
@@ -338,9 +339,10 @@
     Object.defineProperty(klass, descr.key, descr);
   }
 
-  function addMethods(klass, instanceMethods, classMethods) {
+  function installMethods(klass, instanceMethods, classMethods) {
     // install methods from two lists (static + instance) of {key, value} or
     // {key, get/set} descriptors
+
     classMethods && classMethods.forEach(function (ea) {
       ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
     });
@@ -361,6 +363,20 @@
       });
       klass.prototype[initializeSymbol].displayName = "lively-initialize";
     }
+
+    // 5. undefine properties that were removed form class definition
+    var toDeleteInstance = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
+      return m.key;
+    }).concat(["constructor"]));
+    toDeleteInstance.forEach(function (key) {
+      delete klass.prototype[key];
+    });
+    var toDeleteClass = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
+      return m.key;
+    }).concat(["length", "name", "prototype"]));
+    toDeleteClass.forEach(function (key) {
+      delete klass[key];
+    });
   }
 
   function ensureInitializeStub(superclass) {
@@ -409,7 +425,7 @@
     var superclass = setSuperclass(klass, superclassSpec);
 
     // 3. Install methods
-    addMethods(klass, instanceMethods, classMethods);
+    installMethods(klass, instanceMethods, classMethods);
 
     // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
     // then we also store some meta data about the module. This allows us to
@@ -435,7 +451,7 @@
           if (name === superclassSpec.referencedAs) {
             // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
             setSuperclass(klass, val);
-            addMethods(klass, instanceMethods, classMethods);
+            installMethods(klass, instanceMethods, classMethods);
           }
         });
       }

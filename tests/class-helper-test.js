@@ -1,8 +1,8 @@
 /*global beforeEach, afterEach, describe, it*/
 
 import { expect } from "mocha-es6";
-import { classToFunctionTransform } from "node_modules/lively.ast/lib/class-to-function-transform.js"
-// import { classToFunctionTransform } from "lively.ast/lib/class-to-function-transform.js"
+// import { classToFunctionTransform } from "node_modules/lively.ast/lib/class-to-function-transform.js"
+import { classToFunctionTransform } from "lively.ast/lib/class-to-function-transform.js"
 
 import {
   initializeClass,
@@ -95,6 +95,13 @@ describe("create or extend classes", function() {
     var Foo2 = await evalClass("class Foo2 extends Foo { constructor(a, b) { super(a,b); this.y = a; } }")
     expect(new Foo2(2,3).x).equals(5);
     expect(new Foo2(2,3).y).equals(2);
+  });
+
+  it("inheriting class side", async function() {
+    var Foo = await evalClass("class Foo { static foo() { return 23; }  static bar() { return 99; } }")
+    var Foo2 = await evalClass("class Foo2 extends Foo { static foo() { return super.foo() + 1; }}")
+    expect(Foo2.bar()).equals(99, "class method of superclass not reachable");
+    expect(Foo2.foo()).equals(24, "method not correctly overriden on class side");
   });
 
   it("modifying the superclass affects the subclass and its instances", async function() {

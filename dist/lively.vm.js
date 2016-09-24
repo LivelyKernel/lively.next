@@ -300,21 +300,27 @@
             case Number:
                 return a == b;
             }
-            ;
             if (typeof a.isEqualNode === 'function')
                 return a.isEqualNode(b);
             if (typeof a.equals === 'function')
                 return a.equals(b);
-            return cmp(a, b) && cmp(b, a);
-            function cmp(left, right) {
-                for (var name in left) {
-                    if (typeof left[name] === 'function')
-                        continue;
-                    if (!obj.equals(left[name], right[name]))
-                        return false;
-                }
-                return true;
+            var seenInA = [];
+            for (var name in a) {
+                seenInA.push(name);
+                if (typeof a[name] === 'function')
+                    continue;
+                if (!obj.equals(a[name], b[name]))
+                    return false;
             }
+            for (var name in b) {
+                if (seenInA.indexOf(name) !== -1)
+                    continue;
+                if (typeof b[name] === 'function')
+                    continue;
+                if (!obj.equals(b[name], a[name]))
+                    return false;
+            }
+            return true;
         },
         keys: Object.keys || function (object) {
             var keys = [];
@@ -1224,10 +1230,19 @@
     };
     var arr = exports.arr = {
         range: function (begin, end, step) {
-            step = step || 1;
+            step = step || 0;
             var result = [];
-            for (var i = begin; i <= end; i += step)
-                result.push(i);
+            if (begin <= end) {
+                if (step <= 0)
+                    step = -step || 1;
+                for (var i = begin; i <= end; i += step)
+                    result.push(i);
+            } else {
+                if (step >= 0)
+                    step = -step || -1;
+                for (var i = begin; i >= end; i += step)
+                    result.push(i);
+            }
             return result;
         },
         from: features.from ? Array.from : function (iterable) {
@@ -4421,6 +4436,25 @@
             return new Promise(function (resolve, reject) {
                 exports.promise._chainResolveNext(promiseFuncs.slice(), undefined, {}, resolve, reject);
             });
+        },
+        finally: function (promise, finallyFn) {
+            return Promise.resolve(promise).then(function (result) {
+                try {
+                    finallyFn();
+                } catch (err) {
+                    console.error('Error in promise finally: ' + err.stack || err);
+                }
+                ;
+                return result;
+            }).catch(function (err) {
+                try {
+                    finallyFn();
+                } catch (err) {
+                    console.error('Error in promise finally: ' + err.stack || err);
+                }
+                ;
+                throw err;
+            });
         }
     });
 }(typeof lively !== 'undefined' && lively.lang ? lively.lang : {}));
@@ -4430,12 +4464,14 @@
     'use strict';
     var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
     var events = exports.events = {
-        makeEmitter: isNode ? function (obj) {
+        makeEmitter: isNode ? function (obj, options) {
             if (obj.on && obj.removeListener)
                 return obj;
             var events = require('events');
             require('util')._extend(obj, events.EventEmitter.prototype);
             events.EventEmitter.call(obj);
+            if (options && options.maxListenerLimit)
+                obj.setMaxListeners(options.maxListenerLimit);
             return obj;
         } : function (obj) {
             if (obj.on && obj.removeListener)
@@ -17519,7 +17555,7 @@ module.exports = function(acorn) {
     options = options || {};
     var traversal = options.traversal || 'preorder'; // also: postorder
 
-    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.visitors.withMemberExpression);
+    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
     var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
       func(node, state, depth, type);return orig(node, depth + 1, cont);
     } : function (orig, type, node, depth, cont) {
@@ -17558,8 +17594,8 @@ module.exports = function(acorn) {
 
   function findNodesIncluding(parsed, pos, test, base) {
     var nodes = [];
-    base = base || acorn.walk.make({});
-    Object.keys(acorn.walk.base).forEach(function (name) {
+    base = base || walk.make(walk.visitors.withMemberExpression);
+    Object.keys(walk.base).forEach(function (name) {
       var orig = base[name];
       base[name] = function (node, state, cont) {
         lively_lang.arr.pushIfNotIncluded(nodes, node);
@@ -19573,6 +19609,7 @@ var nodes = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var isTransformedClassVarDeclSymbol = Symbol();
+  var methodKindSymbol = Symbol();
   var tempLivelyClassVar = "__lively_class__";
   var tempLivelyClassHolderVar = "__lively_classholder__";
 
@@ -19588,7 +19625,9 @@ var nodes = Object.freeze({
       key: "accept",
       value: function accept(node, state, path) {
         if (isFunctionNode(node)) {
-          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]) });
+          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]),
+            currentMethod: node[methodKindSymbol] ? node : state.currentMethod
+          });
         }
 
         if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
@@ -19624,6 +19663,13 @@ var nodes = Object.freeze({
     // just super
     console.assert(node.type === "Super");
 
+    var currentMethod = state.currentMethod;
+
+    if (!currentMethod) {
+      console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + stringify(node) + " in " + path.join("."));
+      // return node;
+    }
+
     var _path$slice = path.slice(-2);
 
     var _path$slice2 = babelHelpers.slicedToArray(_path$slice, 2);
@@ -19633,7 +19679,9 @@ var nodes = Object.freeze({
 
     if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
 
-    return funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
+    var methodHolder = currentMethod && currentMethod[methodKindSymbol] === "static" ? funcCall(member("Object", "getPrototypeOf"), id(tempLivelyClassVar)) : funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
+
+    return methodHolder;
   }
 
   // parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
@@ -19643,28 +19691,28 @@ var nodes = Object.freeze({
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.object.type === "Super");
 
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state.classHolder, [], options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state, path.concat(["callee", "object"]), options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
   function replaceDirectSuperCall(node, state, path, options) {
-    // like super.foo()
+    // like super()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.type === "Super");
 
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state.classHolder, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state, path.concat(["callee"]), options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
   function replaceSuperGetter(node, state, path, options) {
     console.assert(node.type === "MemberExpression");
     console.assert(node.object.type === "Super");
-    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state.classHolder, [], options), literal(node.property.value || node.property.name), id("this"));
+    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state, path.concat(["object"]), options), literal(node.property.value || node.property.name), id("this"));
   }
 
   function replaceSuperSetter(node, state, path, options) {
     console.assert(node.type === "AssignmentExpression");
     console.assert(node.left.object.type === "Super");
 
-    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state.classHolder, [], options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
+    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state, path.concat(["left", "object"]), options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
   }
 
   function replaceClass(node, state, path, options) {
@@ -19696,16 +19744,16 @@ var nodes = Object.freeze({
           // outer functions / vars, something that is totally not apparent for a user
           // of the class syntax. That's the reason for making it a little cryptic
           var methodId = id(className + "_" + (key.name || key.value) + "_"),
-              _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, { id: methodId })];
+              _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
 
           decl = objectLiteral(_props);
         } else if (kind === "get" || kind === "set") {
-          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, { id: id(kind) })]);
+          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, babelHelpers.defineProperty({ id: id(kind) }, methodKindSymbol, classSide ? "static" : "proto"))]);
         } else if (kind === "constructor") {
-          var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, { id: id(className + "_initialize_") })];
+          var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: id(className + "_initialize_") }, methodKindSymbol, "proto"))];
           decl = objectLiteral(_props2);
         } else {
-          console.warn("classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
+          console.warn("[lively.classes] classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
         }
         (classSide ? props.clazz : props.inst).push(decl);
         return props;
@@ -21077,11 +21125,15 @@ var categorizer = Object.freeze({
         if (env !== undefined) {
           return env;
         }
-        return env = { emitter: lively_lang.events.makeEmitter({}), notifications: [] };
+        return env = {
+          emitter: lively_lang.events.makeEmitter({}, { maxListenerLimit: 10000 }),
+          notifications: []
+        };
       } else {
         system = System;
       }
     }
+
     var livelyEnv = system.get("@lively-env");
     var options = void 0;
     if (livelyEnv === undefined) {
@@ -21095,7 +21147,7 @@ var categorizer = Object.freeze({
     }
     if (!options.emitter) {
       Object.assign(options, {
-        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({})),
+        emitter: system["__lively.notifications_emitter"] || (system["__lively.notifications_emitter"] = lively_lang.events.makeEmitter({}, { maxListenerLimit: 10000 })),
         notifications: system["__lively.notifications_notifications"] || (system["__lively.notifications_notifications"] = [])
       });
     }
@@ -21517,6 +21569,7 @@ var categorizer = Object.freeze({
       klass[superclassSymbol] = superclass;
       klass.prototype = Object.create(superclass.prototype);
       klass.prototype.constructor = klass;
+      if (superclass !== Object) Object.setPrototypeOf ? Object.setPrototypeOf(klass, superclass) : klass.__proto__ = superclass;
     }
     return superclass;
   }
@@ -21544,9 +21597,10 @@ var categorizer = Object.freeze({
     Object.defineProperty(klass, descr.key, descr);
   }
 
-  function addMethods(klass, instanceMethods, classMethods) {
+  function installMethods(klass, instanceMethods, classMethods) {
     // install methods from two lists (static + instance) of {key, value} or
     // {key, get/set} descriptors
+
     classMethods && classMethods.forEach(function (ea) {
       ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
     });
@@ -21567,6 +21621,20 @@ var categorizer = Object.freeze({
       });
       klass.prototype[initializeSymbol].displayName = "lively-initialize";
     }
+
+    // 5. undefine properties that were removed form class definition
+    var toDeleteInstance = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
+      return m.key;
+    }).concat(["constructor"]));
+    toDeleteInstance.forEach(function (key) {
+      delete klass.prototype[key];
+    });
+    var toDeleteClass = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
+      return m.key;
+    }).concat(["length", "name", "prototype"]));
+    toDeleteClass.forEach(function (key) {
+      delete klass[key];
+    });
   }
 
   function ensureInitializeStub(superclass) {
@@ -21615,7 +21683,7 @@ var categorizer = Object.freeze({
     var superclass = setSuperclass(klass, superclassSpec);
 
     // 3. Install methods
-    addMethods(klass, instanceMethods, classMethods);
+    installMethods(klass, instanceMethods, classMethods);
 
     // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
     // then we also store some meta data about the module. This allows us to
@@ -21641,7 +21709,7 @@ var categorizer = Object.freeze({
           if (name === superclassSpec.referencedAs) {
             // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
             setSuperclass(klass, val);
-            addMethods(klass, instanceMethods, classMethods);
+            installMethods(klass, instanceMethods, classMethods);
           }
         });
       }
