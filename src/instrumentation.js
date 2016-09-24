@@ -244,7 +244,7 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
         depNames          = arr.pluck(registerCall["arguments"][0].elements, "value"),
         declareFuncNode   = registerCall["arguments"][1],
         declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
-        declare           = eval(`var __moduleName = "${load.name}";(${declareFuncSource});\n//@ sourceURL=${load.name}\n`);
+        declare           = eval(`var __moduleName = "${load.name}";(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
 
     if (System.debug && typeof $morph !== "undefined" && $morph("log"))
       $morph("log").textString = declare;
@@ -279,7 +279,7 @@ function old_instrumentSourceOfEsmModuleLoad(System, load) {
         depNames          = arr.pluck(registerCall["arguments"][0].elements, "value"),
         declareFuncNode   = call.callee.body.body[0].expression["arguments"][1],
         declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
-        declare           = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});\n//@ sourceURL=${moduleName}\n`);
+        declare           = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});\n//# sourceURL=${moduleName}\n`);
 
     if (System.debug && typeof $morph !== "undefined" && $morph("log"))
       $morph("log").textString = declare;
