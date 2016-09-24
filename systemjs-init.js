@@ -66,6 +66,12 @@
         pluginBabelPath = src.slice(0, index3) + "node_modules/lively.modules/node_modules/systemjs-plugin-babel";
         break;
       }
+
+      var match = src.match(/(.*)generated\/[^\/]+\/combinedModules.js/);
+      if (match) {
+        pluginBabelPath = match[1] + "node_modules/lively.modules/node_modules/systemjs-plugin-babel";
+        break;
+      }
     }
 
     return pluginBabelPath;
