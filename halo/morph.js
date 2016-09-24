@@ -757,7 +757,10 @@ export class Halo extends Morph {
 
   toggleDiagonal(active) {
     var diagonal = this.getSubmorphNamed("diagonal"),
-        bounds = this.borderBox.bounds().scaleRectTo(this.innerBounds());
+        {x,y,width, height } = this.target.globalBounds(),
+        bounds = this.localize(pt(x,y))
+                     .extent(pt(width, height))
+                     .scaleRectTo(this.innerBounds());
     if (active) {
       if (diagonal) {
         diagonal.setBounds(bounds);
