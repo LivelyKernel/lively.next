@@ -65,6 +65,10 @@ export default class JavaScriptHighlighter extends Highlighter {
           this.state = "comment";
           return Token.comment;
         }
+        if (this.checkChars("//")) {
+          this.state = "linecomment";
+          return Token.comment;
+        }
         if (c=== "/") {
           this.rere.lastIndex = this.idx;
           const m = this.rere.exec(this.str);
@@ -73,10 +77,6 @@ export default class JavaScriptHighlighter extends Highlighter {
             this.left = m[0].length - 1;
             return Token.regex;
           }
-        }
-        if (this.checkChars("//")) {
-          this.state = "linecomment";
-          return Token.comment;
         }
         if (this.checkWord("keyword")) {
           return Token.keyword;

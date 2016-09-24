@@ -134,6 +134,13 @@ describe("javascript highlighting", () => {
     ]);
   });
   
+  it("ignores urls in line comments", () => {
+    const src = "// http://abc/123";
+    expect(mode.highlight(src)).to.be.deep.equal([
+      {token: Token.comment, from: {row: 0, column: 0}, to: {row: 0, column: 17}}
+    ]);
+  });
+  
   it("matches keywords", () => {
     const src = "return 1";
     expect(mode.highlight(src)).to.be.deep.equal([
