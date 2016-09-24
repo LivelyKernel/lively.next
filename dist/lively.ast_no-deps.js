@@ -14185,6 +14185,7 @@ var nodes = Object.freeze({
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   var isTransformedClassVarDeclSymbol = Symbol();
+  var methodKindSymbol = Symbol();
   var tempLivelyClassVar = "__lively_class__";
   var tempLivelyClassHolderVar = "__lively_classholder__";
 
@@ -14200,7 +14201,9 @@ var nodes = Object.freeze({
       key: "accept",
       value: function accept(node, state, path) {
         if (isFunctionNode(node)) {
-          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]) });
+          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]),
+            currentMethod: node[methodKindSymbol] ? node : state.currentMethod
+          });
         }
 
         if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
@@ -14236,6 +14239,13 @@ var nodes = Object.freeze({
     // just super
     console.assert(node.type === "Super");
 
+    var currentMethod = state.currentMethod;
+
+    if (!currentMethod) {
+      console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + stringify(node) + " in " + path.join("."));
+      // return node;
+    }
+
     var _path$slice = path.slice(-2);
 
     var _path$slice2 = babelHelpers.slicedToArray(_path$slice, 2);
@@ -14245,7 +14255,9 @@ var nodes = Object.freeze({
 
     if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
 
-    return funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
+    var methodHolder = currentMethod && currentMethod[methodKindSymbol] === "static" ? funcCall(member("Object", "getPrototypeOf"), id(tempLivelyClassVar)) : funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
+
+    return methodHolder;
   }
 
   // parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
@@ -14255,28 +14267,28 @@ var nodes = Object.freeze({
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.object.type === "Super");
 
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state.classHolder, [], options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state, path.concat(["callee", "object"]), options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
   function replaceDirectSuperCall(node, state, path, options) {
-    // like super.foo()
+    // like super()
     console.assert(node.type === "CallExpression");
     console.assert(node.callee.type === "Super");
 
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state.classHolder, [], options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
+    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state, path.concat(["callee"]), options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
   }
 
   function replaceSuperGetter(node, state, path, options) {
     console.assert(node.type === "MemberExpression");
     console.assert(node.object.type === "Super");
-    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state.classHolder, [], options), literal(node.property.value || node.property.name), id("this"));
+    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state, path.concat(["object"]), options), literal(node.property.value || node.property.name), id("this"));
   }
 
   function replaceSuperSetter(node, state, path, options) {
     console.assert(node.type === "AssignmentExpression");
     console.assert(node.left.object.type === "Super");
 
-    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state.classHolder, [], options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
+    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state, path.concat(["left", "object"]), options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
   }
 
   function replaceClass(node, state, path, options) {
@@ -14308,16 +14320,16 @@ var nodes = Object.freeze({
           // outer functions / vars, something that is totally not apparent for a user
           // of the class syntax. That's the reason for making it a little cryptic
           var methodId = id(className + "_" + (key.name || key.value) + "_"),
-              _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, { id: methodId })];
+              _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
 
           decl = objectLiteral(_props);
         } else if (kind === "get" || kind === "set") {
-          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, { id: id(kind) })]);
+          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, babelHelpers.defineProperty({ id: id(kind) }, methodKindSymbol, classSide ? "static" : "proto"))]);
         } else if (kind === "constructor") {
-          var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, { id: id(className + "_initialize_") })];
+          var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: id(className + "_initialize_") }, methodKindSymbol, "proto"))];
           decl = objectLiteral(_props2);
         } else {
-          console.warn("classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
+          console.warn("[lively.classes] classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
         }
         (classSide ? props.clazz : props.inst).push(decl);
         return props;
