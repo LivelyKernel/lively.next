@@ -68,6 +68,15 @@ classTemplateDecl("Foo", undefined, "undefined", `[{
     }
 }]`, "_rec", "undefined")));
 
+  it("with class side methods inheritance + super call", () =>
+      expect(stringify(classToFunctionTransform("class Foo2 extends Foo {static m() { return super.m() + 1; }}", opts))).to.equal(
+classTemplateDecl("Foo2", "Foo", "undefined", `[{
+    key: 'm',
+    value: function Foo2_m_() {
+        return initializeClass._get(Object.getPrototypeOf(__lively_class__), 'm', this).call(this) + 1;
+    }
+}]`, "_rec", "undefined")));
+
   it("with superclass", () =>
       expect(stringify(classToFunctionTransform("class Foo extends Bar {}", opts))).to.equal(
         classTemplateDecl('Foo', 'Bar', 'undefined', 'undefined', "_rec", 'undefined')));
