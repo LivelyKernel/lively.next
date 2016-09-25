@@ -999,7 +999,12 @@ function maybeSelectCommentOrLine(morph) {
 var printEvalResult = (function() {
   var maxColLength = 300,
       itSym = typeof Symbol !== "undefined" && Symbol.iterator;
-  return printInspect;
+  return function(result, maxDepth) {
+    var err = result instanceof Error ? result : result.isError ? result.value : null;
+    return err ?
+      String(err) + (err.stack ? "\n" + err.stack : "") :
+      printInspect(result.value, maxDepth);
+  }
 
   function printIterable(val, ignore) {
     var isIterable = typeof val !== "string"
@@ -1070,7 +1075,7 @@ commands.push(
       } catch (e) { err = e; }
       err ?
         morph.world().logError(err) : 
-        morph.world().setStatusMessage(String(result.value) + "\n" + printEvalResult(result.value, count));
+        morph.world().setStatusMessage(printEvalResult(result, count));
       return result;
     }
   },
@@ -1105,7 +1110,8 @@ commands.push(
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
+      // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
+      morph.insertTextAndSelect(err ? String(err) + (err.stack ? "\n" + err.stack : "") : String(result.value));
       return result;
     }
   },
@@ -1124,7 +1130,7 @@ commands.push(
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       // morph.insertTextAndSelect(err ? err.stack || String(err) : obj.inspect(result.value, {maxDepth: count}));
-      morph.insertTextAndSelect(err ? err.stack || String(err) : printEvalResult(result.value, count));
+      morph.insertTextAndSelect(printEvalResult(result, count));
       return result;
     }
   },
