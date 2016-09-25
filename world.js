@@ -43,8 +43,23 @@ var worldCommands = [
   },
 
   {
+    name: "select morph",
+    exec: async (world, opts = {justReturn: false}) => {
+      var i = 0, items = tree.map(world,
+        (m, depth) => ({isListItem: true, string: `${++i} ${"  ".repeat(depth)}${m}`, value: m}),
+        m => m.submorphs);
+      var {selected: morphs} = await world.filterableListPrompt("Choose morph", items, {onSelection: sel => sel && sel.show()});
+      if (!opts.justReturn)
+        morphs[0] && world.showHaloFor(morphs[0]);
+      return morphs;
+    }
+  },
+
+  {
     name: "escape",
     exec: (world) => {
+      var eventState =  world.env.eventDispatcher.eventState;
+      if (eventState.menu) eventState.menu.remove();
       var halos = world.halos();
       halos.forEach(h => h.remove());
       var focusTarget = (arr.last(halos) && arr.last(halos).target) || world.focusedMorph || world;
