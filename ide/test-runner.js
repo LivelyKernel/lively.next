@@ -598,7 +598,8 @@ export default class TestRunner extends HTMLMorph {
 
   scrollIntoView(fullTitle) {
     var el = document.getElementById(fullTitle);
-    el && el.scrollIntoViewIfNeeded();
+    if (el && el.scrollIntoViewIfNeeded) el.scrollIntoViewIfNeeded();
+    else if (el && el.scrollIntoView) el.scrollIntoView();
     return Promise.resolve();
   }
 
