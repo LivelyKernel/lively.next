@@ -167,16 +167,13 @@ class HaloPropertyDisplay extends Text {
   displayedValue() { return this.textString; }
 
   displayProperty(val) {
+    var activeButton = this.halo.activeButton;
     val = String(val);
     this.visible = true;
     this.textString = val;
-    var activeButton = this.halo.activeButton;
-    if (activeButton &&
-        activeButton.topLeft.x < (this.width + 10) &&
-        activeButton.topLeft.y < 0) {
-      this.position = pt(activeButton.topRight.x + 10, -25);
-    } else {
-      this.position = this.defaultPosition;
+    this.position = this.defaultPosition;
+    if (this.bounds().insetBy(10).intersects(activeButton.bounds())) {
+      this.position = pt(activeButton.topRight.x + 10, this.position.y);
     }
   }
 
@@ -802,25 +799,25 @@ export class Halo extends Morph {
   morphHighlighter() {
     var halo = this;
     return this.getSubmorphNamed("morphHighlighter") || this.addMorphBack({
-          opacity: 0,
-          name: "morphHighlighter",
-          fill: Color.orange.withA(0.5),
-          alignWithHalo() {
-            if (this.target) {
-              this.position = halo.localize(this.target.globalBounds().topLeft());
-              this.extent = this.target.globalBounds().extent();
-            }
-          },
-          show(target) {
-            this.target = target;
-            this.animate({opacity: 1, duration: 500});
-            this.alignWithHalo();
-          },
-          deactivate() {
-            this.animate({opacity: 0});
-            this.alignWithHalo();
-          }
-        });
+      opacity: 0,
+      name: "morphHighlighter",
+      fill: Color.orange.withA(0.5),
+      alignWithHalo() {
+        if (this.target) {
+          this.position = halo.localize(this.target.globalBounds().topLeft());
+          this.extent = this.target.globalBounds().extent();
+        }
+      },
+      show(target) {
+        this.target = target;
+        this.animate({opacity: 1, duration: 500});
+        this.alignWithHalo();
+      },
+      deactivate() {
+        this.animate({opacity: 0});
+        this.alignWithHalo();
+      }
+    });
   }
 
   toggleMorphHighlighter(active, target) {
