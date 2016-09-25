@@ -9,7 +9,6 @@ import { StyleRange } from "./style.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import KeyHandler from "../events/KeyHandler.js";
-import { ClickHandler } from "../events/clickhandler.js";
 import { UndoManager } from "../undo.js";
 import { Anchor } from "./anchors.js";
 import { TextSearcher } from "./search.js";
@@ -72,7 +71,6 @@ export class Text extends Morph {
     this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
-    this.clickhandler = ClickHandler.withDefaultBindings(),
     this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
     this._anchors = null;
     this._markers = null;
@@ -773,7 +771,21 @@ export class Text extends Morph {
 
   onMouseDown(evt) {
     this.activeMark && (this.activeMark = null);
-    this.clickhandler.handle(this, evt);
+    var {position, state: {clickedOnMorph, clickedOnPosition, clickCount}} = evt;
+
+    if (clickedOnMorph !== this) return;
+    var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1;
+
+    if (evt.isShiftDown() && this.selectable) {
+      this.selection.lead = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(position)));
+      return true;
+    }
+
+    if (normedClickCount === 1) return this.onMouseMove(evt);
+
+    if (normedClickCount === 2) return this.execCommand("select word", null, 1, evt);
+    
+    if (normedClickCount === 3) return this.execCommand("select line", null, 1, evt);
   }
 
   onMouseMove(evt) {
