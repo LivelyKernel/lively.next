@@ -189,7 +189,7 @@ export class CompletionController {
         completions = completions.concat(await c.compute(this.textMorph, prefix));
       } catch (e) {}
 
-    var infoCol = completions.reduce((maxCol, ea) => Math.max(ea.completion.length, maxCol), 0),
+    var infoCol = completions.reduce((maxCol, ea) => Math.max(ea.completion.length, maxCol), 0) + 1,
         maxCol = infoCol;
 
     // if multiple options with same completion exist, uniq by the highest priority
@@ -240,7 +240,8 @@ export class CompletionController {
         {items, maxCol} = await this.computeCompletions(prefix),
         charBounds = m.env.fontMetric.sizeFor(fontFamily, fontSize, "M"),
         minWidth = 300,
-        width = Math.max(minWidth, charBounds.width*maxCol),
+        maxWidth = m.width,
+        width = Math.max(minWidth, Math.min(maxWidth, charBounds.width*maxCol)),
         minHeight = 70, maxHeight = 700,
         fullHeight = charBounds.height*items.length+charBounds.height+10,
         height = Math.max(minHeight, Math.min(maxHeight, fullHeight)),

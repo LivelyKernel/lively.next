@@ -37,6 +37,9 @@ export default class TextDocument {
     } : {row: 0, column: 0}
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // TextAttributes
+
   get textAttributes() { return this._textAttributes; }
 
   // NOTE: assumes provided textAttributes are non-overlapping
@@ -58,9 +61,8 @@ export default class TextDocument {
 
   addTextAttribute(range) {
     this._textAttributes = TextAttribute.mergeInto(this._textAttributes, range);
-    for (let row = range.start.row; row <= range.end.row; row++) {
+    for (let row = range.start.row; row <= range.end.row; row++)
       this.updateLineTextAttributes(row);
-    }
     // TODO: Consolidate/deduplicate ranges
   }
 
@@ -83,6 +85,8 @@ export default class TextDocument {
   }
 
   get textAttributesByLine() { return this._textAttributesByLine; }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getLine(row) {
     var safeRow = Math.min(Math.max(0, row), this.lines.length-1);
@@ -182,9 +186,9 @@ export default class TextDocument {
 
     let insertionRange = {start: pos, end};
     textAttributes.forEach(ea => ea.onInsert(insertionRange));
-    for (let row = pos.row; row <= end.row; row++) {
+    for (let row = pos.row; row <= end.row; row++)
       this.updateLineTextAttributes(row);
-    }
+
     return insertionRange;
   }
 
