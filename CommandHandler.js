@@ -72,7 +72,7 @@ export default class CommandHandler {
     // to not swallow errors
     if (result && typeof result.catch === "function") {
       result.catch(err => {
-        var msg = `Error in interactive command ${name}: ${err.stack || err}`;
+        var msg = `Error in interactive command ${name}: ${err}\n${err.stack || err}`;
         world ? world.logError(msg) : console.error(msg);
         throw err;
       });
