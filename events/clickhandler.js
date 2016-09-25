@@ -2,7 +2,7 @@ import { arr } from "lively.lang";
 
 
 var clickBindings = [
-  {numClicks: 1, command: (morph, evt) => morph.onMouseMove(evt)},
+  {numClicks: 1, command: {exec: (morph, evt) => morph.onMouseMove(evt)}},
   {numClicks: 2, command: "select word"},
   {numClicks: 3, command: "select line"}];
 
@@ -16,26 +16,24 @@ export class ClickHandler {
   }
 
   constructor() {
-    this.clickBindings = {};
+    this.clickBindings = new Map();
     this._maxBinding = null;
   }
 
   bind(numClicks, command) {
-    if (!command) delete this.clickBindings[numClicks];
-    else this.clickBindings[numClicks] = command;
+    if (!command) this.clickBindings.delete(numClicks);
+    else this.clickBindings.set(numClicks, command);
     this._maxBinding = null;
   }
 
   getBinding(numClicks) {
-    return this.clickBindings[numClicks];
+    return this.clickBindings.get(numClicks);
   }
 
   get maxBinding() {
-    if (!this._maxBinding) {
-      let { clickBindings } = this,
-          bindings = Object.keys(clickBindings);
-      this._maxBinding = arr.max(bindings, numClicks => parseInt(numClicks));
-    }
+    if (!this._maxBinding)
+      for (let [numClicks, command] of this.clickBindings)
+        this._maxBinding = Math.max(this._maxBinding || 0, numClicks);
     return this._maxBinding;
   }
 
@@ -48,8 +46,7 @@ export class ClickHandler {
     var normalizedClickCount = this.normalizeClickCount(evt.state.clickCount),
         command = this.getBinding(normalizedClickCount);
     if (command) {
-      if (typeof(command) === "function") command(morph, evt);
-      else morph.commandHandler.exec(command, morph, [], evt);
+      this.execCommand(command, null, 1, evt);
     }
   }
 }
