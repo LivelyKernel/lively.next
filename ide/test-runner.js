@@ -391,12 +391,11 @@ export default class TestRunner extends HTMLMorph {
 
     var printed = this.stringifyExpectedAndActualOfError(test.error);
 
-    show(printed || test.error);
-
-    // if (printed)
-    //   lively.ide.diff(printed.actual, printed.expected)
-    // else
-    //   lively.morphic.inspect(test.error)
+    if (printed)
+      this.world().execCommand("diff and open in window",
+        {textA: printed.actual, textB: printed.expected, title: test.fullTitle})
+    else
+      this.world().execCommand("open text window", {title: test.fullTitle, content: test.error});
   }
 
 
