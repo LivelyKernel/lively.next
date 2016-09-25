@@ -441,6 +441,17 @@ export class Text extends Morph {
     return new Range(range);
   }
 
+  insertTextWithTextAttributes(text, attributes = [], pos) {
+    if (!Array.isArray(attributes)) attributes = [attributes];
+    var range = this.insertText(text, pos);
+    attributes.forEach(attr => {
+      if (!attr.isTextAttribute) attr = new TextAttribute(attr);
+      attr.range = range;
+      this.addTextAttribute(attr);
+    });
+    return range;
+  }
+
   insertTextAndSelect(text, pos = null) {
     text = String(text);
     if (pos) this.selection.range = this.insertText(text, pos);
@@ -572,13 +583,18 @@ export class Text extends Morph {
     }
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // TextAttributes
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   get styleProps() {
-    return obj.select(this, ["fontFamily",
-        "fontSize", "fontColor", "fontWeight", "fontStyle",
-        "textDecoration", "fixedCharacterSpacing"]);
+    return obj.select(this, [
+      "fontFamily", "fontSize", "fontColor", "fontWeight",
+      "fontStyle", "textDecoration", "fixedCharacterSpacing"]);
   }
 
-  get textAttributes() { return this.document.textAttributes }
+  get textAttributes() { return this.document.textAttributes; }
 
   // NOTE: assumes provided textAttributes are non-overlapping
   replaceTextAttributes(textAttributes) {
@@ -598,7 +614,6 @@ export class Text extends Morph {
   }
 
   addTextAttribute(range) {
-
     // FIXME: undos
     // this.undoManager.undoStart(this, "addTextAttribute");
 
@@ -630,6 +645,7 @@ export class Text extends Morph {
     this.document.clearTextAttributes();
     this.setDefaultStyle();
   }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
