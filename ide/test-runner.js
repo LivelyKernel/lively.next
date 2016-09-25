@@ -210,7 +210,7 @@ export default class TestRunner extends HTMLMorph {
       return `<div class="row ${isCollapsed ? "collapsed" : ""} ${classes.join(" ")}">
                 <span
                   class="${classes.join(" ")}"
-                  onmousedown="${ref}.onClickTest('${id}', '${file}', this)"
+                  onmousedown="${ref}.onClickTest(event, '${id}', '${file}', this);"
                   id="${id}"
                   style="margin-left: ${depthOffset}px;"
                   >${title}</span>
@@ -223,7 +223,7 @@ export default class TestRunner extends HTMLMorph {
                   type="button" class="run-button" value="run"
                   onmousedown="${ref}.runTest('${id}')"></input>
                 <div
-                  onmousedown="${ref}.onClickError('${id}', '${file}', this)"
+                  onmousedown="${ref}.onClickError(event, '${id}', '${file}', this);"
                   class="error ${renderedError ? "" : "hidden"}"
                   style="margin-left: ${depthOffset+10}px;"
                   >${renderedError}
@@ -250,11 +250,11 @@ export default class TestRunner extends HTMLMorph {
       return `<div class="row ${parentCollapsed ? "collapsed" : ""} ${classes.join(" ")}">
                 <span
                   class="collapse-button ${collapseStart ? "collapsed" : ""}"
-                  onmousedown="${ref}.onClickCollapseButton('${id}', '${file}', this)"
+                  onmousedown="${ref}.onClickCollapseButton(event, '${id}', '${file}', this);"
                   style="margin-left: ${depthOffset}px;">${collapseStart ? "► " : "▼ "}</span>
                 <span
                   class="${classes.join(" ")}"
-                  onmousedown="${ref}.onClickSuite('${id}', '${file}', this)"
+                  onmousedown="${ref}.onClickSuite(event, '${id}', '${file}', this);"
                   id="${id}">${title}</span>
                 <span class="duration">${duration}ms</span>
                 <input
@@ -277,10 +277,10 @@ export default class TestRunner extends HTMLMorph {
       return `<div class="row ${classes.join(" ")}">
                 <span
                   class="collapse-button ${isCollapsed ? "collapsed" : ""}"
-                  onmousedown="${ref}.onClickCollapseButton('${id}', '${file}', this)"">
+                  onmousedown="${ref}.onClickCollapseButton(event, '${id}', '${file}', this);">
                   ${isCollapsed ? "► " : "▼ "}</span>
                 <h2 class="${classes.join(" ")}"
-                    onmousedown="${ref}.onClickFile('${id}', this)"
+                    onmousedown="${ref}.onClickFile(event, '${id}', this);"
                  >${id}</h2>
                 <span class="duration">${duration}ms</span>
                 <input
@@ -347,9 +347,9 @@ export default class TestRunner extends HTMLMorph {
     } catch (err) { this.showError(err); }
   }
 
-  onClickCollapseButton(target, file) {
+  onClickCollapseButton(evt, target, file) {
 
-    var recursive = event.shiftKey
+    var recursive = evt.shiftKey
 
     var collapsed = this.state.collapsedSuites;
     var tests = this.state.loadedTests;
@@ -384,22 +384,24 @@ export default class TestRunner extends HTMLMorph {
   }
 
 
-  onClickError(testTitle, file) {
+  onClickError(evt, testTitle, file) {
     // this.jumpToTest({fullTitle: testTitle}, file).catch(err => this.showError(err));
     var testsOfFile = this.state.loadedTests.find(ea => ea.file === file);
     var test = testsOfFile.tests.find(test => test.fullTitle === testTitle)
 
     var printed = this.stringifyExpectedAndActualOfError(test.error);
 
-    if (printed)
+    if (printed && printed.actual && printed.expected)
       this.world().execCommand("diff and open in window",
         {textA: printed.actual, textB: printed.expected, title: test.fullTitle})
-    else
-      this.world().execCommand("open text window", {title: test.fullTitle, content: test.error});
+    else {
+      var win = this.world().execCommand("open text window", {title: test.fullTitle, content: test.error + "\n" + test.error.stack});
+      setTimeout(() => win.activate());
+    }
   }
 
 
-  async onClickFile(file) {
+  async onClickFile(evt, file) {
     try {
       var browser = await this.findBrowserForFile(file);
       browser.activate();
@@ -407,15 +409,15 @@ export default class TestRunner extends HTMLMorph {
     } catch (err) { this.showError(err); }
   }
 
-  onClickSuite(suiteTitle, file) {
-    this.onClickTest(suiteTitle, file);
+  onClickSuite(evt, suiteTitle, file) {
+    this.onClickTest(evt, suiteTitle, file);
   }
 
   showError(err) {
     this.world().logError(err);
   }
 
-  async onClickTest(testTitle, file) {
+  async onClickTest(evt, testTitle, file) {
     try {
       await this.jumpToTest({fullTitle: testTitle}, file);
     } catch (err) {
