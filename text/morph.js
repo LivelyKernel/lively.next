@@ -793,11 +793,13 @@ export class Text extends Morph {
     var {clickedOnMorph, clickedOnPosition} = evt.state;
     if (clickedOnMorph !== this || !this.selectable) return;
 
-    var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
-        end = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
+    var textPosClicked = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)));
 
-    var from = this.selection.toString();
-    this.selection.range = {start, end};
+    this.selection.lead = textPosClicked;
+    if (!evt.isShiftDown()) {
+      var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition)));
+      this.selection.anchor = start;
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
