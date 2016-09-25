@@ -547,7 +547,7 @@ export class Morph {
 
   openInWorldNearHand(optWorld) {
     var world = optWorld || this.world() || this.env.world;
-    world ? this.openInWorldNear(world.firstHand.position) : undefined;
+    return world ? this.openInWorldNear(world.firstHand.position) : undefined;
   }
 
   openInWorld(pos, optWorld) {
@@ -992,6 +992,10 @@ export class Morph {
 
   get commandHandler() {
     return this._commandHandler || defaultCommandHandler;
+  }
+
+  lookupCommand(commandOrName) {
+    return this.commandHandler.lookupCommand(commandOrName, this);
   }
 
   execCommand(command, args, count, evt) {

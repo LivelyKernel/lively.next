@@ -1,4 +1,5 @@
 import { Text, Morph, show } from "./index.js";
+import { arr } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 
 export class MenuItem extends Text {
@@ -54,6 +55,30 @@ export class MenuItem extends Text {
 }
 
 export class Menu extends Morph {
+
+  static menuItemsForCommands(commandsOrNames, targets, opts = {showKeyShortcuts: true}) {
+    if (!Array.isArray(targets)) targets = [targets];
+    console.assert(targets.length > 0);
+    console.assert(targets.every(ea => ea.execCommand));
+
+    return commandsOrNames.map(ea => {
+      var justName = typeof ea === "string",
+          name = justName ? ea : ea.name,
+          keys = opts.showKeyShortcuts && justName ?
+            arr.findAndGet(targets, t => t.keysForCommand(name)) : null,
+          descr = name + (keys ? ` [${keys}]` : ""),
+          target = (typeof ea === "string" && targets.find(t => t.lookupCommand(name))) || targets[0];
+
+      return [descr, () => target.execCommand(ea)]
+    });
+  }
+
+  static forCommands(commandsOrNames, targets, opts = {title: "menu", showKeyShortcuts: true}) {
+    return new this({
+      ...opts, title: opts.title,
+      items: this.menuItemsForCommands(commandsOrNames, targets, opts)
+    });
+  }
 
   constructor(props) {
     super({

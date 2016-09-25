@@ -468,19 +468,7 @@ export class World extends Morph {
 
   onContextMenu(evt) {
     evt.stop();
-    if (evt.state.menu) evt.state.menu.remove();
-    this.addMorph(evt.state.menu = new Menu({
-      position: evt.position,
-      title: "World menu", items: [
-        ["undo",                                                   () => this.env.undoManager.undo()],
-        ["redo",                                                   () => this.env.undoManager.redo()],
-        [`Workspace [${this.keysForCommand("open workspace")}]`,   () => this.execCommand("open workspace")],
-        [`Browser [${this.keysForCommand("open browser")}]`,       () => this.execCommand("open browser")],
-        [`Test runner`,                                            () => this.execCommand("open test runner")],
-        [`ObjectDrawer`,                                           () => this.addMorph(new ObjectDrawer({center: this.center}))],
-        [`Run command... [${this.keysForCommand("run command")}]`, () => this.execCommand("run command")],
-      ]
-    }));
+    this.openWorldMenu();
   }
 
   onWindowScroll(evt) {}
@@ -488,6 +476,24 @@ export class World extends Morph {
   onWindowResize(evt) {
     this._cachedWindowBounds = null;
     this.execCommand("resize to fit window");
+  }
+
+  openWorldMenu() {
+    var eventState =  this.env.eventDispatcher.eventState;
+    if (eventState.menu) eventState.menu.remove();
+    return eventState.menu = Menu.forCommands(
+      ["undo",
+       "redo",
+       "run command",
+       "select morph",
+       "resize to fit window",
+       "window switcher",
+       "open workspace",
+       "open browser",
+       "choose and browse module",
+       "open code search",
+       "open test runner"], this, {showKeyShortcuts: true}
+     ).openInWorldNearHand();
   }
 
   get commands() { return worldCommands.concat(super.commands); }
