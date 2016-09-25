@@ -540,7 +540,31 @@ export class FilterableList extends Morph {
 
   updateFilter() {
     var filterText = this.get("input").textString,
-        filterTokens = filterText.split(/\s+/).map(ea => ea.toLowerCase()),
+
+        // parser that allows escapes
+        parsed = Array.from(filterText).reduce(((state, char) => {
+          // filterText = "foo bar\\ x"
+          if (char === "\\" && !state.escaped) {
+            state.escaped = true;
+            return state;
+          }
+        
+          if (char === " " && !state.escaped) {
+            if (!state.spaceSeen && state.current) {
+              state.tokens.push(state.current);
+              state.current = "";
+            }
+            state.spaceSeen = true;
+          } else {
+            state.spaceSeen = false;
+            state.current += char;
+          }
+          state.escaped = false;
+          return state;
+        }), {tokens: [], current: "", escaped: false, spaceSeen: false}),
+        _ = parsed.current && parsed.tokens.push(parsed.current),
+        filterTokens = parsed.tokens,
+
         filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token))),
         list = this.get("list"),
         newSelectedIndexes = list.selectedIndexes.map(i => filteredItems.indexOf(list.items[i])).filter(i => i !== -1)
@@ -551,17 +575,17 @@ export class FilterableList extends Morph {
 
   get keybindings() {
     return [
-      {keys: "Up|Ctrl-P", command: "arrow up"},
-      {keys: "Down|Ctrl-N", command: "arrow down"},
-      {keys: "Shift-Up", command: "select up"},
-      {keys: "Shift-Down", command: "select down"},
+      {keys: "Up|Ctrl-P",                    command: "arrow up"},
+      {keys: "Down|Ctrl-N",                  command: "arrow down"},
+      {keys: "Shift-Up",                     command: "select up"},
+      {keys: "Shift-Down",                   command: "select down"},
       {keys: {win: "Ctrl-A", mac: "Meta-A"}, command: "select all"},
-      {keys: "Alt-V|PageUp", command: "page up"},
-      {keys: "Ctrl-V|PageDown", command: "page down"},
-      {keys: "Alt-Shift-,", command: "goto first item"},
-      {keys: "Alt-Shift-.", command: "goto last item"},
-      {keys: "Enter", command: "accept input"},
-      {keys: "Escape|Ctrl-G", command: "cancel"}
+      {keys: "Alt-V|PageUp",                 command: "page up"},
+      {keys: "Ctrl-V|PageDown",              command: "page down"},
+      {keys: "Alt-Shift-,",                  command: "goto first item"},
+      {keys: "Alt-Shift-.",                  command: "goto last item"},
+      {keys: "Enter",                        command: "accept input"},
+      {keys: "Escape|Ctrl-G",                command: "cancel"}
     ].concat(super.keybindings);
   }
 
