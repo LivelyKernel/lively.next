@@ -822,20 +822,16 @@ export class Text extends Morph {
   onPaste(evt) {
     if (this.rejectsInput()) return;
     evt.stop();
-    if (this.inMultiSelectMode()) {
-      this.execCommand("manual clipboard paste")
-    } else {
-      var data = evt.domEvt.clipboardData.getData("text"),
-          sel = this.selection,
-          sels = sel.isMultiSelection ? sel.selections : [sel];
-      this.undoManager.group();
-      sels.forEach(sel => {
-        sel.text = data;
-        this.saveMark(sel.start);
-        sel.collapseToEnd();
-      });
-      this.undoManager.group();
-    }
+    var data = evt.domEvt.clipboardData.getData("text");
+    this.undoManager.group();
+    var sel = this.selection,
+        sels = sel.isMultiSelection ? sel.selections : [sel];
+    sels.forEach(sel => {
+      sel.text = data;
+      this.saveMark(sel.start);
+      sel.collapseToEnd();
+    });
+    this.undoManager.group();
   }
 
   onFocus(evt) {
