@@ -8,9 +8,9 @@ var config = {
   showTooltipsAfter: 2,
 
   globalKeyBindings: [
-  
-    {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "undo", onlyWhenFocused: true},
-    {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "redo", onlyWhenFocused: true},
+
+    {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "undo"},
+    {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "redo"},
     {keys: "Alt-X", command: "run command"},
 
     {keys: "Meta-H", command: "show halo for focused morph"},
