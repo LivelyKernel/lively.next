@@ -832,12 +832,11 @@ export class Halo extends Morph {
   }
 
   alignWithTarget() {
-    const {x, y, width, height} = this.target.globalBounds(),
-          origin = this.target.origin;
-    this.setBounds(rect(x,y, width, height).insetBy(-26).intersection(this.target.world().innerBounds()));
-    this.borderBox.setBounds(this.localize(pt(x,y))
-                                 .extent(pt(width, height))
-                                 .intersection(this.innerBounds()));
+    const targetBounds = this.target.globalBounds(),
+          worldBounds = this.target.world().innerBounds(),
+          {x, y, width, height} = targetBounds.intersection(worldBounds);
+    this.setBounds(targetBounds.insetBy(-26).intersection(worldBounds));
+    this.borderBox.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
     if (this.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
       this.activeButton.visible = true;
