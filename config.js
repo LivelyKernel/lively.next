@@ -147,7 +147,7 @@ var config = {
       {keys: {win: "Alt-Shift-Left", mac: "Meta-Shift-Left"},   command: {command: "goto matching left", args: {select: true}}},
       {keys: {win: "Alt-Right", mac: "Meta-Right"},             command: "goto matching right"},
       {keys: {win: "Alt-Shift-Right", mac: "Meta-Shift-Right"}, command: {command: "goto matching right", args: {select: true}}},
-      
+
       // FIXME this is actually fwd/bwd sexp
       {keys: "Alt-Ctrl-B", command: "goto matching left"},
       {keys: "Alt-Ctrl-F", command: "goto matching right"},
@@ -178,10 +178,11 @@ var config = {
       {keys: {mac: 'Ctrl-X Ctrl-T'}, command: "transpose chars"},
       {keys: {mac: 'Ctrl-C Ctrl-U'}, command: "uppercase"},
       {keys: {mac: 'Ctrl-C Ctrl-L'}, command: "lowercase"},
+      {keys: {mac: 'Meta-Shift-L W t'}, command: "remove trailing whitespace"},
 
       {keys: "Ctrl-Space", command: "toggle active mark"},
 
-      
+
       {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
       {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
 
@@ -200,7 +201,7 @@ var config = {
 
       {keys: {win: "Ctrl-F|Ctrl-G|Ctrl-S|F3", mac: "Meta-F|Meta-G|Ctrl-S"}, command: "search in text"},
       {keys: {win: "Ctrl-Shift-F|Ctrl-Shift-G|Ctrl-R", mac: "Meta-Shift-F|Meta-Shift-G|Ctrl-R"}, command: {command: "search in text", args: {backwards: true}}},
-      
+
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // multi select bindings
