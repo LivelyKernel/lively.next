@@ -814,16 +814,17 @@ export class Halo extends Morph {
           show(target) {
             this.target = target;
             this.animate({opacity: 1, duration: 500});
+            this.alignWithHalo();
           },
           deactivate() {
             this.animate({opacity: 0});
+            this.alignWithHalo();
           }
         });
   }
 
   toggleMorphHighlighter(active, target) {
     const morphHighlighter = this.morphHighlighter();
-    morphHighlighter.alignWithHalo();
     if (active && target && target != this.world()) {
       morphHighlighter.show(target);
     } else {
