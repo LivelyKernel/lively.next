@@ -1,36 +1,7 @@
+import { obj, arr } from "lively.lang";
 import { Range } from "./range.js";
 import { Anchor } from "./anchors.js";
-import { obj, arr } from "lively.lang";
-
 import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
-
-
-class StyleAnchor extends Anchor {
-
-  onDelete(range) {
-    if (lessEqPosition(this.position, range.start)) return;
-
-    if (lessEqPosition(range.start, this.position)
-     && lessEqPosition(this.position, range.end)) { this.position = range.start; return; }
-
-    let {row, column} = this.position,
-        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
-        deltaRows = endRow - startRow,
-        deltaColumns = endRow === this.position.row ?
-                       endColumn - startColumn : 0
-    this.position = {column: column - deltaColumns, row: row - deltaRows}
-  }
-
-  onInsert(range) {
-    if (lessPosition(this.position, range.start)) return;
-    let {row, column} = this.position,
-        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
-        deltaRows = endRow - startRow,
-        deltaColumns = endColumn - startColumn;
-    this.position = {column: column + deltaColumns, row: row + deltaRows}
-  }
-
-}
 
 
 export class TextAttribute {
@@ -50,44 +21,46 @@ export class TextAttribute {
     if (!firstRange) return [newRange];
     let { a, b } = TextAttribute.merge(firstRange, newRange),
         remaining = others.slice(1);
-    b.map(ea => { remaining = TextAttribute.mergeInto(remaining, ea) });
+    b.map(ea => remaining = TextAttribute.mergeInto(remaining, ea));
     return a.concat(remaining);
   }
 
   static merge(a, b) {
-    // Styles from "b" will be applied to (and override) any overlapping section of "a"; will return 1-3 new ranges
-    let { style: style_a, range: range_a } = a,
-        { style: style_b, range: range_b } = b,
-        intersection = range_a.intersect(range_b);
+    // Styles from "b" will be applied to (and override) any overlapping
+    // section of "a"; will return 1-3 new ranges
+    let { style: styleA, range: rangeA } = a,
+        { style: styleB, range: rangeB } = b,
+        intersection = rangeA.intersect(rangeB);
     if (!intersection.isEmpty()) {
-      let mergedStyle = obj.merge(style_a, style_b),
+      let mergedStyle = obj.merge(styleA, styleB),
           restyledRange = new TextAttribute(mergedStyle, intersection),
-          leftover_a = range_a.subtract(intersection)
+          leftoverA = rangeA.subtract(intersection)
                               .filter(r => !r.isEmpty())
-                              .map(range => new TextAttribute(style_a, range)),
-          leftover_b = range_b.subtract(intersection)
+                              .map(range => new TextAttribute(styleA, range)),
+          leftoverB = rangeB.subtract(intersection)
                               .filter(r => !r.isEmpty())
-                              .map(range => new TextAttribute(style_b, range));
-          return { a: [...leftover_a, restyledRange], b: leftover_b };
+                              .map(range => new TextAttribute(styleB, range));
+          return { a: [...leftoverA, restyledRange], b: leftoverB };
           // TODO: Join adjacent ranges with equivalent styles
 
     } else return { a: [a], b: [b] };
-
   }
 
-  constructor(style = {}, range) {
+  constructor(style = {}, range = {start: {row: 0, column: 0}, end: {row: 0, column: 0}}) {
     this.style = style;
     this.range = range;
   }
+
+  get isTextAttribute() { return true; }
 
   get start() { return this.startAnchor.position }
   get end() { return this.endAnchor.position }
 
   set start(start) {
-    this.startAnchor = new StyleAnchor(undefined, start);
+    this.startAnchor = new Anchor(undefined, start);
   }
   set end(end) {
-    this.endAnchor = new StyleAnchor(undefined, end);
+    this.endAnchor = new Anchor(undefined, end);
   }
 
   get range() {
@@ -117,4 +90,8 @@ export class TextAttribute {
     this.endAnchor.onDelete(range);
   }
 
+  toString() {
+    var range = String(this.range).replace("Range(", "").replace(")", "");
+    return `TextAttribute(${range} ${obj.values(this.style)})`;
+  }
 }
