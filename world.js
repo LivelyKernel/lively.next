@@ -1,5 +1,5 @@
 import { Rectangle, Color, pt } from "lively.graphics";
-import { arr, obj, promise } from "lively.lang";
+import { tree, arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { List, FilterableList } from "./list.js"
 import { Menu } from "./menus.js"
@@ -17,6 +17,16 @@ import { CodeSearcher } from "./ide/code-search.js"
 import TestRunner from "lively.morphic/ide/test-runner.js"
 
 var worldCommands = [
+
+  {
+    name: "undo",
+    exec: world => { world.env.undoManager.undo(); return true; }
+  },
+
+  {
+    name: "redo",
+    exec: world => { world.env.undoManager.redo(); return true; }
+  },
 
   {
     name: "run command",
@@ -144,71 +154,123 @@ var worldCommands = [
   },
 
   {
-      name: "resize active window",
-      exec: function(world, opts = {how: null, window: null}) {
-  
-          var {window, how} = opts,
-              win = window || world.activeWindow();
-          if (!win) return;
-  
-          var worldB = world.visibleBounds().insetBy(20),
-              winB = win.bounds(),
-              bounds = worldB;
-  
-          // FIXME!
-          if (!win._normalBounds) win._normalBounds = winB;
-  
-          var thirdWMin = 750,
-              thirdW = Math.min(thirdWMin, Math.max(1000, bounds.width/3)),
-              thirdColBounds = bounds.withWidth(thirdW);
-  
-          if (!how) askForHow(); else doResize(how);
-  
-          return true;
-  
-          // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
-  
-          async function askForHow() {
-            var {selected: [how]} = await world.filterableListPrompt("How to resize the window?", [
-              'full', 'fullscreen','center','right','left','bottom',
-              'top',"shrinkWidth", "growWidth","shrinkHeight",
-              "growHeight", 'col1','col2', 'col3', 'col4', 'col5',
-              'reset']);
-            how && doResize(how);
-          }
-  
-          function doResize(how) {
-              switch(how) {
-                  case 'full': case 'fullscreen': break;
-                  case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
-                  case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
-                  case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
-                  case 'col3': case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
-                  case 'col5': case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
-                  case 'col1': case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
-                  case 'bottom': bounds = bounds.withY(bounds.y + bounds.height/2);
-                  case 'top': bounds = bounds.withHeight(bounds.height/2); break;
-                  case 'col2': bounds = thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW); break;
-                  case 'col4': bounds = thirdColBounds.withTopRight(worldB.topCenter().scaleByPt(pt(1.666,1))).withWidth(thirdW); break;
-                  case 'halftop': bounds = winB.withY(bounds.top()).withHeight(bounds.height/2); break;
-                  case 'halfbottom': bounds = winB.withY(bounds.height/2).withHeight(bounds.height/2); break;
-                  case 'reset': bounds = win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center()); break;
-                  default: return;
-              }
-  
-              if (how === 'reset') delete win.normalBounds;
-  
-              win.setBounds(bounds);
-          }
-  
-          return true;
-      }
+    name: "resize active window",
+    exec: function(world, opts = {how: null, window: null}) {
+
+        var {window, how} = opts,
+            win = window || world.activeWindow();
+        if (!win) return;
+
+        var worldB = world.visibleBounds().insetBy(20),
+            winB = win.bounds(),
+            bounds = worldB;
+
+        // FIXME!
+        if (!win._normalBounds) win._normalBounds = winB;
+
+        var thirdWMin = 750,
+            thirdW = Math.min(thirdWMin, Math.max(1000, bounds.width/3)),
+            thirdColBounds = bounds.withWidth(thirdW);
+
+        if (!how) askForHow(); else doResize(how);
+
+        return true;
+
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+        async function askForHow() {
+          var {selected: [how]} = await world.filterableListPrompt("How to resize the window?", [
+            'full', 'fullscreen','center','right','left','bottom',
+            'top',"shrinkWidth", "growWidth","shrinkHeight",
+            "growHeight", 'col1','col2', 'col3', 'col4', 'col5',
+            'reset']);
+          how && doResize(how);
+        }
+
+        function doResize(how) {
+            switch(how) {
+                case 'full': case 'fullscreen': break;
+                case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
+                case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
+                case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
+                case 'col3': case 'center': bounds = thirdColBounds.withCenter(worldB.center()); break;
+                case 'col5': case 'right': bounds = thirdColBounds.withTopRight(worldB.topRight()); break;
+                case 'col1': case 'left': bounds = thirdColBounds.withTopLeft(bounds.topLeft()); break;
+                case 'bottom': bounds = bounds.withY(bounds.y + bounds.height/2);
+                case 'top': bounds = bounds.withHeight(bounds.height/2); break;
+                case 'col2': bounds = thirdColBounds.withTopLeft(worldB.topCenter().scaleByPt(pt(.333,1))).withWidth(thirdW); break;
+                case 'col4': bounds = thirdColBounds.withTopRight(worldB.topCenter().scaleByPt(pt(1.666,1))).withWidth(thirdW); break;
+                case 'halftop': bounds = winB.withY(bounds.top()).withHeight(bounds.height/2); break;
+                case 'halfbottom': bounds = winB.withY(bounds.height/2).withHeight(bounds.height/2); break;
+                case 'reset': bounds = win.normalBounds || pt(500,400).extentAsRectangle().withCenter(bounds.center()); break;
+                default: return;
+            }
+
+            if (how === 'reset') delete win.normalBounds;
+
+            win.setBounds(bounds);
+        }
+
+        return true;
+    }
   },
+
   {
     name: "open workspace",
     exec: world => {
       return new Workspace({center: world.center}).activate(); 
+    }
+  },
+
+  {
+    name: "open text window",
+    exec: (world, opts = {}) => {
+      var {title, extent, content, mode, name} = opts;
+
+      title = title ||  "text window";
+      content = content ||  "";
+      extent = extent || pt(500, 400);
+      name = name || "text workspace";
+
+      return world.openInWindow(
+        new Text({...obj.dissoc(opts, ["title", "content"]),
+                  textString: content, fixedWidth: true, fixedHeight: true, name, extent}),
+        {title}).activate();
+    }
+  },
+
+  {
+    name: "diff and open in window",
+    exec: async (world, opts = {textA: "", textB: "", extent: pt(500,600)}) => {
+      var {textA, textB, extent} = opts;
+
+      // import * as diff from "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
+      var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
+      var diffed = diffInWindow(textA, textB, {extent, fontFamily: "monospace"});
+
+      function diffInWindow(textA, textB, opts) {
+        var diffed = diff.diffChars(textA, textB);
+        
+        var insertions = diffed.map(({count, value, added, removed}) => {
+          var attribute = removed ?
+              {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ? 
+              {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :
+              {fontWeight: "normal", textDecoration: "", fontColor: Color.darkGray};
+          return { text: value, attribute }
+        })
+
+        var win = world.execCommand("open text window", opts),
+            textMorph = win.targetMorph;
+      
+        insertions.forEach(({text, attribute}) => {
+          textMorph.insertTextWithTextAttributes(text, attribute ? [attribute] : [])
+        });
+
+        win.width = textMorph.textBounds().width
+
+        return textMorph;
+      }
     }
   },
 
