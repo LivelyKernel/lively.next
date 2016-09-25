@@ -319,9 +319,11 @@ var worldCommands = [
           }));
       }
 
-      var {selected: [selected]} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
+      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700})
 
-      selected && (await Browser.browse(selected.package.address, selected.name, undefined, browser)).activate()
+      Promise.all(selected.map(ea =>
+        Browser.browse(ea.package.address, ea.name, undefined, browser)
+          .then(browser => browser.activate())));
 
       return true;
     }
