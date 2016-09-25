@@ -245,7 +245,7 @@ var worldCommands = [
 
       return world.openInWindow(
         new Text({...obj.dissoc(opts, ["title", "content"]),
-                  textString: content, fixedWidth: true, fixedHeight: true, name, extent}),
+                  textString: content, clipMode: "auto", name, extent}),
         {title}).activate();
     }
   },
