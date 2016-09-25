@@ -784,7 +784,7 @@ export class Text extends Morph {
     if (normedClickCount === 1) return this.onMouseMove(evt);
 
     if (normedClickCount === 2) return this.execCommand("select word", null, 1, evt);
-    
+
     if (normedClickCount === 3) return this.execCommand("select line", null, 1, evt);
   }
 

@@ -20,12 +20,22 @@ var worldCommands = [
 
   {
     name: "undo",
-    exec: world => { world.env.undoManager.undo(); return true; }
+    exec: world => {
+      if (world.focusedMorph && world.focusedMorph !== world && world.focusedMorph.undoManager)
+        return false;
+      world.env.undoManager.undo();
+      return true;
+    }
   },
 
   {
     name: "redo",
-    exec: world => { world.env.undoManager.redo(); return true; }
+    exec: world => {
+      if (world.focusedMorph && world.focusedMorph !== world && world.focusedMorph.undoManager)
+        return false;
+      world.env.undoManager.redo();
+      return true;
+    }
   },
 
   {
