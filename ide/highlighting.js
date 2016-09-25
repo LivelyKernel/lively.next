@@ -32,11 +32,9 @@ export class Highlighter {
   
   checkChars(chars) { // string -> boolean
     if (this.idx + chars.length - 1 >= this.str.length) return false;
-    for (let i = 0; i < chars.length; i++) {
-      if (this.str[i + this.idx] !== chars[i]) {
+    for (let i = 0; i < chars.length; i++)
+      if (this.str[i + this.idx] !== chars[i])
         return false;
-      }
-    }
     return true;
   }
   
