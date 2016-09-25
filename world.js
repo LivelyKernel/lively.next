@@ -551,7 +551,16 @@ export class World extends Morph {
   }
 
   logError(err) {
-    this.setStatusMessage(err.stack || String(err), Color.red);
+    var stringified = String(err),
+        stack = err.stack || "";
+    if (stack) {
+      stack = String(stack);
+      var errInStackIdx = stack.indexOf(stringified);
+      if (errInStackIdx === 0)
+        stack = stack.slice(stringified.length);
+      stringified += "\n" + stack;
+    }
+    this.setStatusMessage(stringified, Color.red);
   }
 
   setStatusMessage(msg, color, delay = 5000, optStyle = {}) {
