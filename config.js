@@ -8,6 +8,9 @@ var config = {
   showTooltipsAfter: 2,
 
   globalKeyBindings: [
+  
+    {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "undo", onlyWhenFocused: true},
+    {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "redo", onlyWhenFocused: true},
     {keys: "Alt-X", command: "run command"},
 
     {keys: "Meta-H", command: "show halo for focused morph"},
@@ -85,8 +88,8 @@ var config = {
       {keys: {mac: 'Meta-X', win: 'Ctrl-X'}, command: {command: "clipboard cut", passEvent: true}},
       {keys: {mac: 'Meta-V', win: 'Ctrl-V'}, command: {command: "clipboard paste", passEvent: true}},
 
-      {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'}, command: "text undo"},
-      {keys: {mac: 'Meta-Shift-Z'},          command: "text redo"},
+      {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "text undo"},
+      {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "text redo"},
 
       {keys: {mac: 'Meta-A|Ctrl-X H', win: 'Ctrl-A|Ctrl-X H'}, command: "select all"},
       {keys: {mac: 'Meta-D', win:  'Ctrl-D'}, command: "doit"},
