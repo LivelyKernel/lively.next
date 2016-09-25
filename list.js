@@ -563,7 +563,7 @@ export class FilterableList extends Morph {
           return state;
         }), {tokens: [], current: "", escaped: false, spaceSeen: false}),
         _ = parsed.current && parsed.tokens.push(parsed.current),
-        filterTokens = parsed.tokens,
+        filterTokens = parsed.tokens.map(ea => ea.toLowerCase()),
 
         filteredItems = this.state.allItems.filter(item => filterTokens.every(token => item.string.toLowerCase().includes(token))),
         list = this.get("list"),
