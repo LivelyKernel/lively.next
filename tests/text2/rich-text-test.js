@@ -53,11 +53,7 @@ async function createMorphicEnv() {
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
-
 describe("rich text", () => {
-
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
 
   var style_a = { fontSize: 12, fontStyle: "italic" },
       style_b = { fontSize: 14, fontWeight: "bold" },
@@ -68,11 +64,14 @@ describe("rich text", () => {
       b = TextAttribute.create(style_b, 0, 2, 0, 4),
       textAttributes;
 
+  beforeEach(() => createMorphicEnv());
+  afterEach(() => destroyMorphicEnv());
+
   it("begins with default style range", () => {
     textAttributes = sut.document.textAttributesByLine[0];
     expect(textAttributes).property("length").equals(1);
-    expect(textAttributes).property(0).property("range").stringEquals("Range(0/0 -> 0/5)");
-    expect(textAttributes).property(0).property("data").deep.equals(defaultStyle);
+    expect(textAttributes[0].range).stringEquals("Range(0/0 -> 0/5)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
   });
 
   it("addTextAttribute merges style ranges", () => {

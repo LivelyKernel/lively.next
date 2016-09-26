@@ -217,6 +217,7 @@ export default class TextDocument {
       for (let i = 0; i < insertionLines.length; i++) {
         let newRow = row+1+i,
             attrsInNewRow = this._textAttributesByLine[newRow];
+        // need to maintain the sort order! ....
         if (attr.end.row >= newRow) attrsInNewRow.push(attr);
       }      
     });
