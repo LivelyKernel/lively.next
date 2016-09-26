@@ -20,13 +20,13 @@ describe("completion controller", () => {
     text.cursorPosition = {row: 2, column: 0}
     var controller = new CompletionController(text, [new WordCompleter()]),
         {items} = await controller.completionListSpec();
-    expect(items).containSubset([{string: "afg"}, {string: "abc"}]);
+    expect(items).containSubset([{value: {completion: "afg"}}, {value: {completion: "abc"}}]);
   });
 
   it("computes dynamic JS completions", async () => {
     if (!System.get(System.decanonicalize("lively.vm/index.js"))) return;
     text.textString = "this.";
-    text.gotoStartOrEnd({direction: "end"});
+    text.gotoDocumentEnd();
     var controller = new CompletionController(text, [new DynamicJavaScriptCompleter()]),
         {items} = await controller.completionListSpec();
     expect(items).containSubset([{value: {completion: "textString"}}]);
