@@ -1,7 +1,8 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { createDOMEnvironment } from "../rendering/dom-helper.js";
 import { MorphicEnv } from "../index.js";
-import { Text, World } from "../index.js";
+import { World } from "../index.js";
+import { Text } from "../text/morph.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric, expectSelection } from "./test-helpers.js";
@@ -132,7 +133,7 @@ describe("rendered text", () => {
   afterEach(() => destroyMorphicEnv());
 
   inBrowser("only renders visible part of scrolled text", async () => {
-    var lineHeight = sut.renderer.lines[0].height;
+    var lineHeight = sut.textLayout.lines[0].height;
     Object.assign(sut, {
       clipMode: "auto",
       extent: pt(100,2*lineHeight), position: pt(0,0),

@@ -1,5 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { Text, World, MorphicEnv } from "../../index.js";
+import { World, MorphicEnv } from "../../index.js";
+import { Text } from "../../text/morph.js";
 import { pt, Rectangle } from "lively.graphics";
 import { CompletionController, WordCompleter, DynamicJavaScriptCompleter } from "../../text/completion.js";
 import { expect } from "mocha-es6";

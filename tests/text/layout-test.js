@@ -1,5 +1,5 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { Text } from "../../index.js";
+import { Text } from "../../text/morph.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
@@ -56,7 +56,7 @@ describe("text layout", () => {
     var t, r, w, h;
     beforeEach(() => {
       t = text("hello\n lively\nworld");
-      r = t.renderer;
+      r = t.textLayout;
       ({height:h, width:w} = fontMetric);
     });
 

@@ -2,8 +2,9 @@
 import { expect } from "mocha-es6";
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 import { MorphicEnv } from "../../index.js";
-import { Text, World } from "../../index.js";
+import { World } from "../../index.js";
 import { Range } from "../../text/range.js";
+import { Text } from "../../text/morph.js";
 import { TextAttribute } from "../../text/style.js";
 import { Rectangle, Color, pt } from "lively.graphics";
 import { obj } from "lively.lang";
@@ -52,11 +53,7 @@ async function createMorphicEnv() {
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
-
 describe("rich text", () => {
-
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
 
   var style_a = { fontSize: 12, fontStyle: "italic" },
       style_b = { fontSize: 14, fontWeight: "bold" },
@@ -67,11 +64,14 @@ describe("rich text", () => {
       b = TextAttribute.create(style_b, 0, 2, 0, 4),
       textAttributes;
 
+  beforeEach(() => createMorphicEnv());
+  afterEach(() => destroyMorphicEnv());
+
   it("begins with default style range", () => {
     textAttributes = sut.document.textAttributesByLine[0];
     expect(textAttributes).property("length").equals(1);
-    expect(textAttributes).property(0).property("range").stringEquals("Range(0/0 -> 0/5)");
-    expect(textAttributes).property(0).property("style").deep.equals(defaultStyle);
+    expect(textAttributes[0].range).stringEquals("Range(0/0 -> 0/5)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
   });
 
   it("addTextAttribute merges style ranges", () => {
@@ -82,9 +82,9 @@ describe("rich text", () => {
     expect(textAttributes).deep.property("0.range").stringEquals("Range(0/0 -> 0/1)");
     expect(textAttributes).deep.property("1.range").stringEquals("Range(0/1 -> 0/3)");
     expect(textAttributes).deep.property("2.range").stringEquals("Range(0/3 -> 0/5)");
-    expect(textAttributes).deep.property("0.style").deep.equals(defaultStyle);
-    expect(textAttributes).deep.property("1.style").deep.equals(merged_a);
-    expect(textAttributes).deep.property("2.style").deep.equals(defaultStyle);
+    expect(textAttributes).deep.property("0.data").deep.equals(defaultStyle);
+    expect(textAttributes).deep.property("1.data").deep.equals(merged_a);
+    expect(textAttributes).deep.property("2.data").deep.equals(defaultStyle);
 
     sut.addTextAttribute(b);
     textAttributes = sut.document.textAttributesByLine[0];
@@ -95,11 +95,11 @@ describe("rich text", () => {
     expect(textAttributes).deep.property("2.range").stringEquals("Range(0/2 -> 0/3)");
     expect(textAttributes).deep.property("3.range").stringEquals("Range(0/3 -> 0/4)");
     expect(textAttributes).deep.property("4.range").stringEquals("Range(0/4 -> 0/5)");
-    expect(textAttributes).deep.property("0.style").deep.equals(defaultStyle);
-    expect(textAttributes).deep.property("1.style").deep.equals(merged_a);
-    expect(textAttributes).deep.property("2.style").deep.equals(merged_ab);
-    expect(textAttributes).deep.property("3.style").deep.equals(merged_b);
-    expect(textAttributes).deep.property("4.style").deep.equals(defaultStyle);
+    expect(textAttributes).deep.property("0.data").deep.equals(defaultStyle);
+    expect(textAttributes).deep.property("1.data").deep.equals(merged_a);
+    expect(textAttributes).deep.property("2.data").deep.equals(merged_ab);
+    expect(textAttributes).deep.property("3.data").deep.equals(merged_b);
+    expect(textAttributes).deep.property("4.data").deep.equals(defaultStyle);
   });
 
   it("renders styles", async () => {
@@ -122,21 +122,29 @@ describe("rich text", () => {
           fontWeight =     jsStyle.getPropertyValue("font-weight"),
           fontStyle =      jsStyle.getPropertyValue("font-style"),
           textDecoration = jsStyle.getPropertyValue("text-decoration");
+      // note: when running the tests on Firefox "fontWeight" is differently
+      // reported than on Chrome
+      if (fontWeight == "400") fontWeight = "normal";
+      if (fontWeight == "700") fontWeight = "bold";
       return { fontFamily, fontSize, fontWeight, fontStyle, textDecoration };
     });
 
     let strings = Array.from(chunks).map(ea => ea.textContent);
 
-    expect(styles[0]).deep.equals(obj.dissoc(defaultStyle, ["fontColor", "fixedCharacterSpacing"]));
-    expect(styles[1]).deep.equals(obj.dissoc(merged_a,     ["fontColor", "fixedCharacterSpacing"]));
-    expect(styles[2]).deep.equals(obj.dissoc(merged_ab,    ["fontColor", "fixedCharacterSpacing"]));
-    expect(styles[3]).deep.equals(obj.dissoc(merged_b,     ["fontColor", "fixedCharacterSpacing"]));
-    expect(styles[4]).deep.equals(obj.dissoc(defaultStyle, ["fontColor", "fixedCharacterSpacing"]));
-
+    expect(printStyleNormalized(styles[0])).equals(printStyleNormalized(obj.dissoc(defaultStyle, ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[1])).equals(printStyleNormalized(obj.dissoc(merged_a,     ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[2])).equals(printStyleNormalized(obj.dissoc(merged_ab,    ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[3])).equals(printStyleNormalized(obj.dissoc(merged_b,     ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[4])).equals(printStyleNormalized(obj.dissoc(defaultStyle, ["fontColor", "fixedCharacterSpacing"])));
+    
     expect(strings[0]).equals("h");
     expect(strings[1]).equals("e");
     expect(strings[2]).equals("l");
     expect(strings[3]).equals("l");
     expect(strings[4]).equals("o");
+    
+    function printStyleNormalized(style) {
+      return obj.inspect(style).replace(/ /g, "");
+    }
   });
 });

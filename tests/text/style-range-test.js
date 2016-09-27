@@ -34,9 +34,9 @@ describe("TextAttribute", () => {
       expect(test).property("a").property("length").equals(2);
       expect(test).property("b").property("length").equals(1);
 
-      expect(test).property("a").property(0).property("style").deep.equals(style_a);
-      expect(test).property("a").property(1).property("style").deep.equals(style_ab);
-      expect(test).property("b").property(0).property("style").deep.equals(style_b);
+      expect(test).property("a").property(0).property("data").deep.equals(style_a);
+      expect(test).property("a").property(1).property("data").deep.equals(style_ab);
+      expect(test).property("b").property(0).property("data").deep.equals(style_b);
 
       expect(test).property("a").property(0).property("range").stringEquals("Range(0/0 -> 1/2)");
       expect(test).property("a").property(1).property("range").stringEquals("Range(1/2 -> 1/4)");
@@ -51,9 +51,9 @@ describe("TextAttribute", () => {
       expect(test).property("a").property("length").equals(2);
       expect(test).property("b").property("length").equals(1);
 
-      expect(test).property("a").property(0).property("style").deep.equals(style_a);
-      expect(test).property("a").property(1).property("style").deep.equals(style_ab);
-      expect(test).property("b").property(0).property("style").deep.equals(style_b);
+      expect(test).property("a").property(0).property("data").deep.equals(style_a);
+      expect(test).property("a").property(1).property("data").deep.equals(style_ab);
+      expect(test).property("b").property(0).property("data").deep.equals(style_b);
 
       expect(test).property("a").property(0).property("range").stringEquals("Range(1/4 -> 1/5)");
       expect(test).property("a").property(1).property("range").stringEquals("Range(1/2 -> 1/4)");
@@ -68,9 +68,9 @@ describe("TextAttribute", () => {
       expect(test).property("a").property("length").equals(3);
       expect(test).property("b").property("length").equals(0);
 
-      expect(test).property("a").property(0).property("style").deep.equals(style_a);
-      expect(test).property("a").property(1).property("style").deep.equals(style_a);
-      expect(test).property("a").property(2).property("style").deep.equals(style_ab);
+      expect(test).property("a").property(0).property("data").deep.equals(style_a);
+      expect(test).property("a").property(1).property("data").deep.equals(style_a);
+      expect(test).property("a").property(2).property("data").deep.equals(style_ab);
 
       expect(test).property("a").property(0).property("range").stringEquals("Range(0/0 -> 0/2)");
       expect(test).property("a").property(1).property("range").stringEquals("Range(1/2 -> 1/4)");
@@ -85,9 +85,9 @@ describe("TextAttribute", () => {
       expect(test).property("a").property("length").equals(1);
       expect(test).property("b").property("length").equals(2);
 
-      expect(test).property("a").property(0).property("style").deep.equals(style_ab);
-      expect(test).property("b").property(0).property("style").deep.equals(style_b);
-      expect(test).property("b").property(1).property("style").deep.equals(style_b);
+      expect(test).property("a").property(0).property("data").deep.equals(style_ab);
+      expect(test).property("b").property(0).property("data").deep.equals(style_b);
+      expect(test).property("b").property(1).property("data").deep.equals(style_b);
 
       expect(test).property("a").property(0).property("range").stringEquals("Range(0/2 -> 1/2)");
       expect(test).property("b").property(0).property("range").stringEquals("Range(0/0 -> 0/2)");
@@ -136,11 +136,11 @@ describe("TextAttribute", () => {
 
       expect(test).property("length").equals(5);
 
-      expect(test).property(0).property("style").deep.equals(style_a);
-      expect(test).property(1).property("style").deep.equals(style_ab);
-      expect(test).property(2).property("style").deep.equals(style_abc);
-      expect(test).property(3).property("style").deep.equals(style_ac);
-      expect(test).property(4).property("style").deep.equals(style_a);
+      expect(test).property(0).property("data").deep.equals(style_a);
+      expect(test).property(1).property("data").deep.equals(style_ab);
+      expect(test).property(2).property("data").deep.equals(style_abc);
+      expect(test).property(3).property("data").deep.equals(style_ac);
+      expect(test).property(4).property("data").deep.equals(style_a);
 
       expect(test).property(0).property("range").stringEquals("Range(0/0 -> 0/2)");
       expect(test).property(1).property("range").stringEquals("Range(0/2 -> 0/8)");
@@ -157,11 +157,11 @@ describe("TextAttribute", () => {
 
       expect(test).property("length").equals(5);
 
-      expect(test).property(0).property("style").deep.equals(style_a);
-      expect(test).property(1).property("style").deep.equals(style_cb);
-      expect(test).property(2).property("style").deep.equals(style_cba);
-      expect(test).property(3).property("style").deep.equals(style_ca);
-      expect(test).property(4).property("style").deep.equals(style_a);
+      expect(test).property(0).property("data").deep.equals(style_a);
+      expect(test).property(1).property("data").deep.equals(style_cb);
+      expect(test).property(2).property("data").deep.equals(style_cba);
+      expect(test).property(3).property("data").deep.equals(style_ca);
+      expect(test).property(4).property("data").deep.equals(style_a);
 
       expect(test).property(0).property("range").stringEquals("Range(0/0 -> 0/2)");
       expect(test).property(1).property("range").stringEquals("Range(0/2 -> 0/8)");
