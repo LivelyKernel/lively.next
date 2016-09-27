@@ -73,10 +73,15 @@ export class Range {
   }
 
   constructor(range = {start: {row: 0, column: 0}, end: {row: 0, column: 0}}) {
-    var {start, end} = range;
-    if (lessPosition(end, start)) [start, end] = [end, start]; // reverse
-    this.start = start;
-    this.end = end;
+    var {
+      start: {row: startRow, column: startColumn},
+      end: {row: endRow, column: endColumn}
+    } = range;
+
+    if (endRow < startRow || (endRow === startRow && endColumn < startColumn)) // reverse
+      [endRow, endColumn, startRow, startColumn] = [startRow, startColumn, endRow, endColumn]
+    this.start = {row: startRow, column: startColumn};
+    this.end = {row: endRow, column: endColumn};
   }
 
   get isRange() { return true }
@@ -167,6 +172,3 @@ export class Range {
 
 
 export const defaultRange = new Range()
-
-
-

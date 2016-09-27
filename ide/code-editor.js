@@ -6,8 +6,6 @@ import { connect } from "lively.bindings";
 import { Morph, Menu } from "../index.js";
 import { Text } from "../text/morph.js";
 import { TextAttribute } from "../text/style.js";
-import { Text as Text2 } from "../text2/morph.js";
-import { TextAttribute as TextAttribute2 } from "../text2/style.js";
 
 import { Token, Highlighter, Theme } from "./highlighting.js";
 import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
@@ -40,7 +38,7 @@ export default class CodeEditor extends Morph {
     super({
       extent: props.extent || pt(400,300),
       submorphs: [{
-        type: Text2,
+        type: Text,
         name: "text",
         extent: props.extent || pt(400,300),
         textString: props.textString || "",
@@ -70,20 +68,10 @@ export default class CodeEditor extends Morph {
     let textMorph = this.submorphs[0],
         tokens = this.mode.highlight(textMorph.textString),
         defaultStyle = this.submorphs[0].styleProps;
-
-    if (textMorph instanceof Text) {
-      let textAttributes = tokens.map(({token, from, to}) =>
-            TextAttribute.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
-      textAttributes.push(TextAttribute.create(defaultStyle, 0, -1, 0, 0));
-      textMorph.replaceTextAttributes(textAttributes);
-
-    } else if (textMorph instanceof Text2) {
-      let textAttributes = tokens.map(({token, from, to}) =>
-            TextAttribute2.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
-      textAttributes.unshift(TextAttribute2.create(defaultStyle, 0, -1, textMorph.documentEndPosition.row+1, 0));
-      textMorph.setTextAttributesSorted(textAttributes);
-    }
-    
+    let textAttributes = tokens.map(({token, from, to}) =>
+          TextAttribute.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
+    textAttributes.unshift(TextAttribute.create(defaultStyle, 0, -1, textMorph.documentEndPosition.row+1, 0));
+    textMorph.setTextAttributesSorted(textAttributes);
 
     if (this._checker)
       this._checker.onDocumentChange({}, this);

@@ -8,35 +8,51 @@ import { TextAttribute } from "./style.js";
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
+const styleProps = ["fontFamily", "fontSize", "fontColor", "fontWeight",
+                    "fontStyle", "textDecoration", "fixedCharacterSpacing"];
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function styleFromTextAttributes(textAttributes) {
+  var s = {};
+  for (var i = 0; i < textAttributes.length; i++) {
+    var d = textAttributes[i].data;
+    if ("fontFamily" in d)            s.fontFamily = d.fontFamily;
+    if ("fontSize" in d)              s.fontSize = d.fontSize;
+    if ("fontColor" in d)             s.fontColor = d.fontColor;
+    if ("fontWeight" in d)            s.fontWeight = d.fontWeight;
+    if ("fontStyle" in d)             s.fontStyle = d.fontStyle;
+    if ("textDecoration" in d)        s.textDecoration = d.textDecoration;
+    if ("fixedCharacterSpacing" in d) s.fixedCharacterSpacing = d.fixedCharacterSpacing;
+  }
+  return s;
+}
 
 class RenderedChunk {
 
-  static fromTextAttribute(lineText, fontMetric, textAttribute) {
-    let {start, end, style} = textAttribute,
-        startCol = start.column,
-        endCol = end.column,
-        chunkText = lineText.slice(startCol, endCol),
-        chunkConfig = {style, fontMetric};
-    return new RenderedChunk(chunkText, chunkConfig);
-  }
-
-  constructor(text, config) {
-    this.config = config;
+  constructor(text, fontMetric, textAttributes) {
+    this.fontMetric = fontMetric;
+    this.textAttributes = textAttributes;
     this.text = text;
 
     this.rendered = undefined;
+    this._style = undefined;
     this._charBounds = undefined;
     this._width = undefined;
     this._height = undefined;
     return this;
   }
 
-  compatibleWith(text2, config2) {
-    var {text, config} = this;
-    return text                   === text2
-        && config.fontMetric      === config2.fontMetric
-        && obj.equals(config.style, config2.style);
+  get style() {
+    return this._style || (this._style = styleFromTextAttributes(this.textAttributes));
+  }
+
+  compatibleWith(text2, fontMetric2, textAttributes2) {
+    var {text, fontMetric, style} = this;
+    return text === text2
+        && fontMetric === fontMetric2
+        // FIXME!!!!!! that's sloooooow....
+        && obj.equals(style, styleFromTextAttributes(textAttributes2));
   }
 
   get height() {
@@ -68,18 +84,17 @@ class RenderedChunk {
   }
 
   computeCharBounds() {
-    let {text, config: {style, fontMetric}} = this;
+    let {text, fontMetric, style} = this;
     text += newline;
     this._charBounds = fontMetric.charBoundsFor(style, text);
   }
 
   render() {
     if (this.rendered) return this.rendered;
-    var {config:
-          {style: {fontSize, fontFamily, fontColor, backgroundColor,
-                   fontWeight, fontStyle, textDecoration,
-                   fixedCharacterSpacing}},
-          text, width, height} = this,
+    var {style, text, width, height} = this,
+        {fontSize, fontFamily, fontColor, backgroundColor,
+         fontWeight, fontStyle, textDecoration,
+         fixedCharacterSpacing} = style,
         textNodes = text ?
           (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br");
     backgroundColor = backgroundColor || "",
@@ -103,18 +118,19 @@ class RenderedChunk {
 
 class RenderedLine {
 
-  static chunksFrom(text, config) {
-    let {fontMetric, textAttributes} = config, chunks = [];
-    if (!text) return textAttributes.length ?
-      [RenderedChunk.fromTextAttribute(text, fontMetric, textAttributes[0])] : chunks;
-    for (let i = 0; i < textAttributes.length; i++)
-      if (!textAttributes[i].isEmpty())
-        chunks.push(RenderedChunk.fromTextAttribute(text, fontMetric, textAttributes[i]));
+  static chunksFrom(text, fontMetric, textAttributesOfLine) {
+    let chunks = [];
+    for (var i = 0; i < textAttributesOfLine.length; i += 3) {
+      var startCol = textAttributesOfLine[i],
+          endCol = textAttributesOfLine[i+1],
+          attributes = textAttributesOfLine[i+2];
+      chunks.push(new RenderedChunk(text.slice(startCol, endCol), fontMetric, attributes));
+    }
     return chunks;
   }
 
-  constructor(text, config) {
-    this.chunks = this.constructor.chunksFrom(text, config);
+  constructor(text, fontMetric, textAttributesOfLine) {
+    this.chunks = this.constructor.chunksFrom(text, fontMetric, textAttributesOfLine);
     return this;
   }
 
@@ -141,20 +157,8 @@ class RenderedLine {
     return this;
   }
 
-  compatibleWith(text2, config2) {
-    let chunks2 = this.constructor.chunksFrom(text2, config2),
-        { chunks } = this;
-    if (chunks.length !== chunks2.length) return false
-    for (let i = 0; i < chunks.length; i++) {
-      let chunk = chunks[i],
-          { text: chunkText2, config: chunkConfig2 } = chunks2[i];
-      if (!chunk.compatibleWith(chunkText2, chunkConfig2)) return false;
-    }
-    return true;
-  }
-
-  updateIfNecessary(text, config) {
-    let newChunks = this.constructor.chunksFrom(text, config),
+  updateIfNecessary(text, fontMetric, textAttributes) {
+    let newChunks = this.constructor.chunksFrom(text, fontMetric, textAttributes),
         {chunks: oldChunks} = this,
         oldChunkCount = oldChunks.length,
         newChunkCount = newChunks.length,
@@ -163,8 +167,8 @@ class RenderedLine {
     for (let i = 0; i < newChunks.length; i++) {
       let oldChunk = oldChunks[i],
           newChunk = newChunks[i],
-          { text: newText, config: newConfig } = newChunk;
-      if (!oldChunk || !oldChunk.compatibleWith(newText, newConfig)) {
+          { text: newText, fontMetric: newFontMetric, textAttributes: newTextAttributes } = newChunk;
+      if (!oldChunk || !oldChunk.compatibleWith(newText, newFontMetric, newTextAttributes)) {
         this.chunks[i] = newChunk;
         shouldReset = true;
       }
@@ -276,32 +280,33 @@ export default class TextLayout {
     this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
   }
 
-  updateFromMorphIfNecessary(morph) {
-    if (this.layoutComputed) return;
+  updateFromDocumentIfNecessary(doc) {
+    if (this.layoutComputed) return false;
 
-    let { document } = morph,
-        fontMetric = this.fontMetric,
-        lines = document.lines,
-        nRows = lines.length;
+// TODO: specify which lines have changed!
+
+    let fontMetric = this.fontMetric,
+        lines = doc.lines,
+        nRows = lines.length,
+        textAttributesChunked = doc.textAttributesChunked(0, nRows-1);
 
     for (let row = 0; row < nRows; row++) {
-      let textAttributes = document.textAttributesByLine[row] || [],
+      let textAttributesOfLine = textAttributesChunked[row],
           text = lines[row],
-          config = {fontMetric, textAttributes},
           line = this.lines[row];
       if (!line)
-        this.lines[row] = new RenderedLine(text, config);
+        this.lines[row] = new RenderedLine(text, fontMetric, textAttributesOfLine);
       else
-        line.updateIfNecessary(text, config);
+        line.updateIfNecessary(text, fontMetric, textAttributesOfLine);
     }
     this.lines.splice(nRows, this.lines.length - nRows);
 
     this.layoutComputed = true;
-    return this;
+    return true;
   }
 
   renderMorph(renderer, morph) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     return renderMorph(renderer, this, morph);
   }
 
@@ -316,7 +321,7 @@ export default class TextLayout {
   }
 
   textPositionFor(morph, point) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     var {lines} = this;
     if (!lines.length) return {row: 0, column: 0};
 
@@ -337,7 +342,7 @@ export default class TextLayout {
   }
 
   textBounds(morph) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     let textWidth = 0, textHeight = 0;
     for (let row = 0; row < this.lines.length; row++) {
       var {width, height} = this.lines[row];
@@ -349,7 +354,7 @@ export default class TextLayout {
 
 
   boundsFor(morph, {row, column}) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     let {lines} = this,
         maxLength = lines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
@@ -364,7 +369,7 @@ export default class TextLayout {
   }
 
   boundsForIndex(morph, index) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     var pos = morph.document.indexToPosition(index);
     return this.boundsFor(morph, pos);
   }

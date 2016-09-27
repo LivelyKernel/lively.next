@@ -40,51 +40,62 @@ export default class TextDocument {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // TextAttributes
 
+  get textAndAttributes() { return getTextAndAttributes(this); }
+  set textAndAttributes(textAndAttributes) { setTextAndAttributes(this, textAndAttributes); }
+
   get textAttributes() { return this._textAttributes; }
-
-  // NOTE: assumes provided textAttributes are non-overlapping
   set textAttributes(textAttributes) {
-    this._textAttributes = textAttributes;
-    this._textAttributesByLine = this.lines.map(ea => []);
-    for (var i = 0; i < textAttributes.length; i++) {
-      let {style, start, end} = textAttributes[i];
+    this.setTextAttributesSorted(textAttributes.sort(Range.compare));
+  }
 
-      for (let row = start.row; row <= end.row; row++) {
-        let text = this.lines[row],
-            startCol = row === start.row ? start.column : 0,
-            endCol = row === end.row ? end.column : text.length,
-            textAttribute = TextAttribute.fromPositions(style, {row, column: startCol}, {row, column: endCol});
-        this._textAttributesByLine[row].push(textAttribute);
+  setTextAttributesSorted(attributes) {
+    // NOTE only use if attributes are sorted accoring to Range.compare(attrA, attrB)
+    // Horrible things will happen otherwise!!
+    this._textAttributes = attributes;
+    this._textAttributesByLine = new Array(this.lines.length);
+
+    for (var i = 0; i < attributes.length; i++) {
+      let attr = attributes[i], {start, end} = attr;
+      for (let row = start.row; row <= end.row; row++)
+        (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
+          .push(attr);
+    }
+  }
+
+  addTextAttribute(textAttr) {
+    var {start, end} = textAttr;
+
+    // _textAttributes is sorted by position. To not iterate over the entire
+    // attributes array when inserting the new attribute we first try to find
+    // an existing attribute in the by-line index if we have found that and it
+    // is a shortcut into finding the right position
+    var textAttrBefore;
+    for (var row = start.row; row >= 0; row--) {
+      var attrs = this._textAttributesByLine[row];
+      if (attrs && attrs.length && Range.compare(attrs[0], textAttr) <= 0) {
+        textAttrBefore = attrs[0];
+        break;
       }
     }
-  }
 
-  addTextAttribute(range) {
-    this._textAttributes = TextAttribute.mergeInto(this._textAttributes, range);
-    for (let row = range.start.row; row <= range.end.row; row++)
-      this.updateLineTextAttributes(row);
-    // TODO: Consolidate/deduplicate ranges
-  }
-
-  clearTextAttributes() { this._textAttributes = []; }
-
-  updateLineTextAttributes(row) {
-    let { textAttributes } = this,
-        text = this.lines[row] || "",
-        start = {row, column: 0},
-        end = {row, column: text ? text.length : 0},
-        lineRange = Range.fromPositions(start, end),
-        lineTextAttributes = [];
-    for (var i = 0; i < textAttributes.length; i++) {
-      let {style, range} = textAttributes[i],
-          intersection = lineRange.intersect(range);
-      if (intersection.start.row === lineRange.start.row)
-        lineTextAttributes.push(new TextAttribute(style, intersection));
+    if (textAttrBefore) {
+      this._textAttributes.splice(this._textAttributes.indexOf(textAttrBefore)+1, 0, textAttr);
+    } else {
+      this._textAttributes.unshift(textAttr);
     }
-    this._textAttributesByLine[row] = Range.sort(lineTextAttributes);
+
+    for (let row = start.row; row <= end.row; row++)
+      (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
+        .push(textAttr);
   }
+
+  resetTextAttributes() { this._textAttributes = []; this._textAttributesByLine = []; }
 
   get textAttributesByLine() { return this._textAttributesByLine; }
+
+  textAttributesChunked(startRow = 0, endRow = this.lines.length-1) {
+    return textAttributesChunked(this, startRow, endRow);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -157,7 +168,7 @@ export default class TextDocument {
   }
 
   insert(string, pos) {
-    let {lines, textAttributes} = this,
+    let {lines} = this,
         {row, column} = pos,
         line = lines[row],
         insertionLines = TextDocument.parseIntoLines(string);
@@ -185,15 +196,38 @@ export default class TextDocument {
     lines[row + insertionLines.length] = lines[row + insertionLines.length] + after;
 
     let insertionRange = {start: pos, end};
-    textAttributes.forEach(ea => ea.onInsert(insertionRange));
-    for (let row = pos.row; row <= end.row; row++)
-      this.updateLineTextAttributes(row);
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // text attribute updating...
+    // Note that the _textAttributesByLine index can include identical
+    // TextAttribute objects on multiple lines so track which one where updated
+    // already
+    for (let i = this._textAttributes.length-1; i >= 0; i--) {
+      let attr = this._textAttributes[i];
+      // since the attributes are sorted we know that no other attr that needs
+      // update is in _textAttributes but not in _textAttributesByLine
+      if (attr.start.row <= row) break;
+      attr.onInsert(insertionRange);
+    }
+    var attrsSeen = [];
+    (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = [])).forEach(attr => {
+      if (attrsSeen.includes(attr)) return;
+      attrsSeen.push(attr);
+      if (!attr.onInsert(insertionRange)) return;
+      for (let i = 0; i < insertionLines.length; i++) {
+        let newRow = row+1+i,
+            attrsInNewRow = this._textAttributesByLine[newRow];
+        // need to maintain the sort order! ....
+        if (attr.end.row >= newRow) attrsInNewRow.push(attr);
+      }
+    });
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     return insertionRange;
   }
 
-  remove({start, end}) {
-    var {lines, textAttributes} = this;
+  remove(range) {
+    var {start, end} = range, {lines} = this;
     if (!lines.length) return;
 
     if (lessPosition(end, start)) [start, end] = [end, start];
@@ -206,11 +240,48 @@ export default class TextDocument {
 
     lines[fromRow] = lines[fromRow].slice(0, fromCol) + lines[toRow].slice(toCol);
     lines.splice(fromRow+1, toRow - fromRow);
-    this._textAttributesByLine.splice(fromRow+1, toRow - fromRow);
 
-    textAttributes.forEach(ea => ea.onDelete({start, end}));
-    this._textAttributes = textAttributes.filter(ea => !ea.isEmpty());
-    this.updateLineTextAttributes(fromRow);
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // text attribute updating...
+    // ...those that now have an empty range...
+    for (let i = this._textAttributes.length-1; i >= 0; i--) {
+      let attr = this._textAttributes[i];
+      // since the attributes are sorted we know that no other attr that needs
+      // update is in _textAttributes but not in _textAttributesByLine
+      if (attr.start.row <= toRow) break;
+      attr.onDelete(range);
+    }
+
+    var attrsToRemove = [], attrsSeen = [];
+    for (let row = fromRow; row <= toRow; row++) {
+      // Get the attributes for each line. Note that the _textAttributesByLine
+      // index can include identical TextAttribute objects on multiple lines...
+      let attrs = this._textAttributesByLine[row];
+      if (!attrs) continue;
+      for (let i = attrs.length-1; i >= 0; i--) {
+        let attr = attrs[i];
+        // ...this is why we need to keep track of which attribtues we have
+        // already seen...
+        if (attrsToRemove.includes(attr)) { attrs.splice(i, 1); continue; }
+        if (attrsSeen.includes(attr)) continue;
+        attrsSeen.push(attr);
+        // ...and only inform those about the change once...
+        if (!attr.onDelete(range) || !attr.isEmpty()) {
+          // The attribute might have moved rows up b/c of the deletion:
+          let attrsOfLine = this._textAttributesByLine[attr.start.row]
+                        || (this._textAttributesByLine[attr.start.row] = []);
+          if (!attrsOfLine.includes(attr)) attrsOfLine.push(attr);
+          continue; // not not to remove or otherwise change
+        }
+        attrsToRemove.push(attr);
+        attrs.splice(i, 1);
+        // ...and remove them only once as well!
+        this._textAttributes.splice(this._textAttributes.indexOf(attr), 1);
+      }
+    }
+    // Last thing: resize the line index.
+    this._textAttributesByLine.splice(fromRow+1, toRow - fromRow);
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   }
 
   wordsOfLine(row) {
@@ -336,4 +407,255 @@ export default class TextDocument {
   copy() { return new TextDocument(this.lines.slice()); }
 
   toString() { return `TextDocument(${string.truncate(this.textString, 60)})`; }
+}
+
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+
+function attributesIndexed(doc) {
+  // produces a data structure like {row, column, starting: [], ending: []}
+  // that lists the beginnging / end of all text attributes in the order in
+  // which they occur in the document
+
+  // snap.map(({row, column, starting, ending}) => `[${row}/${column}] starting: ${starting.map(ea => ea.data.id).join(",")} ending: ${ending.map(ea => ea.data.id).join(",")}`).join("\n")
+
+  var attributes = doc.textAttributes,
+      attributesByStartLine = [],
+      attributesByEndLine = [];
+
+  for (var i = 0; i < attributes.length; i++) {
+    var {start, end} = attributes[i],
+        startList = attributesByStartLine[start.row] || (attributesByStartLine[start.row] = []),
+        endList = attributesByEndLine[end.row] || (attributesByEndLine[end.row] = []);
+    startList.push(attributes[i]);
+    endList.push(attributes[i]);
+  }
+
+  var indexed = [],
+      current = [],
+      snapStarting = [],
+      snapEnding = [],
+      lastSnapPos = {row: 0, column: 0}
+
+  for (var row = 0; row < doc.lines.length; row++) {
+
+    var line = doc.lines[row],
+        attributesStarting = attributesByStartLine[row] || [],
+        attributesEnding = attributesByEndLine[row] || [];
+
+    for (var column = 0; column < line.length; column++) {
+      var pos = {row, column}, someStarting = false, someEnding = false;
+
+      for (let i = attributesStarting.length-1; i >= 0; i--) {
+        let attr = attributesStarting[i];
+        if (attr.start.column === column) {
+          snapStarting.push(attr);
+          someStarting = someStarting || true;
+          attributesStarting.splice(i, 1);
+        }
+      }
+
+      for (let i = attributesEnding.length-1; i >= 0; i--) {
+        let attr = attributesEnding[i];
+        if (attr.end.column === column) {
+          snapEnding.push(attr)
+          someEnding = someEnding || true;
+          attributesEnding.splice(i, 1);
+        }
+      }
+
+      if (someStarting || someEnding) {
+        indexed.push({row, column, starting: snapStarting.slice(), ending: snapEnding.slice()});
+        lastSnapPos = pos;
+        snapStarting.length = 0;
+        snapEnding.length = 0;
+      }
+
+    }
+
+    attributesEnding.length && indexed.push({row, column, starting: [], ending: attributesEnding});
+  }
+
+  return indexed;
+}
+
+
+function getTextAndAttributes(doc, indexed) {
+  // returns a list like [["text", [attribute1, attribute2, ...]], ["...", [...]], ...]
+  // that splits the text in attributed ranges
+
+  // currentAttrs.map(([text, attrs]) => `[${attrs.map(ea => ea.data.fontColor).join("-")}]${text}`).join("")
+  indexed = (indexed || attributesIndexed(doc)).slice();
+  var result = [], active = [], currentText = "", lines = doc.lines;
+
+  if (!indexed.length) return [[lines.join("\n"), []]];
+
+  // preamble
+  while (true) {
+    if (!indexed.length) break;
+    var {row, column, ending, starting} = indexed[0];
+    if (row > 0 || row === 0 && column > 0) break;
+    active = arr.withoutAll(active, ending).concat(starting);
+    indexed.shift();
+  }
+
+  for (var row = 0; row < lines.length; row++) {
+    var line = doc.lines[row] + "\n";
+
+    for (var column = 0; column < line.length; column++) {
+      var pos = {row, column}, next = indexed[0];
+      if (!next) break;
+      if (next.row === row && next.column === column) {
+        indexed.shift();
+        result.push([currentText, active.slice()]);
+        currentText = "";
+        var {starting, ending} = next;
+        for (var i = 0; i < ending.length; i++) {
+          var idx = active.indexOf(ending[i]);
+          if (idx > -1) active.splice(idx, 1);
+        }
+        for (var i = 0; i < starting.length; i++) {
+          if (!active.includes(starting[i]))
+            active.push(starting[i]);
+        }
+      }
+      currentText += line[column]
+    }
+
+    if (!indexed[0]) break;
+  }
+
+  if (currentText.length) {
+    result.push([currentText, indexed[0] ? indexed[0].ending : []]);
+  }
+
+  return result;
+}
+
+function setTextAndAttributes(doc, textAndAttributes) {
+    var row = 0, column = 0,
+        lines = [], currentLine = "",
+        activeAttrs = [], attrs = [];
+
+    while (textAndAttributes.length) {
+      var [text, attrsOfRange] = textAndAttributes.shift();
+
+      for (var i = 0; i < activeAttrs.length; i++) {
+        if (!attrsOfRange.includes(activeAttrs[i])) {
+          var [attr] = activeAttrs.splice(i, 1);
+          attr.end = {row, column};
+        }
+      }
+
+      for (var i = 0; i < attrsOfRange.length; i++) {
+        var attr = attrsOfRange[i];
+        if (!attrs.includes(attr)) attrs.push(attr);
+        if (!activeAttrs.includes(attr)) {
+          activeAttrs.push(attr);
+          attr.start = {row, column};
+        }
+      }
+
+      for (var i = 0; i < text.length; i++) {
+        var char = text[i];
+        if (char === "\n") {
+          lines.push(currentLine);
+          currentLine = "";
+          row++; column = 0;
+        } else {
+          currentLine += char;
+          column++;
+        }
+      }
+    }
+    if (currentLine.length) lines.push(currentLine);
+    activeAttrs.forEach(attr => attr.end = {row, column});
+
+    doc.lines = lines;
+    doc.textAttributes = attrs;
+}
+
+function textAttributesChunked(doc, startRow, endRow) {
+  var lines = new Array(endRow);
+
+  // 1. find which attributes are "active" before startRow / 0
+  var currentAttributes = [],
+      attrsOfLine = doc.textAttributesByLine[startRow] || [];
+  for (let i = 0; i < attrsOfLine.length; i++) {
+    var attr = attrsOfLine[i];
+    if (attr.start.row < startRow || attr.start.column < 0)
+      currentAttributes.push(attr);
+  }
+
+  for (let row = startRow; row <= endRow; row++) {
+
+    attrsOfLine = doc.textAttributesByLine[row] || [];
+    let attributeChangesByColumn = [], content = doc.lines[row] || "";
+
+    // 2. Index the attributes of the current line by column, for each column
+    // that has attributes starting or ending, remember those
+    for (let i = 0; i < attrsOfLine.length; i++) {
+      let attr = attrsOfLine[i],
+          {start: {column: startColumn, row: startRow}, end: {column: endColumn, row: endRow}} = attr;
+      if (startRow === row && startColumn >= 0) {
+        let change = attributeChangesByColumn[startColumn] || (attributeChangesByColumn[startColumn] = {starting: [], ending: []});
+        change.starting.push(attr);
+      }
+      if (endRow === row) {
+        let change = attributeChangesByColumn[endColumn] || (attributeChangesByColumn[endColumn] = {starting: [], ending: []});
+        change.ending.push(attr);
+      }
+    }
+
+    let ranges = [], column = 0;
+
+    // don't slip empty lines...
+    if (!content.length) {
+      ranges.push(0,0, currentAttributes.slice());
+    } else {
+      let prevCol = 0, endColumn = content.length;
+
+      // 3. Now use the index to construct a data structure that looks like
+      // [startCol, endCol, attributes, ...] describing the ranges and "active"
+      // attributes for each.
+      for (column = 0; column <= endColumn; column++) {
+        var change = attributeChangesByColumn[column];
+        if (!change) {
+          if (column === endColumn)
+            ranges.push(prevCol, column, currentAttributes.slice());
+          continue;
+        }
+        let {starting, ending} = change;
+        if (column > 0) // prevCol === 0 && column === 0
+          ranges.push(prevCol, column, currentAttributes.slice());
+        prevCol = column;
+        if (ending.length)
+          for (let i = 0; i < ending.length; i++)
+            currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
+
+        if (starting.length)
+          currentAttributes.push(...starting);
+      }
+    }
+
+    lines[row] = ranges;
+
+    if (column <= attributeChangesByColumn.length) {
+      for (let i = column; i < attributeChangesByColumn.length; i++) {
+        let change = attributeChangesByColumn[i];
+        if (!change) continue;
+        let {ending, starting} = change;
+        if (ending.length)
+          for (let i = 0; i < ending.length; i++)
+            currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
+        if (starting.length)
+          currentAttributes.push(...starting);
+      }
+    }
+  }
+
+  return lines
 }
