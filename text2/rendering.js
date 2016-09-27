@@ -30,11 +30,6 @@ function styleFromTextAttributes(textAttributes) {
 
 class RenderedChunk {
 
-  static fromTextAttributes(lineText, startCol, endCol, fontMetric, textAttributes) {
-    var chunkText = lineText.slice(startCol, endCol);
-    return new RenderedChunk(chunkText, fontMetric, textAttributes);
-  }
-
   constructor(text, fontMetric, textAttributes) {
     this.fontMetric = fontMetric;
     this.textAttributes = textAttributes;
@@ -123,18 +118,19 @@ class RenderedChunk {
 
 class RenderedLine {
 
-  static chunksFrom(text, fontMetric, textAttributes) {
+  static chunksFrom(text, fontMetric, textAttributesOfLine) {
     let chunks = [];
-    if (!text) return textAttributes.length ?
-      [RenderedChunk.fromTextAttributes("", 0, 0, fontMetric, textAttributes)] : chunks;
-    for (let i = 0; i < textAttributes.length; i++)
-      if (!textAttributes[i].isEmpty())
-        chunks.push(RenderedChunk.fromTextAttributes(text, 0, text.length, fontMetric, textAttributes));
+    for (var i = 0; i < textAttributesOfLine.length; i += 3) {
+      var startCol = textAttributesOfLine[i],
+          endCol = textAttributesOfLine[i+1],
+          attributes = textAttributesOfLine[i+2];
+      chunks.push(new RenderedChunk(text.slice(startCol, endCol), fontMetric, attributes));
+    }
     return chunks;
   }
 
-  constructor(text, fontMetric, textAttributes) {
-    this.chunks = this.constructor.chunksFrom(text, fontMetric, textAttributes);
+  constructor(text, fontMetric, textAttributesOfLine) {
+    this.chunks = this.constructor.chunksFrom(text, fontMetric, textAttributesOfLine);
     return this;
   }
 
@@ -284,33 +280,33 @@ export default class TextLayout {
     this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
   }
 
-  updateFromMorphIfNecessary(morph) {
-    if (this.layoutComputed) return;
+  updateFromDocumentIfNecessary(doc) {
+    if (this.layoutComputed) return false;
 
 // TODO: specify which lines have changed!
 
-    let { document } = morph,
-        fontMetric = this.fontMetric,
-        lines = document.lines,
-        nRows = lines.length;
+    let fontMetric = this.fontMetric,
+        lines = doc.lines,
+        nRows = lines.length,
+        textAttributesChunked = doc.textAttributesChunked(0, nRows-1);
 
     for (let row = 0; row < nRows; row++) {
-      let textAttributes = document.textAttributesByLine[row] || [],
+      let textAttributesOfLine = textAttributesChunked[row],
           text = lines[row],
           line = this.lines[row];
       if (!line)
-        this.lines[row] = new RenderedLine(text, fontMetric, textAttributes);
+        this.lines[row] = new RenderedLine(text, fontMetric, textAttributesOfLine);
       else
-        line.updateIfNecessary(text, fontMetric, textAttributes);
+        line.updateIfNecessary(text, fontMetric, textAttributesOfLine);
     }
     this.lines.splice(nRows, this.lines.length - nRows);
 
     this.layoutComputed = true;
-    return this;
+    return true;
   }
 
   renderMorph(renderer, morph) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     return renderMorph(renderer, this, morph);
   }
 
@@ -325,7 +321,7 @@ export default class TextLayout {
   }
 
   textPositionFor(morph, point) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     var {lines} = this;
     if (!lines.length) return {row: 0, column: 0};
 
@@ -346,7 +342,7 @@ export default class TextLayout {
   }
 
   textBounds(morph) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     let textWidth = 0, textHeight = 0;
     for (let row = 0; row < this.lines.length; row++) {
       var {width, height} = this.lines[row];
@@ -358,7 +354,7 @@ export default class TextLayout {
 
 
   boundsFor(morph, {row, column}) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     let {lines} = this,
         maxLength = lines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
@@ -373,7 +369,7 @@ export default class TextLayout {
   }
 
   boundsForIndex(morph, index) {
-    this.updateFromMorphIfNecessary(morph);
+    this.updateFromDocumentIfNecessary(morph.document);
     var pos = morph.document.indexToPosition(index);
     return this.boundsFor(morph, pos);
   }

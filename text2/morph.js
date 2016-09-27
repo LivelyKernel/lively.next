@@ -589,6 +589,13 @@ export class Text extends Morph {
     this.makeDirty();
   }
 
+  setTextAttributesSorted(attrs) {
+    this.document.setTextAttributesSorted(attrs);
+    this._needsFit = true; 
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
+  }
+
   addTextAttribute(range) {
     this.document.addTextAttribute(range);
     this._needsFit = true; 
@@ -606,7 +613,7 @@ export class Text extends Morph {
   }
 
   resetTextAttributes() {
-    this.document.clearTextAttributes();
+    this.document.resetTextAttributes();
     this.setDefaultStyle();
   }
 
