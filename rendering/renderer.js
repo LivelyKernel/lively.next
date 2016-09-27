@@ -95,6 +95,7 @@ export class Renderer {
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
     this.afterRenderCallTargets = [];
+    this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame;
   }
 
   clear() {
@@ -112,8 +113,7 @@ export class Renderer {
   }
 
   startRenderWorldLoop() {
-    var {requestAnimationFrame} = this.domEnvironment.window;
-    this.renderWorldLoopProcess = requestAnimationFrame(() => this.startRenderWorldLoop());
+    this.renderWorldLoopProcess = this.requestAnimationFrame(() => this.startRenderWorldLoop());
     this.worldMorph.renderAsRoot(this);
     return this;
   }
