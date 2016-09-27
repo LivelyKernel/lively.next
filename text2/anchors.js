@@ -30,11 +30,15 @@ export class Anchor {
     // necessary and if deleted range was in same row also decrease column
     let {row, column} = this.position,
         {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
-        deltaRows = endRow - startRow,
-        deltaColumns = endRow !== this.position.row ?
-          0 : startRow === endRow ?
-            endColumn - startColumn : endColumn;
-    this.position = {column: column - deltaColumns, row: row - deltaRows}
+        // deltaRows = endRow - startRow,
+        // deltaColumns = endRow !== this.position.row ?
+        //   0 : startColumn - column;
+        newRow = row - (endRow - startRow),
+        newColumn = endRow !== this.position.row ? column :
+                      startColumn === endColumn ?
+                        column - (endColumn - startColumn) :
+                        startColumn + (column - endColumn);
+    this.position = {column: newColumn, row: newRow}
     return true;
   }
 

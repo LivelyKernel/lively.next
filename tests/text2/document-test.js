@@ -336,6 +336,16 @@ describe("text doc", () => {
       expect(doc.textAttributesByLine).equals([[attr3]]);
     });
 
+    it("are updated on deletion of line break", () => {
+      var doc = TextDocument.fromString("a\nb"),
+          attr = new TextAttribute({}, range(1,0,1,1));
+      doc.textAttributes = [attr];
+      doc.remove(range(0,1,1,0));
+      expect(doc.textAttributes).equals([attr]);
+      expect(doc.textAttributes[0].range).stringEquals("Range(0/1 -> 0/2)");
+      expect(doc.textAttributesByLine).equals([[attr]]);
+    });
+
     it("are updated on insertion", () => {
       var doc = TextDocument.fromString("hello\nworld"),
           attr1 = new TextAttribute({}, range(0,0,0,5)),
@@ -355,6 +365,87 @@ describe("text doc", () => {
       expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr1, attr2], [attr1, attr2], [attr2]]);
     });
 
+    it("are updated on insertion even if not directly in modified range 1", () => {
+      var doc = TextDocument.fromString("a\nb"),
+          attr = new TextAttribute({}, range(1,0,1,1));
+      doc.textAttributes = [attr];
+      doc.insert("\n", {row: 0, column: 1});
+      expect(doc.textAttributes[0].range).stringEquals("Range(2/0 -> 2/1)");
+      expect(doc.textAttributesByLine).equals([[], [], [attr]]);
+    });
+
+    it("are updated on deletion even if not directly in modified range 2", () => {
+      var doc = TextDocument.fromString("a\n\nb"),
+          attr = new TextAttribute({}, range(2,0,2,1));
+      doc.textAttributes = [attr];
+      doc.remove(range(0,1,1,0));
+      expect(doc.textAttributes[0].range).stringEquals("Range(1/0 -> 1/1)");
+      expect(doc.textAttributesByLine).equals([undefined, [attr]]);
+    });
+
+    it("are completely removed on deletion", () => {
+      var doc = TextDocument.fromString("a\nb\nc"),
+          attr = new TextAttribute({}, range(1,0,1,1));
+      doc.textAttributes = [attr];
+      doc.remove(range(0,0,2,1));
+      expect(doc.textAttributes).equals([]);
+      expect(doc.textAttributesByLine).equals([undefined]);
+    });
+
+    describe("chunking attributes", () => {
+
+      it("empty doc", () => {
+        expect(TextDocument.fromString("").textAttributesChunked()).equals([[0,0, []]]);
+      });
+
+      it("no attributes doc", () => {
+        expect(TextDocument.fromString("hello\nworld").textAttributesChunked()).equals([[0,5, []], [0,5, []]]);
+      });
+
+      it("attribute on single line", () => {
+        var doc = TextDocument.fromString("hello\n  world"),
+            attr1 = new TextAttribute({}, range(0,0,0,5));
+        doc.textAttributes = [attr1];
+        expect(doc.textAttributesChunked()).deep.equals([[0, 5, [attr1]], [0, 7, []]]);
+      });
+
+      it("overlapping", () => {
+        var doc = TextDocument.fromString("hello\n  world"),
+            attr1 = new TextAttribute({}, range(0,1,0,5)),
+            attr2 = new TextAttribute({}, range(0,2,0,4));
+        doc.textAttributes = [attr1, attr2];
+        expect(doc.textAttributesChunked()).equals([
+          [0,1,[], 1,2, [attr1], 2,4, [attr1, attr2], 4,5, [attr1]],
+          [0,7,[]]]);
+      });
+
+      it("overlapping lines", () => {
+        var doc = TextDocument.fromString("hello\n  world"),
+            attr1 = new TextAttribute({}, range(0,0,0,5)),
+            attr2 = new TextAttribute({}, range(0,0,1,5));
+        doc.textAttributes = [attr1, attr2];
+        expect(doc.textAttributesChunked()).deep.equals([
+          [0, 5, [attr1, attr2]],
+          [0, 5, [attr2], 5,7, []]]);
+      });
+
+      it("sparse", () => {
+        var doc = TextDocument.fromString("hello\nworld"),
+            attr1 = new TextAttribute({}, range(0,1,0,3)),
+            attr2 = new TextAttribute({}, range(0,5,1,5));
+        doc.textAttributes = [attr1, attr2];
+        expect(doc.textAttributesChunked()).equals([[0,1, [], 1, 3, [attr1], 3,5, []], [0, 5, [attr2]]])
+      });
+
+      it("empty line followed by single", () => {
+        var doc = TextDocument.fromString("\na"),
+            attr1 = new TextAttribute({}, range(0,1,1,1)),
+            attr2 = new TextAttribute({}, range(1,0,1,1));
+        doc.textAttributes = [attr1, attr2];
+        expect(doc.textAttributesChunked()).equals([[0,0, []], [0,1, [attr1, attr2]]])
+      });
+
+    });
   });
 
 });
