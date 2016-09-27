@@ -172,6 +172,3 @@ export class Range {
 
 
 export const defaultRange = new Range()
-
-
-

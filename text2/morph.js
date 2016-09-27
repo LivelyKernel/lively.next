@@ -439,6 +439,17 @@ export class Text extends Morph {
     return new Range(range);
   }
 
+  insertTextWithTextAttributes(text, attributes = [], pos) {
+    if (!Array.isArray(attributes)) attributes = [attributes];
+    var range = this.insertText(text, pos);
+    attributes.forEach(attr => {
+      if (!attr.isTextAttribute) attr = new TextAttribute(attr);
+      attr.range = range;
+      this.addTextAttribute(attr);
+    });
+    return range;
+  }
+
   insertTextAndSelect(text, pos = null) {
     text = String(text);
     if (pos) this.selection.range = this.insertText(text, pos);
@@ -590,6 +601,7 @@ export class Text extends Morph {
   }
 
   setTextAttributesSorted(attrs) {
+    // see comment in document
     this.document.setTextAttributesSorted(attrs);
     this._needsFit = true; 
     this.textLayout && (this.textLayout.layoutComputed = false);
@@ -780,11 +792,13 @@ export class Text extends Morph {
     var {clickedOnMorph, clickedOnPosition} = evt.state;
     if (clickedOnMorph !== this || !this.selectable) return;
 
-    var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition))),
-        end = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)))
+    var textPosClicked = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)));
 
-    var from = this.selection.toString();
-    this.selection.range = {start, end};
+    this.selection.lead = textPosClicked;
+    if (!evt.isShiftDown()) {
+      var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition)));
+      this.selection.anchor = start;
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

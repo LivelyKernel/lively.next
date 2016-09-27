@@ -77,7 +77,7 @@ var commands = [
 
       if (opts.killRingCycleBack && (arr.last(arr.pluck(morph.commandHandler.history, "name")) || "").includes("clipboard paste"))
         pasted = kr.back();
-      
+
       if (!pasted && kr.isCycling())
         pasted = kr.yank();
 
@@ -95,7 +95,7 @@ var commands = [
 
       if (!pasted) pasted = kr.yank();
 
-      if (morph.selection.isMultiSelection) {        
+      if (morph.selection.isMultiSelection) {
         morph.undoManager.group();
         morph.selection.selections.slice(0,-1)
           .reverse()
@@ -792,7 +792,7 @@ var commands = [
         morph.activeMark = sel.lead;
         return true;
       }
-      
+
       // otherwise save mark, deactivate it, and remove any selection that
       // there might be
       morph.saveMark(m || sel.anchor);
@@ -865,6 +865,19 @@ var commands = [
         morph.undoManager.group();
         if (morph.selection.isEmpty()) morph.selection = morph.wordAt().range;
         morph.selection.text = morph.selection.text.toLowerCase();
+        morph.undoManager.group();
+        return true;
+      }
+  },
+
+  {
+      name: "remove trailing whitespace",
+      exec: (morph) => {
+        morph.undoManager.group();
+        var i = 0;
+        morph.withLinesDo(0, morph.documentEndPosition.row, (line, range) =>
+          line.match(/\s+$/) && ++i && morph.replace(range, line.trimRight()));
+        morph.world().setStatusMessage(`${i} lines cleaned up`);
         morph.undoManager.group();
         return true;
       }
@@ -1074,7 +1087,7 @@ commands.push(
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
-        morph.world().logError(err) : 
+        morph.world().logError(err) :
         morph.world().setStatusMessage(printEvalResult(result, count));
       return result;
     }
@@ -1092,7 +1105,7 @@ commands.push(
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       err ?
-        morph.world().logError(err) : 
+        morph.world().logError(err) :
         morph.world().setStatusMessage(String(result.value));
       return result;
     }
@@ -1221,13 +1234,13 @@ commands.push(
         var endLeft = morph.search("*/", {start: pos, backwards: true});
         // /*....*/ ... <|>
         if (endLeft && lessPosition(startLeft, endLeft)) return null;
-        
+
         var endRight = morph.search("*/", {start: pos});
         if (!endRight) return null;
         var startRight = morph.search("/*", {start: pos});
         // <|> ... /*....*/
         if (startRight && lessPosition(startRight, endRight)) return null;
-      
+
         return {start: startLeft.range.start, end: endRight.range.end};
       }
     }
@@ -1309,7 +1322,7 @@ var multiSelectCommands = [
       return true;
     }
   },
-  
+
   {
     name: "[multi select] add cursor below",
     multiSelectAction: "single",
@@ -1332,7 +1345,7 @@ var multiSelectCommands = [
       var found = morph.searchForAll(last.text, {start: {column: 0, row: 0}});
       found.forEach(({range}) => morph.selection.addRange(range));
       arr.remove(morph.selection.selections, last);
-      morph.selection.selections.push(last); // make it the first again      
+      morph.selection.selections.push(last); // make it the first again
       return true;
     }
   },
@@ -1354,7 +1367,7 @@ var multiSelectCommands = [
       return true;
     }
   },
-  
+
   {
     name: "[multi select] more like this backward",
     multiSelectAction: "single",
@@ -1375,7 +1388,7 @@ var multiSelectCommands = [
       return true;
     }
   },
-  
+
   {
     name: "[multi select] remove focused cursor",
     multiSelectAction: "single",
