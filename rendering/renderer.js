@@ -95,7 +95,7 @@ export class Renderer {
     this.renderMap = new WeakMap();
     this.renderWorldLoopProcess = null;
     this.afterRenderCallTargets = [];
-    this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame;
+    this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
   }
 
   clear() {
