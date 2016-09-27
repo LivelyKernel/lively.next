@@ -44,13 +44,18 @@ export default class TextDocument {
   set textAndAttributes(textAndAttributes) { setTextAndAttributes(this, textAndAttributes); }
 
   get textAttributes() { return this._textAttributes; }
-  // NOTE: assumes provided textAttributes are non-overlapping
   set textAttributes(textAttributes) {
-    this._textAttributes = textAttributes.sort(Range.compare);
+    this.setTextAttributesSorted(textAttributes.sort(Range.compare));
+  }
+
+  setTextAttributesSorted(attributes) {
+    // NOTE only use if attributes are sorted accoring to Range.compare(attrA, attrB)
+    // Horrible things will happen otherwise!!
+    this._textAttributes = attributes;
     this._textAttributesByLine = new Array(this.lines.length);
 
-    for (var i = 0; i < textAttributes.length; i++) {
-      let attr = textAttributes[i], {start, end} = attr;
+    for (var i = 0; i < attributes.length; i++) {
+      let attr = attributes[i], {start, end} = attr;
       for (let row = start.row; row <= end.row; row++)
         (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
           .push(attr);
