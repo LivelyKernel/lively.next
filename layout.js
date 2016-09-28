@@ -4,6 +4,7 @@ import { GridLayoutHalo, FlexLayoutHalo } from "./halo/layout.js";
 import { Morph } from "./index.js";
 
 class Layout {
+  
   constructor({spacing, border, container} = {}) {
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
@@ -20,29 +21,60 @@ class Layout {
       case "removeMorph":
         this.onSubmorphRemoved(change.args[0]);
         break;
-      case "insertMorphAt":
+      case "addMorphAt":
         this.onSubmorphAdded(change.args[0]);
         break;
     }
-    this.apply();
+    if (change.prop == "extent" && !change.value.equals(change.prevValue)) this.apply();
   }
   
-  affectsLayout({prop}) {
-    return ["position", "scale", "rotation"].includes(prop);
+  affectsLayout(submorph, {prop, value, prevValue}) {
+    return ["position", "scale", "rotation"].includes(prop) && !value.equals(prevValue);
   }
 
   onSubmorphChange(submorph, change) {
-    if ("extent" == change.prop) this.onSubmorphResized(submorph);
-    if (this.affectsLayout(change)) this.apply();
+    if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph);
+    if (this.affectsLayout(submorph, change)) this.apply();
   }
   
   inspect(pointerId) {}
+}
+
+/* This is just a very simple constraint layout, that should
+   eventually be replaced by just dynamically appying constraints
+   to morph properties that relate to other morph's properties */
+
+export class FillLayout extends Layout {
+  
+  constructor(config = {}) {
+    super(config);
+    this.morphs = config.morphs || [];
+    this.fixedHeight = config.fixedHeight;
+    this.fixedWidth = config.fixedWidth;
+  }
+  
+  apply() {
+    /* FIXME: Add support for destructuring default values */
+    if (this.active) return;
+    const {fixedWidth, fixedHeight} = this,
+          height = !fixedHeight  && this.container.height - 2 * this.spacing,
+          width = !fixedWidth && this.container.width - 2 * this.spacing;
+    
+    this.active = true;
+    this.morphs.forEach(m => {
+      var m = this.container.getSubmorphNamed(m);
+      m.setBounds(pt(this.spacing,this.spacing).extent(pt(width || m.width, height || m.height)));
+    });
+    this.active = false;
+  }
+  
 }
 
 export class VerticalLayout extends Layout {
 
   apply() {
     if (this.active) return;
+    console.log(this.container.name);
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
         maxWidth = 0;
@@ -63,6 +95,8 @@ export class HorizontalLayout extends Layout {
 
  apply() {
     if (this.active) return;
+        console.log(this.container.name);
+
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
         maxHeight = 0;
