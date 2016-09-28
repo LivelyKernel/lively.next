@@ -6,7 +6,7 @@ import { Morph, show } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
 import { Range } from "./range.js";
 import { TextAttribute } from "./style.js";
-import DocumentRenderer from "./rendering.js";
+import TextLayout from "./layout.js";
 import TextDocument from "./document.js";
 import KeyHandler from "../events/KeyHandler.js";
 import { UndoManager } from "../undo.js";
@@ -14,6 +14,7 @@ import { Anchor } from "./anchors.js";
 import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
+import { renderMorph } from "./rendering.js"
 
 export class Text extends Morph {
 
@@ -68,7 +69,7 @@ export class Text extends Morph {
       savedMarks: [],
       ...props
     });
-    this.textLayout = new DocumentRenderer(fontMetric || this.env.fontMetric);
+    this.textLayout = new TextLayout(fontMetric || this.env.fontMetric);
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
     this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
@@ -784,9 +785,7 @@ export class Text extends Morph {
     this.fitIfNeeded();
   }
 
-  render(renderer) {
-    return this.textLayout.renderMorph(renderer, this);
-  }
+  render(renderer) { return renderMorph(renderer, this); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mouse events
