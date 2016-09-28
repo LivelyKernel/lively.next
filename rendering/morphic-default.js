@@ -29,7 +29,7 @@ class StyleMapper {
   }
   
   getFill({fill}) {
-    return fill && {backgroundColor: fill.toString()}
+    return fill && {background: fill.toString()}
   }
   
   getExtentStyle({width, height, extent}) {
