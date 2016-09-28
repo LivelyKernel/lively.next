@@ -5,7 +5,7 @@ import { Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
 import { Range } from "./range.js";
-import { StyleRange } from "./style.js";
+import { TextAttribute } from "./style.js";
 import DocumentRenderer from "./rendering.js";
 import TextDocument from "./document.js";
 import KeyHandler from "../events/KeyHandler.js";
@@ -49,26 +49,26 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, selection, clipMode, styleRanges } = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode", "styleRanges"])
+    var {
+      fontMetric, textString, selectable, selection, clipMode, textAttributes,
+      fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
+    } = props;
+    props = obj.dissoc(props, [
+      "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
+      // default style attrs: need document to be installed first
+      "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration", "fixedCharacterSpacing"
+    ]);
     super({
       readOnly: false,
       draggable: false,
       fixedWidth: false, fixedHeight: false,
       padding: 0,
-      fontFamily: "Sans-Serif",
-      fontSize: 12,
-      fontColor: Color.black,
-      fontWeight: "normal",
-      fontStyle: "normal",
-      textDecoration: "none",
-      fixedCharacterSpacing: false,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
       ...props
     });
-    this.renderer = new DocumentRenderer(fontMetric || this.env.fontMetric);
+    this.textLayout = new DocumentRenderer(fontMetric || this.env.fontMetric);
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
     this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
@@ -76,7 +76,16 @@ export class Text extends Morph {
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     if (clipMode) this.clipMode = clipMode;
-    if (styleRanges) styleRanges.map(range => this.addStyleRange(range));
+    
+    this.fontFamily = fontFamily || "Sans-Serif";
+    this.fontSize = fontSize || 12;
+    this.fontColor = fontColor || Color.black;
+    this.fontWeight = fontWeight || "normal";
+    this.fontStyle = fontStyle || "normal";
+    this.textDecoration = textDecoration || "none";
+    this.fixedCharacterSpacing = fixedCharacterSpacing || false;
+
+    if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
     this._needsFit = false;
   }
@@ -87,8 +96,6 @@ export class Text extends Morph {
     var textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
     if (textChange
-     || change.selector === "addStyleRange"
-     || change.selector === "replaceStyleRanges"
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
@@ -98,7 +105,7 @@ export class Text extends Morph {
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
      || change.prop === "fixedCharacterSpacing")
-       this.renderer && (this.renderer.layoutComputed = false);
+       this.textLayout && (this.textLayout.layoutComputed = false);
 
     super.onChange(change);
     textChange && signal(this, "textChange");
@@ -302,7 +309,7 @@ export class Text extends Morph {
   }
 
   textBounds() {
-    return this.renderer ? this.renderer.textBounds(this) : new Rectangle(0,0,0,0);
+    return this.textLayout ? this.textLayout.textBounds(this) : new Rectangle(0,0,0,0);
   }
   paddedTextBounds() {
     let textBounds = this.textBounds(),
@@ -326,7 +333,7 @@ export class Text extends Morph {
   
 
   execCommand(commandOrName, args, count, evt) {
-    var {name, command} = this.commandHandler.lookupCommand(commandOrName, this);
+    var {name, command} = this.lookupCommand(commandOrName);
     if (!command) return undefined;
 
     var multiSelect = this.inMultiSelectMode(),
@@ -403,7 +410,7 @@ export class Text extends Morph {
 
   changeDocument(doc, resetStyle = false) {
     this.document = doc;
-    this.renderer.reset();
+    this.textLayout.reset();
     if (resetStyle)
       this.setDefaultStyle();
     this.makeDirty();
@@ -441,6 +448,17 @@ export class Text extends Morph {
     return new Range(range);
   }
 
+  insertTextWithTextAttributes(text, attributes = [], pos) {
+    if (!Array.isArray(attributes)) attributes = [attributes];
+    var range = this.insertText(text, pos);
+    attributes.forEach(attr => {
+      if (!attr.isTextAttribute) attr = new TextAttribute(attr);
+      attr.range = range;
+      this.addTextAttribute(attr);
+    });
+    return range;
+  }
+
   insertTextAndSelect(text, pos = null) {
     text = String(text);
     if (pos) this.selection.range = this.insertText(text, pos);
@@ -453,7 +471,7 @@ export class Text extends Morph {
     if (!text.length) return Range.fromPositions(pos, pos);
 
     var range = this.document.insert(text, pos);
-    this.renderer.shiftLinesIfNeeded(this, range, "insertText");
+    this.textLayout.shiftLinesIfNeeded(this, range, "insertText");
 
     this.undoManager.undoStart(this, "insertText");
 
@@ -486,10 +504,10 @@ export class Text extends Morph {
     if (range.isEmpty()) return;
 
     this.undoManager.undoStart(this, "deleteText");
-    var {document: doc, renderer} = this,
+    var {document: doc, textLayout} = this,
         text = doc.textInRange(range);
     doc.remove(range);
-    renderer.shiftLinesIfNeeded(this, range, "deleteText");
+    textLayout.shiftLinesIfNeeded(this, range, "deleteText");
     this._needsFit = true;
 
     this.addMethodCallChangeDoing({
@@ -562,8 +580,8 @@ export class Text extends Morph {
   }
 
   get whatsVisible() {
-    var startRow = this.renderer.firstVisibleLine,
-        endRow = this.renderer.lastVisibleLine,
+    var startRow = this.textLayout.firstVisibleLine,
+        endRow = this.textLayout.lastVisibleLine,
         lines = this.document.lines;
     return {
       lines: startRow === undefined || endRow === undefined ?
@@ -572,64 +590,68 @@ export class Text extends Morph {
     }
   }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // TextAttributes
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   get styleProps() {
-    return obj.select(this, ["fontFamily",
-        "fontSize", "fontColor", "fontWeight", "fontStyle",
-        "textDecoration", "fixedCharacterSpacing"]);
+    return obj.select(this, [
+      "fontFamily", "fontSize", "fontColor", "fontWeight",
+      "fontStyle", "textDecoration", "fixedCharacterSpacing"]);
   }
 
-  get styleRanges() { return this.document.styleRanges }
-
-  // NOTE: assumes provided styleRanges are non-overlapping
-  replaceStyleRanges(styleRanges) {
-    // FIXME: undos
-
-    this.document.styleRanges = styleRanges;
-
-    this.addMethodCallChangeDoing({
-      target: this,
-      selector: "replaceStyleRanges",
-      args: [styleRanges],
-      // FIXME!
-      // undo: {
-      //   target: this,
-      // }
-    }, () => { this._needsFit = true; });
+  get textAttributes() { return this.document.textAttributes; }
+  set textAttributes(attrs) {
+    this.document.textAttributes = attrs;
+    this._needsFit = true; 
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
   }
 
-  addStyleRange(range) {
+  setSortedTextAttributes(attrs) {
+    // see comment in document
+    this.document.setSortedTextAttributes(attrs);
+    this._needsFit = true; 
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
+  }
 
-    // FIXME: undos
-    // this.undoManager.undoStart(this, "addStyleRange");
+  addTextAttribute(range) {
+    this.document.addTextAttribute(range);
+    this._needsFit = true; 
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
+  }
 
-    this.document.addStyleRange(range);
-
-    this.addMethodCallChangeDoing({
-      target: this,
-      selector: "addStyleRange",
-      args: [range],
-      // FIXME!
-      // undo: {
-      //   target: this,
-      // }
-    }, () => { this._needsFit = true; });
-
-    //this.undoManager.undoStop();
+  removeTextAttribute(attr) {
+    this.document.removeTextAttribute(attr);
+    this._needsFit = true; 
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
   }
 
   setDefaultStyle(style = this.styleProps) {
-    let { document } = this;
-    if (!document) return;
-    let start = { row: 0, column: -1 },
-        end = document.endPosition,
-        defaultStyleRange = StyleRange.fromPositions(style, start, end);
-    this.addStyleRange(defaultStyleRange);
+    var attr = this.textAttributes.find(ea =>
+      ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0);
+    if (attr) {
+      Object.assign(attr.data, style);
+      this._needsFit = true; 
+      this.textLayout && (this.textLayout.layoutComputed = false);
+      this.makeDirty();
+    } else {
+      this.addTextAttribute(
+        TextAttribute.fromPositions(
+          style, { row: 0, column: -1 },
+          this.documentEndPosition));
+    }
   }
 
-  resetStyleRanges() {
-    this.document.clearStyleRanges();
+  resetTextAttributes() {
+    this.document.resetTextAttributes();
     this.setDefaultStyle();
   }
+
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
@@ -719,7 +741,7 @@ export class Text extends Morph {
 
   fit() {
     let {fixedWidth, fixedHeight} = this;
-    if ((fixedHeight && fixedWidth) || !this.renderer/*not init'ed yet*/) return;
+    if ((fixedHeight && fixedWidth) || !this.textLayout/*not init'ed yet*/) return;
     let paddedTextBounds = this.paddedTextBounds();
     if (!fixedHeight) this.height = paddedTextBounds.height;
     if (!fixedWidth) this.width = paddedTextBounds.width;
@@ -731,15 +753,15 @@ export class Text extends Morph {
 
   get defaultLineHeight() {
     var p = this.padding;
-    return p.top() + p.bottom() + this.renderer.fontMetric.defaultLineHeight({fontSize: this.fontSize, fontFamily: this.fontFamily})
+    return p.top() + p.bottom() + this.textLayout.fontMetric.defaultLineHeight({fontSize: this.fontSize, fontFamily: this.fontFamily})
   }
 
   textPositionFromPoint(point) {
-    return this.renderer.textPositionFor(this, point);
+    return this.textLayout.textPositionFor(this, point);
   }
 
   charBoundsFromTextPosition(pos) {
-    return this.renderer.boundsFor(this, pos);
+    return this.textLayout.boundsFor(this, pos);
   }
 
   paddingAndScrollOffset() {
@@ -763,7 +785,7 @@ export class Text extends Morph {
   }
 
   render(renderer) {
-    return this.renderer.renderMorph(renderer, this);
+    return this.textLayout.renderMorph(renderer, this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -864,7 +886,7 @@ export class Text extends Morph {
     var {direction, select} = opts;
     this[direction === "down" ? "scrollPageDown" : "scrollPageUp"]();
     var offset = pt(0, (direction === "down" ? 1 : -1) * this.height),
-        pos = this.renderer.pixelPositionFor(this, this.cursorPosition).addPt(offset),
+        pos = this.textLayout.pixelPositionFor(this, this.cursorPosition).addPt(offset),
         textPos = this.textPositionFromPoint(pos);
     if (!opts || !opts.select) this.cursorPosition = textPos;
     else this.selection.lead = textPos;

@@ -1,5 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
-import { Text, World, MorphicEnv } from "../../index.js";
+import { World, MorphicEnv } from "../../index.js";
+import { Text } from "../../text/morph.js";
 import { pt, Rectangle } from "lively.graphics";
 import { CompletionController, WordCompleter, DynamicJavaScriptCompleter } from "../../text/completion.js";
 import { expect } from "mocha-es6";
@@ -19,13 +20,13 @@ describe("completion controller", () => {
     text.cursorPosition = {row: 2, column: 0}
     var controller = new CompletionController(text, [new WordCompleter()]),
         {items} = await controller.completionListSpec();
-    expect(items).containSubset([{string: "afg"}, {string: "abc"}]);
+    expect(items).containSubset([{value: {completion: "afg"}}, {value: {completion: "abc"}}]);
   });
 
   it("computes dynamic JS completions", async () => {
     if (!System.get(System.decanonicalize("lively.vm/index.js"))) return;
     text.textString = "this.";
-    text.gotoStartOrEnd({direction: "end"});
+    text.gotoDocumentEnd();
     var controller = new CompletionController(text, [new DynamicJavaScriptCompleter()]),
         {items} = await controller.completionListSpec();
     expect(items).containSubset([{value: {completion: "textString"}}]);

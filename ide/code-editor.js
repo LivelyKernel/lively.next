@@ -3,8 +3,9 @@ import { pt, Rectangle, Color } from "lively.graphics";
 import config from "../config.js";
 
 import { connect } from "lively.bindings";
-import { Morph, Text, Menu } from "../index.js";
-import { StyleRange } from "../text/style.js";
+import { Morph, Menu } from "../index.js";
+import { Text } from "../text/morph.js";
+import { TextAttribute } from "../text/style.js";
 
 import { Token, Highlighter, Theme } from "./highlighting.js";
 import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
@@ -37,7 +38,7 @@ export default class CodeEditor extends Morph {
     super({
       extent: props.extent || pt(400,300),
       submorphs: [{
-        type: "text",
+        type: Text,
         name: "text",
         extent: props.extent || pt(400,300),
         textString: props.textString || "",
@@ -61,20 +62,19 @@ export default class CodeEditor extends Morph {
     });
     connect(this, "extent", this.submorphs[0], "extent");
   }
-  
+
   highlight() {
     if (!this.theme) return;
-    const txt = this.submorphs[0],
-          tokens = this.mode.highlight(txt.textString),
-          defaultStyle = this.submorphs[0].styleProps,
-          styleRanges = tokens.map(({token, from, to}) =>
-            StyleRange.fromPositions({...defaultStyle, ...this.theme.styleCached(token)}, from, to));
-    styleRanges.push(StyleRange.create(defaultStyle, 0, -1, 0, 0));
-    txt.replaceStyleRanges(styleRanges);
+    let textMorph = this.submorphs[0],
+        tokens = this.mode.highlight(textMorph.textString),
+        defaultStyle = this.submorphs[0].styleProps;
+    let textAttributes = tokens.map(({token, from, to}) =>
+          TextAttribute.fromPositions(this.theme.styleCached(token), from, to));
+    textAttributes.unshift(TextAttribute.create(defaultStyle, 0, -1, textMorph.documentEndPosition.row+1, 0));
+    textMorph.setSortedTextAttributes(textAttributes);
 
-    if (this._checker) {
+    if (this._checker)
       this._checker.onDocumentChange({}, this);
-    }
   }
   
   get text() { return this.submorphs[0]; }

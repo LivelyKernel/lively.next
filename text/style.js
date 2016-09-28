@@ -1,46 +1,17 @@
+import { obj, arr } from "lively.lang";
 import { Range } from "./range.js";
 import { Anchor } from "./anchors.js";
-import { obj, arr } from "lively.lang";
-
 import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
 
 
-class StyleAnchor extends Anchor {
+export class TextAttribute {
 
-  onDelete(range) {
-    if (lessEqPosition(this.position, range.start)) return;
-
-    if (lessEqPosition(range.start, this.position)
-     && lessEqPosition(this.position, range.end)) { this.position = range.start; return; }
-
-    let {row, column} = this.position,
-        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
-        deltaRows = endRow - startRow,
-        deltaColumns = endRow === this.position.row ?
-                       endColumn - startColumn : 0
-    this.position = {column: column - deltaColumns, row: row - deltaRows}
+  static fromPositions(data = {}, start, end) {
+    return new this(data, Range.fromPositions(start, end));
   }
 
-  onInsert(range) {
-    if (lessPosition(this.position, range.start)) return;
-    let {row, column} = this.position,
-        {start: {row: startRow, column: startColumn}, end: {row: endRow, column: endColumn}} = range,
-        deltaRows = endRow - startRow,
-        deltaColumns = endColumn - startColumn;
-    this.position = {column: column + deltaColumns, row: row + deltaRows}
-  }
-
-}
-
-
-export class StyleRange {
-
-  static fromPositions(style = {}, start, end) {
-    return new this(style, Range.fromPositions(start, end));
-  }
-
-  static create(style, startRow, startCol, endRow, endCol) {
-    return new this(style, {
+  static create(data, startRow, startCol, endRow, endCol) {
+    return new this(data, {
       start: {row: startRow, column: startCol},
       end: {row: endRow, column: endCol}});
   }
@@ -48,46 +19,48 @@ export class StyleRange {
   static mergeInto(others, newRange) {
     let firstRange = others[0];
     if (!firstRange) return [newRange];
-    let { a, b } = StyleRange.merge(firstRange, newRange),
+    let { a, b } = TextAttribute.merge(firstRange, newRange),
         remaining = others.slice(1);
-    b.map(ea => { remaining = StyleRange.mergeInto(remaining, ea) });
+    b.map(ea => remaining = TextAttribute.mergeInto(remaining, ea));
     return a.concat(remaining);
   }
 
   static merge(a, b) {
-    // Styles from "b" will be applied to (and override) any overlapping section of "a"; will return 1-3 new ranges
-    let { style: style_a, range: range_a } = a,
-        { style: style_b, range: range_b } = b,
-        intersection = range_a.intersect(range_b);
+    // Styles from "b" will be applied to (and override) any overlapping
+    // section of "a"; will return 1-3 new ranges
+    let { data: dataA, range: rangeA } = a,
+        { data: dataB, range: rangeB } = b,
+        intersection = rangeA.intersect(rangeB);
     if (!intersection.isEmpty()) {
-      let mergedStyle = obj.merge(style_a, style_b),
-          restyledRange = new StyleRange(mergedStyle, intersection),
-          leftover_a = range_a.subtract(intersection)
+      let mergedData = obj.merge(dataA, dataB),
+          restyledRange = new TextAttribute(mergedData, intersection),
+          leftoverA = rangeA.subtract(intersection)
                               .filter(r => !r.isEmpty())
-                              .map(range => new StyleRange(style_a, range)),
-          leftover_b = range_b.subtract(intersection)
+                              .map(range => new TextAttribute(dataA, range)),
+          leftoverB = rangeB.subtract(intersection)
                               .filter(r => !r.isEmpty())
-                              .map(range => new StyleRange(style_b, range));
-          return { a: [...leftover_a, restyledRange], b: leftover_b };
+                              .map(range => new TextAttribute(dataB, range));
+          return { a: [...leftoverA, restyledRange], b: leftoverB };
           // TODO: Join adjacent ranges with equivalent styles
 
     } else return { a: [a], b: [b] };
-
   }
 
-  constructor(style = {}, range) {
-    this.style = style;
+  constructor(data = {}, range = {start: {row: 0, column: 0}, end: {row: 0, column: 0}}) {
+    this.data = data;
     this.range = range;
   }
+
+  get isTextAttribute() { return true; }
 
   get start() { return this.startAnchor.position }
   get end() { return this.endAnchor.position }
 
   set start(start) {
-    this.startAnchor = new StyleAnchor(undefined, start);
+    this.startAnchor = new Anchor(undefined, start);
   }
   set end(end) {
-    this.endAnchor = new StyleAnchor(undefined, end);
+    this.endAnchor = new Anchor(undefined, end);
   }
 
   get range() {
@@ -103,18 +76,24 @@ export class StyleRange {
   isEmpty() { return this.range.isEmpty(); }
 
   equals(other) { return this.range.equals(other.range)
-                      && obj.equals(this.style, other.style); }
+                      && obj.equals(this.data, other.data); }
 
   merge(other) { return this.constructor.merge(this, other) };
 
   onInsert(range) {
-    this.startAnchor.onInsert(range);
-    this.endAnchor.onInsert(range);
+    var changedStart = this.startAnchor.onInsert(range),
+        changedEnd = this.endAnchor.onInsert(range);
+    return changedStart || changedEnd;
   }
 
   onDelete(range) {
-    this.startAnchor.onDelete(range);
-    this.endAnchor.onDelete(range);
+    var changedStart = this.startAnchor.onDelete(range),
+        changedEnd = this.endAnchor.onDelete(range);
+    return changedStart || changedEnd;
   }
 
+  toString() {
+    var range = String(this.range).replace("Range(", "").replace(")", "");
+    return `TextAttribute(${range} ${obj.values(this.data)})`;
+  }
 }

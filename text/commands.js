@@ -398,8 +398,8 @@ var commands = [
     exec: function(morph) {
       var select = !!morph.activeMark,
           currentPos = morph.cursorPosition,
-          firstRow = morph.renderer.firstFullVisibleLine(morph),
-          lastRow = morph.renderer.lastFullVisibleLine(morph),
+          firstRow = morph.textLayout.firstFullVisibleLine(morph),
+          lastRow = morph.textLayout.lastFullVisibleLine(morph),
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
           newPos = currentPos;
       if (currentPos.row <= firstRow) return true;
@@ -418,8 +418,8 @@ var commands = [
     exec: function(morph) {
       var select = !!morph.activeMark,
           currentPos = morph.cursorPosition,
-          firstRow = morph.renderer.firstFullVisibleLine(morph),
-          lastRow = morph.renderer.lastFullVisibleLine(morph),
+          firstRow = morph.textLayout.firstFullVisibleLine(morph),
+          lastRow = morph.textLayout.lastFullVisibleLine(morph),
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
           newPos = currentPos;
       if (currentPos.row < firstRow) newPos.row = firstRow;
@@ -438,8 +438,8 @@ var commands = [
     exec: function(morph) {
       var select = !!morph.activeMark,
           currentPos = morph.cursorPosition,
-          firstRow = morph.renderer.firstFullyVisibleLine,
-          lastRow = morph.renderer.lastFullyVisibleLine,
+          firstRow = morph.textLayout.firstFullyVisibleLine,
+          lastRow = morph.textLayout.lastFullyVisibleLine,
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
           newPos = currentPos;
       if (currentPos.row <= firstRow) return true;
@@ -458,8 +458,8 @@ var commands = [
     exec: function(morph) {
       var select = !!morph.activeMark,
           currentPos = morph.cursorPosition,
-          firstRow = morph.renderer.firstFullyVisibleLine,
-          lastRow = morph.renderer.lastFullyVisibleLine,
+          firstRow = morph.textLayout.firstFullyVisibleLine,
+          lastRow = morph.textLayout.lastFullyVisibleLine,
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
           newPos = currentPos;
       if (currentPos.row < firstRow) newPos.row = firstRow;
