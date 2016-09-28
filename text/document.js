@@ -37,13 +37,115 @@ export default class TextDocument {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // TextAttributes
 
+  get textAttributes() { return this._textAttributes; }
+  set textAttributes(textAttributes) {
+    this.setSortedTextAttributes(textAttributes.sort(Range.compare));
+  }
+  get textAttributesByLine() { return this._textAttributesByLine; }
+
+  textAttributesChunked(startRow = 0, endRow = this.lines.length-1, withLineEnding = false) {
+    // returns an array chunked with chunked.length === lines.length
+    // chunked[n] is an array that looks like
+    // [startCol1, endCol1, [attr1, attr2, ...], startCol2, endCol2, [attr1, attr3, ...], ...]
+    // i.e. it "chunks" and groups the attributes by columns, each
+    // start-end-column-chunk marking a canonical text attribute range
+    // This is used directly as the input for the text renderer that turns this
+    // view on attributes into html elements
+
+    var lines = new Array(endRow), newline = this.constructor.newline;
+
+    // 1. find which attributes are "active" before startRow / 0
+    var currentAttributes = [],
+        attrsOfLine = this._textAttributesByLine[startRow] || [];
+    for (let i = 0; i < attrsOfLine.length; i++) {
+      var attr = attrsOfLine[i];
+      if (attr.start.row < startRow || attr.start.column < 0)
+        currentAttributes.push(attr);
+    }
+
+    for (let row = startRow; row <= endRow; row++) {
+
+      attrsOfLine = this._textAttributesByLine[row] || [];
+      let attributeChangesByColumn = [],
+          content = this.lines[row] || "";
+      if (withLineEnding) content += newline;
+
+      // 2. Index the attributes of the current line by column, for each column
+      // that has attributes starting or ending, remember those
+      for (let i = 0; i < attrsOfLine.length; i++) {
+        let attr = attrsOfLine[i],
+            {start: {column: startColumn, row: startRow}, end: {column: endColumn, row: endRow}} = attr;
+        if (startRow === row && startColumn >= 0) {
+          let change = attributeChangesByColumn[startColumn] || (attributeChangesByColumn[startColumn] = {starting: [], ending: []});
+          change.starting.push(attr);
+        }
+        if (endRow === row) {
+          let change = attributeChangesByColumn[endColumn] || (attributeChangesByColumn[endColumn] = {starting: [], ending: []});
+          change.ending.push(attr);
+        }
+      }
+
+      let ranges = [], column = 0;
+
+      // don't slip empty lines...
+      if (!content.length) {
+        ranges.push(0,0, currentAttributes.slice());
+      } else {
+        let prevCol = 0, endColumn = content.length;
+
+        // 3. Now use the index to construct a data structure that looks like
+        // [startCol, endCol, attributes, ...] describing the ranges and "active"
+        // attributes for each.
+        for (column = 0; column <= endColumn; column++) {
+          var change = attributeChangesByColumn[column];
+          if (!change) {
+            if (column === endColumn)
+              ranges.push(prevCol, column, currentAttributes.slice());
+            continue;
+          }
+          let {starting, ending} = change;
+          if (column > 0) // prevCol === 0 && column === 0
+            ranges.push(prevCol, column, currentAttributes.slice());
+          prevCol = column;
+          if (ending.length)
+            for (let i = 0; i < ending.length; i++)
+              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
+
+          if (starting.length)
+            currentAttributes.push(...starting);
+        }
+      }
+
+      lines[row] = ranges;
+
+      if (column <= attributeChangesByColumn.length) {
+        for (let i = column; i < attributeChangesByColumn.length; i++) {
+          let change = attributeChangesByColumn[i];
+          if (!change) continue;
+          let {ending, starting} = change;
+          if (ending.length)
+            for (let i = 0; i < ending.length; i++)
+              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
+          if (starting.length)
+            currentAttributes.push(...starting);
+        }
+      }
+    }
+
+    return lines
+  }
+
   get textAndAttributes() {
     // t.document.textAndAttributes.map(([text, attrs]) => `"${text}"\n${attrs.join("\n")}\n`).join("\n")
-    return this.textAttributesChunked().map((chunked, row) =>
-            arr.flatmap(
-              arr.toTuples(chunked, 3),
-              ([startCol, endCol, attrs]) =>
-                [this.lines[row].slice(startCol, endCol), attrs]));
+    let newline = this.constructor.newline,
+        maxRow = this.lines.length-1;
+    return arr.flatmap(this.textAttributesChunked(0, maxRow, true), (chunked, row) => {
+      if (row === maxRow) newline = "";
+      return arr.toTuples(chunked, 3).map(
+        ([startCol, endCol, attrs]) =>
+          [(this.lines[row] + newline).slice(startCol, endCol), attrs]);
+    });
+
   }
 
   set textAndAttributes(textAndAttributes) {
@@ -91,11 +193,6 @@ export default class TextDocument {
 
     this.lines = lines;
     this.textAttributes = attrs;
-  }
-
-  get textAttributes() { return this._textAttributes; }
-  set textAttributes(textAttributes) {
-    this.setSortedTextAttributes(textAttributes.sort(Range.compare));
   }
 
   setSortedTextAttributes(attributes) {
@@ -190,98 +287,6 @@ export default class TextDocument {
 
   resetTextAttributes() { this._textAttributes = []; this._textAttributesByLine = []; }
 
-  get textAttributesByLine() { return this._textAttributesByLine; }
-
-  textAttributesChunked(startRow = 0, endRow = this.lines.length-1) {
-    // returns an array chunked with chunked.length === lines.length
-    // chunked[n] is an array that looks like
-    // [startCol1, endCol1, [attr1, attr2, ...], startCol2, endCol2, [attr1, attr3, ...], ...]
-    // i.e. it "chunks" and groups the attributes by columns, each
-    // start-end-column-chunk marking a canonical text attribute range
-    // This is used directly as the input for the text renderer that turns this
-    // view on attributes into html elements
-
-    var lines = new Array(endRow);
-  
-    // 1. find which attributes are "active" before startRow / 0
-    var currentAttributes = [],
-        attrsOfLine = this._textAttributesByLine[startRow] || [];
-    for (let i = 0; i < attrsOfLine.length; i++) {
-      var attr = attrsOfLine[i];
-      if (attr.start.row < startRow || attr.start.column < 0)
-        currentAttributes.push(attr);
-    }
-  
-    for (let row = startRow; row <= endRow; row++) {
-  
-      attrsOfLine = this._textAttributesByLine[row] || [];
-      let attributeChangesByColumn = [], content = this.lines[row] || "";
-  
-      // 2. Index the attributes of the current line by column, for each column
-      // that has attributes starting or ending, remember those
-      for (let i = 0; i < attrsOfLine.length; i++) {
-        let attr = attrsOfLine[i],
-            {start: {column: startColumn, row: startRow}, end: {column: endColumn, row: endRow}} = attr;
-        if (startRow === row && startColumn >= 0) {
-          let change = attributeChangesByColumn[startColumn] || (attributeChangesByColumn[startColumn] = {starting: [], ending: []});
-          change.starting.push(attr);
-        }
-        if (endRow === row) {
-          let change = attributeChangesByColumn[endColumn] || (attributeChangesByColumn[endColumn] = {starting: [], ending: []});
-          change.ending.push(attr);
-        }
-      }
-  
-      let ranges = [], column = 0;
-  
-      // don't slip empty lines...
-      if (!content.length) {
-        ranges.push(0,0, currentAttributes.slice());
-      } else {
-        let prevCol = 0, endColumn = content.length;
-  
-        // 3. Now use the index to construct a data structure that looks like
-        // [startCol, endCol, attributes, ...] describing the ranges and "active"
-        // attributes for each.
-        for (column = 0; column <= endColumn; column++) {
-          var change = attributeChangesByColumn[column];
-          if (!change) {
-            if (column === endColumn)
-              ranges.push(prevCol, column, currentAttributes.slice());
-            continue;
-          }
-          let {starting, ending} = change;
-          if (column > 0) // prevCol === 0 && column === 0
-            ranges.push(prevCol, column, currentAttributes.slice());
-          prevCol = column;
-          if (ending.length)
-            for (let i = 0; i < ending.length; i++)
-              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
-  
-          if (starting.length)
-            currentAttributes.push(...starting);
-        }
-      }
-  
-      lines[row] = ranges;
-  
-      if (column <= attributeChangesByColumn.length) {
-        for (let i = column; i < attributeChangesByColumn.length; i++) {
-          let change = attributeChangesByColumn[i];
-          if (!change) continue;
-          let {ending, starting} = change;
-          if (ending.length)
-            for (let i = 0; i < ending.length; i++)
-              currentAttributes.splice(currentAttributes.indexOf(ending[i]), 1)
-          if (starting.length)
-            currentAttributes.push(...starting);
-        }
-      }
-    }
-  
-    return lines
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getLine(row) {
@@ -293,21 +298,23 @@ export default class TextDocument {
     let {row, column} = this.clipPositionToLines(pos),
         index = 0,
         lines = this.lines,
-        maxLength = lines.length-1;
+        maxLength = lines.length-1,
+        newlineLength = this.constructor.newlineLength;
     for (var i = startRow; i < row; i++)
-      index += lines[i].length + (i === maxLength ? 0 : this.constructor.newlineLength);
+      index += lines[i].length + (i === maxLength ? 0 : newlineLength);
     return index + column;
   }
 
   indexToPosition(index, startRow = 0) {
     // TextDocument.fromString("hello\nworld").indexToPosition(8)
     if (index < 0) index = 0;
-    var lines = this.lines;
+    var lines = this.lines,
+        newlineLength = this.constructor.newlineLength;
     if (lines.length === 0) return {row: 0, column: 0};
     for (var i = startRow, l = lines.length; i < l; i++) {
-      index -= lines[i].length + this.constructor.newlineLength;
+      index -= lines[i].length + newlineLength;
       if (index < 0)
-        return {row: i, column: index + lines[i].length + this.constructor.newlineLength};
+        return {row: i, column: index + lines[i].length + newlineLength};
     }
     return {row: l-1, column: lines[l-1].length};
   }
@@ -334,7 +341,8 @@ export default class TextDocument {
 
     let {row, column} = start,
         {row: endRow, column: endColumn} = end,
-        lines = this.lines;
+        lines = this.lines,
+        newline = this.constructor.newline;
 
     if (row === endRow)
       return column === endColumn ?
@@ -342,8 +350,8 @@ export default class TextDocument {
 
     let result = lines[row].slice(column);
     for (let i = row+1; i < endRow; i++)
-      result += this.constructor.newline + lines[i];
-    return result + this.constructor.newline + lines[endRow].slice(0, endColumn);
+      result += newline + lines[i];
+    return result + newline + lines[endRow].slice(0, endColumn);
   }
 
   setTextInRange(string, range) {

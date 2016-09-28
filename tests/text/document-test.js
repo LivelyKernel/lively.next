@@ -288,9 +288,10 @@ describe("text doc", () => {
       expect(doc.textAttributes).equals([]);
       doc.textAttributes = [attr1, attr2];
       expect(doc.textAttributes).equals([attr1, attr2]);
+
       expect(doc.textAndAttributes).deep.equals([
         ["hello\n", []],
-        ["wor", [attr2, attr1]],
+        ["wor", [attr1, attr2]],
         ["l", [attr2]],
         ["d", []]
       ]);
