@@ -113,6 +113,8 @@ export default class TextDocument {
   }
 
   removeTextAttribute(attr) {
+    // fast for removing a single attribute but when called often with lot's of
+    // attributes gets really slow
     var idx = this._textAttributes.indexOf(attr);
     if (idx > -1) this._textAttributes.splice(idx, 1);
     for (let row = attr.start.row; row <= attr.end.row; row++) {
@@ -123,6 +125,10 @@ export default class TextDocument {
   }
 
   removeTextAttributes(attrs) {
+    // will simply reset it all. Not that the withoutAll filter can be really
+    // slow when used with large attribute arrays. For a faster version that
+    // requires the attributes to be removed in sorted order see the attribute
+    // cleanup code at the end of Document>>remove
     this.setSortedTextAttributes(arr.withoutAll(this._textAttributes, attrs));
   }
 
@@ -279,10 +285,23 @@ export default class TextDocument {
     lines.splice(fromRow+1, toRow - fromRow);
 
 
+    // here we update and remove the text attributes that are affected by the
+    // removal.
     var rangesToRemove = [],
         currentRangeStart = undefined, currentRangeEnd = undefined,
         textAttributes = this._textAttributes;
 
+    // first lets find the indexes of the attributes that need to be removed.
+    // Removing every one of them individually via splice or even filtering
+    // them is slow for large attribute arrays. Instead of doing this we build
+    // a list of start end indexes in the _textAttributes array that mark the
+    // ranges to be removed. Those can be non-consecutive b/c text attributes
+    // are sorted by Range.compare.
+    // Given attributes a = range(0,0,0,1), b = range(0,1,0,4), c = range(0,2,0,3).
+    // Sorted _textAttributes = [a,b,c]
+    // If we remove range(0,0,0,3) attributes a and c would be both empty (range(0,0,0,0))
+    // and would need to be removed. Attribute b however would be range(0,0,0,1) and stay.
+    // The range intervals we will determine for this case are [[0,1], [1,2]]
     for (var i = 0; i < textAttributes.length; i++) {
       var ea = textAttributes[i];
       if (ea.onDelete(range) && ea.isEmpty()) {
@@ -300,9 +319,11 @@ export default class TextDocument {
     if (currentRangeStart !== undefined)
       rangesToRemove.push([currentRangeStart, currentRangeEnd]);
 
-    rangesToRemove.reverse().forEach(([i,j]) => textAttributes = textAttributes.slice(0,i).concat(textAttributes.slice(j)))
+    // build new textAttributes array
+    rangesToRemove.reverse().forEach(([i,j]) =>
+      textAttributes = textAttributes.slice(0,i).concat(textAttributes.slice(j)))
+    // set it, new _textAttributesByLine index will be build there
     this.setSortedTextAttributes(textAttributes);
-
   }
 
   wordsOfLine(row) {
