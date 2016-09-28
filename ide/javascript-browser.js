@@ -361,7 +361,7 @@ export class Browser extends Window {
     try {
       if (module.isLoaded) { // is loaded in runtime
         await system.interactivelyChangeModule(
-          this, module.name, content,
+          null, module.name, content,
           {targetModule: module.name, doEval: true});      
       } else await system.moduleWrite(module.name, content);
     } catch(err) { return this.world().logError(err); }
