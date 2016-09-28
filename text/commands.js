@@ -1463,6 +1463,18 @@ var multiSelectCommands = [
      && morph.selection.addRange({end: {row, column: endCol}, start: {row, column: startCol}}));
       return true;
     }
+  },
+
+  {
+    name: "[multi select] count",
+    multiSelectAction: "single",
+    handlesCount: true,
+    exec: (morph, _, count = 1) => {
+      morph.undoManager.group();
+      morph.selection.selections.forEach((sel, i) => sel.text = String(i+count))
+      morph.undoManager.group();
+      return true;
+    }
   }
 
 ]
