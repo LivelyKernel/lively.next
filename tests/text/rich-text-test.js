@@ -53,6 +53,8 @@ async function createMorphicEnv() {
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
+function printStyleNormalized(style) { return obj.inspect(style).replace(/ /g, ""); }
+
 var style_a = { fontSize: 12, fontStyle: "italic" },
     style_b = { fontSize: 14, fontWeight: "bold" },
     a = TextAttribute.create(style_a, 0, 1, 0, 3),
@@ -123,20 +125,12 @@ describe("rich text", () => {
 
     let strings = Array.from(chunks).map(ea => ea.textContent);
 
-    expect(printStyleNormalized(styles[0])).equals(printStyleNormalized(obj.dissoc(defaultStyle, ["fontColor", "fixedCharacterSpacing"])));
-    expect(printStyleNormalized(styles[1])).equals(printStyleNormalized(obj.dissoc(merged_a,     ["fontColor", "fixedCharacterSpacing"])));
-    expect(printStyleNormalized(styles[2])).equals(printStyleNormalized(obj.dissoc(merged_ab,    ["fontColor", "fixedCharacterSpacing"])));
-    expect(printStyleNormalized(styles[3])).equals(printStyleNormalized(obj.dissoc(merged_b,     ["fontColor", "fixedCharacterSpacing"])));
-    expect(printStyleNormalized(styles[4])).equals(printStyleNormalized(obj.dissoc(defaultStyle, ["fontColor", "fixedCharacterSpacing"])));
-    
-    expect(strings[0]).equals("h");
-    expect(strings[1]).equals("e");
-    expect(strings[2]).equals("l");
-    expect(strings[3]).equals("l");
-    expect(strings[4]).equals("o");
-    
-    function printStyleNormalized(style) {
-      return obj.inspect(style).replace(/ /g, "");
-    }
+    expect(printStyleNormalized(styles[0])).equals(printStyleNormalized(obj.dissoc(defaultStyle,                                 ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[1])).equals(printStyleNormalized(obj.dissoc({...defaultStyle, ...style_a},                ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[2])).equals(printStyleNormalized(obj.dissoc({...defaultStyle, ...style_a, ...style_b},    ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[3])).equals(printStyleNormalized(obj.dissoc({...defaultStyle, ...style_b},                ["fontColor", "fixedCharacterSpacing"])));
+    expect(printStyleNormalized(styles[4])).equals(printStyleNormalized(obj.dissoc(defaultStyle,                                 ["fontColor", "fixedCharacterSpacing"])));
+
+    expect(strings).equals(["h", "e", "l", "l", "o"]);
   });
 });
