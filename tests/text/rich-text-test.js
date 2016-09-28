@@ -53,16 +53,13 @@ async function createMorphicEnv() {
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
-describe("rich text", () => {
+var style_a = { fontSize: 12, fontStyle: "italic" },
+    style_b = { fontSize: 14, fontWeight: "bold" },
+    a = TextAttribute.create(style_a, 0, 1, 0, 3),
+    b = TextAttribute.create(style_b, 0, 2, 0, 4),
+    textAttributes;
 
-  var style_a = { fontSize: 12, fontStyle: "italic" },
-      style_b = { fontSize: 14, fontWeight: "bold" },
-      merged_a = obj.merge(defaultStyle, style_a),
-      merged_b = obj.merge(defaultStyle, style_b),
-      merged_ab = obj.merge(merged_a, style_b),
-      a = TextAttribute.create(style_a, 0, 1, 0, 3),
-      b = TextAttribute.create(style_b, 0, 2, 0, 4),
-      textAttributes;
+describe("rich text", () => {
 
   beforeEach(() => createMorphicEnv());
   afterEach(() => destroyMorphicEnv());
@@ -70,36 +67,31 @@ describe("rich text", () => {
   it("begins with default style range", () => {
     textAttributes = sut.document.textAttributesByLine[0];
     expect(textAttributes).property("length").equals(1);
-    expect(textAttributes[0].range).stringEquals("Range(0/0 -> 0/5)");
+    expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
     expect(textAttributes[0].data).deep.equals(defaultStyle);
   });
 
   it("addTextAttribute merges style ranges", () => {
     sut.addTextAttribute(a);
     textAttributes = sut.document.textAttributesByLine[0];
+    textAttributes.length
 
-    expect(textAttributes).property("length").equals(3);
-    expect(textAttributes).deep.property("0.range").stringEquals("Range(0/0 -> 0/1)");
-    expect(textAttributes).deep.property("1.range").stringEquals("Range(0/1 -> 0/3)");
-    expect(textAttributes).deep.property("2.range").stringEquals("Range(0/3 -> 0/5)");
-    expect(textAttributes).deep.property("0.data").deep.equals(defaultStyle);
-    expect(textAttributes).deep.property("1.data").deep.equals(merged_a);
-    expect(textAttributes).deep.property("2.data").deep.equals(defaultStyle);
+    expect(textAttributes).property("length").equals(2);
+    expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
+    expect(textAttributes[1].range).stringEquals("Range(0/1 -> 0/3)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[1].data).deep.equals(style_a);
 
     sut.addTextAttribute(b);
     textAttributes = sut.document.textAttributesByLine[0];
 
-    expect(textAttributes).property("length").equals(5);
-    expect(textAttributes).deep.property("0.range").stringEquals("Range(0/0 -> 0/1)");
-    expect(textAttributes).deep.property("1.range").stringEquals("Range(0/1 -> 0/2)");
-    expect(textAttributes).deep.property("2.range").stringEquals("Range(0/2 -> 0/3)");
-    expect(textAttributes).deep.property("3.range").stringEquals("Range(0/3 -> 0/4)");
-    expect(textAttributes).deep.property("4.range").stringEquals("Range(0/4 -> 0/5)");
-    expect(textAttributes).deep.property("0.data").deep.equals(defaultStyle);
-    expect(textAttributes).deep.property("1.data").deep.equals(merged_a);
-    expect(textAttributes).deep.property("2.data").deep.equals(merged_ab);
-    expect(textAttributes).deep.property("3.data").deep.equals(merged_b);
-    expect(textAttributes).deep.property("4.data").deep.equals(defaultStyle);
+    expect(textAttributes).property("length").equals(3);
+    expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
+    expect(textAttributes[1].range).stringEquals("Range(0/1 -> 0/3)");
+    expect(textAttributes[2].range).stringEquals("Range(0/2 -> 0/4)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[1].data).deep.equals(style_a);
+    expect(textAttributes[2].data).deep.equals(style_b);
   });
 
   it("renders styles", async () => {
