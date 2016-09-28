@@ -74,13 +74,11 @@ describe("text doc", () => {
   });
 
   it("text length", () => {
-    var doc = TextDocument.fromString("hello\nworld\nfoo");
-    expect(doc.stringLength).equals(15);
+    expect(TextDocument.fromString("hello\nworld\nfoo").stringLength).equals(15);
   });
 
   it("end position", () => {
-    var doc = TextDocument.fromString("hello\nworld\nfoo");
-    expect(doc.endPosition).deep.equals({row: 2, column: 3});
+    expect(TextDocument.fromString("hello\nworld\nfoo").endPosition).deep.equals({row: 2, column: 3});
   });
 
   it("position to index", () => {
@@ -225,12 +223,12 @@ describe("text doc", () => {
 
     var doc; beforeEach(() => doc = TextDocument.fromString("hello\nworld\n123"));
 
-    it("single line", () => expect(doc.textInRange(range(0,1,0,5))).equals("ello"));
-    it("empty range", () => expect(doc.textInRange(range(0,1,0,1))).equals("") .equals(""));
-    it("reverse", () => expect(doc.textInRange(range(0,5,0,1))).equals("ello"));
-    it("across one lines", () => expect(doc.textInRange(range(0,4,1,2))).equals("o\nwo"));
+    it("single line",           () => expect(doc.textInRange(range(0,1,0,5))).equals("ello"));
+    it("empty range",           () => expect(doc.textInRange(range(0,1,0,1))).equals("") .equals(""));
+    it("reverse",               () => expect(doc.textInRange(range(0,5,0,1))).equals("ello"));
+    it("across one lines",      () => expect(doc.textInRange(range(0,4,1,2))).equals("o\nwo"));
     it("across mulitple lines", () => expect(doc.textInRange(range(0,4,2,2))).equals("o\nworld\n12"));
-    it("including newline", () => expect(doc.textInRange(range(0,4,1,0))).equals("o\n"));
+    it("including newline",     () => expect(doc.textInRange(range(0,4,1,0))).equals("o\n"));
 
     it("replaces text range single line", () => {
       var newRange = doc.setTextInRange("foo\nbar", range(0,2,0,4));
@@ -280,9 +278,15 @@ describe("text doc", () => {
 
   describe("attributes", () => {
 
+    var doc;
+    beforeEach(() => {
+      doc = TextDocument.fromString("hello\nworld");
+      doc.experimentalTextAttributes = true;
+    })
+
     it("attributes and text access", () => {
-      var doc = TextDocument.fromString("hello\nworld"),
-          attr1 = new TextAttribute({}, range(1,0,1,3)),
+      doc.textString = "hello\nworld";
+      let attr1 = new TextAttribute({}, range(1,0,1,3)),
           attr2 = new TextAttribute({}, range(1,0,1,4));
       expect(doc.textAttributes).equals([]);
       doc.textAttributes = [attr1, attr2];
@@ -294,10 +298,10 @@ describe("text doc", () => {
         ["d", []]
       ]);
     });
-    
+
     it("set attributes and text", () => {
-      var doc = TextDocument.fromString(""),
-          attr1 = new TextAttribute({}),
+      doc.textString = "";
+      let attr1 = new TextAttribute({}),
           attr2 = new TextAttribute({});
       doc.textAndAttributes = [
         ["hello\n", []],
@@ -311,86 +315,150 @@ describe("text doc", () => {
       expect(doc.textAttributes[1].range).equals(range(1,0,1,4));
     });
 
-    it("are updated on deletion", () => {
-      var doc = TextDocument.fromString("hello\nworld\n123"),
-          attr1 = new TextAttribute({}, range(0,0,0,5)),
-          attr2 = new TextAttribute({}, range(0,0,1,5)),
-          attr3 = new TextAttribute({}, range(0,0,2,3));
-      doc.textAttributes = [attr1, attr2, attr3];
-      doc.remove(range(0,1,0,2));
-      expect(doc.textAttributes).equals([attr1, attr2, attr3]);
-      expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/4)");
-      expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 1/5)");
-      expect(doc.textAttributes[2].range).stringEquals("Range(0/0 -> 2/3)");
-      expect(doc.textAttributesByLine).equals([[attr1, attr2, attr3], [attr2, attr3], [attr3]]);
+    describe("addition", () => {
 
-      doc.remove(range(0,0,0,5));
-      expect(doc.textAttributes).equals([attr2, attr3]);
-      expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 1/5)");
-      expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 2/3)");
-      expect(doc.textAttributesByLine).equals([[attr2, attr3], [attr2, attr3], [attr3]]);
+      it("of single attribute", () => {
+        var attr = TextAttribute.create({}, 1,2, 1, 5);
+        doc.addTextAttributes([attr])
+        expect(doc.textAttributes).equals([attr]);
+        expect(doc.textAttributesByLine).equals([undefined, [attr]]);
+      });
 
-      doc.remove(range(0,0,2,0));
-      expect(doc.textAttributes).equals([attr3]);
-      expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/3)");
-      expect(doc.textAttributesByLine).equals([[attr3]]);
+      it("of single attribute on multiple lines", () => {
+        var attr = TextAttribute.create({}, 0,2, 1, 5);
+        doc.addTextAttributes([attr])
+        expect(doc.textAttributes).equals([attr]);
+        expect(doc.textAttributesByLine).equals([[attr], [attr]]);
+      });
+
+      it("of multiple attribute on single line", () => {
+        var attr1 = TextAttribute.create({}, 0,2, 0, 5);
+        var attr2 = TextAttribute.create({}, 0,1, 0, 5);
+        var attr3 = TextAttribute.create({}, 0,3, 0, 5);
+        doc.addTextAttributes([attr1, attr2, attr3])
+        expect(doc.textAttributes).equals([attr2, attr1, attr3]);
+        expect(doc.textAttributesByLine).equals([[attr2, attr1, attr3]]);
+      });
+
+      it("of multiple attribute across lines", () => {
+        var attr1 = TextAttribute.create({}, 0,2, 0, 5);
+        var attr2 = TextAttribute.create({}, 0,1, 1, 5);
+        var attr3 = TextAttribute.create({}, 0,3, 1, 0);
+        var attr4 = TextAttribute.create({}, 1,3, 1, 4);
+        doc.addTextAttributes([attr1, attr2, attr3, attr4])
+        expect(doc.textAttributes).equals([attr2, attr1, attr3, attr4]);
+        expect(doc.textAttributesByLine).equals([[attr2, attr1, attr3], [attr2, attr3, attr4]]);
+      });
+
+      it("of multiple attributes across lines with existing attributes", () => {
+        var [attr1, attr2, attr3] = doc.textAttributes = [
+          TextAttribute.create({}, 0,-1, 1, 5),
+          TextAttribute.create({}, 1,0, 1, 4),
+          TextAttribute.create({}, 1,4, 1, 5)
+        ];
+        var attr4 = TextAttribute.create({}, 0,2, 0, 5),
+            attr5 = TextAttribute.create({}, 0,1, 1, 5),
+            attr6 = TextAttribute.create({}, 0,3, 1, 0),
+            attr7 = TextAttribute.create({}, 1,3, 1, 4);
+        doc.addTextAttributes([attr4, attr5, attr6, attr7]);
+        expect(doc.textAttributes).equals([attr1, attr5, attr4, attr6, attr2, attr7, attr3]);
+        expect(doc.textAttributesByLine).equals([
+          [attr1, attr5, attr4, attr6],
+          [attr1, attr5, attr6, attr2, attr7, attr3]
+        ]);
+      });
+
     });
 
-    it("are updated on deletion of line break", () => {
-      var doc = TextDocument.fromString("a\nb"),
-          attr = new TextAttribute({}, range(1,0,1,1));
-      doc.textAttributes = [attr];
-      doc.remove(range(0,1,1,0));
-      expect(doc.textAttributes).equals([attr]);
-      expect(doc.textAttributes[0].range).stringEquals("Range(0/1 -> 0/2)");
-      expect(doc.textAttributesByLine).equals([[attr]]);
+    describe("on text deletion", () => {
+
+      it("are updated", () => {
+        doc.textString = "hello\nworld\n123";
+        let attr1 = new TextAttribute({}, range(0,0,0,5)),
+            attr2 = new TextAttribute({}, range(0,0,1,5)),
+            attr3 = new TextAttribute({}, range(0,0,2,3));
+        doc.textAttributes = [attr1, attr2, attr3];
+        doc.remove(range(0,1,0,2));
+        expect(doc.textAttributes).equals([attr1, attr2, attr3]);
+        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/4)");
+        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 1/5)");
+        expect(doc.textAttributes[2].range).stringEquals("Range(0/0 -> 2/3)");
+        expect(doc.textAttributesByLine).equals([[attr1, attr2, attr3], [attr2, attr3], [attr3]]);
+  
+        doc.remove(range(0,0,0,5));
+        expect(doc.textAttributes).equals([attr2, attr3]);
+        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 1/5)");
+        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 2/3)");
+        expect(doc.textAttributesByLine).equals([[attr2, attr3], [attr2, attr3], [attr3]]);
+  
+        doc.remove(range(0,0,2,0));
+        expect(doc.textAttributes).equals([attr3]);
+        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/3)");
+        expect(doc.textAttributesByLine).equals([[attr3]]);
+      });
+  
+      it("of line break are updated", () => {
+        doc.textString = "a\nb";
+        let attr = new TextAttribute({}, range(1,0,1,1));
+        doc.textAttributes = [attr];
+        doc.remove(range(0,1,1,0));
+        expect(doc.textAttributes).equals([attr]);
+        expect(doc.textAttributes[0].range).stringEquals("Range(0/1 -> 0/2)");
+        expect(doc.textAttributesByLine).equals([[attr]]);
+      });
+
+      it("are updated even if not directly in modified range", () => {
+        doc.textString = "a\n\nb";
+        let attr = new TextAttribute({}, range(2,0,2,1));
+        doc.textAttributes = [attr];
+        doc.remove(range(0,1,1,0));
+        expect(doc.textAttributes[0].range).stringEquals("Range(1/0 -> 1/1)");
+        expect(doc.textAttributesByLine).equals([undefined, [attr]]);
+      });
+  
+      it("are completely removed", () => {
+        doc.textString = "a\nb\nc";
+        let attr = new TextAttribute({}, range(1,0,1,1));
+        doc.textAttributes = [attr];
+        doc.remove(range(0,0,2,1));
+        expect(doc.textAttributes).equals([]);
+        expect(doc.textAttributesByLine).equals([undefined]);
+      });
+
     });
 
-    it("are updated on insertion", () => {
-      var doc = TextDocument.fromString("hello\nworld"),
-          attr1 = new TextAttribute({}, range(0,0,0,5)),
-          attr2 = new TextAttribute({}, range(0,0,1,5));
-      doc.textAttributes = [attr1, attr2];
+    describe("on text insertion", () => {
 
-      doc.insert("X", {row: 0, column: 5});
-      expect(doc.textAttributes).equals([attr1, attr2]);
-      expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/6)");
-      expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 1/5)");
-      expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr2]]);
+      it("are updated", () => {
+        doc.textString = "hello\nworld";
+        let attr1 = new TextAttribute({}, range(0,0,0,5)),
+            attr2 = new TextAttribute({}, range(0,0,1,5));
+        doc.textAttributes = [attr1, attr2];
+  
+        doc.insert("X", {row: 0, column: 5});
+        expect(doc.textAttributes).equals([attr1, attr2]);
+        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 0/6)");
+        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 1/5)");
+        expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr2]]);
+  
+        doc.insert("A\nY\nZ", {row: 0, column: 5});
+        expect(doc.textAttributes).equals([attr1, attr2]);
+        expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 2/2)");
+        expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 3/5)");
+        expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr1, attr2], [attr1, attr2], [attr2]]);
+      });
 
-      doc.insert("A\nY\nZ", {row: 0, column: 5});
-      expect(doc.textAttributes).equals([attr1, attr2]);
-      expect(doc.textAttributes[0].range).stringEquals("Range(0/0 -> 2/2)");
-      expect(doc.textAttributes[1].range).stringEquals("Range(0/0 -> 3/5)");
-      expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr1, attr2], [attr1, attr2], [attr2]]);
+      it("are updated even if not directly in modified range 1", () => {
+        doc.textString = "a\nb";
+        let attr = new TextAttribute({}, range(1,0,1,1));
+        doc.textAttributes = [attr];
+        doc.insert("\n", {row: 0, column: 1});
+        expect(doc.textAttributes[0].range).stringEquals("Range(2/0 -> 2/1)");
+        expect(doc.textAttributesByLine).equals([[], [], [attr]]);
+      });
+
     });
 
-    it("are updated on insertion even if not directly in modified range 1", () => {
-      var doc = TextDocument.fromString("a\nb"),
-          attr = new TextAttribute({}, range(1,0,1,1));
-      doc.textAttributes = [attr];
-      doc.insert("\n", {row: 0, column: 1});
-      expect(doc.textAttributes[0].range).stringEquals("Range(2/0 -> 2/1)");
-      expect(doc.textAttributesByLine).equals([[], [], [attr]]);
-    });
-
-    it("are updated on deletion even if not directly in modified range 2", () => {
-      var doc = TextDocument.fromString("a\n\nb"),
-          attr = new TextAttribute({}, range(2,0,2,1));
-      doc.textAttributes = [attr];
-      doc.remove(range(0,1,1,0));
-      expect(doc.textAttributes[0].range).stringEquals("Range(1/0 -> 1/1)");
-      expect(doc.textAttributesByLine).equals([undefined, [attr]]);
-    });
-
-    it("are completely removed on deletion", () => {
-      var doc = TextDocument.fromString("a\nb\nc"),
-          attr = new TextAttribute({}, range(1,0,1,1));
-      doc.textAttributes = [attr];
-      doc.remove(range(0,0,2,1));
-      expect(doc.textAttributes).equals([]);
-      expect(doc.textAttributesByLine).equals([undefined]);
-    });
 
     describe("chunking attributes", () => {
 
@@ -403,15 +471,15 @@ describe("text doc", () => {
       });
 
       it("attribute on single line", () => {
-        var doc = TextDocument.fromString("hello\n  world"),
-            attr1 = new TextAttribute({}, range(0,0,0,5));
+        doc.textString = "hello\n  world";
+        let attr1 = new TextAttribute({}, range(0,0,0,5));
         doc.textAttributes = [attr1];
         expect(doc.textAttributesChunked()).deep.equals([[0, 5, [attr1]], [0, 7, []]]);
       });
 
       it("overlapping", () => {
-        var doc = TextDocument.fromString("hello\n  world"),
-            attr1 = new TextAttribute({}, range(0,1,0,5)),
+        doc.textString = "hello\n  world";
+        let attr1 = new TextAttribute({}, range(0,1,0,5)),
             attr2 = new TextAttribute({}, range(0,2,0,4));
         doc.textAttributes = [attr1, attr2];
         expect(doc.textAttributesChunked()).equals([
@@ -420,8 +488,8 @@ describe("text doc", () => {
       });
 
       it("overlapping lines", () => {
-        var doc = TextDocument.fromString("hello\n  world"),
-            attr1 = new TextAttribute({}, range(0,0,0,5)),
+        doc.textString = "hello\n  world";
+        let attr1 = new TextAttribute({}, range(0,0,0,5)),
             attr2 = new TextAttribute({}, range(0,0,1,5));
         doc.textAttributes = [attr1, attr2];
         expect(doc.textAttributesChunked()).deep.equals([
@@ -430,16 +498,16 @@ describe("text doc", () => {
       });
 
       it("sparse", () => {
-        var doc = TextDocument.fromString("hello\nworld"),
-            attr1 = new TextAttribute({}, range(0,1,0,3)),
+        doc.textString = "hello\nworld";
+        let attr1 = new TextAttribute({}, range(0,1,0,3)),
             attr2 = new TextAttribute({}, range(0,5,1,5));
         doc.textAttributes = [attr1, attr2];
         expect(doc.textAttributesChunked()).equals([[0,1, [], 1, 3, [attr1], 3,5, []], [0, 5, [attr2]]])
       });
 
       it("empty line followed by single", () => {
-        var doc = TextDocument.fromString("\na"),
-            attr1 = new TextAttribute({}, range(0,1,1,1)),
+        doc.textString = "\na";
+        let attr1 = new TextAttribute({}, range(0,1,1,1)),
             attr2 = new TextAttribute({}, range(1,0,1,1));
         doc.textAttributes = [attr1, attr2];
         expect(doc.textAttributesChunked()).equals([[0,0, []], [0,1, [attr1, attr2]]])

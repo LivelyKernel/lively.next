@@ -49,20 +49,20 @@ export class Text extends Morph {
   }
 
   constructor(props = {}) {
-    var {fontMetric, textString, selectable, selection, clipMode, textAttributes } = props;
-    props = obj.dissoc(props, ["textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes"])
+    var {
+      fontMetric, textString, selectable, selection, clipMode, textAttributes,
+      fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
+    } = props;
+    props = obj.dissoc(props, [
+      "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
+      // default style attrs: need document to be installed first
+      "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration", "fixedCharacterSpacing"
+    ]);
     super({
       readOnly: false,
       draggable: false,
       fixedWidth: false, fixedHeight: false,
       padding: 0,
-      fontFamily: "Sans-Serif",
-      fontSize: 12,
-      fontColor: Color.black,
-      fontWeight: "normal",
-      fontStyle: "normal",
-      textDecoration: "none",
-      fixedCharacterSpacing: false,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
@@ -76,6 +76,15 @@ export class Text extends Morph {
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     if (clipMode) this.clipMode = clipMode;
+    
+    this.fontFamily = fontFamily || "Sans-Serif";
+    this.fontSize = fontSize || 12;
+    this.fontColor = fontColor || Color.black;
+    this.fontWeight = fontWeight || "normal";
+    this.fontStyle = fontStyle || "normal";
+    this.textDecoration = textDecoration || "none";
+    this.fixedCharacterSpacing = fixedCharacterSpacing || false;
+
     if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
     this._needsFit = false;
@@ -600,9 +609,9 @@ export class Text extends Morph {
     this.makeDirty();
   }
 
-  setTextAttributesSorted(attrs) {
+  setSortedTextAttributes(attrs) {
     // see comment in document
-    this.document.setTextAttributesSorted(attrs);
+    this.document.setSortedTextAttributes(attrs);
     this._needsFit = true; 
     this.textLayout && (this.textLayout.layoutComputed = false);
     this.makeDirty();
@@ -615,13 +624,27 @@ export class Text extends Morph {
     this.makeDirty();
   }
 
+  removeTextAttribute(attr) {
+    this.document.removeTextAttribute(attr);
+    this._needsFit = true; 
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
+  }
+
   setDefaultStyle(style = this.styleProps) {
-    let { document } = this;
-    if (!document) return;
-    let start = { row: 0, column: -1 },
-        end = document.endPosition,
-        defaultTextAttribute = TextAttribute.fromPositions(style, start, end);
-    this.addTextAttribute(defaultTextAttribute);
+    var attr = this.textAttributes.find(ea =>
+      ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0);
+    if (attr) {
+      Object.assign(attr.data, style);
+      this._needsFit = true; 
+      this.textLayout && (this.textLayout.layoutComputed = false);
+      this.makeDirty();
+    } else {
+      this.addTextAttribute(
+        TextAttribute.fromPositions(
+          style, { row: 0, column: -1 },
+          this.documentEndPosition));
+    }
   }
 
   resetTextAttributes() {

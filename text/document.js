@@ -3,9 +3,6 @@ import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } fr
 import { Range } from "./range.js";
 import { TextAttribute } from "./style.js";
 
-const newline = "\n",
-      newlineLength = newline.length;
-
 export default class TextDocument {
 
   static fromString(string) {
@@ -14,8 +11,8 @@ export default class TextDocument {
     return doc;
   }
 
-  static get newline() { return newline; }
-  static get newlineLength() { return newlineLength; }
+  static get newline() { return "\n"; }
+  static get newlineLength() { return 1; }
   static parseIntoLines(text) { return text.split(this.newline); }
 
   constructor(lines = [], textAttributes = []) {
@@ -25,8 +22,8 @@ export default class TextDocument {
     textAttributes.map(range => this.addTextAttribute(range));
   }
 
-  get textString() { return this.lines.join(TextDocument.newline); }
-  set textString(string) { this.lines = TextDocument.parseIntoLines(string); }
+  get textString() { return this.lines.join(this.constructor.newline); }
+  set textString(string) { this.lines = this.constructor.parseIntoLines(string); }
   get stringLength() { return this.textString.length; }
 
   get endPosition() {
@@ -45,11 +42,11 @@ export default class TextDocument {
 
   get textAttributes() { return this._textAttributes; }
   set textAttributes(textAttributes) {
-    this.setTextAttributesSorted(textAttributes.sort(Range.compare));
+    this.setSortedTextAttributes(textAttributes.sort(Range.compare));
   }
 
-  setTextAttributesSorted(attributes) {
-    // NOTE only use if attributes are sorted accoring to Range.compare(attrA, attrB)
+  setSortedTextAttributes(attributes) {
+    // ONLY use if attributes are sorted according to Range.compare!
     // Horrible things will happen otherwise!!
     this._textAttributes = attributes;
     this._textAttributesByLine = new Array(this.lines.length);
@@ -63,30 +60,70 @@ export default class TextDocument {
   }
 
   addTextAttribute(textAttr) {
-    var {start, end} = textAttr;
+    return this.addSortedTextAttributes([textAttr]);
+  }
 
-    // _textAttributes is sorted by position. To not iterate over the entire
-    // attributes array when inserting the new attribute we first try to find
-    // an existing attribute in the by-line index if we have found that and it
-    // is a shortcut into finding the right position
-    var textAttrBefore;
-    for (var row = start.row; row >= 0; row--) {
-      var attrs = this._textAttributesByLine[row];
-      if (attrs && attrs.length && Range.compare(attrs[0], textAttr) <= 0) {
-        textAttrBefore = attrs[0];
-        break;
-      }
+  addTextAttributes(attrs) {
+    this.addSortedTextAttributes(attrs.sort(Range.compare));
+  }
+
+  addSortedTextAttributes(attrs) {
+    if (!attrs.length) return;
+    let textAttributes = this._textAttributes,
+        first = attrs[0],
+        last = arr.last(attrs);
+
+    // 1. Figure out what the start and end indexes of this._textAttributes are
+    // between which we need to insert the new attributes. We look for the
+    // attributes between first.start.row and last.end.row since we also have to
+    // update the line index later.
+
+    let insertionStart = 0;
+    while (insertionStart < textAttributes.length && first.start.row > textAttributes[insertionStart].start.row)
+      insertionStart++;
+
+    let insertionEnd = insertionStart;
+    while (insertionEnd < textAttributes.length && textAttributes[insertionEnd].end.row <= last.end.row)
+      insertionEnd++;
+
+    var newAttributes = textAttributes.slice(insertionStart, insertionEnd).concat(attrs).sort(Range.compare);
+    // 2. Insert the new attributes mixed with the old ones sorted.
+    this._textAttributes = textAttributes.slice(0, insertionStart).concat(newAttributes).concat(textAttributes.slice(insertionEnd));
+
+    // 3. Update the line index: First reset the line index between the start
+    // and end row. However, in the line index might be ranges that start
+    // before first.start.row. Those attributes are not in newAttributes and
+    // this is why we need to leave them in the index
+    for (let row = first.start.row; row <= last.end.row; row++) {
+      var byLine = this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []),
+          i = 0;
+      while (i < byLine.length && byLine[i].start.row < first.start.row) i++;
+      byLine.length = i;
     }
 
-    if (textAttrBefore) {
-      this._textAttributes.splice(this._textAttributes.indexOf(textAttrBefore)+1, 0, textAttr);
-    } else {
-      this._textAttributes.unshift(textAttr);
+    // Now that only attributes that start before of the inserted attributes
+    // are in the line index we can simply append the new attributes. Since they
+    // are already sorted, the correct order is maintained
+    for (var i = 0; i < newAttributes.length; i++) {
+      let attr = newAttributes[i], {start, end} = attr;
+      for (let row = start.row; row <= end.row; row++)
+        (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
+          .push(attr);
     }
+  }
 
-    for (let row = start.row; row <= end.row; row++)
-      (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
-        .push(textAttr);
+  removeTextAttribute(attr) {
+    var idx = this._textAttributes.indexOf(attr);
+    if (idx > -1) this._textAttributes.splice(idx, 1);
+    for (let row = attr.start.row; row <= attr.end.row; row++) {
+      let attrs = this._textAttributesByLine[row] || [],
+          idx = attrs.indexOf(attr);
+      if (idx > -1) attrs.splice(idx, 1);
+    }
+  }
+
+  removeTextAttributes(attrs) {
+    this.setSortedTextAttributes(arr.withoutAll(this._textAttributes, attrs));
   }
 
   resetTextAttributes() { this._textAttributes = []; this._textAttributesByLine = []; }
@@ -110,7 +147,7 @@ export default class TextDocument {
         lines = this.lines,
         maxLength = lines.length-1;
     for (var i = startRow; i < row; i++)
-      index += lines[i].length + (i === maxLength ? 0 : TextDocument.newlineLength);
+      index += lines[i].length + (i === maxLength ? 0 : this.constructor.newlineLength);
     return index + column;
   }
 
@@ -120,9 +157,9 @@ export default class TextDocument {
     var lines = this.lines;
     if (lines.length === 0) return {row: 0, column: 0};
     for (var i = startRow, l = lines.length; i < l; i++) {
-      index -= lines[i].length + TextDocument.newlineLength;
+      index -= lines[i].length + this.constructor.newlineLength;
       if (index < 0)
-        return {row: i, column: index + lines[i].length + TextDocument.newlineLength};
+        return {row: i, column: index + lines[i].length + this.constructor.newlineLength};
     }
     return {row: l-1, column: lines[l-1].length};
   }
@@ -157,8 +194,8 @@ export default class TextDocument {
 
     let result = lines[row].slice(column);
     for (let i = row+1; i < endRow; i++)
-      result += TextDocument.newline + lines[i];
-    return result + TextDocument.newline + lines[endRow].slice(0, endColumn);
+      result += this.constructor.newline + lines[i];
+    return result + this.constructor.newline + lines[endRow].slice(0, endColumn);
   }
 
   setTextInRange(string, range) {
@@ -171,7 +208,7 @@ export default class TextDocument {
     let {lines} = this,
         {row, column} = pos,
         line = lines[row],
-        insertionLines = TextDocument.parseIntoLines(string);
+        insertionLines = this.constructor.parseIntoLines(string);
 
     if (!line) line = lines[row] = "";
 
@@ -241,47 +278,31 @@ export default class TextDocument {
     lines[fromRow] = lines[fromRow].slice(0, fromCol) + lines[toRow].slice(toCol);
     lines.splice(fromRow+1, toRow - fromRow);
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // text attribute updating...
-    // ...those that now have an empty range...
-    for (let i = this._textAttributes.length-1; i >= 0; i--) {
-      let attr = this._textAttributes[i];
-      // since the attributes are sorted we know that no other attr that needs
-      // update is in _textAttributes but not in _textAttributesByLine
-      if (attr.start.row <= toRow) break;
-      attr.onDelete(range);
-    }
 
-    var attrsToRemove = [], attrsSeen = [];
-    for (let row = fromRow; row <= toRow; row++) {
-      // Get the attributes for each line. Note that the _textAttributesByLine
-      // index can include identical TextAttribute objects on multiple lines...
-      let attrs = this._textAttributesByLine[row];
-      if (!attrs) continue;
-      for (let i = attrs.length-1; i >= 0; i--) {
-        let attr = attrs[i];
-        // ...this is why we need to keep track of which attribtues we have
-        // already seen...
-        if (attrsToRemove.includes(attr)) { attrs.splice(i, 1); continue; }
-        if (attrsSeen.includes(attr)) continue;
-        attrsSeen.push(attr);
-        // ...and only inform those about the change once...
-        if (!attr.onDelete(range) || !attr.isEmpty()) {
-          // The attribute might have moved rows up b/c of the deletion:
-          let attrsOfLine = this._textAttributesByLine[attr.start.row]
-                        || (this._textAttributesByLine[attr.start.row] = []);
-          if (!attrsOfLine.includes(attr)) attrsOfLine.push(attr);
-          continue; // not not to remove or otherwise change
+    var rangesToRemove = [],
+        currentRangeStart = undefined, currentRangeEnd = undefined,
+        textAttributes = this._textAttributes;
+
+    for (var i = 0; i < textAttributes.length; i++) {
+      var ea = textAttributes[i];
+      if (ea.onDelete(range) && ea.isEmpty()) {
+        if (currentRangeStart === undefined)
+          currentRangeStart = i;
+        currentRangeEnd = i + 1;
+      } else {
+        if (currentRangeStart !== undefined) {
+          rangesToRemove.push([currentRangeStart, currentRangeEnd]);
+          currentRangeStart = currentRangeEnd = undefined;
         }
-        attrsToRemove.push(attr);
-        attrs.splice(i, 1);
-        // ...and remove them only once as well!
-        this._textAttributes.splice(this._textAttributes.indexOf(attr), 1);
       }
     }
-    // Last thing: resize the line index.
-    this._textAttributesByLine.splice(fromRow+1, toRow - fromRow);
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    if (currentRangeStart !== undefined)
+      rangesToRemove.push([currentRangeStart, currentRangeEnd]);
+
+    rangesToRemove.reverse().forEach(([i,j]) => textAttributes = textAttributes.slice(0,i).concat(textAttributes.slice(j)))
+    this.setSortedTextAttributes(textAttributes);
+
   }
 
   wordsOfLine(row) {
