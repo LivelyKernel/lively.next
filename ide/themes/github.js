@@ -17,6 +17,7 @@ export default class GithubTheme extends Theme {
       case Token.string: return { fontColor: Color.rgbHex("#183691"), fontWeight: "bold" };
       case Token.comment: return { fontColor: Color.rgbHex("#969896"), fontWeight: "bold" };
       case Token.regex: return { fontColor: Color.rgbHex("#009926"), fontWeight: "bold" };
+      case Token.context: return { fontColor: Color.rgbHex("#bfbfbf"), fontWeight: "bold" };
       case Token.error: return { backgroundColor: Color.rgbHex("#ff4c4c"), fontWeight: "bold" };
       default: return { fontColor: Color.rgbHex("#333"), fontWeight: "bold" };
     }

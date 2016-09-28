@@ -10,14 +10,16 @@ import { Token, Highlighter, Theme } from "./highlighting.js";
 import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
 import JavaScriptChecker from "./modes/javascript-checker.js";
 import PlainHighlighter from "./modes/plain.js";
+import DiffHighlighter from "./modes/diff.js";
 import ChromeTheme from "./themes/chrome.js";
 import TomorrowNightTheme from "./themes/tomorrow-night.js";
 import GithubTheme from "./themes/github.js";
 
 const highlighters = {
   "plain": PlainHighlighter,
-  "javascript": JavaScriptHighlighter
-}
+  "javascript": JavaScriptHighlighter,
+  "diff": DiffHighlighter
+};
 
 const checkers = {
   "plain": null,

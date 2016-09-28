@@ -4,7 +4,7 @@ import { Token, Theme } from "../highlighting.js";
 
 export default class TomorrowNightTheme extends Theme {
   background() { // -> Color
-    return Color.rgbHex("#1a1a1a");
+    return Color.rgbHex("#0a0a0a");
   }
   style(token) { // Token -> Style
     switch (token) {
@@ -17,6 +17,7 @@ export default class TomorrowNightTheme extends Theme {
       case Token.string: return { fontColor: Color.rgbHex("#b9ca4a"), fontWeight: "bold" };
       case Token.comment: return { fontColor: Color.rgbHex("#969896"), fontWeight: "bold" };
       case Token.regex: return { fontColor: Color.rgbHex("#d54e53"), fontWeight: "bold" };
+      case Token.context: return { fontColor: Color.rgbHex("#454545"), fontWeight: "bold" };
       case Token.error: return { backgroundColor: Color.rgbHex("#641d1d"), fontWeight: "bold" };
       default: return { fontColor: Color.rgbHex("#dedede"), fontWeight: "bold" };
     }

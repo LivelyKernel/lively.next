@@ -12,10 +12,10 @@ export { show } from "./markers.js"
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { World } from "./world.js";
-import { Morph, Hand, Image, Ellipse } from "./morph.js";
+import { Morph, Hand, Image, Ellipse, Path } from "./morph.js";
 import { List } from "./list.js";
 import { Text } from "./text/morph.js";
-import { Button } from "./widgets.js";
+import { Button, CheckBox } from "./widgets.js";
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;
@@ -27,9 +27,11 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'hand':    klass = Hand; break;
         case 'image':   klass = Image; break;
         case 'ellipse': klass = Ellipse; break;
+        case 'path':    klass = Path; break;
         case 'text':    klass = Text; break;
         case 'list':    klass = List; break;
         case 'button':  klass = Button; break;
+        case 'checkbox':klass = CheckBox; break;
       }
   }
 
