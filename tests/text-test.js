@@ -6,30 +6,36 @@ import { Text } from "../text/morph.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric, expectSelection } from "./test-helpers.js";
+import { TextAttribute } from "../text/style.js";
 
 expectSelection(chai);
 
-// FIXME! FontMetric should work in nodejs with jsdom as well!!!
 var inBrowser = System.get("@system-env").browser ? it :
   (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); }
 
-var describeInBrowser = System.get("@system-env").browser ? describe :
-  (title, fn) => { console.warn(`Suite ${title} is currently only supported in a browser`); return xdescribe(title, fn); }
+const defaultStyle = {
+  fontFamily: "Monaco, monospace",
+  fontSize: 10,
+  fontWeight: "normal",
+  fontColor: Color.black,
+  fontStyle: "normal",
+  textDecoration: "none",
+  fixedCharacterSpacing: false
+}
 
-const padding = 20;
 
 function text(string, props) {
   return new Text({
     name: "text",
     textString: string,
-    fontFamily: "Monaco, monosonpace",
-    fontSize: 10,
     extent: pt(100,100),
-    padding,
+    padding: Rectangle.inset(3),
     fontMetric,
+    ...defaultStyle,
     ...props
   });
 }
+
 
 function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
@@ -59,17 +65,46 @@ async function destroyMorphicEnv() {
 }
 
 
-describe("text operations", () => {
+describe("text attributes", () => {
 
-  it("selection / line string", () => {
-    var t = text("hello\n world", {});
-    t.selection = range(0,2,0,4);
-    t.withSelectedLinesDo((line, range) => t.insertText(" ", range.start));
-    expect(t.textString).equals(" hello\n world");
-    expect(t.selection.text).equals("ll");
+  var style_a = { fontSize: 12, fontStyle: "italic" },
+      style_b = { fontSize: 14, fontWeight: "bold" },
+      a = TextAttribute.create(style_a, 0, 1, 0, 3),
+      b = TextAttribute.create(style_b, 0, 2, 0, 4),
+      textAttributes;
+
+  beforeEach(() => sut = text("hello", {}))
+
+  it("begins with default style range", () => {
+    var textAttributes = sut.document.textAttributesByLine[0];
+    expect(textAttributes).property("length").equals(1);
+    expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
   });
 
-});
+  it("addTextAttribute merges style ranges", () => {
+    sut.addTextAttribute(a);
+    var textAttributes = sut.document.textAttributesByLine[0];
+
+    expect(textAttributes).property("length").equals(2);
+    expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
+    expect(textAttributes[1].range).stringEquals("Range(0/1 -> 0/3)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[1].data).deep.equals(style_a);
+
+    sut.addTextAttribute(b);
+    textAttributes = sut.document.textAttributesByLine[0];
+
+    expect(textAttributes).property("length").equals(3);
+    expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
+    expect(textAttributes[1].range).stringEquals("Range(0/1 -> 0/3)");
+    expect(textAttributes[2].range).stringEquals("Range(0/2 -> 0/4)");
+    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[1].data).deep.equals(style_a);
+    expect(textAttributes[2].data).deep.equals(style_b);
+  });
+
+})
 
 describe("anchors", () => {
 
@@ -127,59 +162,25 @@ describe("anchors", () => {
 });
 
 
-describe("rendered text", () => {
-
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
-
-  inBrowser("only renders visible part of scrolled text", async () => {
-    var lineHeight = sut.textLayout.lines[0].height;
-    Object.assign(sut, {
-      clipMode: "auto",
-      extent: pt(100,2*lineHeight), position: pt(0,0),
-      textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
-      scroll: pt(0, lineHeight*2+padding-1)
-    });
-
-    await sut.whenRendered();
-
-    var node = env.renderer.getNodeForMorph(sut),
-        b = node.querySelector(".text-layer").getBoundingClientRect(),
-        textBounds = new Rectangle(b.left, b.top, b.width, b.height);
-
-    expect(textBounds.top()).equals(-2*lineHeight-padding+1, "text layer not scrolled");
-    expect(textBounds.height).equals(lineHeight*11 + 2*padding, "text layer does not have size of all lines");
-    expect(node.querySelector(".text-layer").textContent).equals("123", "text  layer renders more than necessary");
-  });
-
-  it("can resize on content change", async () => {
-    sut.textString = "Hello hello";
-    await sut.whenRendered();
-    expect(sut.width).equals(11*fontMetric.width + 2*padding);
-    sut.textString = "foo";
-    await sut.whenRendered();
-    expect(sut.width).equals(3*fontMetric.width + 2*padding);
-  });
-
-});
-
-
 describe("scroll", () => {
 
   beforeEach(() => createMorphicEnv());
   afterEach(() => destroyMorphicEnv());
 
   it("cursor into view", () => {
-    var lineHeight = fontMetric.height;
+    var lineHeight = fontMetric.height,
+        padTop = sut.padding.top(),
+        padBot = sut.padding.bottom();
     Object.assign(sut, {
       clipMode: "auto",
-      extent: pt(100,2*lineHeight+2*padding),
+      borderWidth: 0,
+      extent: pt(100,2*lineHeight),
       textString: [0,1,2,3,4,5,6,7,8,9].join("\n"),
     });
-    expect(sut.scrollExtent).equals(pt(100, sut.document.lines.length * lineHeight + 2*padding, "scrollExtent not as expected"));
+    expect(sut.scrollExtent).equals(pt(100, sut.document.lines.length * lineHeight + padTop+padBot, "scrollExtent not as expected"));
     sut.cursorPosition = { column: 0, row: 3 }
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,lineHeight*2-padding));
+    expect(sut.scroll).equals(pt(0,2*lineHeight+padTop));
     sut.cursorPosition = {column: 0, row: 0};
     sut.scrollCursorIntoView();
     expect(sut.scroll).equals(pt(0,0))
@@ -237,12 +238,19 @@ describe("text key events", () => {
 
 describe("text mouse events", () => {
 
-  beforeEach(() => createMorphicEnv());
+  var padLeft, padRight, padTop, padBot;
+  beforeEach(async () => {
+    await createMorphicEnv();
+    padLeft = sut.padding.left();
+    padRight = sut.padding.right();
+    padTop = sut.padding.top();
+    padBot = sut.padding.bottom();
+  });
   afterEach(() => destroyMorphicEnv());
 
   it("click sets cursor", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*3 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line
+        clickPos = pt(x+fontMetric.width*3 + 2 + padLeft, y+fontMetric.height*2 - 5 + padTop); // second line
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
     env.eventDispatcher.simulateDOMEvents({target: sut, type: "click", position: clickPos});
@@ -254,7 +262,7 @@ describe("text mouse events", () => {
 
   it("double-click selects word", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+        clickPos = pt(x+fontMetric.width*2 + 2 + padLeft, y+fontMetric.height*2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
@@ -267,7 +275,7 @@ describe("text mouse events", () => {
 
   it("triple-click selects line", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+        clickPos = pt(x+fontMetric.width*2 + 2 + padLeft, y+fontMetric.height*2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
@@ -281,7 +289,7 @@ describe("text mouse events", () => {
 
   it("4-click sets cursor", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+        clickPos = pt(x+fontMetric.width*2 + 2 + padLeft, y+fontMetric.height*2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
@@ -296,7 +304,7 @@ describe("text mouse events", () => {
 
   it("5-click selects word", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+        clickPos = pt(x+fontMetric.width*2 + 2 + padLeft, y+fontMetric.height*2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
@@ -312,7 +320,7 @@ describe("text mouse events", () => {
 
   it("6-click selects line", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
-        clickPos = pt(x+fontMetric.width*2 + 2 + padding, y+fontMetric.height*2 - 5 + padding); // second line, second char
+        clickPos = pt(x+fontMetric.width*2 + 2 + padLeft, y+fontMetric.height*2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
@@ -331,9 +339,9 @@ describe("text mouse events", () => {
     var {position: {x,y}, fontFamily, fontSize, textString} = sut,
         {width: charW, height: charH} = fontMetric;
 
-    var dragStartPos =    pt(charW+padding-2, charH+padding-2),
-        dragOvershotPos = pt(3*charW+padding+10, charH*2+padding+10),
-        dragEndPos =      pt(3*charW+padding+2, charH*2+padding-charH/2);
+    var dragStartPos =    pt(charW+padLeft-2, charH+padTop-2),
+        dragOvershotPos = pt(3*charW+padLeft+10, charH*2+padTop+10),
+        dragEndPos =      pt(3*charW+padLeft+2, charH*2+padTop-charH/2);
 
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
 
@@ -431,6 +439,14 @@ describe("clipboard buffer / kill ring", () => {
 
 describe("text movement and selection commands", () => {
   
+  it("selection / line string", () => {
+    var t = text("hello\n world", {});
+    t.selection = range(0,2,0,4);
+    t.withSelectedLinesDo((line, range) => t.insertText(" ", range.start));
+    expect(t.textString).equals(" hello\n world");
+    expect(t.selection.text).equals("ll");
+  });
+
   describe("paragraphs", () => {
 
     var t;
