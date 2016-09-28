@@ -40,7 +40,8 @@ var worldCommands = [
 
   {
     name: "run command",
-    exec: async world => {
+    handlesCount: true,
+    exec: async (world, args, count) => {
       var items = KeyHandler.generateCommandToKeybindingMap(world.focusedMorph || world, true).map(ea => {
             var {keys, target, command: {name}} = ea,
                 targetName = target.constructor.name,
@@ -49,7 +50,7 @@ var worldCommands = [
           }),
           {prompt, selected: [cmd]} = await world.filterableListPrompt("Run command", items, {extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
       world._cachedRunCommandPrompt = prompt;
-      return cmd ? cmd.target.execCommand(cmd.command) : true;
+      return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
   },
 
