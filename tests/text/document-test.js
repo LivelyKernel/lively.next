@@ -279,10 +279,7 @@ describe("text doc", () => {
   describe("attributes", () => {
 
     var doc;
-    beforeEach(() => {
-      doc = TextDocument.fromString("hello\nworld");
-      doc.experimentalTextAttributes = true;
-    })
+    beforeEach(() => doc = TextDocument.fromString("hello\nworld"))
 
     it("attributes and text access", () => {
       doc.textString = "hello\nworld";
@@ -318,10 +315,17 @@ describe("text doc", () => {
     describe("addition", () => {
 
       it("of single attribute", () => {
-        var attr = TextAttribute.create({}, 1,2, 1, 5);
-        doc.addTextAttributes([attr])
+        var [attr] = doc.addTextAttributes([TextAttribute.create({}, 1,2, 1, 5)]);
         expect(doc.textAttributes).equals([attr]);
         expect(doc.textAttributesByLine).equals([undefined, [attr]]);
+      });
+
+      it("of single attribute after default style", () => {
+        var [attr1] = doc.textAttributes = [TextAttribute.create({}, 0,-1,1,5)],
+            attr2 = doc.addTextAttribute(TextAttribute.create({}, 0,0,0,5));
+        expect(doc.textAttributes).equals([attr1, attr2]);
+        expect(doc.textAttributesByLine).equals([[attr1, attr2], [attr1]]);
+        doc.textAttributesByLine[1]
       });
 
       it("of single attribute on multiple lines", () => {
@@ -517,4 +521,3 @@ describe("text doc", () => {
   });
 
 });
-

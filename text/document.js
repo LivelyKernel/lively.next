@@ -60,11 +60,12 @@ export default class TextDocument {
   }
 
   addTextAttribute(textAttr) {
-    return this.addSortedTextAttributes([textAttr]);
+    this.addSortedTextAttributes([textAttr]);
+    return textAttr;
   }
 
   addTextAttributes(attrs) {
-    this.addSortedTextAttributes(attrs.sort(Range.compare));
+    return this.addSortedTextAttributes(attrs.sort(Range.compare));
   }
 
   addSortedTextAttributes(attrs) {
@@ -77,13 +78,12 @@ export default class TextDocument {
     // between which we need to insert the new attributes. We look for the
     // attributes between first.start.row and last.end.row since we also have to
     // update the line index later.
-
     let insertionStart = 0;
-    while (insertionStart < textAttributes.length && first.start.row > textAttributes[insertionStart].start.row)
+    while (insertionStart < textAttributes.length && textAttributes[insertionStart].start.row < first.start.row)
       insertionStart++;
 
     let insertionEnd = insertionStart;
-    while (insertionEnd < textAttributes.length && textAttributes[insertionEnd].end.row <= last.end.row)
+    while (insertionEnd < textAttributes.length && textAttributes[insertionEnd].start.row <= last.end.row)
       insertionEnd++;
 
     var newAttributes = textAttributes.slice(insertionStart, insertionEnd).concat(attrs).sort(Range.compare);
@@ -94,7 +94,8 @@ export default class TextDocument {
     // and end row. However, in the line index might be ranges that start
     // before first.start.row. Those attributes are not in newAttributes and
     // this is why we need to leave them in the index
-    for (let row = first.start.row; row <= last.end.row; row++) {
+    var endRow = arr.max(newAttributes, (ea) => ea.end.row).end.row;
+    for (let row = first.start.row; row <= endRow; row++) {
       var byLine = this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []),
           i = 0;
       while (i < byLine.length && byLine[i].start.row < first.start.row) i++;
@@ -110,6 +111,8 @@ export default class TextDocument {
         (this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []))
           .push(attr);
     }
+
+    return attrs;
   }
 
   removeTextAttribute(attr) {
