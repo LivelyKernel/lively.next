@@ -335,7 +335,7 @@ describe("layout", () => {
       expect(m1.position.y).equals(0);
       m.resizeBy(pt(100,100));
       m.layout.col(1).fixed = false;
-      expect(m.layout.col(1).length).closeTo(50, 0.00001);
+      expect(m.layout.col(1).length).closeTo(400 / 3, 0.00001);
     });
 
     it("can set minimum spacing for columns and rows", () => {
