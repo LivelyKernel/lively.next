@@ -109,7 +109,8 @@ export class Renderer {
     return promise.waitFor(3000, () => this.domNode.ownerDocument)
       .then(doc => Promise.all([
         addOrChangeCSSDeclaration("lively-morphic-css", defaultCSS, doc),
-        addOrChangeLinkedCSS("lively-font-awesome", System.decanonicalize("lively.morphic/assets/font-awesome/css/font-awesome.css"), doc)]));
+        addOrChangeLinkedCSS("lively-font-awesome", System.decanonicalize("lively.morphic/assets/font-awesome/css/font-awesome.css"), doc),
+        addOrChangeLinkedCSS("lively-font-hack", System.decanonicalize("lively.morphic/assets/Hack-webfonts/css/hack.min.css"), doc)]));
   }
 
   startRenderWorldLoop() {
