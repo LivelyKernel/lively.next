@@ -9,6 +9,7 @@ export const Token = {
   default: "default",
   dynamic: "dynamic",
   regex: "regex",
+  context: "context",
   error: "error"
 };
 

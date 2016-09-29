@@ -238,15 +238,17 @@ export class Button extends Morph {
     return {
       borderColor: Color.gray,
       fill: Color.rgb(240,240,240),
-      fontColor: Color.almostBlack
+      fontColor: Color.almostBlack,
+      nativeCursor: "pointer"
     }
   }
 
   get inactiveStyle() {
     return {
-      borderColor: Color.darkGray,
-      fill: Color.gray,
-      fontColor: Color.darkGray
+      borderColor: Color.gray.withA(0.5),
+      fill: Color.rgba(240,240,240, 0.5),
+      fontColor: Color.almostBlack.withA(0.5),
+      nativeCursor: "not-allowed"
     }
   }
 
@@ -283,6 +285,7 @@ export class Button extends Morph {
   get active() { return this.getProperty("active"); }
   set active(value) {
     Object.assign(this, value ? this.activeStyle : this.inactiveStyle);
+    this.submorphs[0].nativeCursor = this.nativeCursor;
     this.addValueChange("active", value);
   }
 
@@ -337,8 +340,8 @@ export class CheckBox extends Morph {
 
   trigger() {
     try {
-      signal(this, "checked", !this.checked);
       this.checked = !this.checked;
+      signal(this, "toggle", this.checked);
     } catch (err) {
       var w = this.world();
       if (w) w.logError(err);
