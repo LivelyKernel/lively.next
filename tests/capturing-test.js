@@ -103,6 +103,14 @@ describe("ast.capturing", function() {
                "for (var x in {}) { x; }",
                "for (var x in {}) {\n    x;\n}");
 
+    testVarTfm("for-of won't get rewritten",
+               "for (let x of foo) { x; }",
+               "for (let x of _rec.foo) {\n    x;\n}");
+
+    testVarTfm("for-of wont get rewritten 2",
+               "for (let [x, y] of foo) { x + y; }",
+               "for (let [x, y] of _rec.foo) {\n    x + y;\n}");
+
   });
 
   describe("labels", function() {

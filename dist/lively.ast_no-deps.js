@@ -10366,5311 +10366,5531 @@ module.exports = function(acorn) {
   (function() {
     this.lively = this.lively || {};
 (function (exports,lively_lang,escodegen,acorn$1) {
-  'use strict';
+'use strict';
 
-  var babelHelpers = {};
-  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-  };
+// <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
+// Generated on 16-07-17 17:25 PDT
 
-  babelHelpers.classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
+function Visitor() {}
+Visitor.prototype.accept = function accept(node, state, path) {
+  if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
+  if (!node.type) throw new Error("Strangee AST node without type in Visitor.accept:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
+  switch (node.type) {
+    case "Node":
+      return this.visitNode(node, state, path);
+    case "SourceLocation":
+      return this.visitSourceLocation(node, state, path);
+    case "Position":
+      return this.visitPosition(node, state, path);
+    case "Program":
+      return this.visitProgram(node, state, path);
+    case "Function":
+      return this.visitFunction(node, state, path);
+    case "Statement":
+      return this.visitStatement(node, state, path);
+    case "SwitchCase":
+      return this.visitSwitchCase(node, state, path);
+    case "CatchClause":
+      return this.visitCatchClause(node, state, path);
+    case "VariableDeclarator":
+      return this.visitVariableDeclarator(node, state, path);
+    case "Expression":
+      return this.visitExpression(node, state, path);
+    case "Property":
+      return this.visitProperty(node, state, path);
+    case "Pattern":
+      return this.visitPattern(node, state, path);
+    case "Super":
+      return this.visitSuper(node, state, path);
+    case "SpreadElement":
+      return this.visitSpreadElement(node, state, path);
+    case "TemplateElement":
+      return this.visitTemplateElement(node, state, path);
+    case "Class":
+      return this.visitClass(node, state, path);
+    case "ClassBody":
+      return this.visitClassBody(node, state, path);
+    case "MethodDefinition":
+      return this.visitMethodDefinition(node, state, path);
+    case "ModuleDeclaration":
+      return this.visitModuleDeclaration(node, state, path);
+    case "ModuleSpecifier":
+      return this.visitModuleSpecifier(node, state, path);
+    case "RestProperty":
+      return this.visitRestProperty(node, state, path);
+    case "SpreadProperty":
+      return this.visitSpreadProperty(node, state, path);
+    case "Identifier":
+      return this.visitIdentifier(node, state, path);
+    case "Literal":
+      return this.visitLiteral(node, state, path);
+    case "ExpressionStatement":
+      return this.visitExpressionStatement(node, state, path);
+    case "BlockStatement":
+      return this.visitBlockStatement(node, state, path);
+    case "EmptyStatement":
+      return this.visitEmptyStatement(node, state, path);
+    case "DebuggerStatement":
+      return this.visitDebuggerStatement(node, state, path);
+    case "WithStatement":
+      return this.visitWithStatement(node, state, path);
+    case "ReturnStatement":
+      return this.visitReturnStatement(node, state, path);
+    case "LabeledStatement":
+      return this.visitLabeledStatement(node, state, path);
+    case "BreakStatement":
+      return this.visitBreakStatement(node, state, path);
+    case "ContinueStatement":
+      return this.visitContinueStatement(node, state, path);
+    case "IfStatement":
+      return this.visitIfStatement(node, state, path);
+    case "SwitchStatement":
+      return this.visitSwitchStatement(node, state, path);
+    case "ThrowStatement":
+      return this.visitThrowStatement(node, state, path);
+    case "TryStatement":
+      return this.visitTryStatement(node, state, path);
+    case "WhileStatement":
+      return this.visitWhileStatement(node, state, path);
+    case "DoWhileStatement":
+      return this.visitDoWhileStatement(node, state, path);
+    case "ForStatement":
+      return this.visitForStatement(node, state, path);
+    case "ForInStatement":
+      return this.visitForInStatement(node, state, path);
+    case "Declaration":
+      return this.visitDeclaration(node, state, path);
+    case "ThisExpression":
+      return this.visitThisExpression(node, state, path);
+    case "ArrayExpression":
+      return this.visitArrayExpression(node, state, path);
+    case "ObjectExpression":
+      return this.visitObjectExpression(node, state, path);
+    case "FunctionExpression":
+      return this.visitFunctionExpression(node, state, path);
+    case "UnaryExpression":
+      return this.visitUnaryExpression(node, state, path);
+    case "UpdateExpression":
+      return this.visitUpdateExpression(node, state, path);
+    case "BinaryExpression":
+      return this.visitBinaryExpression(node, state, path);
+    case "AssignmentExpression":
+      return this.visitAssignmentExpression(node, state, path);
+    case "LogicalExpression":
+      return this.visitLogicalExpression(node, state, path);
+    case "MemberExpression":
+      return this.visitMemberExpression(node, state, path);
+    case "ConditionalExpression":
+      return this.visitConditionalExpression(node, state, path);
+    case "CallExpression":
+      return this.visitCallExpression(node, state, path);
+    case "SequenceExpression":
+      return this.visitSequenceExpression(node, state, path);
+    case "ArrowFunctionExpression":
+      return this.visitArrowFunctionExpression(node, state, path);
+    case "YieldExpression":
+      return this.visitYieldExpression(node, state, path);
+    case "TemplateLiteral":
+      return this.visitTemplateLiteral(node, state, path);
+    case "TaggedTemplateExpression":
+      return this.visitTaggedTemplateExpression(node, state, path);
+    case "AssignmentProperty":
+      return this.visitAssignmentProperty(node, state, path);
+    case "ObjectPattern":
+      return this.visitObjectPattern(node, state, path);
+    case "ArrayPattern":
+      return this.visitArrayPattern(node, state, path);
+    case "RestElement":
+      return this.visitRestElement(node, state, path);
+    case "AssignmentPattern":
+      return this.visitAssignmentPattern(node, state, path);
+    case "ClassExpression":
+      return this.visitClassExpression(node, state, path);
+    case "MetaProperty":
+      return this.visitMetaProperty(node, state, path);
+    case "ImportDeclaration":
+      return this.visitImportDeclaration(node, state, path);
+    case "ImportSpecifier":
+      return this.visitImportSpecifier(node, state, path);
+    case "ImportDefaultSpecifier":
+      return this.visitImportDefaultSpecifier(node, state, path);
+    case "ImportNamespaceSpecifier":
+      return this.visitImportNamespaceSpecifier(node, state, path);
+    case "ExportNamedDeclaration":
+      return this.visitExportNamedDeclaration(node, state, path);
+    case "ExportSpecifier":
+      return this.visitExportSpecifier(node, state, path);
+    case "ExportDefaultDeclaration":
+      return this.visitExportDefaultDeclaration(node, state, path);
+    case "ExportAllDeclaration":
+      return this.visitExportAllDeclaration(node, state, path);
+    case "AwaitExpression":
+      return this.visitAwaitExpression(node, state, path);
+    case "RegExpLiteral":
+      return this.visitRegExpLiteral(node, state, path);
+    case "FunctionDeclaration":
+      return this.visitFunctionDeclaration(node, state, path);
+    case "VariableDeclaration":
+      return this.visitVariableDeclaration(node, state, path);
+    case "NewExpression":
+      return this.visitNewExpression(node, state, path);
+    case "ForOfStatement":
+      return this.visitForOfStatement(node, state, path);
+    case "ClassDeclaration":
+      return this.visitClassDeclaration(node, state, path);
+  }
+  throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
+};
+Visitor.prototype.visitNode = function visitNode(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
+  var visitor = this;
+  // start is of types Position
+  node["start"] = visitor.accept(node["start"], state, path.concat(["start"]));
+  // end is of types Position
+  node["end"] = visitor.accept(node["end"], state, path.concat(["end"]));
+  return node;
+};
+Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
+  var visitor = this;
+  // body is a list with types Statement, ModuleDeclaration
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
+};
+Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  if (node["test"]) {
+    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  }
+  // consequent is a list with types Statement
+  var newElements = [];
+  for (var i = 0; i < node["consequent"].length; i++) {
+    var ea = node["consequent"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["consequent", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["consequent"] = newElements;
+  return node;
+};
+Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
+  var visitor = this;
+  // param is of types Pattern
+  node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
+  var visitor = this;
+  // id is of types Pattern
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // init is of types Expression
+  if (node["init"]) {
+    node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
+  }
+  return node;
+};
+Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
+  var visitor = this;
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // value is of types Expression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  return node;
+};
+Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitClass = function visitClass(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
+  var visitor = this;
+  // body is a list with types MethodDefinition
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
+};
+Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
+  var visitor = this;
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // value is of types FunctionExpression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  return node;
+};
+Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
+  var visitor = this;
+  // expression is of types Expression
+  node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
+  return node;
+};
+Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
+  var visitor = this;
+  // body is a list with types Statement
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
+};
+Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
+  var visitor = this;
+  // object is of types Expression
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  return node;
+};
+Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  if (node["label"]) {
+    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  }
+  return node;
+};
+Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  if (node["label"]) {
+    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  }
+  return node;
+};
+Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // consequent is of types Statement
+  node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
+  // alternate is of types Statement
+  if (node["alternate"]) {
+    node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
+  }
+  return node;
+};
+Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
+  var visitor = this;
+  // discriminant is of types Expression
+  node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
+  // cases is a list with types SwitchCase
+  var newElements = [];
+  for (var i = 0; i < node["cases"].length; i++) {
+    var ea = node["cases"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["cases", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["cases"] = newElements;
+  return node;
+};
+Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
+  var visitor = this;
+  // block is of types BlockStatement
+  node["block"] = visitor.accept(node["block"], state, path.concat(["block"]));
+  // handler is of types CatchClause
+  if (node["handler"]) {
+    node["handler"] = visitor.accept(node["handler"], state, path.concat(["handler"]));
+  }
+  // finalizer is of types BlockStatement
+  if (node["finalizer"]) {
+    node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
+  }
+  return node;
+};
+Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
+  var visitor = this;
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  return node;
+};
+Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
+  var visitor = this;
+  // init is of types VariableDeclaration, Expression
+  if (node["init"]) {
+    node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
+  }
+  // test is of types Expression
+  if (node["test"]) {
+    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  }
+  // update is of types Expression
+  if (node["update"]) {
+    node["update"] = visitor.accept(node["update"], state, path.concat(["update"]));
+  }
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
+  var visitor = this;
+  // left is of types VariableDeclaration, Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
+  var visitor = this;
+  // elements is a list with types Expression, SpreadElement
+  if (node["elements"]) {
+    var newElements = [];
+    for (var i = 0; i < node["elements"].length; i++) {
+      var ea = node["elements"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
     }
-  };
-
-  babelHelpers.createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
+    node["elements"] = newElements;
+  }
+  return node;
+};
+Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
+  var visitor = this;
+  // properties is a list with types Property, SpreadProperty
+  var newElements = [];
+  for (var i = 0; i < node["properties"].length; i++) {
+    var ea = node["properties"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["properties"] = newElements;
+  return node;
+};
+Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Expression
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Expression
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
+  var visitor = this;
+  // object is of types Expression, Super
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // property is of types Expression
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  return node;
+};
+Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // alternate is of types Expression
+  node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
+  // consequent is of types Expression
+  node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
+  return node;
+};
+Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression, Super
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression, SpreadElement
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
+};
+Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
+  var visitor = this;
+  // expressions is a list with types Expression
+  var newElements = [];
+  for (var i = 0; i < node["expressions"].length; i++) {
+    var ea = node["expressions"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["expressions"] = newElements;
+  return node;
+};
+Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
+  var visitor = this;
+  // body is of types BlockStatement, Expression
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  return node;
+};
+Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  return node;
+};
+Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
+  var visitor = this;
+  // quasis is a list with types TemplateElement
+  var newElements = [];
+  for (var i = 0; i < node["quasis"].length; i++) {
+    var ea = node["quasis"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["quasis", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["quasis"] = newElements;
+  // expressions is a list with types Expression
+  var newElements = [];
+  for (var i = 0; i < node["expressions"].length; i++) {
+    var ea = node["expressions"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["expressions"] = newElements;
+  return node;
+};
+Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
+  var visitor = this;
+  // tag is of types Expression
+  node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
+  // quasi is of types TemplateLiteral
+  node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
+  return node;
+};
+Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
+  var visitor = this;
+  // value is of types Pattern, Expression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  return node;
+};
+Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
+  var visitor = this;
+  // properties is a list with types AssignmentProperty, RestProperty
+  var newElements = [];
+  for (var i = 0; i < node["properties"].length; i++) {
+    var ea = node["properties"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["properties"] = newElements;
+  return node;
+};
+Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
+  var visitor = this;
+  // elements is a list with types Pattern
+  if (node["elements"]) {
+    var newElements = [];
+    for (var i = 0; i < node["elements"].length; i++) {
+      var ea = node["elements"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
     }
+    node["elements"] = newElements;
+  }
+  return node;
+};
+Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
+  var visitor = this;
+  // argument is of types Pattern
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
+  var visitor = this;
+  // left is of types Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
+  var visitor = this;
+  // meta is of types Identifier
+  node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
+  // property is of types Identifier
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  return node;
+};
+Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
+  var visitor = this;
+  // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
+  var newElements = [];
+  for (var i = 0; i < node["specifiers"].length; i++) {
+    var ea = node["specifiers"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["specifiers"] = newElements;
+  // source is of types Literal
+  node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  return node;
+};
+Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
+  var visitor = this;
+  // imported is of types Identifier
+  node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
+  var visitor = this;
+  // declaration is of types Declaration
+  if (node["declaration"]) {
+    node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
+  }
+  // specifiers is a list with types ExportSpecifier
+  var newElements = [];
+  for (var i = 0; i < node["specifiers"].length; i++) {
+    var ea = node["specifiers"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["specifiers"] = newElements;
+  // source is of types Literal
+  if (node["source"]) {
+    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  }
+  return node;
+};
+Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
+  var visitor = this;
+  // exported is of types Identifier
+  node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
+  var visitor = this;
+  // declaration is of types Declaration, Expression
+  node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
+  return node;
+};
+Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
+  var visitor = this;
+  // source is of types Literal
+  node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  return node;
+};
+Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  return node;
+};
+Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
+  var visitor = this;
+  // declarations is a list with types VariableDeclarator
+  var newElements = [];
+  for (var i = 0; i < node["declarations"].length; i++) {
+    var ea = node["declarations"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["declarations", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["declarations"] = newElements;
+  return node;
+};
+Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression, Super
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression, SpreadElement
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
+};
+Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
+  var visitor = this;
+  // left is of types VariableDeclaration, Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
 
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
+};
 
-  babelHelpers.defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
 
-    return obj;
-  };
 
-  babelHelpers.extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
 
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
         }
-      }
+      });
     }
 
-    return target;
-  };
-
-  babelHelpers.get = function get(object, property, receiver) {
-    if (object === null) object = Function.prototype;
-    var desc = Object.getOwnPropertyDescriptor(object, property);
-
-    if (desc === undefined) {
-      var parent = Object.getPrototypeOf(object);
-
-      if (parent === null) {
-        return undefined;
-      } else {
-        return get(parent, property, receiver);
-      }
-    } else if ("value" in desc) {
-      return desc.value;
-    } else {
-      var getter = desc.get;
-
-      if (getter === undefined) {
-        return undefined;
-      }
-
-      return getter.call(receiver);
-    }
-  };
-
-  babelHelpers.inherits = function (subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-    }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  };
-
-  babelHelpers.possibleConstructorReturn = function (self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  };
-
-  babelHelpers.slicedToArray = function () {
-    function sliceIterator(arr, i) {
-      var _arr = [];
-      var _n = true;
-      var _d = false;
-      var _e = undefined;
-
+    function resume(key, arg) {
       try {
-        for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-          _arr.push(_s.value);
+        var result = gen[key](arg);
+        var value = result.value;
 
-          if (i && _arr.length === i) break;
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
         }
       } catch (err) {
-        _d = true;
-        _e = err;
-      } finally {
-        try {
-          if (!_n && _i["return"]) _i["return"]();
-        } finally {
-          if (_d) throw _e;
-        }
+        settle("throw", err);
       }
-
-      return _arr;
     }
 
-    return function (arr, i) {
-      if (Array.isArray(arr)) {
-        return arr;
-      } else if (Symbol.iterator in Object(arr)) {
-        return sliceIterator(arr, i);
-      } else {
-        throw new TypeError("Invalid attempt to destructure non-iterable instance");
-      }
-    };
-  }();
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
 
-  babelHelpers.toArray = function (arr) {
-    return Array.isArray(arr) ? arr : Array.from(arr);
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
   };
 
-  babelHelpers.toConsumableArray = function (arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
 
-      return arr2;
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
+
+  return obj$$1;
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
     } else {
-      return Array.from(arr);
+      return get(parent, property, receiver);
     }
-  };
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
 
-  babelHelpers;
-
-  // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-  // Generated on 16-07-17 17:25 PDT
-
-  function Visitor() {}
-  Visitor.prototype.accept = function accept(node, state, path) {
-    if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
-    if (!node.type) throw new Error("Strangee AST node without type in Visitor.accept:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
-    switch (node.type) {
-      case "Node":
-        return this.visitNode(node, state, path);
-      case "SourceLocation":
-        return this.visitSourceLocation(node, state, path);
-      case "Position":
-        return this.visitPosition(node, state, path);
-      case "Program":
-        return this.visitProgram(node, state, path);
-      case "Function":
-        return this.visitFunction(node, state, path);
-      case "Statement":
-        return this.visitStatement(node, state, path);
-      case "SwitchCase":
-        return this.visitSwitchCase(node, state, path);
-      case "CatchClause":
-        return this.visitCatchClause(node, state, path);
-      case "VariableDeclarator":
-        return this.visitVariableDeclarator(node, state, path);
-      case "Expression":
-        return this.visitExpression(node, state, path);
-      case "Property":
-        return this.visitProperty(node, state, path);
-      case "Pattern":
-        return this.visitPattern(node, state, path);
-      case "Super":
-        return this.visitSuper(node, state, path);
-      case "SpreadElement":
-        return this.visitSpreadElement(node, state, path);
-      case "TemplateElement":
-        return this.visitTemplateElement(node, state, path);
-      case "Class":
-        return this.visitClass(node, state, path);
-      case "ClassBody":
-        return this.visitClassBody(node, state, path);
-      case "MethodDefinition":
-        return this.visitMethodDefinition(node, state, path);
-      case "ModuleDeclaration":
-        return this.visitModuleDeclaration(node, state, path);
-      case "ModuleSpecifier":
-        return this.visitModuleSpecifier(node, state, path);
-      case "RestProperty":
-        return this.visitRestProperty(node, state, path);
-      case "SpreadProperty":
-        return this.visitSpreadProperty(node, state, path);
-      case "Identifier":
-        return this.visitIdentifier(node, state, path);
-      case "Literal":
-        return this.visitLiteral(node, state, path);
-      case "ExpressionStatement":
-        return this.visitExpressionStatement(node, state, path);
-      case "BlockStatement":
-        return this.visitBlockStatement(node, state, path);
-      case "EmptyStatement":
-        return this.visitEmptyStatement(node, state, path);
-      case "DebuggerStatement":
-        return this.visitDebuggerStatement(node, state, path);
-      case "WithStatement":
-        return this.visitWithStatement(node, state, path);
-      case "ReturnStatement":
-        return this.visitReturnStatement(node, state, path);
-      case "LabeledStatement":
-        return this.visitLabeledStatement(node, state, path);
-      case "BreakStatement":
-        return this.visitBreakStatement(node, state, path);
-      case "ContinueStatement":
-        return this.visitContinueStatement(node, state, path);
-      case "IfStatement":
-        return this.visitIfStatement(node, state, path);
-      case "SwitchStatement":
-        return this.visitSwitchStatement(node, state, path);
-      case "ThrowStatement":
-        return this.visitThrowStatement(node, state, path);
-      case "TryStatement":
-        return this.visitTryStatement(node, state, path);
-      case "WhileStatement":
-        return this.visitWhileStatement(node, state, path);
-      case "DoWhileStatement":
-        return this.visitDoWhileStatement(node, state, path);
-      case "ForStatement":
-        return this.visitForStatement(node, state, path);
-      case "ForInStatement":
-        return this.visitForInStatement(node, state, path);
-      case "Declaration":
-        return this.visitDeclaration(node, state, path);
-      case "ThisExpression":
-        return this.visitThisExpression(node, state, path);
-      case "ArrayExpression":
-        return this.visitArrayExpression(node, state, path);
-      case "ObjectExpression":
-        return this.visitObjectExpression(node, state, path);
-      case "FunctionExpression":
-        return this.visitFunctionExpression(node, state, path);
-      case "UnaryExpression":
-        return this.visitUnaryExpression(node, state, path);
-      case "UpdateExpression":
-        return this.visitUpdateExpression(node, state, path);
-      case "BinaryExpression":
-        return this.visitBinaryExpression(node, state, path);
-      case "AssignmentExpression":
-        return this.visitAssignmentExpression(node, state, path);
-      case "LogicalExpression":
-        return this.visitLogicalExpression(node, state, path);
-      case "MemberExpression":
-        return this.visitMemberExpression(node, state, path);
-      case "ConditionalExpression":
-        return this.visitConditionalExpression(node, state, path);
-      case "CallExpression":
-        return this.visitCallExpression(node, state, path);
-      case "SequenceExpression":
-        return this.visitSequenceExpression(node, state, path);
-      case "ArrowFunctionExpression":
-        return this.visitArrowFunctionExpression(node, state, path);
-      case "YieldExpression":
-        return this.visitYieldExpression(node, state, path);
-      case "TemplateLiteral":
-        return this.visitTemplateLiteral(node, state, path);
-      case "TaggedTemplateExpression":
-        return this.visitTaggedTemplateExpression(node, state, path);
-      case "AssignmentProperty":
-        return this.visitAssignmentProperty(node, state, path);
-      case "ObjectPattern":
-        return this.visitObjectPattern(node, state, path);
-      case "ArrayPattern":
-        return this.visitArrayPattern(node, state, path);
-      case "RestElement":
-        return this.visitRestElement(node, state, path);
-      case "AssignmentPattern":
-        return this.visitAssignmentPattern(node, state, path);
-      case "ClassExpression":
-        return this.visitClassExpression(node, state, path);
-      case "MetaProperty":
-        return this.visitMetaProperty(node, state, path);
-      case "ImportDeclaration":
-        return this.visitImportDeclaration(node, state, path);
-      case "ImportSpecifier":
-        return this.visitImportSpecifier(node, state, path);
-      case "ImportDefaultSpecifier":
-        return this.visitImportDefaultSpecifier(node, state, path);
-      case "ImportNamespaceSpecifier":
-        return this.visitImportNamespaceSpecifier(node, state, path);
-      case "ExportNamedDeclaration":
-        return this.visitExportNamedDeclaration(node, state, path);
-      case "ExportSpecifier":
-        return this.visitExportSpecifier(node, state, path);
-      case "ExportDefaultDeclaration":
-        return this.visitExportDefaultDeclaration(node, state, path);
-      case "ExportAllDeclaration":
-        return this.visitExportAllDeclaration(node, state, path);
-      case "AwaitExpression":
-        return this.visitAwaitExpression(node, state, path);
-      case "RegExpLiteral":
-        return this.visitRegExpLiteral(node, state, path);
-      case "FunctionDeclaration":
-        return this.visitFunctionDeclaration(node, state, path);
-      case "VariableDeclaration":
-        return this.visitVariableDeclaration(node, state, path);
-      case "NewExpression":
-        return this.visitNewExpression(node, state, path);
-      case "ForOfStatement":
-        return this.visitForOfStatement(node, state, path);
-      case "ClassDeclaration":
-        return this.visitClassDeclaration(node, state, path);
-    }
-    throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
-  };
-  Visitor.prototype.visitNode = function visitNode(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
-    var visitor = this;
-    // start is of types Position
-    node["start"] = visitor.accept(node["start"], state, path.concat(["start"]));
-    // end is of types Position
-    node["end"] = visitor.accept(node["end"], state, path.concat(["end"]));
-    return node;
-  };
-  Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
-    var visitor = this;
-    // body is a list with types Statement, ModuleDeclaration
-    var newElements = [];
-    for (var i = 0; i < node["body"].length; i++) {
-      var ea = node["body"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["body"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    if (node["test"]) {
-      node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    }
-    // consequent is a list with types Statement
-    var newElements = [];
-    for (var i = 0; i < node["consequent"].length; i++) {
-      var ea = node["consequent"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["consequent", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["consequent"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
-    var visitor = this;
-    // param is of types Pattern
-    node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
-    var visitor = this;
-    // id is of types Pattern
-    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    // init is of types Expression
-    if (node["init"]) {
-      node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
-    var visitor = this;
-    // key is of types Expression
-    node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    // value is of types Expression
-    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    return node;
-  };
-  Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitClass = function visitClass(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // superClass is of types Expression
-    if (node["superClass"]) {
-      node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
-    }
-    // body is of types ClassBody
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
-    var visitor = this;
-    // body is a list with types MethodDefinition
-    var newElements = [];
-    for (var i = 0; i < node["body"].length; i++) {
-      var ea = node["body"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["body"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
-    var visitor = this;
-    // key is of types Expression
-    node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    // value is of types FunctionExpression
-    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    return node;
-  };
-  Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
-    var visitor = this;
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
-    var visitor = this;
-    // expression is of types Expression
-    node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
-    return node;
-  };
-  Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
-    var visitor = this;
-    // body is a list with types Statement
-    var newElements = [];
-    for (var i = 0; i < node["body"].length; i++) {
-      var ea = node["body"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["body"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
-    var visitor = this;
-    // object is of types Expression
-    node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    if (node["argument"]) {
-      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, state, path) {
-    var visitor = this;
-    // label is of types Identifier
-    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
-    var visitor = this;
-    // label is of types Identifier
-    if (node["label"]) {
-      node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
-    var visitor = this;
-    // label is of types Identifier
-    if (node["label"]) {
-      node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // consequent is of types Statement
-    node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
-    // alternate is of types Statement
-    if (node["alternate"]) {
-      node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
-    var visitor = this;
-    // discriminant is of types Expression
-    node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
-    // cases is a list with types SwitchCase
-    var newElements = [];
-    for (var i = 0; i < node["cases"].length; i++) {
-      var ea = node["cases"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["cases", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["cases"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
-    var visitor = this;
-    // block is of types BlockStatement
-    node["block"] = visitor.accept(node["block"], state, path.concat(["block"]));
-    // handler is of types CatchClause
-    if (node["handler"]) {
-      node["handler"] = visitor.accept(node["handler"], state, path.concat(["handler"]));
-    }
-    // finalizer is of types BlockStatement
-    if (node["finalizer"]) {
-      node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
-    var visitor = this;
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    return node;
-  };
-  Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
-    var visitor = this;
-    // init is of types VariableDeclaration, Expression
-    if (node["init"]) {
-      node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
-    }
-    // test is of types Expression
-    if (node["test"]) {
-      node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    }
-    // update is of types Expression
-    if (node["update"]) {
-      node["update"] = visitor.accept(node["update"], state, path.concat(["update"]));
-    }
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
-    var visitor = this;
-    // left is of types VariableDeclaration, Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
-    var visitor = this;
-    // elements is a list with types Expression, SpreadElement
-    if (node["elements"]) {
-      var newElements = [];
-      for (var i = 0; i < node["elements"].length; i++) {
-        var ea = node["elements"][i];
-        var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
-        if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-      }
-      node["elements"] = newElements;
-    }
-    return node;
-  };
-  Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
-    var visitor = this;
-    // properties is a list with types Property, SpreadProperty
-    var newElements = [];
-    for (var i = 0; i < node["properties"].length; i++) {
-      var ea = node["properties"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["properties"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
-    var visitor = this;
-    // left is of types Expression
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
-    var visitor = this;
-    // left is of types Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
-    var visitor = this;
-    // left is of types Expression
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
-    var visitor = this;
-    // object is of types Expression, Super
-    node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
-    // property is of types Expression
-    node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-    return node;
-  };
-  Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // alternate is of types Expression
-    node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
-    // consequent is of types Expression
-    node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
-    return node;
-  };
-  Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
-    var visitor = this;
-    // callee is of types Expression, Super
-    node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-    // arguments is a list with types Expression, SpreadElement
-    var newElements = [];
-    for (var i = 0; i < node["arguments"].length; i++) {
-      var ea = node["arguments"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["arguments"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
-    var visitor = this;
-    // expressions is a list with types Expression
-    var newElements = [];
-    for (var i = 0; i < node["expressions"].length; i++) {
-      var ea = node["expressions"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["expressions"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
-    var visitor = this;
-    // body is of types BlockStatement, Expression
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    if (node["argument"]) {
-      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
-    var visitor = this;
-    // quasis is a list with types TemplateElement
-    var newElements = [];
-    for (var i = 0; i < node["quasis"].length; i++) {
-      var ea = node["quasis"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["quasis", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["quasis"] = newElements;
-    // expressions is a list with types Expression
-    var newElements = [];
-    for (var i = 0; i < node["expressions"].length; i++) {
-      var ea = node["expressions"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["expressions"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
-    var visitor = this;
-    // tag is of types Expression
-    node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
-    // quasi is of types TemplateLiteral
-    node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
-    return node;
-  };
-  Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
-    var visitor = this;
-    // value is of types Pattern, Expression
-    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    // key is of types Expression
-    node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    return node;
-  };
-  Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
-    var visitor = this;
-    // properties is a list with types AssignmentProperty, RestProperty
-    var newElements = [];
-    for (var i = 0; i < node["properties"].length; i++) {
-      var ea = node["properties"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["properties"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
-    var visitor = this;
-    // elements is a list with types Pattern
-    if (node["elements"]) {
-      var newElements = [];
-      for (var i = 0; i < node["elements"].length; i++) {
-        var ea = node["elements"][i];
-        var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
-        if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-      }
-      node["elements"] = newElements;
-    }
-    return node;
-  };
-  Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
-    var visitor = this;
-    // argument is of types Pattern
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
-    var visitor = this;
-    // left is of types Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // superClass is of types Expression
-    if (node["superClass"]) {
-      node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
-    }
-    // body is of types ClassBody
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
-    var visitor = this;
-    // meta is of types Identifier
-    node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
-    // property is of types Identifier
-    node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-    return node;
-  };
-  Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
-    var visitor = this;
-    // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
-    var newElements = [];
-    for (var i = 0; i < node["specifiers"].length; i++) {
-      var ea = node["specifiers"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["specifiers"] = newElements;
-    // source is of types Literal
-    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    return node;
-  };
-  Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
-    var visitor = this;
-    // imported is of types Identifier
-    node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
-    var visitor = this;
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
-    var visitor = this;
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
-    var visitor = this;
-    // declaration is of types Declaration
-    if (node["declaration"]) {
-      node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
-    }
-    // specifiers is a list with types ExportSpecifier
-    var newElements = [];
-    for (var i = 0; i < node["specifiers"].length; i++) {
-      var ea = node["specifiers"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["specifiers"] = newElements;
-    // source is of types Literal
-    if (node["source"]) {
-      node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
-    var visitor = this;
-    // exported is of types Identifier
-    node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
-    var visitor = this;
-    // declaration is of types Declaration, Expression
-    node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
-    return node;
-  };
-  Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
-    var visitor = this;
-    // source is of types Literal
-    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    return node;
-  };
-  Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    if (node["argument"]) {
-      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
-    var visitor = this;
-    // declarations is a list with types VariableDeclarator
-    var newElements = [];
-    for (var i = 0; i < node["declarations"].length; i++) {
-      var ea = node["declarations"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["declarations", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["declarations"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
-    var visitor = this;
-    // callee is of types Expression, Super
-    node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-    // arguments is a list with types Expression, SpreadElement
-    var newElements = [];
-    for (var i = 0; i < node["arguments"].length; i++) {
-      var ea = node["arguments"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["arguments"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
-    var visitor = this;
-    // left is of types VariableDeclaration, Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    // superClass is of types Expression
-    if (node["superClass"]) {
-      node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
-    }
-    // body is of types ClassBody
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-
-  var PrinterVisitor = function (_Visitor) {
-    babelHelpers.inherits(PrinterVisitor, _Visitor);
-
-    function PrinterVisitor() {
-      babelHelpers.classCallCheck(this, PrinterVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(PrinterVisitor).apply(this, arguments));
+    if (getter === undefined) {
+      return undefined;
     }
 
-    babelHelpers.createClass(PrinterVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        var pathString = path.map(function (ea) {
-          return typeof ea === 'string' ? "." + ea : "[" + ea + "]";
-        }).join(''),
-            myChildren = [],
-            result = babelHelpers.get(Object.getPrototypeOf(PrinterVisitor.prototype), "accept", this).call(this, node, { index: state.index, tree: myChildren }, path);
-        state.tree.push({
-          node: node,
-          path: pathString,
-          index: state.index++,
-          children: myChildren
-        });
-        return result;
-      }
-    }]);
-    return PrinterVisitor;
-  }(Visitor);
+    return getter.call(receiver);
+  }
+};
 
-  var ComparisonVisitor = function (_Visitor2) {
-    babelHelpers.inherits(ComparisonVisitor, _Visitor2);
-
-    function ComparisonVisitor() {
-      babelHelpers.classCallCheck(this, ComparisonVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ComparisonVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ComparisonVisitor, [{
-      key: "recordNotEqual",
-      value: function recordNotEqual(node1, node2, state, msg) {
-        state.comparisons.errors.push({
-          node1: node1, node2: node2,
-          path: state.completePath, msg: msg
-        });
-      }
-    }, {
-      key: "compareType",
-      value: function compareType(node1, node2, state) {
-        return this.compareField('type', node1, node2, state);
-      }
-    }, {
-      key: "compareField",
-      value: function compareField(field, node1, node2, state) {
-        node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
-        if (node1 && node2 && node1[field] === node2[field]) return true;
-        if (node1 && node1[field] === '*' || node2 && node2[field] === '*') return true;
-        var fullPath = state.completePath.join('.') + '.' + field,
-            msg;
-        if (!node1) msg = "node1 on " + fullPath + " not defined";else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: ' + node1[field];else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
-        this.recordNotEqual(node1, node2, state, msg);
-        return false;
-      }
-    }, {
-      key: "accept",
-      value: function accept(node1, node2, state, path) {
-        var patternNode = lively.PropertyPath(path.join('.')).get(node2);
-        if (node1 === '*' || patternNode === '*') return;
-        var nextState = {
-          completePath: path,
-          comparisons: state.comparisons
-        };
-        if (this.compareType(node1, node2, nextState)) this['visit' + node1.type](node1, node2, nextState, path);
-      }
-    }, {
-      key: "visitFunction",
-      value: function visitFunction(node1, node2, state, path) {
-        // node1.generator has a specific type that is boolean
-        if (node1.generator) {
-          this.compareField("generator", node1, node2, state);
-        }
-
-        // node1.expression has a specific type that is boolean
-        if (node1.expression) {
-          this.compareField("expression", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunction", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitSwitchStatement",
-      value: function visitSwitchStatement(node1, node2, state, path) {
-        // node1.lexical has a specific type that is boolean
-        if (node1.lexical) {
-          this.compareField("lexical", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitSwitchStatement", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitForInStatement",
-      value: function visitForInStatement(node1, node2, state, path) {
-        // node1.each has a specific type that is boolean
-        if (node1.each) {
-          this.compareField("each", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitForInStatement", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitFunctionDeclaration",
-      value: function visitFunctionDeclaration(node1, node2, state, path) {
-        // node1.generator has a specific type that is boolean
-        if (node1.generator) {
-          this.compareField("generator", node1, node2, state);
-        }
-
-        // node1.expression has a specific type that is boolean
-        if (node1.expression) {
-          this.compareField("expression", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunctionDeclaration", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitVariableDeclaration",
-      value: function visitVariableDeclaration(node1, node2, state, path) {
-        // node1.kind is "var" or "let" or "const"
-        this.compareField("kind", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitVariableDeclaration", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitUnaryExpression",
-      value: function visitUnaryExpression(node1, node2, state, path) {
-        // node1.operator is an UnaryOperator enum:
-        // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
-        this.compareField("operator", node1, node2, state);
-
-        // node1.prefix has a specific type that is boolean
-        if (node1.prefix) {
-          this.compareField("prefix", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUnaryExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitBinaryExpression",
-      value: function visitBinaryExpression(node1, node2, state, path) {
-        // node1.operator is an BinaryOperator enum:
-        // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
-        this.compareField("operator", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitBinaryExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitAssignmentExpression",
-      value: function visitAssignmentExpression(node1, node2, state, path) {
-        // node1.operator is an AssignmentOperator enum:
-        // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
-        this.compareField("operator", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitAssignmentExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitUpdateExpression",
-      value: function visitUpdateExpression(node1, node2, state, path) {
-        // node1.operator is an UpdateOperator enum:
-        // "++" | "--"
-        this.compareField("operator", node1, node2, state);
-        // node1.prefix has a specific type that is boolean
-        if (node1.prefix) {
-          this.compareField("prefix", node1, node2, state);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUpdateExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitLogicalExpression",
-      value: function visitLogicalExpression(node1, node2, state, path) {
-        // node1.operator is an LogicalOperator enum:
-        // "||" | "&&"
-        this.compareField("operator", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLogicalExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitMemberExpression",
-      value: function visitMemberExpression(node1, node2, state, path) {
-        // node1.computed has a specific type that is boolean
-        if (node1.computed) {
-          this.compareField("computed", node1, node2, state);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMemberExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitComprehensionBlock",
-      value: function visitComprehensionBlock(node1, node2, state, path) {
-        // node1.each has a specific type that is boolean
-        if (node1.each) {
-          this.compareField("each", node1, node2, state);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitComprehensionBlock", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitIdentifier",
-      value: function visitIdentifier(node1, node2, state, path) {
-        // node1.name has a specific type that is string
-        this.compareField("name", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitIdentifier", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitLiteral",
-      value: function visitLiteral(node1, node2, state, path) {
-        this.compareField("value", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLiteral", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitClassDeclaration",
-      value: function visitClassDeclaration(node1, node2, state, path) {
-        this.compareField("id", node1, node2, state);
-        if (node1.superClass) {
-          this.compareField("superClass", node1, node2, state);
-        }
-        this.compareField("body", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassDeclaration", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitClassBody",
-      value: function visitClassBody(node1, node2, state, path) {
-        this.compareField("body", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassBody", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitMethodDefinition",
-      value: function visitMethodDefinition(node1, node2, state, path) {
-        this.compareField("static", node1, node2, state);
-        this.compareField("computed", node1, node2, state);
-        this.compareField("kind", node1, node2, state);
-        this.compareField("key", node1, node2, state);
-        this.compareField("value", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMethodDefinition", this).call(this, node1, node2, state, path);
-      }
-    }]);
-    return ComparisonVisitor;
-  }(Visitor);
-
-  var ScopeVisitor = function (_Visitor3) {
-    babelHelpers.inherits(ScopeVisitor, _Visitor3);
-
-    function ScopeVisitor() {
-      babelHelpers.classCallCheck(this, ScopeVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ScopeVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ScopeVisitor, [{
-      key: "newScope",
-      value: function newScope(scopeNode, parentScope) {
-        var scope = {
-          node: scopeNode,
-          varDecls: [],
-          varDeclPaths: [],
-          funcDecls: [],
-          funcDeclPaths: [],
-          classDecls: [],
-          classDeclPaths: [],
-          classExprs: [],
-          classExprPaths: [],
-          methodDecls: [],
-          methodDeclPaths: [],
-          importDecls: [],
-          importDeclPaths: [],
-          exportDecls: [],
-          exportDeclPaths: [],
-          refs: [],
-          thisRefs: [],
-          params: [],
-          catches: [],
-          subScopes: [],
-          resolvedRefMap: new Map()
-        };
-        if (parentScope) parentScope.subScopes.push(scope);
-        return scope;
-      }
-    }, {
-      key: "visitVariableDeclaration",
-      value: function visitVariableDeclaration(node, scope, path) {
-        scope.varDecls.push(node);
-        scope.varDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitVariableDeclaration", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitVariableDeclarator",
-      value: function visitVariableDeclarator(node, scope, path) {
-        var visitor = this;
-        // ignore id
-        // // id is of types Pattern
-        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-        // init is of types Expression
-        if (node["init"]) {
-          node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitFunction",
-      value: function visitFunction(node, scope, path) {
-        var newScope = this.newScope(node, scope);
-        newScope.params = Array.prototype.slice.call(node.params);
-        return newScope;
-      }
-    }, {
-      key: "visitFunctionDeclaration",
-      value: function visitFunctionDeclaration(node, scope, path) {
-        var newScope = this.visitFunction(node, scope, path);
-        scope.funcDecls.push(node);
-        scope.funcDeclPaths.push(path);
-
-        // don't visit id and params 
-        var visitor = this;
-
-        if (node.defaults) {
-          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
-            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-            return results;
-          }, []);
-        }
-
-        if (node.rest) {
-          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
-        }
-
-        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-        // loc is of types SourceLocation
-        if (node["loc"]) {
-          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitFunctionExpression",
-      value: function visitFunctionExpression(node, scope, path) {
-        var newScope = this.visitFunction(node, scope, path);
-
-        // don't visit id and params 
-        var visitor = this;
-
-        if (node.defaults) {
-          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
-            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-            return results;
-          }, []);
-        }
-
-        if (node.rest) {
-          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
-        }
-
-        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-        // loc is of types SourceLocation
-        if (node["loc"]) {
-          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitArrowFunctionExpression",
-      value: function visitArrowFunctionExpression(node, scope, path) {
-        var newScope = this.visitFunction(node, scope, path);
-        var visitor = this;
-
-        if (node.defaults) {
-          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
-            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-            return results;
-          }, []);
-        }
-
-        if (node.rest) {
-          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
-        }
-
-        // body is of types BlockStatement, Expression
-        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-        // loc is of types SourceLocation
-        if (node["loc"]) {
-          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-        }
-        // node.generator has a specific type that is boolean
-        if (node.generator) {} /*do stuff*/
-
-        // node.expression has a specific type that is boolean
-        if (node.expression) {/*do stuff*/}
-        return node;
-      }
-    }, {
-      key: "visitIdentifier",
-      value: function visitIdentifier(node, scope, path) {
-        scope.refs.push(node);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitIdentifier", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitMemberExpression",
-      value: function visitMemberExpression(node, scope, path) {
-        // only visit property part when prop is computed so we don't gather
-        // prop ids
-
-        var visitor = this;
-        // object is of types Expression, Super
-        node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
-        // property is of types Expression
-        if (node.computed) {
-          node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitProperty",
-      value: function visitProperty(node, scope, path) {
-        var visitor = this;
-        // key is of types Expression
-        if (node.computed) node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
-        // value is of types Expression
-        node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
-        return node;
-      }
-    }, {
-      key: "visitThisExpression",
-      value: function visitThisExpression(node, scope, path) {
-        scope.thisRefs.push(node);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitThisExpression", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitTryStatement",
-      value: function visitTryStatement(node, scope, path) {
-        var visitor = this;
-        // block is of types BlockStatement
-        node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
-        // handler is of types CatchClause
-        if (node["handler"]) {
-          node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
-          scope.catches.push(node.handler.param);
-        }
-
-        // finalizer is of types BlockStatement
-        if (node["finalizer"]) {
-          node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitLabeledStatement",
-      value: function visitLabeledStatement(node, scope, path) {
-        var visitor = this;
-        // ignore label
-        // // label is of types Identifier
-        // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
-        // body is of types Statement
-        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-        return node;
-      }
-    }, {
-      key: "visitClassDeclaration",
-      value: function visitClassDeclaration(node, scope, path) {
-        scope.classDecls.push(node);
-        scope.classDeclPaths.push(path);
-
-        var visitor = this;
-        // ignore id
-        // // id is of types Identifier
-        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-        // superClass is of types Expression
-        if (node["superClass"]) {
-          node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
-        }
-        // body is of types ClassBody
-        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-        return node;
-      }
-    }, {
-      key: "visitClassExpression",
-      value: function visitClassExpression(node, scope, path) {
-        if (node.id) {
-          scope.classExprs.push(node);
-          scope.classExprPaths.push(path);
-        }
-
-        var visitor = this;
-        // ignore id
-        // // id is of types Identifier
-        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-        // superClass is of types Expression
-        if (node["superClass"]) {
-          node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
-        }
-        // body is of types ClassBody
-        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-        return node;
-      }
-    }, {
-      key: "visitMethodDefinition",
-      value: function visitMethodDefinition(node, scope, path) {
-        var visitor = this;
-        // don't visit key Identifier for now
-        // // key is of types Expression
-        // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
-        // value is of types FunctionExpression
-        node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
-        return node;
-      }
-    }, {
-      key: "visitBreakStatement",
-      value: function visitBreakStatement(node, scope, path) {
-        return node;
-      }
-    }, {
-      key: "visitContinueStatement",
-      value: function visitContinueStatement(node, scope, path) {
-        return node;
-      }
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // es6 modules
-
-    }, {
-      key: "visitImportSpecifier",
-      value: function visitImportSpecifier(node, scope, path) {
-        scope.importDecls.push(node.local);
-        scope.importDeclPaths.push(path);
-
-        var visitor = this;
-        // // imported is of types Identifier
-        // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
-        // local is of types Identifier
-        node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitImportDefaultSpecifier",
-      value: function visitImportDefaultSpecifier(node, scope, path) {
-        scope.importDecls.push(node.local);
-        scope.importDeclPaths.push(path);
-        var visitor = this;
-        // // local is of types Identifier
-        // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitImportNamespaceSpecifier",
-      value: function visitImportNamespaceSpecifier(node, scope, path) {
-        scope.importDecls.push(node.local);
-        scope.importDeclPaths.push(path);
-        var visitor = this;
-        // // local is of types Identifier
-        // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitExportSpecifier",
-      value: function visitExportSpecifier(node, scope, path) {
-        var visitor = this;
-        // // exported is of types Identifier
-        // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
-        // local is of types Identifier
-        node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitExportNamedDeclaration",
-      value: function visitExportNamedDeclaration(node, scope, path) {
-        scope.exportDecls.push(node);
-        scope.exportDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitExportDefaultDeclaration",
-      value: function visitExportDefaultDeclaration(node, scope, path) {
-        scope.exportDecls.push(node);
-        scope.exportDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitExportAllDeclaration",
-      value: function visitExportAllDeclaration(node, scope, path) {
-        scope.exportDecls.push(node);
-        scope.exportDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
-      }
-    }]);
-    return ScopeVisitor;
-  }(Visitor);
-
-  var es = escodegen.escodegen || escodegen;
-
-  function stringify(node, opts) {
-    return es.generate(fixParamDefaults(node), opts);
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
   }
 
-  var FixParamsForEscodegenVisitor = function (_Visitor) {
-    babelHelpers.inherits(FixParamsForEscodegenVisitor, _Visitor);
-
-    function FixParamsForEscodegenVisitor() {
-      babelHelpers.classCallCheck(this, FixParamsForEscodegenVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(FixParamsForEscodegenVisitor).apply(this, arguments));
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
     }
-
-    babelHelpers.createClass(FixParamsForEscodegenVisitor, [{
-      key: "fixFunctionNode",
-      value: function fixFunctionNode(node) {
-        node.defaults = node.params.map(function (p, i) {
-          if (p.type === "AssignmentPattern") {
-            node.params[i] = p.left;
-            return p.right;
-          }
-          return undefined;
-        });
-      }
-    }, {
-      key: "visitFunction",
-      value: function visitFunction(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunction", this).call(this, node, state, path);
-      }
-    }, {
-      key: "visitArrowFunctionExpression",
-      value: function visitArrowFunctionExpression(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitArrowFunctionExpression", this).call(this, node, state, path);
-      }
-    }, {
-      key: "visitFunctionExpression",
-      value: function visitFunctionExpression(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionExpression", this).call(this, node, state, path);
-      }
-    }, {
-      key: "visitFunctionDeclaration",
-      value: function visitFunctionDeclaration(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionDeclaration", this).call(this, node, state, path);
-      }
-    }]);
-    return FixParamsForEscodegenVisitor;
-  }(Visitor);
-
-  // debugger;
-  // var node = lively.ast.parse("/^file:\\/\\//");
-  // fixParamDefaults(node).body[0].expression.value
-
-  function fixParamDefaults(parsed) {
-    parsed = lively_lang.obj.deepCopy(parsed);
-    new FixParamsForEscodegenVisitor().accept(parsed, null, []);
-    return parsed;
-  }
-
-  var walk = acorn.walk;
-  var loose = acorn.loose;
-  // rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
-  // await. We patch the walker here until it does
-  if (!walk.base.AwaitExpression) {
-    walk.base.AwaitExpression = function (node, st, c) {
-      if (node.argument) c(node.argument, st, 'Expression');
-    };
-  }
-
-  // FIXME, don't add to walk object, that's our own stuff!
-  walk.forEachNode = forEachNode;
-  walk.matchNodes = matchNodes;
-  walk.findNodesIncluding = findNodesIncluding;
-  walk.withParentInfo = withParentInfo;
-  walk.copy = copy;
-  walk.findSiblings = findSiblings;
-
-  walk.findNodeByAstIndex = findNodeByAstIndex;
-  walk.findStatementOfNode = findStatementOfNode;
-  walk.addAstIndex = addAstIndex;
-
-  // -=-=-=-=-=-=-=-=-=-=-=-
-  // from lively.ast.acorn
-  // -=-=-=-=-=-=-=-=-=-=-=-
-  function forEachNode(parsed, func, state, options) {
-    // note: func can get called with the same node for different
-    // visitor callbacks!
-    // func args: node, state, depth, type
-    options = options || {};
-    var traversal = options.traversal || 'preorder'; // also: postorder
-
-    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
-    var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
-      func(node, state, depth, type);return orig(node, depth + 1, cont);
-    } : function (orig, type, node, depth, cont) {
-      var result = orig(node, depth + 1, cont);func(node, state, depth, type);return result;
-    };
-    Object.keys(visitors).forEach(function (type) {
-      var orig = visitors[type];
-      visitors[type] = function (node, depth, cont) {
-        return iterator(orig, type, node, depth, cont);
-      };
-    });
-    walk.recursive(parsed, 0, null, visitors);
-    return parsed;
-  };
-
-  function matchNodes(parsed, visitor, state, options) {
-    function visit(node, state, depth, type) {
-      if (visitor[node.type]) visitor[node.type](node, state, depth, type);
-    }
-    return forEachNode(parsed, visit, state, options);
-  };
-
-  // findNodesIncluding: function(ast, pos, test, base) {
-  //   var nodes = [];
-  //   base = base || acorn.walk.make({});
-  //   Object.keys(base).forEach(function(name) {
-  //       var orig = base[name];
-  //       base[name] = function(node, state, cont) {
-  //           nodes.pushIfNotIncluded(node);
-  //           return orig(node, state, cont);
-  //       }
-  //   });
-  //   acorn.walk.findNodeAround(ast, pos, test, base);
-  //   return nodes;
-  // }
-
-  function findNodesIncluding(parsed, pos, test, base) {
-    var nodes = [];
-    base = base || walk.make(walk.visitors.withMemberExpression);
-    Object.keys(walk.base).forEach(function (name) {
-      var orig = base[name];
-      base[name] = function (node, state, cont) {
-        lively_lang.arr.pushIfNotIncluded(nodes, node);
-        return orig(node, state, cont);
-      };
-    });
-    base["Property"] = function (node, st, c) {
-      lively_lang.arr.pushIfNotIncluded(nodes, node);
-      c(node.key, st, "Expression");
-      c(node.value, st, "Expression");
-    };
-    base["LabeledStatement"] = function (node, st, c) {
-      node.label && c(node.label, st, "Expression");
-      c(node.body, st, "Statement");
-    };
-    walk.findNodeAround(parsed, pos, test, base);
-    return nodes;
-  };
-
-  function withParentInfo(parsed, iterator, options) {
-    // options = {visitAllNodes: BOOL}
-    options = options || {};
-    function makeScope(parentScope) {
-      var scope = { id: lively_lang.string.newUUID(), parentScope: parentScope, containingScopes: [] };
-      parentScope && parentScope.containingScopes.push(scope);
-      return scope;
-    }
-    var visitors = walk.make({
-      Function: function Function(node, st, c) {
-        if (st && st.scope) st.scope = makeScope(st.scope);
-        c(node.body, st, "ScopeBody");
-      },
-      VariableDeclarator: function VariableDeclarator(node, st, c) {
-        // node.id && c(node.id, st, 'Identifier');
-        node.init && c(node.init, st, 'Expression');
-      },
-      VariableDeclaration: function VariableDeclaration(node, st, c) {
-        for (var i = 0; i < node.declarations.length; ++i) {
-          var decl = node.declarations[i];
-          if (decl) c(decl, st, "VariableDeclarator");
-        }
-      },
-      ObjectExpression: function ObjectExpression(node, st, c) {
-        for (var i = 0; i < node.properties.length; ++i) {
-          var prop = node.properties[i];
-          c(prop.key, st, "Expression");
-          c(prop.value, st, "Expression");
-        }
-      },
-      MemberExpression: function MemberExpression(node, st, c) {
-        c(node.object, st, "Expression");
-        c(node.property, st, "Expression");
-      }
-    }, walk.base);
-    var lastActiveProp,
-        getters = [];
-    forEachNode(parsed, function (node) {
-      lively_lang.arr.withoutAll(Object.keys(node), ['end', 'start', 'type', 'source', 'raw']).forEach(function (propName) {
-        if (node.__lookupGetter__(propName)) return; // already defined
-        var val = node[propName];
-        node.__defineGetter__(propName, function () {
-          lastActiveProp = propName;return val;
-        });
-        getters.push([node, propName, node[propName]]);
-      });
-    }, null, { visitors: visitors });
-    var result = [];
-    Object.keys(visitors).forEach(function (type) {
-      var orig = visitors[type];
-      visitors[type] = function (node, state, cont) {
-        if (type === node.type || options.visitAllNodes) {
-          result.push(iterator.call(null, node, { scope: state.scope, depth: state.depth, parent: state.parent, type: type, propertyInParent: lastActiveProp }));
-          return orig(node, { scope: state.scope, parent: node, depth: state.depth + 1 }, cont);
-        } else {
-          return orig(node, state, cont);
-        }
-      };
-    });
-    walk.recursive(parsed, { scope: makeScope(), parent: null, propertyInParent: '', depth: 0 }, null, visitors);
-    getters.forEach(function (nodeNameVal) {
-      delete nodeNameVal[0][nodeNameVal[1]];
-      nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
-    });
-    return result;
-  };
-
-  function copy(ast, override) {
-    var visitors = lively_lang.obj.extend({
-      Program: function Program(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'Program',
-          body: n.body.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      FunctionDeclaration: function FunctionDeclaration(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'FunctionDeclaration',
-          id: c(n.id), params: n.params.map(c), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      BlockStatement: function BlockStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'BlockStatement',
-          body: n.body.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ExpressionStatement: function ExpressionStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ExpressionStatement',
-          expression: c(n.expression),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      CallExpression: function CallExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'CallExpression',
-          callee: c(n.callee), arguments: n.arguments.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      MemberExpression: function MemberExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'MemberExpression',
-          object: c(n.object), property: c(n.property), computed: n.computed,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      NewExpression: function NewExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'NewExpression',
-          callee: c(n.callee), arguments: n.arguments.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      VariableDeclaration: function VariableDeclaration(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'VariableDeclaration',
-          declarations: n.declarations.map(c), kind: n.kind,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      VariableDeclarator: function VariableDeclarator(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'VariableDeclarator',
-          id: c(n.id), init: c(n.init),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      FunctionExpression: function FunctionExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'FunctionExpression',
-          id: c(n.id), params: n.params.map(c), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      IfStatement: function IfStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'IfStatement',
-          test: c(n.test), consequent: c(n.consequent),
-          alternate: c(n.alternate),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ConditionalExpression: function ConditionalExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ConditionalExpression',
-          test: c(n.test), consequent: c(n.consequent),
-          alternate: c(n.alternate),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      SwitchStatement: function SwitchStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'SwitchStatement',
-          discriminant: c(n.discriminant), cases: n.cases.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      SwitchCase: function SwitchCase(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'SwitchCase',
-          test: c(n.test), consequent: n.consequent.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      BreakStatement: function BreakStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'BreakStatement',
-          label: n.label,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ContinueStatement: function ContinueStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ContinueStatement',
-          label: n.label,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      TryStatement: function TryStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'TryStatement',
-          block: c(n.block), handler: c(n.handler), finalizer: c(n.finalizer),
-          guardedHandlers: n.guardedHandlers.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      CatchClause: function CatchClause(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'CatchClause',
-          param: c(n.param), guard: c(n.guard), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ThrowStatement: function ThrowStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ThrowStatement',
-          argument: c(n.argument),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ForStatement: function ForStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ForStatement',
-          init: c(n.init), test: c(n.test), update: c(n.update),
-          body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ForInStatement: function ForInStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ForInStatement',
-          left: c(n.left), right: c(n.right), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      WhileStatement: function WhileStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'WhileStatement',
-          test: c(n.test), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      DoWhileStatement: function DoWhileStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'DoWhileStatement',
-          test: c(n.test), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      WithStatement: function WithStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'WithStatement',
-          object: c(n.object), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      UnaryExpression: function UnaryExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'UnaryExpression',
-          argument: c(n.argument), operator: n.operator, prefix: n.prefix,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      BinaryExpression: function BinaryExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'BinaryExpression',
-          left: c(n.left), operator: n.operator, right: c(n.right),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      LogicalExpression: function LogicalExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'LogicalExpression',
-          left: c(n.left), operator: n.operator, right: c(n.right),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      AssignmentExpression: function AssignmentExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'AssignmentExpression',
-          left: c(n.left), operator: n.operator, right: c(n.right),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      UpdateExpression: function UpdateExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'UpdateExpression',
-          argument: c(n.argument), operator: n.operator, prefix: n.prefix,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ReturnStatement: function ReturnStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ReturnStatement',
-          argument: c(n.argument),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      Identifier: function Identifier(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'Identifier',
-          name: n.name,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      Literal: function Literal(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'Literal',
-          value: n.value, raw: n.raw /* Acorn-specific */
-          , source: n.source, astIndex: n.astIndex
-        };
-      },
-      ObjectExpression: function ObjectExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ObjectExpression',
-          properties: n.properties.map(function (prop) {
-            return {
-              key: c(prop.key), value: c(prop.value), kind: prop.kind
-            };
-          }),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ArrayExpression: function ArrayExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ArrayExpression',
-          elements: n.elements.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      SequenceExpression: function SequenceExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'SequenceExpression',
-          expressions: n.expressions.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      EmptyStatement: function EmptyStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'EmptyStatement',
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ThisExpression: function ThisExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ThisExpression',
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      DebuggerStatement: function DebuggerStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'DebuggerStatement',
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      LabeledStatement: function LabeledStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'LabeledStatement',
-          label: n.label, body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      }
-    }, override || {});
-
-    function c(node) {
-      if (node === null) return null;
-      return visitors[node.type](node, c);
-    }
-    return c(ast);
-  }
-
-  function findSiblings(parsed, node, beforeOrAfter) {
-    if (!node) return [];
-    var nodes = findNodesIncluding(parsed, node.start),
-        idx = nodes.indexOf(node),
-        parents = nodes.slice(0, idx),
-        parentWithBody = lively_lang.arr.detect(parents.reverse(), function (p) {
-      return Array.isArray(p.body);
-    }),
-        siblingsWithNode = parentWithBody.body;
-    if (!beforeOrAfter) return lively_lang.arr.without(siblingsWithNode, node);
-    var nodeIdxInSiblings = siblingsWithNode.indexOf(node);
-    return beforeOrAfter === 'before' ? siblingsWithNode.slice(0, nodeIdxInSiblings) : siblingsWithNode.slice(nodeIdxInSiblings + 1);
-  }
-
-  // // cached visitors that are used often
-  walk.visitors = {
-    stopAtFunctions: walk.make({
-      'Function': function Function() {/* stop descent */}
-    }, walk.base),
-
-    withMemberExpression: walk.make({
-      MemberExpression: function MemberExpression(node, st, c) {
-        c(node.object, st, "Expression");
-        c(node.property, st, "Expression");
-      }
-    }, walk.base)
-  };
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // from lively.ast.AstHelper
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
-  function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
-    addIndex = addIndex == null ? true : !!addIndex;
-    if (!parsed.astIndex && addIndex) addAstIndex(parsed);
-    // we need to visit every node, forEachNode is highly
-    // inefficient, the compilled Mozilla visitors are a better fit
-    var found = null;
-    withMozillaAstDo(parsed, null, function (next, node, state) {
-      if (found) return;
-      var idx = node.astIndex;
-      if (idx < astIndexToFind) return;
-      if (node.astIndex === astIndexToFind) {
-        found = node;return;
-      }
-      next();
-    });
-    return found;
-  };
-
-  // FIXME: global (and temporary) findNodeByAstIndex is used by __getClosure and defined in Rewriting.js
-  // Global.findNodeByAstIndex = findNodeByAstIndex;
-
-  function findStatementOfNode(options, parsed, target) {
-    // DEPRECATED in favor of query.statementOf(parsed, node)
-    // Can also be called with just ast and target. options can be {asPath: BOOLEAN}.
-    // Find the statement that a target node is in. Example:
-    // let source be "var x = 1; x + 1;" and we are looking for the
-    // Identifier "x" in "x+1;". The second statement is what will be found.
-    if (!target) {
-      target = parsed;parsed = options;options = null;
-    }
-    if (!options) options = {};
-    if (!parsed.astIndex) addAstIndex(parsed);
-    var found,
-        targetReached = false;
-    var statements = [
-    // ES5
-    'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration', 'VariableDeclaration',
-    // ES2015:
-    'ClassDeclaration'];
-    withMozillaAstDo(parsed, {}, function (next, node, state, path) {
-      if (targetReached || node.astIndex < target.astIndex) return;
-      if (node === target || node.astIndex === target.astIndex) {
-        targetReached = true;
-        if (options.asPath) found = path;else {
-          var p = lively_lang.Path(path);
-          do {
-            found = p.get(parsed);
-            p = p.slice(0, p.size() - 1);
-          } while (statements.indexOf(found.type) == -1 && p.size() > 0);
-        }
-      }
-      !targetReached && next();
-    });
-    return found;
-  };
-
-  function addAstIndex(parsed) {
-    // we need to visit every node, forEachNode is highly
-    // inefficient, the compilled Mozilla visitors are a better fit
-    withMozillaAstDo(parsed, { index: 0 }, function (next, node, state) {
-      next();node.astIndex = state.index++;
-    });
-    return parsed;
-  };
-
-  var FindToplevelFuncDeclVisitor = function (_Visitor) {
-    babelHelpers.inherits(FindToplevelFuncDeclVisitor, _Visitor);
-
-    function FindToplevelFuncDeclVisitor() {
-      babelHelpers.classCallCheck(this, FindToplevelFuncDeclVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(FindToplevelFuncDeclVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(FindToplevelFuncDeclVisitor, [{
-      key: "accept",
-      value: function accept(node, funcDecls, path) {
-        switch (node.type) {
-          case "ArrowFunctionExpression":
-            return node;
-          case "FunctionExpression":
-            return node;
-          case "FunctionDeclaration":
-            funcDecls.unshift({ node: node, path: path });return node;
-          default:
-            return babelHelpers.get(Object.getPrototypeOf(FindToplevelFuncDeclVisitor.prototype), "accept", this).call(this, node, funcDecls, path);
-        }
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed) {
-        var state = [];
-        new this().accept(parsed, state, []);
-        return state;
-      }
-    }]);
-    return FindToplevelFuncDeclVisitor;
-  }(Visitor);
-
-  var AllNodesVisitor = function (_Visitor2) {
-    babelHelpers.inherits(AllNodesVisitor, _Visitor2);
-
-    function AllNodesVisitor() {
-      babelHelpers.classCallCheck(this, AllNodesVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(AllNodesVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(AllNodesVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        this.doFunc(node, state, path);
-        return babelHelpers.get(Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, doFunc, state) {
-        var v = new this();
-        v.doFunc = doFunc;
-        v.accept(parsed, state, []);
-        return state;
-      }
-    }]);
-    return AllNodesVisitor;
-  }(Visitor);
-
-  acorn.walk.addSource = addSource;
-
-  function addSource(parsed, source) {
-    if (typeof parsed === "string") {
-      source = parsed;
-      parsed = parse(parsed);
-    }
-    source && AllNodesVisitor.run(parsed, function (node, state, path) {
-      return !node.source && (node.source = source.slice(node.start, node.end));
-    });
-    return parsed;
-  }
-
-  function nodesAt(pos, ast) {
-    ast = typeof ast === 'string' ? this.parse(ast) : ast;
-    return findNodesIncluding(ast, pos);
-  }
-
-  function parseFunction(source) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-    var src = '(' + source + ')',
-        ast = parse(src, options);
-    if (options.addSource) addSource(ast, src);
-    return ast.body[0].expression;
-  }
-
-  function fuzzyParse(source, options) {
-    // options: verbose, addSource, type
-    options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 7;
-    options.sourceType = options.sourceType || "module";
-    options.plugins = options.plugins || {};
-    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
-    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
-
-    var ast, safeSource, err;
-    if (options.type === 'LabeledStatement') {
-      safeSource = '$={' + source + '}';
-    }
-    try {
-      // we only parse to find errors
-      ast = parse(safeSource || source, options);
-      if (safeSource) ast = null; // we parsed only for finding errors
-      else if (options.addSource) addSource(ast, source);
-    } catch (e) {
-      err = e;
-    }
-    if (err && err.raisedAt !== undefined) {
-      if (safeSource) {
-        // fix error pos
-        err.pos -= 3;err.raisedAt -= 3;err.loc.column -= 3;
-      }
-      var parseErrorSource = '';
-      parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
-      parseErrorSource += '<-error->';
-      parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
-      options.verbose && show('parse error: ' + parseErrorSource);
-      err.parseErrorSource = parseErrorSource;
-    } else if (err && options.verbose) {
-      show('' + err + err.stack);
-    }
-    if (!ast) {
-      ast = loose.parse_dammit(source, options);
-      if (options.addSource) addSource(ast, source);
-      ast.isFuzzy = true;
-      ast.parseError = err;
-    }
-    return ast;
-  }
-
-  function parse(source, options) {
-    // proxy function to acorn.parse.
-    // Note that we will implement useful functionality on top of the pure
-    // acorn interface and make it available here (such as more convenient
-    // comment parsing). For using the pure acorn interface use the acorn
-    // global.
-    // See https://github.com/marijnh/acorn for full acorn doc and parse options.
-    // options: {
-    //   addSource: BOOL, -- add source property to each node
-    //   addAstIndex: BOOL, -- each node gets an index  number
-    //   withComments: BOOL, -- adds comment objects to Program/BlockStatements:
-    //              {isBlock: BOOL, text: STRING, node: NODE,
-    //               start: INTEGER, end: INTEGER, line: INTEGER, column: INTEGER}
-    //   ecmaVersion: 3|5|6,
-    //   allowReturnOutsideFunction: BOOL, -- Default is false
-    //   locations: BOOL -- Default is false
-    // }
-
-    options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 7;
-    options.sourceType = options.sourceType || "module";
-    if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
-    options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
-    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
-
-    if (options.withComments) {
-      // record comments
-      delete options.withComments;
-      var comments = [];
-      options.onComment = function (isBlock, text, start, end, line, column) {
-        comments.push({
-          isBlock: isBlock,
-          text: text, node: null,
-          start: start, end: end,
-          line: line, column: column
-        });
-      };
-    }
-
-    var parsed = acorn.parse(source, options);
-
-    if (options.addSource) addSource(parsed, source);
-
-    if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
-
-    if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
-
-    return parsed;
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function attachCommentsToAST(commentData) {
-      // for each comment: assign the comment to a block-level AST node
-      commentData = mergeComments(assignCommentsToBlockNodes(commentData));
-      parsed.allComments = commentData.comments;
-    }
-
-    function assignCommentsToBlockNodes(commentData) {
-      comments.forEach(function (comment) {
-        var node = lively_lang.arr.detect(nodesAt(comment.start, parsed).reverse(), function (node) {
-          return node.type === 'BlockStatement' || node.type === 'Program';
-        });
-        if (!node) node = parsed;
-        if (!node.comments) node.comments = [];
-        node.comments.push(comment);
-        commentData.nodesWithComments.push(node);
-      });
-      return commentData;
-    }
-
-    function mergeComments(commentData) {
-      // coalesce non-block comments (multiple following lines of "// ...") into one comment.
-      // This only happens if line comments aren't seperated by newlines
-      commentData.nodesWithComments.forEach(function (blockNode) {
-        lively_lang.arr.clone(blockNode.comments).reduce(function (coalesceData, comment) {
-          if (comment.isBlock) {
-            coalesceData.lastComment = null;
-            return coalesceData;
-          }
-
-          if (!coalesceData.lastComment) {
-            coalesceData.lastComment = comment;
-            return coalesceData;
-          }
-
-          // if the comments are seperated by a statement, don't merge
-          var last = coalesceData.lastComment;
-          var nodeInbetween = lively_lang.arr.detect(blockNode.body, function (node) {
-            return node.start >= last.end && node.end <= comment.start;
-          });
-          if (nodeInbetween) {
-            coalesceData.lastComment = comment;
-            return coalesceData;
-          }
-
-          // if the comments are seperated by a newline, don't merge
-          var codeInBetween = source.slice(last.end, comment.start);
-          if (/[\n\r][\n\r]+/.test(codeInBetween)) {
-            coalesceData.lastComment = comment;
-            return coalesceData;
-          }
-
-          // merge comments into one
-          last.text += "\n" + comment.text;
-          last.end = comment.end;
-          lively_lang.arr.remove(blockNode.comments, comment);
-          lively_lang.arr.remove(commentData.comments, comment);
-          return coalesceData;
-        }, { lastComment: null });
-      });
-      return commentData;
-    }
-  }
-
-  var methods = {
-
-    withMozillaAstDo: function withMozillaAstDo(parsed, state, func) {
-      // simple interface to mozilla AST visitor. function gets passed three
-      // arguments:
-      // acceptNext, -- continue visiting
-      // node, -- current node being visited
-      // state -- state variable that is passed along
-      var vis = new Visitor(),
-          origAccept = vis.accept;
-      vis.accept = function (node, st, path) {
-        var next = function next() {
-          origAccept.call(vis, node, st, path);
-        };
-        state = func(next, node, st, path);
-        return node;
-      };
-      vis.accept(parsed, state, []);
-      return state;
-    },
-
-    printAst: function printAst(astOrSource, options) {
-      options = options || {};
-      var printSource = options.printSource || false,
-          printPositions = options.printPositions || false,
-          printIndex = options.printIndex || false,
-          source,
-          parsed,
-          tree = [];
-
-      if (typeof astOrSource === "string") {
-        source = astOrSource;
-        parsed = parse(astOrSource);
-      } else {
-        parsed = astOrSource;source = options.source || parsed.source;
-      }
-
-      if (printSource && !parsed.source) {
-        // ensure that nodes have source attached
-        if (!source) {
-          source = stringify(parsed);
-          parsed = parse(source);
-        }
-        addSource(parsed, source);
-      }
-
-      function printFunc(ea) {
-        var line = ea.path + ':' + ea.node.type,
-            additional = [];
-        if (printIndex) {
-          additional.push(ea.index);
-        }
-        if (printPositions) {
-          additional.push(ea.node.start + '-' + ea.node.end);
-        }
-        if (printSource) {
-          var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-              printed = lively_lang.string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
-          additional.push(printed);
-        }
-        if (additional.length) {
-          line += '(' + additional.join(',') + ')';
-        }
-        return line;
-      }
-
-      new PrinterVisitor().accept(parsed, { index: 0, tree: tree }, []);
-      return lively_lang.string.printTree(tree[0], printFunc, function (ea) {
-        return ea.children;
-      }, '  ');
-    },
-
-    compareAst: function compareAst(node1, node2) {
-      if (!node1 || !node2) throw new Error('node' + (node1 ? '1' : '2') + ' not defined');
-      var state = { completePath: [], comparisons: { errors: [] } };
-      new ComparisonVisitor().accept(node1, node2, state, []);
-      return !state.comparisons.errors.length ? null : state.comparisons.errors.pluck('msg');
-    },
-
-    pathToNode: function pathToNode(parsed, index, options) {
-      options = options || {};
-      if (!parsed.astIndex) addAstIndex(parsed);
-      var vis = new Visitor(),
-          found = null;
-      (vis.accept = function (node, pathToHere, state, path) {
-        if (found) return;
-        var fullPath = pathToHere.concat(path);
-        if (node.astIndex === index) {
-          var pathString = fullPath.map(function (ea) {
-            return typeof ea === 'string' ? '.' + ea : '[' + ea + ']';
-          }).join('');
-          found = { pathString: pathString, path: fullPath, node: node };
-        }
-        return this['visit' + node.type](node, fullPath, state, path);
-      }).call(vis, parsed, [], {}, []);
-      return found;
-    },
-
-    rematchAstWithSource: function rematchAstWithSource(parsed, source, addLocations, subTreePath) {
-      addLocations = !!addLocations;
-      var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
-          visitor = new Visitor();
-      if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
-
-      visitor.accept = function (node, state, path) {
-        path = path || [];
-        var node2 = path.reduce(function (node, pathElem) {
-          return node[pathElem];
-        }, parsed);
-        node2.start = node.start;
-        node2.end = node.end;
-        if (addLocations) node2.loc = node.loc;
-        return this['visit' + node.type](node, state, path);
-      };
-
-      visitor.accept(parsed2);
-    }
-
-  };
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var withMozillaAstDo = methods.withMozillaAstDo;
-  var printAst = methods.printAst;
-  var compareAst = methods.compareAst;
-  var pathToNode = methods.pathToNode;
-  var rematchAstWithSource = methods.rematchAstWithSource;
-
-  var identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
-  function isIdentifier(string) {
-    // Note: It's not so easy...
-    // http://wiki.ecmascript.org/doku.php?id=strawman:identifier_identification
-    // https://mathiasbynens.be/notes/javascript-identifiers-es6
-    return identifierRe.test(string) && string.indexOf("-") === -1;
-  }
-
-  function id(name) {
-    return name === "this" ? { type: "ThisExpression" } : { name: String(name), type: "Identifier" };
-  }
-
-  function literal(value) {
-    return { type: "Literal", value: value };
-  }
-
-  function exprStmt(expression) {
-    return { type: "ExpressionStatement", expression: expression };
-  }
-
-  function returnStmt(expr) {
-    return { type: "ReturnStatement", argument: expr };
-  }
-
-  function empty() {
-    return { type: "EmptyStatement" };
-  }
-
-  function binaryExpr(left, op, right) {
-    return {
-      left: left, right: right, operator: op,
-      type: "BinaryExpression"
-    };
-  }
-
-  function funcExpr(_ref) {
-    for (var _len = arguments.length, statements = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-      statements[_key - 2] = arguments[_key];
-    }
-
-    var arrow = _ref.arrow;
-    var funcId = _ref.id;
-    var expression = _ref.expression;
-    var generator = _ref.generator;
-    var params = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-
-    // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
-    // // => "function foo(a) { 3; }"
-    params = params.map(function (ea) {
-      return typeof ea === "string" ? id(ea) : ea;
-    });
-    return {
-      type: (arrow ? "Arrow" : "") + "FunctionExpression",
-      id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
-      params: params,
-      body: { body: statements, type: "BlockStatement" },
-      expression: expression || false,
-      generator: generator || false
-    };
-  }
-
-  function funcCall(callee) {
-    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-      args[_key2 - 1] = arguments[_key2];
-    }
-
-    if (typeof callee === "string") callee = id(callee);
-    return {
-      type: "CallExpression",
-      callee: callee,
-      arguments: args
-    };
-  }
-
-  function varDecl(id, init, kind) {
-    if (typeof id === "string") id = { name: id, type: "Identifier" };
-    return {
-      type: "VariableDeclaration", kind: kind || "var",
-      declarations: [{ type: "VariableDeclarator", id: id, init: init }]
-    };
-  }
-
-  function member(obj, prop, computed) {
-    // Example:
-    // lively.ast.stringify(member("foo", "bar"))
-    // // => "foo.bar"
-    // lively.ast.stringify(member("foo", "b-a-r"))
-    // // => "foo['b-a-r']"
-    // lively.ast.stringify(member("foo", "zork", true))
-    // // => "foo['zork']"
-    // lively.ast.stringify(member("foo", 0))
-    // // => "foo[0]"
-    if (typeof obj === "string") obj = id(obj);
-    if (typeof prop === "string") {
-      if (!computed && !isIdentifier(prop)) computed = true;
-      prop = computed ? literal(prop) : id(prop);
-    } else if (typeof prop === "number") {
-      prop = literal(prop);
-      computed = true;
-    } else if (prop.type === "Literal") {
-      computed = true;
-    }
-    return {
-      type: "MemberExpression",
-      computed: !!computed,
-      object: obj, property: prop
-    };
-  }
-
-  function memberChain(first) {
-    for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-      rest[_key3 - 1] = arguments[_key3];
-    }
-
-    // lively.ast.stringify(memberChain("foo", "bar", 0, "baz-zork"));
-    // // => "foo.bar[0]['baz-zork']"
-    return rest.reduce(function (memberExpr, key) {
-      return member(memberExpr, key);
-    }, (typeof first === "undefined" ? "undefined" : babelHelpers.typeof(first)) === "object" ? first : id(first));
-  }
-
-  function assign(left, right) {
-    // lively.ast.stringify(assign("a", "x"))
-    // // => "a = x"
-    // lively.ast.stringify(assign(member("a", "x"), literal(23)))
-    // // => "a.x = 23"
-    return {
-      type: "AssignmentExpression", operator: "=",
-      right: right ? typeof right === "string" ? id(right) : right : id("undefined"),
-      left: typeof left === "string" ? id(left) : left
-    };
-  }
-
-  function block() {
-    for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-      body[_key4] = arguments[_key4];
-    }
-
-    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
-  }
-
-  function program() {
-    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
-  }
-
-  function tryStmt(exName, handlerBody, finalizerBody) {
-    for (var _len5 = arguments.length, body = Array(_len5 > 3 ? _len5 - 3 : 0), _key5 = 3; _key5 < _len5; _key5++) {
-      body[_key5 - 3] = arguments[_key5];
-    }
-
-    // Example:
-    // var stmt = exprStmt(binaryExpr(literal(3), "+", literal(2)));
-    // lively.ast.stringify(tryStmt("err", [stmt], [stmt], stmt, stmt))
-    // // => "try { 3 + 2; 3 + 2; } catch (err) { 3 + 2; } finally { 3 + 2; }"
-    if (!Array.isArray(finalizerBody)) {
-      body.unshift(finalizerBody);
-      finalizerBody = null;
-    }
-    return {
-      block: block(body),
-      finalizer: finalizerBody ? block(finalizerBody) : null,
-      handler: {
-        body: block(handlerBody),
-        param: id(exName),
-        type: "CatchClause"
-      },
-      type: "TryStatement"
-    };
-  }
-
-  function prop(key, value) {
-    return {
-      type: "Property",
-      key: key,
-      computed: key.type !== "Identifier",
-      shorthand: false,
-      value: value
-    };
-  }
-
-  function objectLiteral(keysAndValues) {
-    var props = [];
-    for (var i = 0; i < keysAndValues.length; i += 2) {
-      var key = keysAndValues[i];
-      if (typeof key === "string") key = id(key);
-      props.push(prop(key, keysAndValues[i + 1]));
-    }
-    return {
-      properties: props,
-      type: "ObjectExpression"
-    };
-  }
-
-  function ifStmt(test) {
-    var consequent = arguments.length <= 1 || arguments[1] === undefined ? block() : arguments[1];
-    var alternate = arguments.length <= 2 || arguments[2] === undefined ? block() : arguments[2];
-
-    return {
-      consequent: consequent, alternate: alternate, test: test,
-      type: "IfStatement"
-    };
-  }
-
-  function logical(op, left, right) {
-    return {
-      operator: op, left: left, right: right,
-      type: "LogicalExpression"
-    };
-  }
-
-var nodes = Object.freeze({
-    isIdentifier: isIdentifier,
-    id: id,
-    literal: literal,
-    objectLiteral: objectLiteral,
-    prop: prop,
-    exprStmt: exprStmt,
-    returnStmt: returnStmt,
-    empty: empty,
-    binaryExpr: binaryExpr,
-    funcExpr: funcExpr,
-    funcCall: funcCall,
-    varDecl: varDecl,
-    member: member,
-    memberChain: memberChain,
-    assign: assign,
-    block: block,
-    program: program,
-    tryStmt: tryStmt,
-    ifStmt: ifStmt,
-    logical: logical
   });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var helpers = {
-    declIds: function declIds(nodes) {
-      return lively_lang.arr.flatmap(nodes, function (ea) {
-        if (!ea) return [];
-        if (ea.type === "Identifier") return [ea];
-        if (ea.type === "RestElement") return [ea.argument];
-        if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
-        if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
-        if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
-        return [];
-      });
-    },
-    varDecls: function varDecls(scope) {
-      return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
-        return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
-          return helpers.declIds([decl.id]).map(function (id) {
-            return [decl, id];
-          });
-        });
-      });
-    },
-    varDeclIds: function varDeclIds(scope) {
-      return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
-        all.push.apply(all, ea.declarations);return all;
-      }, []).map(function (ea) {
-        return ea.id;
-      }));
-    },
-    objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
-      // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
-      // nodes as a list
-      return lively_lang.arr.flatmap(objExpr.properties, function (prop) {
-        var key = prop.key.name;
-        // var result = [{key: path.concat([key]), value: prop.value}];
-        var result = [];
-        var thisNode = { key: path.concat([key]), value: prop.value };
-        switch (prop.value.type) {
-          case "ArrayExpression":case "ArrayPattern":
-            if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
-              return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
-            }));
-            break;
-          case "ObjectExpression":case "ObjectPattern":
-            if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
-            break;
-          case "AssignmentPattern":
-            if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
-            break;
-          default:
-            result.push(thisNode);
-        }
-        return result;
-      });
-    },
-    isDeclaration: function isDeclaration(node) {
-      return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
     }
-  };
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
-
-  function scopes(parsed) {
-    var vis = new ScopeVisitor(),
-        scope = vis.newScope(parsed, null);
-    vis.accept(parsed, scope, []);
-    return scope;
-  }
-
-  function nodesAtIndex(parsed, index) {
-    return withMozillaAstDo(parsed, [], function (next, node, found) {
-      if (node.start <= index && index <= node.end) {
-        found.push(node);next();
-      }
-      return found;
-    });
-  }
-
-  function scopesAtIndex(parsed, index) {
-    return lively_lang.tree.filter(scopes(parsed), function (scope) {
-      var n = scope.node;
-      var start = n.start,
-          end = n.end;
-      if (n.type === 'FunctionDeclaration') {
-        start = n.params.length ? n.params[0].start : n.body.start;
-        end = n.body.end;
-      }
-      return start <= index && index <= end;
-    }, function (s) {
-      return s.subScopes;
-    });
-  }
-
-  function scopeAtIndex(parsed, index) {
-    return lively_lang.arr.last(scopesAtIndex(parsed, index));
-  }
-
-  function scopesAtPos(pos, parsed) {
-    // DEPRECATED
-    // FIXME "scopes" should actually not referer to a node but to a scope
-    // object, see exports.scopes!
-    return nodesAt$1(pos, parsed).filter(function (node) {
-      return node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression';
-    });
-  }
-
-  function nodesInScopeOf(node) {
-    // DEPRECATED
-    // FIXME "scopes" should actually not referer to a node but to a scope
-    // object, see exports.scopes!
-    return withMozillaAstDo(node, { root: node, result: [] }, function (next, node, state) {
-      state.result.push(node);
-      if (node !== state.root && (node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) return state;
-      next();
-      return state;
-    }).result;
-  }
-
-  function declarationsOfScope(scope, includeOuter) {
-    // returns Identifier nodes
-    return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : []).concat(helpers.declIds(scope.params)).concat(scope.funcDecls.map(function (ea) {
-      return ea.id;
-    })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
-      return ea.id;
-    })).concat(scope.importDecls);
-  }
-
-  function declarationsWithIdsOfScope(scope) {
-    // returns a list of pairs [(DeclarationNode,IdentifierNode)]
-    var bareIds = helpers.declIds(scope.params).concat(scope.catches),
-        declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
-    return bareIds.map(function (ea) {
-      return [ea, ea];
-    }).concat(declNodes.map(function (ea) {
-      return [ea, ea.id];
-    })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
-      return [statementOf(scope.node, im), im];
-    }));
-  }
-
-  function _declaredVarNames(scope, useComments) {
-    return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
-  }
-
-  function _findJsLintGlobalDeclarations(node) {
-    if (!node || !node.comments) return [];
-    return lively_lang.arr.flatten(node.comments.filter(function (ea) {
-      return ea.text.trim().match(/^global/);
-    }).map(function (ea) {
-      return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
-    }));
-  }
-
-  function topLevelFuncDecls(parsed) {
-    return FindToplevelFuncDeclVisitor.run(parsed);
-  }
-
-  function resolveReference(ref, scopePath) {
-    if (scopePath.length == 0) return [null, null];
-
-    var _scopePath = babelHelpers.toArray(scopePath);
-
-    var scope = _scopePath[0];
-
-    var outer = _scopePath.slice(1);
-
-    var decls = scope.decls || declarationsWithIdsOfScope(scope);
-    scope.decls = decls;
-    var decl = decls.find(function (_ref) {
-      var _ref2 = babelHelpers.slicedToArray(_ref, 2);
-
-      var _ = _ref2[0];
-      var id = _ref2[1];
-      return id.name == ref;
-    });
-    return decl || resolveReference(ref, outer);
-  }
-
-  function resolveReferences(scope) {
-    function rec(scope, outerScopes) {
-      var path = [scope].concat(outerScopes);
-      scope.refs.forEach(function (ref) {
-        var _resolveReference = resolveReference(ref.name, path);
-
-        var _resolveReference2 = babelHelpers.slicedToArray(_resolveReference, 2);
-
-        var decl = _resolveReference2[0];
-        var id = _resolveReference2[1];
-
-        map.set(ref, { decl: decl, declId: id, ref: ref });
-      });
-      scope.subScopes.forEach(function (s) {
-        return rec(s, path);
-      });
+    if (setter !== undefined) {
+      setter.call(receiver, value);
     }
-    if (scope.referencesResolvedSafely) return scope;
-    var map = scope.resolvedRefMap || (scope.resolvedRefMap = new Map());
-    rec(scope, []);
-    scope.referencesResolvedSafely = true;
-    return scope;
   }
 
-  function refWithDeclAt(pos, scope) {
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
+  return value;
+};
+
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
     try {
-      for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var ref = _step.value;
-        var _ref$ref = ref.ref;
-        var start = _ref$ref.start;
-        var end = _ref$ref.end;
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
 
-        if (start <= pos && pos <= end) return ref;
+        if (i && _arr.length === i) break;
       }
     } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
+      _d = true;
+      _e = err;
     } finally {
       try {
-        if (!_iteratorNormalCompletion && _iterator.return) {
-          _iterator.return();
-        }
+        if (!_n && _i["return"]) _i["return"]();
       } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
+        if (_d) throw _e;
       }
     }
+
+    return _arr;
   }
 
-  function topLevelDeclsAndRefs(parsed, options) {
-    options = options || {};
-    options.withComments = true;
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
-    if (typeof parsed === "string") parsed = parse(parsed, options);
 
-    var scope = scopes(parsed),
-        useComments = !!options.jslintGlobalComment,
-        declared = _declaredVarNames(scope, useComments),
-        refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
-        undeclared = lively_lang.arr.withoutAll(refs.map(function (ea) {
-      return ea.name;
-    }), declared);
 
-    return {
-      scope: scope,
-      varDecls: scope.varDecls,
-      funcDecls: scope.funcDecls,
-      classDecls: scope.classDecls,
-      declaredNames: declared,
-      undeclaredNames: undeclared,
-      refs: refs,
-      thisRefs: scope.thisRefs
-    };
+
+
+
+
+
+
+
+
+var toArray = function (arr$$1) {
+  return Array.isArray(arr$$1) ? arr$$1 : Array.from(arr$$1);
+};
+
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr$$1);
+  }
+};
+
+/*global process, global, exports*/
+
+var PrinterVisitor = function (_Visitor) {
+  inherits(PrinterVisitor, _Visitor);
+
+  function PrinterVisitor() {
+    classCallCheck(this, PrinterVisitor);
+    return possibleConstructorReturn(this, (PrinterVisitor.__proto__ || Object.getPrototypeOf(PrinterVisitor)).apply(this, arguments));
+  }
+
+  createClass(PrinterVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      var pathString = path.map(function (ea) {
+        return typeof ea === 'string' ? "." + ea : "[" + ea + "]";
+      }).join(''),
+          myChildren = [],
+          result = get(PrinterVisitor.prototype.__proto__ || Object.getPrototypeOf(PrinterVisitor.prototype), "accept", this).call(this, node, { index: state.index, tree: myChildren }, path);
+      state.tree.push({
+        node: node,
+        path: pathString,
+        index: state.index++,
+        children: myChildren
+      });
+      return result;
+    }
+  }]);
+  return PrinterVisitor;
+}(Visitor);
+
+var ComparisonVisitor = function (_Visitor2) {
+  inherits(ComparisonVisitor, _Visitor2);
+
+  function ComparisonVisitor() {
+    classCallCheck(this, ComparisonVisitor);
+    return possibleConstructorReturn(this, (ComparisonVisitor.__proto__ || Object.getPrototypeOf(ComparisonVisitor)).apply(this, arguments));
+  }
+
+  createClass(ComparisonVisitor, [{
+    key: "recordNotEqual",
+    value: function recordNotEqual(node1, node2, state, msg) {
+      state.comparisons.errors.push({
+        node1: node1, node2: node2,
+        path: state.completePath, msg: msg
+      });
+    }
+  }, {
+    key: "compareType",
+    value: function compareType(node1, node2, state) {
+      return this.compareField('type', node1, node2, state);
+    }
+  }, {
+    key: "compareField",
+    value: function compareField(field, node1, node2, state) {
+      node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
+      if (node1 && node2 && node1[field] === node2[field]) return true;
+      if (node1 && node1[field] === '*' || node2 && node2[field] === '*') return true;
+      var fullPath = state.completePath.join('.') + '.' + field,
+          msg;
+      if (!node1) msg = "node1 on " + fullPath + " not defined";else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: ' + node1[field];else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
+      this.recordNotEqual(node1, node2, state, msg);
+      return false;
+    }
+  }, {
+    key: "accept",
+    value: function accept(node1, node2, state, path) {
+      var patternNode = lively.PropertyPath(path.join('.')).get(node2);
+      if (node1 === '*' || patternNode === '*') return;
+      var nextState = {
+        completePath: path,
+        comparisons: state.comparisons
+      };
+      if (this.compareType(node1, node2, nextState)) this['visit' + node1.type](node1, node2, nextState, path);
+    }
+  }, {
+    key: "visitFunction",
+    value: function visitFunction(node1, node2, state, path) {
+      // node1.generator has a specific type that is boolean
+      if (node1.generator) {
+        this.compareField("generator", node1, node2, state);
+      }
+
+      // node1.expression has a specific type that is boolean
+      if (node1.expression) {
+        this.compareField("expression", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunction", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitSwitchStatement",
+    value: function visitSwitchStatement(node1, node2, state, path) {
+      // node1.lexical has a specific type that is boolean
+      if (node1.lexical) {
+        this.compareField("lexical", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitSwitchStatement", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitForInStatement",
+    value: function visitForInStatement(node1, node2, state, path) {
+      // node1.each has a specific type that is boolean
+      if (node1.each) {
+        this.compareField("each", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitForInStatement", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitFunctionDeclaration",
+    value: function visitFunctionDeclaration(node1, node2, state, path) {
+      // node1.generator has a specific type that is boolean
+      if (node1.generator) {
+        this.compareField("generator", node1, node2, state);
+      }
+
+      // node1.expression has a specific type that is boolean
+      if (node1.expression) {
+        this.compareField("expression", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunctionDeclaration", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitVariableDeclaration",
+    value: function visitVariableDeclaration(node1, node2, state, path) {
+      // node1.kind is "var" or "let" or "const"
+      this.compareField("kind", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitVariableDeclaration", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitUnaryExpression",
+    value: function visitUnaryExpression(node1, node2, state, path) {
+      // node1.operator is an UnaryOperator enum:
+      // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
+      this.compareField("operator", node1, node2, state);
+
+      // node1.prefix has a specific type that is boolean
+      if (node1.prefix) {
+        this.compareField("prefix", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUnaryExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitBinaryExpression",
+    value: function visitBinaryExpression(node1, node2, state, path) {
+      // node1.operator is an BinaryOperator enum:
+      // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
+      this.compareField("operator", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitBinaryExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitAssignmentExpression",
+    value: function visitAssignmentExpression(node1, node2, state, path) {
+      // node1.operator is an AssignmentOperator enum:
+      // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
+      this.compareField("operator", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitAssignmentExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitUpdateExpression",
+    value: function visitUpdateExpression(node1, node2, state, path) {
+      // node1.operator is an UpdateOperator enum:
+      // "++" | "--"
+      this.compareField("operator", node1, node2, state);
+      // node1.prefix has a specific type that is boolean
+      if (node1.prefix) {
+        this.compareField("prefix", node1, node2, state);
+      }
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUpdateExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitLogicalExpression",
+    value: function visitLogicalExpression(node1, node2, state, path) {
+      // node1.operator is an LogicalOperator enum:
+      // "||" | "&&"
+      this.compareField("operator", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLogicalExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitMemberExpression",
+    value: function visitMemberExpression(node1, node2, state, path) {
+      // node1.computed has a specific type that is boolean
+      if (node1.computed) {
+        this.compareField("computed", node1, node2, state);
+      }
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMemberExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitComprehensionBlock",
+    value: function visitComprehensionBlock(node1, node2, state, path) {
+      // node1.each has a specific type that is boolean
+      if (node1.each) {
+        this.compareField("each", node1, node2, state);
+      }
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitComprehensionBlock", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitIdentifier",
+    value: function visitIdentifier(node1, node2, state, path) {
+      // node1.name has a specific type that is string
+      this.compareField("name", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitIdentifier", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitLiteral",
+    value: function visitLiteral(node1, node2, state, path) {
+      this.compareField("value", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLiteral", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitClassDeclaration",
+    value: function visitClassDeclaration(node1, node2, state, path) {
+      this.compareField("id", node1, node2, state);
+      if (node1.superClass) {
+        this.compareField("superClass", node1, node2, state);
+      }
+      this.compareField("body", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassDeclaration", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitClassBody",
+    value: function visitClassBody(node1, node2, state, path) {
+      this.compareField("body", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassBody", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitMethodDefinition",
+    value: function visitMethodDefinition(node1, node2, state, path) {
+      this.compareField("static", node1, node2, state);
+      this.compareField("computed", node1, node2, state);
+      this.compareField("kind", node1, node2, state);
+      this.compareField("key", node1, node2, state);
+      this.compareField("value", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMethodDefinition", this).call(this, node1, node2, state, path);
+    }
+  }]);
+  return ComparisonVisitor;
+}(Visitor);
+
+var ScopeVisitor = function (_Visitor3) {
+  inherits(ScopeVisitor, _Visitor3);
+
+  function ScopeVisitor() {
+    classCallCheck(this, ScopeVisitor);
+    return possibleConstructorReturn(this, (ScopeVisitor.__proto__ || Object.getPrototypeOf(ScopeVisitor)).apply(this, arguments));
+  }
+
+  createClass(ScopeVisitor, [{
+    key: "newScope",
+    value: function newScope(scopeNode, parentScope) {
+      var scope = {
+        node: scopeNode,
+        varDecls: [],
+        varDeclPaths: [],
+        funcDecls: [],
+        funcDeclPaths: [],
+        classDecls: [],
+        classDeclPaths: [],
+        classExprs: [],
+        classExprPaths: [],
+        methodDecls: [],
+        methodDeclPaths: [],
+        importDecls: [],
+        importDeclPaths: [],
+        exportDecls: [],
+        exportDeclPaths: [],
+        refs: [],
+        thisRefs: [],
+        params: [],
+        catches: [],
+        subScopes: [],
+        resolvedRefMap: new Map()
+      };
+      if (parentScope) parentScope.subScopes.push(scope);
+      return scope;
+    }
+  }, {
+    key: "visitVariableDeclaration",
+    value: function visitVariableDeclaration(node, scope, path) {
+      scope.varDecls.push(node);
+      scope.varDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitVariableDeclaration", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitVariableDeclarator",
+    value: function visitVariableDeclarator(node, scope, path) {
+      var visitor = this;
+      // ignore id
+      // // id is of types Pattern
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // init is of types Expression
+      if (node["init"]) {
+        node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitFunction",
+    value: function visitFunction(node, scope, path) {
+      var newScope = this.newScope(node, scope);
+      newScope.params = Array.prototype.slice.call(node.params);
+      return newScope;
+    }
+  }, {
+    key: "visitFunctionDeclaration",
+    value: function visitFunctionDeclaration(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+      scope.funcDecls.push(node);
+      scope.funcDeclPaths.push(path);
+
+      // don't visit id and params  
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitFunctionExpression",
+    value: function visitFunctionExpression(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+
+      // don't visit id and params  
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitArrowFunctionExpression",
+    value: function visitArrowFunctionExpression(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      // body is of types BlockStatement, Expression
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      // node.generator has a specific type that is boolean
+      if (node.generator) {} /*do stuff*/
+
+      // node.expression has a specific type that is boolean
+      if (node.expression) {/*do stuff*/}
+      return node;
+    }
+  }, {
+    key: "visitIdentifier",
+    value: function visitIdentifier(node, scope, path) {
+      scope.refs.push(node);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitIdentifier", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitMemberExpression",
+    value: function visitMemberExpression(node, scope, path) {
+      // only visit property part when prop is computed so we don't gather
+      // prop ids
+
+      var visitor = this;
+      // object is of types Expression, Super
+      node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
+      // property is of types Expression
+      if (node.computed) {
+        node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitProperty",
+    value: function visitProperty(node, scope, path) {
+      var visitor = this;
+      // key is of types Expression
+      if (node.computed) node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+      // value is of types Expression
+      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+      return node;
+    }
+  }, {
+    key: "visitThisExpression",
+    value: function visitThisExpression(node, scope, path) {
+      scope.thisRefs.push(node);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitThisExpression", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitTryStatement",
+    value: function visitTryStatement(node, scope, path) {
+      var visitor = this;
+      // block is of types BlockStatement
+      node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
+      // handler is of types CatchClause
+      if (node["handler"]) {
+        node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
+        scope.catches.push(node.handler.param);
+      }
+
+      // finalizer is of types BlockStatement
+      if (node["finalizer"]) {
+        node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitLabeledStatement",
+    value: function visitLabeledStatement(node, scope, path) {
+      var visitor = this;
+      // ignore label
+      // // label is of types Identifier
+      // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
+      // body is of types Statement
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+  }, {
+    key: "visitClassDeclaration",
+    value: function visitClassDeclaration(node, scope, path) {
+      scope.classDecls.push(node);
+      scope.classDeclPaths.push(path);
+
+      var visitor = this;
+      // ignore id
+      // // id is of types Identifier
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // superClass is of types Expression
+      if (node["superClass"]) {
+        node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+      }
+      // body is of types ClassBody
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+  }, {
+    key: "visitClassExpression",
+    value: function visitClassExpression(node, scope, path) {
+      if (node.id) {
+        scope.classExprs.push(node);
+        scope.classExprPaths.push(path);
+      }
+
+      var visitor = this;
+      // ignore id
+      // // id is of types Identifier
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // superClass is of types Expression
+      if (node["superClass"]) {
+        node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+      }
+      // body is of types ClassBody
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+  }, {
+    key: "visitMethodDefinition",
+    value: function visitMethodDefinition(node, scope, path) {
+      var visitor = this;
+      // don't visit key Identifier for now
+      // // key is of types Expression
+      // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+      // value is of types FunctionExpression
+      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+      return node;
+    }
+  }, {
+    key: "visitBreakStatement",
+    value: function visitBreakStatement(node, scope, path) {
+      return node;
+    }
+  }, {
+    key: "visitContinueStatement",
+    value: function visitContinueStatement(node, scope, path) {
+      return node;
+    }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // es6 modules
 
-    function findUndeclaredReferences(scope) {
-      var names = _declaredVarNames(scope, useComments);
-      return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
-        return refs.concat(ea);
-      }, scope.refs).filter(function (ref) {
-        return names.indexOf(ref.name) === -1;
+  }, {
+    key: "visitImportSpecifier",
+    value: function visitImportSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      scope.importDeclPaths.push(path);
+
+      var visitor = this;
+      // // imported is of types Identifier
+      // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
+      // local is of types Identifier
+      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitImportDefaultSpecifier",
+    value: function visitImportDefaultSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      scope.importDeclPaths.push(path);
+      var visitor = this;
+      // // local is of types Identifier
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitImportNamespaceSpecifier",
+    value: function visitImportNamespaceSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      scope.importDeclPaths.push(path);
+      var visitor = this;
+      // // local is of types Identifier
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitExportSpecifier",
+    value: function visitExportSpecifier(node, scope, path) {
+      var visitor = this;
+      // // exported is of types Identifier
+      // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
+      // local is of types Identifier
+      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitExportNamedDeclaration",
+    value: function visitExportNamedDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      scope.exportDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitExportDefaultDeclaration",
+    value: function visitExportDefaultDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      scope.exportDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitExportAllDeclaration",
+    value: function visitExportAllDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      scope.exportDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
+    }
+  }]);
+  return ScopeVisitor;
+}(Visitor);
+
+var es = escodegen.escodegen || escodegen;
+
+function stringify(node, opts) {
+  return es.generate(fixParamDefaults(node), opts);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// rk 2016-04-10: escodegen cannot deal with how default parameters are
+// represented by the AST format acorn uses (and which adheres to the offical
+// Mozilla ES AST spec)
+// for that purpose we implement a transformer here that will convert an AST like this
+//   {
+//     body: {body: [],type: "BlockStatement"},
+//     expression: false,
+//     generator: false,
+//     id: { name: "foo", type: "Identifier" },
+//     params: [{
+//         left: { name: "a", type: "Identifier" },
+//         right: { type: "Literal", value: 3 },
+//         type: "AssignmentPattern"
+//       }],
+//     type: "FunctionDeclaration"
+//   }
+//   (lively.ast.parse("function foo(a = 3) {}"))
+// into an ast like this
+//   {
+//     "type": "FunctionDeclaration",
+//     "id": { "type": "Identifier", "name": "foo" },
+//     "params": [{ "type": "Identifier", "name": "a" }],
+//     "defaults": [{ "type": "Literal", "value": 3, "raw": "3" }],
+//     "body": { "type": "BlockStatement", "body": [] },
+//     "generator": false,
+//     "expression": false
+//   }
+
+var FixParamsForEscodegenVisitor = function (_Visitor) {
+  inherits(FixParamsForEscodegenVisitor, _Visitor);
+
+  function FixParamsForEscodegenVisitor() {
+    classCallCheck(this, FixParamsForEscodegenVisitor);
+    return possibleConstructorReturn(this, (FixParamsForEscodegenVisitor.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor)).apply(this, arguments));
+  }
+
+  createClass(FixParamsForEscodegenVisitor, [{
+    key: "fixFunctionNode",
+    value: function fixFunctionNode(node) {
+      node.defaults = node.params.map(function (p, i) {
+        if (p.type === "AssignmentPattern") {
+          node.params[i] = p.left;
+          return p.right;
+        }
+        return undefined;
       });
     }
-  }
+  }, {
+    key: "visitFunction",
+    value: function visitFunction(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunction", this).call(this, node, state, path);
+    }
+  }, {
+    key: "visitArrowFunctionExpression",
+    value: function visitArrowFunctionExpression(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitArrowFunctionExpression", this).call(this, node, state, path);
+    }
+  }, {
+    key: "visitFunctionExpression",
+    value: function visitFunctionExpression(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionExpression", this).call(this, node, state, path);
+    }
+  }, {
+    key: "visitFunctionDeclaration",
+    value: function visitFunctionDeclaration(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionDeclaration", this).call(this, node, state, path);
+    }
+  }]);
+  return FixParamsForEscodegenVisitor;
+}(Visitor);
 
-  function findGlobalVarRefs(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed, options),
-        noGlobals = topLevel.declaredNames.concat(knownGlobals);
-    return topLevel.refs.filter(function (ea) {
-      return noGlobals.indexOf(ea.name) === -1;
-    });
-  }
+// debugger;
+// var node = lively.ast.parse("/^file:\\/\\//");
+// fixParamDefaults(node).body[0].expression.value
 
-  function findNodesIncludingLines(parsed, code, lines, options) {
-    if (!code && !parsed) throw new Error("Need at least ast or code");
-    code = code ? code : stringify(parsed);
-    parsed = parsed && parsed.loc ? parsed : parse(code, { locations: true });
-    return withMozillaAstDo(parsed, [], function (next, node, found) {
-      if (lines.every(function (line) {
-        return lively_lang.num.between(line, node.loc.start.line, node.loc.end.line);
-      })) {
-        lively_lang.arr.pushIfNotIncluded(found, node);next();
+function fixParamDefaults(parsed) {
+  parsed = lively_lang.obj.deepCopy(parsed);
+  new FixParamsForEscodegenVisitor().accept(parsed, null, []);
+  return parsed;
+}
+
+/*global acorn*/
+var walk = acorn.walk;
+var loose = acorn.loose;
+// rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
+// await. We patch the walker here until it does
+if (!walk.base.AwaitExpression) {
+  walk.base.AwaitExpression = function (node, st, c) {
+    if (node.argument) c(node.argument, st, 'Expression');
+  };
+}
+
+// FIXME, don't add to walk object, that's our own stuff!
+walk.forEachNode = forEachNode;
+walk.matchNodes = matchNodes;
+walk.findNodesIncluding = findNodesIncluding;
+walk.withParentInfo = withParentInfo;
+walk.copy = copy;
+walk.findSiblings = findSiblings;
+
+walk.findNodeByAstIndex = findNodeByAstIndex;
+walk.findStatementOfNode = findStatementOfNode;
+walk.addAstIndex = addAstIndex;
+
+// -=-=-=-=-=-=-=-=-=-=-=-
+// from lively.ast.acorn
+// -=-=-=-=-=-=-=-=-=-=-=-
+function forEachNode(parsed, func, state, options) {
+  // note: func can get called with the same node for different
+  // visitor callbacks!
+  // func args: node, state, depth, type
+  options = options || {};
+  var traversal = options.traversal || 'preorder'; // also: postorder
+
+  var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
+  var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
+    func(node, state, depth, type);return orig(node, depth + 1, cont);
+  } : function (orig, type, node, depth, cont) {
+    var result = orig(node, depth + 1, cont);func(node, state, depth, type);return result;
+  };
+  Object.keys(visitors).forEach(function (type) {
+    var orig = visitors[type];
+    visitors[type] = function (node, depth, cont) {
+      return iterator(orig, type, node, depth, cont);
+    };
+  });
+  walk.recursive(parsed, 0, null, visitors);
+  return parsed;
+}
+
+function matchNodes(parsed, visitor, state, options) {
+  function visit(node, state, depth, type) {
+    if (visitor[node.type]) visitor[node.type](node, state, depth, type);
+  }
+  return forEachNode(parsed, visit, state, options);
+}
+
+// findNodesIncluding: function(ast, pos, test, base) {
+//   var nodes = [];
+//   base = base || acorn.walk.make({});
+//   Object.keys(base).forEach(function(name) {
+//       var orig = base[name];
+//       base[name] = function(node, state, cont) {
+//           nodes.pushIfNotIncluded(node);
+//           return orig(node, state, cont);
+//       }
+//   });
+//   acorn.walk.findNodeAround(ast, pos, test, base);
+//   return nodes;
+// }
+
+function findNodesIncluding(parsed, pos, test, base) {
+  var nodes = [];
+  base = base || walk.make(walk.visitors.withMemberExpression);
+  Object.keys(walk.base).forEach(function (name) {
+    var orig = base[name];
+    base[name] = function (node, state, cont) {
+      lively_lang.arr.pushIfNotIncluded(nodes, node);
+      return orig(node, state, cont);
+    };
+  });
+  base["Property"] = function (node, st, c) {
+    lively_lang.arr.pushIfNotIncluded(nodes, node);
+    c(node.key, st, "Expression");
+    c(node.value, st, "Expression");
+  };
+  base["LabeledStatement"] = function (node, st, c) {
+    node.label && c(node.label, st, "Expression");
+    c(node.body, st, "Statement");
+  };
+  walk.findNodeAround(parsed, pos, test, base);
+  return nodes;
+}
+
+function withParentInfo(parsed, iterator, options) {
+  // options = {visitAllNodes: BOOL}
+  options = options || {};
+  function makeScope(parentScope) {
+    var scope = { id: lively_lang.string.newUUID(), parentScope: parentScope, containingScopes: [] };
+    parentScope && parentScope.containingScopes.push(scope);
+    return scope;
+  }
+  var visitors = walk.make({
+    Function: function Function(node, st, c) {
+      if (st && st.scope) st.scope = makeScope(st.scope);
+      c(node.body, st, "ScopeBody");
+    },
+    VariableDeclarator: function VariableDeclarator(node, st, c) {
+      // node.id && c(node.id, st, 'Identifier');
+      node.init && c(node.init, st, 'Expression');
+    },
+    VariableDeclaration: function VariableDeclaration(node, st, c) {
+      for (var i = 0; i < node.declarations.length; ++i) {
+        var decl = node.declarations[i];
+        if (decl) c(decl, st, "VariableDeclarator");
       }
-      return found;
+    },
+    ObjectExpression: function ObjectExpression(node, st, c) {
+      for (var i = 0; i < node.properties.length; ++i) {
+        var prop = node.properties[i];
+        c(prop.key, st, "Expression");
+        c(prop.value, st, "Expression");
+      }
+    },
+    MemberExpression: function MemberExpression(node, st, c) {
+      c(node.object, st, "Expression");
+      c(node.property, st, "Expression");
+    }
+  }, walk.base);
+  var lastActiveProp,
+      getters = [];
+  forEachNode(parsed, function (node) {
+    lively_lang.arr.withoutAll(Object.keys(node), ['end', 'start', 'type', 'source', 'raw']).forEach(function (propName) {
+      if (node.__lookupGetter__(propName)) return; // already defined
+      var val = node[propName];
+      node.__defineGetter__(propName, function () {
+        lastActiveProp = propName;return val;
+      });
+      getters.push([node, propName, node[propName]]);
     });
+  }, null, { visitors: visitors });
+  var result = [];
+  Object.keys(visitors).forEach(function (type) {
+    var orig = visitors[type];
+    visitors[type] = function (node, state, cont) {
+      if (type === node.type || options.visitAllNodes) {
+        result.push(iterator.call(null, node, { scope: state.scope, depth: state.depth, parent: state.parent, type: type, propertyInParent: lastActiveProp }));
+        return orig(node, { scope: state.scope, parent: node, depth: state.depth + 1 }, cont);
+      } else {
+        return orig(node, state, cont);
+      }
+    };
+  });
+  walk.recursive(parsed, { scope: makeScope(), parent: null, propertyInParent: '', depth: 0 }, null, visitors);
+  getters.forEach(function (nodeNameVal) {
+    delete nodeNameVal[0][nodeNameVal[1]];
+    nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
+  });
+  return result;
+}
+
+function copy(ast, override) {
+  var visitors = lively_lang.obj.extend({
+    Program: function Program(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'Program',
+        body: n.body.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    FunctionDeclaration: function FunctionDeclaration(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'FunctionDeclaration',
+        id: c(n.id), params: n.params.map(c), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    BlockStatement: function BlockStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'BlockStatement',
+        body: n.body.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ExpressionStatement: function ExpressionStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ExpressionStatement',
+        expression: c(n.expression),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    CallExpression: function CallExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'CallExpression',
+        callee: c(n.callee), arguments: n.arguments.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    MemberExpression: function MemberExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'MemberExpression',
+        object: c(n.object), property: c(n.property), computed: n.computed,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    NewExpression: function NewExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'NewExpression',
+        callee: c(n.callee), arguments: n.arguments.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    VariableDeclaration: function VariableDeclaration(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'VariableDeclaration',
+        declarations: n.declarations.map(c), kind: n.kind,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    VariableDeclarator: function VariableDeclarator(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'VariableDeclarator',
+        id: c(n.id), init: c(n.init),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    FunctionExpression: function FunctionExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'FunctionExpression',
+        id: c(n.id), params: n.params.map(c), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    IfStatement: function IfStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'IfStatement',
+        test: c(n.test), consequent: c(n.consequent),
+        alternate: c(n.alternate),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ConditionalExpression: function ConditionalExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ConditionalExpression',
+        test: c(n.test), consequent: c(n.consequent),
+        alternate: c(n.alternate),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    SwitchStatement: function SwitchStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'SwitchStatement',
+        discriminant: c(n.discriminant), cases: n.cases.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    SwitchCase: function SwitchCase(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'SwitchCase',
+        test: c(n.test), consequent: n.consequent.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    BreakStatement: function BreakStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'BreakStatement',
+        label: n.label,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ContinueStatement: function ContinueStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ContinueStatement',
+        label: n.label,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    TryStatement: function TryStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'TryStatement',
+        block: c(n.block), handler: c(n.handler), finalizer: c(n.finalizer),
+        guardedHandlers: n.guardedHandlers.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    CatchClause: function CatchClause(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'CatchClause',
+        param: c(n.param), guard: c(n.guard), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ThrowStatement: function ThrowStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ThrowStatement',
+        argument: c(n.argument),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ForStatement: function ForStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ForStatement',
+        init: c(n.init), test: c(n.test), update: c(n.update),
+        body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ForInStatement: function ForInStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ForInStatement',
+        left: c(n.left), right: c(n.right), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    WhileStatement: function WhileStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'WhileStatement',
+        test: c(n.test), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    DoWhileStatement: function DoWhileStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'DoWhileStatement',
+        test: c(n.test), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    WithStatement: function WithStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'WithStatement',
+        object: c(n.object), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    UnaryExpression: function UnaryExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'UnaryExpression',
+        argument: c(n.argument), operator: n.operator, prefix: n.prefix,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    BinaryExpression: function BinaryExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'BinaryExpression',
+        left: c(n.left), operator: n.operator, right: c(n.right),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    LogicalExpression: function LogicalExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'LogicalExpression',
+        left: c(n.left), operator: n.operator, right: c(n.right),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    AssignmentExpression: function AssignmentExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'AssignmentExpression',
+        left: c(n.left), operator: n.operator, right: c(n.right),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    UpdateExpression: function UpdateExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'UpdateExpression',
+        argument: c(n.argument), operator: n.operator, prefix: n.prefix,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ReturnStatement: function ReturnStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ReturnStatement',
+        argument: c(n.argument),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    Identifier: function Identifier(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'Identifier',
+        name: n.name,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    Literal: function Literal(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'Literal',
+        value: n.value, raw: n.raw /* Acorn-specific */
+        , source: n.source, astIndex: n.astIndex
+      };
+    },
+    ObjectExpression: function ObjectExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ObjectExpression',
+        properties: n.properties.map(function (prop) {
+          return {
+            key: c(prop.key), value: c(prop.value), kind: prop.kind
+          };
+        }),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ArrayExpression: function ArrayExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ArrayExpression',
+        elements: n.elements.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    SequenceExpression: function SequenceExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'SequenceExpression',
+        expressions: n.expressions.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    EmptyStatement: function EmptyStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'EmptyStatement',
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ThisExpression: function ThisExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ThisExpression',
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    DebuggerStatement: function DebuggerStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'DebuggerStatement',
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    LabeledStatement: function LabeledStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'LabeledStatement',
+        label: n.label, body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    }
+  }, override || {});
+
+  function c(node) {
+    if (node === null) return null;
+    return visitors[node.type](node, c);
+  }
+  return c(ast);
+}
+
+function findSiblings(parsed, node, beforeOrAfter) {
+  if (!node) return [];
+  var nodes = findNodesIncluding(parsed, node.start),
+      idx = nodes.indexOf(node),
+      parents = nodes.slice(0, idx),
+      parentWithBody = lively_lang.arr.detect(parents.reverse(), function (p) {
+    return Array.isArray(p.body);
+  }),
+      siblingsWithNode = parentWithBody.body;
+  if (!beforeOrAfter) return lively_lang.arr.without(siblingsWithNode, node);
+  var nodeIdxInSiblings = siblingsWithNode.indexOf(node);
+  return beforeOrAfter === 'before' ? siblingsWithNode.slice(0, nodeIdxInSiblings) : siblingsWithNode.slice(nodeIdxInSiblings + 1);
+}
+
+// // cached visitors that are used often
+walk.visitors = {
+  stopAtFunctions: walk.make({
+    'Function': function Function() {/* stop descent */}
+  }, walk.base),
+
+  withMemberExpression: walk.make({
+    MemberExpression: function MemberExpression(node, st, c) {
+      c(node.object, st, "Expression");
+      c(node.property, st, "Expression");
+    }
+  }, walk.base)
+};
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+// from lively.ast.AstHelper
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
+  addIndex = addIndex == null ? true : !!addIndex;
+  if (!parsed.astIndex && addIndex) addAstIndex(parsed);
+  // we need to visit every node, forEachNode is highly
+  // inefficient, the compilled Mozilla visitors are a better fit
+  var found = null;
+  withMozillaAstDo(parsed, null, function (next, node, state) {
+    if (found) return;
+    var idx = node.astIndex;
+    if (idx < astIndexToFind) return;
+    if (node.astIndex === astIndexToFind) {
+      found = node;return;
+    }
+    next();
+  });
+  return found;
+}
+
+// FIXME: global (and temporary) findNodeByAstIndex is used by __getClosure and defined in Rewriting.js
+// Global.findNodeByAstIndex = findNodeByAstIndex;
+
+function findStatementOfNode(options, parsed, target) {
+  // DEPRECATED in favor of query.statementOf(parsed, node)
+  // Can also be called with just ast and target. options can be {asPath: BOOLEAN}.
+  // Find the statement that a target node is in. Example:
+  // let source be "var x = 1; x + 1;" and we are looking for the
+  // Identifier "x" in "x+1;". The second statement is what will be found.
+  if (!target) {
+    target = parsed;parsed = options;options = null;
+  }
+  if (!options) options = {};
+  if (!parsed.astIndex) addAstIndex(parsed);
+  var found,
+      targetReached = false;
+  var statements = [
+  // ES5
+  'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration', 'VariableDeclaration',
+  // ES2015:
+  'ClassDeclaration'];
+  withMozillaAstDo(parsed, {}, function (next, node, state, path) {
+    if (targetReached || node.astIndex < target.astIndex) return;
+    if (node === target || node.astIndex === target.astIndex) {
+      targetReached = true;
+      if (options.asPath) found = path;else {
+        var p = lively_lang.Path(path);
+        do {
+          found = p.get(parsed);
+          p = p.slice(0, p.size() - 1);
+        } while (statements.indexOf(found.type) == -1 && p.size() > 0);
+      }
+    }
+    !targetReached && next();
+  });
+  return found;
+}
+
+function addAstIndex(parsed) {
+  // we need to visit every node, forEachNode is highly
+  // inefficient, the compilled Mozilla visitors are a better fit
+  withMozillaAstDo(parsed, { index: 0 }, function (next, node, state) {
+    next();node.astIndex = state.index++;
+  });
+  return parsed;
+}
+
+var FindToplevelFuncDeclVisitor = function (_Visitor) {
+  inherits(FindToplevelFuncDeclVisitor, _Visitor);
+
+  function FindToplevelFuncDeclVisitor() {
+    classCallCheck(this, FindToplevelFuncDeclVisitor);
+    return possibleConstructorReturn(this, (FindToplevelFuncDeclVisitor.__proto__ || Object.getPrototypeOf(FindToplevelFuncDeclVisitor)).apply(this, arguments));
   }
 
-  function findReferencesAndDeclsInScope(scope, name) {
-    if (name === "this") {
-      return scope.thisRefs;
+  createClass(FindToplevelFuncDeclVisitor, [{
+    key: "accept",
+    value: function accept(node, funcDecls, path) {
+      switch (node.type) {
+        case "ArrowFunctionExpression":
+          return node;
+        case "FunctionExpression":
+          return node;
+        case "FunctionDeclaration":
+          funcDecls.unshift({ node: node, path: path });return node;
+        default:
+          return get(FindToplevelFuncDeclVisitor.prototype.__proto__ || Object.getPrototypeOf(FindToplevelFuncDeclVisitor.prototype), "accept", this).call(this, node, funcDecls, path);
+      }
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed) {
+      var state = [];
+      new this().accept(parsed, state, []);
+      return state;
+    }
+  }]);
+  return FindToplevelFuncDeclVisitor;
+}(Visitor);
+
+var AllNodesVisitor = function (_Visitor2) {
+  inherits(AllNodesVisitor, _Visitor2);
+
+  function AllNodesVisitor() {
+    classCallCheck(this, AllNodesVisitor);
+    return possibleConstructorReturn(this, (AllNodesVisitor.__proto__ || Object.getPrototypeOf(AllNodesVisitor)).apply(this, arguments));
+  }
+
+  createClass(AllNodesVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      this.doFunc(node, state, path);
+      return get(AllNodesVisitor.prototype.__proto__ || Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, doFunc, state) {
+      var v = new this();
+      v.doFunc = doFunc;
+      v.accept(parsed, state, []);
+      return state;
+    }
+  }]);
+  return AllNodesVisitor;
+}(Visitor);
+
+acorn.walk.addSource = addSource;
+
+function addSource(parsed, source) {
+  if (typeof parsed === "string") {
+    source = parsed;
+    parsed = parse(parsed);
+  }
+  source && AllNodesVisitor.run(parsed, function (node, state, path) {
+    return !node.source && (node.source = source.slice(node.start, node.end));
+  });
+  return parsed;
+}
+
+function nodesAt(pos, ast) {
+  ast = typeof ast === 'string' ? this.parse(ast) : ast;
+  return findNodesIncluding(ast, pos);
+}
+
+function parseFunction(source) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var src = '(' + source + ')',
+      ast = parse(src, options);
+  if (options.addSource) addSource(ast, src);
+  return ast.body[0].expression;
+}
+
+function fuzzyParse(source, options) {
+  // options: verbose, addSource, type
+  options = options || {};
+  options.ecmaVersion = options.ecmaVersion || 7;
+  options.sourceType = options.sourceType || "module";
+  options.plugins = options.plugins || {};
+  // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+  options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+  options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
+
+  var ast, safeSource, err;
+  if (options.type === 'LabeledStatement') {
+    safeSource = '$={' + source + '}';
+  }
+  try {
+    // we only parse to find errors
+    ast = parse(safeSource || source, options);
+    if (safeSource) ast = null; // we parsed only for finding errors
+    else if (options.addSource) addSource(ast, source);
+  } catch (e) {
+    err = e;
+  }
+  if (err && err.raisedAt !== undefined) {
+    if (safeSource) {
+      // fix error pos
+      err.pos -= 3;err.raisedAt -= 3;err.loc.column -= 3;
+    }
+    var parseErrorSource = '';
+    parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
+    parseErrorSource += '<-error->';
+    parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
+    options.verbose && show('parse error: ' + parseErrorSource);
+    err.parseErrorSource = parseErrorSource;
+  } else if (err && options.verbose) {
+    show('' + err + err.stack);
+  }
+  if (!ast) {
+    ast = loose.parse_dammit(source, options);
+    if (options.addSource) addSource(ast, source);
+    ast.isFuzzy = true;
+    ast.parseError = err;
+  }
+  return ast;
+}
+
+function parse(source, options) {
+  // proxy function to acorn.parse.
+  // Note that we will implement useful functionality on top of the pure
+  // acorn interface and make it available here (such as more convenient
+  // comment parsing). For using the pure acorn interface use the acorn
+  // global.
+  // See https://github.com/marijnh/acorn for full acorn doc and parse options.
+  // options: {
+  //   addSource: BOOL, -- add source property to each node
+  //   addAstIndex: BOOL, -- each node gets an index  number
+  //   withComments: BOOL, -- adds comment objects to Program/BlockStatements:
+  //              {isBlock: BOOL, text: STRING, node: NODE,
+  //               start: INTEGER, end: INTEGER, line: INTEGER, column: INTEGER}
+  //   ecmaVersion: 3|5|6,
+  //   allowReturnOutsideFunction: BOOL, -- Default is false
+  //   locations: BOOL -- Default is false
+  // }
+
+  options = options || {};
+  options.ecmaVersion = options.ecmaVersion || 7;
+  options.sourceType = options.sourceType || "module";
+  if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
+  options.plugins = options.plugins || {};
+  options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+  options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
+
+  if (options.withComments) {
+    // record comments
+    delete options.withComments;
+    var comments = [];
+    options.onComment = function (isBlock, text, start, end, line, column) {
+      comments.push({
+        isBlock: isBlock,
+        text: text, node: null,
+        start: start, end: end,
+        line: line, column: column
+      });
+    };
+  }
+
+  var parsed = acorn.parse(source, options);
+
+  if (options.addSource) addSource(parsed, source);
+
+  if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
+
+  if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
+
+  return parsed;
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function attachCommentsToAST(commentData) {
+    // for each comment: assign the comment to a block-level AST node
+    commentData = mergeComments(assignCommentsToBlockNodes(commentData));
+    parsed.allComments = commentData.comments;
+  }
+
+  function assignCommentsToBlockNodes(commentData) {
+    comments.forEach(function (comment) {
+      var node = lively_lang.arr.detect(nodesAt(comment.start, parsed).reverse(), function (node) {
+        return node.type === 'BlockStatement' || node.type === 'Program';
+      });
+      if (!node) node = parsed;
+      if (!node.comments) node.comments = [];
+      node.comments.push(comment);
+      commentData.nodesWithComments.push(node);
+    });
+    return commentData;
+  }
+
+  function mergeComments(commentData) {
+    // coalesce non-block comments (multiple following lines of "// ...") into one comment.
+    // This only happens if line comments aren't seperated by newlines
+    commentData.nodesWithComments.forEach(function (blockNode) {
+      lively_lang.arr.clone(blockNode.comments).reduce(function (coalesceData, comment) {
+        if (comment.isBlock) {
+          coalesceData.lastComment = null;
+          return coalesceData;
+        }
+
+        if (!coalesceData.lastComment) {
+          coalesceData.lastComment = comment;
+          return coalesceData;
+        }
+
+        // if the comments are seperated by a statement, don't merge
+        var last = coalesceData.lastComment;
+        var nodeInbetween = lively_lang.arr.detect(blockNode.body, function (node) {
+          return node.start >= last.end && node.end <= comment.start;
+        });
+        if (nodeInbetween) {
+          coalesceData.lastComment = comment;
+          return coalesceData;
+        }
+
+        // if the comments are seperated by a newline, don't merge
+        var codeInBetween = source.slice(last.end, comment.start);
+        if (/[\n\r][\n\r]+/.test(codeInBetween)) {
+          coalesceData.lastComment = comment;
+          return coalesceData;
+        }
+
+        // merge comments into one
+        last.text += "\n" + comment.text;
+        last.end = comment.end;
+        lively_lang.arr.remove(blockNode.comments, comment);
+        lively_lang.arr.remove(commentData.comments, comment);
+        return coalesceData;
+      }, { lastComment: null });
+    });
+    return commentData;
+  }
+}
+
+/*global process, global, exports*/
+
+var methods = {
+
+  withMozillaAstDo: function withMozillaAstDo(parsed, state, func) {
+    // simple interface to mozilla AST visitor. function gets passed three
+    // arguments:
+    // acceptNext, -- continue visiting
+    // node, -- current node being visited
+    // state -- state variable that is passed along
+    var vis = new Visitor(),
+        origAccept = vis.accept;
+    vis.accept = function (node, st, path) {
+      var next = function next() {
+        origAccept.call(vis, node, st, path);
+      };
+      state = func(next, node, st, path);
+      return node;
+    };
+    vis.accept(parsed, state, []);
+    return state;
+  },
+
+  printAst: function printAst(astOrSource, options) {
+    options = options || {};
+    var printSource = options.printSource || false,
+        printPositions = options.printPositions || false,
+        printIndex = options.printIndex || false,
+        source,
+        parsed,
+        tree$$1 = [];
+
+    if (typeof astOrSource === "string") {
+      source = astOrSource;
+      parsed = parse(astOrSource);
+    } else {
+      parsed = astOrSource;source = options.source || parsed.source;
     }
 
-    return lively_lang.arr.flatten( // all references
-    lively_lang.tree.map(scope, function (scope) {
-      return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
-        return ref.name === name;
-      });
-    }, function (s) {
-      return s.subScopes.filter(function (subScope) {
-        return varDeclIdsOf(subScope).every(function (id) {
-          return id.name !== name;
+    if (printSource && !parsed.source) {
+      // ensure that nodes have source attached
+      if (!source) {
+        source = stringify(parsed);
+        parsed = parse(source);
+      }
+      addSource(parsed, source);
+    }
+
+    function printFunc(ea) {
+      var line = ea.path + ':' + ea.node.type,
+          additional = [];
+      if (printIndex) {
+        additional.push(ea.index);
+      }
+      if (printPositions) {
+        additional.push(ea.node.start + '-' + ea.node.end);
+      }
+      if (printSource) {
+        var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
+            printed = lively_lang.string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+        additional.push(printed);
+      }
+      if (additional.length) {
+        line += '(' + additional.join(',') + ')';
+      }
+      return line;
+    }
+
+    new PrinterVisitor().accept(parsed, { index: 0, tree: tree$$1 }, []);
+    return lively_lang.string.printTree(tree$$1[0], printFunc, function (ea) {
+      return ea.children;
+    }, '  ');
+  },
+
+  compareAst: function compareAst(node1, node2) {
+    if (!node1 || !node2) throw new Error('node' + (node1 ? '1' : '2') + ' not defined');
+    var state = { completePath: [], comparisons: { errors: [] } };
+    new ComparisonVisitor().accept(node1, node2, state, []);
+    return !state.comparisons.errors.length ? null : state.comparisons.errors.pluck('msg');
+  },
+
+  pathToNode: function pathToNode(parsed, index, options) {
+    options = options || {};
+    if (!parsed.astIndex) addAstIndex(parsed);
+    var vis = new Visitor(),
+        found = null;
+    (vis.accept = function (node, pathToHere, state, path) {
+      if (found) return;
+      var fullPath = pathToHere.concat(path);
+      if (node.astIndex === index) {
+        var pathString = fullPath.map(function (ea) {
+          return typeof ea === 'string' ? '.' + ea : '[' + ea + ']';
+        }).join('');
+        found = { pathString: pathString, path: fullPath, node: node };
+      }
+      return this['visit' + node.type](node, fullPath, state, path);
+    }).call(vis, parsed, [], {}, []);
+    return found;
+  },
+
+  rematchAstWithSource: function rematchAstWithSource(parsed, source, addLocations, subTreePath) {
+    addLocations = !!addLocations;
+    var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
+        visitor = new Visitor();
+    if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
+
+    visitor.accept = function (node, state, path) {
+      path = path || [];
+      var node2 = path.reduce(function (node, pathElem) {
+        return node[pathElem];
+      }, parsed);
+      node2.start = node.start;
+      node2.end = node.end;
+      if (addLocations) node2.loc = node.loc;
+      return this['visit' + node.type](node, state, path);
+    };
+
+    visitor.accept(parsed2);
+  }
+
+};
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var withMozillaAstDo = methods.withMozillaAstDo;
+var printAst = methods.printAst;
+var compareAst = methods.compareAst;
+var pathToNode = methods.pathToNode;
+var rematchAstWithSource = methods.rematchAstWithSource;
+
+
+
+// obj.extend(ast, methods);
+
+// FIXME! Don't extend acorn object!
+// obj.extend(ast.acorn, methods);
+
+var identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
+function isIdentifier(string$$1) {
+  // Note: It's not so easy...
+  // http://wiki.ecmascript.org/doku.php?id=strawman:identifier_identification
+  // https://mathiasbynens.be/notes/javascript-identifiers-es6
+  return identifierRe.test(string$$1) && string$$1.indexOf("-") === -1;
+}
+
+function id(name) {
+  return name === "this" ? { type: "ThisExpression" } : { name: String(name), type: "Identifier" };
+}
+
+function literal(value) {
+  return { type: "Literal", value: value };
+}
+
+function exprStmt(expression) {
+  return { type: "ExpressionStatement", expression: expression };
+}
+
+function returnStmt(expr) {
+  return { type: "ReturnStatement", argument: expr };
+}
+
+function empty() {
+  return { type: "EmptyStatement" };
+}
+
+function binaryExpr(left, op, right) {
+  return {
+    left: left, right: right, operator: op,
+    type: "BinaryExpression"
+  };
+}
+
+function funcExpr(_ref) {
+  for (var _len = arguments.length, statements = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+    statements[_key - 2] = arguments[_key];
+  }
+
+  var arrow = _ref.arrow;
+  var funcId = _ref.id;
+  var expression = _ref.expression;
+  var generator = _ref.generator;
+  var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+  // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
+  // // => "function foo(a) { 3; }"
+  params = params.map(function (ea) {
+    return typeof ea === "string" ? id(ea) : ea;
+  });
+  return {
+    type: (arrow ? "Arrow" : "") + "FunctionExpression",
+    id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
+    params: params,
+    body: { body: statements, type: "BlockStatement" },
+    expression: expression || false,
+    generator: generator || false
+  };
+}
+
+function funcCall(callee) {
+  for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    args[_key2 - 1] = arguments[_key2];
+  }
+
+  if (typeof callee === "string") callee = id(callee);
+  return {
+    type: "CallExpression",
+    callee: callee,
+    arguments: args
+  };
+}
+
+function varDecl(id, init, kind) {
+  if (typeof id === "string") id = { name: id, type: "Identifier" };
+  return {
+    type: "VariableDeclaration", kind: kind || "var",
+    declarations: [{ type: "VariableDeclarator", id: id, init: init }]
+  };
+}
+
+function member(obj$$1, prop, computed) {
+  // Example:
+  // lively.ast.stringify(member("foo", "bar"))
+  // // => "foo.bar"
+  // lively.ast.stringify(member("foo", "b-a-r"))
+  // // => "foo['b-a-r']"
+  // lively.ast.stringify(member("foo", "zork", true))
+  // // => "foo['zork']"
+  // lively.ast.stringify(member("foo", 0))
+  // // => "foo[0]"
+  if (typeof obj$$1 === "string") obj$$1 = id(obj$$1);
+  if (typeof prop === "string") {
+    if (!computed && !isIdentifier(prop)) computed = true;
+    prop = computed ? literal(prop) : id(prop);
+  } else if (typeof prop === "number") {
+    prop = literal(prop);
+    computed = true;
+  } else if (prop.type === "Literal") {
+    computed = true;
+  }
+  return {
+    type: "MemberExpression",
+    computed: !!computed,
+    object: obj$$1, property: prop
+  };
+}
+
+function memberChain(first) {
+  for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    rest[_key3 - 1] = arguments[_key3];
+  }
+
+  // lively.ast.stringify(memberChain("foo", "bar", 0, "baz-zork"));
+  // // => "foo.bar[0]['baz-zork']"
+  return rest.reduce(function (memberExpr, key) {
+    return member(memberExpr, key);
+  }, (typeof first === "undefined" ? "undefined" : _typeof(first)) === "object" ? first : id(first));
+}
+
+function assign(left, right) {
+  // lively.ast.stringify(assign("a", "x"))
+  // // => "a = x"
+  // lively.ast.stringify(assign(member("a", "x"), literal(23)))
+  // // => "a.x = 23"
+  return {
+    type: "AssignmentExpression", operator: "=",
+    right: right ? typeof right === "string" ? id(right) : right : id("undefined"),
+    left: typeof left === "string" ? id(left) : left
+  };
+}
+
+function block() {
+  for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+    body[_key4] = arguments[_key4];
+  }
+
+  return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
+}
+
+function program() {
+  return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
+}
+
+function tryStmt(exName, handlerBody, finalizerBody) {
+  for (var _len5 = arguments.length, body = Array(_len5 > 3 ? _len5 - 3 : 0), _key5 = 3; _key5 < _len5; _key5++) {
+    body[_key5 - 3] = arguments[_key5];
+  }
+
+  // Example:
+  // var stmt = exprStmt(binaryExpr(literal(3), "+", literal(2)));
+  // lively.ast.stringify(tryStmt("err", [stmt], [stmt], stmt, stmt))
+  // // => "try { 3 + 2; 3 + 2; } catch (err) { 3 + 2; } finally { 3 + 2; }"
+  if (!Array.isArray(finalizerBody)) {
+    body.unshift(finalizerBody);
+    finalizerBody = null;
+  }
+  return {
+    block: block(body),
+    finalizer: finalizerBody ? block(finalizerBody) : null,
+    handler: {
+      body: block(handlerBody),
+      param: id(exName),
+      type: "CatchClause"
+    },
+    type: "TryStatement"
+  };
+}
+
+function prop(key, value) {
+  return {
+    type: "Property",
+    key: key,
+    computed: key.type !== "Identifier",
+    shorthand: false,
+    value: value
+  };
+}
+
+function objectLiteral(keysAndValues) {
+  var props = [];
+  for (var i = 0; i < keysAndValues.length; i += 2) {
+    var key = keysAndValues[i];
+    if (typeof key === "string") key = id(key);
+    props.push(prop(key, keysAndValues[i + 1]));
+  }
+  return {
+    properties: props,
+    type: "ObjectExpression"
+  };
+}
+
+function ifStmt(test) {
+  var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : block();
+  var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : block();
+
+  return {
+    consequent: consequent, alternate: alternate, test: test,
+    type: "IfStatement"
+  };
+}
+
+function logical(op, left, right) {
+  return {
+    operator: op, left: left, right: right,
+    type: "LogicalExpression"
+  };
+}
+
+
+
+var nodes = Object.freeze({
+	isIdentifier: isIdentifier,
+	id: id,
+	literal: literal,
+	objectLiteral: objectLiteral,
+	prop: prop,
+	exprStmt: exprStmt,
+	returnStmt: returnStmt,
+	empty: empty,
+	binaryExpr: binaryExpr,
+	funcExpr: funcExpr,
+	funcCall: funcCall,
+	varDecl: varDecl,
+	member: member,
+	memberChain: memberChain,
+	assign: assign,
+	block: block,
+	program: program,
+	tryStmt: tryStmt,
+	ifStmt: ifStmt,
+	logical: logical
+});
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var helpers = {
+  declIds: function declIds(nodes) {
+    return lively_lang.arr.flatmap(nodes, function (ea) {
+      if (!ea) return [];
+      if (ea.type === "Identifier") return [ea];
+      if (ea.type === "RestElement") return [ea.argument];
+      if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
+      if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
+      if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
+      return [];
+    });
+  },
+  varDecls: function varDecls(scope) {
+    return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
+      return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
+        return helpers.declIds([decl.id]).map(function (id) {
+          return [decl, id];
         });
       });
+    });
+  },
+  varDeclIds: function varDeclIds(scope) {
+    return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
+      all.push.apply(all, ea.declarations);return all;
+    }, []).map(function (ea) {
+      return ea.id;
     }));
+  },
+  objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
+    // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
+    // nodes as a list
+    return lively_lang.arr.flatmap(objExpr.properties, function (prop) {
+      var key = prop.key.name;
+      // var result = [{key: path.concat([key]), value: prop.value}];
+      var result = [];
+      var thisNode = { key: path.concat([key]), value: prop.value };
+      switch (prop.value.type) {
+        case "ArrayExpression":case "ArrayPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
+            return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
+          }));
+          break;
+        case "ObjectExpression":case "ObjectPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+          break;
+        case "AssignmentPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
+          break;
+        default:
+          result.push(thisNode);
+      }
+      return result;
+    });
+  },
+  isDeclaration: function isDeclaration(node) {
+    return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
+  }
+};
 
-    function varDeclIdsOf(scope) {
-      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+
+function scopes(parsed) {
+  var vis = new ScopeVisitor(),
+      scope = vis.newScope(parsed, null);
+  vis.accept(parsed, scope, []);
+  return scope;
+}
+
+function nodesAtIndex(parsed, index) {
+  return withMozillaAstDo(parsed, [], function (next, node, found) {
+    if (node.start <= index && index <= node.end) {
+      found.push(node);next();
+    }
+    return found;
+  });
+}
+
+function scopesAtIndex(parsed, index) {
+  return lively_lang.tree.filter(scopes(parsed), function (scope) {
+    var n = scope.node;
+    var start = n.start,
+        end = n.end;
+    if (n.type === 'FunctionDeclaration') {
+      start = n.params.length ? n.params[0].start : n.body.start;
+      end = n.body.end;
+    }
+    return start <= index && index <= end;
+  }, function (s) {
+    return s.subScopes;
+  });
+}
+
+function scopeAtIndex(parsed, index) {
+  return lively_lang.arr.last(scopesAtIndex(parsed, index));
+}
+
+function scopesAtPos(pos, parsed) {
+  // DEPRECATED
+  // FIXME "scopes" should actually not referer to a node but to a scope
+  // object, see exports.scopes!
+  return nodesAt$1(pos, parsed).filter(function (node) {
+    return node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression';
+  });
+}
+
+function nodesInScopeOf(node) {
+  // DEPRECATED
+  // FIXME "scopes" should actually not referer to a node but to a scope
+  // object, see exports.scopes!
+  return withMozillaAstDo(node, { root: node, result: [] }, function (next, node, state) {
+    state.result.push(node);
+    if (node !== state.root && (node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) return state;
+    next();
+    return state;
+  }).result;
+}
+
+function declarationsOfScope(scope, includeOuter) {
+  // returns Identifier nodes
+  return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : []).concat(helpers.declIds(scope.params)).concat(scope.funcDecls.map(function (ea) {
+    return ea.id;
+  })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
+    return ea.id;
+  })).concat(scope.importDecls);
+}
+
+function declarationsWithIdsOfScope(scope) {
+  // returns a list of pairs [(DeclarationNode,IdentifierNode)]
+  var bareIds = helpers.declIds(scope.params).concat(scope.catches),
+      declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+  return bareIds.map(function (ea) {
+    return [ea, ea];
+  }).concat(declNodes.map(function (ea) {
+    return [ea, ea.id];
+  })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
+    return [statementOf(scope.node, im), im];
+  }));
+}
+
+function _declaredVarNames(scope, useComments) {
+  return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
+}
+
+function _findJsLintGlobalDeclarations(node) {
+  if (!node || !node.comments) return [];
+  return lively_lang.arr.flatten(node.comments.filter(function (ea) {
+    return ea.text.trim().match(/^global/);
+  }).map(function (ea) {
+    return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
+  }));
+}
+
+function topLevelFuncDecls(parsed) {
+  return FindToplevelFuncDeclVisitor.run(parsed);
+}
+
+function resolveReference(ref, scopePath) {
+  if (scopePath.length == 0) return [null, null];
+
+  var _scopePath = toArray(scopePath);
+
+  var scope = _scopePath[0];
+
+  var outer = _scopePath.slice(1);
+
+  var decls = scope.decls || declarationsWithIdsOfScope(scope);
+  scope.decls = decls;
+  var decl = decls.find(function (_ref) {
+    var _ref2 = slicedToArray(_ref, 2);
+
+    var _ = _ref2[0];
+    var id = _ref2[1];
+    return id.name == ref;
+  });
+  return decl || resolveReference(ref, outer);
+}
+
+function resolveReferences(scope) {
+  function rec(scope, outerScopes) {
+    var path = [scope].concat(outerScopes);
+    scope.refs.forEach(function (ref) {
+      var _resolveReference = resolveReference(ref.name, path);
+
+      var _resolveReference2 = slicedToArray(_resolveReference, 2);
+
+      var decl = _resolveReference2[0];
+      var id = _resolveReference2[1];
+
+      map.set(ref, { decl: decl, declId: id, ref: ref });
+    });
+    scope.subScopes.forEach(function (s) {
+      return rec(s, path);
+    });
+  }
+  if (scope.referencesResolvedSafely) return scope;
+  var map = scope.resolvedRefMap || (scope.resolvedRefMap = new Map());
+  rec(scope, []);
+  scope.referencesResolvedSafely = true;
+  return scope;
+}
+
+function refWithDeclAt(pos, scope) {
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var ref = _step.value;
+      var _ref$ref = ref.ref;
+      var start = _ref$ref.start;
+      var end = _ref$ref.end;
+
+      if (start <= pos && pos <= end) return ref;
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
     }
   }
+}
 
-  function findDeclarationClosestToIndex(parsed, name, index) {
-    var found = null;
-    lively_lang.arr.detect(scopesAtIndex(parsed, index).reverse(), function (scope) {
-      var decls = declarationsOfScope(scope, true),
-          idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
-      if (idx === -1) return false;
-      found = decls[idx];return true;
+function topLevelDeclsAndRefs(parsed, options) {
+  options = options || {};
+  options.withComments = true;
+
+  if (typeof parsed === "string") parsed = parse(parsed, options);
+
+  var scope = scopes(parsed),
+      useComments = !!options.jslintGlobalComment,
+      declared = _declaredVarNames(scope, useComments),
+      refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
+      undeclared = lively_lang.arr.withoutAll(refs.map(function (ea) {
+    return ea.name;
+  }), declared);
+
+  return {
+    scope: scope,
+    varDecls: scope.varDecls,
+    funcDecls: scope.funcDecls,
+    classDecls: scope.classDecls,
+    declaredNames: declared,
+    undeclaredNames: undeclared,
+    refs: refs,
+    thisRefs: scope.thisRefs
+  };
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function findUndeclaredReferences(scope) {
+    var names = _declaredVarNames(scope, useComments);
+    return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
+      return refs.concat(ea);
+    }, scope.refs).filter(function (ref) {
+      return names.indexOf(ref.name) === -1;
     });
+  }
+}
+
+function findGlobalVarRefs(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed, options),
+      noGlobals = topLevel.declaredNames.concat(knownGlobals);
+  return topLevel.refs.filter(function (ea) {
+    return noGlobals.indexOf(ea.name) === -1;
+  });
+}
+
+function findNodesIncludingLines(parsed, code, lines, options) {
+  if (!code && !parsed) throw new Error("Need at least ast or code");
+  code = code ? code : stringify(parsed);
+  parsed = parsed && parsed.loc ? parsed : parse(code, { locations: true });
+  return withMozillaAstDo(parsed, [], function (next, node, found) {
+    if (lines.every(function (line) {
+      return lively_lang.num.between(line, node.loc.start.line, node.loc.end.line);
+    })) {
+      lively_lang.arr.pushIfNotIncluded(found, node);next();
+    }
     return found;
+  });
+}
+
+function findReferencesAndDeclsInScope(scope, name) {
+  if (name === "this") {
+    return scope.thisRefs;
   }
 
-  function nodesAt$1(pos, ast) {
-    ast = typeof ast === 'string' ? parse(ast) : ast;
-    return acorn.walk.findNodesIncluding(ast, pos);
-  }
-
-  var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
-
-  function statementOf(parsed, node, options) {
-    // Find the statement that a target node is in. Example:
-    // let source be "var x = 1; x + 1;" and we are looking for the
-    // Identifier "x" in "x+1;". The second statement is what will be found.
-    var nodes = nodesAt$1(node.start, parsed),
-        found = nodes.reverse().find(function (node) {
-      return lively_lang.arr.include(_stmtTypes, node.type);
+  return lively_lang.arr.flatten( // all references
+  lively_lang.tree.map(scope, function (scope) {
+    return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
+      return ref.name === name;
     });
-    if (options && options.asPath) {
-      var v = new Visitor(),
-          foundPath = void 0;
-      v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-        if (node === found) {
-          foundPath = path;throw new Error("stop search");
-        };
-        return proceed(node, state, path);
+  }, function (s) {
+    return s.subScopes.filter(function (subScope) {
+      return varDeclIdsOf(subScope).every(function (id) {
+        return id.name !== name;
       });
-      try {
-        v.accept(parsed, {}, []);
-      } catch (e) {}
-      return foundPath;
-    }
-    return found;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // imports and exports
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function imports(scope) {
-    var imports = scope.importDecls.reduce(function (imports, node) {
-      var nodes = nodesAtIndex(scope.node, node.start),
-          importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-      if (!importStmt) return imports;
-
-      var from = importStmt.source ? importStmt.source.value : "unknown module";
-      if (!importStmt.specifiers.length) // no imported vars
-        return imports.concat([{
-          local: null,
-          imported: null,
-          fromModule: from,
-          node: node
-        }]);
-
-      return imports.concat(importStmt.specifiers.map(function (importSpec) {
-        var imported;
-        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
-        return {
-          local: importSpec.local ? importSpec.local.name : null,
-          imported: imported,
-          fromModule: from,
-          node: node
-        };
-      }));
-    }, []);
-
-    return lively_lang.arr.uniqBy(imports, function (a, b) {
-      return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
     });
+  }));
+
+  function varDeclIdsOf(scope) {
+    return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
   }
+}
 
-  function exports$1(scope) {
-    var resolve = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+function findDeclarationClosestToIndex(parsed, name, index) {
+  var found = null;
+  lively_lang.arr.detect(scopesAtIndex(parsed, index).reverse(), function (scope) {
+    var decls = declarationsOfScope(scope, true),
+        idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
+    if (idx === -1) return false;
+    found = decls[idx];return true;
+  });
+  return found;
+}
 
-    if (resolve) resolveReferences(scope);
+function nodesAt$1(pos, ast) {
+  ast = typeof ast === 'string' ? parse(ast) : ast;
+  return acorn.walk.findNodesIncluding(ast, pos);
+}
 
-    var exports = scope.exportDecls.reduce(function (exports, node) {
+var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
 
-      var exportsStmt = statementOf(scope.node, node);
-      if (!exportsStmt) return exports;
-
-      var from = exportsStmt.source ? exportsStmt.source.value : null;
-
-      if (exportsStmt.type === "ExportAllDeclaration") {
-        return exports.concat([{
-          local: null,
-          exported: "*",
-          imported: "*",
-          fromModule: from,
-          node: node,
-          type: "all"
-        }]);
+function statementOf(parsed, node, options) {
+  // Find the statement that a target node is in. Example:
+  // let source be "var x = 1; x + 1;" and we are looking for the
+  // Identifier "x" in "x+1;". The second statement is what will be found.
+  var nodes = nodesAt$1(node.start, parsed),
+      found = nodes.reverse().find(function (node) {
+    return lively_lang.arr.include(_stmtTypes, node.type);
+  });
+  if (options && options.asPath) {
+    var v = new Visitor(),
+        foundPath = void 0;
+    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
+      if (node === found) {
+        foundPath = path;throw new Error("stop search");
       }
-      if (exportsStmt.type === "ExportDefaultDeclaration") {
-        if (helpers.isDeclaration(exportsStmt.declaration)) {
-          return exports.concat({
-            local: exportsStmt.declaration.id.name,
-            exported: "default",
-            type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
-            fromModule: null,
-            node: node,
-            decl: exportsStmt.declaration,
-            declId: exportsStmt.declaration.id
-          });
-        } else if (exportsStmt.declaration.type === "Identifier") {
-          var _ref3 = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
+      return proceed(node, state, path);
+    });
+    try {
+      v.accept(parsed, {}, []);
+    } catch (e) {}
+    return foundPath;
+  }
+  return found;
+}
 
-          var decl = _ref3.decl;
-          var declId = _ref3.declId;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// imports and exports
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-          return exports.concat([{
-            local: exportsStmt.declaration.name,
-            exported: "default",
-            fromModule: null,
-            node: node,
-            type: "id",
-            decl: decl,
-            declId: declId
-          }]);
-        } else {
-          // exportsStmt.declaration is an expression
-          return exports.concat([{
-            local: null,
-            exported: "default",
-            fromModule: null,
-            node: node,
-            type: "expr",
-            decl: exportsStmt.declaration,
-            declId: exportsStmt.declaration
-          }]);
-        }
-      }
+function imports(scope) {
+  var imports = scope.importDecls.reduce(function (imports, node) {
+    var nodes = nodesAtIndex(scope.node, node.start),
+        importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+    if (!importStmt) return imports;
 
-      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
-        return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
-          var decl, declId;
-          if (from) {
-            // "export { x as y } from 'foo'" is the only case where export
-            // creates a (non-local) declaration itself
-            decl = node;declId = exportSpec.exported;
-          } else if (exportSpec.local) {
-            var resolved = scope.resolvedRefMap.get(exportSpec.local);
-            decl = resolved ? resolved.decl : null;
-            declId = resolved ? resolved.declId : null;
-          }
+    var from = importStmt.source ? importStmt.source.value : "unknown module";
+    if (!importStmt.specifiers.length) // no imported vars
+      return imports.concat([{
+        local: null,
+        imported: null,
+        fromModule: from,
+        node: node
+      }]);
 
-          return {
-            local: !from && exportSpec.local ? exportSpec.local.name : null,
-            exported: exportSpec.exported ? exportSpec.exported.name : null,
-            imported: from && exportSpec.local ? exportSpec.local.name : null,
-            fromModule: from || null,
-            type: "id",
-            node: node,
-            decl: decl,
-            declId: declId
-          };
-        }));
-      }
+    return imports.concat(importStmt.specifiers.map(function (importSpec) {
+      var imported;
+      if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+      return {
+        local: importSpec.local ? importSpec.local.name : null,
+        imported: imported,
+        fromModule: from,
+        node: node
+      };
+    }));
+  }, []);
 
-      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
-        return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
-          return {
-            local: decl.id.name,
-            exported: decl.id.name,
-            type: exportsStmt.declaration.kind,
-            fromModule: null,
-            node: node,
-            decl: decl,
-            declId: decl.id
-          };
-        }));
-      }
+  return lively_lang.arr.uniqBy(imports, function (a, b) {
+    return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+  });
+}
 
-      if (exportsStmt.declaration) {
+function exports$1(scope) {
+  var resolve = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+  if (resolve) resolveReferences(scope);
+
+  var exports = scope.exportDecls.reduce(function (exports, node) {
+
+    var exportsStmt = statementOf(scope.node, node);
+    if (!exportsStmt) return exports;
+
+    var from = exportsStmt.source ? exportsStmt.source.value : null;
+
+    if (exportsStmt.type === "ExportAllDeclaration") {
+      return exports.concat([{
+        local: null,
+        exported: "*",
+        imported: "*",
+        fromModule: from,
+        node: node,
+        type: "all"
+      }]);
+    }
+    if (exportsStmt.type === "ExportDefaultDeclaration") {
+      if (helpers.isDeclaration(exportsStmt.declaration)) {
         return exports.concat({
           local: exportsStmt.declaration.id.name,
-          exported: exportsStmt.declaration.id.name,
+          exported: "default",
           type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
           fromModule: null,
           node: node,
           decl: exportsStmt.declaration,
           declId: exportsStmt.declaration.id
         });
-      }
-      return exports;
-    }, []);
-
-    return lively_lang.arr.uniqBy(exports, function (a, b) {
-      return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
-    });
-  }
-
-
-
-  var query = Object.freeze({
-    helpers: helpers,
-    knownGlobals: knownGlobals,
-    scopes: scopes,
-    nodesAtIndex: nodesAtIndex,
-    scopesAtIndex: scopesAtIndex,
-    scopeAtIndex: scopeAtIndex,
-    scopesAtPos: scopesAtPos,
-    nodesInScopeOf: nodesInScopeOf,
-    declarationsOfScope: declarationsOfScope,
-    _declaredVarNames: _declaredVarNames,
-    _findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
-    topLevelDeclsAndRefs: topLevelDeclsAndRefs,
-    topLevelFuncDecls: topLevelFuncDecls,
-    findGlobalVarRefs: findGlobalVarRefs,
-    findNodesIncludingLines: findNodesIncludingLines,
-    findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
-    findDeclarationClosestToIndex: findDeclarationClosestToIndex,
-    nodesAt: nodesAt$1,
-    statementOf: statementOf,
-    resolveReferences: resolveReferences,
-    refWithDeclAt: refWithDeclAt,
-    imports: imports,
-    exports: exports$1
-  });
-
-  var ObjectSpreadTransformer = function (_Visitor) {
-    babelHelpers.inherits(ObjectSpreadTransformer, _Visitor);
-
-    function ObjectSpreadTransformer() {
-      babelHelpers.classCallCheck(this, ObjectSpreadTransformer);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ObjectSpreadTransformer).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ObjectSpreadTransformer, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        if (node.type === "ObjectExpression") {
-          node = this.transformSpreadProperty(node);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ObjectSpreadTransformer.prototype), "accept", this).call(this, node, state, path);
-      }
-    }, {
-      key: "transformSpreadProperty",
-      value: function transformSpreadProperty(node) {
-        var currentGroup = [],
-            propGroups = [currentGroup];
-
-        node.properties.forEach(function (prop) {
-          if (prop.type !== "SpreadProperty") currentGroup.push(prop);else {
-            propGroups.push(prop);
-            currentGroup = [];
-            propGroups.push(currentGroup);
-          }
-        });
-
-        if (propGroups.length === 1) return node;
-
-        if (!currentGroup.length) propGroups.pop();
-
-        return funcCall.apply(undefined, [member("Object", "assign")].concat(babelHelpers.toConsumableArray(propGroups.map(function (group) {
-          return group.type === "SpreadProperty" ? group.argument : {
-            properties: group,
-            type: 'ObjectExpression'
-          };
-        }))));
-      }
-    }]);
-    return ObjectSpreadTransformer;
-  }(Visitor);
-
-  function objectSpreadTransform(parsed) {
-    // "var x = {y, ...z}" => "var x = Object.assign({ y }, z);"
-    return new ObjectSpreadTransformer().accept(parsed, {}, []);
-  };
-
-  var helper = {
-    // currently this is used by the replacement functions below but
-    // I don't wan't to make it part of our AST API
-
-    _node2string: function _node2string(node) {
-      return node.source || stringify(node);
-    },
-
-    _findIndentAt: function _findIndentAt(s, pos) {
-      var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
-          indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
-      if (indent[0] === '\n') indent = indent.slice(1);
-      return indent;
-    },
-
-    _applyChanges: function _applyChanges(changes, source) {
-      return changes.reduce(function (source, change) {
-        if (change.type === 'del') {
-          return source.slice(0, change.pos) + source.slice(change.pos + change.length);
-        } else if (change.type === 'add') {
-          return source.slice(0, change.pos) + change.string + source.slice(change.pos);
-        }
-        throw new Error('Uexpected change ' + Objects.inspect(change));
-      }, source);
-    },
-
-    _compareNodesForReplacement: function _compareNodesForReplacement(nodeA, nodeB) {
-      // equals
-      if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
-      // a "left" of b
-      if (nodeA.end <= nodeB.start) return -1;
-      // a "right" of b
-      if (nodeA.start >= nodeB.end) return 1;
-      // a contains b
-      if (nodeA.start <= nodeB.start && nodeA.end >= nodeB.end) return 1;
-      // b contains a
-      if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
-      throw new Error('Comparing nodes');
-    },
-
-    replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
-      // parameters:
-      //   - target: ast node
-      //   - replacementFunc that gets this node and its source snippet
-      //     handed and should produce a new ast node.
-      //   - sourceOrChanges: If its a string -- the source code to rewrite
-      //                      If its and object -- {changes: ARRAY, source: STRING}
-
-      var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : babelHelpers.typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
-          insideChangedBefore = false,
-          pos = sourceChanges.changes.reduce(function (pos, change) {
-        // fixup the start and end indices of target using the del/add
-        // changes already applied
-        if (pos.end < change.pos) return pos;
-
-        var isInFront = change.pos < pos.start;
-        insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
-
-        if (change.type === 'add') return {
-          start: isInFront ? pos.start + change.string.length : pos.start,
-          end: pos.end + change.string.length
-        };
-
-        if (change.type === 'del') return {
-          start: isInFront ? pos.start - change.length : pos.start,
-          end: pos.end - change.length
-        };
-
-        throw new Error('Cannot deal with change ' + Objects.inspect(change));
-      }, { start: target.start, end: target.end });
-
-      var source = sourceChanges.source,
-          replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
-          replacementSource = Array.isArray(replacement) ? replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)) : replacementSource = helper._node2string(replacement);
-
-      var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
-
-      return {
-        changes: sourceChanges.changes.concat(changes),
-        source: this._applyChanges(changes, source)
-      };
-    },
-
-    replaceNodes: function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
-      // replace multiple AST nodes, order rewriting from inside out and
-      // top to bottom so that nodes to rewrite can overlap or be contained
-      // in each other
-      return targetAndReplacementFuncs.sort(function (a, b) {
-        return helper._compareNodesForReplacement(a.target, b.target);
-      }).reduce(function (sourceChanges, ea) {
-        return helper.replaceNode(ea.target, ea.replacementFunc, sourceChanges);
-      }, (typeof sourceOrChanges === "undefined" ? "undefined" : babelHelpers.typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges });
-    }
-
-  };
-
-  function replace(astOrSource, targetNode, replacementFunc, options) {
-    // replaces targetNode in astOrSource with what replacementFunc returns
-    // (one or multiple ast nodes)
-    // Example:
-    // var ast = exports.parse('foo.bar("hello");')
-    // exports.transform.replace(
-    //     ast, ast.body[0].expression,
-    //     function(node, source) {
-    //         return {type: "CallExpression",
-    //             callee: {name: node.arguments[0].value, type: "Identifier"},
-    //             arguments: [{value: "world", type: "Literal"}]
-    //         }
-    //     });
-    // => {
-    //      source: "hello('world');",
-    //      changes: [{pos: 0,length: 16,type: "del"},{pos: 0,string: "hello('world')",type: "add"}]
-    //    }
-
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : null,
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        result = helper.replaceNode(targetNode, replacementFunc, source);
-
-    return result;
-  }
-
-  function oneDeclaratorPerVarDecl(astOrSource) {
-    // exports.transform.oneDeclaratorPerVarDecl(
-    //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
-
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        scope = scopes(parsed),
-        varDecls = function findVarDecls(scope) {
-      return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-    }(scope);
-
-    var targetsAndReplacements = varDecls.map(function (decl) {
-      return {
-        target: decl,
-        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-          if (wasChanged) {
-            // reparse node if necessary, e.g. if init was changed before like in
-            // var x = (function() { var y = ... })();
-            declNode = parse(s).body[0];
-          }
-
-          return declNode.declarations.map(function (ea) {
-            return {
-              type: "VariableDeclaration",
-              kind: "var", declarations: [ea]
-            };
-          });
-        }
-      };
-    });
-
-    return helper.replaceNodes(targetsAndReplacements, source);
-  }
-
-  function oneDeclaratorForVarsInDestructoring(astOrSource) {
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        scope = scopes(parsed),
-        varDecls = function findVarDecls(scope) {
-      return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-    }(scope);
-
-    var targetsAndReplacements = varDecls.map(function (decl) {
-      return {
-        target: decl,
-        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-          if (wasChanged) {
-            // reparse node if necessary, e.g. if init was changed before like in
-            // var x = (function() { var y = ... })();
-            declNode = parse(s).body[0];
-          }
-
-          return lively_lang.arr.flatmap(declNode.declarations, function (declNode) {
-            var extractedId = { type: "Identifier", name: "__temp" },
-                extractedInit = {
-              type: "VariableDeclaration", kind: "var",
-              declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
-            };
-
-            var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
-              return ea.key;
-            }).map(function (keyPath) {
-              return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(babelHelpers.toConsumableArray(keyPath))), "var");
-            });
-
-            return [extractedInit].concat(propDecls);
-          });
-        }
-      };
-    });
-
-    return helper.replaceNodes(targetsAndReplacements, source);
-  }
-
-  function returnLastStatement(source, opts) {
-    opts = opts || {};
-
-    var parsed = parse(source, opts),
-        last = lively_lang.arr.last(parsed.body);
-    if (last.type === "ExpressionStatement") {
-      parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
-      return opts.asAST ? parsed : stringify(parsed);
-    } else {
-      return opts.asAST ? parsed : source;
-    }
-  }
-
-  function wrapInFunction(code, opts) {
-    opts = opts || {};
-    var transformed = returnLastStatement(code, opts);
-    return opts.asAST ? program(funcExpr.apply(undefined, [{ id: opts.id || undefined }, []].concat(babelHelpers.toConsumableArray(transformed.body)))) : "function" + (opts.id ? " " + opts.id : "") + "() {\n" + transformed + "\n}";
-  }
-
-  function wrapInStartEndCall(parsed, options) {
-    // Wraps a piece of code into two function calls: One before the first
-    // statement and one after the last. Also wraps the entire thing into a try /
-    // catch block. The end call gets the result of the last statement (if it is
-    // something that returns a value, i.e. an expression) passed as the second
-    // argument. If an error occurs the end function is called with an error as
-    // first parameter
-    // Why? This allows to easily track execution of code, especially for
-    // asynchronus / await code!
-    // Example:
-    // stringify(wrapInStartEndCall("var y = x + 23; y"))
-    // // generates code
-    // try {
-    //     __start_execution();
-    //     __lvVarRecorder.y = x + 23;
-    //     return __end_execution(null, __lvVarRecorder.y);
-    // } catch (err) {
-    //     return __end_execution(err, undefined);
-    // }
-
-    if (typeof parsed === "string") parsed = parse(parsed);
-    options = options || {};
-
-    var isProgram = parsed.type === "Program",
-        startFuncNode = options.startFuncNode || id("__start_execution"),
-        endFuncNode = options.endFuncNode || id("__end_execution"),
-        funcDecls = topLevelFuncDecls(parsed),
-        innerBody = parsed.body,
-        outerBody = [];
-
-    // 1. Hoist func decls outside the actual eval start - end code. The async /
-    // generator transforms require this!
-    funcDecls.forEach(function (_ref) {
-      var node = _ref.node;
-      var path = _ref.path;
-
-      lively_lang.Path(path).set(parsed, exprStmt(node.id));
-      outerBody.push(node);
-    });
-
-    // 2. add start-eval call
-    innerBody.unshift(exprStmt(funcCall(startFuncNode)));
-
-    // 3. if last statement is an expression, transform it so we can pass it to
-    // the end-eval call, replacing the original expression. If it's a
-    // non-expression we record undefined as the eval result
-    var last = lively_lang.arr.last(innerBody);
-    if (last.type === "ExpressionStatement") {
-      innerBody.pop();
-      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
-    } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
-      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
-    } else {
-      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
-    }
-
-    // 4. Wrap that stuff in a try stmt
-    outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(babelHelpers.toConsumableArray(innerBody))));
-
-    return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
-  }
-
-  var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
-
-  function transformSingleExpression(code) {
-    // evaling certain expressions such as single functions or object
-    // literals will fail or not work as intended. When the code being
-    // evaluated consists just out of a single expression we will wrap it in
-    // parens to allow for those cases
-    // Example:
-    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
-
-    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
-
-    try {
-      var parsed = fuzzyParse(code);
-      if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
-        code = '(' + code.replace(/;\s*$/, '') + ')';
-      }
-    } catch (e) {
-      if ((typeof lively === "undefined" ? "undefined" : babelHelpers.typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
-    }
-    return code;
-  }
-
-
-
-  var transform = Object.freeze({
-    helper: helper,
-    replace: replace,
-    oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
-    oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
-    returnLastStatement: returnLastStatement,
-    wrapInFunction: wrapInFunction,
-    wrapInStartEndCall: wrapInStartEndCall,
-    transformSingleExpression: transformSingleExpression,
-    objectSpreadTransform: objectSpreadTransform
-  });
-
-  function isFunctionNode(node) {
-    return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function constructorTemplate(name) {
-    // Creates a function like
-    // function CLASS() {
-    //   var firstArg = arguments[0];
-    //   if (firstArg && firstArg[Symbol.for("lively-instance-restorer")]) {
-    //     // for deserializing instances just do nothing
-    //   } else {
-    //     // automatically call the initialize method
-    //     this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
-    //   }
-    // }
-
-    return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var isTransformedClassVarDeclSymbol = Symbol();
-  var methodKindSymbol = Symbol();
-  var tempLivelyClassVar = "__lively_class__";
-  var tempLivelyClassHolderVar = "__lively_classholder__";
-
-  var ClassReplaceVisitor = function (_Visitor) {
-    babelHelpers.inherits(ClassReplaceVisitor, _Visitor);
-
-    function ClassReplaceVisitor() {
-      babelHelpers.classCallCheck(this, ClassReplaceVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ClassReplaceVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ClassReplaceVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        if (isFunctionNode(node)) {
-          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]),
-            currentMethod: node[methodKindSymbol] ? node : state.currentMethod
-          });
-        }
-
-        if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
-
-        if (node.type === "Super") node = replaceSuper(node, state, path, state.options);
-
-        if (node.type === "MemberExpression" && node.object && node.object.type === "Super") node = replaceSuperGetter(node, state, path, state.options);
-
-        if (node.type === "AssignmentExpression" && node.left.type === "MemberExpression" && node.left.object.type === "Super") node = replaceSuperSetter(node, state, path, state.options);
-
-        if (node.type === "CallExpression" && node.callee.type === "Super") node = replaceDirectSuperCall(node, state, path, state.options);
-
-        if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
-
-        node = babelHelpers.get(Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
-
-        if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
-
-        return node;
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, options) {
-        var v = new this(),
-            classHolder = options.classHolder || objectLiteral([]);
-        return v.accept(parsed, { options: options, classHolder: classHolder }, []);
-      }
-    }]);
-    return ClassReplaceVisitor;
-  }(Visitor);
-
-  function replaceSuper(node, state, path, options) {
-    // just super
-    console.assert(node.type === "Super");
-
-    var currentMethod = state.currentMethod;
-
-    if (!currentMethod) {
-      console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + stringify(node) + " in " + path.join("."));
-      // return node;
-    }
-
-    var _path$slice = path.slice(-2);
-
-    var _path$slice2 = babelHelpers.slicedToArray(_path$slice, 2);
-
-    var parentReferencedAs = _path$slice2[0];
-    var referencedAs = _path$slice2[1];
-
-    if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
-
-    var methodHolder = currentMethod && currentMethod[methodKindSymbol] === "static" ? funcCall(member("Object", "getPrototypeOf"), id(tempLivelyClassVar)) : funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
-
-    return methodHolder;
-  }
-
-  // parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
-
-  function replaceSuperMethodCall(node, state, path, options) {
-    // like super.foo()
-    console.assert(node.type === "CallExpression");
-    console.assert(node.callee.object.type === "Super");
-
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state, path.concat(["callee", "object"]), options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
-  }
-
-  function replaceDirectSuperCall(node, state, path, options) {
-    // like super()
-    console.assert(node.type === "CallExpression");
-    console.assert(node.callee.type === "Super");
-
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state, path.concat(["callee"]), options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
-  }
-
-  function replaceSuperGetter(node, state, path, options) {
-    console.assert(node.type === "MemberExpression");
-    console.assert(node.object.type === "Super");
-    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state, path.concat(["object"]), options), literal(node.property.value || node.property.name), id("this"));
-  }
-
-  function replaceSuperSetter(node, state, path, options) {
-    console.assert(node.type === "AssignmentExpression");
-    console.assert(node.left.object.type === "Super");
-
-    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state, path.concat(["left", "object"]), options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
-  }
-
-  function replaceClass(node, state, path, options) {
-    console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
-
-    var body = node.body.body;
-    var superClass = node.superClass;
-    var classId = node.id;
-    var type = node.type;
-    var instanceProps = id("undefined");
-    var classProps = id("undefined");
-    var className = classId ? classId.name : "anonymous_class";
-
-    if (body.length) {
-      var _body$reduce = body.reduce(function (props, propNode) {
-        var decl;var key = propNode.key;
-        var kind = propNode.kind;
-        var value = propNode.value;
-        var classSide = propNode.static;
-
-
-        if (key.type !== "Literal" && key.type !== "Identifier") {
-          console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
-        }
-
-        if (kind === "method") {
-          // The name is just for debugging purposes when it appears in
-          // native debuggers. We have to be careful about it b/c it shadows
-          // outer functions / vars, something that is totally not apparent for a user
-          // of the class syntax. That's the reason for making it a little cryptic
-          var methodId = id(className + "_" + (key.name || key.value) + "_"),
-              _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
-
-          decl = objectLiteral(_props);
-        } else if (kind === "get" || kind === "set") {
-          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, babelHelpers.defineProperty({ id: id(kind) }, methodKindSymbol, classSide ? "static" : "proto"))]);
-        } else if (kind === "constructor") {
-          var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: id(className + "_initialize_") }, methodKindSymbol, "proto"))];
-          decl = objectLiteral(_props2);
-        } else {
-          console.warn("[lively.classes] classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
-        }
-        (classSide ? props.clazz : props.inst).push(decl);
-        return props;
-      }, { inst: [], clazz: [] });
-
-      var inst = _body$reduce.inst;
-      var clazz = _body$reduce.clazz;
-
-
-      if (inst.length) instanceProps = { type: "ArrayExpression", elements: inst };
-      if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
-    }
-
-    var scope = options.scope,
-        superClassReferencedAs,
-        superClassRef;
-
-    if (superClass && options.currentModuleAccessor) {
-      if (options.classHolder === superClass.object) {
-        superClassRef = superClass;
-        superClassReferencedAs = superClass.property.name;
+      } else if (exportsStmt.declaration.type === "Identifier") {
+        var _ref3 = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
+
+        var decl = _ref3.decl;
+        var declId = _ref3.declId;
+
+        return exports.concat([{
+          local: exportsStmt.declaration.name,
+          exported: "default",
+          fromModule: null,
+          node: node,
+          type: "id",
+          decl: decl,
+          declId: declId
+        }]);
       } else {
-        var found = scope && scope.resolvedRefMap && scope.resolvedRefMap.get(superClass),
-            isTopLevel = found && found.decl && scope.decls && scope.decls.find(function (_ref) {
-          var _ref2 = babelHelpers.slicedToArray(_ref, 1);
-
-          var decl = _ref2[0];
-          return decl === found.decl;
-        });
-        if (isTopLevel) {
-          superClassRef = superClass;
-          superClassReferencedAs = superClass.name;
-        };
+        // exportsStmt.declaration is an expression
+        return exports.concat([{
+          local: null,
+          exported: "default",
+          fromModule: null,
+          node: node,
+          type: "expr",
+          decl: exportsStmt.declaration,
+          declId: exportsStmt.declaration
+        }]);
       }
     }
 
-    var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
+    if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+      return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+        var decl, declId;
+        if (from) {
+          // "export { x as y } from 'foo'" is the only case where export
+          // creates a (non-local) declaration itself
+          decl = node;declId = exportSpec.exported;
+        } else if (exportSpec.local) {
+          var resolved = scope.resolvedRefMap.get(exportSpec.local);
+          decl = resolved ? resolved.decl : null;
+          declId = resolved ? resolved.declId : null;
+        }
 
-    var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? {
-      type: "ConditionalExpression",
-      test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({ argument: member(tempLivelyClassHolderVar, classId), operator: "typeof", prefix: true, type: "UnaryExpression" }, "===", literal("function"))),
-      consequent: member(tempLivelyClassHolderVar, classId),
-      alternate: constructorTemplate(classId.name)
-    } : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
-
-    if (type === "ClassExpression") return classCreator;
-
-    var result = classCreator;
-
-    if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
-
-    // since it is a declaration and we removed the class construct we need to add a var-decl
-    result = varDecl(classId, result, "var");
-    result[isTransformedClassVarDeclSymbol] = true;
-
-    return result;
-  }
-
-  function splitExportDefaultWithClass(node, classHolder, path, options) {
-    return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
-      declaration: node.declaration.declarations[0].id,
-      type: "ExportDefaultDeclaration"
-    }];
-  }
-
-  // var opts = {classHolder: {type: "Identifier", name: "_rec"}, functionNode: {type: "Identifier", name: "createOrExtendClass"}};
-  // stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(); }}"), opts))
-  // stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(arguments[1]); }}"), opts))
-  // stringify(classToFunctionTransform(parse("class Foo {constructor() {}}"), opts))
-
-  function classToFunctionTransform(sourceOrAst, options) {
-    // required: options = {functionNode, classHolder}
-    // From
-    //   class Foo extends SuperFoo { m() { return 2 + super.m() }}
-    // produces something like
-    //   createOrExtend({}, {referencedAs: "SuperFoo", value: SuperFoo}, "Foo2", [{
-    //     key: "m",
-    //     value: function m() {
-    //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
-    //     }
-    //   }])
-
-    var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
-    options.scope = resolveReferences(scopes(parsed));
-
-    var replaced = ClassReplaceVisitor.run(parsed, options);
-
-    return replaced;
-  }
-
-  var merge = Object.assign;
-
-  function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
-    /* replaces var and function declarations with assignment statements.
-     * Example:
-       stringify(
-         rewriteToCaptureTopLevelVariables2(
-           parse("var x = 3, y = 2, z = 4"),
-           {name: "A", type: "Identifier"}, ['z']));
-       // => "A.x = 3; A.y = 2; z = 4"
-     */
-
-    if (!assignToObj) assignToObj = { type: "Identifier", name: "__rec" };
-
-    options = Object.assign({
-      ignoreUndeclaredExcept: null,
-      includeRefs: null,
-      excludeRefs: options && options.exclude || [],
-      includeDecls: null,
-      excludeDecls: options && options.exclude || [],
-      recordDefRanges: false,
-      es6ExportFuncId: null,
-      es6ImportFuncId: null,
-      captureObj: assignToObj,
-      moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
-      moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
-      declarationWrapper: undefined,
-      classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : Object.assign({
-        classHolder: assignToObj,
-        functionNode: { type: "Identifier", name: "_createOrExtendClass" },
-        declarationWrapper: options && options.declarationWrapper
-      })
-    }, options);
-
-    var rewritten = parsed;
-
-    // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
-    // if it is a list of names we will capture all refs with those names
-    if (options.ignoreUndeclaredExcept) {
-      var topLevel = topLevelDeclsAndRefs(parsed);
-      options.excludeRefs = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
-      options.excludeDecls = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
+        return {
+          local: !from && exportSpec.local ? exportSpec.local.name : null,
+          exported: exportSpec.exported ? exportSpec.exported.name : null,
+          imported: from && exportSpec.local ? exportSpec.local.name : null,
+          fromModule: from || null,
+          type: "id",
+          node: node,
+          decl: decl,
+          declId: declId
+        };
+      }));
     }
 
-    options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
-    options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
-
-    // 1. def ranges so that we know at which source code positions the
-    // definitions are
-    var defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
-
-    // 2. find those var declarations that should not be rewritten. we
-    // currently ignore var declarations in for loops and the error parameter
-    // declaration in catch clauses. Also es6 import / export declaration need
-    // a special treatment
-    // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
-    // as this is not valid syntax. Instead we add a var declaration using the
-    // recorder as init for those exports later
-    options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
-    options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
-
-    rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
-
-    // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
-    // obj assignment, converting es6 code to es5 using the extra
-    // options.moduleExportFunc and options.moduleImportFunc as capture / sources
-    if (options.es6ExportFuncId) {
-      options.excludeRefs.push(options.es6ExportFuncId);
-      options.excludeRefs.push(options.es6ImportFuncId);
-      rewritten = es6ModuleTransforms(rewritten, options);
+    if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+      return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
+        return {
+          local: decl.id.name,
+          exported: decl.id.name,
+          type: exportsStmt.declaration.kind,
+          fromModule: null,
+          node: node,
+          decl: decl,
+          declId: decl.id
+        };
+      }));
     }
 
-    // 4. make all references declared in the toplevel scope into property
-    // reads of captureObj
-    // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    rewritten = replaceRefs(rewritten, options);
-
-    // 5.a turn var declarations into assignments to captureObj
-    // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
-    // if declarationWrapper is requested:
-    //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
-    rewritten = replaceVarDecls(rewritten, options);
-
-    // 5.b record class declarations
-    // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
-    // if declarationWrapper is requested:
-    //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
-    rewritten = replaceClassDecls(rewritten, options);
-
-    // 6. es6 export declaration are left untouched but a capturing assignment
-    // is added after the export so that we get the value:
-    // "export var x = 23;" => "export var x = 23; Global.x = x;"
-    rewritten = insertCapturesForExportDeclarations(rewritten, options);
-
-    // 7. es6 import declaration are left untouched but a capturing assignment
-    // is added after the import so that we get the value:
-    // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
-    rewritten = insertCapturesForImportDeclarations(rewritten, options);
-
-    // 8. Since variable declarations like "var x = 23" were transformed to sth
-    // like "_rex.x = 23" exports can't simply reference vars anymore and
-    // "export { _rec.x }" is invalid syntax. So in front of those exports we add
-    // var decls manually
-    rewritten = insertDeclarationsForExports(rewritten, options);
-
-    // 9. assignments for function declarations in the top level scope are
-    // put in front of everything else to mirror the func hoisting:
-    // "return bar(); function bar() { return 23 }" ->
-    //   "Global.bar = bar; return bar(); function bar() { return 23 }"
-    // if declarationWrapper is requested:
-    //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
-    rewritten = putFunctionDeclsInFront(rewritten, options);
-
-    return rewritten;
-  }
-
-  function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
-    // for rewriting the setters part in code like
-    // ```js
-    //   System.register(["a.js"], function (_export, _context) {
-    //     var a, _rec;
-    //     return {
-    //       setters: [function(foo_a_js) { a = foo_a_js.x }],
-    //       execute: function () { _rec.x = 23 + _rec.a; }
-    //     };
-    //   });
-    // ```
-    // This allows us to capture (and potentially re-export) imports and their
-    // changes without actively running the module again.
-
-    options = merge({
-      captureObj: assignToObj || { type: "Identifier", name: "__rec" },
-      exclude: [],
-      declarationWrapper: undefined
-    }, options);
-
-    var registerCall = lively_lang.Path("body.0.expression").get(parsed);
-    if (registerCall.callee.object.name !== "System") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
-    if (registerCall.callee.property.name !== "register") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
-    var registerBody = lively_lang.Path("arguments.1.body.body").get(registerCall),
-        registerReturn = lively_lang.arr.last(registerBody);
-    if (registerReturn.type !== "ReturnStatement") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: " + stringify(parsed).slice(0, 300) + "...");
-    var setters = registerReturn.argument.properties.find(function (prop) {
-      return prop.key.name === "setters";
-    });
-    if (!setters) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding setters: " + stringify(parsed).slice(0, 300) + "...");
-    var execute = registerReturn.argument.properties.find(function (prop) {
-      return prop.key.name === "execute";
-    });
-    if (!execute) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: " + stringify(parsed).slice(0, 300) + "...");
-
-    // in each setter function: intercept the assignments to local vars and inject capture object
-    setters.value.elements.forEach(function (funcExpr) {
-      return funcExpr.body.body = funcExpr.body.body.map(function (stmt) {
-        if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
-
-        var id = stmt.expression.left,
-            rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
-        return exprStmt(assign(member(options.captureObj, id), rhs));
+    if (exportsStmt.declaration) {
+      return exports.concat({
+        local: exportsStmt.declaration.id.name,
+        exported: exportsStmt.declaration.id.name,
+        type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+        fromModule: null,
+        node: node,
+        decl: exportsStmt.declaration,
+        declId: exportsStmt.declaration.id
       });
-    });
-
-    var captureInitialize = execute.value.body.body.find(function (stmt) {
-      return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
-    });
-    if (captureInitialize) {
-      lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
     }
+    return exports;
+  }, []);
 
-    return parsed;
+  return lively_lang.arr.uniqBy(exports, function (a, b) {
+    return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+  });
+}
+
+
+
+var query = Object.freeze({
+	helpers: helpers,
+	knownGlobals: knownGlobals,
+	scopes: scopes,
+	nodesAtIndex: nodesAtIndex,
+	scopesAtIndex: scopesAtIndex,
+	scopeAtIndex: scopeAtIndex,
+	scopesAtPos: scopesAtPos,
+	nodesInScopeOf: nodesInScopeOf,
+	declarationsOfScope: declarationsOfScope,
+	_declaredVarNames: _declaredVarNames,
+	_findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
+	topLevelDeclsAndRefs: topLevelDeclsAndRefs,
+	topLevelFuncDecls: topLevelFuncDecls,
+	findGlobalVarRefs: findGlobalVarRefs,
+	findNodesIncludingLines: findNodesIncludingLines,
+	findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
+	findDeclarationClosestToIndex: findDeclarationClosestToIndex,
+	nodesAt: nodesAt$1,
+	statementOf: statementOf,
+	resolveReferences: resolveReferences,
+	refWithDeclAt: refWithDeclAt,
+	imports: imports,
+	exports: exports$1
+});
+
+var ObjectSpreadTransformer = function (_Visitor) {
+  inherits(ObjectSpreadTransformer, _Visitor);
+
+  function ObjectSpreadTransformer() {
+    classCallCheck(this, ObjectSpreadTransformer);
+    return possibleConstructorReturn(this, (ObjectSpreadTransformer.__proto__ || Object.getPrototypeOf(ObjectSpreadTransformer)).apply(this, arguments));
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // replacing helpers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  // TODO move this stuff over into transform? Or separate replace.js?
-
-  var ReplaceVisitor = function (_Visitor) {
-    babelHelpers.inherits(ReplaceVisitor, _Visitor);
-
-    function ReplaceVisitor() {
-      babelHelpers.classCallCheck(this, ReplaceVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceVisitor).apply(this, arguments));
+  createClass(ObjectSpreadTransformer, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      if (node.type === "ObjectExpression") {
+        node = this.transformSpreadProperty(node);
+      }
+      return get(ObjectSpreadTransformer.prototype.__proto__ || Object.getPrototypeOf(ObjectSpreadTransformer.prototype), "accept", this).call(this, node, state, path);
     }
+  }, {
+    key: "transformSpreadProperty",
+    value: function transformSpreadProperty(node) {
+      var currentGroup = [],
+          propGroups = [currentGroup];
 
-    babelHelpers.createClass(ReplaceVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, replacer) {
-        var v = new this();
-        v.replacer = replacer;
-        return v.accept(parsed, null, []);
-      }
-    }]);
-    return ReplaceVisitor;
-  }(Visitor);
-
-  function replace$1(parsed, replacer) {
-    return ReplaceVisitor.run(parsed, replacer);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var canBeInlinedSym = Symbol("canBeInlined");
-
-  function blockInliner(node) {
-    // FIXME what about () => x kind of functions?
-    if (Array.isArray(node.body)) {
-      for (var i = node.body.length - 1; i >= 0; i--) {
-        var stmt = node.body[i];
-        if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
-          node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
+      node.properties.forEach(function (prop$$1) {
+        if (prop$$1.type !== "SpreadProperty") currentGroup.push(prop$$1);else {
+          propGroups.push(prop$$1);
+          currentGroup = [];
+          propGroups.push(currentGroup);
         }
-      }
-    }
-    return node;
-  }
-
-  var ReplaceManyVisitor = function (_Visitor2) {
-    babelHelpers.inherits(ReplaceManyVisitor, _Visitor2);
-
-    function ReplaceManyVisitor() {
-      babelHelpers.classCallCheck(this, ReplaceManyVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceManyVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ReplaceManyVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
-        var replaced = this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
-        return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
-      }
-    }, {
-      key: "visitBlockStatement",
-      value: function visitBlockStatement(node, state, path) {
-        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
-      }
-    }, {
-      key: "visitProgram",
-      value: function visitProgram(node, state, path) {
-        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, replacer) {
-        var v = new this();
-        v.replacer = replacer;
-        return v.accept(parsed, null, []);
-      }
-    }]);
-    return ReplaceManyVisitor;
-  }(Visitor);
-
-  function replaceWithMany(parsed, replacer) {
-    return ReplaceManyVisitor.run(parsed, replacer);
-  }
-
-  function replaceRefs(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        refsToReplace = topLevel.refs.filter(function (ref) {
-      return shouldRefBeCaptured(ref, topLevel, options);
-    });
-
-    var replaced = replace$1(parsed, function (node, path) {
-      return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
-    });
-
-    return replace$1(replaced, function (node, path) {
-      return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
-    });
-  }
-
-  function replaceVarDecls(parsed, options) {
-    // rewrites var declarations so that they can be captured by
-    // `options.captureObj`.
-    // For normal vars we will do a transform like
-    //   "var x = 23;" => "_rec.x = 23";
-    // For patterns (destructuring assignments) we will create assignments for
-    // all properties that are being destructured, creating helper vars as needed
-    //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
-
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    return replaceWithMany(parsed, function (node) {
-      if (topLevel.varDecls.indexOf(node) === -1 || node.declarations.every(function (decl) {
-        return !shouldDeclBeCaptured(decl, options);
-      })) return node;
-
-      return lively_lang.arr.flatmap(node.declarations, function (decl) {
-        if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
-
-        var init = decl.init || {
-          operator: "||",
-          type: "LogicalExpression",
-          left: { computed: false, object: options.captureObj, property: decl.id, type: "MemberExpression" },
-          right: { name: "undefined", type: "Identifier" }
-        };
-
-        var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
-
-        // Here we create the object pattern / destructuring replacements
-        if (decl.id.type.match(/Pattern/)) {
-          var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
-              declRoot = { type: "Identifier", name: declRootName },
-              state = { parent: declRoot, declaredNames: topLevel.declaredNames },
-              extractions = transformPattern(decl.id, state).map(function (decl) {
-            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
-          });
-          topLevel.declaredNames.push(declRootName);
-          return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
-        }
-
-        // This is rewriting normal vars
-        return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
       });
-    });
-  }
 
-  function replaceClassDecls(parsed, options) {
+      if (propGroups.length === 1) return node;
 
-    if (options.classToFunction) return classToFunctionTransform(parsed, options.classToFunction);
+      if (!currentGroup.length) propGroups.pop();
 
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    if (!topLevel.classDecls.length) return parsed;
-    for (var i = parsed.body.length - 1; i >= 0; i--) {
-      var stmt = parsed.body[i];
-      if (topLevel.classDecls.indexOf(stmt) !== -1) {
-        if (false && options.declarationWrapper) {} else {
-          parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
-        }
+      return funcCall.apply(undefined, [member("Object", "assign")].concat(toConsumableArray(propGroups.map(function (group) {
+        return group.type === "SpreadProperty" ? group.argument : {
+          properties: group,
+          type: 'ObjectExpression'
+        };
+      }))));
+    }
+  }]);
+  return ObjectSpreadTransformer;
+}(Visitor);
+
+function objectSpreadTransform(parsed) {
+  // "var x = {y, ...z}" => "var x = Object.assign({ y }, z);"
+  return new ObjectSpreadTransformer().accept(parsed, {}, []);
+}
+
+/*global process, global, exports*/
+
+var helper = {
+  // currently this is used by the replacement functions below but
+  // I don't wan't to make it part of our AST API
+
+  _node2string: function _node2string(node) {
+    return node.source || stringify(node);
+  },
+
+  _findIndentAt: function _findIndentAt(s, pos) {
+    var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
+        indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
+    if (indent[0] === '\n') indent = indent.slice(1);
+    return indent;
+  },
+
+  _applyChanges: function _applyChanges(changes, source) {
+    return changes.reduce(function (source, change) {
+      if (change.type === 'del') {
+        return source.slice(0, change.pos) + source.slice(change.pos + change.length);
+      } else if (change.type === 'add') {
+        return source.slice(0, change.pos) + change.string + source.slice(change.pos);
       }
-    }
-    return parsed;
-  }
+      throw new Error('Uexpected change ' + Objects.inspect(change));
+    }, source);
+  },
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // naming
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  _compareNodesForReplacement: function _compareNodesForReplacement(nodeA, nodeB) {
+    // equals
+    if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
+    // a "left" of b
+    if (nodeA.end <= nodeB.start) return -1;
+    // a "right" of b
+    if (nodeA.start >= nodeB.end) return 1;
+    // a contains b
+    if (nodeA.start <= nodeB.start && nodeA.end >= nodeB.end) return 1;
+    // b contains a
+    if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
+    throw new Error('Comparing nodes');
+  },
 
-  function generateUniqueName(declaredNames, hint) {
-    var unique = hint,
-        n = 1;
-    while (declaredNames.indexOf(unique) > -1) {
-      if (n > 1000) throw new Error("Endless loop searching for unique variable " + unique);
-      unique = unique.replace(/_[0-9]+$|$/, "_" + ++n);
-    }
-    return unique;
-  }
+  replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
+    // parameters:
+    //   - target: ast node
+    //   - replacementFunc that gets this node and its source snippet
+    //     handed and should produce a new ast node.
+    //   - sourceOrChanges: If its a string -- the source code to rewrite
+    //                      If its and object -- {changes: ARRAY, source: STRING}
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // exclude / include helpers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
+        insideChangedBefore = false,
+        pos = sourceChanges.changes.reduce(function (pos, change) {
+      // fixup the start and end indices of target using the del/add
+      // changes already applied
+      if (pos.end < change.pos) return pos;
 
-  function additionalIgnoredDecls(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        ignoreDecls = [];
-    for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
-      var decl = topLevel.scope.varDecls[i],
-          path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
-          parent = path.slice(0, -1).get(parsed);
-      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
-        ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
-      }
-    }
+      var isInFront = change.pos < pos.start;
+      insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
 
-    return topLevel.scope.catches.map(function (ea) {
-      return ea.name;
-    }).concat(ignoreDecls.map(function (ea) {
-      return ea.id.name;
-    }));
-  }
+      if (change.type === 'add') return {
+        start: isInFront ? pos.start + change.string.length : pos.start,
+        end: pos.end + change.string.length
+      };
 
-  function additionalIgnoredRefs(parsed, options) {
-    // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
-    // decls, this should somehow be consolidated with this function and with the
-    // fact that naming based ignores aren't good enough...
-    var topLevel = topLevelDeclsAndRefs(parsed);
+      if (change.type === 'del') return {
+        start: isInFront ? pos.start - change.length : pos.start,
+        end: pos.end - change.length
+      };
 
-    var ignoreDecls = [];
-    for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
-      var decl = topLevel.scope.varDecls[i],
-          path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
-          parent = path.slice(0, -1).get(parsed);
-      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
-        ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
-      }
-    }
+      throw new Error('Cannot deal with change ' + Objects.inspect(change));
+    }, { start: target.start, end: target.end });
 
-    var ignoredImportAndExportNames = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") {
-        ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, babelHelpers.toConsumableArray(stmt.specifiers.filter(function (ea) {
-          return ea.type === "ImportSpecifier";
-        }).map(function (ea) {
-          return ea.imported.name;
-        })));
-      } else if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) {
-        ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, babelHelpers.toConsumableArray(stmt.specifiers.map(function (specifier) {
-          return specifier.local.name;
-        })));
-      }
-    }
+    var source = sourceChanges.source,
+        replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
+        replacementSource = Array.isArray(replacement) ? replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)) : replacementSource = helper._node2string(replacement);
 
-    return [].concat(topLevel.scope.catches.map(function (ea) {
-      return ea.name;
-    })).concat(ignoredImportAndExportNames).concat(ignoreDecls.map(function (ea) {
-      return ea.id.name;
-    }));
-  }
+    var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
 
-  function shouldDeclBeCaptured(decl, options) {
-    return options.excludeDecls.indexOf(decl.id.name) === -1 && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
-  }
-
-  function shouldRefBeCaptured(ref, toplevel, options) {
-    return toplevel.scope.importDecls.indexOf(ref) === -1 && lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
-      return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
-    }).indexOf(ref) === -1 && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) !== -1);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // capturing specific code
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function insertCapturesForExportDeclarations(parsed, options) {
-    var body = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      body.push(stmt);
-      // ExportNamedDeclaration can have specifieres = refs, those should already
-      // be captured. Only focus on export declarations and only those
-      // declarations that are no refs, i.e.
-      // ignore: "export default x;"
-      // capture: "export default function foo () {};", "export var x = 23, y = 3;"
-      if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
-        /*...*/
-      } else if (stmt.declaration.declarations) {
-          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-            return assignExpr(options.captureObj, decl.id, decl.id, false);
-          })));
-        } else if (stmt.declaration.type === "FunctionDeclaration") {
-          /*handled by function rewriter as last step*/
-        } else if (stmt.declaration.type === "ClassDeclaration") {
-            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-          }
-    }
-    parsed.body = body;
-    return parsed;
-  }
-
-  function insertCapturesForImportDeclarations(parsed, options) {
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      return stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] : [stmt].concat(stmt.specifiers.map(function (specifier) {
-        return assignExpr(options.captureObj, specifier.local, specifier.local, false);
-      })));
-    }, []);
-    return parsed;
-  }
-
-  function insertDeclarationsForExports(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        body = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
-        body = body.concat([varDeclOrAssignment(parsed, {
-          type: "VariableDeclarator",
-          id: stmt.declaration,
-          init: member(options.captureObj, stmt.declaration)
-        }), stmt]);
-      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
-        body.push(stmt);
-      } else {
-        body = body.concat(stmt.specifiers.map(function (specifier) {
-          return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
-            type: "VariableDeclarator",
-            id: specifier.local,
-            init: member(options.captureObj, specifier.local)
-          });
-        }).filter(Boolean)).concat(stmt);
-      }
-    }
-
-    parsed.body = body;
-    return parsed;
-  }
-
-  function fixDefaultAsyncFunctionExportForRegeneratorBug(parsed, options) {
-    // rk 2016-06-02: see https://github.com/LivelyKernel/lively.modules/issues/9
-    // FIXME this needs to be removed as soon as the cause for the issue is fixed
-    var body = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
-        body.push(stmt.declaration);
-        stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
-      }
-      body.push(stmt);
-    }
-    parsed.body = body;
-    return parsed;
-  }
-
-  function es6ModuleTransforms(parsed, options) {
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      var nodes;
-      if (stmt.type === "ExportNamedDeclaration") {
-
-        if (stmt.source) {
-          var key = moduleId = stmt.source;
-          nodes = stmt.specifiers.map(function (specifier) {
-            return {
-              type: "ExpressionStatement",
-              expression: exportFromImport({ type: "Literal", value: specifier.exported.name }, { type: "Literal", value: specifier.local.name }, moduleId, options.moduleExportFunc, options.moduleImportFunc) };
-          });
-        } else if (stmt.declaration) {
-          var decls = stmt.declaration.declarations;
-          if (!decls) {
-            // func decl or class
-            nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id));
-          } else {
-            nodes = decls.map(function (decl) {
-              options.excludeRefs.push(decl.id);
-              options.excludeDecls.push(decl.id);
-              return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
-            }).concat(decls.map(function (decl) {
-              return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
-            }));
-          }
-        } else {
-          nodes = stmt.specifiers.map(function (specifier) {
-            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
-          });
-        }
-      } else if (stmt.type === "ExportDefaultDeclaration") {
-        if (stmt.declaration && stmt.declaration.id) {
-          nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, "default", stmt.declaration.id));
-        } else {
-          nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
-        }
-      } else if (stmt.type === "ExportAllDeclaration") {
-        var key = { name: options.es6ExportFuncId + "__iterator__", type: "Identifier" },
-            moduleId = stmt.source;
-        nodes = [{
-          type: "ForInStatement",
-          body: { type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc) },
-          left: { type: "VariableDeclaration", kind: "var", declarations: [{ type: "VariableDeclarator", id: key, init: null }] },
-          right: importCall(null, moduleId, options.moduleImportFunc)
-        }];
-        options.excludeRefs.push(key.name);
-        options.excludeDecls.push(key.name);
-      } else if (stmt.type === "ImportDeclaration") {
-        nodes = stmt.specifiers.length ? stmt.specifiers.map(function (specifier) {
-          var local = specifier.local,
-              imported = specifier.type === "ImportSpecifier" && specifier.imported.name || specifier.type === "ImportDefaultSpecifier" && "default" || null;
-          return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
-        }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
-      } else nodes = [stmt];
-      return stmts.concat(nodes);
-    }, []);
-
-    return parsed;
-  }
-
-  function putFunctionDeclsInFront(parsed, options) {
-    var scope = topLevelDeclsAndRefs(parsed).scope,
-        funcDecls = scope.funcDecls;
-    if (!funcDecls.length) return parsed;
-
-    var putInFront = [];
-
-    for (var i = funcDecls.length; i--;) {
-      var decl = funcDecls[i];
-      if (!shouldDeclBeCaptured(decl, options)) continue;
-
-      var parentPath = scope.funcDeclPaths[i].slice(0, -1),
-
-      // ge the parent so we can replace the original function:
-      parent = lively_lang.Path(parentPath).get(scope.node),
-          funcId = { type: "Identifier", name: decl.id.name },
-
-      // what we capture:
-      init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
-          declFront = Object.assign({}, decl);
-
-      if (Array.isArray(parent)) {
-        // If the parent is a body array we remove the original func decl from it
-        // and replace it with a reference to the function
-        parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
-      } else if (parent.type === "ExportNamedDeclaration") {
-        // If the function is exported we change the export declaration into a reference
-        var parentIndexInBody = scope.node.body.indexOf(parent);
-        if (parentIndexInBody > -1) {
-          scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
-        }
-      } else if (parent.type === "ExportDefaultDeclaration") {
-        parent.declaration = decl.id;
-      } else {}
-      // ??? just leave it alone...
-      // decl.type = "EmptyStatement";
-
-
-      // hoist the function to the front, also it's capture
-      putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
-      putInFront.unshift(declFront);
-    }
-    parsed.body = putInFront.concat(parsed.body);
-    return parsed;
-  }
-
-  function computeDefRanges(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls).reduce(function (defs, decl) {
-      if (!defs[decl.id.name]) defs[decl.id.name] = [];
-      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
-      return defs;
-    }, {});
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // capturing oobject patters / destructuring
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var annotationSym = Symbol("lively.ast-destructuring-transform");
-
-  function transformPattern(pattern, transformState) {
-    // For transforming destructuring expressions into plain vars and member access.
-    // Takes a var or argument pattern node (of type ArrayPattern or
-    // ObjectPattern) and transforms it into a set of var declarations that will
-    // "pull out" the nested properties
-    // Example:
-    // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
-    // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
-    // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
-    // // => "var arg$0 = arg[0];\n"
-    // //  + "var arg$0$b = arg$0.b;\n"
-    // //  + "var arg$0$b$c = arg$0$b.c;\n"
-    // //  + "var a = arg$0$b$c[0];"
-    if (pattern.type === "ArrayPattern") {
-      return transformArrayPattern(pattern, transformState);
-    } else if (pattern.type === "ObjectPattern") {
-      return transformObjectPattern(pattern, transformState);
-    } else {
-      return [];
-    }
-  }
-
-  function transformArrayPattern(pattern, transformState) {
-    var declaredNames = transformState.declaredNames,
-        p = annotationSym;
-    return lively_lang.arr.flatmap(pattern.elements, function (el, i) {
-
-      // like [a]
-      if (el.type === "Identifier") {
-        return [merge(varDecl(el, member(transformState.parent, id(i), true)), babelHelpers.defineProperty({}, p, { capture: true }))];
-
-        // like [...foo]
-      } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
-            type: "CallExpression",
-            arguments: [{ type: "Literal", value: i }],
-            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
-
-          // like [{x}]
-        } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-            declaredNames.push(helperVarId.name);
-            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-          }
-    });
-  }
-
-  function transformObjectPattern(pattern, transformState) {
-    var declaredNames = transformState.declaredNames,
-        p = annotationSym;
-    return lively_lang.arr.flatmap(pattern.properties, function (prop) {
-
-      // like {x: y}
-      if (prop.value.type == "Identifier") {
-        return [merge(varDecl(prop.value, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: true }))];
-
-        // like {x: {z}} or {x: [a]}
-      } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-          declaredNames.push(helperVarId.name);
-          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-        }
-    });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // code generation helpers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function block$1(nodes) {
-    return { type: "BlockStatement", body: nodes };
-  }
-
-  function varDeclOrAssignment(parsed, declarator, kind) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        name = declarator.id.name;
-    return topLevel.declaredNames.indexOf(name) > -1 ?
-    // only create a new declaration if necessary
-    exprStmt(assign(declarator.id, declarator.init)) : {
-      declarations: [declarator],
-      kind: kind || "var", type: "VariableDeclaration"
-    };
-  }
-
-  function assignExpr(assignee, propId, value, computed) {
-    return exprStmt(assign(member(assignee, propId, computed), value || id("undefined")));
-  }
-
-  function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
-    return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
-  }
-
-  function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
-    // return varDeclOrAssignment(parsed, {
-    //   type: "VariableDeclarator",
-    //   id: localId,
-    //   init: importCall(imported, moduleSource, moduleImportFunc)
-    // });
-    return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
-  }
-
-  function importCall(imported, moduleSource, moduleImportFunc) {
-    if (typeof imported === "string") imported = literal(imported);
     return {
-      arguments: [moduleSource].concat(imported || []),
-      callee: moduleImportFunc, type: "CallExpression"
+      changes: sourceChanges.changes.concat(changes),
+      source: this._applyChanges(changes, source)
     };
+  },
+
+  replaceNodes: function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
+    // replace multiple AST nodes, order rewriting from inside out and
+    // top to bottom so that nodes to rewrite can overlap or be contained
+    // in each other
+    return targetAndReplacementFuncs.sort(function (a, b) {
+      return helper._compareNodesForReplacement(a.target, b.target);
+    }).reduce(function (sourceChanges, ea) {
+      return helper.replaceNode(ea.target, ea.replacementFunc, sourceChanges);
+    }, (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges });
   }
 
-  function importCallStmt(imported, moduleSource, moduleImportFunc) {
-    return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
+};
+
+function replace(astOrSource, targetNode, replacementFunc, options) {
+  // replaces targetNode in astOrSource with what replacementFunc returns
+  // (one or multiple ast nodes)
+  // Example:
+  // var ast = exports.parse('foo.bar("hello");')
+  // exports.transform.replace(
+  //     ast, ast.body[0].expression,
+  //     function(node, source) {
+  //         return {type: "CallExpression",
+  //             callee: {name: node.arguments[0].value, type: "Identifier"},
+  //             arguments: [{value: "world", type: "Literal"}]
+  //         }
+  //     });
+  // => {
+  //      source: "hello('world');",
+  //      changes: [{pos: 0,length: 16,type: "del"},{pos: 0,string: "hello('world')",type: "add"}]
+  //    }
+
+  var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : null,
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      result = helper.replaceNode(targetNode, replacementFunc, source);
+
+  return result;
+}
+
+function oneDeclaratorPerVarDecl(astOrSource) {
+  // exports.transform.oneDeclaratorPerVarDecl(
+  //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
+
+  var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      scope = scopes(parsed),
+      varDecls = function findVarDecls(scope) {
+    return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
+  }(scope);
+
+  var targetsAndReplacements = varDecls.map(function (decl) {
+    return {
+      target: decl,
+      replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+        if (wasChanged) {
+          // reparse node if necessary, e.g. if init was changed before like in
+          // var x = (function() { var y = ... })();
+          declNode = parse(s).body[0];
+        }
+
+        return declNode.declarations.map(function (ea) {
+          return {
+            type: "VariableDeclaration",
+            kind: "var", declarations: [ea]
+          };
+        });
+      }
+    };
+  });
+
+  return helper.replaceNodes(targetsAndReplacements, source);
+}
+
+function oneDeclaratorForVarsInDestructoring(astOrSource) {
+  var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      scope = scopes(parsed),
+      varDecls = function findVarDecls(scope) {
+    return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
+  }(scope);
+
+  var targetsAndReplacements = varDecls.map(function (decl) {
+    return {
+      target: decl,
+      replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+        if (wasChanged) {
+          // reparse node if necessary, e.g. if init was changed before like in
+          // var x = (function() { var y = ... })();
+          declNode = parse(s).body[0];
+        }
+
+        return lively_lang.arr.flatmap(declNode.declarations, function (declNode) {
+          var extractedId = { type: "Identifier", name: "__temp" },
+              extractedInit = {
+            type: "VariableDeclaration", kind: "var",
+            declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
+          };
+
+          var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
+            return ea.key;
+          }).map(function (keyPath) {
+            return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(toConsumableArray(keyPath))), "var");
+          });
+
+          return [extractedInit].concat(propDecls);
+        });
+      }
+    };
+  });
+
+  return helper.replaceNodes(targetsAndReplacements, source);
+}
+
+function returnLastStatement(source, opts) {
+  opts = opts || {};
+
+  var parsed = parse(source, opts),
+      last = lively_lang.arr.last(parsed.body);
+  if (last.type === "ExpressionStatement") {
+    parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
+    return opts.asAST ? parsed : stringify(parsed);
+  } else {
+    return opts.asAST ? parsed : source;
+  }
+}
+
+function wrapInFunction(code, opts) {
+  opts = opts || {};
+  var transformed = returnLastStatement(code, opts);
+  return opts.asAST ? program(funcExpr.apply(undefined, [{ id: opts.id || undefined }, []].concat(toConsumableArray(transformed.body)))) : "function" + (opts.id ? " " + opts.id : "") + "() {\n" + transformed + "\n}";
+}
+
+function wrapInStartEndCall(parsed, options) {
+  // Wraps a piece of code into two function calls: One before the first
+  // statement and one after the last. Also wraps the entire thing into a try /
+  // catch block. The end call gets the result of the last statement (if it is
+  // something that returns a value, i.e. an expression) passed as the second
+  // argument. If an error occurs the end function is called with an error as
+  // first parameter
+  // Why? This allows to easily track execution of code, especially for
+  // asynchronus / await code!
+  // Example:
+  // stringify(wrapInStartEndCall("var y = x + 23; y"))
+  // // generates code
+  // try {
+  //     __start_execution();
+  //     __lvVarRecorder.y = x + 23;
+  //     return __end_execution(null, __lvVarRecorder.y);
+  // } catch (err) {
+  //     return __end_execution(err, undefined);
+  // }
+
+  if (typeof parsed === "string") parsed = parse(parsed);
+  options = options || {};
+
+  var isProgram = parsed.type === "Program",
+      startFuncNode = options.startFuncNode || id("__start_execution"),
+      endFuncNode = options.endFuncNode || id("__end_execution"),
+      funcDecls = topLevelFuncDecls(parsed),
+      innerBody = parsed.body,
+      outerBody = [];
+
+  // 1. Hoist func decls outside the actual eval start - end code. The async /
+  // generator transforms require this!
+  funcDecls.forEach(function (_ref) {
+    var node = _ref.node;
+    var path = _ref.path;
+
+    lively_lang.Path(path).set(parsed, exprStmt(node.id));
+    outerBody.push(node);
+  });
+
+  // 2. add start-eval call
+  innerBody.unshift(exprStmt(funcCall(startFuncNode)));
+
+  // 3. if last statement is an expression, transform it so we can pass it to
+  // the end-eval call, replacing the original expression. If it's a
+  // non-expression we record undefined as the eval result
+  var last = lively_lang.arr.last(innerBody);
+  if (last.type === "ExpressionStatement") {
+    innerBody.pop();
+    innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+  } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
+    innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
+  } else {
+    innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
   }
 
-  function exportCall(exportFunc, local, exportedObj) {
-    if (typeof local === "string") local = literal(local);
-    exportedObj = lively_lang.obj.deepCopy(exportedObj);
-    return funcCall(exportFunc, local, exportedObj);
+  // 4. Wrap that stuff in a try stmt
+  outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(toConsumableArray(innerBody))));
+
+  return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
+}
+
+var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
+
+function transformSingleExpression(code) {
+  // evaling certain expressions such as single functions or object
+  // literals will fail or not work as intended. When the code being
+  // evaluated consists just out of a single expression we will wrap it in
+  // parens to allow for those cases
+  // Example:
+  // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+  if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
+  try {
+    var parsed = fuzzyParse(code);
+    if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
+      code = '(' + code.replace(/;\s*$/, '') + ')';
+    }
+  } catch (e) {
+    if ((typeof lively === "undefined" ? "undefined" : _typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
+  }
+  return code;
+}
+
+
+
+var transform = Object.freeze({
+	helper: helper,
+	replace: replace,
+	oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
+	oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
+	returnLastStatement: returnLastStatement,
+	wrapInFunction: wrapInFunction,
+	wrapInStartEndCall: wrapInStartEndCall,
+	transformSingleExpression: transformSingleExpression,
+	objectSpreadTransform: objectSpreadTransform
+});
+
+function isFunctionNode(node) {
+  return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function constructorTemplate(name) {
+  // Creates a function like
+  // function CLASS() {
+  //   var firstArg = arguments[0];
+  //   if (firstArg && firstArg[Symbol.for("lively-instance-restorer")]) {
+  //     // for deserializing instances just do nothing
+  //   } else {
+  //     // automatically call the initialize method
+  //     this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
+  //   }
+  // }
+
+  return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var isTransformedClassVarDeclSymbol = Symbol();
+var methodKindSymbol = Symbol();
+var tempLivelyClassVar = "__lively_class__";
+var tempLivelyClassHolderVar = "__lively_classholder__";
+
+var ClassReplaceVisitor = function (_Visitor) {
+  inherits(ClassReplaceVisitor, _Visitor);
+
+  function ClassReplaceVisitor() {
+    classCallCheck(this, ClassReplaceVisitor);
+    return possibleConstructorReturn(this, (ClassReplaceVisitor.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor)).apply(this, arguments));
   }
 
-  function exportCallStmt(exportFunc, local, exportedObj) {
-    return exprStmt(exportCall(exportFunc, local, exportedObj));
+  createClass(ClassReplaceVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      if (isFunctionNode(node)) {
+        state = _extends({}, state, { classHolder: objectLiteral([]),
+          currentMethod: node[methodKindSymbol] ? node : state.currentMethod
+        });
+      }
+
+      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
+
+      if (node.type === "Super") node = replaceSuper(node, state, path, state.options);
+
+      if (node.type === "MemberExpression" && node.object && node.object.type === "Super") node = replaceSuperGetter(node, state, path, state.options);
+
+      if (node.type === "AssignmentExpression" && node.left.type === "MemberExpression" && node.left.object.type === "Super") node = replaceSuperSetter(node, state, path, state.options);
+
+      if (node.type === "CallExpression" && node.callee.type === "Super") node = replaceDirectSuperCall(node, state, path, state.options);
+
+      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
+
+      node = get(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+
+      if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
+
+      return node;
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, options) {
+      var v = new this(),
+          classHolder = options.classHolder || objectLiteral([]);
+      return v.accept(parsed, { options: options, classHolder: classHolder }, []);
+    }
+  }]);
+  return ClassReplaceVisitor;
+}(Visitor);
+
+function replaceSuper(node, state, path, options) {
+  // just super
+  console.assert(node.type === "Super");
+
+  var currentMethod = state.currentMethod;
+
+  if (!currentMethod) {
+    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + stringify(node) + " in " + path.join("."));
+    // return node;
   }
+
+  var _path$slice = path.slice(-2);
+
+  var _path$slice2 = slicedToArray(_path$slice, 2);
+
+  var parentReferencedAs = _path$slice2[0];
+  var referencedAs = _path$slice2[1];
+
+  if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
+
+  var methodHolder = currentMethod && currentMethod[methodKindSymbol] === "static" ? funcCall(member("Object", "getPrototypeOf"), id(tempLivelyClassVar)) : funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
+
+  return methodHolder;
+}
+
+// parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
+
+function replaceSuperMethodCall(node, state, path, options) {
+  // like super.foo()
+  console.assert(node.type === "CallExpression");
+  console.assert(node.callee.object.type === "Super");
+
+  return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state, path.concat(["callee", "object"]), options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(toConsumableArray(node.arguments)));
+}
+
+function replaceDirectSuperCall(node, state, path, options) {
+  // like super()
+  console.assert(node.type === "CallExpression");
+  console.assert(node.callee.type === "Super");
+
+  return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state, path.concat(["callee"]), options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(toConsumableArray(node.arguments)));
+}
+
+function replaceSuperGetter(node, state, path, options) {
+  console.assert(node.type === "MemberExpression");
+  console.assert(node.object.type === "Super");
+  return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state, path.concat(["object"]), options), literal(node.property.value || node.property.name), id("this"));
+}
+
+function replaceSuperSetter(node, state, path, options) {
+  console.assert(node.type === "AssignmentExpression");
+  console.assert(node.left.object.type === "Super");
+
+  return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state, path.concat(["left", "object"]), options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
+}
+
+function replaceClass(node, state, path, options) {
+  console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
+
+  var body = node.body.body;
+  var superClass = node.superClass;
+  var classId = node.id;
+  var type = node.type;
+  var instanceProps = id("undefined");
+  var classProps = id("undefined");
+  var className = classId ? classId.name : "anonymous_class";
+
+  if (body.length) {
+    var _body$reduce = body.reduce(function (props, propNode) {
+      var decl;var key = propNode.key;
+      var kind = propNode.kind;
+      var value = propNode.value;
+      var classSide = propNode.static;
+
+
+      if (key.type !== "Literal" && key.type !== "Identifier") {
+        console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
+      }
+
+      if (kind === "method") {
+        // The name is just for debugging purposes when it appears in
+        // native debuggers. We have to be careful about it b/c it shadows
+        // outer functions / vars, something that is totally not apparent for a user
+        // of the class syntax. That's the reason for making it a little cryptic
+        var methodId = id(className + "_" + (key.name || key.value) + "_"),
+            _props = ["key", literal(key.name || key.value), "value", _extends({}, value, defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
+
+        decl = objectLiteral(_props);
+      } else if (kind === "get" || kind === "set") {
+        decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, defineProperty({ id: id(kind) }, methodKindSymbol, classSide ? "static" : "proto"))]);
+      } else if (kind === "constructor") {
+        var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", _extends({}, value, defineProperty({ id: id(className + "_initialize_") }, methodKindSymbol, "proto"))];
+        decl = objectLiteral(_props2);
+      } else {
+        console.warn("[lively.classes] classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
+      }
+      (classSide ? props.clazz : props.inst).push(decl);
+      return props;
+    }, { inst: [], clazz: [] });
+
+    var inst = _body$reduce.inst;
+    var clazz = _body$reduce.clazz;
+
+
+    if (inst.length) instanceProps = { type: "ArrayExpression", elements: inst };
+    if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
+  }
+
+  var scope = options.scope,
+      superClassReferencedAs,
+      superClassRef;
+
+  if (superClass && options.currentModuleAccessor) {
+    if (options.classHolder === superClass.object) {
+      superClassRef = superClass;
+      superClassReferencedAs = superClass.property.name;
+    } else {
+      var found = scope && scope.resolvedRefMap && scope.resolvedRefMap.get(superClass),
+          isTopLevel = found && found.decl && scope.decls && scope.decls.find(function (_ref) {
+        var _ref2 = slicedToArray(_ref, 1);
+
+        var decl = _ref2[0];
+        return decl === found.decl;
+      });
+      if (isTopLevel) {
+        superClassRef = superClass;
+        superClassReferencedAs = superClass.name;
+      }
+    }
+  }
+
+  var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
+
+  var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? {
+    type: "ConditionalExpression",
+    test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({ argument: member(tempLivelyClassHolderVar, classId), operator: "typeof", prefix: true, type: "UnaryExpression" }, "===", literal("function"))),
+    consequent: member(tempLivelyClassHolderVar, classId),
+    alternate: constructorTemplate(classId.name)
+  } : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
+
+  if (type === "ClassExpression") return classCreator;
+
+  var result = classCreator;
+
+  if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
+
+  // since it is a declaration and we removed the class construct we need to add a var-decl
+  result = varDecl(classId, result, "var");
+  result[isTransformedClassVarDeclSymbol] = true;
+
+  return result;
+}
+
+function splitExportDefaultWithClass(node, classHolder, path, options) {
+  return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
+    declaration: node.declaration.declarations[0].id,
+    type: "ExportDefaultDeclaration"
+  }];
+}
+
+// var opts = {classHolder: {type: "Identifier", name: "_rec"}, functionNode: {type: "Identifier", name: "createOrExtendClass"}};
+// stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(); }}"), opts))
+// stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(arguments[1]); }}"), opts))
+// stringify(classToFunctionTransform(parse("class Foo {constructor() {}}"), opts))
+
+function classToFunctionTransform(sourceOrAst, options) {
+  // required: options = {functionNode, classHolder}
+  // From
+  //   class Foo extends SuperFoo { m() { return 2 + super.m() }}
+  // produces something like
+  //   createOrExtend({}, {referencedAs: "SuperFoo", value: SuperFoo}, "Foo2", [{
+  //     key: "m",
+  //     value: function m() {
+  //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
+  //     }
+  //   }])
+
+  var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
+  options.scope = resolveReferences(scopes(parsed));
+
+  var replaced = ClassReplaceVisitor.run(parsed, options);
+
+  return replaced;
+}
+
+var merge = Object.assign;
+
+function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
+  /* replaces var and function declarations with assignment statements.
+   * Example:
+     stringify(
+       rewriteToCaptureTopLevelVariables2(
+         parse("var x = 3, y = 2, z = 4"),
+         {name: "A", type: "Identifier"}, ['z']));
+     // => "A.x = 3; A.y = 2; z = 4"
+   */
+
+  if (!assignToObj) assignToObj = { type: "Identifier", name: "__rec" };
+
+  options = Object.assign({
+    ignoreUndeclaredExcept: null,
+    includeRefs: null,
+    excludeRefs: options && options.exclude || [],
+    includeDecls: null,
+    excludeDecls: options && options.exclude || [],
+    recordDefRanges: false,
+    es6ExportFuncId: null,
+    es6ImportFuncId: null,
+    captureObj: assignToObj,
+    moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
+    moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
+    declarationWrapper: undefined,
+    classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : Object.assign({
+      classHolder: assignToObj,
+      functionNode: { type: "Identifier", name: "_createOrExtendClass" },
+      declarationWrapper: options && options.declarationWrapper
+    })
+  }, options);
+
+  var rewritten = parsed;
+
+  // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
+  // if it is a list of names we will capture all refs with those names
+  if (options.ignoreUndeclaredExcept) {
+    var topLevel = topLevelDeclsAndRefs(parsed);
+    options.excludeRefs = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
+    options.excludeDecls = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
+  }
+
+  options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
+  options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
+
+  // 1. def ranges so that we know at which source code positions the
+  // definitions are
+  var defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
+
+  // 2. find those var declarations that should not be rewritten. we
+  // currently ignore var declarations in for loops and the error parameter
+  // declaration in catch clauses. Also es6 import / export declaration need
+  // a special treatment
+  // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
+  // as this is not valid syntax. Instead we add a var declaration using the
+  // recorder as init for those exports later
+  options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
+  options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
+
+  rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
+
+  // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
+  // obj assignment, converting es6 code to es5 using the extra
+  // options.moduleExportFunc and options.moduleImportFunc as capture / sources
+  if (options.es6ExportFuncId) {
+    options.excludeRefs.push(options.es6ExportFuncId);
+    options.excludeRefs.push(options.es6ImportFuncId);
+    rewritten = es6ModuleTransforms(rewritten, options);
+  }
+
+  // 4. make all references declared in the toplevel scope into property
+  // reads of captureObj
+  // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
+  rewritten = replaceRefs(rewritten, options);
+
+  // 5.a turn var declarations into assignments to captureObj
+  // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
+  // if declarationWrapper is requested:
+  //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
+  rewritten = replaceVarDecls(rewritten, options);
+
+  // 5.b record class declarations
+  // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
+  // if declarationWrapper is requested:
+  //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
+  rewritten = replaceClassDecls(rewritten, options);
+
+  // 6. es6 export declaration are left untouched but a capturing assignment
+  // is added after the export so that we get the value:
+  // "export var x = 23;" => "export var x = 23; Global.x = x;"
+  rewritten = insertCapturesForExportDeclarations(rewritten, options);
+
+  // 7. es6 import declaration are left untouched but a capturing assignment
+  // is added after the import so that we get the value:
+  // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
+  rewritten = insertCapturesForImportDeclarations(rewritten, options);
+
+  // 8. Since variable declarations like "var x = 23" were transformed to sth
+  // like "_rex.x = 23" exports can't simply reference vars anymore and
+  // "export { _rec.x }" is invalid syntax. So in front of those exports we add
+  // var decls manually
+  rewritten = insertDeclarationsForExports(rewritten, options);
+
+  // 9. assignments for function declarations in the top level scope are
+  // put in front of everything else to mirror the func hoisting:
+  // "return bar(); function bar() { return 23 }" ->
+  //   "Global.bar = bar; return bar(); function bar() { return 23 }"
+  // if declarationWrapper is requested:
+  //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
+  rewritten = putFunctionDeclsInFront(rewritten, options);
+
+  return rewritten;
+}
+
+function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
+  // for rewriting the setters part in code like
+  // ```js
+  //   System.register(["a.js"], function (_export, _context) {
+  //     var a, _rec;
+  //     return {
+  //       setters: [function(foo_a_js) { a = foo_a_js.x }],
+  //       execute: function () { _rec.x = 23 + _rec.a; }
+  //     };
+  //   });
+  // ```
+  // This allows us to capture (and potentially re-export) imports and their
+  // changes without actively running the module again.
+
+  options = merge({
+    captureObj: assignToObj || { type: "Identifier", name: "__rec" },
+    exclude: [],
+    declarationWrapper: undefined
+  }, options);
+
+  var registerCall = lively_lang.Path("body.0.expression").get(parsed);
+  if (registerCall.callee.object.name !== "System") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+  if (registerCall.callee.property.name !== "register") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+  var registerBody = lively_lang.Path("arguments.1.body.body").get(registerCall),
+      registerReturn = lively_lang.arr.last(registerBody);
+  if (registerReturn.type !== "ReturnStatement") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: " + stringify(parsed).slice(0, 300) + "...");
+  var setters = registerReturn.argument.properties.find(function (prop$$1) {
+    return prop$$1.key.name === "setters";
+  });
+  if (!setters) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding setters: " + stringify(parsed).slice(0, 300) + "...");
+  var execute = registerReturn.argument.properties.find(function (prop$$1) {
+    return prop$$1.key.name === "execute";
+  });
+  if (!execute) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: " + stringify(parsed).slice(0, 300) + "...");
+
+  // in each setter function: intercept the assignments to local vars and inject capture object
+  setters.value.elements.forEach(function (funcExpr$$1) {
+    return funcExpr$$1.body.body = funcExpr$$1.body.body.map(function (stmt) {
+      if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
+
+      var id$$1 = stmt.expression.left,
+          rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id$$1.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
+      return exprStmt(assign(member(options.captureObj, id$$1), rhs));
+    });
+  });
+
+  var captureInitialize = execute.value.body.body.find(function (stmt) {
+    return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
+  });
+  if (captureInitialize) {
+    lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
+  }
+
+  return parsed;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// replacing helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// TODO move this stuff over into transform? Or separate replace.js?
+
+var ReplaceVisitor = function (_Visitor) {
+  inherits(ReplaceVisitor, _Visitor);
+
+  function ReplaceVisitor() {
+    classCallCheck(this, ReplaceVisitor);
+    return possibleConstructorReturn(this, (ReplaceVisitor.__proto__ || Object.getPrototypeOf(ReplaceVisitor)).apply(this, arguments));
+  }
+
+  createClass(ReplaceVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      return this.replacer(get(ReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, replacer) {
+      var v = new this();
+      v.replacer = replacer;
+      return v.accept(parsed, null, []);
+    }
+  }]);
+  return ReplaceVisitor;
+}(Visitor);
+
+function replace$1(parsed, replacer) {
+  return ReplaceVisitor.run(parsed, replacer);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var canBeInlinedSym = Symbol("canBeInlined");
+
+function blockInliner(node) {
+  // FIXME what about () => x kind of functions?
+  if (Array.isArray(node.body)) {
+    for (var i = node.body.length - 1; i >= 0; i--) {
+      var stmt = node.body[i];
+      if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
+        node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
+      }
+    }
+  }
+  return node;
+}
+
+var ReplaceManyVisitor = function (_Visitor2) {
+  inherits(ReplaceManyVisitor, _Visitor2);
+
+  function ReplaceManyVisitor() {
+    classCallCheck(this, ReplaceManyVisitor);
+    return possibleConstructorReturn(this, (ReplaceManyVisitor.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor)).apply(this, arguments));
+  }
+
+  createClass(ReplaceManyVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      return this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
+      var replaced = this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
+      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), defineProperty({}, canBeInlinedSym, true));
+    }
+  }, {
+    key: "visitBlockStatement",
+    value: function visitBlockStatement(node, state, path) {
+      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
+    }
+  }, {
+    key: "visitProgram",
+    value: function visitProgram(node, state, path) {
+      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, replacer) {
+      var v = new this();
+      v.replacer = replacer;
+      return v.accept(parsed, null, []);
+    }
+  }]);
+  return ReplaceManyVisitor;
+}(Visitor);
+
+function replaceWithMany(parsed, replacer) {
+  return ReplaceManyVisitor.run(parsed, replacer);
+}
+
+function replaceRefs(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      refsToReplace = topLevel.refs.filter(function (ref) {
+    return shouldRefBeCaptured(ref, topLevel, options);
+  });
+
+  var replaced = replace$1(parsed, function (node, path) {
+    return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
+  });
+
+  return replace$1(replaced, function (node, path) {
+    return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
+  });
+}
+
+function replaceVarDecls(parsed, options) {
+  // rewrites var declarations so that they can be captured by
+  // `options.captureObj`.
+  // For normal vars we will do a transform like
+  //   "var x = 23;" => "_rec.x = 23";
+  // For patterns (destructuring assignments) we will create assignments for
+  // all properties that are being destructured, creating helper vars as needed
+  //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
+
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  return replaceWithMany(parsed, function (node) {
+    if (topLevel.varDecls.indexOf(node) === -1 || node.declarations.every(function (decl) {
+      return !shouldDeclBeCaptured(decl, options);
+    })) return node;
+
+    return lively_lang.arr.flatmap(node.declarations, function (decl) {
+      if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
+
+      var init = decl.init || {
+        operator: "||",
+        type: "LogicalExpression",
+        left: { computed: false, object: options.captureObj, property: decl.id, type: "MemberExpression" },
+        right: { name: "undefined", type: "Identifier" }
+      };
+
+      var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+
+      // Here we create the object pattern / destructuring replacements
+      if (decl.id.type.includes("Pattern")) {
+        var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
+            declRoot = { type: "Identifier", name: declRootName },
+            state = { parent: declRoot, declaredNames: topLevel.declaredNames },
+            extractions = transformPattern(decl.id, state).map(function (decl) {
+          return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
+        });
+        topLevel.declaredNames.push(declRootName);
+        return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
+      }
+
+      // This is rewriting normal vars
+      return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
+    });
+  });
+}
+
+function replaceClassDecls(parsed, options) {
+
+  if (options.classToFunction) return classToFunctionTransform(parsed, options.classToFunction);
+
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  if (!topLevel.classDecls.length) return parsed;
+  for (var i = parsed.body.length - 1; i >= 0; i--) {
+    var stmt = parsed.body[i];
+    if (topLevel.classDecls.indexOf(stmt) !== -1) {
+      if (false && options.declarationWrapper) {
+        parsed.body.splice(i, 1, varDecl(stmt.id, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false), "var"));
+      } else {
+        parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+      }
+    }
+  }
+  return parsed;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// naming
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function generateUniqueName(declaredNames, hint) {
+  var unique = hint,
+      n = 1;
+  while (declaredNames.indexOf(unique) > -1) {
+    if (n > 1000) throw new Error("Endless loop searching for unique variable " + unique);
+    unique = unique.replace(/_[0-9]+$|$/, "_" + ++n);
+  }
+  return unique;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// exclude / include helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function additionalIgnoredDecls(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      ignoreDecls = [];
+  for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
+    var decl = topLevel.scope.varDecls[i],
+        path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+        parent = path.slice(0, -1).get(parsed);
+    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
+      ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
+    }
+  }
+
+  return topLevel.scope.catches.map(function (ea) {
+    return ea.name;
+  }).concat(ignoreDecls.map(function (ea) {
+    return ea.id.name;
+  }));
+}
+
+function additionalIgnoredRefs(parsed, options) {
+  // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
+  // decls, this should somehow be consolidated with this function and with the
+  // fact that naming based ignores aren't good enough...
+  var topLevel = topLevelDeclsAndRefs(parsed);
+
+  var ignoreDecls = [];
+  for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
+    var decl = topLevel.scope.varDecls[i],
+        path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+        parent = path.slice(0, -1).get(parsed);
+    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
+      ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
+    }
+  }
+
+  var ignoredImportAndExportNames = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") {
+      ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, toConsumableArray(stmt.specifiers.filter(function (ea) {
+        return ea.type === "ImportSpecifier";
+      }).map(function (ea) {
+        return ea.imported.name;
+      })));
+    } else if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) {
+      ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, toConsumableArray(stmt.specifiers.map(function (specifier) {
+        return specifier.local.name;
+      })));
+    }
+  }
+
+  return [].concat(topLevel.scope.catches.map(function (ea) {
+    return ea.name;
+  })).concat(ignoredImportAndExportNames).concat(helpers.declIds(ignoreDecls.map(function (ea) {
+    return ea.id;
+  })).map(function (ea) {
+    return ea.name;
+  }));
+}
+
+function shouldDeclBeCaptured(decl, options) {
+  return options.excludeDecls.indexOf(decl.id.name) === -1 && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+}
+
+function shouldRefBeCaptured(ref, toplevel, options) {
+  return toplevel.scope.importDecls.indexOf(ref) === -1 && lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
+    return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
+  }).indexOf(ref) === -1 && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) !== -1);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// capturing specific code
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function insertCapturesForExportDeclarations(parsed, options) {
+  var body = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    body.push(stmt);
+    // ExportNamedDeclaration can have specifieres = refs, those should already
+    // be captured. Only focus on export declarations and only those
+    // declarations that are no refs, i.e.
+    // ignore: "export default x;"
+    // capture: "export default function foo () {};", "export var x = 23, y = 3;"
+    if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
+      /*...*/
+    } else if (stmt.declaration.declarations) {
+      body.push.apply(body, toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+        return assignExpr(options.captureObj, decl.id, decl.id, false);
+      })));
+    } else if (stmt.declaration.type === "FunctionDeclaration") {
+      /*handled by function rewriter as last step*/
+    } else if (stmt.declaration.type === "ClassDeclaration") {
+      body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+    }
+  }
+  parsed.body = body;
+  return parsed;
+}
+
+function insertCapturesForImportDeclarations(parsed, options) {
+  parsed.body = parsed.body.reduce(function (stmts, stmt) {
+    return stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] : [stmt].concat(stmt.specifiers.map(function (specifier) {
+      return assignExpr(options.captureObj, specifier.local, specifier.local, false);
+    })));
+  }, []);
+  return parsed;
+}
+
+function insertDeclarationsForExports(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      body = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
+      body = body.concat([varDeclOrAssignment(parsed, {
+        type: "VariableDeclarator",
+        id: stmt.declaration,
+        init: member(options.captureObj, stmt.declaration)
+      }), stmt]);
+    } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
+      body.push(stmt);
+    } else {
+      body = body.concat(stmt.specifiers.map(function (specifier) {
+        return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
+          type: "VariableDeclarator",
+          id: specifier.local,
+          init: member(options.captureObj, specifier.local)
+        });
+      }).filter(Boolean)).concat(stmt);
+    }
+  }
+
+  parsed.body = body;
+  return parsed;
+}
+
+function fixDefaultAsyncFunctionExportForRegeneratorBug(parsed, options) {
+  // rk 2016-06-02: see https://github.com/LivelyKernel/lively.modules/issues/9
+  // FIXME this needs to be removed as soon as the cause for the issue is fixed
+  var body = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
+      body.push(stmt.declaration);
+      stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
+    }
+    body.push(stmt);
+  }
+  parsed.body = body;
+  return parsed;
+}
+
+function es6ModuleTransforms(parsed, options) {
+  parsed.body = parsed.body.reduce(function (stmts, stmt) {
+    var nodes;
+    if (stmt.type === "ExportNamedDeclaration") {
+
+      if (stmt.source) {
+        var key = moduleId = stmt.source;
+        nodes = stmt.specifiers.map(function (specifier) {
+          return {
+            type: "ExpressionStatement",
+            expression: exportFromImport({ type: "Literal", value: specifier.exported.name }, { type: "Literal", value: specifier.local.name }, moduleId, options.moduleExportFunc, options.moduleImportFunc) };
+        });
+      } else if (stmt.declaration) {
+        var decls = stmt.declaration.declarations;
+        if (!decls) {
+          // func decl or class
+          nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id));
+        } else {
+          nodes = decls.map(function (decl) {
+            options.excludeRefs.push(decl.id);
+            options.excludeDecls.push(decl.id);
+            return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
+          }).concat(decls.map(function (decl) {
+            return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
+          }));
+        }
+      } else {
+        nodes = stmt.specifiers.map(function (specifier) {
+          return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
+        });
+      }
+    } else if (stmt.type === "ExportDefaultDeclaration") {
+      if (stmt.declaration && stmt.declaration.id) {
+        nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, "default", stmt.declaration.id));
+      } else {
+        nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
+      }
+    } else if (stmt.type === "ExportAllDeclaration") {
+      var key = { name: options.es6ExportFuncId + "__iterator__", type: "Identifier" },
+          moduleId = stmt.source;
+      nodes = [{
+        type: "ForInStatement",
+        body: { type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc) },
+        left: { type: "VariableDeclaration", kind: "var", declarations: [{ type: "VariableDeclarator", id: key, init: null }] },
+        right: importCall(null, moduleId, options.moduleImportFunc)
+      }];
+      options.excludeRefs.push(key.name);
+      options.excludeDecls.push(key.name);
+    } else if (stmt.type === "ImportDeclaration") {
+      nodes = stmt.specifiers.length ? stmt.specifiers.map(function (specifier) {
+        var local = specifier.local,
+            imported = specifier.type === "ImportSpecifier" && specifier.imported.name || specifier.type === "ImportDefaultSpecifier" && "default" || null;
+        return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
+      }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
+    } else nodes = [stmt];
+    return stmts.concat(nodes);
+  }, []);
+
+  return parsed;
+}
+
+function putFunctionDeclsInFront(parsed, options) {
+  var scope = topLevelDeclsAndRefs(parsed).scope,
+      funcDecls = scope.funcDecls;
+  if (!funcDecls.length) return parsed;
+
+  var putInFront = [];
+
+  for (var i = funcDecls.length; i--;) {
+    var decl = funcDecls[i];
+    if (!shouldDeclBeCaptured(decl, options)) continue;
+
+    var parentPath = scope.funcDeclPaths[i].slice(0, -1),
+
+    // ge the parent so we can replace the original function:
+    parent = lively_lang.Path(parentPath).get(scope.node),
+        funcId = { type: "Identifier", name: decl.id.name },
+
+    // what we capture:
+    init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
+        declFront = Object.assign({}, decl);
+
+    if (Array.isArray(parent)) {
+      // If the parent is a body array we remove the original func decl from it
+      // and replace it with a reference to the function
+      parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
+    } else if (parent.type === "ExportNamedDeclaration") {
+      // If the function is exported we change the export declaration into a reference
+      var parentIndexInBody = scope.node.body.indexOf(parent);
+      if (parentIndexInBody > -1) {
+        scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
+      }
+    } else if (parent.type === "ExportDefaultDeclaration") {
+      parent.declaration = decl.id;
+    } else {}
+    // ??? just leave it alone...
+    // decl.type = "EmptyStatement";
+
+
+    // hoist the function to the front, also it's capture
+    putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
+    putInFront.unshift(declFront);
+  }
+  parsed.body = putInFront.concat(parsed.body);
+  return parsed;
+}
+
+function computeDefRanges(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls).reduce(function (defs, decl) {
+    if (!defs[decl.id.name]) defs[decl.id.name] = [];
+    defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
+    return defs;
+  }, {});
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// capturing oobject patters / destructuring
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var annotationSym = Symbol("lively.ast-destructuring-transform");
+
+function transformPattern(pattern, transformState) {
+  // For transforming destructuring expressions into plain vars and member access.
+  // Takes a var or argument pattern node (of type ArrayPattern or
+  // ObjectPattern) and transforms it into a set of var declarations that will
+  // "pull out" the nested properties
+  // Example:
+  // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
+  // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
+  // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
+  // // => "var arg$0 = arg[0];\n"
+  // //  + "var arg$0$b = arg$0.b;\n"
+  // //  + "var arg$0$b$c = arg$0$b.c;\n"
+  // //  + "var a = arg$0$b$c[0];"
+  if (pattern.type === "ArrayPattern") {
+    return transformArrayPattern(pattern, transformState);
+  } else if (pattern.type === "ObjectPattern") {
+    return transformObjectPattern(pattern, transformState);
+  } else {
+    return [];
+  }
+}
+
+function transformArrayPattern(pattern, transformState) {
+  var declaredNames = transformState.declaredNames,
+      p = annotationSym;
+  return lively_lang.arr.flatmap(pattern.elements, function (el, i) {
+
+    // like [a]
+    if (el.type === "Identifier") {
+      return [merge(varDecl(el, member(transformState.parent, id(i), true)), defineProperty({}, p, { capture: true }))];
+
+      // like [...foo]
+    } else if (el.type === "RestElement") {
+      return [merge(varDecl(el.argument, {
+        type: "CallExpression",
+        arguments: [{ type: "Literal", value: i }],
+        callee: member(transformState.parent, id("slice"), false) }), defineProperty({}, p, { capture: true }))];
+
+      // like [{x}]
+    } else {
+      var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+          helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), defineProperty({}, p, { capture: true }));
+      declaredNames.push(helperVarId.name);
+      return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+    }
+  });
+}
+
+function transformObjectPattern(pattern, transformState) {
+  var declaredNames = transformState.declaredNames,
+      p = annotationSym;
+  return lively_lang.arr.flatmap(pattern.properties, function (prop$$1) {
+
+    // like {x: y}
+    if (prop$$1.value.type == "Identifier") {
+      return [merge(varDecl(prop$$1.value, member(transformState.parent, prop$$1.key)), defineProperty({}, p, { capture: true }))];
+
+      // like {x: {z}} or {x: [a]}
+    } else {
+      var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop$$1.key.name)),
+          helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop$$1.key)), defineProperty({}, p, { capture: false }));
+      declaredNames.push(helperVarId.name);
+      return [helperVar].concat(transformPattern(prop$$1.value, { parent: helperVarId, declaredNames: declaredNames }));
+    }
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// code generation helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function block$1(nodes) {
+  return { type: "BlockStatement", body: nodes };
+}
+
+function varDeclOrAssignment(parsed, declarator, kind) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      name = declarator.id.name;
+  return topLevel.declaredNames.indexOf(name) > -1 ?
+  // only create a new declaration if necessary
+  exprStmt(assign(declarator.id, declarator.init)) : {
+    declarations: [declarator],
+    kind: kind || "var", type: "VariableDeclaration"
+  };
+}
+
+function assignExpr(assignee, propId, value, computed) {
+  return exprStmt(assign(member(assignee, propId, computed), value || id("undefined")));
+}
+
+function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
+  return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
+}
+
+function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
+  // return varDeclOrAssignment(parsed, {
+  //   type: "VariableDeclarator",
+  //   id: localId,
+  //   init: importCall(imported, moduleSource, moduleImportFunc)
+  // });
+  return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
+}
+
+function importCall(imported, moduleSource, moduleImportFunc) {
+  if (typeof imported === "string") imported = literal(imported);
+  return {
+    arguments: [moduleSource].concat(imported || []),
+    callee: moduleImportFunc, type: "CallExpression"
+  };
+}
+
+function importCallStmt(imported, moduleSource, moduleImportFunc) {
+  return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
+}
+
+function exportCall(exportFunc, local, exportedObj) {
+  if (typeof local === "string") local = literal(local);
+  exportedObj = lively_lang.obj.deepCopy(exportedObj);
+  return funcCall(exportFunc, local, exportedObj);
+}
+
+function exportCallStmt(exportFunc, local, exportedObj) {
+  return exprStmt(exportCall(exportFunc, local, exportedObj));
+}
+
+
 
 var capturing = Object.freeze({
-    rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
-    rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
+	rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
+	rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
+});
+
+/*global process, global, exports*/
+
+function getCommentPrecedingNode(parsed, node) {
+  var statementPath = statementOf(parsed, node, { asPath: true }),
+      blockPath = statementPath.slice(0, -2),
+      block = lively_lang.Path(blockPath).get(parsed);
+
+  return !block.comments || !block.comments.length ? null : lively_lang.chain(extractComments(parsed)).reversed().detect(function (ea) {
+    return ea.followingNode === node;
+  }).value();
+}
+
+function extractComments(astOrCode, optCode) {
+  var parsed = typeof astOrCode === "string" ? parse(astOrCode, { withComments: true }) : astOrCode,
+      code = optCode ? optCode : typeof astOrCode === "string" ? astOrCode : stringify(astOrCode),
+      parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), function (c) {
+    return c.comment.start;
   });
 
-  function getCommentPrecedingNode(parsed, node) {
-    var statementPath = statementOf(parsed, node, { asPath: true }),
-        blockPath = statementPath.slice(0, -2),
-        block = lively_lang.Path(blockPath).get(parsed);
+  return parsedComments.map(function (c, i) {
 
-    return !block.comments || !block.comments.length ? null : lively_lang.chain(extractComments(parsed)).reversed().detect(function (ea) {
-      return ea.followingNode === node;
-    }).value();
+    // 1. a method comment like "x: function() {\n//foo\n ...}"?
+    if (isInObjectMethod(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOf(c)]);
+    }
+
+    if (isInComputedMethod(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, computedMethodAttributesOf(c)]);
+    }
+
+    // 2. function statement comment like "function foo() {\n//foo\n ...}"?
+    if (isInFunctionStatement(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'function', comment: c.comment.text }, functionAttributesOf(c)]);
+    }
+
+    // 3. assigned method like "foo.bar = function(x) {/*comment*/};"
+    if (isInAssignedMethod(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOfAssignment(c)]);
+    }
+
+    // 4. comment preceding another node?
+    var followingNode = followingNodeOf(c);
+    if (!followingNode) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+
+    // is there another comment in front of the node>
+    var followingComment = parsedComments[i + 1];
+    if (followingComment && followingComment.comment.start <= followingNode.start) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+
+    // 3. an obj var comment like "// foo\nvar obj = {...}"?
+    if (isSingleObjVarDeclaration(followingNode)) {
+      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'object', comment: c.comment.text }, objAttributesOf(followingNode)]);
+    }
+
+    // 4. Is it a simple var declaration like "// foo\nvar obj = 23"?
+    if (isSingleVarDeclaration(followingNode)) {
+      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'var', comment: c.comment.text }, objAttributesOf(followingNode)]);
+    }
+
+    return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+  });
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function commentsWithPathsAndNodes(parsed) {
+    var comments = [],
+        v = new Visitor();
+    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
+      if (node.comments) {
+        lively_lang.arr.pushAll(comments, node.comments.map(function (comment) {
+          return { path: path, comment: comment, node: node };
+        }));
+      }
+      return proceed(node, state, path);
+    });
+    v.accept(parsed, comments, []);
+    return comments;
   }
 
-  function extractComments(astOrCode, optCode) {
-    var parsed = typeof astOrCode === "string" ? parse(astOrCode, { withComments: true }) : astOrCode,
-        code = optCode ? optCode : typeof astOrCode === "string" ? astOrCode : stringify(astOrCode),
-        parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), function (c) {
-      return c.comment.start;
+  function followingNodeOf(comment) {
+    return lively_lang.arr.detect(comment.node.body, function (node) {
+      return node.start > comment.comment.end;
     });
+  }
 
-    return parsedComments.map(function (c, i) {
+  function unknownComment(comment) {
+    return { type: "unknown", comment: comment.comment.text };
+  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-      // 1. a method comment like "x: function() {\n//foo\n ...}"?
-      if (isInObjectMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOf(c)]);
-      }
+  function isInFunctionStatement(comment) {
+    var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
+    return node && node.type === "FunctionDeclaration";
+  }
 
-      if (isInComputedMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, computedMethodAttributesOf(c)]);
-      }
+  function functionAttributesOf(comment) {
+    var funcNode = lively_lang.Path(comment.path.slice(0, -1)).get(parsed),
+        name = funcNode.id ? funcNode.id.name : "<error: no name for function>";
+    return { name: name, args: lively_lang.arr.pluck(funcNode.params, "name") };
+  }
 
-      // 2. function statement comment like "function foo() {\n//foo\n ...}"?
-      if (isInFunctionStatement(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'function', comment: c.comment.text }, functionAttributesOf(c)]);
-      }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-      // 3. assigned method like "foo.bar = function(x) {/*comment*/};"
-      if (isInAssignedMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOfAssignment(c)]);
-      }
+  function isInObjectMethod(comment) {
+    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
+  }
 
-      // 4. comment preceding another node?
-      var followingNode = followingNodeOf(c);
-      if (!followingNode) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+  function isInAssignedMethod(comment) {
+    return lively_lang.arr.equals(comment.path.slice(-2), ["right", "body"]); // asignment
+  }
 
-      // is there another comment in front of the node>
-      var followingComment = parsedComments[i + 1];
-      if (followingComment && followingComment.comment.start <= followingNode.start) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+  function methodAttributesOf(comment) {
+    var methodNode = lively_lang.Path(comment.path.slice(0, -2)).get(parsed),
+        name = methodNode.key ? methodNode.key.name : "<error: no name for method>";
 
-      // 3. an obj var comment like "// foo\nvar obj = {...}"?
-      if (isSingleObjVarDeclaration(followingNode)) {
-        return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'object', comment: c.comment.text }, objAttributesOf(followingNode)]);
-      }
+    // if it's someting like "var obj = {foo: function() {...}};"
+    var p = comment.path.slice(),
+        objectName = "<error: no object found for method>";
 
-      // 4. Is it a simple var declaration like "// foo\nvar obj = 23"?
-      if (isSingleVarDeclaration(followingNode)) {
-        return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'var', comment: c.comment.text }, objAttributesOf(followingNode)]);
-      }
-
-      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
-    });
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function commentsWithPathsAndNodes(parsed) {
-      var comments = [],
-          v = new Visitor();
-      v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-        if (node.comments) {
-          lively_lang.arr.pushAll(comments, node.comments.map(function (comment) {
-            return { path: path, comment: comment, node: node };
-          }));
-        }
-        return proceed(node, state, path);
-      });
-      v.accept(parsed, comments, []);
-      return comments;
+    while (p.length && lively_lang.arr.last(p) !== 'init') {
+      p.pop();
+    }if (p.length) {
+      objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
     }
 
-    function followingNodeOf(comment) {
-      return lively_lang.arr.detect(comment.node.body, function (node) {
-        return node.start > comment.comment.end;
-      });
-    }
-
-    function unknownComment(comment) {
-      return { type: "unknown", comment: comment.comment.text };
-    }
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function isInFunctionStatement(comment) {
-      var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
-      return node && node.type === "FunctionDeclaration";
-    }
-
-    function functionAttributesOf(comment) {
-      var funcNode = lively_lang.Path(comment.path.slice(0, -1)).get(parsed),
-          name = funcNode.id ? funcNode.id.name : "<error: no name for function>";
-      return { name: name, args: lively_lang.arr.pluck(funcNode.params, "name") };
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function isInObjectMethod(comment) {
-      return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
-    }
-
-    function isInAssignedMethod(comment) {
-      return lively_lang.arr.equals(comment.path.slice(-2), ["right", "body"]); // asignment
-    }
-
-    function methodAttributesOf(comment) {
-      var methodNode = lively_lang.Path(comment.path.slice(0, -2)).get(parsed),
-          name = methodNode.key ? methodNode.key.name : "<error: no name for method>";
-
-      // if it's someting like "var obj = {foo: function() {...}};"
-      var p = comment.path.slice(),
-          objectName = "<error: no object found for method>";
-
-      while (p.length && lively_lang.arr.last(p) !== 'init') {
+    // if it's someting like "exports.obj = {foo: function() {...}};"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
+      p = comment.path.slice();
+      while (p.length && lively_lang.arr.last(p) !== 'right') {
         p.pop();
       }if (p.length) {
-        objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
+        var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
+        objectName = code.slice(assignNode.start, assignNode.end);
       }
-
-      // if it's someting like "exports.obj = {foo: function() {...}};"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        p = comment.path.slice();
-        while (p.length && lively_lang.arr.last(p) !== 'right') {
-          p.pop();
-        }if (p.length) {
-          var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
-          objectName = code.slice(assignNode.start, assignNode.end);
-        }
-      }
-
-      // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        p = comment.path.slice();
-        var callExpr = lively_lang.Path(p.slice(0, -6)).get(parsed),
-            isCall = callExpr && callExpr.type === "CallExpression",
-            firstArg = isCall && callExpr.arguments[0];
-        if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
-      }
-
-      return {
-        name: name,
-        args: lively_lang.arr.pluck(methodNode.value.params, "name"),
-        objectName: objectName
-      };
     }
 
-    function methodAttributesOfAssignment(comment) {
-
-      var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
-      if (node.type !== "FunctionExpression" && node.type !== "FunctionDeclaration") return {};
-
-      var statement = statementOf(parsed, node);
-      if (statement.type !== "ExpressionStatement" || statement.expression.type !== "AssignmentExpression") return {};
-
-      var objName = code.slice(statement.expression.left.object.start, statement.expression.left.object.end);
-
-      var methodName = code.slice(statement.expression.left.property.start, statement.expression.left.property.end);
-
-      return {
-        name: methodName,
-        objectName: objName,
-        args: lively_lang.arr.pluck(node.params, "name")
-      };
+    // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
+      p = comment.path.slice();
+      var callExpr = lively_lang.Path(p.slice(0, -6)).get(parsed),
+          isCall = callExpr && callExpr.type === "CallExpression",
+          firstArg = isCall && callExpr.arguments[0];
+      if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
     }
 
-    function isInComputedMethod(comment) {
-      var path = comment.path.slice(-5);
-      lively_lang.arr.removeAt(path, 1);
-      return lively_lang.arr.equals(path, ["properties", "value", "callee", "body"]);
+    return {
+      name: name,
+      args: lively_lang.arr.pluck(methodNode.value.params, "name"),
+      objectName: objectName
+    };
+  }
+
+  function methodAttributesOfAssignment(comment) {
+
+    var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
+    if (node.type !== "FunctionExpression" && node.type !== "FunctionDeclaration") return {};
+
+    var statement = statementOf(parsed, node);
+    if (statement.type !== "ExpressionStatement" || statement.expression.type !== "AssignmentExpression") return {};
+
+    var objName = code.slice(statement.expression.left.object.start, statement.expression.left.object.end);
+
+    var methodName = code.slice(statement.expression.left.property.start, statement.expression.left.property.end);
+
+    return {
+      name: methodName,
+      objectName: objName,
+      args: lively_lang.arr.pluck(node.params, "name")
+    };
+  }
+
+  function isInComputedMethod(comment) {
+    var path = comment.path.slice(-5);
+    lively_lang.arr.removeAt(path, 1);
+    return lively_lang.arr.equals(path, ["properties", "value", "callee", "body"]);
+  }
+
+  function computedMethodAttributesOf(comment) {
+    var name, args, pathToProp;
+
+    pathToProp = comment.path.slice(0, -3);
+    var propertyNode = lively_lang.Path(pathToProp).get(parsed);
+    if (propertyNode && propertyNode.type === "Property") {
+      // if it is a function immediatelly called
+      args = lively_lang.arr.pluck(propertyNode.value.callee.params, "name");
+      name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
     }
 
-    function computedMethodAttributesOf(comment) {
-      var name, args, pathToProp;
-
-      pathToProp = comment.path.slice(0, -3);
-      var propertyNode = lively_lang.Path(pathToProp).get(parsed);
+    if (!name) {
+      // if it is an object member function
+      pathToProp = comment.path.slice(0, -2);
+      propertyNode = lively_lang.Path(pathToProp).get(parsed);
       if (propertyNode && propertyNode.type === "Property") {
-        // if it is a function immediatelly called
-        args = lively_lang.arr.pluck(propertyNode.value.callee.params, "name");
+        args = lively_lang.arr.pluck(propertyNode.value.params, "name");
         name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
       }
+    }
 
-      if (!name) {
-        // if it is an object member function
-        pathToProp = comment.path.slice(0, -2);
-        propertyNode = lively_lang.Path(pathToProp).get(parsed);
-        if (propertyNode && propertyNode.type === "Property") {
-          args = lively_lang.arr.pluck(propertyNode.value.params, "name");
-          name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
-        }
-      }
+    if (!name) {
+      name = "<error: no name for method>";
+      args = [];
+      pathToProp = comment.path;
+    }
 
-      if (!name) {
-        name = "<error: no name for method>";
-        args = [];
-        pathToProp = comment.path;
-      }
+    // if it's someting like "var obj = {foo: function() {...}};"
+    var p = lively_lang.arr.clone(pathToProp);
+    var objectName = "<error: no object found for method>";
 
-      // if it's someting like "var obj = {foo: function() {...}};"
+    while (p.length && lively_lang.arr.last(p) !== 'init') {
+      p.pop();
+    }if (p.length) {
+      objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
+    }
+
+    // if it's someting like "exports.obj = {foo: function() {...}};"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
       var p = lively_lang.arr.clone(pathToProp);
-      var objectName = "<error: no object found for method>";
-
-      while (p.length && lively_lang.arr.last(p) !== 'init') {
+      while (p.length && lively_lang.arr.last(p) !== 'right') {
         p.pop();
       }if (p.length) {
-        objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
+        var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
+        objectName = code.slice(assignNode.start, assignNode.end);
       }
-
-      // if it's someting like "exports.obj = {foo: function() {...}};"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        var p = lively_lang.arr.clone(pathToProp);
-        while (p.length && lively_lang.arr.last(p) !== 'right') {
-          p.pop();
-        }if (p.length) {
-          var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
-          objectName = code.slice(assignNode.start, assignNode.end);
-        }
-      }
-
-      // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        var p = lively_lang.arr.clone(pathToProp);
-        var callExpr = lively_lang.Path(p.slice(0, -4)).get(parsed),
-            isCall = callExpr && callExpr.type === "CallExpression",
-            firstArg = isCall && callExpr.arguments[0];
-        if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
-      }
-
-      return { name: name, args: args, objectName: objectName };
     }
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    // like "var foo = {/*...*/}" or  "var foo = bar = {/*...*/};"
-    function isSingleObjVarDeclaration(node) {
-      // should be a var declaration with one declarator with a value
-      // being an JS object
-      return isSingleVarDeclaration(node) && (node.declarations[0].init.type === "ObjectExpression" || isObjectAssignment(node.declarations[0].init));
+    // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
+      var p = lively_lang.arr.clone(pathToProp);
+      var callExpr = lively_lang.Path(p.slice(0, -4)).get(parsed),
+          isCall = callExpr && callExpr.type === "CallExpression",
+          firstArg = isCall && callExpr.arguments[0];
+      if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
     }
 
-    function isSingleVarDeclaration(node) {
-      return node && node.type === 'VariableDeclaration' && node.declarations.length === 1;
-    }
-
-    function objAttributesOf(node) {
-      return { name: node.declarations[0].id.name };
-    };
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    // like "foo = {/*...*/}"
-    function isObjectAssignment(node) {
-      if (node.type !== "AssignmentExpression") return false;
-      if (node.right.type === "ObjectExpression") return true;
-      if (node.right.type === "AssignmentExpression") return isObjectAssignment(node.right);;
-      return false;
-    }
+    return { name: name, args: args, objectName: objectName };
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  // like "var foo = {/*...*/}" or  "var foo = bar = {/*...*/};"
+  function isSingleObjVarDeclaration(node) {
+    // should be a var declaration with one declarator with a value
+    // being an JS object
+    return isSingleVarDeclaration(node) && (node.declarations[0].init.type === "ObjectExpression" || isObjectAssignment(node.declarations[0].init));
+  }
+
+  function isSingleVarDeclaration(node) {
+    return node && node.type === 'VariableDeclaration' && node.declarations.length === 1;
+  }
+
+  function objAttributesOf(node) {
+    return { name: node.declarations[0].id.name };
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  // like "foo = {/*...*/}"
+  function isObjectAssignment(node) {
+    if (node.type !== "AssignmentExpression") return false;
+    if (node.right.type === "ObjectExpression") return true;
+    if (node.right.type === "AssignmentExpression") return isObjectAssignment(node.right);
+    return false;
+  }
+}
 
 
-  var comments = Object.freeze({
-    getCommentPrecedingNode: getCommentPrecedingNode,
-    extractComments: extractComments
+
+var comments = Object.freeze({
+	getCommentPrecedingNode: getCommentPrecedingNode,
+	extractComments: extractComments
+});
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// main method
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function findDecls(parsed, options) {
+  // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
+
+  options = options || lively_lang.obj.merge({ hideOneLiners: false }, options);
+
+  if (typeof parsed === "string") parsed = parse(parsed, { addSource: true });
+
+  var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
+      defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
+    return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
   });
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // main method
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  function findDecls(parsed, options) {
-    // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
-
-    options = options || lively_lang.obj.merge({ hideOneLiners: false }, options);
-
-    if (typeof parsed === "string") parsed = parse(parsed, { addSource: true });
-
-    var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
-        defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
-      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
-    });
-
-    if (options.hideOneLiners && parsed.source) {
-      defs = defs.reduce(function (defs, def) {
-        if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def);else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def);
-        return defs;
-      }, []);
-    }
-
-    if (options.hideOneLiners && parsed.loc) defs = defs.filter(function (def) {
-      return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
-      parsed;
-    });
-
-    return defs;
+  if (options.hideOneLiners && parsed.source) {
+    defs = defs.reduce(function (defs, def) {
+      if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def);else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def);
+      return defs;
+    }, []);
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // helpers
+  if (options.hideOneLiners && parsed.loc) defs = defs.filter(function (def) {
+    return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
+    parsed;
+  });
 
-  function objectKeyValsAsDefs(objectExpression) {
-    return objectExpression.properties.map(function (prop) {
+  return defs;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helpers
+
+function objectKeyValsAsDefs(objectExpression) {
+  return objectExpression.properties.map(function (prop) {
+    return {
+      name: prop.key.name || prop.key.value,
+      type: prop.value.type === "FunctionExpression" ? "method" : "property",
+      node: prop
+    };
+  });
+}
+
+function classDef(node) {
+  if (lively_lang.Path("expression.callee.property.name").get(node) !== "subclass") return null;
+  var def = {
+    type: "lively-class-definition",
+    name: lively_lang.Path("expression.arguments.0.value").get(node),
+    node: node
+  };
+  var props = lively_lang.arr.flatmap(node.expression.arguments, function (argNode) {
+    if (argNode.type !== "ObjectExpression") return [];
+    return objectKeyValsAsDefs(argNode).map(function (ea) {
+      ea.type = "lively-class-instance-" + ea.type;
+      ea.parent = def;
+      return ea;
+    });
+  });
+  return [def].concat(props);
+}
+
+function es6ClassDef(node) {
+  if (node.type !== "ClassDeclaration") return null;
+  var def = {
+    type: "class",
+    name: node.id.name,
+    node: node
+  };
+  // FIXME need to differentiate between class / instance methods, getters, setters!
+  var props = node.body.body.map(function (propNode) {
+    if (propNode.type === "MethodDefinition") {
       return {
-        name: prop.key.name || prop.key.value,
-        type: prop.value.type === "FunctionExpression" ? "method" : "property",
-        node: prop
+        type: "class-method",
+        parent: def,
+        name: propNode.key.name,
+        node: propNode
       };
-    });
-  }
-
-  function classDef(node) {
-    if (lively_lang.Path("expression.callee.property.name").get(node) !== "subclass") return null;
-    var def = {
-      type: "lively-class-definition",
-      name: lively_lang.Path("expression.arguments.0.value").get(node),
-      node: node
-    };
-    var props = lively_lang.arr.flatmap(node.expression.arguments, function (argNode) {
-      if (argNode.type !== "ObjectExpression") return [];
-      return objectKeyValsAsDefs(argNode).map(function (ea) {
-        ea.type = "lively-class-instance-" + ea.type;
-        ea.parent = def;
-        return ea;
-      });
-    });
-    return [def].concat(props);
-  }
-
-  function es6ClassDef(node) {
-    if (node.type !== "ClassDeclaration") return null;
-    var def = {
-      type: "class",
-      name: node.id.name,
-      node: node
-    };
-    // FIXME need to differentiate between class / instance methods, getters, setters!
-    var props = node.body.body.map(function (propNode) {
-      if (propNode.type === "MethodDefinition") {
-        return {
-          type: "class-method",
-          parent: def,
-          name: propNode.key.name,
-          node: propNode
-        };
-      }
-      return null;
-    }).filter(function (ea) {
-      return !!ea;
-    });
-    return [def].concat(props);
-  }
-
-  function extendDef(node) {
-    if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend" || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
-    var name = lively_lang.Path("expression.arguments.0.name").get(node);
-    if (!name) return null;
-    var def = {
-      name: name, node: node,
-      type: "lively-extend-definition"
-    };
-    var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || []).map(function (d) {
-      d.parent = def;return d;
-    });
-    return [def].concat(props);
-  }
-
-  function varDefs(node) {
-    if (node.type !== "VariableDeclaration") return null;
-    return lively_lang.arr.flatmap(withVarDeclIds(node), function (ea) {
-      return lively_lang.arr.flatmap(ea.ids, function (id) {
-        var def = { name: id.name, node: ea.node, type: "var-decl" };
-        if (!def.node.init) return [def];
-        var node = def.node.init;
-        while (node.type === "AssignmentExpression") {
-          node = node.right;
-        }if (node.type === "ObjectExpression") {
-          return [def].concat(objectKeyValsAsDefs(node).map(function (ea) {
-            ea.type = "object-" + ea.type;ea.parent = def;return ea;
-          }));
-        }
-        var objDefs = someObjectExpressionCall(node);
-        if (objDefs) return [def].concat(objDefs.map(function (d) {
-          d.parent = def;return d;
-        }));
-        return [def];
-      });
-    });
-  }
-
-  function funcDef(node) {
-    if (node.type !== "FunctionStatement" && node.type !== "FunctionDeclaration") return null;
-    return [{
-      name: node.id.name,
-      node: node,
-      type: "function-decl"
-    }];
-  }
-
-  function someObjectExpressionCall(node) {
-    if (node.type === "ExpressionStatement") node = node.expression;
-    if (node.type !== "CallExpression") return null;
-    var objArg = node.arguments.detect(function (a) {
-      return a.type === "ObjectExpression";
-    });
-    if (!objArg) return null;
-    return objectKeyValsAsDefs(objArg);
-  }
-
-  function moduleDef(node, options) {
-    if (!isModuleDeclaration(node)) return null;
-    var decls = findDecls(lively_lang.Path("expression.arguments.0").get(node), options),
-        parent = { node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node) };
-    decls.forEach(function (decl) {
-      return decl.parent = parent;
-    });
-    return decls;
-  }
-
-  function functionWrapper(node, options) {
-    if (!isFunctionWrapper(node)) return null;
-    var decls;
-    // Is it a function wrapper passed as arg?
-    // like ;(function(run) {... })(function(exports) {...})     
-    var argFunc = lively_lang.Path("expression.arguments.0").get(node);
-    if (argFunc && argFunc.type === "FunctionExpression" && lively_lang.string.lines(argFunc.source || "").length > 5) {
-      // lively.debugNextMethodCall(lively.ast.CodeCategorizer, "findDecls");
-      decls = findDecls(argFunc, options);
-    } else {
-      decls = findDecls(lively_lang.Path("expression.callee").get(node), options);
     }
-    var parent = { node: node, name: lively_lang.Path("expression.callee.id.name").get(node) };
-    decls.forEach(function (decl) {
-      return decl.parent || (decl.parent = parent);
-    });
-    return decls;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function isModuleDeclaration(node) {
-    return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module" && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
-  }
-
-  function isFunctionWrapper(node) {
-    return lively_lang.Path("expression.type").get(node) === "CallExpression" && lively_lang.Path("expression.callee.type").get(node) === "FunctionExpression";
-  }
-
-  function declIds(idNodes) {
-    return lively_lang.arr.flatmap(idNodes, function (ea) {
-      if (!ea) return [];
-      if (ea.type === "Identifier") return [ea];
-      if (ea.type === "RestElement") return [ea.argument];
-      if (ea.type === "ObjectPattern") return declIds(lively_lang.arr.pluck(ea.properties, "value"));
-      if (ea.type === "ArrayPattern") return declIds(ea.elements);
-      return [];
-    });
-  }
-
-  function withVarDeclIds(varNode) {
-    return varNode.declarations.map(function (declNode) {
-      if (!declNode.source && declNode.init) declNode.source = declNode.id.name + " = " + declNode.init.source;
-      return { node: declNode, ids: declIds([declNode.id]) };
-    });
-  }
-
-var categorizer = Object.freeze({
-    findDecls: findDecls
+    return null;
+  }).filter(function (ea) {
+    return !!ea;
   });
+  return [def].concat(props);
+}
 
-  exports.withMozillaAstDo = withMozillaAstDo;
-  exports.printAst = printAst;
-  exports.compareAst = compareAst;
-  exports.pathToNode = pathToNode;
-  exports.rematchAstWithSource = rematchAstWithSource;
-  exports.parse = parse;
-  exports.parseFunction = parseFunction;
-  exports.fuzzyParse = fuzzyParse;
-  exports.escodegen = es;
-  exports.acorn = acorn;
-  exports.query = query;
-  exports.transform = transform;
-  exports.capturing = capturing;
-  exports.comments = comments;
-  exports.categorizer = categorizer;
-  exports.stringify = stringify;
-  exports.nodes = nodes;
+function extendDef(node) {
+  if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend" || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
+  var name = lively_lang.Path("expression.arguments.0.name").get(node);
+  if (!name) return null;
+  var def = {
+    name: name, node: node,
+    type: "lively-extend-definition"
+  };
+  var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || []).map(function (d) {
+    d.parent = def;return d;
+  });
+  return [def].concat(props);
+}
+
+function varDefs(node) {
+  if (node.type !== "VariableDeclaration") return null;
+  return lively_lang.arr.flatmap(withVarDeclIds(node), function (ea) {
+    return lively_lang.arr.flatmap(ea.ids, function (id) {
+      var def = { name: id.name, node: ea.node, type: "var-decl" };
+      if (!def.node.init) return [def];
+      var node = def.node.init;
+      while (node.type === "AssignmentExpression") {
+        node = node.right;
+      }if (node.type === "ObjectExpression") {
+        return [def].concat(objectKeyValsAsDefs(node).map(function (ea) {
+          ea.type = "object-" + ea.type;ea.parent = def;return ea;
+        }));
+      }
+      var objDefs = someObjectExpressionCall(node);
+      if (objDefs) return [def].concat(objDefs.map(function (d) {
+        d.parent = def;return d;
+      }));
+      return [def];
+    });
+  });
+}
+
+function funcDef(node) {
+  if (node.type !== "FunctionStatement" && node.type !== "FunctionDeclaration") return null;
+  return [{
+    name: node.id.name,
+    node: node,
+    type: "function-decl"
+  }];
+}
+
+function someObjectExpressionCall(node) {
+  if (node.type === "ExpressionStatement") node = node.expression;
+  if (node.type !== "CallExpression") return null;
+  var objArg = node.arguments.detect(function (a) {
+    return a.type === "ObjectExpression";
+  });
+  if (!objArg) return null;
+  return objectKeyValsAsDefs(objArg);
+}
+
+function moduleDef(node, options) {
+  if (!isModuleDeclaration(node)) return null;
+  var decls = findDecls(lively_lang.Path("expression.arguments.0").get(node), options),
+      parent = { node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node) };
+  decls.forEach(function (decl) {
+    return decl.parent = parent;
+  });
+  return decls;
+}
+
+function functionWrapper(node, options) {
+  if (!isFunctionWrapper(node)) return null;
+  var decls;
+  // Is it a function wrapper passed as arg?
+  // like ;(function(run) {... })(function(exports) {...})      
+  var argFunc = lively_lang.Path("expression.arguments.0").get(node);
+  if (argFunc && argFunc.type === "FunctionExpression" && lively_lang.string.lines(argFunc.source || "").length > 5) {
+    // lively.debugNextMethodCall(lively.ast.CodeCategorizer, "findDecls");
+    decls = findDecls(argFunc, options);
+  } else {
+    decls = findDecls(lively_lang.Path("expression.callee").get(node), options);
+  }
+  var parent = { node: node, name: lively_lang.Path("expression.callee.id.name").get(node) };
+  decls.forEach(function (decl) {
+    return decl.parent || (decl.parent = parent);
+  });
+  return decls;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function isModuleDeclaration(node) {
+  return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module" && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
+}
+
+function isFunctionWrapper(node) {
+  return lively_lang.Path("expression.type").get(node) === "CallExpression" && lively_lang.Path("expression.callee.type").get(node) === "FunctionExpression";
+}
+
+function declIds$1(idNodes) {
+  return lively_lang.arr.flatmap(idNodes, function (ea) {
+    if (!ea) return [];
+    if (ea.type === "Identifier") return [ea];
+    if (ea.type === "RestElement") return [ea.argument];
+    if (ea.type === "ObjectPattern") return declIds$1(lively_lang.arr.pluck(ea.properties, "value"));
+    if (ea.type === "ArrayPattern") return declIds$1(ea.elements);
+    return [];
+  });
+}
+
+function withVarDeclIds(varNode) {
+  return varNode.declarations.map(function (declNode) {
+    if (!declNode.source && declNode.init) declNode.source = declNode.id.name + " = " + declNode.init.source;
+    return { node: declNode, ids: declIds$1([declNode.id]) };
+  });
+}
+
+var codeCategorizer = Object.freeze({
+	findDecls: findDecls
+});
+
+exports.withMozillaAstDo = withMozillaAstDo;
+exports.printAst = printAst;
+exports.compareAst = compareAst;
+exports.pathToNode = pathToNode;
+exports.rematchAstWithSource = rematchAstWithSource;
+exports.parse = parse;
+exports.parseFunction = parseFunction;
+exports.fuzzyParse = fuzzyParse;
+exports.escodegen = es;
+exports.acorn = acorn;
+exports.query = query;
+exports.transform = transform;
+exports.capturing = capturing;
+exports.comments = comments;
+exports.categorizer = codeCategorizer;
+exports.stringify = stringify;
+exports.nodes = nodes;
 
 }((this.lively.ast = this.lively.ast || {}),lively.lang,GLOBAL.escodegen,acorn));
+
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
