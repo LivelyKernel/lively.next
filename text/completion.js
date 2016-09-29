@@ -318,8 +318,9 @@ export class CompletionController {
 
 export var completionCommands = [{
   name: "text completion",
+  handlesCount: true, // to ignore and not open multiple lists
   multiSelectAction: "single",
-  async exec(morph, opts) {
+  async exec(morph, opts, count) {
     var completer = new CompletionController(morph, defaultCompleters);
     await completer.openCompletionList();
     return true;
