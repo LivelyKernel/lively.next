@@ -16,20 +16,20 @@ class Layout {
   onSubmorphAdded(submorph) { this.apply() }
   onSubmorphRemoved(submorph) { this.apply() }
   
-  onChange(change) {
-    switch (change.selector) {
+  onChange({selector, args, prop, value, prevValue}) {
+    switch (selector) {
       case "removeMorph":
-        this.onSubmorphRemoved(change.args[0]);
+        this.onSubmorphRemoved(args[0]);
         break;
       case "addMorphAt":
-        this.onSubmorphAdded(change.args[0]);
+        this.onSubmorphAdded(args[0]);
         break;
     }
-    if (change.prop == "extent" && !change.value.equals(change.prevValue)) this.apply();
+    if (prop == "extent" && !(value && value.equals(prevValue))) this.apply();
   }
   
   affectsLayout(submorph, {prop, value, prevValue}) {
-    return ["position", "scale", "rotation"].includes(prop) && !value.equals(prevValue);
+    return ["position", "scale", "rotation"].includes(prop) && !(value && value.equals(prevValue));
   }
 
   onSubmorphChange(submorph, change) {
@@ -174,15 +174,16 @@ export class CellGroup {
   }
   
   get resize() { return this.state.resize }
-  set resize(forceBounds) { this.state.resize = forceBounds }
+  set resize(forceBounds) { this.state.resize = forceBounds; this.layout.apply() }
   
   get align() { return this.state.align || "topLeft" }
-  set align(orientation) { this.state.align = orientation }
+  set align(orientation) { this.state.align = orientation; this.layout.apply() }
   
   set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
     if (conflictingGroup) conflictingGroup.morph = null;
-    this.state.morph = value; 
+    this.state.morph = value;
+    this.layout.apply();
   }
   
   manages(morph) {
@@ -391,6 +392,7 @@ export class LayoutColumn extends LayoutAxis {
         c.min.width += delta;
       }
     });
+    this.layout.apply()
   }
   
   get fixed() {
@@ -398,18 +400,18 @@ export class LayoutColumn extends LayoutAxis {
   }
   
   set fixed(active) {
-    const fixedWidth = typeof active == "number" ? active : active && this.origin.width,
-          l = this.length;
+    const fixedWidth = typeof active == "number" ? active : active && this.origin.width;
     this.items.forEach(c => {
       c.fixed.width = fixedWidth;
     });
-    if (!fixedWidth) this.adjustStretch(l - this.length);
+    this.layout.apply();
   }
   
   set proportion(prop) {
     this.items.forEach(c => {
       c.proportion.width = prop;
-    }); 
+    });
+    this.layout.apply()
   }
   
   get proportion() { return this.origin.proportion.width; }
@@ -471,6 +473,7 @@ export class LayoutRow extends LayoutAxis {
         c.min.height += delta;
       }
     });
+    this.layout.apply();
   }
   
   get containerLength() { return this.container.height }
@@ -484,12 +487,14 @@ export class LayoutRow extends LayoutAxis {
     this.items.forEach(c => { 
       c.fixed.height = fixedHeight;
     });
+    this.layout.apply();
   }
   
   set proportion(prop) { 
     this.items.forEach(c => {
       c.proportion.height = prop;
     });
+    this.layout.apply();
   }
   
   get proportion() { return this.origin.proportion.height; }
