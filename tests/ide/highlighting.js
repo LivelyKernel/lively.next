@@ -203,4 +203,15 @@ describe("javascript highlighting", () => {
     ]);
   });
   
+  it("recognizes comments after divide operator", () => {
+    const src = `a / 2\n/*x*/`;
+    expect(mode.highlight(src)).to.be.deep.equal([
+      {token: Token.id, from: {row: 0, column: 0}, to: {row: 0, column: 1}},
+      {token: Token.default, from: {row: 0, column: 1}, to: {row: 0, column: 4}},
+      {token: Token.numeric, from: {row: 0, column: 4}, to: {row: 0, column: 5}},
+      {token: Token.default, from: {row: 0, column: 5}, to: {row: 1, column: 0}},
+      {token: Token.comment, from: {row: 1, column: 0}, to: {row: 1, column: 5}}
+    ]);
+  });
+  
 });

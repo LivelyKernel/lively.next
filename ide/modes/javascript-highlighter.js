@@ -72,7 +72,7 @@ export default class JavaScriptHighlighter extends Highlighter {
         if (c=== "/") {
           this.rere.lastIndex = this.idx;
           const m = this.rere.exec(this.str);
-          if (m) {
+          if (m && m.index === this.idx) {
             this.state = "regex";
             this.left = m[0].length - 1;
             return Token.regex;
