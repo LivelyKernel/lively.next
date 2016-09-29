@@ -1,6 +1,7 @@
 /*global fetch, Headers, DOMParser, XPathEvaluator, XPathResult, Namespace*/
 
 import { Resource } from "./resource.js";
+import { applyExclude } from "./helpers.js";
 
 class XPathQuery {
 
@@ -104,13 +105,16 @@ export class WebDAVResource extends Resource {
     return this;
   }
 
-  async dirList(depth = 1) {
+  async dirList(depth = 1, opts = {}) {
     // depth = number >= 1 or 'infinity'
-    if (!this.isDirectory())
-      throw new Error(`dirList called on non-directory: ${this.path()}`)
+
+    // if (!this.isDirectory())
+    //   throw new Error(`dirList called on non-directory: ${this.path()}`)
 
     if (typeof depth !== "number" && depth !== 'infinity')
       throw new Error(`dirList – invalid depth argument: ${depth}`);
+
+    var {exclude} = opts;
 
     if (depth <= 0) depth = 1;
 
@@ -127,14 +131,17 @@ export class WebDAVResource extends Resource {
       })
       if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
       var xmlString = await res.text(),
-          root = this.root();
-      return urlListFromPropfindDocument(xmlString).map(path => root.join(path));
+          root = this.root(),
+          result = urlListFromPropfindDocument(xmlString).map(path => root.join(path));
+      if (exclude) result = applyExclude(exclude, result);
+      return result;
 
     } else {
-      var subResources = await this.dirList(1),
-          subCollections = subResources.filter(ea => ea.isDirectory());
+      var subResources = await this.dirList(1, opts);
+      if (exclude) subResources = applyExclude(exclude, subResources);
+      var subCollections = subResources.filter(ea => ea.isDirectory());
       return Promise.all(subCollections.map(col =>
-            col.dirList(typeof depth === "number" ? depth - 1 : depth)))
+            col.dirList(typeof depth === "number" ? depth - 1 : depth, opts)))
               .then(recursiveResult =>
                 recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
     }

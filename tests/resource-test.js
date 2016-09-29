@@ -51,39 +51,6 @@ describe('http', function() {
     expect(await r.read()).equals("hello world");
   });
 
-  it("can list files in a directory", async () => {
-    var r = resource(testProjectDir);
-    expect((await r.dirList()).map(ea => ea.url)).deep.equals([
-      r.join("file1.js").url,
-      r.join("sub-dir/").url
-    ]);
-  });
-
-  it("can list files in a directory recursively", async () => {
-    var r = resource(testProjectDir);
-    expect((await r.dirList('infinity')).map(ea => ea.url)).deep.equals([
-      r.join("file1.js").url,
-      r.join("sub-dir/").url,
-      r.join("sub-dir/file2.js").url,
-      r.join("sub-dir/sub-sub-dir/").url,
-      r.join("sub-dir/sub-sub-dir/file3.js").url,
-      r.join("sub-dir/sub-sub-dir/file4.txt").url,
-      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/").url,
-      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file5.js").url,
-      r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file6.txt").url
-    ]);
-  });
-
-  it("can list files in a directory recursively upt to a depth", async () => {
-    var r = resource(testProjectDir);
-    expect((await r.dirList(2)).map(ea => ea.url)).deep.equals([
-      r.join("file1.js").url,
-      r.join("sub-dir/").url,
-      r.join("sub-dir/file2.js").url,
-      r.join("sub-dir/sub-sub-dir/").url
-    ]);
-  });
-
   it("cannot write a dir", async () => {
     var r = resource(testProjectDir + "new-sub-dir/");
     try {
@@ -132,4 +99,61 @@ describe('http', function() {
     expect(await resource(testProjectDir + "dir/b.txt").read()).equals("bbbbb");
   });
 
+  describe("file listing", () => {
+
+  
+    it("of directory", async () => {
+      var r = resource(testProjectDir);
+      expect((await r.dirList()).map(ea => ea.url)).deep.equals([
+        r.join("file1.js").url,
+        r.join("sub-dir/").url
+      ]);
+    });
+  
+    it("of directory recursively", async () => {
+      var r = resource(testProjectDir);
+      expect((await r.dirList('infinity')).map(ea => ea.url)).deep.equals([
+        r.join("file1.js").url,
+        r.join("sub-dir/").url,
+        r.join("sub-dir/file2.js").url,
+        r.join("sub-dir/sub-sub-dir/").url,
+        r.join("sub-dir/sub-sub-dir/file3.js").url,
+        r.join("sub-dir/sub-sub-dir/file4.txt").url,
+        r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/").url,
+        r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file5.js").url,
+        r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file6.txt").url
+      ]);
+    });
+  
+    it("recursively up to a depth", async () => {
+      var r = resource(testProjectDir);
+      expect((await r.dirList(2)).map(ea => ea.url)).deep.equals([
+        r.join("file1.js").url,
+        r.join("sub-dir/").url,
+        r.join("sub-dir/file2.js").url,
+        r.join("sub-dir/sub-sub-dir/").url
+      ]);
+    });
+  
+    it("list files with string filter", async () => {
+      var r = resource(testProjectDir);
+      expect((await r.dirList('infinity', {exclude: "sub-sub-dir"})).map(ea => ea.url)).deep.equals([
+        r.join("file1.js").url,
+        r.join("sub-dir/").url,
+        r.join("sub-dir/file2.js").url
+      ]);
+    });
+
+    it("list files with function filter", async () => {
+      var r = resource(testProjectDir);
+      expect((await r.dirList('infinity', {exclude: res => res.name().endsWith(".js")})).map(ea => ea.url)).deep.equals([
+        r.join("sub-dir/").url,
+        r.join("sub-dir/sub-sub-dir/").url,
+        r.join("sub-dir/sub-sub-dir/file4.txt").url,
+        r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/").url,
+        r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file6.txt").url
+      ]);
+    });
+
+  })
 });

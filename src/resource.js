@@ -1,9 +1,9 @@
+import { resource } from "../index.js";
+
 const slashEndRe = /\/+$/,
       slashStartRe = /^\/+/,
       protocolRe = /^[a-z0-9-_]+:/,
       slashslashRe = /^\/\/[^\/]+/;
-
-import { resource } from "../index.js";
 
 function nyi(obj, name) {
   throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
@@ -25,6 +25,10 @@ export class Resource {
       .replace(protocolRe, "")
       .replace(slashslashRe, "");
     return path === "" ? "/" : path;
+  }
+
+  name() {
+    return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
   }
 
   schemeAndHost() {
@@ -73,10 +77,10 @@ export class Resource {
     return this;
   }
 
-  async read()         { nyi(this, "read"); }
-  async write()        { nyi(this, "write"); }
-  async exists()       { nyi(this, "exists"); }
-  async remove()       { nyi(this, "remove"); }
-  async dirList(depth) { nyi(this, "dirList"); }
+  async read()               { nyi(this, "read"); }
+  async write()              { nyi(this, "write"); }
+  async exists()             { nyi(this, "exists"); }
+  async remove()             { nyi(this, "remove"); }
+  async dirList(depth, opts) { nyi(this, "dirList"); }
 
 }
