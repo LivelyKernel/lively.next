@@ -1,4 +1,5 @@
-import { obj } from "lively.lang";
+import { obj, arr } from "lively.lang";
+import { resource } from "lively.resources";
 
 export function shortModuleName(system, moduleId, itsPackage) {
   var packageAddress = itsPackage && itsPackage.address,
@@ -22,43 +23,43 @@ export async function interactivelyChangeModule(system, vmEditor, moduleName, ne
   options = obj.merge({targetModule: moduleName}, options);
   moduleName = await system.normalize(moduleName);
   await system.moduleSourceChange(moduleName, newSource, options);
-  await vmEditor.updateModuleList();
+  if (vmEditor) await vmEditor.updateModuleList();
   return moduleName;
 }
 
 export async function interactivelyReloadModule(system, vmEditor, moduleName) {
-  vmEditor.setStatusMessage("Reloading " + moduleName);
+  vmEditor && vmEditor.setStatusMessage("Reloading " + moduleName);
   try {
     await system.reloadModule(moduleName, {reloadDeps: true, resetEnv: true});
-    await vmEditor.updateModuleList();
-    vmEditor.setStatusMessage("Reloded " + moduleName)
+    vmEditor && await vmEditor.updateModuleList();
+    vmEditor && vmEditor.setStatusMessage("Reloded " + moduleName)
   } catch (err) {
     try {
-      await vmEditor.updateEditorWithSourceOf(moduleName);
+      vmEditor && await vmEditor.updateEditorWithSourceOf(moduleName);
     } catch (e) {}
-    vmEditor.showError(err); throw err;
+    vmEditor && vmEditor.showError(err); throw err;
   }
 }
 
 export async function interactivelyUnloadModule(system, vmEditor, moduleName) {
   await system.forgetModule(moduleName, {forgetEnv: true, forgetDeps: true});
-  await vmEditor.updateModuleList();
+  vmEditor && await vmEditor.updateModuleList();
 }
 
 
-export async function interactivelyRemoveModule(system, vmEditor, moduleName) {
+export async function interactivelyRemoveModule(system, vmEditor, moduleName, world = $world) {
   // var moduleName = this.state.selection.name
   var fullname = await system.normalize(moduleName),
-      really = await $world.confirm(`Remove file ${fullname}?`)
+      really = await world.confirm(`Remove file ${fullname}?`)
   if (!really) throw "Canceled";
   await system.forgetModule(moduleName);
-  await vmEditor.updateModuleList()
+  vmEditor && await vmEditor.updateModuleList()
   await system.resourceRemove(fullname);
   var p = await system.getPackageForModule(fullname);
-  await vmEditor.uiSelect(p ? p.address : null);
+  vmEditor && await vmEditor.uiSelect(p ? p.address : null);
 }
 
-export async function interactivelyAddModule(system, vmEditor, relatedPackageOrModule) {
+export async function interactivelyAddModule(system, vmEditor, relatedPackageOrModule, world = $world) {
 
   var root = new URL((await system.getConfig()).baseURL);
   if (relatedPackageOrModule) {
@@ -66,50 +67,53 @@ export async function interactivelyAddModule(system, vmEditor, relatedPackageOrM
     if (p) root = new URL(p.address);
   }
 
-  var candidates = await _searchForExistingFiles(vmEditor, root, p);
+  var candidates = await _searchForExistingFiles(vmEditor, String(root), p, world);
 
-  if (candidates.include("[create new module]")) {
-    var fullname = await _askForModuleName(system, String(root))
+  if (candidates.includes("[create new module]")) {
+    var fullname = await _askForModuleName(system, String(root), world)
     candidates = [fullname];
   }
 
   var namesAndErrors = await _createAndLoadModules(system, candidates),
-      errors = namesAndErrors.map(ea => ea.error).compact(),
+      errors = arr.compact(namesAndErrors.map(ea => ea.error)),
       hasError = !!errors.length;
 
-  await vmEditor.updateModuleList();
-  await vmEditor.uiSelect(namesAndErrors.first().name);
-  vmEditor.focus();
-  if (hasError) throw errors[0];
+  if (vmEditor) {
+    await vmEditor.updateModuleList();
+    await vmEditor.uiSelect(namesAndErrors.first().name);
+    vmEditor.focus();
+  }
+
+  return namesAndErrors;
 }
 
-async function _askForModuleName(system, input) {
-  var input = await $world.prompt(
+async function _askForModuleName(system, input, world) {
+  var input = await world.prompt(
     "Enter module name",
     {input: input, historyId: "lively.vm-editor-add-module-name"});
   if (!input) throw "Canceled";
   var fullname = await system.normalize(input),
-      really = await $world.confirm("Create module " + fullname + "?");
+      really = await world.confirm("Create module " + fullname + "?");
   if (!really) throw "Canceled";
   return fullname;
 }
 
-async function _searchForExistingFiles(vmEditor, rootURL, p) {
+async function _searchForExistingFiles(vmEditor, rootURL, p, world) {
   if (String(rootURL).match(/^http/)) {
-    return _searchForExistingFilesWeb(vmEditor, rootURL, p)
+    return _searchForExistingFilesWeb(vmEditor, rootURL, p, world)
   } else {
-    return _searchForExistingFilesManually(vmEditor, rootURL, p);
+    return _searchForExistingFilesManually(vmEditor, rootURL, p, world);
   }
 }
 
-function _searchForExistingFilesManually(vmEditor, rootURL, p) {
+function _searchForExistingFilesManually(vmEditor, rootURL, p, world = $world) {
   return new Promise((resolve, reject) => {
     var m = lively.morphic.Menu.openAtHand(
       "Create new module or load an existing one?", [
       ["create", () => { m.triggered = true; resolve("[create new module]"); }],
       ["load", async () => {
         m.triggered = true;
-        var result = await $world.prompt("URL of module?", {input: rootURL, historyId: "lively.vm._searchForExistingFilesManually.url-of-module"})
+        var result = await world.prompt("URL of module?", {input: rootURL, historyId: "lively.vm._searchForExistingFilesManually.url-of-module"})
         if (!result) reject("Canceled");
         else resolve([result]);
       }]]);
@@ -123,19 +127,19 @@ function _searchForExistingFilesManually(vmEditor, rootURL, p) {
   })
 }
 
-async function _searchForExistingFilesWeb(vmEditor, rootURL, p) {
-  function exclude(webR) {
-    var url = webR.getURL();
-    if ([".git/", "node_modules/", ".optimized-loading-cache/"].include(url.filename()))
+async function _searchForExistingFilesWeb(vmEditor, rootURL, p, world = $world) {
+  function exclude(resource) {
+    var name = resource.name();
+    if ([".git", "node_modules", ".optimized-loading-cache"].includes(resource.name()))
       return true;
     if (p) {
-      var modules = p.modules.pluck("name");
-      if (modules.include(String(url))) return true;
+      var modules = arr.pluck(p.modules, "name");
+      if (modules.includes(resource.url)) return true;
     }
     return false;
   }
-
-  var found = await _recursiveFileListWeb(rootURL.asWebResource(), exclude, 0, 2),
+  
+  var found = await (await resource(rootURL).dirList(5, {exclude})).map(ea => ea.url),
       candidates = [{
         isListItem: true,
         string: "[create new module]",
@@ -149,17 +153,19 @@ async function _searchForExistingFilesWeb(vmEditor, rootURL, p) {
             name;
           return {isListItem: true, string: shortName, value: name};
         })),
-      answer = await $world.filterableListPrompt("What module to load?", {
+
+      answer = await world.filterableListPrompt("What module to load?", candidates, {
         filterLabel: "filter: ",
-        list: candidates,
         multiselect: true,
-        extent: pt(vmEditor.width(), 400)
+        ...(vmEditor ? {extent: pt(vmEditor.width(), 400)} : {})
       });
 
-  if (answer.status === "canceled" || !answer.selected.length)
+  if (!answer || answer.status === "canceled" || !answer.selected.length)
     throw "Canceled";
 
-  return answer.selected;
+  var result = answer.selected || answer;
+  if (!Array.isArray(result)) result = [result];
+  return result;
 }
 
 async function _createAndLoadModules(system, fullnames) {
@@ -169,7 +175,6 @@ async function _createAndLoadModules(system, fullnames) {
     await system.forgetModule(fullname, {forgetDeps: false, forgetEnv: false});
     // ensure file record is created to display file in graph even if load
     // error occurs:
-    await system.importModule(fullname).catch(err => "...");
     await system.resourceEnsureExistance(fullname, '"format esm";\n');
 
     try {
@@ -182,42 +187,20 @@ async function _createAndLoadModules(system, fullnames) {
   return results;
 }
 
-function _recursiveFileListWeb(webR, exclude, depth, maxDepth) {
-  if (!depth) depth = 0;
-  if (!maxDepth) maxDepth = 3;
-
-  return new Promise((resolve, reject) => {
-
-    if (depth > maxDepth || (exclude && exclude(webR))) return resolve([]);
-
-    webR.beAsync().getSubElements(1).whenDone((_, status) => {
-      if (!status.isSuccess()) reject(new Error(String(status)));
-
-      var dirs = webR.subCollections.filter(ea => !exclude(ea)),
-          docs = webR.subDocuments.filter(ea => !exclude(ea))
-      Promise.all(
-        dirs.concat(docs).invoke("getURL").invoke("toString")
-          .concat(dirs.map(ea => _recursiveFileListWeb(ea, exclude, depth+1, maxDepth))))
-        .then(results => results.flatten()).then(resolve);
-    });
-  });
-}
-
 export async function modulesInPackage(system, packageName) {
   const p = await system.getPackage(packageName);
   if (!p || !p.address.match(/^http/)) {
     throw new Error(`Cannot load package ${packageName}`);
   }
-  function exclude(webR) {
-    const file = webR.getURL().filename();
-    if ([".git/", "node_modules/", ".optimized-loading-cache/"].includes(file)) {
+  function exclude(res) {
+    if ([".git", "node_modules", ".optimized-loading-cache"].includes(res.name())) {
       return true;
     }
     return false;
   }
 
-  const webR = new URL(p.address).asWebResource(),
-        found = await _recursiveFileListWeb(webR, exclude, 0, 2);
+  const res = resource(new URL(p.address)),
+        found = (await res.dirList(5, {exclude})).map(ea => ea.url)
   return found.filter(f => f.match(/\.js$/))
               .map(m => system.getModule(m));
 }

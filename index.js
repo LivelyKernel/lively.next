@@ -35,6 +35,7 @@ export class Interface {
   getModule(a, b, c)                             { return this.coreInterface.getModule(a, b, c); }
   getPackage(a, b, c)                            { return this.coreInterface.getPackage(a, b, c); }
   getPackageForModule(a, b, c)                   { return this.coreInterface.getPackageForModule(a, b, c); }
+  resourcesOfPackage(packageAddress, excludes)   { return this.coreInterface.resourcesOfPackage(packageAddress, excludes); }
   systemConfChange(a, b, c)                      { return this.coreInterface.systemConfChange(a, b, c); }
 
   registerPackage(packageURL) { return this.coreInterface.registerPackage(packageURL); }
@@ -47,7 +48,7 @@ export class Interface {
   interactivelyCreatePackage(a, b) { return interactivelyCreatePackage(this.coreInterface, a, b); }
   interactivelyLoadPackage(a, b)   { return interactivelyLoadPackage(this.coreInterface, a, b); }
   interactivelyReloadPackage(a, b) { return interactivelyReloadPackage(this.coreInterface, a, b); }
-  interactivelyUnloadPackage(a, b) { return interactivelyUnloadPackage(this.coreInterface, a, b); }
+  interactivelyUnloadPackage(vmEditor, packageURL, world) { return interactivelyUnloadPackage(this.coreInterface, vmEditor, packageURL, world); }
   interactivelyRemovePackage(a, b) { return interactivelyRemovePackage(this.coreInterface, a, b); }
 
   importModule(name)         { return this.coreInterface.importModule(name); }
@@ -64,7 +65,7 @@ export class Interface {
   interactivelyReloadModule(vmEditor, moduleName)                     { return interactivelyReloadModule(this.coreInterface, vmEditor, moduleName); }
   interactivelyUnloadModule(vmEditor, moduleName)                     { return interactivelyUnloadModule(this.coreInterface, vmEditor, moduleName); }
   interactivelyRemoveModule(vmEditor, moduleName)                     { return interactivelyRemoveModule(this.coreInterface, vmEditor, moduleName); }
-  interactivelyAddModule(vmEditor, relatedPackageOrModule)            { return interactivelyAddModule(this.coreInterface, vmEditor, relatedPackageOrModule); }
+  interactivelyAddModule(vmEditor, relatedPackageOrModule, world) { return interactivelyAddModule(this.coreInterface, vmEditor, relatedPackageOrModule, world); }
 
   searchInPackage(packageURL, searchTerm, options) { return this.coreInterface.searchInPackage(packageURL, searchTerm, options); }
   async searchInAllPackages(searchTerm, options) {

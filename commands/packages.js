@@ -17,9 +17,13 @@ async function loadPackage(system, vmEditor, spec) {
       console.warn(`Cannot load test of new package: ${e}`);
     }
   }
-  await vmEditor.updateModuleList();
-  await vmEditor.uiSelect(spec);
-  vmEditor.focus();
+  
+  if (vmEditor) {
+    await vmEditor.updateModuleList();
+    await vmEditor.uiSelect(spec);
+    vmEditor.focus();
+  }
+
   return system.getPackage(spec.address);
 }
 
@@ -62,7 +66,7 @@ export async function interactivelyCreatePackage(system, vmEditor) {
 
 }
 
-export async function interactivelyLoadPackage(system, vmEditor) {
+export async function interactivelyLoadPackage(system, vmEditor, related = vmEditor ? vmEditor.state.selection && vmEditor.state.selection.name : null, world) {
 
   // var vmEditor = that.owner;
   // var system = vmEditor.systemInterface()
@@ -70,10 +74,9 @@ export async function interactivelyLoadPackage(system, vmEditor) {
   var spec = {name: "", address: "", type: "package"}
 
   var config = await system.getConfig();
-  var related = vmEditor.state.selection && vmEditor.state.selection.name;
   var relatedPackage = related && (await system.getPackage(related) || await system.getPackageForModule(related));
 
-  var dir = await $world.prompt("What is the package directory?", {
+  var dir = await (world || $world).prompt("What is the package directory?", {
     input: (relatedPackage && relatedPackage.address) || config.baseURL,
     historyId: "lively.vm-editor-package-load-history",
     useLastInput: false
@@ -108,35 +111,44 @@ export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
   if (!p) throw new Error("Cannot find package for " + name);
 
   await system.reloadPackage(name);
-  await vmEditor.updateModuleList();
-  return await vmEditor.uiSelect(name, false);
+  
+  if (vmEditor) {
+    await vmEditor.updateModuleList();
+    return await vmEditor.uiSelect(name, false);
+  }
 }
 
-export async function interactivelyUnloadPackage(system, vmEditor, packageURL) {
+export async function interactivelyUnloadPackage(system, vmEditor, packageURL, world) {
   var p = await system.getPackage(packageURL);
-  var really = await $world.confirm(`Unload package ${p.name}??`);
+  var really = await (world || $world).confirm(`Unload package ${p.name}??`);
   if (!really) throw "Canceled";
   await system.removePackage(packageURL);
-  await vmEditor.updateModuleList();
-  await vmEditor.uiSelect(null);
+  
+  if (vmEditor) {
+    await vmEditor.updateModuleList();
+    await vmEditor.uiSelect(null);
+  }
 }
 
-export async function interactivelyRemovePackage(system, vmEditor, packageURL) {
+export async function interactivelyRemovePackage(system, vmEditor, packageURL, world = $world) {
   var p = await system.getPackage(packageURL);
-  var really = await $world.confirm(`Really remove package ${p.name}??`);
+  var really = await world.confirm(`Really remove package ${p.name}??`);
   if (!really) throw "Cancelled";
   system.removePackage(packageURL);
-  var really2 = await $world.confirm(`Also remove directory ${p.name} including ${p.modules.length} modules?`);
+  var really2 = await world.confirm(`Also remove directory ${p.name} including ${p.modules.length} modules?`);
   if (really2) {
-    var really3 = await $world.confirm(`REALLY *remove* directory ${p.name}? No undo possible...`);
+    var really3 = await world.confirm(`REALLY *remove* directory ${p.name}? No undo possible...`);
     if (really3) await system.resourceRemove(p.address);
   }
-  await vmEditor.updateModuleList()
-  await vmEditor.uiSelect(null);
+  
+  if (vmEditor) {
+    await vmEditor.updateModuleList()
+    await vmEditor.uiSelect(null);
+  }
 }
 
 // showExportsAndImportsOf("http://localhost:9001/packages/lively-system-interface/")
-export async function showExportsAndImportsOf(system, packageAddress) {
+export async function showExportsAndImportsOf(system, packageAddress, world = $world) {
   var p = await system.getPackage(packageAddress);
 
   if (!p)
@@ -149,7 +161,7 @@ export async function showExportsAndImportsOf(system, packageAddress) {
     try {
       var importsExports = await system.importsAndExportsOf(mod.name, await system.moduleRead(mod.name));
     } catch (e) {
-      $world.logError(new Error(`Error when getting imports/exports from module ${mod.name}:\n${e.stack}`));
+      world.logError(new Error(`Error when getting imports/exports from module ${mod.name}:\n${e.stack}`));
       continue;
     }
 
@@ -191,7 +203,7 @@ export async function showExportsAndImportsOf(system, packageAddress) {
     reports.push(report);
   }
 
-  $world.addCodeEditor({
+  world.addCodeEditor({
     title: "imports and exports of " + packageAddress,
     content: reports.join("\n\n"),
     textMode: "text",
