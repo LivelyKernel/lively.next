@@ -44,7 +44,7 @@
     var scripts = [].slice.call(document.getElementsByTagName("script")),
         pluginBabelPath;
 
-    for (var i = 0; i < scripts.length; i++) {
+    for (var i = scripts.length-1; i >= 0; i--) {
       var src = scripts[i].src;
       // is lively.modules loaded? Use it's node_modules folder
       var index1 = src.indexOf("lively.modules/");

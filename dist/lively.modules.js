@@ -16614,5311 +16614,5531 @@ module.exports = function(acorn) {
   (function() {
     this.lively = this.lively || {};
 (function (exports,lively_lang,escodegen,acorn$1) {
-  'use strict';
+'use strict';
 
-  var babelHelpers = {};
-  babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-  };
+// <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
+// Generated on 16-07-17 17:25 PDT
 
-  babelHelpers.classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
+function Visitor() {}
+Visitor.prototype.accept = function accept(node, state, path) {
+  if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
+  if (!node.type) throw new Error("Strangee AST node without type in Visitor.accept:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
+  switch (node.type) {
+    case "Node":
+      return this.visitNode(node, state, path);
+    case "SourceLocation":
+      return this.visitSourceLocation(node, state, path);
+    case "Position":
+      return this.visitPosition(node, state, path);
+    case "Program":
+      return this.visitProgram(node, state, path);
+    case "Function":
+      return this.visitFunction(node, state, path);
+    case "Statement":
+      return this.visitStatement(node, state, path);
+    case "SwitchCase":
+      return this.visitSwitchCase(node, state, path);
+    case "CatchClause":
+      return this.visitCatchClause(node, state, path);
+    case "VariableDeclarator":
+      return this.visitVariableDeclarator(node, state, path);
+    case "Expression":
+      return this.visitExpression(node, state, path);
+    case "Property":
+      return this.visitProperty(node, state, path);
+    case "Pattern":
+      return this.visitPattern(node, state, path);
+    case "Super":
+      return this.visitSuper(node, state, path);
+    case "SpreadElement":
+      return this.visitSpreadElement(node, state, path);
+    case "TemplateElement":
+      return this.visitTemplateElement(node, state, path);
+    case "Class":
+      return this.visitClass(node, state, path);
+    case "ClassBody":
+      return this.visitClassBody(node, state, path);
+    case "MethodDefinition":
+      return this.visitMethodDefinition(node, state, path);
+    case "ModuleDeclaration":
+      return this.visitModuleDeclaration(node, state, path);
+    case "ModuleSpecifier":
+      return this.visitModuleSpecifier(node, state, path);
+    case "RestProperty":
+      return this.visitRestProperty(node, state, path);
+    case "SpreadProperty":
+      return this.visitSpreadProperty(node, state, path);
+    case "Identifier":
+      return this.visitIdentifier(node, state, path);
+    case "Literal":
+      return this.visitLiteral(node, state, path);
+    case "ExpressionStatement":
+      return this.visitExpressionStatement(node, state, path);
+    case "BlockStatement":
+      return this.visitBlockStatement(node, state, path);
+    case "EmptyStatement":
+      return this.visitEmptyStatement(node, state, path);
+    case "DebuggerStatement":
+      return this.visitDebuggerStatement(node, state, path);
+    case "WithStatement":
+      return this.visitWithStatement(node, state, path);
+    case "ReturnStatement":
+      return this.visitReturnStatement(node, state, path);
+    case "LabeledStatement":
+      return this.visitLabeledStatement(node, state, path);
+    case "BreakStatement":
+      return this.visitBreakStatement(node, state, path);
+    case "ContinueStatement":
+      return this.visitContinueStatement(node, state, path);
+    case "IfStatement":
+      return this.visitIfStatement(node, state, path);
+    case "SwitchStatement":
+      return this.visitSwitchStatement(node, state, path);
+    case "ThrowStatement":
+      return this.visitThrowStatement(node, state, path);
+    case "TryStatement":
+      return this.visitTryStatement(node, state, path);
+    case "WhileStatement":
+      return this.visitWhileStatement(node, state, path);
+    case "DoWhileStatement":
+      return this.visitDoWhileStatement(node, state, path);
+    case "ForStatement":
+      return this.visitForStatement(node, state, path);
+    case "ForInStatement":
+      return this.visitForInStatement(node, state, path);
+    case "Declaration":
+      return this.visitDeclaration(node, state, path);
+    case "ThisExpression":
+      return this.visitThisExpression(node, state, path);
+    case "ArrayExpression":
+      return this.visitArrayExpression(node, state, path);
+    case "ObjectExpression":
+      return this.visitObjectExpression(node, state, path);
+    case "FunctionExpression":
+      return this.visitFunctionExpression(node, state, path);
+    case "UnaryExpression":
+      return this.visitUnaryExpression(node, state, path);
+    case "UpdateExpression":
+      return this.visitUpdateExpression(node, state, path);
+    case "BinaryExpression":
+      return this.visitBinaryExpression(node, state, path);
+    case "AssignmentExpression":
+      return this.visitAssignmentExpression(node, state, path);
+    case "LogicalExpression":
+      return this.visitLogicalExpression(node, state, path);
+    case "MemberExpression":
+      return this.visitMemberExpression(node, state, path);
+    case "ConditionalExpression":
+      return this.visitConditionalExpression(node, state, path);
+    case "CallExpression":
+      return this.visitCallExpression(node, state, path);
+    case "SequenceExpression":
+      return this.visitSequenceExpression(node, state, path);
+    case "ArrowFunctionExpression":
+      return this.visitArrowFunctionExpression(node, state, path);
+    case "YieldExpression":
+      return this.visitYieldExpression(node, state, path);
+    case "TemplateLiteral":
+      return this.visitTemplateLiteral(node, state, path);
+    case "TaggedTemplateExpression":
+      return this.visitTaggedTemplateExpression(node, state, path);
+    case "AssignmentProperty":
+      return this.visitAssignmentProperty(node, state, path);
+    case "ObjectPattern":
+      return this.visitObjectPattern(node, state, path);
+    case "ArrayPattern":
+      return this.visitArrayPattern(node, state, path);
+    case "RestElement":
+      return this.visitRestElement(node, state, path);
+    case "AssignmentPattern":
+      return this.visitAssignmentPattern(node, state, path);
+    case "ClassExpression":
+      return this.visitClassExpression(node, state, path);
+    case "MetaProperty":
+      return this.visitMetaProperty(node, state, path);
+    case "ImportDeclaration":
+      return this.visitImportDeclaration(node, state, path);
+    case "ImportSpecifier":
+      return this.visitImportSpecifier(node, state, path);
+    case "ImportDefaultSpecifier":
+      return this.visitImportDefaultSpecifier(node, state, path);
+    case "ImportNamespaceSpecifier":
+      return this.visitImportNamespaceSpecifier(node, state, path);
+    case "ExportNamedDeclaration":
+      return this.visitExportNamedDeclaration(node, state, path);
+    case "ExportSpecifier":
+      return this.visitExportSpecifier(node, state, path);
+    case "ExportDefaultDeclaration":
+      return this.visitExportDefaultDeclaration(node, state, path);
+    case "ExportAllDeclaration":
+      return this.visitExportAllDeclaration(node, state, path);
+    case "AwaitExpression":
+      return this.visitAwaitExpression(node, state, path);
+    case "RegExpLiteral":
+      return this.visitRegExpLiteral(node, state, path);
+    case "FunctionDeclaration":
+      return this.visitFunctionDeclaration(node, state, path);
+    case "VariableDeclaration":
+      return this.visitVariableDeclaration(node, state, path);
+    case "NewExpression":
+      return this.visitNewExpression(node, state, path);
+    case "ForOfStatement":
+      return this.visitForOfStatement(node, state, path);
+    case "ClassDeclaration":
+      return this.visitClassDeclaration(node, state, path);
+  }
+  throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
+};
+Visitor.prototype.visitNode = function visitNode(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
+  var visitor = this;
+  // start is of types Position
+  node["start"] = visitor.accept(node["start"], state, path.concat(["start"]));
+  // end is of types Position
+  node["end"] = visitor.accept(node["end"], state, path.concat(["end"]));
+  return node;
+};
+Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
+  var visitor = this;
+  // body is a list with types Statement, ModuleDeclaration
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
+};
+Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  if (node["test"]) {
+    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  }
+  // consequent is a list with types Statement
+  var newElements = [];
+  for (var i = 0; i < node["consequent"].length; i++) {
+    var ea = node["consequent"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["consequent", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["consequent"] = newElements;
+  return node;
+};
+Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
+  var visitor = this;
+  // param is of types Pattern
+  node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
+  var visitor = this;
+  // id is of types Pattern
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // init is of types Expression
+  if (node["init"]) {
+    node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
+  }
+  return node;
+};
+Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
+  var visitor = this;
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // value is of types Expression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  return node;
+};
+Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitClass = function visitClass(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
+  var visitor = this;
+  // body is a list with types MethodDefinition
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
+};
+Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
+  var visitor = this;
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  // value is of types FunctionExpression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  return node;
+};
+Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
+  var visitor = this;
+  // expression is of types Expression
+  node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
+  return node;
+};
+Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
+  var visitor = this;
+  // body is a list with types Statement
+  var newElements = [];
+  for (var i = 0; i < node["body"].length; i++) {
+    var ea = node["body"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["body"] = newElements;
+  return node;
+};
+Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
+  var visitor = this;
+  // object is of types Expression
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  return node;
+};
+Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  if (node["label"]) {
+    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  }
+  return node;
+};
+Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
+  var visitor = this;
+  // label is of types Identifier
+  if (node["label"]) {
+    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
+  }
+  return node;
+};
+Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // consequent is of types Statement
+  node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
+  // alternate is of types Statement
+  if (node["alternate"]) {
+    node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
+  }
+  return node;
+};
+Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
+  var visitor = this;
+  // discriminant is of types Expression
+  node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
+  // cases is a list with types SwitchCase
+  var newElements = [];
+  for (var i = 0; i < node["cases"].length; i++) {
+    var ea = node["cases"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["cases", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["cases"] = newElements;
+  return node;
+};
+Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
+  var visitor = this;
+  // block is of types BlockStatement
+  node["block"] = visitor.accept(node["block"], state, path.concat(["block"]));
+  // handler is of types CatchClause
+  if (node["handler"]) {
+    node["handler"] = visitor.accept(node["handler"], state, path.concat(["handler"]));
+  }
+  // finalizer is of types BlockStatement
+  if (node["finalizer"]) {
+    node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
+  }
+  return node;
+};
+Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
+  var visitor = this;
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  return node;
+};
+Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
+  var visitor = this;
+  // init is of types VariableDeclaration, Expression
+  if (node["init"]) {
+    node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
+  }
+  // test is of types Expression
+  if (node["test"]) {
+    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  }
+  // update is of types Expression
+  if (node["update"]) {
+    node["update"] = visitor.accept(node["update"], state, path.concat(["update"]));
+  }
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
+  var visitor = this;
+  // left is of types VariableDeclaration, Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
+  var visitor = this;
+  // elements is a list with types Expression, SpreadElement
+  if (node["elements"]) {
+    var newElements = [];
+    for (var i = 0; i < node["elements"].length; i++) {
+      var ea = node["elements"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
     }
-  };
-
-  babelHelpers.createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
+    node["elements"] = newElements;
+  }
+  return node;
+};
+Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
+  var visitor = this;
+  // properties is a list with types Property, SpreadProperty
+  var newElements = [];
+  for (var i = 0; i < node["properties"].length; i++) {
+    var ea = node["properties"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["properties"] = newElements;
+  return node;
+};
+Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Expression
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
+  var visitor = this;
+  // left is of types Expression
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
+  var visitor = this;
+  // object is of types Expression, Super
+  node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
+  // property is of types Expression
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  return node;
+};
+Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
+  var visitor = this;
+  // test is of types Expression
+  node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
+  // alternate is of types Expression
+  node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
+  // consequent is of types Expression
+  node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
+  return node;
+};
+Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression, Super
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression, SpreadElement
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
+};
+Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
+  var visitor = this;
+  // expressions is a list with types Expression
+  var newElements = [];
+  for (var i = 0; i < node["expressions"].length; i++) {
+    var ea = node["expressions"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["expressions"] = newElements;
+  return node;
+};
+Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
+  var visitor = this;
+  // body is of types BlockStatement, Expression
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  return node;
+};
+Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  return node;
+};
+Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
+  var visitor = this;
+  // quasis is a list with types TemplateElement
+  var newElements = [];
+  for (var i = 0; i < node["quasis"].length; i++) {
+    var ea = node["quasis"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["quasis", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["quasis"] = newElements;
+  // expressions is a list with types Expression
+  var newElements = [];
+  for (var i = 0; i < node["expressions"].length; i++) {
+    var ea = node["expressions"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["expressions"] = newElements;
+  return node;
+};
+Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
+  var visitor = this;
+  // tag is of types Expression
+  node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
+  // quasi is of types TemplateLiteral
+  node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
+  return node;
+};
+Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
+  var visitor = this;
+  // value is of types Pattern, Expression
+  node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
+  // key is of types Expression
+  node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
+  return node;
+};
+Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
+  var visitor = this;
+  // properties is a list with types AssignmentProperty, RestProperty
+  var newElements = [];
+  for (var i = 0; i < node["properties"].length; i++) {
+    var ea = node["properties"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["properties"] = newElements;
+  return node;
+};
+Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
+  var visitor = this;
+  // elements is a list with types Pattern
+  if (node["elements"]) {
+    var newElements = [];
+    for (var i = 0; i < node["elements"].length; i++) {
+      var ea = node["elements"][i];
+      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
     }
+    node["elements"] = newElements;
+  }
+  return node;
+};
+Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
+  var visitor = this;
+  // argument is of types Pattern
+  node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  return node;
+};
+Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
+  var visitor = this;
+  // left is of types Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  return node;
+};
+Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  if (node["id"]) {
+    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  }
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
+  var visitor = this;
+  // meta is of types Identifier
+  node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
+  // property is of types Identifier
+  node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
+  return node;
+};
+Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
+  var visitor = this;
+  // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
+  var newElements = [];
+  for (var i = 0; i < node["specifiers"].length; i++) {
+    var ea = node["specifiers"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["specifiers"] = newElements;
+  // source is of types Literal
+  node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  return node;
+};
+Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
+  var visitor = this;
+  // imported is of types Identifier
+  node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
+  var visitor = this;
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
+  var visitor = this;
+  // declaration is of types Declaration
+  if (node["declaration"]) {
+    node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
+  }
+  // specifiers is a list with types ExportSpecifier
+  var newElements = [];
+  for (var i = 0; i < node["specifiers"].length; i++) {
+    var ea = node["specifiers"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["specifiers"] = newElements;
+  // source is of types Literal
+  if (node["source"]) {
+    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  }
+  return node;
+};
+Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
+  var visitor = this;
+  // exported is of types Identifier
+  node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
+  // local is of types Identifier
+  node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
+  return node;
+};
+Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
+  var visitor = this;
+  // declaration is of types Declaration, Expression
+  node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
+  return node;
+};
+Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
+  var visitor = this;
+  // source is of types Literal
+  node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
+  return node;
+};
+Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
+  var visitor = this;
+  // argument is of types Expression
+  if (node["argument"]) {
+    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
+  }
+  return node;
+};
+Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
+  var visitor = this;
+  return node;
+};
+Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // params is a list with types Pattern
+  var newElements = [];
+  for (var i = 0; i < node["params"].length; i++) {
+    var ea = node["params"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["params"] = newElements;
+  // body is of types BlockStatement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
+  var visitor = this;
+  // declarations is a list with types VariableDeclarator
+  var newElements = [];
+  for (var i = 0; i < node["declarations"].length; i++) {
+    var ea = node["declarations"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["declarations", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["declarations"] = newElements;
+  return node;
+};
+Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
+  var visitor = this;
+  // callee is of types Expression, Super
+  node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
+  // arguments is a list with types Expression, SpreadElement
+  var newElements = [];
+  for (var i = 0; i < node["arguments"].length; i++) {
+    var ea = node["arguments"][i];
+    var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
+    if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
+  }
+  node["arguments"] = newElements;
+  return node;
+};
+Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
+  var visitor = this;
+  // left is of types VariableDeclaration, Pattern
+  node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
+  // right is of types Expression
+  node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
+  // body is of types Statement
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
+Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
+  var visitor = this;
+  // id is of types Identifier
+  node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
+  // superClass is of types Expression
+  if (node["superClass"]) {
+    node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
+  }
+  // body is of types ClassBody
+  node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
+  return node;
+};
 
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
+};
 
-  babelHelpers.defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
 
-    return obj;
-  };
 
-  babelHelpers.extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
 
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
         }
-      }
+      });
     }
 
-    return target;
-  };
-
-  babelHelpers.get = function get(object, property, receiver) {
-    if (object === null) object = Function.prototype;
-    var desc = Object.getOwnPropertyDescriptor(object, property);
-
-    if (desc === undefined) {
-      var parent = Object.getPrototypeOf(object);
-
-      if (parent === null) {
-        return undefined;
-      } else {
-        return get(parent, property, receiver);
-      }
-    } else if ("value" in desc) {
-      return desc.value;
-    } else {
-      var getter = desc.get;
-
-      if (getter === undefined) {
-        return undefined;
-      }
-
-      return getter.call(receiver);
-    }
-  };
-
-  babelHelpers.inherits = function (subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-    }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  };
-
-  babelHelpers.possibleConstructorReturn = function (self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  };
-
-  babelHelpers.slicedToArray = function () {
-    function sliceIterator(arr, i) {
-      var _arr = [];
-      var _n = true;
-      var _d = false;
-      var _e = undefined;
-
+    function resume(key, arg) {
       try {
-        for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-          _arr.push(_s.value);
+        var result = gen[key](arg);
+        var value = result.value;
 
-          if (i && _arr.length === i) break;
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
         }
       } catch (err) {
-        _d = true;
-        _e = err;
-      } finally {
-        try {
-          if (!_n && _i["return"]) _i["return"]();
-        } finally {
-          if (_d) throw _e;
-        }
+        settle("throw", err);
       }
-
-      return _arr;
     }
 
-    return function (arr, i) {
-      if (Array.isArray(arr)) {
-        return arr;
-      } else if (Symbol.iterator in Object(arr)) {
-        return sliceIterator(arr, i);
-      } else {
-        throw new TypeError("Invalid attempt to destructure non-iterable instance");
-      }
-    };
-  }();
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
 
-  babelHelpers.toArray = function (arr) {
-    return Array.isArray(arr) ? arr : Array.from(arr);
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
   };
 
-  babelHelpers.toConsumableArray = function (arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
 
-      return arr2;
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
+
+  return obj$$1;
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
     } else {
-      return Array.from(arr);
+      return get(parent, property, receiver);
     }
-  };
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
 
-  babelHelpers;
-
-  // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-  // Generated on 16-07-17 17:25 PDT
-
-  function Visitor() {}
-  Visitor.prototype.accept = function accept(node, state, path) {
-    if (!node) throw new Error("Undefined AST node in Visitor.accept:\n  " + path.join(".") + "\n  " + node);
-    if (!node.type) throw new Error("Strangee AST node without type in Visitor.accept:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
-    switch (node.type) {
-      case "Node":
-        return this.visitNode(node, state, path);
-      case "SourceLocation":
-        return this.visitSourceLocation(node, state, path);
-      case "Position":
-        return this.visitPosition(node, state, path);
-      case "Program":
-        return this.visitProgram(node, state, path);
-      case "Function":
-        return this.visitFunction(node, state, path);
-      case "Statement":
-        return this.visitStatement(node, state, path);
-      case "SwitchCase":
-        return this.visitSwitchCase(node, state, path);
-      case "CatchClause":
-        return this.visitCatchClause(node, state, path);
-      case "VariableDeclarator":
-        return this.visitVariableDeclarator(node, state, path);
-      case "Expression":
-        return this.visitExpression(node, state, path);
-      case "Property":
-        return this.visitProperty(node, state, path);
-      case "Pattern":
-        return this.visitPattern(node, state, path);
-      case "Super":
-        return this.visitSuper(node, state, path);
-      case "SpreadElement":
-        return this.visitSpreadElement(node, state, path);
-      case "TemplateElement":
-        return this.visitTemplateElement(node, state, path);
-      case "Class":
-        return this.visitClass(node, state, path);
-      case "ClassBody":
-        return this.visitClassBody(node, state, path);
-      case "MethodDefinition":
-        return this.visitMethodDefinition(node, state, path);
-      case "ModuleDeclaration":
-        return this.visitModuleDeclaration(node, state, path);
-      case "ModuleSpecifier":
-        return this.visitModuleSpecifier(node, state, path);
-      case "RestProperty":
-        return this.visitRestProperty(node, state, path);
-      case "SpreadProperty":
-        return this.visitSpreadProperty(node, state, path);
-      case "Identifier":
-        return this.visitIdentifier(node, state, path);
-      case "Literal":
-        return this.visitLiteral(node, state, path);
-      case "ExpressionStatement":
-        return this.visitExpressionStatement(node, state, path);
-      case "BlockStatement":
-        return this.visitBlockStatement(node, state, path);
-      case "EmptyStatement":
-        return this.visitEmptyStatement(node, state, path);
-      case "DebuggerStatement":
-        return this.visitDebuggerStatement(node, state, path);
-      case "WithStatement":
-        return this.visitWithStatement(node, state, path);
-      case "ReturnStatement":
-        return this.visitReturnStatement(node, state, path);
-      case "LabeledStatement":
-        return this.visitLabeledStatement(node, state, path);
-      case "BreakStatement":
-        return this.visitBreakStatement(node, state, path);
-      case "ContinueStatement":
-        return this.visitContinueStatement(node, state, path);
-      case "IfStatement":
-        return this.visitIfStatement(node, state, path);
-      case "SwitchStatement":
-        return this.visitSwitchStatement(node, state, path);
-      case "ThrowStatement":
-        return this.visitThrowStatement(node, state, path);
-      case "TryStatement":
-        return this.visitTryStatement(node, state, path);
-      case "WhileStatement":
-        return this.visitWhileStatement(node, state, path);
-      case "DoWhileStatement":
-        return this.visitDoWhileStatement(node, state, path);
-      case "ForStatement":
-        return this.visitForStatement(node, state, path);
-      case "ForInStatement":
-        return this.visitForInStatement(node, state, path);
-      case "Declaration":
-        return this.visitDeclaration(node, state, path);
-      case "ThisExpression":
-        return this.visitThisExpression(node, state, path);
-      case "ArrayExpression":
-        return this.visitArrayExpression(node, state, path);
-      case "ObjectExpression":
-        return this.visitObjectExpression(node, state, path);
-      case "FunctionExpression":
-        return this.visitFunctionExpression(node, state, path);
-      case "UnaryExpression":
-        return this.visitUnaryExpression(node, state, path);
-      case "UpdateExpression":
-        return this.visitUpdateExpression(node, state, path);
-      case "BinaryExpression":
-        return this.visitBinaryExpression(node, state, path);
-      case "AssignmentExpression":
-        return this.visitAssignmentExpression(node, state, path);
-      case "LogicalExpression":
-        return this.visitLogicalExpression(node, state, path);
-      case "MemberExpression":
-        return this.visitMemberExpression(node, state, path);
-      case "ConditionalExpression":
-        return this.visitConditionalExpression(node, state, path);
-      case "CallExpression":
-        return this.visitCallExpression(node, state, path);
-      case "SequenceExpression":
-        return this.visitSequenceExpression(node, state, path);
-      case "ArrowFunctionExpression":
-        return this.visitArrowFunctionExpression(node, state, path);
-      case "YieldExpression":
-        return this.visitYieldExpression(node, state, path);
-      case "TemplateLiteral":
-        return this.visitTemplateLiteral(node, state, path);
-      case "TaggedTemplateExpression":
-        return this.visitTaggedTemplateExpression(node, state, path);
-      case "AssignmentProperty":
-        return this.visitAssignmentProperty(node, state, path);
-      case "ObjectPattern":
-        return this.visitObjectPattern(node, state, path);
-      case "ArrayPattern":
-        return this.visitArrayPattern(node, state, path);
-      case "RestElement":
-        return this.visitRestElement(node, state, path);
-      case "AssignmentPattern":
-        return this.visitAssignmentPattern(node, state, path);
-      case "ClassExpression":
-        return this.visitClassExpression(node, state, path);
-      case "MetaProperty":
-        return this.visitMetaProperty(node, state, path);
-      case "ImportDeclaration":
-        return this.visitImportDeclaration(node, state, path);
-      case "ImportSpecifier":
-        return this.visitImportSpecifier(node, state, path);
-      case "ImportDefaultSpecifier":
-        return this.visitImportDefaultSpecifier(node, state, path);
-      case "ImportNamespaceSpecifier":
-        return this.visitImportNamespaceSpecifier(node, state, path);
-      case "ExportNamedDeclaration":
-        return this.visitExportNamedDeclaration(node, state, path);
-      case "ExportSpecifier":
-        return this.visitExportSpecifier(node, state, path);
-      case "ExportDefaultDeclaration":
-        return this.visitExportDefaultDeclaration(node, state, path);
-      case "ExportAllDeclaration":
-        return this.visitExportAllDeclaration(node, state, path);
-      case "AwaitExpression":
-        return this.visitAwaitExpression(node, state, path);
-      case "RegExpLiteral":
-        return this.visitRegExpLiteral(node, state, path);
-      case "FunctionDeclaration":
-        return this.visitFunctionDeclaration(node, state, path);
-      case "VariableDeclaration":
-        return this.visitVariableDeclaration(node, state, path);
-      case "NewExpression":
-        return this.visitNewExpression(node, state, path);
-      case "ForOfStatement":
-        return this.visitForOfStatement(node, state, path);
-      case "ClassDeclaration":
-        return this.visitClassDeclaration(node, state, path);
-    }
-    throw new Error("No visit function in AST visitor Visitor for:\n  " + path.join(".") + "\n  " + JSON.stringify(node));
-  };
-  Visitor.prototype.visitNode = function visitNode(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSourceLocation = function visitSourceLocation(node, state, path) {
-    var visitor = this;
-    // start is of types Position
-    node["start"] = visitor.accept(node["start"], state, path.concat(["start"]));
-    // end is of types Position
-    node["end"] = visitor.accept(node["end"], state, path.concat(["end"]));
-    return node;
-  };
-  Visitor.prototype.visitPosition = function visitPosition(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitProgram = function visitProgram(node, state, path) {
-    var visitor = this;
-    // body is a list with types Statement, ModuleDeclaration
-    var newElements = [];
-    for (var i = 0; i < node["body"].length; i++) {
-      var ea = node["body"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["body"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitFunction = function visitFunction(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitStatement = function visitStatement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSwitchCase = function visitSwitchCase(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    if (node["test"]) {
-      node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    }
-    // consequent is a list with types Statement
-    var newElements = [];
-    for (var i = 0; i < node["consequent"].length; i++) {
-      var ea = node["consequent"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["consequent", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["consequent"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitCatchClause = function visitCatchClause(node, state, path) {
-    var visitor = this;
-    // param is of types Pattern
-    node["param"] = visitor.accept(node["param"], state, path.concat(["param"]));
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitVariableDeclarator = function visitVariableDeclarator(node, state, path) {
-    var visitor = this;
-    // id is of types Pattern
-    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    // init is of types Expression
-    if (node["init"]) {
-      node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitExpression = function visitExpression(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitProperty = function visitProperty(node, state, path) {
-    var visitor = this;
-    // key is of types Expression
-    node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    // value is of types Expression
-    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    return node;
-  };
-  Visitor.prototype.visitPattern = function visitPattern(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSuper = function visitSuper(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitSpreadElement = function visitSpreadElement(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitTemplateElement = function visitTemplateElement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitClass = function visitClass(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // superClass is of types Expression
-    if (node["superClass"]) {
-      node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
-    }
-    // body is of types ClassBody
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitClassBody = function visitClassBody(node, state, path) {
-    var visitor = this;
-    // body is a list with types MethodDefinition
-    var newElements = [];
-    for (var i = 0; i < node["body"].length; i++) {
-      var ea = node["body"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["body"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitMethodDefinition = function visitMethodDefinition(node, state, path) {
-    var visitor = this;
-    // key is of types Expression
-    node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    // value is of types FunctionExpression
-    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    return node;
-  };
-  Visitor.prototype.visitModuleDeclaration = function visitModuleDeclaration(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitModuleSpecifier = function visitModuleSpecifier(node, state, path) {
-    var visitor = this;
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitRestProperty = function visitRestProperty(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitSpreadProperty = function visitSpreadProperty(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitIdentifier = function visitIdentifier(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitLiteral = function visitLiteral(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitExpressionStatement = function visitExpressionStatement(node, state, path) {
-    var visitor = this;
-    // expression is of types Expression
-    node["expression"] = visitor.accept(node["expression"], state, path.concat(["expression"]));
-    return node;
-  };
-  Visitor.prototype.visitBlockStatement = function visitBlockStatement(node, state, path) {
-    var visitor = this;
-    // body is a list with types Statement
-    var newElements = [];
-    for (var i = 0; i < node["body"].length; i++) {
-      var ea = node["body"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["body", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["body"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitEmptyStatement = function visitEmptyStatement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitDebuggerStatement = function visitDebuggerStatement(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitWithStatement = function visitWithStatement(node, state, path) {
-    var visitor = this;
-    // object is of types Expression
-    node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitReturnStatement = function visitReturnStatement(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    if (node["argument"]) {
-      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitLabeledStatement = function visitLabeledStatement(node, state, path) {
-    var visitor = this;
-    // label is of types Identifier
-    node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitBreakStatement = function visitBreakStatement(node, state, path) {
-    var visitor = this;
-    // label is of types Identifier
-    if (node["label"]) {
-      node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitContinueStatement = function visitContinueStatement(node, state, path) {
-    var visitor = this;
-    // label is of types Identifier
-    if (node["label"]) {
-      node["label"] = visitor.accept(node["label"], state, path.concat(["label"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitIfStatement = function visitIfStatement(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // consequent is of types Statement
-    node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
-    // alternate is of types Statement
-    if (node["alternate"]) {
-      node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitSwitchStatement = function visitSwitchStatement(node, state, path) {
-    var visitor = this;
-    // discriminant is of types Expression
-    node["discriminant"] = visitor.accept(node["discriminant"], state, path.concat(["discriminant"]));
-    // cases is a list with types SwitchCase
-    var newElements = [];
-    for (var i = 0; i < node["cases"].length; i++) {
-      var ea = node["cases"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["cases", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["cases"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitThrowStatement = function visitThrowStatement(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitTryStatement = function visitTryStatement(node, state, path) {
-    var visitor = this;
-    // block is of types BlockStatement
-    node["block"] = visitor.accept(node["block"], state, path.concat(["block"]));
-    // handler is of types CatchClause
-    if (node["handler"]) {
-      node["handler"] = visitor.accept(node["handler"], state, path.concat(["handler"]));
-    }
-    // finalizer is of types BlockStatement
-    if (node["finalizer"]) {
-      node["finalizer"] = visitor.accept(node["finalizer"], state, path.concat(["finalizer"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitWhileStatement = function visitWhileStatement(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitDoWhileStatement = function visitDoWhileStatement(node, state, path) {
-    var visitor = this;
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    return node;
-  };
-  Visitor.prototype.visitForStatement = function visitForStatement(node, state, path) {
-    var visitor = this;
-    // init is of types VariableDeclaration, Expression
-    if (node["init"]) {
-      node["init"] = visitor.accept(node["init"], state, path.concat(["init"]));
-    }
-    // test is of types Expression
-    if (node["test"]) {
-      node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    }
-    // update is of types Expression
-    if (node["update"]) {
-      node["update"] = visitor.accept(node["update"], state, path.concat(["update"]));
-    }
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitForInStatement = function visitForInStatement(node, state, path) {
-    var visitor = this;
-    // left is of types VariableDeclaration, Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitDeclaration = function visitDeclaration(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitThisExpression = function visitThisExpression(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitArrayExpression = function visitArrayExpression(node, state, path) {
-    var visitor = this;
-    // elements is a list with types Expression, SpreadElement
-    if (node["elements"]) {
-      var newElements = [];
-      for (var i = 0; i < node["elements"].length; i++) {
-        var ea = node["elements"][i];
-        var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
-        if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-      }
-      node["elements"] = newElements;
-    }
-    return node;
-  };
-  Visitor.prototype.visitObjectExpression = function visitObjectExpression(node, state, path) {
-    var visitor = this;
-    // properties is a list with types Property, SpreadProperty
-    var newElements = [];
-    for (var i = 0; i < node["properties"].length; i++) {
-      var ea = node["properties"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["properties"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitFunctionExpression = function visitFunctionExpression(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitUnaryExpression = function visitUnaryExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitUpdateExpression = function visitUpdateExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitBinaryExpression = function visitBinaryExpression(node, state, path) {
-    var visitor = this;
-    // left is of types Expression
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitAssignmentExpression = function visitAssignmentExpression(node, state, path) {
-    var visitor = this;
-    // left is of types Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitLogicalExpression = function visitLogicalExpression(node, state, path) {
-    var visitor = this;
-    // left is of types Expression
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitMemberExpression = function visitMemberExpression(node, state, path) {
-    var visitor = this;
-    // object is of types Expression, Super
-    node["object"] = visitor.accept(node["object"], state, path.concat(["object"]));
-    // property is of types Expression
-    node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-    return node;
-  };
-  Visitor.prototype.visitConditionalExpression = function visitConditionalExpression(node, state, path) {
-    var visitor = this;
-    // test is of types Expression
-    node["test"] = visitor.accept(node["test"], state, path.concat(["test"]));
-    // alternate is of types Expression
-    node["alternate"] = visitor.accept(node["alternate"], state, path.concat(["alternate"]));
-    // consequent is of types Expression
-    node["consequent"] = visitor.accept(node["consequent"], state, path.concat(["consequent"]));
-    return node;
-  };
-  Visitor.prototype.visitCallExpression = function visitCallExpression(node, state, path) {
-    var visitor = this;
-    // callee is of types Expression, Super
-    node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-    // arguments is a list with types Expression, SpreadElement
-    var newElements = [];
-    for (var i = 0; i < node["arguments"].length; i++) {
-      var ea = node["arguments"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["arguments"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitSequenceExpression = function visitSequenceExpression(node, state, path) {
-    var visitor = this;
-    // expressions is a list with types Expression
-    var newElements = [];
-    for (var i = 0; i < node["expressions"].length; i++) {
-      var ea = node["expressions"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["expressions"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitArrowFunctionExpression = function visitArrowFunctionExpression(node, state, path) {
-    var visitor = this;
-    // body is of types BlockStatement, Expression
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitYieldExpression = function visitYieldExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    if (node["argument"]) {
-      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitTemplateLiteral = function visitTemplateLiteral(node, state, path) {
-    var visitor = this;
-    // quasis is a list with types TemplateElement
-    var newElements = [];
-    for (var i = 0; i < node["quasis"].length; i++) {
-      var ea = node["quasis"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["quasis", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["quasis"] = newElements;
-    // expressions is a list with types Expression
-    var newElements = [];
-    for (var i = 0; i < node["expressions"].length; i++) {
-      var ea = node["expressions"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["expressions", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["expressions"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitTaggedTemplateExpression = function visitTaggedTemplateExpression(node, state, path) {
-    var visitor = this;
-    // tag is of types Expression
-    node["tag"] = visitor.accept(node["tag"], state, path.concat(["tag"]));
-    // quasi is of types TemplateLiteral
-    node["quasi"] = visitor.accept(node["quasi"], state, path.concat(["quasi"]));
-    return node;
-  };
-  Visitor.prototype.visitAssignmentProperty = function visitAssignmentProperty(node, state, path) {
-    var visitor = this;
-    // value is of types Pattern, Expression
-    node["value"] = visitor.accept(node["value"], state, path.concat(["value"]));
-    // key is of types Expression
-    node["key"] = visitor.accept(node["key"], state, path.concat(["key"]));
-    return node;
-  };
-  Visitor.prototype.visitObjectPattern = function visitObjectPattern(node, state, path) {
-    var visitor = this;
-    // properties is a list with types AssignmentProperty, RestProperty
-    var newElements = [];
-    for (var i = 0; i < node["properties"].length; i++) {
-      var ea = node["properties"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["properties", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["properties"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitArrayPattern = function visitArrayPattern(node, state, path) {
-    var visitor = this;
-    // elements is a list with types Pattern
-    if (node["elements"]) {
-      var newElements = [];
-      for (var i = 0; i < node["elements"].length; i++) {
-        var ea = node["elements"][i];
-        var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["elements", i])) : ea;
-        if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-      }
-      node["elements"] = newElements;
-    }
-    return node;
-  };
-  Visitor.prototype.visitRestElement = function visitRestElement(node, state, path) {
-    var visitor = this;
-    // argument is of types Pattern
-    node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    return node;
-  };
-  Visitor.prototype.visitAssignmentPattern = function visitAssignmentPattern(node, state, path) {
-    var visitor = this;
-    // left is of types Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    return node;
-  };
-  Visitor.prototype.visitClassExpression = function visitClassExpression(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    if (node["id"]) {
-      node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    }
-    // superClass is of types Expression
-    if (node["superClass"]) {
-      node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
-    }
-    // body is of types ClassBody
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitMetaProperty = function visitMetaProperty(node, state, path) {
-    var visitor = this;
-    // meta is of types Identifier
-    node["meta"] = visitor.accept(node["meta"], state, path.concat(["meta"]));
-    // property is of types Identifier
-    node["property"] = visitor.accept(node["property"], state, path.concat(["property"]));
-    return node;
-  };
-  Visitor.prototype.visitImportDeclaration = function visitImportDeclaration(node, state, path) {
-    var visitor = this;
-    // specifiers is a list with types ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier
-    var newElements = [];
-    for (var i = 0; i < node["specifiers"].length; i++) {
-      var ea = node["specifiers"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["specifiers"] = newElements;
-    // source is of types Literal
-    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    return node;
-  };
-  Visitor.prototype.visitImportSpecifier = function visitImportSpecifier(node, state, path) {
-    var visitor = this;
-    // imported is of types Identifier
-    node["imported"] = visitor.accept(node["imported"], state, path.concat(["imported"]));
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitImportDefaultSpecifier = function visitImportDefaultSpecifier(node, state, path) {
-    var visitor = this;
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitImportNamespaceSpecifier = function visitImportNamespaceSpecifier(node, state, path) {
-    var visitor = this;
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitExportNamedDeclaration = function visitExportNamedDeclaration(node, state, path) {
-    var visitor = this;
-    // declaration is of types Declaration
-    if (node["declaration"]) {
-      node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
-    }
-    // specifiers is a list with types ExportSpecifier
-    var newElements = [];
-    for (var i = 0; i < node["specifiers"].length; i++) {
-      var ea = node["specifiers"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["specifiers", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["specifiers"] = newElements;
-    // source is of types Literal
-    if (node["source"]) {
-      node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitExportSpecifier = function visitExportSpecifier(node, state, path) {
-    var visitor = this;
-    // exported is of types Identifier
-    node["exported"] = visitor.accept(node["exported"], state, path.concat(["exported"]));
-    // local is of types Identifier
-    node["local"] = visitor.accept(node["local"], state, path.concat(["local"]));
-    return node;
-  };
-  Visitor.prototype.visitExportDefaultDeclaration = function visitExportDefaultDeclaration(node, state, path) {
-    var visitor = this;
-    // declaration is of types Declaration, Expression
-    node["declaration"] = visitor.accept(node["declaration"], state, path.concat(["declaration"]));
-    return node;
-  };
-  Visitor.prototype.visitExportAllDeclaration = function visitExportAllDeclaration(node, state, path) {
-    var visitor = this;
-    // source is of types Literal
-    node["source"] = visitor.accept(node["source"], state, path.concat(["source"]));
-    return node;
-  };
-  Visitor.prototype.visitAwaitExpression = function visitAwaitExpression(node, state, path) {
-    var visitor = this;
-    // argument is of types Expression
-    if (node["argument"]) {
-      node["argument"] = visitor.accept(node["argument"], state, path.concat(["argument"]));
-    }
-    return node;
-  };
-  Visitor.prototype.visitRegExpLiteral = function visitRegExpLiteral(node, state, path) {
-    var visitor = this;
-    return node;
-  };
-  Visitor.prototype.visitFunctionDeclaration = function visitFunctionDeclaration(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    // params is a list with types Pattern
-    var newElements = [];
-    for (var i = 0; i < node["params"].length; i++) {
-      var ea = node["params"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["params", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["params"] = newElements;
-    // body is of types BlockStatement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitVariableDeclaration = function visitVariableDeclaration(node, state, path) {
-    var visitor = this;
-    // declarations is a list with types VariableDeclarator
-    var newElements = [];
-    for (var i = 0; i < node["declarations"].length; i++) {
-      var ea = node["declarations"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["declarations", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["declarations"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitNewExpression = function visitNewExpression(node, state, path) {
-    var visitor = this;
-    // callee is of types Expression, Super
-    node["callee"] = visitor.accept(node["callee"], state, path.concat(["callee"]));
-    // arguments is a list with types Expression, SpreadElement
-    var newElements = [];
-    for (var i = 0; i < node["arguments"].length; i++) {
-      var ea = node["arguments"][i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(["arguments", i])) : ea;
-      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);else newElements.push(acceptedNodes);
-    }
-    node["arguments"] = newElements;
-    return node;
-  };
-  Visitor.prototype.visitForOfStatement = function visitForOfStatement(node, state, path) {
-    var visitor = this;
-    // left is of types VariableDeclaration, Pattern
-    node["left"] = visitor.accept(node["left"], state, path.concat(["left"]));
-    // right is of types Expression
-    node["right"] = visitor.accept(node["right"], state, path.concat(["right"]));
-    // body is of types Statement
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-  Visitor.prototype.visitClassDeclaration = function visitClassDeclaration(node, state, path) {
-    var visitor = this;
-    // id is of types Identifier
-    node["id"] = visitor.accept(node["id"], state, path.concat(["id"]));
-    // superClass is of types Expression
-    if (node["superClass"]) {
-      node["superClass"] = visitor.accept(node["superClass"], state, path.concat(["superClass"]));
-    }
-    // body is of types ClassBody
-    node["body"] = visitor.accept(node["body"], state, path.concat(["body"]));
-    return node;
-  };
-
-  var PrinterVisitor = function (_Visitor) {
-    babelHelpers.inherits(PrinterVisitor, _Visitor);
-
-    function PrinterVisitor() {
-      babelHelpers.classCallCheck(this, PrinterVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(PrinterVisitor).apply(this, arguments));
+    if (getter === undefined) {
+      return undefined;
     }
 
-    babelHelpers.createClass(PrinterVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        var pathString = path.map(function (ea) {
-          return typeof ea === 'string' ? "." + ea : "[" + ea + "]";
-        }).join(''),
-            myChildren = [],
-            result = babelHelpers.get(Object.getPrototypeOf(PrinterVisitor.prototype), "accept", this).call(this, node, { index: state.index, tree: myChildren }, path);
-        state.tree.push({
-          node: node,
-          path: pathString,
-          index: state.index++,
-          children: myChildren
-        });
-        return result;
-      }
-    }]);
-    return PrinterVisitor;
-  }(Visitor);
+    return getter.call(receiver);
+  }
+};
 
-  var ComparisonVisitor = function (_Visitor2) {
-    babelHelpers.inherits(ComparisonVisitor, _Visitor2);
-
-    function ComparisonVisitor() {
-      babelHelpers.classCallCheck(this, ComparisonVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ComparisonVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ComparisonVisitor, [{
-      key: "recordNotEqual",
-      value: function recordNotEqual(node1, node2, state, msg) {
-        state.comparisons.errors.push({
-          node1: node1, node2: node2,
-          path: state.completePath, msg: msg
-        });
-      }
-    }, {
-      key: "compareType",
-      value: function compareType(node1, node2, state) {
-        return this.compareField('type', node1, node2, state);
-      }
-    }, {
-      key: "compareField",
-      value: function compareField(field, node1, node2, state) {
-        node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
-        if (node1 && node2 && node1[field] === node2[field]) return true;
-        if (node1 && node1[field] === '*' || node2 && node2[field] === '*') return true;
-        var fullPath = state.completePath.join('.') + '.' + field,
-            msg;
-        if (!node1) msg = "node1 on " + fullPath + " not defined";else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: ' + node1[field];else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
-        this.recordNotEqual(node1, node2, state, msg);
-        return false;
-      }
-    }, {
-      key: "accept",
-      value: function accept(node1, node2, state, path) {
-        var patternNode = lively.PropertyPath(path.join('.')).get(node2);
-        if (node1 === '*' || patternNode === '*') return;
-        var nextState = {
-          completePath: path,
-          comparisons: state.comparisons
-        };
-        if (this.compareType(node1, node2, nextState)) this['visit' + node1.type](node1, node2, nextState, path);
-      }
-    }, {
-      key: "visitFunction",
-      value: function visitFunction(node1, node2, state, path) {
-        // node1.generator has a specific type that is boolean
-        if (node1.generator) {
-          this.compareField("generator", node1, node2, state);
-        }
-
-        // node1.expression has a specific type that is boolean
-        if (node1.expression) {
-          this.compareField("expression", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunction", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitSwitchStatement",
-      value: function visitSwitchStatement(node1, node2, state, path) {
-        // node1.lexical has a specific type that is boolean
-        if (node1.lexical) {
-          this.compareField("lexical", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitSwitchStatement", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitForInStatement",
-      value: function visitForInStatement(node1, node2, state, path) {
-        // node1.each has a specific type that is boolean
-        if (node1.each) {
-          this.compareField("each", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitForInStatement", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitFunctionDeclaration",
-      value: function visitFunctionDeclaration(node1, node2, state, path) {
-        // node1.generator has a specific type that is boolean
-        if (node1.generator) {
-          this.compareField("generator", node1, node2, state);
-        }
-
-        // node1.expression has a specific type that is boolean
-        if (node1.expression) {
-          this.compareField("expression", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunctionDeclaration", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitVariableDeclaration",
-      value: function visitVariableDeclaration(node1, node2, state, path) {
-        // node1.kind is "var" or "let" or "const"
-        this.compareField("kind", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitVariableDeclaration", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitUnaryExpression",
-      value: function visitUnaryExpression(node1, node2, state, path) {
-        // node1.operator is an UnaryOperator enum:
-        // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
-        this.compareField("operator", node1, node2, state);
-
-        // node1.prefix has a specific type that is boolean
-        if (node1.prefix) {
-          this.compareField("prefix", node1, node2, state);
-        }
-
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUnaryExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitBinaryExpression",
-      value: function visitBinaryExpression(node1, node2, state, path) {
-        // node1.operator is an BinaryOperator enum:
-        // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
-        this.compareField("operator", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitBinaryExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitAssignmentExpression",
-      value: function visitAssignmentExpression(node1, node2, state, path) {
-        // node1.operator is an AssignmentOperator enum:
-        // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
-        this.compareField("operator", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitAssignmentExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitUpdateExpression",
-      value: function visitUpdateExpression(node1, node2, state, path) {
-        // node1.operator is an UpdateOperator enum:
-        // "++" | "--"
-        this.compareField("operator", node1, node2, state);
-        // node1.prefix has a specific type that is boolean
-        if (node1.prefix) {
-          this.compareField("prefix", node1, node2, state);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUpdateExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitLogicalExpression",
-      value: function visitLogicalExpression(node1, node2, state, path) {
-        // node1.operator is an LogicalOperator enum:
-        // "||" | "&&"
-        this.compareField("operator", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLogicalExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitMemberExpression",
-      value: function visitMemberExpression(node1, node2, state, path) {
-        // node1.computed has a specific type that is boolean
-        if (node1.computed) {
-          this.compareField("computed", node1, node2, state);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMemberExpression", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitComprehensionBlock",
-      value: function visitComprehensionBlock(node1, node2, state, path) {
-        // node1.each has a specific type that is boolean
-        if (node1.each) {
-          this.compareField("each", node1, node2, state);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitComprehensionBlock", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitIdentifier",
-      value: function visitIdentifier(node1, node2, state, path) {
-        // node1.name has a specific type that is string
-        this.compareField("name", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitIdentifier", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitLiteral",
-      value: function visitLiteral(node1, node2, state, path) {
-        this.compareField("value", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLiteral", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitClassDeclaration",
-      value: function visitClassDeclaration(node1, node2, state, path) {
-        this.compareField("id", node1, node2, state);
-        if (node1.superClass) {
-          this.compareField("superClass", node1, node2, state);
-        }
-        this.compareField("body", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassDeclaration", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitClassBody",
-      value: function visitClassBody(node1, node2, state, path) {
-        this.compareField("body", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassBody", this).call(this, node1, node2, state, path);
-      }
-    }, {
-      key: "visitMethodDefinition",
-      value: function visitMethodDefinition(node1, node2, state, path) {
-        this.compareField("static", node1, node2, state);
-        this.compareField("computed", node1, node2, state);
-        this.compareField("kind", node1, node2, state);
-        this.compareField("key", node1, node2, state);
-        this.compareField("value", node1, node2, state);
-        return babelHelpers.get(Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMethodDefinition", this).call(this, node1, node2, state, path);
-      }
-    }]);
-    return ComparisonVisitor;
-  }(Visitor);
-
-  var ScopeVisitor = function (_Visitor3) {
-    babelHelpers.inherits(ScopeVisitor, _Visitor3);
-
-    function ScopeVisitor() {
-      babelHelpers.classCallCheck(this, ScopeVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ScopeVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ScopeVisitor, [{
-      key: "newScope",
-      value: function newScope(scopeNode, parentScope) {
-        var scope = {
-          node: scopeNode,
-          varDecls: [],
-          varDeclPaths: [],
-          funcDecls: [],
-          funcDeclPaths: [],
-          classDecls: [],
-          classDeclPaths: [],
-          classExprs: [],
-          classExprPaths: [],
-          methodDecls: [],
-          methodDeclPaths: [],
-          importDecls: [],
-          importDeclPaths: [],
-          exportDecls: [],
-          exportDeclPaths: [],
-          refs: [],
-          thisRefs: [],
-          params: [],
-          catches: [],
-          subScopes: [],
-          resolvedRefMap: new Map()
-        };
-        if (parentScope) parentScope.subScopes.push(scope);
-        return scope;
-      }
-    }, {
-      key: "visitVariableDeclaration",
-      value: function visitVariableDeclaration(node, scope, path) {
-        scope.varDecls.push(node);
-        scope.varDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitVariableDeclaration", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitVariableDeclarator",
-      value: function visitVariableDeclarator(node, scope, path) {
-        var visitor = this;
-        // ignore id
-        // // id is of types Pattern
-        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-        // init is of types Expression
-        if (node["init"]) {
-          node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitFunction",
-      value: function visitFunction(node, scope, path) {
-        var newScope = this.newScope(node, scope);
-        newScope.params = Array.prototype.slice.call(node.params);
-        return newScope;
-      }
-    }, {
-      key: "visitFunctionDeclaration",
-      value: function visitFunctionDeclaration(node, scope, path) {
-        var newScope = this.visitFunction(node, scope, path);
-        scope.funcDecls.push(node);
-        scope.funcDeclPaths.push(path);
-
-        // don't visit id and params 
-        var visitor = this;
-
-        if (node.defaults) {
-          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
-            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-            return results;
-          }, []);
-        }
-
-        if (node.rest) {
-          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
-        }
-
-        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-        // loc is of types SourceLocation
-        if (node["loc"]) {
-          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitFunctionExpression",
-      value: function visitFunctionExpression(node, scope, path) {
-        var newScope = this.visitFunction(node, scope, path);
-
-        // don't visit id and params 
-        var visitor = this;
-
-        if (node.defaults) {
-          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
-            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-            return results;
-          }, []);
-        }
-
-        if (node.rest) {
-          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
-        }
-
-        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-        // loc is of types SourceLocation
-        if (node["loc"]) {
-          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitArrowFunctionExpression",
-      value: function visitArrowFunctionExpression(node, scope, path) {
-        var newScope = this.visitFunction(node, scope, path);
-        var visitor = this;
-
-        if (node.defaults) {
-          node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
-            var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
-            if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
-            return results;
-          }, []);
-        }
-
-        if (node.rest) {
-          node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
-        }
-
-        // body is of types BlockStatement, Expression
-        node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
-
-        // loc is of types SourceLocation
-        if (node["loc"]) {
-          node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
-        }
-        // node.generator has a specific type that is boolean
-        if (node.generator) {} /*do stuff*/
-
-        // node.expression has a specific type that is boolean
-        if (node.expression) {/*do stuff*/}
-        return node;
-      }
-    }, {
-      key: "visitIdentifier",
-      value: function visitIdentifier(node, scope, path) {
-        scope.refs.push(node);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitIdentifier", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitMemberExpression",
-      value: function visitMemberExpression(node, scope, path) {
-        // only visit property part when prop is computed so we don't gather
-        // prop ids
-
-        var visitor = this;
-        // object is of types Expression, Super
-        node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
-        // property is of types Expression
-        if (node.computed) {
-          node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitProperty",
-      value: function visitProperty(node, scope, path) {
-        var visitor = this;
-        // key is of types Expression
-        if (node.computed) node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
-        // value is of types Expression
-        node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
-        return node;
-      }
-    }, {
-      key: "visitThisExpression",
-      value: function visitThisExpression(node, scope, path) {
-        scope.thisRefs.push(node);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitThisExpression", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitTryStatement",
-      value: function visitTryStatement(node, scope, path) {
-        var visitor = this;
-        // block is of types BlockStatement
-        node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
-        // handler is of types CatchClause
-        if (node["handler"]) {
-          node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
-          scope.catches.push(node.handler.param);
-        }
-
-        // finalizer is of types BlockStatement
-        if (node["finalizer"]) {
-          node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
-        }
-        return node;
-      }
-    }, {
-      key: "visitLabeledStatement",
-      value: function visitLabeledStatement(node, scope, path) {
-        var visitor = this;
-        // ignore label
-        // // label is of types Identifier
-        // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
-        // body is of types Statement
-        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-        return node;
-      }
-    }, {
-      key: "visitClassDeclaration",
-      value: function visitClassDeclaration(node, scope, path) {
-        scope.classDecls.push(node);
-        scope.classDeclPaths.push(path);
-
-        var visitor = this;
-        // ignore id
-        // // id is of types Identifier
-        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-        // superClass is of types Expression
-        if (node["superClass"]) {
-          node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
-        }
-        // body is of types ClassBody
-        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-        return node;
-      }
-    }, {
-      key: "visitClassExpression",
-      value: function visitClassExpression(node, scope, path) {
-        if (node.id) {
-          scope.classExprs.push(node);
-          scope.classExprPaths.push(path);
-        }
-
-        var visitor = this;
-        // ignore id
-        // // id is of types Identifier
-        // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
-        // superClass is of types Expression
-        if (node["superClass"]) {
-          node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
-        }
-        // body is of types ClassBody
-        node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
-        return node;
-      }
-    }, {
-      key: "visitMethodDefinition",
-      value: function visitMethodDefinition(node, scope, path) {
-        var visitor = this;
-        // don't visit key Identifier for now
-        // // key is of types Expression
-        // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
-        // value is of types FunctionExpression
-        node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
-        return node;
-      }
-    }, {
-      key: "visitBreakStatement",
-      value: function visitBreakStatement(node, scope, path) {
-        return node;
-      }
-    }, {
-      key: "visitContinueStatement",
-      value: function visitContinueStatement(node, scope, path) {
-        return node;
-      }
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // es6 modules
-
-    }, {
-      key: "visitImportSpecifier",
-      value: function visitImportSpecifier(node, scope, path) {
-        scope.importDecls.push(node.local);
-        scope.importDeclPaths.push(path);
-
-        var visitor = this;
-        // // imported is of types Identifier
-        // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
-        // local is of types Identifier
-        node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitImportDefaultSpecifier",
-      value: function visitImportDefaultSpecifier(node, scope, path) {
-        scope.importDecls.push(node.local);
-        scope.importDeclPaths.push(path);
-        var visitor = this;
-        // // local is of types Identifier
-        // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitImportNamespaceSpecifier",
-      value: function visitImportNamespaceSpecifier(node, scope, path) {
-        scope.importDecls.push(node.local);
-        scope.importDeclPaths.push(path);
-        var visitor = this;
-        // // local is of types Identifier
-        // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitExportSpecifier",
-      value: function visitExportSpecifier(node, scope, path) {
-        var visitor = this;
-        // // exported is of types Identifier
-        // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
-        // local is of types Identifier
-        node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
-        return node;
-      }
-    }, {
-      key: "visitExportNamedDeclaration",
-      value: function visitExportNamedDeclaration(node, scope, path) {
-        scope.exportDecls.push(node);
-        scope.exportDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitExportDefaultDeclaration",
-      value: function visitExportDefaultDeclaration(node, scope, path) {
-        scope.exportDecls.push(node);
-        scope.exportDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
-      }
-    }, {
-      key: "visitExportAllDeclaration",
-      value: function visitExportAllDeclaration(node, scope, path) {
-        scope.exportDecls.push(node);
-        scope.exportDeclPaths.push(path);
-        return babelHelpers.get(Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
-      }
-    }]);
-    return ScopeVisitor;
-  }(Visitor);
-
-  var es = escodegen.escodegen || escodegen;
-
-  function stringify(node, opts) {
-    return es.generate(fixParamDefaults(node), opts);
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
   }
 
-  var FixParamsForEscodegenVisitor = function (_Visitor) {
-    babelHelpers.inherits(FixParamsForEscodegenVisitor, _Visitor);
-
-    function FixParamsForEscodegenVisitor() {
-      babelHelpers.classCallCheck(this, FixParamsForEscodegenVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(FixParamsForEscodegenVisitor).apply(this, arguments));
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
     }
-
-    babelHelpers.createClass(FixParamsForEscodegenVisitor, [{
-      key: "fixFunctionNode",
-      value: function fixFunctionNode(node) {
-        node.defaults = node.params.map(function (p, i) {
-          if (p.type === "AssignmentPattern") {
-            node.params[i] = p.left;
-            return p.right;
-          }
-          return undefined;
-        });
-      }
-    }, {
-      key: "visitFunction",
-      value: function visitFunction(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunction", this).call(this, node, state, path);
-      }
-    }, {
-      key: "visitArrowFunctionExpression",
-      value: function visitArrowFunctionExpression(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitArrowFunctionExpression", this).call(this, node, state, path);
-      }
-    }, {
-      key: "visitFunctionExpression",
-      value: function visitFunctionExpression(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionExpression", this).call(this, node, state, path);
-      }
-    }, {
-      key: "visitFunctionDeclaration",
-      value: function visitFunctionDeclaration(node, state, path) {
-        this.fixFunctionNode(node);
-        return babelHelpers.get(Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionDeclaration", this).call(this, node, state, path);
-      }
-    }]);
-    return FixParamsForEscodegenVisitor;
-  }(Visitor);
-
-  // debugger;
-  // var node = lively.ast.parse("/^file:\\/\\//");
-  // fixParamDefaults(node).body[0].expression.value
-
-  function fixParamDefaults(parsed) {
-    parsed = lively_lang.obj.deepCopy(parsed);
-    new FixParamsForEscodegenVisitor().accept(parsed, null, []);
-    return parsed;
-  }
-
-  var walk = acorn.walk;
-  var loose = acorn.loose;
-  // rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
-  // await. We patch the walker here until it does
-  if (!walk.base.AwaitExpression) {
-    walk.base.AwaitExpression = function (node, st, c) {
-      if (node.argument) c(node.argument, st, 'Expression');
-    };
-  }
-
-  // FIXME, don't add to walk object, that's our own stuff!
-  walk.forEachNode = forEachNode;
-  walk.matchNodes = matchNodes;
-  walk.findNodesIncluding = findNodesIncluding;
-  walk.withParentInfo = withParentInfo;
-  walk.copy = copy;
-  walk.findSiblings = findSiblings;
-
-  walk.findNodeByAstIndex = findNodeByAstIndex;
-  walk.findStatementOfNode = findStatementOfNode;
-  walk.addAstIndex = addAstIndex;
-
-  // -=-=-=-=-=-=-=-=-=-=-=-
-  // from lively.ast.acorn
-  // -=-=-=-=-=-=-=-=-=-=-=-
-  function forEachNode(parsed, func, state, options) {
-    // note: func can get called with the same node for different
-    // visitor callbacks!
-    // func args: node, state, depth, type
-    options = options || {};
-    var traversal = options.traversal || 'preorder'; // also: postorder
-
-    var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
-    var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
-      func(node, state, depth, type);return orig(node, depth + 1, cont);
-    } : function (orig, type, node, depth, cont) {
-      var result = orig(node, depth + 1, cont);func(node, state, depth, type);return result;
-    };
-    Object.keys(visitors).forEach(function (type) {
-      var orig = visitors[type];
-      visitors[type] = function (node, depth, cont) {
-        return iterator(orig, type, node, depth, cont);
-      };
-    });
-    walk.recursive(parsed, 0, null, visitors);
-    return parsed;
-  };
-
-  function matchNodes(parsed, visitor, state, options) {
-    function visit(node, state, depth, type) {
-      if (visitor[node.type]) visitor[node.type](node, state, depth, type);
-    }
-    return forEachNode(parsed, visit, state, options);
-  };
-
-  // findNodesIncluding: function(ast, pos, test, base) {
-  //   var nodes = [];
-  //   base = base || acorn.walk.make({});
-  //   Object.keys(base).forEach(function(name) {
-  //       var orig = base[name];
-  //       base[name] = function(node, state, cont) {
-  //           nodes.pushIfNotIncluded(node);
-  //           return orig(node, state, cont);
-  //       }
-  //   });
-  //   acorn.walk.findNodeAround(ast, pos, test, base);
-  //   return nodes;
-  // }
-
-  function findNodesIncluding(parsed, pos, test, base) {
-    var nodes = [];
-    base = base || walk.make(walk.visitors.withMemberExpression);
-    Object.keys(walk.base).forEach(function (name) {
-      var orig = base[name];
-      base[name] = function (node, state, cont) {
-        lively_lang.arr.pushIfNotIncluded(nodes, node);
-        return orig(node, state, cont);
-      };
-    });
-    base["Property"] = function (node, st, c) {
-      lively_lang.arr.pushIfNotIncluded(nodes, node);
-      c(node.key, st, "Expression");
-      c(node.value, st, "Expression");
-    };
-    base["LabeledStatement"] = function (node, st, c) {
-      node.label && c(node.label, st, "Expression");
-      c(node.body, st, "Statement");
-    };
-    walk.findNodeAround(parsed, pos, test, base);
-    return nodes;
-  };
-
-  function withParentInfo(parsed, iterator, options) {
-    // options = {visitAllNodes: BOOL}
-    options = options || {};
-    function makeScope(parentScope) {
-      var scope = { id: lively_lang.string.newUUID(), parentScope: parentScope, containingScopes: [] };
-      parentScope && parentScope.containingScopes.push(scope);
-      return scope;
-    }
-    var visitors = walk.make({
-      Function: function Function(node, st, c) {
-        if (st && st.scope) st.scope = makeScope(st.scope);
-        c(node.body, st, "ScopeBody");
-      },
-      VariableDeclarator: function VariableDeclarator(node, st, c) {
-        // node.id && c(node.id, st, 'Identifier');
-        node.init && c(node.init, st, 'Expression');
-      },
-      VariableDeclaration: function VariableDeclaration(node, st, c) {
-        for (var i = 0; i < node.declarations.length; ++i) {
-          var decl = node.declarations[i];
-          if (decl) c(decl, st, "VariableDeclarator");
-        }
-      },
-      ObjectExpression: function ObjectExpression(node, st, c) {
-        for (var i = 0; i < node.properties.length; ++i) {
-          var prop = node.properties[i];
-          c(prop.key, st, "Expression");
-          c(prop.value, st, "Expression");
-        }
-      },
-      MemberExpression: function MemberExpression(node, st, c) {
-        c(node.object, st, "Expression");
-        c(node.property, st, "Expression");
-      }
-    }, walk.base);
-    var lastActiveProp,
-        getters = [];
-    forEachNode(parsed, function (node) {
-      lively_lang.arr.withoutAll(Object.keys(node), ['end', 'start', 'type', 'source', 'raw']).forEach(function (propName) {
-        if (node.__lookupGetter__(propName)) return; // already defined
-        var val = node[propName];
-        node.__defineGetter__(propName, function () {
-          lastActiveProp = propName;return val;
-        });
-        getters.push([node, propName, node[propName]]);
-      });
-    }, null, { visitors: visitors });
-    var result = [];
-    Object.keys(visitors).forEach(function (type) {
-      var orig = visitors[type];
-      visitors[type] = function (node, state, cont) {
-        if (type === node.type || options.visitAllNodes) {
-          result.push(iterator.call(null, node, { scope: state.scope, depth: state.depth, parent: state.parent, type: type, propertyInParent: lastActiveProp }));
-          return orig(node, { scope: state.scope, parent: node, depth: state.depth + 1 }, cont);
-        } else {
-          return orig(node, state, cont);
-        }
-      };
-    });
-    walk.recursive(parsed, { scope: makeScope(), parent: null, propertyInParent: '', depth: 0 }, null, visitors);
-    getters.forEach(function (nodeNameVal) {
-      delete nodeNameVal[0][nodeNameVal[1]];
-      nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
-    });
-    return result;
-  };
-
-  function copy(ast, override) {
-    var visitors = lively_lang.obj.extend({
-      Program: function Program(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'Program',
-          body: n.body.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      FunctionDeclaration: function FunctionDeclaration(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'FunctionDeclaration',
-          id: c(n.id), params: n.params.map(c), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      BlockStatement: function BlockStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'BlockStatement',
-          body: n.body.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ExpressionStatement: function ExpressionStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ExpressionStatement',
-          expression: c(n.expression),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      CallExpression: function CallExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'CallExpression',
-          callee: c(n.callee), arguments: n.arguments.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      MemberExpression: function MemberExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'MemberExpression',
-          object: c(n.object), property: c(n.property), computed: n.computed,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      NewExpression: function NewExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'NewExpression',
-          callee: c(n.callee), arguments: n.arguments.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      VariableDeclaration: function VariableDeclaration(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'VariableDeclaration',
-          declarations: n.declarations.map(c), kind: n.kind,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      VariableDeclarator: function VariableDeclarator(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'VariableDeclarator',
-          id: c(n.id), init: c(n.init),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      FunctionExpression: function FunctionExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'FunctionExpression',
-          id: c(n.id), params: n.params.map(c), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      IfStatement: function IfStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'IfStatement',
-          test: c(n.test), consequent: c(n.consequent),
-          alternate: c(n.alternate),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ConditionalExpression: function ConditionalExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ConditionalExpression',
-          test: c(n.test), consequent: c(n.consequent),
-          alternate: c(n.alternate),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      SwitchStatement: function SwitchStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'SwitchStatement',
-          discriminant: c(n.discriminant), cases: n.cases.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      SwitchCase: function SwitchCase(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'SwitchCase',
-          test: c(n.test), consequent: n.consequent.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      BreakStatement: function BreakStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'BreakStatement',
-          label: n.label,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ContinueStatement: function ContinueStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ContinueStatement',
-          label: n.label,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      TryStatement: function TryStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'TryStatement',
-          block: c(n.block), handler: c(n.handler), finalizer: c(n.finalizer),
-          guardedHandlers: n.guardedHandlers.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      CatchClause: function CatchClause(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'CatchClause',
-          param: c(n.param), guard: c(n.guard), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ThrowStatement: function ThrowStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ThrowStatement',
-          argument: c(n.argument),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ForStatement: function ForStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ForStatement',
-          init: c(n.init), test: c(n.test), update: c(n.update),
-          body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ForInStatement: function ForInStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ForInStatement',
-          left: c(n.left), right: c(n.right), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      WhileStatement: function WhileStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'WhileStatement',
-          test: c(n.test), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      DoWhileStatement: function DoWhileStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'DoWhileStatement',
-          test: c(n.test), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      WithStatement: function WithStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'WithStatement',
-          object: c(n.object), body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      UnaryExpression: function UnaryExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'UnaryExpression',
-          argument: c(n.argument), operator: n.operator, prefix: n.prefix,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      BinaryExpression: function BinaryExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'BinaryExpression',
-          left: c(n.left), operator: n.operator, right: c(n.right),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      LogicalExpression: function LogicalExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'LogicalExpression',
-          left: c(n.left), operator: n.operator, right: c(n.right),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      AssignmentExpression: function AssignmentExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'AssignmentExpression',
-          left: c(n.left), operator: n.operator, right: c(n.right),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      UpdateExpression: function UpdateExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'UpdateExpression',
-          argument: c(n.argument), operator: n.operator, prefix: n.prefix,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ReturnStatement: function ReturnStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ReturnStatement',
-          argument: c(n.argument),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      Identifier: function Identifier(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'Identifier',
-          name: n.name,
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      Literal: function Literal(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'Literal',
-          value: n.value, raw: n.raw /* Acorn-specific */
-          , source: n.source, astIndex: n.astIndex
-        };
-      },
-      ObjectExpression: function ObjectExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ObjectExpression',
-          properties: n.properties.map(function (prop) {
-            return {
-              key: c(prop.key), value: c(prop.value), kind: prop.kind
-            };
-          }),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ArrayExpression: function ArrayExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ArrayExpression',
-          elements: n.elements.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      SequenceExpression: function SequenceExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'SequenceExpression',
-          expressions: n.expressions.map(c),
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      EmptyStatement: function EmptyStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'EmptyStatement',
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      ThisExpression: function ThisExpression(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'ThisExpression',
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      DebuggerStatement: function DebuggerStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'DebuggerStatement',
-          source: n.source, astIndex: n.astIndex
-        };
-      },
-      LabeledStatement: function LabeledStatement(n, c) {
-        return {
-          start: n.start, end: n.end, type: 'LabeledStatement',
-          label: n.label, body: c(n.body),
-          source: n.source, astIndex: n.astIndex
-        };
-      }
-    }, override || {});
-
-    function c(node) {
-      if (node === null) return null;
-      return visitors[node.type](node, c);
-    }
-    return c(ast);
-  }
-
-  function findSiblings(parsed, node, beforeOrAfter) {
-    if (!node) return [];
-    var nodes = findNodesIncluding(parsed, node.start),
-        idx = nodes.indexOf(node),
-        parents = nodes.slice(0, idx),
-        parentWithBody = lively_lang.arr.detect(parents.reverse(), function (p) {
-      return Array.isArray(p.body);
-    }),
-        siblingsWithNode = parentWithBody.body;
-    if (!beforeOrAfter) return lively_lang.arr.without(siblingsWithNode, node);
-    var nodeIdxInSiblings = siblingsWithNode.indexOf(node);
-    return beforeOrAfter === 'before' ? siblingsWithNode.slice(0, nodeIdxInSiblings) : siblingsWithNode.slice(nodeIdxInSiblings + 1);
-  }
-
-  // // cached visitors that are used often
-  walk.visitors = {
-    stopAtFunctions: walk.make({
-      'Function': function Function() {/* stop descent */}
-    }, walk.base),
-
-    withMemberExpression: walk.make({
-      MemberExpression: function MemberExpression(node, st, c) {
-        c(node.object, st, "Expression");
-        c(node.property, st, "Expression");
-      }
-    }, walk.base)
-  };
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // from lively.ast.AstHelper
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-
-  function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
-    addIndex = addIndex == null ? true : !!addIndex;
-    if (!parsed.astIndex && addIndex) addAstIndex(parsed);
-    // we need to visit every node, forEachNode is highly
-    // inefficient, the compilled Mozilla visitors are a better fit
-    var found = null;
-    withMozillaAstDo(parsed, null, function (next, node, state) {
-      if (found) return;
-      var idx = node.astIndex;
-      if (idx < astIndexToFind) return;
-      if (node.astIndex === astIndexToFind) {
-        found = node;return;
-      }
-      next();
-    });
-    return found;
-  };
-
-  // FIXME: global (and temporary) findNodeByAstIndex is used by __getClosure and defined in Rewriting.js
-  // Global.findNodeByAstIndex = findNodeByAstIndex;
-
-  function findStatementOfNode(options, parsed, target) {
-    // DEPRECATED in favor of query.statementOf(parsed, node)
-    // Can also be called with just ast and target. options can be {asPath: BOOLEAN}.
-    // Find the statement that a target node is in. Example:
-    // let source be "var x = 1; x + 1;" and we are looking for the
-    // Identifier "x" in "x+1;". The second statement is what will be found.
-    if (!target) {
-      target = parsed;parsed = options;options = null;
-    }
-    if (!options) options = {};
-    if (!parsed.astIndex) addAstIndex(parsed);
-    var found,
-        targetReached = false;
-    var statements = [
-    // ES5
-    'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration', 'VariableDeclaration',
-    // ES2015:
-    'ClassDeclaration'];
-    withMozillaAstDo(parsed, {}, function (next, node, state, path) {
-      if (targetReached || node.astIndex < target.astIndex) return;
-      if (node === target || node.astIndex === target.astIndex) {
-        targetReached = true;
-        if (options.asPath) found = path;else {
-          var p = lively_lang.Path(path);
-          do {
-            found = p.get(parsed);
-            p = p.slice(0, p.size() - 1);
-          } while (statements.indexOf(found.type) == -1 && p.size() > 0);
-        }
-      }
-      !targetReached && next();
-    });
-    return found;
-  };
-
-  function addAstIndex(parsed) {
-    // we need to visit every node, forEachNode is highly
-    // inefficient, the compilled Mozilla visitors are a better fit
-    withMozillaAstDo(parsed, { index: 0 }, function (next, node, state) {
-      next();node.astIndex = state.index++;
-    });
-    return parsed;
-  };
-
-  var FindToplevelFuncDeclVisitor = function (_Visitor) {
-    babelHelpers.inherits(FindToplevelFuncDeclVisitor, _Visitor);
-
-    function FindToplevelFuncDeclVisitor() {
-      babelHelpers.classCallCheck(this, FindToplevelFuncDeclVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(FindToplevelFuncDeclVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(FindToplevelFuncDeclVisitor, [{
-      key: "accept",
-      value: function accept(node, funcDecls, path) {
-        switch (node.type) {
-          case "ArrowFunctionExpression":
-            return node;
-          case "FunctionExpression":
-            return node;
-          case "FunctionDeclaration":
-            funcDecls.unshift({ node: node, path: path });return node;
-          default:
-            return babelHelpers.get(Object.getPrototypeOf(FindToplevelFuncDeclVisitor.prototype), "accept", this).call(this, node, funcDecls, path);
-        }
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed) {
-        var state = [];
-        new this().accept(parsed, state, []);
-        return state;
-      }
-    }]);
-    return FindToplevelFuncDeclVisitor;
-  }(Visitor);
-
-  var AllNodesVisitor = function (_Visitor2) {
-    babelHelpers.inherits(AllNodesVisitor, _Visitor2);
-
-    function AllNodesVisitor() {
-      babelHelpers.classCallCheck(this, AllNodesVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(AllNodesVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(AllNodesVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        this.doFunc(node, state, path);
-        return babelHelpers.get(Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, doFunc, state) {
-        var v = new this();
-        v.doFunc = doFunc;
-        v.accept(parsed, state, []);
-        return state;
-      }
-    }]);
-    return AllNodesVisitor;
-  }(Visitor);
-
-  acorn.walk.addSource = addSource;
-
-  function addSource(parsed, source) {
-    if (typeof parsed === "string") {
-      source = parsed;
-      parsed = parse(parsed);
-    }
-    source && AllNodesVisitor.run(parsed, function (node, state, path) {
-      return !node.source && (node.source = source.slice(node.start, node.end));
-    });
-    return parsed;
-  }
-
-  function nodesAt(pos, ast) {
-    ast = typeof ast === 'string' ? this.parse(ast) : ast;
-    return findNodesIncluding(ast, pos);
-  }
-
-  function parseFunction(source) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-    var src = '(' + source + ')',
-        ast = parse(src, options);
-    if (options.addSource) addSource(ast, src);
-    return ast.body[0].expression;
-  }
-
-  function fuzzyParse(source, options) {
-    // options: verbose, addSource, type
-    options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 7;
-    options.sourceType = options.sourceType || "module";
-    options.plugins = options.plugins || {};
-    // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
-    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
-
-    var ast, safeSource, err;
-    if (options.type === 'LabeledStatement') {
-      safeSource = '$={' + source + '}';
-    }
-    try {
-      // we only parse to find errors
-      ast = parse(safeSource || source, options);
-      if (safeSource) ast = null; // we parsed only for finding errors
-      else if (options.addSource) addSource(ast, source);
-    } catch (e) {
-      err = e;
-    }
-    if (err && err.raisedAt !== undefined) {
-      if (safeSource) {
-        // fix error pos
-        err.pos -= 3;err.raisedAt -= 3;err.loc.column -= 3;
-      }
-      var parseErrorSource = '';
-      parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
-      parseErrorSource += '<-error->';
-      parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
-      options.verbose && show('parse error: ' + parseErrorSource);
-      err.parseErrorSource = parseErrorSource;
-    } else if (err && options.verbose) {
-      show('' + err + err.stack);
-    }
-    if (!ast) {
-      ast = loose.parse_dammit(source, options);
-      if (options.addSource) addSource(ast, source);
-      ast.isFuzzy = true;
-      ast.parseError = err;
-    }
-    return ast;
-  }
-
-  function parse(source, options) {
-    // proxy function to acorn.parse.
-    // Note that we will implement useful functionality on top of the pure
-    // acorn interface and make it available here (such as more convenient
-    // comment parsing). For using the pure acorn interface use the acorn
-    // global.
-    // See https://github.com/marijnh/acorn for full acorn doc and parse options.
-    // options: {
-    //   addSource: BOOL, -- add source property to each node
-    //   addAstIndex: BOOL, -- each node gets an index  number
-    //   withComments: BOOL, -- adds comment objects to Program/BlockStatements:
-    //              {isBlock: BOOL, text: STRING, node: NODE,
-    //               start: INTEGER, end: INTEGER, line: INTEGER, column: INTEGER}
-    //   ecmaVersion: 3|5|6,
-    //   allowReturnOutsideFunction: BOOL, -- Default is false
-    //   locations: BOOL -- Default is false
-    // }
-
-    options = options || {};
-    options.ecmaVersion = options.ecmaVersion || 7;
-    options.sourceType = options.sourceType || "module";
-    if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
-    options.plugins = options.plugins || {};
-    options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
-    options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
-
-    if (options.withComments) {
-      // record comments
-      delete options.withComments;
-      var comments = [];
-      options.onComment = function (isBlock, text, start, end, line, column) {
-        comments.push({
-          isBlock: isBlock,
-          text: text, node: null,
-          start: start, end: end,
-          line: line, column: column
-        });
-      };
-    }
-
-    var parsed = acorn.parse(source, options);
-
-    if (options.addSource) addSource(parsed, source);
-
-    if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
-
-    if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
-
-    return parsed;
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function attachCommentsToAST(commentData) {
-      // for each comment: assign the comment to a block-level AST node
-      commentData = mergeComments(assignCommentsToBlockNodes(commentData));
-      parsed.allComments = commentData.comments;
-    }
-
-    function assignCommentsToBlockNodes(commentData) {
-      comments.forEach(function (comment) {
-        var node = lively_lang.arr.detect(nodesAt(comment.start, parsed).reverse(), function (node) {
-          return node.type === 'BlockStatement' || node.type === 'Program';
-        });
-        if (!node) node = parsed;
-        if (!node.comments) node.comments = [];
-        node.comments.push(comment);
-        commentData.nodesWithComments.push(node);
-      });
-      return commentData;
-    }
-
-    function mergeComments(commentData) {
-      // coalesce non-block comments (multiple following lines of "// ...") into one comment.
-      // This only happens if line comments aren't seperated by newlines
-      commentData.nodesWithComments.forEach(function (blockNode) {
-        lively_lang.arr.clone(blockNode.comments).reduce(function (coalesceData, comment) {
-          if (comment.isBlock) {
-            coalesceData.lastComment = null;
-            return coalesceData;
-          }
-
-          if (!coalesceData.lastComment) {
-            coalesceData.lastComment = comment;
-            return coalesceData;
-          }
-
-          // if the comments are seperated by a statement, don't merge
-          var last = coalesceData.lastComment;
-          var nodeInbetween = lively_lang.arr.detect(blockNode.body, function (node) {
-            return node.start >= last.end && node.end <= comment.start;
-          });
-          if (nodeInbetween) {
-            coalesceData.lastComment = comment;
-            return coalesceData;
-          }
-
-          // if the comments are seperated by a newline, don't merge
-          var codeInBetween = source.slice(last.end, comment.start);
-          if (/[\n\r][\n\r]+/.test(codeInBetween)) {
-            coalesceData.lastComment = comment;
-            return coalesceData;
-          }
-
-          // merge comments into one
-          last.text += "\n" + comment.text;
-          last.end = comment.end;
-          lively_lang.arr.remove(blockNode.comments, comment);
-          lively_lang.arr.remove(commentData.comments, comment);
-          return coalesceData;
-        }, { lastComment: null });
-      });
-      return commentData;
-    }
-  }
-
-  var methods = {
-
-    withMozillaAstDo: function withMozillaAstDo(parsed, state, func) {
-      // simple interface to mozilla AST visitor. function gets passed three
-      // arguments:
-      // acceptNext, -- continue visiting
-      // node, -- current node being visited
-      // state -- state variable that is passed along
-      var vis = new Visitor(),
-          origAccept = vis.accept;
-      vis.accept = function (node, st, path) {
-        var next = function next() {
-          origAccept.call(vis, node, st, path);
-        };
-        state = func(next, node, st, path);
-        return node;
-      };
-      vis.accept(parsed, state, []);
-      return state;
-    },
-
-    printAst: function printAst(astOrSource, options) {
-      options = options || {};
-      var printSource = options.printSource || false,
-          printPositions = options.printPositions || false,
-          printIndex = options.printIndex || false,
-          source,
-          parsed,
-          tree = [];
-
-      if (typeof astOrSource === "string") {
-        source = astOrSource;
-        parsed = parse(astOrSource);
-      } else {
-        parsed = astOrSource;source = options.source || parsed.source;
-      }
-
-      if (printSource && !parsed.source) {
-        // ensure that nodes have source attached
-        if (!source) {
-          source = stringify(parsed);
-          parsed = parse(source);
-        }
-        addSource(parsed, source);
-      }
-
-      function printFunc(ea) {
-        var line = ea.path + ':' + ea.node.type,
-            additional = [];
-        if (printIndex) {
-          additional.push(ea.index);
-        }
-        if (printPositions) {
-          additional.push(ea.node.start + '-' + ea.node.end);
-        }
-        if (printSource) {
-          var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
-              printed = lively_lang.string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
-          additional.push(printed);
-        }
-        if (additional.length) {
-          line += '(' + additional.join(',') + ')';
-        }
-        return line;
-      }
-
-      new PrinterVisitor().accept(parsed, { index: 0, tree: tree }, []);
-      return lively_lang.string.printTree(tree[0], printFunc, function (ea) {
-        return ea.children;
-      }, '  ');
-    },
-
-    compareAst: function compareAst(node1, node2) {
-      if (!node1 || !node2) throw new Error('node' + (node1 ? '1' : '2') + ' not defined');
-      var state = { completePath: [], comparisons: { errors: [] } };
-      new ComparisonVisitor().accept(node1, node2, state, []);
-      return !state.comparisons.errors.length ? null : state.comparisons.errors.pluck('msg');
-    },
-
-    pathToNode: function pathToNode(parsed, index, options) {
-      options = options || {};
-      if (!parsed.astIndex) addAstIndex(parsed);
-      var vis = new Visitor(),
-          found = null;
-      (vis.accept = function (node, pathToHere, state, path) {
-        if (found) return;
-        var fullPath = pathToHere.concat(path);
-        if (node.astIndex === index) {
-          var pathString = fullPath.map(function (ea) {
-            return typeof ea === 'string' ? '.' + ea : '[' + ea + ']';
-          }).join('');
-          found = { pathString: pathString, path: fullPath, node: node };
-        }
-        return this['visit' + node.type](node, fullPath, state, path);
-      }).call(vis, parsed, [], {}, []);
-      return found;
-    },
-
-    rematchAstWithSource: function rematchAstWithSource(parsed, source, addLocations, subTreePath) {
-      addLocations = !!addLocations;
-      var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
-          visitor = new Visitor();
-      if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
-
-      visitor.accept = function (node, state, path) {
-        path = path || [];
-        var node2 = path.reduce(function (node, pathElem) {
-          return node[pathElem];
-        }, parsed);
-        node2.start = node.start;
-        node2.end = node.end;
-        if (addLocations) node2.loc = node.loc;
-        return this['visit' + node.type](node, state, path);
-      };
-
-      visitor.accept(parsed2);
-    }
-
-  };
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var withMozillaAstDo = methods.withMozillaAstDo;
-  var printAst = methods.printAst;
-  var compareAst = methods.compareAst;
-  var pathToNode = methods.pathToNode;
-  var rematchAstWithSource = methods.rematchAstWithSource;
-
-  var identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
-  function isIdentifier(string) {
-    // Note: It's not so easy...
-    // http://wiki.ecmascript.org/doku.php?id=strawman:identifier_identification
-    // https://mathiasbynens.be/notes/javascript-identifiers-es6
-    return identifierRe.test(string) && string.indexOf("-") === -1;
-  }
-
-  function id(name) {
-    return name === "this" ? { type: "ThisExpression" } : { name: String(name), type: "Identifier" };
-  }
-
-  function literal(value) {
-    return { type: "Literal", value: value };
-  }
-
-  function exprStmt(expression) {
-    return { type: "ExpressionStatement", expression: expression };
-  }
-
-  function returnStmt(expr) {
-    return { type: "ReturnStatement", argument: expr };
-  }
-
-  function empty() {
-    return { type: "EmptyStatement" };
-  }
-
-  function binaryExpr(left, op, right) {
-    return {
-      left: left, right: right, operator: op,
-      type: "BinaryExpression"
-    };
-  }
-
-  function funcExpr(_ref) {
-    for (var _len = arguments.length, statements = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-      statements[_key - 2] = arguments[_key];
-    }
-
-    var arrow = _ref.arrow;
-    var funcId = _ref.id;
-    var expression = _ref.expression;
-    var generator = _ref.generator;
-    var params = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-
-    // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
-    // // => "function foo(a) { 3; }"
-    params = params.map(function (ea) {
-      return typeof ea === "string" ? id(ea) : ea;
-    });
-    return {
-      type: (arrow ? "Arrow" : "") + "FunctionExpression",
-      id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
-      params: params,
-      body: { body: statements, type: "BlockStatement" },
-      expression: expression || false,
-      generator: generator || false
-    };
-  }
-
-  function funcCall(callee) {
-    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-      args[_key2 - 1] = arguments[_key2];
-    }
-
-    if (typeof callee === "string") callee = id(callee);
-    return {
-      type: "CallExpression",
-      callee: callee,
-      arguments: args
-    };
-  }
-
-  function varDecl(id, init, kind) {
-    if (typeof id === "string") id = { name: id, type: "Identifier" };
-    return {
-      type: "VariableDeclaration", kind: kind || "var",
-      declarations: [{ type: "VariableDeclarator", id: id, init: init }]
-    };
-  }
-
-  function member(obj, prop, computed) {
-    // Example:
-    // lively.ast.stringify(member("foo", "bar"))
-    // // => "foo.bar"
-    // lively.ast.stringify(member("foo", "b-a-r"))
-    // // => "foo['b-a-r']"
-    // lively.ast.stringify(member("foo", "zork", true))
-    // // => "foo['zork']"
-    // lively.ast.stringify(member("foo", 0))
-    // // => "foo[0]"
-    if (typeof obj === "string") obj = id(obj);
-    if (typeof prop === "string") {
-      if (!computed && !isIdentifier(prop)) computed = true;
-      prop = computed ? literal(prop) : id(prop);
-    } else if (typeof prop === "number") {
-      prop = literal(prop);
-      computed = true;
-    } else if (prop.type === "Literal") {
-      computed = true;
-    }
-    return {
-      type: "MemberExpression",
-      computed: !!computed,
-      object: obj, property: prop
-    };
-  }
-
-  function memberChain(first) {
-    for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-      rest[_key3 - 1] = arguments[_key3];
-    }
-
-    // lively.ast.stringify(memberChain("foo", "bar", 0, "baz-zork"));
-    // // => "foo.bar[0]['baz-zork']"
-    return rest.reduce(function (memberExpr, key) {
-      return member(memberExpr, key);
-    }, (typeof first === "undefined" ? "undefined" : babelHelpers.typeof(first)) === "object" ? first : id(first));
-  }
-
-  function assign(left, right) {
-    // lively.ast.stringify(assign("a", "x"))
-    // // => "a = x"
-    // lively.ast.stringify(assign(member("a", "x"), literal(23)))
-    // // => "a.x = 23"
-    return {
-      type: "AssignmentExpression", operator: "=",
-      right: right ? typeof right === "string" ? id(right) : right : id("undefined"),
-      left: typeof left === "string" ? id(left) : left
-    };
-  }
-
-  function block() {
-    for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-      body[_key4] = arguments[_key4];
-    }
-
-    return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
-  }
-
-  function program() {
-    return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
-  }
-
-  function tryStmt(exName, handlerBody, finalizerBody) {
-    for (var _len5 = arguments.length, body = Array(_len5 > 3 ? _len5 - 3 : 0), _key5 = 3; _key5 < _len5; _key5++) {
-      body[_key5 - 3] = arguments[_key5];
-    }
-
-    // Example:
-    // var stmt = exprStmt(binaryExpr(literal(3), "+", literal(2)));
-    // lively.ast.stringify(tryStmt("err", [stmt], [stmt], stmt, stmt))
-    // // => "try { 3 + 2; 3 + 2; } catch (err) { 3 + 2; } finally { 3 + 2; }"
-    if (!Array.isArray(finalizerBody)) {
-      body.unshift(finalizerBody);
-      finalizerBody = null;
-    }
-    return {
-      block: block(body),
-      finalizer: finalizerBody ? block(finalizerBody) : null,
-      handler: {
-        body: block(handlerBody),
-        param: id(exName),
-        type: "CatchClause"
-      },
-      type: "TryStatement"
-    };
-  }
-
-  function prop(key, value) {
-    return {
-      type: "Property",
-      key: key,
-      computed: key.type !== "Identifier",
-      shorthand: false,
-      value: value
-    };
-  }
-
-  function objectLiteral(keysAndValues) {
-    var props = [];
-    for (var i = 0; i < keysAndValues.length; i += 2) {
-      var key = keysAndValues[i];
-      if (typeof key === "string") key = id(key);
-      props.push(prop(key, keysAndValues[i + 1]));
-    }
-    return {
-      properties: props,
-      type: "ObjectExpression"
-    };
-  }
-
-  function ifStmt(test) {
-    var consequent = arguments.length <= 1 || arguments[1] === undefined ? block() : arguments[1];
-    var alternate = arguments.length <= 2 || arguments[2] === undefined ? block() : arguments[2];
-
-    return {
-      consequent: consequent, alternate: alternate, test: test,
-      type: "IfStatement"
-    };
-  }
-
-  function logical(op, left, right) {
-    return {
-      operator: op, left: left, right: right,
-      type: "LogicalExpression"
-    };
-  }
-
-var nodes = Object.freeze({
-    isIdentifier: isIdentifier,
-    id: id,
-    literal: literal,
-    objectLiteral: objectLiteral,
-    prop: prop,
-    exprStmt: exprStmt,
-    returnStmt: returnStmt,
-    empty: empty,
-    binaryExpr: binaryExpr,
-    funcExpr: funcExpr,
-    funcCall: funcCall,
-    varDecl: varDecl,
-    member: member,
-    memberChain: memberChain,
-    assign: assign,
-    block: block,
-    program: program,
-    tryStmt: tryStmt,
-    ifStmt: ifStmt,
-    logical: logical
   });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var helpers = {
-    declIds: function declIds(nodes) {
-      return lively_lang.arr.flatmap(nodes, function (ea) {
-        if (!ea) return [];
-        if (ea.type === "Identifier") return [ea];
-        if (ea.type === "RestElement") return [ea.argument];
-        if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
-        if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
-        if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
-        return [];
-      });
-    },
-    varDecls: function varDecls(scope) {
-      return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
-        return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
-          return helpers.declIds([decl.id]).map(function (id) {
-            return [decl, id];
-          });
-        });
-      });
-    },
-    varDeclIds: function varDeclIds(scope) {
-      return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
-        all.push.apply(all, ea.declarations);return all;
-      }, []).map(function (ea) {
-        return ea.id;
-      }));
-    },
-    objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
-      // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
-      // nodes as a list
-      return lively_lang.arr.flatmap(objExpr.properties, function (prop) {
-        var key = prop.key.name;
-        // var result = [{key: path.concat([key]), value: prop.value}];
-        var result = [];
-        var thisNode = { key: path.concat([key]), value: prop.value };
-        switch (prop.value.type) {
-          case "ArrayExpression":case "ArrayPattern":
-            if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
-              return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
-            }));
-            break;
-          case "ObjectExpression":case "ObjectPattern":
-            if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
-            break;
-          case "AssignmentPattern":
-            if (!onlyLeafs) result.push(thisNode);
-            result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
-            break;
-          default:
-            result.push(thisNode);
-        }
-        return result;
-      });
-    },
-    isDeclaration: function isDeclaration(node) {
-      return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
     }
-  };
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
-
-  function scopes(parsed) {
-    var vis = new ScopeVisitor(),
-        scope = vis.newScope(parsed, null);
-    vis.accept(parsed, scope, []);
-    return scope;
-  }
-
-  function nodesAtIndex(parsed, index) {
-    return withMozillaAstDo(parsed, [], function (next, node, found) {
-      if (node.start <= index && index <= node.end) {
-        found.push(node);next();
-      }
-      return found;
-    });
-  }
-
-  function scopesAtIndex(parsed, index) {
-    return lively_lang.tree.filter(scopes(parsed), function (scope) {
-      var n = scope.node;
-      var start = n.start,
-          end = n.end;
-      if (n.type === 'FunctionDeclaration') {
-        start = n.params.length ? n.params[0].start : n.body.start;
-        end = n.body.end;
-      }
-      return start <= index && index <= end;
-    }, function (s) {
-      return s.subScopes;
-    });
-  }
-
-  function scopeAtIndex(parsed, index) {
-    return lively_lang.arr.last(scopesAtIndex(parsed, index));
-  }
-
-  function scopesAtPos(pos, parsed) {
-    // DEPRECATED
-    // FIXME "scopes" should actually not referer to a node but to a scope
-    // object, see exports.scopes!
-    return nodesAt$1(pos, parsed).filter(function (node) {
-      return node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression';
-    });
-  }
-
-  function nodesInScopeOf(node) {
-    // DEPRECATED
-    // FIXME "scopes" should actually not referer to a node but to a scope
-    // object, see exports.scopes!
-    return withMozillaAstDo(node, { root: node, result: [] }, function (next, node, state) {
-      state.result.push(node);
-      if (node !== state.root && (node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) return state;
-      next();
-      return state;
-    }).result;
-  }
-
-  function declarationsOfScope(scope, includeOuter) {
-    // returns Identifier nodes
-    return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : []).concat(helpers.declIds(scope.params)).concat(scope.funcDecls.map(function (ea) {
-      return ea.id;
-    })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
-      return ea.id;
-    })).concat(scope.importDecls);
-  }
-
-  function declarationsWithIdsOfScope(scope) {
-    // returns a list of pairs [(DeclarationNode,IdentifierNode)]
-    var bareIds = helpers.declIds(scope.params).concat(scope.catches),
-        declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
-    return bareIds.map(function (ea) {
-      return [ea, ea];
-    }).concat(declNodes.map(function (ea) {
-      return [ea, ea.id];
-    })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
-      return [statementOf(scope.node, im), im];
-    }));
-  }
-
-  function _declaredVarNames(scope, useComments) {
-    return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
-  }
-
-  function _findJsLintGlobalDeclarations(node) {
-    if (!node || !node.comments) return [];
-    return lively_lang.arr.flatten(node.comments.filter(function (ea) {
-      return ea.text.trim().match(/^global/);
-    }).map(function (ea) {
-      return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
-    }));
-  }
-
-  function topLevelFuncDecls(parsed) {
-    return FindToplevelFuncDeclVisitor.run(parsed);
-  }
-
-  function resolveReference(ref, scopePath) {
-    if (scopePath.length == 0) return [null, null];
-
-    var _scopePath = babelHelpers.toArray(scopePath);
-
-    var scope = _scopePath[0];
-
-    var outer = _scopePath.slice(1);
-
-    var decls = scope.decls || declarationsWithIdsOfScope(scope);
-    scope.decls = decls;
-    var decl = decls.find(function (_ref) {
-      var _ref2 = babelHelpers.slicedToArray(_ref, 2);
-
-      var _ = _ref2[0];
-      var id = _ref2[1];
-      return id.name == ref;
-    });
-    return decl || resolveReference(ref, outer);
-  }
-
-  function resolveReferences(scope) {
-    function rec(scope, outerScopes) {
-      var path = [scope].concat(outerScopes);
-      scope.refs.forEach(function (ref) {
-        var _resolveReference = resolveReference(ref.name, path);
-
-        var _resolveReference2 = babelHelpers.slicedToArray(_resolveReference, 2);
-
-        var decl = _resolveReference2[0];
-        var id = _resolveReference2[1];
-
-        map.set(ref, { decl: decl, declId: id, ref: ref });
-      });
-      scope.subScopes.forEach(function (s) {
-        return rec(s, path);
-      });
+    if (setter !== undefined) {
+      setter.call(receiver, value);
     }
-    if (scope.referencesResolvedSafely) return scope;
-    var map = scope.resolvedRefMap || (scope.resolvedRefMap = new Map());
-    rec(scope, []);
-    scope.referencesResolvedSafely = true;
-    return scope;
   }
 
-  function refWithDeclAt(pos, scope) {
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
+  return value;
+};
+
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
     try {
-      for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var ref = _step.value;
-        var _ref$ref = ref.ref;
-        var start = _ref$ref.start;
-        var end = _ref$ref.end;
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
 
-        if (start <= pos && pos <= end) return ref;
+        if (i && _arr.length === i) break;
       }
     } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
+      _d = true;
+      _e = err;
     } finally {
       try {
-        if (!_iteratorNormalCompletion && _iterator.return) {
-          _iterator.return();
-        }
+        if (!_n && _i["return"]) _i["return"]();
       } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
+        if (_d) throw _e;
       }
     }
+
+    return _arr;
   }
 
-  function topLevelDeclsAndRefs(parsed, options) {
-    options = options || {};
-    options.withComments = true;
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
 
-    if (typeof parsed === "string") parsed = parse(parsed, options);
 
-    var scope = scopes(parsed),
-        useComments = !!options.jslintGlobalComment,
-        declared = _declaredVarNames(scope, useComments),
-        refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
-        undeclared = lively_lang.arr.withoutAll(refs.map(function (ea) {
-      return ea.name;
-    }), declared);
 
-    return {
-      scope: scope,
-      varDecls: scope.varDecls,
-      funcDecls: scope.funcDecls,
-      classDecls: scope.classDecls,
-      declaredNames: declared,
-      undeclaredNames: undeclared,
-      refs: refs,
-      thisRefs: scope.thisRefs
-    };
+
+
+
+
+
+
+
+
+var toArray = function (arr$$1) {
+  return Array.isArray(arr$$1) ? arr$$1 : Array.from(arr$$1);
+};
+
+var toConsumableArray = function (arr$$1) {
+  if (Array.isArray(arr$$1)) {
+    for (var i = 0, arr2 = Array(arr$$1.length); i < arr$$1.length; i++) arr2[i] = arr$$1[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr$$1);
+  }
+};
+
+/*global process, global, exports*/
+
+var PrinterVisitor = function (_Visitor) {
+  inherits(PrinterVisitor, _Visitor);
+
+  function PrinterVisitor() {
+    classCallCheck(this, PrinterVisitor);
+    return possibleConstructorReturn(this, (PrinterVisitor.__proto__ || Object.getPrototypeOf(PrinterVisitor)).apply(this, arguments));
+  }
+
+  createClass(PrinterVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      var pathString = path.map(function (ea) {
+        return typeof ea === 'string' ? "." + ea : "[" + ea + "]";
+      }).join(''),
+          myChildren = [],
+          result = get(PrinterVisitor.prototype.__proto__ || Object.getPrototypeOf(PrinterVisitor.prototype), "accept", this).call(this, node, { index: state.index, tree: myChildren }, path);
+      state.tree.push({
+        node: node,
+        path: pathString,
+        index: state.index++,
+        children: myChildren
+      });
+      return result;
+    }
+  }]);
+  return PrinterVisitor;
+}(Visitor);
+
+var ComparisonVisitor = function (_Visitor2) {
+  inherits(ComparisonVisitor, _Visitor2);
+
+  function ComparisonVisitor() {
+    classCallCheck(this, ComparisonVisitor);
+    return possibleConstructorReturn(this, (ComparisonVisitor.__proto__ || Object.getPrototypeOf(ComparisonVisitor)).apply(this, arguments));
+  }
+
+  createClass(ComparisonVisitor, [{
+    key: "recordNotEqual",
+    value: function recordNotEqual(node1, node2, state, msg) {
+      state.comparisons.errors.push({
+        node1: node1, node2: node2,
+        path: state.completePath, msg: msg
+      });
+    }
+  }, {
+    key: "compareType",
+    value: function compareType(node1, node2, state) {
+      return this.compareField('type', node1, node2, state);
+    }
+  }, {
+    key: "compareField",
+    value: function compareField(field, node1, node2, state) {
+      node2 = lively.PropertyPath(state.completePath.join('.')).get(node2);
+      if (node1 && node2 && node1[field] === node2[field]) return true;
+      if (node1 && node1[field] === '*' || node2 && node2[field] === '*') return true;
+      var fullPath = state.completePath.join('.') + '.' + field,
+          msg;
+      if (!node1) msg = "node1 on " + fullPath + " not defined";else if (!node2) msg = 'node2 not defined but node1 (' + fullPath + ') is: ' + node1[field];else msg = fullPath + ' is not equal: ' + node1[field] + ' vs. ' + node2[field];
+      this.recordNotEqual(node1, node2, state, msg);
+      return false;
+    }
+  }, {
+    key: "accept",
+    value: function accept(node1, node2, state, path) {
+      var patternNode = lively.PropertyPath(path.join('.')).get(node2);
+      if (node1 === '*' || patternNode === '*') return;
+      var nextState = {
+        completePath: path,
+        comparisons: state.comparisons
+      };
+      if (this.compareType(node1, node2, nextState)) this['visit' + node1.type](node1, node2, nextState, path);
+    }
+  }, {
+    key: "visitFunction",
+    value: function visitFunction(node1, node2, state, path) {
+      // node1.generator has a specific type that is boolean
+      if (node1.generator) {
+        this.compareField("generator", node1, node2, state);
+      }
+
+      // node1.expression has a specific type that is boolean
+      if (node1.expression) {
+        this.compareField("expression", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunction", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitSwitchStatement",
+    value: function visitSwitchStatement(node1, node2, state, path) {
+      // node1.lexical has a specific type that is boolean
+      if (node1.lexical) {
+        this.compareField("lexical", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitSwitchStatement", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitForInStatement",
+    value: function visitForInStatement(node1, node2, state, path) {
+      // node1.each has a specific type that is boolean
+      if (node1.each) {
+        this.compareField("each", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitForInStatement", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitFunctionDeclaration",
+    value: function visitFunctionDeclaration(node1, node2, state, path) {
+      // node1.generator has a specific type that is boolean
+      if (node1.generator) {
+        this.compareField("generator", node1, node2, state);
+      }
+
+      // node1.expression has a specific type that is boolean
+      if (node1.expression) {
+        this.compareField("expression", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitFunctionDeclaration", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitVariableDeclaration",
+    value: function visitVariableDeclaration(node1, node2, state, path) {
+      // node1.kind is "var" or "let" or "const"
+      this.compareField("kind", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitVariableDeclaration", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitUnaryExpression",
+    value: function visitUnaryExpression(node1, node2, state, path) {
+      // node1.operator is an UnaryOperator enum:
+      // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
+      this.compareField("operator", node1, node2, state);
+
+      // node1.prefix has a specific type that is boolean
+      if (node1.prefix) {
+        this.compareField("prefix", node1, node2, state);
+      }
+
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUnaryExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitBinaryExpression",
+    value: function visitBinaryExpression(node1, node2, state, path) {
+      // node1.operator is an BinaryOperator enum:
+      // "==" | "!=" | "===" | "!==" | | "<" | "<=" | ">" | ">=" | | "<<" | ">>" | ">>>" | | "+" | "-" | "*" | "/" | "%" | | "|" | "^" | "&" | "in" | | "instanceof" | ".."
+      this.compareField("operator", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitBinaryExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitAssignmentExpression",
+    value: function visitAssignmentExpression(node1, node2, state, path) {
+      // node1.operator is an AssignmentOperator enum:
+      // "=" | "+=" | "-=" | "*=" | "/=" | "%=" | | "<<=" | ">>=" | ">>>=" | | "|=" | "^=" | "&="
+      this.compareField("operator", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitAssignmentExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitUpdateExpression",
+    value: function visitUpdateExpression(node1, node2, state, path) {
+      // node1.operator is an UpdateOperator enum:
+      // "++" | "--"
+      this.compareField("operator", node1, node2, state);
+      // node1.prefix has a specific type that is boolean
+      if (node1.prefix) {
+        this.compareField("prefix", node1, node2, state);
+      }
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitUpdateExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitLogicalExpression",
+    value: function visitLogicalExpression(node1, node2, state, path) {
+      // node1.operator is an LogicalOperator enum:
+      // "||" | "&&"
+      this.compareField("operator", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLogicalExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitMemberExpression",
+    value: function visitMemberExpression(node1, node2, state, path) {
+      // node1.computed has a specific type that is boolean
+      if (node1.computed) {
+        this.compareField("computed", node1, node2, state);
+      }
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMemberExpression", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitComprehensionBlock",
+    value: function visitComprehensionBlock(node1, node2, state, path) {
+      // node1.each has a specific type that is boolean
+      if (node1.each) {
+        this.compareField("each", node1, node2, state);
+      }
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitComprehensionBlock", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitIdentifier",
+    value: function visitIdentifier(node1, node2, state, path) {
+      // node1.name has a specific type that is string
+      this.compareField("name", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitIdentifier", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitLiteral",
+    value: function visitLiteral(node1, node2, state, path) {
+      this.compareField("value", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitLiteral", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitClassDeclaration",
+    value: function visitClassDeclaration(node1, node2, state, path) {
+      this.compareField("id", node1, node2, state);
+      if (node1.superClass) {
+        this.compareField("superClass", node1, node2, state);
+      }
+      this.compareField("body", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassDeclaration", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitClassBody",
+    value: function visitClassBody(node1, node2, state, path) {
+      this.compareField("body", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitClassBody", this).call(this, node1, node2, state, path);
+    }
+  }, {
+    key: "visitMethodDefinition",
+    value: function visitMethodDefinition(node1, node2, state, path) {
+      this.compareField("static", node1, node2, state);
+      this.compareField("computed", node1, node2, state);
+      this.compareField("kind", node1, node2, state);
+      this.compareField("key", node1, node2, state);
+      this.compareField("value", node1, node2, state);
+      return get(ComparisonVisitor.prototype.__proto__ || Object.getPrototypeOf(ComparisonVisitor.prototype), "visitMethodDefinition", this).call(this, node1, node2, state, path);
+    }
+  }]);
+  return ComparisonVisitor;
+}(Visitor);
+
+var ScopeVisitor = function (_Visitor3) {
+  inherits(ScopeVisitor, _Visitor3);
+
+  function ScopeVisitor() {
+    classCallCheck(this, ScopeVisitor);
+    return possibleConstructorReturn(this, (ScopeVisitor.__proto__ || Object.getPrototypeOf(ScopeVisitor)).apply(this, arguments));
+  }
+
+  createClass(ScopeVisitor, [{
+    key: "newScope",
+    value: function newScope(scopeNode, parentScope) {
+      var scope = {
+        node: scopeNode,
+        varDecls: [],
+        varDeclPaths: [],
+        funcDecls: [],
+        funcDeclPaths: [],
+        classDecls: [],
+        classDeclPaths: [],
+        classExprs: [],
+        classExprPaths: [],
+        methodDecls: [],
+        methodDeclPaths: [],
+        importDecls: [],
+        importDeclPaths: [],
+        exportDecls: [],
+        exportDeclPaths: [],
+        refs: [],
+        thisRefs: [],
+        params: [],
+        catches: [],
+        subScopes: [],
+        resolvedRefMap: new Map()
+      };
+      if (parentScope) parentScope.subScopes.push(scope);
+      return scope;
+    }
+  }, {
+    key: "visitVariableDeclaration",
+    value: function visitVariableDeclaration(node, scope, path) {
+      scope.varDecls.push(node);
+      scope.varDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitVariableDeclaration", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitVariableDeclarator",
+    value: function visitVariableDeclarator(node, scope, path) {
+      var visitor = this;
+      // ignore id
+      // // id is of types Pattern
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // init is of types Expression
+      if (node["init"]) {
+        node["init"] = visitor.accept(node["init"], scope, path.concat(["init"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitFunction",
+    value: function visitFunction(node, scope, path) {
+      var newScope = this.newScope(node, scope);
+      newScope.params = Array.prototype.slice.call(node.params);
+      return newScope;
+    }
+  }, {
+    key: "visitFunctionDeclaration",
+    value: function visitFunctionDeclaration(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+      scope.funcDecls.push(node);
+      scope.funcDeclPaths.push(path);
+
+      // don't visit id and params  
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitFunctionExpression",
+    value: function visitFunctionExpression(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+
+      // don't visit id and params  
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitArrowFunctionExpression",
+    value: function visitArrowFunctionExpression(node, scope, path) {
+      var newScope = this.visitFunction(node, scope, path);
+      var visitor = this;
+
+      if (node.defaults) {
+        node["defaults"] = node["defaults"].reduce(function (results, ea, i) {
+          var result = visitor.accept(ea, newScope, path.concat(["defaults", i]));
+          if (Array.isArray(result)) results.push.apply(results, result);else results.push(result);
+          return results;
+        }, []);
+      }
+
+      if (node.rest) {
+        node["rest"] = visitor.accept(node["rest"], newScope, path.concat(["rest"]));
+      }
+
+      // body is of types BlockStatement, Expression
+      node["body"] = visitor.accept(node["body"], newScope, path.concat(["body"]));
+
+      // loc is of types SourceLocation
+      if (node["loc"]) {
+        node["loc"] = visitor.accept(node["loc"], newScope, path.concat(["loc"]));
+      }
+      // node.generator has a specific type that is boolean
+      if (node.generator) {} /*do stuff*/
+
+      // node.expression has a specific type that is boolean
+      if (node.expression) {/*do stuff*/}
+      return node;
+    }
+  }, {
+    key: "visitIdentifier",
+    value: function visitIdentifier(node, scope, path) {
+      scope.refs.push(node);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitIdentifier", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitMemberExpression",
+    value: function visitMemberExpression(node, scope, path) {
+      // only visit property part when prop is computed so we don't gather
+      // prop ids
+
+      var visitor = this;
+      // object is of types Expression, Super
+      node["object"] = visitor.accept(node["object"], scope, path.concat(["object"]));
+      // property is of types Expression
+      if (node.computed) {
+        node["property"] = visitor.accept(node["property"], scope, path.concat(["property"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitProperty",
+    value: function visitProperty(node, scope, path) {
+      var visitor = this;
+      // key is of types Expression
+      if (node.computed) node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+      // value is of types Expression
+      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+      return node;
+    }
+  }, {
+    key: "visitThisExpression",
+    value: function visitThisExpression(node, scope, path) {
+      scope.thisRefs.push(node);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitThisExpression", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitTryStatement",
+    value: function visitTryStatement(node, scope, path) {
+      var visitor = this;
+      // block is of types BlockStatement
+      node["block"] = visitor.accept(node["block"], scope, path.concat(["block"]));
+      // handler is of types CatchClause
+      if (node["handler"]) {
+        node["handler"] = visitor.accept(node["handler"], scope, path.concat(["handler"]));
+        scope.catches.push(node.handler.param);
+      }
+
+      // finalizer is of types BlockStatement
+      if (node["finalizer"]) {
+        node["finalizer"] = visitor.accept(node["finalizer"], scope, path.concat(["finalizer"]));
+      }
+      return node;
+    }
+  }, {
+    key: "visitLabeledStatement",
+    value: function visitLabeledStatement(node, scope, path) {
+      var visitor = this;
+      // ignore label
+      // // label is of types Identifier
+      // node["label"] = visitor.accept(node["label"], scope, path.concat(["label"]));
+      // body is of types Statement
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+  }, {
+    key: "visitClassDeclaration",
+    value: function visitClassDeclaration(node, scope, path) {
+      scope.classDecls.push(node);
+      scope.classDeclPaths.push(path);
+
+      var visitor = this;
+      // ignore id
+      // // id is of types Identifier
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // superClass is of types Expression
+      if (node["superClass"]) {
+        node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+      }
+      // body is of types ClassBody
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+  }, {
+    key: "visitClassExpression",
+    value: function visitClassExpression(node, scope, path) {
+      if (node.id) {
+        scope.classExprs.push(node);
+        scope.classExprPaths.push(path);
+      }
+
+      var visitor = this;
+      // ignore id
+      // // id is of types Identifier
+      // node["id"] = visitor.accept(node["id"], scope, path.concat(["id"]));
+      // superClass is of types Expression
+      if (node["superClass"]) {
+        node["superClass"] = visitor.accept(node["superClass"], scope, path.concat(["superClass"]));
+      }
+      // body is of types ClassBody
+      node["body"] = visitor.accept(node["body"], scope, path.concat(["body"]));
+      return node;
+    }
+  }, {
+    key: "visitMethodDefinition",
+    value: function visitMethodDefinition(node, scope, path) {
+      var visitor = this;
+      // don't visit key Identifier for now
+      // // key is of types Expression
+      // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
+      // value is of types FunctionExpression
+      node["value"] = visitor.accept(node["value"], scope, path.concat(["value"]));
+      return node;
+    }
+  }, {
+    key: "visitBreakStatement",
+    value: function visitBreakStatement(node, scope, path) {
+      return node;
+    }
+  }, {
+    key: "visitContinueStatement",
+    value: function visitContinueStatement(node, scope, path) {
+      return node;
+    }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // es6 modules
 
-    function findUndeclaredReferences(scope) {
-      var names = _declaredVarNames(scope, useComments);
-      return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
-        return refs.concat(ea);
-      }, scope.refs).filter(function (ref) {
-        return names.indexOf(ref.name) === -1;
+  }, {
+    key: "visitImportSpecifier",
+    value: function visitImportSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      scope.importDeclPaths.push(path);
+
+      var visitor = this;
+      // // imported is of types Identifier
+      // node["imported"] = visitor.accept(node["imported"], scope, path.concat(["imported"]));
+      // local is of types Identifier
+      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitImportDefaultSpecifier",
+    value: function visitImportDefaultSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      scope.importDeclPaths.push(path);
+      var visitor = this;
+      // // local is of types Identifier
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitImportNamespaceSpecifier",
+    value: function visitImportNamespaceSpecifier(node, scope, path) {
+      scope.importDecls.push(node.local);
+      scope.importDeclPaths.push(path);
+      var visitor = this;
+      // // local is of types Identifier
+      // node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitExportSpecifier",
+    value: function visitExportSpecifier(node, scope, path) {
+      var visitor = this;
+      // // exported is of types Identifier
+      // node["exported"] = visitor.accept(node["exported"], scope, path.concat(["exported"]));
+      // local is of types Identifier
+      node["local"] = visitor.accept(node["local"], scope, path.concat(["local"]));
+      return node;
+    }
+  }, {
+    key: "visitExportNamedDeclaration",
+    value: function visitExportNamedDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      scope.exportDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitExportDefaultDeclaration",
+    value: function visitExportDefaultDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      scope.exportDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportDefaultDeclaration", this).call(this, node, scope, path);
+    }
+  }, {
+    key: "visitExportAllDeclaration",
+    value: function visitExportAllDeclaration(node, scope, path) {
+      scope.exportDecls.push(node);
+      scope.exportDeclPaths.push(path);
+      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportAllDeclaration", this).call(this, node, scope, path);
+    }
+  }]);
+  return ScopeVisitor;
+}(Visitor);
+
+var es = escodegen.escodegen || escodegen;
+
+function stringify(node, opts) {
+  return es.generate(fixParamDefaults(node), opts);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// rk 2016-04-10: escodegen cannot deal with how default parameters are
+// represented by the AST format acorn uses (and which adheres to the offical
+// Mozilla ES AST spec)
+// for that purpose we implement a transformer here that will convert an AST like this
+//   {
+//     body: {body: [],type: "BlockStatement"},
+//     expression: false,
+//     generator: false,
+//     id: { name: "foo", type: "Identifier" },
+//     params: [{
+//         left: { name: "a", type: "Identifier" },
+//         right: { type: "Literal", value: 3 },
+//         type: "AssignmentPattern"
+//       }],
+//     type: "FunctionDeclaration"
+//   }
+//   (lively.ast.parse("function foo(a = 3) {}"))
+// into an ast like this
+//   {
+//     "type": "FunctionDeclaration",
+//     "id": { "type": "Identifier", "name": "foo" },
+//     "params": [{ "type": "Identifier", "name": "a" }],
+//     "defaults": [{ "type": "Literal", "value": 3, "raw": "3" }],
+//     "body": { "type": "BlockStatement", "body": [] },
+//     "generator": false,
+//     "expression": false
+//   }
+
+var FixParamsForEscodegenVisitor = function (_Visitor) {
+  inherits(FixParamsForEscodegenVisitor, _Visitor);
+
+  function FixParamsForEscodegenVisitor() {
+    classCallCheck(this, FixParamsForEscodegenVisitor);
+    return possibleConstructorReturn(this, (FixParamsForEscodegenVisitor.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor)).apply(this, arguments));
+  }
+
+  createClass(FixParamsForEscodegenVisitor, [{
+    key: "fixFunctionNode",
+    value: function fixFunctionNode(node) {
+      node.defaults = node.params.map(function (p, i) {
+        if (p.type === "AssignmentPattern") {
+          node.params[i] = p.left;
+          return p.right;
+        }
+        return undefined;
       });
     }
-  }
+  }, {
+    key: "visitFunction",
+    value: function visitFunction(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunction", this).call(this, node, state, path);
+    }
+  }, {
+    key: "visitArrowFunctionExpression",
+    value: function visitArrowFunctionExpression(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitArrowFunctionExpression", this).call(this, node, state, path);
+    }
+  }, {
+    key: "visitFunctionExpression",
+    value: function visitFunctionExpression(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionExpression", this).call(this, node, state, path);
+    }
+  }, {
+    key: "visitFunctionDeclaration",
+    value: function visitFunctionDeclaration(node, state, path) {
+      this.fixFunctionNode(node);
+      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionDeclaration", this).call(this, node, state, path);
+    }
+  }]);
+  return FixParamsForEscodegenVisitor;
+}(Visitor);
 
-  function findGlobalVarRefs(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed, options),
-        noGlobals = topLevel.declaredNames.concat(knownGlobals);
-    return topLevel.refs.filter(function (ea) {
-      return noGlobals.indexOf(ea.name) === -1;
-    });
-  }
+// debugger;
+// var node = lively.ast.parse("/^file:\\/\\//");
+// fixParamDefaults(node).body[0].expression.value
 
-  function findNodesIncludingLines(parsed, code, lines, options) {
-    if (!code && !parsed) throw new Error("Need at least ast or code");
-    code = code ? code : stringify(parsed);
-    parsed = parsed && parsed.loc ? parsed : parse(code, { locations: true });
-    return withMozillaAstDo(parsed, [], function (next, node, found) {
-      if (lines.every(function (line) {
-        return lively_lang.num.between(line, node.loc.start.line, node.loc.end.line);
-      })) {
-        lively_lang.arr.pushIfNotIncluded(found, node);next();
+function fixParamDefaults(parsed) {
+  parsed = lively_lang.obj.deepCopy(parsed);
+  new FixParamsForEscodegenVisitor().accept(parsed, null, []);
+  return parsed;
+}
+
+/*global acorn*/
+var walk = acorn.walk;
+var loose = acorn.loose;
+// rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
+// await. We patch the walker here until it does
+if (!walk.base.AwaitExpression) {
+  walk.base.AwaitExpression = function (node, st, c) {
+    if (node.argument) c(node.argument, st, 'Expression');
+  };
+}
+
+// FIXME, don't add to walk object, that's our own stuff!
+walk.forEachNode = forEachNode;
+walk.matchNodes = matchNodes;
+walk.findNodesIncluding = findNodesIncluding;
+walk.withParentInfo = withParentInfo;
+walk.copy = copy;
+walk.findSiblings = findSiblings;
+
+walk.findNodeByAstIndex = findNodeByAstIndex;
+walk.findStatementOfNode = findStatementOfNode;
+walk.addAstIndex = addAstIndex;
+
+// -=-=-=-=-=-=-=-=-=-=-=-
+// from lively.ast.acorn
+// -=-=-=-=-=-=-=-=-=-=-=-
+function forEachNode(parsed, func, state, options) {
+  // note: func can get called with the same node for different
+  // visitor callbacks!
+  // func args: node, state, depth, type
+  options = options || {};
+  var traversal = options.traversal || 'preorder'; // also: postorder
+
+  var visitors = lively_lang.obj.clone(options.visitors ? options.visitors : walk.make(walk.visitors.withMemberExpression));
+  var iterator = traversal === 'preorder' ? function (orig, type, node, depth, cont) {
+    func(node, state, depth, type);return orig(node, depth + 1, cont);
+  } : function (orig, type, node, depth, cont) {
+    var result = orig(node, depth + 1, cont);func(node, state, depth, type);return result;
+  };
+  Object.keys(visitors).forEach(function (type) {
+    var orig = visitors[type];
+    visitors[type] = function (node, depth, cont) {
+      return iterator(orig, type, node, depth, cont);
+    };
+  });
+  walk.recursive(parsed, 0, null, visitors);
+  return parsed;
+}
+
+function matchNodes(parsed, visitor, state, options) {
+  function visit(node, state, depth, type) {
+    if (visitor[node.type]) visitor[node.type](node, state, depth, type);
+  }
+  return forEachNode(parsed, visit, state, options);
+}
+
+// findNodesIncluding: function(ast, pos, test, base) {
+//   var nodes = [];
+//   base = base || acorn.walk.make({});
+//   Object.keys(base).forEach(function(name) {
+//       var orig = base[name];
+//       base[name] = function(node, state, cont) {
+//           nodes.pushIfNotIncluded(node);
+//           return orig(node, state, cont);
+//       }
+//   });
+//   acorn.walk.findNodeAround(ast, pos, test, base);
+//   return nodes;
+// }
+
+function findNodesIncluding(parsed, pos, test, base) {
+  var nodes = [];
+  base = base || walk.make(walk.visitors.withMemberExpression);
+  Object.keys(walk.base).forEach(function (name) {
+    var orig = base[name];
+    base[name] = function (node, state, cont) {
+      lively_lang.arr.pushIfNotIncluded(nodes, node);
+      return orig(node, state, cont);
+    };
+  });
+  base["Property"] = function (node, st, c) {
+    lively_lang.arr.pushIfNotIncluded(nodes, node);
+    c(node.key, st, "Expression");
+    c(node.value, st, "Expression");
+  };
+  base["LabeledStatement"] = function (node, st, c) {
+    node.label && c(node.label, st, "Expression");
+    c(node.body, st, "Statement");
+  };
+  walk.findNodeAround(parsed, pos, test, base);
+  return nodes;
+}
+
+function withParentInfo(parsed, iterator, options) {
+  // options = {visitAllNodes: BOOL}
+  options = options || {};
+  function makeScope(parentScope) {
+    var scope = { id: lively_lang.string.newUUID(), parentScope: parentScope, containingScopes: [] };
+    parentScope && parentScope.containingScopes.push(scope);
+    return scope;
+  }
+  var visitors = walk.make({
+    Function: function Function(node, st, c) {
+      if (st && st.scope) st.scope = makeScope(st.scope);
+      c(node.body, st, "ScopeBody");
+    },
+    VariableDeclarator: function VariableDeclarator(node, st, c) {
+      // node.id && c(node.id, st, 'Identifier');
+      node.init && c(node.init, st, 'Expression');
+    },
+    VariableDeclaration: function VariableDeclaration(node, st, c) {
+      for (var i = 0; i < node.declarations.length; ++i) {
+        var decl = node.declarations[i];
+        if (decl) c(decl, st, "VariableDeclarator");
       }
-      return found;
+    },
+    ObjectExpression: function ObjectExpression(node, st, c) {
+      for (var i = 0; i < node.properties.length; ++i) {
+        var prop = node.properties[i];
+        c(prop.key, st, "Expression");
+        c(prop.value, st, "Expression");
+      }
+    },
+    MemberExpression: function MemberExpression(node, st, c) {
+      c(node.object, st, "Expression");
+      c(node.property, st, "Expression");
+    }
+  }, walk.base);
+  var lastActiveProp,
+      getters = [];
+  forEachNode(parsed, function (node) {
+    lively_lang.arr.withoutAll(Object.keys(node), ['end', 'start', 'type', 'source', 'raw']).forEach(function (propName) {
+      if (node.__lookupGetter__(propName)) return; // already defined
+      var val = node[propName];
+      node.__defineGetter__(propName, function () {
+        lastActiveProp = propName;return val;
+      });
+      getters.push([node, propName, node[propName]]);
     });
+  }, null, { visitors: visitors });
+  var result = [];
+  Object.keys(visitors).forEach(function (type) {
+    var orig = visitors[type];
+    visitors[type] = function (node, state, cont) {
+      if (type === node.type || options.visitAllNodes) {
+        result.push(iterator.call(null, node, { scope: state.scope, depth: state.depth, parent: state.parent, type: type, propertyInParent: lastActiveProp }));
+        return orig(node, { scope: state.scope, parent: node, depth: state.depth + 1 }, cont);
+      } else {
+        return orig(node, state, cont);
+      }
+    };
+  });
+  walk.recursive(parsed, { scope: makeScope(), parent: null, propertyInParent: '', depth: 0 }, null, visitors);
+  getters.forEach(function (nodeNameVal) {
+    delete nodeNameVal[0][nodeNameVal[1]];
+    nodeNameVal[0][nodeNameVal[1]] = nodeNameVal[2];
+  });
+  return result;
+}
+
+function copy(ast, override) {
+  var visitors = lively_lang.obj.extend({
+    Program: function Program(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'Program',
+        body: n.body.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    FunctionDeclaration: function FunctionDeclaration(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'FunctionDeclaration',
+        id: c(n.id), params: n.params.map(c), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    BlockStatement: function BlockStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'BlockStatement',
+        body: n.body.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ExpressionStatement: function ExpressionStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ExpressionStatement',
+        expression: c(n.expression),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    CallExpression: function CallExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'CallExpression',
+        callee: c(n.callee), arguments: n.arguments.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    MemberExpression: function MemberExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'MemberExpression',
+        object: c(n.object), property: c(n.property), computed: n.computed,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    NewExpression: function NewExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'NewExpression',
+        callee: c(n.callee), arguments: n.arguments.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    VariableDeclaration: function VariableDeclaration(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'VariableDeclaration',
+        declarations: n.declarations.map(c), kind: n.kind,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    VariableDeclarator: function VariableDeclarator(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'VariableDeclarator',
+        id: c(n.id), init: c(n.init),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    FunctionExpression: function FunctionExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'FunctionExpression',
+        id: c(n.id), params: n.params.map(c), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    IfStatement: function IfStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'IfStatement',
+        test: c(n.test), consequent: c(n.consequent),
+        alternate: c(n.alternate),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ConditionalExpression: function ConditionalExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ConditionalExpression',
+        test: c(n.test), consequent: c(n.consequent),
+        alternate: c(n.alternate),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    SwitchStatement: function SwitchStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'SwitchStatement',
+        discriminant: c(n.discriminant), cases: n.cases.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    SwitchCase: function SwitchCase(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'SwitchCase',
+        test: c(n.test), consequent: n.consequent.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    BreakStatement: function BreakStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'BreakStatement',
+        label: n.label,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ContinueStatement: function ContinueStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ContinueStatement',
+        label: n.label,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    TryStatement: function TryStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'TryStatement',
+        block: c(n.block), handler: c(n.handler), finalizer: c(n.finalizer),
+        guardedHandlers: n.guardedHandlers.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    CatchClause: function CatchClause(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'CatchClause',
+        param: c(n.param), guard: c(n.guard), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ThrowStatement: function ThrowStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ThrowStatement',
+        argument: c(n.argument),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ForStatement: function ForStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ForStatement',
+        init: c(n.init), test: c(n.test), update: c(n.update),
+        body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ForInStatement: function ForInStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ForInStatement',
+        left: c(n.left), right: c(n.right), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    WhileStatement: function WhileStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'WhileStatement',
+        test: c(n.test), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    DoWhileStatement: function DoWhileStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'DoWhileStatement',
+        test: c(n.test), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    WithStatement: function WithStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'WithStatement',
+        object: c(n.object), body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    UnaryExpression: function UnaryExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'UnaryExpression',
+        argument: c(n.argument), operator: n.operator, prefix: n.prefix,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    BinaryExpression: function BinaryExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'BinaryExpression',
+        left: c(n.left), operator: n.operator, right: c(n.right),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    LogicalExpression: function LogicalExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'LogicalExpression',
+        left: c(n.left), operator: n.operator, right: c(n.right),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    AssignmentExpression: function AssignmentExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'AssignmentExpression',
+        left: c(n.left), operator: n.operator, right: c(n.right),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    UpdateExpression: function UpdateExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'UpdateExpression',
+        argument: c(n.argument), operator: n.operator, prefix: n.prefix,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ReturnStatement: function ReturnStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ReturnStatement',
+        argument: c(n.argument),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    Identifier: function Identifier(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'Identifier',
+        name: n.name,
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    Literal: function Literal(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'Literal',
+        value: n.value, raw: n.raw /* Acorn-specific */
+        , source: n.source, astIndex: n.astIndex
+      };
+    },
+    ObjectExpression: function ObjectExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ObjectExpression',
+        properties: n.properties.map(function (prop) {
+          return {
+            key: c(prop.key), value: c(prop.value), kind: prop.kind
+          };
+        }),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ArrayExpression: function ArrayExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ArrayExpression',
+        elements: n.elements.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    SequenceExpression: function SequenceExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'SequenceExpression',
+        expressions: n.expressions.map(c),
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    EmptyStatement: function EmptyStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'EmptyStatement',
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    ThisExpression: function ThisExpression(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'ThisExpression',
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    DebuggerStatement: function DebuggerStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'DebuggerStatement',
+        source: n.source, astIndex: n.astIndex
+      };
+    },
+    LabeledStatement: function LabeledStatement(n, c) {
+      return {
+        start: n.start, end: n.end, type: 'LabeledStatement',
+        label: n.label, body: c(n.body),
+        source: n.source, astIndex: n.astIndex
+      };
+    }
+  }, override || {});
+
+  function c(node) {
+    if (node === null) return null;
+    return visitors[node.type](node, c);
+  }
+  return c(ast);
+}
+
+function findSiblings(parsed, node, beforeOrAfter) {
+  if (!node) return [];
+  var nodes = findNodesIncluding(parsed, node.start),
+      idx = nodes.indexOf(node),
+      parents = nodes.slice(0, idx),
+      parentWithBody = lively_lang.arr.detect(parents.reverse(), function (p) {
+    return Array.isArray(p.body);
+  }),
+      siblingsWithNode = parentWithBody.body;
+  if (!beforeOrAfter) return lively_lang.arr.without(siblingsWithNode, node);
+  var nodeIdxInSiblings = siblingsWithNode.indexOf(node);
+  return beforeOrAfter === 'before' ? siblingsWithNode.slice(0, nodeIdxInSiblings) : siblingsWithNode.slice(nodeIdxInSiblings + 1);
+}
+
+// // cached visitors that are used often
+walk.visitors = {
+  stopAtFunctions: walk.make({
+    'Function': function Function() {/* stop descent */}
+  }, walk.base),
+
+  withMemberExpression: walk.make({
+    MemberExpression: function MemberExpression(node, st, c) {
+      c(node.object, st, "Expression");
+      c(node.property, st, "Expression");
+    }
+  }, walk.base)
+};
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+// from lively.ast.AstHelper
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+function findNodeByAstIndex(parsed, astIndexToFind, addIndex) {
+  addIndex = addIndex == null ? true : !!addIndex;
+  if (!parsed.astIndex && addIndex) addAstIndex(parsed);
+  // we need to visit every node, forEachNode is highly
+  // inefficient, the compilled Mozilla visitors are a better fit
+  var found = null;
+  withMozillaAstDo(parsed, null, function (next, node, state) {
+    if (found) return;
+    var idx = node.astIndex;
+    if (idx < astIndexToFind) return;
+    if (node.astIndex === astIndexToFind) {
+      found = node;return;
+    }
+    next();
+  });
+  return found;
+}
+
+// FIXME: global (and temporary) findNodeByAstIndex is used by __getClosure and defined in Rewriting.js
+// Global.findNodeByAstIndex = findNodeByAstIndex;
+
+function findStatementOfNode(options, parsed, target) {
+  // DEPRECATED in favor of query.statementOf(parsed, node)
+  // Can also be called with just ast and target. options can be {asPath: BOOLEAN}.
+  // Find the statement that a target node is in. Example:
+  // let source be "var x = 1; x + 1;" and we are looking for the
+  // Identifier "x" in "x+1;". The second statement is what will be found.
+  if (!target) {
+    target = parsed;parsed = options;options = null;
+  }
+  if (!options) options = {};
+  if (!parsed.astIndex) addAstIndex(parsed);
+  var found,
+      targetReached = false;
+  var statements = [
+  // ES5
+  'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration', 'VariableDeclaration',
+  // ES2015:
+  'ClassDeclaration'];
+  withMozillaAstDo(parsed, {}, function (next, node, state, path) {
+    if (targetReached || node.astIndex < target.astIndex) return;
+    if (node === target || node.astIndex === target.astIndex) {
+      targetReached = true;
+      if (options.asPath) found = path;else {
+        var p = lively_lang.Path(path);
+        do {
+          found = p.get(parsed);
+          p = p.slice(0, p.size() - 1);
+        } while (statements.indexOf(found.type) == -1 && p.size() > 0);
+      }
+    }
+    !targetReached && next();
+  });
+  return found;
+}
+
+function addAstIndex(parsed) {
+  // we need to visit every node, forEachNode is highly
+  // inefficient, the compilled Mozilla visitors are a better fit
+  withMozillaAstDo(parsed, { index: 0 }, function (next, node, state) {
+    next();node.astIndex = state.index++;
+  });
+  return parsed;
+}
+
+var FindToplevelFuncDeclVisitor = function (_Visitor) {
+  inherits(FindToplevelFuncDeclVisitor, _Visitor);
+
+  function FindToplevelFuncDeclVisitor() {
+    classCallCheck(this, FindToplevelFuncDeclVisitor);
+    return possibleConstructorReturn(this, (FindToplevelFuncDeclVisitor.__proto__ || Object.getPrototypeOf(FindToplevelFuncDeclVisitor)).apply(this, arguments));
   }
 
-  function findReferencesAndDeclsInScope(scope, name) {
-    if (name === "this") {
-      return scope.thisRefs;
+  createClass(FindToplevelFuncDeclVisitor, [{
+    key: "accept",
+    value: function accept(node, funcDecls, path) {
+      switch (node.type) {
+        case "ArrowFunctionExpression":
+          return node;
+        case "FunctionExpression":
+          return node;
+        case "FunctionDeclaration":
+          funcDecls.unshift({ node: node, path: path });return node;
+        default:
+          return get(FindToplevelFuncDeclVisitor.prototype.__proto__ || Object.getPrototypeOf(FindToplevelFuncDeclVisitor.prototype), "accept", this).call(this, node, funcDecls, path);
+      }
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed) {
+      var state = [];
+      new this().accept(parsed, state, []);
+      return state;
+    }
+  }]);
+  return FindToplevelFuncDeclVisitor;
+}(Visitor);
+
+var AllNodesVisitor = function (_Visitor2) {
+  inherits(AllNodesVisitor, _Visitor2);
+
+  function AllNodesVisitor() {
+    classCallCheck(this, AllNodesVisitor);
+    return possibleConstructorReturn(this, (AllNodesVisitor.__proto__ || Object.getPrototypeOf(AllNodesVisitor)).apply(this, arguments));
+  }
+
+  createClass(AllNodesVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      this.doFunc(node, state, path);
+      return get(AllNodesVisitor.prototype.__proto__ || Object.getPrototypeOf(AllNodesVisitor.prototype), "accept", this).call(this, node, state, path);
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, doFunc, state) {
+      var v = new this();
+      v.doFunc = doFunc;
+      v.accept(parsed, state, []);
+      return state;
+    }
+  }]);
+  return AllNodesVisitor;
+}(Visitor);
+
+acorn.walk.addSource = addSource;
+
+function addSource(parsed, source) {
+  if (typeof parsed === "string") {
+    source = parsed;
+    parsed = parse(parsed);
+  }
+  source && AllNodesVisitor.run(parsed, function (node, state, path) {
+    return !node.source && (node.source = source.slice(node.start, node.end));
+  });
+  return parsed;
+}
+
+function nodesAt(pos, ast) {
+  ast = typeof ast === 'string' ? this.parse(ast) : ast;
+  return findNodesIncluding(ast, pos);
+}
+
+function parseFunction(source) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var src = '(' + source + ')',
+      ast = parse(src, options);
+  if (options.addSource) addSource(ast, src);
+  return ast.body[0].expression;
+}
+
+function fuzzyParse(source, options) {
+  // options: verbose, addSource, type
+  options = options || {};
+  options.ecmaVersion = options.ecmaVersion || 7;
+  options.sourceType = options.sourceType || "module";
+  options.plugins = options.plugins || {};
+  // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+  options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+  options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
+
+  var ast, safeSource, err;
+  if (options.type === 'LabeledStatement') {
+    safeSource = '$={' + source + '}';
+  }
+  try {
+    // we only parse to find errors
+    ast = parse(safeSource || source, options);
+    if (safeSource) ast = null; // we parsed only for finding errors
+    else if (options.addSource) addSource(ast, source);
+  } catch (e) {
+    err = e;
+  }
+  if (err && err.raisedAt !== undefined) {
+    if (safeSource) {
+      // fix error pos
+      err.pos -= 3;err.raisedAt -= 3;err.loc.column -= 3;
+    }
+    var parseErrorSource = '';
+    parseErrorSource += source.slice(err.raisedAt - 20, err.raisedAt);
+    parseErrorSource += '<-error->';
+    parseErrorSource += source.slice(err.raisedAt, err.raisedAt + 20);
+    options.verbose && show('parse error: ' + parseErrorSource);
+    err.parseErrorSource = parseErrorSource;
+  } else if (err && options.verbose) {
+    show('' + err + err.stack);
+  }
+  if (!ast) {
+    ast = loose.parse_dammit(source, options);
+    if (options.addSource) addSource(ast, source);
+    ast.isFuzzy = true;
+    ast.parseError = err;
+  }
+  return ast;
+}
+
+function parse(source, options) {
+  // proxy function to acorn.parse.
+  // Note that we will implement useful functionality on top of the pure
+  // acorn interface and make it available here (such as more convenient
+  // comment parsing). For using the pure acorn interface use the acorn
+  // global.
+  // See https://github.com/marijnh/acorn for full acorn doc and parse options.
+  // options: {
+  //   addSource: BOOL, -- add source property to each node
+  //   addAstIndex: BOOL, -- each node gets an index  number
+  //   withComments: BOOL, -- adds comment objects to Program/BlockStatements:
+  //              {isBlock: BOOL, text: STRING, node: NODE,
+  //               start: INTEGER, end: INTEGER, line: INTEGER, column: INTEGER}
+  //   ecmaVersion: 3|5|6,
+  //   allowReturnOutsideFunction: BOOL, -- Default is false
+  //   locations: BOOL -- Default is false
+  // }
+
+  options = options || {};
+  options.ecmaVersion = options.ecmaVersion || 7;
+  options.sourceType = options.sourceType || "module";
+  if (!options.hasOwnProperty("allowImportExportEverywhere")) options.allowImportExportEverywhere = true;
+  options.plugins = options.plugins || {};
+  options.plugins.asyncawait = options.plugins.hasOwnProperty("asyncawait") ? options.plugins.asyncawait : { inAsyncFunction: true };
+  options.plugins.objectSpread = options.plugins.hasOwnProperty("objectSpread") ? options.plugins.objectSpread : true;
+
+  if (options.withComments) {
+    // record comments
+    delete options.withComments;
+    var comments = [];
+    options.onComment = function (isBlock, text, start, end, line, column) {
+      comments.push({
+        isBlock: isBlock,
+        text: text, node: null,
+        start: start, end: end,
+        line: line, column: column
+      });
+    };
+  }
+
+  var parsed = acorn.parse(source, options);
+
+  if (options.addSource) addSource(parsed, source);
+
+  if (options.addAstIndex && !parsed.hasOwnProperty('astIndex')) addAstIndex(parsed);
+
+  if (parsed && comments) attachCommentsToAST({ ast: parsed, comments: comments, nodesWithComments: [] });
+
+  return parsed;
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function attachCommentsToAST(commentData) {
+    // for each comment: assign the comment to a block-level AST node
+    commentData = mergeComments(assignCommentsToBlockNodes(commentData));
+    parsed.allComments = commentData.comments;
+  }
+
+  function assignCommentsToBlockNodes(commentData) {
+    comments.forEach(function (comment) {
+      var node = lively_lang.arr.detect(nodesAt(comment.start, parsed).reverse(), function (node) {
+        return node.type === 'BlockStatement' || node.type === 'Program';
+      });
+      if (!node) node = parsed;
+      if (!node.comments) node.comments = [];
+      node.comments.push(comment);
+      commentData.nodesWithComments.push(node);
+    });
+    return commentData;
+  }
+
+  function mergeComments(commentData) {
+    // coalesce non-block comments (multiple following lines of "// ...") into one comment.
+    // This only happens if line comments aren't seperated by newlines
+    commentData.nodesWithComments.forEach(function (blockNode) {
+      lively_lang.arr.clone(blockNode.comments).reduce(function (coalesceData, comment) {
+        if (comment.isBlock) {
+          coalesceData.lastComment = null;
+          return coalesceData;
+        }
+
+        if (!coalesceData.lastComment) {
+          coalesceData.lastComment = comment;
+          return coalesceData;
+        }
+
+        // if the comments are seperated by a statement, don't merge
+        var last = coalesceData.lastComment;
+        var nodeInbetween = lively_lang.arr.detect(blockNode.body, function (node) {
+          return node.start >= last.end && node.end <= comment.start;
+        });
+        if (nodeInbetween) {
+          coalesceData.lastComment = comment;
+          return coalesceData;
+        }
+
+        // if the comments are seperated by a newline, don't merge
+        var codeInBetween = source.slice(last.end, comment.start);
+        if (/[\n\r][\n\r]+/.test(codeInBetween)) {
+          coalesceData.lastComment = comment;
+          return coalesceData;
+        }
+
+        // merge comments into one
+        last.text += "\n" + comment.text;
+        last.end = comment.end;
+        lively_lang.arr.remove(blockNode.comments, comment);
+        lively_lang.arr.remove(commentData.comments, comment);
+        return coalesceData;
+      }, { lastComment: null });
+    });
+    return commentData;
+  }
+}
+
+/*global process, global, exports*/
+
+var methods = {
+
+  withMozillaAstDo: function withMozillaAstDo(parsed, state, func) {
+    // simple interface to mozilla AST visitor. function gets passed three
+    // arguments:
+    // acceptNext, -- continue visiting
+    // node, -- current node being visited
+    // state -- state variable that is passed along
+    var vis = new Visitor(),
+        origAccept = vis.accept;
+    vis.accept = function (node, st, path) {
+      var next = function next() {
+        origAccept.call(vis, node, st, path);
+      };
+      state = func(next, node, st, path);
+      return node;
+    };
+    vis.accept(parsed, state, []);
+    return state;
+  },
+
+  printAst: function printAst(astOrSource, options) {
+    options = options || {};
+    var printSource = options.printSource || false,
+        printPositions = options.printPositions || false,
+        printIndex = options.printIndex || false,
+        source,
+        parsed,
+        tree$$1 = [];
+
+    if (typeof astOrSource === "string") {
+      source = astOrSource;
+      parsed = parse(astOrSource);
+    } else {
+      parsed = astOrSource;source = options.source || parsed.source;
     }
 
-    return lively_lang.arr.flatten( // all references
-    lively_lang.tree.map(scope, function (scope) {
-      return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
-        return ref.name === name;
-      });
-    }, function (s) {
-      return s.subScopes.filter(function (subScope) {
-        return varDeclIdsOf(subScope).every(function (id) {
-          return id.name !== name;
+    if (printSource && !parsed.source) {
+      // ensure that nodes have source attached
+      if (!source) {
+        source = stringify(parsed);
+        parsed = parse(source);
+      }
+      addSource(parsed, source);
+    }
+
+    function printFunc(ea) {
+      var line = ea.path + ':' + ea.node.type,
+          additional = [];
+      if (printIndex) {
+        additional.push(ea.index);
+      }
+      if (printPositions) {
+        additional.push(ea.node.start + '-' + ea.node.end);
+      }
+      if (printSource) {
+        var src = ea.node.source || source.slice(ea.node.start, ea.node.end),
+            printed = lively_lang.string.print(src.truncate(60).replace(/\n/g, '').replace(/\s+/g, ' '));
+        additional.push(printed);
+      }
+      if (additional.length) {
+        line += '(' + additional.join(',') + ')';
+      }
+      return line;
+    }
+
+    new PrinterVisitor().accept(parsed, { index: 0, tree: tree$$1 }, []);
+    return lively_lang.string.printTree(tree$$1[0], printFunc, function (ea) {
+      return ea.children;
+    }, '  ');
+  },
+
+  compareAst: function compareAst(node1, node2) {
+    if (!node1 || !node2) throw new Error('node' + (node1 ? '1' : '2') + ' not defined');
+    var state = { completePath: [], comparisons: { errors: [] } };
+    new ComparisonVisitor().accept(node1, node2, state, []);
+    return !state.comparisons.errors.length ? null : state.comparisons.errors.pluck('msg');
+  },
+
+  pathToNode: function pathToNode(parsed, index, options) {
+    options = options || {};
+    if (!parsed.astIndex) addAstIndex(parsed);
+    var vis = new Visitor(),
+        found = null;
+    (vis.accept = function (node, pathToHere, state, path) {
+      if (found) return;
+      var fullPath = pathToHere.concat(path);
+      if (node.astIndex === index) {
+        var pathString = fullPath.map(function (ea) {
+          return typeof ea === 'string' ? '.' + ea : '[' + ea + ']';
+        }).join('');
+        found = { pathString: pathString, path: fullPath, node: node };
+      }
+      return this['visit' + node.type](node, fullPath, state, path);
+    }).call(vis, parsed, [], {}, []);
+    return found;
+  },
+
+  rematchAstWithSource: function rematchAstWithSource(parsed, source, addLocations, subTreePath) {
+    addLocations = !!addLocations;
+    var parsed2 = parse(source, addLocations ? { locations: true } : undefined),
+        visitor = new Visitor();
+    if (subTreePath) parsed2 = lively_lang.Path(subTreePath).get(parsed2);
+
+    visitor.accept = function (node, state, path) {
+      path = path || [];
+      var node2 = path.reduce(function (node, pathElem) {
+        return node[pathElem];
+      }, parsed);
+      node2.start = node.start;
+      node2.end = node.end;
+      if (addLocations) node2.loc = node.loc;
+      return this['visit' + node.type](node, state, path);
+    };
+
+    visitor.accept(parsed2);
+  }
+
+};
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var withMozillaAstDo = methods.withMozillaAstDo;
+var printAst = methods.printAst;
+var compareAst = methods.compareAst;
+var pathToNode = methods.pathToNode;
+var rematchAstWithSource = methods.rematchAstWithSource;
+
+
+
+// obj.extend(ast, methods);
+
+// FIXME! Don't extend acorn object!
+// obj.extend(ast.acorn, methods);
+
+var identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
+function isIdentifier(string$$1) {
+  // Note: It's not so easy...
+  // http://wiki.ecmascript.org/doku.php?id=strawman:identifier_identification
+  // https://mathiasbynens.be/notes/javascript-identifiers-es6
+  return identifierRe.test(string$$1) && string$$1.indexOf("-") === -1;
+}
+
+function id(name) {
+  return name === "this" ? { type: "ThisExpression" } : { name: String(name), type: "Identifier" };
+}
+
+function literal(value) {
+  return { type: "Literal", value: value };
+}
+
+function exprStmt(expression) {
+  return { type: "ExpressionStatement", expression: expression };
+}
+
+function returnStmt(expr) {
+  return { type: "ReturnStatement", argument: expr };
+}
+
+function empty() {
+  return { type: "EmptyStatement" };
+}
+
+function binaryExpr(left, op, right) {
+  return {
+    left: left, right: right, operator: op,
+    type: "BinaryExpression"
+  };
+}
+
+function funcExpr(_ref) {
+  for (var _len = arguments.length, statements = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+    statements[_key - 2] = arguments[_key];
+  }
+
+  var arrow = _ref.arrow;
+  var funcId = _ref.id;
+  var expression = _ref.expression;
+  var generator = _ref.generator;
+  var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+  // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
+  // // => "function foo(a) { 3; }"
+  params = params.map(function (ea) {
+    return typeof ea === "string" ? id(ea) : ea;
+  });
+  return {
+    type: (arrow ? "Arrow" : "") + "FunctionExpression",
+    id: funcId ? typeof funcId === "string" ? id(funcId) : funcId : undefined,
+    params: params,
+    body: { body: statements, type: "BlockStatement" },
+    expression: expression || false,
+    generator: generator || false
+  };
+}
+
+function funcCall(callee) {
+  for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    args[_key2 - 1] = arguments[_key2];
+  }
+
+  if (typeof callee === "string") callee = id(callee);
+  return {
+    type: "CallExpression",
+    callee: callee,
+    arguments: args
+  };
+}
+
+function varDecl(id, init, kind) {
+  if (typeof id === "string") id = { name: id, type: "Identifier" };
+  return {
+    type: "VariableDeclaration", kind: kind || "var",
+    declarations: [{ type: "VariableDeclarator", id: id, init: init }]
+  };
+}
+
+function member(obj$$1, prop, computed) {
+  // Example:
+  // lively.ast.stringify(member("foo", "bar"))
+  // // => "foo.bar"
+  // lively.ast.stringify(member("foo", "b-a-r"))
+  // // => "foo['b-a-r']"
+  // lively.ast.stringify(member("foo", "zork", true))
+  // // => "foo['zork']"
+  // lively.ast.stringify(member("foo", 0))
+  // // => "foo[0]"
+  if (typeof obj$$1 === "string") obj$$1 = id(obj$$1);
+  if (typeof prop === "string") {
+    if (!computed && !isIdentifier(prop)) computed = true;
+    prop = computed ? literal(prop) : id(prop);
+  } else if (typeof prop === "number") {
+    prop = literal(prop);
+    computed = true;
+  } else if (prop.type === "Literal") {
+    computed = true;
+  }
+  return {
+    type: "MemberExpression",
+    computed: !!computed,
+    object: obj$$1, property: prop
+  };
+}
+
+function memberChain(first) {
+  for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    rest[_key3 - 1] = arguments[_key3];
+  }
+
+  // lively.ast.stringify(memberChain("foo", "bar", 0, "baz-zork"));
+  // // => "foo.bar[0]['baz-zork']"
+  return rest.reduce(function (memberExpr, key) {
+    return member(memberExpr, key);
+  }, (typeof first === "undefined" ? "undefined" : _typeof(first)) === "object" ? first : id(first));
+}
+
+function assign(left, right) {
+  // lively.ast.stringify(assign("a", "x"))
+  // // => "a = x"
+  // lively.ast.stringify(assign(member("a", "x"), literal(23)))
+  // // => "a.x = 23"
+  return {
+    type: "AssignmentExpression", operator: "=",
+    right: right ? typeof right === "string" ? id(right) : right : id("undefined"),
+    left: typeof left === "string" ? id(left) : left
+  };
+}
+
+function block() {
+  for (var _len4 = arguments.length, body = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+    body[_key4] = arguments[_key4];
+  }
+
+  return { body: Array.isArray(body[0]) ? body[0] : body, type: "BlockStatement" };
+}
+
+function program() {
+  return Object.assign(block.apply(undefined, arguments), { sourceType: "module", type: "Program" });
+}
+
+function tryStmt(exName, handlerBody, finalizerBody) {
+  for (var _len5 = arguments.length, body = Array(_len5 > 3 ? _len5 - 3 : 0), _key5 = 3; _key5 < _len5; _key5++) {
+    body[_key5 - 3] = arguments[_key5];
+  }
+
+  // Example:
+  // var stmt = exprStmt(binaryExpr(literal(3), "+", literal(2)));
+  // lively.ast.stringify(tryStmt("err", [stmt], [stmt], stmt, stmt))
+  // // => "try { 3 + 2; 3 + 2; } catch (err) { 3 + 2; } finally { 3 + 2; }"
+  if (!Array.isArray(finalizerBody)) {
+    body.unshift(finalizerBody);
+    finalizerBody = null;
+  }
+  return {
+    block: block(body),
+    finalizer: finalizerBody ? block(finalizerBody) : null,
+    handler: {
+      body: block(handlerBody),
+      param: id(exName),
+      type: "CatchClause"
+    },
+    type: "TryStatement"
+  };
+}
+
+function prop(key, value) {
+  return {
+    type: "Property",
+    key: key,
+    computed: key.type !== "Identifier",
+    shorthand: false,
+    value: value
+  };
+}
+
+function objectLiteral(keysAndValues) {
+  var props = [];
+  for (var i = 0; i < keysAndValues.length; i += 2) {
+    var key = keysAndValues[i];
+    if (typeof key === "string") key = id(key);
+    props.push(prop(key, keysAndValues[i + 1]));
+  }
+  return {
+    properties: props,
+    type: "ObjectExpression"
+  };
+}
+
+function ifStmt(test) {
+  var consequent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : block();
+  var alternate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : block();
+
+  return {
+    consequent: consequent, alternate: alternate, test: test,
+    type: "IfStatement"
+  };
+}
+
+function logical(op, left, right) {
+  return {
+    operator: op, left: left, right: right,
+    type: "LogicalExpression"
+  };
+}
+
+
+
+var nodes = Object.freeze({
+	isIdentifier: isIdentifier,
+	id: id,
+	literal: literal,
+	objectLiteral: objectLiteral,
+	prop: prop,
+	exprStmt: exprStmt,
+	returnStmt: returnStmt,
+	empty: empty,
+	binaryExpr: binaryExpr,
+	funcExpr: funcExpr,
+	funcCall: funcCall,
+	varDecl: varDecl,
+	member: member,
+	memberChain: memberChain,
+	assign: assign,
+	block: block,
+	program: program,
+	tryStmt: tryStmt,
+	ifStmt: ifStmt,
+	logical: logical
+});
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var helpers = {
+  declIds: function declIds(nodes) {
+    return lively_lang.arr.flatmap(nodes, function (ea) {
+      if (!ea) return [];
+      if (ea.type === "Identifier") return [ea];
+      if (ea.type === "RestElement") return [ea.argument];
+      if (ea.type === "AssignmentPattern") return helpers.declIds([ea.left]);
+      if (ea.type === "ObjectPattern") return helpers.declIds(lively_lang.arr.pluck(ea.properties, "value"));
+      if (ea.type === "ArrayPattern") return helpers.declIds(ea.elements);
+      return [];
+    });
+  },
+  varDecls: function varDecls(scope) {
+    return lively_lang.arr.flatmap(scope.varDecls, function (varDecl) {
+      return lively_lang.arr.flatmap(varDecl.declarations, function (decl) {
+        return helpers.declIds([decl.id]).map(function (id) {
+          return [decl, id];
         });
       });
+    });
+  },
+  varDeclIds: function varDeclIds(scope) {
+    return helpers.declIds(scope.varDecls.reduce(function (all, ea) {
+      all.push.apply(all, ea.declarations);return all;
+    }, []).map(function (ea) {
+      return ea.id;
     }));
+  },
+  objPropertiesAsList: function objPropertiesAsList(objExpr, path, onlyLeafs) {
+    // takes an obj expr like {x: 23, y: [{z: 4}]} an returns the key and value
+    // nodes as a list
+    return lively_lang.arr.flatmap(objExpr.properties, function (prop) {
+      var key = prop.key.name;
+      // var result = [{key: path.concat([key]), value: prop.value}];
+      var result = [];
+      var thisNode = { key: path.concat([key]), value: prop.value };
+      switch (prop.value.type) {
+        case "ArrayExpression":case "ArrayPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(lively_lang.arr.flatmap(prop.value.elements, function (el, i) {
+            return helpers.objPropertiesAsList(el, path.concat([key, i]), onlyLeafs);
+          }));
+          break;
+        case "ObjectExpression":case "ObjectPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(helpers.objPropertiesAsList(prop.value, path.concat([key]), onlyLeafs));
+          break;
+        case "AssignmentPattern":
+          if (!onlyLeafs) result.push(thisNode);
+          result = result.concat(helpers.objPropertiesAsList(prop.left, path.concat([key]), onlyLeafs));
+          break;
+        default:
+          result.push(thisNode);
+      }
+      return result;
+    });
+  },
+  isDeclaration: function isDeclaration(node) {
+    return node.type === "FunctionDeclaration" || node.type === "VariableDeclaration" || node.type === "ClassDeclaration";
+  }
+};
 
-    function varDeclIdsOf(scope) {
-      return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var knownGlobals = ["true", "false", "null", "undefined", "arguments", "Object", "Function", "String", "Array", "Date", "Boolean", "Number", "RegExp", "Symbol", "Error", "EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError", "Math", "NaN", "Infinity", "Intl", "JSON", "Promise", "parseFloat", "parseInt", "isNaN", "isFinite", "eval", "alert", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "navigator", "window", "document", "console", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "requestAnimationFrame", "cancelAnimationFrame", "Node", "HTMLCanvasElement", "Image", "lively", "pt", "rect", "rgb", "$super", "$morph", "$world", "show"];
+
+function scopes(parsed) {
+  var vis = new ScopeVisitor(),
+      scope = vis.newScope(parsed, null);
+  vis.accept(parsed, scope, []);
+  return scope;
+}
+
+function nodesAtIndex(parsed, index) {
+  return withMozillaAstDo(parsed, [], function (next, node, found) {
+    if (node.start <= index && index <= node.end) {
+      found.push(node);next();
+    }
+    return found;
+  });
+}
+
+function scopesAtIndex(parsed, index) {
+  return lively_lang.tree.filter(scopes(parsed), function (scope) {
+    var n = scope.node;
+    var start = n.start,
+        end = n.end;
+    if (n.type === 'FunctionDeclaration') {
+      start = n.params.length ? n.params[0].start : n.body.start;
+      end = n.body.end;
+    }
+    return start <= index && index <= end;
+  }, function (s) {
+    return s.subScopes;
+  });
+}
+
+function scopeAtIndex(parsed, index) {
+  return lively_lang.arr.last(scopesAtIndex(parsed, index));
+}
+
+function scopesAtPos(pos, parsed) {
+  // DEPRECATED
+  // FIXME "scopes" should actually not referer to a node but to a scope
+  // object, see exports.scopes!
+  return nodesAt$1(pos, parsed).filter(function (node) {
+    return node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression';
+  });
+}
+
+function nodesInScopeOf(node) {
+  // DEPRECATED
+  // FIXME "scopes" should actually not referer to a node but to a scope
+  // object, see exports.scopes!
+  return withMozillaAstDo(node, { root: node, result: [] }, function (next, node, state) {
+    state.result.push(node);
+    if (node !== state.root && (node.type === 'Program' || node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) return state;
+    next();
+    return state;
+  }).result;
+}
+
+function declarationsOfScope(scope, includeOuter) {
+  // returns Identifier nodes
+  return (includeOuter && scope.node.id && scope.node.id.name ? [scope.node.id] : []).concat(helpers.declIds(scope.params)).concat(scope.funcDecls.map(function (ea) {
+    return ea.id;
+  })).concat(helpers.varDeclIds(scope)).concat(scope.catches).concat(scope.classDecls.map(function (ea) {
+    return ea.id;
+  })).concat(scope.importDecls);
+}
+
+function declarationsWithIdsOfScope(scope) {
+  // returns a list of pairs [(DeclarationNode,IdentifierNode)]
+  var bareIds = helpers.declIds(scope.params).concat(scope.catches),
+      declNodes = (scope.node.id && scope.node.id.name ? [scope.node] : []).concat(scope.funcDecls).concat(scope.classDecls);
+  return bareIds.map(function (ea) {
+    return [ea, ea];
+  }).concat(declNodes.map(function (ea) {
+    return [ea, ea.id];
+  })).concat(helpers.varDecls(scope)).concat(scope.importDecls.map(function (im) {
+    return [statementOf(scope.node, im), im];
+  }));
+}
+
+function _declaredVarNames(scope, useComments) {
+  return lively_lang.arr.pluck(declarationsOfScope(scope, true), 'name').concat(!useComments ? [] : _findJsLintGlobalDeclarations(scope.node.type === 'Program' ? scope.node : scope.node.body));
+}
+
+function _findJsLintGlobalDeclarations(node) {
+  if (!node || !node.comments) return [];
+  return lively_lang.arr.flatten(node.comments.filter(function (ea) {
+    return ea.text.trim().match(/^global/);
+  }).map(function (ea) {
+    return lively_lang.arr.invoke(ea.text.replace(/^\s*global\s*/, '').split(','), 'trim');
+  }));
+}
+
+function topLevelFuncDecls(parsed) {
+  return FindToplevelFuncDeclVisitor.run(parsed);
+}
+
+function resolveReference(ref, scopePath) {
+  if (scopePath.length == 0) return [null, null];
+
+  var _scopePath = toArray(scopePath);
+
+  var scope = _scopePath[0];
+
+  var outer = _scopePath.slice(1);
+
+  var decls = scope.decls || declarationsWithIdsOfScope(scope);
+  scope.decls = decls;
+  var decl = decls.find(function (_ref) {
+    var _ref2 = slicedToArray(_ref, 2);
+
+    var _ = _ref2[0];
+    var id = _ref2[1];
+    return id.name == ref;
+  });
+  return decl || resolveReference(ref, outer);
+}
+
+function resolveReferences(scope) {
+  function rec(scope, outerScopes) {
+    var path = [scope].concat(outerScopes);
+    scope.refs.forEach(function (ref) {
+      var _resolveReference = resolveReference(ref.name, path);
+
+      var _resolveReference2 = slicedToArray(_resolveReference, 2);
+
+      var decl = _resolveReference2[0];
+      var id = _resolveReference2[1];
+
+      map.set(ref, { decl: decl, declId: id, ref: ref });
+    });
+    scope.subScopes.forEach(function (s) {
+      return rec(s, path);
+    });
+  }
+  if (scope.referencesResolvedSafely) return scope;
+  var map = scope.resolvedRefMap || (scope.resolvedRefMap = new Map());
+  rec(scope, []);
+  scope.referencesResolvedSafely = true;
+  return scope;
+}
+
+function refWithDeclAt(pos, scope) {
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = scope.resolvedRefMap.values()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var ref = _step.value;
+      var _ref$ref = ref.ref;
+      var start = _ref$ref.start;
+      var end = _ref$ref.end;
+
+      if (start <= pos && pos <= end) return ref;
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
     }
   }
+}
 
-  function findDeclarationClosestToIndex(parsed, name, index) {
-    var found = null;
-    lively_lang.arr.detect(scopesAtIndex(parsed, index).reverse(), function (scope) {
-      var decls = declarationsOfScope(scope, true),
-          idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
-      if (idx === -1) return false;
-      found = decls[idx];return true;
+function topLevelDeclsAndRefs(parsed, options) {
+  options = options || {};
+  options.withComments = true;
+
+  if (typeof parsed === "string") parsed = parse(parsed, options);
+
+  var scope = scopes(parsed),
+      useComments = !!options.jslintGlobalComment,
+      declared = _declaredVarNames(scope, useComments),
+      refs = scope.refs.concat(lively_lang.arr.flatten(scope.subScopes.map(findUndeclaredReferences))),
+      undeclared = lively_lang.arr.withoutAll(refs.map(function (ea) {
+    return ea.name;
+  }), declared);
+
+  return {
+    scope: scope,
+    varDecls: scope.varDecls,
+    funcDecls: scope.funcDecls,
+    classDecls: scope.classDecls,
+    declaredNames: declared,
+    undeclaredNames: undeclared,
+    refs: refs,
+    thisRefs: scope.thisRefs
+  };
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function findUndeclaredReferences(scope) {
+    var names = _declaredVarNames(scope, useComments);
+    return scope.subScopes.map(findUndeclaredReferences).reduce(function (refs, ea) {
+      return refs.concat(ea);
+    }, scope.refs).filter(function (ref) {
+      return names.indexOf(ref.name) === -1;
     });
+  }
+}
+
+function findGlobalVarRefs(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed, options),
+      noGlobals = topLevel.declaredNames.concat(knownGlobals);
+  return topLevel.refs.filter(function (ea) {
+    return noGlobals.indexOf(ea.name) === -1;
+  });
+}
+
+function findNodesIncludingLines(parsed, code, lines, options) {
+  if (!code && !parsed) throw new Error("Need at least ast or code");
+  code = code ? code : stringify(parsed);
+  parsed = parsed && parsed.loc ? parsed : parse(code, { locations: true });
+  return withMozillaAstDo(parsed, [], function (next, node, found) {
+    if (lines.every(function (line) {
+      return lively_lang.num.between(line, node.loc.start.line, node.loc.end.line);
+    })) {
+      lively_lang.arr.pushIfNotIncluded(found, node);next();
+    }
     return found;
+  });
+}
+
+function findReferencesAndDeclsInScope(scope, name) {
+  if (name === "this") {
+    return scope.thisRefs;
   }
 
-  function nodesAt$1(pos, ast) {
-    ast = typeof ast === 'string' ? parse(ast) : ast;
-    return acorn.walk.findNodesIncluding(ast, pos);
-  }
-
-  var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
-
-  function statementOf(parsed, node, options) {
-    // Find the statement that a target node is in. Example:
-    // let source be "var x = 1; x + 1;" and we are looking for the
-    // Identifier "x" in "x+1;". The second statement is what will be found.
-    var nodes = nodesAt$1(node.start, parsed),
-        found = nodes.reverse().find(function (node) {
-      return lively_lang.arr.include(_stmtTypes, node.type);
+  return lively_lang.arr.flatten( // all references
+  lively_lang.tree.map(scope, function (scope) {
+    return scope.refs.concat(varDeclIdsOf(scope)).filter(function (ref) {
+      return ref.name === name;
     });
-    if (options && options.asPath) {
-      var v = new Visitor(),
-          foundPath = void 0;
-      v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-        if (node === found) {
-          foundPath = path;throw new Error("stop search");
-        };
-        return proceed(node, state, path);
+  }, function (s) {
+    return s.subScopes.filter(function (subScope) {
+      return varDeclIdsOf(subScope).every(function (id) {
+        return id.name !== name;
       });
-      try {
-        v.accept(parsed, {}, []);
-      } catch (e) {}
-      return foundPath;
-    }
-    return found;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // imports and exports
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function imports(scope) {
-    var imports = scope.importDecls.reduce(function (imports, node) {
-      var nodes = nodesAtIndex(scope.node, node.start),
-          importStmt = lively_lang.arr.without(nodes, scope.node)[0];
-      if (!importStmt) return imports;
-
-      var from = importStmt.source ? importStmt.source.value : "unknown module";
-      if (!importStmt.specifiers.length) // no imported vars
-        return imports.concat([{
-          local: null,
-          imported: null,
-          fromModule: from,
-          node: node
-        }]);
-
-      return imports.concat(importStmt.specifiers.map(function (importSpec) {
-        var imported;
-        if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
-        return {
-          local: importSpec.local ? importSpec.local.name : null,
-          imported: imported,
-          fromModule: from,
-          node: node
-        };
-      }));
-    }, []);
-
-    return lively_lang.arr.uniqBy(imports, function (a, b) {
-      return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
     });
+  }));
+
+  function varDeclIdsOf(scope) {
+    return scope.params.concat(lively_lang.arr.pluck(scope.funcDecls, 'id')).concat(lively_lang.arr.pluck(scope.classDecls, 'id')).concat(helpers.varDeclIds(scope));
   }
+}
 
-  function exports$1(scope) {
-    var resolve = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+function findDeclarationClosestToIndex(parsed, name, index) {
+  var found = null;
+  lively_lang.arr.detect(scopesAtIndex(parsed, index).reverse(), function (scope) {
+    var decls = declarationsOfScope(scope, true),
+        idx = lively_lang.arr.pluck(decls, 'name').indexOf(name);
+    if (idx === -1) return false;
+    found = decls[idx];return true;
+  });
+  return found;
+}
 
-    if (resolve) resolveReferences(scope);
+function nodesAt$1(pos, ast) {
+  ast = typeof ast === 'string' ? parse(ast) : ast;
+  return acorn.walk.findNodesIncluding(ast, pos);
+}
 
-    var exports = scope.exportDecls.reduce(function (exports, node) {
+var _stmtTypes = ["EmptyStatement", "BlockStatement", "ExpressionStatement", "IfStatement", "BreakStatement", "ContinueStatement", "WithStatement", "ReturnStatement", "ThrowStatement", "TryStatement", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "DebuggerStatement", "FunctionDeclaration", "VariableDeclaration", "ClassDeclaration", "ImportDeclaration", "ImportDeclaration", "ExportNamedDeclaration", "ExportDefaultDeclaration", "ExportAllDeclaration"];
 
-      var exportsStmt = statementOf(scope.node, node);
-      if (!exportsStmt) return exports;
-
-      var from = exportsStmt.source ? exportsStmt.source.value : null;
-
-      if (exportsStmt.type === "ExportAllDeclaration") {
-        return exports.concat([{
-          local: null,
-          exported: "*",
-          imported: "*",
-          fromModule: from,
-          node: node,
-          type: "all"
-        }]);
+function statementOf(parsed, node, options) {
+  // Find the statement that a target node is in. Example:
+  // let source be "var x = 1; x + 1;" and we are looking for the
+  // Identifier "x" in "x+1;". The second statement is what will be found.
+  var nodes = nodesAt$1(node.start, parsed),
+      found = nodes.reverse().find(function (node) {
+    return lively_lang.arr.include(_stmtTypes, node.type);
+  });
+  if (options && options.asPath) {
+    var v = new Visitor(),
+        foundPath = void 0;
+    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
+      if (node === found) {
+        foundPath = path;throw new Error("stop search");
       }
-      if (exportsStmt.type === "ExportDefaultDeclaration") {
-        if (helpers.isDeclaration(exportsStmt.declaration)) {
-          return exports.concat({
-            local: exportsStmt.declaration.id.name,
-            exported: "default",
-            type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
-            fromModule: null,
-            node: node,
-            decl: exportsStmt.declaration,
-            declId: exportsStmt.declaration.id
-          });
-        } else if (exportsStmt.declaration.type === "Identifier") {
-          var _ref3 = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
+      return proceed(node, state, path);
+    });
+    try {
+      v.accept(parsed, {}, []);
+    } catch (e) {}
+    return foundPath;
+  }
+  return found;
+}
 
-          var decl = _ref3.decl;
-          var declId = _ref3.declId;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// imports and exports
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-          return exports.concat([{
-            local: exportsStmt.declaration.name,
-            exported: "default",
-            fromModule: null,
-            node: node,
-            type: "id",
-            decl: decl,
-            declId: declId
-          }]);
-        } else {
-          // exportsStmt.declaration is an expression
-          return exports.concat([{
-            local: null,
-            exported: "default",
-            fromModule: null,
-            node: node,
-            type: "expr",
-            decl: exportsStmt.declaration,
-            declId: exportsStmt.declaration
-          }]);
-        }
-      }
+function imports(scope) {
+  var imports = scope.importDecls.reduce(function (imports, node) {
+    var nodes = nodesAtIndex(scope.node, node.start),
+        importStmt = lively_lang.arr.without(nodes, scope.node)[0];
+    if (!importStmt) return imports;
 
-      if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
-        return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
-          var decl, declId;
-          if (from) {
-            // "export { x as y } from 'foo'" is the only case where export
-            // creates a (non-local) declaration itself
-            decl = node;declId = exportSpec.exported;
-          } else if (exportSpec.local) {
-            var resolved = scope.resolvedRefMap.get(exportSpec.local);
-            decl = resolved ? resolved.decl : null;
-            declId = resolved ? resolved.declId : null;
-          }
+    var from = importStmt.source ? importStmt.source.value : "unknown module";
+    if (!importStmt.specifiers.length) // no imported vars
+      return imports.concat([{
+        local: null,
+        imported: null,
+        fromModule: from,
+        node: node
+      }]);
 
-          return {
-            local: !from && exportSpec.local ? exportSpec.local.name : null,
-            exported: exportSpec.exported ? exportSpec.exported.name : null,
-            imported: from && exportSpec.local ? exportSpec.local.name : null,
-            fromModule: from || null,
-            type: "id",
-            node: node,
-            decl: decl,
-            declId: declId
-          };
-        }));
-      }
+    return imports.concat(importStmt.specifiers.map(function (importSpec) {
+      var imported;
+      if (importSpec.type === "ImportNamespaceSpecifier") imported = "*";else if (importSpec.type === "ImportDefaultSpecifier") imported = "default";else if (importSpec.type === "ImportSpecifier") imported = importSpec.imported.name;else if (importStmt.source) imported = importStmt.source.name;else imported = null;
+      return {
+        local: importSpec.local ? importSpec.local.name : null,
+        imported: imported,
+        fromModule: from,
+        node: node
+      };
+    }));
+  }, []);
 
-      if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
-        return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
-          return {
-            local: decl.id.name,
-            exported: decl.id.name,
-            type: exportsStmt.declaration.kind,
-            fromModule: null,
-            node: node,
-            decl: decl,
-            declId: decl.id
-          };
-        }));
-      }
+  return lively_lang.arr.uniqBy(imports, function (a, b) {
+    return a.local == b.local && a.imported == b.imported && a.fromModule == b.fromModule;
+  });
+}
 
-      if (exportsStmt.declaration) {
+function exports$1(scope) {
+  var resolve = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+  if (resolve) resolveReferences(scope);
+
+  var exports = scope.exportDecls.reduce(function (exports, node) {
+
+    var exportsStmt = statementOf(scope.node, node);
+    if (!exportsStmt) return exports;
+
+    var from = exportsStmt.source ? exportsStmt.source.value : null;
+
+    if (exportsStmt.type === "ExportAllDeclaration") {
+      return exports.concat([{
+        local: null,
+        exported: "*",
+        imported: "*",
+        fromModule: from,
+        node: node,
+        type: "all"
+      }]);
+    }
+    if (exportsStmt.type === "ExportDefaultDeclaration") {
+      if (helpers.isDeclaration(exportsStmt.declaration)) {
         return exports.concat({
           local: exportsStmt.declaration.id.name,
-          exported: exportsStmt.declaration.id.name,
+          exported: "default",
           type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
           fromModule: null,
           node: node,
           decl: exportsStmt.declaration,
           declId: exportsStmt.declaration.id
         });
-      }
-      return exports;
-    }, []);
-
-    return lively_lang.arr.uniqBy(exports, function (a, b) {
-      return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
-    });
-  }
-
-
-
-  var query = Object.freeze({
-    helpers: helpers,
-    knownGlobals: knownGlobals,
-    scopes: scopes,
-    nodesAtIndex: nodesAtIndex,
-    scopesAtIndex: scopesAtIndex,
-    scopeAtIndex: scopeAtIndex,
-    scopesAtPos: scopesAtPos,
-    nodesInScopeOf: nodesInScopeOf,
-    declarationsOfScope: declarationsOfScope,
-    _declaredVarNames: _declaredVarNames,
-    _findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
-    topLevelDeclsAndRefs: topLevelDeclsAndRefs,
-    topLevelFuncDecls: topLevelFuncDecls,
-    findGlobalVarRefs: findGlobalVarRefs,
-    findNodesIncludingLines: findNodesIncludingLines,
-    findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
-    findDeclarationClosestToIndex: findDeclarationClosestToIndex,
-    nodesAt: nodesAt$1,
-    statementOf: statementOf,
-    resolveReferences: resolveReferences,
-    refWithDeclAt: refWithDeclAt,
-    imports: imports,
-    exports: exports$1
-  });
-
-  var ObjectSpreadTransformer = function (_Visitor) {
-    babelHelpers.inherits(ObjectSpreadTransformer, _Visitor);
-
-    function ObjectSpreadTransformer() {
-      babelHelpers.classCallCheck(this, ObjectSpreadTransformer);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ObjectSpreadTransformer).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ObjectSpreadTransformer, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        if (node.type === "ObjectExpression") {
-          node = this.transformSpreadProperty(node);
-        }
-        return babelHelpers.get(Object.getPrototypeOf(ObjectSpreadTransformer.prototype), "accept", this).call(this, node, state, path);
-      }
-    }, {
-      key: "transformSpreadProperty",
-      value: function transformSpreadProperty(node) {
-        var currentGroup = [],
-            propGroups = [currentGroup];
-
-        node.properties.forEach(function (prop) {
-          if (prop.type !== "SpreadProperty") currentGroup.push(prop);else {
-            propGroups.push(prop);
-            currentGroup = [];
-            propGroups.push(currentGroup);
-          }
-        });
-
-        if (propGroups.length === 1) return node;
-
-        if (!currentGroup.length) propGroups.pop();
-
-        return funcCall.apply(undefined, [member("Object", "assign")].concat(babelHelpers.toConsumableArray(propGroups.map(function (group) {
-          return group.type === "SpreadProperty" ? group.argument : {
-            properties: group,
-            type: 'ObjectExpression'
-          };
-        }))));
-      }
-    }]);
-    return ObjectSpreadTransformer;
-  }(Visitor);
-
-  function objectSpreadTransform(parsed) {
-    // "var x = {y, ...z}" => "var x = Object.assign({ y }, z);"
-    return new ObjectSpreadTransformer().accept(parsed, {}, []);
-  };
-
-  var helper = {
-    // currently this is used by the replacement functions below but
-    // I don't wan't to make it part of our AST API
-
-    _node2string: function _node2string(node) {
-      return node.source || stringify(node);
-    },
-
-    _findIndentAt: function _findIndentAt(s, pos) {
-      var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
-          indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
-      if (indent[0] === '\n') indent = indent.slice(1);
-      return indent;
-    },
-
-    _applyChanges: function _applyChanges(changes, source) {
-      return changes.reduce(function (source, change) {
-        if (change.type === 'del') {
-          return source.slice(0, change.pos) + source.slice(change.pos + change.length);
-        } else if (change.type === 'add') {
-          return source.slice(0, change.pos) + change.string + source.slice(change.pos);
-        }
-        throw new Error('Uexpected change ' + Objects.inspect(change));
-      }, source);
-    },
-
-    _compareNodesForReplacement: function _compareNodesForReplacement(nodeA, nodeB) {
-      // equals
-      if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
-      // a "left" of b
-      if (nodeA.end <= nodeB.start) return -1;
-      // a "right" of b
-      if (nodeA.start >= nodeB.end) return 1;
-      // a contains b
-      if (nodeA.start <= nodeB.start && nodeA.end >= nodeB.end) return 1;
-      // b contains a
-      if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
-      throw new Error('Comparing nodes');
-    },
-
-    replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
-      // parameters:
-      //   - target: ast node
-      //   - replacementFunc that gets this node and its source snippet
-      //     handed and should produce a new ast node.
-      //   - sourceOrChanges: If its a string -- the source code to rewrite
-      //                      If its and object -- {changes: ARRAY, source: STRING}
-
-      var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : babelHelpers.typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
-          insideChangedBefore = false,
-          pos = sourceChanges.changes.reduce(function (pos, change) {
-        // fixup the start and end indices of target using the del/add
-        // changes already applied
-        if (pos.end < change.pos) return pos;
-
-        var isInFront = change.pos < pos.start;
-        insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
-
-        if (change.type === 'add') return {
-          start: isInFront ? pos.start + change.string.length : pos.start,
-          end: pos.end + change.string.length
-        };
-
-        if (change.type === 'del') return {
-          start: isInFront ? pos.start - change.length : pos.start,
-          end: pos.end - change.length
-        };
-
-        throw new Error('Cannot deal with change ' + Objects.inspect(change));
-      }, { start: target.start, end: target.end });
-
-      var source = sourceChanges.source,
-          replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
-          replacementSource = Array.isArray(replacement) ? replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)) : replacementSource = helper._node2string(replacement);
-
-      var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
-
-      return {
-        changes: sourceChanges.changes.concat(changes),
-        source: this._applyChanges(changes, source)
-      };
-    },
-
-    replaceNodes: function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
-      // replace multiple AST nodes, order rewriting from inside out and
-      // top to bottom so that nodes to rewrite can overlap or be contained
-      // in each other
-      return targetAndReplacementFuncs.sort(function (a, b) {
-        return helper._compareNodesForReplacement(a.target, b.target);
-      }).reduce(function (sourceChanges, ea) {
-        return helper.replaceNode(ea.target, ea.replacementFunc, sourceChanges);
-      }, (typeof sourceOrChanges === "undefined" ? "undefined" : babelHelpers.typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges });
-    }
-
-  };
-
-  function replace(astOrSource, targetNode, replacementFunc, options) {
-    // replaces targetNode in astOrSource with what replacementFunc returns
-    // (one or multiple ast nodes)
-    // Example:
-    // var ast = exports.parse('foo.bar("hello");')
-    // exports.transform.replace(
-    //     ast, ast.body[0].expression,
-    //     function(node, source) {
-    //         return {type: "CallExpression",
-    //             callee: {name: node.arguments[0].value, type: "Identifier"},
-    //             arguments: [{value: "world", type: "Literal"}]
-    //         }
-    //     });
-    // => {
-    //      source: "hello('world');",
-    //      changes: [{pos: 0,length: 16,type: "del"},{pos: 0,string: "hello('world')",type: "add"}]
-    //    }
-
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : null,
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        result = helper.replaceNode(targetNode, replacementFunc, source);
-
-    return result;
-  }
-
-  function oneDeclaratorPerVarDecl(astOrSource) {
-    // exports.transform.oneDeclaratorPerVarDecl(
-    //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
-
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        scope = scopes(parsed),
-        varDecls = function findVarDecls(scope) {
-      return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-    }(scope);
-
-    var targetsAndReplacements = varDecls.map(function (decl) {
-      return {
-        target: decl,
-        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-          if (wasChanged) {
-            // reparse node if necessary, e.g. if init was changed before like in
-            // var x = (function() { var y = ... })();
-            declNode = parse(s).body[0];
-          }
-
-          return declNode.declarations.map(function (ea) {
-            return {
-              type: "VariableDeclaration",
-              kind: "var", declarations: [ea]
-            };
-          });
-        }
-      };
-    });
-
-    return helper.replaceNodes(targetsAndReplacements, source);
-  }
-
-  function oneDeclaratorForVarsInDestructoring(astOrSource) {
-    var parsed = (typeof astOrSource === "undefined" ? "undefined" : babelHelpers.typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
-        source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
-        scope = scopes(parsed),
-        varDecls = function findVarDecls(scope) {
-      return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
-    }(scope);
-
-    var targetsAndReplacements = varDecls.map(function (decl) {
-      return {
-        target: decl,
-        replacementFunc: function replacementFunc(declNode, s, wasChanged) {
-          if (wasChanged) {
-            // reparse node if necessary, e.g. if init was changed before like in
-            // var x = (function() { var y = ... })();
-            declNode = parse(s).body[0];
-          }
-
-          return lively_lang.arr.flatmap(declNode.declarations, function (declNode) {
-            var extractedId = { type: "Identifier", name: "__temp" },
-                extractedInit = {
-              type: "VariableDeclaration", kind: "var",
-              declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
-            };
-
-            var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
-              return ea.key;
-            }).map(function (keyPath) {
-              return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(babelHelpers.toConsumableArray(keyPath))), "var");
-            });
-
-            return [extractedInit].concat(propDecls);
-          });
-        }
-      };
-    });
-
-    return helper.replaceNodes(targetsAndReplacements, source);
-  }
-
-  function returnLastStatement(source, opts) {
-    opts = opts || {};
-
-    var parsed = parse(source, opts),
-        last = lively_lang.arr.last(parsed.body);
-    if (last.type === "ExpressionStatement") {
-      parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
-      return opts.asAST ? parsed : stringify(parsed);
-    } else {
-      return opts.asAST ? parsed : source;
-    }
-  }
-
-  function wrapInFunction(code, opts) {
-    opts = opts || {};
-    var transformed = returnLastStatement(code, opts);
-    return opts.asAST ? program(funcExpr.apply(undefined, [{ id: opts.id || undefined }, []].concat(babelHelpers.toConsumableArray(transformed.body)))) : "function" + (opts.id ? " " + opts.id : "") + "() {\n" + transformed + "\n}";
-  }
-
-  function wrapInStartEndCall(parsed, options) {
-    // Wraps a piece of code into two function calls: One before the first
-    // statement and one after the last. Also wraps the entire thing into a try /
-    // catch block. The end call gets the result of the last statement (if it is
-    // something that returns a value, i.e. an expression) passed as the second
-    // argument. If an error occurs the end function is called with an error as
-    // first parameter
-    // Why? This allows to easily track execution of code, especially for
-    // asynchronus / await code!
-    // Example:
-    // stringify(wrapInStartEndCall("var y = x + 23; y"))
-    // // generates code
-    // try {
-    //     __start_execution();
-    //     __lvVarRecorder.y = x + 23;
-    //     return __end_execution(null, __lvVarRecorder.y);
-    // } catch (err) {
-    //     return __end_execution(err, undefined);
-    // }
-
-    if (typeof parsed === "string") parsed = parse(parsed);
-    options = options || {};
-
-    var isProgram = parsed.type === "Program",
-        startFuncNode = options.startFuncNode || id("__start_execution"),
-        endFuncNode = options.endFuncNode || id("__end_execution"),
-        funcDecls = topLevelFuncDecls(parsed),
-        innerBody = parsed.body,
-        outerBody = [];
-
-    // 1. Hoist func decls outside the actual eval start - end code. The async /
-    // generator transforms require this!
-    funcDecls.forEach(function (_ref) {
-      var node = _ref.node;
-      var path = _ref.path;
-
-      lively_lang.Path(path).set(parsed, exprStmt(node.id));
-      outerBody.push(node);
-    });
-
-    // 2. add start-eval call
-    innerBody.unshift(exprStmt(funcCall(startFuncNode)));
-
-    // 3. if last statement is an expression, transform it so we can pass it to
-    // the end-eval call, replacing the original expression. If it's a
-    // non-expression we record undefined as the eval result
-    var last = lively_lang.arr.last(innerBody);
-    if (last.type === "ExpressionStatement") {
-      innerBody.pop();
-      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
-    } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
-      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
-    } else {
-      innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
-    }
-
-    // 4. Wrap that stuff in a try stmt
-    outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(babelHelpers.toConsumableArray(innerBody))));
-
-    return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
-  }
-
-  var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
-
-  function transformSingleExpression(code) {
-    // evaling certain expressions such as single functions or object
-    // literals will fail or not work as intended. When the code being
-    // evaluated consists just out of a single expression we will wrap it in
-    // parens to allow for those cases
-    // Example:
-    // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
-
-    if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
-
-    try {
-      var parsed = fuzzyParse(code);
-      if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
-        code = '(' + code.replace(/;\s*$/, '') + ')';
-      }
-    } catch (e) {
-      if ((typeof lively === "undefined" ? "undefined" : babelHelpers.typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
-    }
-    return code;
-  }
-
-
-
-  var transform = Object.freeze({
-    helper: helper,
-    replace: replace,
-    oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
-    oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
-    returnLastStatement: returnLastStatement,
-    wrapInFunction: wrapInFunction,
-    wrapInStartEndCall: wrapInStartEndCall,
-    transformSingleExpression: transformSingleExpression,
-    objectSpreadTransform: objectSpreadTransform
-  });
-
-  function isFunctionNode(node) {
-    return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function constructorTemplate(name) {
-    // Creates a function like
-    // function CLASS() {
-    //   var firstArg = arguments[0];
-    //   if (firstArg && firstArg[Symbol.for("lively-instance-restorer")]) {
-    //     // for deserializing instances just do nothing
-    //   } else {
-    //     // automatically call the initialize method
-    //     this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
-    //   }
-    // }
-
-    return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var isTransformedClassVarDeclSymbol = Symbol();
-  var methodKindSymbol = Symbol();
-  var tempLivelyClassVar = "__lively_class__";
-  var tempLivelyClassHolderVar = "__lively_classholder__";
-
-  var ClassReplaceVisitor = function (_Visitor) {
-    babelHelpers.inherits(ClassReplaceVisitor, _Visitor);
-
-    function ClassReplaceVisitor() {
-      babelHelpers.classCallCheck(this, ClassReplaceVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ClassReplaceVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ClassReplaceVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        if (isFunctionNode(node)) {
-          state = babelHelpers.extends({}, state, { classHolder: objectLiteral([]),
-            currentMethod: node[methodKindSymbol] ? node : state.currentMethod
-          });
-        }
-
-        if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
-
-        if (node.type === "Super") node = replaceSuper(node, state, path, state.options);
-
-        if (node.type === "MemberExpression" && node.object && node.object.type === "Super") node = replaceSuperGetter(node, state, path, state.options);
-
-        if (node.type === "AssignmentExpression" && node.left.type === "MemberExpression" && node.left.object.type === "Super") node = replaceSuperSetter(node, state, path, state.options);
-
-        if (node.type === "CallExpression" && node.callee.type === "Super") node = replaceDirectSuperCall(node, state, path, state.options);
-
-        if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
-
-        node = babelHelpers.get(Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
-
-        if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
-
-        return node;
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, options) {
-        var v = new this(),
-            classHolder = options.classHolder || objectLiteral([]);
-        return v.accept(parsed, { options: options, classHolder: classHolder }, []);
-      }
-    }]);
-    return ClassReplaceVisitor;
-  }(Visitor);
-
-  function replaceSuper(node, state, path, options) {
-    // just super
-    console.assert(node.type === "Super");
-
-    var currentMethod = state.currentMethod;
-
-    if (!currentMethod) {
-      console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + stringify(node) + " in " + path.join("."));
-      // return node;
-    }
-
-    var _path$slice = path.slice(-2);
-
-    var _path$slice2 = babelHelpers.slicedToArray(_path$slice, 2);
-
-    var parentReferencedAs = _path$slice2[0];
-    var referencedAs = _path$slice2[1];
-
-    if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
-
-    var methodHolder = currentMethod && currentMethod[methodKindSymbol] === "static" ? funcCall(member("Object", "getPrototypeOf"), id(tempLivelyClassVar)) : funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
-
-    return methodHolder;
-  }
-
-  // parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
-
-  function replaceSuperMethodCall(node, state, path, options) {
-    // like super.foo()
-    console.assert(node.type === "CallExpression");
-    console.assert(node.callee.object.type === "Super");
-
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state, path.concat(["callee", "object"]), options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
-  }
-
-  function replaceDirectSuperCall(node, state, path, options) {
-    // like super()
-    console.assert(node.type === "CallExpression");
-    console.assert(node.callee.type === "Super");
-
-    return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state, path.concat(["callee"]), options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(babelHelpers.toConsumableArray(node.arguments)));
-  }
-
-  function replaceSuperGetter(node, state, path, options) {
-    console.assert(node.type === "MemberExpression");
-    console.assert(node.object.type === "Super");
-    return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state, path.concat(["object"]), options), literal(node.property.value || node.property.name), id("this"));
-  }
-
-  function replaceSuperSetter(node, state, path, options) {
-    console.assert(node.type === "AssignmentExpression");
-    console.assert(node.left.object.type === "Super");
-
-    return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state, path.concat(["left", "object"]), options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
-  }
-
-  function replaceClass(node, state, path, options) {
-    console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
-
-    var body = node.body.body;
-    var superClass = node.superClass;
-    var classId = node.id;
-    var type = node.type;
-    var instanceProps = id("undefined");
-    var classProps = id("undefined");
-    var className = classId ? classId.name : "anonymous_class";
-
-    if (body.length) {
-      var _body$reduce = body.reduce(function (props, propNode) {
-        var decl;var key = propNode.key;
-        var kind = propNode.kind;
-        var value = propNode.value;
-        var classSide = propNode.static;
-
-
-        if (key.type !== "Literal" && key.type !== "Identifier") {
-          console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
-        }
-
-        if (kind === "method") {
-          // The name is just for debugging purposes when it appears in
-          // native debuggers. We have to be careful about it b/c it shadows
-          // outer functions / vars, something that is totally not apparent for a user
-          // of the class syntax. That's the reason for making it a little cryptic
-          var methodId = id(className + "_" + (key.name || key.value) + "_"),
-              _props = ["key", literal(key.name || key.value), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
-
-          decl = objectLiteral(_props);
-        } else if (kind === "get" || kind === "set") {
-          decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, babelHelpers.defineProperty({ id: id(kind) }, methodKindSymbol, classSide ? "static" : "proto"))]);
-        } else if (kind === "constructor") {
-          var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", babelHelpers.extends({}, value, babelHelpers.defineProperty({ id: id(className + "_initialize_") }, methodKindSymbol, "proto"))];
-          decl = objectLiteral(_props2);
-        } else {
-          console.warn("[lively.classes] classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
-        }
-        (classSide ? props.clazz : props.inst).push(decl);
-        return props;
-      }, { inst: [], clazz: [] });
-
-      var inst = _body$reduce.inst;
-      var clazz = _body$reduce.clazz;
-
-
-      if (inst.length) instanceProps = { type: "ArrayExpression", elements: inst };
-      if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
-    }
-
-    var scope = options.scope,
-        superClassReferencedAs,
-        superClassRef;
-
-    if (superClass && options.currentModuleAccessor) {
-      if (options.classHolder === superClass.object) {
-        superClassRef = superClass;
-        superClassReferencedAs = superClass.property.name;
+      } else if (exportsStmt.declaration.type === "Identifier") {
+        var _ref3 = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
+
+        var decl = _ref3.decl;
+        var declId = _ref3.declId;
+
+        return exports.concat([{
+          local: exportsStmt.declaration.name,
+          exported: "default",
+          fromModule: null,
+          node: node,
+          type: "id",
+          decl: decl,
+          declId: declId
+        }]);
       } else {
-        var found = scope && scope.resolvedRefMap && scope.resolvedRefMap.get(superClass),
-            isTopLevel = found && found.decl && scope.decls && scope.decls.find(function (_ref) {
-          var _ref2 = babelHelpers.slicedToArray(_ref, 1);
-
-          var decl = _ref2[0];
-          return decl === found.decl;
-        });
-        if (isTopLevel) {
-          superClassRef = superClass;
-          superClassReferencedAs = superClass.name;
-        };
+        // exportsStmt.declaration is an expression
+        return exports.concat([{
+          local: null,
+          exported: "default",
+          fromModule: null,
+          node: node,
+          type: "expr",
+          decl: exportsStmt.declaration,
+          declId: exportsStmt.declaration
+        }]);
       }
     }
 
-    var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
+    if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
+      return exports.concat(exportsStmt.specifiers.map(function (exportSpec) {
+        var decl, declId;
+        if (from) {
+          // "export { x as y } from 'foo'" is the only case where export
+          // creates a (non-local) declaration itself
+          decl = node;declId = exportSpec.exported;
+        } else if (exportSpec.local) {
+          var resolved = scope.resolvedRefMap.get(exportSpec.local);
+          decl = resolved ? resolved.decl : null;
+          declId = resolved ? resolved.declId : null;
+        }
 
-    var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? {
-      type: "ConditionalExpression",
-      test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({ argument: member(tempLivelyClassHolderVar, classId), operator: "typeof", prefix: true, type: "UnaryExpression" }, "===", literal("function"))),
-      consequent: member(tempLivelyClassHolderVar, classId),
-      alternate: constructorTemplate(classId.name)
-    } : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
-
-    if (type === "ClassExpression") return classCreator;
-
-    var result = classCreator;
-
-    if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
-
-    // since it is a declaration and we removed the class construct we need to add a var-decl
-    result = varDecl(classId, result, "var");
-    result[isTransformedClassVarDeclSymbol] = true;
-
-    return result;
-  }
-
-  function splitExportDefaultWithClass(node, classHolder, path, options) {
-    return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
-      declaration: node.declaration.declarations[0].id,
-      type: "ExportDefaultDeclaration"
-    }];
-  }
-
-  // var opts = {classHolder: {type: "Identifier", name: "_rec"}, functionNode: {type: "Identifier", name: "createOrExtendClass"}};
-  // stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(); }}"), opts))
-  // stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(arguments[1]); }}"), opts))
-  // stringify(classToFunctionTransform(parse("class Foo {constructor() {}}"), opts))
-
-  function classToFunctionTransform(sourceOrAst, options) {
-    // required: options = {functionNode, classHolder}
-    // From
-    //   class Foo extends SuperFoo { m() { return 2 + super.m() }}
-    // produces something like
-    //   createOrExtend({}, {referencedAs: "SuperFoo", value: SuperFoo}, "Foo2", [{
-    //     key: "m",
-    //     value: function m() {
-    //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
-    //     }
-    //   }])
-
-    var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
-    options.scope = resolveReferences(scopes(parsed));
-
-    var replaced = ClassReplaceVisitor.run(parsed, options);
-
-    return replaced;
-  }
-
-  var merge = Object.assign;
-
-  function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
-    /* replaces var and function declarations with assignment statements.
-     * Example:
-       stringify(
-         rewriteToCaptureTopLevelVariables2(
-           parse("var x = 3, y = 2, z = 4"),
-           {name: "A", type: "Identifier"}, ['z']));
-       // => "A.x = 3; A.y = 2; z = 4"
-     */
-
-    if (!assignToObj) assignToObj = { type: "Identifier", name: "__rec" };
-
-    options = Object.assign({
-      ignoreUndeclaredExcept: null,
-      includeRefs: null,
-      excludeRefs: options && options.exclude || [],
-      includeDecls: null,
-      excludeDecls: options && options.exclude || [],
-      recordDefRanges: false,
-      es6ExportFuncId: null,
-      es6ImportFuncId: null,
-      captureObj: assignToObj,
-      moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
-      moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
-      declarationWrapper: undefined,
-      classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : Object.assign({
-        classHolder: assignToObj,
-        functionNode: { type: "Identifier", name: "_createOrExtendClass" },
-        declarationWrapper: options && options.declarationWrapper
-      })
-    }, options);
-
-    var rewritten = parsed;
-
-    // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
-    // if it is a list of names we will capture all refs with those names
-    if (options.ignoreUndeclaredExcept) {
-      var topLevel = topLevelDeclsAndRefs(parsed);
-      options.excludeRefs = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
-      options.excludeDecls = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
+        return {
+          local: !from && exportSpec.local ? exportSpec.local.name : null,
+          exported: exportSpec.exported ? exportSpec.exported.name : null,
+          imported: from && exportSpec.local ? exportSpec.local.name : null,
+          fromModule: from || null,
+          type: "id",
+          node: node,
+          decl: decl,
+          declId: declId
+        };
+      }));
     }
 
-    options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
-    options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
-
-    // 1. def ranges so that we know at which source code positions the
-    // definitions are
-    var defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
-
-    // 2. find those var declarations that should not be rewritten. we
-    // currently ignore var declarations in for loops and the error parameter
-    // declaration in catch clauses. Also es6 import / export declaration need
-    // a special treatment
-    // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
-    // as this is not valid syntax. Instead we add a var declaration using the
-    // recorder as init for those exports later
-    options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
-    options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
-
-    rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
-
-    // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
-    // obj assignment, converting es6 code to es5 using the extra
-    // options.moduleExportFunc and options.moduleImportFunc as capture / sources
-    if (options.es6ExportFuncId) {
-      options.excludeRefs.push(options.es6ExportFuncId);
-      options.excludeRefs.push(options.es6ImportFuncId);
-      rewritten = es6ModuleTransforms(rewritten, options);
+    if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
+      return exports.concat(exportsStmt.declaration.declarations.map(function (decl) {
+        return {
+          local: decl.id.name,
+          exported: decl.id.name,
+          type: exportsStmt.declaration.kind,
+          fromModule: null,
+          node: node,
+          decl: decl,
+          declId: decl.id
+        };
+      }));
     }
 
-    // 4. make all references declared in the toplevel scope into property
-    // reads of captureObj
-    // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-    rewritten = replaceRefs(rewritten, options);
-
-    // 5.a turn var declarations into assignments to captureObj
-    // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
-    // if declarationWrapper is requested:
-    //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
-    rewritten = replaceVarDecls(rewritten, options);
-
-    // 5.b record class declarations
-    // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
-    // if declarationWrapper is requested:
-    //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
-    rewritten = replaceClassDecls(rewritten, options);
-
-    // 6. es6 export declaration are left untouched but a capturing assignment
-    // is added after the export so that we get the value:
-    // "export var x = 23;" => "export var x = 23; Global.x = x;"
-    rewritten = insertCapturesForExportDeclarations(rewritten, options);
-
-    // 7. es6 import declaration are left untouched but a capturing assignment
-    // is added after the import so that we get the value:
-    // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
-    rewritten = insertCapturesForImportDeclarations(rewritten, options);
-
-    // 8. Since variable declarations like "var x = 23" were transformed to sth
-    // like "_rex.x = 23" exports can't simply reference vars anymore and
-    // "export { _rec.x }" is invalid syntax. So in front of those exports we add
-    // var decls manually
-    rewritten = insertDeclarationsForExports(rewritten, options);
-
-    // 9. assignments for function declarations in the top level scope are
-    // put in front of everything else to mirror the func hoisting:
-    // "return bar(); function bar() { return 23 }" ->
-    //   "Global.bar = bar; return bar(); function bar() { return 23 }"
-    // if declarationWrapper is requested:
-    //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
-    rewritten = putFunctionDeclsInFront(rewritten, options);
-
-    return rewritten;
-  }
-
-  function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
-    // for rewriting the setters part in code like
-    // ```js
-    //   System.register(["a.js"], function (_export, _context) {
-    //     var a, _rec;
-    //     return {
-    //       setters: [function(foo_a_js) { a = foo_a_js.x }],
-    //       execute: function () { _rec.x = 23 + _rec.a; }
-    //     };
-    //   });
-    // ```
-    // This allows us to capture (and potentially re-export) imports and their
-    // changes without actively running the module again.
-
-    options = merge({
-      captureObj: assignToObj || { type: "Identifier", name: "__rec" },
-      exclude: [],
-      declarationWrapper: undefined
-    }, options);
-
-    var registerCall = lively_lang.Path("body.0.expression").get(parsed);
-    if (registerCall.callee.object.name !== "System") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
-    if (registerCall.callee.property.name !== "register") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
-    var registerBody = lively_lang.Path("arguments.1.body.body").get(registerCall),
-        registerReturn = lively_lang.arr.last(registerBody);
-    if (registerReturn.type !== "ReturnStatement") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: " + stringify(parsed).slice(0, 300) + "...");
-    var setters = registerReturn.argument.properties.find(function (prop) {
-      return prop.key.name === "setters";
-    });
-    if (!setters) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding setters: " + stringify(parsed).slice(0, 300) + "...");
-    var execute = registerReturn.argument.properties.find(function (prop) {
-      return prop.key.name === "execute";
-    });
-    if (!execute) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: " + stringify(parsed).slice(0, 300) + "...");
-
-    // in each setter function: intercept the assignments to local vars and inject capture object
-    setters.value.elements.forEach(function (funcExpr) {
-      return funcExpr.body.body = funcExpr.body.body.map(function (stmt) {
-        if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
-
-        var id = stmt.expression.left,
-            rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
-        return exprStmt(assign(member(options.captureObj, id), rhs));
+    if (exportsStmt.declaration) {
+      return exports.concat({
+        local: exportsStmt.declaration.id.name,
+        exported: exportsStmt.declaration.id.name,
+        type: exportsStmt.declaration.type === "FunctionDeclaration" ? "function" : exportsStmt.declaration.type === "ClassDeclaration" ? "class" : null,
+        fromModule: null,
+        node: node,
+        decl: exportsStmt.declaration,
+        declId: exportsStmt.declaration.id
       });
-    });
-
-    var captureInitialize = execute.value.body.body.find(function (stmt) {
-      return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
-    });
-    if (captureInitialize) {
-      lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
     }
+    return exports;
+  }, []);
 
-    return parsed;
+  return lively_lang.arr.uniqBy(exports, function (a, b) {
+    return a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule;
+  });
+}
+
+
+
+var query = Object.freeze({
+	helpers: helpers,
+	knownGlobals: knownGlobals,
+	scopes: scopes,
+	nodesAtIndex: nodesAtIndex,
+	scopesAtIndex: scopesAtIndex,
+	scopeAtIndex: scopeAtIndex,
+	scopesAtPos: scopesAtPos,
+	nodesInScopeOf: nodesInScopeOf,
+	declarationsOfScope: declarationsOfScope,
+	_declaredVarNames: _declaredVarNames,
+	_findJsLintGlobalDeclarations: _findJsLintGlobalDeclarations,
+	topLevelDeclsAndRefs: topLevelDeclsAndRefs,
+	topLevelFuncDecls: topLevelFuncDecls,
+	findGlobalVarRefs: findGlobalVarRefs,
+	findNodesIncludingLines: findNodesIncludingLines,
+	findReferencesAndDeclsInScope: findReferencesAndDeclsInScope,
+	findDeclarationClosestToIndex: findDeclarationClosestToIndex,
+	nodesAt: nodesAt$1,
+	statementOf: statementOf,
+	resolveReferences: resolveReferences,
+	refWithDeclAt: refWithDeclAt,
+	imports: imports,
+	exports: exports$1
+});
+
+var ObjectSpreadTransformer = function (_Visitor) {
+  inherits(ObjectSpreadTransformer, _Visitor);
+
+  function ObjectSpreadTransformer() {
+    classCallCheck(this, ObjectSpreadTransformer);
+    return possibleConstructorReturn(this, (ObjectSpreadTransformer.__proto__ || Object.getPrototypeOf(ObjectSpreadTransformer)).apply(this, arguments));
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // replacing helpers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  // TODO move this stuff over into transform? Or separate replace.js?
-
-  var ReplaceVisitor = function (_Visitor) {
-    babelHelpers.inherits(ReplaceVisitor, _Visitor);
-
-    function ReplaceVisitor() {
-      babelHelpers.classCallCheck(this, ReplaceVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceVisitor).apply(this, arguments));
+  createClass(ObjectSpreadTransformer, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      if (node.type === "ObjectExpression") {
+        node = this.transformSpreadProperty(node);
+      }
+      return get(ObjectSpreadTransformer.prototype.__proto__ || Object.getPrototypeOf(ObjectSpreadTransformer.prototype), "accept", this).call(this, node, state, path);
     }
+  }, {
+    key: "transformSpreadProperty",
+    value: function transformSpreadProperty(node) {
+      var currentGroup = [],
+          propGroups = [currentGroup];
 
-    babelHelpers.createClass(ReplaceVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, replacer) {
-        var v = new this();
-        v.replacer = replacer;
-        return v.accept(parsed, null, []);
-      }
-    }]);
-    return ReplaceVisitor;
-  }(Visitor);
-
-  function replace$1(parsed, replacer) {
-    return ReplaceVisitor.run(parsed, replacer);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var canBeInlinedSym = Symbol("canBeInlined");
-
-  function blockInliner(node) {
-    // FIXME what about () => x kind of functions?
-    if (Array.isArray(node.body)) {
-      for (var i = node.body.length - 1; i >= 0; i--) {
-        var stmt = node.body[i];
-        if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
-          node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
+      node.properties.forEach(function (prop$$1) {
+        if (prop$$1.type !== "SpreadProperty") currentGroup.push(prop$$1);else {
+          propGroups.push(prop$$1);
+          currentGroup = [];
+          propGroups.push(currentGroup);
         }
-      }
-    }
-    return node;
-  }
-
-  var ReplaceManyVisitor = function (_Visitor2) {
-    babelHelpers.inherits(ReplaceManyVisitor, _Visitor2);
-
-    function ReplaceManyVisitor() {
-      babelHelpers.classCallCheck(this, ReplaceManyVisitor);
-      return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(ReplaceManyVisitor).apply(this, arguments));
-    }
-
-    babelHelpers.createClass(ReplaceManyVisitor, [{
-      key: "accept",
-      value: function accept(node, state, path) {
-        return this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
-        var replaced = this.replacer(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
-        return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), babelHelpers.defineProperty({}, canBeInlinedSym, true));
-      }
-    }, {
-      key: "visitBlockStatement",
-      value: function visitBlockStatement(node, state, path) {
-        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
-      }
-    }, {
-      key: "visitProgram",
-      value: function visitProgram(node, state, path) {
-        return blockInliner(babelHelpers.get(Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
-      }
-    }], [{
-      key: "run",
-      value: function run(parsed, replacer) {
-        var v = new this();
-        v.replacer = replacer;
-        return v.accept(parsed, null, []);
-      }
-    }]);
-    return ReplaceManyVisitor;
-  }(Visitor);
-
-  function replaceWithMany(parsed, replacer) {
-    return ReplaceManyVisitor.run(parsed, replacer);
-  }
-
-  function replaceRefs(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        refsToReplace = topLevel.refs.filter(function (ref) {
-      return shouldRefBeCaptured(ref, topLevel, options);
-    });
-
-    var replaced = replace$1(parsed, function (node, path) {
-      return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
-    });
-
-    return replace$1(replaced, function (node, path) {
-      return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
-    });
-  }
-
-  function replaceVarDecls(parsed, options) {
-    // rewrites var declarations so that they can be captured by
-    // `options.captureObj`.
-    // For normal vars we will do a transform like
-    //   "var x = 23;" => "_rec.x = 23";
-    // For patterns (destructuring assignments) we will create assignments for
-    // all properties that are being destructured, creating helper vars as needed
-    //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
-
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    return replaceWithMany(parsed, function (node) {
-      if (topLevel.varDecls.indexOf(node) === -1 || node.declarations.every(function (decl) {
-        return !shouldDeclBeCaptured(decl, options);
-      })) return node;
-
-      return lively_lang.arr.flatmap(node.declarations, function (decl) {
-        if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
-
-        var init = decl.init || {
-          operator: "||",
-          type: "LogicalExpression",
-          left: { computed: false, object: options.captureObj, property: decl.id, type: "MemberExpression" },
-          right: { name: "undefined", type: "Identifier" }
-        };
-
-        var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
-
-        // Here we create the object pattern / destructuring replacements
-        if (decl.id.type.match(/Pattern/)) {
-          var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
-              declRoot = { type: "Identifier", name: declRootName },
-              state = { parent: declRoot, declaredNames: topLevel.declaredNames },
-              extractions = transformPattern(decl.id, state).map(function (decl) {
-            return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
-          });
-          topLevel.declaredNames.push(declRootName);
-          return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
-        }
-
-        // This is rewriting normal vars
-        return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
       });
-    });
-  }
 
-  function replaceClassDecls(parsed, options) {
+      if (propGroups.length === 1) return node;
 
-    if (options.classToFunction) return classToFunctionTransform(parsed, options.classToFunction);
+      if (!currentGroup.length) propGroups.pop();
 
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    if (!topLevel.classDecls.length) return parsed;
-    for (var i = parsed.body.length - 1; i >= 0; i--) {
-      var stmt = parsed.body[i];
-      if (topLevel.classDecls.indexOf(stmt) !== -1) {
-        if (false && options.declarationWrapper) {} else {
-          parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
-        }
+      return funcCall.apply(undefined, [member("Object", "assign")].concat(toConsumableArray(propGroups.map(function (group) {
+        return group.type === "SpreadProperty" ? group.argument : {
+          properties: group,
+          type: 'ObjectExpression'
+        };
+      }))));
+    }
+  }]);
+  return ObjectSpreadTransformer;
+}(Visitor);
+
+function objectSpreadTransform(parsed) {
+  // "var x = {y, ...z}" => "var x = Object.assign({ y }, z);"
+  return new ObjectSpreadTransformer().accept(parsed, {}, []);
+}
+
+/*global process, global, exports*/
+
+var helper = {
+  // currently this is used by the replacement functions below but
+  // I don't wan't to make it part of our AST API
+
+  _node2string: function _node2string(node) {
+    return node.source || stringify(node);
+  },
+
+  _findIndentAt: function _findIndentAt(s, pos) {
+    var bol = lively_lang.string.peekLeft(s, pos, /\s+$/),
+        indent = typeof bol === 'number' ? s.slice(bol, pos) : '';
+    if (indent[0] === '\n') indent = indent.slice(1);
+    return indent;
+  },
+
+  _applyChanges: function _applyChanges(changes, source) {
+    return changes.reduce(function (source, change) {
+      if (change.type === 'del') {
+        return source.slice(0, change.pos) + source.slice(change.pos + change.length);
+      } else if (change.type === 'add') {
+        return source.slice(0, change.pos) + change.string + source.slice(change.pos);
       }
-    }
-    return parsed;
-  }
+      throw new Error('Uexpected change ' + Objects.inspect(change));
+    }, source);
+  },
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // naming
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  _compareNodesForReplacement: function _compareNodesForReplacement(nodeA, nodeB) {
+    // equals
+    if (nodeA.start === nodeB.start && nodeA.end === nodeB.end) return 0;
+    // a "left" of b
+    if (nodeA.end <= nodeB.start) return -1;
+    // a "right" of b
+    if (nodeA.start >= nodeB.end) return 1;
+    // a contains b
+    if (nodeA.start <= nodeB.start && nodeA.end >= nodeB.end) return 1;
+    // b contains a
+    if (nodeB.start <= nodeA.start && nodeB.end >= nodeA.end) return -1;
+    throw new Error('Comparing nodes');
+  },
 
-  function generateUniqueName(declaredNames, hint) {
-    var unique = hint,
-        n = 1;
-    while (declaredNames.indexOf(unique) > -1) {
-      if (n > 1000) throw new Error("Endless loop searching for unique variable " + unique);
-      unique = unique.replace(/_[0-9]+$|$/, "_" + ++n);
-    }
-    return unique;
-  }
+  replaceNode: function replaceNode(target, replacementFunc, sourceOrChanges) {
+    // parameters:
+    //   - target: ast node
+    //   - replacementFunc that gets this node and its source snippet
+    //     handed and should produce a new ast node.
+    //   - sourceOrChanges: If its a string -- the source code to rewrite
+    //                      If its and object -- {changes: ARRAY, source: STRING}
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // exclude / include helpers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    var sourceChanges = (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges },
+        insideChangedBefore = false,
+        pos = sourceChanges.changes.reduce(function (pos, change) {
+      // fixup the start and end indices of target using the del/add
+      // changes already applied
+      if (pos.end < change.pos) return pos;
 
-  function additionalIgnoredDecls(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        ignoreDecls = [];
-    for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
-      var decl = topLevel.scope.varDecls[i],
-          path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
-          parent = path.slice(0, -1).get(parsed);
-      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
-        ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
-      }
-    }
+      var isInFront = change.pos < pos.start;
+      insideChangedBefore = insideChangedBefore || change.pos >= pos.start && change.pos <= pos.end;
 
-    return topLevel.scope.catches.map(function (ea) {
-      return ea.name;
-    }).concat(ignoreDecls.map(function (ea) {
-      return ea.id.name;
-    }));
-  }
+      if (change.type === 'add') return {
+        start: isInFront ? pos.start + change.string.length : pos.start,
+        end: pos.end + change.string.length
+      };
 
-  function additionalIgnoredRefs(parsed, options) {
-    // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
-    // decls, this should somehow be consolidated with this function and with the
-    // fact that naming based ignores aren't good enough...
-    var topLevel = topLevelDeclsAndRefs(parsed);
+      if (change.type === 'del') return {
+        start: isInFront ? pos.start - change.length : pos.start,
+        end: pos.end - change.length
+      };
 
-    var ignoreDecls = [];
-    for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
-      var decl = topLevel.scope.varDecls[i],
-          path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
-          parent = path.slice(0, -1).get(parsed);
-      if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
-        ignoreDecls.push.apply(ignoreDecls, babelHelpers.toConsumableArray(decl.declarations));
-      }
-    }
+      throw new Error('Cannot deal with change ' + Objects.inspect(change));
+    }, { start: target.start, end: target.end });
 
-    var ignoredImportAndExportNames = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") {
-        ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, babelHelpers.toConsumableArray(stmt.specifiers.filter(function (ea) {
-          return ea.type === "ImportSpecifier";
-        }).map(function (ea) {
-          return ea.imported.name;
-        })));
-      } else if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) {
-        ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, babelHelpers.toConsumableArray(stmt.specifiers.map(function (specifier) {
-          return specifier.local.name;
-        })));
-      }
-    }
+    var source = sourceChanges.source,
+        replacement = replacementFunc(target, source.slice(pos.start, pos.end), insideChangedBefore),
+        replacementSource = Array.isArray(replacement) ? replacement.map(helper._node2string).join('\n' + helper._findIndentAt(source, pos.start)) : replacementSource = helper._node2string(replacement);
 
-    return [].concat(topLevel.scope.catches.map(function (ea) {
-      return ea.name;
-    })).concat(ignoredImportAndExportNames).concat(ignoreDecls.map(function (ea) {
-      return ea.id.name;
-    }));
-  }
+    var changes = [{ type: 'del', pos: pos.start, length: pos.end - pos.start }, { type: 'add', pos: pos.start, string: replacementSource }];
 
-  function shouldDeclBeCaptured(decl, options) {
-    return options.excludeDecls.indexOf(decl.id.name) === -1 && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
-  }
-
-  function shouldRefBeCaptured(ref, toplevel, options) {
-    return toplevel.scope.importDecls.indexOf(ref) === -1 && lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
-      return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
-    }).indexOf(ref) === -1 && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) !== -1);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // capturing specific code
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function insertCapturesForExportDeclarations(parsed, options) {
-    var body = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      body.push(stmt);
-      // ExportNamedDeclaration can have specifieres = refs, those should already
-      // be captured. Only focus on export declarations and only those
-      // declarations that are no refs, i.e.
-      // ignore: "export default x;"
-      // capture: "export default function foo () {};", "export var x = 23, y = 3;"
-      if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
-        /*...*/
-      } else if (stmt.declaration.declarations) {
-          body.push.apply(body, babelHelpers.toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-            return assignExpr(options.captureObj, decl.id, decl.id, false);
-          })));
-        } else if (stmt.declaration.type === "FunctionDeclaration") {
-          /*handled by function rewriter as last step*/
-        } else if (stmt.declaration.type === "ClassDeclaration") {
-            body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-          }
-    }
-    parsed.body = body;
-    return parsed;
-  }
-
-  function insertCapturesForImportDeclarations(parsed, options) {
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      return stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] : [stmt].concat(stmt.specifiers.map(function (specifier) {
-        return assignExpr(options.captureObj, specifier.local, specifier.local, false);
-      })));
-    }, []);
-    return parsed;
-  }
-
-  function insertDeclarationsForExports(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        body = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
-        body = body.concat([varDeclOrAssignment(parsed, {
-          type: "VariableDeclarator",
-          id: stmt.declaration,
-          init: member(options.captureObj, stmt.declaration)
-        }), stmt]);
-      } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
-        body.push(stmt);
-      } else {
-        body = body.concat(stmt.specifiers.map(function (specifier) {
-          return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
-            type: "VariableDeclarator",
-            id: specifier.local,
-            init: member(options.captureObj, specifier.local)
-          });
-        }).filter(Boolean)).concat(stmt);
-      }
-    }
-
-    parsed.body = body;
-    return parsed;
-  }
-
-  function fixDefaultAsyncFunctionExportForRegeneratorBug(parsed, options) {
-    // rk 2016-06-02: see https://github.com/LivelyKernel/lively.modules/issues/9
-    // FIXME this needs to be removed as soon as the cause for the issue is fixed
-    var body = [];
-    for (var i = 0; i < parsed.body.length; i++) {
-      var stmt = parsed.body[i];
-      if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
-        body.push(stmt.declaration);
-        stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
-      }
-      body.push(stmt);
-    }
-    parsed.body = body;
-    return parsed;
-  }
-
-  function es6ModuleTransforms(parsed, options) {
-    parsed.body = parsed.body.reduce(function (stmts, stmt) {
-      var nodes;
-      if (stmt.type === "ExportNamedDeclaration") {
-
-        if (stmt.source) {
-          var key = moduleId = stmt.source;
-          nodes = stmt.specifiers.map(function (specifier) {
-            return {
-              type: "ExpressionStatement",
-              expression: exportFromImport({ type: "Literal", value: specifier.exported.name }, { type: "Literal", value: specifier.local.name }, moduleId, options.moduleExportFunc, options.moduleImportFunc) };
-          });
-        } else if (stmt.declaration) {
-          var decls = stmt.declaration.declarations;
-          if (!decls) {
-            // func decl or class
-            nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id));
-          } else {
-            nodes = decls.map(function (decl) {
-              options.excludeRefs.push(decl.id);
-              options.excludeDecls.push(decl.id);
-              return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
-            }).concat(decls.map(function (decl) {
-              return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
-            }));
-          }
-        } else {
-          nodes = stmt.specifiers.map(function (specifier) {
-            return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
-          });
-        }
-      } else if (stmt.type === "ExportDefaultDeclaration") {
-        if (stmt.declaration && stmt.declaration.id) {
-          nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, "default", stmt.declaration.id));
-        } else {
-          nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
-        }
-      } else if (stmt.type === "ExportAllDeclaration") {
-        var key = { name: options.es6ExportFuncId + "__iterator__", type: "Identifier" },
-            moduleId = stmt.source;
-        nodes = [{
-          type: "ForInStatement",
-          body: { type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc) },
-          left: { type: "VariableDeclaration", kind: "var", declarations: [{ type: "VariableDeclarator", id: key, init: null }] },
-          right: importCall(null, moduleId, options.moduleImportFunc)
-        }];
-        options.excludeRefs.push(key.name);
-        options.excludeDecls.push(key.name);
-      } else if (stmt.type === "ImportDeclaration") {
-        nodes = stmt.specifiers.length ? stmt.specifiers.map(function (specifier) {
-          var local = specifier.local,
-              imported = specifier.type === "ImportSpecifier" && specifier.imported.name || specifier.type === "ImportDefaultSpecifier" && "default" || null;
-          return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
-        }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
-      } else nodes = [stmt];
-      return stmts.concat(nodes);
-    }, []);
-
-    return parsed;
-  }
-
-  function putFunctionDeclsInFront(parsed, options) {
-    var scope = topLevelDeclsAndRefs(parsed).scope,
-        funcDecls = scope.funcDecls;
-    if (!funcDecls.length) return parsed;
-
-    var putInFront = [];
-
-    for (var i = funcDecls.length; i--;) {
-      var decl = funcDecls[i];
-      if (!shouldDeclBeCaptured(decl, options)) continue;
-
-      var parentPath = scope.funcDeclPaths[i].slice(0, -1),
-
-      // ge the parent so we can replace the original function:
-      parent = lively_lang.Path(parentPath).get(scope.node),
-          funcId = { type: "Identifier", name: decl.id.name },
-
-      // what we capture:
-      init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
-          declFront = Object.assign({}, decl);
-
-      if (Array.isArray(parent)) {
-        // If the parent is a body array we remove the original func decl from it
-        // and replace it with a reference to the function
-        parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
-      } else if (parent.type === "ExportNamedDeclaration") {
-        // If the function is exported we change the export declaration into a reference
-        var parentIndexInBody = scope.node.body.indexOf(parent);
-        if (parentIndexInBody > -1) {
-          scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
-        }
-      } else if (parent.type === "ExportDefaultDeclaration") {
-        parent.declaration = decl.id;
-      } else {}
-      // ??? just leave it alone...
-      // decl.type = "EmptyStatement";
-
-
-      // hoist the function to the front, also it's capture
-      putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
-      putInFront.unshift(declFront);
-    }
-    parsed.body = putInFront.concat(parsed.body);
-    return parsed;
-  }
-
-  function computeDefRanges(parsed, options) {
-    var topLevel = topLevelDeclsAndRefs(parsed);
-    return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls).reduce(function (defs, decl) {
-      if (!defs[decl.id.name]) defs[decl.id.name] = [];
-      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
-      return defs;
-    }, {});
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // capturing oobject patters / destructuring
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var annotationSym = Symbol("lively.ast-destructuring-transform");
-
-  function transformPattern(pattern, transformState) {
-    // For transforming destructuring expressions into plain vars and member access.
-    // Takes a var or argument pattern node (of type ArrayPattern or
-    // ObjectPattern) and transforms it into a set of var declarations that will
-    // "pull out" the nested properties
-    // Example:
-    // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
-    // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
-    // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
-    // // => "var arg$0 = arg[0];\n"
-    // //  + "var arg$0$b = arg$0.b;\n"
-    // //  + "var arg$0$b$c = arg$0$b.c;\n"
-    // //  + "var a = arg$0$b$c[0];"
-    if (pattern.type === "ArrayPattern") {
-      return transformArrayPattern(pattern, transformState);
-    } else if (pattern.type === "ObjectPattern") {
-      return transformObjectPattern(pattern, transformState);
-    } else {
-      return [];
-    }
-  }
-
-  function transformArrayPattern(pattern, transformState) {
-    var declaredNames = transformState.declaredNames,
-        p = annotationSym;
-    return lively_lang.arr.flatmap(pattern.elements, function (el, i) {
-
-      // like [a]
-      if (el.type === "Identifier") {
-        return [merge(varDecl(el, member(transformState.parent, id(i), true)), babelHelpers.defineProperty({}, p, { capture: true }))];
-
-        // like [...foo]
-      } else if (el.type === "RestElement") {
-          return [merge(varDecl(el.argument, {
-            type: "CallExpression",
-            arguments: [{ type: "Literal", value: i }],
-            callee: member(transformState.parent, id("slice"), false) }), babelHelpers.defineProperty({}, p, { capture: true }))];
-
-          // like [{x}]
-        } else {
-            var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-                helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), babelHelpers.defineProperty({}, p, { capture: true }));
-            declaredNames.push(helperVarId.name);
-            return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
-          }
-    });
-  }
-
-  function transformObjectPattern(pattern, transformState) {
-    var declaredNames = transformState.declaredNames,
-        p = annotationSym;
-    return lively_lang.arr.flatmap(pattern.properties, function (prop) {
-
-      // like {x: y}
-      if (prop.value.type == "Identifier") {
-        return [merge(varDecl(prop.value, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: true }))];
-
-        // like {x: {z}} or {x: [a]}
-      } else {
-          var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop.key.name)),
-              helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop.key)), babelHelpers.defineProperty({}, p, { capture: false }));
-          declaredNames.push(helperVarId.name);
-          return [helperVar].concat(transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }));
-        }
-    });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // code generation helpers
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function block$1(nodes) {
-    return { type: "BlockStatement", body: nodes };
-  }
-
-  function varDeclOrAssignment(parsed, declarator, kind) {
-    var topLevel = topLevelDeclsAndRefs(parsed),
-        name = declarator.id.name;
-    return topLevel.declaredNames.indexOf(name) > -1 ?
-    // only create a new declaration if necessary
-    exprStmt(assign(declarator.id, declarator.init)) : {
-      declarations: [declarator],
-      kind: kind || "var", type: "VariableDeclaration"
-    };
-  }
-
-  function assignExpr(assignee, propId, value, computed) {
-    return exprStmt(assign(member(assignee, propId, computed), value || id("undefined")));
-  }
-
-  function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
-    return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
-  }
-
-  function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
-    // return varDeclOrAssignment(parsed, {
-    //   type: "VariableDeclarator",
-    //   id: localId,
-    //   init: importCall(imported, moduleSource, moduleImportFunc)
-    // });
-    return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
-  }
-
-  function importCall(imported, moduleSource, moduleImportFunc) {
-    if (typeof imported === "string") imported = literal(imported);
     return {
-      arguments: [moduleSource].concat(imported || []),
-      callee: moduleImportFunc, type: "CallExpression"
+      changes: sourceChanges.changes.concat(changes),
+      source: this._applyChanges(changes, source)
     };
+  },
+
+  replaceNodes: function replaceNodes(targetAndReplacementFuncs, sourceOrChanges) {
+    // replace multiple AST nodes, order rewriting from inside out and
+    // top to bottom so that nodes to rewrite can overlap or be contained
+    // in each other
+    return targetAndReplacementFuncs.sort(function (a, b) {
+      return helper._compareNodesForReplacement(a.target, b.target);
+    }).reduce(function (sourceChanges, ea) {
+      return helper.replaceNode(ea.target, ea.replacementFunc, sourceChanges);
+    }, (typeof sourceOrChanges === "undefined" ? "undefined" : _typeof(sourceOrChanges)) === 'object' ? sourceOrChanges : { changes: [], source: sourceOrChanges });
   }
 
-  function importCallStmt(imported, moduleSource, moduleImportFunc) {
-    return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
+};
+
+function replace(astOrSource, targetNode, replacementFunc, options) {
+  // replaces targetNode in astOrSource with what replacementFunc returns
+  // (one or multiple ast nodes)
+  // Example:
+  // var ast = exports.parse('foo.bar("hello");')
+  // exports.transform.replace(
+  //     ast, ast.body[0].expression,
+  //     function(node, source) {
+  //         return {type: "CallExpression",
+  //             callee: {name: node.arguments[0].value, type: "Identifier"},
+  //             arguments: [{value: "world", type: "Literal"}]
+  //         }
+  //     });
+  // => {
+  //      source: "hello('world');",
+  //      changes: [{pos: 0,length: 16,type: "del"},{pos: 0,string: "hello('world')",type: "add"}]
+  //    }
+
+  var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : null,
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      result = helper.replaceNode(targetNode, replacementFunc, source);
+
+  return result;
+}
+
+function oneDeclaratorPerVarDecl(astOrSource) {
+  // exports.transform.oneDeclaratorPerVarDecl(
+  //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
+
+  var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      scope = scopes(parsed),
+      varDecls = function findVarDecls(scope) {
+    return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
+  }(scope);
+
+  var targetsAndReplacements = varDecls.map(function (decl) {
+    return {
+      target: decl,
+      replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+        if (wasChanged) {
+          // reparse node if necessary, e.g. if init was changed before like in
+          // var x = (function() { var y = ... })();
+          declNode = parse(s).body[0];
+        }
+
+        return declNode.declarations.map(function (ea) {
+          return {
+            type: "VariableDeclaration",
+            kind: "var", declarations: [ea]
+          };
+        });
+      }
+    };
+  });
+
+  return helper.replaceNodes(targetsAndReplacements, source);
+}
+
+function oneDeclaratorForVarsInDestructoring(astOrSource) {
+  var parsed = (typeof astOrSource === "undefined" ? "undefined" : _typeof(astOrSource)) === 'object' ? astOrSource : parse(astOrSource),
+      source = typeof astOrSource === 'string' ? astOrSource : parsed.source || helper._node2string(parsed),
+      scope = scopes(parsed),
+      varDecls = function findVarDecls(scope) {
+    return lively_lang.arr.flatten(scope.varDecls.concat(scope.subScopes.map(findVarDecls)));
+  }(scope);
+
+  var targetsAndReplacements = varDecls.map(function (decl) {
+    return {
+      target: decl,
+      replacementFunc: function replacementFunc(declNode, s, wasChanged) {
+        if (wasChanged) {
+          // reparse node if necessary, e.g. if init was changed before like in
+          // var x = (function() { var y = ... })();
+          declNode = parse(s).body[0];
+        }
+
+        return lively_lang.arr.flatmap(declNode.declarations, function (declNode) {
+          var extractedId = { type: "Identifier", name: "__temp" },
+              extractedInit = {
+            type: "VariableDeclaration", kind: "var",
+            declarations: [{ type: "VariableDeclarator", id: extractedId, init: declNode.init }]
+          };
+
+          var propDecls = helpers.objPropertiesAsList(declNode.id, [], false).map(function (ea) {
+            return ea.key;
+          }).map(function (keyPath) {
+            return varDecl(lively_lang.arr.last(keyPath), memberChain.apply(undefined, [extractedId.name].concat(toConsumableArray(keyPath))), "var");
+          });
+
+          return [extractedInit].concat(propDecls);
+        });
+      }
+    };
+  });
+
+  return helper.replaceNodes(targetsAndReplacements, source);
+}
+
+function returnLastStatement(source, opts) {
+  opts = opts || {};
+
+  var parsed = parse(source, opts),
+      last = lively_lang.arr.last(parsed.body);
+  if (last.type === "ExpressionStatement") {
+    parsed.body.splice(parsed.body.length - 1, 1, returnStmt(last.expression));
+    return opts.asAST ? parsed : stringify(parsed);
+  } else {
+    return opts.asAST ? parsed : source;
+  }
+}
+
+function wrapInFunction(code, opts) {
+  opts = opts || {};
+  var transformed = returnLastStatement(code, opts);
+  return opts.asAST ? program(funcExpr.apply(undefined, [{ id: opts.id || undefined }, []].concat(toConsumableArray(transformed.body)))) : "function" + (opts.id ? " " + opts.id : "") + "() {\n" + transformed + "\n}";
+}
+
+function wrapInStartEndCall(parsed, options) {
+  // Wraps a piece of code into two function calls: One before the first
+  // statement and one after the last. Also wraps the entire thing into a try /
+  // catch block. The end call gets the result of the last statement (if it is
+  // something that returns a value, i.e. an expression) passed as the second
+  // argument. If an error occurs the end function is called with an error as
+  // first parameter
+  // Why? This allows to easily track execution of code, especially for
+  // asynchronus / await code!
+  // Example:
+  // stringify(wrapInStartEndCall("var y = x + 23; y"))
+  // // generates code
+  // try {
+  //     __start_execution();
+  //     __lvVarRecorder.y = x + 23;
+  //     return __end_execution(null, __lvVarRecorder.y);
+  // } catch (err) {
+  //     return __end_execution(err, undefined);
+  // }
+
+  if (typeof parsed === "string") parsed = parse(parsed);
+  options = options || {};
+
+  var isProgram = parsed.type === "Program",
+      startFuncNode = options.startFuncNode || id("__start_execution"),
+      endFuncNode = options.endFuncNode || id("__end_execution"),
+      funcDecls = topLevelFuncDecls(parsed),
+      innerBody = parsed.body,
+      outerBody = [];
+
+  // 1. Hoist func decls outside the actual eval start - end code. The async /
+  // generator transforms require this!
+  funcDecls.forEach(function (_ref) {
+    var node = _ref.node;
+    var path = _ref.path;
+
+    lively_lang.Path(path).set(parsed, exprStmt(node.id));
+    outerBody.push(node);
+  });
+
+  // 2. add start-eval call
+  innerBody.unshift(exprStmt(funcCall(startFuncNode)));
+
+  // 3. if last statement is an expression, transform it so we can pass it to
+  // the end-eval call, replacing the original expression. If it's a
+  // non-expression we record undefined as the eval result
+  var last = lively_lang.arr.last(innerBody);
+  if (last.type === "ExpressionStatement") {
+    innerBody.pop();
+    innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), last.expression)));
+  } else if (last.type === "VariableDeclaration" && lively_lang.arr.last(last.declarations).id.type === "Identifier") {
+    innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), lively_lang.arr.last(last.declarations).id)));
+  } else {
+    innerBody.push(exprStmt(funcCall(endFuncNode, id("null"), id("undefined"))));
   }
 
-  function exportCall(exportFunc, local, exportedObj) {
-    if (typeof local === "string") local = literal(local);
-    exportedObj = lively_lang.obj.deepCopy(exportedObj);
-    return funcCall(exportFunc, local, exportedObj);
+  // 4. Wrap that stuff in a try stmt
+  outerBody.push(tryStmt.apply(undefined, ["err", [exprStmt(funcCall(endFuncNode, id("err"), id("undefined")))]].concat(toConsumableArray(innerBody))));
+
+  return isProgram ? program.apply(undefined, outerBody) : block.apply(undefined, outerBody);
+}
+
+var isProbablySingleExpressionRe = /^\s*(\{|function\s*\()/;
+
+function transformSingleExpression(code) {
+  // evaling certain expressions such as single functions or object
+  // literals will fail or not work as intended. When the code being
+  // evaluated consists just out of a single expression we will wrap it in
+  // parens to allow for those cases
+  // Example:
+  // transformSingleExpression("{foo: 23}") // => "({foo: 23})"
+
+  if (!isProbablySingleExpressionRe.test(code) || code.split("\n").length > 30) return code;
+
+  try {
+    var parsed = fuzzyParse(code);
+    if (parsed.body.length === 1 && (parsed.body[0].type === 'FunctionDeclaration' || parsed.body[0].type === 'BlockStatement' && parsed.body[0].body[0].type === 'LabeledStatement')) {
+      code = '(' + code.replace(/;\s*$/, '') + ')';
+    }
+  } catch (e) {
+    if ((typeof lively === "undefined" ? "undefined" : _typeof(lively)) && lively.Config && lively.Config.showImprovedJavaScriptEvalErrors) $world.logError(e);else console.error("Eval preprocess error: %s", e.stack || e);
+  }
+  return code;
+}
+
+
+
+var transform = Object.freeze({
+	helper: helper,
+	replace: replace,
+	oneDeclaratorPerVarDecl: oneDeclaratorPerVarDecl,
+	oneDeclaratorForVarsInDestructoring: oneDeclaratorForVarsInDestructoring,
+	returnLastStatement: returnLastStatement,
+	wrapInFunction: wrapInFunction,
+	wrapInStartEndCall: wrapInStartEndCall,
+	transformSingleExpression: transformSingleExpression,
+	objectSpreadTransform: objectSpreadTransform
+});
+
+function isFunctionNode(node) {
+  return node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression" || node.type === "FunctionDeclaration";
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function constructorTemplate(name) {
+  // Creates a function like
+  // function CLASS() {
+  //   var firstArg = arguments[0];
+  //   if (firstArg && firstArg[Symbol.for("lively-instance-restorer")]) {
+  //     // for deserializing instances just do nothing
+  //   } else {
+  //     // automatically call the initialize method
+  //     this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
+  //   }
+  // }
+
+  return funcExpr({ id: name ? id(name) : null }, ["__first_arg__"], ifStmt(binaryExpr(id("__first_arg__"), "&&", member("__first_arg__", funcCall(member("Symbol", "for"), literal("lively-instance-restorer")), true)), block(), block(exprStmt(funcCall(member(member("this", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), true), "apply"), id("this"), id("arguments"))))));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var isTransformedClassVarDeclSymbol = Symbol();
+var methodKindSymbol = Symbol();
+var tempLivelyClassVar = "__lively_class__";
+var tempLivelyClassHolderVar = "__lively_classholder__";
+
+var ClassReplaceVisitor = function (_Visitor) {
+  inherits(ClassReplaceVisitor, _Visitor);
+
+  function ClassReplaceVisitor() {
+    classCallCheck(this, ClassReplaceVisitor);
+    return possibleConstructorReturn(this, (ClassReplaceVisitor.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor)).apply(this, arguments));
   }
 
-  function exportCallStmt(exportFunc, local, exportedObj) {
-    return exprStmt(exportCall(exportFunc, local, exportedObj));
+  createClass(ClassReplaceVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      if (isFunctionNode(node)) {
+        state = _extends({}, state, { classHolder: objectLiteral([]),
+          currentMethod: node[methodKindSymbol] ? node : state.currentMethod
+        });
+      }
+
+      if (node.type === "ClassExpression" || node.type === "ClassDeclaration") node = replaceClass(node, state, path, state.options);
+
+      if (node.type === "Super") node = replaceSuper(node, state, path, state.options);
+
+      if (node.type === "MemberExpression" && node.object && node.object.type === "Super") node = replaceSuperGetter(node, state, path, state.options);
+
+      if (node.type === "AssignmentExpression" && node.left.type === "MemberExpression" && node.left.object.type === "Super") node = replaceSuperSetter(node, state, path, state.options);
+
+      if (node.type === "CallExpression" && node.callee.type === "Super") node = replaceDirectSuperCall(node, state, path, state.options);
+
+      if (node.type === "CallExpression" && node.callee.object && node.callee.object.type === "Super") node = replaceSuperMethodCall(node, state, path, state.options);
+
+      node = get(ClassReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ClassReplaceVisitor.prototype), "accept", this).call(this, node, state, path);
+
+      if (node.type === "ExportDefaultDeclaration") return splitExportDefaultWithClass(node, state, path, state.options);
+
+      return node;
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, options) {
+      var v = new this(),
+          classHolder = options.classHolder || objectLiteral([]);
+      return v.accept(parsed, { options: options, classHolder: classHolder }, []);
+    }
+  }]);
+  return ClassReplaceVisitor;
+}(Visitor);
+
+function replaceSuper(node, state, path, options) {
+  // just super
+  console.assert(node.type === "Super");
+
+  var currentMethod = state.currentMethod;
+
+  if (!currentMethod) {
+    console.warn("[lively.classes] Trying to transform es6 class but got super call outside a method! " + stringify(node) + " in " + path.join("."));
+    // return node;
   }
+
+  var _path$slice = path.slice(-2);
+
+  var _path$slice2 = slicedToArray(_path$slice, 2);
+
+  var parentReferencedAs = _path$slice2[0];
+  var referencedAs = _path$slice2[1];
+
+  if (parentReferencedAs === 'callee' && referencedAs === 'object' || referencedAs === 'callee') return node; // deal with this in replaceSuperCall
+
+  var methodHolder = currentMethod && currentMethod[methodKindSymbol] === "static" ? funcCall(member("Object", "getPrototypeOf"), id(tempLivelyClassVar)) : funcCall(member("Object", "getPrototypeOf"), member(id(tempLivelyClassVar), "prototype"));
+
+  return methodHolder;
+}
+
+// parse("class Foo extends Bar { get x() { return super.x; }}").body[0]
+
+function replaceSuperMethodCall(node, state, path, options) {
+  // like super.foo()
+  console.assert(node.type === "CallExpression");
+  console.assert(node.callee.object.type === "Super");
+
+  return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee.object, state, path.concat(["callee", "object"]), options), literal(node.callee.property.value || node.callee.property.name), id("this")), "call"), id("this")].concat(toConsumableArray(node.arguments)));
+}
+
+function replaceDirectSuperCall(node, state, path, options) {
+  // like super()
+  console.assert(node.type === "CallExpression");
+  console.assert(node.callee.type === "Super");
+
+  return funcCall.apply(undefined, [member(funcCall(member(options.functionNode, "_get"), replaceSuper(node.callee, state, path.concat(["callee"]), options), funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), id("this")), "call"), id("this")].concat(toConsumableArray(node.arguments)));
+}
+
+function replaceSuperGetter(node, state, path, options) {
+  console.assert(node.type === "MemberExpression");
+  console.assert(node.object.type === "Super");
+  return funcCall(member(options.functionNode, "_get"), replaceSuper(node.object, state, path.concat(["object"]), options), literal(node.property.value || node.property.name), id("this"));
+}
+
+function replaceSuperSetter(node, state, path, options) {
+  console.assert(node.type === "AssignmentExpression");
+  console.assert(node.left.object.type === "Super");
+
+  return funcCall(member(options.functionNode, "_set"), replaceSuper(node.left.object, state, path.concat(["left", "object"]), options), literal(node.left.property.value || node.left.property.name), node.right, id("this"));
+}
+
+function replaceClass(node, state, path, options) {
+  console.assert(node.type === "ClassDeclaration" || node.type === "ClassExpression");
+
+  var body = node.body.body;
+  var superClass = node.superClass;
+  var classId = node.id;
+  var type = node.type;
+  var instanceProps = id("undefined");
+  var classProps = id("undefined");
+  var className = classId ? classId.name : "anonymous_class";
+
+  if (body.length) {
+    var _body$reduce = body.reduce(function (props, propNode) {
+      var decl;var key = propNode.key;
+      var kind = propNode.kind;
+      var value = propNode.value;
+      var classSide = propNode.static;
+
+
+      if (key.type !== "Literal" && key.type !== "Identifier") {
+        console.warn("Unexpected key in classToFunctionTransform! " + JSON.stringify(key));
+      }
+
+      if (kind === "method") {
+        // The name is just for debugging purposes when it appears in
+        // native debuggers. We have to be careful about it b/c it shadows
+        // outer functions / vars, something that is totally not apparent for a user
+        // of the class syntax. That's the reason for making it a little cryptic
+        var methodId = id(className + "_" + (key.name || key.value) + "_"),
+            _props = ["key", literal(key.name || key.value), "value", _extends({}, value, defineProperty({ id: methodId }, methodKindSymbol, classSide ? "static" : "proto"))];
+
+        decl = objectLiteral(_props);
+      } else if (kind === "get" || kind === "set") {
+        decl = objectLiteral(["key", literal(key.name || key.value), kind, Object.assign({}, value, defineProperty({ id: id(kind) }, methodKindSymbol, classSide ? "static" : "proto"))]);
+      } else if (kind === "constructor") {
+        var _props2 = ["key", funcCall(member("Symbol", "for"), literal("lively-instance-initialize")), "value", _extends({}, value, defineProperty({ id: id(className + "_initialize_") }, methodKindSymbol, "proto"))];
+        decl = objectLiteral(_props2);
+      } else {
+        console.warn("[lively.classes] classToFunctionTransform encountered unknown class property with kind " + kind + ", ignoring it, " + JSON.stringify(propNode));
+      }
+      (classSide ? props.clazz : props.inst).push(decl);
+      return props;
+    }, { inst: [], clazz: [] });
+
+    var inst = _body$reduce.inst;
+    var clazz = _body$reduce.clazz;
+
+
+    if (inst.length) instanceProps = { type: "ArrayExpression", elements: inst };
+    if (clazz.length) classProps = { type: "ArrayExpression", elements: clazz };
+  }
+
+  var scope = options.scope,
+      superClassReferencedAs,
+      superClassRef;
+
+  if (superClass && options.currentModuleAccessor) {
+    if (options.classHolder === superClass.object) {
+      superClassRef = superClass;
+      superClassReferencedAs = superClass.property.name;
+    } else {
+      var found = scope && scope.resolvedRefMap && scope.resolvedRefMap.get(superClass),
+          isTopLevel = found && found.decl && scope.decls && scope.decls.find(function (_ref) {
+        var _ref2 = slicedToArray(_ref, 1);
+
+        var decl = _ref2[0];
+        return decl === found.decl;
+      });
+      if (isTopLevel) {
+        superClassRef = superClass;
+        superClassReferencedAs = superClass.name;
+      }
+    }
+  }
+
+  var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
+
+  var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? {
+    type: "ConditionalExpression",
+    test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({ argument: member(tempLivelyClassHolderVar, classId), operator: "typeof", prefix: true, type: "UnaryExpression" }, "===", literal("function"))),
+    consequent: member(tempLivelyClassHolderVar, classId),
+    alternate: constructorTemplate(classId.name)
+  } : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
+
+  if (type === "ClassExpression") return classCreator;
+
+  var result = classCreator;
+
+  if (options.declarationWrapper && state.classHolder === options.classHolder /*i.e. toplevel*/) result = funcCall(options.declarationWrapper, literal(classId.name), literal("class"), result, options.classHolder);
+
+  // since it is a declaration and we removed the class construct we need to add a var-decl
+  result = varDecl(classId, result, "var");
+  result[isTransformedClassVarDeclSymbol] = true;
+
+  return result;
+}
+
+function splitExportDefaultWithClass(node, classHolder, path, options) {
+  return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol] ? node : [node.declaration, {
+    declaration: node.declaration.declarations[0].id,
+    type: "ExportDefaultDeclaration"
+  }];
+}
+
+// var opts = {classHolder: {type: "Identifier", name: "_rec"}, functionNode: {type: "Identifier", name: "createOrExtendClass"}};
+// stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(); }}"), opts))
+// stringify(classToFunctionTransform(parse("class Foo extends Bar {m() { super.m(arguments[1]); }}"), opts))
+// stringify(classToFunctionTransform(parse("class Foo {constructor() {}}"), opts))
+
+function classToFunctionTransform(sourceOrAst, options) {
+  // required: options = {functionNode, classHolder}
+  // From
+  //   class Foo extends SuperFoo { m() { return 2 + super.m() }}
+  // produces something like
+  //   createOrExtend({}, {referencedAs: "SuperFoo", value: SuperFoo}, "Foo2", [{
+  //     key: "m",
+  //     value: function m() {
+  //       return 2 + this.constructor[superclassSymbol].prototype.m.call(this);
+  //     }
+  //   }])
+
+  var parsed = typeof sourceOrAst === "string" ? parse(sourceOrAst) : sourceOrAst;
+  options.scope = resolveReferences(scopes(parsed));
+
+  var replaced = ClassReplaceVisitor.run(parsed, options);
+
+  return replaced;
+}
+
+var merge = Object.assign;
+
+function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
+  /* replaces var and function declarations with assignment statements.
+   * Example:
+     stringify(
+       rewriteToCaptureTopLevelVariables2(
+         parse("var x = 3, y = 2, z = 4"),
+         {name: "A", type: "Identifier"}, ['z']));
+     // => "A.x = 3; A.y = 2; z = 4"
+   */
+
+  if (!assignToObj) assignToObj = { type: "Identifier", name: "__rec" };
+
+  options = Object.assign({
+    ignoreUndeclaredExcept: null,
+    includeRefs: null,
+    excludeRefs: options && options.exclude || [],
+    includeDecls: null,
+    excludeDecls: options && options.exclude || [],
+    recordDefRanges: false,
+    es6ExportFuncId: null,
+    es6ImportFuncId: null,
+    captureObj: assignToObj,
+    moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
+    moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
+    declarationWrapper: undefined,
+    classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : Object.assign({
+      classHolder: assignToObj,
+      functionNode: { type: "Identifier", name: "_createOrExtendClass" },
+      declarationWrapper: options && options.declarationWrapper
+    })
+  }, options);
+
+  var rewritten = parsed;
+
+  // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
+  // if it is a list of names we will capture all refs with those names
+  if (options.ignoreUndeclaredExcept) {
+    var topLevel = topLevelDeclsAndRefs(parsed);
+    options.excludeRefs = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
+    options.excludeDecls = lively_lang.arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
+  }
+
+  options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
+  options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
+
+  // 1. def ranges so that we know at which source code positions the
+  // definitions are
+  var defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
+
+  // 2. find those var declarations that should not be rewritten. we
+  // currently ignore var declarations in for loops and the error parameter
+  // declaration in catch clauses. Also es6 import / export declaration need
+  // a special treatment
+  // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
+  // as this is not valid syntax. Instead we add a var declaration using the
+  // recorder as init for those exports later
+  options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
+  options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
+
+  rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
+
+  // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
+  // obj assignment, converting es6 code to es5 using the extra
+  // options.moduleExportFunc and options.moduleImportFunc as capture / sources
+  if (options.es6ExportFuncId) {
+    options.excludeRefs.push(options.es6ExportFuncId);
+    options.excludeRefs.push(options.es6ImportFuncId);
+    rewritten = es6ModuleTransforms(rewritten, options);
+  }
+
+  // 4. make all references declared in the toplevel scope into property
+  // reads of captureObj
+  // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
+  rewritten = replaceRefs(rewritten, options);
+
+  // 5.a turn var declarations into assignments to captureObj
+  // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
+  // if declarationWrapper is requested:
+  //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
+  rewritten = replaceVarDecls(rewritten, options);
+
+  // 5.b record class declarations
+  // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
+  // if declarationWrapper is requested:
+  //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
+  rewritten = replaceClassDecls(rewritten, options);
+
+  // 6. es6 export declaration are left untouched but a capturing assignment
+  // is added after the export so that we get the value:
+  // "export var x = 23;" => "export var x = 23; Global.x = x;"
+  rewritten = insertCapturesForExportDeclarations(rewritten, options);
+
+  // 7. es6 import declaration are left untouched but a capturing assignment
+  // is added after the import so that we get the value:
+  // "import x from './some-es6-module.js';" => "import x from './some-es6-module.js';\n_rec.x = x;"
+  rewritten = insertCapturesForImportDeclarations(rewritten, options);
+
+  // 8. Since variable declarations like "var x = 23" were transformed to sth
+  // like "_rex.x = 23" exports can't simply reference vars anymore and
+  // "export { _rec.x }" is invalid syntax. So in front of those exports we add
+  // var decls manually
+  rewritten = insertDeclarationsForExports(rewritten, options);
+
+  // 9. assignments for function declarations in the top level scope are
+  // put in front of everything else to mirror the func hoisting:
+  // "return bar(); function bar() { return 23 }" ->
+  //   "Global.bar = bar; return bar(); function bar() { return 23 }"
+  // if declarationWrapper is requested:
+  //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
+  rewritten = putFunctionDeclsInFront(rewritten, options);
+
+  return rewritten;
+}
+
+function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
+  // for rewriting the setters part in code like
+  // ```js
+  //   System.register(["a.js"], function (_export, _context) {
+  //     var a, _rec;
+  //     return {
+  //       setters: [function(foo_a_js) { a = foo_a_js.x }],
+  //       execute: function () { _rec.x = 23 + _rec.a; }
+  //     };
+  //   });
+  // ```
+  // This allows us to capture (and potentially re-export) imports and their
+  // changes without actively running the module again.
+
+  options = merge({
+    captureObj: assignToObj || { type: "Identifier", name: "__rec" },
+    exclude: [],
+    declarationWrapper: undefined
+  }, options);
+
+  var registerCall = lively_lang.Path("body.0.expression").get(parsed);
+  if (registerCall.callee.object.name !== "System") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+  if (registerCall.callee.property.name !== "register") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: " + stringify(parsed).slice(0, 300) + "...");
+  var registerBody = lively_lang.Path("arguments.1.body.body").get(registerCall),
+      registerReturn = lively_lang.arr.last(registerBody);
+  if (registerReturn.type !== "ReturnStatement") throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: " + stringify(parsed).slice(0, 300) + "...");
+  var setters = registerReturn.argument.properties.find(function (prop$$1) {
+    return prop$$1.key.name === "setters";
+  });
+  if (!setters) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding setters: " + stringify(parsed).slice(0, 300) + "...");
+  var execute = registerReturn.argument.properties.find(function (prop$$1) {
+    return prop$$1.key.name === "execute";
+  });
+  if (!execute) throw new Error("rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: " + stringify(parsed).slice(0, 300) + "...");
+
+  // in each setter function: intercept the assignments to local vars and inject capture object
+  setters.value.elements.forEach(function (funcExpr$$1) {
+    return funcExpr$$1.body.body = funcExpr$$1.body.body.map(function (stmt) {
+      if (stmt.type !== "ExpressionStatement" || stmt.expression.type !== "AssignmentExpression" || stmt.expression.left.type !== "Identifier" || lively_lang.arr.include(options.exclude, stmt.expression.left.name)) return stmt;
+
+      var id$$1 = stmt.expression.left,
+          rhs = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(id$$1.name), literal("var"), stmt.expression, options.captureObj) : stmt.expression;
+      return exprStmt(assign(member(options.captureObj, id$$1), rhs));
+    });
+  });
+
+  var captureInitialize = execute.value.body.body.find(function (stmt) {
+    return stmt.type === "ExpressionStatement" && stmt.expression.type == "AssignmentExpression" && stmt.expression.left.name === options.captureObj.name;
+  });
+  if (captureInitialize) {
+    lively_lang.arr.pushAt(registerBody, captureInitialize, registerBody.length - 1);
+  }
+
+  return parsed;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// replacing helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// TODO move this stuff over into transform? Or separate replace.js?
+
+var ReplaceVisitor = function (_Visitor) {
+  inherits(ReplaceVisitor, _Visitor);
+
+  function ReplaceVisitor() {
+    classCallCheck(this, ReplaceVisitor);
+    return possibleConstructorReturn(this, (ReplaceVisitor.__proto__ || Object.getPrototypeOf(ReplaceVisitor)).apply(this, arguments));
+  }
+
+  createClass(ReplaceVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      return this.replacer(get(ReplaceVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceVisitor.prototype), "accept", this).call(this, node, state, path), path);
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, replacer) {
+      var v = new this();
+      v.replacer = replacer;
+      return v.accept(parsed, null, []);
+    }
+  }]);
+  return ReplaceVisitor;
+}(Visitor);
+
+function replace$1(parsed, replacer) {
+  return ReplaceVisitor.run(parsed, replacer);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var canBeInlinedSym = Symbol("canBeInlined");
+
+function blockInliner(node) {
+  // FIXME what about () => x kind of functions?
+  if (Array.isArray(node.body)) {
+    for (var i = node.body.length - 1; i >= 0; i--) {
+      var stmt = node.body[i];
+      if (stmt.type === "BlockStatement" && stmt[canBeInlinedSym]) {
+        node.body.splice.apply(node.body, [i, 1].concat(stmt.body));
+      }
+    }
+  }
+  return node;
+}
+
+var ReplaceManyVisitor = function (_Visitor2) {
+  inherits(ReplaceManyVisitor, _Visitor2);
+
+  function ReplaceManyVisitor() {
+    classCallCheck(this, ReplaceManyVisitor);
+    return possibleConstructorReturn(this, (ReplaceManyVisitor.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor)).apply(this, arguments));
+  }
+
+  createClass(ReplaceManyVisitor, [{
+    key: "accept",
+    value: function accept(node, state, path) {
+      return this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path));
+      var replaced = this.replacer(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "accept", this).call(this, node, state, path), path);
+      return !Array.isArray(replaced) ? replaced : replaced.length === 1 ? replaced[0] : Object.assign(block$1(replaced), defineProperty({}, canBeInlinedSym, true));
+    }
+  }, {
+    key: "visitBlockStatement",
+    value: function visitBlockStatement(node, state, path) {
+      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitBlockStatement", this).call(this, node, state, path));
+    }
+  }, {
+    key: "visitProgram",
+    value: function visitProgram(node, state, path) {
+      return blockInliner(get(ReplaceManyVisitor.prototype.__proto__ || Object.getPrototypeOf(ReplaceManyVisitor.prototype), "visitProgram", this).call(this, node, state, path));
+    }
+  }], [{
+    key: "run",
+    value: function run(parsed, replacer) {
+      var v = new this();
+      v.replacer = replacer;
+      return v.accept(parsed, null, []);
+    }
+  }]);
+  return ReplaceManyVisitor;
+}(Visitor);
+
+function replaceWithMany(parsed, replacer) {
+  return ReplaceManyVisitor.run(parsed, replacer);
+}
+
+function replaceRefs(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      refsToReplace = topLevel.refs.filter(function (ref) {
+    return shouldRefBeCaptured(ref, topLevel, options);
+  });
+
+  var replaced = replace$1(parsed, function (node, path) {
+    return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
+  });
+
+  return replace$1(replaced, function (node, path) {
+    return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
+  });
+}
+
+function replaceVarDecls(parsed, options) {
+  // rewrites var declarations so that they can be captured by
+  // `options.captureObj`.
+  // For normal vars we will do a transform like
+  //   "var x = 23;" => "_rec.x = 23";
+  // For patterns (destructuring assignments) we will create assignments for
+  // all properties that are being destructured, creating helper vars as needed
+  //   "var {x: [y]} = foo" => "var _1 = foo; var _1$x = _1.x; __rec.y = _1$x[0];"
+
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  return replaceWithMany(parsed, function (node) {
+    if (topLevel.varDecls.indexOf(node) === -1 || node.declarations.every(function (decl) {
+      return !shouldDeclBeCaptured(decl, options);
+    })) return node;
+
+    return lively_lang.arr.flatmap(node.declarations, function (decl) {
+      if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
+
+      var init = decl.init || {
+        operator: "||",
+        type: "LogicalExpression",
+        left: { computed: false, object: options.captureObj, property: decl.id, type: "MemberExpression" },
+        right: { name: "undefined", type: "Identifier" }
+      };
+
+      var initWrapped = options.declarationWrapper && decl.id.name ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(node.kind), init, options.captureObj) : init;
+
+      // Here we create the object pattern / destructuring replacements
+      if (decl.id.type.includes("Pattern")) {
+        var declRootName = generateUniqueName(topLevel.declaredNames, "destructured_1"),
+            declRoot = { type: "Identifier", name: declRootName },
+            state = { parent: declRoot, declaredNames: topLevel.declaredNames },
+            extractions = transformPattern(decl.id, state).map(function (decl) {
+          return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
+        });
+        topLevel.declaredNames.push(declRootName);
+        return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
+      }
+
+      // This is rewriting normal vars
+      return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
+    });
+  });
+}
+
+function replaceClassDecls(parsed, options) {
+
+  if (options.classToFunction) return classToFunctionTransform(parsed, options.classToFunction);
+
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  if (!topLevel.classDecls.length) return parsed;
+  for (var i = parsed.body.length - 1; i >= 0; i--) {
+    var stmt = parsed.body[i];
+    if (topLevel.classDecls.indexOf(stmt) !== -1) {
+      if (false && options.declarationWrapper) {
+        parsed.body.splice(i, 1, varDecl(stmt.id, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false), "var"));
+      } else {
+        parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
+      }
+    }
+  }
+  return parsed;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// naming
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function generateUniqueName(declaredNames, hint) {
+  var unique = hint,
+      n = 1;
+  while (declaredNames.indexOf(unique) > -1) {
+    if (n > 1000) throw new Error("Endless loop searching for unique variable " + unique);
+    unique = unique.replace(/_[0-9]+$|$/, "_" + ++n);
+  }
+  return unique;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// exclude / include helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function additionalIgnoredDecls(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      ignoreDecls = [];
+  for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
+    var decl = topLevel.scope.varDecls[i],
+        path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+        parent = path.slice(0, -1).get(parsed);
+    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
+      ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
+    }
+  }
+
+  return topLevel.scope.catches.map(function (ea) {
+    return ea.name;
+  }).concat(ignoreDecls.map(function (ea) {
+    return ea.id.name;
+  }));
+}
+
+function additionalIgnoredRefs(parsed, options) {
+  // FIXME rk 2016-05-11: in shouldRefBeCaptured we now also test for import
+  // decls, this should somehow be consolidated with this function and with the
+  // fact that naming based ignores aren't good enough...
+  var topLevel = topLevelDeclsAndRefs(parsed);
+
+  var ignoreDecls = [];
+  for (var i = 0; i < topLevel.scope.varDecls.length; i++) {
+    var decl = topLevel.scope.varDecls[i],
+        path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
+        parent = path.slice(0, -1).get(parsed);
+    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
+      ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
+    }
+  }
+
+  var ignoredImportAndExportNames = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") {
+      ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, toConsumableArray(stmt.specifiers.filter(function (ea) {
+        return ea.type === "ImportSpecifier";
+      }).map(function (ea) {
+        return ea.imported.name;
+      })));
+    } else if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) {
+      ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, toConsumableArray(stmt.specifiers.map(function (specifier) {
+        return specifier.local.name;
+      })));
+    }
+  }
+
+  return [].concat(topLevel.scope.catches.map(function (ea) {
+    return ea.name;
+  })).concat(ignoredImportAndExportNames).concat(helpers.declIds(ignoreDecls.map(function (ea) {
+    return ea.id;
+  })).map(function (ea) {
+    return ea.name;
+  }));
+}
+
+function shouldDeclBeCaptured(decl, options) {
+  return options.excludeDecls.indexOf(decl.id.name) === -1 && (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+}
+
+function shouldRefBeCaptured(ref, toplevel, options) {
+  return toplevel.scope.importDecls.indexOf(ref) === -1 && lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
+    return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
+  }).indexOf(ref) === -1 && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) !== -1);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// capturing specific code
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function insertCapturesForExportDeclarations(parsed, options) {
+  var body = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    body.push(stmt);
+    // ExportNamedDeclaration can have specifieres = refs, those should already
+    // be captured. Only focus on export declarations and only those
+    // declarations that are no refs, i.e.
+    // ignore: "export default x;"
+    // capture: "export default function foo () {};", "export var x = 23, y = 3;"
+    if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
+      /*...*/
+    } else if (stmt.declaration.declarations) {
+      body.push.apply(body, toConsumableArray(stmt.declaration.declarations.map(function (decl) {
+        return assignExpr(options.captureObj, decl.id, decl.id, false);
+      })));
+    } else if (stmt.declaration.type === "FunctionDeclaration") {
+      /*handled by function rewriter as last step*/
+    } else if (stmt.declaration.type === "ClassDeclaration") {
+      body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
+    }
+  }
+  parsed.body = body;
+  return parsed;
+}
+
+function insertCapturesForImportDeclarations(parsed, options) {
+  parsed.body = parsed.body.reduce(function (stmts, stmt) {
+    return stmts.concat(stmt.type !== "ImportDeclaration" || !stmt.specifiers.length ? [stmt] : [stmt].concat(stmt.specifiers.map(function (specifier) {
+      return assignExpr(options.captureObj, specifier.local, specifier.local, false);
+    })));
+  }, []);
+  return parsed;
+}
+
+function insertDeclarationsForExports(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      body = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration && stmt.declaration.type.indexOf("Declaration") === -1) {
+      body = body.concat([varDeclOrAssignment(parsed, {
+        type: "VariableDeclarator",
+        id: stmt.declaration,
+        init: member(options.captureObj, stmt.declaration)
+      }), stmt]);
+    } else if (stmt.type !== "ExportNamedDeclaration" || !stmt.specifiers.length || stmt.source) {
+      body.push(stmt);
+    } else {
+      body = body.concat(stmt.specifiers.map(function (specifier) {
+        return lively_lang.arr.include(topLevel.declaredNames, specifier.local.name) ? null : varDeclOrAssignment(parsed, {
+          type: "VariableDeclarator",
+          id: specifier.local,
+          init: member(options.captureObj, specifier.local)
+        });
+      }).filter(Boolean)).concat(stmt);
+    }
+  }
+
+  parsed.body = body;
+  return parsed;
+}
+
+function fixDefaultAsyncFunctionExportForRegeneratorBug(parsed, options) {
+  // rk 2016-06-02: see https://github.com/LivelyKernel/lively.modules/issues/9
+  // FIXME this needs to be removed as soon as the cause for the issue is fixed
+  var body = [];
+  for (var i = 0; i < parsed.body.length; i++) {
+    var stmt = parsed.body[i];
+    if (stmt.type === "ExportDefaultDeclaration" && stmt.declaration.type === "FunctionDeclaration" && stmt.declaration.id && stmt.declaration.async) {
+      body.push(stmt.declaration);
+      stmt.declaration = { type: "Identifier", name: stmt.declaration.id.name };
+    }
+    body.push(stmt);
+  }
+  parsed.body = body;
+  return parsed;
+}
+
+function es6ModuleTransforms(parsed, options) {
+  parsed.body = parsed.body.reduce(function (stmts, stmt) {
+    var nodes;
+    if (stmt.type === "ExportNamedDeclaration") {
+
+      if (stmt.source) {
+        var key = moduleId = stmt.source;
+        nodes = stmt.specifiers.map(function (specifier) {
+          return {
+            type: "ExpressionStatement",
+            expression: exportFromImport({ type: "Literal", value: specifier.exported.name }, { type: "Literal", value: specifier.local.name }, moduleId, options.moduleExportFunc, options.moduleImportFunc) };
+        });
+      } else if (stmt.declaration) {
+        var decls = stmt.declaration.declarations;
+        if (!decls) {
+          // func decl or class
+          nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id));
+        } else {
+          nodes = decls.map(function (decl) {
+            options.excludeRefs.push(decl.id);
+            options.excludeDecls.push(decl.id);
+            return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
+          }).concat(decls.map(function (decl) {
+            return exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id);
+          }));
+        }
+      } else {
+        nodes = stmt.specifiers.map(function (specifier) {
+          return exportCallStmt(options.moduleExportFunc, specifier.exported.name, shouldDeclBeCaptured({ id: specifier.local }, options) ? member(options.captureObj, specifier.local) : specifier.local);
+        });
+      }
+    } else if (stmt.type === "ExportDefaultDeclaration") {
+      if (stmt.declaration && stmt.declaration.id) {
+        nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, "default", stmt.declaration.id));
+      } else {
+        nodes = [exportCallStmt(options.moduleExportFunc, "default", stmt.declaration)];
+      }
+    } else if (stmt.type === "ExportAllDeclaration") {
+      var key = { name: options.es6ExportFuncId + "__iterator__", type: "Identifier" },
+          moduleId = stmt.source;
+      nodes = [{
+        type: "ForInStatement",
+        body: { type: "ExpressionStatement", expression: exportFromImport(key, key, moduleId, options.moduleExportFunc, options.moduleImportFunc) },
+        left: { type: "VariableDeclaration", kind: "var", declarations: [{ type: "VariableDeclarator", id: key, init: null }] },
+        right: importCall(null, moduleId, options.moduleImportFunc)
+      }];
+      options.excludeRefs.push(key.name);
+      options.excludeDecls.push(key.name);
+    } else if (stmt.type === "ImportDeclaration") {
+      nodes = stmt.specifiers.length ? stmt.specifiers.map(function (specifier) {
+        var local = specifier.local,
+            imported = specifier.type === "ImportSpecifier" && specifier.imported.name || specifier.type === "ImportDefaultSpecifier" && "default" || null;
+        return varDeclAndImportCall(parsed, local, imported || null, stmt.source, options.moduleImportFunc);
+      }) : importCallStmt(null, stmt.source, options.moduleImportFunc);
+    } else nodes = [stmt];
+    return stmts.concat(nodes);
+  }, []);
+
+  return parsed;
+}
+
+function putFunctionDeclsInFront(parsed, options) {
+  var scope = topLevelDeclsAndRefs(parsed).scope,
+      funcDecls = scope.funcDecls;
+  if (!funcDecls.length) return parsed;
+
+  var putInFront = [];
+
+  for (var i = funcDecls.length; i--;) {
+    var decl = funcDecls[i];
+    if (!shouldDeclBeCaptured(decl, options)) continue;
+
+    var parentPath = scope.funcDeclPaths[i].slice(0, -1),
+
+    // ge the parent so we can replace the original function:
+    parent = lively_lang.Path(parentPath).get(scope.node),
+        funcId = { type: "Identifier", name: decl.id.name },
+
+    // what we capture:
+    init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
+        declFront = Object.assign({}, decl);
+
+    if (Array.isArray(parent)) {
+      // If the parent is a body array we remove the original func decl from it
+      // and replace it with a reference to the function
+      parent.splice(parent.indexOf(decl), 1, exprStmt(decl.id));
+    } else if (parent.type === "ExportNamedDeclaration") {
+      // If the function is exported we change the export declaration into a reference
+      var parentIndexInBody = scope.node.body.indexOf(parent);
+      if (parentIndexInBody > -1) {
+        scope.node.body.splice(parentIndexInBody, 1, { type: "ExportNamedDeclaration", specifiers: [{ type: "ExportSpecifier", exported: decl.id, local: decl.id }] });
+      }
+    } else if (parent.type === "ExportDefaultDeclaration") {
+      parent.declaration = decl.id;
+    } else {}
+    // ??? just leave it alone...
+    // decl.type = "EmptyStatement";
+
+
+    // hoist the function to the front, also it's capture
+    putInFront.unshift(assignExpr(options.captureObj, funcId, init, false));
+    putInFront.unshift(declFront);
+  }
+  parsed.body = putInFront.concat(parsed.body);
+  return parsed;
+}
+
+function computeDefRanges(parsed, options) {
+  var topLevel = topLevelDeclsAndRefs(parsed);
+  return lively_lang.chain(topLevel.scope.varDecls).pluck("declarations").flatten().value().concat(topLevel.scope.funcDecls).reduce(function (defs, decl) {
+    if (!defs[decl.id.name]) defs[decl.id.name] = [];
+    defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
+    return defs;
+  }, {});
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// capturing oobject patters / destructuring
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var annotationSym = Symbol("lively.ast-destructuring-transform");
+
+function transformPattern(pattern, transformState) {
+  // For transforming destructuring expressions into plain vars and member access.
+  // Takes a var or argument pattern node (of type ArrayPattern or
+  // ObjectPattern) and transforms it into a set of var declarations that will
+  // "pull out" the nested properties
+  // Example:
+  // var parsed = ast.parse("var [{b: {c: [a]}}] = foo;");
+  // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
+  // transformPattern(parsed.body[0].declarations[0].id, state).map(ast.stringify).join("\n");
+  // // => "var arg$0 = arg[0];\n"
+  // //  + "var arg$0$b = arg$0.b;\n"
+  // //  + "var arg$0$b$c = arg$0$b.c;\n"
+  // //  + "var a = arg$0$b$c[0];"
+  if (pattern.type === "ArrayPattern") {
+    return transformArrayPattern(pattern, transformState);
+  } else if (pattern.type === "ObjectPattern") {
+    return transformObjectPattern(pattern, transformState);
+  } else {
+    return [];
+  }
+}
+
+function transformArrayPattern(pattern, transformState) {
+  var declaredNames = transformState.declaredNames,
+      p = annotationSym;
+  return lively_lang.arr.flatmap(pattern.elements, function (el, i) {
+
+    // like [a]
+    if (el.type === "Identifier") {
+      return [merge(varDecl(el, member(transformState.parent, id(i), true)), defineProperty({}, p, { capture: true }))];
+
+      // like [...foo]
+    } else if (el.type === "RestElement") {
+      return [merge(varDecl(el.argument, {
+        type: "CallExpression",
+        arguments: [{ type: "Literal", value: i }],
+        callee: member(transformState.parent, id("slice"), false) }), defineProperty({}, p, { capture: true }))];
+
+      // like [{x}]
+    } else {
+      var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
+          helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), defineProperty({}, p, { capture: true }));
+      declaredNames.push(helperVarId.name);
+      return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+    }
+  });
+}
+
+function transformObjectPattern(pattern, transformState) {
+  var declaredNames = transformState.declaredNames,
+      p = annotationSym;
+  return lively_lang.arr.flatmap(pattern.properties, function (prop$$1) {
+
+    // like {x: y}
+    if (prop$$1.value.type == "Identifier") {
+      return [merge(varDecl(prop$$1.value, member(transformState.parent, prop$$1.key)), defineProperty({}, p, { capture: true }))];
+
+      // like {x: {z}} or {x: [a]}
+    } else {
+      var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop$$1.key.name)),
+          helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop$$1.key)), defineProperty({}, p, { capture: false }));
+      declaredNames.push(helperVarId.name);
+      return [helperVar].concat(transformPattern(prop$$1.value, { parent: helperVarId, declaredNames: declaredNames }));
+    }
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// code generation helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function block$1(nodes) {
+  return { type: "BlockStatement", body: nodes };
+}
+
+function varDeclOrAssignment(parsed, declarator, kind) {
+  var topLevel = topLevelDeclsAndRefs(parsed),
+      name = declarator.id.name;
+  return topLevel.declaredNames.indexOf(name) > -1 ?
+  // only create a new declaration if necessary
+  exprStmt(assign(declarator.id, declarator.init)) : {
+    declarations: [declarator],
+    kind: kind || "var", type: "VariableDeclaration"
+  };
+}
+
+function assignExpr(assignee, propId, value, computed) {
+  return exprStmt(assign(member(assignee, propId, computed), value || id("undefined")));
+}
+
+function exportFromImport(keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
+  return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
+}
+
+function varDeclAndImportCall(parsed, localId, imported, moduleSource, moduleImportFunc) {
+  // return varDeclOrAssignment(parsed, {
+  //   type: "VariableDeclarator",
+  //   id: localId,
+  //   init: importCall(imported, moduleSource, moduleImportFunc)
+  // });
+  return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
+}
+
+function importCall(imported, moduleSource, moduleImportFunc) {
+  if (typeof imported === "string") imported = literal(imported);
+  return {
+    arguments: [moduleSource].concat(imported || []),
+    callee: moduleImportFunc, type: "CallExpression"
+  };
+}
+
+function importCallStmt(imported, moduleSource, moduleImportFunc) {
+  return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
+}
+
+function exportCall(exportFunc, local, exportedObj) {
+  if (typeof local === "string") local = literal(local);
+  exportedObj = lively_lang.obj.deepCopy(exportedObj);
+  return funcCall(exportFunc, local, exportedObj);
+}
+
+function exportCallStmt(exportFunc, local, exportedObj) {
+  return exprStmt(exportCall(exportFunc, local, exportedObj));
+}
+
+
 
 var capturing = Object.freeze({
-    rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
-    rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
+	rewriteToCaptureTopLevelVariables: rewriteToCaptureTopLevelVariables,
+	rewriteToRegisterModuleToCaptureSetters: rewriteToRegisterModuleToCaptureSetters
+});
+
+/*global process, global, exports*/
+
+function getCommentPrecedingNode(parsed, node) {
+  var statementPath = statementOf(parsed, node, { asPath: true }),
+      blockPath = statementPath.slice(0, -2),
+      block = lively_lang.Path(blockPath).get(parsed);
+
+  return !block.comments || !block.comments.length ? null : lively_lang.chain(extractComments(parsed)).reversed().detect(function (ea) {
+    return ea.followingNode === node;
+  }).value();
+}
+
+function extractComments(astOrCode, optCode) {
+  var parsed = typeof astOrCode === "string" ? parse(astOrCode, { withComments: true }) : astOrCode,
+      code = optCode ? optCode : typeof astOrCode === "string" ? astOrCode : stringify(astOrCode),
+      parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), function (c) {
+    return c.comment.start;
   });
 
-  function getCommentPrecedingNode(parsed, node) {
-    var statementPath = statementOf(parsed, node, { asPath: true }),
-        blockPath = statementPath.slice(0, -2),
-        block = lively_lang.Path(blockPath).get(parsed);
+  return parsedComments.map(function (c, i) {
 
-    return !block.comments || !block.comments.length ? null : lively_lang.chain(extractComments(parsed)).reversed().detect(function (ea) {
-      return ea.followingNode === node;
-    }).value();
+    // 1. a method comment like "x: function() {\n//foo\n ...}"?
+    if (isInObjectMethod(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOf(c)]);
+    }
+
+    if (isInComputedMethod(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, computedMethodAttributesOf(c)]);
+    }
+
+    // 2. function statement comment like "function foo() {\n//foo\n ...}"?
+    if (isInFunctionStatement(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'function', comment: c.comment.text }, functionAttributesOf(c)]);
+    }
+
+    // 3. assigned method like "foo.bar = function(x) {/*comment*/};"
+    if (isInAssignedMethod(c)) {
+      return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOfAssignment(c)]);
+    }
+
+    // 4. comment preceding another node?
+    var followingNode = followingNodeOf(c);
+    if (!followingNode) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+
+    // is there another comment in front of the node>
+    var followingComment = parsedComments[i + 1];
+    if (followingComment && followingComment.comment.start <= followingNode.start) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+
+    // 3. an obj var comment like "// foo\nvar obj = {...}"?
+    if (isSingleObjVarDeclaration(followingNode)) {
+      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'object', comment: c.comment.text }, objAttributesOf(followingNode)]);
+    }
+
+    // 4. Is it a simple var declaration like "// foo\nvar obj = 23"?
+    if (isSingleVarDeclaration(followingNode)) {
+      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'var', comment: c.comment.text }, objAttributesOf(followingNode)]);
+    }
+
+    return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+  });
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function commentsWithPathsAndNodes(parsed) {
+    var comments = [],
+        v = new Visitor();
+    v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
+      if (node.comments) {
+        lively_lang.arr.pushAll(comments, node.comments.map(function (comment) {
+          return { path: path, comment: comment, node: node };
+        }));
+      }
+      return proceed(node, state, path);
+    });
+    v.accept(parsed, comments, []);
+    return comments;
   }
 
-  function extractComments(astOrCode, optCode) {
-    var parsed = typeof astOrCode === "string" ? parse(astOrCode, { withComments: true }) : astOrCode,
-        code = optCode ? optCode : typeof astOrCode === "string" ? astOrCode : stringify(astOrCode),
-        parsedComments = lively_lang.arr.sortBy(commentsWithPathsAndNodes(parsed), function (c) {
-      return c.comment.start;
+  function followingNodeOf(comment) {
+    return lively_lang.arr.detect(comment.node.body, function (node) {
+      return node.start > comment.comment.end;
     });
+  }
 
-    return parsedComments.map(function (c, i) {
+  function unknownComment(comment) {
+    return { type: "unknown", comment: comment.comment.text };
+  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-      // 1. a method comment like "x: function() {\n//foo\n ...}"?
-      if (isInObjectMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOf(c)]);
-      }
+  function isInFunctionStatement(comment) {
+    var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
+    return node && node.type === "FunctionDeclaration";
+  }
 
-      if (isInComputedMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, computedMethodAttributesOf(c)]);
-      }
+  function functionAttributesOf(comment) {
+    var funcNode = lively_lang.Path(comment.path.slice(0, -1)).get(parsed),
+        name = funcNode.id ? funcNode.id.name : "<error: no name for function>";
+    return { name: name, args: lively_lang.arr.pluck(funcNode.params, "name") };
+  }
 
-      // 2. function statement comment like "function foo() {\n//foo\n ...}"?
-      if (isInFunctionStatement(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'function', comment: c.comment.text }, functionAttributesOf(c)]);
-      }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-      // 3. assigned method like "foo.bar = function(x) {/*comment*/};"
-      if (isInAssignedMethod(c)) {
-        return lively_lang.obj.merge([c, c.comment, { type: 'method', comment: c.comment.text }, methodAttributesOfAssignment(c)]);
-      }
+  function isInObjectMethod(comment) {
+    return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
+  }
 
-      // 4. comment preceding another node?
-      var followingNode = followingNodeOf(c);
-      if (!followingNode) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+  function isInAssignedMethod(comment) {
+    return lively_lang.arr.equals(comment.path.slice(-2), ["right", "body"]); // asignment
+  }
 
-      // is there another comment in front of the node>
-      var followingComment = parsedComments[i + 1];
-      if (followingComment && followingComment.comment.start <= followingNode.start) return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
+  function methodAttributesOf(comment) {
+    var methodNode = lively_lang.Path(comment.path.slice(0, -2)).get(parsed),
+        name = methodNode.key ? methodNode.key.name : "<error: no name for method>";
 
-      // 3. an obj var comment like "// foo\nvar obj = {...}"?
-      if (isSingleObjVarDeclaration(followingNode)) {
-        return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'object', comment: c.comment.text }, objAttributesOf(followingNode)]);
-      }
+    // if it's someting like "var obj = {foo: function() {...}};"
+    var p = comment.path.slice(),
+        objectName = "<error: no object found for method>";
 
-      // 4. Is it a simple var declaration like "// foo\nvar obj = 23"?
-      if (isSingleVarDeclaration(followingNode)) {
-        return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, { type: 'var', comment: c.comment.text }, objAttributesOf(followingNode)]);
-      }
-
-      return lively_lang.obj.merge([c, c.comment, { followingNode: followingNode }, unknownComment(c)]);
-    });
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function commentsWithPathsAndNodes(parsed) {
-      var comments = [],
-          v = new Visitor();
-      v.accept = lively_lang.fun.wrap(v.accept, function (proceed, node, state, path) {
-        if (node.comments) {
-          lively_lang.arr.pushAll(comments, node.comments.map(function (comment) {
-            return { path: path, comment: comment, node: node };
-          }));
-        }
-        return proceed(node, state, path);
-      });
-      v.accept(parsed, comments, []);
-      return comments;
+    while (p.length && lively_lang.arr.last(p) !== 'init') {
+      p.pop();
+    }if (p.length) {
+      objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
     }
 
-    function followingNodeOf(comment) {
-      return lively_lang.arr.detect(comment.node.body, function (node) {
-        return node.start > comment.comment.end;
-      });
-    }
-
-    function unknownComment(comment) {
-      return { type: "unknown", comment: comment.comment.text };
-    }
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function isInFunctionStatement(comment) {
-      var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
-      return node && node.type === "FunctionDeclaration";
-    }
-
-    function functionAttributesOf(comment) {
-      var funcNode = lively_lang.Path(comment.path.slice(0, -1)).get(parsed),
-          name = funcNode.id ? funcNode.id.name : "<error: no name for function>";
-      return { name: name, args: lively_lang.arr.pluck(funcNode.params, "name") };
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    function isInObjectMethod(comment) {
-      return lively_lang.arr.equals(comment.path.slice(-2), ["value", "body"]); // obj expr
-    }
-
-    function isInAssignedMethod(comment) {
-      return lively_lang.arr.equals(comment.path.slice(-2), ["right", "body"]); // asignment
-    }
-
-    function methodAttributesOf(comment) {
-      var methodNode = lively_lang.Path(comment.path.slice(0, -2)).get(parsed),
-          name = methodNode.key ? methodNode.key.name : "<error: no name for method>";
-
-      // if it's someting like "var obj = {foo: function() {...}};"
-      var p = comment.path.slice(),
-          objectName = "<error: no object found for method>";
-
-      while (p.length && lively_lang.arr.last(p) !== 'init') {
+    // if it's someting like "exports.obj = {foo: function() {...}};"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
+      p = comment.path.slice();
+      while (p.length && lively_lang.arr.last(p) !== 'right') {
         p.pop();
       }if (p.length) {
-        objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
+        var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
+        objectName = code.slice(assignNode.start, assignNode.end);
       }
-
-      // if it's someting like "exports.obj = {foo: function() {...}};"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        p = comment.path.slice();
-        while (p.length && lively_lang.arr.last(p) !== 'right') {
-          p.pop();
-        }if (p.length) {
-          var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
-          objectName = code.slice(assignNode.start, assignNode.end);
-        }
-      }
-
-      // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        p = comment.path.slice();
-        var callExpr = lively_lang.Path(p.slice(0, -6)).get(parsed),
-            isCall = callExpr && callExpr.type === "CallExpression",
-            firstArg = isCall && callExpr.arguments[0];
-        if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
-      }
-
-      return {
-        name: name,
-        args: lively_lang.arr.pluck(methodNode.value.params, "name"),
-        objectName: objectName
-      };
     }
 
-    function methodAttributesOfAssignment(comment) {
-
-      var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
-      if (node.type !== "FunctionExpression" && node.type !== "FunctionDeclaration") return {};
-
-      var statement = statementOf(parsed, node);
-      if (statement.type !== "ExpressionStatement" || statement.expression.type !== "AssignmentExpression") return {};
-
-      var objName = code.slice(statement.expression.left.object.start, statement.expression.left.object.end);
-
-      var methodName = code.slice(statement.expression.left.property.start, statement.expression.left.property.end);
-
-      return {
-        name: methodName,
-        objectName: objName,
-        args: lively_lang.arr.pluck(node.params, "name")
-      };
+    // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
+      p = comment.path.slice();
+      var callExpr = lively_lang.Path(p.slice(0, -6)).get(parsed),
+          isCall = callExpr && callExpr.type === "CallExpression",
+          firstArg = isCall && callExpr.arguments[0];
+      if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
     }
 
-    function isInComputedMethod(comment) {
-      var path = comment.path.slice(-5);
-      lively_lang.arr.removeAt(path, 1);
-      return lively_lang.arr.equals(path, ["properties", "value", "callee", "body"]);
+    return {
+      name: name,
+      args: lively_lang.arr.pluck(methodNode.value.params, "name"),
+      objectName: objectName
+    };
+  }
+
+  function methodAttributesOfAssignment(comment) {
+
+    var node = lively_lang.Path(comment.path.slice(0, -1)).get(parsed);
+    if (node.type !== "FunctionExpression" && node.type !== "FunctionDeclaration") return {};
+
+    var statement = statementOf(parsed, node);
+    if (statement.type !== "ExpressionStatement" || statement.expression.type !== "AssignmentExpression") return {};
+
+    var objName = code.slice(statement.expression.left.object.start, statement.expression.left.object.end);
+
+    var methodName = code.slice(statement.expression.left.property.start, statement.expression.left.property.end);
+
+    return {
+      name: methodName,
+      objectName: objName,
+      args: lively_lang.arr.pluck(node.params, "name")
+    };
+  }
+
+  function isInComputedMethod(comment) {
+    var path = comment.path.slice(-5);
+    lively_lang.arr.removeAt(path, 1);
+    return lively_lang.arr.equals(path, ["properties", "value", "callee", "body"]);
+  }
+
+  function computedMethodAttributesOf(comment) {
+    var name, args, pathToProp;
+
+    pathToProp = comment.path.slice(0, -3);
+    var propertyNode = lively_lang.Path(pathToProp).get(parsed);
+    if (propertyNode && propertyNode.type === "Property") {
+      // if it is a function immediatelly called
+      args = lively_lang.arr.pluck(propertyNode.value.callee.params, "name");
+      name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
     }
 
-    function computedMethodAttributesOf(comment) {
-      var name, args, pathToProp;
-
-      pathToProp = comment.path.slice(0, -3);
-      var propertyNode = lively_lang.Path(pathToProp).get(parsed);
+    if (!name) {
+      // if it is an object member function
+      pathToProp = comment.path.slice(0, -2);
+      propertyNode = lively_lang.Path(pathToProp).get(parsed);
       if (propertyNode && propertyNode.type === "Property") {
-        // if it is a function immediatelly called
-        args = lively_lang.arr.pluck(propertyNode.value.callee.params, "name");
+        args = lively_lang.arr.pluck(propertyNode.value.params, "name");
         name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
       }
+    }
 
-      if (!name) {
-        // if it is an object member function
-        pathToProp = comment.path.slice(0, -2);
-        propertyNode = lively_lang.Path(pathToProp).get(parsed);
-        if (propertyNode && propertyNode.type === "Property") {
-          args = lively_lang.arr.pluck(propertyNode.value.params, "name");
-          name = propertyNode.key ? propertyNode.key.name : "<error: no name for method>";
-        }
-      }
+    if (!name) {
+      name = "<error: no name for method>";
+      args = [];
+      pathToProp = comment.path;
+    }
 
-      if (!name) {
-        name = "<error: no name for method>";
-        args = [];
-        pathToProp = comment.path;
-      }
+    // if it's someting like "var obj = {foo: function() {...}};"
+    var p = lively_lang.arr.clone(pathToProp);
+    var objectName = "<error: no object found for method>";
 
-      // if it's someting like "var obj = {foo: function() {...}};"
+    while (p.length && lively_lang.arr.last(p) !== 'init') {
+      p.pop();
+    }if (p.length) {
+      objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
+    }
+
+    // if it's someting like "exports.obj = {foo: function() {...}};"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
       var p = lively_lang.arr.clone(pathToProp);
-      var objectName = "<error: no object found for method>";
-
-      while (p.length && lively_lang.arr.last(p) !== 'init') {
+      while (p.length && lively_lang.arr.last(p) !== 'right') {
         p.pop();
       }if (p.length) {
-        objectName = lively_lang.Path(p.slice(0, -1).concat(["id", "name"])).get(parsed);
+        var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
+        objectName = code.slice(assignNode.start, assignNode.end);
       }
-
-      // if it's someting like "exports.obj = {foo: function() {...}};"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        var p = lively_lang.arr.clone(pathToProp);
-        while (p.length && lively_lang.arr.last(p) !== 'right') {
-          p.pop();
-        }if (p.length) {
-          var assignNode = lively_lang.Path(p.slice(0, -1).concat(["left"])).get(parsed);
-          objectName = code.slice(assignNode.start, assignNode.end);
-        }
-      }
-
-      // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
-      if (lively_lang.string.startsWith(objectName, "<error")) {
-        var p = lively_lang.arr.clone(pathToProp);
-        var callExpr = lively_lang.Path(p.slice(0, -4)).get(parsed),
-            isCall = callExpr && callExpr.type === "CallExpression",
-            firstArg = isCall && callExpr.arguments[0];
-        if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
-      }
-
-      return { name: name, args: args, objectName: objectName };
     }
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    // like "var foo = {/*...*/}" or  "var foo = bar = {/*...*/};"
-    function isSingleObjVarDeclaration(node) {
-      // should be a var declaration with one declarator with a value
-      // being an JS object
-      return isSingleVarDeclaration(node) && (node.declarations[0].init.type === "ObjectExpression" || isObjectAssignment(node.declarations[0].init));
+    // if it's someting like "Object.extend(Foo.prototype, {m: function() {/*some comment*/ return 23; }})"
+    if (lively_lang.string.startsWith(objectName, "<error")) {
+      var p = lively_lang.arr.clone(pathToProp);
+      var callExpr = lively_lang.Path(p.slice(0, -4)).get(parsed),
+          isCall = callExpr && callExpr.type === "CallExpression",
+          firstArg = isCall && callExpr.arguments[0];
+      if (firstArg) objectName = code.slice(firstArg.start, firstArg.end);
     }
 
-    function isSingleVarDeclaration(node) {
-      return node && node.type === 'VariableDeclaration' && node.declarations.length === 1;
-    }
-
-    function objAttributesOf(node) {
-      return { name: node.declarations[0].id.name };
-    };
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    // like "foo = {/*...*/}"
-    function isObjectAssignment(node) {
-      if (node.type !== "AssignmentExpression") return false;
-      if (node.right.type === "ObjectExpression") return true;
-      if (node.right.type === "AssignmentExpression") return isObjectAssignment(node.right);;
-      return false;
-    }
+    return { name: name, args: args, objectName: objectName };
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  // like "var foo = {/*...*/}" or  "var foo = bar = {/*...*/};"
+  function isSingleObjVarDeclaration(node) {
+    // should be a var declaration with one declarator with a value
+    // being an JS object
+    return isSingleVarDeclaration(node) && (node.declarations[0].init.type === "ObjectExpression" || isObjectAssignment(node.declarations[0].init));
+  }
+
+  function isSingleVarDeclaration(node) {
+    return node && node.type === 'VariableDeclaration' && node.declarations.length === 1;
+  }
+
+  function objAttributesOf(node) {
+    return { name: node.declarations[0].id.name };
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  // like "foo = {/*...*/}"
+  function isObjectAssignment(node) {
+    if (node.type !== "AssignmentExpression") return false;
+    if (node.right.type === "ObjectExpression") return true;
+    if (node.right.type === "AssignmentExpression") return isObjectAssignment(node.right);
+    return false;
+  }
+}
 
 
-  var comments = Object.freeze({
-    getCommentPrecedingNode: getCommentPrecedingNode,
-    extractComments: extractComments
+
+var comments = Object.freeze({
+	getCommentPrecedingNode: getCommentPrecedingNode,
+	extractComments: extractComments
+});
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// main method
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function findDecls(parsed, options) {
+  // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
+
+  options = options || lively_lang.obj.merge({ hideOneLiners: false }, options);
+
+  if (typeof parsed === "string") parsed = parse(parsed, { addSource: true });
+
+  var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
+      defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
+    return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
   });
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // main method
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  function findDecls(parsed, options) {
-    // lively.debugNextMethodCall(lively.ast.codeCategorizer, "findDecls")
-
-    options = options || lively_lang.obj.merge({ hideOneLiners: false }, options);
-
-    if (typeof parsed === "string") parsed = parse(parsed, { addSource: true });
-
-    var topLevelNodes = parsed.type === "Program" ? parsed.body : parsed.body.body,
-        defs = lively_lang.arr.flatmap(topLevelNodes, function (n) {
-      return moduleDef(n, options) || functionWrapper(n, options) || varDefs(n) || funcDef(n) || classDef(n) || es6ClassDef(n) || extendDef(n) || someObjectExpressionCall(n);
-    });
-
-    if (options.hideOneLiners && parsed.source) {
-      defs = defs.reduce(function (defs, def) {
-        if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def);else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def);
-        return defs;
-      }, []);
-    }
-
-    if (options.hideOneLiners && parsed.loc) defs = defs.filter(function (def) {
-      return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
-      parsed;
-    });
-
-    return defs;
+  if (options.hideOneLiners && parsed.source) {
+    defs = defs.reduce(function (defs, def) {
+      if (def.parent && defs.indexOf(def.parent) > -1) defs.push(def);else if ((def.node.source || "").indexOf("\n") > -1) defs.push(def);
+      return defs;
+    }, []);
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // helpers
+  if (options.hideOneLiners && parsed.loc) defs = defs.filter(function (def) {
+    return !def.node.loc || def.node.loc.start.line !== def.node.loc.end.line;
+    parsed;
+  });
 
-  function objectKeyValsAsDefs(objectExpression) {
-    return objectExpression.properties.map(function (prop) {
+  return defs;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// helpers
+
+function objectKeyValsAsDefs(objectExpression) {
+  return objectExpression.properties.map(function (prop) {
+    return {
+      name: prop.key.name || prop.key.value,
+      type: prop.value.type === "FunctionExpression" ? "method" : "property",
+      node: prop
+    };
+  });
+}
+
+function classDef(node) {
+  if (lively_lang.Path("expression.callee.property.name").get(node) !== "subclass") return null;
+  var def = {
+    type: "lively-class-definition",
+    name: lively_lang.Path("expression.arguments.0.value").get(node),
+    node: node
+  };
+  var props = lively_lang.arr.flatmap(node.expression.arguments, function (argNode) {
+    if (argNode.type !== "ObjectExpression") return [];
+    return objectKeyValsAsDefs(argNode).map(function (ea) {
+      ea.type = "lively-class-instance-" + ea.type;
+      ea.parent = def;
+      return ea;
+    });
+  });
+  return [def].concat(props);
+}
+
+function es6ClassDef(node) {
+  if (node.type !== "ClassDeclaration") return null;
+  var def = {
+    type: "class",
+    name: node.id.name,
+    node: node
+  };
+  // FIXME need to differentiate between class / instance methods, getters, setters!
+  var props = node.body.body.map(function (propNode) {
+    if (propNode.type === "MethodDefinition") {
       return {
-        name: prop.key.name || prop.key.value,
-        type: prop.value.type === "FunctionExpression" ? "method" : "property",
-        node: prop
+        type: "class-method",
+        parent: def,
+        name: propNode.key.name,
+        node: propNode
       };
-    });
-  }
-
-  function classDef(node) {
-    if (lively_lang.Path("expression.callee.property.name").get(node) !== "subclass") return null;
-    var def = {
-      type: "lively-class-definition",
-      name: lively_lang.Path("expression.arguments.0.value").get(node),
-      node: node
-    };
-    var props = lively_lang.arr.flatmap(node.expression.arguments, function (argNode) {
-      if (argNode.type !== "ObjectExpression") return [];
-      return objectKeyValsAsDefs(argNode).map(function (ea) {
-        ea.type = "lively-class-instance-" + ea.type;
-        ea.parent = def;
-        return ea;
-      });
-    });
-    return [def].concat(props);
-  }
-
-  function es6ClassDef(node) {
-    if (node.type !== "ClassDeclaration") return null;
-    var def = {
-      type: "class",
-      name: node.id.name,
-      node: node
-    };
-    // FIXME need to differentiate between class / instance methods, getters, setters!
-    var props = node.body.body.map(function (propNode) {
-      if (propNode.type === "MethodDefinition") {
-        return {
-          type: "class-method",
-          parent: def,
-          name: propNode.key.name,
-          node: propNode
-        };
-      }
-      return null;
-    }).filter(function (ea) {
-      return !!ea;
-    });
-    return [def].concat(props);
-  }
-
-  function extendDef(node) {
-    if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend" || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
-    var name = lively_lang.Path("expression.arguments.0.name").get(node);
-    if (!name) return null;
-    var def = {
-      name: name, node: node,
-      type: "lively-extend-definition"
-    };
-    var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || []).map(function (d) {
-      d.parent = def;return d;
-    });
-    return [def].concat(props);
-  }
-
-  function varDefs(node) {
-    if (node.type !== "VariableDeclaration") return null;
-    return lively_lang.arr.flatmap(withVarDeclIds(node), function (ea) {
-      return lively_lang.arr.flatmap(ea.ids, function (id) {
-        var def = { name: id.name, node: ea.node, type: "var-decl" };
-        if (!def.node.init) return [def];
-        var node = def.node.init;
-        while (node.type === "AssignmentExpression") {
-          node = node.right;
-        }if (node.type === "ObjectExpression") {
-          return [def].concat(objectKeyValsAsDefs(node).map(function (ea) {
-            ea.type = "object-" + ea.type;ea.parent = def;return ea;
-          }));
-        }
-        var objDefs = someObjectExpressionCall(node);
-        if (objDefs) return [def].concat(objDefs.map(function (d) {
-          d.parent = def;return d;
-        }));
-        return [def];
-      });
-    });
-  }
-
-  function funcDef(node) {
-    if (node.type !== "FunctionStatement" && node.type !== "FunctionDeclaration") return null;
-    return [{
-      name: node.id.name,
-      node: node,
-      type: "function-decl"
-    }];
-  }
-
-  function someObjectExpressionCall(node) {
-    if (node.type === "ExpressionStatement") node = node.expression;
-    if (node.type !== "CallExpression") return null;
-    var objArg = node.arguments.detect(function (a) {
-      return a.type === "ObjectExpression";
-    });
-    if (!objArg) return null;
-    return objectKeyValsAsDefs(objArg);
-  }
-
-  function moduleDef(node, options) {
-    if (!isModuleDeclaration(node)) return null;
-    var decls = findDecls(lively_lang.Path("expression.arguments.0").get(node), options),
-        parent = { node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node) };
-    decls.forEach(function (decl) {
-      return decl.parent = parent;
-    });
-    return decls;
-  }
-
-  function functionWrapper(node, options) {
-    if (!isFunctionWrapper(node)) return null;
-    var decls;
-    // Is it a function wrapper passed as arg?
-    // like ;(function(run) {... })(function(exports) {...})     
-    var argFunc = lively_lang.Path("expression.arguments.0").get(node);
-    if (argFunc && argFunc.type === "FunctionExpression" && lively_lang.string.lines(argFunc.source || "").length > 5) {
-      // lively.debugNextMethodCall(lively.ast.CodeCategorizer, "findDecls");
-      decls = findDecls(argFunc, options);
-    } else {
-      decls = findDecls(lively_lang.Path("expression.callee").get(node), options);
     }
-    var parent = { node: node, name: lively_lang.Path("expression.callee.id.name").get(node) };
-    decls.forEach(function (decl) {
-      return decl.parent || (decl.parent = parent);
-    });
-    return decls;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function isModuleDeclaration(node) {
-    return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module" && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
-  }
-
-  function isFunctionWrapper(node) {
-    return lively_lang.Path("expression.type").get(node) === "CallExpression" && lively_lang.Path("expression.callee.type").get(node) === "FunctionExpression";
-  }
-
-  function declIds(idNodes) {
-    return lively_lang.arr.flatmap(idNodes, function (ea) {
-      if (!ea) return [];
-      if (ea.type === "Identifier") return [ea];
-      if (ea.type === "RestElement") return [ea.argument];
-      if (ea.type === "ObjectPattern") return declIds(lively_lang.arr.pluck(ea.properties, "value"));
-      if (ea.type === "ArrayPattern") return declIds(ea.elements);
-      return [];
-    });
-  }
-
-  function withVarDeclIds(varNode) {
-    return varNode.declarations.map(function (declNode) {
-      if (!declNode.source && declNode.init) declNode.source = declNode.id.name + " = " + declNode.init.source;
-      return { node: declNode, ids: declIds([declNode.id]) };
-    });
-  }
-
-var categorizer = Object.freeze({
-    findDecls: findDecls
+    return null;
+  }).filter(function (ea) {
+    return !!ea;
   });
+  return [def].concat(props);
+}
 
-  exports.withMozillaAstDo = withMozillaAstDo;
-  exports.printAst = printAst;
-  exports.compareAst = compareAst;
-  exports.pathToNode = pathToNode;
-  exports.rematchAstWithSource = rematchAstWithSource;
-  exports.parse = parse;
-  exports.parseFunction = parseFunction;
-  exports.fuzzyParse = fuzzyParse;
-  exports.escodegen = es;
-  exports.acorn = acorn;
-  exports.query = query;
-  exports.transform = transform;
-  exports.capturing = capturing;
-  exports.comments = comments;
-  exports.categorizer = categorizer;
-  exports.stringify = stringify;
-  exports.nodes = nodes;
+function extendDef(node) {
+  if (lively_lang.Path("expression.callee.property.name").get(node) !== "extend" || lively_lang.Path("expression.arguments.0.type").get(node) !== "ObjectExpression") return null;
+  var name = lively_lang.Path("expression.arguments.0.name").get(node);
+  if (!name) return null;
+  var def = {
+    name: name, node: node,
+    type: "lively-extend-definition"
+  };
+  var props = (objectKeyValsAsDefs(lively_lang.Path("expression.arguments.1").get(node)) || []).map(function (d) {
+    d.parent = def;return d;
+  });
+  return [def].concat(props);
+}
+
+function varDefs(node) {
+  if (node.type !== "VariableDeclaration") return null;
+  return lively_lang.arr.flatmap(withVarDeclIds(node), function (ea) {
+    return lively_lang.arr.flatmap(ea.ids, function (id) {
+      var def = { name: id.name, node: ea.node, type: "var-decl" };
+      if (!def.node.init) return [def];
+      var node = def.node.init;
+      while (node.type === "AssignmentExpression") {
+        node = node.right;
+      }if (node.type === "ObjectExpression") {
+        return [def].concat(objectKeyValsAsDefs(node).map(function (ea) {
+          ea.type = "object-" + ea.type;ea.parent = def;return ea;
+        }));
+      }
+      var objDefs = someObjectExpressionCall(node);
+      if (objDefs) return [def].concat(objDefs.map(function (d) {
+        d.parent = def;return d;
+      }));
+      return [def];
+    });
+  });
+}
+
+function funcDef(node) {
+  if (node.type !== "FunctionStatement" && node.type !== "FunctionDeclaration") return null;
+  return [{
+    name: node.id.name,
+    node: node,
+    type: "function-decl"
+  }];
+}
+
+function someObjectExpressionCall(node) {
+  if (node.type === "ExpressionStatement") node = node.expression;
+  if (node.type !== "CallExpression") return null;
+  var objArg = node.arguments.detect(function (a) {
+    return a.type === "ObjectExpression";
+  });
+  if (!objArg) return null;
+  return objectKeyValsAsDefs(objArg);
+}
+
+function moduleDef(node, options) {
+  if (!isModuleDeclaration(node)) return null;
+  var decls = findDecls(lively_lang.Path("expression.arguments.0").get(node), options),
+      parent = { node: node, name: lively_lang.Path("expression.callee.object.callee.object.arguments.0.value").get(node) };
+  decls.forEach(function (decl) {
+    return decl.parent = parent;
+  });
+  return decls;
+}
+
+function functionWrapper(node, options) {
+  if (!isFunctionWrapper(node)) return null;
+  var decls;
+  // Is it a function wrapper passed as arg?
+  // like ;(function(run) {... })(function(exports) {...})      
+  var argFunc = lively_lang.Path("expression.arguments.0").get(node);
+  if (argFunc && argFunc.type === "FunctionExpression" && lively_lang.string.lines(argFunc.source || "").length > 5) {
+    // lively.debugNextMethodCall(lively.ast.CodeCategorizer, "findDecls");
+    decls = findDecls(argFunc, options);
+  } else {
+    decls = findDecls(lively_lang.Path("expression.callee").get(node), options);
+  }
+  var parent = { node: node, name: lively_lang.Path("expression.callee.id.name").get(node) };
+  decls.forEach(function (decl) {
+    return decl.parent || (decl.parent = parent);
+  });
+  return decls;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function isModuleDeclaration(node) {
+  return lively_lang.Path("expression.callee.object.callee.object.callee.name").get(node) === "module" && lively_lang.Path("expression.callee.property.name").get(node) === "toRun";
+}
+
+function isFunctionWrapper(node) {
+  return lively_lang.Path("expression.type").get(node) === "CallExpression" && lively_lang.Path("expression.callee.type").get(node) === "FunctionExpression";
+}
+
+function declIds$1(idNodes) {
+  return lively_lang.arr.flatmap(idNodes, function (ea) {
+    if (!ea) return [];
+    if (ea.type === "Identifier") return [ea];
+    if (ea.type === "RestElement") return [ea.argument];
+    if (ea.type === "ObjectPattern") return declIds$1(lively_lang.arr.pluck(ea.properties, "value"));
+    if (ea.type === "ArrayPattern") return declIds$1(ea.elements);
+    return [];
+  });
+}
+
+function withVarDeclIds(varNode) {
+  return varNode.declarations.map(function (declNode) {
+    if (!declNode.source && declNode.init) declNode.source = declNode.id.name + " = " + declNode.init.source;
+    return { node: declNode, ids: declIds$1([declNode.id]) };
+  });
+}
+
+var codeCategorizer = Object.freeze({
+	findDecls: findDecls
+});
+
+exports.withMozillaAstDo = withMozillaAstDo;
+exports.printAst = printAst;
+exports.compareAst = compareAst;
+exports.pathToNode = pathToNode;
+exports.rematchAstWithSource = rematchAstWithSource;
+exports.parse = parse;
+exports.parseFunction = parseFunction;
+exports.fuzzyParse = fuzzyParse;
+exports.escodegen = es;
+exports.acorn = acorn;
+exports.query = query;
+exports.transform = transform;
+exports.capturing = capturing;
+exports.comments = comments;
+exports.categorizer = codeCategorizer;
+exports.stringify = stringify;
+exports.nodes = nodes;
 
 }((this.lively.ast = this.lively.ast || {}),lively.lang,GLOBAL.escodegen,acorn));
+
   }).call(GLOBAL);
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.ast;
 })();
@@ -21929,1928 +22149,2100 @@ var categorizer = Object.freeze({
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
 (function (exports,lively_lang,lively_ast,lively_notifications) {
-  'use strict';
+'use strict';
 
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
+};
+
+
+
+
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
+
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
+
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
   };
 
-  var asyncToGenerator = function (fn) {
-    return function () {
-      var gen = fn.apply(this, arguments);
-      return new Promise(function (resolve, reject) {
-        function step(key, arg) {
-          try {
-            var info = gen[key](arg);
-            var value = info.value;
-          } catch (error) {
-            reject(error);
-            return;
-          }
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
 
-          if (info.done) {
-            resolve(value);
-          } else {
-            return Promise.resolve(value).then(function (value) {
-              return step("next", value);
-            }, function (err) {
-              return step("throw", err);
-            });
-          }
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
         }
 
-        return step("next");
-      });
-    };
-  };
-
-  var classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  };
-
-  var createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
+        }
       }
+
+      return step("next");
+    });
+  };
+};
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
     }
+  }
 
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
 
-  var defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
+
+
+
+
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
+
+  return obj$$1;
+};
+
+var get$1 = function get$1(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
     } else {
-      obj[key] = value;
+      return get$1(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
     }
 
-    return obj;
-  };
+    return getter.call(receiver);
+  }
+};
 
-  var get = function get(object, property, receiver) {
-    if (object === null) object = Function.prototype;
-    var desc = Object.getOwnPropertyDescriptor(object, property);
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
 
-    if (desc === undefined) {
-      var parent = Object.getPrototypeOf(object);
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
 
-      if (parent === null) {
-        return undefined;
-      } else {
-        return get(parent, property, receiver);
-      }
-    } else if ("value" in desc) {
-      return desc.value;
+
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
+  }
+
+  return value;
+};
+
+/*global require, __dirname*/
+
+// helper
+function signatureOf(name, func) {
+  var source = String(func),
+      match = source.match(/function\s*[a-zA-Z0-9_$]*\s*\(([^\)]*)\)/),
+      params = match && match[1] || '';
+  return name + '(' + params + ')';
+}
+
+function pluck(list, prop) {
+  return list.map(function (ea) {
+    return ea[prop];
+  });
+}
+
+function getObjectForCompletion(evalFunc, stringToEval) {
+  var startLetters = '';
+  return Promise.resolve().then(function () {
+    // thenDo = function(err, obj, startLetters)
+    var idx = stringToEval.lastIndexOf('.');
+    if (idx >= 0) {
+      startLetters = stringToEval.slice(idx + 1);
+      stringToEval = stringToEval.slice(0, idx);
     } else {
-      var getter = desc.get;
-
-      if (getter === undefined) {
-        return undefined;
-      }
-
-      return getter.call(receiver);
+      startLetters = stringToEval;
+      stringToEval = '(typeof window === "undefined" ? global : window)';
     }
-  };
+    return evalFunc(stringToEval);
+  }).then(function (evalResult) {
+    return {
+      evalResult: evalResult,
+      startLetters: startLetters,
+      code: stringToEval
+    };
+  });
+}
 
-  var inherits = function (subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+var knownSymbols = function () {
+  return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
+    return _typeof(Symbol[ea]) === "symbol";
+  }).reduce(function (map, ea) {
+    return map.set(Symbol[ea], "Symbol." + ea);
+  }, new Map());
+}();
+
+var symMatcher = /^Symbol\((.*)\)$/;
+
+function printSymbolForCompletion(sym) {
+  if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
+  if (knownSymbols.get(sym)) return knownSymbols.get(sym);
+  var matched = String(sym).match(symMatcher);
+  return String(sym);
+}
+function propertyExtract(excludes, obj$$1, extractor) {
+  return Object.getOwnPropertyNames(obj$$1).concat(Object.getOwnPropertySymbols(obj$$1).map(printSymbolForCompletion)).filter(function (key) {
+    return excludes.indexOf(key) === -1;
+  }).map(extractor).filter(function (ea) {
+    return !!ea;
+  }).sort(function (a, b) {
+    return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+  });
+}
+
+function getMethodsOf(excludes, obj$$1) {
+  return propertyExtract(excludes, obj$$1, function (key) {
+    if (obj$$1.__lookupGetter__ && obj$$1.__lookupGetter__(key) || typeof obj$$1[key] !== 'function') return null;
+    return { name: key, completion: signatureOf(key, obj$$1[key]) };
+  });
+}
+
+function getAttributesOf(excludes, obj$$1) {
+  return propertyExtract(excludes, obj$$1, function (key) {
+    if (obj$$1.__lookupGetter__ && !obj$$1.__lookupGetter__(key) && typeof obj$$1[key] === 'function') return null;
+    return { name: key, completion: key };
+  });
+}
+
+function getProtoChain(obj$$1) {
+  var protos = [],
+      proto = obj$$1;
+  while (obj$$1) {
+    protos.push(obj$$1);obj$$1 = obj$$1.__proto__;
+  }
+  return protos;
+}
+
+function getDescriptorOf(originalObj, proto) {
+  function shorten(s, len) {
+    if (s.length > len) s = s.slice(0, len) + '...';
+    return s.replace(/\n/g, '').replace(/\s+/g, ' ');
+  }
+
+  if (originalObj === proto) {
+    if (typeof originalObj !== 'function') return shorten(originalObj.toString ? originalObj.toString() : "[some object]", 50);
+    var funcString = originalObj.toString(),
+        body = shorten(funcString.slice(funcString.indexOf('{') + 1, funcString.lastIndexOf('}')), 50);
+    return signatureOf(originalObj.displayName || originalObj.name || 'function', originalObj) + ' {' + body + '}';
+  }
+
+  var klass = proto.hasOwnProperty('constructor') && proto.constructor;
+  if (!klass) return 'prototype';
+  if (typeof klass.type === 'string' && klass.type.length) return shorten(klass.type, 50);
+  if (typeof klass.name === 'string' && klass.name.length) return shorten(klass.name, 50);
+  return "anonymous class";
+}
+
+function descriptorsOfObjAndProtoProperties(obj$$1) {
+  var excludes = [],
+      completions = getProtoChain(obj$$1).map(function (proto) {
+    var descr = getDescriptorOf(obj$$1, proto),
+        methodsAndAttributes = getMethodsOf(excludes, proto).concat(getAttributesOf(excludes, proto));
+    excludes = excludes.concat(pluck(methodsAndAttributes, 'name'));
+    return [descr, pluck(methodsAndAttributes, 'completion')];
+  });
+  return completions;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// the main deal
+function getCompletions(evalFunc, string$$1, thenDo) {
+  // thendo = function(err, completions/*ARRAY*/)
+  // eval string and for the resulting object find attributes and methods,
+  // grouped by its prototype / class chain
+  // if string is something like "foo().bar.baz" then treat "baz" as start
+  // letters = filter for properties of foo().bar
+  // ("foo().bar.baz." for props of the result of the complete string)
+  var promise$$1 = getObjectForCompletion(evalFunc, string$$1).then(function (evalResultAndStartLetters) {
+    var evalResult = evalResultAndStartLetters.evalResult,
+        value = evalResult && evalResult.isEvalResult ? evalResult.value : evalResult,
+        result = {
+      completions: descriptorsOfObjAndProtoProperties(value),
+      startLetters: evalResultAndStartLetters.startLetters,
+      code: evalResultAndStartLetters.code
+    };
+
+    if (evalResult && evalResult.isPromise) {
+      if (evalResult.promiseStatus === "fulfilled") result.promiseResolvedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue);else if (evalResult.promiseStatus === "rejected") result.promiseRejectedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue);
     }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  };
-
-  var possibleConstructorReturn = function (self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  };
-
-  // helper
-  function signatureOf(name, func) {
-    var source = String(func),
-        match = source.match(/function\s*[a-zA-Z0-9_$]*\s*\(([^\)]*)\)/),
-        params = match && match[1] || '';
-    return name + '(' + params + ')';
-  }
-
-  function pluck(list, prop) {
-    return list.map(function (ea) {
-      return ea[prop];
+    return result;
+  });
+  if (typeof thenDo === "function") {
+    promise$$1.then(function (result) {
+      return thenDo(null, result);
+    }).catch(function (err) {
+      return thenDo(err);
     });
   }
+  return promise$$1;
+}
 
-  function getObjectForCompletion(evalFunc, stringToEval) {
-    var startLetters = '';
-    return Promise.resolve().then(function () {
-      // thenDo = function(err, obj, startLetters)
-      var idx = stringToEval.lastIndexOf('.');
-      if (idx >= 0) {
-        startLetters = stringToEval.slice(idx + 1);
-        stringToEval = stringToEval.slice(0, idx);
-      } else {
-        startLetters = stringToEval;
-        stringToEval = '(typeof window === "undefined" ? global : window)';
-      }
-      return evalFunc(stringToEval);
-    }).then(function (evalResult) {
-      return {
-        evalResult: evalResult,
-        startLetters: startLetters,
-        code: stringToEval
-      };
+
+
+var completions = Object.freeze({
+	getCompletions: getCompletions
+});
+
+var initializeSymbol = Symbol.for("lively-instance-initialize");
+var superclassSymbol = Symbol.for("lively-instance-superclass");
+var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
+var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
+
+var constructorArgMatcher = /\([^\\)]*\)/;
+
+var defaultPropertyDescriptorForGetterSetter = {
+  enumerable: false,
+  configurable: true
+};
+
+var defaultPropertyDescriptorForValue = {
+  enumerable: false,
+  configurable: true,
+  writable: true
+};
+
+function setSuperclass(klass, superclassOrSpec) {
+  // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
+  var superclass = !superclassOrSpec ? Object : typeof superclassOrSpec === "function" ? superclassOrSpec : superclassOrSpec.value ? superclassOrSpec.value : Object;
+  var existingSuperclass = klass && klass[superclassSymbol];
+  // set the superclass if necessary and set prototype
+  if (!existingSuperclass || existingSuperclass !== superclass) {
+    ensureInitializeStub(superclass);
+    klass[superclassSymbol] = superclass;
+    klass.prototype = Object.create(superclass.prototype);
+    klass.prototype.constructor = klass;
+    if (superclass !== Object) Object.setPrototypeOf ? Object.setPrototypeOf(klass, superclass) : klass.__proto__ = superclass;
+  }
+  return superclass;
+}
+
+function installValueDescriptor(object, klass, descr) {
+  descr = Object.assign(descr, defaultPropertyDescriptorForValue);
+  descr.value.displayName = descr.key;
+  if (descr.needsDeclaringClass) {
+    var orig = descr.value.originalFunction || descr.value;
+    descr.value = Object.assign(function declaring_class_wrapper() /*args*/{
+      return orig.call.apply(orig, [this, klass].concat(Array.prototype.slice.call(arguments)));
+    }, {
+      originalFunction: orig,
+      toString: function toString() {
+        return orig.toString();
+      },
+      displayName: descr.key
     });
   }
+  Object.defineProperty(object, descr.key, descr);
+}
 
-  var knownSymbols = function () {
-    return Object.getOwnPropertyNames(Symbol).filter(function (ea) {
-      return _typeof(Symbol[ea]) === "symbol";
-    }).reduce(function (map, ea) {
-      return map.set(Symbol[ea], "Symbol." + ea);
-    }, new Map());
-  }();
+function installGetterSetterDescriptor(klass, descr) {
+  descr = Object.assign(descr, defaultPropertyDescriptorForGetterSetter);
+  Object.defineProperty(klass, descr.key, descr);
+}
 
-  var symMatcher = /^Symbol\((.*)\)$/;
+function installMethods(klass, instanceMethods, classMethods) {
+  // install methods from two lists (static + instance) of {key, value} or
+  // {key, get/set} descriptors
 
-  function printSymbolForCompletion(sym) {
-    if (Symbol.keyFor(sym)) return 'Symbol.for("' + Symbol.keyFor(sym) + '")';
-    if (knownSymbols.get(sym)) return knownSymbols.get(sym);
-    var matched = String(sym).match(symMatcher);
-    return String(sym);
-  }
-  function propertyExtract(excludes, obj, extractor) {
-    return Object.getOwnPropertyNames(obj).concat(Object.getOwnPropertySymbols(obj).map(printSymbolForCompletion)).filter(function (key) {
-      return excludes.indexOf(key) === -1;
-    }).map(extractor).filter(function (ea) {
-      return !!ea;
-    }).sort(function (a, b) {
-      return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
-    });
-  }
-
-  function getMethodsOf(excludes, obj) {
-    return propertyExtract(excludes, obj, function (key) {
-      if (obj.__lookupGetter__ && obj.__lookupGetter__(key) || typeof obj[key] !== 'function') return null;
-      return { name: key, completion: signatureOf(key, obj[key]) };
-    });
-  }
-
-  function getAttributesOf(excludes, obj) {
-    return propertyExtract(excludes, obj, function (key) {
-      if (obj.__lookupGetter__ && !obj.__lookupGetter__(key) && typeof obj[key] === 'function') return null;
-      return { name: key, completion: key };
-    });
-  }
-
-  function getProtoChain(obj) {
-    var protos = [],
-        proto = obj;
-    while (obj) {
-      protos.push(obj);obj = obj.__proto__;
-    }
-    return protos;
-  }
-
-  function getDescriptorOf(originalObj, proto) {
-    function shorten(s, len) {
-      if (s.length > len) s = s.slice(0, len) + '...';
-      return s.replace(/\n/g, '').replace(/\s+/g, ' ');
-    }
-
-    if (originalObj === proto) {
-      if (typeof originalObj !== 'function') return shorten(originalObj.toString ? originalObj.toString() : "[some object]", 50);
-      var funcString = originalObj.toString(),
-          body = shorten(funcString.slice(funcString.indexOf('{') + 1, funcString.lastIndexOf('}')), 50);
-      return signatureOf(originalObj.displayName || originalObj.name || 'function', originalObj) + ' {' + body + '}';
-    }
-
-    var klass = proto.hasOwnProperty('constructor') && proto.constructor;
-    if (!klass) return 'prototype';
-    if (typeof klass.type === 'string' && klass.type.length) return shorten(klass.type, 50);
-    if (typeof klass.name === 'string' && klass.name.length) return shorten(klass.name, 50);
-    return "anonymous class";
-  }
-
-  function descriptorsOfObjAndProtoProperties(obj) {
-    var excludes = [],
-        completions = getProtoChain(obj).map(function (proto) {
-      var descr = getDescriptorOf(obj, proto),
-          methodsAndAttributes = getMethodsOf(excludes, proto).concat(getAttributesOf(excludes, proto));
-      excludes = excludes.concat(pluck(methodsAndAttributes, 'name'));
-      return [descr, pluck(methodsAndAttributes, 'completion')];
-    });
-    return completions;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // the main deal
-  function getCompletions(evalFunc, string, thenDo) {
-    // thendo = function(err, completions/*ARRAY*/)
-    // eval string and for the resulting object find attributes and methods,
-    // grouped by its prototype / class chain
-    // if string is something like "foo().bar.baz" then treat "baz" as start
-    // letters = filter for properties of foo().bar
-    // ("foo().bar.baz." for props of the result of the complete string)
-    var promise = getObjectForCompletion(evalFunc, string).then(function (evalResultAndStartLetters) {
-      var evalResult = evalResultAndStartLetters.evalResult,
-          value = evalResult && evalResult.isEvalResult ? evalResult.value : evalResult,
-          result = {
-        completions: descriptorsOfObjAndProtoProperties(value),
-        startLetters: evalResultAndStartLetters.startLetters,
-        code: evalResultAndStartLetters.code
-      };
-
-      if (evalResult && evalResult.isPromise) {
-        if (evalResult.promiseStatus === "fulfilled") result.promiseResolvedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue);else if (evalResult.promiseStatus === "rejected") result.promiseRejectedCompletions = descriptorsOfObjAndProtoProperties(evalResult.promisedValue);
-      }
-      return result;
-    });
-    if (typeof thenDo === "function") {
-      promise.then(function (result) {
-        return thenDo(null, result);
-      }).catch(function (err) {
-        return thenDo(err);
-      });
-    }
-    return promise;
-  }
-
-
-
-  var completions = Object.freeze({
-    getCompletions: getCompletions
+  classMethods && classMethods.forEach(function (ea) {
+    ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
   });
 
-  var initializeSymbol = Symbol.for("lively-instance-initialize");
-  var superclassSymbol = Symbol.for("lively-instance-superclass");
-  var moduleMetaSymbol = Symbol.for("lively-instance-module-meta");
-  var moduleSubscribeToToplevelChangesSym = Symbol.for("lively-klass-changes-subscriber");
-  var constructorArgMatcher = /\([^\\)]*\)/;
+  instanceMethods && instanceMethods.forEach(function (ea) {
+    ea.value ? installValueDescriptor(klass.prototype, klass, ea) : installGetterSetterDescriptor(klass.prototype, ea);
+  });
 
-  var defaultPropertyDescriptorForGetterSetter = {
-    enumerable: false,
-    configurable: true
-  };
-
-  var defaultPropertyDescriptorForValue = {
-    enumerable: false,
-    configurable: true,
-    writable: true
-  };
-
-  function setSuperclass(klass, superclassOrSpec) {
-    // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
-    var superclass = !superclassOrSpec ? Object : typeof superclassOrSpec === "function" ? superclassOrSpec : superclassOrSpec.value ? superclassOrSpec.value : Object;
-    var existingSuperclass = klass && klass[superclassSymbol];
-    // set the superclass if necessary and set prototype
-    if (!existingSuperclass || existingSuperclass !== superclass) {
-      ensureInitializeStub(superclass);
-      klass[superclassSymbol] = superclass;
-      klass.prototype = Object.create(superclass.prototype);
-      klass.prototype.constructor = klass;
-      if (superclass !== Object) Object.setPrototypeOf ? Object.setPrototypeOf(klass, superclass) : klass.__proto__ = superclass;
-    }
-    return superclass;
-  }
-
-  function installValueDescriptor(object, klass, descr) {
-    descr = Object.assign(descr, defaultPropertyDescriptorForValue);
-    descr.value.displayName = descr.key;
-    if (descr.needsDeclaringClass) {
-      var orig = descr.value.originalFunction || descr.value;
-      descr.value = Object.assign(function declaring_class_wrapper() /*args*/{
-        return orig.call.apply(orig, [this, klass].concat(Array.prototype.slice.call(arguments)));
-      }, {
-        originalFunction: orig,
-        toString: function toString() {
-          return orig.toString();
-        },
-        displayName: descr.key
-      });
-    }
-    Object.defineProperty(object, descr.key, descr);
-  }
-
-  function installGetterSetterDescriptor(klass, descr) {
-    descr = Object.assign(descr, defaultPropertyDescriptorForGetterSetter);
-    Object.defineProperty(klass, descr.key, descr);
-  }
-
-  function installMethods(klass, instanceMethods, classMethods) {
-    // install methods from two lists (static + instance) of {key, value} or
-    // {key, get/set} descriptors
-
-    classMethods && classMethods.forEach(function (ea) {
-      ea.value ? installValueDescriptor(klass, klass, ea) : installGetterSetterDescriptor(klass, ea);
-    });
-
-    instanceMethods && instanceMethods.forEach(function (ea) {
-      ea.value ? installValueDescriptor(klass.prototype, klass, ea) : installGetterSetterDescriptor(klass.prototype, ea);
-    });
-
-    // 4. define initializer method, in our class system the constructor is
-    // generic and re-directs to the initializer method. This way we can change
-    // the constructor without loosing the identity of the class
-    if (!klass.prototype[initializeSymbol]) {
-      Object.defineProperty(klass.prototype, initializeSymbol, {
-        enumerable: false,
-        configurable: true,
-        writable: true,
-        value: function value() {}
-      });
-      klass.prototype[initializeSymbol].displayName = "lively-initialize";
-    }
-
-    // 5. undefine properties that were removed form class definition
-    var toDeleteInstance = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
-      return m.key;
-    }).concat(["constructor"]));
-    toDeleteInstance.forEach(function (key) {
-      delete klass.prototype[key];
-    });
-    var toDeleteClass = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
-      return m.key;
-    }).concat(["length", "name", "prototype"]));
-    toDeleteClass.forEach(function (key) {
-      delete klass[key];
-    });
-  }
-
-  function ensureInitializeStub(superclass) {
-    // when we inherit from "conventional classes" those don't have an
-    // initializer method. We install a stub that calls the superclass function
-    // itself
-    if (superclass === Object || superclass.prototype[initializeSymbol]) return;
-    Object.defineProperty(superclass.prototype, initializeSymbol, {
+  // 4. define initializer method, in our class system the constructor is
+  // generic and re-directs to the initializer method. This way we can change
+  // the constructor without loosing the identity of the class
+  if (!klass.prototype[initializeSymbol]) {
+    Object.defineProperty(klass.prototype, initializeSymbol, {
       enumerable: false,
       configurable: true,
       writable: true,
-      value: function value() /*args*/{
-        superclass.apply(this, arguments);
-      }
+      value: function value() {}
     });
-    superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
+    klass.prototype[initializeSymbol].displayName = "lively-initialize";
   }
 
-  function initializeClass(constructorFunc, superclassSpec) {
-    var instanceMethods = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
-    var classMethods = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
-    var classHolder = arguments.length <= 4 || arguments[4] === undefined ? {} : arguments[4];
-    var currentModule = arguments[5];
+  // 5. undefine properties that were removed form class definition
+  var toDeleteInstance = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
+    return m.key;
+  }).concat(["constructor"]));
+  toDeleteInstance.forEach(function (key) {
+    delete klass.prototype[key];
+  });
+  var toDeleteClass = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
+    return m.key;
+  }).concat(["length", "name", "prototype"]));
+  toDeleteClass.forEach(function (key) {
+    delete klass[key];
+  });
+}
 
-    // Given a `classHolder` object as "environment", will try to find a "class"
-    // (JS constructor function) inside it. If no class is found it will create a
-    // new costructor function object and will attach the methods to it. If a class
-    // is found it will be modified.
-    // This is being used as the compile target for es6 class syntax by the
-    // lively.ast capturing / transform logic
-    // Example:
-    // var Foo = function(superclass) {
-    //   function Foo() {}
-    //   return initializeClass(Foo, superclass, [{key: "m", value: function m() { return 23 }}])
-    // }();
-    // new Foo().m() // => 23
-
-    // 1. create a new constructor function if necessary, re-use an exisiting if the
-    // classHolder object has it
-    var className = constructorFunc.name,
-        klass = className && classHolder.hasOwnProperty(className) && classHolder[className],
-        existingSuperclass = klass && klass[superclassSymbol];
-    if (!klass || typeof klass !== "function" || !existingSuperclass) klass = constructorFunc;
-
-    // 2. set the superclass if necessary and set prototype
-    var superclass = setSuperclass(klass, superclassSpec);
-
-    // 3. Install methods
-    installMethods(klass, instanceMethods, classMethods);
-
-    // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
-    // then we also store some meta data about the module. This allows us to
-    // (de)serialize class instances in lively.serializer
-    if (currentModule) {
-      var p = currentModule.package();
-      klass[moduleMetaSymbol] = {
-        package: p ? { name: p.name, version: p.version } : {},
-        pathInPackage: currentModule.pathInPackage()
-      };
-
-      // if we have a module, we can listen to toplevel changes of it in case the
-      // superclass binding changes. With that we can keep our class up-to-date
-      // even if the superclass binding changes. This is especially useful for
-      // situations where modules have a circular dependency and classes in modules
-      // won't get defined correctly when loaded first. See
-      // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
-      if (superclassSpec && superclassSpec.referencedAs) {
-        if (klass[moduleSubscribeToToplevelChangesSym]) {
-          currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
-        }
-        klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
-          if (name === superclassSpec.referencedAs) {
-            // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
-            setSuperclass(klass, val);
-            installMethods(klass, instanceMethods, classMethods);
-          }
-        });
-      }
+function ensureInitializeStub(superclass) {
+  // when we inherit from "conventional classes" those don't have an
+  // initializer method. We install a stub that calls the superclass function
+  // itself
+  if (superclass === Object || superclass.prototype[initializeSymbol]) return;
+  Object.defineProperty(superclass.prototype, initializeSymbol, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function value() /*args*/{
+      superclass.apply(this, arguments);
     }
+  });
+  superclass.prototype[initializeSymbol].displayName = "lively-initialize-stub";
+}
 
-    // 6. Add a toString method for the class to allows us to see its constructor arguments
-    var init = klass.prototype[initializeSymbol],
-        constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
-        string = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
-    klass.toString = function () {
-      return string;
+function initializeClass(constructorFunc, superclassSpec) {
+  var instanceMethods = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+  var classMethods = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+  var classHolder = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+  var currentModule = arguments[5];
+
+  // Given a `classHolder` object as "environment", will try to find a "class"
+  // (JS constructor function) inside it. If no class is found it will create a
+  // new costructor function object and will attach the methods to it. If a class
+  // is found it will be modified.
+  // This is being used as the compile target for es6 class syntax by the
+  // lively.ast capturing / transform logic
+  // Example:
+  // var Foo = function(superclass) {
+  //   function Foo() {}
+  //   return initializeClass(Foo, superclass, [{key: "m", value: function m() { return 23 }}])
+  // }();
+  // new Foo().m() // => 23
+
+  // 1. create a new constructor function if necessary, re-use an exisiting if the
+  // classHolder object has it
+  var className = constructorFunc.name,
+      klass = className && classHolder.hasOwnProperty(className) && classHolder[className],
+      existingSuperclass = klass && klass[superclassSymbol];
+  if (!klass || typeof klass !== "function" || !existingSuperclass) klass = constructorFunc;
+
+  // 2. set the superclass if necessary and set prototype
+  var superclass = setSuperclass(klass, superclassSpec);
+
+  // 3. Install methods
+  installMethods(klass, instanceMethods, classMethods);
+
+  // 4. If we have a `currentModule` instance (from lively.modules/src/module.js)
+  // then we also store some meta data about the module. This allows us to
+  // (de)serialize class instances in lively.serializer
+  if (currentModule) {
+    var p = currentModule.package();
+    klass[moduleMetaSymbol] = {
+      package: p ? { name: p.name, version: p.version } : {},
+      pathInPackage: currentModule.pathInPackage()
     };
 
-    return klass;
-  }
-
-  initializeClass._get = function _get(object, property, receiver) {
-    if (object === null) object = Function.prototype;
-    var desc = Object.getOwnPropertyDescriptor(object, property);
-    if (desc === undefined) {
-      var parent = Object.getPrototypeOf(object);
-      if (parent === null) {
-        return undefined;
-      } else {
-        return _get(parent, property, receiver);
+    // if we have a module, we can listen to toplevel changes of it in case the
+    // superclass binding changes. With that we can keep our class up-to-date
+    // even if the superclass binding changes. This is especially useful for
+    // situations where modules have a circular dependency and classes in modules
+    // won't get defined correctly when loaded first. See
+    // https://github.com/LivelyKernel/lively.modules/issues/27 for more details
+    if (superclassSpec && superclassSpec.referencedAs) {
+      if (klass[moduleSubscribeToToplevelChangesSym]) {
+        currentModule.unsubscribeFromToplevelDefinitionChanges(klass[moduleSubscribeToToplevelChangesSym]);
       }
-    } else if ("value" in desc) {
-      return desc.value;
-    } else {
-      var getter = desc.get;
-      if (getter === undefined) {
-        return undefined;
-      }
-      return getter.call(receiver);
-    }
-  };
-
-  initializeClass._set = function _set(object, property, value, receiver) {
-    var desc = Object.getOwnPropertyDescriptor(object, property);
-    if (desc === undefined) {
-      var parent = Object.getPrototypeOf(object);
-      if (parent !== null) {
-        _set(parent, property, value, receiver);
-      }
-    } else if ("value" in desc && desc.writable) {
-      desc.value = value;
-    } else {
-      var setter = desc.set;
-      if (setter !== undefined) {
-        setter.call(receiver, value);
-      }
-    }
-    return value;
-  };
-
-  var id = lively_ast.nodes.id;
-  var literal = lively_ast.nodes.literal;
-  var member = lively_ast.nodes.member;
-  var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
-  var defaultClassToFunctionConverterName = "initializeES6ClassForLively";
-  function evalCodeTransform(code, options) {
-    // variable declaration and references in the the source code get
-    // transformed so that they are bound to `varRecorderName` aren't local
-    // state. THis makes it possible to capture eval results, e.g. for
-    // inspection, watching and recording changes, workspace vars, and
-    // incrementally evaluating var declarations and having values bound later.
-
-    // 1. Allow evaluation of function expressions and object literals
-    code = lively_ast.transform.transformSingleExpression(code);
-    var parsed = lively_ast.parse(code);
-
-    // transforming experimental ES features into accepted es6 form...
-    parsed = lively_ast.transform.objectSpreadTransform(parsed);
-
-    // 2. capture top level vars into topLevelVarRecorder "environment"
-
-    if (options.topLevelVarRecorder) {
-
-      // capture and wrap logic
-      var blacklist = (options.dontTransform || []).concat(["arguments"]),
-          undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
-          varRecorder = id(options.varRecorderName || '__lvVarRecorder'),
-          es6ClassToFunctionOptions = undefined,
-          declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
-
-      if (options.keepPreviouslyDeclaredValues) {
-        // 2.1 declare a function that should wrap all definitions, i.e. all var
-        // decls, functions, classes etc that get captured will be wrapped in this
-        // function. When using this with the option.keepPreviouslyDeclaredValues
-        // we will use a wrapping function that keeps the identity of prevously
-        // defined objects
-        options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
-        options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
-
-        // Class declarations and expressions are converted into a function call
-        // to `createOrExtendClass`, a helper that will produce (or extend an
-        // existing) constructor function in a way that allows us to redefine
-        // methods and properties of the class while keeping the class object
-        // identical
-        options.topLevelVarRecorder[defaultClassToFunctionConverterName] = initializeClass;
-        es6ClassToFunctionOptions = {
-          currentModuleAccessor: options.currentModuleAccessor,
-          classHolder: varRecorder,
-          functionNode: member(varRecorder, defaultClassToFunctionConverterName),
-          declarationWrapper: options.declarationWrapper
-        };
-      }
-
-      // 2.2 Here we call out to the actual code transformation that installs the
-      parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
-        es6ImportFuncId: options.es6ImportFuncId,
-        es6ExportFuncId: options.es6ExportFuncId,
-        ignoreUndeclaredExcept: undeclaredToTransform,
-        exclude: blacklist,
-        declarationWrapper: options.declarationWrapper || undefined,
-        classToFunction: es6ClassToFunctionOptions
+      klass[moduleSubscribeToToplevelChangesSym] = currentModule.subscribeToToplevelDefinitionChanges(function (name, val) {
+        if (name === superclassSpec.referencedAs) {
+          // console.log(`class ${className}: new superclass ${name} ${name !== superclassSpec.referencedAs ? '(' + superclassSpec.referencedAs + ')' : ''}was defined via module bindings`)
+          setSuperclass(klass, val);
+          installMethods(klass, instanceMethods, classMethods);
+        }
       });
     }
-
-    if (options.wrapInStartEndCall) {
-      parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
-        startFuncNode: options.startFuncNode,
-        endFuncNode: options.endFuncNode
-      });
-    }
-
-    var result = lively_ast.stringify(parsed);
-
-    if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
-
-    return result;
   }
 
-  function evalCodeTransformOfSystemRegisterSetters(code, options) {
-    if (!options.topLevelVarRecorder) return code;
+  // 6. Add a toString method for the class to allows us to see its constructor arguments
+  var init = klass.prototype[initializeSymbol],
+      constructorArgs = String(klass.prototype[initializeSymbol]).match(constructorArgMatcher),
+      string$$1 = "class " + className + " " + (superclass ? "extends " + superclass.name : "") + " {\n" + ("  constructor" + (constructorArgs ? constructorArgs[0] : "()") + " { /*...*/ }") + "\n}";
+  klass.toString = function () {
+    return string$$1;
+  };
 
-    var parsed = lively_ast.parse(code),
-        blacklist = (options.dontTransform || []).concat(["arguments"]),
+  return klass;
+}
+
+initializeClass._get = function _get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+    if (parent === null) {
+      return undefined;
+    } else {
+      return _get(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+    if (getter === undefined) {
+      return undefined;
+    }
+    return getter.call(receiver);
+  }
+};
+
+initializeClass._set = function _set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+    if (parent !== null) {
+      _set(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
+  }
+  return value;
+};
+
+var id = lively_ast.nodes.id;
+var literal = lively_ast.nodes.literal;
+var member = lively_ast.nodes.member;
+var defaultDeclarationWrapperName = "lively.capturing-declaration-wrapper";
+var defaultClassToFunctionConverterName = "initializeES6ClassForLively";
+
+function evalCodeTransform(code, options) {
+  // variable declaration and references in the the source code get
+  // transformed so that they are bound to `varRecorderName` aren't local
+  // state. THis makes it possible to capture eval results, e.g. for
+  // inspection, watching and recording changes, workspace vars, and
+  // incrementally evaluating var declarations and having values bound later.
+
+  // 1. Allow evaluation of function expressions and object literals
+  code = lively_ast.transform.transformSingleExpression(code);
+  var parsed = lively_ast.parse(code);
+
+  // transforming experimental ES features into accepted es6 form...
+  parsed = lively_ast.transform.objectSpreadTransform(parsed);
+
+  // 2. capture top level vars into topLevelVarRecorder "environment"
+
+  if (options.topLevelVarRecorder) {
+
+    // capture and wrap logic
+    var blacklist = (options.dontTransform || []).concat(["arguments"]),
         undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
-        result = lively_ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
+        varRecorder = id(options.varRecorderName || '__lvVarRecorder'),
+        es6ClassToFunctionOptions = undefined,
+        declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
 
-    return lively_ast.stringify(result);
-  }
+    if (options.keepPreviouslyDeclaredValues) {
+      // 2.1 declare a function that should wrap all definitions, i.e. all var
+      // decls, functions, classes etc that get captured will be wrapped in this
+      // function. When using this with the option.keepPreviouslyDeclaredValues
+      // we will use a wrapping function that keeps the identity of prevously
+      // defined objects
+      options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
+      options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
 
-  function declarationWrapperForKeepingValues(name, kind, value, recorder) {
-    // show(`declaring ${name}, a ${kind}, value ${value}`);
-
-    if (kind === "function") return value;
-    if (kind === "class") {
-      recorder[name] = value;
-      return value;
+      // Class declarations and expressions are converted into a function call
+      // to `createOrExtendClass`, a helper that will produce (or extend an
+      // existing) constructor function in a way that allows us to redefine
+      // methods and properties of the class while keeping the class object
+      // identical
+      options.topLevelVarRecorder[defaultClassToFunctionConverterName] = initializeClass;
+      es6ClassToFunctionOptions = {
+        currentModuleAccessor: options.currentModuleAccessor,
+        classHolder: varRecorder,
+        functionNode: member(varRecorder, defaultClassToFunctionConverterName),
+        declarationWrapper: options.declarationWrapper
+      };
     }
 
-    // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
-    //   return value;
+    // 2.2 Here we call out to the actual code transformation that installs the
+    parsed = lively_ast.capturing.rewriteToCaptureTopLevelVariables(parsed, varRecorder, {
+      es6ImportFuncId: options.es6ImportFuncId,
+      es6ExportFuncId: options.es6ExportFuncId,
+      ignoreUndeclaredExcept: undeclaredToTransform,
+      exclude: blacklist,
+      declarationWrapper: options.declarationWrapper || undefined,
+      classToFunction: es6ClassToFunctionOptions
+    });
+  }
 
-    // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
-    //   if (Object.isFrozen(recorder[name])) return value;
-    //   try {
-    //     copyProperties(value, recorder[name]);
-    //     return recorder[name];
-    //   } catch (e) {
-    //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
-    //     return value;
-    //   }
-    // }
+  if (options.wrapInStartEndCall) {
+    parsed = lively_ast.transform.wrapInStartEndCall(parsed, {
+      startFuncNode: options.startFuncNode,
+      endFuncNode: options.endFuncNode
+    });
+  }
 
+  var result = lively_ast.stringify(parsed);
+
+  if (options.sourceURL) result += "\n//# sourceURL=" + options.sourceURL.replace(/\s/g, "_");
+
+  return result;
+}
+
+function evalCodeTransformOfSystemRegisterSetters(code, options) {
+  if (!options.topLevelVarRecorder) return code;
+
+  var parsed = lively_ast.parse(code),
+      blacklist = (options.dontTransform || []).concat(["arguments"]),
+      undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
+      result = lively_ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
+
+  return lively_ast.stringify(result);
+}
+
+function declarationWrapperForKeepingValues(name, kind, value, recorder) {
+  // show(`declaring ${name}, a ${kind}, value ${value}`);
+
+  if (kind === "function") return value;
+  if (kind === "class") {
+    recorder[name] = value;
     return value;
   }
 
-  var defaultTopLevelVarRecorderName = '__lvVarRecorder';
-  var startEvalFunctionName = "lively.vm-on-eval-start";
-  var endEvalFunctionName = "lively.vm-on-eval-end";
-  function _normalizeEvalOptions(opts) {
-    if (!opts) opts = {};
+  // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
+  //   return value;
 
-    opts = Object.assign({
-      targetModule: null,
-      sourceURL: opts.targetModule,
-      runtime: null,
-      context: getGlobal(),
-      varRecorderName: defaultTopLevelVarRecorderName,
-      dontTransform: [], // blacklist vars
-      recordGlobals: null,
-      returnPromise: true,
-      promiseTimeout: 200,
-      waitForPromise: true,
-      wrapInStartEndCall: false,
-      onStartEval: null,
-      onEndEval: null,
-      keepPreviouslyDeclaredValues: true
-    }, opts);
+  // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
+  //   if (Object.isFrozen(recorder[name])) return value;
+  //   try {
+  //     copyProperties(value, recorder[name]);
+  //     return recorder[name];
+  //   } catch (e) {
+  //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
+  //     return value;
+  //   }
+  // }
 
-    if (opts.targetModule) {
-      var moduleEnv = opts.runtime && opts.runtime.modules && opts.runtime.modules[opts.targetModule];
-      if (moduleEnv) opts = Object.assign(opts, moduleEnv);
-    }
+  return value;
+}
 
-    if (opts.wrapInStartEndCall) {
-      opts.startFuncNode = {
-        type: "MemberExpression",
-        object: { type: "Identifier", name: opts.varRecorderName },
-        property: { type: "Literal", value: startEvalFunctionName },
-        computed: true
-      };
-      opts.endFuncNode = {
-        type: "MemberExpression",
-        object: { type: "Identifier", name: opts.varRecorderName },
-        property: { type: "Literal", value: endEvalFunctionName },
-        computed: true
-      };
-    }
+/*global: global, System*/
 
-    return opts;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// options
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var defaultTopLevelVarRecorderName = '__lvVarRecorder';
+var startEvalFunctionName = "lively.vm-on-eval-start";
+var endEvalFunctionName = "lively.vm-on-eval-end";
+
+function _normalizeEvalOptions(opts) {
+  if (!opts) opts = {};
+
+  opts = Object.assign({
+    targetModule: null,
+    sourceURL: opts.targetModule,
+    runtime: null,
+    context: getGlobal(),
+    varRecorderName: defaultTopLevelVarRecorderName,
+    dontTransform: [], // blacklist vars
+    recordGlobals: null,
+    returnPromise: true,
+    promiseTimeout: 200,
+    waitForPromise: true,
+    wrapInStartEndCall: false,
+    onStartEval: null,
+    onEndEval: null,
+    keepPreviouslyDeclaredValues: true
+  }, opts);
+
+  if (opts.targetModule) {
+    var moduleEnv = opts.runtime && opts.runtime.modules && opts.runtime.modules[opts.targetModule];
+    if (moduleEnv) opts = Object.assign(opts, moduleEnv);
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // eval
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  if (opts.wrapInStartEndCall) {
+    opts.startFuncNode = {
+      type: "MemberExpression",
+      object: { type: "Identifier", name: opts.varRecorderName },
+      property: { type: "Literal", value: startEvalFunctionName },
+      computed: true
+    };
+    opts.endFuncNode = {
+      type: "MemberExpression",
+      object: { type: "Identifier", name: opts.varRecorderName },
+      property: { type: "Literal", value: endEvalFunctionName },
+      computed: true
+    };
+  }
 
-  function getGlobal() {
-    if (typeof System !== "undefined") return System.global;
-    if (typeof window !== "undefined") return window;
-    if (typeof global !== "undefined") return global;
-    if (typeof Global !== "undefined") return Global;
-    return function () {
+  return opts;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// eval
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function getGlobal() {
+  if (typeof System !== "undefined") return System.global;
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  if (typeof Global !== "undefined") return Global;
+  return function () {
+    return this;
+  }();
+}
+
+function _eval(__lvEvalStatement, __lvVarRecorder /*needed as arg for capturing*/) {
+  return eval(__lvEvalStatement);
+}
+
+function runEval$1(code, options, thenDo) {
+  // The main function where all eval options are configured.
+  // options can be: {
+  //   runtime: {
+  //     modules: {[MODULENAME: PerModuleOptions]}
+  //   }
+  // }
+  // or directly, PerModuleOptions = {
+  //   varRecorderName: STRING, // default is '__lvVarRecorder'
+  //   topLevelVarRecorder: OBJECT,
+  //   context: OBJECT,
+  //   sourceURL: STRING,
+  //   recordGlobals: BOOLEAN, // also transform free vars? default is false
+  //   transpiler: FUNCTION(source, options) // for transforming the source after the lively xfm
+  //   wrapInStartEndCall: BOOLEAN
+  //   onStartEval: FUNCTION()?,
+  //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
+  //   keepPreviouslyDeclaredValues: BOOLEAN // maintain the identity of objects that were declared before
+  // }
+
+  if (typeof options === 'function' && arguments.length === 2) {
+    thenDo = options;options = null;
+  }
+
+  var result = new EvalResult(),
+      returnedError,
+      returnedValue,
+      onEvalEndError,
+      onEvalEndValue,
+      onEvalStartCalled = false,
+      onEvalEndCalled = false;
+  options = _normalizeEvalOptions(options);
+
+  // 1. In case we rewrite the code with on-start and on-end calls we prepare
+  // the environment with actual function handlers that will get called once
+  // the code is evaluated
+
+  var evalDone = lively_lang.promise.deferred(),
+      recorder = options.topLevelVarRecorder || getGlobal();
+
+  if (options.wrapInStartEndCall) {
+    if (recorder[startEvalFunctionName]) console.warn(result.addWarning("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!"));
+
+    if (recorder[endEvalFunctionName]) console.warn(result.addWarning("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!"));
+
+    recorder[startEvalFunctionName] = function () {
+      if (onEvalStartCalled) {
+        console.warn(result.addWarning("onEvalStartCalled multiple times!"));return;
+      }
+      onEvalStartCalled = true;
+      if (typeof options.onStartEval === "function") options.onStartEval();
+    };
+
+    recorder[endEvalFunctionName] = function (err, value) {
+      if (onEvalEndCalled) {
+        console.warn(result.addWarning("onEvalEndCalled multiple times!"));return;
+      }
+      onEvalEndCalled = true;
+      finishEval(err, value, result, options, recorder, evalDone, thenDo);
+    };
+  }
+
+  // 2. Transform the code to capture top-level variables, inject function calls, ...
+  try {
+    code = evalCodeTransform(code, options);
+    if (options.header) code = options.header + code;
+    if (options.footer) code = code + options.footer;
+    if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
+    // console.log(code);
+  } catch (e) {
+    console.warn(result.addWarning("lively.vm evalCodeTransform not working: " + (e.stack || e)));
+  }
+
+  // 3. Now really run eval!
+  try {
+    typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
+    returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
+  } catch (e) {
+    returnedError = e;
+  }
+
+  // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
+  // wrap-up, otherwise we firectly call finishEval()
+  if (options.wrapInStartEndCall) {
+    if (returnedError && !onEvalEndCalled) recorder[endEvalFunctionName](returnedError, undefined);
+  } else {
+    finishEval(returnedError, returnedError || returnedValue, result, options, recorder, evalDone, thenDo);
+  }
+
+  return options.sync ? result : evalDone.promise;
+}
+
+function finishEval(err, value, result, options, recorder, evalDone, thenDo) {
+  // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
+  // use any Promise since promises always run on next tick. That's why we have
+  // to slightly duplicate the finish logic...
+
+  if (options.wrapInStartEndCall) {
+    delete recorder[startEvalFunctionName];
+    delete recorder[endEvalFunctionName];
+  }
+
+  if (err) {
+    result.isError = true;result.value = err;
+  } else result.value = value;
+  if (result.value instanceof Promise) result.isPromise = true;
+
+  if (options.sync) {
+    result.processSync(options);
+    if (typeof options.onEndEval === "function") options.onEndEval(err, value);
+  } else {
+    result.process(options).then(function () {
+      typeof thenDo === "function" && thenDo(null, result);
+      typeof options.onEndEval === "function" && options.onEndEval(err, value);
+      return result;
+    }, function (err) {
+      typeof thenDo === "function" && thenDo(err, undefined);
+      typeof options.onEndEval === "function" && options.onEndEval(err, undefined);
+      return result;
+    }).then(evalDone.resolve, evalDone.reject);
+  }
+}
+
+function syncEval$1(string$$1, options) {
+  // See #runEval for options.
+  // Although the defaul eval is synchronous we assume that the general
+  // evaluation might not return immediatelly. This makes is possible to
+  // change the evaluation backend, e.g. to be a remotely attached runtime
+  options = Object.assign(options || {}, { sync: true });
+  return runEval$1(string$$1, options);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// EvalResult
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var EvalResult = function () {
+  function EvalResult() {
+    classCallCheck(this, EvalResult);
+
+    this.isEvalResult = true;
+    this.value = undefined;
+    this.warnings = [];
+    this.isError = false;
+    this.isPromise = false;
+    this.promisedValue = undefined;
+    this.promiseStatus = "unknown";
+  }
+
+  createClass(EvalResult, [{
+    key: "addWarning",
+    value: function addWarning(warn) {
+      this.warnings.push(warn);return warn;
+    }
+  }, {
+    key: "printed",
+    value: function printed(options) {
+      this.value = print(this.value, Object.assign(options || {}, {
+        isError: this.isError,
+        isPromise: this.isPromise,
+        promisedValue: this.promisedValue,
+        promiseStatus: this.promiseStatus
+      }));
+    }
+  }, {
+    key: "processSync",
+    value: function processSync(options) {
+      if (options.inspect || options.asString) this.value = this.print(this.value, options);
       return this;
-    }();
-  }
-
-  function _eval(__lvEvalStatement, __lvVarRecorder /*needed as arg for capturing*/) {
-    return eval(__lvEvalStatement);
-  }
-
-  function vmRunEval(code, options, thenDo) {
-    // The main function where all eval options are configured.
-    // options can be: {
-    //   runtime: {
-    //     modules: {[MODULENAME: PerModuleOptions]}
-    //   }
-    // }
-    // or directly, PerModuleOptions = {
-    //   varRecorderName: STRING, // default is '__lvVarRecorder'
-    //   topLevelVarRecorder: OBJECT,
-    //   context: OBJECT,
-    //   sourceURL: STRING,
-    //   recordGlobals: BOOLEAN, // also transform free vars? default is false
-    //   transpiler: FUNCTION(source, options) // for transforming the source after the lively xfm
-    //   wrapInStartEndCall: BOOLEAN
-    //   onStartEval: FUNCTION()?,
-    //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
-    //   keepPreviouslyDeclaredValues: BOOLEAN // maintain the identity of objects that were declared before
-    // }
-
-    if (typeof options === 'function' && arguments.length === 2) {
-      thenDo = options;options = null;
     }
-
-    var result = new EvalResult(),
-        returnedError,
-        returnedValue,
-        onEvalEndError,
-        onEvalEndValue,
-        onEvalStartCalled = false,
-        onEvalEndCalled = false;
-    options = _normalizeEvalOptions(options);
-
-    // 1. In case we rewrite the code with on-start and on-end calls we prepare
-    // the environment with actual function handlers that will get called once
-    // the code is evaluated
-
-    var evalDone = lively_lang.promise.deferred(),
-        recorder = options.topLevelVarRecorder || getGlobal();
-
-    if (options.wrapInStartEndCall) {
-      if (recorder[startEvalFunctionName]) console.warn(result.addWarning("startEvalFunctionName " + startEvalFunctionName + " already exists in recorder!"));
-
-      if (recorder[endEvalFunctionName]) console.warn(result.addWarning("endEvalFunctionName " + endEvalFunctionName + " already exists in recorder!"));
-
-      recorder[startEvalFunctionName] = function () {
-        if (onEvalStartCalled) {
-          console.warn(result.addWarning("onEvalStartCalled multiple times!"));return;
-        }
-        onEvalStartCalled = true;
-        if (typeof options.onStartEval === "function") options.onStartEval();
-      };
-
-      recorder[endEvalFunctionName] = function (err, value) {
-        if (onEvalEndCalled) {
-          console.warn(result.addWarning("onEvalEndCalled multiple times!"));return;
-        }
-        onEvalEndCalled = true;
-        finishEval(err, value, result, options, recorder, evalDone, thenDo);
-      };
-    }
-
-    // 2. Transform the code to capture top-level variables, inject function calls, ...
-    try {
-      code = evalCodeTransform(code, options);
-      if (options.header) code = options.header + code;
-      if (options.footer) code = code + options.footer;
-      if (options.transpiler) code = options.transpiler(code, options.transpilerOptions);
-      // console.log(code);
-    } catch (e) {
-      console.warn(result.addWarning("lively.vm evalCodeTransform not working: " + (e.stack || e)));
-    }
-
-    // 3. Now really run eval!
-    try {
-      typeof $morph !== "undefined" && $morph('log') && ($morph('log').textString = code);
-      returnedValue = _eval.call(options.context, code, options.topLevelVarRecorder);
-    } catch (e) {
-      returnedError = e;
-    }
-
-    // 4. Wrapping up: if we inject a on-eval-end call we let it handle the
-    // wrap-up, otherwise we firectly call finishEval()
-    if (options.wrapInStartEndCall) {
-      if (returnedError && !onEvalEndCalled) recorder[endEvalFunctionName](returnedError, undefined);
-    } else {
-      finishEval(returnedError, returnedError || returnedValue, result, options, recorder, evalDone, thenDo);
-    }
-
-    return options.sync ? result : evalDone.promise;
-  }
-
-  function finishEval(err, value, result, options, recorder, evalDone, thenDo) {
-    // 5. Here we end the evaluation. Note that if we are in sync mode we cannot
-    // use any Promise since promises always run on next tick. That's why we have
-    // to slightly duplicate the finish logic...
-
-    if (options.wrapInStartEndCall) {
-      delete recorder[startEvalFunctionName];
-      delete recorder[endEvalFunctionName];
-    }
-
-    if (err) {
-      result.isError = true;result.value = err;
-    } else result.value = value;
-    if (result.value instanceof Promise) result.isPromise = true;
-
-    if (options.sync) {
-      result.processSync(options);
-      if (typeof options.onEndEval === "function") options.onEndEval(err, value);
-    } else {
-      result.process(options).then(function () {
-        typeof thenDo === "function" && thenDo(null, result);
-        typeof options.onEndEval === "function" && options.onEndEval(err, value);
-        return result;
-      }, function (err) {
-        typeof thenDo === "function" && thenDo(err, undefined);
-        typeof options.onEndEval === "function" && options.onEndEval(err, undefined);
-        return result;
-      }).then(evalDone.resolve, evalDone.reject);
-    }
-  }
-
-  function syncEval$1(string, options) {
-    // See #runEval for options.
-    // Although the defaul eval is synchronous we assume that the general
-    // evaluation might not return immediatelly. This makes is possible to
-    // change the evaluation backend, e.g. to be a remotely attached runtime
-    options = Object.assign(options || {}, { sync: true });
-    return vmRunEval(string, options);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // EvalResult
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var EvalResult = function () {
-    function EvalResult() {
-      classCallCheck(this, EvalResult);
-
-      this.isEvalResult = true;
-      this.value = undefined;
-      this.warnings = [];
-      this.isError = false;
-      this.isPromise = false;
-      this.promisedValue = undefined;
-      this.promiseStatus = "unknown";
-    }
-
-    createClass(EvalResult, [{
-      key: "addWarning",
-      value: function addWarning(warn) {
-        this.warnings.push(warn);return warn;
-      }
-    }, {
-      key: "printed",
-      value: function printed(options) {
-        this.value = print(this.value, Object.assign(options || {}, {
-          isError: this.isError,
-          isPromise: this.isPromise,
-          promisedValue: this.promisedValue,
-          promiseStatus: this.promiseStatus
-        }));
-      }
-    }, {
-      key: "processSync",
-      value: function processSync(options) {
-        if (options.inspect || options.asString) this.value = this.print(this.value, options);
-        return this;
-      }
-    }, {
-      key: "process",
-      value: function process(options) {
-        var result = this;
-        if (result.isPromise && options.waitForPromise) {
-          return tryToWaitForPromise(result, options.promiseTimeout).then(function () {
-            if (options.inspect || options.asString) result.printed(options);
-            return result;
-          });
-        }
-        if (options.inspect || options.asString) result.printed(options);
-        return Promise.resolve(result);
-      }
-    }]);
-    return EvalResult;
-  }();
-
-  function tryToWaitForPromise(evalResult, timeoutMs) {
-    console.assert(evalResult.isPromise, "no promise in tryToWaitForPromise???");
-    var timeout = {},
-        timeoutP = new Promise(function (resolve) {
-      return setTimeout(resolve, timeoutMs, timeout);
-    });
-    return Promise.race([timeoutP, evalResult.value]).then(function (resolved) {
-      return Object.assign(evalResult, resolved !== timeout ? { promiseStatus: "fulfilled", promisedValue: resolved } : { promiseStatus: "pending" });
-    }).catch(function (rejected) {
-      return Object.assign(evalResult, { promiseStatus: "rejected", promisedValue: rejected });
-    });
-  }
-
-  function print(value, options) {
-    if (options.isError || value instanceof Error) return String(value.stack || value);
-
-    if (options.isPromise) {
-      var status = lively_lang.string.print(options.promiseStatus),
-          printed = options.promiseStatus === "pending" ? undefined : print(options.promisedValue, Object.assign(options || {}, { isPromise: false }));
-      return "Promise({status: " + status + ", " + (value === undefined ? "" : "value: " + printed) + "})";
-    }
-
-    if (value instanceof Promise) return 'Promise({status: "unknown"})';
-
-    if (options.inspect) return printInspect(value, options);
-
-    // options.asString
-    return String(value);
-  }
-
-  function printInspect(value, options) {
-    var printDepth = options.printDepth || 2,
-        customPrintInspect = lively_lang.Path("lively.morphic.printInspect").get(getGlobal()),
-        customPrinter = customPrintInspect ? function (val, _) {
-      return customPrintInspect(val, printDepth);
-    } : undefined;
-    return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // load support
-
-  var ensureImportsAreLoaded = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
-      var body, imports;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              // FIXME do we have to do a reparse? We should be able to get the ast from
-              // the rewriter...
-              body = lively_ast.parse(code).body, imports = body.filter(function (node) {
-                return node.type === "ImportDeclaration";
-              });
-              return _context.abrupt("return", Promise.all(imports.map(function (node) {
-                return System.normalize(node.source.value, parentModule).then(function (fullName) {
-                  return System.get(fullName) || System.import(fullName);
-                });
-              })).catch(function (err) {
-                console.error("Error ensuring imports: " + err.message);throw err;
-              }));
-
-            case 2:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this);
-    }));
-    return function ensureImportsAreLoaded(_x, _x2, _x3) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // transpiler to make es next work
-
-  var getEs6Transpiler = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
-      var babel, babelPluginPath, babelPath, babelPlugin;
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              if (!options.transpiler) {
-                _context2.next = 2;
-                break;
-              }
-
-              return _context2.abrupt("return", Promise.resolve(options.transpiler));
-
-            case 2:
-              if (options.es6Transpile) {
-                _context2.next = 4;
-                break;
-              }
-
-              return _context2.abrupt("return", Promise.resolve(null));
-
-            case 4:
-              if (!(System.transpiler === "babel")) {
-                _context2.next = 12;
-                break;
-              }
-
-              _context2.t0 = System.global[System.transpiler];
-
-              if (_context2.t0) {
-                _context2.next = 10;
-                break;
-              }
-
-              _context2.next = 9;
-              return System.import(System.transpiler);
-
-            case 9:
-              _context2.t0 = _context2.sent;
-
-            case 10:
-              babel = _context2.t0;
-              return _context2.abrupt("return", babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env));
-
-            case 12:
-              if (!(System.transpiler === "plugin-babel")) {
-                _context2.next = 21;
-                break;
-              }
-
-              _context2.next = 15;
-              return System.normalize("plugin-babel");
-
-            case 15:
-              babelPluginPath = _context2.sent;
-              babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/");
-              _context2.next = 19;
-              return System.import(babelPath);
-
-            case 19:
-              babelPlugin = _context2.sent;
-              return _context2.abrupt("return", babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
-
-            case 21:
-              throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
-
-            case 22:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, this);
-    }));
-    return function getEs6Transpiler(_x4, _x5, _x6) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var funcCall = lively_ast.nodes.funcCall;
-  var member$1 = lively_ast.nodes.member;
-  var literal$1 = lively_ast.nodes.literal;
-
-
-  function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
-    // The function wrapper is needed b/c we need toplevel awaits and babel
-    // converts "this" => "undefined" for modules
-    return function (source, options) {
-      options = Object.assign({
-        sourceMap: undefined, // 'inline' || true || false
-        inputSourceMap: undefined,
-        filename: filename,
-        code: true,
-        ast: false
-      }, options);
-      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
-          transpiled = babel.transform(sourceForBabel, options).code;
-      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
-      return transpiled;
-    };
-  }
-
-  function babelPluginTranspilerForAsyncAwaitCode(System, babelWrapper, filename, env) {
-
-    // The function wrapper is needed b/c we need toplevel awaits and babel
-    // converts "this" => "undefined" for modules
-    return function (source, options) {
-      var babelOptions = System.babelOptions || {},
-          presets = [];
-      presets.push(babelWrapper.presetES2015);
-      if (babelOptions.stage3) presets.push({ plugins: babelWrapper.pluginsStage3 });
-      if (babelOptions.stage2) presets.push({ plugins: babelWrapper.pluginsStage2 });
-      if (babelOptions.stage1) presets.push({ plugins: babelWrapper.pluginsStage1 });
-
-      options = Object.assign({
-        sourceMap: undefined, // 'inline' || true || false
-        inputSourceMap: undefined,
-        filename: filename,
-        babelrc: false,
-        // plugins: plugins,
-        presets: presets,
-        moduleIds: false,
-        code: true,
-        ast: false
-      }, options);
-      var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
-          transpiled = babelWrapper.babel.transform(sourceForBabel, options).code;
-      transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
-      return transpiled;
-    };
-  }
-
-  var runEval$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
-      var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              options = lively_lang.obj.merge({
-                targetModule: null, parentModule: null,
-                parentAddress: null,
-                es6Transpile: true,
-                transpiler: null, // function with params: source, options
-                transpilerOptions: null
-              }, options);
-              originalCode = code;
-
-
-              System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
-
-              _context3.next = 5;
-              return System.normalize(options.targetModule || "*scratch*", options.parentModule, options.parentAddress);
-
-            case 5:
-              fullname = _context3.sent;
-
-              options.targetModule = fullname;
-
-              _context3.next = 9;
-              return System.import(fullname);
-
-            case 9:
-              _context3.next = 11;
-              return ensureImportsAreLoaded(System, code, fullname);
-
-            case 11:
-              env = System.get("@lively-env").moduleEnv(fullname);
-              recorder = env.recorder;
-              recorderName = env.recorderName;
-              dontTransform = env.dontTransform;
-              _context3.next = 17;
-              return getEs6Transpiler(System, options, env);
-
-            case 17:
-              transpiler = _context3.sent;
-              header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
-
-
-              code = header + code;
-              options = Object.assign({ waitForPromise: true }, options, {
-                recordGlobals: true,
-                dontTransform: dontTransform,
-                varRecorderName: recorderName,
-                topLevelVarRecorder: recorder,
-                sourceURL: options.sourceURL || options.targetModule,
-                context: options.context || recorder,
-                wrapInStartEndCall: true, // for async / await eval support
-                es6ExportFuncId: "_moduleExport",
-                es6ImportFuncId: "_moduleImport",
-                transpiler: transpiler,
-                currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
-              });
-
-              System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
-
-              lively_notifications.emit("lively.vm/doitrequest", {
-                code: originalCode,
-                waitForPromise: options.waitForPromise,
-                targetModule: options.targetModule }, Date.now(), System);
-
-              _context3.next = 25;
-              return vmRunEval(code, options);
-
-            case 25:
-              result = _context3.sent;
-
-
-              System.get("@lively-env").evaluationDone(fullname);
-              System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
-
-              lively_notifications.emit("lively.vm/doitresult", {
-                code: originalCode, result: result,
-                waitForPromise: options.waitForPromise,
-                targetModule: options.targetModule }, Date.now(), System);
-
-              return _context3.abrupt("return", result);
-
-            case 30:
-            case "end":
-              return _context3.stop();
-          }
-        }
-      }, _callee3, this);
-    }));
-    return function runEval(_x7, _x8, _x9) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var _EvalableTextMorphTra;
-
-  var EvalStrategy = function () {
-    function EvalStrategy() {
-      classCallCheck(this, EvalStrategy);
-    }
-
-    createClass(EvalStrategy, [{
-      key: "runEval",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  return _context.abrupt("return", Promise.reject("runEval(source, options) not yet implemented for " + this.constructor.name));
-
-                case 1:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function runEval(_x, _x2) {
-          return ref.apply(this, arguments);
-        }
-
-        return runEval;
-      }()
-    }, {
-      key: "keysOfObject",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  return _context2.abrupt("return", Promise.reject("keysOfObject(prefix, options) not yet implemented for " + this.constructor.name));
-
-                case 1:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, this);
-        }));
-
-        function keysOfObject(_x3, _x4) {
-          return ref.apply(this, arguments);
-        }
-
-        return keysOfObject;
-      }()
-    }]);
-    return EvalStrategy;
-  }();
-
-  var SimpleEvalStrategy = function (_EvalStrategy) {
-    inherits(SimpleEvalStrategy, _EvalStrategy);
-
-    function SimpleEvalStrategy() {
-      classCallCheck(this, SimpleEvalStrategy);
-      return possibleConstructorReturn(this, Object.getPrototypeOf(SimpleEvalStrategy).apply(this, arguments));
-    }
-
-    createClass(SimpleEvalStrategy, [{
-      key: "runEval",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-              switch (_context3.prev = _context3.next) {
-                case 0:
-                  return _context3.abrupt("return", Promise.resolve().then(function () {
-                    try {
-                      return Promise.resolve({ value: eval(source) });
-                    } catch (err) {
-                      return { isError: true, value: err };
-                    }
-                  }));
-
-                case 1:
-                case "end":
-                  return _context3.stop();
-              }
-            }
-          }, _callee3, this);
-        }));
-
-        function runEval(_x5, _x6) {
-          return ref.apply(this, arguments);
-        }
-
-        return runEval;
-      }()
-    }, {
-      key: "keysOfObject",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
-          var _this2 = this;
-
-          var result;
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  _context4.next = 2;
-                  return lively.vm.completions.getCompletions(function (code) {
-                    return _this2.runEval(code, options);
-                  }, prefix);
-
-                case 2:
-                  result = _context4.sent;
-                  return _context4.abrupt("return", { completions: result.completions, prefix: result.startLetters });
-
-                case 4:
-                case "end":
-                  return _context4.stop();
-              }
-            }
-          }, _callee4, this);
-        }));
-
-        function keysOfObject(_x7, _x8) {
-          return ref.apply(this, arguments);
-        }
-
-        return keysOfObject;
-      }()
-    }]);
-    return SimpleEvalStrategy;
-  }(EvalStrategy);
-
-  var LivelyVmEvalStrategy = function (_EvalStrategy2) {
-    inherits(LivelyVmEvalStrategy, _EvalStrategy2);
-
-    function LivelyVmEvalStrategy() {
-      classCallCheck(this, LivelyVmEvalStrategy);
-      return possibleConstructorReturn(this, Object.getPrototypeOf(LivelyVmEvalStrategy).apply(this, arguments));
-    }
-
-    createClass(LivelyVmEvalStrategy, [{
-      key: "normalizeOptions",
-      value: function normalizeOptions(options) {
-        if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
-
-        return Object.assign({
-          sourceURL: options.targetModule + "_doit_" + Date.now(),
-          keepPreviouslyDeclaredValues: true
-        }, options);
-      }
-    }, {
-      key: "runEval",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
-          var conf;
-          return regeneratorRuntime.wrap(function _callee5$(_context5) {
-            while (1) {
-              switch (_context5.prev = _context5.next) {
-                case 0:
-                  options = this.normalizeOptions(options);
-                  conf = { meta: {} };
-                  conf.meta[options.targetModule] = { format: "esm" };
-                  lively.modules.System.config(conf);
-                  return _context5.abrupt("return", lively.vm.runEval(source, options));
-
-                case 5:
-                case "end":
-                  return _context5.stop();
-              }
-            }
-          }, _callee5, this);
-        }));
-
-        function runEval(_x9, _x10) {
-          return ref.apply(this, arguments);
-        }
-
-        return runEval;
-      }()
-    }, {
-      key: "keysOfObject",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
-          var result;
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
-            while (1) {
-              switch (_context6.prev = _context6.next) {
-                case 0:
-                  _context6.next = 2;
-                  return lively.vm.completions.getCompletions(function (code) {
-                    return lively.vm.runEval(code, options);
-                  }, prefix);
-
-                case 2:
-                  result = _context6.sent;
-                  return _context6.abrupt("return", { completions: result.completions, prefix: result.startLetters });
-
-                case 4:
-                case "end":
-                  return _context6.stop();
-              }
-            }
-          }, _callee6, this);
-        }));
-
-        function keysOfObject(_x11, _x12) {
-          return ref.apply(this, arguments);
-        }
-
-        return keysOfObject;
-      }()
-    }]);
-    return LivelyVmEvalStrategy;
-  }(EvalStrategy);
-
-  var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
-    inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
-    createClass(HttpEvalStrategy, null, [{
-      key: "defaultURL",
-      get: function get() {
-        return "http://localhost:3000/lively";
-      }
-    }]);
-
-    function HttpEvalStrategy(url) {
-      classCallCheck(this, HttpEvalStrategy);
-
-      var _this4 = possibleConstructorReturn(this, Object.getPrototypeOf(HttpEvalStrategy).call(this));
-
-      _this4.url = url || _this4.constructor.defaultURL;
-      return _this4;
-    }
-
-    createClass(HttpEvalStrategy, [{
-      key: "normalizeOptions",
-      value: function normalizeOptions(options) {
-        options = get(Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
-        return Object.assign({ serverEvalURL: this.url }, options, { context: null });
-      }
-    }, {
-      key: "sourceForServer",
-      value: function sourceForServer(action, arg, options) {
-        return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  options.context = System.global;\n  function evalFunction(source, options) {\n    var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n    lively.modules.System.config(conf);\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: String(err.stack || err)}));\n})();\n";
-      }
-    }, {
-      key: "sendRequest",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
-          var method, content;
-          return regeneratorRuntime.wrap(function _callee7$(_context7) {
-            while (1) {
-              switch (_context7.prev = _context7.next) {
-                case 0:
-                  method = "sendRequest" + (System.get("@system-env").node ? "_node" : "_web");
-                  _context7.next = 3;
-                  return this[method](payload, url);
-
-                case 3:
-                  content = _context7.sent;
-                  _context7.prev = 4;
-                  return _context7.abrupt("return", JSON.parse(content));
-
-                case 8:
-                  _context7.prev = 8;
-                  _context7.t0 = _context7["catch"](4);
-                  return _context7.abrupt("return", { isError: true, value: "Server eval failed: " + content });
-
-                case 11:
-                case "end":
-                  return _context7.stop();
-              }
-            }
-          }, _callee7, this, [[4, 8]]);
-        }));
-
-        function sendRequest(_x13, _x14) {
-          return ref.apply(this, arguments);
-        }
-
-        return sendRequest;
-      }()
-    }, {
-      key: "sendRequest_web",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
-          var res;
-          return regeneratorRuntime.wrap(function _callee8$(_context8) {
-            while (1) {
-              switch (_context8.prev = _context8.next) {
-                case 0:
-                  _context8.prev = 0;
-                  _context8.next = 3;
-                  return window.fetch(url, payload);
-
-                case 3:
-                  res = _context8.sent;
-                  _context8.next = 9;
-                  break;
-
-                case 6:
-                  _context8.prev = 6;
-                  _context8.t0 = _context8["catch"](0);
-                  throw new Error("Cannot reach server at " + url + ": " + _context8.t0.message);
-
-                case 9:
-                  if (res.ok) {
-                    _context8.next = 11;
-                    break;
-                  }
-
-                  throw new Error("Server at " + url + ": " + res.statusText);
-
-                case 11:
-                  return _context8.abrupt("return", res.text());
-
-                case 12:
-                case "end":
-                  return _context8.stop();
-              }
-            }
-          }, _callee8, this, [[0, 6]]);
-        }));
-
-        function sendRequest_web(_x15, _x16) {
-          return ref.apply(this, arguments);
-        }
-
-        return sendRequest_web;
-      }()
-    }, {
-      key: "sendRequest_node",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
-          var urlParse, http, opts;
-          return regeneratorRuntime.wrap(function _callee9$(_context9) {
-            while (1) {
-              switch (_context9.prev = _context9.next) {
-                case 0:
-                  urlParse = System._nodeRequire("url").parse, http = System._nodeRequire("http"), opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
-                  return _context9.abrupt("return", new Promise(function (resolve, reject) {
-                    var request = http.request(opts, function (res) {
-                      res.setEncoding('utf8');
-                      var data = "";
-                      res.on('data', function (chunk) {
-                        return data += chunk;
-                      });
-                      res.on('end', function () {
-                        return resolve(data);
-                      });
-                      res.on('error', function (err) {
-                        return reject(err);
-                      });
-                    });
-                    request.on('error', function (err) {
-                      return reject(err);
-                    });
-                    request.end(payload.body);
-                  }));
-
-                case 2:
-                case "end":
-                  return _context9.stop();
-              }
-            }
-          }, _callee9, this);
-        }));
-
-        function sendRequest_node(_x17, _x18) {
-          return ref.apply(this, arguments);
-        }
-
-        return sendRequest_node;
-      }()
-    }, {
-      key: "runEval",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
-          var payLoad;
-          return regeneratorRuntime.wrap(function _callee10$(_context10) {
-            while (1) {
-              switch (_context10.prev = _context10.next) {
-                case 0:
-                  options = this.normalizeOptions(options);
-                  payLoad = { method: "POST", body: this.sourceForServer("eval", source, options) };
-                  return _context10.abrupt("return", this.sendRequest(payLoad, options.serverEvalURL));
-
-                case 3:
-                case "end":
-                  return _context10.stop();
-              }
-            }
-          }, _callee10, this);
-        }));
-
-        function runEval(_x19, _x20) {
-          return ref.apply(this, arguments);
-        }
-
-        return runEval;
-      }()
-    }, {
-      key: "keysOfObject",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
-          var payLoad, result;
-          return regeneratorRuntime.wrap(function _callee11$(_context11) {
-            while (1) {
-              switch (_context11.prev = _context11.next) {
-                case 0:
-                  options = this.normalizeOptions(options);
-                  payLoad = { method: "POST", body: this.sourceForServer("keysOfObject", prefix, options) };
-                  _context11.next = 4;
-                  return this.sendRequest(payLoad, options.serverEvalURL);
-
-                case 4:
-                  result = _context11.sent;
-
-                  if (!result.isError) {
-                    _context11.next = 7;
-                    break;
-                  }
-
-                  throw new Error(result.value);
-
-                case 7:
-                  return _context11.abrupt("return", result);
-
-                case 8:
-                case "end":
-                  return _context11.stop();
-              }
-            }
-          }, _callee11, this);
-        }));
-
-        function keysOfObject(_x21, _x22) {
-          return ref.apply(this, arguments);
-        }
-
-        return keysOfObject;
-      }()
-    }]);
-    return HttpEvalStrategy;
-  }(LivelyVmEvalStrategy);
-
-  function evalStrategy(morph) {
-    return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
-  }
-
-  function processEvalError(evalResult) {
-    // produce a hopefully helpful string out of an error
-    var isError = evalResult.isError;
-    var value = evalResult.value;
-    var warnings = evalResult.warnings;
-
-    console.assert(evalResult.isError, "processEvalError called with non-error eval result");
-    var error = String(value),
-        stack = value.stack,
-        warning = warnings ? warnings.join("\n") : "";
-    if (error.match(/syntaxerror/i) && warning.match(/syntaxerror/i)) {
-      return warning + "\n\n" + error;
-    }
-    return stack || error;
-  }
-
-  var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
-    applyTo: function applyTo(obj) {
-      var overrides = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-
-      var trait = this,
-          dontCopy = ["applyTo"].concat(lively.lang.arr.withoutAll(lively.lang.properties.allProperties(obj), overrides));
-      Object.keys(trait).filter(function (key) {
-        return !dontCopy.includes(key);
-      }).forEach(function (key) {
-        return Object.defineProperty(obj, key, { configurable: true, get: function get() {
-            return trait[key];
-          }
+  }, {
+    key: "process",
+    value: function process(options) {
+      var result = this;
+      if (result.isPromise && options.waitForPromise) {
+        return tryToWaitForPromise(result, options.promiseTimeout).then(function () {
+          if (options.inspect || options.asString) result.printed(options);
+          return result;
         });
-      });
-      return obj;
-    },
-    doit: function doit(printResult, editor, options) {
-      var _this5 = this;
+      }
+      if (options.inspect || options.asString) result.printed(options);
+      return Promise.resolve(result);
+    }
+  }]);
+  return EvalResult;
+}();
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
-        var result, val;
-        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+function tryToWaitForPromise(evalResult, timeoutMs) {
+  console.assert(evalResult.isPromise, "no promise in tryToWaitForPromise???");
+  var timeout = {},
+      timeoutP = new Promise(function (resolve) {
+    return setTimeout(resolve, timeoutMs, timeout);
+  });
+  return Promise.race([timeoutP, evalResult.value]).then(function (resolved) {
+    return Object.assign(evalResult, resolved !== timeout ? { promiseStatus: "fulfilled", promisedValue: resolved } : { promiseStatus: "pending" });
+  }).catch(function (rejected) {
+    return Object.assign(evalResult, { promiseStatus: "rejected", promisedValue: rejected });
+  });
+}
+
+function print(value, options) {
+  if (options.isError || value instanceof Error) return String(value.stack || value);
+
+  if (options.isPromise) {
+    var status = lively_lang.string.print(options.promiseStatus),
+        printed = options.promiseStatus === "pending" ? undefined : print(options.promisedValue, Object.assign(options || {}, { isPromise: false }));
+    return "Promise({status: " + status + ", " + (value === undefined ? "" : "value: " + printed) + "})";
+  }
+
+  if (value instanceof Promise) return 'Promise({status: "unknown"})';
+
+  if (options.inspect) return printInspect$1(value, options);
+
+  // options.asString
+  return String(value);
+}
+
+function printInspect$1(value, options) {
+  var printDepth = options.printDepth || 2,
+      customPrintInspect = lively_lang.Path("lively.morphic.printInspect").get(getGlobal()),
+      customPrinter = customPrintInspect ? function (val, _) {
+    return customPrintInspect(val, printDepth);
+  } : undefined;
+  return lively_lang.obj.inspect(value, { maxDepth: printDepth, customPrinter: customPrinter });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// load support
+
+var ensureImportsAreLoaded = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, code, parentModule) {
+    var body, imports;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            // FIXME do we have to do a reparse? We should be able to get the ast from
+            // the rewriter...
+            body = lively_ast.parse(code).body, imports = body.filter(function (node) {
+              return node.type === "ImportDeclaration";
+            });
+            return _context.abrupt("return", Promise.all(imports.map(function (node) {
+              return System.normalize(node.source.value, parentModule).then(function (fullName) {
+                return System.get(fullName) || System.import(fullName);
+              });
+            })).catch(function (err) {
+              console.error("Error ensuring imports: " + err.message);throw err;
+            }));
+
+          case 2:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+
+  return function ensureImportsAreLoaded(_x, _x2, _x3) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// transpiler to make es next work
+
+var getEs6Transpiler = function () {
+  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, options, env) {
+    var babel, babelPluginPath, babelPath, babelPlugin;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (!options.transpiler) {
+              _context2.next = 2;
+              break;
+            }
+
+            return _context2.abrupt("return", Promise.resolve(options.transpiler));
+
+          case 2:
+            if (options.es6Transpile) {
+              _context2.next = 4;
+              break;
+            }
+
+            return _context2.abrupt("return", Promise.resolve(null));
+
+          case 4:
+            if (!(System.transpiler === "babel")) {
+              _context2.next = 12;
+              break;
+            }
+
+            _context2.t0 = System.global[System.transpiler];
+
+            if (_context2.t0) {
+              _context2.next = 10;
+              break;
+            }
+
+            _context2.next = 9;
+            return System.import(System.transpiler);
+
+          case 9:
+            _context2.t0 = _context2.sent;
+
+          case 10:
+            babel = _context2.t0;
+            return _context2.abrupt("return", babelTranspilerForAsyncAwaitCode(System, babel, options.targetModule, env));
+
+          case 12:
+            if (!(System.transpiler === "plugin-babel")) {
+              _context2.next = 21;
+              break;
+            }
+
+            _context2.next = 15;
+            return System.normalize("plugin-babel");
+
+          case 15:
+            babelPluginPath = _context2.sent;
+            babelPath = babelPluginPath.split("/").slice(0, -1).concat("systemjs-babel-browser.js").join("/");
+            _context2.next = 19;
+            return System.import(babelPath);
+
+          case 19:
+            babelPlugin = _context2.sent;
+            return _context2.abrupt("return", babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
+
+          case 21:
+            throw new Error("Sorry, currently only babel is supported as es6 transpiler for runEval!");
+
+          case 22:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, this);
+  }));
+
+  return function getEs6Transpiler(_x4, _x5, _x6) {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
+var funcCall = lively_ast.nodes.funcCall;
+var member$1 = lively_ast.nodes.member;
+var literal$1 = lively_ast.nodes.literal;
+
+
+function babelTranspilerForAsyncAwaitCode(System, babel, filename, env) {
+  // The function wrapper is needed b/c we need toplevel awaits and babel
+  // converts "this" => "undefined" for modules
+  return function (source, options) {
+    options = Object.assign({
+      sourceMap: undefined, // 'inline' || true || false
+      inputSourceMap: undefined,
+      filename: filename,
+      code: true,
+      ast: false
+    }, options);
+    var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
+        transpiled = babel.transform(sourceForBabel, options).code;
+    transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    return transpiled;
+  };
+}
+
+function babelPluginTranspilerForAsyncAwaitCode(System, babelWrapper, filename, env) {
+
+  // The function wrapper is needed b/c we need toplevel awaits and babel
+  // converts "this" => "undefined" for modules
+  return function (source, options) {
+    var babelOptions = System.babelOptions || {},
+        presets = [];
+    presets.push(babelWrapper.presetES2015);
+    if (babelOptions.stage3) presets.push({ plugins: babelWrapper.pluginsStage3 });
+    if (babelOptions.stage2) presets.push({ plugins: babelWrapper.pluginsStage2 });
+    if (babelOptions.stage1) presets.push({ plugins: babelWrapper.pluginsStage1 });
+
+    options = Object.assign({
+      sourceMap: undefined, // 'inline' || true || false
+      inputSourceMap: undefined,
+      filename: filename,
+      babelrc: false,
+      // plugins: plugins,
+      presets: presets,
+      moduleIds: false,
+      code: true,
+      ast: false
+    }, options);
+    var sourceForBabel = "(async function(__rec) {\n" + source + "\n}).call(this);",
+        transpiled = babelWrapper.babel.transform(sourceForBabel, options).code;
+    transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, "}).call(this)");
+    return transpiled;
+  };
+}
+
+var runEval$2 = function () {
+  var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
+    var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            options = lively_lang.obj.merge({
+              targetModule: null, parentModule: null,
+              parentAddress: null,
+              es6Transpile: true,
+              transpiler: null, // function with params: source, options
+              transpilerOptions: null
+            }, options);
+            originalCode = code;
+
+
+            System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
+
+            _context3.next = 5;
+            return System.normalize(options.targetModule || "*scratch*", options.parentModule, options.parentAddress);
+
+          case 5:
+            fullname = _context3.sent;
+
+            options.targetModule = fullname;
+
+            _context3.next = 9;
+            return System.import(fullname);
+
+          case 9:
+            _context3.next = 11;
+            return ensureImportsAreLoaded(System, code, fullname);
+
+          case 11:
+            env = System.get("@lively-env").moduleEnv(fullname);
+            recorder = env.recorder;
+            recorderName = env.recorderName;
+            dontTransform = env.dontTransform;
+            _context3.next = 17;
+            return getEs6Transpiler(System, options, env);
+
+          case 17:
+            transpiler = _context3.sent;
+            header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
+
+
+            code = header + code;
+            options = Object.assign({ waitForPromise: true }, options, {
+              recordGlobals: true,
+              dontTransform: dontTransform,
+              varRecorderName: recorderName,
+              topLevelVarRecorder: recorder,
+              sourceURL: options.sourceURL || options.targetModule,
+              context: options.context || recorder,
+              wrapInStartEndCall: true, // for async / await eval support
+              es6ExportFuncId: "_moduleExport",
+              es6ImportFuncId: "_moduleImport",
+              transpiler: transpiler,
+              currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
+            });
+
+            System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
+
+            lively_notifications.emit("lively.vm/doitrequest", {
+              code: originalCode,
+              waitForPromise: options.waitForPromise,
+              targetModule: options.targetModule }, Date.now(), System);
+
+            _context3.next = 25;
+            return runEval$1(code, options);
+
+          case 25:
+            result = _context3.sent;
+
+
+            System.get("@lively-env").evaluationDone(fullname);
+            System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
+
+            lively_notifications.emit("lively.vm/doitresult", {
+              code: originalCode, result: result,
+              waitForPromise: options.waitForPromise,
+              targetModule: options.targetModule }, Date.now(), System);
+
+            return _context3.abrupt("return", result);
+
+          case 30:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, this);
+  }));
+
+  return function runEval$2(_x7, _x8, _x9) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
+var _EvalableTextMorphTra;
+
+var EvalStrategy = function () {
+  function EvalStrategy() {
+    classCallCheck(this, EvalStrategy);
+  }
+
+  createClass(EvalStrategy, [{
+    key: "runEval",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(source, options) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
-            switch (_context12.prev = _context12.next) {
+            switch (_context.prev = _context.next) {
               case 0:
-                _context12.prev = 0;
+                return _context.abrupt("return", Promise.reject("runEval(source, options) not yet implemented for " + this.constructor.name));
 
-                options = Object.assign({
-                  inspect: !printResult,
-                  printDepth: _this5.printInspectMaxDepth,
-                  targetModule: _this5.moduleId(),
-                  context: _this5
-                }, options);
-                _context12.next = 4;
-                return evalStrategy(_this5).runEval(_this5.getCodeForEval(), options);
-
-              case 4:
-                result = _context12.sent;
-                val = result.isError ? processEvalError(result) : result.value;
-
-                if (printResult) {
-                  _this5.printObject(editor, val, false, _this5.getPrintItAsComment());
-                } else {
-                  _this5[result.isError ? "showError" : "setStatusMessage"](val);
-                }
-                _this5.onDoitDone(result);
-                return _context12.abrupt("return", result);
-
-              case 11:
-                _context12.prev = 11;
-                _context12.t0 = _context12["catch"](0);
-                _this5.showError(_context12.t0);throw _context12.t0;
-
-              case 15:
+              case 1:
               case "end":
-                return _context12.stop();
+                return _context.stop();
             }
           }
-        }, _callee12, _this5, [[0, 11]]);
-      }))();
-    },
-    printInspect: function printInspect(options) {
-      var _this6 = this;
+        }, _callee, this);
+      }));
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
-        var msgMorph, ed;
-        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+      function runEval(_x, _x2) {
+        return _ref.apply(this, arguments);
+      }
+
+      return runEval;
+    }()
+  }, {
+    key: "keysOfObject",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(prefix, options) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context13.prev = _context13.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                options = options || {};
-                msgMorph = _this6._statusMorph;
-                _context13.next = 4;
-                return new Promise(function (resolve, reject) {
-                  return _this6.withAceDo(resolve);
-                });
+                return _context2.abrupt("return", Promise.reject("keysOfObject(prefix, options) not yet implemented for " + this.constructor.name));
 
-              case 4:
-                ed = _context13.sent;
-
-                if (!(msgMorph && msgMorph.world())) {
-                  _context13.next = 7;
-                  break;
-                }
-
-                return _context13.abrupt("return", ed.execCommand('insertEvalResult'));
-
-              case 7:
-                return _context13.abrupt("return", _this6.doit(true, ed, { inspect: true, printDepth: options.depth || _this6.printInspectMaxDepth }));
-
-              case 8:
+              case 1:
               case "end":
-                return _context13.stop();
+                return _context2.stop();
             }
           }
-        }, _callee13, _this6);
-      }))();
-    },
-    evalSelection: function evalSelection(printIt) {
-      var _this7 = this;
+        }, _callee2, this);
+      }));
 
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
-        var options, result;
-        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+      function keysOfObject(_x3, _x4) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return keysOfObject;
+    }()
+  }]);
+  return EvalStrategy;
+}();
+
+var SimpleEvalStrategy = function (_EvalStrategy) {
+  inherits(SimpleEvalStrategy, _EvalStrategy);
+
+  function SimpleEvalStrategy() {
+    classCallCheck(this, SimpleEvalStrategy);
+    return possibleConstructorReturn(this, (SimpleEvalStrategy.__proto__ || Object.getPrototypeOf(SimpleEvalStrategy)).apply(this, arguments));
+  }
+
+  createClass(SimpleEvalStrategy, [{
+    key: "runEval",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(source, options) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context14.prev = _context14.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                options = { context: _this7, targetModule: _this7.moduleId(), asString: !!printIt };
-                _context14.next = 3;
-                return evalStrategy(_this7).runEval(_this7.getCodeForEval(), options);
+                return _context3.abrupt("return", Promise.resolve().then(function () {
+                  try {
+                    return Promise.resolve({ value: eval(source) });
+                  } catch (err) {
+                    return { isError: true, value: err };
+                  }
+                }));
+
+              case 1:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function runEval(_x5, _x6) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return runEval;
+    }()
+  }, {
+    key: "keysOfObject",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(prefix, options) {
+        var _this2 = this;
+
+        var result;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _context4.next = 2;
+                return lively.vm.completions.getCompletions(function (code) {
+                  return _this2.runEval(code, options);
+                }, prefix);
+
+              case 2:
+                result = _context4.sent;
+                return _context4.abrupt("return", { completions: result.completions, prefix: result.startLetters });
+
+              case 4:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function keysOfObject(_x7, _x8) {
+        return _ref4.apply(this, arguments);
+      }
+
+      return keysOfObject;
+    }()
+  }]);
+  return SimpleEvalStrategy;
+}(EvalStrategy);
+
+var LivelyVmEvalStrategy = function (_EvalStrategy2) {
+  inherits(LivelyVmEvalStrategy, _EvalStrategy2);
+
+  function LivelyVmEvalStrategy() {
+    classCallCheck(this, LivelyVmEvalStrategy);
+    return possibleConstructorReturn(this, (LivelyVmEvalStrategy.__proto__ || Object.getPrototypeOf(LivelyVmEvalStrategy)).apply(this, arguments));
+  }
+
+  createClass(LivelyVmEvalStrategy, [{
+    key: "normalizeOptions",
+    value: function normalizeOptions(options) {
+      if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
+
+      return Object.assign({
+        sourceURL: options.targetModule + "_doit_" + Date.now(),
+        keepPreviouslyDeclaredValues: true
+      }, options);
+    }
+  }, {
+    key: "runEval",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
+        var conf;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                options = this.normalizeOptions(options);
+                conf = { meta: {} };
+                conf.meta[options.targetModule] = { format: "esm" };
+                lively.modules.System.config(conf);
+                return _context5.abrupt("return", lively.vm.runEval(source, options));
+
+              case 5:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function runEval(_x9, _x10) {
+        return _ref5.apply(this, arguments);
+      }
+
+      return runEval;
+    }()
+  }, {
+    key: "keysOfObject",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(prefix, options) {
+        var result;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return lively.vm.completions.getCompletions(function (code) {
+                  return lively.vm.runEval(code, options);
+                }, prefix);
+
+              case 2:
+                result = _context6.sent;
+                return _context6.abrupt("return", { completions: result.completions, prefix: result.startLetters });
+
+              case 4:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function keysOfObject(_x11, _x12) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return keysOfObject;
+    }()
+  }]);
+  return LivelyVmEvalStrategy;
+}(EvalStrategy);
+
+var HttpEvalStrategy = function (_LivelyVmEvalStrategy) {
+  inherits(HttpEvalStrategy, _LivelyVmEvalStrategy);
+  createClass(HttpEvalStrategy, null, [{
+    key: "defaultURL",
+    get: function get() {
+      return "http://localhost:3000/lively";
+    }
+  }]);
+
+  function HttpEvalStrategy(url) {
+    classCallCheck(this, HttpEvalStrategy);
+
+    var _this4 = possibleConstructorReturn(this, (HttpEvalStrategy.__proto__ || Object.getPrototypeOf(HttpEvalStrategy)).call(this));
+
+    _this4.url = url || _this4.constructor.defaultURL;
+    return _this4;
+  }
+
+  createClass(HttpEvalStrategy, [{
+    key: "normalizeOptions",
+    value: function normalizeOptions(options) {
+      options = get$1(HttpEvalStrategy.prototype.__proto__ || Object.getPrototypeOf(HttpEvalStrategy.prototype), "normalizeOptions", this).call(this, options);
+      return Object.assign({ serverEvalURL: this.url }, options, { context: null });
+    }
+  }, {
+    key: "sourceForServer",
+    value: function sourceForServer(action, arg, options) {
+      return "\n(function() {\n  var arg = " + JSON.stringify(arg) + ",\n      options = " + JSON.stringify(options) + ";\n  options.context = System.global;\n  function evalFunction(source, options) {\n    var conf = {meta: {}}; conf.meta[options.targetModule] = {format: \"esm\"};\n    lively.modules.System.config(conf);\n    return lively.vm.runEval(source, options);\n  }\n  function keysOfObjectFunction(prefix, options) {\n    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)\n      .then(result => ({completions: result.completions, prefix: result.startLetters}));\n  }\n  options.asString = " + (action === "eval" ? "true" : "false") + ";\n  return " + (action === "eval" ? "evalFunction" : "keysOfObjectFunction") + "(arg, options)\n    .catch(err => ({isError: true, value: String(err.stack || err)}));\n})();\n";
+    }
+  }, {
+    key: "sendRequest",
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(payload, url) {
+        var method, content;
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                method = "sendRequest" + (System.get("@system-env").node ? "_node" : "_web");
+                _context7.next = 3;
+                return this[method](payload, url);
 
               case 3:
-                result = _context14.sent;
-
-                if (printIt) _this7.insertAtCursor(result.value, true);
-                return _context14.abrupt("return", result);
-
-              case 6:
-              case "end":
-                return _context14.stop();
-            }
-          }
-        }, _callee14, _this7);
-      }))();
-    },
-    doListProtocol: function doListProtocol() {
-      var _this8 = this;
-
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
-        var m, prefix, completions, lister;
-        return regeneratorRuntime.wrap(function _callee15$(_context15) {
-          while (1) {
-            switch (_context15.prev = _context15.next) {
-              case 0:
-                _context15.prev = 0;
-                m = lively.module("lively.ide.codeeditor.Completions");
-
-                if (m.isLoaded()) {
-                  _context15.next = 5;
-                  break;
-                }
-
-                _context15.next = 5;
-                return m.load();
-
-              case 5:
-                prefix = _this8.getCodeForCompletions();
-                _context15.next = 8;
-                return evalStrategy(_this8).keysOfObject(prefix, { context: _this8, targetModule: _this8.moduleId() });
+                content = _context7.sent;
+                _context7.prev = 4;
+                return _context7.abrupt("return", JSON.parse(content));
 
               case 8:
-                completions = _context15.sent;
-                lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this8);
-
-                lister.openNarrower(completions);
-                return _context15.abrupt("return", lister);
-
-              case 14:
-                _context15.prev = 14;
-                _context15.t0 = _context15["catch"](0);
-                _this8.showError(_context15.t0);
-              case 17:
-              case "end":
-                return _context15.stop();
-            }
-          }
-        }, _callee15, _this8, [[0, 14]]);
-      }))();
-    },
-    doSave: function doSave() {
-      var _this9 = this;
-
-      return asyncToGenerator(regeneratorRuntime.mark(function _callee16() {
-        return regeneratorRuntime.wrap(function _callee16$(_context16) {
-          while (1) {
-            switch (_context16.prev = _context16.next) {
-              case 0:
-                _this9.savedTextString = _this9.textString;
-
-                if (!_this9.getEvalOnSave()) {
-                  _context16.next = 10;
-                  break;
-                }
-
-                _context16.prev = 2;
-                _context16.next = 5;
-                return lively.modules.moduleSourceChange(_this9.moduleId(), _this9.textString);
-
-              case 5:
-                _context16.next = 10;
-                break;
-
-              case 7:
-                _context16.prev = 7;
-                _context16.t0 = _context16["catch"](2);
-                return _context16.abrupt("return", _this9.showError(_context16.t0));
-
-              case 10:
-                _this9.onSaveDone();
+                _context7.prev = 8;
+                _context7.t0 = _context7["catch"](4);
+                return _context7.abrupt("return", { isError: true, value: "Server eval failed: " + content });
 
               case 11:
               case "end":
-                return _context16.stop();
+                return _context7.stop();
             }
           }
-        }, _callee16, _this9, [[2, 7]]);
-      }))();
-    },
-    onDoitDone: function onDoitDone(result) {},
-    onSaveDone: function onSaveDone() {},
-    getAllCode: function getAllCode() {
-      throw new Error("getAllCode() not yet implemented for " + this.constructor.name);
-    },
-    getCodeForEval: function getCodeForEval() {
-      throw new Error("getCodeForEval() not yet implemented for " + this.constructor.name);
-    },
-    getCodeForCompletions: function getCodeForCompletions() {
-      throw new Error("getCodeForCompletions() not yet implemented for " + this.constructor.name);
-    },
-    moduleId: function moduleId() {
-      throw new Error("moduleId() not yet implemented for " + this.constructor.name);
-    },
-    printObject: function printObject() {
-      throw new Error("printObject() not yet implemented for " + this.constructor.name);
-    },
-    getPrintItAsComment: function getPrintItAsComment() {
-      throw new Error("getPrintItAsComment() not yet implemented for " + this.constructor.name);
-    },
-    insertAtCursor: function insertAtCursor() {
-      throw new Error("insertAtCursor() not yet implemented for " + this.constructor.name);
-    },
-    setStatusMessage: function setStatusMessage() {
-      throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-    }
-  }, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+        }, _callee7, this, [[4, 8]]);
+      }));
+
+      function sendRequest(_x13, _x14) {
+        return _ref7.apply(this, arguments);
+      }
+
+      return sendRequest;
+    }()
+  }, {
+    key: "sendRequest_web",
+    value: function () {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8(payload, url) {
+        var res;
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _context8.prev = 0;
+                _context8.next = 3;
+                return window.fetch(url, payload);
+
+              case 3:
+                res = _context8.sent;
+                _context8.next = 9;
+                break;
+
+              case 6:
+                _context8.prev = 6;
+                _context8.t0 = _context8["catch"](0);
+                throw new Error("Cannot reach server at " + url + ": " + _context8.t0.message);
+
+              case 9:
+                if (res.ok) {
+                  _context8.next = 11;
+                  break;
+                }
+
+                throw new Error("Server at " + url + ": " + res.statusText);
+
+              case 11:
+                return _context8.abrupt("return", res.text());
+
+              case 12:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this, [[0, 6]]);
+      }));
+
+      function sendRequest_web(_x15, _x16) {
+        return _ref8.apply(this, arguments);
+      }
+
+      return sendRequest_web;
+    }()
+  }, {
+    key: "sendRequest_node",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(payload, url) {
+        var urlParse, http, opts;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                urlParse = System._nodeRequire("url").parse, http = System._nodeRequire("http"), opts = Object.assign({ method: payload.method || "GET" }, urlParse(url));
+                return _context9.abrupt("return", new Promise(function (resolve, reject) {
+                  var request = http.request(opts, function (res) {
+                    res.setEncoding('utf8');
+                    var data = "";
+                    res.on('data', function (chunk) {
+                      return data += chunk;
+                    });
+                    res.on('end', function () {
+                      return resolve(data);
+                    });
+                    res.on('error', function (err) {
+                      return reject(err);
+                    });
+                  });
+                  request.on('error', function (err) {
+                    return reject(err);
+                  });
+                  request.end(payload.body);
+                }));
+
+              case 2:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function sendRequest_node(_x17, _x18) {
+        return _ref9.apply(this, arguments);
+      }
+
+      return sendRequest_node;
+    }()
+  }, {
+    key: "runEval",
+    value: function () {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(source, options) {
+        var payLoad;
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                options = this.normalizeOptions(options);
+                payLoad = { method: "POST", body: this.sourceForServer("eval", source, options) };
+                return _context10.abrupt("return", this.sendRequest(payLoad, options.serverEvalURL));
+
+              case 3:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function runEval(_x19, _x20) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return runEval;
+    }()
+  }, {
+    key: "keysOfObject",
+    value: function () {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(prefix, options) {
+        var payLoad, result;
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                options = this.normalizeOptions(options);
+                payLoad = { method: "POST", body: this.sourceForServer("keysOfObject", prefix, options) };
+                _context11.next = 4;
+                return this.sendRequest(payLoad, options.serverEvalURL);
+
+              case 4:
+                result = _context11.sent;
+
+                if (!result.isError) {
+                  _context11.next = 7;
+                  break;
+                }
+
+                throw new Error(result.value);
+
+              case 7:
+                return _context11.abrupt("return", result);
+
+              case 8:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function keysOfObject(_x21, _x22) {
+        return _ref11.apply(this, arguments);
+      }
+
+      return keysOfObject;
+    }()
+  }]);
+  return HttpEvalStrategy;
+}(LivelyVmEvalStrategy);
+
+function evalStrategy(morph) {
+  return morph.state && morph.state.evalStrategy || new LivelyVmEvalStrategy();
+}
+
+function processEvalError(evalResult) {
+  // produce a hopefully helpful string out of an error
+  var isError = evalResult.isError;
+  var value = evalResult.value;
+  var warnings = evalResult.warnings;
+
+  console.assert(evalResult.isError, "processEvalError called with non-error eval result");
+  var error = String(value),
+      stack = value.stack,
+      warning = warnings ? warnings.join("\n") : "";
+  if (error.match(/syntaxerror/i) && warning.match(/syntaxerror/i)) {
+    return warning + "\n\n" + error;
+  }
+  return stack || error;
+}
+
+var EvalableTextMorphTrait = (_EvalableTextMorphTra = {
+  applyTo: function applyTo(obj$$1) {
+    var overrides = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+    var trait = this,
+        dontCopy = ["applyTo"].concat(lively.lang.arr.withoutAll(lively.lang.properties.allProperties(obj$$1), overrides));
+    Object.keys(trait).filter(function (key) {
+      return !dontCopy.includes(key);
+    }).forEach(function (key) {
+      return Object.defineProperty(obj$$1, key, { configurable: true, get: function get() {
+          return trait[key];
+        }
+      });
+    });
+    return obj$$1;
+  },
+  doit: function doit(printResult, editor, options) {
+    var _this5 = this;
+
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+      var result, val;
+      return regeneratorRuntime.wrap(function _callee12$(_context12) {
+        while (1) {
+          switch (_context12.prev = _context12.next) {
+            case 0:
+              _context12.prev = 0;
+
+              options = Object.assign({
+                inspect: !printResult,
+                printDepth: _this5.printInspectMaxDepth,
+                targetModule: _this5.moduleId(),
+                context: _this5
+              }, options);
+              _context12.next = 4;
+              return evalStrategy(_this5).runEval(_this5.getCodeForEval(), options);
+
+            case 4:
+              result = _context12.sent;
+              val = result.isError ? processEvalError(result) : result.value;
+
+              if (printResult) {
+                _this5.printObject(editor, val, false, _this5.getPrintItAsComment());
+              } else {
+                _this5[result.isError ? "showError" : "setStatusMessage"](val);
+              }
+              _this5.onDoitDone(result);
+              return _context12.abrupt("return", result);
+
+            case 11:
+              _context12.prev = 11;
+              _context12.t0 = _context12["catch"](0);
+              _this5.showError(_context12.t0);throw _context12.t0;
+
+            case 15:
+            case "end":
+              return _context12.stop();
+          }
+        }
+      }, _callee12, _this5, [[0, 11]]);
+    }))();
+  },
+  printInspect: function printInspect(options) {
+    var _this6 = this;
+
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee13() {
+      var msgMorph, ed;
+      return regeneratorRuntime.wrap(function _callee13$(_context13) {
+        while (1) {
+          switch (_context13.prev = _context13.next) {
+            case 0:
+              options = options || {};
+              msgMorph = _this6._statusMorph;
+              _context13.next = 4;
+              return new Promise(function (resolve, reject) {
+                return _this6.withAceDo(resolve);
+              });
+
+            case 4:
+              ed = _context13.sent;
+
+              if (!(msgMorph && msgMorph.world())) {
+                _context13.next = 7;
+                break;
+              }
+
+              return _context13.abrupt("return", ed.execCommand('insertEvalResult'));
+
+            case 7:
+              return _context13.abrupt("return", _this6.doit(true, ed, { inspect: true, printDepth: options.depth || _this6.printInspectMaxDepth }));
+
+            case 8:
+            case "end":
+              return _context13.stop();
+          }
+        }
+      }, _callee13, _this6);
+    }))();
+  },
+  evalSelection: function evalSelection(printIt) {
+    var _this7 = this;
+
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee14() {
+      var options, result;
+      return regeneratorRuntime.wrap(function _callee14$(_context14) {
+        while (1) {
+          switch (_context14.prev = _context14.next) {
+            case 0:
+              options = { context: _this7, targetModule: _this7.moduleId(), asString: !!printIt };
+              _context14.next = 3;
+              return evalStrategy(_this7).runEval(_this7.getCodeForEval(), options);
+
+            case 3:
+              result = _context14.sent;
+
+              if (printIt) _this7.insertAtCursor(result.value, true);
+              return _context14.abrupt("return", result);
+
+            case 6:
+            case "end":
+              return _context14.stop();
+          }
+        }
+      }, _callee14, _this7);
+    }))();
+  },
+  doListProtocol: function doListProtocol() {
+    var _this8 = this;
+
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee15() {
+      var m, prefix, completions, lister;
+      return regeneratorRuntime.wrap(function _callee15$(_context15) {
+        while (1) {
+          switch (_context15.prev = _context15.next) {
+            case 0:
+              _context15.prev = 0;
+              m = lively.module("lively.ide.codeeditor.Completions");
+
+              if (m.isLoaded()) {
+                _context15.next = 5;
+                break;
+              }
+
+              _context15.next = 5;
+              return m.load();
+
+            case 5:
+              prefix = _this8.getCodeForCompletions();
+              _context15.next = 8;
+              return evalStrategy(_this8).keysOfObject(prefix, { context: _this8, targetModule: _this8.moduleId() });
+
+            case 8:
+              completions = _context15.sent;
+              lister = new lively.ide.codeeditor.Completions.ProtocolLister(_this8);
+
+              lister.openNarrower(completions);
+              return _context15.abrupt("return", lister);
+
+            case 14:
+              _context15.prev = 14;
+              _context15.t0 = _context15["catch"](0);
+              _this8.showError(_context15.t0);
+            case 17:
+            case "end":
+              return _context15.stop();
+          }
+        }
+      }, _callee15, _this8, [[0, 14]]);
+    }))();
+  },
+  doSave: function doSave() {
+    var _this9 = this;
+
+    return asyncToGenerator(regeneratorRuntime.mark(function _callee16() {
+      return regeneratorRuntime.wrap(function _callee16$(_context16) {
+        while (1) {
+          switch (_context16.prev = _context16.next) {
+            case 0:
+              _this9.savedTextString = _this9.textString;
+
+              if (!_this9.getEvalOnSave()) {
+                _context16.next = 10;
+                break;
+              }
+
+              _context16.prev = 2;
+              _context16.next = 5;
+              return lively.modules.moduleSourceChange(_this9.moduleId(), _this9.textString);
+
+            case 5:
+              _context16.next = 10;
+              break;
+
+            case 7:
+              _context16.prev = 7;
+              _context16.t0 = _context16["catch"](2);
+              return _context16.abrupt("return", _this9.showError(_context16.t0));
+
+            case 10:
+              _this9.onSaveDone();
+
+            case 11:
+            case "end":
+              return _context16.stop();
+          }
+        }
+      }, _callee16, _this9, [[2, 7]]);
+    }))();
+  },
+  onDoitDone: function onDoitDone(result) {},
+  onSaveDone: function onSaveDone() {},
+  getAllCode: function getAllCode() {
+    throw new Error("getAllCode() not yet implemented for " + this.constructor.name);
+  },
+  getCodeForEval: function getCodeForEval() {
+    throw new Error("getCodeForEval() not yet implemented for " + this.constructor.name);
+  },
+  getCodeForCompletions: function getCodeForCompletions() {
+    throw new Error("getCodeForCompletions() not yet implemented for " + this.constructor.name);
+  },
+  moduleId: function moduleId() {
+    throw new Error("moduleId() not yet implemented for " + this.constructor.name);
+  },
+  printObject: function printObject() {
+    throw new Error("printObject() not yet implemented for " + this.constructor.name);
+  },
+  getPrintItAsComment: function getPrintItAsComment() {
+    throw new Error("getPrintItAsComment() not yet implemented for " + this.constructor.name);
+  },
+  insertAtCursor: function insertAtCursor() {
+    throw new Error("insertAtCursor() not yet implemented for " + this.constructor.name);
+  },
+  setStatusMessage: function setStatusMessage() {
     throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
-  }), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
-    throw new Error("showError() not yet implemented for " + this.constructor.name);
-  }), _EvalableTextMorphTra);
+  }
+}, defineProperty(_EvalableTextMorphTra, "setStatusMessage", function setStatusMessage() {
+  throw new Error("setStatusMessage() not yet implemented for " + this.constructor.name);
+}), defineProperty(_EvalableTextMorphTra, "showError", function showError() {
+  throw new Error("showError() not yet implemented for " + this.constructor.name);
+}), _EvalableTextMorphTra);
 
 
 
-  var evalStrategies = Object.freeze({
-    EvalStrategy: EvalStrategy,
-    SimpleEvalStrategy: SimpleEvalStrategy,
-    LivelyVmEvalStrategy: LivelyVmEvalStrategy,
-    HttpEvalStrategy: HttpEvalStrategy,
-    EvalableTextMorphTrait: EvalableTextMorphTrait
-  });
+var evalStrategies = Object.freeze({
+	EvalStrategy: EvalStrategy,
+	SimpleEvalStrategy: SimpleEvalStrategy,
+	LivelyVmEvalStrategy: LivelyVmEvalStrategy,
+	HttpEvalStrategy: HttpEvalStrategy,
+	EvalableTextMorphTrait: EvalableTextMorphTrait
+});
 
-  function runEval(code, options) {
-    options = Object.assign({
-      format: "global",
-      System: null,
-      targetModule: null
-    }, options);
+function runEval$$1(code, options) {
+  options = Object.assign({
+    format: "global",
+    System: null,
+    targetModule: null
+  }, options);
 
-    var S = options.System || typeof System !== "undefined" && System;
-    if (!S && options.targetModule) {
-      return Promise.reject(new Error("options to runEval have targetModule but cannot find system loader!"));
-    }
-
-    return options.targetModule ? runEval$1(options.System || System, code, options) : vmRunEval(code, options);
+  var S = options.System || typeof System !== "undefined" && System;
+  if (!S && options.targetModule) {
+    return Promise.reject(new Error("options to runEval have targetModule but cannot find system loader!"));
   }
 
-  function syncEval(code, options) {
-    return syncEval$1(code, options);
-  }
+  return options.targetModule ? runEval$2(options.System || System, code, options) : runEval$1(code, options);
+}
 
-  exports.completions = completions;
-  exports.runEval = runEval;
-  exports.syncEval = syncEval;
-  exports.evalStrategies = evalStrategies;
-  exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
-  exports.evalCodeTransform = evalCodeTransform;
-  exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
+function syncEval$$1(code, options) {
+  return syncEval$1(code, options);
+}
+
+exports.completions = completions;
+exports.runEval = runEval$$1;
+exports.syncEval = syncEval$$1;
+exports.evalStrategies = evalStrategies;
+exports.defaultTopLevelVarRecorderName = defaultTopLevelVarRecorderName;
+exports.evalCodeTransform = evalCodeTransform;
+exports.evalCodeTransformOfSystemRegisterSetters = evalCodeTransformOfSystemRegisterSetters;
 
 }((this.lively.vm = this.lively.vm || {}),lively.lang,lively.ast,lively.notifications));
+
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.vm;
 })();
 (function() {
@@ -23859,1275 +24251,1555 @@ var categorizer = Object.freeze({
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
 (function (exports,fs) {
-  'use strict';
+'use strict';
 
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-  };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
 
-  var asyncToGenerator = function (fn) {
-    return function () {
-      var gen = fn.apply(this, arguments);
-      return new Promise(function (resolve, reject) {
-        function step(key, arg) {
-          try {
-            var info = gen[key](arg);
-            var value = info.value;
-          } catch (error) {
-            reject(error);
-            return;
-          }
 
-          if (info.done) {
-            resolve(value);
-          } else {
-            return Promise.resolve(value).then(function (value) {
-              return step("next", value);
-            }, function (err) {
-              return step("throw", err);
-            });
-          }
-        }
 
-        return step("next");
-      });
-    };
-  };
 
-  var classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  };
 
-  var createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
-
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-
-  var inherits = function (subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-    }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  };
-
-  var possibleConstructorReturn = function (self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  };
-
-  var slashEndRe = /\/+$/;
-  var slashStartRe = /^\/+/;
-  var protocolRe = /^[a-z0-9-_]+:/;
-  var slashslashRe = /^\/\/[^\/]+/;
-  function nyi(obj, name) {
-    throw new Error(name + " for " + obj.constructor.name + " not yet implemented");
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
   }
 
-  var Resource = function () {
-    function Resource(url) {
-      classCallCheck(this, Resource);
+  function AsyncGenerator(gen) {
+    var front, back;
 
-      this.isResource = true;
-      this.url = String(url);
-    }
-
-    createClass(Resource, [{
-      key: "toString",
-      value: function toString() {
-        return this.constructor.name + "(\"" + this.url + "\")";
-      }
-    }, {
-      key: "path",
-      value: function path() {
-        var path = this.url.replace(protocolRe, "").replace(slashslashRe, "");
-        return path === "" ? "/" : path;
-      }
-    }, {
-      key: "schemeAndHost",
-      value: function schemeAndHost() {
-        return this.url.slice(0, this.url.length - this.path().length);
-      }
-    }, {
-      key: "parent",
-      value: function parent() {
-        if (this.isRoot()) return null;
-        return resource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
-      }
-    }, {
-      key: "parents",
-      value: function parents() {
-        var result = [],
-            p = this.parent();
-        while (p) {
-          result.unshift(p);p = p.parent();
-        }
-        return result;
-      }
-    }, {
-      key: "join",
-      value: function join(path) {
-        return resource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
-      }
-    }, {
-      key: "isRoot",
-      value: function isRoot() {
-        return this.path() === "/";
-      }
-    }, {
-      key: "isFile",
-      value: function isFile() {
-        return !this.isRoot() && !this.url.match(slashEndRe);
-      }
-    }, {
-      key: "isDirectory",
-      value: function isDirectory() {
-        return !this.isFile();
-      }
-    }, {
-      key: "asDirectory",
-      value: function asDirectory() {
-        return resource(this.url.replace(slashEndRe, "") + "/");
-      }
-    }, {
-      key: "root",
-      value: function root() {
-        var toplevel = this.url.slice(0, -this.path().length);
-        return resource(toplevel + "/");
-      }
-    }, {
-      key: "asFile",
-      value: function asFile() {
-        return resource(this.url.replace(slashEndRe, ""));
-      }
-    }, {
-      key: "ensureExistance",
-      value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  _context.next = 2;
-                  return this.exists();
-
-                case 2:
-                  if (!_context.sent) {
-                    _context.next = 4;
-                    break;
-                  }
-
-                  return _context.abrupt("return", this);
-
-                case 4:
-                  _context.next = 6;
-                  return this.parent().ensureExistance();
-
-                case 6:
-                  if (!this.isFile()) {
-                    _context.next = 11;
-                    break;
-                  }
-
-                  _context.next = 9;
-                  return this.write(optionalContent || "");
-
-                case 9:
-                  _context.next = 13;
-                  break;
-
-                case 11:
-                  _context.next = 13;
-                  return this.mkdir();
-
-                case 13:
-                  return _context.abrupt("return", this);
-
-                case 14:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function ensureExistance(_x) {
-          return _ref.apply(this, arguments);
-        }
-
-        return ensureExistance;
-      }()
-    }, {
-      key: "read",
-      value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  nyi(this, "read");
-                case 1:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, this);
-        }));
-
-        function read() {
-          return _ref2.apply(this, arguments);
-        }
-
-        return read;
-      }()
-    }, {
-      key: "write",
-      value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-              switch (_context3.prev = _context3.next) {
-                case 0:
-                  nyi(this, "write");
-                case 1:
-                case "end":
-                  return _context3.stop();
-              }
-            }
-          }, _callee3, this);
-        }));
-
-        function write() {
-          return _ref3.apply(this, arguments);
-        }
-
-        return write;
-      }()
-    }, {
-      key: "exists",
-      value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  nyi(this, "exists");
-                case 1:
-                case "end":
-                  return _context4.stop();
-              }
-            }
-          }, _callee4, this);
-        }));
-
-        function exists() {
-          return _ref4.apply(this, arguments);
-        }
-
-        return exists;
-      }()
-    }, {
-      key: "remove",
-      value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
-          return regeneratorRuntime.wrap(function _callee5$(_context5) {
-            while (1) {
-              switch (_context5.prev = _context5.next) {
-                case 0:
-                  nyi(this, "remove");
-                case 1:
-                case "end":
-                  return _context5.stop();
-              }
-            }
-          }, _callee5, this);
-        }));
-
-        function remove() {
-          return _ref5.apply(this, arguments);
-        }
-
-        return remove;
-      }()
-    }, {
-      key: "dirList",
-      value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(depth) {
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
-            while (1) {
-              switch (_context6.prev = _context6.next) {
-                case 0:
-                  nyi(this, "dirList");
-                case 1:
-                case "end":
-                  return _context6.stop();
-              }
-            }
-          }, _callee6, this);
-        }));
-
-        function dirList(_x2) {
-          return _ref6.apply(this, arguments);
-        }
-
-        return dirList;
-      }()
-    }]);
-    return Resource;
-  }();
-
-  var XPathQuery = function () {
-    function XPathQuery(expression) {
-      classCallCheck(this, XPathQuery);
-
-      this.expression = expression;
-      this.contextNode = null;
-      this.xpe = new XPathEvaluator();
-    }
-
-    createClass(XPathQuery, [{
-      key: "establishContext",
-      value: function establishContext(node) {
-        if (this.nsResolver) return;
-        var ctx = node.ownerDocument ? node.ownerDocument.documentElement : node.documentElement;
-        if (ctx !== this.contextNode) {
-          this.contextNode = ctx;
-          this.nsResolver = this.xpe.createNSResolver(ctx);
-        }
-      }
-    }, {
-      key: "manualNSLookup",
-      value: function manualNSLookup() {
-        this.nsResolver = function (prefix) {
-          return Namespace[prefix.toUpperCase()] || null;
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
         };
-        return this;
-      }
-    }, {
-      key: "findAll",
-      value: function findAll(node, defaultValue) {
-        this.establishContext(node);
-        var result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null),
-            accumulator = [],
-            res = null;
-        while (res = result.iterateNext()) {
-          accumulator.push(res);
-        }return accumulator.length > 0 || defaultValue === undefined ? accumulator : defaultValue;
-      }
-    }, {
-      key: "findFirst",
-      value: function findFirst(node) {
-        this.establishContext(node);
-        var result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
-        return result.iterateNext();
-      }
-    }]);
-    return XPathQuery;
-  }();
 
-  function davNs(xmlString) {
-    // finds the declaration of the webdav namespace, usually "d" or "D"
-    var davNSMatch = xmlString.match(/\/([a-z]+?):multistatus/i);
-    return davNSMatch ? davNSMatch[1] : "d";
-  }
-
-  function urlListFromPropfindDocument(xmlString) {
-    // the xmlString looks like this:
-    // <?xml version="1.0" encoding="utf-8"?>
-    // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
-    //   <d:response>
-    //     <d:href>sub-dir/</d:href>
-    //     <d:propstat>
-    //       <d:prop>
-    //         <d:getlastmodified xmlns:b="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" b:dt="dateTime.rfc1123">Fri, 24 Jun 2016 09:58:20 -0700</d:getlastmodified>
-    //         <d:resourcetype>
-    //           <d:collection/>
-    //         </d:resourcetype>
-    //       </d:prop>
-    //       <d:status>HTTP/1.1 200 Ok</d:status>
-    //     </d:propstat>
-    //   </d:response>
-    // ...
-    // </d:multistatus>
-
-    var doc = new DOMParser().parseFromString(xmlString, "text/xml"),
-        ns = davNs(xmlString),
-        nodes = new XPathQuery("/" + ns + ":multistatus/" + ns + ":response").findAll(doc.documentElement),
-        urlQ = new XPathQuery(ns + ":href");
-    return nodes.slice(1 /*first node is source*/).map(function (node) {
-      var urlNode = urlQ.findFirst(node);
-      return urlNode.textContent || urlNode.text; // text is FIX for IE9+
-    });
-  }
-
-  var WebDAVResource = function (_Resource) {
-    inherits(WebDAVResource, _Resource);
-
-    function WebDAVResource() {
-      classCallCheck(this, WebDAVResource);
-      return possibleConstructorReturn(this, Object.getPrototypeOf(WebDAVResource).apply(this, arguments));
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
     }
 
-    createClass(WebDAVResource, [{
-      key: "read",
-      value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  _context.next = 2;
-                  return fetch(this.url, { mode: 'cors' });
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
 
-                case 2:
-                  return _context.abrupt("return", _context.sent.text());
-
-                case 3:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function read() {
-          return _ref.apply(this, arguments);
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
         }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
 
-        return read;
-      }()
-    }, {
-      key: "write",
-      value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(content) {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  if (this.isFile()) {
-                    _context2.next = 2;
-                    break;
-                  }
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
 
-                  throw new Error("Cannot write a non-file: " + this.url);
+        case "throw":
+          front.reject(value);
+          break;
 
-                case 2:
-                  _context2.next = 4;
-                  return fetch(this.url, { mode: 'cors', method: "PUT", body: content });
-
-                case 4:
-                  return _context2.abrupt("return", this);
-
-                case 5:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, this);
-        }));
-
-        function write(_x) {
-          return _ref2.apply(this, arguments);
-        }
-
-        return write;
-      }()
-    }, {
-      key: "mkdir",
-      value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-              switch (_context3.prev = _context3.next) {
-                case 0:
-                  if (!this.isFile()) {
-                    _context3.next = 2;
-                    break;
-                  }
-
-                  throw new Error("Cannot mkdir on a file: " + this.url);
-
-                case 2:
-                  _context3.next = 4;
-                  return fetch(this.url, { mode: 'cors', method: "MKCOL" });
-
-                case 4:
-                  return _context3.abrupt("return", this);
-
-                case 5:
-                case "end":
-                  return _context3.stop();
-              }
-            }
-          }, _callee3, this);
-        }));
-
-        function mkdir() {
-          return _ref3.apply(this, arguments);
-        }
-
-        return mkdir;
-      }()
-    }, {
-      key: "exists",
-      value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  if (!this.isRoot()) {
-                    _context4.next = 4;
-                    break;
-                  }
-
-                  _context4.t0 = true;
-                  _context4.next = 7;
-                  break;
-
-                case 4:
-                  _context4.next = 6;
-                  return fetch(this.url, { mode: 'cors', method: "HEAD" });
-
-                case 6:
-                  _context4.t0 = !!_context4.sent.ok;
-
-                case 7:
-                  return _context4.abrupt("return", _context4.t0);
-
-                case 8:
-                case "end":
-                  return _context4.stop();
-              }
-            }
-          }, _callee4, this);
-        }));
-
-        function exists() {
-          return _ref4.apply(this, arguments);
-        }
-
-        return exists;
-      }()
-    }, {
-      key: "remove",
-      value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
-          return regeneratorRuntime.wrap(function _callee5$(_context5) {
-            while (1) {
-              switch (_context5.prev = _context5.next) {
-                case 0:
-                  _context5.next = 2;
-                  return fetch(this.url, { mode: 'cors', method: "DELETE" });
-
-                case 2:
-                  return _context5.abrupt("return", this);
-
-                case 3:
-                case "end":
-                  return _context5.stop();
-              }
-            }
-          }, _callee5, this);
-        }));
-
-        function remove() {
-          return _ref5.apply(this, arguments);
-        }
-
-        return remove;
-      }()
-    }, {
-      key: "dirList",
-      value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
-          var depth = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
-          var res, xmlString, root, subResources, subCollections;
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
-            while (1) {
-              switch (_context6.prev = _context6.next) {
-                case 0:
-                  if (this.isDirectory()) {
-                    _context6.next = 2;
-                    break;
-                  }
-
-                  throw new Error("dirList called on non-directory: " + this.path());
-
-                case 2:
-                  if (!(typeof depth !== "number" && depth !== 'infinity')) {
-                    _context6.next = 4;
-                    break;
-                  }
-
-                  throw new Error("dirList – invalid depth argument: " + depth);
-
-                case 4:
-
-                  if (depth <= 0) depth = 1;
-
-                  if (!(depth === 1)) {
-                    _context6.next = 18;
-                    break;
-                  }
-
-                  _context6.next = 8;
-                  return fetch(this.url, {
-                    method: "PROPFIND",
-                    mode: 'cors',
-                    redirect: 'follow',
-                    headers: new Headers({
-                      'Content-Type': 'text/xml'
-                    })
-                  });
-
-                case 8:
-                  res = _context6.sent;
-
-                  if (res.ok) {
-                    _context6.next = 11;
-                    break;
-                  }
-
-                  throw new Error("Error in dirList for " + this.url + ": " + res.statusText);
-
-                case 11:
-                  _context6.next = 13;
-                  return res.text();
-
-                case 13:
-                  xmlString = _context6.sent;
-                  root = this.root();
-                  return _context6.abrupt("return", urlListFromPropfindDocument(xmlString).map(function (path) {
-                    return root.join(path);
-                  }));
-
-                case 18:
-                  _context6.next = 20;
-                  return this.dirList(1);
-
-                case 20:
-                  subResources = _context6.sent;
-                  subCollections = subResources.filter(function (ea) {
-                    return ea.isDirectory();
-                  });
-                  return _context6.abrupt("return", Promise.all(subCollections.map(function (col) {
-                    return col.dirList(typeof depth === "number" ? depth - 1 : depth);
-                  })).then(function (recursiveResult) {
-                    return recursiveResult.reduce(function (all, ea) {
-                      return all.concat(ea);
-                    }, subResources);
-                  }));
-
-                case 23:
-                case "end":
-                  return _context6.stop();
-              }
-            }
-          }, _callee6, this);
-        }));
-
-        function dirList(_x2) {
-          return _ref6.apply(this, arguments);
-        }
-
-        return dirList;
-      }()
-    }]);
-    return WebDAVResource;
-  }(Resource);
-
-  function wrapInPromise(func) {
-    return function () {
-      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
       }
 
-      return new Promise(function (resolve, reject) {
-        return func.apply(null, args.concat(function (err, result) {
-          return err ? reject(err) : resolve(result);
-        }));
-      });
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
     };
   }
 
-  var readFileP = wrapInPromise(fs.readFile);
-  var writeFileP = wrapInPromise(fs.writeFile);
-  var existsP = function existsP(path) {
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
     return new Promise(function (resolve, reject) {
-      return fs.exists(path, function (exists) {
-        return resolve(!!exists);
-      });
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
     });
   };
-  var readdirP = wrapInPromise(fs.readdir);
-  var mkdirP = wrapInPromise(fs.mkdir);
-  var rmdirP = wrapInPromise(fs.rmdir);
-  var unlinkP = wrapInPromise(fs.unlink);
-  var lstatP = wrapInPromise(fs.lstat);
-  var NodeJSFileResource = function (_Resource) {
-    inherits(NodeJSFileResource, _Resource);
+};
 
-    function NodeJSFileResource() {
-      classCallCheck(this, NodeJSFileResource);
-      return possibleConstructorReturn(this, Object.getPrototypeOf(NodeJSFileResource).apply(this, arguments));
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
     }
-
-    createClass(NodeJSFileResource, [{
-      key: "stat",
-      value: function () {
-        var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  return _context.abrupt("return", lstatP(this.path()));
-
-                case 1:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function stat() {
-          return _ref.apply(this, arguments);
-        }
-
-        return stat;
-      }()
-    }, {
-      key: "read",
-      value: function () {
-        var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  return _context2.abrupt("return", readFileP(this.path()).then(String));
-
-                case 1:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, this);
-        }));
-
-        function read() {
-          return _ref2.apply(this, arguments);
-        }
-
-        return read;
-      }()
-    }, {
-      key: "write",
-      value: function () {
-        var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-              switch (_context3.prev = _context3.next) {
-                case 0:
-                  if (!this.isDirectory()) {
-                    _context3.next = 2;
-                    break;
-                  }
-
-                  throw new Error("Cannot write into a directory: " + this.path());
-
-                case 2:
-                  _context3.next = 4;
-                  return writeFileP(this.path(), content);
-
-                case 4:
-                  return _context3.abrupt("return", this);
-
-                case 5:
-                case "end":
-                  return _context3.stop();
-              }
-            }
-          }, _callee3, this);
-        }));
-
-        function write(_x) {
-          return _ref3.apply(this, arguments);
-        }
-
-        return write;
-      }()
-    }, {
-      key: "mkdir",
-      value: function () {
-        var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(content) {
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  if (!this.isFile()) {
-                    _context4.next = 2;
-                    break;
-                  }
-
-                  throw new Error("Cannot mkdir on a file: " + this.path());
-
-                case 2:
-                  _context4.next = 4;
-                  return mkdirP(this.path());
-
-                case 4:
-                  return _context4.abrupt("return", this);
-
-                case 5:
-                case "end":
-                  return _context4.stop();
-              }
-            }
-          }, _callee4, this);
-        }));
-
-        function mkdir(_x2) {
-          return _ref4.apply(this, arguments);
-        }
-
-        return mkdir;
-      }()
-    }, {
-      key: "exists",
-      value: function () {
-        var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
-          return regeneratorRuntime.wrap(function _callee5$(_context5) {
-            while (1) {
-              switch (_context5.prev = _context5.next) {
-                case 0:
-                  return _context5.abrupt("return", this.isRoot() ? true : existsP(this.path()));
-
-                case 1:
-                case "end":
-                  return _context5.stop();
-              }
-            }
-          }, _callee5, this);
-        }));
-
-        function exists() {
-          return _ref5.apply(this, arguments);
-        }
-
-        return exists;
-      }()
-    }, {
-      key: "dirList",
-      value: function () {
-        var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
-          var depth = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
-
-          var subResources, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, name, subResource, subCollections;
-
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
-            while (1) {
-              switch (_context6.prev = _context6.next) {
-                case 0:
-                  if (this.isDirectory()) {
-                    _context6.next = 2;
-                    break;
-                  }
-
-                  throw new Error("dirList called on non-directory: " + this.path());
-
-                case 2:
-                  if (!(typeof depth !== "number" && depth !== 'infinity')) {
-                    _context6.next = 4;
-                    break;
-                  }
-
-                  throw new Error("dirList – invalid depth argument: " + depth);
-
-                case 4:
-
-                  if (depth <= 0) depth = 1;
-
-                  if (!(depth === 1)) {
-                    _context6.next = 48;
-                    break;
-                  }
-
-                  subResources = [];
-                  _iteratorNormalCompletion = true;
-                  _didIteratorError = false;
-                  _iteratorError = undefined;
-                  _context6.prev = 10;
-                  _context6.next = 13;
-                  return readdirP(this.path());
-
-                case 13:
-                  _context6.t0 = Symbol.iterator;
-                  _iterator = _context6.sent[_context6.t0]();
-
-                case 15:
-                  if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                    _context6.next = 31;
-                    break;
-                  }
-
-                  name = _step.value;
-                  subResource = this.join(name);
-                  _context6.t1 = subResources;
-                  _context6.next = 21;
-                  return subResource.stat();
-
-                case 21:
-                  if (!_context6.sent.isDirectory()) {
-                    _context6.next = 25;
-                    break;
-                  }
-
-                  _context6.t2 = subResource.asDirectory();
-                  _context6.next = 26;
-                  break;
-
-                case 25:
-                  _context6.t2 = subResource;
-
-                case 26:
-                  _context6.t3 = _context6.t2;
-
-                  _context6.t1.push.call(_context6.t1, _context6.t3);
-
-                case 28:
-                  _iteratorNormalCompletion = true;
-                  _context6.next = 15;
-                  break;
-
-                case 31:
-                  _context6.next = 37;
-                  break;
-
-                case 33:
-                  _context6.prev = 33;
-                  _context6.t4 = _context6["catch"](10);
-                  _didIteratorError = true;
-                  _iteratorError = _context6.t4;
-
-                case 37:
-                  _context6.prev = 37;
-                  _context6.prev = 38;
-
-                  if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                  }
-
-                case 40:
-                  _context6.prev = 40;
-
-                  if (!_didIteratorError) {
-                    _context6.next = 43;
-                    break;
-                  }
-
-                  throw _iteratorError;
-
-                case 43:
-                  return _context6.finish(40);
-
-                case 44:
-                  return _context6.finish(37);
-
-                case 45:
-                  return _context6.abrupt("return", subResources);
-
-                case 48:
-                  _context6.next = 50;
-                  return this.dirList(1);
-
-                case 50:
-                  subResources = _context6.sent;
-                  subCollections = subResources.filter(function (ea) {
-                    return ea.isDirectory();
-                  });
-                  return _context6.abrupt("return", Promise.all(subCollections.map(function (col) {
-                    return col.dirList(typeof depth === "number" ? depth - 1 : depth);
-                  })).then(function (recursiveResult) {
-                    return recursiveResult.reduce(function (all, ea) {
-                      return all.concat(ea);
-                    }, subResources);
-                  }));
-
-                case 53:
-                case "end":
-                  return _context6.stop();
-              }
-            }
-          }, _callee6, this, [[10, 33, 37, 45], [38,, 40, 44]]);
-        }));
-
-        function dirList(_x3) {
-          return _ref6.apply(this, arguments);
-        }
-
-        return dirList;
-      }()
-    }, {
-      key: "isEmptyDirectory",
-      value: function () {
-        var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
-          return regeneratorRuntime.wrap(function _callee7$(_context7) {
-            while (1) {
-              switch (_context7.prev = _context7.next) {
-                case 0:
-                  _context7.next = 2;
-                  return this.dirList();
-
-                case 2:
-                  _context7.t0 = _context7.sent.length;
-                  return _context7.abrupt("return", _context7.t0 === 0);
-
-                case 4:
-                case "end":
-                  return _context7.stop();
-              }
-            }
-          }, _callee7, this);
-        }));
-
-        function isEmptyDirectory() {
-          return _ref7.apply(this, arguments);
-        }
-
-        return isEmptyDirectory;
-      }()
-    }, {
-      key: "remove",
-      value: function () {
-        var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-          var _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subResource;
-
-          return regeneratorRuntime.wrap(function _callee8$(_context8) {
-            while (1) {
-              switch (_context8.prev = _context8.next) {
-                case 0:
-                  _context8.next = 2;
-                  return this.exists();
-
-                case 2:
-                  if (_context8.sent) {
-                    _context8.next = 5;
-                    break;
-                  }
-
-                  _context8.next = 41;
-                  break;
-
-                case 5:
-                  if (!this.isDirectory()) {
-                    _context8.next = 39;
-                    break;
-                  }
-
-                  _iteratorNormalCompletion2 = true;
-                  _didIteratorError2 = false;
-                  _iteratorError2 = undefined;
-                  _context8.prev = 9;
-                  _context8.next = 12;
-                  return this.dirList();
-
-                case 12:
-                  _context8.t0 = Symbol.iterator;
-                  _iterator2 = _context8.sent[_context8.t0]();
-
-                case 14:
-                  if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-                    _context8.next = 21;
-                    break;
-                  }
-
-                  subResource = _step2.value;
-                  _context8.next = 18;
-                  return subResource.remove();
-
-                case 18:
-                  _iteratorNormalCompletion2 = true;
-                  _context8.next = 14;
-                  break;
-
-                case 21:
-                  _context8.next = 27;
-                  break;
-
-                case 23:
-                  _context8.prev = 23;
-                  _context8.t1 = _context8["catch"](9);
-                  _didIteratorError2 = true;
-                  _iteratorError2 = _context8.t1;
-
-                case 27:
-                  _context8.prev = 27;
-                  _context8.prev = 28;
-
-                  if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                    _iterator2.return();
-                  }
-
-                case 30:
-                  _context8.prev = 30;
-
-                  if (!_didIteratorError2) {
-                    _context8.next = 33;
-                    break;
-                  }
-
-                  throw _iteratorError2;
-
-                case 33:
-                  return _context8.finish(30);
-
-                case 34:
-                  return _context8.finish(27);
-
-                case 35:
-                  _context8.next = 37;
-                  return rmdirP(this.path());
-
-                case 37:
-                  _context8.next = 41;
-                  break;
-
-                case 39:
-                  _context8.next = 41;
-                  return unlinkP(this.path());
-
-                case 41:
-                  return _context8.abrupt("return", this);
-
-                case 42:
-                case "end":
-                  return _context8.stop();
-              }
-            }
-          }, _callee8, this, [[9, 23, 27, 35], [28,, 30, 34]]);
-        }));
-
-        function remove() {
-          return _ref8.apply(this, arguments);
-        }
-
-        return remove;
-      }()
-    }]);
-    return NodeJSFileResource;
-  }(Resource);
-
-  function resource(url) {
-    if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
-    if (url.isResource) return url;
-    url = String(url);
-    if (url.match(/^http/i)) return new WebDAVResource(url);
-    if (url.match(/^file/i)) return new NodeJSFileResource(url);
-    throw new Error("Cannot find resource type for url " + url);
   }
 
-  var createFiles = function () {
-    var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec) {
-      var base, name, _resource;
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
 
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              base = resource(baseDir).asDirectory();
-              _context.next = 3;
-              return base.ensureExistance();
 
-            case 3:
-              _context.t0 = regeneratorRuntime.keys(fileSpec);
 
-            case 4:
-              if ((_context.t1 = _context.t0()).done) {
-                _context.next = 18;
+
+
+
+
+var get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
+  }
+
+  return value;
+};
+
+var slashEndRe = /\/+$/;
+var slashStartRe = /^\/+/;
+var protocolRe = /^[a-z0-9-_]+:/;
+var slashslashRe = /^\/\/[^\/]+/;
+
+function nyi(obj, name) {
+  throw new Error(name + " for " + obj.constructor.name + " not yet implemented");
+}
+
+var Resource = function () {
+  function Resource(url) {
+    classCallCheck(this, Resource);
+
+    this.isResource = true;
+    this.url = String(url);
+  }
+
+  createClass(Resource, [{
+    key: "toString",
+    value: function toString() {
+      return this.constructor.name + "(\"" + this.url + "\")";
+    }
+  }, {
+    key: "path",
+    value: function path() {
+      var path = this.url.replace(protocolRe, "").replace(slashslashRe, "");
+      return path === "" ? "/" : path;
+    }
+  }, {
+    key: "name",
+    value: function name() {
+      return this.path().replace(/\/$/, "").split("/").slice(-1)[0];
+    }
+  }, {
+    key: "schemeAndHost",
+    value: function schemeAndHost() {
+      return this.url.slice(0, this.url.length - this.path().length);
+    }
+  }, {
+    key: "parent",
+    value: function parent() {
+      if (this.isRoot()) return null;
+      return resource(this.url.replace(slashEndRe, "").split("/").slice(0, -1).join("/") + "/");
+    }
+  }, {
+    key: "parents",
+    value: function parents() {
+      var result = [],
+          p = this.parent();
+      while (p) {
+        result.unshift(p);p = p.parent();
+      }
+      return result;
+    }
+  }, {
+    key: "join",
+    value: function join(path) {
+      return resource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
+    }
+  }, {
+    key: "isRoot",
+    value: function isRoot() {
+      return this.path() === "/";
+    }
+  }, {
+    key: "isFile",
+    value: function isFile() {
+      return !this.isRoot() && !this.url.match(slashEndRe);
+    }
+  }, {
+    key: "isDirectory",
+    value: function isDirectory() {
+      return !this.isFile();
+    }
+  }, {
+    key: "asDirectory",
+    value: function asDirectory() {
+      return resource(this.url.replace(slashEndRe, "") + "/");
+    }
+  }, {
+    key: "root",
+    value: function root() {
+      var toplevel = this.url.slice(0, -this.path().length);
+      return resource(toplevel + "/");
+    }
+  }, {
+    key: "asFile",
+    value: function asFile() {
+      return resource(this.url.replace(slashEndRe, ""));
+    }
+  }, {
+    key: "ensureExistance",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(optionalContent) {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.exists();
+
+              case 2:
+                if (!_context.sent) {
+                  _context.next = 4;
+                  break;
+                }
+
+                return _context.abrupt("return", this);
+
+              case 4:
+                _context.next = 6;
+                return this.parent().ensureExistance();
+
+              case 6:
+                if (!this.isFile()) {
+                  _context.next = 11;
+                  break;
+                }
+
+                _context.next = 9;
+                return this.write(optionalContent || "");
+
+              case 9:
+                _context.next = 13;
                 break;
-              }
 
-              name = _context.t1.value;
+              case 11:
+                _context.next = 13;
+                return this.mkdir();
 
-              if (fileSpec.hasOwnProperty(name)) {
-                _context.next = 8;
-                break;
-              }
+              case 13:
+                return _context.abrupt("return", this);
 
-              return _context.abrupt("continue", 4);
-
-            case 8:
-              _resource = base.join(name);
-
-              if (!(_typeof(fileSpec[name]) === "object")) {
-                _context.next = 14;
-                break;
-              }
-
-              _context.next = 12;
-              return createFiles(_resource, fileSpec[name]);
-
-            case 12:
-              _context.next = 16;
-              break;
-
-            case 14:
-              _context.next = 16;
-              return _resource.write(fileSpec[name]);
-
-            case 16:
-              _context.next = 4;
-              break;
-
-            case 18:
-              return _context.abrupt("return", base);
-
-            case 19:
-            case "end":
-              return _context.stop();
+              case 14:
+              case "end":
+                return _context.stop();
+            }
           }
+        }, _callee, this);
+      }));
+
+      function ensureExistance(_x) {
+        return _ref.apply(this, arguments);
+      }
+
+      return ensureExistance;
+    }()
+  }, {
+    key: "read",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                nyi(this, "read");
+              case 1:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function read() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "write",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                nyi(this, "write");
+              case 1:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function write() {
+        return _ref3.apply(this, arguments);
+      }
+
+      return write;
+    }()
+  }, {
+    key: "exists",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                nyi(this, "exists");
+              case 1:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function exists$$1() {
+        return _ref4.apply(this, arguments);
+      }
+
+      return exists$$1;
+    }()
+  }, {
+    key: "remove",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                nyi(this, "remove");
+              case 1:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function remove() {
+        return _ref5.apply(this, arguments);
+      }
+
+      return remove;
+    }()
+  }, {
+    key: "dirList",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(depth, opts) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                nyi(this, "dirList");
+              case 1:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function dirList(_x2, _x3) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return dirList;
+    }()
+  }]);
+  return Resource;
+}();
+
+function applyExclude(exclude, resources) {
+  if (Array.isArray(exclude)) return exclude.reduce(function (intersect, exclude) {
+    return applyExclude(exclude, intersect);
+  }, resources);
+  if (typeof exclude === "string") return resources.filter(function (ea) {
+    return ea.path() !== exclude && ea.name() !== exclude;
+  });
+  if (exclude instanceof RegExp) return resources.filter(function (ea) {
+    return !exclude.test(ea.path()) && !exclude.test(ea.name());
+  });
+  if (typeof exclude === "function") return resources.filter(function (ea) {
+    return !exclude(ea);
+  });
+  return resources;
+}
+
+/*
+
+applyExclude(["foo", "foo"], [
+  {path: () => "foo", name: () => "foo"},
+  {path: () => "bar", name: () => "bar"},
+  {path: () => "baz", name: () => "baz"}
+])
+
+applyExclude(["bar", "foo"], [
+  {path: () => "foo", name: () => "foo"},
+  {path: () => "bar", name: () => "bar"},
+  {path: () => "baz", name: () => "baz"}
+])
+
+*/
+
+/*global fetch, Headers, DOMParser, XPathEvaluator, XPathResult, Namespace*/
+
+var XPathQuery = function () {
+  function XPathQuery(expression) {
+    classCallCheck(this, XPathQuery);
+
+    this.expression = expression;
+    this.contextNode = null;
+    this.xpe = new XPathEvaluator();
+  }
+
+  createClass(XPathQuery, [{
+    key: "establishContext",
+    value: function establishContext(node) {
+      if (this.nsResolver) return;
+      var ctx = node.ownerDocument ? node.ownerDocument.documentElement : node.documentElement;
+      if (ctx !== this.contextNode) {
+        this.contextNode = ctx;
+        this.nsResolver = this.xpe.createNSResolver(ctx);
+      }
+    }
+  }, {
+    key: "manualNSLookup",
+    value: function manualNSLookup() {
+      this.nsResolver = function (prefix) {
+        return Namespace[prefix.toUpperCase()] || null;
+      };
+      return this;
+    }
+  }, {
+    key: "findAll",
+    value: function findAll(node, defaultValue) {
+      this.establishContext(node);
+      var result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null),
+          accumulator = [],
+          res = null;
+      while (res = result.iterateNext()) {
+        accumulator.push(res);
+      }return accumulator.length > 0 || defaultValue === undefined ? accumulator : defaultValue;
+    }
+  }, {
+    key: "findFirst",
+    value: function findFirst(node) {
+      this.establishContext(node);
+      var result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
+      return result.iterateNext();
+    }
+  }]);
+  return XPathQuery;
+}();
+
+function davNs(xmlString) {
+  // finds the declaration of the webdav namespace, usually "d" or "D"
+  var davNSMatch = xmlString.match(/\/([a-z]+?):multistatus/i);
+  return davNSMatch ? davNSMatch[1] : "d";
+}
+
+function urlListFromPropfindDocument(xmlString) {
+  // the xmlString looks like this:
+  // <?xml version="1.0" encoding="utf-8"?>
+  // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
+  //   <d:response>
+  //     <d:href>sub-dir/</d:href>
+  //     <d:propstat>
+  //       <d:prop>
+  //         <d:getlastmodified xmlns:b="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" b:dt="dateTime.rfc1123">Fri, 24 Jun 2016 09:58:20 -0700</d:getlastmodified>
+  //         <d:resourcetype>
+  //           <d:collection/>
+  //         </d:resourcetype>
+  //       </d:prop>
+  //       <d:status>HTTP/1.1 200 Ok</d:status>
+  //     </d:propstat>
+  //   </d:response>
+  // ...
+  // </d:multistatus>
+
+  var doc = new DOMParser().parseFromString(xmlString, "text/xml"),
+      ns = davNs(xmlString),
+      nodes = new XPathQuery("/" + ns + ":multistatus/" + ns + ":response").findAll(doc.documentElement),
+      urlQ = new XPathQuery(ns + ":href");
+  return nodes.slice(1 /*first node is source*/).map(function (node) {
+    var urlNode = urlQ.findFirst(node);
+    return urlNode.textContent || urlNode.text; // text is FIX for IE9+
+  });
+}
+
+var WebDAVResource = function (_Resource) {
+  inherits(WebDAVResource, _Resource);
+
+  function WebDAVResource() {
+    classCallCheck(this, WebDAVResource);
+    return possibleConstructorReturn(this, (WebDAVResource.__proto__ || Object.getPrototypeOf(WebDAVResource)).apply(this, arguments));
+  }
+
+  createClass(WebDAVResource, [{
+    key: "read",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return fetch(this.url, { mode: 'cors' });
+
+              case 2:
+                return _context.abrupt("return", _context.sent.text());
+
+              case 3:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function read() {
+        return _ref.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "write",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(content) {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (this.isFile()) {
+                  _context2.next = 2;
+                  break;
+                }
+
+                throw new Error("Cannot write a non-file: " + this.url);
+
+              case 2:
+                _context2.next = 4;
+                return fetch(this.url, { mode: 'cors', method: "PUT", body: content });
+
+              case 4:
+                return _context2.abrupt("return", this);
+
+              case 5:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function write(_x) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return write;
+    }()
+  }, {
+    key: "mkdir",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!this.isFile()) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                throw new Error("Cannot mkdir on a file: " + this.url);
+
+              case 2:
+                _context3.next = 4;
+                return fetch(this.url, { mode: 'cors', method: "MKCOL" });
+
+              case 4:
+                return _context3.abrupt("return", this);
+
+              case 5:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function mkdir$$1() {
+        return _ref3.apply(this, arguments);
+      }
+
+      return mkdir$$1;
+    }()
+  }, {
+    key: "exists",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                if (!this.isRoot()) {
+                  _context4.next = 4;
+                  break;
+                }
+
+                _context4.t0 = true;
+                _context4.next = 7;
+                break;
+
+              case 4:
+                _context4.next = 6;
+                return fetch(this.url, { mode: 'cors', method: "HEAD" });
+
+              case 6:
+                _context4.t0 = !!_context4.sent.ok;
+
+              case 7:
+                return _context4.abrupt("return", _context4.t0);
+
+              case 8:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function exists$$1() {
+        return _ref4.apply(this, arguments);
+      }
+
+      return exists$$1;
+    }()
+  }, {
+    key: "remove",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _context5.next = 2;
+                return fetch(this.url, { mode: 'cors', method: "DELETE" });
+
+              case 2:
+                return _context5.abrupt("return", this);
+
+              case 3:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function remove() {
+        return _ref5.apply(this, arguments);
+      }
+
+      return remove;
+    }()
+  }, {
+    key: "dirList",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var _this2 = this;
+
+        var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var exclude, res, _ret, _ret2;
+
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                if (!(typeof depth !== "number" && depth !== 'infinity')) {
+                  _context8.next = 2;
+                  break;
+                }
+
+                throw new Error("dirList \u2013 invalid depth argument: " + depth);
+
+              case 2:
+                exclude = opts.exclude;
+
+
+                if (depth <= 0) depth = 1;
+
+                if (!(depth === 1)) {
+                  _context8.next = 11;
+                  break;
+                }
+
+                return _context8.delegateYield(regeneratorRuntime.mark(function _callee6() {
+                  var xmlString, root, result;
+                  return regeneratorRuntime.wrap(function _callee6$(_context6) {
+                    while (1) {
+                      switch (_context6.prev = _context6.next) {
+                        case 0:
+                          _context6.next = 2;
+                          return fetch(_this2.url, {
+                            method: "PROPFIND",
+                            mode: 'cors',
+                            redirect: 'follow',
+                            headers: new Headers({
+                              'Content-Type': 'text/xml'
+                            })
+                          });
+
+                        case 2:
+                          res = _context6.sent;
+
+                          if (res.ok) {
+                            _context6.next = 5;
+                            break;
+                          }
+
+                          throw new Error("Error in dirList for " + _this2.url + ": " + res.statusText);
+
+                        case 5:
+                          _context6.next = 7;
+                          return res.text();
+
+                        case 7:
+                          xmlString = _context6.sent;
+                          root = _this2.root();
+                          result = urlListFromPropfindDocument(xmlString).map(function (path) {
+                            return root.join(path);
+                          });
+
+                          if (exclude) result = applyExclude(exclude, result);
+                          return _context6.abrupt("return", {
+                            v: result
+                          });
+
+                        case 12:
+                        case "end":
+                          return _context6.stop();
+                      }
+                    }
+                  }, _callee6, _this2);
+                })(), "t0", 6);
+
+              case 6:
+                _ret = _context8.t0;
+
+                if (!((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object")) {
+                  _context8.next = 9;
+                  break;
+                }
+
+                return _context8.abrupt("return", _ret.v);
+
+              case 9:
+                _context8.next = 15;
+                break;
+
+              case 11:
+                return _context8.delegateYield(regeneratorRuntime.mark(function _callee7() {
+                  var subResources, subCollections;
+                  return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                    while (1) {
+                      switch (_context7.prev = _context7.next) {
+                        case 0:
+                          _context7.next = 2;
+                          return _this2.dirList(1, opts);
+
+                        case 2:
+                          subResources = _context7.sent;
+                          subCollections = subResources.filter(function (ea) {
+                            return ea.isDirectory();
+                          });
+                          return _context7.abrupt("return", {
+                            v: Promise.all(subCollections.map(function (col) {
+                              return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
+                            })).then(function (recursiveResult) {
+                              return recursiveResult.reduce(function (all, ea) {
+                                return all.concat(ea);
+                              }, subResources);
+                            })
+                          });
+
+                        case 5:
+                        case "end":
+                          return _context7.stop();
+                      }
+                    }
+                  }, _callee7, _this2);
+                })(), "t1", 12);
+
+              case 12:
+                _ret2 = _context8.t1;
+
+                if (!((typeof _ret2 === "undefined" ? "undefined" : _typeof(_ret2)) === "object")) {
+                  _context8.next = 15;
+                  break;
+                }
+
+                return _context8.abrupt("return", _ret2.v);
+
+              case 15:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this);
+      }));
+
+      function dirList(_x2, _x3) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return dirList;
+    }()
+  }]);
+  return WebDAVResource;
+}(Resource);
+
+function wrapInPromise(func) {
+  return function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return new Promise(function (resolve, reject) {
+      return func.apply(null, args.concat(function (err, result) {
+        return err ? reject(err) : resolve(result);
+      }));
+    });
+  };
+}
+
+var readFileP = wrapInPromise(fs.readFile);
+var writeFileP = wrapInPromise(fs.writeFile);
+var existsP = function existsP(path) {
+  return new Promise(function (resolve, reject) {
+    return fs.exists(path, function (exists$$1) {
+      return resolve(!!exists$$1);
+    });
+  });
+};
+var readdirP = wrapInPromise(fs.readdir);
+var mkdirP = wrapInPromise(fs.mkdir);
+var rmdirP = wrapInPromise(fs.rmdir);
+var unlinkP = wrapInPromise(fs.unlink);
+var lstatP = wrapInPromise(fs.lstat);
+
+var NodeJSFileResource = function (_Resource) {
+  inherits(NodeJSFileResource, _Resource);
+
+  function NodeJSFileResource() {
+    classCallCheck(this, NodeJSFileResource);
+    return possibleConstructorReturn(this, (NodeJSFileResource.__proto__ || Object.getPrototypeOf(NodeJSFileResource)).apply(this, arguments));
+  }
+
+  createClass(NodeJSFileResource, [{
+    key: "stat",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                return _context.abrupt("return", lstatP(this.path()));
+
+              case 1:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function stat() {
+        return _ref.apply(this, arguments);
+      }
+
+      return stat;
+    }()
+  }, {
+    key: "read",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                return _context2.abrupt("return", readFileP(this.path()).then(String));
+
+              case 1:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function read() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return read;
+    }()
+  }, {
+    key: "write",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(content) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!this.isDirectory()) {
+                  _context3.next = 2;
+                  break;
+                }
+
+                throw new Error("Cannot write into a directory: " + this.path());
+
+              case 2:
+                _context3.next = 4;
+                return writeFileP(this.path(), content);
+
+              case 4:
+                return _context3.abrupt("return", this);
+
+              case 5:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function write(_x) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return write;
+    }()
+  }, {
+    key: "mkdir",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(content) {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                if (!this.isFile()) {
+                  _context4.next = 2;
+                  break;
+                }
+
+                throw new Error("Cannot mkdir on a file: " + this.path());
+
+              case 2:
+                _context4.next = 4;
+                return mkdirP(this.path());
+
+              case 4:
+                return _context4.abrupt("return", this);
+
+              case 5:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function mkdir$$1(_x2) {
+        return _ref4.apply(this, arguments);
+      }
+
+      return mkdir$$1;
+    }()
+  }, {
+    key: "exists",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                return _context5.abrupt("return", this.isRoot() ? true : existsP(this.path()));
+
+              case 1:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function exists$$1() {
+        return _ref5.apply(this, arguments);
+      }
+
+      return exists$$1;
+    }()
+  }, {
+    key: "dirList",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+        var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var exclude, _subResources, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, name, subResource, subResources, subCollections;
+
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                if (!(typeof depth !== "number" && depth !== 'infinity')) {
+                  _context6.next = 2;
+                  break;
+                }
+
+                throw new Error("dirList \u2013 invalid depth argument: " + depth);
+
+              case 2:
+                exclude = opts.exclude;
+
+
+                if (depth <= 0) depth = 1;
+
+                if (!(depth === 1)) {
+                  _context6.next = 46;
+                  break;
+                }
+
+                _subResources = [];
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context6.prev = 9;
+                _context6.next = 12;
+                return readdirP(this.path());
+
+              case 12:
+                _context6.t0 = Symbol.iterator;
+                _iterator = _context6.sent[_context6.t0]();
+
+              case 14:
+                if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                  _context6.next = 30;
+                  break;
+                }
+
+                name = _step.value;
+                subResource = this.join(name);
+                _context6.t1 = _subResources;
+                _context6.next = 20;
+                return subResource.stat();
+
+              case 20:
+                if (!_context6.sent.isDirectory()) {
+                  _context6.next = 24;
+                  break;
+                }
+
+                _context6.t2 = subResource.asDirectory();
+                _context6.next = 25;
+                break;
+
+              case 24:
+                _context6.t2 = subResource;
+
+              case 25:
+                _context6.t3 = _context6.t2;
+
+                _context6.t1.push.call(_context6.t1, _context6.t3);
+
+              case 27:
+                _iteratorNormalCompletion = true;
+                _context6.next = 14;
+                break;
+
+              case 30:
+                _context6.next = 36;
+                break;
+
+              case 32:
+                _context6.prev = 32;
+                _context6.t4 = _context6["catch"](9);
+                _didIteratorError = true;
+                _iteratorError = _context6.t4;
+
+              case 36:
+                _context6.prev = 36;
+                _context6.prev = 37;
+
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+
+              case 39:
+                _context6.prev = 39;
+
+                if (!_didIteratorError) {
+                  _context6.next = 42;
+                  break;
+                }
+
+                throw _iteratorError;
+
+              case 42:
+                return _context6.finish(39);
+
+              case 43:
+                return _context6.finish(36);
+
+              case 44:
+                if (exclude) _subResources = applyExclude(exclude, _subResources);
+                return _context6.abrupt("return", _subResources);
+
+              case 46:
+                _context6.next = 48;
+                return this.dirList(1, opts);
+
+              case 48:
+                subResources = _context6.sent;
+                subCollections = subResources.filter(function (ea) {
+                  return ea.isDirectory();
+                });
+                return _context6.abrupt("return", Promise.all(subCollections.map(function (col) {
+                  return col.dirList(typeof depth === "number" ? depth - 1 : depth, opts);
+                })).then(function (recursiveResult) {
+                  return recursiveResult.reduce(function (all, ea) {
+                    return all.concat(ea);
+                  }, subResources);
+                }));
+
+              case 51:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this, [[9, 32, 36, 44], [37,, 39, 43]]);
+      }));
+
+      function dirList(_x3, _x4) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return dirList;
+    }()
+  }, {
+    key: "isEmptyDirectory",
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                _context7.next = 2;
+                return this.dirList();
+
+              case 2:
+                _context7.t0 = _context7.sent.length;
+                return _context7.abrupt("return", _context7.t0 === 0);
+
+              case 4:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function isEmptyDirectory() {
+        return _ref7.apply(this, arguments);
+      }
+
+      return isEmptyDirectory;
+    }()
+  }, {
+    key: "remove",
+    value: function () {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, subResource;
+
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _context8.next = 2;
+                return this.exists();
+
+              case 2:
+                if (_context8.sent) {
+                  _context8.next = 5;
+                  break;
+                }
+
+                _context8.next = 41;
+                break;
+
+              case 5:
+                if (!this.isDirectory()) {
+                  _context8.next = 39;
+                  break;
+                }
+
+                _iteratorNormalCompletion2 = true;
+                _didIteratorError2 = false;
+                _iteratorError2 = undefined;
+                _context8.prev = 9;
+                _context8.next = 12;
+                return this.dirList();
+
+              case 12:
+                _context8.t0 = Symbol.iterator;
+                _iterator2 = _context8.sent[_context8.t0]();
+
+              case 14:
+                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+                  _context8.next = 21;
+                  break;
+                }
+
+                subResource = _step2.value;
+                _context8.next = 18;
+                return subResource.remove();
+
+              case 18:
+                _iteratorNormalCompletion2 = true;
+                _context8.next = 14;
+                break;
+
+              case 21:
+                _context8.next = 27;
+                break;
+
+              case 23:
+                _context8.prev = 23;
+                _context8.t1 = _context8["catch"](9);
+                _didIteratorError2 = true;
+                _iteratorError2 = _context8.t1;
+
+              case 27:
+                _context8.prev = 27;
+                _context8.prev = 28;
+
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                  _iterator2.return();
+                }
+
+              case 30:
+                _context8.prev = 30;
+
+                if (!_didIteratorError2) {
+                  _context8.next = 33;
+                  break;
+                }
+
+                throw _iteratorError2;
+
+              case 33:
+                return _context8.finish(30);
+
+              case 34:
+                return _context8.finish(27);
+
+              case 35:
+                _context8.next = 37;
+                return rmdirP(this.path());
+
+              case 37:
+                _context8.next = 41;
+                break;
+
+              case 39:
+                _context8.next = 41;
+                return unlinkP(this.path());
+
+              case 41:
+                return _context8.abrupt("return", this);
+
+              case 42:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this, [[9, 23, 27, 35], [28,, 30, 34]]);
+      }));
+
+      function remove() {
+        return _ref8.apply(this, arguments);
+      }
+
+      return remove;
+    }()
+  }]);
+  return NodeJSFileResource;
+}(Resource);
+
+function resource(url) {
+  if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
+  if (url.isResource) return url;
+  url = String(url);
+  if (url.match(/^http/i)) return new WebDAVResource(url);
+  if (url.match(/^file/i)) return new NodeJSFileResource(url);
+  throw new Error("Cannot find resource type for url " + url);
+}
+
+var createFiles = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(baseDir, fileSpec) {
+    var base, name, _resource;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            base = resource(baseDir).asDirectory();
+            _context.next = 3;
+            return base.ensureExistance();
+
+          case 3:
+            _context.t0 = regeneratorRuntime.keys(fileSpec);
+
+          case 4:
+            if ((_context.t1 = _context.t0()).done) {
+              _context.next = 18;
+              break;
+            }
+
+            name = _context.t1.value;
+
+            if (fileSpec.hasOwnProperty(name)) {
+              _context.next = 8;
+              break;
+            }
+
+            return _context.abrupt("continue", 4);
+
+          case 8:
+            _resource = base.join(name);
+
+            if (!(_typeof(fileSpec[name]) === "object")) {
+              _context.next = 14;
+              break;
+            }
+
+            _context.next = 12;
+            return createFiles(_resource, fileSpec[name]);
+
+          case 12:
+            _context.next = 16;
+            break;
+
+          case 14:
+            _context.next = 16;
+            return _resource.write(fileSpec[name]);
+
+          case 16:
+            _context.next = 4;
+            break;
+
+          case 18:
+            return _context.abrupt("return", base);
+
+          case 19:
+          case "end":
+            return _context.stop();
         }
-      }, _callee, this);
-    }));
+      }
+    }, _callee, this);
+  }));
 
-    return function createFiles(_x, _x2) {
-      return _ref.apply(this, arguments);
-    };
-  }();
+  return function createFiles(_x, _x2) {
+    return _ref.apply(this, arguments);
+  };
+}();
 
-  exports.resource = resource;
-  exports.createFiles = createFiles;
+exports.resource = resource;
+exports.createFiles = createFiles;
 
 }((this.lively.resources = this.lively.resources || {}),typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}));
+
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.resources;
 })();
 
@@ -25177,7 +25849,7 @@ var categorizer = Object.freeze({
     var scripts = [].slice.call(document.getElementsByTagName("script")),
         pluginBabelPath;
 
-    for (var i = 0; i < scripts.length; i++) {
+    for (var i = scripts.length-1; i >= 0; i--) {
       var src = scripts[i].src;
       // is lively.modules loaded? Use it's node_modules folder
       var index1 = src.indexOf("lively.modules/");
@@ -25232,3007 +25904,3175 @@ var categorizer = Object.freeze({
         typeof self!=="undefined" ? self : this;
   this.lively = this.lively || {};
 (function (exports,lively_lang,lively_ast,lively_notifications,lively_vm,lively_resources) {
-  'use strict';
+'use strict';
 
-  function installHook$1(System, hookName, hook) {
-    System[hookName] = lively_lang.fun.wrap(System[hookName], hook);
-    System[hookName].hookFunc = hook;
+function install(System, hookName, hook) {
+  System[hookName] = lively_lang.fun.wrap(System[hookName], hook);
+  System[hookName].hookFunc = hook;
+}
+
+function remove$1(System, methodName, hookOrName) {
+  var chain = [],
+      f = System[methodName];
+  while (f) {
+    chain.push(f);
+    f = f.originalFunction;
   }
 
-  function removeHook$1(System, methodName, hookOrName) {
-    var chain = [],
-        f = System[methodName];
-    while (f) {
-      chain.push(f);
-      f = f.originalFunction;
+  var found = typeof hookOrName === "string" ? chain.find(function (wrapper) {
+    return wrapper.hookFunc && wrapper.hookFunc.name === hookOrName;
+  }) : chain.find(function (wrapper) {
+    return wrapper.hookFunc === hookOrName;
+  });
+
+  if (!found) return false;
+
+  lively_lang.arr.remove(chain, found);
+
+  System[methodName] = chain.reduceRight(function (method, wrapper) {
+    return lively_lang.fun.wrap(method, wrapper.hookFunc || wrapper);
+  });
+
+  return true;
+}
+
+function isInstalled(System, methodName, hookOrName) {
+  var f = System[methodName];
+  while (f) {
+    if (f.hookFunc) {
+      if (typeof hookOrName === "string" && f.hookFunc.name === hookOrName) return true;else if (f.hookFunc === hookOrName) return true;
     }
-
-    var found = typeof hookOrName === "string" ? chain.find(function (wrapper) {
-      return wrapper.hookFunc && wrapper.hookFunc.name === hookOrName;
-    }) : chain.find(function (wrapper) {
-      return wrapper.hookFunc === hookOrName;
-    });
-
-    if (!found) return false;
-
-    lively_lang.arr.remove(chain, found);
-
-    System[methodName] = chain.reduceRight(function (method, wrapper) {
-      return lively_lang.fun.wrap(method, wrapper.hookFunc || wrapper);
-    });
-
-    return true;
+    f = f.originalFunction;
   }
+  return false;
+}
 
-  function isHookInstalled$1(System, methodName, hookOrName) {
-    var f = System[methodName];
-    while (f) {
-      if (f.hookFunc) {
-        if (typeof hookOrName === "string" && f.hookFunc.name === hookOrName) return true;else if (f.hookFunc === hookOrName) return true;
-      }
-      f = f.originalFunction;
-    }
-    return false;
-  }
+// function computeRequireMap() {
+//   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
+//     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
+//     return requireMap;
+//   }, {});
+// }
 
-  // function computeRequireMap() {
-  //   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
-  //     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
-  //     return requireMap;
-  //   }, {});
-  // }
-
-  function requireMap$1(System) {
-    if (System.loads) {
-      var store = System.loads,
-          modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
-      return modNames.reduce(function (requireMap, k) {
-        var depMap = store[k] ? store[k].depMap : {};
-        requireMap[k] = Object.keys(depMap).map(function (localName) {
-          var resolvedName = depMap[localName];
-          if (resolvedName === "@empty") return resolvedName + "/" + localName;
-          return resolvedName;
-        });
-        return requireMap;
-      }, {});
-    }
-
-    return Object.keys(System._loader.moduleRecords).reduce(function (requireMap, k) {
-      requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(function (ea) {
-        return ea.name;
+function computeRequireMap(System) {
+  if (System.loads) {
+    var store = System.loads,
+        modNames = lively_lang.arr.uniq(Object.keys(loadedModules$1(System)).concat(Object.keys(store)));
+    return modNames.reduce(function (requireMap, k) {
+      var depMap = store[k] ? store[k].depMap : {};
+      requireMap[k] = Object.keys(depMap).map(function (localName) {
+        var resolvedName = depMap[localName];
+        if (resolvedName === "@empty") return resolvedName + "/" + localName;
+        return resolvedName;
       });
       return requireMap;
     }, {});
   }
 
-  var funcCall = lively_ast.nodes.funcCall;
-  var member = lively_ast.nodes.member;
-  var literal = lively_ast.nodes.literal;
+  return Object.keys(System._loader.moduleRecords).reduce(function (requireMap, k) {
+    requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(function (ea) {
+      return ea.name;
+    });
+    return requireMap;
+  }, {});
+}
 
-  var isNode$1 = System.get("@system-env").node;
+var funcCall = lively_ast.nodes.funcCall;
+var member = lively_ast.nodes.member;
+var literal = lively_ast.nodes.literal;
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // code instrumentation
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+var isNode$1 = System.get("@system-env").node;
 
-  var node_modulesDir = System.decanonicalize("lively.modules/node_modules/");
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// code instrumentation
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var exceptions = [
-  // id => id.indexOf(resolve("node_modules/")) > -1,
-  // id => canonicalURL(id).indexOf(node_modulesDir) > -1,
-  function (id) {
-    return lively_lang.string.include(id, "acorn/src");
-  }, function (id) {
-    return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js") || lively_lang.string.include(id, "systemjs-plugin-babel");
+var node_modulesDir = System.decanonicalize("lively.modules/node_modules/");
+
+var exceptions = [
+// id => id.indexOf(resolve("node_modules/")) > -1,
+// id => canonicalURL(id).indexOf(node_modulesDir) > -1,
+function (id) {
+  return lively_lang.string.include(id, "acorn/src");
+}, function (id) {
+  return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js") || lively_lang.string.include(id, "systemjs-plugin-babel");
+},
+// id => lang.string.include(id, "lively.ast.es6.bundle.js"),
+function (id) {
+  return id.slice(-3) !== ".js";
+}];
+var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
+var cjsFormatCommentRegExp = /['"]format cjs['"];/;
+var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+
+function prepareCodeForCustomCompile(source, fullname, env, debug) {
+  source = String(source);
+  var tfmOptions = {
+    topLevelVarRecorder: env.recorder,
+    varRecorderName: env.recorderName,
+    dontTransform: env.dontTransform,
+    recordGlobals: true,
+    keepPreviouslyDeclaredValues: true,
+    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+
   },
-  // id => lang.string.include(id, "lively.ast.es6.bundle.js"),
-  function (id) {
-    return id.slice(-3) !== ".js";
-  }];
-  var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
-  var cjsFormatCommentRegExp = /['"]format cjs['"];/;
-  var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
-  function prepareCodeForCustomCompile(source, fullname, env, debug) {
-    source = String(source);
-    var tfmOptions = {
-      topLevelVarRecorder: env.recorder,
-      varRecorderName: env.recorderName,
-      dontTransform: env.dontTransform,
-      recordGlobals: true,
-      keepPreviouslyDeclaredValues: true,
-      currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+      isGlobal = env.recorderName === "System.global",
+      header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
+      footer = "";
 
-    },
-        isGlobal = env.recorderName === "System.global",
-        header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
-        footer = "";
-
-    if (isGlobal) {
-      // FIXME how to update exports in that case?
-    } else {
-      header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
-      footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
-    }
-
-    try {
-      var rewrittenSource = header + lively_vm.evalCodeTransform(source, tfmOptions) + footer;
-      if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
-      return rewrittenSource;
-    } catch (e) {
-      console.error("Error in prepareCodeForCustomCompile", e.stack);
-      return source;
-    }
+  if (isGlobal) {
+    // FIXME how to update exports in that case?
+  } else {
+    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
+    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
   }
 
-  function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
-    source = String(source);
-    var tfmOptions = {
-      topLevelVarRecorder: env.recorder,
-      varRecorderName: env.recorderName,
-      dontTransform: env.dontTransform,
-      recordGlobals: true,
-      currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
-    },
-        isGlobal = env.recorderName === "System.global";
+  try {
+    var rewrittenSource = header + lively_vm.evalCodeTransform(source, tfmOptions) + footer;
+    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
+    return rewrittenSource;
+  } catch (e) {
+    console.error("Error in prepareCodeForCustomCompile", e.stack);
+    return source;
+  }
+}
 
-    try {
-      var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
-      if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
-      return rewrittenSource;
-    } catch (e) {
-      console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
-      return source;
-    }
+function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
+  source = String(source);
+  var tfmOptions = {
+    topLevelVarRecorder: env.recorder,
+    varRecorderName: env.recorderName,
+    dontTransform: env.dontTransform,
+    recordGlobals: true,
+    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+  },
+      isGlobal = env.recorderName === "System.global";
+
+  try {
+    var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
+    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
+    return rewrittenSource;
+  } catch (e) {
+    console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
+    return source;
+  }
+}
+
+function getCachedNodejsModule(System, load) {
+  // On nodejs we might run alongside normal node modules. To not load those
+  // twice we have this little hack...
+  try {
+    var Module = System._nodeRequire("module").Module,
+        id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
+        nodeModule = Module._cache[id];
+    return nodeModule;
+  } catch (e) {
+    System.debug && console.log("[lively.modules getCachedNodejsModule] %s unknown to nodejs", load.name);
+  }
+  return null;
+}
+
+function addNodejsWrapperSource(System, load) {
+  // On nodejs we might run alongside normal node modules. To not load those
+  // twice we have this little hack...
+  var m = getCachedNodejsModule(System, load);
+  if (m) {
+    load.metadata.format = 'esm';
+    load.source = "var exports = System._nodeRequire('" + m.id + "'); export default exports;\n" + lively_lang.properties.allOwnPropertiesOrFunctions(m.exports).map(function (k) {
+      return lively_lang.classHelper.isValidIdentifier(k) ? "export var " + k + " = exports['" + k + "'];" : "/*ignoring export \"" + k + "\" b/c it is not a valid identifier*/";
+    }).join("\n");
+    System.debug && console.log("[lively.modules customTranslate] loading %s from nodejs module cache", load.name);
+    return true;
+  }
+  System.debug && console.log("[lively.modules customTranslate] %s not yet in nodejs module cache", load.name);
+  return false;
+}
+
+function customTranslate(proceed, load) {
+  // load like
+  // {
+  //   address: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
+  //   name: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
+  //   metadata: { deps: [/*...*/], entry: {/*...*/}, format: "esm", sourceMap: ... },
+  //   source: "..."
+  // }
+
+  var System = this,
+      debug = System.debug;
+
+  if (exceptions.some(function (exc) {
+    return exc(load.name);
+  })) {
+    debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
+    return proceed(load);
+  }
+  if (isNode$1 && addNodejsWrapperSource(System, load)) {
+    debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
+    return proceed(load);
   }
 
-  function getCachedNodejsModule(System, load) {
-    // On nodejs we might run alongside normal node modules. To not load those
-    // twice we have this little hack...
-    try {
-      var Module = System._nodeRequire("module").Module,
-          id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
-          nodeModule = Module._cache[id];
-      return nodeModule;
-    } catch (e) {
-      System.debug && console.log("[lively.modules getCachedNodejsModule] %s unknown to nodejs", load.name);
-    }
-    return null;
+  var start = Date.now();
+
+  var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || !load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0, 5000)) || !load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0, 5000)) && esmRegEx.test(load.source),
+      isCjs = load.metadata.format == 'cjs',
+      isGlobal = load.metadata.format == 'global' || !load.metadata.format,
+      env = module$2(System, load.name).env(),
+      instrumented = false;
+
+  if (isEsm) {
+    load.metadata.format = "esm";
+    load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+    load.metadata["lively.modules instrumented"] = true;
+    instrumented = true;
+    debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
+    // debug && console.log(load.source)
+  } else if (isCjs && isNode$1) {
+    load.metadata.format = "cjs";
+    var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
+    load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
+    load.metadata["lively.modules instrumented"] = true;
+    instrumented = true;
+    debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name);
+    // console.log("[lively.modules] no rewrite for cjs module", load.name)
+  } else if (load.metadata.format === "global") {
+    env.recorderName = "System.global";
+    env.recorder = System.global;
+    load.metadata.format = "global";
+    load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+    load.metadata["lively.modules instrumented"] = true;
+    instrumented = true;
+    debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name);
   }
 
-  function addNodejsWrapperSource(System, load) {
-    // On nodejs we might run alongside normal node modules. To not load those
-    // twice we have this little hack...
-    var m = getCachedNodejsModule(System, load);
-    if (m) {
-      load.metadata.format = 'esm';
-      load.source = "var exports = System._nodeRequire('" + m.id + "'); export default exports;\n" + lively_lang.properties.allOwnPropertiesOrFunctions(m.exports).map(function (k) {
-        return lively_lang.classHelper.isValidIdentifier(k) ? "export var " + k + " = exports['" + k + "'];" : "/*ignoring export \"" + k + "\" b/c it is not a valid identifier*/";
-      }).join("\n");
-      System.debug && console.log("[lively.modules customTranslate] loading %s from nodejs module cache", load.name);
-      return true;
-    }
-    System.debug && console.log("[lively.modules customTranslate] %s not yet in nodejs module cache", load.name);
-    return false;
+  if (!instrumented) {
+    debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
   }
 
-  function customTranslate(proceed, load) {
-    // load like
-    // {
-    //   address: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
-    //   name: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
-    //   metadata: { deps: [/*...*/], entry: {/*...*/}, format: "esm", sourceMap: ... },
-    //   source: "..."
-    // }
-
-    var System = this,
-        debug = System.debug;
-
-    if (exceptions.some(function (exc) {
-      return exc(load.name);
-    })) {
-      debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
-      return proceed(load);
-    }
-    if (isNode$1 && addNodejsWrapperSource(System, load)) {
-      debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
-      return proceed(load);
+  return proceed(load).then(function (translated) {
+    if (translated.indexOf("System.register(") === 0) {
+      debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
+      translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
     }
 
-    var start = Date.now();
+    debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
+    return translated;
+  });
+}
 
-    var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || !load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0, 5000)) || !load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0, 5000)) && esmRegEx.test(load.source),
-        isCjs = load.metadata.format == 'cjs',
-        isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-        env = module$2(System, load.name).env(),
-        instrumented = false;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Functions below are for re-loading modules from change.js. We typically
+// start with a load object that skips the normalize / fetch step. Since we need
+// to jumo in the "middle" of the load process and SystemJS does not provide an
+// interface to this, we need to invoke the translate / instantiate / execute
+// manually
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    if (isEsm) {
-      load.metadata.format = "esm";
-      load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
-      load.metadata["lively.modules instrumented"] = true;
-      instrumented = true;
-      debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
-      // debug && console.log(load.source)
-    } else if (isCjs && isNode$1) {
-      load.metadata.format = "cjs";
-      var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
-      load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-      load.metadata["lively.modules instrumented"] = true;
-      instrumented = true;
-      debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name);
-      // console.log("[lively.modules] no rewrite for cjs module", load.name)
-    } else if (load.metadata.format === "global") {
-      env.recorderName = "System.global";
-      env.recorder = System.global;
-      load.metadata.format = "global";
-      load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
-      load.metadata["lively.modules instrumented"] = true;
-      instrumented = true;
-      debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name);
-    }
+function instrumentSourceOfEsmModuleLoad(System, load) {
+  // brittle!
+  // The result of System.translate is source code for a call to
+  // System.register that can't be run standalone. We parse the necessary
+  // details from it that we will use to re-define the module
+  // (dependencies, setters, execute)
+  // Note: this only works for esm modules!
 
-    if (!instrumented) {
-      debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
-    }
+  return System.translate(load).then(function (translated) {
+    // translated looks like
+    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
+    //   "use strict";
+    //   var x, z, y;
+    //   return {
+    //     setters: [function (_someEs6ModuleJs) { ... }],
+    //     execute: function () {...}
+    //   };
+    // });
 
-    return proceed(load).then(function (translated) {
-      if (translated.indexOf("System.register(") === 0) {
-        debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
-        translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
-      }
+    var parsed = lively_ast.parse(translated),
+        registerCall = parsed.body[0].expression,
+        depNames = lively_lang.arr.pluck(registerCall["arguments"][0].elements, "value"),
+        declareFuncNode = registerCall["arguments"][1],
+        declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
+        declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//# sourceURL=" + load.name + "\n");
 
-      debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
-      return translated;
+    if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
+
+    return { localDeps: depNames, declare: declare };
+  });
+}
+
+function instrumentSourceOfGlobalModuleLoad(System, load) {
+  return System.translate(load).then(function (translated) {
+    // return {localDeps: depNames, declare: declare};
+    return { translated: translated };
+  });
+}
+
+function wrapModuleLoad$1(System) {
+  if (isInstalled(System, "translate", "lively_modules_translate_hook")) return;
+  install(System, "translate", function lively_modules_translate_hook(proceed, load) {
+    return customTranslate.call(System, proceed, load);
+  });
+}
+
+function unwrapModuleLoad$1(System) {
+  remove$1(System, "translate", "lively_modules_translate_hook");
+}
+
+function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
+      rec = module$2(System, moduleId).record();
+  if (rec && (name in rec.exports || addNewExport)) {
+    var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
+    pending[name] = value;
+  }
+}
+
+function runScheduledExportChanges(System, moduleId) {
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
+      keysAndValues = pendingExportChanges[moduleId];
+  if (!keysAndValues) return;
+  clearPendingModuleExportChanges(System, moduleId);
+  updateModuleExports(System, moduleId, keysAndValues);
+}
+
+function clearPendingModuleExportChanges(System, moduleId) {
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges;
+  delete pendingExportChanges[moduleId];
+}
+
+function updateModuleExports(System, moduleId, keysAndValues) {
+  var debug = System.debug;
+  module$2(System, moduleId).updateRecord(function (record) {
+
+    var newExports = [],
+        existingExports = [];
+
+    Object.keys(keysAndValues).forEach(function (name) {
+      var value = keysAndValues[name];
+      debug && console.log("[lively.vm es6 updateModuleExports] %s export %s = %s", moduleId, name, String(value).slice(0, 30).replace(/\n/g, "") + "...");
+
+      var isNewExport = !(name in record.exports);
+      if (isNewExport) record.__lively_modules__.evalOnlyExport[name] = true;
+      // var isEvalOnlyExport = record.__lively_vm__.evalOnlyExport[name];
+      record.exports[name] = value;
+
+      if (isNewExport) newExports.push(name);else existingExports.push(name);
     });
-  }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // Functions below are for re-loading modules from change.js. We typically
-  // start with a load object that skips the normalize / fetch step. Since we need
-  // to jumo in the "middle" of the load process and SystemJS does not provide an
-  // interface to this, we need to invoke the translate / instantiate / execute
-  // manually
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function instrumentSourceOfEsmModuleLoad(System, load) {
-    // brittle!
-    // The result of System.translate is source code for a call to
-    // System.register that can't be run standalone. We parse the necessary
-    // details from it that we will use to re-define the module
-    // (dependencies, setters, execute)
-    // Note: this only works for esm modules!
-
-    return System.translate(load).then(function (translated) {
-      // translated looks like
-      // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
-      //   "use strict";
-      //   var x, z, y;
-      //   return {
-      //     setters: [function (_someEs6ModuleJs) { ... }],
-      //     execute: function () {...}
-      //   };
-      // });
-
-      var parsed = lively_ast.parse(translated),
-          registerCall = parsed.body[0].expression,
-          depNames = lively_lang.arr.pluck(registerCall["arguments"][0].elements, "value"),
-          declareFuncNode = registerCall["arguments"][1],
-          declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
-          declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//# sourceURL=" + load.name + "\n");
-
-      if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
-
-      return { localDeps: depNames, declare: declare };
-    });
-  }
-
-  function instrumentSourceOfGlobalModuleLoad(System, load) {
-    return System.translate(load).then(function (translated) {
-      // return {localDeps: depNames, declare: declare};
-      return { translated: translated };
-    });
-  }
-
-  function wrapModuleLoad$1(System) {
-    if (isHookInstalled$1(System, "translate", "lively_modules_translate_hook")) return;
-    installHook$1(System, "translate", function lively_modules_translate_hook(proceed, load) {
-      return customTranslate.call(System, proceed, load);
-    });
-  }
-
-  function unwrapModuleLoad$1(System) {
-    removeHook$1(System, "translate", "lively_modules_translate_hook");
-  }
-
-  function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
-    var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
-        rec = module$2(System, moduleId).record();
-    if (rec && (name in rec.exports || addNewExport)) {
-      var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
-      pending[name] = value;
-    }
-  }
-
-  function runScheduledExportChanges(System, moduleId) {
-    var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
-        keysAndValues = pendingExportChanges[moduleId];
-    if (!keysAndValues) return;
-    clearPendingModuleExportChanges(System, moduleId);
-    updateModuleExports(System, moduleId, keysAndValues);
-  }
-
-  function clearPendingModuleExportChanges(System, moduleId) {
-    var pendingExportChanges = System.get("@lively-env").pendingExportChanges;
-    delete pendingExportChanges[moduleId];
-  }
-
-  function updateModuleExports(System, moduleId, keysAndValues) {
-    var debug = System.debug;
-    module$2(System, moduleId).updateRecord(function (record) {
-
-      var newExports = [],
-          existingExports = [];
-
-      Object.keys(keysAndValues).forEach(function (name) {
-        var value = keysAndValues[name];
-        debug && console.log("[lively.vm es6 updateModuleExports] %s export %s = %s", moduleId, name, String(value).slice(0, 30).replace(/\n/g, "") + "...");
-
-        var isNewExport = !(name in record.exports);
-        if (isNewExport) record.__lively_modules__.evalOnlyExport[name] = true;
-        // var isEvalOnlyExport = record.__lively_vm__.evalOnlyExport[name];
-        record.exports[name] = value;
-
-        if (isNewExport) newExports.push(name);else existingExports.push(name);
-      });
-
-      // if it's a new export we don't need to update dependencies, just the
-      // module itself since no depends know about the export...
-      // HMM... what about *-imports?
-      if (newExports.length) {
-        var m = System.get(moduleId);
-        if (Object.isFrozen(m)) {
-          console.warn("[lively.vm es6 updateModuleExports] Since module %s is frozen a new module object was installed in the system. Note that only(!) exisiting module bindings are updated. New exports that were added will only be available in already loaded modules after those are reloaded!", moduleId);
-          System.set(moduleId, System.newModule(record.exports));
-        } else {
-          debug && console.log("[lively.vm es6 updateModuleExports] adding new exports to %s", moduleId);
-          newExports.forEach(function (name) {
-            Object.defineProperty(m, name, {
-              configurable: false, enumerable: true,
-              get: function get() {
-                return record.exports[name];
-              },
-              set: function set() {
-                throw new Error("exports cannot be changed from the outside");
-              }
-            });
+    // if it's a new export we don't need to update dependencies, just the
+    // module itself since no depends know about the export...
+    // HMM... what about *-imports?
+    if (newExports.length) {
+      var m = System.get(moduleId);
+      if (Object.isFrozen(m)) {
+        console.warn("[lively.vm es6 updateModuleExports] Since module %s is frozen a new module object was installed in the system. Note that only(!) exisiting module bindings are updated. New exports that were added will only be available in already loaded modules after those are reloaded!", moduleId);
+        System.set(moduleId, System.newModule(record.exports));
+      } else {
+        debug && console.log("[lively.vm es6 updateModuleExports] adding new exports to %s", moduleId);
+        newExports.forEach(function (name) {
+          Object.defineProperty(m, name, {
+            configurable: false, enumerable: true,
+            get: function get() {
+              return record.exports[name];
+            },
+            set: function set() {
+              throw new Error("exports cannot be changed from the outside");
+            }
           });
-        }
+        });
       }
+    }
 
-      if (existingExports.length) {
-        debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
-        for (var i = 0, l = record.importers.length; i < l; i++) {
-          var importerModule = record.importers[i];
-          if (!importerModule.locked) {
-            // via the module bindings to importer modules we refresh the values
-            // bound in those modules by triggering the setters defined in the
-            // records of those modules
-            var importerIndex,
-                found = importerModule.dependencies.some(function (dep, i) {
-              importerIndex = i;
-              return dep && dep.name === record.name;
-            });
+    if (existingExports.length) {
+      debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
+      for (var i = 0, l = record.importers.length; i < l; i++) {
+        var importerModule = record.importers[i];
+        if (!importerModule.locked) {
+          // via the module bindings to importer modules we refresh the values
+          // bound in those modules by triggering the setters defined in the
+          // records of those modules
+          var importerIndex,
+              found = importerModule.dependencies.some(function (dep, i) {
+            importerIndex = i;
+            return dep && dep.name === record.name;
+          });
 
-            if (found) {
-              if (debug) {
-                var mod = module$2(System, importerModule.name);
-                console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
-              }
-              importerModule.setters[importerIndex](record.exports);
+          if (found) {
+            if (debug) {
+              var mod = module$2(System, importerModule.name);
+              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
             }
+            importerModule.setters[importerIndex](record.exports);
+          }
 
-            // rk 2016-06-09: for now don't re-execute dependent modules on save,
-            // just update module bindings
-            if (false) {} else {
-              module$2(System, importerModule.name).evaluationDone();
-            }
+          // rk 2016-06-09: for now don't re-execute dependent modules on save,
+          // just update module bindings
+          {
+            module$2(System, importerModule.name).evaluationDone();
           }
         }
       }
-    });
+    }
+  });
+}
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
+  return typeof obj$$1;
+} : function (obj$$1) {
+  return obj$$1 && typeof Symbol === "function" && obj$$1.constructor === Symbol && obj$$1 !== Symbol.prototype ? "symbol" : typeof obj$$1;
+};
+
+
+
+
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
   }
 
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-  };
+  function AsyncGenerator(gen) {
+    var front, back;
 
-  var asyncToGenerator = function (fn) {
-    return function () {
-      var gen = fn.apply(this, arguments);
+    function send(key, arg) {
       return new Promise(function (resolve, reject) {
-        function step(key, arg) {
-          try {
-            var info = gen[key](arg);
-            var value = info.value;
-          } catch (error) {
-            reject(error);
-            return;
-          }
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
 
-          if (info.done) {
-            resolve(value);
-          } else {
-            return Promise.resolve(value).then(function (value) {
-              return step("next", value);
-            }, function (err) {
-              return step("throw", err);
-            });
-          }
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
         }
-
-        return step("next");
       });
-    };
-  };
-
-  var classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  };
-
-  var createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
     }
 
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
-
-  var defineProperty = function (obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-
-    return obj;
-  };
-
-  var slicedToArray = function () {
-    function sliceIterator(arr, i) {
-      var _arr = [];
-      var _n = true;
-      var _d = false;
-      var _e = undefined;
-
+    function resume(key, arg) {
       try {
-        for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-          _arr.push(_s.value);
+        var result = gen[key](arg);
+        var value = result.value;
 
-          if (i && _arr.length === i) break;
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
         }
       } catch (err) {
-        _d = true;
-        _e = err;
-      } finally {
-        try {
-          if (!_n && _i["return"]) _i["return"]();
-        } finally {
-          if (_d) throw _e;
-        }
-      }
-
-      return _arr;
-    }
-
-    return function (arr, i) {
-      if (Array.isArray(arr)) {
-        return arr;
-      } else if (Symbol.iterator in Object(arr)) {
-        return sliceIterator(arr, i);
-      } else {
-        throw new TypeError("Invalid attempt to destructure non-iterable instance");
-      }
-    };
-  }();
-
-  var moduleSourceChange$1 = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, newSource, format, options) {
-      var changeResult;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              _context.prev = 0;
-
-              System.debug && console.log("[module change] " + moduleId + " " + newSource.slice(0, 50).replace(/\n/g, "") + " " + format);
-
-              if (!(!format || format === "es6" || format === "esm" || format === "register" || format === "defined")) {
-                _context.next = 8;
-                break;
-              }
-
-              _context.next = 5;
-              return moduleSourceChangeEsm(System, moduleId, newSource, options);
-
-            case 5:
-              changeResult = _context.sent;
-              _context.next = 15;
-              break;
-
-            case 8:
-              if (!(format === "global")) {
-                _context.next = 14;
-                break;
-              }
-
-              _context.next = 11;
-              return moduleSourceChangeGlobal(System, moduleId, newSource, options);
-
-            case 11:
-              changeResult = _context.sent;
-              _context.next = 15;
-              break;
-
-            case 14:
-              throw new Error("moduleSourceChange is not supported for module " + moduleId + " with format " + format);
-
-            case 15:
-
-              lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, newSource: newSource, options: options }, Date.now(), System);
-
-              return _context.abrupt("return", changeResult);
-
-            case 19:
-              _context.prev = 19;
-              _context.t0 = _context["catch"](0);
-
-              lively_notifications.emit("lively.modules/modulechanged", {
-                module: moduleId, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
-              throw _context.t0;
-
-            case 23:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this, [[0, 19]]);
-    }));
-    return function moduleSourceChange(_x, _x2, _x3, _x4, _x5) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var moduleSourceChangeEsm = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
-      var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
-
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              debug = System.debug, load = {
-                status: 'loading',
-                source: newSource,
-                name: moduleId,
-                address: moduleId,
-                linkSets: [],
-                dependencies: [],
-                metadata: { format: "esm" }
-              };
-
-              // translate the source and produce a {declare: FUNCTION, localDeps:
-              // [STRING]} object
-
-              _context2.next = 3;
-              return instrumentSourceOfEsmModuleLoad(System, load);
-
-            case 3:
-              updateData = _context2.sent;
-
-
-              // evaluate the module source, to get the register module object with execute
-              // and setters fields
-              _exports = function _exports(name, val) {
-                return scheduleModuleExportsChange(System, load.name, name, val, true);
-              }, declared = updateData.declare(_exports);
-
-
-              debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
-
-              // ensure dependencies are loaded
-              deps = [];
-              _iteratorNormalCompletion = true;
-              _didIteratorError = false;
-              _iteratorError = undefined;
-              _context2.prev = 10;
-              _iterator = updateData.localDeps[Symbol.iterator]();
-
-            case 12:
-              if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                _context2.next = 25;
-                break;
-              }
-
-              depName = _step.value;
-              _context2.next = 16;
-              return System.normalize(depName, load.name);
-
-            case 16:
-              depId = _context2.sent;
-              depModule = module$2(System, depId);
-              _context2.next = 20;
-              return depModule.load();
-
-            case 20:
-              exports = _context2.sent;
-
-              deps.push({ name: depName, fullname: depId, module: depModule, exports: exports });
-
-            case 22:
-              _iteratorNormalCompletion = true;
-              _context2.next = 12;
-              break;
-
-            case 25:
-              _context2.next = 31;
-              break;
-
-            case 27:
-              _context2.prev = 27;
-              _context2.t0 = _context2["catch"](10);
-              _didIteratorError = true;
-              _iteratorError = _context2.t0;
-
-            case 31:
-              _context2.prev = 31;
-              _context2.prev = 32;
-
-              if (!_iteratorNormalCompletion && _iterator.return) {
-                _iterator.return();
-              }
-
-            case 34:
-              _context2.prev = 34;
-
-              if (!_didIteratorError) {
-                _context2.next = 37;
-                break;
-              }
-
-              throw _iteratorError;
-
-            case 37:
-              return _context2.finish(34);
-
-            case 38:
-              return _context2.finish(31);
-
-            case 39:
-
-              // hmm... for house keeping... not really needed right now, though
-              prevLoad = System.loads && System.loads[load.name];
-
-              if (prevLoad) {
-                prevLoad.deps = deps.map(function (ea) {
-                  return ea.name;
-                });
-                prevLoad.depMap = deps.reduce(function (map, dep) {
-                  map[dep.name] = dep.fullname;return map;
-                }, {});
-                if (prevLoad.metadata && prevLoad.metadata.entry) {
-                  prevLoad.metadata.entry.deps = prevLoad.deps;
-                  prevLoad.metadata.entry.normalizedDeps = deps.map(function (ea) {
-                    return ea.fullname;
-                  });
-                  prevLoad.metadata.entry.declare = updateData.declare;
-                }
-              }
-
-              mod = module$2(System, load.name), record = mod.record();
-
-              // 1. update the record so that when its dependencies change and cause a
-              // re-execute, the correct code (new version) is run
-
-              deps.forEach(function (ea, i) {
-                return mod.addDependencyToModuleRecord(ea.module, declared.setters[i]);
-              });
-              if (record) record.execute = declared.execute;
-
-              // 2. run setters to populate imports
-              deps.forEach(function (d, i) {
-                return declared.setters[i](d.exports);
-              });
-
-              // 3. execute module body
-              result = declared.execute();
-
-              // for updating records, modules, etc
-              // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
-
-              System.get("@lively-env").evaluationDone(load.name);
-
-              return _context2.abrupt("return", result);
-
-            case 48:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, this, [[10, 27, 31, 39], [32,, 34, 38]]);
-    }));
-    return function moduleSourceChangeEsm(_x6, _x7, _x8, _x9) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var moduleSourceChangeGlobal = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
-      var load, updateData, entry;
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              load = {
-                status: 'loading',
-                source: newSource,
-                name: moduleId,
-                address: moduleId,
-                linkSets: [],
-                dependencies: [],
-                metadata: { format: "global" }
-              };
-
-              if (System.get(moduleId)) {
-                _context3.next = 4;
-                break;
-              }
-
-              _context3.next = 4;
-              return System["import"](moduleId);
-
-            case 4:
-              _context3.next = 6;
-              return instrumentSourceOfGlobalModuleLoad(System, load);
-
-            case 6:
-              updateData = _context3.sent;
-
-
-              load.source = updateData.translated;
-              entry = doInstantiateGlobalModule(System, load);
-
-              System.delete(moduleId);
-              System.set(entry.name, entry.esModule);
-              return _context3.abrupt("return", entry.module);
-
-            case 12:
-            case "end":
-              return _context3.stop();
-          }
-        }
-      }, _callee3, this);
-    }));
-    return function moduleSourceChangeGlobal(_x10, _x11, _x12, _x13) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  function doInstantiateGlobalModule(System, load) {
-
-    var entry = __createEntry();
-    entry.name = load.name;
-    entry.esmExports = true;
-    load.metadata.entry = entry;
-
-    entry.deps = [];
-
-    for (var g in load.metadata.globals) {
-      var gl = load.metadata.globals[g];
-      if (gl) entry.deps.push(gl);
-    }
-
-    entry.execute = function executeGlobalModule(require, exports, m) {
-
-      // SystemJS exports detection for global modules is based in new props
-      // added to the global. In order to allow re-load we remove previously
-      // "exported" values
-      var prevMeta = module$2(System, m.id).metadata(),
-          exports = prevMeta && prevMeta.entry && prevMeta.entry.module && prevMeta.entry.module.exports;
-      if (exports) Object.keys(exports).forEach(function (name) {
-        try {
-          delete System.global[name];
-        } catch (e) {
-          console.warn("[lively.modules] executeGlobalModule: Cannot delete global[\"" + name + "\"]");
-        }
-      });
-
-      var globals;
-      if (load.metadata.globals) {
-        globals = {};
-        for (var g in load.metadata.globals) {
-          if (load.metadata.globals[g]) globals[g] = require(load.metadata.globals[g]);
-        }
-      }
-
-      var exportName = load.metadata.exports;
-
-      if (exportName) load.source += "\nSystem.global[\"" + exportName + "\"] = " + exportName + ";";
-
-      var retrieveGlobal = System.get('@@global-helpers').prepareGlobal(module$2.id, exportName, globals);
-
-      __evaluateGlobalLoadSource(System, load);
-
-      return retrieveGlobal();
-    };
-
-    return runExecuteOfGlobalModule(System, entry);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function __createEntry() {
-    return {
-      name: null,
-      deps: null,
-      originalIndices: null,
-      declare: null,
-      execute: null,
-      executingRequire: false,
-      declarative: false,
-      normalizedDeps: null,
-      groupIndex: null,
-      evaluated: false,
-      module: null,
-      esModule: null,
-      esmExports: false
-    };
-  }
-
-  function __evaluateGlobalLoadSource(System, load) {
-    // System clobbering protection (mostly for Traceur)
-    var curLoad,
-        curSystem,
-        callCounter = 0,
-        __global = System.global;
-    return __exec.call(System, load);
-
-    function preExec(loader, load) {
-      if (callCounter++ == 0) curSystem = __global.System;
-      __global.System = __global.SystemJS = loader;
-    }
-
-    function postExec() {
-      if (--callCounter == 0) __global.System = __global.SystemJS = curSystem;
-      curLoad = undefined;
-    }
-
-    function __exec(load) {
-      // if ((load.metadata.integrity || load.metadata.nonce) && supportsScriptExec)
-      //   return scriptExec.call(this, load);
-      try {
-        preExec(this, load);
-        curLoad = load;
-        (0, eval)(load.source);
-        postExec();
-      } catch (e) {
-        postExec();
-        throw new Error("Error evaluating " + load.address + ":\n" + e.stack);
-      }
-    };
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function runExecuteOfGlobalModule(System, entry) {
-    // if (entry.module) return;
-
-    var exports = {},
-        module = entry.module = { exports: exports, id: entry.name };
-
-    // // AMD requires execute the tree first
-    // if (!entry.executingRequire) {
-    //   for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
-    //     var depName = entry.normalizedDeps[i];
-    //     var depEntry = loader.defined[depName];
-    //     if (depEntry)
-    //       linkDynamicModule(depEntry, loader);
-    //   }
-    // }
-
-    // now execute
-    entry.evaluated = true;
-    var output = entry.execute.call(System.global, function (name) {
-      var dep = entry.deps.find(function (dep) {
-        return dep === name;
-      }),
-          loadedDep = dep && System.get(entry.normalizedDeps[entry.deps.indexOf(dep)]) || System.get(System.decanonicalize(name, entry.name));
-      if (loadedDep) return loadedDep;
-      throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
-    }, exports, module);
-
-    if (output) module.exports = output;
-
-    // create the esModule object, which allows ES6 named imports of dynamics
-    exports = module.exports;
-
-    // __esModule flag treats as already-named
-    var Module = System.get("@system-env").constructor;
-    if (exports && (exports.__esModule || exports instanceof Module)) entry.esModule = exports;
-    // set module as 'default' export, then fake named exports by iterating properties
-    else if (entry.esmExports && exports !== System.global) entry.esModule = System.newModule(exports);
-      // just use the 'default' export
-      else entry.esModule = { 'default': exports };
-
-    return entry;
-  }
-
-  var join = lively_lang.string.joinPath;
-
-  function isURL(string) {
-    return (/^[^:\\]+:\/\//.test(string)
-    );
-  }
-
-  function urlResolve(url) {
-    var urlMatch = url.match(/^([^:]+:\/\/)(.*)/);
-    if (!urlMatch) return url;
-
-    var protocol = urlMatch[1],
-        path = urlMatch[2],
-        result = path;
-    // /foo/../bar --> /bar
-    do {
-      path = result;
-      result = path.replace(/\/[^\/]+\/\.\./, '');
-    } while (result != path);
-    // foo//bar --> foo/bar
-    result = result.replace(/(^|[^:])[\/]+/g, '$1/');
-    // foo/./bar --> foo/bar
-    result = result.replace(/\/\.\//g, '/');
-    return protocol + result;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // config
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var tryToLoadPackageConfig = function () {
-    var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
-      var packageConfigURL, config, name;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              packageConfigURL = packageURL + "/package.json";
-
-              System.config({
-                meta: defineProperty({}, packageConfigURL, { format: "json" }),
-                packages: defineProperty({}, packageURL, { meta: { "package.json": { format: "json" } } })
-              });
-
-              System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
-
-              _context.prev = 3;
-              _context.t0 = System.get(packageConfigURL);
-
-              if (_context.t0) {
-                _context.next = 9;
-                break;
-              }
-
-              _context.next = 8;
-              return System.import(packageConfigURL);
-
-            case 8:
-              _context.t0 = _context.sent;
-
-            case 9:
-              config = _context.t0;
-
-              lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
-              return _context.abrupt("return", config);
-
-            case 14:
-              _context.prev = 14;
-              _context.t1 = _context["catch"](3);
-
-              console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, _context.t1);
-              delete System.meta[packageConfigURL];
-              name = packageURL.split("/").slice(-1)[0];
-              return _context.abrupt("return", { name: name });
-
-            case 20:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this, [[3, 14]]);
-    }));
-    return function tryToLoadPackageConfig(_x, _x2) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // internal
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function normalizeInsidePackage(System, urlOrName, packageURL) {
-    return isURL(urlOrName) ? urlOrName : // absolute
-    urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
-  }
-
-  function normalizePackageURL(System, packageURL) {
-    if (Object.keys(getPackages$1(System)).some(function (ea) {
-      return ea === packageURL;
-    })) return packageURL;
-
-    var url = System.decanonicalize(packageURL.replace(/[\/]+$/, "") + "/");
-
-    if (!isURL(url)) throw new Error("Strange package URL: " + url + " is not a valid URL");
-
-    // ensure it's a directory
-    if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
-
-    if (url.match(/\.js$/)) throw new Error("packageURL is expected to point to a directory but seems to be a .js file: " + url);
-
-    return String(url).replace(/\/$/, "");
-  }
-
-  function packageStore(System) {
-    return System.get("@lively-env").packages;
-  }
-
-  function addToPackageStore(System, p) {
-    var store = packageStore(System);
-    store[p.url] = p;
-    return p;
-  }
-
-  function findPackageNamed(System, name) {
-    return lively_lang.obj.values(packageStore(System)).find(function (ea) {
-      return ea.name === name;
-    });
-  }
-
-  function applyConfig(System, packageConfig, packageURL) {
-    // takes a config json object (typically read from a package.json file but
-    // can be used standalone) and changes the System configuration to what it finds
-    // in it.
-    // In particular uses the "systemjs" section as described in https://github.com/systemjs/systemjs/blob/master/docs/config-api.md
-    // and uses the "lively" section as described in `applyLivelyConfig`
-
-    var name = packageConfig.name || packageURL.split("/").slice(-1)[0],
-        sysConfig = packageConfig.systemjs || {},
-        livelyConfig = packageConfig.lively,
-        main = packageConfig.main || "index.js";
-
-    System.config({
-      map: defineProperty({}, name, packageURL),
-      packages: defineProperty({}, packageURL, sysConfig)
-    });
-
-    var packageInSystem = System.getConfig().packages[packageURL] || {};
-    if (!packageInSystem.map) packageInSystem.map = {};
-
-    if (sysConfig) {
-      if (sysConfig.packageConfigPaths) System.packageConfigPaths = lively_lang.arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
-      if (sysConfig.main) main = sysConfig.main;
-      applySystemJSConfig(System, packageConfig, packageURL);
-    }
-
-    packageInSystem.referencedAs = packageInSystem.referencedAs || [];
-    lively_lang.arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
-
-    if (!main.match(/\.[^\/\.]+/)) main += ".js";
-    packageInSystem.main = main;
-
-    // System.packages doesn't allow us to store our own properties
-    var p = getPackage$1(System, packageURL);
-    p.mergeWithConfig(packageInSystem);
-
-    var packageApplyResult = livelyConfig ? applyLivelyConfig(System, livelyConfig, p) : { subPackages: [] };
-
-    return packageApplyResult;
-  }
-
-  function applySystemJSConfig(System, systemjsConfig, pkg) {}
-
-  function applyLivelyConfig(System, livelyConfig, pkg) {
-    // configures System object from lively config JSON object.
-    // - adds System.package entry for package
-    // - adds name to System.package[pkg.url].referencedAs
-    // - installs hook from {hooks: [{name, source}]}
-    // - merges livelyConfig.packageMap into System.package[pkg.url].map
-    //   entries in packageMap are specifically meant to be sub-packages!
-    // Will return a {subPackages: [{name, address},...]} object
-    applyLivelyConfigMeta(System, livelyConfig, pkg);
-    applyLivelyConfigHooks(System, livelyConfig, pkg);
-    applyLivelyConfigBundles(System, livelyConfig, pkg);
-    return applyLivelyConfigPackageMap(System, livelyConfig, pkg);
-  }
-
-  function applyLivelyConfigHooks(System, livelyConfig, pkg) {
-    (livelyConfig.hooks || []).forEach(function (h) {
-      try {
-        var f = eval("(" + h.source + ")");
-        if (!f.name || !isHookInstalled$1(System, h.target, f.name)) installHook$1(System, h.target, f);
-      } catch (e) {
-        console.error("Error installing hook for %s: %s", pkg.url, e, h);
-      }
-    });
-  }
-
-  function applyLivelyConfigBundles(System, livelyConfig, pkg) {
-    if (!livelyConfig.bundles) return Promise.resolve();
-    var normalized = Object.keys(livelyConfig.bundles).reduce(function (bundles, name) {
-      var absName = pkg.url + "/" + name,
-          files = livelyConfig.bundles[name].map(function (f) {
-        return System.decanonicalize(f, pkg.url + "/");
-      });
-      bundles[absName] = files;
-      return bundles;
-    }, {});
-    System.config({ bundles: normalized });
-    return Promise.resolve();
-  }
-
-  function applyLivelyConfigMeta(System, livelyConfig, pkg) {
-    if (!livelyConfig.meta) return;
-    var pConf = System.getConfig().packages[pkg.url] || {},
-        c = { meta: {}, packages: defineProperty({}, pkg.url, pConf) };
-    Object.keys(livelyConfig.meta).forEach(function (key) {
-      var val = livelyConfig.meta[key];
-      if (isURL(key)) {
-        c.meta[key] = val;
-      } else {
-        if (!pConf.meta) pConf.meta = {};
-        pConf.meta[key] = val;
-      }
-    });
-    System.config(c);
-  }
-
-  function applyLivelyConfigPackageMap(System, livelyConfig, pkg) {
-    var subPackages = livelyConfig.packageMap ? Object.keys(livelyConfig.packageMap).map(function (name) {
-      return subpackageNameAndAddress(System, livelyConfig, name, pkg);
-    }) : [];
-    return { subPackages: subPackages };
-  }
-
-  function subpackageNameAndAddress(System, livelyConfig, subPackageName, pkg) {
-    // var pConf = System.packages[packageURL],
-    var preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ? livelyConfig.preferLoadedPackages : true,
-        normalized = System.decanonicalize(subPackageName, pkg.url);
-
-    if (preferLoadedPackages) {
-      var subpackageURL,
-          existing = findPackageNamed(System, subPackageName);
-
-      if (existing) subpackageURL = existing.url;else if (pkg.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], pkg.url);else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], pkg.url);else if (System.get(normalized)) subpackageURL = System.decanonicalize(subPackageName, pkg.url + "/");
-
-      if (subpackageURL) {
-        if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
-        System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
-        return getPackage$1(System, subpackageURL);
+        settle("throw", err);
       }
     }
 
-    pkg.addMapping(subPackageName, livelyConfig.packageMap[subPackageName]);
-
-    // lookup
-    var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
-    System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
-    return getPackage$1(System, subpackageURL);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // package object
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  var Package = function () {
-    function Package(System, packageURL) {
-      classCallCheck(this, Package);
-
-      // the name from the packages config, set once the config is loaded
-      this._name = undefined;
-      // The names under which the package is referenced by other packages
-      this.referencedAs = [];
-      this.url = packageURL;
-      this.System = System;
-      this.registerProcess = null;
-      this.map = {};
-    }
-
-    createClass(Package, [{
-      key: "path",
-      value: function path() {
-        var base = this.System.baseURL;
-        return this.url.indexOf(base) === 0 ? this.url.slice(base.length) : this.url;
-      }
-    }, {
-      key: "toString",
-      value: function toString() {
-        return "Package(" + this._name + " – " + this.path() + "/)";
-      }
-    }, {
-      key: "import",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  _context2.next = 2;
-                  return this.register();
-
-                case 2:
-                  _context2.t0 = this.System;
-                  _context2.next = 5;
-                  return this.System.normalize(this.url);
-
-                case 5:
-                  _context2.t1 = _context2.sent;
-                  return _context2.abrupt("return", _context2.t0.import.call(_context2.t0, _context2.t1));
-
-                case 7:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, this);
-        }));
-
-        function _import() {
-          return ref.apply(this, arguments);
-        }
-
-        return _import;
-      }()
-    }, {
-      key: "isRegistering",
-      value: function isRegistering() {
-        return !!this.registerProcess;
-      }
-    }, {
-      key: "register",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
-          var packageLoadStack = arguments.length <= 0 || arguments[0] === undefined ? [this.url] : arguments[0];
-
-          var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
-
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-              switch (_context3.prev = _context3.next) {
-                case 0:
-                  System = this.System;
-                  url = this.url;
-
-                  if (!this.isRegistering()) {
-                    _context3.next = 4;
-                    break;
-                  }
-
-                  return _context3.abrupt("return", this.registerProcess.promise);
-
-                case 4:
-                  this.registerProcess = lively_lang.promise.deferred();
-
-                  System.debug && console.log("[lively.modules package register] %s", url);
-                  _context3.next = 8;
-                  return tryToLoadPackageConfig(System, url);
-
-                case 8:
-                  cfg = _context3.sent;
-                  _context3.next = 11;
-                  return applyConfig(System, cfg, url);
-
-                case 11:
-                  packageConfigResult = _context3.sent;
-                  _iteratorNormalCompletion = true;
-                  _didIteratorError = false;
-                  _iteratorError = undefined;
-                  _context3.prev = 15;
-                  _iterator = packageConfigResult.subPackages[Symbol.iterator]();
-
-                case 17:
-                  if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                    _context3.next = 29;
-                    break;
-                  }
-
-                  supPkg = _step.value;
-
-                  if (!lively_lang.arr.include(packageLoadStack, supPkg.url)) {
-                    _context3.next = 23;
-                    break;
-                  }
-
-                  if (System.debug || true) {
-                    shortStack = packageLoadStack && packageLoadStack.map(function (ea) {
-                      return ea.indexOf(System.baseURL) === 0 ? ea.slice(System.baseURL.length) : ea;
-                    });
-
-                    System.debug && console.log("[lively.modules package register] " + url + " is a circular dependency, stopping registering subpackages, stack: " + shortStack);
-                  }
-                  _context3.next = 26;
-                  break;
-
-                case 23:
-                  packageLoadStack.push(supPkg.url);
-                  _context3.next = 26;
-                  return supPkg.register(packageLoadStack);
-
-                case 26:
-                  _iteratorNormalCompletion = true;
-                  _context3.next = 17;
-                  break;
-
-                case 29:
-                  _context3.next = 35;
-                  break;
-
-                case 31:
-                  _context3.prev = 31;
-                  _context3.t0 = _context3["catch"](15);
-                  _didIteratorError = true;
-                  _iteratorError = _context3.t0;
-
-                case 35:
-                  _context3.prev = 35;
-                  _context3.prev = 36;
-
-                  if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                  }
-
-                case 38:
-                  _context3.prev = 38;
-
-                  if (!_didIteratorError) {
-                    _context3.next = 41;
-                    break;
-                  }
-
-                  throw _iteratorError;
-
-                case 41:
-                  return _context3.finish(38);
-
-                case 42:
-                  return _context3.finish(35);
-
-                case 43:
-                  registerP = this.registerProcess.promise;
-
-                  this.registerProcess.resolve(cfg);
-                  delete this.registerProcess;
-                  lively_notifications.emit("lively.modules/packageregistered", { "package": this.url }, Date.now(), System);
-
-                  return _context3.abrupt("return", registerP);
-
-                case 48:
-                case "end":
-                  return _context3.stop();
-              }
-            }
-          }, _callee3, this, [[15, 31, 35, 43], [36,, 38, 42]]);
-        }));
-
-        function register(_x3) {
-          return ref.apply(this, arguments);
-        }
-
-        return register;
-      }()
-    }, {
-      key: "remove",
-      value: function remove() {
-        var System = this.System;
-        var url = this.url;
-
-
-        url = url.replace(/\/$/, "");
-        var conf = System.getConfig(),
-            packageConfigURL = url + "/package.json";
-
-        var p = getPackages$1(System).find(function (ea) {
-          return ea.address === url;
-        });
-        if (p) p.modules.forEach(function (mod) {
-          return module$2(System, mod.name).unload({ forgetEnv: true, forgetDeps: false });
-        });
-
-        System.delete(String(packageConfigURL));
-        lively_lang.arr.remove(conf.packageConfigPaths || [], packageConfigURL);
-
-        System.config({
-          meta: defineProperty({}, packageConfigURL, {}),
-          packages: defineProperty({}, url, {}),
-          packageConfigPaths: conf.packageConfigPaths
-        });
-        delete System.meta[packageConfigURL];
-        delete System.packages[url];
-        lively_notifications.emit("lively.modules/packageremoved", { "package": this.url }, Date.now(), System);
-      }
-    }, {
-      key: "reload",
-      value: function reload() {
-        this.remove();return this.import();
-      }
-    }, {
-      key: "search",
-      value: function search(needle, options) {
-        return searchInPackage$1(this.System, this.url, needle, options);
-      }
-    }, {
-      key: "mergeWithConfig",
-      value: function mergeWithConfig(config) {
-        var copy = Object.assign({}, config);
-        var name = copy.name;
-        var referencedAs = copy.referencedAs;
-        var map = copy.map;
-
-
-        if (referencedAs) {
-          delete copy.referencedAs;
-          this.referencedAs = lively_lang.arr.uniq(this.referencedAs.concat(referencedAs));
-        }
-
-        if (name) {
-          delete copy.name;
-          this._name = name;
-        }
-
-        if (map) {
-          delete copy.map;
-          Object.assign(this.map, map);
-        }
-
-        Object.assign(this, copy);
-        return this;
-      }
-    }, {
-      key: "addMapping",
-      value: function addMapping(name, url) {
-        this.map[name] = url;
-        this.System.config({ packages: defineProperty({}, this.url, { map: defineProperty({}, name, url) }) });
-      }
-    }, {
-      key: "name",
-      get: function get() {
-        return this._name || lively_lang.arr.last(this.url.replace(/[\/]+$/, "").split("/"));
-      },
-      set: function set(v) {
-        return this._name = v;
-      }
-    }, {
-      key: "address",
-      get: function get() {
-        return this.url;
-      },
-      set: function set(v) {
-        return this.url = v;
-      }
-    }]);
-    return Package;
-  }();
-
-  function getPackage$1(System, packageURL) {
-    var url = normalizePackageURL(System, packageURL);
-    return packageStore(System).hasOwnProperty(url) ? packageStore(System)[url] : addToPackageStore(System, new Package(System, url));
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // interface
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function importPackage$1(System, packageURL) {
-    return getPackage$1(System, packageURL).import();
-  }
-  function registerPackage$1(System, packageURL, packageLoadStack) {
-    return getPackage$1(System, packageURL).register(packageLoadStack);
-  }
-  function removePackage$1(System, packageURL) {
-    return getPackage$1(System, packageURL).remove();
-  }
-  function reloadPackage$1(System, packageURL) {
-    return getPackage$1(System, packageURL).reload();
-  }
-
-  function groupIntoPackages(System, moduleNames, packageNames) {
-
-    return lively_lang.arr.groupBy(moduleNames, groupFor);
-
-    function groupFor(moduleName) {
-      var fullname = System.decanonicalize(moduleName),
-          matching = packageNames.filter(function (p) {
-        return fullname.indexOf(p) === 0;
-      });
-      return matching.length ? matching.reduce(function (specific, ea) {
-        return ea.length > specific.length ? ea : specific;
-      }) : "no group";
-    }
-  }
-
-  function getPackages$1(System) {
-    // returns a list like
-    // ```
-    // [{
-    //   address: package-address,
-    //   modules: [module-name-1, module-name-2, ...],
-    //   name: package-name,
-    //   names: [package-name, ...]
-    // }, ... ]
-    // ```
-
-    var map = requireMap$1(System),
-        modules = Object.keys(map),
-        sysPackages = System.packages,
-        livelyPackages = packageStore(System),
-        packageNames = lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
-        result = [];
-
-    groupIntoPackages(System, modules, packageNames).mapGroups(function (packageAddress, moduleNames) {
-      var systemP = sysPackages[packageAddress],
-          livelyP = livelyPackages[packageAddress],
-          p = livelyP && systemP ? livelyP.mergeWithConfig(systemP) : livelyP || systemP,
-          referencedAs = p ? p.referencedAs : [];
-      if (!referencedAs || !referencedAs.length) referencedAs = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
-
-      moduleNames = moduleNames.filter(function (name) {
-        return name !== packageAddress && name !== packageAddress + "/";
-      });
-
-      result.push(Object.assign({}, p || {}, {
-        address: packageAddress,
-        name: referencedAs[0],
-        names: referencedAs,
-        modules: moduleNames.map(function (name) {
-          return {
-            name: name,
-            deps: map[name]
-          };
-        })
-      }));
-    });
-
-    return result;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // search
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function searchInPackage$1(System, packageURL, searchStr, options) {
-    packageURL = packageURL.replace(/\/$/, "");
-    var p = getPackages$1(System).find(function (p) {
-      return p.address == packageURL;
-    });
-    return p ? Promise.all(p.modules.map(function (m) {
-      return module$2(System, m.name).search(searchStr, options);
-    })).then(function (res) {
-      return lively_lang.arr.flatten(res, 1);
-    }) : Promise.resolve([]);
-  }
-
-  function module$2(System, moduleName, parent) {
-    var sysEnv = livelySystemEnv(System),
-        id = System.decanonicalize(moduleName, parent);
-    return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
-  }
-
-  // ModuleInterface is primarily used to provide an API that integrates the System
-  // loader state with lively.modules extensions.
-  // It does not hold any mutable state.
-
-  var ModuleInterface = function () {
-    function ModuleInterface(System, id) {
-      var _this = this;
-
-      classCallCheck(this, ModuleInterface);
-
-      // We assume module ids to be a URL with a scheme
-
-      if (!isURL(id) && !/^@/.test(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
-      this.System = System;
-      this.id = id;
-
-      // Under what variable name the recorder becomes available during module
-      // execution and eval
-      this.recorderName = "__lvVarRecorder";
-      this._recorder = null;
-
-      // cached values
-      this._source = null;
-      this._ast = null;
-      this._scope = null;
-      this._observersOfTopLevelState = [];
-
-      lively_notifications.subscribe("lively.modules/modulechanged", function (data) {
-        if (data.module === _this.id) _this.reset();
-      });
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // properties
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    // returns Promise<string>
-
-
-    createClass(ModuleInterface, [{
-      key: "fullName",
-      value: function fullName() {
-        return this.id;
-      }
-
-      // returns Promise<string>
-
-    }, {
-      key: "source",
-      value: function source() {
-        // rk 2016-06-24:
-        // We should consider using lively.resource here. Unfortunately
-        // System.fetch (at least with the current systemjs release) will not work in
-        // all cases b/c modules once loaded by the loaded get cached and System.fetch
-        // returns "" in those cases
-        //
-        // cs 2016-08-06:
-        // Changed implementation, so it uses System.resource to be consistent
-        // with module loading
-
-        if (this.id === "@empty") return Promise.resolve("");
-
-        if (this._source) return Promise.resolve(this._source);
-
-        return this.System.resource(this.id).read();
-      }
-    }, {
-      key: "ast",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  if (!this._ast) {
-                    _context.next = 2;
-                    break;
-                  }
-
-                  return _context.abrupt("return", this._ast);
-
-                case 2:
-                  _context.next = 4;
-                  return this.source();
-
-                case 4:
-                  _context.t0 = _context.sent;
-                  return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
-
-                case 6:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        function ast() {
-          return ref.apply(this, arguments);
-        }
-
-        return ast;
-      }()
-    }, {
-      key: "scope",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
-          var ast;
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  if (!this._scope) {
-                    _context2.next = 2;
-                    break;
-                  }
-
-                  return _context2.abrupt("return", this._scope);
-
-                case 2:
-                  _context2.next = 4;
-                  return this.ast();
-
-                case 4:
-                  ast = _context2.sent;
-                  return _context2.abrupt("return", this._scope = lively_ast.query.topLevelDeclsAndRefs(ast).scope);
-
-                case 6:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2, this);
-        }));
-
-        function scope() {
-          return ref.apply(this, arguments);
-        }
-
-        return scope;
-      }()
-    }, {
-      key: "resolvedScope",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
-          return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-              switch (_context3.prev = _context3.next) {
-                case 0:
-                  _context3.t0 = lively_ast.query;
-                  _context3.next = 3;
-                  return this.scope();
-
-                case 3:
-                  _context3.t1 = _context3.sent;
-                  return _context3.abrupt("return", this._scope = _context3.t0.resolveReferences.call(_context3.t0, _context3.t1));
-
-                case 5:
-                case "end":
-                  return _context3.stop();
-              }
-            }
-          }, _callee3, this);
-        }));
-
-        function resolvedScope() {
-          return ref.apply(this, arguments);
-        }
-
-        return resolvedScope;
-      }()
-    }, {
-      key: "metadata",
-      value: function metadata() {
-        var load = this.System.loads ? this.System.loads[this.id] : null;
-        return load ? load.metadata : null;
-      }
-    }, {
-      key: "format",
-      value: function format() {
-        // assume esm by default
-        var meta = this.metadata();
-        return meta ? meta.format : "esm";
-      }
-    }, {
-      key: "reset",
-      value: function reset() {
-        this._source = null;
-        this._ast = null;
-        this._scope = null;
-      }
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // loading
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "load",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
-          var m;
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  m = this.System.get(this.id);
-
-                  if (m) {
-                    _context4.next = 6;
-                    break;
-                  }
-
-                  _context4.next = 4;
-                  return this.System.import(this.id);
-
-                case 4:
-                  m = _context4.sent;
-
-                  lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
-
-                case 6:
-                  return _context4.abrupt("return", m);
-
-                case 7:
-                case "end":
-                  return _context4.stop();
-              }
-            }
-          }, _callee4, this);
-        }));
-
-        function load() {
-          return ref.apply(this, arguments);
-        }
-
-        return load;
-      }()
-    }, {
-      key: "isLoaded",
-      value: function isLoaded() {
-        return !!this.System.get(this.id);
-      }
-    }, {
-      key: "unloadEnv",
-      value: function unloadEnv() {
-        this._recorder = null;
-        this._observersOfTopLevelState = [];
-        // FIXME this shouldn't be necessary anymore....
-        delete livelySystemEnv(this.System).loadedModules[this.id];
-      }
-    }, {
-      key: "unloadDeps",
-      value: function unloadDeps(opts) {
-        var _this2 = this;
-
-        opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
-        this.dependents().forEach(function (ea) {
-          _this2.System.delete(ea.id);
-          if (_this2.System.loads) delete _this2.System.loads[ea.id];
-          if (opts.forgetEnv) ea.unloadEnv();
-        });
-      }
-    }, {
-      key: "unload",
-      value: function unload(opts) {
-        opts = lively_lang.obj.merge({ reset: true, forgetDeps: true, forgetEnv: true }, opts);
-        if (opts.reset) this.reset();
-        if (opts.forgetDeps) this.unloadDeps(opts);
-        this.System.delete(this.id);
-        if (this.System.loads) {
-          delete this.System.loads[this.id];
-        }
-        if (this.System.meta) delete this.System.meta[this.id];
-        if (opts.forgetEnv) this.unloadEnv();
-        lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
-      }
-    }, {
-      key: "reload",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
-          var _this3 = this;
-
-          var toBeReloaded;
-          return regeneratorRuntime.wrap(function _callee5$(_context5) {
-            while (1) {
-              switch (_context5.prev = _context5.next) {
-                case 0:
-                  opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
-                  toBeReloaded = [this];
-
-                  if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
-                  this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
-                  _context5.next = 6;
-                  return Promise.all(toBeReloaded.map(function (ea) {
-                    return ea.id !== _this3.id && ea.load();
-                  }));
-
-                case 6:
-                  _context5.next = 8;
-                  return this.load();
-
-                case 8:
-                case "end":
-                  return _context5.stop();
-              }
-            }
-          }, _callee5, this);
-        }));
-
-        function reload(_x) {
-          return ref.apply(this, arguments);
-        }
-
-        return reload;
-      }()
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // change
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "changeSourceAction",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
-          var source, newSource;
-          return regeneratorRuntime.wrap(function _callee6$(_context6) {
-            while (1) {
-              switch (_context6.prev = _context6.next) {
-                case 0:
-                  _context6.next = 2;
-                  return this.source();
-
-                case 2:
-                  source = _context6.sent;
-                  _context6.next = 5;
-                  return changeFunc(source);
-
-                case 5:
-                  newSource = _context6.sent;
-                  return _context6.abrupt("return", this.changeSource(newSource, { doEval: true }));
-
-                case 7:
-                case "end":
-                  return _context6.stop();
-              }
-            }
-          }, _callee6, this);
-        }));
-
-        function changeSourceAction(_x2) {
-          return ref.apply(this, arguments);
-        }
-
-        return changeSourceAction;
-      }()
-    }, {
-      key: "changeSource",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
-          return regeneratorRuntime.wrap(function _callee7$(_context7) {
-            while (1) {
-              switch (_context7.prev = _context7.next) {
-                case 0:
-                  if (!(!options || options.doSave !== false)) {
-                    _context7.next = 3;
-                    break;
-                  }
-
-                  _context7.next = 3;
-                  return this.System.resource(this.id).write(newSource);
-
-                case 3:
-                  return _context7.abrupt("return", moduleSourceChange$1(this.System, this.id, newSource, this.format(), options));
-
-                case 4:
-                case "end":
-                  return _context7.stop();
-              }
-            }
-          }, _callee7, this);
-        }));
-
-        function changeSource(_x3, _x4) {
-          return ref.apply(this, arguments);
-        }
-
-        return changeSource;
-      }()
-    }, {
-      key: "addDependencyToModuleRecord",
-      value: function addDependencyToModuleRecord(dependency) {
-        var _this4 = this;
-
-        var setter = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
-
-        // `dependency is another module, setter is the function that gets
-        // triggered when a dependency's binding changes so that "this" module is updated
-        var record = this.record(),
-            dependencyRecord = dependency.record();
-
-        if (record && dependencyRecord) {
-          // 1. update the record so that when its dependencies change and cause a
-          // re-execute, the correct code (new version) is run
-          var depIndex,
-              hasDepenency = record.dependencies.some(function (ea, i) {
-            if (!ea) return;depIndex = i;return ea && ea.name === dependency.id;
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
           });
-          if (!hasDepenency) {
-            record.dependencies.push(dependencyRecord);
-          } else if (dependencyRecord !== record.dependencies[depIndex] /*happens when a dep is reloaded*/) record.dependencies.splice(depIndex, 1, dependencyRecord);
+          break;
 
-          // setters are for updating module bindings, the position of the record
-          // in dependencies should be the same as the position of the setter for that
-          // dependency...
-          if (!hasDepenency || !record.setters[depIndex]) record.setters[hasDepenency ? depIndex : record.dependencies.length - 1] = setter;
+        case "throw":
+          front.reject(value);
+          break;
 
-          // 2. update records of dependencies, so that they know about this module as an importer
-          var impIndex,
-              hasImporter = dependencyRecord.importers.some(function (imp, i) {
-            if (!imp) return;impIndex = i;return imp && imp.name === _this4.id;
+        default:
+          front.resolve({
+            value: value,
+            done: false
           });
-          if (!hasImporter) dependencyRecord.importers.push(record);else if (record !== dependencyRecord.importers[impIndex]) dependencyRecord.importers.splice(impIndex, 1, record);
-        }
+          break;
       }
 
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // dependencies
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      front = front.next;
 
-    }, {
-      key: "dependents",
-      value: function dependents() {
-        var _this5 = this;
-
-        // which modules (module ids) are (in)directly import module with id
-        // Let's say you have
-        // module1: export var x = 23;
-        // module2: import {x} from "module1.js"; export var y = x + 1;
-        // module3: import {y} from "module2.js"; export var z = y + 1;
-        // `dependents` gives you an answer what modules are "stale" when you
-        // change module1 = module2 + module3
-        return lively_lang.graph.hull(lively_lang.graph.invert(requireMap$1(this.System)), this.id).map(function (mid) {
-          return module$2(_this5.System, mid);
-        });
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
       }
-    }, {
-      key: "requirements",
-      value: function requirements() {
-        var _this6 = this;
+    }
 
-        // which modules (module ids) are (in)directly required by module with id
-        // Let's say you have
-        // module1: export var x = 23;
-        // module2: import {x} from "module1.js"; export var y = x + 1;
-        // module3: import {y} from "module2.js"; export var z = y + 1;
-        // `module("./module3").requirements()` will report ./module2 and ./module1
-        return lively_lang.graph.hull(requireMap$1(this.System), this.id).map(function (mid) {
-          return module$2(_this6.System, mid);
-        });
-      }
+    this._invoke = send;
 
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // module environment
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
 
-      // What variables to not transform during execution, i.e. what variables
-      // should not be accessed as properties of recorder
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
 
-    }, {
-      key: "define",
-      value: function define(varName, value) {
-        return this.recorder[varName] = value;
-      }
-    }, {
-      key: "undefine",
-      value: function undefine(varName) {
-        delete this.recorder[varName];
-      }
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
 
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // observing top level state
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
 
-    }, {
-      key: "subscribeToToplevelDefinitionChanges",
-      value: function subscribeToToplevelDefinitionChanges(func) {
-        this._observersOfTopLevelState.push(func);
-        return func;
-      }
-    }, {
-      key: "notifyTopLevelObservers",
-      value: function notifyTopLevelObservers(key) {
-        var ignored = ["createOrExtendES6ClassForLively", "lively.capturing-declaration-wrapper"],
-            rec = this.recorder;
-        if (lively_lang.arr.include(ignored, key)) return;
-        this._observersOfTopLevelState.forEach(function (fn) {
-          return fn(key, rec[key]);
-        });
-      }
-    }, {
-      key: "unsubscribeFromToplevelDefinitionChanges",
-      value: function unsubscribeFromToplevelDefinitionChanges(funcOrName) {
-        this._observersOfTopLevelState = typeof funcOrName === "string" ? this._observersOfTopLevelState.filter(function (ea) {
-          return ea.name !== funcOrName;
-        }) : this._observersOfTopLevelState.filter(function (ea) {
-          return ea !== funcOrName;
-        });
-      }
-    }, {
-      key: "evaluationDone",
-      value: function evaluationDone() {
-        this.addGetterSettersForNewVars();
-        runScheduledExportChanges(this.System, this.id);
-      }
-    }, {
-      key: "addGetterSettersForNewVars",
-      value: function addGetterSettersForNewVars() {
-        var _this7 = this;
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
 
-        // after eval we modify the env so that all captures vars are wrapped in
-        // getter/setter to be notified of changes
-        // FIXME: better to not capture via assignments but use func calls...!
-        var rec = this.recorder,
-            prefix = "__lively.modules__";
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
 
-        if (rec === this.System.global) {
-          console.warn("[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!");
+
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
           return;
         }
 
-        lively_lang.properties.own(rec).forEach(function (key) {
-          if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
-          Object.defineProperty(rec, prefix + key, {
-            enumerable: false,
-            writable: true,
-            value: rec[key]
-          });
-          Object.defineProperty(rec, key, {
-            enumerable: true,
-            get: function get() {
-              return rec[prefix + key];
-            },
-            set: function set(v) {
-              rec[prefix + key] = v;
-              scheduleModuleExportsChange(_this7.System, _this7.id, key, v, false /*add export*/);
-              _this7.notifyTopLevelObservers(key);
-            }
-          });
-
-          _this7.notifyTopLevelObservers(key);
-        });
-      }
-    }, {
-      key: "env",
-      value: function env() {
-        return this;
-      }
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // package related
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "package",
-      value: function _package() {
-        var _this8 = this;
-
-        return getPackages$1(this.System).find(function (ea) {
-          return ea.modules.some(function (mod) {
-            return mod.name === _this8.id;
-          });
-        });
-      }
-    }, {
-      key: "pathInPackage",
-      value: function pathInPackage() {
-        var p = this.package();
-        return p && this.id.indexOf(p.address) === 0 ? join("./", this.id.slice(p.address.length)) : this.id;
-      }
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // imports and exports
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "imports",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
-          var parsed, scope;
-          return regeneratorRuntime.wrap(function _callee8$(_context8) {
-            while (1) {
-              switch (_context8.prev = _context8.next) {
-                case 0:
-                  _context8.next = 2;
-                  return this.ast();
-
-                case 2:
-                  parsed = _context8.sent;
-                  _context8.next = 5;
-                  return this.scope();
-
-                case 5:
-                  scope = _context8.sent;
-                  return _context8.abrupt("return", lively_ast.query.imports(scope));
-
-                case 7:
-                case "end":
-                  return _context8.stop();
-              }
-            }
-          }, _callee8, this);
-        }));
-
-        function imports() {
-          return ref.apply(this, arguments);
-        }
-
-        return imports;
-      }()
-    }, {
-      key: "exports",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
-          var parsed, scope;
-          return regeneratorRuntime.wrap(function _callee9$(_context9) {
-            while (1) {
-              switch (_context9.prev = _context9.next) {
-                case 0:
-                  _context9.next = 2;
-                  return this.ast();
-
-                case 2:
-                  parsed = _context9.sent;
-                  _context9.next = 5;
-                  return this.scope();
-
-                case 5:
-                  scope = _context9.sent;
-                  return _context9.abrupt("return", lively_ast.query.exports(scope));
-
-                case 7:
-                case "end":
-                  return _context9.stop();
-              }
-            }
-          }, _callee9, this);
-        }));
-
-        function exports() {
-          return ref.apply(this, arguments);
-        }
-
-        return exports;
-      }()
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // bindings
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "_localDeclForRefAt",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
-          var scope, ref;
-          return regeneratorRuntime.wrap(function _callee10$(_context10) {
-            while (1) {
-              switch (_context10.prev = _context10.next) {
-                case 0:
-                  _context10.next = 2;
-                  return this.resolvedScope();
-
-                case 2:
-                  scope = _context10.sent;
-                  ref = lively_ast.query.refWithDeclAt(pos, scope);
-                  return _context10.abrupt("return", ref && { decl: ref.decl, id: ref.declId, declModule: this });
-
-                case 5:
-                case "end":
-                  return _context10.stop();
-              }
-            }
-          }, _callee10, this);
-        }));
-
-        function _localDeclForRefAt(_x6) {
-          return ref.apply(this, arguments);
-        }
-
-        return _localDeclForRefAt;
-      }()
-    }, {
-      key: "_importForNSRefAt",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
-          var scope, ast, nodes, id, member, _ref, decl, name, spec;
-
-          return regeneratorRuntime.wrap(function _callee11$(_context11) {
-            while (1) {
-              switch (_context11.prev = _context11.next) {
-                case 0:
-                  _context11.next = 2;
-                  return this.resolvedScope();
-
-                case 2:
-                  scope = _context11.sent;
-                  ast = scope.node;
-                  nodes = lively_ast.query.nodesAtIndex(ast, pos);
-
-                  if (!(nodes.length < 2)) {
-                    _context11.next = 7;
-                    break;
-                  }
-
-                  return _context11.abrupt("return", [null, null]);
-
-                case 7:
-                  id = nodes[nodes.length - 1], member = nodes[nodes.length - 2];
-
-                  if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
-                    _context11.next = 10;
-                    break;
-                  }
-
-                  return _context11.abrupt("return", [null, null]);
-
-                case 10:
-                  _ref = scope.resolvedRefMap.get(member.object) || {};
-                  decl = _ref.decl;
-
-                  if (!(!decl || decl.type !== "ImportDeclaration")) {
-                    _context11.next = 14;
-                    break;
-                  }
-
-                  return _context11.abrupt("return", [null, null]);
-
-                case 14:
-                  name = member.object.name, spec = decl.specifiers.find(function (s) {
-                    return s.local.name === name;
-                  });
-                  return _context11.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
-
-                case 16:
-                case "end":
-                  return _context11.stop();
-              }
-            }
-          }, _callee11, this);
-        }));
-
-        function _importForNSRefAt(_x7) {
-          return ref.apply(this, arguments);
-        }
-
-        return _importForNSRefAt;
-      }()
-    }, {
-      key: "_resolveImportedDecl",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
-          var _decl$id, start, name, type, imports, im, imM;
-
-          return regeneratorRuntime.wrap(function _callee12$(_context12) {
-            while (1) {
-              switch (_context12.prev = _context12.next) {
-                case 0:
-                  if (decl) {
-                    _context12.next = 2;
-                    break;
-                  }
-
-                  return _context12.abrupt("return", []);
-
-                case 2:
-                  _decl$id = decl.id;
-                  start = _decl$id.start;
-                  name = _decl$id.name;
-                  type = _decl$id.type;
-                  _context12.next = 8;
-                  return this.imports();
-
-                case 8:
-                  imports = _context12.sent;
-                  im = imports.find(function (i) {
-                    return i.node.start == start && // can't rely on
-                    i.node.name == name && // object identity
-                    i.node.type == type;
-                  });
-
-                  if (!im) {
-                    _context12.next = 17;
-                    break;
-                  }
-
-                  imM = module$2(this.System, im.fromModule, this.id);
-                  _context12.t0 = [decl];
-                  _context12.next = 15;
-                  return imM.bindingPathForExport(im.imported);
-
-                case 15:
-                  _context12.t1 = _context12.sent;
-                  return _context12.abrupt("return", _context12.t0.concat.call(_context12.t0, _context12.t1));
-
-                case 17:
-                  return _context12.abrupt("return", [decl]);
-
-                case 18:
-                case "end":
-                  return _context12.stop();
-              }
-            }
-          }, _callee12, this);
-        }));
-
-        function _resolveImportedDecl(_x8) {
-          return ref.apply(this, arguments);
-        }
-
-        return _resolveImportedDecl;
-      }()
-    }, {
-      key: "bindingPathForExport",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
-          var exports, ex, imM, decl;
-          return regeneratorRuntime.wrap(function _callee13$(_context13) {
-            while (1) {
-              switch (_context13.prev = _context13.next) {
-                case 0:
-                  _context13.next = 2;
-                  return this.resolvedScope();
-
-                case 2:
-                  _context13.next = 4;
-                  return this.exports();
-
-                case 4:
-                  exports = _context13.sent;
-                  ex = exports.find(function (e) {
-                    return e.exported === name;
-                  });
-
-                  if (!ex.fromModule) {
-                    _context13.next = 17;
-                    break;
-                  }
-
-                  imM = module$2(this.System, ex.fromModule, this.id);
-                  decl = { decl: ex.node, id: ex.declId };
-
-                  decl.declModule = this;
-                  _context13.t0 = [decl];
-                  _context13.next = 13;
-                  return imM.bindingPathForExport(ex.imported);
-
-                case 13:
-                  _context13.t1 = _context13.sent;
-                  return _context13.abrupt("return", _context13.t0.concat.call(_context13.t0, _context13.t1));
-
-                case 17:
-                  return _context13.abrupt("return", this._resolveImportedDecl({
-                    decl: ex.decl,
-                    id: ex.declId,
-                    declModule: ex && ex.decl ? this : null
-                  }));
-
-                case 18:
-                case "end":
-                  return _context13.stop();
-              }
-            }
-          }, _callee13, this);
-        }));
-
-        function bindingPathForExport(_x9) {
-          return ref.apply(this, arguments);
-        }
-
-        return bindingPathForExport;
-      }()
-    }, {
-      key: "bindingPathForRefAt",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
-          var decl, _ref2, _ref3, imDecl, id, name, imM;
-
-          return regeneratorRuntime.wrap(function _callee14$(_context14) {
-            while (1) {
-              switch (_context14.prev = _context14.next) {
-                case 0:
-                  _context14.next = 2;
-                  return this._localDeclForRefAt(pos);
-
-                case 2:
-                  decl = _context14.sent;
-
-                  if (!decl) {
-                    _context14.next = 7;
-                    break;
-                  }
-
-                  _context14.next = 6;
-                  return this._resolveImportedDecl(decl);
-
-                case 6:
-                  return _context14.abrupt("return", _context14.sent);
-
-                case 7:
-                  _context14.next = 9;
-                  return this._importForNSRefAt(pos);
-
-                case 9:
-                  _ref2 = _context14.sent;
-                  _ref3 = slicedToArray(_ref2, 3);
-                  imDecl = _ref3[0];
-                  id = _ref3[1];
-                  name = _ref3[2];
-
-                  if (imDecl) {
-                    _context14.next = 16;
-                    break;
-                  }
-
-                  return _context14.abrupt("return", []);
-
-                case 16:
-                  imM = module$2(this.System, imDecl.source.value, this.id);
-                  _context14.t0 = [{ decl: imDecl, declModule: this, id: id }];
-                  _context14.next = 20;
-                  return imM.bindingPathForExport(name);
-
-                case 20:
-                  _context14.t1 = _context14.sent;
-                  return _context14.abrupt("return", _context14.t0.concat.call(_context14.t0, _context14.t1));
-
-                case 22:
-                case "end":
-                  return _context14.stop();
-              }
-            }
-          }, _callee14, this);
-        }));
-
-        function bindingPathForRefAt(_x10) {
-          return ref.apply(this, arguments);
-        }
-
-        return bindingPathForRefAt;
-      }()
-    }, {
-      key: "definitionForRefAt",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
-          var path;
-          return regeneratorRuntime.wrap(function _callee15$(_context15) {
-            while (1) {
-              switch (_context15.prev = _context15.next) {
-                case 0:
-                  _context15.next = 2;
-                  return this.bindingPathForRefAt(pos);
-
-                case 2:
-                  path = _context15.sent;
-                  return _context15.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
-
-                case 4:
-                case "end":
-                  return _context15.stop();
-              }
-            }
-          }, _callee15, this);
-        }));
-
-        function definitionForRefAt(_x11) {
-          return ref.apply(this, arguments);
-        }
-
-        return definitionForRefAt;
-      }()
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // module records
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "record",
-      value: function record() {
-        var rec = this.System._loader.moduleRecords[this.id];
-        if (!rec) return null;
-        if (!rec.hasOwnProperty("__lively_modules__")) rec.__lively_modules__ = { evalOnlyExport: {} };
-        return rec;
-      }
-    }, {
-      key: "updateRecord",
-      value: function updateRecord(doFunc) {
-        var record = this.record();
-        if (!record) throw new Error("es6 environment global of " + this.id + ": module not loaded, cannot get export object!");
-        record.locked = true;
-        try {
-          return doFunc(record);
-        } finally {
-          record.locked = false;
-        }
-      }
-
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // search
-      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    }, {
-      key: "search",
-      value: function () {
-        var ref = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
-          var _this9 = this;
-
-          var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
-
-          return regeneratorRuntime.wrap(function _callee16$(_context16) {
-            while (1) {
-              switch (_context16.prev = _context16.next) {
-                case 0:
-                  options = Object.assign({ excludedModules: [] }, options);
-
-                  if (!options.excludedModules.some(function (ex) {
-                    if (typeof ex === "string") return ex === _this9.id;
-                    if (ex instanceof RegExp) return ex.test(_this9.id);
-                    return false;
-                  })) {
-                    _context16.next = 3;
-                    break;
-                  }
-
-                  return _context16.abrupt("return", []);
-
-                case 3:
-                  _context16.next = 5;
-                  return this.source();
-
-                case 5:
-                  src = _context16.sent;
-                  re = void 0;
-
-                  if (searchStr instanceof RegExp) {
-                    flags = 'g'; // add 'g' flag
-
-                    if (searchStr.ignoreCase) flags += 'i';
-                    if (searchStr.multiline) flags += 'm';
-                    re = RegExp(searchStr.source, flags);
-                  } else {
-                    re = RegExp(searchStr, 'g');
-                  }
-
-                  match = void 0, res = [];
-
-                  while ((match = re.exec(src)) !== null) {
-                    res.push([match.index, match[0].length]);
-                  }i = 0, j = 0, line = 1, lineStart = 0;
-
-                case 11:
-                  if (!(i < src.length && j < res.length)) {
-                    _context16.next = 25;
-                    break;
-                  }
-
-                  if (src[i] == '\n') {
-                    line++;
-                    lineStart = i + 1;
-                  }
-                  _res$j = slicedToArray(res[j], 2);
-                  idx = _res$j[0];
-                  length = _res$j[1];
-
-                  if (!(i !== idx)) {
-                    _context16.next = 18;
-                    break;
-                  }
-
-                  return _context16.abrupt("continue", 22);
-
-                case 18:
-                  lineEnd = src.slice(lineStart).indexOf("\n");
-
-                  if (lineEnd === -1) lineEnd = src.length;else lineEnd += lineStart;
-                  res[j] = {
-                    module: this,
-                    length: length,
-                    line: line, column: i - lineStart,
-                    lineString: src.slice(lineStart, lineEnd)
-                  };
-                  j++;
-
-                case 22:
-                  i++;
-                  _context16.next = 11;
-                  break;
-
-                case 25:
-                  return _context16.abrupt("return", res);
-
-                case 26:
-                case "end":
-                  return _context16.stop();
-              }
-            }
-          }, _callee16, this);
-        }));
-
-        function search(_x12, _x13) {
-          return ref.apply(this, arguments);
-        }
-
-        return search;
-      }()
-    }, {
-      key: "toString",
-      value: function toString() {
-        return "module(" + this.id + ")";
-      }
-    }, {
-      key: "dontTransform",
-      get: function get() {
-        return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "localStorage", // for Firefox, see fetch
-        "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-        ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]));
-      }
-
-      // FIXME... better to make this read-only, currently needed for loading
-      // global modules, from instrumentation.js
-
-    }, {
-      key: "recorder",
-      set: function set(v) {
-        return this._recorder = v;
-      },
-      get: function get() {
-        if (this._recorder) return this._recorder;
-
-        var S = this.System,
-            self = this;
-
-        return this._recorder = Object.create(S.global, {
-
-          System: { configurable: true, writable: true, value: S },
-
-          _moduleExport: {
-            value: function value(name, val) {
-              scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
-            }
-          },
-
-          _moduleImport: {
-            value: function value(depName, key) {
-              var depId = S.decanonicalize(depName, self.id),
-                  depExports = S.get(depId);
-
-              if (!depExports) {
-                console.warn("import of " + key + " failed: " + depName + " (tried as " + self.id + ") is not loaded!");
-                return undefined;
-              }
-
-              self.addDependencyToModuleRecord(module$2(S, depId),
-              // setter is only installed if there isn't a setter already. In
-              // those cases we make sure that at least the module varRecorder gets
-              // updated, which is good enough for "virtual modules"
-              function (imports) {
-                return Object.assign(self.recorder, imports);
-              });
-
-              if (key == undefined) return depExports;
-
-              if (!depExports.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
-
-              return depExports[key];
-            }
-          }
-
-        });
-      }
-    }]);
-    return ModuleInterface;
-  }();
-
-  function fetchResource(proceed, load) {
-    var System = this,
-        res = System.resource(load.name);
-
-    if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
-
-    return res ? res.read() : proceed(load);
-  }
-
-  function livelyProtocol(proceed, url) {
-    if (!url.match(/^lively:\/\//)) return proceed(url);
-    var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
-        worldId = match[1],
-        localObjectName = match[2];
-    return {
-      read: function read() {
-        return Promise.resolve(typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + localObjectName + "*/");
-      },
-      write: function write(source) {
-        if (typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString) {
-          $morph(localObjectName).textString = source;
-          return Promise.resolve(source);
+        if (info.done) {
+          resolve(value);
         } else {
-          return Promise.reject("Could not save morph " + localObjectName);
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
         }
       }
-    };
+
+      return step("next");
+    });
+  };
+};
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
   }
 
-  function wrapResource(System) {
-    if (!System.resource) {
-      System.resource = lively_resources.resource;
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+var defineProperty = function (obj$$1, key, value) {
+  if (key in obj$$1) {
+    Object.defineProperty(obj$$1, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj$$1[key] = value;
+  }
+
+  return obj$$1;
+};
+
+var get$1 = function get$1(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get$1(parent, property, receiver);
     }
-    if (!isHookInstalled$1(System, "fetch", fetchResource)) {
-      installHook$1(System, "fetch", fetchResource);
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
     }
-    if (!isHookInstalled$1(System, "resource", livelyProtocol)) {
-      installHook$1(System, "resource", livelyProtocol);
+
+    return getter.call(receiver);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var set$1 = function set$1(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set$1(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
     }
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  return value;
+};
 
-  var isNode = System.get("@system-env").node;
-  var initialSystem = initialSystem || System;
+var slicedToArray = function () {
+  function sliceIterator(arr$$1, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
-  var SystemClass = System.constructor;
-  if (!SystemClass.systems) SystemClass.systems = {};
+    try {
+      for (var _i = arr$$1[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
 
-  var defaultOptions = {
-    notificationLimit: null
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr$$1, i) {
+    if (Array.isArray(arr$$1)) {
+      return arr$$1;
+    } else if (Symbol.iterator in Object(arr$$1)) {
+      return sliceIterator(arr$$1, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
+var moduleSourceChange$1 = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, newSource, format, options) {
+    var changeResult;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.prev = 0;
+
+            System.debug && console.log("[module change] " + moduleId + " " + newSource.slice(0, 50).replace(/\n/g, "") + " " + format);
+
+            if (!(!format || format === "es6" || format === "esm" || format === "register" || format === "defined")) {
+              _context.next = 8;
+              break;
+            }
+
+            _context.next = 5;
+            return moduleSourceChangeEsm(System, moduleId, newSource, options);
+
+          case 5:
+            changeResult = _context.sent;
+            _context.next = 15;
+            break;
+
+          case 8:
+            if (!(format === "global")) {
+              _context.next = 14;
+              break;
+            }
+
+            _context.next = 11;
+            return moduleSourceChangeGlobal(System, moduleId, newSource, options);
+
+          case 11:
+            changeResult = _context.sent;
+            _context.next = 15;
+            break;
+
+          case 14:
+            throw new Error("moduleSourceChange is not supported for module " + moduleId + " with format " + format);
+
+          case 15:
+
+            lively_notifications.emit("lively.modules/modulechanged", {
+              module: moduleId, newSource: newSource, options: options }, Date.now(), System);
+
+            return _context.abrupt("return", changeResult);
+
+          case 19:
+            _context.prev = 19;
+            _context.t0 = _context["catch"](0);
+
+            lively_notifications.emit("lively.modules/modulechanged", {
+              module: moduleId, newSource: newSource, error: _context.t0, options: options }, Date.now(), System);
+            throw _context.t0;
+
+          case 23:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this, [[0, 19]]);
+  }));
+
+  return function moduleSourceChange$1(_x, _x2, _x3, _x4, _x5) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+var moduleSourceChangeEsm = function () {
+  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
+    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
+
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            debug = System.debug, load = {
+              status: 'loading',
+              source: newSource,
+              name: moduleId,
+              address: moduleId,
+              linkSets: [],
+              dependencies: [],
+              metadata: { format: "esm" }
+            };
+
+            // translate the source and produce a {declare: FUNCTION, localDeps:
+            // [STRING]} object
+
+            _context2.next = 3;
+            return instrumentSourceOfEsmModuleLoad(System, load);
+
+          case 3:
+            updateData = _context2.sent;
+
+
+            // evaluate the module source, to get the register module object with execute
+            // and setters fields
+            _exports = function _exports(name, val) {
+              return scheduleModuleExportsChange(System, load.name, name, val, true);
+            }, declared = updateData.declare(_exports);
+
+
+            debug && console.log("[lively.vm es6] sourceChange of %s with deps", load.name, updateData.localDeps);
+
+            // ensure dependencies are loaded
+            deps = [];
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _iteratorError = undefined;
+            _context2.prev = 10;
+            _iterator = updateData.localDeps[Symbol.iterator]();
+
+          case 12:
+            if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+              _context2.next = 25;
+              break;
+            }
+
+            depName = _step.value;
+            _context2.next = 16;
+            return System.normalize(depName, load.name);
+
+          case 16:
+            depId = _context2.sent;
+            depModule = module$2(System, depId);
+            _context2.next = 20;
+            return depModule.load();
+
+          case 20:
+            exports = _context2.sent;
+
+            deps.push({ name: depName, fullname: depId, module: depModule, exports: exports });
+
+          case 22:
+            _iteratorNormalCompletion = true;
+            _context2.next = 12;
+            break;
+
+          case 25:
+            _context2.next = 31;
+            break;
+
+          case 27:
+            _context2.prev = 27;
+            _context2.t0 = _context2["catch"](10);
+            _didIteratorError = true;
+            _iteratorError = _context2.t0;
+
+          case 31:
+            _context2.prev = 31;
+            _context2.prev = 32;
+
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+
+          case 34:
+            _context2.prev = 34;
+
+            if (!_didIteratorError) {
+              _context2.next = 37;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 37:
+            return _context2.finish(34);
+
+          case 38:
+            return _context2.finish(31);
+
+          case 39:
+
+            // hmm... for house keeping... not really needed right now, though
+            prevLoad = System.loads && System.loads[load.name];
+
+            if (prevLoad) {
+              prevLoad.deps = deps.map(function (ea) {
+                return ea.name;
+              });
+              prevLoad.depMap = deps.reduce(function (map, dep) {
+                map[dep.name] = dep.fullname;return map;
+              }, {});
+              if (prevLoad.metadata && prevLoad.metadata.entry) {
+                prevLoad.metadata.entry.deps = prevLoad.deps;
+                prevLoad.metadata.entry.normalizedDeps = deps.map(function (ea) {
+                  return ea.fullname;
+                });
+                prevLoad.metadata.entry.declare = updateData.declare;
+              }
+            }
+
+            mod = module$2(System, load.name), record = mod.record();
+
+            // 1. update the record so that when its dependencies change and cause a
+            // re-execute, the correct code (new version) is run
+
+            deps.forEach(function (ea, i) {
+              return mod.addDependencyToModuleRecord(ea.module, declared.setters[i]);
+            });
+            if (record) record.execute = declared.execute;
+
+            // 2. run setters to populate imports
+            deps.forEach(function (d, i) {
+              return declared.setters[i](d.exports);
+            });
+
+            // 3. execute module body
+            result = declared.execute();
+
+            // for updating records, modules, etc
+            // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
+
+            System.get("@lively-env").evaluationDone(load.name);
+
+            return _context2.abrupt("return", result);
+
+          case 48:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, this, [[10, 27, 31, 39], [32,, 34, 38]]);
+  }));
+
+  return function moduleSourceChangeEsm(_x6, _x7, _x8, _x9) {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
+var moduleSourceChangeGlobal = function () {
+  var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, moduleId, newSource, options) {
+    var load, updateData, entry;
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            load = {
+              status: 'loading',
+              source: newSource,
+              name: moduleId,
+              address: moduleId,
+              linkSets: [],
+              dependencies: [],
+              metadata: { format: "global" }
+            };
+
+            if (System.get(moduleId)) {
+              _context3.next = 4;
+              break;
+            }
+
+            _context3.next = 4;
+            return System["import"](moduleId);
+
+          case 4:
+            _context3.next = 6;
+            return instrumentSourceOfGlobalModuleLoad(System, load);
+
+          case 6:
+            updateData = _context3.sent;
+
+
+            load.source = updateData.translated;
+            entry = doInstantiateGlobalModule(System, load);
+
+            System.delete(moduleId);
+            System.set(entry.name, entry.esModule);
+            return _context3.abrupt("return", entry.module);
+
+          case 12:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, this);
+  }));
+
+  return function moduleSourceChangeGlobal(_x10, _x11, _x12, _x13) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
+function doInstantiateGlobalModule(System, load) {
+
+  var entry = __createEntry();
+  entry.name = load.name;
+  entry.esmExports = true;
+  load.metadata.entry = entry;
+
+  entry.deps = [];
+
+  for (var g in load.metadata.globals) {
+    var gl = load.metadata.globals[g];
+    if (gl) entry.deps.push(gl);
+  }
+
+  entry.execute = function executeGlobalModule(require, exports, m) {
+
+    // SystemJS exports detection for global modules is based in new props
+    // added to the global. In order to allow re-load we remove previously
+    // "exported" values
+    var prevMeta = module$2(System, m.id).metadata(),
+        exports = prevMeta && prevMeta.entry && prevMeta.entry.module && prevMeta.entry.module.exports;
+    if (exports) Object.keys(exports).forEach(function (name) {
+      try {
+        delete System.global[name];
+      } catch (e) {
+        console.warn("[lively.modules] executeGlobalModule: Cannot delete global[\"" + name + "\"]");
+      }
+    });
+
+    var globals;
+    if (load.metadata.globals) {
+      globals = {};
+      for (var g in load.metadata.globals) {
+        if (load.metadata.globals[g]) globals[g] = require(load.metadata.globals[g]);
+      }
+    }
+
+    var exportName = load.metadata.exports;
+
+    if (exportName) load.source += "\nSystem.global[\"" + exportName + "\"] = " + exportName + ";";
+
+    var retrieveGlobal = System.get('@@global-helpers').prepareGlobal(module$2.id, exportName, globals);
+
+    __evaluateGlobalLoadSource(System, load);
+
+    return retrieveGlobal();
   };
 
-  function livelySystemEnv(System) {
-    return {
-      moduleEnv: function moduleEnv(id) {
-        return module$2(System, id);
-      },
+  return runExecuteOfGlobalModule(System, entry);
+}
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-      // TODO this is just a test, won't work in all cases...
-      get itself() {
-        return System.get(System.decanonicalize("lively.modules/index.js"));
-      },
+function __createEntry() {
+  return {
+    name: null,
+    deps: null,
+    originalIndices: null,
+    declare: null,
+    execute: null,
+    executingRequire: false,
+    declarative: false,
+    normalizedDeps: null,
+    groupIndex: null,
+    evaluated: false,
+    module: null,
+    esModule: null,
+    esmExports: false
+  };
+}
 
-      evaluationDone: function evaluationDone(moduleId) {
-        module$2(System, moduleId).evaluationDone();
-      },
-      dumpConfig: function dumpConfig() {
-        return JSON.stringify({
-          baseURL: System.baseURL,
-          transpiler: System.transpiler,
-          defaultJSExtensions: System.defaultJSExtensions,
-          map: System.map,
-          meta: System.meta,
-          packages: System.packages,
-          paths: System.paths,
-          packageConfigPaths: System.packageConfigPaths
-        }, null, 2);
-      },
+function __evaluateGlobalLoadSource(System, load) {
+  // System clobbering protection (mostly for Traceur)
+  var curLoad,
+      curSystem,
+      callCounter = 0,
+      __global = System.global;
+  return __exec.call(System, load);
 
-
-      // this is where the canonical state of the module system is held...
-      packages: System["__lively.modules__packages"] || (System["__lively.modules__packages"] = {}),
-      loadedModules: System["__lively.modules__loadedModules"] || (System["__lively.modules__loadedModules"] = {}),
-      pendingExportChanges: System["__lively.modules__pendingExportChanges"] || (System["__lively.modules__pendingExportChanges"] = {}),
-      notifications: System["__lively.modules__notifications"] || (System["__lively.modules__notifications"] = []),
-      notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
-      options: System["__lively.modules__options"] || (System["__lively.modules__options"] = lively_lang.obj.deepCopy(defaultOptions))
-    };
+  function preExec(loader, load) {
+    if (callCounter++ == 0) curSystem = __global.System;
+    __global.System = __global.SystemJS = loader;
   }
 
-  function systems() {
-    return SystemClass.systems;
+  function postExec() {
+    if (--callCounter == 0) __global.System = __global.SystemJS = curSystem;
+    curLoad = undefined;
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // System creation + access interface
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  function __exec(load) {
+    // if ((load.metadata.integrity || load.metadata.nonce) && supportsScriptExec)
+    //   return scriptExec.call(this, load);
+    try {
+      preExec(this, load);
+      curLoad = load;
+      (0, eval)(load.source);
+      postExec();
+    } catch (e) {
+      postExec();
+      throw new Error("Error evaluating " + load.address + ":\n" + e.stack);
+    }
+  }
+}
 
-  function nameOfSystem(System) {
-    return Object.keys(systems()).detect(function (name) {
-      return systems()[name] === System;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function runExecuteOfGlobalModule(System, entry) {
+  // if (entry.module) return;
+
+  var exports = {},
+      module = entry.module = { exports: exports, id: entry.name };
+
+  // // AMD requires execute the tree first
+  // if (!entry.executingRequire) {
+  //   for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
+  //     var depName = entry.normalizedDeps[i];
+  //     var depEntry = loader.defined[depName];
+  //     if (depEntry)
+  //       linkDynamicModule(depEntry, loader);
+  //   }
+  // }
+
+  // now execute
+  entry.evaluated = true;
+  var output = entry.execute.call(System.global, function (name) {
+    var dep = entry.deps.find(function (dep) {
+      return dep === name;
+    }),
+        loadedDep = dep && System.get(entry.normalizedDeps[entry.deps.indexOf(dep)]) || System.get(System.decanonicalize(name, entry.name));
+    if (loadedDep) return loadedDep;
+    throw new Error('Module ' + name + ' not declared as a dependency of ' + entry.name);
+  }, exports, module);
+
+  if (output) module.exports = output;
+
+  // create the esModule object, which allows ES6 named imports of dynamics
+  exports = module.exports;
+
+  // __esModule flag treats as already-named
+  var Module = System.get("@system-env").constructor;
+  if (exports && (exports.__esModule || exports instanceof Module)) entry.esModule = exports;
+  // set module as 'default' export, then fake named exports by iterating properties
+  else if (entry.esmExports && exports !== System.global) entry.esModule = System.newModule(exports);
+    // just use the 'default' export
+    else entry.esModule = { 'default': exports };
+
+  return entry;
+}
+
+function isJsFile(url) {
+  return (/\.js/i.test(url)
+  );
+}
+
+
+
+var join = lively_lang.string.joinPath;
+
+function isURL(string$$1) {
+  return (/^[^:\\]+:\/\//.test(string$$1)
+  );
+}
+
+function urlResolve(url) {
+  var urlMatch = url.match(/^([^:]+:\/\/)(.*)/);
+  if (!urlMatch) return url;
+
+  var protocol = urlMatch[1],
+      path = urlMatch[2],
+      result = path;
+  // /foo/../bar --> /bar
+  do {
+    path = result;
+    result = path.replace(/\/[^\/]+\/\.\./, '');
+  } while (result != path);
+  // foo//bar --> foo/bar
+  result = result.replace(/(^|[^:])[\/]+/g, '$1/');
+  // foo/./bar --> foo/bar
+  result = result.replace(/\/\.\//g, '/');
+  return protocol + result;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// config
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var tryToLoadPackageConfig = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, packageURL) {
+    var packageConfigURL, config, name;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            packageConfigURL = packageURL + "/package.json";
+
+            System.config({
+              meta: defineProperty({}, packageConfigURL, { format: "json" }),
+              packages: defineProperty({}, packageURL, { meta: { "package.json": { format: "json" } } })
+            });
+
+            System.debug && console.log("[lively.modules package reading config] %s", packageConfigURL);
+
+            _context.prev = 3;
+            _context.t0 = System.get(packageConfigURL);
+
+            if (_context.t0) {
+              _context.next = 9;
+              break;
+            }
+
+            _context.next = 8;
+            return System.import(packageConfigURL);
+
+          case 8:
+            _context.t0 = _context.sent;
+
+          case 9:
+            config = _context.t0;
+
+            lively_lang.arr.pushIfNotIncluded(System.packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
+            return _context.abrupt("return", config);
+
+          case 14:
+            _context.prev = 14;
+            _context.t1 = _context["catch"](3);
+
+            console.log("[lively.modules package] Unable loading package config %s for package: ", packageConfigURL, _context.t1);
+            delete System.meta[packageConfigURL];
+            name = packageURL.split("/").slice(-1)[0];
+            return _context.abrupt("return", { name: name });
+
+          case 20:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this, [[3, 14]]);
+  }));
+
+  return function tryToLoadPackageConfig(_x, _x2) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// internal
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function normalizeInsidePackage(System, urlOrName, packageURL) {
+  return isURL(urlOrName) ? urlOrName : // absolute
+  urlResolve(join(urlOrName[0] === "." ? packageURL : System.baseURL, urlOrName)); // relative to either the package or the system:
+}
+
+function normalizePackageURL(System, packageURL) {
+  if (Object.keys(getPackages$1(System)).some(function (ea) {
+    return ea === packageURL;
+  })) return packageURL;
+
+  var url = System.decanonicalize(packageURL.replace(/[\/]+$/, "") + "/");
+
+  if (!isURL(url)) throw new Error("Strange package URL: " + url + " is not a valid URL");
+
+  // ensure it's a directory
+  if (!url.match(/\.js/)) url = url;else if (url.indexOf(url + ".js") > -1) url = url.replace(/\.js$/, "");else url = url.split("/").slice(0, -1).join("/");
+
+  if (url.match(/\.js$/)) throw new Error("packageURL is expected to point to a directory but seems to be a .js file: " + url);
+
+  return String(url).replace(/\/$/, "");
+}
+
+function packageStore(System) {
+  return System.get("@lively-env").packages;
+}
+
+function addToPackageStore(System, p) {
+  var store = packageStore(System);
+  store[p.url] = p;
+  return p;
+}
+
+function findPackageNamed(System, name) {
+  return lively_lang.obj.values(packageStore(System)).find(function (ea) {
+    return ea.name === name;
+  });
+}
+
+function applyConfig(System, packageConfig, packageURL) {
+  // takes a config json object (typically read from a package.json file but
+  // can be used standalone) and changes the System configuration to what it finds
+  // in it.
+  // In particular uses the "systemjs" section as described in https://github.com/systemjs/systemjs/blob/master/docs/config-api.md
+  // and uses the "lively" section as described in `applyLivelyConfig`
+
+  var name = packageConfig.name || packageURL.split("/").slice(-1)[0],
+      sysConfig = packageConfig.systemjs || {},
+      livelyConfig = packageConfig.lively,
+      main = packageConfig.main || "index.js";
+
+  System.config({
+    map: defineProperty({}, name, packageURL),
+    packages: defineProperty({}, packageURL, sysConfig)
+  });
+
+  var packageInSystem = System.getConfig().packages[packageURL] || {};
+  if (!packageInSystem.map) packageInSystem.map = {};
+
+  if (sysConfig) {
+    if (sysConfig.packageConfigPaths) System.packageConfigPaths = lively_lang.arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
+    if (sysConfig.main) main = sysConfig.main;
+    applySystemJSConfig(System, packageConfig, packageURL);
+  }
+
+  packageInSystem.referencedAs = packageInSystem.referencedAs || [];
+  lively_lang.arr.pushIfNotIncluded(packageInSystem.referencedAs, name);
+
+  if (!main.match(/\.[^\/\.]+/)) main += ".js";
+  packageInSystem.main = main;
+
+  // System.packages doesn't allow us to store our own properties
+  var p = getPackage$1(System, packageURL);
+  p.mergeWithConfig(packageInSystem);
+
+  var packageApplyResult = livelyConfig ? applyLivelyConfig(System, livelyConfig, p) : { subPackages: [] };
+
+  return packageApplyResult;
+}
+
+function applySystemJSConfig(System, systemjsConfig, pkg) {}
+
+function applyLivelyConfig(System, livelyConfig, pkg) {
+  // configures System object from lively config JSON object.
+  // - adds System.package entry for package
+  // - adds name to System.package[pkg.url].referencedAs
+  // - installs hook from {hooks: [{name, source}]}
+  // - merges livelyConfig.packageMap into System.package[pkg.url].map
+  //   entries in packageMap are specifically meant to be sub-packages!
+  // Will return a {subPackages: [{name, address},...]} object
+  applyLivelyConfigMeta(System, livelyConfig, pkg);
+  applyLivelyConfigHooks(System, livelyConfig, pkg);
+  applyLivelyConfigBundles(System, livelyConfig, pkg);
+  return applyLivelyConfigPackageMap(System, livelyConfig, pkg);
+}
+
+function applyLivelyConfigHooks(System, livelyConfig, pkg) {
+  (livelyConfig.hooks || []).forEach(function (h) {
+    try {
+      var f = eval("(" + h.source + ")");
+      if (!f.name || !isInstalled(System, h.target, f.name)) install(System, h.target, f);
+    } catch (e) {
+      console.error("Error installing hook for %s: %s", pkg.url, e, h);
+    }
+  });
+}
+
+function applyLivelyConfigBundles(System, livelyConfig, pkg) {
+  if (!livelyConfig.bundles) return Promise.resolve();
+  var normalized = Object.keys(livelyConfig.bundles).reduce(function (bundles, name) {
+    var absName = pkg.url + "/" + name,
+        files = livelyConfig.bundles[name].map(function (f) {
+      return System.decanonicalize(f, pkg.url + "/");
+    });
+    bundles[absName] = files;
+    return bundles;
+  }, {});
+  System.config({ bundles: normalized });
+  return Promise.resolve();
+}
+
+function applyLivelyConfigMeta(System, livelyConfig, pkg) {
+  if (!livelyConfig.meta) return;
+  var pConf = System.getConfig().packages[pkg.url] || {},
+      c = { meta: {}, packages: defineProperty({}, pkg.url, pConf) };
+  Object.keys(livelyConfig.meta).forEach(function (key) {
+    var val = livelyConfig.meta[key];
+    if (isURL(key)) {
+      c.meta[key] = val;
+    } else {
+      if (!pConf.meta) pConf.meta = {};
+      pConf.meta[key] = val;
+    }
+  });
+  System.config(c);
+}
+
+function applyLivelyConfigPackageMap(System, livelyConfig, pkg) {
+  var subPackages = livelyConfig.packageMap ? Object.keys(livelyConfig.packageMap).map(function (name) {
+    return subpackageNameAndAddress(System, livelyConfig, name, pkg);
+  }) : [];
+  return { subPackages: subPackages };
+}
+
+function subpackageNameAndAddress(System, livelyConfig, subPackageName, pkg) {
+  // var pConf = System.packages[packageURL],
+  var preferLoadedPackages = livelyConfig.hasOwnProperty("preferLoadedPackages") ? livelyConfig.preferLoadedPackages : true,
+      normalized = System.decanonicalize(subPackageName, pkg.url);
+
+  if (preferLoadedPackages) {
+    var subpackageURL,
+        existing = findPackageNamed(System, subPackageName);
+
+    if (existing) subpackageURL = existing.url;else if (pkg.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, pkg.map[subPackageName], pkg.url);else if (System.map[subPackageName]) subpackageURL = normalizeInsidePackage(System, System.map[subPackageName], pkg.url);else if (System.get(normalized)) subpackageURL = System.decanonicalize(subPackageName, pkg.url + "/");
+
+    if (subpackageURL) {
+      if (System.get(subpackageURL)) subpackageURL = subpackageURL.split("/").slice(0, -1).join("/"); // force to be dir
+      System.debug && console.log("[lively.module package] Package %s required by %s already in system as %s", subPackageName, pkg, subpackageURL);
+      return getPackage$1(System, subpackageURL);
+    }
+  }
+
+  pkg.addMapping(subPackageName, livelyConfig.packageMap[subPackageName]);
+
+  // lookup
+  var subpackageURL = normalizeInsidePackage(System, livelyConfig.packageMap[subPackageName], pkg.url);
+  System.debug && console.log("[lively.module package] Package %s required by %s NOT in system, will be loaded as %s", subPackageName, pkg, subpackageURL);
+  return getPackage$1(System, subpackageURL);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// package object
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var Package = function () {
+  function Package(System, packageURL) {
+    classCallCheck(this, Package);
+
+    // the name from the packages config, set once the config is loaded
+    this._name = undefined;
+    // The names under which the package is referenced by other packages
+    this.referencedAs = [];
+    this.url = packageURL;
+    this.System = System;
+    this.registerProcess = null;
+    this.map = {};
+  }
+
+  createClass(Package, [{
+    key: "path",
+    value: function path() {
+      var base = this.System.baseURL;
+      return this.url.indexOf(base) === 0 ? this.url.slice(base.length) : this.url;
+    }
+  }, {
+    key: "toString",
+    value: function toString() {
+      return "Package(" + this._name + " \u2013 " + this.path() + "/)";
+    }
+  }, {
+    key: "import",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this.register();
+
+              case 2:
+                _context2.t0 = this.System;
+                _context2.next = 5;
+                return this.System.normalize(this.url);
+
+              case 5:
+                _context2.t1 = _context2.sent;
+                return _context2.abrupt("return", _context2.t0.import.call(_context2.t0, _context2.t1));
+
+              case 7:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function _import() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return _import;
+    }()
+  }, {
+    key: "isRegistering",
+    value: function isRegistering() {
+      return !!this.registerProcess;
+    }
+  }, {
+    key: "register",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        var packageLoadStack = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [this.url];
+
+        var System, url, cfg, packageConfigResult, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, supPkg, shortStack, registerP;
+
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                System = this.System;
+                url = this.url;
+
+                if (!this.isRegistering()) {
+                  _context3.next = 4;
+                  break;
+                }
+
+                return _context3.abrupt("return", this.registerProcess.promise);
+
+              case 4:
+                this.registerProcess = lively_lang.promise.deferred();
+
+                System.debug && console.log("[lively.modules package register] %s", url);
+                _context3.next = 8;
+                return tryToLoadPackageConfig(System, url);
+
+              case 8:
+                cfg = _context3.sent;
+                _context3.next = 11;
+                return applyConfig(System, cfg, url);
+
+              case 11:
+                packageConfigResult = _context3.sent;
+                _iteratorNormalCompletion = true;
+                _didIteratorError = false;
+                _iteratorError = undefined;
+                _context3.prev = 15;
+                _iterator = packageConfigResult.subPackages[Symbol.iterator]();
+
+              case 17:
+                if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                  _context3.next = 29;
+                  break;
+                }
+
+                supPkg = _step.value;
+
+                if (!lively_lang.arr.include(packageLoadStack, supPkg.url)) {
+                  _context3.next = 23;
+                  break;
+                }
+
+                if (System.debug || true) {
+                  shortStack = packageLoadStack && packageLoadStack.map(function (ea) {
+                    return ea.indexOf(System.baseURL) === 0 ? ea.slice(System.baseURL.length) : ea;
+                  });
+
+                  System.debug && console.log("[lively.modules package register] " + url + " is a circular dependency, stopping registering subpackages, stack: " + shortStack);
+                }
+                _context3.next = 26;
+                break;
+
+              case 23:
+                packageLoadStack.push(supPkg.url);
+                _context3.next = 26;
+                return supPkg.register(packageLoadStack);
+
+              case 26:
+                _iteratorNormalCompletion = true;
+                _context3.next = 17;
+                break;
+
+              case 29:
+                _context3.next = 35;
+                break;
+
+              case 31:
+                _context3.prev = 31;
+                _context3.t0 = _context3["catch"](15);
+                _didIteratorError = true;
+                _iteratorError = _context3.t0;
+
+              case 35:
+                _context3.prev = 35;
+                _context3.prev = 36;
+
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+
+              case 38:
+                _context3.prev = 38;
+
+                if (!_didIteratorError) {
+                  _context3.next = 41;
+                  break;
+                }
+
+                throw _iteratorError;
+
+              case 41:
+                return _context3.finish(38);
+
+              case 42:
+                return _context3.finish(35);
+
+              case 43:
+                registerP = this.registerProcess.promise;
+
+                this.registerProcess.resolve(cfg);
+                delete this.registerProcess;
+                lively_notifications.emit("lively.modules/packageregistered", { "package": this.url }, Date.now(), System);
+
+                return _context3.abrupt("return", registerP);
+
+              case 48:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this, [[15, 31, 35, 43], [36,, 38, 42]]);
+      }));
+
+      function register(_x3) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return register;
+    }()
+  }, {
+    key: "remove",
+    value: function remove() {
+      var System = this.System;
+      var url = this.url;
+
+
+      url = url.replace(/\/$/, "");
+      var conf = System.getConfig(),
+          packageConfigURL = url + "/package.json";
+
+      var p = getPackages$1(System).find(function (ea) {
+        return ea.address === url;
+      });
+      if (p) p.modules.forEach(function (mod) {
+        return module$2(System, mod.name).unload({ forgetEnv: true, forgetDeps: false });
+      });
+
+      System.delete(String(packageConfigURL));
+      lively_lang.arr.remove(conf.packageConfigPaths || [], packageConfigURL);
+
+      System.config({
+        meta: defineProperty({}, packageConfigURL, {}),
+        packages: defineProperty({}, url, {}),
+        packageConfigPaths: conf.packageConfigPaths
+      });
+      delete System.meta[packageConfigURL];
+      delete System.packages[url];
+      lively_notifications.emit("lively.modules/packageremoved", { "package": this.url }, Date.now(), System);
+    }
+  }, {
+    key: "reload",
+    value: function reload() {
+      this.remove();return this.import();
+    }
+  }, {
+    key: "search",
+    value: function search(needle, options) {
+      return searchInPackage$1(this.System, this.url, needle, options);
+    }
+  }, {
+    key: "mergeWithConfig",
+    value: function mergeWithConfig(config) {
+      var copy = Object.assign({}, config);
+      var name = copy.name;
+      var referencedAs = copy.referencedAs;
+      var map = copy.map;
+
+
+      if (referencedAs) {
+        delete copy.referencedAs;
+        this.referencedAs = lively_lang.arr.uniq(this.referencedAs.concat(referencedAs));
+      }
+
+      if (name) {
+        delete copy.name;
+        this._name = name;
+      }
+
+      if (map) {
+        delete copy.map;
+        Object.assign(this.map, map);
+      }
+
+      Object.assign(this, copy);
+      return this;
+    }
+  }, {
+    key: "addMapping",
+    value: function addMapping(name, url) {
+      this.map[name] = url;
+      this.System.config({ packages: defineProperty({}, this.url, { map: defineProperty({}, name, url) }) });
+    }
+  }, {
+    key: "name",
+    get: function get() {
+      return this._name || lively_lang.arr.last(this.url.replace(/[\/]+$/, "").split("/"));
+    },
+    set: function set(v) {
+      return this._name = v;
+    }
+  }, {
+    key: "address",
+    get: function get() {
+      return this.url;
+    },
+    set: function set(v) {
+      return this.url = v;
+    }
+  }]);
+  return Package;
+}();
+
+function getPackage$1(System, packageURL) {
+  var url = normalizePackageURL(System, packageURL);
+  return packageStore(System).hasOwnProperty(url) ? packageStore(System)[url] : addToPackageStore(System, new Package(System, url));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// interface
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function importPackage$1(System, packageURL) {
+  return getPackage$1(System, packageURL).import();
+}
+function registerPackage$1(System, packageURL, packageLoadStack) {
+  return getPackage$1(System, packageURL).register(packageLoadStack);
+}
+function removePackage$1(System, packageURL) {
+  return getPackage$1(System, packageURL).remove();
+}
+function reloadPackage$1(System, packageURL) {
+  return getPackage$1(System, packageURL).reload();
+}
+
+function groupIntoPackages(System, moduleNames, packageNames) {
+
+  return lively_lang.arr.groupBy(moduleNames, groupFor);
+
+  function groupFor(moduleName) {
+    var fullname = System.decanonicalize(moduleName),
+        matching = packageNames.filter(function (p) {
+      return fullname.indexOf(p) === 0;
+    });
+    return matching.length ? matching.reduce(function (specific, ea) {
+      return ea.length > specific.length ? ea : specific;
+    }) : "no group";
+  }
+}
+
+function getPackages$1(System) {
+  // returns a list like
+  // ```
+  // [{
+  //   address: package-address,
+  //   modules: [module-name-1, module-name-2, ...],
+  //   name: package-name,
+  //   names: [package-name, ...]
+  // }, ... ]
+  // ```
+
+  var map = computeRequireMap(System),
+      modules = Object.keys(map),
+      sysPackages = System.packages,
+      livelyPackages = packageStore(System),
+      packageNames = lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages))),
+      result = [];
+
+  groupIntoPackages(System, modules, packageNames).mapGroups(function (packageAddress, moduleNames) {
+    var systemP = sysPackages[packageAddress],
+        livelyP = livelyPackages[packageAddress],
+        p = livelyP && systemP ? livelyP.mergeWithConfig(systemP) : livelyP || systemP,
+        referencedAs = p ? p.referencedAs : [];
+    if (!referencedAs || !referencedAs.length) referencedAs = [packageAddress.replace(/^(?:.+\/)?([^\/]+)$/, "$1")];
+
+    moduleNames = moduleNames.filter(function (name) {
+      return name !== packageAddress && name !== packageAddress + "/";
+    });
+
+    result.push(Object.assign({}, p || {}, {
+      address: packageAddress,
+      name: referencedAs[0],
+      names: referencedAs,
+      modules: moduleNames.map(function (name) {
+        return {
+          name: name,
+          deps: map[name]
+        };
+      })
+    }));
+  });
+
+  return result;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// search
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function searchInPackage$1(System, packageURL, searchStr, options) {
+  packageURL = packageURL.replace(/\/$/, "");
+  var p = getPackages$1(System).find(function (p) {
+    return p.address == packageURL;
+  });
+  return p ? Promise.all(p.modules.map(function (m) {
+    return module$2(System, m.name).search(searchStr, options);
+  })).then(function (res) {
+    return lively_lang.arr.flatten(res, 1);
+  }) : Promise.resolve([]);
+}
+
+function module$2(System, moduleName, parent) {
+  var sysEnv = livelySystemEnv(System),
+      id = System.decanonicalize(moduleName, parent);
+  return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
+}
+
+// ModuleInterface is primarily used to provide an API that integrates the System
+// loader state with lively.modules extensions.
+// It does not hold any mutable state.
+
+var ModuleInterface = function () {
+  function ModuleInterface(System, id) {
+    var _this = this;
+
+    classCallCheck(this, ModuleInterface);
+
+    // We assume module ids to be a URL with a scheme
+
+    if (!isURL(id) && !/^@/.test(id)) throw new Error("ModuleInterface constructor called with " + id + " that does not seem to be a fully normalized module id.");
+    this.System = System;
+    this.id = id;
+
+    // Under what variable name the recorder becomes available during module
+    // execution and eval
+    this.recorderName = "__lvVarRecorder";
+    this._recorder = null;
+
+    // cached values
+    this._source = null;
+    this._ast = null;
+    this._scope = null;
+    this._observersOfTopLevelState = [];
+
+    lively_notifications.subscribe("lively.modules/modulechanged", function (data) {
+      if (data.module === _this.id) _this.reset();
     });
   }
 
-  function getSystem(nameOrSystem, config) {
-    return nameOrSystem && typeof nameOrSystem !== "string" ? nameOrSystem : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
-  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // properties
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  function removeSystem(nameOrSystem) {
-    // FIXME "unload" code...???
-    var name = nameOrSystem && typeof nameOrSystem !== "string" ? nameOfSystem(nameOrSystem) : nameOrSystem;
-    delete systems()[name];
-  }
+  // returns Promise<string>
 
-  function makeSystem(cfg) {
-    return prepareSystem(new SystemClass(), cfg);
-  }
 
-  function prepareSystem(System, config) {
-    System.trace = true;
-    config = config || {};
-
-    System.set("@lively-env", System.newModule(livelySystemEnv(System)));
-
-    wrapResource(System);
-    wrapModuleLoad$1(System);
-
-    if (!isHookInstalled$1(System, "normalizeHook")) installHook$1(System, "normalize", normalizeHook);
-
-    if (!isHookInstalled$1(System, "decanonicalize", "decanonicalizeHook")) installHook$1(System, "decanonicalize", decanonicalizeHook);
-
-    if (!isHookInstalled$1(System, "newModule", "newModule_volatile")) installHook$1(System, "newModule", newModule_volatile);
-
-    if (isNode) {
-      var nodejsCoreModules = ["addons", "assert", "buffer", "child_process", "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs", "http", "https", "module", "net", "os", "path", "punycode", "querystring", "readline", "repl", "stream", "stringdecoder", "timers", "tls", "tty", "url", "util", "v8", "vm", "zlib"],
-          map = nodejsCoreModules.reduce(function (map, ea) {
-        map[ea] = "@node/" + ea;return map;
-      }, {});
-      config.map = lively_lang.obj.merge(map, config.map);
-      // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
-      // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
+  createClass(ModuleInterface, [{
+    key: "fullName",
+    value: function fullName() {
+      return this.id;
     }
 
-    config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
-    if (!config.transpiler && System.transpiler === "traceur") {
-      System.config({
-        map: {
-          'plugin-babel': initialSystem.map["plugin-babel"],
-          'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
-        },
-        transpiler: initialSystem.transpiler,
-        babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
+    // returns Promise<string>
+
+  }, {
+    key: "source",
+    value: function source() {
+      // rk 2016-06-24:
+      // We should consider using lively.resource here. Unfortunately
+      // System.fetch (at least with the current systemjs release) will not work in
+      // all cases b/c modules once loaded by the loaded get cached and System.fetch
+      // returns "" in those cases
+      //
+      // cs 2016-08-06:
+      // Changed implementation, so it uses System.resource to be consistent
+      // with module loading
+
+      if (this.id === "@empty") return Promise.resolve("");
+
+      if (this._source) return Promise.resolve(this._source);
+
+      return this.System.resource(this.id).read();
+    }
+  }, {
+    key: "ast",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!this._ast) {
+                  _context.next = 2;
+                  break;
+                }
+
+                return _context.abrupt("return", this._ast);
+
+              case 2:
+                _context.next = 4;
+                return this.source();
+
+              case 4:
+                _context.t0 = _context.sent;
+                return _context.abrupt("return", this._ast = lively_ast.parse(_context.t0));
+
+              case 6:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function ast() {
+        return _ref.apply(this, arguments);
+      }
+
+      return ast;
+    }()
+  }, {
+    key: "scope",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+        var ast;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                if (!this._scope) {
+                  _context2.next = 2;
+                  break;
+                }
+
+                return _context2.abrupt("return", this._scope);
+
+              case 2:
+                _context2.next = 4;
+                return this.ast();
+
+              case 4:
+                ast = _context2.sent;
+                return _context2.abrupt("return", this._scope = lively_ast.query.topLevelDeclsAndRefs(ast).scope);
+
+              case 6:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function scope() {
+        return _ref2.apply(this, arguments);
+      }
+
+      return scope;
+    }()
+  }, {
+    key: "resolvedScope",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.t0 = lively_ast.query;
+                _context3.next = 3;
+                return this.scope();
+
+              case 3:
+                _context3.t1 = _context3.sent;
+                return _context3.abrupt("return", this._scope = _context3.t0.resolveReferences.call(_context3.t0, _context3.t1));
+
+              case 5:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function resolvedScope() {
+        return _ref3.apply(this, arguments);
+      }
+
+      return resolvedScope;
+    }()
+  }, {
+    key: "metadata",
+    value: function metadata() {
+      var load = this.System.loads ? this.System.loads[this.id] : null;
+      return load ? load.metadata : null;
+    }
+  }, {
+    key: "format",
+    value: function format() {
+      // assume esm by default
+      var meta = this.metadata();
+      return meta ? meta.format : "esm";
+    }
+  }, {
+    key: "reset",
+    value: function reset() {
+      this._source = null;
+      this._ast = null;
+      this._scope = null;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // loading
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "load",
+    value: function () {
+      var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        var m;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                m = this.System.get(this.id);
+
+                if (m) {
+                  _context4.next = 6;
+                  break;
+                }
+
+                _context4.next = 4;
+                return this.System.import(this.id);
+
+              case 4:
+                m = _context4.sent;
+
+                lively_notifications.emit("lively.modules/moduleloaded", { module: this.id }, Date.now(), this.System);
+
+              case 6:
+                return _context4.abrupt("return", m);
+
+              case 7:
+              case "end":
+                return _context4.stop();
+            }
+          }
+        }, _callee4, this);
+      }));
+
+      function load() {
+        return _ref4.apply(this, arguments);
+      }
+
+      return load;
+    }()
+  }, {
+    key: "isLoaded",
+    value: function isLoaded() {
+      return !!this.System.get(this.id);
+    }
+  }, {
+    key: "unloadEnv",
+    value: function unloadEnv() {
+      this._recorder = null;
+      this._observersOfTopLevelState = [];
+      // FIXME this shouldn't be necessary anymore....
+      delete livelySystemEnv(this.System).loadedModules[this.id];
+    }
+  }, {
+    key: "unloadDeps",
+    value: function unloadDeps(opts) {
+      var _this2 = this;
+
+      opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
+      this.dependents().forEach(function (ea) {
+        _this2.System.delete(ea.id);
+        if (_this2.System.loads) delete _this2.System.loads[ea.id];
+        if (opts.forgetEnv) ea.unloadEnv();
+      });
+    }
+  }, {
+    key: "unload",
+    value: function unload(opts) {
+      opts = lively_lang.obj.merge({ reset: true, forgetDeps: true, forgetEnv: true }, opts);
+      if (opts.reset) this.reset();
+      if (opts.forgetDeps) this.unloadDeps(opts);
+      this.System.delete(this.id);
+      if (this.System.loads) {
+        delete this.System.loads[this.id];
+      }
+      if (this.System.meta) delete this.System.meta[this.id];
+      if (opts.forgetEnv) this.unloadEnv();
+      lively_notifications.emit("lively.modules/moduleunloaded", { module: this.id }, Date.now(), this.System);
+    }
+  }, {
+    key: "reload",
+    value: function () {
+      var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
+        var _this3 = this;
+
+        var toBeReloaded;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                opts = lively_lang.obj.merge({ reloadDeps: true, resetEnv: true }, opts);
+                toBeReloaded = [this];
+
+                if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
+                this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
+                _context5.next = 6;
+                return Promise.all(toBeReloaded.map(function (ea) {
+                  return ea.id !== _this3.id && ea.load();
+                }));
+
+              case 6:
+                _context5.next = 8;
+                return this.load();
+
+              case 8:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function reload(_x) {
+        return _ref5.apply(this, arguments);
+      }
+
+      return reload;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // change
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "changeSourceAction",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6(changeFunc) {
+        var source, newSource;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return this.source();
+
+              case 2:
+                source = _context6.sent;
+                _context6.next = 5;
+                return changeFunc(source);
+
+              case 5:
+                newSource = _context6.sent;
+                return _context6.abrupt("return", this.changeSource(newSource, { doEval: true }));
+
+              case 7:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function changeSourceAction(_x2) {
+        return _ref6.apply(this, arguments);
+      }
+
+      return changeSourceAction;
+    }()
+  }, {
+    key: "changeSource",
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(newSource, options) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                if (!(!options || options.doSave !== false)) {
+                  _context7.next = 3;
+                  break;
+                }
+
+                _context7.next = 3;
+                return this.System.resource(this.id).write(newSource);
+
+              case 3:
+                return _context7.abrupt("return", moduleSourceChange$1(this.System, this.id, newSource, this.format(), options));
+
+              case 4:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function changeSource(_x3, _x4) {
+        return _ref7.apply(this, arguments);
+      }
+
+      return changeSource;
+    }()
+  }, {
+    key: "addDependencyToModuleRecord",
+    value: function addDependencyToModuleRecord(dependency) {
+      var _this4 = this;
+
+      var setter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {};
+
+      // `dependency is another module, setter is the function that gets
+      // triggered when a dependency's binding changes so that "this" module is updated
+      var record = this.record(),
+          dependencyRecord = dependency.record();
+
+      if (record && dependencyRecord) {
+        // 1. update the record so that when its dependencies change and cause a
+        // re-execute, the correct code (new version) is run
+        var depIndex,
+            hasDepenency = record.dependencies.some(function (ea, i) {
+          if (!ea) return;depIndex = i;return ea && ea.name === dependency.id;
+        });
+        if (!hasDepenency) {
+          record.dependencies.push(dependencyRecord);
+        } else if (dependencyRecord !== record.dependencies[depIndex] /*happens when a dep is reloaded*/) record.dependencies.splice(depIndex, 1, dependencyRecord);
+
+        // setters are for updating module bindings, the position of the record
+        // in dependencies should be the same as the position of the setter for that
+        // dependency...
+        if (!hasDepenency || !record.setters[depIndex]) record.setters[hasDepenency ? depIndex : record.dependencies.length - 1] = setter;
+
+        // 2. update records of dependencies, so that they know about this module as an importer
+        var impIndex,
+            hasImporter = dependencyRecord.importers.some(function (imp, i) {
+          if (!imp) return;impIndex = i;return imp && imp.name === _this4.id;
+        });
+        if (!hasImporter) dependencyRecord.importers.push(record);else if (record !== dependencyRecord.importers[impIndex]) dependencyRecord.importers.splice(impIndex, 1, record);
+      }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // dependencies
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "dependents",
+    value: function dependents() {
+      var _this5 = this;
+
+      // which modules (module ids) are (in)directly import module with id
+      // Let's say you have
+      // module1: export var x = 23;
+      // module2: import {x} from "module1.js"; export var y = x + 1;
+      // module3: import {y} from "module2.js"; export var z = y + 1;
+      // `dependents` gives you an answer what modules are "stale" when you
+      // change module1 = module2 + module3
+      return lively_lang.graph.hull(lively_lang.graph.invert(computeRequireMap(this.System)), this.id).map(function (mid) {
+        return module$2(_this5.System, mid);
+      });
+    }
+  }, {
+    key: "requirements",
+    value: function requirements() {
+      var _this6 = this;
+
+      // which modules (module ids) are (in)directly required by module with id
+      // Let's say you have
+      // module1: export var x = 23;
+      // module2: import {x} from "module1.js"; export var y = x + 1;
+      // module3: import {y} from "module2.js"; export var z = y + 1;
+      // `module("./module3").requirements()` will report ./module2 and ./module1
+      return lively_lang.graph.hull(computeRequireMap(this.System), this.id).map(function (mid) {
+        return module$2(_this6.System, mid);
       });
     }
 
-    // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // module environment
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    System.config(config);
+    // What variables to not transform during execution, i.e. what variables
+    // should not be accessed as properties of recorder
 
-    return System;
-  }
+  }, {
+    key: "define",
+    value: function define(varName, value) {
+      return this.recorder[varName] = value;
+    }
+  }, {
+    key: "undefine",
+    value: function undefine(varName) {
+      delete this.recorder[varName];
+    }
 
-  function normalizeHook(proceed, name, parent, parentAddress) {
-    var System = this;
-    if (name === "..") name = '../index.js'; // Fix ".."
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // observing top level state
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
-    // names with double slashes which causes module id issues later. This fixes
-    // that...
-    // name = name.replace(/([^:])\/\/+/g, "$1\/");
-    name = name.replace(/.\/{2,}/g, function (match) {
-      return match[0] === ":" ? match : match[0] + "/";
-    });
+  }, {
+    key: "subscribeToToplevelDefinitionChanges",
+    value: function subscribeToToplevelDefinitionChanges(func) {
+      this._observersOfTopLevelState.push(func);
+      return func;
+    }
+  }, {
+    key: "notifyTopLevelObservers",
+    value: function notifyTopLevelObservers(key) {
+      var ignored = ["createOrExtendES6ClassForLively", "lively.capturing-declaration-wrapper"],
+          rec = this.recorder;
+      if (lively_lang.arr.include(ignored, key)) return;
+      this._observersOfTopLevelState.forEach(function (fn) {
+        return fn(key, rec[key]);
+      });
+    }
+  }, {
+    key: "unsubscribeFromToplevelDefinitionChanges",
+    value: function unsubscribeFromToplevelDefinitionChanges(funcOrName) {
+      this._observersOfTopLevelState = typeof funcOrName === "string" ? this._observersOfTopLevelState.filter(function (ea) {
+        return ea.name !== funcOrName;
+      }) : this._observersOfTopLevelState.filter(function (ea) {
+        return ea !== funcOrName;
+      });
+    }
+  }, {
+    key: "evaluationDone",
+    value: function evaluationDone() {
+      this.addGetterSettersForNewVars();
+      runScheduledExportChanges(this.System, this.id);
+    }
+  }, {
+    key: "addGetterSettersForNewVars",
+    value: function addGetterSettersForNewVars() {
+      var _this7 = this;
 
-    return proceed(name, parent, parentAddress).then(function (result) {
+      // after eval we modify the env so that all captures vars are wrapped in
+      // getter/setter to be notified of changes
+      // FIXME: better to not capture via assignments but use func calls...!
+      var rec = this.recorder,
+          prefix = "__lively.modules__";
 
-      // lookup package main
-      var base = result.replace(/\.js$/, "");
-      if (base in System.packages) {
-        var main = System.packages[base].main;
-        if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+      if (rec === this.System.global) {
+        console.warn("[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!");
+        return;
       }
 
-      // Fix issue with accidentally adding .js
-      var m = result.match(/(.*json)\.js/i);
-      if (m) return m[1];
+      lively_lang.properties.own(rec).forEach(function (key) {
+        if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
+        Object.defineProperty(rec, prefix + key, {
+          enumerable: false,
+          writable: true,
+          value: rec[key]
+        });
+        Object.defineProperty(rec, key, {
+          enumerable: true,
+          get: function get() {
+            return rec[prefix + key];
+          },
+          set: function set(v) {
+            rec[prefix + key] = v;
+            scheduleModuleExportsChange(_this7.System, _this7.id, key, v, false /*add export*/);
+            _this7.notifyTopLevelObservers(key);
+          }
+        });
 
-      return result;
-    });
-  }
+        _this7.notifyTopLevelObservers(key);
+      });
+    }
+  }, {
+    key: "env",
+    value: function env() {
+      return this;
+    }
 
-  function decanonicalizeHook(proceed, name, parent, isPlugin) {
-    var System = this;
-    if (name === "..") name = '../index.js'; // Fix ".."
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // package related
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    // systemjs' decanonicalize has by default not the fancy
-    // '{node: "events", "~node": "@mepty"}' mapping but we need it
-    var pkg = parent && normalize_packageOfURL(parent, System);
-    if (pkg) {
-      var mappedObject = pkg.map && pkg.map[name] || System.map[name];
-      if ((typeof mappedObject === "undefined" ? "undefined" : _typeof(mappedObject)) === "object") {
-        name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
+  }, {
+    key: "package",
+    value: function _package() {
+      var _this8 = this;
+
+      return getPackages$1(this.System).find(function (ea) {
+        return ea.modules.some(function (mod) {
+          return mod.name === _this8.id;
+        });
+      });
+    }
+  }, {
+    key: "pathInPackage",
+    value: function pathInPackage() {
+      var p = this.package();
+      return p && this.id.indexOf(p.address) === 0 ? join("./", this.id.slice(p.address.length)) : this.id;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // imports and exports
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "imports",
+    value: function () {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+        var parsed, scope;
+        return regeneratorRuntime.wrap(function _callee8$(_context8) {
+          while (1) {
+            switch (_context8.prev = _context8.next) {
+              case 0:
+                _context8.next = 2;
+                return this.ast();
+
+              case 2:
+                parsed = _context8.sent;
+                _context8.next = 5;
+                return this.scope();
+
+              case 5:
+                scope = _context8.sent;
+                return _context8.abrupt("return", lively_ast.query.imports(scope));
+
+              case 7:
+              case "end":
+                return _context8.stop();
+            }
+          }
+        }, _callee8, this);
+      }));
+
+      function imports() {
+        return _ref8.apply(this, arguments);
+      }
+
+      return imports;
+    }()
+  }, {
+    key: "exports",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+        var parsed, scope;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.next = 2;
+                return this.ast();
+
+              case 2:
+                parsed = _context9.sent;
+                _context9.next = 5;
+                return this.scope();
+
+              case 5:
+                scope = _context9.sent;
+                return _context9.abrupt("return", lively_ast.query.exports(scope));
+
+              case 7:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function exports() {
+        return _ref9.apply(this, arguments);
+      }
+
+      return exports;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // bindings
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "_localDeclForRefAt",
+    value: function () {
+      var _ref10 = asyncToGenerator(regeneratorRuntime.mark(function _callee10(pos) {
+        var scope, ref;
+        return regeneratorRuntime.wrap(function _callee10$(_context10) {
+          while (1) {
+            switch (_context10.prev = _context10.next) {
+              case 0:
+                _context10.next = 2;
+                return this.resolvedScope();
+
+              case 2:
+                scope = _context10.sent;
+                ref = lively_ast.query.refWithDeclAt(pos, scope);
+                return _context10.abrupt("return", ref && { decl: ref.decl, id: ref.declId, declModule: this });
+
+              case 5:
+              case "end":
+                return _context10.stop();
+            }
+          }
+        }, _callee10, this);
+      }));
+
+      function _localDeclForRefAt(_x6) {
+        return _ref10.apply(this, arguments);
+      }
+
+      return _localDeclForRefAt;
+    }()
+  }, {
+    key: "_importForNSRefAt",
+    value: function () {
+      var _ref11 = asyncToGenerator(regeneratorRuntime.mark(function _callee11(pos) {
+        var scope, ast, nodes$$1, id, member, _ref12, decl, name, spec;
+
+        return regeneratorRuntime.wrap(function _callee11$(_context11) {
+          while (1) {
+            switch (_context11.prev = _context11.next) {
+              case 0:
+                _context11.next = 2;
+                return this.resolvedScope();
+
+              case 2:
+                scope = _context11.sent;
+                ast = scope.node;
+                nodes$$1 = lively_ast.query.nodesAtIndex(ast, pos);
+
+                if (!(nodes$$1.length < 2)) {
+                  _context11.next = 7;
+                  break;
+                }
+
+                return _context11.abrupt("return", [null, null]);
+
+              case 7:
+                id = nodes$$1[nodes$$1.length - 1], member = nodes$$1[nodes$$1.length - 2];
+
+                if (!(id.type != "Identifier" || member.type != "MemberExpression" || member.computed || member.object.type !== "Identifier")) {
+                  _context11.next = 10;
+                  break;
+                }
+
+                return _context11.abrupt("return", [null, null]);
+
+              case 10:
+                _ref12 = scope.resolvedRefMap.get(member.object) || {};
+                decl = _ref12.decl;
+
+                if (!(!decl || decl.type !== "ImportDeclaration")) {
+                  _context11.next = 14;
+                  break;
+                }
+
+                return _context11.abrupt("return", [null, null]);
+
+              case 14:
+                name = member.object.name, spec = decl.specifiers.find(function (s) {
+                  return s.local.name === name;
+                });
+                return _context11.abrupt("return", spec.type !== "ImportNamespaceSpecifier" ? [null, null] : [decl, spec.local, id.name]);
+
+              case 16:
+              case "end":
+                return _context11.stop();
+            }
+          }
+        }, _callee11, this);
+      }));
+
+      function _importForNSRefAt(_x7) {
+        return _ref11.apply(this, arguments);
+      }
+
+      return _importForNSRefAt;
+    }()
+  }, {
+    key: "_resolveImportedDecl",
+    value: function () {
+      var _ref13 = asyncToGenerator(regeneratorRuntime.mark(function _callee12(decl) {
+        var _decl$id, start, name, type, imports, im, imM;
+
+        return regeneratorRuntime.wrap(function _callee12$(_context12) {
+          while (1) {
+            switch (_context12.prev = _context12.next) {
+              case 0:
+                if (decl) {
+                  _context12.next = 2;
+                  break;
+                }
+
+                return _context12.abrupt("return", []);
+
+              case 2:
+                _decl$id = decl.id;
+                start = _decl$id.start;
+                name = _decl$id.name;
+                type = _decl$id.type;
+                _context12.next = 8;
+                return this.imports();
+
+              case 8:
+                imports = _context12.sent;
+                im = imports.find(function (i) {
+                  return i.node.start == start && // can't rely on
+                  i.node.name == name && // object identity
+                  i.node.type == type;
+                });
+
+                if (!im) {
+                  _context12.next = 17;
+                  break;
+                }
+
+                imM = module$2(this.System, im.fromModule, this.id);
+                _context12.t0 = [decl];
+                _context12.next = 15;
+                return imM.bindingPathForExport(im.imported);
+
+              case 15:
+                _context12.t1 = _context12.sent;
+                return _context12.abrupt("return", _context12.t0.concat.call(_context12.t0, _context12.t1));
+
+              case 17:
+                return _context12.abrupt("return", [decl]);
+
+              case 18:
+              case "end":
+                return _context12.stop();
+            }
+          }
+        }, _callee12, this);
+      }));
+
+      function _resolveImportedDecl(_x8) {
+        return _ref13.apply(this, arguments);
+      }
+
+      return _resolveImportedDecl;
+    }()
+  }, {
+    key: "bindingPathForExport",
+    value: function () {
+      var _ref14 = asyncToGenerator(regeneratorRuntime.mark(function _callee13(name) {
+        var exports, ex, imM, decl;
+        return regeneratorRuntime.wrap(function _callee13$(_context13) {
+          while (1) {
+            switch (_context13.prev = _context13.next) {
+              case 0:
+                _context13.next = 2;
+                return this.resolvedScope();
+
+              case 2:
+                _context13.next = 4;
+                return this.exports();
+
+              case 4:
+                exports = _context13.sent;
+                ex = exports.find(function (e) {
+                  return e.exported === name;
+                });
+
+                if (!ex.fromModule) {
+                  _context13.next = 17;
+                  break;
+                }
+
+                imM = module$2(this.System, ex.fromModule, this.id);
+                decl = { decl: ex.node, id: ex.declId };
+
+                decl.declModule = this;
+                _context13.t0 = [decl];
+                _context13.next = 13;
+                return imM.bindingPathForExport(ex.imported);
+
+              case 13:
+                _context13.t1 = _context13.sent;
+                return _context13.abrupt("return", _context13.t0.concat.call(_context13.t0, _context13.t1));
+
+              case 17:
+                return _context13.abrupt("return", this._resolveImportedDecl({
+                  decl: ex.decl,
+                  id: ex.declId,
+                  declModule: ex && ex.decl ? this : null
+                }));
+
+              case 18:
+              case "end":
+                return _context13.stop();
+            }
+          }
+        }, _callee13, this);
+      }));
+
+      function bindingPathForExport(_x9) {
+        return _ref14.apply(this, arguments);
+      }
+
+      return bindingPathForExport;
+    }()
+  }, {
+    key: "bindingPathForRefAt",
+    value: function () {
+      var _ref15 = asyncToGenerator(regeneratorRuntime.mark(function _callee14(pos) {
+        var decl, _ref16, _ref17, imDecl, id, name, imM;
+
+        return regeneratorRuntime.wrap(function _callee14$(_context14) {
+          while (1) {
+            switch (_context14.prev = _context14.next) {
+              case 0:
+                _context14.next = 2;
+                return this._localDeclForRefAt(pos);
+
+              case 2:
+                decl = _context14.sent;
+
+                if (!decl) {
+                  _context14.next = 7;
+                  break;
+                }
+
+                _context14.next = 6;
+                return this._resolveImportedDecl(decl);
+
+              case 6:
+                return _context14.abrupt("return", _context14.sent);
+
+              case 7:
+                _context14.next = 9;
+                return this._importForNSRefAt(pos);
+
+              case 9:
+                _ref16 = _context14.sent;
+                _ref17 = slicedToArray(_ref16, 3);
+                imDecl = _ref17[0];
+                id = _ref17[1];
+                name = _ref17[2];
+
+                if (imDecl) {
+                  _context14.next = 16;
+                  break;
+                }
+
+                return _context14.abrupt("return", []);
+
+              case 16:
+                imM = module$2(this.System, imDecl.source.value, this.id);
+                _context14.t0 = [{ decl: imDecl, declModule: this, id: id }];
+                _context14.next = 20;
+                return imM.bindingPathForExport(name);
+
+              case 20:
+                _context14.t1 = _context14.sent;
+                return _context14.abrupt("return", _context14.t0.concat.call(_context14.t0, _context14.t1));
+
+              case 22:
+              case "end":
+                return _context14.stop();
+            }
+          }
+        }, _callee14, this);
+      }));
+
+      function bindingPathForRefAt(_x10) {
+        return _ref15.apply(this, arguments);
+      }
+
+      return bindingPathForRefAt;
+    }()
+  }, {
+    key: "definitionForRefAt",
+    value: function () {
+      var _ref18 = asyncToGenerator(regeneratorRuntime.mark(function _callee15(pos) {
+        var path;
+        return regeneratorRuntime.wrap(function _callee15$(_context15) {
+          while (1) {
+            switch (_context15.prev = _context15.next) {
+              case 0:
+                _context15.next = 2;
+                return this.bindingPathForRefAt(pos);
+
+              case 2:
+                path = _context15.sent;
+                return _context15.abrupt("return", path.length < 1 ? null : path[path.length - 1].decl);
+
+              case 4:
+              case "end":
+                return _context15.stop();
+            }
+          }
+        }, _callee15, this);
+      }));
+
+      function definitionForRefAt(_x11) {
+        return _ref18.apply(this, arguments);
+      }
+
+      return definitionForRefAt;
+    }()
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // module records
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "record",
+    value: function record() {
+      var rec = this.System._loader.moduleRecords[this.id];
+      if (!rec) return null;
+      if (!rec.hasOwnProperty("__lively_modules__")) rec.__lively_modules__ = { evalOnlyExport: {} };
+      return rec;
+    }
+  }, {
+    key: "updateRecord",
+    value: function updateRecord(doFunc) {
+      var record = this.record();
+      if (!record) throw new Error("es6 environment global of " + this.id + ": module not loaded, cannot get export object!");
+      record.locked = true;
+      try {
+        return doFunc(record);
+      } finally {
+        record.locked = false;
       }
     }
 
-    var result = proceed(name, parent, isPlugin);
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // search
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  }, {
+    key: "search",
+    value: function () {
+      var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
+        var _this9 = this;
+
+        var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
+
+        return regeneratorRuntime.wrap(function _callee16$(_context16) {
+          while (1) {
+            switch (_context16.prev = _context16.next) {
+              case 0:
+                options = Object.assign({ excludedModules: [] }, options);
+
+                if (!options.excludedModules.some(function (ex) {
+                  if (typeof ex === "string") return ex === _this9.id;
+                  if (ex instanceof RegExp) return ex.test(_this9.id);
+                  return false;
+                })) {
+                  _context16.next = 3;
+                  break;
+                }
+
+                return _context16.abrupt("return", []);
+
+              case 3:
+                _context16.next = 5;
+                return this.source();
+
+              case 5:
+                src = _context16.sent;
+                re = void 0;
+
+                if (searchStr instanceof RegExp) {
+                  flags = 'g'; // add 'g' flag
+
+                  if (searchStr.ignoreCase) flags += 'i';
+                  if (searchStr.multiline) flags += 'm';
+                  re = RegExp(searchStr.source, flags);
+                } else {
+                  re = RegExp(searchStr, 'g');
+                }
+
+                match = void 0, res = [];
+
+                while ((match = re.exec(src)) !== null) {
+                  res.push([match.index, match[0].length]);
+                }i = 0, j = 0, line = 1, lineStart = 0;
+
+              case 11:
+                if (!(i < src.length && j < res.length)) {
+                  _context16.next = 25;
+                  break;
+                }
+
+                if (src[i] == '\n') {
+                  line++;
+                  lineStart = i + 1;
+                }
+                _res$j = slicedToArray(res[j], 2);
+                idx = _res$j[0];
+                length = _res$j[1];
+
+                if (!(i !== idx)) {
+                  _context16.next = 18;
+                  break;
+                }
+
+                return _context16.abrupt("continue", 22);
+
+              case 18:
+                lineEnd = src.slice(lineStart).indexOf("\n");
+
+                if (lineEnd === -1) lineEnd = src.length;else lineEnd += lineStart;
+                res[j] = {
+                  module: this,
+                  length: length,
+                  line: line, column: i - lineStart,
+                  lineString: src.slice(lineStart, lineEnd)
+                };
+                j++;
+
+              case 22:
+                i++;
+                _context16.next = 11;
+                break;
+
+              case 25:
+                return _context16.abrupt("return", res);
+
+              case 26:
+              case "end":
+                return _context16.stop();
+            }
+          }
+        }, _callee16, this);
+      }));
+
+      function search(_x12, _x13) {
+        return _ref19.apply(this, arguments);
+      }
+
+      return search;
+    }()
+  }, {
+    key: "toString",
+    value: function toString() {
+      return "module(" + this.id + ")";
+    }
+  }, {
+    key: "dontTransform",
+    get: function get() {
+      return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "localStorage", // for Firefox, see fetch
+      "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+      ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]));
+    }
+
+    // FIXME... better to make this read-only, currently needed for loading
+    // global modules, from instrumentation.js
+
+  }, {
+    key: "recorder",
+    set: function set(v) {
+      return this._recorder = v;
+    },
+    get: function get() {
+      if (this._recorder) return this._recorder;
+
+      var S = this.System,
+          self = this;
+
+      return this._recorder = Object.create(S.global, {
+
+        System: { configurable: true, writable: true, value: S },
+
+        _moduleExport: {
+          value: function value(name, val) {
+            scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
+          }
+        },
+
+        _moduleImport: {
+          value: function value(depName, key) {
+            var depId = S.decanonicalize(depName, self.id),
+                depExports = S.get(depId);
+
+            if (!depExports) {
+              console.warn("import of " + key + " failed: " + depName + " (tried as " + self.id + ") is not loaded!");
+              return undefined;
+            }
+
+            self.addDependencyToModuleRecord(module$2(S, depId),
+            // setter is only installed if there isn't a setter already. In
+            // those cases we make sure that at least the module varRecorder gets
+            // updated, which is good enough for "virtual modules"
+            function (imports) {
+              return Object.assign(self.recorder, imports);
+            });
+
+            if (key == undefined) return depExports;
+
+            if (!depExports.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
+
+            return depExports[key];
+          }
+        }
+
+      });
+    }
+  }]);
+  return ModuleInterface;
+}();
+
+function fetchResource(proceed, load) {
+  var System = this,
+      res = System.resource(load.name);
+
+  if (load.name.match(/^lively:\/\//)) load.metadata.format = "esm";
+
+  return res ? res.read() : proceed(load);
+}
+
+function livelyProtocol(proceed, url) {
+  if (!url.match(/^lively:\/\//)) return proceed(url);
+  var match = url.match(/^lively:\/\/([^\/]+)\/(.*)$/),
+      worldId = match[1],
+      localObjectName = match[2];
+  return {
+    read: function read() {
+      return Promise.resolve(typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString || "/*Could not locate " + localObjectName + "*/");
+    },
+    write: function write(source) {
+      if (typeof $morph !== "undefined" && $morph(localObjectName) && $morph(localObjectName).textString) {
+        $morph(localObjectName).textString = source;
+        return Promise.resolve(source);
+      } else {
+        return Promise.reject("Could not save morph " + localObjectName);
+      }
+    }
+  };
+}
+
+function wrapResource(System) {
+  if (!System.resource) {
+    System.resource = lively_resources.resource;
+  }
+  if (!isInstalled(System, "fetch", fetchResource)) {
+    install(System, "fetch", fetchResource);
+  }
+  if (!isInstalled(System, "resource", livelyProtocol)) {
+    install(System, "resource", livelyProtocol);
+  }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var isNode = System.get("@system-env").node;
+var initialSystem = initialSystem || System;
+
+var SystemClass = System.constructor;
+if (!SystemClass.systems) SystemClass.systems = {};
+
+var defaultOptions = {
+  notificationLimit: null
+};
+
+function livelySystemEnv(System) {
+  return {
+    moduleEnv: function moduleEnv(id) {
+      return module$2(System, id);
+    },
+
+
+    // TODO this is just a test, won't work in all cases...
+    get itself() {
+      return System.get(System.decanonicalize("lively.modules/index.js"));
+    },
+
+    evaluationDone: function evaluationDone(moduleId) {
+      module$2(System, moduleId).evaluationDone();
+    },
+    dumpConfig: function dumpConfig() {
+      return JSON.stringify({
+        baseURL: System.baseURL,
+        transpiler: System.transpiler,
+        defaultJSExtensions: System.defaultJSExtensions,
+        map: System.map,
+        meta: System.meta,
+        packages: System.packages,
+        paths: System.paths,
+        packageConfigPaths: System.packageConfigPaths
+      }, null, 2);
+    },
+
+
+    // this is where the canonical state of the module system is held...
+    packages: System["__lively.modules__packages"] || (System["__lively.modules__packages"] = {}),
+    loadedModules: System["__lively.modules__loadedModules"] || (System["__lively.modules__loadedModules"] = {}),
+    pendingExportChanges: System["__lively.modules__pendingExportChanges"] || (System["__lively.modules__pendingExportChanges"] = {}),
+    notifications: System["__lively.modules__notifications"] || (System["__lively.modules__notifications"] = []),
+    notificationSubscribers: System["__lively.modules__notificationSubscribers"] || (System["__lively.modules__notificationSubscribers"] = {}),
+    options: System["__lively.modules__options"] || (System["__lively.modules__options"] = lively_lang.obj.deepCopy(defaultOptions))
+  };
+}
+
+function systems() {
+  return SystemClass.systems;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// System creation + access interface
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function nameOfSystem(System) {
+  return Object.keys(systems()).detect(function (name) {
+    return systems()[name] === System;
+  });
+}
+
+function getSystem(nameOrSystem, config) {
+  return nameOrSystem && typeof nameOrSystem !== "string" ? nameOrSystem : systems()[nameOrSystem] || (systems()[nameOrSystem] = makeSystem(config));
+}
+
+function removeSystem(nameOrSystem) {
+  // FIXME "unload" code...???
+  var name = nameOrSystem && typeof nameOrSystem !== "string" ? nameOfSystem(nameOrSystem) : nameOrSystem;
+  delete systems()[name];
+}
+
+function makeSystem(cfg) {
+  return prepareSystem(new SystemClass(), cfg);
+}
+
+function prepareSystem(System, config) {
+  System.trace = true;
+  config = config || {};
+
+  System.set("@lively-env", System.newModule(livelySystemEnv(System)));
+
+  wrapResource(System);
+  wrapModuleLoad$1(System);
+
+  if (!isInstalled(System, "normalizeHook")) install(System, "normalize", normalizeHook);
+
+  if (!isInstalled(System, "decanonicalize", "decanonicalizeHook")) install(System, "decanonicalize", decanonicalizeHook);
+
+  if (!isInstalled(System, "newModule", "newModule_volatile")) install(System, "newModule", newModule_volatile);
+
+  if (isNode) {
+    var nodejsCoreModules = ["addons", "assert", "buffer", "child_process", "cluster", "console", "crypto", "dgram", "dns", "domain", "events", "fs", "http", "https", "module", "net", "os", "path", "punycode", "querystring", "readline", "repl", "stream", "stringdecoder", "timers", "tls", "tty", "url", "util", "v8", "vm", "zlib"],
+        map = nodejsCoreModules.reduce(function (map, ea) {
+      map[ea] = "@node/" + ea;return map;
+    }, {});
+    config.map = lively_lang.obj.merge(map, config.map);
+    // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
+    // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
+  }
+
+  config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
+  if (!config.transpiler && System.transpiler === "traceur") {
+    System.config({
+      map: {
+        'plugin-babel': initialSystem.map["plugin-babel"],
+        'systemjs-babel-build': initialSystem.map["systemjs-babel-build"]
+      },
+      transpiler: initialSystem.transpiler,
+      babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
+    });
+  }
+
+  // if (!cfg.hasOwnProperty("defaultJSExtensions")) cfg.defaultJSExtensions = true;
+
+
+  System.config(config);
+
+  return System;
+}
+
+function normalizeHook(proceed, name, parent, parentAddress) {
+  var System = this;
+  if (name === "..") name = '../index.js'; // Fix ".."
+
+  // rk 2016-07-19: sometimes SystemJS doStringMap() will resolve path into
+  // names with double slashes which causes module id issues later. This fixes
+  // that...
+  // name = name.replace(/([^:])\/\/+/g, "$1\/");
+  name = name.replace(/.\/{2,}/g, function (match) {
+    return match[0] === ":" ? match : match[0] + "/";
+  });
+
+  return proceed(name, parent, parentAddress).then(function (result) {
 
     // lookup package main
     var base = result.replace(/\.js$/, "");
@@ -28246,180 +29086,473 @@ var categorizer = Object.freeze({
     if (m) return m[1];
 
     return result;
+  });
+}
+
+function decanonicalizeHook(proceed, name, parent, isPlugin) {
+  var System = this;
+  if (name === "..") name = '../index.js'; // Fix ".."
+
+  // systemjs' decanonicalize has by default not the fancy
+  // '{node: "events", "~node": "@mepty"}' mapping but we need it
+  var pkg = parent && normalize_packageOfURL(parent, System);
+  if (pkg) {
+    var mappedObject = pkg.map && pkg.map[name] || System.map[name];
+    if ((typeof mappedObject === "undefined" ? "undefined" : _typeof(mappedObject)) === "object") {
+      name = normalize_doMapWithObject(mappedObject, pkg, System) || name;
+    }
   }
 
-  function normalize_doMapWithObject(mappedObject, pkg, loader) {
-    // SystemJS allows stuff like {events: {"node": "@node/events", "~node": "@empty"}}
-    // for conditional name lookups based on the environment. The resolution
-    // process in SystemJS is asynchronous, this one here synch. to support
-    // decanonicalize and a one-step-load
-    var env = loader.get(pkg.map['@env'] || '@system-env');
-    // first map condition to match is used
-    var resolved;
-    for (var e in mappedObject) {
-      var negate = e[0] == '~';
-      var value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
-      if (!negate && value || negate && !value) {
-        resolved = mappedObject[e];
-        break;
+  var result = proceed(name, parent, isPlugin);
+
+  // lookup package main
+  var base = result.replace(/\.js$/, "");
+  if (base in System.packages) {
+    var main = System.packages[base].main;
+    if (main) return base.replace(/\/$/, "") + "/" + main.replace(/^\.?\//, "");
+  }
+
+  // Fix issue with accidentally adding .js
+  var m = result.match(/(.*json)\.js/i);
+  if (m) return m[1];
+
+  return result;
+}
+
+function normalize_doMapWithObject(mappedObject, pkg, loader) {
+  // SystemJS allows stuff like {events: {"node": "@node/events", "~node": "@empty"}}
+  // for conditional name lookups based on the environment. The resolution
+  // process in SystemJS is asynchronous, this one here synch. to support
+  // decanonicalize and a one-step-load
+  var env = loader.get(pkg.map['@env'] || '@system-env');
+  // first map condition to match is used
+  var resolved;
+  for (var e in mappedObject) {
+    var negate = e[0] == '~';
+    var value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
+    if (!negate && value || negate && !value) {
+      resolved = mappedObject[e];
+      break;
+    }
+  }
+
+  if (resolved) {
+    if (typeof resolved != 'string') throw new Error('Unable to map a package conditional to a package conditional.');
+  }
+  return resolved;
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  function normalize_readMemberExpression(p, value) {
+    var pParts = p.split('.');
+    while (pParts.length) {
+      value = value[pParts.shift()];
+    }return value;
+  }
+}
+
+function normalize_packageOfURL(url, System) {
+  // given a url like "http://localhost:9001/lively.lang/lib/base.js" finds the
+  // corresponding package name in loader.packages, like "http://localhost:9001/lively.lang"
+  // ... actually it returns the package
+  var packageNames = Object.keys(System.packages || {}),
+      matchingPackages = packageNames.map(function (pkgName) {
+    return url.indexOf(pkgName) === 0 ? { url: pkgName, penalty: url.slice(pkgName.length).length } : null;
+  }).filter(function (ea) {
+    return !!ea;
+  }),
+      pName = matchingPackages.length ? matchingPackages.reduce(function (matchingPkg, ea) {
+    return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
+  }).url : null;
+  return pName ? System.packages[pName] : null;
+}
+
+function newModule_volatile(proceed, exports) {
+  var freeze = Object.freeze;
+  Object.freeze = function (x) {
+    return x;
+  };
+  var m = proceed(exports);
+  Object.freeze = freeze;
+  return m;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// debugging
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function printSystemConfig$1(System) {
+  System = getSystem(System);
+  var json = {
+    baseURL: System.baseURL,
+    transpiler: System.transpiler,
+    defaultJSExtensions: System.defaultJSExtensions,
+    defaultExtension: System.defaultExtension,
+    map: System.map,
+    meta: System.meta,
+    packages: System.packages,
+    paths: System.paths,
+    packageConfigPaths: System.packageConfigPaths,
+    bundles: System.bundles
+  };
+  return JSON.stringify(json, null, 2);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module state
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function loadedModules$1(System) {
+  return System.get("@lively-env").loadedModules;
+}
+
+/*
+
+  ### `lively.modules.importPackage(packageName)`
+
+  To load a project into your runtime you will typically use
+  `lively.modules.importPackage('some-package-name')`. `'some-package-name'`
+  should resolve to a directory with a JSON package config file (typically
+  package.json) that at least defines a `name` field. The package will be
+  imported, i.e. the main module of the package will be loaded via
+  `lively.modules.System.import('some-package-name/index.js')`. By default the
+  name of main is `'index.js'` but this can be customized via the `main` field
+  of the package config file.
+
+  The result of the importPackage call is the promise for loading the main module.
+
+
+
+  #### Specifics of the lively package format
+
+  The main purpose of the lively package format is to make it easy to integrate
+  dependent packages in the lively.module and es6 module systems. It allows you
+  to define a `"lively"` field in the main JSON that allows to set a separate
+  main module, a `"packageMap"` object that maps names that can be used in
+  `import` statements to directories of sub-packages. When sub-packages are
+  discovered while importing a package, those are recursively imported as well.
+
+  Here is an example how a config inside a package.json file could look like.
+
+  ```json
+  {
+    "name": "some-package",
+    "main": "main-for-non-es6.js",
+    "lively": {
+      "main": "for-es6.js",
+      "packageMap": {
+        "dep1": "./node_modules/dep1",
+        "dep2": "./libs/dep2"
       }
     }
+  }
+  ```
 
-    if (resolved) {
-      if (typeof resolved != 'string') throw new Error('Unable to map a package conditional to a package conditional.');
-    }
-    return resolved;
+  For more examples, see [lively.modules/package.json](https://github.com/LivelyKernel/lively.modules/package.json), or [lively.ast/package.json](https://github.com/LivelyKernel/lively.ast/package.json).
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    function normalize_readMemberExpression(p, value) {
-      var pParts = p.split('.');
-      while (pParts.length) {
-        value = value[pParts.shift()];
-      }return value;
-    }
-  }
 
-  function normalize_packageOfURL(url, System) {
-    // given a url like "http://localhost:9001/lively.lang/lib/base.js" finds the
-    // corresponding package name in loader.packages, like "http://localhost:9001/lively.lang"
-    // ... actually it returns the package
-    var packageNames = Object.keys(System.packages || {}),
-        matchingPackages = packageNames.map(function (pkgName) {
-      return url.indexOf(pkgName) === 0 ? { url: pkgName, penalty: url.slice(pkgName.length).length } : null;
-    }).filter(function (ea) {
-      return !!ea;
-    }),
-        pName = matchingPackages.length ? matchingPackages.reduce(function (matchingPkg, ea) {
-      return matchingPkg.penalty > ea.penalty ? ea : matchingPkg;
-    }).url : null;
-    return pName ? System.packages[pName] : null;
-  }
+  ### `lively.modules.System`
 
-  function newModule_volatile(proceed, exports) {
-    var freeze = Object.freeze;
-    Object.freeze = function (x) {
-      return x;
-    };
-    var m = proceed(exports);
-    Object.freeze = freeze;
-    return m;
-  }
+  The main lively.modules interface provides access to a System loader object
+  (currently from the [SystemJS library](https://github.com/systemjs/systemjs)
+  that has some improvements added, e.g.   the name normalization respects the
+  lively package conventions, translate is   used to instrument code by
+  default, etc.
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // debugging
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  By default the loader instance is the same as the global loader (e.g.
+  window.System). Note: *The System instance can be easily changed* to support
+  multiple, isolated environnments.
 
-  function printSystemConfig$1(System) {
-    System = getSystem(System);
-    var json = {
-      baseURL: System.baseURL,
-      transpiler: System.transpiler,
-      defaultJSExtensions: System.defaultJSExtensions,
-      defaultExtension: System.defaultExtension,
-      map: System.map,
-      meta: System.meta,
-      packages: System.packages,
-      paths: System.paths,
-      packageConfigPaths: System.packageConfigPaths,
-      bundles: System.bundles
-    };
-    return JSON.stringify(json, null, 2);
-  }
+  Example:
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // module state
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  ```js
+  var testSystem = lively.modules.getSystem("my-test-system");
+  lively.modules.changeSystem(testSystem, true); // true: make the System global
+  System.import("some-module"); // uses the new System loader
+  ```
 
-  function loadedModules$1(System) {
-    return System.get("@lively-env").loadedModules;
-  }
+  Now all state (what modules are loaded, their metadata, etc) are stored in
+  `testSystem`. Changing to another System allows to define different name
+  resolution approach etc.
 
-  var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
+  Side note: Since all System related implementation functions defined in the
+  modules in src/ will take a System loader object as first parameter, the
+  implementation is loader independent.
 
-  exports.System = exports.System || prepareSystem(GLOBAL.System);
-  function changeSystem(newSystem, makeGlobal) {
-    exports.System = newSystem;
-    if (makeGlobal) GLOBAL.System = newSystem;
-    return newSystem;
-  }
-  function loadedModules() {
-    return Object.keys(lively.modules.requireMap());
-  }
-  function module$1(id) {
-    return module$2(exports.System, id);
-  }
-  function printSystemConfig() {
-    return printSystemConfig$1(exports.System);
-  }
-  function importPackage(packageURL) {
-    return importPackage$1(exports.System, packageURL);
-  }
-  function registerPackage(packageURL) {
-    return registerPackage$1(exports.System, packageURL);
-  }
-  function removePackage(packageURL) {
-    return removePackage$1(exports.System, packageURL);
-  }
-  function reloadPackage(packageURL) {
-    return reloadPackage$1(exports.System, packageURL);
-  }
-  function getPackages() {
-    return getPackages$1(exports.System);
-  }
-  function getPackage(packageURL) {
-    return getPackage$1(exports.System, packageURL);
-  }
-  function applyPackageConfig(packageConfig, packageURL) {
-    return applyConfig(exports.System, packageConfig, packageURL);
-  }
-  function searchInPackage(packageURL, searchString, options) {
-    return searchInPackage$1(exports.System, packageURL, searchString, options);
-  }
-  function moduleSourceChange(moduleName, newSource, options) {
-    return moduleSourceChange$1(exports.System, moduleName, newSource, options);
-  }
-  function requireMap() {
-    return requireMap$1(exports.System);
-  }
-  function isHookInstalled(methodName, hookOrName) {
-    return isHookInstalled$1(exports.System, methodName, hookOrName);
-  }
-  function installHook(hookName, hook) {
-    return installHook$1(exports.System, hookName, hook);
-  }
-  function removeHook(methodName, hookOrName) {
-    return removeHook$1(exports.System, methodName, hookOrName);
-  }
-  function wrapModuleLoad() {
-    wrapModuleLoad$1(exports.System);
-  }
-  function unwrapModuleLoad() {
-    unwrapModuleLoad$1(exports.System);
-  }
 
-  exports.getSystem = getSystem;
-  exports.removeSystem = removeSystem;
-  exports.loadedModules = loadedModules;
-  exports.printSystemConfig = printSystemConfig;
-  exports.changeSystem = changeSystem;
-  exports.module = module$1;
-  exports.importPackage = importPackage;
-  exports.registerPackage = registerPackage;
-  exports.removePackage = removePackage;
-  exports.reloadPackage = reloadPackage;
-  exports.getPackages = getPackages;
-  exports.getPackage = getPackage;
-  exports.applyPackageConfig = applyPackageConfig;
-  exports.searchInPackage = searchInPackage;
-  exports.moduleSourceChange = moduleSourceChange;
-  exports.requireMap = requireMap;
-  exports.isHookInstalled = isHookInstalled;
-  exports.installHook = installHook;
-  exports.removeHook = removeHook;
-  exports.wrapModuleLoad = wrapModuleLoad;
-  exports.unwrapModuleLoad = unwrapModuleLoad;
+
+  ### Loader state / module state
+
+  - `lively.modules.loadedModules()`: Returns a list of ids of the currently loaded modules.
+
+  - lively.modules.printSystemConfig(): Returns a stringified version of the [SystemJS config](https://github.com/systemjs/systemjs/blob/master/docs/config-api.md). Useful for debugging SystemJS issues
+
+  #### `lively.modules.requireMap()`
+
+  Will return a JS object whose keys are module ids and the corresponding
+  values are lists of module ids of those modules that dependent on the key
+  module (including the key module itself). I.e. the importers of that module.
+
+
+
+  ### instrumentation
+
+  By default lively.modules will hook into the `System.translate` process so that source code of modules get transformed to allow recording of their internal evaluation state (that is then captured in `moduleEnv`s). You can enable and disable this behavior via
+
+  - `lively.modules.wrapModuleLoad()`
+  - `lively.modules.unwrapModuleLoad()`
+
+
+
+  ### evaluation
+
+  * This is handled by the [lively.vm module](https://github.com/LivelyKernel/lively.vm)!
+
+
+
+  ### ModuleInterface
+
+  #### `lively.modules.module(moduleId)`
+
+  Returns an instance of ModuleInterface with the following methods:
+
+  ##### `ModuleInterface>>dependents()`
+
+  Which modules (module ids) are (in)directly import module with id.
+
+  Let's say you have
+
+  - module1.js: `export var x = 23;`
+  - module2.js: `import {x} from "module1.js"; export var y = x + 1;`
+  - module3.js: `import {y} from "module2.js"; export var z = y + 1;`
+
+  `module("module1.js").dependents()` returns [module("module2"), module("module3")]
+
+  ##### `ModuleInterface>>requirements()`
+
+  which modules (module ids) are (in)directly required by module with id?
+
+  Let's say you have
+
+  - module1: `export var x = 23;`
+  - module2: `import {x} from "module1.js"; export var y = x + 1;`
+  - module3: `import {y} from "module2.js"; export var z = y + 1;`
+
+  `module("module3").requirements()` will report [module("module2"), module("module1")]
+
+  ##### `async ModuleInterface>>changeSource(newSource, options)`
+
+  To redefine a module's source code at runtime you can use the
+  changeSource method. Given `a.js` from the previous example you can run
+  `module('a.js').changeSource('var x = 24;\nexport x;')`.
+  This will a) evaluate the changed code and b) try to modify the actual file
+  behind the module. In browser environments this is done via a `PUT` request,
+  in node.js `fs.writeFile` is used.
+
+  ##### `async ModuleInterface>>reload(options)``
+
+  Will re-import the module identified by `moduleName`. By default this will
+  also reload all direct and indirect dependencies of that module. You can
+  control that behavior via `options`, the default value of it is
+  `{reloadDeps: true, resetEnv: true}`.
+
+  ##### `ModuleInterface>>unload(options)`
+
+  Will remove the module from the loaded module set of lively.modules.System.
+  `options` are by default `{forgetDeps: true, forgetEnv: true}`.
+
+  ##### `async ModuleInterface>>imports()` and `async ModuleInterface>>exports()`
+
+  Import and export state. For exports this includes the local name of the
+  exported variable, its export name, etc. For imports it includes the imported
+  variable name, the module from where it was imported etc.
+
+  Example:
+
+  ```js
+  await module("lively.modules/index.js").exports();
+    // =>
+    //   [{
+    //       exported: "getSystem",
+    //       local: "getSystem",
+    //       fromModule: "http://localhost:9001/node_modules/lively.modules/index.js",
+    //     }, ...]
+
+  await module("lively.modules/index.js").imports();
+    //   [{
+    //       fromModule: "lively.lang",
+    //       local: "obj",
+    //       localModule: "http://localhost:9001/node_modules/lively.modules/index.js"
+    //     }, {
+    //       fromModule: "./src/system.js",
+    //       local: "getSystem",
+    //       localModule: "http://localhost:9001/node_modules/lively.modules/index.js"
+    //     }, ...]
+    //   })
+  ```
+
+
+  ##### `async ModuleInterface>>source()`
+
+  Returns the source code of the module.
+
+  ##### `async ModuleInterface>>env()`
+
+  Returns the evaluation environment of the module.
+
+  A "module env" is the object used for recording the evaluation state. Each
+  module that is loaded with source instrumentation enabled as an according
+  moduleEnv It is populated when the module is imported and then used and
+  modified when users run evaluations using `lively.vm.runEval()` or change the module's
+  code with `ModuleInterface>>changeSource()`. You can get access to the internal module
+  state via `module(...).env().recorder` the recorder is a map of
+  variable and function names.
+
+  Example: When lively.modules is bootstrapped you can access the state of its
+  main module via:
+
+  ```js
+  var id = System.decanonicalize("lively.modules/index.js");
+  Object.keys(lively.modules.moduleEnv("lively.modules/index.js").recorder);
+    // => ["defaultSystem", "changeSystem", "loadedModules", "sourceOf", "moduleEnv", ...]
+  lively.modules.moduleEnv("lively.modules/index.js").recorder.changeSystem
+    // => function() {...} The actual object defined in the module scope
+  ```
+
+
+
+  ### hooks
+
+  lively.modules provides an easy way to customize the behavior of the System
+  loader object via `installHook` and `removeHook`. To extend the behavior of
+  of `lively.modules.System.fetch` you can for example do
+
+  ```js
+  installHook("fetch", function myFetch(proceed, load) {
+    if (load.name === "my-custom-module.js") return "my.custom.code()";
+    return proceed(load); // default behavior
+  });
+  ```
+  
+  ### notification
+  
+  There are five types of system-wide notifications:
+  
+  1. `{type: "lively.modules/moduleloaded", module}`
+  2. `{type: "lively.modules/modulechanged", module, oldSource, newSource, error, options}`
+  3. `{type: "lively.modules/moduleunloaded", module}`
+  4. `{type: "lively.modules/packageregistered", package}`
+  5. `{type: "lively.modules/packageremoved", package}`
+
+  These notifications are all emitted with `lively.notifications`.
+
+ */
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// System accessors
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+var GLOBAL = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : undefined;
+
+exports.System = exports.System || prepareSystem(GLOBAL.System);
+function changeSystem(newSystem, makeGlobal) {
+  exports.System = newSystem;
+  if (makeGlobal) GLOBAL.System = newSystem;
+  return newSystem;
+}
+function loadedModules$$1() {
+  return Object.keys(lively.modules.requireMap());
+}
+function module$1(id) {
+  return module$2(exports.System, id);
+}
+function printSystemConfig$$1() {
+  return printSystemConfig$1(exports.System);
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// packages
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function importPackage$$1(packageURL) {
+  return importPackage$1(exports.System, packageURL);
+}
+function registerPackage$$1(packageURL) {
+  return registerPackage$1(exports.System, packageURL);
+}
+function removePackage$$1(packageURL) {
+  return removePackage$1(exports.System, packageURL);
+}
+function reloadPackage$$1(packageURL) {
+  return reloadPackage$1(exports.System, packageURL);
+}
+function getPackages$$1() {
+  return getPackages$1(exports.System);
+}
+function getPackage$$1(packageURL) {
+  return getPackage$1(exports.System, packageURL);
+}
+function applyPackageConfig(packageConfig, packageURL) {
+  return applyConfig(exports.System, packageConfig, packageURL);
+}
+function searchInPackage$$1(packageURL, searchString, options) {
+  return searchInPackage$1(exports.System, packageURL, searchString, options);
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// changing modules
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function moduleSourceChange$$1(moduleName, newSource, options) {
+  return moduleSourceChange$1(exports.System, moduleName, newSource, options);
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// dependencies
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function requireMap() {
+  return computeRequireMap(exports.System);
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// hooks
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function isHookInstalled(methodName, hookOrName) {
+  return isInstalled(exports.System, methodName, hookOrName);
+}
+function installHook(hookName, hook) {
+  return install(exports.System, hookName, hook);
+}
+function removeHook(methodName, hookOrName) {
+  return remove$1(exports.System, methodName, hookOrName);
+}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// instrumentation
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+function wrapModuleLoad$$1() {
+  wrapModuleLoad$1(exports.System);
+}
+function unwrapModuleLoad$$1() {
+  unwrapModuleLoad$1(exports.System);
+}
+
+exports.getSystem = getSystem;
+exports.removeSystem = removeSystem;
+exports.loadedModules = loadedModules$$1;
+exports.printSystemConfig = printSystemConfig$$1;
+exports.changeSystem = changeSystem;
+exports.module = module$1;
+exports.importPackage = importPackage$$1;
+exports.registerPackage = registerPackage$$1;
+exports.removePackage = removePackage$$1;
+exports.reloadPackage = reloadPackage$$1;
+exports.getPackages = getPackages$$1;
+exports.getPackage = getPackage$$1;
+exports.applyPackageConfig = applyPackageConfig;
+exports.searchInPackage = searchInPackage$$1;
+exports.moduleSourceChange = moduleSourceChange$$1;
+exports.requireMap = requireMap;
+exports.isHookInstalled = isHookInstalled;
+exports.installHook = installHook;
+exports.removeHook = removeHook;
+exports.wrapModuleLoad = wrapModuleLoad$$1;
+exports.unwrapModuleLoad = unwrapModuleLoad$$1;
 
 }((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources));
+
   if (typeof module !== "undefined" && module.exports) module.exports = GLOBAL.lively.modules;
 })();

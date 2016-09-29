@@ -24,8 +24,8 @@ module.exports = Promise.resolve()
       exclude: 'node_modules/**',
       sourceMap: true,
       babelrc: false,
-      plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread"],
-      presets: ["es2015-rollup"]
+      plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+      presets: [["es2015", {"modules": false}]]
     })]
   }))
   .then(bundle =>
