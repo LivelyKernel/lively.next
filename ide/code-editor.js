@@ -38,22 +38,16 @@ export default class CodeEditor extends Morph {
     super({
       extent: props.extent || pt(400,300),
       submorphs: [{
-        type: Text,
-        name: "text",
+        type: Text, name: "text",
         extent: props.extent || pt(400,300),
         textString: props.textString || "",
-        fixedWidth: true,
-        fixedHeight: true,
         clipMode: "auto",
         padding: Rectangle.inset(4, 2, 4, 2),
-        fontSize: props.fontSize || 12,
-        fontFamily: props.fontFamily || "Monaco, monospace",
         doSave() { this.owner && this.owner.doSave(); }
       }],
-      ...obj.dissoc(props, ["textString", "mode", "theme"])
+      ...config.codeEditor.defaultStyle,
+      ...props
     });
-    this.mode = props.mode || "plain";
-    this.theme = props.theme || config.codeEditor.defaultTheme;
     this.requestHighlight(true);
 
     // FIXME lively.bindings does not seem to work:
@@ -76,11 +70,24 @@ export default class CodeEditor extends Morph {
     if (this._checker)
       this._checker.onDocumentChange({}, this);
   }
-  
-  get text() { return this.submorphs[0]; }
 
+  get text() { return this.submorphs[0]; }
   get textString() { return this.text.textString; }
   set textString(str) { this.text.textString = str; }
+  get fontFamily() { return this.text.fontFamily; }
+  set fontFamily(x) { this.text.fontFamily = x; }
+  get fontSize() { return this.text.fontSize; }
+  set fontSize(x) { this.text.fontSize = x; }
+  get fontColor() { return this.text.fontColor; }
+  set fontColor(x) { this.text.fontColor = x; }
+  get fontWeight() { return this.text.fontWeight; }
+  set fontWeight(x) { this.text.fontWeight = x; }
+  get fontStyle() { return this.text.fontStyle; }
+  set fontStyle(x) { this.text.fontStyle = x; }
+  get textDecoration() { return this.text.textDecoration; }
+  set textDecoration(x) { this.text.textDecoration = x; }
+  get fixedCharacterSpacing() { return this.text.fixedCharacterSpacing; }
+  set fixedCharacterSpacing(x) { this.text.fixedCharacterSpacing = x; }
 
   get mode() { return this._mode; }
   set mode(mode) {
@@ -95,7 +102,7 @@ export default class CodeEditor extends Morph {
     this.text.fill = this._theme.background();
     this.requestHighlight();
   }
-  
+
   requestHighlight(immediate = false) {  
     if (immediate) this.highlight();
     else fun.debounceNamed(this.id + "-requestHighlight", 500, () => this.highlight())();

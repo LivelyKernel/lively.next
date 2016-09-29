@@ -222,8 +222,14 @@ var config = {
     ]
 
   },
+
   codeEditor: {
-    defaultTheme: "github"
+    defaultStyle: {
+      theme: "github",
+      mode: "plain",
+      fontFamily: "Hack, Monaco, monospace",
+      fontSize: 12
+    }
   }
 }
 
