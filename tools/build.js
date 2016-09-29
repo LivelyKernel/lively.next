@@ -19,10 +19,10 @@ module.exports = Promise.resolve()
     plugins: [
       babel({
         exclude: 'node_modules/**', sourceMap: false,
-        "presets": ["es2015-rollup"],
-        babelrc: false,
-        plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread"]})
-    ]
+        "presets": [["es2015", {modules: false}]],
+        "plugins": ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+        babelrc: false
+      })]
   }))
   .then(bundle =>
     bundle.generate({
