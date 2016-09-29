@@ -28835,7 +28835,7 @@ var ModuleInterface = function () {
     key: "dontTransform",
     get: function get() {
       return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "localStorage", // for Firefox, see fetch
-      "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+      "prompt", "alert", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
       ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]));
     }
 

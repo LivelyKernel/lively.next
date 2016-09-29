@@ -244,8 +244,8 @@ class ModuleInterface {
       "global", "self",
       "_moduleExport", "_moduleImport",
       "localStorage", // for Firefox, see fetch
-      "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-    ].concat(arr.withoutAll(query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]));
+      "prompt", "alert", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+    ].concat(arr.withoutAll(query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]/*remove those once transitioned to lively.next*/));
   }
 
   // FIXME... better to make this read-only, currently needed for loading
