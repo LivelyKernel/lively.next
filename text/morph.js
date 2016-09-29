@@ -707,7 +707,7 @@ export class Text extends Morph {
     if (!this.isClip()) return;
     var { scroll, padding } = this,
         paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
-        charBounds =   this.charBoundsFromTextPosition(pos),
+        charBounds =   this.charBoundsFromTextPosition(pos).insetByPt(pt(-20, 0)),
         delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
