@@ -74,7 +74,6 @@ export class VerticalLayout extends Layout {
 
   apply() {
     if (this.active) return;
-    console.log(this.container.name);
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
         maxWidth = 0;
@@ -95,8 +94,6 @@ export class HorizontalLayout extends Layout {
 
  apply() {
     if (this.active) return;
-        console.log(this.container.name);
-
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
         maxHeight = 0;
