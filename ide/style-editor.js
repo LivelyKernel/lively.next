@@ -2,6 +2,7 @@ import { Window, GridLayout, FillLayout, Ellipse, Text,
          VerticalLayout, HorizontalLayout, Morph } from "../index.js";
 import { Color, LinearGradient, pt } from "lively.graphics";
 import { obj, num } from "lively.lang";
+import { connect } from "lively.bindings";
 
 export class ColorPicker extends Window {
   
@@ -13,47 +14,54 @@ export class ColorPicker extends Window {
       targetMorph: this.colorPalette()
     });
     this.update();
+    connect(this, "change", this, "update", {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
+  }
+  
+  set color(c) {
+    const [h, s, b] = c.toHSB();
+    this.hue = h;
+    this.saturation = s;
+    this.brightness = b;
+  }
+  
+  get color() {
+    return Color.hsb(this.hue, this.saturation, this.brightness);
   }
   
   get pickerPosition() {
     // translate the hsv of color to a position
-    const [_, s, b] = this.color.toHSB();
+    const s = this.saturation, b = this.brightness;
     return pt(this.getSubmorphNamed("hue").width * s,
               this.getSubmorphNamed("hue").height * (1 - b))
   }
   
   set pickerPosition({x: light, y: dark}) {
     // translate the pos to a new hsv value
-    var [h, s, b] = this.color.toHSB(),
-        {width, height} = this.getSubmorphNamed("hue"),
-        s = Math.max(0, Math.min(light / width, 1)),
-        b = Math.max(0, Math.min(1 - (dark / height), 1));
-    this.color = Color.hsb(h, s, b);
+    var {width, height} = this.getSubmorphNamed("hue");
+    this.saturation = Math.max(0, Math.min(light / width, 1));
+    this.brightness = Math.max(0, Math.min(1 - (dark / height), 1));
     this.update();
   }
   
   get scalePosition() {
-    var [h, _, _] = this.color.toHSB();
-    return pt(this.getSubmorphNamed("scale").width / 2, this.getSubmorphNamed("hueGradient").height * (h / 360)); 
+    return pt(this.getSubmorphNamed("scale").width / 2, this.getSubmorphNamed("hueGradient").height * (this.hue / 360)); 
   }
   
   set scalePosition(pos) {
     console.log(pos.y / this.getSubmorphNamed("hueGradient").height)
-    const [_, s, b] = this.color.toHSB(),
-          h = Math.max(0, Math.min((pos.y / this.getSubmorphNamed("hueGradient").height) * 360, 359));
-    this.color = Color.hsb(h, s, b);
+    this.hue = Math.max(0, Math.min((pos.y / this.getSubmorphNamed("hueGradient").height) * 360, 359));
     this.update();
   }
   
   update() {
-    this.getSubmorphNamed("field").update(this);
-    this.getSubmorphNamed("colorViewer").update(this);
-    this.getSubmorphNamed("picker").update(this);
-    this.getSubmorphNamed("slider").update(this);
-    //this.getSubmorphNamed("harmonies").update(this);
-    this.getSubmorphNamed("hashViewer").update(this);
-    this.getSubmorphNamed("hsbViewer").update(this);
-    this.getSubmorphNamed("rgbViewer").update(this);
+     [this.getSubmorphNamed("field"),
+      this.getSubmorphNamed("colorViewer"),
+      this.getSubmorphNamed("picker"),
+      this.getSubmorphNamed("slider"),
+      //this.getSubmorphNamed("harmonies"),
+      this.getSubmorphNamed("hashViewer"),
+      this.getSubmorphNamed("hsbViewer"),
+      this.getSubmorphNamed("rgbViewer")].forEach(p => p && p.update(this));
   }
   
   colorPalette() {
@@ -76,24 +84,28 @@ export class ColorPicker extends Window {
       name: "field",
       fill: Color.transparent,
       update(colorPicker) {
-        const [h, s, b] = colorPicker.color.toHSB();
-        this.getSubmorphNamed("hue").fill = Color.hsb(h, 1, 1)
+        this.getSubmorphNamed("hue").fill = Color.hsb(colorPicker.hue, 1, 1);
       },
       submorphs: [{
-        name: "hue",
-        fill: this.color
+        borderRadius: 3,
+        name: "hue"
       },{
+        borderRadius: 3,
         name: "shade",
         fill: new LinearGradient([{color: Color.white, offset: "0%"},
                                   {color: Color.transparent, offset: "100%"}], 
                                   "eastwest")
       },{
+        borderRadius: 3,
         name: "light",
         fill: new LinearGradient([{color: Color.black, offset: "0%"},
                                   {color: Color.transparent, offset: "100%"}],
                                   "southnorth"),
         onMouseDown: (evt) => {
           this.pickerPosition = evt.positionIn(this.getSubmorphNamed("light"));
+        },
+        onDrag: (evt) => {
+          this.pickerPosition = this.pickerPosition.addPt(evt.state.dragDelta)
         },
         submorphs: [{
           name: "picker",
@@ -129,22 +141,28 @@ export class ColorPicker extends Window {
       fill: Color.transparent,
       submorphs: [{
         name: "hueGradient",
+        borderRadius: 3,
         fill: new LinearGradient([
           {color: Color.rgb(255,0,0), offset: "0%"},
           {color: Color.rgb(255,255,0), offset: "17%"},
           {color: Color.limeGreen, offset: "33%"},
           {color: Color.cyan, offset: "50%"},
           {color: Color.blue, offset: "66%"},
-          {color: Color.magenta, offset: "83%"}], 
+          {color: Color.magenta, offset: "83%"},
+          {color: Color.rgb(255,0,0), offset: "100%"}], 
          "northsouth"),
         onMouseDown: (evt) => {
           this.scalePosition = pt(0, evt.positionIn(this.getSubmorphNamed("hueGradient")).y);
+        },
+        onDrag: (evt) => {
+          this.scalePosition = this.scalePosition.addPt(pt(0, evt.state.dragDelta.y));
         }
       },{
         name: "slider",
         height: 10,
         width: 50,
         borderRadius: 3,
+        nativeCursor: "ns-resize",
         borderColor: Color.black,
         fill: Color.transparent, 
         borderWidth: 2,
@@ -231,7 +249,8 @@ export class ColorPicker extends Window {
       fill: Color.transparent,
       layout: new VerticalLayout({spacing: 9}),
       submorphs: [{
-        extent: pt(80,40),
+        type: "ellipse",
+        extent: pt(50,50),
         name: "colorViewer",
         fill: this.color,
         update(colorPicker) { this.fill = colorPicker.color }
