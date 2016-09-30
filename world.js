@@ -481,7 +481,7 @@ export class World extends Morph {
 
   onContextMenu(evt) {
     evt.stop();
-    this.openWorldMenu();
+    this.openWorldMenu(this.focusedMorph);
   }
 
   onWindowScroll(evt) {}
@@ -491,7 +491,7 @@ export class World extends Morph {
     this.execCommand("resize to fit window");
   }
 
-  openWorldMenu() {
+  openWorldMenu(callingMorph) {
     var eventState =  this.env.eventDispatcher.eventState;
     if (eventState.menu) eventState.menu.remove();
     return eventState.menu = Menu.forCommands(
@@ -505,7 +505,7 @@ export class World extends Morph {
        "open browser",
        "choose and browse module",
        "open code search",
-       "open test runner"], this, {showKeyShortcuts: true}
+       "open test runner"], arr.uniq(arr.compact([callingMorph, this])), {showKeyShortcuts: true}
      ).openInWorldNearHand();
   }
 

@@ -67,7 +67,8 @@ export class Menu extends Morph {
           keys = opts.showKeyShortcuts && justName ?
             arr.findAndGet(targets, t => t.keysForCommand(name)) : null,
           descr = name + (keys ? ` [${keys}]` : ""),
-          target = (typeof ea === "string" && targets.find(t => t.lookupCommand(name))) || targets[0];
+          target = (typeof ea === "string" && targets.find(t => t.lookupCommand(name)))
+                || targets[0];
 
       return [descr, () => target.execCommand(ea)]
     });
