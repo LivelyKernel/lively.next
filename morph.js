@@ -995,7 +995,8 @@ export class Morph {
   }
 
   lookupCommand(commandOrName) {
-    return this.commandHandler.lookupCommand(commandOrName, this);
+    var result = this.commandHandler.lookupCommand(commandOrName, this);
+    return result && result.command ? result : null;
   }
 
   execCommand(command, args, count, evt) {
