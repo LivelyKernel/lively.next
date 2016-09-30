@@ -772,7 +772,9 @@ var commands = [
     name: "toggle active mark",
     doc: "....",
     handlesCount: true,
+    multiSelectAction: "single",
     exec: function(morph, args, count) {
+
       var m = morph.activeMark,
           sel = morph.selection,
           selected = !sel.isEmpty();
@@ -797,7 +799,11 @@ var commands = [
       // there might be
       morph.saveMark(m || sel.anchor);
       morph.activeMark = null;
-      if (selected) sel.anchor = sel.lead;
+      if (selected) {
+        var sels = morph.inMultiSelectMode() ?  sel.selections : [sel]
+        sels.forEach(sel => sel.anchor = sel.lead);
+      }
+      
       return true;
     }
   },
