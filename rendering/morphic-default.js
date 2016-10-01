@@ -327,23 +327,7 @@ export function defaultAttributes(morph, renderer) {
 }
 
 function shadowCss(morph) {
-  var x = 1,
-      y = 1,
-      r = morph.rotation;
-  r = (r + (2 * Math.PI)) % (2 * Math.PI);
-  if (2*Math.PI >= r && r >= 1.5*Math.PI) {
-    x = 1 - (((2*Math.PI - r)/(Math.PI/2)) * 2);
-    y = 1;
-  } else if (1.5*Math.PI >= r && r >= Math.PI) {
-    x = -1;
-    y = 1 - (((1.5*Math.PI - r)/(Math.PI/2)) * 2);
-  } else if (Math.PI >= r && r >= (Math.PI/2)) {
-    x = 1 + (((Math.PI/2 - r)/(Math.PI/2)) * 2);
-    y = -1
-  } else if (Math.PI/2 >= r && r >= 0) {
-    y = 1 - ((r/(Math.PI/2)) * 2);
-  }
-  return `drop-shadow(${5 * x}px ${5 * y}px 5px rgba(0, 0, 0, 0.36))`
+  return `drop-shadow(0px 0px 10px rgba(0, 0, 0, 0.4))`
 }
 
 export function gradientShadowCSS(morph) {
