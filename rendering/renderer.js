@@ -176,9 +176,7 @@ export class Renderer {
   }
   
   renderShadow(morph) {
-    // FIXME: take into account the border radius, when rendering the shadow edges
     const shadowColor = "rgba(0,0,0,0.15)",
-          dbg = {},
           shadowWidth = 20 + (morph.borderRadius.top() / 2),
           shadowHeight = 20 + (morph.borderRadius.left() / 2),
           offsetY = Math.min(morph.borderRadius.left(), morph.height / 2),
@@ -193,29 +191,29 @@ export class Renderer {
      return h("div", {style: transformStyle(morph), key: morph.id + "-shadow"},
          h("div", {style: {position: "absolute", transform: `translate(${offsetX}px, ${offsetY}px)`,
                            width: width + "px", height: height + "px", background: shadowColor}},
-          [h("div", {style: {position: "absolute", ...dbg,
+          [h("div", {style: {position: "absolute",
                              top: `-${shadowHeight}px`, width: width + "px", 
                              height: `${shadowHeight}px`, background: background("to top")}}), // top
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
                              left: `-${shadowWidth}px`, top: `-${shadowHeight}px`, 
                              background: radialBackground("bottom right")}}), // top-left
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              left: `-${shadowWidth}px`, width: `${shadowWidth}px`, 
                              height: height + "px", background: background("to left")}}), // left
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              width: `${shadowWidth}px`, height: `${shadowHeight}px`, left: `-${shadowWidth}px`, top: height + "px",
                              background: radialBackground("top right")}}), //bottom-left ...
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              top: height + "px", width: width + "px", 
                              height: `${shadowHeight}px`, background: background("to bottom")}}), // bottom
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              width: `${shadowWidth}px`, height: `${shadowHeight}px`, left: width + "px", top: height + "px",
                              background: radialBackground("top left")}}), // bottom-right
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              left: width + "px", 
                              width: `${shadowWidth}px`, height: height + "px", background: background("to right")}}), // right
-           h("div", {style: {position: "absolute", ...dbg,
+           h("div", {style: {position: "absolute",
                              width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
                              left: width + "px", top: `-${shadowHeight}px`,
                              background: radialBackground('bottom left')}}), //top-right ...
