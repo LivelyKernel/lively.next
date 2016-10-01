@@ -1,6 +1,6 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render, transformStyle, gradientShadowCSS } from "./morphic-default.js";
+import { defaultStyle, defaultAttributes, render, transformStyle } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -176,22 +176,11 @@ export class Renderer {
   }
   
   renderShadow(morph) {
-  
-     const {shadowRoot, shadowOffset,
-            top, topRight, right, bottomRight, 
-            bottom, bottomLeft, left, topLeft} = gradientShadowCSS(morph);
-
-     return h("div", shadowRoot,
-             h("div", shadowOffset,
-              [h("div", top),
-               h("div", topLeft),
-               h("div", left),
-               h("div", bottomLeft), 
-               h("div", bottom),
-               h("div", bottomRight),
-               h("div", right),
-               h("div", topRight)]));
-     }
+     return h("div", {style: {
+     			position: "absolute", 
+     			boxShadow: "0px 7px 35px 5px rgba(0,0,0,0.36)",
+     			...transformStyle(morph)}});
+  }
 
   renderImage(image) {
     return h("div", {
