@@ -346,6 +346,59 @@ function shadowCss(morph) {
   return `drop-shadow(${5 * x}px ${5 * y}px 5px rgba(0, 0, 0, 0.36))`
 }
 
+export function gradientShadowCSS(morph) {
+
+  const shadowColor = "rgba(0,0,0,0.15)",
+        shadowWidth = 20 + (morph.borderRadius.top() / 2),
+        shadowHeight = 20 + (morph.borderRadius.left() / 2),
+        offsetY = Math.min(morph.borderRadius.left(), morph.height / 2),
+        offsetX = Math.min(morph.borderRadius.top(), morph.width / 2),
+        height = Math.max(morph.height - (offsetY * 2), 0),
+        width = Math.max(morph.width - (offsetX * 2), 0),
+        gradientStop = 100,
+        gradientStart = 95 * Math.min(offsetY / shadowHeight, offsetX / shadowWidth),
+        background = (dir) => `linear-gradient(${dir}, ${shadowColor} ${gradientStart}%, transparent ${gradientStop}%)`,
+        radialBackground = (dir) => `radial-gradient(${shadowWidth}px 
+        				${shadowHeight}px at ${dir}, ${shadowColor} ${gradientStart}%, transparent ${gradientStop}%)`;
+
+   return {
+    shadowRoot: {style: transformStyle(morph), key: morph.id + "-shadow"},
+    shadowOffset: {style: {position: "absolute", transform: `translate(${offsetX}px, ${offsetY}px)`,
+                               width: width + "px", height: height + "px", background: shadowColor}},
+    top: {style: {position: "absolute",
+                  top: `-${shadowHeight}px`, 
+                  width: width + "px", height: `${shadowHeight}px`, 
+                  background: background("to top")}},
+    topLeft: {style: {position: "absolute",
+                      width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
+                      left: `-${shadowWidth}px`, top: `-${shadowHeight}px`, 
+                      background: radialBackground("bottom right")}},
+    left: {style: {position: "absolute",
+                   left: `-${shadowWidth}px`, 
+                   width: `${shadowWidth}px`, height: height + "px", 
+                   background: background("to left")}}, 
+    bottomLeft: {style: {position: "absolute",
+                         width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
+                         left: `-${shadowWidth}px`, top: height + "px",
+                         background: radialBackground("top right")}}, 
+    bottom: {style: {position: "absolute",
+                     top: height + "px", 
+                     width: width + "px", height: `${shadowHeight}px`, 
+                     background: background("to bottom")}}, 
+    bottomRight: {style: {position: "absolute",
+                           width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
+                           left: width + "px", top: height + "px",
+                           background: radialBackground("top left")}},
+    right: {style: {position: "absolute",
+                   left: width + "px", 
+                   width: `${shadowWidth}px`, height: height + "px", 
+                   background: background("to right")}},
+    topRight: {style: {position: "absolute",
+                       width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
+                       left: width + "px", top: `-${shadowHeight}px`,
+                       background: radialBackground('bottom left')}}};
+}
+
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 

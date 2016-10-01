@@ -1,6 +1,6 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render, transformStyle } from "./morphic-default.js";
+import { defaultStyle, defaultAttributes, render, transformStyle, gradientShadowCSS } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -176,48 +176,21 @@ export class Renderer {
   }
   
   renderShadow(morph) {
-    const shadowColor = "rgba(0,0,0,0.15)",
-          shadowWidth = 20 + (morph.borderRadius.top() / 2),
-          shadowHeight = 20 + (morph.borderRadius.left() / 2),
-          offsetY = Math.min(morph.borderRadius.left(), morph.height / 2),
-          offsetX = Math.min(morph.borderRadius.top(), morph.width / 2),
-          height = Math.max(morph.height - (offsetY * 2), 0),
-          width = Math.max(morph.width - (offsetX * 2), 0),
-          gradientStop = 100,
-          gradientStart = 95 * Math.min(offsetY / shadowHeight, offsetX / shadowWidth),
-          background = (dir) => `linear-gradient(${dir}, ${shadowColor} ${gradientStart}%, transparent ${gradientStop}%)`,
-          radialBackground = (dir) => `radial-gradient(${shadowWidth}px 
-          				${shadowHeight}px at ${dir}, ${shadowColor} ${gradientStart}%, transparent ${gradientStop}%)`;
-     return h("div", {style: transformStyle(morph), key: morph.id + "-shadow"},
-         h("div", {style: {position: "absolute", transform: `translate(${offsetX}px, ${offsetY}px)`,
-                           width: width + "px", height: height + "px", background: shadowColor}},
-          [h("div", {style: {position: "absolute",
-                             top: `-${shadowHeight}px`, width: width + "px", 
-                             height: `${shadowHeight}px`, background: background("to top")}}), // top
-           h("div", {style: {position: "absolute",
-                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
-                             left: `-${shadowWidth}px`, top: `-${shadowHeight}px`, 
-                             background: radialBackground("bottom right")}}), // top-left
-           h("div", {style: {position: "absolute",
-                             left: `-${shadowWidth}px`, width: `${shadowWidth}px`, 
-                             height: height + "px", background: background("to left")}}), // left
-           h("div", {style: {position: "absolute",
-                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, left: `-${shadowWidth}px`, top: height + "px",
-                             background: radialBackground("top right")}}), //bottom-left ...
-           h("div", {style: {position: "absolute",
-                             top: height + "px", width: width + "px", 
-                             height: `${shadowHeight}px`, background: background("to bottom")}}), // bottom
-           h("div", {style: {position: "absolute",
-                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, left: width + "px", top: height + "px",
-                             background: radialBackground("top left")}}), // bottom-right
-           h("div", {style: {position: "absolute",
-                             left: width + "px", 
-                             width: `${shadowWidth}px`, height: height + "px", background: background("to right")}}), // right
-           h("div", {style: {position: "absolute",
-                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
-                             left: width + "px", top: `-${shadowHeight}px`,
-                             background: radialBackground('bottom left')}}), //top-right ...
-          ]));
+  
+     const {shadowRoot, shadowOffset,
+            top, topRight, right, bottomRight, 
+            bottom, bottomLeft, left, topLeft} = gradientShadowCSS(morph);
+
+     return h("div", shadowRoot,
+             h("div", shadowOffset,
+              [h("div", top),
+               h("div", topLeft),
+               h("div", left),
+               h("div", bottomLeft), 
+               h("div", bottom),
+               h("div", bottomRight),
+               h("div", right),
+               h("div", topRight)]));
      }
 
   renderImage(image) {
