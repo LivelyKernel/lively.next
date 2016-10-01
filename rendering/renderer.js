@@ -1,6 +1,6 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
+import { defaultStyle, defaultAttributes, render, transformStyle } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -160,19 +160,72 @@ export class Renderer {
   }
 
   renderSubmorphs(morph) {
+    const submorphs = [];
+    
+    morph.submorphs.forEach(m => {
+       if (m.dropShadow && !m.isImage) submorphs.push(this.renderShadow(m));
+       submorphs.push(this.render(m));
+    });
+    
     return h("div", {
-        style: {
-          position: "absolute",
-          transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`
-        }
-      },
-      morph.submorphs.map(m => this.render(m)));
+          style: {
+            position: "absolute",
+            transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`
+          }
+        }, submorphs);
   }
+  
+  renderShadow(morph) {
+    // FIXME: take into account the border radius, when rendering the shadow edges
+    const shadowColor = "rgba(0,0,0,0.15)",
+          dbg = {},
+          shadowWidth = 20 + (morph.borderRadius.top() / 2),
+          shadowHeight = 20 + (morph.borderRadius.left() / 2),
+          offsetY = Math.min(morph.borderRadius.left(), morph.height / 2),
+          offsetX = Math.min(morph.borderRadius.top(), morph.width / 2),
+          height = Math.max(morph.height - (offsetY * 2), 0),
+          width = Math.max(morph.width - (offsetX * 2), 0),
+          gradientStop = 100,
+          gradientStart = 95 * Math.min(offsetY / shadowHeight, offsetX / shadowWidth),
+          background = (dir) => `linear-gradient(${dir}, ${shadowColor} ${gradientStart}%, transparent ${gradientStop}%)`,
+          radialBackground = (dir) => `radial-gradient(${shadowWidth}px 
+          				${shadowHeight}px at ${dir}, ${shadowColor} ${gradientStart}%, transparent ${gradientStop}%)`;
+     return h("div", {style: transformStyle(morph), key: morph.id + "-shadow"},
+         h("div", {style: {position: "absolute", transform: `translate(${offsetX}px, ${offsetY}px)`,
+                           width: width + "px", height: height + "px", background: shadowColor}},
+          [h("div", {style: {position: "absolute", ...dbg,
+                             top: `-${shadowHeight}px`, width: width + "px", 
+                             height: `${shadowHeight}px`, background: background("to top")}}), // top
+           h("div", {style: {position: "absolute", ...dbg,
+                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
+                             left: `-${shadowWidth}px`, top: `-${shadowHeight}px`, 
+                             background: radialBackground("bottom right")}}), // top-left
+           h("div", {style: {position: "absolute", ...dbg,
+                             left: `-${shadowWidth}px`, width: `${shadowWidth}px`, 
+                             height: height + "px", background: background("to left")}}), // left
+           h("div", {style: {position: "absolute", ...dbg,
+                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, left: `-${shadowWidth}px`, top: height + "px",
+                             background: radialBackground("top right")}}), //bottom-left ...
+           h("div", {style: {position: "absolute", ...dbg,
+                             top: height + "px", width: width + "px", 
+                             height: `${shadowHeight}px`, background: background("to bottom")}}), // bottom
+           h("div", {style: {position: "absolute", ...dbg,
+                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, left: width + "px", top: height + "px",
+                             background: radialBackground("top left")}}), // bottom-right
+           h("div", {style: {position: "absolute", ...dbg,
+                             left: width + "px", 
+                             width: `${shadowWidth}px`, height: height + "px", background: background("to right")}}), // right
+           h("div", {style: {position: "absolute", ...dbg,
+                             width: `${shadowWidth}px`, height: `${shadowHeight}px`, 
+                             left: width + "px", top: `-${shadowHeight}px`,
+                             background: radialBackground('bottom left')}}), //top-right ...
+          ]));
+     }
 
   renderImage(image) {
     return h("div", {
       ...defaultAttributes(image, this),
-        style: defaultStyle(image)
+        style: {...defaultStyle(image)}
       }, [
         h("img", {
           src: image.imageUrl,
@@ -190,7 +243,7 @@ export class Renderer {
   renderCheckBox(checkbox) {
     return h("div", {
       ...defaultAttributes(checkbox, this),
-        style: defaultStyle(checkbox)
+        style: {...defaultStyle(checkbox)}
       }, [
         h("input", {
           type: "checkbox",
@@ -237,12 +290,12 @@ export class Renderer {
   }
 
   renderSvgMorph(morph, svg) {
-    const {position, WebkitFilter, transform, transformOrigin,
+    const {position, WebkitFilter,
            display, top, left, opacity} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
     return h("div", {...defaultAttributes(morph, this),
-                     style: {transform, transformOrigin, position, opacity,
+                     style: {...transformStyle(morph), position, opacity,
                              width: width + 'px', height: height + 'px',
                              display, WebkitFilter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",

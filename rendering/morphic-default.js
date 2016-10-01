@@ -45,14 +45,14 @@ class StyleMapper {
   }
   
   getShadowStyle(morph) {
-    return morph.dropShadow && {WebkitFilter: shadowCss(morph), filter: shadowCss(morph)}
+    return morph.dropShadow && morph.isImage && {WebkitFilter: shadowCss(morph)}
   }
   
   maskProps(morph) {
     // rk: What the heck is this?
     var {
       position, origin, scale, rotation,
-      origin, visible, clipMode,
+      origin, visible, clipMode, isImage,
       fill, extent, opacity, dropShadow, isSvgMorph,
       borderWidthLeft, borderColorLeft, borderStyleLeft,
       borderWidthRight, borderColorRight, borderStyleRight,
@@ -63,7 +63,7 @@ class StyleMapper {
     
     return {
       position, origin, scale, rotation, opacity, dropShadow, isSvgMorph,
-      origin, visible, clipMode, fill, extent,
+      origin, visible, clipMode, fill, extent, isImage, 
       borderWidthLeft, borderColorLeft, borderStyleLeft,
       borderWidthRight, borderColorRight, borderStyleRight,
       borderWidthBottom, borderColorBottom, borderStyleBottom,
@@ -237,6 +237,13 @@ export class PropertyAnimation {
     } else {
       this.onFinish();
     }
+  }
+}
+
+export function transformStyle(morph) {
+  return {
+    ...plainStyleMapper.getTransformOrigin(morph),
+    ...plainStyleMapper.getTransform(morph)
   }
 }
 
