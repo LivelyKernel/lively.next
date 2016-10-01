@@ -327,7 +327,7 @@ export function defaultAttributes(morph, renderer) {
 }
 
 function shadowCss(morph) {
-  return `drop-shadow(0px 0px 10px rgba(0, 0, 0, 0.4))`
+  return `drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.4))`
 }
 
 export function gradientShadowCSS(morph) {
@@ -347,7 +347,7 @@ export function gradientShadowCSS(morph) {
 
    return {
     shadowRoot: {style: transformStyle(morph), key: morph.id + "-shadow"},
-    shadowOffset: {style: {position: "absolute", transform: `translate(${offsetX}px, ${offsetY}px)`,
+    shadowOffset: {style: {position: "absolute", transform: `translate(${offsetX}px, ${offsetY + 5}px)`,
                                width: width + "px", height: height + "px", background: shadowColor}},
     top: {style: {position: "absolute",
                   top: `-${shadowHeight}px`, 
