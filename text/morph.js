@@ -100,7 +100,10 @@ export class Text extends Morph {
   onChange(change) {
     var textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
+
     if (textChange
+     || (change.prop === "extent" && this.lineWrapping && this.isClip())
+     || (change.prop === "lineWrapping" && this.isClip())
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
@@ -110,8 +113,7 @@ export class Text extends Morph {
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
      || change.prop === "fixedCharacterSpacing"
-     || change.prop === "lineWrapping")
-       this.textLayout && (this.textLayout.layoutComputed = false);
+    ) this.textLayout && (this.textLayout.layoutComputed = false);
 
     super.onChange(change);
     textChange && signal(this, "textChange");

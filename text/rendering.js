@@ -46,13 +46,15 @@ function renderSelectionLayer(textLayouter, morph, selection, diminished = false
 
   if (!selection) return [];
 
-  let {start, end, lead, cursorVisible} = selection,
+  var {start, end, lead, cursorVisible} = selection,
+      start               = textLayouter.docToScreenPos(morph, start),
+      end                 = textLayouter.docToScreenPos(morph, end),
       isReverse           = selection.isReverse(),
       {padding, document} = morph,
-      lines               = textLayouter.lines,
+      lines               = textLayouter.wrappedLines(morph),
       paddingOffset       = padding.topLeft(),
-      startPos            = textLayouter.pixelPositionFor(morph, start).addPt(paddingOffset),
-      endPos              = textLayouter.pixelPositionFor(morph, end).addPt(paddingOffset),
+      startPos            = textLayouter.pixelPositionForScreenPos(morph, start).addPt(paddingOffset),
+      endPos              = textLayouter.pixelPositionForScreenPos(morph, end).addPt(paddingOffset),
       cursorPos           = isReverse ? startPos : endPos,
       defaultHeight       = null,
       endLineHeight       = end.row in lines ?
@@ -124,7 +126,7 @@ function renderMarkerLayer(textLayouter, morph) {
 }
 
 function renderTextLayer(textLayouter, morph) {
-  let {lines} = textLayouter,
+  let lines = textLayouter.wrappedLines(morph),
       textWidth = 0, textHeight = 0,
       {padding, scroll, height} = morph,
       {y: visibleTop} = scroll.subPt(padding.topLeft()),
@@ -182,7 +184,7 @@ function renderTextLayer(textLayouter, morph) {
 }
 
 function renderDebugLayer(textLayouter, morph) {
-  let {lines} = textLayouter,
+  let lines = textLayouter.wrappedLines(morph),
       {y: visibleTop} = morph.scroll,
       visibleBottom = visibleTop + morph.height,
       {padding} = morph,
