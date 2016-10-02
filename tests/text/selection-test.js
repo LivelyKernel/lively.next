@@ -236,7 +236,7 @@ describe("multi select", () => {
   });
 
   describe("range merging", () => {
-  
+
     it("same empty range", function() {
       t.textString = "Hello\nWorld";
       t.selection.addRange(range(0,4,0,4));

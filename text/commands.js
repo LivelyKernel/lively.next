@@ -262,7 +262,7 @@ var commands = [
     exec: function(morph) {
       morph.activeMark ?
         morph.selection.selectUp(1) :
-        morph.selection.goUp();
+        morph.selection.goUp(1, true/*use screen position*/);
       return true;
     }
   },
@@ -272,7 +272,7 @@ var commands = [
     exec: function(morph) {
       morph.activeMark ?
         morph.selection.selectDown(1) :
-        morph.selection.goDown(1);
+        morph.selection.goDown(1, true/*use screen position*/);
       return true;
     }
   },
@@ -289,12 +289,12 @@ var commands = [
 
   {
     name: "select up",
-    exec: function(morph) { morph.selection.selectUp(1); return true; }
+    exec: function(morph) { morph.selection.selectUp(1, true/*use screen position*/); return true; }
   },
 
   {
     name: "select down",
-    exec: function(morph) { morph.selection.selectDown(1); return true; }
+    exec: function(morph) { morph.selection.selectDown(1, true/*use screen position*/); return true; }
   },
 
   {
@@ -314,7 +314,7 @@ var commands = [
       var select = opts.select || !!morph.activeMark,
           sel = morph.selection,
           cursor = sel.lead,
-          line = morph.lineRange(cursor.row, true);
+          line = morph.screenLineRange(cursor, true);
       sel.lead = eqPosition(cursor, line.start) ? {column: 0, row: cursor.row} : line.start;
       !select && (sel.anchor = sel.lead);
       return true;
@@ -327,7 +327,7 @@ var commands = [
       var select = opts.select || !!morph.activeMark,
           sel = morph.selection,
           cursor = sel.lead,
-          line = morph.lineRange(cursor.row, true);
+          line = morph.screenLineRange(cursor, true);
       sel.lead = line.end;
       !select && (sel.anchor = sel.lead);
       return true;
@@ -1332,9 +1332,11 @@ var multiSelectCommands = [
     name: "[multi select] add cursor above",
     multiSelectAction: "single",
     exec: morph => {
-      var {row, column} = morph.selection.start;
-      if (row > 0)
-        morph.selection.addRange({start: {row: row-1, column}, end: {row: row-1, column}})
+      var start = morph.selection.start;      
+      if (start.row > 0) {
+        var pos = morph.getPositionAboveOrBelow(1, start, true)
+        morph.selection.addRange({start: pos, end: pos})
+      }
       return true;
     }
   },
