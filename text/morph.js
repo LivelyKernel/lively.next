@@ -697,6 +697,64 @@ export class Text extends Morph {
   cursorLeft(n = 1) { return this.selection.goLeft(n); }
   cursorRight(n = 1) { return this.selection.goRight(n); }
 
+  getPositionAboveOrBelow(n = 1, pos = this.cursorPosition, useScreenPosition = false, goalColumn) {
+    // n > 0 above, n < 0 below
+
+
+    if (!useScreenPosition) {
+      if (goalColumn === undefined) goalColumn = pos.column
+      return {
+        row: pos.row-n,
+        column: Math.min(this.getLine(pos.row-n).length, goalColumn)
+      }
+    }
+
+    // up / down in screen coordinates is a little difficult, there are a
+    // number of requirements to observe:
+    // When going up and down the "goalColumn" should be observed, that is
+    // the column offset from the (screen!) line start that the cursor should
+    // be placed on. If the (screen) line is shorter than that then the cursor
+    // should be placed at line end. Important here is that the line end for
+    // wrapped lines is actually not the column value after the last char but
+    // the column before the last char (b/c there is no newline the cursor could
+    // be placed between). For actual line ends the last column value is after
+    // the last char.
+
+    var ranges = this.rangesOfWrappedLine(pos.row)
+    if (!ranges.length) return pos;
+
+    var currentRangeIndex = ranges.length -1 - ranges.slice().reverse().findIndex(({start, end}) =>
+                                                  start.column <= pos.column),
+        nextRange, nextRangeIsAtLineEnd = false;
+
+    if (n >= 1) {
+      var isFirst = 0 === currentRangeIndex;
+      nextRange = isFirst ?
+        arr.last(this.rangesOfWrappedLine(pos.row-1)) :
+        ranges[currentRangeIndex-1];
+      if (!nextRange) return pos;
+      nextRangeIsAtLineEnd = isFirst;
+
+    } else if (n <= -1) {
+      var isLast = ranges.length-1 === currentRangeIndex,
+          nextRanges = isLast ?
+            this.rangesOfWrappedLine(pos.row+1) :
+            ranges.slice(currentRangeIndex+1);
+      nextRange = nextRanges[0];
+      if (!nextRange) return pos;
+      nextRangeIsAtLineEnd = nextRanges.length === 1;
+    }
+
+    if (goalColumn === undefined)
+      goalColumn = pos.column - ranges[currentRangeIndex].start.column
+
+    var columnOffset = Math.min(nextRange.end.column - nextRange.start.column, goalColumn),
+        column = nextRange.start.column + columnOffset;
+    if (!nextRangeIsAtLineEnd && column >= nextRange.end.column) column--;
+
+    return {row: nextRange.end.row, column};
+  }
+
   collapseSelection() {
     this.selection.collapse(this.selection.lead);
     return this.selection;
@@ -783,14 +841,20 @@ export class Text extends Morph {
 
   textPositionFromPoint(point) {
     // FIXME cleanup when text wrapping thing done!
-    if (this.textLayout.screenToDocPos)
-      return this.textLayout.screenToDocPos(this, this.screenPositionFromPoint(point));
-    return this.textLayout.textPositionFor(this, point);
+    return this.textLayout.screenToDocPos(this, this.screenPositionFromPoint(point));
   }
 
   screenPositionFromPoint(point) {
     // FIXME cleanup when text wrapping thing done!
     return this.textLayout.screenPositionFor(this, point);
+  }
+
+  toScreenPosition(documentPosition) {
+    return this.textLayout.docToScreenPos(this, documentPosition);
+  }
+
+  toDocumentPosition(screenPosition) {
+    return this.textLayout.screenToDocPos(this, screenPosition);
   }
 
   charBoundsFromTextPosition(pos) {
