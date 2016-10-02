@@ -689,6 +689,8 @@ export class Text extends Morph {
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
   get documentEndPosition() { return this.document.endPosition; }
+  get cursorScreenPosition() { return this.toScreenPosition(this.cursorPosition); }
+  set cursorScreenPosition(p) { return this.cursorPosition = this.toDocumentPosition(p); }
 
   cursorUp(n = 1) { return this.selection.goUp(n); }
   cursorDown(n = 1) { return this.selection.goDown(n); }
