@@ -70,6 +70,7 @@ class TextChunk {
 
   computeBounds() {
     let width = 0, height = 0;
+
     this.charBounds.map(char => {
       width += char.width;
       height = Math.max(height, char.height);
@@ -85,6 +86,36 @@ class TextChunk {
     this._charBounds = fontMetric.charBoundsFor(style, text);
   }
 
+  splitToNotBeWiderAs(maxWidth) {
+    if (this.width <= maxWidth) return [this];
+
+    var {charBounds, _style, _height} = this,
+        chunks = [];
+
+    var current = {from: 0, width: 0};
+    var lastSplitX = 0;
+
+    for (var i = 0; i < charBounds.length; i++) {
+      var {x,width} = charBounds[i];
+      if (current.width === 0
+       || x-lastSplitX + current.width + width <= maxWidth) { current.width += width; continue; }
+
+      chunks.push(Object.assign(new TextChunk(this.text.slice(current.from, i), this.fontMetric, this.textAttributes), {
+        _style, _width: current.width, _height, _charBounds: charBounds.slice(current.from, i)}));
+
+      current.width = width;
+      current.from = i;
+      lastSplitX = x + width;
+    }
+
+    if (current.width) {
+      chunks.push(Object.assign(new TextChunk(this.text.slice(current.from, i), this.fontMetric, this.textAttributes), {
+        _style, _width: current.width, _height, _charBounds: charBounds.slice(current.from, i)}));
+    }
+// console.log(`${current.from}, ${i}`)
+    
+    return chunks;
+  }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -103,8 +134,7 @@ class TextLayoutLine {
   }
 
   constructor(text, fontMetric, textAttributesOfLine) {
-    this.chunks = this.constructor.chunksFrom(text, fontMetric, textAttributesOfLine);
-    return this;
+    this.updateIfNecessary(text, fontMetric, textAttributesOfLine);
   }
 
   resetCache() {
@@ -132,8 +162,13 @@ class TextLayoutLine {
 
   updateIfNecessary(text, fontMetric, textAttributes) {
     let newChunks = this.constructor.chunksFrom(text, fontMetric, textAttributes),
-        {chunks: oldChunks} = this,
-        oldChunkCount = oldChunks.length,
+        {chunks: oldChunks} = this;
+    if (!oldChunks) {
+      this.chunks = newChunks
+      return;
+    }
+
+    let oldChunkCount = oldChunks.length,
         newChunkCount = newChunks.length,
         shouldReset = false;
 
@@ -206,11 +241,54 @@ class TextLayoutLine {
 
 }
 
+class TextLayoutWrappableLine extends TextLayoutLine {
+
+  updateIfNecessary(text, fontMetric, textAttributes) {
+    if (!this.wrappedLines) this.wrappedLines = [];
+
+    var newVisibleBounds = text.innerBounds(),
+        oldVisibleBounds = this.visibleBounds;
+
+    if (!oldVisibleBounds || oldVisibleBounds.equals(newVisibleBounds)) {
+      this.chunks.length = 0;
+    }
+
+    let newChunks = this.constructor.chunksFrom(text, fontMetric, textAttributes),
+        {chunks: oldChunks} = this;
+    if (!oldChunks) {
+      this.chunks = newChunks
+      return;
+    }
+
+    let oldChunkCount = oldChunks.length,
+        newChunkCount = newChunks.length,
+        shouldReset = false;
+
+    for (let i = 0; i < newChunks.length; i++) {
+      let oldChunk = oldChunks[i],
+          newChunk = newChunks[i],
+          { text: newText, fontMetric: newFontMetric, textAttributes: newTextAttributes } = newChunk;
+      if (!oldChunk || !oldChunk.compatibleWith(newText, newFontMetric, newTextAttributes)) {
+        this.chunks[i] = newChunk;
+        shouldReset = true;
+      }
+    }
+
+    if (newChunkCount < oldChunkCount) {
+      this.chunks.splice(newChunkCount, oldChunkCount - newChunkCount);
+      shouldReset = true;
+    }
+
+    if (shouldReset) this.resetCache();
+  }
+
+}
 
 
 export default class TextLayout {
 
   constructor(fontMetric) {
+    this.lineWrapping = false;
     this.reset(fontMetric);
   }
 
@@ -245,22 +323,25 @@ export default class TextLayout {
     this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
   }
 
-  updateFromDocumentIfNecessary(doc) {
+  updateFromMorphIfNecessary(morph) {
     if (this.layoutComputed) return false;
 
 // TODO: specify which lines have changed!
 
-    let fontMetric = this.fontMetric,
+    let doc = morph.document,
+        fontMetric = this.fontMetric,
         lines = doc.lines,
         nRows = lines.length,
-        textAttributesChunked = doc.textAttributesChunked(0, nRows-1);
+        textAttributesChunked = doc.textAttributesChunked(0, nRows-1),
+        Line = this.lineWrapping ? TextLayoutWrappableLine : TextLayoutLine,
+        morphBounds = morph.innerBounds();
 
     for (let row = 0; row < nRows; row++) {
       let textAttributesOfLine = textAttributesChunked[row],
           text = lines[row],
           line = this.lines[row];
       if (!line)
-        this.lines[row] = new TextLayoutLine(text, fontMetric, textAttributesOfLine);
+        this.lines[row] = new Line(text, fontMetric, textAttributesOfLine);
       else
         line.updateIfNecessary(text, fontMetric, textAttributesOfLine);
     }
@@ -281,7 +362,7 @@ export default class TextLayout {
   }
 
   textPositionFor(morph, point) {
-    this.updateFromDocumentIfNecessary(morph.document);
+    this.updateFromMorphIfNecessary(morph);
     var {lines} = this;
     if (!lines.length) return {row: 0, column: 0};
 
@@ -302,7 +383,7 @@ export default class TextLayout {
   }
 
   textBounds(morph) {
-    this.updateFromDocumentIfNecessary(morph.document);
+    this.updateFromMorphIfNecessary(morph);
     let textWidth = 0, textHeight = 0;
     for (let row = 0; row < this.lines.length; row++) {
       var {width, height} = this.lines[row];
@@ -314,7 +395,7 @@ export default class TextLayout {
 
 
   boundsFor(morph, {row, column}) {
-    this.updateFromDocumentIfNecessary(morph.document);
+    this.updateFromMorphIfNecessary(morph);
     let {lines} = this,
         maxLength = lines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
@@ -329,7 +410,7 @@ export default class TextLayout {
   }
 
   boundsForIndex(morph, index) {
-    this.updateFromDocumentIfNecessary(morph.document);
+    this.updateFromMorphIfNecessary(morph);
     var pos = morph.document.indexToPosition(index);
     return this.boundsFor(morph, pos);
   }

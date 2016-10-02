@@ -14,7 +14,7 @@ import { Anchor } from "./anchors.js";
 import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
-import { renderMorph } from "./rendering.js"
+import { renderMorph, defaultRenderer } from "./rendering.js"
 
 export class Text extends Morph {
 
@@ -51,10 +51,12 @@ export class Text extends Morph {
 
   constructor(props = {}) {
     var {
+      textLayout, textRenderer,
       fontMetric, textString, selectable, selection, clipMode, textAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
     } = props;
     props = obj.dissoc(props, [
+      "textLayout", "textRenderer",
       "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
       // default style attrs: need document to be installed first
       "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration", "fixedCharacterSpacing"
@@ -63,13 +65,15 @@ export class Text extends Morph {
       readOnly: false,
       draggable: false,
       fixedWidth: false, fixedHeight: false,
+      lineWrapping: false,
       padding: 0,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
       ...props
     });
-    this.textLayout = new TextLayout(fontMetric || this.env.fontMetric);
+    this.textLayout = textLayout || new TextLayout(fontMetric || this.env.fontMetric);
+    this.textRenderer = textRenderer || defaultRenderer;
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
     this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
@@ -77,7 +81,7 @@ export class Text extends Morph {
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     if (clipMode) this.clipMode = clipMode;
-    
+
     this.fontFamily = fontFamily || "Sans-Serif";
     this.fontSize = fontSize || 12;
     this.fontColor = fontColor || Color.black;
@@ -105,7 +109,8 @@ export class Text extends Morph {
      || change.prop === "fontWeight"
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
-     || change.prop === "fixedCharacterSpacing")
+     || change.prop === "fixedCharacterSpacing"
+     || change.prop === "lineWrapping")
        this.textLayout && (this.textLayout.layoutComputed = false);
 
     super.onChange(change);
@@ -185,6 +190,9 @@ export class Text extends Morph {
     this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
     this.setDefaultStyle({fixedCharacterSpacing});
   }
+
+  get lineWrapping() { return this.getProperty("lineWrapping") }
+  set lineWrapping(lineWrapping) { this.addValueChange("lineWrapping", lineWrapping); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // anchors – positions in text that move when text is changed
@@ -312,14 +320,11 @@ export class Text extends Morph {
   textBounds() {
     return this.textLayout ? this.textLayout.textBounds(this) : new Rectangle(0,0,0,0);
   }
+
   paddedTextBounds() {
-    let textBounds = this.textBounds(),
-        { padding } = this;
-    return new Rectangle(textBounds.x - padding.left(),
-                         textBounds.y - padding.top(),
-                         textBounds.width + padding.left() + padding.right(),
-                         textBounds.height + padding.top() + padding.bottom());
+    return this.textBounds().outsetByRect(this.padding);
   }
+
   get scrollExtent() {
     return this.paddedTextBounds().extent().maxPt(super.scrollExtent);
   }
@@ -758,7 +763,15 @@ export class Text extends Morph {
   }
 
   textPositionFromPoint(point) {
+    // FIXME cleanup when text wrapping thing done!
+    if (this.textLayout.screenToDocPos)
+      return this.textLayout.screenToDocPos(this, this.screenPositionFromPoint(point));
     return this.textLayout.textPositionFor(this, point);
+  }
+
+  screenPositionFromPoint(point) {
+    // FIXME cleanup when text wrapping thing done!
+    return this.textLayout.screenPositionFor(this, point);
   }
 
   charBoundsFromTextPosition(pos) {
@@ -785,7 +798,7 @@ export class Text extends Morph {
     this.fitIfNeeded();
   }
 
-  render(renderer) { return renderMorph(renderer, this); }
+  render(renderer) { return this.textRenderer.renderMorph(renderer, this); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mouse events

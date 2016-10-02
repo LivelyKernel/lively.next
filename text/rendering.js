@@ -2,10 +2,18 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
+export var defaultRenderer = {
+
+  renderMorph(renderer, morph) {
+    return renderMorph(renderer, morph);
+  }
+
+}
+
 export function renderMorph(renderer, morph) {
   var textLayout = morph.textLayout;
 
-  textLayout.updateFromDocumentIfNecessary(morph.document);
+  textLayout.updateFromMorphIfNecessary(morph);
 
   var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
       selectionLayer = [];
