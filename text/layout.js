@@ -1,6 +1,76 @@
 import { arr, string, obj } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics";
 
+
+/*
+
+TODO: render this nicely when browsed in a lively browser!
+
+# About text layouting
+
+
+ref #38 
+
+This allows our text layouter to optionally wrap lines based on a `wrapAt` value that will usually be the text morph width.
+
+![line-wrapping](https://cloud.githubusercontent.com/assets/467450/19018641/aa357264-881f-11e6-9317-7af91352113c.gif)
+
+
+## Structure
+
+If wrapping is disabled then the following structure is used to compute the layout and is what the renderer works with:
+
+![image](https://cloud.githubusercontent.com/assets/467450/19018579/74e8b6aa-881c-11e6-88d1-b57d07120886.png)
+
+The TextLayout updates lines based on text and attributes changes as necessary. TextChunks inside lines are ranges in the text that have text attributes applied. If a text attribute spans multiple lines there will be at least as many chunks as lines, each referring to the text attribute.
+
+If line wrapping is disabled the structure is now:
+
+![image](https://cloud.githubusercontent.com/assets/467450/19018586/c7dbf764-881c-11e6-9e9c-fa9991884853.png)
+
+For each line in the document a WrappedTextLayoutLine is created. This object can split it's line content (text + text attributes) based on the `wrapAt` value of the layouter. It will create as many TextLayoutLines as necessary to fit the given space.
+
+
+## Line breaks
+
+Note that there are differences in how line endings are handled by normal line breaks and wrapped line breaks:
+
+Given a line `abc`. It has a starting position of `{row: 0, column: 0}` and end position `{row: 0, column: 3}`. The text cursor can be placed at `{row: 0, column: 3}` and will be rendered after the c.
+
+If the line is wrapped after "b" and the cursor is placed at `{row: 0, column: 2}` it will be rendered at the beginning of the subsequent line. The model behind that is that there is a newline character at the end of every natural line and you can place the cursor between it and the last normal character. Wrapped lines have no newline character so there is nothing to place the cursor between. 
+
+
+## document and screen position
+
+Wrapped text creates a new "coordinate system" inside the text. Normally positions and ranges in text are identified by `{row, column}` pairs that map directly to a text morph's document and document lines.
+
+Wrapped text creates the need to differentiate "screen positions" from those "document positions". Screen positions are also expressed in `{row,column}` form but refer to what is visible in terms of wrapped content.
+
+Given a line `abc` and it being wrapped after b: Screen positions `{row: 0, column: 2}` and `{row: 1, column: 0}` both map to document position `{row: 0, column: 2}`. So in a sense, screen positions contain more information than document positions as those do not contain the information about wrapped line breaks.
+
+The TextLayout object provides an interface for working with pos kinds of positions:
+
+```
+pixelPositionFor(morph, {row, column})          => {x, y}
+pixelPositionForScreenPos(morph, {row, column}) => {x, y}
+boundsFor(morph, {row, column})                 => {x,y,width,height}
+boundsForScreenPos(morph, {row, column})        => {x,y,width,height}
+screenPositionFor(morph, {x, y})                => {row, column}
+docToScreenPos(morph, {row, column})            => {row, column}
+screenToDocPos(morph, {row, column})            => {row, column}
+```
+
+Note that most of the time for code working with a text morph and its text content it is more convenient to work with document positions (and most of the text commands do that). Only for specific code that e.g. relates position of other morphs to the text it is necessary to use screen positions.
+
+
+## Optimizations
+
+### Chunk handling
+
+Something that is not obvious: TextWrappableLayoutLines won't actually need to hold on to TextChunks. They do because this allows them to check for changes without creating new lines or splitting up the new chunks into pieces so they fit the wrapped space. Note that the chunks in TextWrappableLayoutLines don't have to be equal to the chunks in TextLayoutLines! This is b/c when wrapping is computed in [`TextWrappableLayoutLines>>updateIfNecessary`](https://github.com/LivelyKernel/lively.morphic/blob/text-line-wrapping/text/layout.js#L331), chunks are [split](https://github.com/LivelyKernel/lively.morphic/blob/text-line-wrapping/text/layout.js#L138) which can result in new chunk instances.
+
+ */
+
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
@@ -86,7 +156,6 @@ class TextChunk {
   }
 
   compatibleWith(text2, fontMetric2, textAttributes2) {
-    // return false;
     var {text, fontMetric, style} = this;
     return text === text2
         && fontMetric === fontMetric2
@@ -142,8 +211,6 @@ class TextChunk {
     var {_charBounds, _style, _height, text, fontMetric, textAttributes} = this;
 
     if (!_charBounds.length) return [this];
-
-    // if (splitWidth < _charBounds[0].width) return [null, this];
 
     for (let i = 1/*min 1 char*/; i < _charBounds.length; i++) {
       let {x, width: w} = _charBounds[i],
