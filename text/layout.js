@@ -82,8 +82,8 @@ class TextChunk {
 
   computeCharBounds() {
     let {text, fontMetric, style} = this;
-    text += newline;
-    this._charBounds = fontMetric.charBoundsFor(style, text);
+    this._charBounds = text.length === 0 ?
+      [] : fontMetric.charBoundsFor(style, text);
   }
 
   splitToNotBeWiderAs(maxWidth) {
@@ -224,19 +224,24 @@ class TextLayoutLine {
 
   computeCharBounds() {
     let prefixWidth = 0,
-        {chunks, height: lineHeight } = this,
+        { chunks, height: lineHeight } = this,
         nChunks = chunks.length;
     this._charBounds = [];
-    for (let i = 0; i < nChunks; i++) {
-      let chunk = chunks[i],
-          { charBounds, width, height } = chunk,
-          offsetCharBounds =
-            charBounds.map(bounds => { let {x, y, width} = bounds;
-                                       return {x: x + prefixWidth, y, width, height: lineHeight}});
-        prefixWidth += width;
-        if (i < nChunks - 1) offsetCharBounds.splice(-1, 1);
-        offsetCharBounds.map(ea => this._charBounds.push(ea));
+
+    for (var i = 0; i < nChunks; i++) {
+      let { charBounds, width, height } = chunks[i];
+
+      for (let j = 0; j < charBounds.length; j++) {
+        let bounds = charBounds[j],
+            {x, y, width} = bounds;
+        this._charBounds.push({x: x + prefixWidth, y, width, height: lineHeight});
+      }
+
+      prefixWidth += width;
     }
+
+    // "newline"
+    this._charBounds.push({x: prefixWidth, y: 0, width: 0, height: lineHeight});
   }
 
 }

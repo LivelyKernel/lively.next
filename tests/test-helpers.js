@@ -10,11 +10,11 @@ export var dummyFontMetric = {
     return text.split('').map(function (char, col) {
       let x = prevX,
           { width, height } = this;
-      if (col === text.length - 1) width = 0;
       prevX += width;
       return { x, y: 0, width, height };
     }, this);
-  }
+  },
+  defaultLineHeight(style) { return this.height; }
 }
 
 export function expectSelection(chai) {
