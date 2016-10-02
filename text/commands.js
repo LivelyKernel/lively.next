@@ -940,6 +940,16 @@ var commands = [
   },
 
   {
+    name: "toggle line wrapping",
+    scrollCursorIntoView: false,
+    multiSelectAction: "single",
+    exec: function(morph) {
+      morph.keepPosAtSameScrollOffsetWhile(() => morph.lineWrapping = !morph.lineWrapping);
+      return true;
+    }
+  },
+
+  {
     name: "increase font size",
     scrollCursorIntoView: false,
     exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize++); return true; }

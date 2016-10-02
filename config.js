@@ -183,6 +183,7 @@ var config = {
       {keys: "Ctrl-Space", command: "toggle active mark"},
 
 
+      {keys: {mac: 'Meta-Shift-L L T'}, command: "toggle line wrapping"},
       {keys: {win: 'Ctrl-=', mac: 'Meta-='}, command: "increase font size"},
       {keys: {win: 'Ctrl--', mac: 'Meta--'}, command: "decrease font size"},
 
