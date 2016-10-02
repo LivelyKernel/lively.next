@@ -17,8 +17,8 @@ function text(string, props) {
     fontSize: 10,
     extent: pt(100,100),
     padding,
-    // fontMetric,
-    fontMetric: $$world.env.fontMetric,
+    fontMetric,
+    // fontMetric: $$world.env.fontMetric,
     // textLayout: new TextLayout(fontMetric),
     // textRenderer: newRenderer,
     ...props

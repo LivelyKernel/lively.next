@@ -255,9 +255,9 @@ describe("text mouse events", () => {
     expect(sut.selection).selectionEquals("Selection(0/0 -> 0/0)");
     env.eventDispatcher.simulateDOMEvents({target: sut, type: "click", position: clickPos});
 
-    var clickIndex = sut.document.positionToIndex({row: 1, column: 3});
-    expect(clickIndex).equals(8);
-    expect(sut.selection).selectionEquals("Selection(1/3 -> 1/3)");
+    var clickIndex = sut.document.positionToIndex({row: 1, column: 2});
+    expect(clickIndex).equals(7);
+    expect(sut.selection).selectionEquals("Selection(1/2 -> 1/2)");
   });
 
   it("double-click selects word", () => {
