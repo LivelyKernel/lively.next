@@ -9,8 +9,6 @@ TODO: render this nicely when browsed in a lively browser!
 # About text layouting
 
 
-ref #38 
-
 This allows our text layouter to optionally wrap lines based on a `wrapAt` value that will usually be the text morph width.
 
 ![line-wrapping](https://cloud.githubusercontent.com/assets/467450/19018641/aa357264-881f-11e6-9317-7af91352113c.gif)
@@ -37,7 +35,7 @@ Note that there are differences in how line endings are handled by normal line b
 
 Given a line `abc`. It has a starting position of `{row: 0, column: 0}` and end position `{row: 0, column: 3}`. The text cursor can be placed at `{row: 0, column: 3}` and will be rendered after the c.
 
-If the line is wrapped after "b" and the cursor is placed at `{row: 0, column: 2}` it will be rendered at the beginning of the subsequent line. The model behind that is that there is a newline character at the end of every natural line and you can place the cursor between it and the last normal character. Wrapped lines have no newline character so there is nothing to place the cursor between. 
+If the line is wrapped after "b" and the cursor is placed at `{row: 0, column: 2}` it will be rendered at the beginning of the subsequent line. The model behind that is that there is a newline character at the end of every natural line and you can place the cursor between it and the last normal character. Wrapped lines have no newline character so there is nothing to place the cursor between.
 
 
 ## document and screen position
@@ -230,8 +228,7 @@ class TextChunk {
 
     }
 
-    console.warn("Chunk split failed! Reached max width but found no char bounds to split");
-    return [this];
+    return [null, this];
   }
 
 }
@@ -247,6 +244,13 @@ class TextLayoutLine {
 
   resetCache() {
     this.rendered = this._charBounds = this._height = this._width = undefined;
+  }
+
+  get text() {
+    var text = "";
+    for (let i = 0; i < this.chunks.length; i++)
+      text += this.chunks[i].text
+    return text;
   }
 
   get length() {
@@ -361,6 +365,13 @@ class WrappedTextLayoutLine {
     this._charBounds = this._height = this._width = undefined;
   }
 
+  get text() {
+    var text = 0;
+    for (let i = 0; i < this.wrappedLines.length; i++)
+      text += this.wrappedLines[i].text
+    return text;
+  }
+
   get length() {
     var l = 0;
     for (let i = 0; i < this.wrappedLines.length; i++)
@@ -396,6 +407,15 @@ class WrappedTextLayoutLine {
   }
 
   updateIfNecessary(newcChunks, wrapAt) {
+    // Here we create wrapped lines and figure out what the right content for
+    // them is, i.e. we split the chunks that are in this line into sub-lists
+    // according to wrapAt. wrapAt specifies the width at which the wrap should
+    // occur.
+
+
+    // First update the chunks normally, i.e. compare old chunks of line with
+    // new chunks. If nothing has changed and the wrap width is the same we don't
+    // need to do anything. This is an important optimization!
     let chunks = this.chunks,
         changed = updateChunks(chunks, newcChunks) || this.wrapAt !== wrapAt;
 
@@ -403,47 +423,60 @@ class WrappedTextLayoutLine {
 
     this.wrapAt = wrapAt;
 
+    // chunks by line is a list of chunk lists, each holding the chunks for a
+    // wrapped line
     var chunksByLine = [[]],
         currentLineChunks = chunksByLine[0],
         x = 0;
 
+    // we iterate over the chunks and sum up there width. When we hit the
+    // wrapAt limit we split a chunk, putting its "left" part into the current
+    // chunk list and start a new chunk list, i.e. a new line. We do this until
+    // we run out of chunks
     for (let i = 0; i < chunks.length; i++) {
 
-
-      // let nextChunk = chunks.shift(),
       let nextChunk = chunks[i],
-          nextW = nextChunk.width,
-          nextX = x + nextW;
+          nextW = nextChunk.width;
 
       if (x + nextW <= wrapAt) { x += nextW; currentLineChunks.push(nextChunk); continue; }
-      // let localWraptAt = wrapAt-x;
 
+      let maybeNotSplittableChunk = null;
       while (true) {
+
         let [split1, split2] = nextChunk.splitAt(wrapAt-x);
+
+        if (!split1 && split2 && split2 === maybeNotSplittableChunk) {
+          // we have seen that chunk before and tried to split it, won't work
+          // so we leave it to not enter an endless loop!
+          split1 = split2;
+          split2 = maybeNotSplittableChunk = null;
+        }
+
         if (split1) {
           x += split1.width;
           currentLineChunks.push(split1);
-        }
+        } else maybeNotSplittableChunk = split2;
+
         if (!split2) break;
 
         chunksByLine.push(currentLineChunks = []);
         x = 0;
         nextChunk = split2;
       }
-
     }
 
     let nLines = chunksByLine.length;
 
+    // Now that we have the chunks by line we create new "normal" lines from them
     for (let i = 0; i < nLines; i++) {
       let chunks = chunksByLine[i],
           line = this.wrappedLines[i] || (this.wrappedLines[i] =  new TextLayoutLine())
       line.updateIfNecessary(chunks);
     }
 
-    if (nLines !== this.wrappedLines.length) {
+    // If the wrapped line contained more sub lines before, remove them here
+    if (nLines !== this.wrappedLines.length)
       this.wrappedLines.splice(nLines, this.wrappedLines.length - nLines);
-    }
 
     this.resetCache();
     return true;
@@ -601,7 +634,9 @@ export default class TextLayout {
         lineWrappingBefore = this.lineWrapping,
         lineWrapping = this.lineWrapping = morph.lineWrapping,
         Line = lineWrapping ? WrappedTextLayoutLine : TextLayoutLine,
-        wrapAt = lineWrapping && morph.fixedWidth ? morph.width : Infinity,
+        paddingLeft = morph.padding.left(),
+        paddingRight = morph.padding.right(),
+        wrapAt = lineWrapping && morph.fixedWidth ? morph.width - paddingLeft - paddingRight : Infinity,
         fontMetric = this.fontMetric,
         docLines = doc.lines,
         nRows = docLines.length,
@@ -722,8 +757,11 @@ export default class TextLayout {
     if (!line) return {row: 0, column: 0};
 
     var screenRows = 0;
-    for (let j = 0; j < row; j++)
-      screenRows += this.lines[j].wrappedLines.length;
+    for (let j = 0; j < row; j++) {
+      // can be undefined when called directly after document change before the
+      // layouter had a chance to update, e.g. when pressing enter
+      screenRows += this.lines[j] ? this.lines[j].wrappedLines.length : 0;
+    }
 
     var columnLeft = column, nChars;
     for (var i = 0; i < line.wrappedLines.length; i++) {
@@ -738,7 +776,7 @@ export default class TextLayout {
   screenToDocPos(morph, {row, column}) {
     if (!this.lineWrapping) {
       row = Math.max(0, Math.min(row, this.lines.length-1));
-      column = Math.max(0, Math.min(column, this.lines.length));
+      column = Math.max(0, Math.min(column, this.lines[row].length));
       return {row, column};
     }
 
@@ -751,7 +789,9 @@ export default class TextLayout {
 
     for (docRow = 0; docRow < lines.length; docRow++) {
       docCol = 0;
-      let wrappedLines = lines[docRow].wrappedLines;
+      // can be undefined when called directly after document change before the
+      // layouter had a chance to update, e.g. when pressing enter
+      let wrappedLines = (lines[docRow] && lines[docRow].wrappedLines) || [];
       for (let i = 0; i < wrappedLines.length; i++, screenRow++) {
         if (screenRow === row) {
           column = Math.min(column, wrappedLines[i].length);

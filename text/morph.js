@@ -51,12 +51,12 @@ export class Text extends Morph {
 
   constructor(props = {}) {
     var {
-      textLayout, textRenderer,
+      textLayout, textRenderer, lineWrapping,
       fontMetric, textString, selectable, selection, clipMode, textAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
     } = props;
     props = obj.dissoc(props, [
-      "textLayout", "textRenderer",
+      "textLayout", "textRenderer", "lineWrapping",
       "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
       // default style attrs: need document to be installed first
       "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration", "fixedCharacterSpacing"
@@ -65,7 +65,6 @@ export class Text extends Morph {
       readOnly: false,
       draggable: false,
       fixedWidth: false, fixedHeight: false,
-      lineWrapping: false,
       padding: 0,
       useSoftTabs: config.text.useSoftTabs || true,
       tabWidth: config.text.tabWidth || 2,
@@ -89,6 +88,7 @@ export class Text extends Morph {
     this.fontStyle = fontStyle || "normal";
     this.textDecoration = textDecoration || "none";
     this.fixedCharacterSpacing = fixedCharacterSpacing || false;
+    this.lineWrapping = lineWrapping || false;
 
     if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
@@ -194,7 +194,10 @@ export class Text extends Morph {
   }
 
   get lineWrapping() { return this.getProperty("lineWrapping") }
-  set lineWrapping(lineWrapping) { this.addValueChange("lineWrapping", lineWrapping); }
+  set lineWrapping(lineWrapping) {
+    this.addValueChange("lineWrapping", lineWrapping);
+    this.textLayout.updateFromMorphIfNecessary(this);
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // anchors – positions in text that move when text is changed
@@ -434,8 +437,11 @@ export class Text extends Morph {
   charRight({row, column} = this.cursorPosition) { return this.getLine(row).slice(column, column+1); }
   charLeft({row, column} = this.cursorPosition) { return this.getLine(row).slice(column-1, column); }
 
-  getLine(row) {
-    if (typeof row !== "number") this.cursorPosition.row;
+  getVisibleLine(row = this.cursorScreenPosition.row) {
+    return this.textLayout.wrappedLines(this)[row].text
+  }
+
+  getLine(row = this.cursorPosition.row) {
     var doc = this.document;
     return doc.getLine(row);
   }
@@ -603,14 +609,12 @@ export class Text extends Morph {
   }
 
   get whatsVisible() {
-    var startRow = this.textLayout.firstVisibleLine,
+    var startRow = this.textLayout.firstVisibleLine || 0,
         endRow = this.textLayout.lastVisibleLine,
-        lines = this.document.lines;
-    return {
-      lines: startRow === undefined || endRow === undefined ?
-              lines : lines.slice(startRow, endRow),
-      startRow, endRow
-    }
+        lines = this.lineWrapping ?
+          this.textLayout.wrappedLines(this).slice(startRow, endRow).map(ea => ea.text) :
+          this.document.lines.slice(startRow, endRow);
+    return {lines, startRow, endRow};
   }
 
 
@@ -789,7 +793,10 @@ export class Text extends Morph {
     if (!this.isClip()) return;
     var { scroll, padding } = this,
         paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
-        charBounds =   this.charBoundsFromTextPosition(pos).insetByPt(pt(-20, 0)),
+        charBounds =   this.charBoundsFromTextPosition(pos),
+        // if no line wrapping is enabled we add a little horizontal offset so
+        // that characters at line end are better visible
+        charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
         delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
