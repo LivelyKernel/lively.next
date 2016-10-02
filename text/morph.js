@@ -456,6 +456,21 @@ export class Text extends Morph {
     return new Range(range);
   }
 
+  rangesOfWrappedLine(row = this.cursorPosition.row) {
+    return this.textLayout.rangesOfWrappedLine(this, row);
+  }
+
+  screenLineRange(pos = this.cursorPosition, ignoreLeadingWhitespace = true) {
+    var ranges = this.textLayout.rangesOfWrappedLine(this, pos.row),
+        range = ranges.slice().reverse().find(({start, end}) => start.column <= pos.column),
+        content = this.textInRange(range),
+        leadingSpace = content.match(/^\s*/);
+    if (leadingSpace[0].length && ignoreLeadingWhitespace)
+      range.start.column += leadingSpace[0].length;
+    if (range !== arr.last(ranges)) range.end.column--;
+    return new Range(range);
+  }
+
   insertTextWithTextAttributes(text, attributes = [], pos) {
     if (!Array.isArray(attributes)) attributes = [attributes];
     var range = this.insertText(text, pos);

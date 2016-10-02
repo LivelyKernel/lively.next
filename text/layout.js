@@ -505,6 +505,12 @@ class WrappedTextLayoutLine {
 
 export default class TextLayout {
 
+  // The TextLayout coordinates the positioning and wrapping of lines, i.e. it
+  // takes the document lines from a morph (text + text attributes) and a font
+  // metric and maintains lines for which we can then compute positions and
+  // bounding boxes. This is used to map morphic coordinates to text positions
+  // and back and is used by the text renderer
+
   constructor(fontMetric) {
     this.lineWrapping = false;
     this.reset(fontMetric);
@@ -523,6 +529,7 @@ export default class TextLayout {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   wrappedLines(morph) {
+    // returns the lines in wrapped form
     this.updateFromMorphIfNecessary(morph);
     if (!this.lineWrapping)
       return this.lines;
@@ -530,6 +537,32 @@ export default class TextLayout {
     for (let i = 0; i < lines.length; i++)
       wrappedLines.push(...lines[i].wrappedLines);
     return wrappedLines;
+  }
+
+  rangesOfWrappedLine(morph, row) {
+    // returns a list like [{start: {row,column}, end: {row,column}}, ...] that
+    // specify the start/end positions (ranges) of all wrapped lines identified by
+    // row. Note: row is a document position, i.e. it refers to the line no of a
+    // document / unwrapped line. Also, the {row,column} positions being
+    // returned are in document coordinates!
+    this.updateFromMorphIfNecessary(morph);
+
+    var line = this.lines[row];
+    if (!line) return [];
+
+    if (!this.lineWrapping)
+      return [{start: {column: 0, row}, end: {column: line.length, row}}]
+
+    var column = 0;
+    return line.wrappedLines.map(wrappedLine => {
+       var endColumn = column + wrappedLine.length,
+           range = {
+             start: {row, column},
+             end: {row, column: column + wrappedLine.length}
+           }
+       column = endColumn;
+       return range;
+    });
   }
 
   firstFullVisibleLine(morph) {
