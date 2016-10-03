@@ -1,40 +1,44 @@
-import { Window, GridLayout, FillLayout, Ellipse, Text,  
-         VerticalLayout, HorizontalLayout, Morph } from "../index.js";
-import { Color, LinearGradient, pt } from "lively.graphics";
+import { Window, GridLayout, FillLayout, Ellipse, Text,
+         VerticalLayout, HorizontalLayout, Morph, morph } from "../index.js";
+import { Rectangle, Color, LinearGradient, pt } from "lively.graphics";
 import { obj, num } from "lively.lang";
-import { connect } from "lively.bindings";
+import { signal, connect } from "lively.bindings";
 
 export class ColorPicker extends Window {
-  
+
   constructor(props) {
     this.color = props.color || Color.blue;
     super({
       ...props,
       title: "Color Picker",
+      name: "Color Picker",
       targetMorph: this.colorPalette()
     });
     this.update();
-    connect(this, "change", this, "update", {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
+    connect(this, "change", this, "update", {
+      updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()
+    });
   }
-  
+
   set color(c) {
     const [h, s, b] = c.toHSB();
     this.hue = h;
     this.saturation = s;
     this.brightness = b;
+    signal(this, "color", c); 
   }
-  
+
   get color() {
     return Color.hsb(this.hue, this.saturation, this.brightness);
   }
-  
+
   get pickerPosition() {
     // translate the hsv of color to a position
     const s = this.saturation, b = this.brightness;
     return pt(this.getSubmorphNamed("hue").width * s,
               this.getSubmorphNamed("hue").height * (1 - b))
   }
-  
+
   set pickerPosition({x: light, y: dark}) {
     // translate the pos to a new hsv value
     var {width, height} = this.getSubmorphNamed("hue");
@@ -42,17 +46,17 @@ export class ColorPicker extends Window {
     this.brightness = Math.max(0, Math.min(1 - (dark / height), 1));
     this.update();
   }
-  
+
   get scalePosition() {
-    return pt(this.getSubmorphNamed("scale").width / 2, this.getSubmorphNamed("hueGradient").height * (this.hue / 360)); 
+    return pt(this.getSubmorphNamed("scale").width / 2, this.getSubmorphNamed("hueGradient").height * (this.hue / 360));
   }
-  
+
   set scalePosition(pos) {
     console.log(pos.y / this.getSubmorphNamed("hueGradient").height)
     this.hue = Math.max(0, Math.min((pos.y / this.getSubmorphNamed("hueGradient").height) * 360, 359));
     this.update();
   }
-  
+
   update() {
      [this.getSubmorphNamed("field"),
       this.getSubmorphNamed("colorViewer"),
@@ -61,9 +65,12 @@ export class ColorPicker extends Window {
       //this.getSubmorphNamed("harmonies"),
       this.getSubmorphNamed("hashViewer"),
       this.getSubmorphNamed("hsbViewer"),
-      this.getSubmorphNamed("rgbViewer")].forEach(p => p && p.update(this));
+      this.getSubmorphNamed("rgbViewer"),
+     ].forEach(p => p && p.update(this));
+     // would be better if this.color is the canonical place
+     this.color = this.get("colorViewer").fill;
   }
-  
+
   colorPalette() {
     const colorPalette = this.getSubmorphNamed("colorPalette") || new Morph({
       name: "colorPalette",
@@ -77,7 +84,7 @@ export class ColorPicker extends Window {
     colorPalette.layout.col(2).fixed = 100;
     return colorPalette;
   }
-  
+
   fieldPicker() {
     return this.getSubmorphNamed("field") || new Morph({
       layout: new FillLayout({morphs: ["hue", "shade", "light"], spacing: 9}),
@@ -93,7 +100,7 @@ export class ColorPicker extends Window {
         borderRadius: 3,
         name: "shade",
         fill: new LinearGradient([{color: Color.white, offset: "0%"},
-                                  {color: Color.transparent, offset: "100%"}], 
+                                  {color: Color.transparent, offset: "100%"}],
                                   "eastwest")
       },{
         borderRadius: 3,
@@ -133,7 +140,7 @@ export class ColorPicker extends Window {
      }]
     });
   }
-  
+
   scalePicker() {
     return this.getSubmorphNamed("scale") || new Morph({
       layout: new FillLayout({morphs: ["hueGradient"], spacing: 9}),
@@ -149,7 +156,7 @@ export class ColorPicker extends Window {
           {color: Color.cyan, offset: "50%"},
           {color: Color.blue, offset: "66%"},
           {color: Color.magenta, offset: "83%"},
-          {color: Color.rgb(255,0,0), offset: "100%"}], 
+          {color: Color.rgb(255,0,0), offset: "100%"}],
          "northsouth"),
         onMouseDown: (evt) => {
           this.scalePosition = pt(0, evt.positionIn(this.getSubmorphNamed("hueGradient")).y);
@@ -164,7 +171,7 @@ export class ColorPicker extends Window {
         borderRadius: 3,
         nativeCursor: "ns-resize",
         borderColor: Color.black,
-        fill: Color.transparent, 
+        fill: Color.transparent,
         borderWidth: 2,
         update(colorPicker) {
           this.center = colorPicker.scalePosition.addPt(pt(0,10));
@@ -175,7 +182,7 @@ export class ColorPicker extends Window {
       }]
     });
   }
-  
+
   keyValue({name, key, value, update}) {
     return new Morph({
       update,
@@ -190,24 +197,24 @@ export class ColorPicker extends Window {
           fill: Color.transparent,
           textString: key,
           fontColor: Color.darkgray,
-          fontWeight: "bold"}), 
+          fontWeight: "bold"}),
         new Text({
-          fill: Color.transparent, 
-          textString: obj.safeToString(value), 
+          fill: Color.transparent,
+          textString: obj.safeToString(value),
           fixedWidth: true})]
     })
   }
-  
+
   hashViewer() {
     return this.getSubmorphNamed("hashViewer") || this.keyValue({
-      name: "hashViewer", 
-      key: "#", 
+      name: "hashViewer",
+      key: "#",
       update(colorPicker) {
         this.setValue(colorPicker.color.toHexString());
       },
       value: this.color.toHexString()})
   }
-  
+
   rgbViewer() {
     const [r, g, b] = this.color.toTuple8Bit();
     return this.getSubmorphNamed("rgbViewer") || new Morph({
@@ -224,7 +231,7 @@ export class ColorPicker extends Window {
                   this.keyValue({key: "B", value: b.toFixed()})]
     })
   }
-  
+
   hsbViewer() {
     const [h, s, b] = this.color.toHSB();
     return this.getSubmorphNamed("hsbViewer") || new Morph({
@@ -253,21 +260,21 @@ export class ColorPicker extends Window {
         extent: pt(50,50),
         name: "colorViewer",
         fill: this.color,
-        update(colorPicker) { this.fill = colorPicker.color }
+        update(colorPicker) { this.fill = colorPicker.color; }
       },
       this.hashViewer(),
       this.rgbViewer(),
       this.hsbViewer()]
     })
   }
-  
+
   harmonies() {
     return this.getSubmorphNamed("harmonies") || new Morph({
       name: "harmonies",
       update(colorPicker) {
-        
+
       }
     })
   }
-  
+
 }

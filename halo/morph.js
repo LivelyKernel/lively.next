@@ -3,6 +3,7 @@ import { Ellipse, Morph, Path, Text,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
+import { connect } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 
 const itemExtent = pt(24,24);
@@ -644,13 +645,9 @@ export class Halo extends Morph {
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
         //this.world().showLayoutHaloFor(this.target, this.state.pointerId);
-        this.world().addMorph(new ColorPicker({
-          center: this.world().center, 
-          extent: pt(300,150),
-          onChange: (color) => {
-            this.target.fill = color;
-          }
-          }))
+        var picker = this.world().addMorph(
+          new ColorPicker({center: this.world().center, extent: pt(300,150)}))
+        connect(picker, "color", this.target, "fill");
         this.remove();
       }
     }));
