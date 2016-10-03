@@ -66,7 +66,7 @@ export class Text extends Morph {
       draggable: false,
       fixedWidth: false, fixedHeight: false,
       padding: 0,
-      useSoftTabs: config.text.useSoftTabs || true,
+      useSoftTabs: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
       ...props
@@ -87,8 +87,8 @@ export class Text extends Morph {
     this.fontWeight = fontWeight || "normal";
     this.fontStyle = fontStyle || "normal";
     this.textDecoration = textDecoration || "none";
-    this.fixedCharacterSpacing = fixedCharacterSpacing || false;
-    this.lineWrapping = lineWrapping || false;
+    this.fixedCharacterSpacing = fixedCharacterSpacing !== undefined ? fixedCharacterSpacing : false;
+    this.lineWrapping = lineWrapping !== undefined ? lineWrapping : true;
 
     if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
@@ -323,15 +323,15 @@ export class Text extends Morph {
   }
 
   textBounds() {
-    return this.textLayout ? this.textLayout.textBounds(this) : new Rectangle(0,0,0,0);
+    return this.textLayout ? this.textLayout.textBounds(this) : this.padding.topLeft().extent(pt(0,0));
   }
 
-  paddedTextBounds() {
-    return this.textBounds().outsetByRect(this.padding);
-  }
 
   get scrollExtent() {
-    return this.paddedTextBounds().extent().maxPt(super.scrollExtent);
+    return this.textBounds().extent()
+      .addPt(this.padding.topLeft())
+      .addPt(this.padding.bottomRight())
+      .maxPt(super.scrollExtent);
   }
 
   get useSoftTabs()  { return this.getProperty("useSoftTabs"); }
@@ -797,7 +797,7 @@ export class Text extends Morph {
   scrollPositionIntoView(pos, offset = pt(0,0)) {
     if (!this.isClip()) return;
     var { scroll, padding } = this,
-        paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
+        paddedBounds = this.innerBounds().translatedBy(scroll),
         charBounds =   this.charBoundsFromTextPosition(pos),
         // if no line wrapping is enabled we add a little horizontal offset so
         // that characters at line end are better visible
@@ -837,9 +837,9 @@ export class Text extends Morph {
   fit() {
     let {fixedWidth, fixedHeight} = this;
     if ((fixedHeight && fixedWidth) || !this.textLayout/*not init'ed yet*/) return;
-    let paddedTextBounds = this.paddedTextBounds();
-    if (!fixedHeight) this.height = paddedTextBounds.height;
-    if (!fixedWidth) this.width = paddedTextBounds.width;
+    let textBounds = this.textBounds().outsetByRect(this.padding);
+    if (!fixedHeight) this.height = textBounds.height;
+    if (!fixedWidth) this.width = textBounds.width;
   }
 
   fitIfNeeded() {
@@ -873,18 +873,6 @@ export class Text extends Morph {
     return this.textLayout.boundsFor(this, pos);
   }
 
-  paddingAndScrollOffset() {
-    return this.padding.topLeft().subPt(this.scroll);
-  }
-
-  addPaddingAndScroll(point) {
-    return point.addPt(this.paddingAndScrollOffset());
-  }
-
-  removePaddingAndScroll(point) {
-    return point.subPt(this.paddingAndScrollOffset());
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
 
@@ -906,7 +894,7 @@ export class Text extends Morph {
     var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1;
 
     if (evt.isShiftDown() && this.selectable) {
-      this.selection.lead = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(position)));
+      this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
       return true;
     }
 
@@ -922,11 +910,11 @@ export class Text extends Morph {
     var {clickedOnMorph, clickedOnPosition} = evt.state;
     if (clickedOnMorph !== this || !this.selectable) return;
 
-    var textPosClicked = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)));
+    var textPosClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
 
     this.selection.lead = textPosClicked;
     if (!evt.isShiftDown()) {
-      var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition)));
+      var start = this.textPositionFromPoint(this.scroll.addPt(this.localize(clickedOnPosition)));
       this.selection.anchor = start;
     }
   }

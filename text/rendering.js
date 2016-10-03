@@ -50,11 +50,10 @@ function renderSelectionLayer(textLayouter, morph, selection, diminished = false
       start               = textLayouter.docToScreenPos(morph, start),
       end                 = textLayouter.docToScreenPos(morph, end),
       isReverse           = selection.isReverse(),
-      {padding, document} = morph,
+      {document}          = morph,
       lines               = textLayouter.wrappedLines(morph),
-      paddingOffset       = padding.topLeft(),
-      startPos            = textLayouter.pixelPositionForScreenPos(morph, start).addPt(paddingOffset),
-      endPos              = textLayouter.pixelPositionForScreenPos(morph, end).addPt(paddingOffset),
+      startPos            = textLayouter.pixelPositionForScreenPos(morph, start),
+      endPos              = textLayouter.pixelPositionForScreenPos(morph, end),
       cursorPos           = isReverse ? startPos : endPos,
       defaultHeight       = null,
       endLineHeight       = end.row in lines ?
@@ -261,15 +260,14 @@ function cursor(pos, height, visible, diminished, width) {
 }
 
 function renderMarkerPart(textLayouter, morph, start, end, style) {
-  var padding = morph.padding,
-      {x,y} = textLayouter.boundsFor(morph, start),
+  var {x,y} = textLayouter.boundsFor(morph, start),
       {height, x: endX} = textLayouter.boundsFor(morph, end);
   return h("div.marker-layer-part", {
     style: {
       zIndex: -4,
       ...style,
       position: "absolute",
-      left: padding.left()+x + "px", top: padding.top()+y + "px",
+      left: x + "px", top: y + "px",
       height: height + "px",
       width: endX-x + "px"
     }

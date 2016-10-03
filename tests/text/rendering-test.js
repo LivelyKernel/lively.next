@@ -24,12 +24,14 @@ const defaultStyle = {
   fixedCharacterSpacing: false
 }
 
+var padding = Rectangle.inset(3);
+
 function text(string, props) {
   return new Text({
     name: "text",
     textString: string,
     extent: pt(100,100),
-    padding: Rectangle.inset(3),
+    padding,
     fontMetric,
     ...defaultStyle,
     ...props
@@ -148,6 +150,31 @@ describe("text rendering", () => {
   
       expect(strings).equals(["h", "e", "l", "l", "o"]);
     });
+  });
+
+  describe("visible line detection", () => {
+
+    it("determines last and first full visible line based on padding and scroll", () => {
+      var {width: w, height: h} = fontMetric;
+      Object.assign(sut, {
+        textString: "111111\n222222\n333333\n444444\n555555",
+        padding, borderWidth: 0, fill: Color.lightGray,
+        lineWrapping: false, clipMode: "auto",
+        extent: pt(4*w+padding.left() + padding.right(), 3*h+padding.top()+padding.bottom())
+      });
+
+      var l = sut.textLayout;
+      sut.render(sut.env.renderer);
+      expect(l.firstFullVisibleLine(sut)).equals(0);
+      expect(l.lastFullVisibleLine(sut)).equals(2);
+
+      sut.scroll = sut.scroll.addXY(0, padding.top()+h);
+      sut.render(sut.env.renderer);
+
+      expect(l.firstFullVisibleLine(sut)).equals(1);
+      expect(l.lastFullVisibleLine(sut)).equals(3);
+    });
+
   });
 
 });

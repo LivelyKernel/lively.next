@@ -60,35 +60,39 @@ describe("text layout", () => {
 
   describe("positions", () => {
 
-    var t, r;
+    var t, r, padl, padr, padt, padb;
     beforeEach(() => {
       t = text("hello\n lively\nworld");
       r = t.textLayout;
+      padl = padding.left();
+      padr = padding.right();
+      padt = padding.top();
+      padb = padding.bottom();
     });
 
     it("text pos -> pixel pos", () => {
-      expect(r.pixelPositionFor(t, {row: 0, column: 0}))    .equals(pt(0,   0));
-      expect(r.pixelPositionFor(t, {row: 0, column: 5}))    .equals(pt(5*w, 0));
-      expect(r.pixelPositionFor(t, {row: 1, column: 0}))    .equals(pt(0,   h));
-      expect(r.pixelPositionFor(t, {row: 1, column: 1}))    .equals(pt(1*w, h));
-      expect(r.pixelPositionFor(t, {row: 3, column: 2}))    .equals(pt(2*w, 2*h));
-      expect(r.pixelPositionFor(t, {row: 1, column: 100}))  .equals(pt(7*w, h));
-      expect(r.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(5*w, 2*h));
+      expect(r.pixelPositionFor(t, {row: 0, column: 0}))    .equals(pt(padl+0,   padt+0));
+      expect(r.pixelPositionFor(t, {row: 0, column: 5}))    .equals(pt(padl+5*w, padt+0));
+      expect(r.pixelPositionFor(t, {row: 1, column: 0}))    .equals(pt(padl+0,   padt+h));
+      expect(r.pixelPositionFor(t, {row: 1, column: 1}))    .equals(pt(padl+1*w, padt+h));
+      expect(r.pixelPositionFor(t, {row: 3, column: 2}))    .equals(pt(padl+2*w, padt+2*h));
+      expect(r.pixelPositionFor(t, {row: 1, column: 100}))  .equals(pt(padl+7*w, padt+h));
+      expect(r.pixelPositionFor(t, {row: 100, column: 100})).equals(pt(padl+5*w, padt+2*h));
     });
 
     it("text index -> pixel pos", () => {
-      expect(r.pixelPositionForIndex(t, 0)).equals(pt(0,0));
-      expect(r.pixelPositionForIndex(t, 6)).equals(pt(0,h));
-      expect(r.pixelPositionForIndex(t, 7)).equals(pt(w,h));
-      expect(r.pixelPositionForIndex(t, 100)).equals(pt(5*w,2*h));
+      expect(r.pixelPositionForIndex(t, 0)).equals(pt(padl+0,padt+0));
+      expect(r.pixelPositionForIndex(t, 6)).equals(pt(padl+0,padt+h));
+      expect(r.pixelPositionForIndex(t, 7)).equals(pt(padl+w,padt+h));
+      expect(r.pixelPositionForIndex(t, 100)).equals(pt(padl+5*w,padt+2*h));
     });
 
     it("pixel pos -> text pos", () => {
-      expect(t.textPositionFromPoint(pt(0,0)))            .deep.equals({row: 0, column: 0});
-      expect(t.textPositionFromPoint(pt(w-1,h/2)))        .deep.equals({row: 0, column: 1});
-      expect(t.textPositionFromPoint(pt(w+1,h+1)))        .deep.equals({row: 1, column: 1});
-      expect(t.textPositionFromPoint(pt(w*2+1,h*2+1)))    .deep.equals({row: 2, column: 2});
-      expect(t.textPositionFromPoint(pt(w*2+w/2+1,h*2+1))).deep.equals({row: 2, column: 3}, "right side of char -> next pos")
+      expect(t.textPositionFromPoint(pt(padl+0,         padt+0)))            .deep.equals({row: 0, column: 0});
+      expect(t.textPositionFromPoint(pt(padl+w-1,       padt+h/2)))        .deep.equals({row: 0, column: 1});
+      expect(t.textPositionFromPoint(pt(padl+w+1,       padt+h+1)))        .deep.equals({row: 1, column: 1});
+      expect(t.textPositionFromPoint(pt(padl+w*2+1,     padt+h*2+1)))    .deep.equals({row: 2, column: 2});
+      expect(t.textPositionFromPoint(pt(padl+w*2+w/2+1, padt+h*2+1))).deep.equals({row: 2, column: 3}, "right side of char -> next pos")
     });
 
   });
@@ -101,10 +105,15 @@ describe("line wrapping", () => {
   var t;
 
   it("wraps single line and computes positions back and forth", () => {
-    t = text("", {
-      padding: Rectangle.inset(0), borderWidth: 0, fill: Color.red,
+    var padl = padding.left(),
+        padr = padding.right(),
+        padt = padding.top(),
+        padb = padding.bottom();
+
+    t = text("abcdef\n1234567", {
+      padding, borderWidth: 0, fill: Color.red,
       lineWrapping: false, clipMode: "auto",
-      width: 4*w, textString: "abcdef\n1234567"
+      width: 4*w+padl+padr
     });
 
     var l = t.textLayout;
@@ -113,17 +122,17 @@ describe("line wrapping", () => {
 
     expect(l.lines).to.have.length(2);
     expect(l.wrappedLines(t)).to.have.length(2);
-    expect(t.charBoundsFromTextPosition({row: 0, column: 5})).equals(rect(w*5,0,w,h), "not wrapped: text pos => pixel pos");
-    expect(t.textPositionFromPoint(pt(2*w+1, h+1))).deep.equals({column: 2,row: 1}, "not wrapped: pixel pos => text pos");
+    expect(t.charBoundsFromTextPosition({row: 0, column: 5})).equals(rect(padl+w*5,padt,w,h), "not wrapped: text pos => pixel pos");
+    expect(t.textPositionFromPoint(pt(padl + 2*w+1, padt + h+1))).deep.equals({column: 2,row: 1}, "not wrapped: pixel pos => text pos");
 
     t.lineWrapping = true;
     expect(l.wrappedLines(t)).to.have.length(4);
 
-    expect(l.boundsForScreenPos(t, {row: 0, column: 4})).equals(rect(w*4,0,0,h), "wrapped: text pos => pixel pos 1");
-    expect(l.boundsForScreenPos(t, {row: 0, column: 5})).equals(rect(w*4,0,0,h), "wrapped: text pos => pixel pos 2");
-    expect(l.boundsForScreenPos(t, {row: 1, column: 1})).equals(rect(w*1,h,w,h), "wrapped: pixel pos => text pos 3");
-    expect(l.boundsForScreenPos(t, {row: 3, column: 1})).equals(rect(w*1,3*h,w,h), "wrapped: pixel pos => text pos 4");
-    expect(l.boundsForScreenPos(t, {row: 0, column: 4})).equals(rect(w*4,0,0,h), "wrapped: pixel pos => text pos 5");
+    expect(l.boundsForScreenPos(t, {row: 0, column: 4})).equals(rect(padl+w*4,padt+0,0,h), "wrapped: text pos => pixel pos 1");
+    expect(l.boundsForScreenPos(t, {row: 0, column: 5})).equals(rect(padl+w*4,padt+0,0,h), "wrapped: text pos => pixel pos 2");
+    expect(l.boundsForScreenPos(t, {row: 1, column: 1})).equals(rect(padl+w*1,padt+h,w,h), "wrapped: pixel pos => text pos 3");
+    expect(l.boundsForScreenPos(t, {row: 3, column: 1})).equals(rect(padl+w*1,padt+3*h,w,h), "wrapped: pixel pos => text pos 4");
+    expect(l.boundsForScreenPos(t, {row: 0, column: 4})).equals(rect(padl+w*4,padt+0,0,h), "wrapped: pixel pos => text pos 5");
 
     expect(l.docToScreenPos(t, {row: 0, column: 4})).deep.equals({row: 1, column: 0}, "doc => screen pos 1");
     expect(l.docToScreenPos(t, {row: 0, column: 5})).deep.equals({row: 1, column: 1}, "doc => screen pos 2");

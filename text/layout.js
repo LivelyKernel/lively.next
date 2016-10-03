@@ -599,12 +599,14 @@ export default class TextLayout {
   }
 
   firstFullVisibleLine(morph) {
-    var bounds = this.boundsFor(morph, {row: this.firstVisibleLine, column: 0});
+    var selector = this.lineWrapping ? "boundsForScreenPos" : "boundsFor",
+        bounds = this[selector](morph, {row: this.firstVisibleLine, column: 0});
     return this.firstVisibleLine + (bounds.top() < morph.scroll.y ? 1 : 0);
   }
 
   lastFullVisibleLine(morph) {
-    var bounds = this.boundsFor(morph, {row: this.lastVisibleLine, column: 0});
+    var selector = this.lineWrapping ? "boundsForScreenPos" : "boundsFor",
+        bounds = this[selector](morph, {row: this.lastVisibleLine, column: 0});
     return this.lastVisibleLine + (bounds.bottom() > morph.scroll.y + morph.height ? -1 : 0);
   }
 
@@ -636,7 +638,9 @@ export default class TextLayout {
         Line = lineWrapping ? WrappedTextLayoutLine : TextLayoutLine,
         paddingLeft = morph.padding.left(),
         paddingRight = morph.padding.right(),
-        wrapAt = lineWrapping && morph.fixedWidth ? morph.width - paddingLeft - paddingRight : Infinity,
+        wrapAt = lineWrapping && morph.fixedWidth ?
+          morph.width - paddingLeft - paddingRight :
+          Infinity,
         fontMetric = this.fontMetric,
         docLines = doc.lines,
         nRows = docLines.length,
@@ -696,14 +700,16 @@ export default class TextLayout {
     let lines = this.wrappedLines(morph),
         maxLength = lines.length-1,
         safeRow = Math.max(0, Math.min(maxLength, row)),
-        line = lines[safeRow];
+        line = lines[safeRow],
+        paddingTop = morph.padding.top(),
+        paddingLeft = morph.padding.left();
 
-    if (!line) return new Rectangle(0,0,0,0);
+    if (!line) return new Rectangle(paddingLeft, paddingTop, 0,0);
 
     for (var y = 0, i = 0; i < safeRow; i++)
       y += lines[i].height;
     let { x, width, height } = line.boundsFor(column);
-    return new Rectangle(x, y, width, height);
+    return new Rectangle(paddingLeft+x, paddingTop+y, width, height);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -714,6 +720,9 @@ export default class TextLayout {
     if (!lines.length) return {row: 0, column: 0};
 
     let {x,y: remainingHeight} = point, line, row = 0;
+    x -= morph.padding.left();
+    remainingHeight -= morph.padding.top();
+
     if (remainingHeight < 0) remainingHeight = 0;
 
     for (; row < lines.length; row++) {
@@ -743,7 +752,7 @@ export default class TextLayout {
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
-    return new Rectangle(0,0, textWidth, textHeight);
+    return new Rectangle(morph.padding.left(), morph.padding.top(), textWidth, textHeight);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

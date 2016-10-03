@@ -183,7 +183,7 @@ describe("scroll", () => {
     expect(sut.scroll).equals(pt(0,2*lineHeight+padTop));
     sut.cursorPosition = {column: 0, row: 0};
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,0))
+    expect(sut.scroll).equals(pt(0,padTop))
   });
 
 });
