@@ -1020,6 +1020,50 @@ export class Ellipse extends Morph {
   }
 }
 
+export class Triangle extends Morph {
+
+  constructor(props = {}) {
+    super({direction: "up", ...props});
+    this._currentState.triangleFill = props.fill;
+    this.update();
+  }
+
+  onChange(change) {
+    if (change.prop == "extent"
+     || change.prop == "direction"
+     || (change.prop == "fill" && change.value)
+   ) this.update();
+    super.onChange(change);
+ }
+
+  get direction() { return this.getProperty("direction"); }
+  set direction(col) { this.addValueChange("direction", col); }
+
+  update() {
+    var {x: width, y: height} = this.extent;
+    if (width != height) this.extent = pt(Math.max(width, height), Math.max(width, height))
+
+    this.origin = pt(width/2, height/2)
+
+    var color = this._currentState.triangleFill = this.fill || this._currentState.triangleFill;
+    this.fill = null;
+
+    var base = {width: width/2, style: "solid", color: color},
+        side = {width: height/2, style: "solid", color: Color.transparent},
+        side1, side2, bottom;
+  
+    switch (this.direction) {
+      case "down": side1 = "borderLeft"; side2 = "borderRight"; bottom = "borderTop"; break;
+      case "up": side1 = "borderLeft"; side2 = "borderRight"; bottom = "borderBottom"; break;
+      case "left": side1 = "borderBottom"; side2 = "borderTop"; bottom = "borderRight"; break;
+      case "right": side1 = "borderBottom"; side2 = "borderTop"; bottom = "borderLeft"; break;
+    }
+
+    Object.assign(this, {[side1]: side, [side2]: side, [bottom]: base});
+  }
+
+}
+
 export class Image extends Morph {
 
   constructor(props) {
