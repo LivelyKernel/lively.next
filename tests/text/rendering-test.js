@@ -59,6 +59,14 @@ async function createMorphicEnv() {
 
 async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
+function printStyleNormalized(style) { return obj.inspect(style).replace(/ /g, ""); }
+
+function getRenderedTextNodes(morph) {
+  let root = env.renderer.getNodeForMorph(morph),
+      textLayer = root.getElementsByClassName("text-layer")[0],
+      lines = Array.from(textLayer.childNodes).slice(1); // index 0 is spacer
+  return lines
+}
 
 describe("text rendering", () => {
 
@@ -104,8 +112,6 @@ describe("text rendering", () => {
   
   
   describe("rich text", () => {
-
-    function printStyleNormalized(style) { return obj.inspect(style).replace(/ /g, ""); }
     
     var style_a = { fontSize: 12, fontStyle: "italic" },
         style_b = { fontSize: 14, fontWeight: "bold" },
@@ -119,10 +125,8 @@ describe("text rendering", () => {
   
       await sut.whenRendered();
   
-      let root = env.renderer.getNodeForMorph(sut),
-          textLayer = root.getElementsByClassName("text-layer")[0],
-          line = textLayer.childNodes[1], // index 0 is spacer
-          chunks = line.childNodes;
+      let lines = getRenderedTextNodes(sut),
+          chunks = lines[0].childNodes;
   
       expect(chunks).property("length").equals(5);
   
@@ -150,6 +154,18 @@ describe("text rendering", () => {
   
       expect(strings).equals(["h", "e", "l", "l", "o"]);
     });
+  });
+
+  describe("non-style attributes", () => {
+
+    it("renders css classes", async () => {
+      sut.addTextAttribute(TextAttribute.create({styleClasses: ["class1", "class2"]}, 0, 1, 0, 2));
+      await sut.whenRendered();
+ 
+      let chunks = getRenderedTextNodes(sut)[0].childNodes;
+      expect(chunks[1].className).equals("class1 class2");
+    });
+
   });
 
   describe("visible line detection", () => {

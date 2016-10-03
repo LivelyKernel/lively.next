@@ -63,7 +63,7 @@ export default class FontMetric {
   }
 
   measure(style, text) {
-    var { fontFamily, fontSize, fontWeight, fontStyle, textDecoration } = style,
+    var { fontFamily, fontSize, fontWeight, fontStyle, textDecoration, styleClasses } = style,
         rect = null;
     this.element.textContent = text;
     this.element.style.fontFamily = fontFamily;
@@ -71,6 +71,7 @@ export default class FontMetric {
     this.element.style.fontWeight = fontWeight,
     this.element.style.fontStyle = fontStyle,
     this.element.style.textDecoration = textDecoration;
+    this.element.className = styleClasses ? styleClasses.join(" ") : "";
     var width, height;
     try {
       ({width, height} = this.element.getBoundingClientRect());
@@ -116,13 +117,14 @@ export default class FontMetric {
   sizeFor(style, char) {
     // Select style properties relevant to individual character size
     let { fontFamily, fontSize,
-          fontWeight, fontStyle, textDecoration } = style,
+          fontWeight, fontStyle, textDecoration, styleClasses } = style,
         relevantStyle = { fontFamily, fontSize,
-                          fontWeight, fontStyle, textDecoration };
+                          fontWeight, fontStyle, textDecoration, styleClasses };
 
     if (char.length > 1) return this.measure(relevantStyle, char);
 
-    let styleKey = [fontFamily, fontSize, fontWeight, fontStyle, textDecoration].join('-');
+    let className = styleClasses ? styleClasses.join(" ") : "";
+    let styleKey = [fontFamily, fontSize, fontWeight, fontStyle, textDecoration, className].join('-');
 
     if (!this.charMap[styleKey])
       this.charMap[styleKey] = {};

@@ -73,7 +73,8 @@ const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
 const styleProps = ["fontFamily", "fontSize", "fontColor", "fontWeight",
-                    "fontStyle", "textDecoration", "fixedCharacterSpacing"];
+                    "fontStyle", "textDecoration", "fixedCharacterSpacing",
+                    "styleClasses"];
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -88,6 +89,7 @@ function styleFromTextAttributes(textAttributes) {
     if ("fontStyle" in d)             s.fontStyle = d.fontStyle;
     if ("textDecoration" in d)        s.textDecoration = d.textDecoration;
     if ("fixedCharacterSpacing" in d) s.fixedCharacterSpacing = d.fixedCharacterSpacing;
+    if ("styleClasses" in d)          s.styleClasses = (s.styleClasses || []).concat(d.styleClasses);
   }
   return s;
 }
