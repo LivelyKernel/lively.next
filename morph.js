@@ -19,9 +19,10 @@ const defaultProperties = {
   origin: pt(0,0),
   extent: pt(10, 10),
   fill: Color.white,
-  borderWidth: 0,
-  borderColor: Color.white,
-  borderRadius: Rectangle.inset(0),
+  borderStyleLeft: "solid", borderWidthLeft: 0, borderColorLeft: Color.white, borderRadiusLeft: 0,
+  borderStyleRight: "solid", borderWidthRight: 0, borderColorRight: Color.white, borderRadiusRight: 0,
+  borderStyleBottom: "solid", borderWidthBottom: 0, borderColorBottom: Color.white, borderRadiusBottom: 0,
+  borderStyleTop: "solid", borderWidthTop: 0, borderColorTop: Color.white, borderRadiusTop: 0,
   clipMode: "visible",
   scroll: pt(0,0),
   reactsToPointer: true,
@@ -182,17 +183,55 @@ export class Morph {
   get opacity()         { return this.getProperty("opacity"); }
   set opacity(value)    { this.addValueChange("opacity", value); }
 
-  get borderWidth()       { return this.getProperty("borderWidth"); }
-  set borderWidth(value)  { this.addValueChange("borderWidth", value); }
+  get borderLeft()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} }
+  set borderLeft(x)   { this.borderStyleLeft = x.style; this.borderWidthLeft = x.width; this.borderColorLeft = x.color; }
+  get borderRight()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} }
+  set borderRight(x)  { this.borderStyleRight = x.style; this.borderWidthRight = x.width; this.borderColorRight = x.color; }
+  get borderBottom()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} }
+  set borderBottom(x) { this.borderStyleBottom = x.style; this.borderWidthBottom = x.width; this.borderColorBottom = x.color; }
+  get borderTop()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} }
+  set borderTop(x)    { this.borderStyleTop = x.style; this.borderWidthTop = x.width; this.borderColorTop = x.color; }
 
-  get borderColor()       { return this.getProperty("borderColor"); }
-  set borderColor(value)  { this.addValueChange("borderColor", value); }
-
-  get borderRadius()      { return this.getProperty("borderRadius"); }
-  set borderRadius(value) {
-    if (typeof value === "number") value = Rectangle.inset(value);
-    this.addValueChange("borderRadius", value);
-  }
+  get borderStyleLeft()        { return this.getProperty("borderStyleLeft"); }
+  set borderStyleLeft(value)   { this.addValueChange("borderStyleLeft", value); }
+  get borderStyleRight()       { return this.getProperty("borderStyleRight"); }
+  set borderStyleRight(value)  { this.addValueChange("borderStyleRight", value); }
+  get borderStyleBottom()      { return this.getProperty("borderStyleBottom"); }
+  set borderStyleBottom(value) { this.addValueChange("borderStyleBottom", value); }
+  get borderStyleTop()         { return this.getProperty("borderStyleTop"); }
+  set borderStyleTop(value)    { this.addValueChange("borderStyleTop", value); }
+  get borderRadiusLeft()        { return this.getProperty("borderRadiusLeft"); }
+  set borderRadiusLeft(value)   { this.addValueChange("borderRadiusLeft", value); }
+  get borderRadiusRight()       { return this.getProperty("borderRadiusRight"); }
+  set borderRadiusRight(value)  { this.addValueChange("borderRadiusRight", value); }
+  get borderRadiusBottom()      { return this.getProperty("borderRadiusBottom"); }
+  set borderRadiusBottom(value) { this.addValueChange("borderRadiusBottom", value); }
+  get borderRadiusTop()         { return this.getProperty("borderRadiusTop"); }
+  set borderRadiusTop(value)    { this.addValueChange("borderRadiusTop", value); }
+  get borderWidthLeft()        { return this.getProperty("borderWidthLeft"); }
+  set borderWidthLeft(value)   { this.addValueChange("borderWidthLeft", value); }
+  get borderWidthRight()       { return this.getProperty("borderWidthRight"); }
+  set borderWidthRight(value)  { this.addValueChange("borderWidthRight", value); }
+  get borderWidthBottom()      { return this.getProperty("borderWidthBottom"); }
+  set borderWidthBottom(value) { this.addValueChange("borderWidthBottom", value); }
+  get borderWidthTop()         { return this.getProperty("borderWidthTop"); }
+  set borderWidthTop(value)    { this.addValueChange("borderWidthTop", value); }
+  get borderColorLeft()        { return this.getProperty("borderColorLeft"); }
+  set borderColorLeft(value)   { this.addValueChange("borderColorLeft", value); }
+  get borderColorRight()       { return this.getProperty("borderColorRight"); }
+  set borderColorRight(value)  { this.addValueChange("borderColorRight", value); }
+  get borderColorBottom()      { return this.getProperty("borderColorBottom"); }
+  set borderColorBottom(value) { this.addValueChange("borderColorBottom", value); }
+  get borderColorTop()         { return this.getProperty("borderColorTop"); }
+  set borderColorTop(value)    { this.addValueChange("borderColorTop", value); }
+  get borderWidth()       { return this.borderWidthLeft; }
+  set borderWidth(value)  { this.borderWidthLeft = this.borderWidthRight = this.borderWidthTop = this.borderWidthBottom = value; }
+  get borderRadius()      { return this.borderRadiusLeft; }
+  set borderRadius(value) { this.borderRadiusLeft = this.borderRadiusRight = this.borderRadiusTop = this.borderRadiusBottom = value; }
+  get borderStyle()       { return this.borderStyleLeft; }
+  set borderStyle(value)  { this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value; }
+  get borderColor()       { return this.borderColorLeft; }
+  set borderColor(value)  { this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value; }
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  {
@@ -1011,13 +1050,15 @@ export class Morph {
 
 
 export class Ellipse extends Morph {
-
-  set borderRadius(_) {}
-  get borderRadius() {
-    // cut the corners so that a rectangle becomes an ellipse
-    var {x:w,y:h} = this.extent;
-    return Rectangle.inset(h,w,h,w);
-  }
+  // cut the corners so that a rectangle becomes an ellipse
+  set borderRadiusLeft(_) {}
+  get borderRadiusLeft() { return this.height; }
+  set borderRadiusRight(_) {}
+  get borderRadiusRight() { return this.height; }
+  set borderRadiusTop(_) {}
+  get borderRadiusTop() { return this.width; }
+  set borderRadiusBottom(_) {}
+  get borderRadiusBottom() { return this.width; }
 }
 
 export class Triangle extends Morph {
@@ -1034,7 +1075,7 @@ export class Triangle extends Morph {
      || (change.prop == "fill" && change.value)
    ) this.update();
     super.onChange(change);
- }
+  }
 
   get direction() { return this.getProperty("direction"); }
   set direction(col) { this.addValueChange("direction", col); }
@@ -1092,9 +1133,6 @@ export class Path extends Morph {
   }
   
   get isSvgMorph() { return true }
-
-  get borderStyle() { return this.getProperty("borderStyle") }
-  set borderStyle(value) { this.addValueChange("borderStyle", value) }
 
   get vertices() { return this.getProperty("vertices")}
   set vertices(value) { this.addValueChange("vertices", value)}

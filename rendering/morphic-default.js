@@ -18,14 +18,20 @@ class StyleMapper {
     return (visible != null) && {display: visible ? "inline" : "none"};
   }
   
-  getBorderRadius({borderRadius: br}) {
-    return br && {borderRadius: `${br.top()}px ${br.top()}px ${br.bottom()}px ${br.bottom()}px / ${br.left()}px ${br.right()}px ${br.right()}px ${br.left()}px`};
+  getBorderRadius({borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop}) {
+    return {borderRadius: `${borderRadiusTop}px ${borderRadiusTop}px ${borderRadiusBottom}px ${borderRadiusBottom}px / ${borderRadiusLeft}px ${borderRadiusRight}px ${borderRadiusRight}px ${borderRadiusLeft}px`};
   }
   
-  getBorderStyle({clipMode, borderWidth, borderColor}) {
-    return (clipMode == "hidden") ?
-            borderWidth && {border: `${borderWidth}px solid ${borderColor ? borderColor.toString() : "transparent"}`} :
-            borderWidth && {"box-shadow": `inset 0 0 0 ${borderWidth}px ${borderColor ? borderColor.toString() : "transparent"}`}
+  getBorder({borderWidthLeft, borderColorLeft, borderStyleLeft,
+             borderWidthRight, borderColorRight, borderStyleRight,
+             borderWidthBottom, borderColorBottom, borderStyleBottom,
+             borderWidthTop, borderColorTop, borderStyleTop}) {
+    return {
+      "border-left":   `${borderWidthLeft}px   ${borderStyleLeft}   ${borderColorLeft ? borderColorLeft.toString() : "transparent"}`,
+      "border-right":  `${borderWidthRight}px  ${borderStyleRight}  ${borderColorRight ? borderColorRight.toString() : "transparent"}`,
+      "border-bottom": `${borderWidthBottom}px ${borderStyleBottom} ${borderColorBottom ? borderColorBottom.toString() : "transparent"}`,
+      "border-top":    `${borderWidthTop}px    ${borderStyleTop}    ${borderColorTop ? borderColorTop.toString() : "transparent"}`
+    }
   }
   
   getFill({fill}) {
@@ -43,16 +49,27 @@ class StyleMapper {
   }
   
   maskProps(morph) {
+    // rk: What the heck is this?
     var {
       position, origin, scale, rotation,
-      origin, visible, borderRadius,clipMode, borderWidth, borderColor,
-      fill, extent, opacity, dropShadow, isSvgMorph
+      origin, visible, clipMode,
+      fill, extent, opacity, dropShadow, isSvgMorph,
+      borderWidthLeft, borderColorLeft, borderStyleLeft,
+      borderWidthRight, borderColorRight, borderStyleRight,
+      borderWidthBottom, borderColorBottom, borderStyleBottom,
+      borderWidthTop, borderColorTop, borderStyleTop,
+      borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop
     } = morph;
     
     return {
       position, origin, scale, rotation, opacity, dropShadow, isSvgMorph,
-      origin, visible, borderRadius,clipMode, borderWidth, borderColor,
-      fill, extent, ...morph._animationQueue.maskedProps
+      origin, visible, clipMode, fill, extent,
+      borderWidthLeft, borderColorLeft, borderStyleLeft,
+      borderWidthRight, borderColorRight, borderStyleRight,
+      borderWidthBottom, borderColorBottom, borderStyleBottom,
+      borderWidthTop, borderColorTop, borderStyleTop,
+      borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop,
+      ...morph._animationQueue.maskedProps
     }
   }
   
@@ -63,7 +80,7 @@ class StyleMapper {
       ...this.getTransformOrigin(morph),
       ...this.getDisplay(morph),
       ...this.getExtentStyle(morph),
-      ...this.getBorderStyle(morph),
+      ...this.getBorder(morph),
       ...this.getBorderRadius(morph),
       ...this.getShadowStyle(morph),
       ...(morph.opacity != null && {opacity: morph.opacity})
@@ -229,7 +246,6 @@ export function defaultStyle(morph) {
     opacity, clipMode, reactsToPointer,
     nativeCursor,     
   } = morph;
-  
 
   return {
     ...plainStyleMapper.getStylePropsMasked(morph),
