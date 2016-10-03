@@ -172,7 +172,7 @@ export class Renderer {
   renderImage(image) {
     return h("div", {
       ...defaultAttributes(image, this),
-        style: {...defaultStyle(image)}
+        style: defaultStyle(image)
       }, [
         h("img", {
           src: image.imageUrl,
@@ -190,7 +190,7 @@ export class Renderer {
   renderCheckBox(checkbox) {
     return h("div", {
       ...defaultAttributes(checkbox, this),
-        style: {...defaultStyle(checkbox)}
+        style: defaultStyle(checkbox)
       }, [
         h("input", {
           type: "checkbox",

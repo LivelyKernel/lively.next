@@ -214,10 +214,6 @@ export class PropertyAnimation {
   }
 }
 
-export function shadowNodeStyle(morph) {
-   return plainStyleMapper.getShadowProps(morph)
-}
-
 export function defaultStyle(morph) {
 
   const {
@@ -232,10 +228,6 @@ export function defaultStyle(morph) {
     "pointer-events": reactsToPointer ? "auto" : "none",
     cursor: nativeCursor
   };
-}
-
-function getShadowNode(node) {
-   return node.querySelector("#" + node.id + "-shadow");
 }
 
 // Sets the scroll later...
