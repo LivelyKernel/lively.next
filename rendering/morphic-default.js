@@ -2,7 +2,6 @@ import {diff, patch, create} from "virtual-dom";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt } from "lively.graphics";
-import Velocity from "velocity";
 
 class StyleMapper {
   
@@ -92,44 +91,18 @@ class StyleMapper {
   }
 }
 
-class VelocityStyleMapper extends StyleMapper {
-  
-  getFill({fill, isSvgMorph}) {
-    const [r,g,b,a] = (!isSvgMorph && fill && fill.toTuple8Bit()) || [];
-    return fill && !isSvgMorph && {
-            backgroundColorGreen: g,
-            backgroundColorRed: r,
-            backgroundColorBlue: b,
-            backgroundColorAlpha: a}
+  getShadowPropsMasked(morph) {
+     return this.getShadowProps(this.maskProps(morph));
   }
   
-  getTransform({position, origin, rotation, scale}) {
-    var translateX, translateY, rotateZ, scaleX, scaleY, velocityProps = {};
-    
-    if (position) {
-      origin = origin || pt(0,0);
-      velocityProps.translateX = translateX = `${position.x - origin.x}px`;
-      velocityProps.translateY = translateY = `${position.y - origin.y}px`;
-    }
-    
-    if (rotation != null) {
-      velocityProps.rotateZ = rotateZ = `${num.toDegrees(rotation)}deg`;
-    }
-    
-    if (scale != null) {
-      velocityProps.scaleX = scaleX = scale; 
-      velocityProps.scaleY = scaleY = scale;
-    }
-    
-    return velocityProps;
+  getStylePropsMasked(morph) {
+    return this.getStyleProps(this.maskProps(morph));
   }
-  
 }
 
 // classes do not seem to inherit static members
 // forcing us to create singletons
-const plainStyleMapper = new StyleMapper(),
-      velocityStyleMapper = new VelocityStyleMapper();
+const plainStyleMapper = new StyleMapper();
 
 export class AnimationQueue {
   
@@ -137,12 +110,12 @@ export class AnimationQueue {
     this.morph = morph;
     this.animations = [];
   }
+
+  get animationsActive() { return true } 
   
   get maskedProps() {
     return obj.merge(this.animations.map(a => a.maskedProps));
   }
-  
-  get animationsActive() { return Velocity != undefined }
   
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
@@ -205,18 +178,20 @@ export class PropertyAnimation {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
   
-  get easing() { return this.config.easing || "easeInOutQuint" }
+  get easing() { return "cubic-bezier(.86,0,.07,1)" }
   get onFinish() { return this.config.onFinish || (() => {})}
   get duration() { return this.config.duration || 1000 }
   
   getAnimationProps() {
-    const before = velocityStyleMapper.getStylePropsMasked(this.morph),
-          after = velocityStyleMapper.getStyleProps(this.morph),
-          res = {};
+    var before = plainStyleMapper.getStylePropsMasked(this.morph),
+        after = plainStyleMapper.getStyleProps(this.morph);
     for (var prop in before) {
-      if (!obj.equals(after[prop], before[prop])) res[prop] = [after[prop], before[prop]];
+      if (obj.equals(after[prop], before[prop])) {
+         delete before[prop];
+         delete after[prop];
+      }
     }
-    return res;
+    return [before, after];
   }
   
   assignProps() {
