@@ -1,6 +1,6 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render, transformStyle } from "./morphic-default.js";
+import { defaultStyle, defaultAttributes, render, shadowNodeStyle } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -160,26 +160,26 @@ export class Renderer {
   }
 
   renderSubmorphs(morph) {
-    const submorphs = [];
-    
-    morph.submorphs.forEach(m => {
-       if (m.dropShadow && !m.isImage) submorphs.push(this.renderShadow(m));
-       submorphs.push(this.render(m));
-    });
-    
-    return h("div", {
+    const submorphs = h("div", {
           style: {
             position: "absolute",
             transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`
           }
-        }, submorphs);
+        }, morph.submorphs.map(m => this.render(m)));
+        
+    if (!morph.isImage && !morph.isSvgMorph && !morph.isText) {
+       return this.renderShadow(morph, submorphs)
+    } else {
+       return submorphs;
+    }
   }
   
-  renderShadow(morph) {
-     return h("div", {style: {
-     			position: "absolute", 
-     			boxShadow: "0px 7px 35px 5px rgba(0,0,0,0.36)",
-     			...transformStyle(morph)}});
+  renderShadow(morph, submorphs) {
+     return h("div", {
+               className: "shadow",
+               id: morph.id + "-shadow",
+        	style: shadowNodeStyle(morph)
+         }, [submorphs]);
   }
 
   renderImage(image) {
@@ -250,14 +250,15 @@ export class Renderer {
   }
 
   renderSvgMorph(morph, svg) {
-    const {position, WebkitFilter,
-           display, top, left, opacity} = defaultStyle(morph),
+    const {position, filter,
+           display, top, left, opacity, 
+           transform, transformOrigin} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
     return h("div", {...defaultAttributes(morph, this),
-                     style: {...transformStyle(morph), position, opacity,
+                     style: {transform, transformOrigin, position, opacity,
                              width: width + 'px', height: height + 'px',
-                             display, WebkitFilter, "pointer-events": "auto"}},
+                             display, filter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
                         style: {position: "absolute", "pointer-events": "none"},
                         attributes:
