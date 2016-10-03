@@ -93,6 +93,14 @@ export class Menu extends Morph {
     this.updateMorphs();
   }
 
+  remove() {
+     this.animate({
+        opacity: 0, 
+        duration: 300, 
+        onFinish: () => super.remove()
+      });
+  }
+
   get title() { return this.getProperty("title") }
   set title(value) { this.addValueChange("title", value); }
 
