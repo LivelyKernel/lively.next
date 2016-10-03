@@ -111,6 +111,10 @@ export class Morph {
     return this.env.changeManager.groupChangesWhile(this, groupChange, whileFn);
   }
 
+  dontRecordChangesWhile(whileFn) {
+    return this.env.changeManager.dontRecordChangesWhile(this, whileFn);
+  }
+
   recordChangesWhile(whileFn, optFilter) {
     return this.env.changeManager.recordChangesWhile(whileFn, optFilter);
   }

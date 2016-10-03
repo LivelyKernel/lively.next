@@ -337,7 +337,7 @@ export class List extends Morph {
     var items = this.items;
     if (!items) return; // pre-initialize
 
-    this.groupChangesWhile(undefined, () => {
+    this.dontRecordChangesWhile(() => {
       var {
             itemHeight,
             itemMorphs, listItemContainer,

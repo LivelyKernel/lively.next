@@ -194,16 +194,21 @@ export class ChangeManager {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // group changes
 
-  groupChangesWhile(targetMorph, groupChange = new GroupChange(targetMorph), whileFn) {
+  groupChangesWhile(targetMorph, groupChange, whileFn, record = true) {
+    if (!groupChange) groupChange = new GroupChange(targetMorph);
     this.changeGroupStack.push(groupChange);
     try {
       whileFn();
       arr.remove(this.changeGroupStack, groupChange);
-      return this._record(targetMorph, groupChange);
+      return record ? this._record(targetMorph, groupChange) : groupChange;
     } catch (err) {
       arr.remove(this.changeGroupStack, groupChange);
       throw err;
     }
+  }
+
+  dontRecordChangesWhile(targetMorph, whileFn) {
+    return this.groupChangesWhile(targetMorph, undefined, whileFn, false);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
