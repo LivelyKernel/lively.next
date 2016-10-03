@@ -219,6 +219,21 @@ export class Button extends Morph {
       borderWidth: 1,
       active: true,
       padding: Rectangle.inset(2),
+      activeStyle: {
+        borderColor: Color.gray,
+        fill: Color.rgb(240,240,240),
+        fontColor: Color.almostBlack,
+        nativeCursor: "pointer"
+      },
+      inactiveStyle: {
+        borderColor: Color.gray.withA(0.5),
+        fill: Color.rgba(240,240,240, 0.5),
+        fontColor: Color.almostBlack.withA(0.5),
+        nativeCursor: "not-allowed"
+      },
+      triggerStyle: {
+        fill: Color.rgb(161,161,161)
+      },
       submorphs: [{
         type: "text",
         name: "label",
@@ -228,35 +243,19 @@ export class Button extends Morph {
       }],
       ...props
     });
+    this.active = this.active; // style
     this.relayout();
 
     connect(this, "change", this, "relayout", {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
     connect(this.submorphs[0], "change", this, "relayout", {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
   }
 
-  get activeStyle() {
-    return {
-      borderColor: Color.gray,
-      fill: Color.rgb(240,240,240),
-      fontColor: Color.almostBlack,
-      nativeCursor: "pointer"
-    }
-  }
-
-  get inactiveStyle() {
-    return {
-      borderColor: Color.gray.withA(0.5),
-      fill: Color.rgba(240,240,240, 0.5),
-      fontColor: Color.almostBlack.withA(0.5),
-      nativeCursor: "not-allowed"
-    }
-  }
-
-  get triggerStyle() {
-    return {
-      fill: Color.rgb(161,161,161)
-    }
-  }
+  get activeStyle() { return this.getProperty("activeStyle"); }
+  set activeStyle(value) { this.addValueChange("activeStyle", value); }
+  get inactiveStyle() { return this.getProperty("inactiveStyle"); }
+  set inactiveStyle(value) { this.addValueChange("inactiveStyle", value); }
+  get triggerStyle() { return this.getProperty("triggerStyle"); }
+  set triggerStyle(value) { this.addValueChange("triggerStyle", value); }
 
   relayout() {
     var padding = this.padding,
@@ -271,6 +270,8 @@ export class Button extends Morph {
 
   get label() { return this.get("label").textString; }
   set label(label) { this.get("label").textString = label; this.relayout(); }
+  get labelWithTextAttributes() { return this.get("label").textAndAttributes; }
+  set labelWithTextAttributes(textAndAttributes) { this.get("label").textAndAttributes = textAndAttributes; this.relayout(); }
   get fontFamily() { return this.submorphs[0].fontFamily; }
   set fontFamily(fontFamily) { this.submorphs[0].fontFamily = fontFamily; this.relayout(); }
   get fontSize() { return this.submorphs[0].fontSize; }
