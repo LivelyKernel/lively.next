@@ -1,6 +1,6 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render, shadowNodeStyle } from "./morphic-default.js";
+import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -160,27 +160,14 @@ export class Renderer {
   }
 
   renderSubmorphs(morph) {
-    const submorphs = h("div", {
+    return h("div", {
           style: {
             position: "absolute",
             transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`
           }
         }, morph.submorphs.map(m => this.render(m)));
-        
-    if (!morph.isImage && !morph.isSvgMorph && !morph.isText) {
-       return this.renderShadow(morph, submorphs)
-    } else {
-       return submorphs;
-    }
   }
-  
-  renderShadow(morph, submorphs) {
-     return h("div", {
-               className: "shadow",
-               id: morph.id + "-shadow",
-        	style: shadowNodeStyle(morph)
-         }, [submorphs]);
-  }
+
 
   renderImage(image) {
     return h("div", {

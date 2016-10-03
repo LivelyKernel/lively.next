@@ -44,15 +44,10 @@ class StyleMapper {
   }
   
   getShadowStyle(morph) {
-    return (morph.isSvgMorph || morph.isImage) && {filter: shadowCss(morph)}
-  }
-
-  getBoxShadowStyle(morph) {
-     return  {
-         boxShadow: morph.dropShadow ? 
+    if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)}
+    return {boxShadow: morph.dropShadow ? 
                     "0px 7px 35px 5px rgba(0,0,0,0.36)" :
-                    "0px 0px  0px 0px rgba(0,0,0,0.36)"
-     }
+                    "0px 0px  0px 0px rgba(0,0,0,0.36)"}
   }
   
   maskProps(morph) {
@@ -92,30 +87,6 @@ class StyleMapper {
       ...this.getShadowStyle(morph),
       ...(morph.opacity != null && {opacity: morph.opacity})
     }
-  }
-
-  getShadowProps(morph) {
-    const bw = morph.borderWidth || 0;
-    return {
-      "pointer-events": morph.reactsToPointer ? "auto" : "none",
-      display: "inline",
-      position: "absolute",
-      transform: "translateZ(0)",
-      width: morph.extent.x + "px",
-      height: morph.extent.y + "px",
-      ...(morph.clipMode == "hidden" &&
-            {borderColor: "transparent",
-             borderStyle: "solid",
-             borderWidth: morph.borderWidth + "px",
-             width: morph.extent.x - (2 * bw) + "px",
-             height: morph.extent.y - (2 * bw) + "px",}),
-      overflow: morph.clipMode,
-      ...this.getBoxShadowStyle(morph),
-      ...this.getBorderRadius(morph)};
-  }
-
-  getShadowPropsMasked(morph) {
-     return this.getShadowProps(this.maskProps(morph));
   }
   
   getStylePropsMasked(morph) {
@@ -222,36 +193,10 @@ export class PropertyAnimation {
         this.morph[prop] = this.changedProps[prop];
     }
   }
-
-  getShadowAnimationProps() {
-     var before = plainStyleMapper.getShadowPropsMasked(this.morph),
-         after = plainStyleMapper.getShadowProps(this.morph),
-         needed = false;
-     for (var prop in before) {
-       if (!obj.equals(after[prop], before[prop])) needed = true;
-     }
-     return !(this.morph.isImage || this.morph.isSvgMorph) && needed && [before, after];
-  }
   
   start(node) {
     if(node.animate && !this.active) {
       this.active = true;
-      let shadowNode = getShadowNode(node),
-          shadowAnimationProps = this.getShadowAnimationProps();
-      if (shadowNode && shadowAnimationProps) {
-         let anim = shadowNode.animate(shadowAnimationProps,
-                           {easing: this.easing,
-                            duration: this.duration});
-         anim.onfinish = () => {
-             this.finish();
-             this.morph.makeDirty();
-         }
-      } else if (shadowAnimationProps) {
-         // node is about to be mounted, so postpone animation for next frame
-         this.active = false;
-         this.morph.makeDirty();
-         return;
-      }
       let animationProps = this.getAnimationProps();
       if (animationProps) {
          let anim = node.animate(animationProps, 
@@ -283,6 +228,7 @@ export function defaultStyle(morph) {
   return {
     ...plainStyleMapper.getStylePropsMasked(morph),
     position: "absolute",
+    overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",
     cursor: nativeCursor
   };
@@ -316,7 +262,6 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
   });
 }
 MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
-  node = getShadowNode(node) || node;
   if (node) {
     const {x, y} = morph.scroll;      
     node.scrollTop !== y && (node.scrollTop = y);
