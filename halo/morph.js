@@ -646,7 +646,7 @@ export class Halo extends Morph {
       onMouseDown: (evt) => {
         //this.world().showLayoutHaloFor(this.target, this.state.pointerId);
         var picker = this.world().addMorph(
-          new ColorPicker({center: this.world().center, extent: pt(300,150)}))
+          new ColorPicker({center: this.world().center, color: this.target.fill}))
         connect(picker, "color", this.target, "fill");
         this.remove();
       }
