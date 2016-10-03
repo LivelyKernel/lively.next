@@ -2,9 +2,10 @@ import {diff, patch, create} from "virtual-dom";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt } from "lively.graphics";
+import { Morph } from '../index.js';
 
 class StyleMapper {
-  
+
   getTransform({position, origin, scale, rotation}) {
     return {transform: `translateX(${position.x - origin.x}px) translateY(${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`}
   }
@@ -12,15 +13,15 @@ class StyleMapper {
   getTransformOrigin({origin}) {
     return origin && {transformOrigin: `${origin.x}px ${origin.y}px`};
   }
-  
+
   getDisplay({visible}) {
     return (visible != null) && {display: visible ? "inline" : "none"};
   }
-  
+
   getBorderRadius({borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop}) {
     return {borderRadius: `${borderRadiusTop}px ${borderRadiusTop}px ${borderRadiusBottom}px ${borderRadiusBottom}px / ${borderRadiusLeft}px ${borderRadiusRight}px ${borderRadiusRight}px ${borderRadiusLeft}px`};
   }
-  
+
   getBorder({borderWidthLeft, borderColorLeft, borderStyleLeft,
              borderWidthRight, borderColorRight, borderStyleRight,
              borderWidthBottom, borderColorBottom, borderStyleBottom,
@@ -32,49 +33,32 @@ class StyleMapper {
       "border-top":    `${borderWidthTop}px    ${borderStyleTop}    ${borderColorTop ? borderColorTop.toString() : "transparent"}`
     }
   }
-  
+
   getFill({fill}) {
     return fill && {background: fill.toString()}
   }
-  
+
   getExtentStyle({width, height, extent}) {
     if(width && height) return {width: width + 'px', height: height + 'px'};
     if(extent) return {width: extent.x + 'px', height: extent.y + 'px'};
     return null;
   }
-  
+
   getShadowStyle(morph) {
     if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)}
-    return {boxShadow: morph.dropShadow ? 
+    return {boxShadow: morph.dropShadow ?
                     "0px 7px 35px 5px rgba(0,0,0,0.36)" :
                     "0px 0px  0px 0px rgba(0,0,0,0.36)"}
   }
-  
+
   maskProps(morph) {
-    // rk: What the heck is this?
-    var {
-      position, origin, scale, rotation,
-      origin, visible, clipMode, isImage,
-      fill, extent, opacity, dropShadow, isSvgMorph,
-      borderWidthLeft, borderColorLeft, borderStyleLeft,
-      borderWidthRight, borderColorRight, borderStyleRight,
-      borderWidthBottom, borderColorBottom, borderStyleBottom,
-      borderWidthTop, borderColorTop, borderStyleTop,
-      borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop
-    } = morph;
-    
-    return {
-      position, origin, scale, rotation, opacity, dropShadow, isSvgMorph,
-      origin, visible, clipMode, fill, extent, isImage, 
-      borderWidthLeft, borderColorLeft, borderStyleLeft,
-      borderWidthRight, borderColorRight, borderStyleRight,
-      borderWidthBottom, borderColorBottom, borderStyleBottom,
-      borderWidthTop, borderColorTop, borderStyleTop,
-      borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop,
-      ...morph._animationQueue.maskedProps
-    }
+    return Object.assign(new Morph(morph.exportToJSON()), 
+                         morph._animationQueue.maskedProps, {
+                            isImage: morph.isImage, 
+                            isSvgMorph: morph.isSvgMorph
+                         });
   }
-  
+
   getStyleProps(morph) {
     return {
       ...this.getFill(morph),
@@ -88,7 +72,7 @@ class StyleMapper {
       ...(morph.opacity != null && {opacity: morph.opacity})
     }
   }
-  
+
   getStylePropsMasked(morph) {
     return this.getStyleProps(this.maskProps(morph));
   }
@@ -99,18 +83,18 @@ class StyleMapper {
 const plainStyleMapper = new StyleMapper();
 
 export class AnimationQueue {
-  
+
   constructor(morph) {
     this.morph = morph;
     this.animations = [];
   }
 
-  get animationsActive() { return true } 
-  
+  get animationsActive() { return true }
+
   get maskedProps() {
     return obj.merge(this.animations.map(a => a.maskedProps));
   }
-  
+
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
     if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
@@ -119,17 +103,17 @@ export class AnimationQueue {
       return anim;
     }
   }
-  
+
   startAnimationsFor(node) { this.animations.forEach(anim => anim.start(node)); }
-  
+
   removeAnimation(animation) {
     arr.remove(this.animations, animation);
   }
-  
+
 }
 
 export class PropertyAnimation {
-  
+
   constructor(queue, morph, config) {
     this.queue = queue;
     this.morph = morph;
@@ -139,43 +123,43 @@ export class PropertyAnimation {
     // time they are witheld from being rendered
     this.maskedProps = obj.select(morph, properties.own(this.changedProps));
   }
-  
+
   finish() {
     this.queue.removeAnimation(this);
     this.onFinish();
   }
-  
+
   convertBounds(config) {
     var {bounds, origin, rotation, scale} = config,
          origin = origin || pt(0,0),
          rotation = rotation || 0,
          scale = scale || 1;
     if (bounds) {
-      return {...obj.dissoc(config, ["bounds"]), 
+      return {...obj.dissoc(config, ["bounds"]),
               origin, rotation, scale,
               position: bounds.topLeft().addPt(origin),
               extent: bounds.extent()};
     } else {
       return config
-    }    
+    }
   }
-  
+
   equals(animation) {
     return obj.equals(this.changedProps, animation.changedProps);
   }
-  
+
   get affectsMorph() {
-    return properties.any(this.changedProps, (changedProps, prop) => !obj.equals(changedProps[prop], this.morph[prop])); 
+    return properties.any(this.changedProps, (changedProps, prop) => !obj.equals(changedProps[prop], this.morph[prop]));
   }
-  
+
   get changedProps() {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
-  
+
   get easing() { return "cubic-bezier(.86,0,.07,1)" }
   get onFinish() { return this.config.onFinish || (() => {})}
   get duration() { return this.config.duration || 1000 }
-  
+
   getAnimationProps() {
     var before = plainStyleMapper.getStylePropsMasked(this.morph),
         after = plainStyleMapper.getStyleProps(this.morph);
@@ -187,23 +171,23 @@ export class PropertyAnimation {
     }
     return [before, after];
   }
-  
+
   assignProps() {
     for (var prop in this.changedProps) {
         this.morph[prop] = this.changedProps[prop];
     }
   }
-  
+
   start(node) {
     if(node.animate && !this.active) {
       this.active = true;
       let animationProps = this.getAnimationProps();
       if (animationProps) {
-         let anim = node.animate(animationProps, 
+         let anim = node.animate(animationProps,
                        {easing: this.easing,
                         duration: this.duration});
-         anim.onfinish = () => { 
-             this.finish(); 
+         anim.onfinish = () => {
+             this.finish();
              anim.cancel();
              this.morph.makeDirty();
          }
@@ -218,11 +202,11 @@ export function defaultStyle(morph) {
 
   const {
     opacity, clipMode, reactsToPointer,
-    nativeCursor,     
+    nativeCursor,
   } = morph;
 
   return {
-    ...plainStyleMapper.getStylePropsMasked(morph),
+    ...plainStyleMapper.getStyleProps(morph),
     position: "absolute",
     overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",
@@ -255,7 +239,7 @@ MorphAfterRenderHook.prototype.hook = function(node, propertyName, previousValue
 }
 MorphAfterRenderHook.prototype.updateScroll = function(morph, node) {
   if (node) {
-    const {x, y} = morph.scroll;      
+    const {x, y} = morph.scroll;
     node.scrollTop !== y && (node.scrollTop = y);
     node.scrollLeft !== x && (node.scrollLeft = x);
   }
@@ -294,8 +278,8 @@ export function defaultAttributes(morph, renderer) {
 }
 
 function shadowCss(morph) {
-  return morph.dropShadow ? 
-            `drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.4))` : 
+  return morph.dropShadow ?
+            `drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.4))` :
             `drop-shadow(0px 0px 0px rgba(0, 0, 0, 0.4))`;
 }
 
