@@ -1,5 +1,5 @@
 import { pt, Color, rect } from "lively.graphics";
-import { arr, grid, properties, num } from "lively.lang";
+import { arr, grid, properties, num, obj } from "lively.lang";
 import { GridLayoutHalo, FlexLayoutHalo } from "./halo/layout.js";
 import { Morph } from "./index.js";
 
@@ -29,7 +29,7 @@ class Layout {
   }
   
   affectsLayout(submorph, {prop, value, prevValue}) {
-    return ["position", "scale", "rotation"].includes(prop) && !(value && value.equals(prevValue));
+    return ["position", "scale", "rotation"].includes(prop) && !obj.equals(value, prevValue);
   }
 
   onSubmorphChange(submorph, change) {
