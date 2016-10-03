@@ -902,14 +902,14 @@ export class Hand extends Morph {
     this.addMorph(morph);
     // So that the morph doesn't steal events
     morph.reactsToPointer = false;
-    morph.dropShadow = true;
+    morph.animate({dropShadow: true, duration: 500});
   }
 
   dropMorphsOn(dropTarget) {
     this.grabbedMorphs.forEach(morph => {
       dropTarget.addMorph(morph)
       morph.reactsToPointer = this.prevMorphProps.reactsToPointer;
-      morph.dropShadow = this.prevMorphProps.dropShadow;
+      morph.animate({dropShadow: this.prevMorphProps.dropShadow, duration: 200});
     });
   }
 }
