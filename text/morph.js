@@ -704,6 +704,7 @@ export class Text extends Morph {
   getPositionAboveOrBelow(n = 1, pos = this.cursorPosition, useScreenPosition = false, goalColumn) {
     // n > 0 above, n < 0 below
 
+    if (n === 0) return pos;
 
     if (!useScreenPosition) {
       if (goalColumn === undefined) goalColumn = pos.column
@@ -756,7 +757,11 @@ export class Text extends Morph {
         column = nextRange.start.column + columnOffset;
     if (!nextRangeIsAtLineEnd && column >= nextRange.end.column) column--;
 
-    return {row: nextRange.end.row, column};
+    var newPos = {row: nextRange.end.row, column};
+
+    return Math.abs(n) > 1 ?
+      this.getPositionAboveOrBelow(n + (n > 1 ? -1 : 1), newPos, useScreenPosition, goalColumn) :
+      newPos
   }
 
   collapseSelection() {
