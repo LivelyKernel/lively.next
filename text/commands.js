@@ -262,7 +262,7 @@ var commands = [
     exec: function(morph) {
       morph.activeMark ?
         morph.selection.selectUp(1) :
-        morph.selection.goUp();
+        morph.selection.goUp(1, true/*use screen position*/);
       return true;
     }
   },
@@ -272,7 +272,7 @@ var commands = [
     exec: function(morph) {
       morph.activeMark ?
         morph.selection.selectDown(1) :
-        morph.selection.goDown(1);
+        morph.selection.goDown(1, true/*use screen position*/);
       return true;
     }
   },
@@ -289,12 +289,12 @@ var commands = [
 
   {
     name: "select up",
-    exec: function(morph) { morph.selection.selectUp(1); return true; }
+    exec: function(morph) { morph.selection.selectUp(1, true/*use screen position*/); return true; }
   },
 
   {
     name: "select down",
-    exec: function(morph) { morph.selection.selectDown(1); return true; }
+    exec: function(morph) { morph.selection.selectDown(1, true/*use screen position*/); return true; }
   },
 
   {
@@ -314,7 +314,7 @@ var commands = [
       var select = opts.select || !!morph.activeMark,
           sel = morph.selection,
           cursor = sel.lead,
-          line = morph.lineRange(cursor.row, true);
+          line = morph.screenLineRange(cursor, true);
       sel.lead = eqPosition(cursor, line.start) ? {column: 0, row: cursor.row} : line.start;
       !select && (sel.anchor = sel.lead);
       return true;
@@ -327,7 +327,7 @@ var commands = [
       var select = opts.select || !!morph.activeMark,
           sel = morph.selection,
           cursor = sel.lead,
-          line = morph.lineRange(cursor.row, true);
+          line = morph.screenLineRange(cursor, true);
       sel.lead = line.end;
       !select && (sel.anchor = sel.lead);
       return true;
@@ -393,31 +393,11 @@ var commands = [
   },
 
   {
-    name: 'move cursor to screen top in 1/3 steps',
-    readOnly: true,
-    exec: function(morph) {
-      var select = !!morph.activeMark,
-          currentPos = morph.cursorPosition,
-          firstRow = morph.textLayout.firstFullVisibleLine(morph),
-          lastRow = morph.textLayout.lastFullVisibleLine(morph),
-          middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
-          newPos = currentPos;
-      if (currentPos.row <= firstRow) return true;
-      if (currentPos.row <= middleRow) newPos.row = firstRow;
-      else if (currentPos.row <= lastRow) newPos.row = middleRow;
-      else newPos.row = lastRow;
-      morph.selection.lead = newPos;
-      if (!select) morph.selection.anchor = newPos;
-      return true;
-    }
- },
-
- {
     name: 'move cursor to screen bottom in 1/3 steps',
     readOnly: true,
     exec: function(morph) {
       var select = !!morph.activeMark,
-          currentPos = morph.cursorPosition,
+          currentPos = morph.lineWrapping ? morph.cursorScreenPosition : morph.cursorPosition,
           firstRow = morph.textLayout.firstFullVisibleLine(morph),
           lastRow = morph.textLayout.lastFullVisibleLine(morph),
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
@@ -426,8 +406,8 @@ var commands = [
       else if (currentPos.row < middleRow) newPos.row = middleRow;
       else if (currentPos.row < lastRow) newPos.row = lastRow;
       else return true;
-      morph.selection.lead = newPos;
-      if (!select) morph.selection.anchor = newPos;
+      morph.selection.lead = morph.lineWrapping ? morph.toDocumentPosition(newPos) : newPos;
+      if (!select) morph.selection.anchor = morph.selection.lead;
       return true;
     }
   },
@@ -437,37 +417,17 @@ var commands = [
     readOnly: true,
     exec: function(morph) {
       var select = !!morph.activeMark,
-          currentPos = morph.cursorPosition,
-          firstRow = morph.textLayout.firstFullyVisibleLine,
-          lastRow = morph.textLayout.lastFullyVisibleLine,
+          currentPos = morph.lineWrapping ? morph.cursorScreenPosition : morph.cursorPosition,
+          firstRow = morph.textLayout.firstFullVisibleLine(morph),
+          lastRow = morph.textLayout.lastFullVisibleLine(morph),
           middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
           newPos = currentPos;
       if (currentPos.row <= firstRow) return true;
       if (currentPos.row <= middleRow) newPos.row = firstRow;
       else if (currentPos.row <= lastRow) newPos.row = middleRow;
       else newPos.row = lastRow;
-      morph.selection.lead = newPos;
-      if (!select) morph.selection.anchor = newPos;
-      return true;
-    }
- },
-
- {
-    name: 'move cursor to screen bottom in 1/3 steps',
-    readOnly: true,
-    exec: function(morph) {
-      var select = !!morph.activeMark,
-          currentPos = morph.cursorPosition,
-          firstRow = morph.textLayout.firstFullyVisibleLine,
-          lastRow = morph.textLayout.lastFullyVisibleLine,
-          middleRow = firstRow+Math.floor((lastRow - firstRow)/2),
-          newPos = currentPos;
-      if (currentPos.row < firstRow) newPos.row = firstRow;
-      else if (currentPos.row < middleRow) newPos.row = middleRow;
-      else if (currentPos.row < lastRow) newPos.row = lastRow;
-      else return true;
-      morph.selection.lead = newPos;
-      if (!select) morph.selection.anchor = newPos;
+      morph.selection.lead = morph.lineWrapping ? morph.toDocumentPosition(newPos) : newPos;
+      if (!select) morph.selection.anchor = morph.selection.lead;
       return true;
     }
   },
@@ -940,6 +900,16 @@ var commands = [
   },
 
   {
+    name: "toggle line wrapping",
+    scrollCursorIntoView: false,
+    multiSelectAction: "single",
+    exec: function(morph) {
+      morph.keepPosAtSameScrollOffsetWhile(() => morph.lineWrapping = !morph.lineWrapping);
+      return true;
+    }
+  },
+
+  {
     name: "increase font size",
     scrollCursorIntoView: false,
     exec: function(morph) { morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize++); return true; }
@@ -1322,9 +1292,11 @@ var multiSelectCommands = [
     name: "[multi select] add cursor above",
     multiSelectAction: "single",
     exec: morph => {
-      var {row, column} = morph.selection.start;
-      if (row > 0)
-        morph.selection.addRange({start: {row: row-1, column}, end: {row: row-1, column}})
+      var start = morph.selection.start;      
+      if (start.row > 0) {
+        var pos = morph.getPositionAboveOrBelow(1, start, true)
+        morph.selection.addRange({start: pos, end: pos})
+      }
       return true;
     }
   },

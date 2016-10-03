@@ -2,10 +2,18 @@ import { defaultStyle, defaultAttributes } from "../rendering/morphic-default.js
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
+export var defaultRenderer = {
+
+  renderMorph(renderer, morph) {
+    return renderMorph(renderer, morph);
+  }
+
+}
+
 export function renderMorph(renderer, morph) {
   var textLayout = morph.textLayout;
 
-  textLayout.updateFromDocumentIfNecessary(morph.document);
+  textLayout.updateFromMorphIfNecessary(morph);
 
   var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
       selectionLayer = [];
@@ -38,13 +46,14 @@ function renderSelectionLayer(textLayouter, morph, selection, diminished = false
 
   if (!selection) return [];
 
-  let {start, end, lead, cursorVisible} = selection,
+  var {start, end, lead, cursorVisible} = selection,
+      start               = textLayouter.docToScreenPos(morph, start),
+      end                 = textLayouter.docToScreenPos(morph, end),
       isReverse           = selection.isReverse(),
-      {padding, document} = morph,
-      lines               = textLayouter.lines,
-      paddingOffset       = padding.topLeft(),
-      startPos            = textLayouter.pixelPositionFor(morph, start).addPt(paddingOffset),
-      endPos              = textLayouter.pixelPositionFor(morph, end).addPt(paddingOffset),
+      {document}          = morph,
+      lines               = textLayouter.wrappedLines(morph),
+      startPos            = textLayouter.pixelPositionForScreenPos(morph, start),
+      endPos              = textLayouter.pixelPositionForScreenPos(morph, end),
       cursorPos           = isReverse ? startPos : endPos,
       defaultHeight       = null,
       endLineHeight       = end.row in lines ?
@@ -116,7 +125,7 @@ function renderMarkerLayer(textLayouter, morph) {
 }
 
 function renderTextLayer(textLayouter, morph) {
-  let {lines} = textLayouter,
+  let lines = textLayouter.wrappedLines(morph),
       textWidth = 0, textHeight = 0,
       {padding, scroll, height} = morph,
       {y: visibleTop} = scroll.subPt(padding.topLeft()),
@@ -174,7 +183,7 @@ function renderTextLayer(textLayouter, morph) {
 }
 
 function renderDebugLayer(textLayouter, morph) {
-  let {lines} = textLayouter,
+  let lines = textLayouter.wrappedLines(morph),
       {y: visibleTop} = morph.scroll,
       visibleBottom = visibleTop + morph.height,
       {padding} = morph,
@@ -251,15 +260,14 @@ function cursor(pos, height, visible, diminished, width) {
 }
 
 function renderMarkerPart(textLayouter, morph, start, end, style) {
-  var padding = morph.padding,
-      {x,y} = textLayouter.boundsFor(morph, start),
+  var {x,y} = textLayouter.boundsFor(morph, start),
       {height, x: endX} = textLayouter.boundsFor(morph, end);
   return h("div.marker-layer-part", {
     style: {
       zIndex: -4,
       ...style,
       position: "absolute",
-      left: padding.left()+x + "px", top: padding.top()+y + "px",
+      left: x + "px", top: y + "px",
       height: height + "px",
       width: endX-x + "px"
     }

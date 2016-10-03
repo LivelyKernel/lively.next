@@ -183,7 +183,7 @@ describe("scroll", () => {
     expect(sut.scroll).equals(pt(0,2*lineHeight+padTop));
     sut.cursorPosition = {column: 0, row: 0};
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0,0))
+    expect(sut.scroll).equals(pt(0,padTop))
   });
 
 });
@@ -472,5 +472,40 @@ describe("text movement and selection commands", () => {
     });
 
   });
+
+  it("get position above and below with line wrapping", () => {
+
+    var {width: charWidth,height: charHeight} = fontMetric;
+    var padding = Rectangle.inset(3);
+    var t = text("a\ncdefg\n", {
+      extent: pt(3*charWidth + padding.left() + padding.right(), 200),
+      lineWrapping: true,
+      clipMode: "hidden"
+    });
+
+    t.cursorPosition = {column: 5,row: 1};
+    expect(t.cursorScreenPosition).deep.equals({row: 2, column: 2}, "before 1");
+
+    t.selection.goUp(1, true);
+    expect(t.cursorScreenPosition).deep.equals({row: 1, column: 2}, "up wrapped line 1");
+    expect(t.cursorPosition).deep.equals({row: 1, column: 2}, "up wrapped line 2");
+
+    t.selection.goUp(1, true);
+    expect(t.cursorScreenPosition).deep.equals({row: 0, column: 1}, "upped simple line ");
+
+    t.selection.goDown(3, true);
+    expect(t.cursorScreenPosition).deep.equals({row: 3, column: 0}, "down into wrapped");
+
+    t.selection.goUp(1, true);
+    expect(t.cursorScreenPosition).deep.equals({row: 2, column: 2}, "up again from empty line");
+
+    t.cursorPosition = {row: 3, column: 0}
+    t.selection.goUp(1, true);
+    expect(t.cursorScreenPosition).deep.equals({row: 2, column: 0}, "up from empty line with goal column set to it");
+
+    t.cursorScreenPosition = {row: 2, column: 1}
+    t.selection.goUp(1, true);
+    expect(t.cursorScreenPosition).deep.equals({row: 1, column: 1}, "up from wrapped line with goal column set to it");
+  })
 
 });

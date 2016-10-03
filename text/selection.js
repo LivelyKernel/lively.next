@@ -67,7 +67,9 @@ export class Selection {
     if (range.equals(this._range)) return;
 
     this._range = range;
-    this._goalColumn = this.lead.column;
+    this._goalColumn = this.textMorph.lineWrapping ?
+      this.textMorph.toScreenPosition(this.lead).column :
+      this.lead.column;
 
     this.startAnchor.position = range.start;
     this.endAnchor.position = range.end;
@@ -158,22 +160,18 @@ export class Selection {
     return this;
   }
   selectRight(n = 1) { this.isReverse() ? this.growLeft(-n) : this.growRight(n); return this; }
-  selectUp(n = 1) {
-    var goalColumn = this._goalColumn;
-    this.lead = {row: this.lead.row-n, column: goalColumn};
-    this._goalColumn = goalColumn;
-    return this;
-  }
-  selectDown(n = 1) { return this.selectUp(-n); }
+  selectUp(n = 1, useScreenPosition) { return this.goUp(n, useScreenPosition, true); }
+  selectDown(n = 1, useScreenPosition) { return this.selectUp(-n, useScreenPosition); }
 
-  goUp(n = 1) {
+  goUp(n = 1, useScreenPosition = false, select = false) {
+    if (n === 0) return this;
     var goalColumn = this._goalColumn;
-    this.lead = {row: this.lead.row-n, column: goalColumn};
-    this.anchor = this.lead;
+    this.lead = this.textMorph.getPositionAboveOrBelow(n, this.lead, useScreenPosition, goalColumn);
+    if (!select) this.anchor = this.lead;
     this._goalColumn = goalColumn;
     return this;
   }
-  goDown(n = 1) { return this.goUp(-n); }
+  goDown(n = 1, useScreenPosition) { return this.goUp(-n, useScreenPosition); }
 
   goLeft(n = 1) {
     this.isEmpty() && this.growLeft(n);
@@ -314,11 +312,11 @@ export class MultiSelection extends Selection {
 
   selectLeft(n) { this.defaultSelection.selectLeft(n); return this; }
   selectRight(n) { this.defaultSelection.selectRight(n); return this; }
-  selectUp(n) { this.defaultSelection.selectUp(n); return this; }
-  selectDown(n) { this.defaultSelection.selectDown(n); return this; }
+  selectUp(n, useScreenPosition) { this.defaultSelection.selectUp(n, useScreenPosition); return this; }
+  selectDown(n, useScreenPosition) { this.defaultSelection.selectDown(n, useScreenPosition); return this; }
 
-  goUp(n) { return this.defaultSelection.goUp(n); return this; }
-  goDown(n) { return this.defaultSelection.goDown(n); return this; }
+  goUp(n, useScreenPosition) { return this.defaultSelection.goUp(n, useScreenPosition); return this; }
+  goDown(n, useScreenPosition) { return this.defaultSelection.goDown(n, useScreenPosition); return this; }
   goLeft(n) { return this.defaultSelection.goLeft(n); return this; }
   goRight(n) { return this.defaultSelection.goRight(n); return this; }
 
@@ -334,7 +332,7 @@ export class MultiSelection extends Selection {
         this.textMorph.makeDirty();
       }, timeout*1000);
   }
-  
+
   cursorBlinkStop() {
     super.cursorBlinkStop();
     this.selections.forEach(sel => sel._cursorVisible = true);

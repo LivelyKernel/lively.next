@@ -71,15 +71,11 @@ export default class FontMetric {
     this.element.style.fontWeight = fontWeight,
     this.element.style.fontStyle = fontStyle,
     this.element.style.textDecoration = textDecoration;
+    var width, height;
     try {
-      rect = this.element.getBoundingClientRect();
-    } catch(e) {
-      rect = {width: 0, height:0};
-    };
-    return {
-      height: rect.height,
-      width: rect.width
-    }
+      ({width, height} = this.element.getBoundingClientRect());
+    } catch(e) { return {width: 0, height:0}; };
+    return {height, width}
   }
 
   charBoundsFor(style, str) {

@@ -14,7 +14,7 @@ import { Anchor } from "./anchors.js";
 import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
-import { renderMorph } from "./rendering.js"
+import { renderMorph, defaultRenderer } from "./rendering.js"
 
 export class Text extends Morph {
 
@@ -51,10 +51,12 @@ export class Text extends Morph {
 
   constructor(props = {}) {
     var {
+      textLayout, textRenderer, lineWrapping,
       fontMetric, textString, selectable, selection, clipMode, textAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
     } = props;
     props = obj.dissoc(props, [
+      "textLayout", "textRenderer", "lineWrapping",
       "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
       // default style attrs: need document to be installed first
       "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration", "fixedCharacterSpacing"
@@ -64,12 +66,13 @@ export class Text extends Morph {
       draggable: false,
       fixedWidth: false, fixedHeight: false,
       padding: 0,
-      useSoftTabs: config.text.useSoftTabs || true,
+      useSoftTabs: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true,
       tabWidth: config.text.tabWidth || 2,
       savedMarks: [],
       ...props
     });
-    this.textLayout = new TextLayout(fontMetric || this.env.fontMetric);
+    this.textLayout = textLayout || new TextLayout(fontMetric || this.env.fontMetric);
+    this.textRenderer = textRenderer || defaultRenderer;
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
     this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
@@ -77,14 +80,15 @@ export class Text extends Morph {
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
     if (clipMode) this.clipMode = clipMode;
-    
+
     this.fontFamily = fontFamily || "Sans-Serif";
     this.fontSize = fontSize || 12;
     this.fontColor = fontColor || Color.black;
     this.fontWeight = fontWeight || "normal";
     this.fontStyle = fontStyle || "normal";
     this.textDecoration = textDecoration || "none";
-    this.fixedCharacterSpacing = fixedCharacterSpacing || false;
+    this.fixedCharacterSpacing = fixedCharacterSpacing !== undefined ? fixedCharacterSpacing : false;
+    this.lineWrapping = lineWrapping !== undefined ? lineWrapping : true;
 
     if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
@@ -96,7 +100,10 @@ export class Text extends Morph {
   onChange(change) {
     var textChange = change.selector === "insertText"
                   || change.selector === "deleteText";
+
     if (textChange
+     || (change.prop === "extent" && this.lineWrapping && this.isClip())
+     || (change.prop === "lineWrapping" && this.isClip())
      || change.prop === "fixedWidth"
      || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
@@ -105,8 +112,8 @@ export class Text extends Morph {
      || change.prop === "fontWeight"
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
-     || change.prop === "fixedCharacterSpacing")
-       this.textLayout && (this.textLayout.layoutComputed = false);
+     || change.prop === "fixedCharacterSpacing"
+    ) this.textLayout && (this.textLayout.layoutComputed = false);
 
     super.onChange(change);
     textChange && signal(this, "textChange");
@@ -184,6 +191,12 @@ export class Text extends Morph {
   set fixedCharacterSpacing(fixedCharacterSpacing) {
     this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
     this.setDefaultStyle({fixedCharacterSpacing});
+  }
+
+  get lineWrapping() { return this.getProperty("lineWrapping") }
+  set lineWrapping(lineWrapping) {
+    this.addValueChange("lineWrapping", lineWrapping);
+    this.textLayout.updateFromMorphIfNecessary(this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -310,18 +323,15 @@ export class Text extends Morph {
   }
 
   textBounds() {
-    return this.textLayout ? this.textLayout.textBounds(this) : new Rectangle(0,0,0,0);
+    return this.textLayout ? this.textLayout.textBounds(this) : this.padding.topLeft().extent(pt(0,0));
   }
-  paddedTextBounds() {
-    let textBounds = this.textBounds(),
-        { padding } = this;
-    return new Rectangle(textBounds.x - padding.left(),
-                         textBounds.y - padding.top(),
-                         textBounds.width + padding.left() + padding.right(),
-                         textBounds.height + padding.top() + padding.bottom());
-  }
+
+
   get scrollExtent() {
-    return this.paddedTextBounds().extent().maxPt(super.scrollExtent);
+    return this.textBounds().extent()
+      .addPt(this.padding.topLeft())
+      .addPt(this.padding.bottomRight())
+      .maxPt(super.scrollExtent);
   }
 
   get useSoftTabs()  { return this.getProperty("useSoftTabs"); }
@@ -427,8 +437,11 @@ export class Text extends Morph {
   charRight({row, column} = this.cursorPosition) { return this.getLine(row).slice(column, column+1); }
   charLeft({row, column} = this.cursorPosition) { return this.getLine(row).slice(column-1, column); }
 
-  getLine(row) {
-    if (typeof row !== "number") this.cursorPosition.row;
+  getVisibleLine(row = this.cursorScreenPosition.row) {
+    return this.textLayout.wrappedLines(this)[row].text
+  }
+
+  getLine(row = this.cursorPosition.row) {
     var doc = this.document;
     return doc.getLine(row);
   }
@@ -446,6 +459,21 @@ export class Text extends Morph {
         leadingSpace = line.match(/^\s*/);
     if (leadingSpace[0].length && ignoreLeadingWhitespace)
       range.start.column += leadingSpace[0].length;
+    return new Range(range);
+  }
+
+  rangesOfWrappedLine(row = this.cursorPosition.row) {
+    return this.textLayout.rangesOfWrappedLine(this, row);
+  }
+
+  screenLineRange(pos = this.cursorPosition, ignoreLeadingWhitespace = true) {
+    var ranges = this.textLayout.rangesOfWrappedLine(this, pos.row),
+        range = ranges.slice().reverse().find(({start, end}) => start.column <= pos.column),
+        content = this.textInRange(range),
+        leadingSpace = content.match(/^\s*/);
+    if (leadingSpace[0].length && ignoreLeadingWhitespace)
+      range.start.column += leadingSpace[0].length;
+    if (range !== arr.last(ranges)) range.end.column--;
     return new Range(range);
   }
 
@@ -581,14 +609,12 @@ export class Text extends Morph {
   }
 
   get whatsVisible() {
-    var startRow = this.textLayout.firstVisibleLine,
+    var startRow = this.textLayout.firstVisibleLine || 0,
         endRow = this.textLayout.lastVisibleLine,
-        lines = this.document.lines;
-    return {
-      lines: startRow === undefined || endRow === undefined ?
-              lines : lines.slice(startRow, endRow),
-      startRow, endRow
-    }
+        lines = this.lineWrapping ?
+          this.textLayout.wrappedLines(this).slice(startRow, endRow).map(ea => ea.text) :
+          this.document.lines.slice(startRow, endRow);
+    return {lines, startRow, endRow};
   }
 
 
@@ -667,11 +693,76 @@ export class Text extends Morph {
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
   get documentEndPosition() { return this.document.endPosition; }
+  get cursorScreenPosition() { return this.toScreenPosition(this.cursorPosition); }
+  set cursorScreenPosition(p) { return this.cursorPosition = this.toDocumentPosition(p); }
 
   cursorUp(n = 1) { return this.selection.goUp(n); }
   cursorDown(n = 1) { return this.selection.goDown(n); }
   cursorLeft(n = 1) { return this.selection.goLeft(n); }
   cursorRight(n = 1) { return this.selection.goRight(n); }
+
+  getPositionAboveOrBelow(n = 1, pos = this.cursorPosition, useScreenPosition = false, goalColumn) {
+    // n > 0 above, n < 0 below
+
+    if (n === 0) return pos;
+
+    if (!useScreenPosition) {
+      if (goalColumn === undefined) goalColumn = pos.column
+      return {
+        row: pos.row-n,
+        column: Math.min(this.getLine(pos.row-n).length, goalColumn)
+      }
+    }
+
+    // up / down in screen coordinates is a little difficult, there are a
+    // number of requirements to observe:
+    // When going up and down the "goalColumn" should be observed, that is
+    // the column offset from the (screen!) line start that the cursor should
+    // be placed on. If the (screen) line is shorter than that then the cursor
+    // should be placed at line end. Important here is that the line end for
+    // wrapped lines is actually not the column value after the last char but
+    // the column before the last char (b/c there is no newline the cursor could
+    // be placed between). For actual line ends the last column value is after
+    // the last char.
+
+    var ranges = this.rangesOfWrappedLine(pos.row)
+    if (!ranges.length) return pos;
+
+    var currentRangeIndex = ranges.length -1 - ranges.slice().reverse().findIndex(({start, end}) =>
+                                                  start.column <= pos.column),
+        nextRange, nextRangeIsAtLineEnd = false;
+
+    if (n >= 1) {
+      var isFirst = 0 === currentRangeIndex;
+      nextRange = isFirst ?
+        arr.last(this.rangesOfWrappedLine(pos.row-1)) :
+        ranges[currentRangeIndex-1];
+      if (!nextRange) return pos;
+      nextRangeIsAtLineEnd = isFirst;
+
+    } else if (n <= -1) {
+      var isLast = ranges.length-1 === currentRangeIndex,
+          nextRanges = isLast ?
+            this.rangesOfWrappedLine(pos.row+1) :
+            ranges.slice(currentRangeIndex+1);
+      nextRange = nextRanges[0];
+      if (!nextRange) return pos;
+      nextRangeIsAtLineEnd = nextRanges.length === 1;
+    }
+
+    if (goalColumn === undefined)
+      goalColumn = pos.column - ranges[currentRangeIndex].start.column
+
+    var columnOffset = Math.min(nextRange.end.column - nextRange.start.column, goalColumn),
+        column = nextRange.start.column + columnOffset;
+    if (!nextRangeIsAtLineEnd && column >= nextRange.end.column) column--;
+
+    var newPos = {row: nextRange.end.row, column};
+
+    return Math.abs(n) > 1 ?
+      this.getPositionAboveOrBelow(n + (n > 1 ? -1 : 1), newPos, useScreenPosition, goalColumn) :
+      newPos
+  }
 
   collapseSelection() {
     this.selection.collapse(this.selection.lead);
@@ -706,8 +797,11 @@ export class Text extends Morph {
   scrollPositionIntoView(pos, offset = pt(0,0)) {
     if (!this.isClip()) return;
     var { scroll, padding } = this,
-        paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll),
-        charBounds =   this.charBoundsFromTextPosition(pos).insetByPt(pt(-20, 0)),
+        paddedBounds = this.innerBounds().translatedBy(scroll),
+        charBounds =   this.charBoundsFromTextPosition(pos),
+        // if no line wrapping is enabled we add a little horizontal offset so
+        // that characters at line end are better visible
+        charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
         delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
@@ -743,9 +837,9 @@ export class Text extends Morph {
   fit() {
     let {fixedWidth, fixedHeight} = this;
     if ((fixedHeight && fixedWidth) || !this.textLayout/*not init'ed yet*/) return;
-    let paddedTextBounds = this.paddedTextBounds();
-    if (!fixedHeight) this.height = paddedTextBounds.height;
-    if (!fixedWidth) this.width = paddedTextBounds.width;
+    let textBounds = this.textBounds().outsetByRect(this.padding);
+    if (!fixedHeight) this.height = textBounds.height;
+    if (!fixedWidth) this.width = textBounds.width;
   }
 
   fitIfNeeded() {
@@ -758,23 +852,25 @@ export class Text extends Morph {
   }
 
   textPositionFromPoint(point) {
-    return this.textLayout.textPositionFor(this, point);
+    // FIXME cleanup when text wrapping thing done!
+    return this.textLayout.screenToDocPos(this, this.screenPositionFromPoint(point));
+  }
+
+  screenPositionFromPoint(point) {
+    // FIXME cleanup when text wrapping thing done!
+    return this.textLayout.screenPositionFor(this, point);
+  }
+
+  toScreenPosition(documentPosition) {
+    return this.textLayout.docToScreenPos(this, documentPosition);
+  }
+
+  toDocumentPosition(screenPosition) {
+    return this.textLayout.screenToDocPos(this, screenPosition);
   }
 
   charBoundsFromTextPosition(pos) {
     return this.textLayout.boundsFor(this, pos);
-  }
-
-  paddingAndScrollOffset() {
-    return this.padding.topLeft().subPt(this.scroll);
-  }
-
-  addPaddingAndScroll(point) {
-    return point.addPt(this.paddingAndScrollOffset());
-  }
-
-  removePaddingAndScroll(point) {
-    return point.subPt(this.paddingAndScrollOffset());
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -785,7 +881,7 @@ export class Text extends Morph {
     this.fitIfNeeded();
   }
 
-  render(renderer) { return renderMorph(renderer, this); }
+  render(renderer) { return this.textRenderer.renderMorph(renderer, this); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mouse events
@@ -798,7 +894,7 @@ export class Text extends Morph {
     var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1;
 
     if (evt.isShiftDown() && this.selectable) {
-      this.selection.lead = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(position)));
+      this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
       return true;
     }
 
@@ -814,11 +910,11 @@ export class Text extends Morph {
     var {clickedOnMorph, clickedOnPosition} = evt.state;
     if (clickedOnMorph !== this || !this.selectable) return;
 
-    var textPosClicked = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(evt.position)));
+    var textPosClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
 
     this.selection.lead = textPosClicked;
     if (!evt.isShiftDown()) {
-      var start = this.textPositionFromPoint(this.removePaddingAndScroll(this.localize(clickedOnPosition)));
+      var start = this.textPositionFromPoint(this.scroll.addPt(this.localize(clickedOnPosition)));
       this.selection.anchor = start;
     }
   }
