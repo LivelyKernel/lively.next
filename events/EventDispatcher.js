@@ -299,7 +299,7 @@ export default class EventDispatcher {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       case "pointerup":
-        defaultEvent.onDispatch(() => {
+        defaultEvent.onAfterDispatch(() => {
           let { clickedOnMorph, clickedOnPosition, clickCount } = state,
               clickedAtTime = Date.now();
           state.prevClick = { clickedOnMorph, clickedOnPosition, clickedAtTime, clickCount };

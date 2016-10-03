@@ -124,6 +124,11 @@ export class Event {
     return aMorph.localize(this.position);
   }
 
+  isClickTarget(morph) {
+    var clicked = this.state.clickedOnMorph;
+    return clicked && (morph === clicked || morph.isAncestorOf(clicked));
+  }
+
   // mouse buttons, see
   // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
   leftMouseButtonPressed() {

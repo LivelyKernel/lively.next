@@ -226,7 +226,7 @@ export class Button extends Morph {
         selectable: false,
         fill: Color.white.withA(0),
       }],
-      ...props,
+      ...props
     });
     this.relayout();
 
@@ -313,11 +313,23 @@ export class Button extends Morph {
   }
 
   onMouseUp(evt) {
-    if (this.active) {
+    if (evt.isClickTarget(this) && this.active) {
       Object.assign(this, this.activeStyle);
       this.trigger();
     }
   }
+
+  onHoverOut(evt) {
+    // When leaving the button without mouse up, reset appearance
+    if (this.active && evt.isClickTarget(this))
+      Object.assign(this, this.activeStyle);
+  }
+
+  onHoverIn(evt) {
+    if (this.active && evt.isClickTarget(this))
+      Object.assign(this, this.triggerStyle);
+  }
+
 }
 
 export class CheckBox extends Morph {
@@ -348,11 +360,11 @@ export class CheckBox extends Morph {
       else console.error(err);
     }
   }
-  
+
   onMouseDown(evt) {
     if (this.active) this.trigger();
   }
-  
+
   render(renderer) {
     return renderer.renderCheckBox(this);
   }
@@ -360,11 +372,11 @@ export class CheckBox extends Morph {
 }
 
 export class TooltipViewer {
-  
+
   constructor(world) {
     this.currenMorph = world;
   }
-  
+
   mouseMove({targetMorph}) {
     if(this.currentMorph != targetMorph) {
       this.hoverOutOfMorph(this.currentMorph);
@@ -372,7 +384,7 @@ export class TooltipViewer {
       this.currentMorph = targetMorph;
     }
   }
-     
+
   hoverIntoMorph(morph) {
     this.clearScheduledTooltip();
     if (this.currentTooltip) {
@@ -381,44 +393,44 @@ export class TooltipViewer {
       this.scheduleTooltipFor(morph);
     }
   }
-  
+
   hoverOutOfMorph(morph) {
     const current = this.currentTooltip;
     this.currentTooltip && this.currentTooltip.softRemove((tooltip) => {
       this.clearTooltip(tooltip);
     });
   }
-  
+
   scheduleTooltipFor(morph) {
     this.timer = setTimeout(() => {
         this.showTooltipFor(morph);
       }, config.showTooltipsAfter * 1000);
   }
-  
+
   clearScheduledTooltip() {
     clearTimeout(this.timer);
   }
-  
+
   clearTooltip(tooltip) {
     if (this.currentTooltip == tooltip) {
       this.currentTooltip = null;
     }
   }
-     
+
   showTooltipFor(morph) {
     if (morph.tooltip) {
       this.currentTooltip && this.currentTooltip.remove();
       this.currentTooltip = new Tooltip({
         position: morph.globalBounds().bottomRight(),
         description: morph.tooltip});
-      morph.world().addMorph(this.currentTooltip); 
+      morph.world().addMorph(this.currentTooltip);
     }
   }
-  
+
 }
 
 class Tooltip extends Morph {
-  
+
   constructor(props) {
     super({
       ...props,
@@ -436,12 +448,12 @@ class Tooltip extends Morph {
       })]
     });
   }
-  
+
   softRemove(cb) {
     this.animate({opacity: 0, onFinish: () => {
       cb(this);
       this.remove()
     }});
   }
-  
+
 }
