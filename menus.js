@@ -4,7 +4,7 @@ import { pt, Color } from "lively.graphics";
 
 export class MenuItem extends Text {
 
-  constructor(textString, action, props) {
+  constructor({textString, action, props}) {
     super({
      fixedWidth: false, fixedHeight: false,
      fill: null,
@@ -95,8 +95,8 @@ export class Menu extends Morph {
 
   remove() {
      this.animate({
-        opacity: 0, 
-        duration: 300, 
+        opacity: 0,
+        duration: 300,
         onFinish: () => super.remove()
       });
   }
@@ -126,7 +126,11 @@ export class Menu extends Morph {
     }
 
     this.items.forEach(item => {
-      var itemMorph = this.addMorph(new MenuItem(item[0], item[1], {position: pos}));
+      var itemMorph = this.addMorph(new MenuItem({
+           textString: item[0],
+           action: item[1],
+           props: {position: pos}
+      }));
       pos = itemMorph.bottomLeft;
       maxWidth = Math.max(itemMorph.width + 6/*FIXME*/, maxWidth);
     });
