@@ -13,6 +13,7 @@ class ListItemMorph extends Text {
 
   constructor(props) {
     super({
+      lineWrapping: false,
       halosEnabled: false, readOnly: true, selectable: false,
       fixedWidth: true, fixedHeight: false, fill: null,
       textString: "", itemIndex: undefined, ...props
