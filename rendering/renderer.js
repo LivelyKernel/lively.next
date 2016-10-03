@@ -163,7 +163,7 @@ export class Renderer {
     return h("div", {
           style: {
             position: "absolute",
-            transform: `translate(${morph.origin.x}px,${morph.origin.y}px)`
+            transform: `translate(${morph.origin.x - morph.borderWidthLeft}px,${morph.origin.y - morph.borderWidthTop}px)`
           }
         }, morph.submorphs.map(m => this.render(m)));
   }
