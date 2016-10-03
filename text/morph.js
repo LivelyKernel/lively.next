@@ -14,7 +14,7 @@ import { Anchor } from "./anchors.js";
 import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
-import { renderMorph, defaultRenderer } from "./rendering.js"
+import { defaultRenderer } from "./rendering.js"
 
 export class Text extends Morph {
 
@@ -52,7 +52,7 @@ export class Text extends Morph {
   constructor(props = {}) {
     var {
       textLayout, textRenderer, lineWrapping,
-      fontMetric, textString, selectable, selection, clipMode, textAttributes,
+      fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
     } = props;
     props = obj.dissoc(props, [
@@ -75,7 +75,9 @@ export class Text extends Morph {
     this.textRenderer = textRenderer || defaultRenderer;
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
-    this._selection = selection ? new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) : null;
+    this._selection = selection ?
+      new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) :
+      null /*initialized when needed to make morph creation more leightweight*/;
     this._anchors = null;
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
@@ -90,7 +92,8 @@ export class Text extends Morph {
     this.fixedCharacterSpacing = fixedCharacterSpacing !== undefined ? fixedCharacterSpacing : false;
     this.lineWrapping = lineWrapping !== undefined ? lineWrapping : true;
 
-    if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
+    if (textAndAttributes) this.textAndAttributes = textAndAttributes;
+    else if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
     this.fit();
     this._needsFit = false;
   }
@@ -341,7 +344,7 @@ export class Text extends Morph {
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
   get commands() { return (this._commands || []).concat(commands); }
-  
+
 
   execCommand(commandOrName, args, count, evt) {
     var {name, command} = this.lookupCommand(commandOrName);
@@ -475,6 +478,20 @@ export class Text extends Morph {
       range.start.column += leadingSpace[0].length;
     if (range !== arr.last(ranges)) range.end.column--;
     return new Range(range);
+  }
+
+  get textAndAttributes() { return this.document.textAndAttributes; }
+  set textAndAttributes(textAndAttributes) {
+    this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
+    textAndAttributes.reduce((pos, [text, attrs]) =>
+      this.insertTextWithTextAttributes(text, attrs, pos).end,
+      {row: 0, column: 0});
+    return {start: {row: 0, column: 0}, end: this.documentEndPosition};
+  }
+
+  setTextWithTextAttributes(text, attributes) {
+     this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
+     return this.insertTextWithTextAttributes(text, attributes, {row: 0, column: 0});
   }
 
   insertTextWithTextAttributes(text, attributes = [], pos) {
@@ -631,7 +648,7 @@ export class Text extends Morph {
   get textAttributes() { return this.document.textAttributes; }
   set textAttributes(attrs) {
     this.document.textAttributes = attrs;
-    this._needsFit = true; 
+    this._needsFit = true;
     this.textLayout && (this.textLayout.layoutComputed = false);
     this.makeDirty();
   }
@@ -639,21 +656,21 @@ export class Text extends Morph {
   setSortedTextAttributes(attrs) {
     // see comment in document
     this.document.setSortedTextAttributes(attrs);
-    this._needsFit = true; 
+    this._needsFit = true;
     this.textLayout && (this.textLayout.layoutComputed = false);
     this.makeDirty();
   }
 
   addTextAttribute(range) {
     this.document.addTextAttribute(range);
-    this._needsFit = true; 
+    this._needsFit = true;
     this.textLayout && (this.textLayout.layoutComputed = false);
     this.makeDirty();
   }
 
   removeTextAttribute(attr) {
     this.document.removeTextAttribute(attr);
-    this._needsFit = true; 
+    this._needsFit = true;
     this.textLayout && (this.textLayout.layoutComputed = false);
     this.makeDirty();
   }
@@ -663,7 +680,7 @@ export class Text extends Morph {
       ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0);
     if (attr) {
       Object.assign(attr.data, style);
-      this._needsFit = true; 
+      this._needsFit = true;
       this.textLayout && (this.textLayout.layoutComputed = false);
       this.makeDirty();
     } else {
@@ -887,6 +904,8 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown(evt) {
+    if (!this.selectable) return;
+
     this.activeMark && (this.activeMark = null);
     var {position, state: {clickedOnMorph, clickedOnPosition, clickCount}} = evt;
 
@@ -906,9 +925,9 @@ export class Text extends Morph {
   }
 
   onMouseMove(evt) {
-    if (!evt.leftMouseButtonPressed()) return;
+    if (!evt.leftMouseButtonPressed() || !this.selectable) return;
     var {clickedOnMorph, clickedOnPosition} = evt.state;
-    if (clickedOnMorph !== this || !this.selectable) return;
+    if (clickedOnMorph !== this) return;
 
     var textPosClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
 
