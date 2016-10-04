@@ -739,14 +739,10 @@ export class Halo extends Morph {
               mesh.position = this.localize(pt(2,2));
             },
             show() {
-              mesh.animate({opacity: 1, duration: 500});
-              horizontal.animate({opacity: 1, duration: 500});
-              vertical.animate({opacity: 1, duration: 500});
+              mesh.opacity = horizontal.opacity = vertical.opacity = 1;
             },
             hide: () => {
-              vertical.animate({opacity: 0});
-              horizontal.animate({opacity: 0});
-              mesh.animate({opacity: 0});
+              mesh.opacity = horizontal.opacity = vertical.opacity = 0;
             }
           }));
         mesh.show();
