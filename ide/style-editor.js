@@ -4,10 +4,83 @@ import { Rectangle, Color, LinearGradient, pt } from "lively.graphics";
 import { obj, num } from "lively.lang";
 import { signal, connect } from "lively.bindings";
 
+const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
+
+/* TODO: All of the color harmonies as well as the hsv based color storing should
+         be moved into lively.graphics */
+
+class ColorHarmony {
+
+   constructor(colorPicker) { this.colorPicker = colorPicker }
+
+   offsets() { return null }
+
+   stepCount() { return 0 }
+
+   stepSize() { return 0; }
+
+   get name() { return "Color Harmony"}
+
+   chord() {
+      const {hue, saturation, brightness} = this.colorPicker, 
+             offsets = this.offsets() || arr.range(0, this.steps()).map(i => i * this.stepSize());       
+      return offsets.map(offset => Color.hsb(hue + offset % 360, saturation, brightness));
+   }
+
+}
+
+class Complementary extends ColorHarmony {
+
+    get name() { return "Complementary" }
+    steps() { return 1 }
+    stepSize() { return 180 }
+
+}
+
+class Triadic extends ColorHarmony {
+
+   get name() { return "Triadic" }
+   steps() { return 2 }
+   stepSize() { return 120 } 
+   
+}
+
+class Tetradic extends ColorHarmony {
+
+   get name() { return "Tetradic" }
+   offsets() { return [0, 60, 180, 240] } 
+
+}
+
+class Quadratic extends ColorHarmony {
+
+   get name() { return "Quadratic" }
+   steps() { return 3 }
+   stepSize() { return 90 }
+
+}
+
+class Analogous extends ColorHarmony {
+
+   get name() { return "Analogous" }
+   steps() { return 5 }
+   stepSize() { return 30 }
+
+}
+
+class Neutral extends ColorHarmony {
+
+   get name() { return "Neutral" }
+   steps() { return 5 }
+   stepSize() { return 15 }
+
+}
+
 export class ColorPicker extends Window {
 
   constructor(props) {
     this.color = props.color || Color.blue;
+    this.harmony = new Complementary(this);
     super({
       ...props,
       title: "Color Picker",
