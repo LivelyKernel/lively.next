@@ -1,7 +1,8 @@
 import { Window, GridLayout, FillLayout, Ellipse, Text,
-         VerticalLayout, HorizontalLayout, Morph, morph } from "../index.js";
-import { Rectangle, Color, LinearGradient, pt } from "lively.graphics";
-import { obj, num } from "lively.lang";
+         VerticalLayout, HorizontalLayout, Image, 
+         TilingLayout, Morph, morph, Menu } from "../index.js";
+import { Rectangle, Color, LinearGradient, pt, Point } from "lively.graphics";
+import { obj, num, arr } from "lively.lang";
 import { signal, connect } from "lively.bindings";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
@@ -82,10 +83,12 @@ export class ColorPicker extends Window {
     this.color = props.color || Color.blue;
     this.harmony = new Complementary(this);
     super({
-      ...props,
       title: "Color Picker",
       name: "Color Picker",
-      targetMorph: this.colorPalette()
+      extent: pt(400, 430),
+      targetMorph: this.colorPalette(),
+      commands: this.harmonyCommands,
+      ...props
     });
     this.update();
     connect(this, "change", this, "update", {
@@ -93,9 +96,32 @@ export class ColorPicker extends Window {
     });
   }
 
+  onMouseDown(evt) {
+     if (this.harmonyMenu) this.harmonyMenu.remove();
+  }
+
+  get harmony() { return this._harmony }
+  set harmony(h) { 
+      const harmonyLabel = this.getSubmorphNamed("harmonyLabel");
+      if (harmonyLabel) harmonyLabel.textString = h.name;
+      this._harmony = h;
+   }
+
+  get harmonyCommands() {
+    return [Complementary, Triadic, Tetradic, Quadratic,  Analogous, Neutral].map(harmony => {
+       return {name: harmony.name,
+               exec: colorPicker => { 
+                    colorPicker.harmony = new harmony(colorPicker);
+                    colorPicker.harmonyMenu.remove(); 
+                    colorPicker.update();
+                  }
+               }
+       });
+  }
+
   set color(c) {
     const [h, s, b] = c.toHSB();
-    this.hue = h;
+    this.hue = h
     this.saturation = s;
     this.brightness = b;
     signal(this, "color", c); 
@@ -125,7 +151,6 @@ export class ColorPicker extends Window {
   }
 
   set scalePosition(pos) {
-    console.log(pos.y / this.getSubmorphNamed("hueGradient").height)
     this.hue = Math.max(0, Math.min((pos.y / this.getSubmorphNamed("hueGradient").height) * 360, 359));
     this.update();
   }
@@ -135,26 +160,31 @@ export class ColorPicker extends Window {
       this.getSubmorphNamed("colorViewer"),
       this.getSubmorphNamed("picker"),
       this.getSubmorphNamed("slider"),
-      //this.getSubmorphNamed("harmonies"),
+      this.getSubmorphNamed("harmonies"),
       this.getSubmorphNamed("hashViewer"),
       this.getSubmorphNamed("hsbViewer"),
       this.getSubmorphNamed("rgbViewer"),
      ].forEach(p => p && p.update(this));
      // would be better if this.color is the canonical place
-     this.color = this.get("colorViewer").fill;
+     // rms: as long as lively.graphics/color loses the hue information
+     //      when lightness or saturation drop to 0, this.color can not serve
+     //      as the canonical place but only as a getter for the morph that retrieves
+     //      the picker's color.
+     signal(this, "color", this.color); 
   }
 
   colorPalette() {
     const colorPalette = this.getSubmorphNamed("colorPalette") || new Morph({
       name: "colorPalette",
       fill: Color.transparent,
-      layout: new GridLayout({grid: [["field", "scale", "details"]
-                                     //["harmonies", "harmonies", "harmonies"]
-                                     ]}),
-      submorphs: [this.fieldPicker(), this.scalePicker(), this.colorDetails()]
+      layout: new GridLayout({grid: [["field", "scale", "details"],
+                                     ["harmonies", "harmonies", "harmonies"]]}),
+      submorphs: [this.fieldPicker(), this.scalePicker(), this.colorDetails(),
+                  this.harmonies()]
     })
     colorPalette.layout.col(1).fixed = 55;
     colorPalette.layout.col(2).fixed = 100;
+    colorPalette.layout.row(0).fixed = this.colorDetails().height;
     return colorPalette;
   }
 
@@ -340,13 +370,120 @@ export class ColorPicker extends Window {
     })
   }
 
+  colorField(color) {
+     return new Morph({
+         extent: pt(80, 80),
+         layout: new VerticalLayout(),
+         setColor(c) {
+            const [colorView, hashView] = this.submorphs;
+            colorView.fill = c;
+            hashView.textString = c.toHexString(); 
+         },
+         submorphs: [
+            new Morph({fill: color, extent: pt(80, 50), 
+                       onMouseDown: () => {
+                 this.target.fill = color;
+            }}),
+            new Text({textString: color.toHexString()})
+         ]
+     });
+  }
+
   harmonies() {
     return this.getSubmorphNamed("harmonies") || new Morph({
       name: "harmonies",
-      update(colorPicker) {
-
-      }
+      layout: new HorizontalLayout({spacing: 5}),
+      fill: Color.transparent,
+      update: (colorPicker) => {
+         this.harmonyVisualizer().update(colorPicker);
+         this.harmonyPalette().displayHarmony(colorPicker, this.harmony.chord())
+      },
+      submorphs: [this.harmonyPalette(), this.harmonyControl()]
     })
   }
 
+  harmonyPalette() {
+     return this.getSubmorphNamed("harmonyPalette") || new Morph({
+         name: "harmonyPalette",
+         layout: new TilingLayout({spacing: 5}),
+         fill: Color.transparent,
+         width: 260,
+         displayHarmony(colorPicker, colors) {
+             if (colors.length != this.submorphs.length) {
+                this.submorphs = colors.map(c => colorPicker.colorField(c))
+             } else {
+                arr.zip(this.submorphs, colors)
+                   .forEach(([f, c]) => {
+                      f.setColor(c);
+                });
+             }
+         }
+     });
+  }
+
+  harmonyControl() {
+     return this.getSubmorphNamed("harmonyControl") || new Morph({
+         name: "harmonyControl",
+         layout: new VerticalLayout({spacing: 5}),
+         fill: Color.transparent,
+         submorphs: [this.harmonyVisualizer(),
+                     this.harmonySelector()]
+     })
+  }
+
+  harmonyVisualizer() {
+     return this.getSubmorphNamed("harmonyVisualizer") || new Image({
+         name: "harmonyVisualizer",
+         extent: pt(110,110),
+         fill: Color.transparent,
+         imageUrl: WHEEL_URL,
+         update(colorPicker) {
+             const [harmonyPoints] = this.submorphs,
+                   chord = colorPicker.harmony.chord(),
+                   colorPoints = chord.map(c => {
+                      const [h,s,_] = c.toHSB(),
+                             angle = num.toRadians(h);
+                      return Point.polar(50 * s, angle);
+                   });
+             if (harmonyPoints.submorphs.length != colorPoints.length) {
+                 harmonyPoints.submorphs = colorPoints.map(p => new Ellipse({
+                        center: p, fill: Color.transparent, 
+                        borderWidth: 1, borderColor: Color.black
+                     }));
+             } else {
+                 arr.zip(harmonyPoints.submorphs, colorPoints).forEach(([m, p]) => { m.center = p});
+             }
+         },
+         submorphs: [new Ellipse({
+            name: "harmonyPoints",
+            extent: pt(100,100),
+            origin: pt(50,50),
+            position: pt(50,50),
+            fill: Color.transparent,
+            borderWidth: 1
+         })]
+     });
+  }
+
+  harmonySelector() {
+     return this.getSubmorphNamed("harmonySelector") || new Morph({
+         name: "harmonySelector",
+         extent: pt(150, 50),
+         layout: new HorizontalLayout(),
+         onMouseDown: (evt) => {
+               this.harmonyMenu = Menu.forCommands([
+                  "Complementary", "Triadic", "Tetradic", "Quadratic", "Analogous", "Neutral"
+               ], this, {title: "Harmonies:"}).openInWorld();
+               this.harmonyMenu.globalPosition = this.harmonySelector().globalPosition;
+            },
+         submorphs: [new Text({
+            name: "harmonyLabel",
+            nativeCursor: "pointer",
+            fill: Color.transparent,
+            fontSize: 15,
+            fontColor: Color.gray.darker(),
+            textString: this.harmony.name})]
+     });
+     
+  }
 }
