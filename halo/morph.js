@@ -645,8 +645,7 @@ export class Halo extends Morph {
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
         //this.world().showLayoutHaloFor(this.target, this.state.pointerId);
-        var picker = this.world().addMorph(
-          new ColorPicker({center: this.world().center, color: this.target.fill}))
+        var picker = new ColorPicker({extent: pt(300,150), color: this.target.fill}).openInWorldNearHand();
         connect(picker, "color", this.target, "fill");
         this.remove();
       }
