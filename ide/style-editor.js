@@ -200,8 +200,7 @@ export class ColorPicker extends Window {
           fontWeight: "bold"}),
         new Text({
           fill: Color.transparent,
-          textString: obj.safeToString(value),
-          fixedWidth: true})]
+          textString: obj.safeToString(value)})]
     })
   }
 
