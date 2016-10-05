@@ -279,8 +279,8 @@ export function defaultAttributes(morph, renderer) {
 
 function shadowCss(morph) {
   return morph.dropShadow ?
-            `drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.4))` :
-            `drop-shadow(0px 0px 0px rgba(0, 0, 0, 0.4))`;
+            `drop-shadow(0px 5px 10px rgb(120, 120, 120))` :
+            `drop-shadow(0px 0px 0px rgb(120, 120, 120))`;
 }
 
 export function renderRootMorph(world, renderer) {
