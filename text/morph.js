@@ -501,11 +501,7 @@ export class Text extends Morph {
   insertTextWithTextAttributes(text, attributes = [], pos) {
     if (!Array.isArray(attributes)) attributes = [attributes];
     var range = this.insertText(text, pos);
-    attributes.forEach(attr => {
-      if (!attr.isTextAttribute) attr = new TextAttribute(attr);
-      attr.range = range;
-      this.addTextAttribute(attr);
-    });
+    attributes.forEach(attr => this.addTextAttribute(attr, range));
     return range;
   }
 
@@ -644,54 +640,44 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get styleProps() {
-    return obj.select(this, [
-      "fontFamily", "fontSize", "fontColor", "fontWeight",
-      "fontStyle", "textDecoration", "fixedCharacterSpacing"]);
+    return obj.select(this, arr.without(TextStyleAttribute.styleProps, "styleClasses"));
   }
 
   get textAttributes() { return this.document.textAttributes; }
   set textAttributes(attrs) {
     this.document.textAttributes = attrs;
-    this._needsFit = true;
-    this.textLayout && (this.textLayout.layoutComputed = false);
-    this.makeDirty();
+    this.onAttributesChanged();
   }
 
   setSortedTextAttributes(attrs) {
     // see comment in document
     this.document.setSortedTextAttributes(attrs);
-    this._needsFit = true;
-    this.textLayout && (this.textLayout.layoutComputed = false);
-    this.makeDirty();
+    this.onAttributesChanged();
   }
 
-  addTextAttribute(range) {
-    this.document.addTextAttribute(range);
-    this._needsFit = true;
-    this.textLayout && (this.textLayout.layoutComputed = false);
-    this.makeDirty();
+  addTextAttribute(attr, range/*optional, if attr doesn't specify*/) {
+    if (!attr.isTextAttribute)
+      attr = TextStyleAttribute.isStyleData(attr) ?
+        new TextStyleAttribute(attr) : new TextAttribute(attr);
+    if (range) attr.range = range;
+    this.document.addTextAttribute(attr);
+    this.onAttributesChanged();
   }
 
   removeTextAttribute(attr) {
     this.document.removeTextAttribute(attr);
-    this._needsFit = true;
-    this.textLayout && (this.textLayout.layoutComputed = false);
-    this.makeDirty();
+    this.onAttributesChanged();
   }
 
   setDefaultStyle(style = this.styleProps) {
+    // cryptic way of saying "give me the existing default style"...
     var attr = this.textAttributes.find(ea =>
       ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0);
     if (attr) {
       Object.assign(attr.data, style);
-      this._needsFit = true;
-      this.textLayout && (this.textLayout.layoutComputed = false);
-      this.makeDirty();
+      this.onAttributesChanged();
     } else {
-      this.addTextAttribute(
-        TextAttribute.fromPositions(
-          style, { row: 0, column: -1 },
-          this.documentEndPosition));
+      this.addTextAttribute(style, {start: {row: 0, column: -1}, end: this.documentEndPosition})
     }
   }
 
@@ -700,6 +686,11 @@ export class Text extends Morph {
     this.setDefaultStyle();
   }
 
+  onAttributesChanged() {
+    this._needsFit = true;
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
@@ -710,6 +701,23 @@ export class Text extends Morph {
 
   get selection() { return this._selection || (this._selection = new (config.text.useMultiSelect ? MultiSelection : Selection)(this)); }
   set selection(range) { return this.selection.range = range; }
+
+  get selections() {
+    return this.selection.isMultiSelection ?
+      this.selection.selections :
+      [this.selection];
+  }
+
+  selectionBounds() {
+    return this.selections.map(sel => {
+      var start = this.charBoundsFromTextPosition(sel.start),
+          end = this.charBoundsFromTextPosition(sel.end)
+      return sel.start.row === sel.end.row ?
+        start.union(end) :
+        rect(pt(this.padding.left(), start.top()),
+             pt(this.width-this.padding.left(), end.bottom()));
+    }).reduce((all, ea) => ea.union(all));
+  }
 
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
