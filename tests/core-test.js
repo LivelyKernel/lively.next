@@ -270,6 +270,7 @@ describe("geometric transformations", () => {
     world.addMorph(morph1);
     morph1.addMorph(morph2);
     expect(morph2.bounds().topLeft()).equals(pt(-50,-50));
+    expect(morph1.bounds().width).equals(200);
     expect(morph2.globalBounds().topLeft()).equals(pt(100,100));
     morph2.position = morph2.position.addPt(pt(1,1));
     expect(morph2.origin).equals(pt(50,50));
