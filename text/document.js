@@ -349,8 +349,6 @@ export default class TextDocument {
         first = attrs[0],
         last = arr.last(attrs);
 
-if (window.that && that.document === this) debugger;
-
     // 1. Figure out what the start and end indexes of this._textAttributes are
     // between which we need to insert the new attributes. We look for the
     // attributes between first.start.row and last.end.row since we also have to
