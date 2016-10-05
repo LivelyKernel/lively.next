@@ -55,7 +55,6 @@ export class Morph {
     this._submorphOrderChanged = false; // extra info for renderer
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
-    this._cachedBounds = null;
     this._animationQueue = new AnimationQueue(this);
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
@@ -163,19 +162,19 @@ export class Morph {
   set name(value)      { this.addValueChange("name", value); }
 
   get position()       { return this.getProperty("position"); }
-  set position(value)  { this._cachedBounds = null; this.addValueChange("position", value); }
+  set position(value)  { this.addValueChange("position", value); }
 
   get scale()          { return this.getProperty("scale"); }
-  set scale(value)     { this._cachedBounds = null; this.addValueChange("scale", value); }
+  set scale(value)     { this.addValueChange("scale", value); }
 
   get rotation()       { return this.getProperty("rotation"); }
-  set rotation(value)  { this._cachedBounds = null; this.addValueChange("rotation", value); }
+  set rotation(value)  { this.addValueChange("rotation", value); }
 
   get origin()         { return this.getProperty("origin"); }
   set origin(value)    { return this.addValueChange("origin", value); }
 
   get extent()         { return this.getProperty("extent"); }
-  set extent(value)    { this._cachedBounds = null; this.addValueChange("extent", value); }
+  set extent(value)    { this.addValueChange("extent", value); }
 
   get fill()           { return this.getProperty("fill"); }
   set fill(value)      { this.addValueChange("fill", value); }
@@ -337,8 +336,6 @@ export class Morph {
   }
 
   bounds() {
-    if (this._cachedBounds) return this._cachedBounds;
-
     var tfm = this.getTransform(),
         bounds = this.innerBounds();
 
@@ -349,12 +346,10 @@ export class Morph {
       if (subBounds) bounds = bounds.union(subBounds);
     }
 
-    this._cachedBounds = bounds;
     return bounds;
   }
 
   setBounds(bounds) {
-    this._cachedBounds = bounds;
     this.position = bounds.topLeft().addPt(this.origin);
     this.extent = bounds.extent();
   }
@@ -389,11 +384,7 @@ export class Morph {
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
   moveBy(delta) {
-    var bounds = this._cachedBounds;
-    if (bounds)
-      bounds = bounds.translatedBy(delta);
     this.position = this.position.addPt(delta);
-    this._cachedBounds = bounds;
   }
   rotateBy(delta) { this.rotation += delta; }
   resizeBy(delta) { this.extent = this.extent.addPt(delta); }
@@ -470,8 +461,6 @@ export class Morph {
     var existingIndex = this.submorphs.indexOf(submorph);
     if (existingIndex > -1 && existingIndex === index) return;
 
-    this._cachedBounds = null;
-
     this.addMethodCallChangeDoing({
       target: this,
       selector: "addMorphAt",
@@ -547,7 +536,6 @@ export class Morph {
         args: [morph, index],
       }
     }, () => {
-      this._cachedBounds = null;
       morph._owner = null;
     });
   }
