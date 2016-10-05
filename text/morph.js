@@ -30,8 +30,12 @@ export class Text extends Morph {
   }
 
   static makeInputLine(props) {
-    var t = new Text({type: "text", extent: pt(100, 20), clipMode: "auto", ...props});
-    t.height = t.defaultLineHeight;
+    var t = new Text({
+      extent: pt(100, 20), padding: Rectangle.inset(1),
+      clipMode: "auto", lineWrapping: false,
+      ...props
+    });
+    t.height = t.defaultLineHeight + t.padding.top() + t.padding.bottom();
     t.onChange = function(change) {
       if (change.selector === 'insertText' || change.selector === 'deleteText')
         signal(this, "inputChanged", this.textString);
