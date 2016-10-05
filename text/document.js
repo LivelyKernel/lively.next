@@ -1,7 +1,7 @@
-import { string, arr } from "lively.lang";
+import { string, arr, obj } from "lively.lang";
 import { lessPosition, lessEqPosition, eqPosition, maxPosition, minPosition } from "./position.js";
 import { Range } from "./range.js";
-import { TextAttribute } from "./style.js";
+import { TextAttribute, TextStyleAttribute } from "./attribute.js";
 
 export default class TextDocument {
 

@@ -1,7 +1,8 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import TextDocument from "../../text/document.js";
 import { Range } from "../../text/range.js";
-import { TextAttribute } from "../../text/style.js";
+import { lessPosition, lessEqPosition, eqPosition } from "../../text/position.js";
+import { TextAttribute, TextStyleAttribute } from "../../text/attribute.js";
 import { expect } from "mocha-es6";
 
 function range(startRow, startCol, endRow, endCol) {

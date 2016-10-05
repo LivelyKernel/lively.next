@@ -5,7 +5,7 @@ import config from "../config.js";
 import { connect } from "lively.bindings";
 import { Morph, Menu } from "../index.js";
 import { Text } from "../text/morph.js";
-import { TextAttribute } from "../text/style.js";
+import { TextAttribute } from "../text/attribute.js";
 
 import { Token, Highlighter, Theme } from "./highlighting.js";
 import JavaScriptHighlighter from "./modes/javascript-highlighter.js";

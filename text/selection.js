@@ -1,6 +1,6 @@
 import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
 import { Range, defaultRange } from "./range.js";
-import { TextAttribute } from "./style.js";
+import { TextAttribute } from "./attribute.js";
 import config from "../config.js";
 import { string, arr } from "lively.lang";
 import { signal } from "lively.bindings";

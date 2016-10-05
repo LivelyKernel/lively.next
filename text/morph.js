@@ -1,11 +1,11 @@
 /*global System*/
 import config from "../config.js";
 import { string, obj, arr, fun, promise } from "lively.lang";
-import { Rectangle, Color, pt } from "lively.graphics";
+import { rect, Rectangle, Color, pt } from "lively.graphics";
 import { Morph, show } from "../index.js";
 import { Selection, MultiSelection } from "./selection.js";
 import { Range } from "./range.js";
-import { TextAttribute } from "./style.js";
+import { TextAttribute, TextStyleAttribute } from "./attribute.js";
 import TextLayout from "./layout.js";
 import TextDocument from "./document.js";
 import KeyHandler from "../events/KeyHandler.js";
