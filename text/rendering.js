@@ -6,7 +6,6 @@ export var defaultRenderer = {
 
   renderMorph(renderer, morph) {
     var textLayout = morph.textLayout;
-  
     textLayout.updateFromMorphIfNecessary(morph);
   
     var cursorWidth = morph.fontSize <= 11 ? 2 : 3,

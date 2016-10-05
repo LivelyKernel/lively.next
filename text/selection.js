@@ -75,7 +75,7 @@ export class Selection {
     this.endAnchor.position = range.end;
 
     this.textMorph.makeDirty();
-    signal(this.textMorph, "selectionChange");
+    signal(this.textMorph, "selectionChange", this);
   }
 
   updateFromAnchors() {

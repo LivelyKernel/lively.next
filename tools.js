@@ -4,6 +4,8 @@ import { morph, Morph, Window, show } from "./index.js";
 import { FilterableList } from "./list.js";
 import { GridLayout } from "lively.morphic/layout.js";
 import CodeEditor from "./ide/code-editor.js";
+import { RichTextControl } from "lively.morphic/text/ui.js"
+import { connect } from "lively.bindings"
 
 export class ObjectDrawer extends Morph {
 
@@ -59,14 +61,18 @@ export class ObjectDrawer extends Morph {
       textString: "Lively rocks!",
       position: pos, extent: objExt,
       fill: Color.white, grabbable: false,
+      border: {color: Color.gray, width: 1, radius: 3},
+      padding: Rectangle.inset(8),
       readOnly: true,
-      fontSize: 16,
+      fontSize: 20,
+      fontFamily: "Helvetica Neue, Arial, sans-serif",
       onDrag: doCopy,
       draggable: true,
       init() {
         this.draggable = false;
         this.grabbable = false;
         this.readOnly = false;
+        connect(this, "selectionChange", RichTextControl, "openDebouncedFor", {converter: sel => sel.textMorph})
       }
     });
 
