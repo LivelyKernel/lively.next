@@ -9,7 +9,7 @@ function range(startRow, startCol, endRow, endCol) {
   return {start: {row: startRow, column: startCol}, end: {row: endRow, column: endCol}}
 }
 
-describe("text doc", () => {
+describe("text document", () => {
 
   it("line access", () => {
     var doc = TextDocument.fromString("hello\nworld");
@@ -466,21 +466,21 @@ describe("text doc", () => {
     });
 
 
-    describe("chunking attributes", () => {
+    describe("chunking attributes by lines", () => {
 
       it("empty doc", () => {
-        expect(TextDocument.fromString("").textAttributesChunked()).equals([[0,0, []]]);
+        expect(TextDocument.fromString("").textAttributesChunkedByLine()).equals([[0,0, []]]);
       });
 
       it("no attributes doc", () => {
-        expect(TextDocument.fromString("hello\nworld").textAttributesChunked()).equals([[0,5, []], [0,5, []]]);
+        expect(TextDocument.fromString("hello\nworld").textAttributesChunkedByLine()).equals([[0,5, []], [0,5, []]]);
       });
 
       it("attribute on single line", () => {
         doc.textString = "hello\n  world";
         let attr1 = new TextAttribute({}, range(0,0,0,5));
         doc.textAttributes = [attr1];
-        expect(doc.textAttributesChunked()).deep.equals([[0, 5, [attr1]], [0, 7, []]]);
+        expect(doc.textAttributesChunkedByLine()).deep.equals([[0, 5, [attr1]], [0, 7, []]]);
       });
 
       it("overlapping", () => {
@@ -488,7 +488,7 @@ describe("text doc", () => {
         let attr1 = new TextAttribute({}, range(0,1,0,5)),
             attr2 = new TextAttribute({}, range(0,2,0,4));
         doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunked()).equals([
+        expect(doc.textAttributesChunkedByLine()).equals([
           [0,1,[], 1,2, [attr1], 2,4, [attr1, attr2], 4,5, [attr1]],
           [0,7,[]]]);
       });
@@ -498,7 +498,7 @@ describe("text doc", () => {
         let attr1 = new TextAttribute({}, range(0,0,0,5)),
             attr2 = new TextAttribute({}, range(0,0,1,5));
         doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunked()).deep.equals([
+        expect(doc.textAttributesChunkedByLine()).deep.equals([
           [0, 5, [attr1, attr2]],
           [0, 5, [attr2], 5,7, []]]);
       });
@@ -508,7 +508,7 @@ describe("text doc", () => {
         let attr1 = new TextAttribute({}, range(0,1,0,3)),
             attr2 = new TextAttribute({}, range(0,5,1,5));
         doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunked()).equals([[0,1, [], 1, 3, [attr1], 3,5, []], [0, 5, [attr2]]])
+        expect(doc.textAttributesChunkedByLine()).equals([[0,1, [], 1, 3, [attr1], 3,5, []], [0, 5, [attr2]]])
       });
 
       it("empty line followed by single", () => {
@@ -516,10 +516,89 @@ describe("text doc", () => {
         let attr1 = new TextAttribute({}, range(0,1,1,1)),
             attr2 = new TextAttribute({}, range(1,0,1,1));
         doc.textAttributes = [attr1, attr2];
-        expect(doc.textAttributesChunked()).equals([[0,0, []], [0,1, [attr1, attr2]]])
+        expect(doc.textAttributesChunkedByLine()).equals([[0,0, []], [0,1, [attr1, attr2]]])
       });
 
     });
+
+    describe("chunked across lines", () => {
+
+      let attr1, attr2;
+      beforeEach(() => {
+        // doc = TextDocument.fromString("hello\nworld")
+        doc.textString = "hello\n  world";
+        attr1 = new TextAttribute({}, range(0,2,0,5));
+        attr2 = new TextAttribute({}, range(0,2,1,2));
+        doc.textAttributes = [attr1, attr2];
+      });
+
+
+      it("overlapping lines, whole doc", () => {
+        expect(doc.textAttributesChunked()).deep.equals([
+          [{row: 0, column: 0}, {row: 0, column: 2}, []],
+          [{row: 0, column: 2}, {row: 0, column: 5}, [attr1, attr2]],
+          [{row: 0, column: 5}, {row: 1, column: 2}, [attr2]],
+          [{row: 1, column: 2}, {row: 1, column: 7}, []],
+        ]);
+      });
+
+      it("overlapping lines, filtered", () => {
+        expect(doc.textAttributesChunked(undefined, undefined, attr => attr !== attr1)).deep.equals([
+          [{row: 0, column: 0}, {row: 0, column: 2}, []],
+          [{row: 0, column: 2}, {row: 1, column: 2}, [attr2]],
+          [{row: 1, column: 2}, {row: 1, column: 7}, []],
+        ]);
+      });
+
+      it("overlapping lines, range", () => {
+        expect(doc.textAttributesChunked({row: 0, column: 5}, {row: 1, column: 2})).deep.equals([
+          [{row: 0, column: 5}, {row: 1, column: 2}, [attr2]],
+        ]);
+      });
+    });
+
+    describe("style attributes", () => {
+
+      let attr1, attr2;
+      beforeEach(() => {
+        // doc = TextDocument.fromString("hello\nworld")
+        doc.textString = "hello\n  world";
+        attr1 = new TextStyleAttribute({fontSize: 20, fontColor: "red"}, range(0,-1,1,7));
+        attr2 = new TextStyleAttribute({fontSize: 10}, range(0,2,1,2));
+        doc.textAttributes = [attr1, attr2];
+      });
+
+
+      it("retrieves style in chunks", () => {
+        expect(doc.stylesChunked()).deep.equals([
+          [{row: 0, column: 0}, {row: 0, column: 2}, {fontSize: 20, fontColor: "red"}],
+          [{row: 0, column: 2}, {row: 1, column: 2}, {fontSize: 10, fontColor: "red"}],
+          [{row: 1, column: 2}, {row: 1, column: 7}, {fontSize: 20, fontColor: "red"}],
+        ]);
+        expect(doc.stylesChunked({start: {row: 1, column: 0}, end: {row: 1, column: 7}})).deep.equals([
+          [{row: 1, column: 0}, {row: 1, column: 2}, {fontSize: 10, fontColor: "red"}],
+          [{row: 1, column: 2}, {row: 1, column: 7}, {fontSize: 20, fontColor: "red"}],
+        ]);
+      });
+
+      it("modifies style in range", () => {
+        doc.setStyleInRange(
+          {fontSize: 15},
+          {start: {row: 1, column: 0}, end: {row: 1, column: 7}},
+          attr1);
+        expect(doc.textAttributesChunked()).containSubset([
+          [{row: 0, column: 0}, {row: 0, column: 2}, [attr1]],
+          [{row: 0, column: 2}, {row: 1, column: 0}, [attr1, {data: {fontSize: 10}}]],
+          [{row: 1, column: 0}, {row: 1, column: 7}, [attr1, {data: {fontSize: 15}}]],
+        ], "merge didn't work");
+      });
+
+    });
+
   });
+
+});
+
+describe("attributes", () => {
 
 });

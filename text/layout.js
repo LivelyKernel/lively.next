@@ -72,13 +72,10 @@ Something that is not obvious: TextWrappableLayoutLines won't actually need to h
 const newline = "\n",
       newlineLength = 1; /*fixme make work for cr lf windows...*/
 
-const styleProps = ["fontFamily", "fontSize", "fontColor", "fontWeight",
-                    "fontStyle", "textDecoration", "fixedCharacterSpacing",
-                    "styleClasses"];
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function styleFromTextAttributes(textAttributes) {
+  // see TextStyleAttribute.styleProps
   var s = {};
   for (var i = 0; i < textAttributes.length; i++) {
     var d = textAttributes[i].data;
@@ -646,7 +643,7 @@ export default class TextLayout {
         fontMetric = this.fontMetric,
         docLines = doc.lines,
         nRows = docLines.length,
-        textAttributesChunked = doc.textAttributesChunked(0, nRows-1),
+        textAttributesChunked = doc.textAttributesChunkedByLine(0, nRows-1),
         morphBounds = morph.innerBounds();
 
     // need different keinds of lines, so reset

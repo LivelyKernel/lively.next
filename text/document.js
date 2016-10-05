@@ -43,7 +43,17 @@ export default class TextDocument {
   }
   get textAttributesByLine() { return this._textAttributesByLine; }
 
-  textAttributesChunked(startRow = 0, endRow = this.lines.length-1, withLineEnding = false) {
+  textAttributesChunkedByLine(
+      startRow = {row: 0, column: 0},
+      endRow = this.endPosition,
+      withLineEnding = false) {
+  }
+
+  textAttributesChunkedByLine(
+      startRow = 0,
+      endRow = this.lines.length-1,
+      withLineEnding = false) {
+
     // returns an array chunked with chunked.length === lines.length
     // chunked[n] is an array that looks like
     // [startCol1, endCol1, [attr1, attr2, ...], startCol2, endCol2, [attr1, attr3, ...], ...]
@@ -74,20 +84,24 @@ export default class TextDocument {
       // that has attributes starting or ending, remember those
       for (let i = 0; i < attrsOfLine.length; i++) {
         let attr = attrsOfLine[i],
-            {start: {column: startColumn, row: startRow}, end: {column: endColumn, row: endRow}} = attr;
+            {start: {column: startColumn, row: startRow},
+             end: {column: endColumn, row: endRow}} = attr;
+
         if (startRow === row && startColumn >= 0) {
-          let change = attributeChangesByColumn[startColumn] || (attributeChangesByColumn[startColumn] = {starting: [], ending: []});
+          let change = attributeChangesByColumn[startColumn]
+                    || (attributeChangesByColumn[startColumn] = {starting: [], ending: []});
           change.starting.push(attr);
         }
         if (endRow === row) {
-          let change = attributeChangesByColumn[endColumn] || (attributeChangesByColumn[endColumn] = {starting: [], ending: []});
+          let change = attributeChangesByColumn[endColumn]
+                    || (attributeChangesByColumn[endColumn] = {starting: [], ending: []});
           change.ending.push(attr);
         }
       }
 
       let ranges = [], column = 0;
 
-      // don't slip empty lines...
+      // don't skip empty lines...
       if (!content.length) {
         ranges.push(0,0, currentAttributes.slice());
       } else {
@@ -135,11 +149,122 @@ export default class TextDocument {
     return lines
   }
 
+  textAttributesChunked(
+    from = {row: 0, column: 0},
+    to = this.endPosition,
+    filterFn = (attr) => true)
+  {
+    // similar to textAttributesChunkedByLine but does not regard lines, i.e. a
+    // list of start-end-positions ans attributes is returned
+    // Example:
+    // let attr1 = new TextAttribute({}, Range.create(0,1,1,1)),
+    //     attr2 = new TextAttribute({}, Range.create(1,0,1,1)),
+    //     doc = TextDocument.fromString("hello\nworld");
+    // doc.textAttributes = [attr1, attr2];
+    // doc.textAttributesChunked() =>
+    //   [[0/0, 0/1, []],
+    //    [0/1, 1/0, [TextAttribute(0/1 -> 1/1)]]
+    //    [1/0, 1/1, [TextAttribute(0/1 -> 1/1), TextAttribute(1/0 -> 1/1)]]]
+
+    // doc.textAttributesChunked().map(([start, end, attrs]) => `${start.row}/${start.column} - ${end.row}/${end.column}\n  ${attrs.join("\n  ")}`).join("\n");
+
+    // index attributes by start and end in two two-dim lists
+    var starts = [], ends = [];
+    for (let i = 0; i < this._textAttributes.length; i++) {
+      let attr = this._textAttributes[i],
+          startsOfRow = starts[attr.start.row] || (starts[attr.start.row] = []),
+          startsOfColumn = startsOfRow[attr.start.column] || (startsOfRow[attr.start.column] = []),
+          endsOfRow = ends[attr.end.row] || (ends[attr.end.row] = []),
+          endsOfColumn = endsOfRow[attr.end.column] || (endsOfRow[attr.end.column] = []);
+      if (filterFn(attr)) {
+        startsOfColumn.push(attr);
+        endsOfColumn.push(attr);
+      }
+    }
+
+    var currentAttributes = [];
+
+    // Find those attributes starting before the document
+    for (let i = 0; i < this._textAttributes.length; i++) {
+      let attr = this._textAttributes[i];
+      if (!lessPosition(attr.start, {row: 0, column: 0})) break;
+      if (!lessPosition(attr.end, {row: 0, column: 0}))
+        filterFn(attr) && currentAttributes.push(attr);
+    }
+
+    // find active attributes before start position
+    var stopped = false;
+    for (let row = 0; row <= from.row; row++) {
+      let startsOfRow = starts[row] || [],
+          endsOfRow = ends[row] || [];
+      if (!startsOfRow.length && !endsOfRow.length) continue;
+
+      let nCols = Math.max(endsOfRow.length, startsOfRow.length)
+
+      for (let column = 0; column <= nCols; column++) {
+        let startsOfColumn = startsOfRow[column] || [],
+            endsOfColumn = endsOfRow[column] || [];
+        if (!lessEqPosition({row, column}, from)) break;
+        startsOfColumn.forEach(attr =>
+          !currentAttributes.includes(attr) && currentAttributes.push(attr));
+        endsOfColumn.forEach(attr => arr.remove(currentAttributes, attr));
+      }
+    }
+
+
+    // record attributes by positions
+    var result = [],
+        lastStart = {row: from.row, column: from.column}
+
+    for (let row = from.row; row <= to.row; row++) {
+      let startsOfRow = starts[row] || [],
+          endsOfRow = ends[row] || [];
+      if (!startsOfRow.length && !endsOfRow.length) continue;
+
+      let nCols = Math.max(endsOfRow.length, startsOfRow.length)
+
+      for (let column = 0; column <= nCols; column++) {
+        let pos = {row, column};
+
+        if (lessEqPosition(pos, from)) continue;
+        if (!lessEqPosition(pos, to)) break;
+
+        let startsOfColumn = startsOfRow[column] || [],
+            endsOfColumn = endsOfRow[column] || [],
+            zeroLengthAttrs = [];
+
+        if (!startsOfColumn.length && !endsOfColumn.length)
+          continue;
+
+        result.push([lastStart, pos, currentAttributes.slice()]);
+
+        lastStart = pos;
+        startsOfColumn.forEach(attr =>
+          !currentAttributes.includes(attr) && currentAttributes.push(attr));
+
+        endsOfColumn.forEach(attr => {
+          if (startsOfColumn.includes(attr))
+            zeroLengthAttrs.push(attr);
+          let i = currentAttributes.indexOf(attr);
+          if (i > -1) currentAttributes.splice(i, 1);
+        });
+
+        if (zeroLengthAttrs.length)
+          result.push([pos, pos, zeroLengthAttrs])
+      }
+    }
+
+    if (!eqPosition(lastStart, to))
+      result.push([lastStart, to, currentAttributes.slice()]);
+
+    return result
+  }
+
   get textAndAttributes() {
     // t.document.textAndAttributes.map(([text, attrs]) => `"${text}"\n${attrs.join("\n")}\n`).join("\n")
     let newline = this.constructor.newline,
         maxRow = this.lines.length-1;
-    return arr.flatmap(this.textAttributesChunked(0, maxRow, true), (chunked, row) => {
+    return arr.flatmap(this.textAttributesChunkedByLine(0, maxRow, true), (chunked, row) => {
       if (row === maxRow) newline = "";
       return arr.toTuples(chunked, 3).map(
         ([startCol, endCol, attrs]) =>
@@ -219,17 +344,27 @@ export default class TextDocument {
   }
 
   addSortedTextAttributes(attrs) {
-    if (!attrs.length) return;
+    if (!attrs.length) return [];
     let textAttributes = this._textAttributes,
         first = attrs[0],
         last = arr.last(attrs);
+
+if (window.that && that.document === this) debugger;
 
     // 1. Figure out what the start and end indexes of this._textAttributes are
     // between which we need to insert the new attributes. We look for the
     // attributes between first.start.row and last.end.row since we also have to
     // update the line index later.
     let insertionStart = 0;
-    while (insertionStart < textAttributes.length && textAttributes[insertionStart].start.row < first.start.row)
+
+    while (insertionStart < textAttributes.length
+        && (textAttributes[insertionStart].start.row < first.start.row
+        || (textAttributes[insertionStart].start.row === first.start.row
+         && textAttributes[insertionStart].start.column < 0))
+        /* ^ FIXME ^ that gets ugly, here we also need to filter out those
+           "default attributes on line 0 starting with col < 0"*/
+     )
+
       insertionStart++;
 
     let insertionEnd = insertionStart;
@@ -237,6 +372,7 @@ export default class TextDocument {
       insertionEnd++;
 
     var newAttributes = textAttributes.slice(insertionStart, insertionEnd).concat(attrs).sort(Range.compare);
+
     // 2. Insert the new attributes mixed with the old ones sorted.
     this._textAttributes = textAttributes.slice(0, insertionStart).concat(newAttributes).concat(textAttributes.slice(insertionEnd));
 
@@ -248,7 +384,12 @@ export default class TextDocument {
     for (let row = first.start.row; row <= endRow; row++) {
       var byLine = this._textAttributesByLine[row] || (this._textAttributesByLine[row] = []),
           i = 0;
-      while (i < byLine.length && byLine[i].start.row < first.start.row) i++;
+      while (i < byLine.length
+          && (byLine[i].start.row < first.start.row
+           || (byLine[i].start.row === first.start.row
+            && byLine[i].start.column < 0)
+          /*^^FXIME^^^ again, filter out "defaults"*/
+      )) i++;
       byLine.length = i;
     }
 
@@ -286,6 +427,106 @@ export default class TextDocument {
   }
 
   resetTextAttributes() { this._textAttributes = []; this._textAttributesByLine = []; }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // style attribute related
+
+  stylesChunked(range = {}) {
+    let {start: from, end: to} = range;
+    return this.textAttributesChunked(from, to).map(([start, end, attrs]) => {
+      return [
+        start, end,
+        Object.assign({},
+          ...attrs.filter(ea => ea.isStyleAttribute)
+                  .map(ea => ea.data))];
+    });
+  }
+
+  setStyleInRange(
+    newStyle = {},
+    range = {
+      start: {row: 0, column: 0},
+      end: this.endPosition
+    },
+    defaultStyleAttribute = {data: {}})
+  {
+
+    // enumerates style attributes as stylesChunked() does but also modifies
+    // the styling according to newStyle. If possible we will fall back to
+    // default style. If not, new style attributes will be inserted as needed
+
+    // Please note that at this time we assume that there can be overlapping style
+    // attributes but currently only a default style (that probably overlaps
+    // everything) and a single other style attribute are considered (per canonical
+    // range). All other style attributes will be removed.
+
+
+    let {start: from, end: to} = range,
+        styleProps = Object.keys(newStyle),
+        defaultStyle = defaultStyleAttribute.data,
+        attributesSeen = [], toAdd = [], toRemove = [];
+
+    this.textAttributesChunked(
+      from, to,
+      attr => attr !== defaultStyleAttribute && attr.isStyleAttribute)
+        .forEach(([start, end, styleAttrs]) => {
+
+          var [localStyleAttr, ...rest] = styleAttrs;
+
+          // remove all style attributes except for a single local style
+          // (start<>end) and the default style
+          if (rest.length) { toRemove.push(...rest); toRemove = arr.uniq(toRemove); }
+
+          var localStyle = {...defaultStyle, ...(localStyleAttr ? localStyleAttr.data : null)}
+
+          var propsToChange = styleProps.filter(key =>
+            newStyle[key] && typeof newStyle[key].equals === "function" ?
+              !newStyle[key].equals(localStyle[key]) :
+              newStyle[key] !== localStyle[key]);
+
+          // new style is compatible with old
+          if (!propsToChange.length) return;
+
+          var newStyleForRange = {
+            ...(localStyleAttr ? localStyleAttr.data : null),
+            ...obj.select(newStyle, propsToChange)};
+
+          if (localStyleAttr) {
+            // remove local style attr
+            arr.pushIfNotIncluded(toRemove, localStyleAttr);
+
+            // revert to default if default style has the prop
+            propsToChange.forEach(key => {
+              if (newStyle[key] === defaultStyle[key])
+                delete newStyleForRange[key];
+            });
+
+            // if local style is larger than the chunks we are iterating over
+            // we need to maintian a version from it outside the modification range
+            if (!attributesSeen.includes(localStyleAttr)) {
+              attributesSeen.push(localStyleAttr);
+              if (lessPosition(localStyleAttr.start, from))
+                toAdd.push(localStyleAttr.splitAt(from)[0])
+              if (lessPosition(to, localStyleAttr.end))
+                toAdd.push(localStyleAttr.splitAt(to)[1]);
+            }
+          }
+
+          // add a new attribute for our style if local changes are necessary
+          if (!localStyleAttr || Object.keys(newStyleForRange).length)
+            toAdd.push(new TextStyleAttribute(newStyleForRange, {start, end}));
+
+        });
+
+    this.removeTextAttributes(toRemove);
+    var newAttributes = this.addSortedTextAttributes(toAdd.sort(Range.compare));
+    var startIndex = Math.max(1, this._textAttributes.indexOf(newAttributes[0])-1);
+    var endIndex = this._textAttributes.indexOf(arr.last(newAttributes))+1;
+    this._textAttributes =
+      [this._textAttributes[0]]
+      .concat(TextStyleAttribute.mergeAdjacentAttributes(
+        this._textAttributes.slice(1)));
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
