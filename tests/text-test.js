@@ -6,7 +6,7 @@ import { Text } from "../text/morph.js";
 import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric, expectSelection } from "./test-helpers.js";
-import { TextAttribute } from "../text/style.js";
+import { TextAttribute } from "../text/attribute.js";
 
 expectSelection(chai);
 
