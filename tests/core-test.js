@@ -230,6 +230,24 @@ describe("bounds", () => {
     expect(height).closeTo(20, 0.1, "height");
   });
 
+  it("globalBounds for morph with submorphs AND different origin", () => {
+    var world = morph({
+      type: "world", extent: pt(500,500),
+      submorphs: [{
+        name: "owner",
+        extent: pt(100,100), rotation: num.toRadians(0) ,
+        submorphs: [{name: "target", position:pt(100,100), 
+                     extent: pt(100,100), rotation: num.toRadians(90), origin: pt(50,50),
+                     submorphs: [{extent: pt(100,100)}]}]}
+    ]});
+    // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
+    var {x,y,width,height} = world.get("owner").bounds();
+    expect(x).closeTo(0, 0.1, "x");
+    expect(y).closeTo(0, 0.1, "y");
+    expect(width).closeTo(200, 0.1, "width");
+    expect(height).closeTo(200, 0.1, "height");
+  });
+
 });
 
 
