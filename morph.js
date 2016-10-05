@@ -184,13 +184,13 @@ export class Morph {
   set opacity(value)    { this.addValueChange("opacity", value); }
 
   get borderLeft()    { return {style: this.borderStyleLeft, width: this.borderWidthLeft, color: this.borderColorLeft} }
-  set borderLeft(x)   { this.borderStyleLeft = x.style; this.borderWidthLeft = x.width; this.borderColorLeft = x.color; }
+  set borderLeft(x)   { if ("style" in x) this.borderStyleLeft = x.style; if ("width" in x) this.borderWidthLeft = x.width; if ("color" in x) this.borderColorLeft = x.color; if ("radius" in x) this.borderRadiusLeft = x.radius; }
   get borderRight()   { return {style: this.borderStyleRight, width: this.borderWidthRight, color: this.borderColorRight} }
-  set borderRight(x)  { this.borderStyleRight = x.style; this.borderWidthRight = x.width; this.borderColorRight = x.color; }
+  set borderRight(x)  { if ("style" in x) this.borderStyleRight = x.style; if ("width" in x) this.borderWidthRight = x.width; if ("color" in x) this.borderColorRight = x.color; if ("radius" in x) this.borderRadiusRight = x.radius; }
   get borderBottom()  { return {style: this.borderStyleBottom, width: this.borderWidthBottom, color: this.borderColorBottom} }
-  set borderBottom(x) { this.borderStyleBottom = x.style; this.borderWidthBottom = x.width; this.borderColorBottom = x.color; }
+  set borderBottom(x) { if ("style" in x) this.borderStyleBottom = x.style; if ("width" in x) this.borderWidthBottom = x.width; if ("color" in x) this.borderColorBottom = x.color; if ("radius" in x) this.borderRadiusBottom = x.radius; }
   get borderTop()     { return {style: this.borderStyleTop, width: this.borderWidthTop, color: this.borderColorTop} }
-  set borderTop(x)    { this.borderStyleTop = x.style; this.borderWidthTop = x.width; this.borderColorTop = x.color; }
+  set borderTop(x)    { if ("style" in x) this.borderStyleTop = x.style; if ("width" in x) this.borderWidthTop = x.width; if ("color" in x) this.borderColorTop = x.color; if ("radius" in x) this.borderRadiusTop = x.radius; }
 
   get borderStyleLeft()        { return this.getProperty("borderStyleLeft"); }
   set borderStyleLeft(value)   { this.addValueChange("borderStyleLeft", value); }
@@ -227,11 +227,31 @@ export class Morph {
   get borderWidth()       { return this.borderWidthLeft; }
   set borderWidth(value)  { this.borderWidthLeft = this.borderWidthRight = this.borderWidthTop = this.borderWidthBottom = value; }
   get borderRadius()      { return this.borderRadiusLeft; }
-  set borderRadius(value) { this.borderRadiusLeft = this.borderRadiusRight = this.borderRadiusTop = this.borderRadiusBottom = value; }
+  set borderRadius(value) {
+    if (!value) value = 0;
+    var left = value, right = value, top = value, bottom = value;
+    if (value.isRectangle) {
+      left = value.left();
+      right = value.right();
+      top = value.top();
+      bottom = value.bottom();
+    }
+    this.borderRadiusLeft = left;
+    this.borderRadiusRight = right;
+    this.borderRadiusTop = top;
+    this.borderRadiusBottom = bottom;
+  }
   get borderStyle()       { return this.borderStyleLeft; }
   set borderStyle(value)  { this.borderStyleLeft = this.borderStyleRight = this.borderStyleTop = this.borderStyleBottom = value; }
   get borderColor()       { return this.borderColorLeft; }
   set borderColor(value)  { this.borderColorLeft = this.borderColorRight = this.borderColorTop = this.borderColorBottom = value; }
+  get border()    { return {style: this.borderStyle, width: this.borderWidth, color: this.borderColor} }
+  set border(x)   {
+    if ("style" in x) this.borderStyle = x.style;
+    if ("width" in x) this.borderWidth = x.width;
+    if ("color" in x) this.borderColor = x.color;
+    if ("radius" in x) this.borderRadius = x.radius;
+  }
 
   get clipMode()       { return this.getProperty("clipMode"); }
   set clipMode(value)  {
