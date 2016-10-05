@@ -126,7 +126,7 @@ var worldCommands = [
           answer = await world.filterableListPrompt(
             "Choose window", wins, {
               preselect: 1,
-              onSelection: sel => sel && sel.show(), 
+              onSelection: sel => sel && sel.show(),
               width: world.visibleBounds().extent().x * 1/3,
               labelFontSize: 16,
               listFontSize: 18,
@@ -230,7 +230,7 @@ var worldCommands = [
   {
     name: "open workspace",
     exec: world => {
-      return new Workspace({center: world.center}).activate(); 
+      return new Workspace({center: world.center}).activate();
     }
   },
 
@@ -262,10 +262,10 @@ var worldCommands = [
 
       function diffInWindow(textA, textB, opts) {
         var diffed = diff.diffChars(textA, textB);
-        
+
         var insertions = diffed.map(({count, value, added, removed}) => {
           var attribute = removed ?
-              {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ? 
+              {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ?
               {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :
               {fontWeight: "normal", textDecoration: "", fontColor: Color.darkGray};
           return { text: value, attribute }
@@ -273,7 +273,7 @@ var worldCommands = [
 
         var win = world.execCommand("open text window", opts),
             textMorph = win.targetMorph;
-      
+
         insertions.forEach(({text, attribute}) => {
           textMorph.insertTextWithTextAttributes(text, attribute ? [attribute] : [])
         });
@@ -282,6 +282,13 @@ var worldCommands = [
 
         return textMorph;
       }
+    }
+  },
+
+  {
+    name: "open object drawer",
+    exec: world => {
+      return new ObjectDrawer().openInWorldNearHand();
     }
   },
 
@@ -501,6 +508,7 @@ export class World extends Morph {
        "select morph",
        "resize to fit window",
        "window switcher",
+       "open object drawer",
        "open workspace",
        "open browser",
        "choose and browse module",
@@ -634,7 +642,7 @@ export class World extends Morph {
     // }
     return this.openPrompt(new TextPrompt({label, ...opts}), opts);
   }
-  
+
   confirm(label, opts = {requester: null}) {
     // await this.world().confirm("test")
     return this.openPrompt(new ConfirmPrompt({label, ...opts}), opts);
@@ -769,6 +777,7 @@ export class TextPrompt extends AbstractPrompt {
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
     connect(this.get("cancelBtn"), 'fire', this, 'reject');
+    this.get("input").gotoDocumentEnd();
   }
 
   resolve() { super.resolve(this.get("input").textString); }
@@ -840,7 +849,7 @@ export class ListPrompt extends AbstractPrompt {
       }
     return this.state.answer.resolve(answer);
   }
-  
+
   reject() { return this.state.answer.resolve({prompt: this, selected: [], filtered: [], status: "canceled"}); }
 
   applyLayout() {
