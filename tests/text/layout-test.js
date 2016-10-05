@@ -1,6 +1,6 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
 import { Text } from "../../text/morph.js";
-import { TextAttribute } from "../../text/style.js";
+import { TextAttribute } from "../../text/attribute.js";
 import { expect } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";

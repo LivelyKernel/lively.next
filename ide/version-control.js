@@ -9,7 +9,7 @@ import { subscribe, unsubscribe } from "lively.notifications";
 
 import { morph, Morph } from "../index.js";
 import { Window } from "../widgets.js";
-import { StyleRange } from "../text/style.js";
+import { TextAttribute } from "../text/attribute.js";
 import CodeEditor from "./code-editor.js";
 import { GridLayout, HorizontalLayout } from "../layout.js";
 
@@ -224,7 +224,7 @@ class CommitNode extends Morph {
       tooltip: this.commitTooltip(commit),
       fontSize: 10,
       textString: `${msg}\n${commit.hash.substr(0, 8)} (${relDate})`,
-      styleRanges: [StyleRange.fromPositions({fontWeight: "bold"}, from, to)]
+      styleRanges: [TextAttribute.fromPositions({fontWeight: "bold"}, from, to)]
     };
   }
   

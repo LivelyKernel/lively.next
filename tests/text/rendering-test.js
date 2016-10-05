@@ -4,7 +4,7 @@ import { createDOMEnvironment } from "../../rendering/dom-helper.js";
 import { World, MorphicEnv } from "../../index.js";
 import { Range } from "../../text/range.js";
 import { Text } from "../../text/morph.js";
-import { TextAttribute } from "../../text/style.js";
+import { TextAttribute } from "../../text/attribute.js";
 import TextDocument from "../../text/document.js";
 import TextLayout from "../../text/rendering.js";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
