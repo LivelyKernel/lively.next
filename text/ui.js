@@ -14,21 +14,18 @@ export class RichTextControl extends Morph {
 
     if (selection.isEmpty()) {
       var ctrl = cachedControls.get(textMorph);
-      ctrl && ctrl.remove();
+      ctrl && ctrl.removeFocus();
       return;
     }
 
     fun.debounceNamed(textMorph.id+"openRichTextControl", 600, () => {
       var ctrl = cachedControls.get(textMorph);
-      if (selection.isEmpty()) { ctrl && ctrl.remove(); return }
+      if (selection.isEmpty()) { ctrl && ctrl.removeFocus(); return }
       if (!ctrl) {
         ctrl = new RichTextControl();
         cachedControls.set(textMorph, ctrl);
       }
-      ctrl.openInWorld();
-      ctrl.topCenter = textMorph.getGlobalTransform()
-        .transformRectToRect(textMorph.selectionBounds()).bottomCenter();
-      ctrl.target = textMorph;
+      ctrl.focusOn(textMorph);
     })();
   }
 
@@ -36,6 +33,7 @@ export class RichTextControl extends Morph {
 
     super({
       name: "rich-text-control",
+      dropShadow: true,
       extent: pt(200,35),
       fill: Color.gray,
       borderRadius: 7,
@@ -45,6 +43,24 @@ export class RichTextControl extends Morph {
     connect(this, "extent", this, "relayout");
     this.build();
     this.relayout();
+  }
+
+  removeFocus() {
+     if (this.target) {
+       this.animate({opacity: 0, onFinish: () => {
+           this.remove();
+           this.target = null;
+       }});
+     }
+  }
+
+  focusOn(textMorph) {
+      this.fading = false;
+      this.openInWorld();
+      this.topCenter = textMorph.getGlobalTransform()
+          .transformRectToRect(textMorph.selectionBounds()).bottomCenter();
+      this.target = textMorph;
+      this.opacity = 1;
   }
 
   build() {
@@ -57,6 +73,8 @@ export class RichTextControl extends Morph {
       ["\u200C", {
         fontSize: 14, fontFamily: "",
         styleClasses: ["fa", "fa-" + name]}]];
+
+    this.opacity = 1;
 
     this.addMorph({name: "bold button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("bold")});
     this.addMorph({name: "italic button",    ...btnStyle, labelWithTextAttributes: makeIconStyle("italic")});
