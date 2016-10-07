@@ -51,14 +51,6 @@ class StyleMapper {
                     "0px 0px  0px 0px rgba(0,0,0,0.36)"}
   }
 
-  maskProps(morph) {
-    return Object.assign(new Morph(morph.exportToJSON()), 
-                         morph._animationQueue.maskedProps, {
-                            isImage: morph.isImage, 
-                            isSvgMorph: morph.isSvgMorph
-                         });
-  }
-
   getStyleProps(morph) {
     return {
       ...this.getFill(morph),
@@ -73,9 +65,6 @@ class StyleMapper {
     }
   }
 
-  getStylePropsMasked(morph) {
-    return this.getStyleProps(this.maskProps(morph));
-  }
 }
 
 // classes do not seem to inherit static members
@@ -90,10 +79,6 @@ export class AnimationQueue {
   }
 
   get animationsActive() { return true }
-
-  get maskedProps() {
-    return obj.merge(this.animations.map(a => a.maskedProps));
-  }
 
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
@@ -161,21 +146,21 @@ export class PropertyAnimation {
   get duration() { return this.config.duration || 1000 }
 
   getAnimationProps() {
-    var before = plainStyleMapper.getStylePropsMasked(this.morph),
-        after = plainStyleMapper.getStyleProps(this.morph);
-    for (var prop in before) {
-      if (obj.equals(after[prop], before[prop])) {
-         delete before[prop];
-         delete after[prop];
+    for (var prop in this.beforeProps) {
+      if (obj.equals(this.afterProps[prop], this.beforeProps[prop])) {
+         delete this.beforeProps[prop];
+         delete this.afterProps[prop];
       }
     }
-    return [before, after];
+    return [this.beforeProps, this.afterProps];
   }
 
   assignProps() {
+    this.beforeProps = plainStyleMapper.getStyleProps(this.morph);
     for (var prop in this.changedProps) {
         this.morph[prop] = this.changedProps[prop];
     }
+    this.afterProps = plainStyleMapper.getStyleProps(this.morph);
   }
 
   start(node) {
@@ -185,6 +170,7 @@ export class PropertyAnimation {
       if (animationProps) {
          let anim = node.animate(animationProps,
                        {easing: this.easing,
+                        fill: "none",
                         duration: this.duration});
          anim.onfinish = () => {
              this.finish();
