@@ -346,9 +346,9 @@ export class Morph {
   }
 
   relativeBounds(relativeMorph) {
-    var tfm = relativeMorph ? new Transform(this.origin.negated()).preConcatenate(this.transformToMorph(relativeMorph)) :
+    var tfm = relativeMorph ? this.transformToMorph(relativeMorph) :
                               this.getGlobalTransform(),
-        bounds = tfm.transformRectToRect(this.innerBounds());
+        bounds = tfm.transformRectToRect(this.origin.negated().extent(this.extent));
 
     if (!this.isClip()) {
        this.submorphs.forEach(submorph => {
