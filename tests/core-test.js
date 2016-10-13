@@ -157,7 +157,6 @@ describe("bounds", () => {
     morph1.addMorph(morph2);
     morph1.setBounds(rect(100, 100, 40, 40));
     morph2.setBounds(rect(20, 10, 40, 40));
-    morph2.submorphBounds(morph1.getTransform())
     expect(rect(100, 100, 60, 50)).equals(morph1.bounds());
   });
 
@@ -192,8 +191,8 @@ describe("bounds", () => {
         morph2 = morph();
     morph1.setBounds(rect(100, 100, 40, 40));
     expect(rect(100, 100, 40, 40)).equals(morph1.bounds());
-    morph2.setBounds(rect(-10,0, 20, 50));
     morph1.addMorph(morph2);
+    morph2.setBounds(rect(-10,0, 20, 50));
     expect(rect(90, 100, 50, 50)).equals(morph1.bounds());
     morph2.remove();
     expect(rect(100, 100, 40, 40)).equals(morph1.bounds());
@@ -213,13 +212,13 @@ describe("bounds", () => {
     expect(width).closeTo(20, 0.1, "width");
     expect(height).closeTo(20, 0.1, "height");
   });
-  
+
   it("globalBounds for inner morph with different origin", () => {
     var world = morph({
       type: "world", extent: pt(300,300),
       submorphs: [{
         extent: pt(100,100), rotation: num.toRadians(0) ,
-        submorphs: [{name: "target", position:pt(10,10), 
+        submorphs: [{name: "target", position:pt(10,10),
                      extent: pt(20,20), rotation: num.toRadians(90), origin: pt(10,10)}]}
     ]});
     // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
@@ -236,7 +235,7 @@ describe("bounds", () => {
       submorphs: [{
         name: "owner",
         extent: pt(100,100), rotation: num.toRadians(0) ,
-        submorphs: [{name: "target", position:pt(100,100), 
+        submorphs: [{name: "target", position:pt(100,100),
                      extent: pt(100,100), rotation: num.toRadians(90), origin: pt(50,50),
                      submorphs: [{extent: pt(100,100)}]}]}
     ]});
@@ -276,7 +275,7 @@ describe("geometric transformations", () => {
     expect(morph2.origin).equals(pt(50,50));
     expect(morph2.globalBounds().topLeft()).equals(pt(101,101));
   });
-  
+
   it("origin influences localize", function() {
     var world = morph({type: "world", extent: pt(300,300)}),
         morph1 = morph({extent: pt(200, 200), position: pt(150,150), origin: pt(100,100)}),
@@ -286,7 +285,7 @@ describe("geometric transformations", () => {
     expect(morph1.worldPoint(pt(0,0))).equals(pt(150,150));
     expect(morph1.localize(pt(150,150))).equals(pt(0,0));
   });
-  
+
   it("localizes positions if nested in transforms", function() {
     var world = morph({type: "world", extent: pt(300,300)}),
         morph1 = morph({extent: pt(200, 200), position: pt(150,150), origin: pt(100,100)}),
@@ -379,7 +378,7 @@ describe("contains point", () => {
 });
 
 describe("command and keybinding test", () => {
-  
+
   it("add command and keybinding and invoke", () => {
     var m = morph(), run = 0;
     m.addKeyBindings([{keys: "input-a", command: "do stuff"}])
