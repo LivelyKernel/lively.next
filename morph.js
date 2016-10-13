@@ -345,8 +345,19 @@ export class Morph {
     return rect(0,0,w,h);
   }
 
+  transformTillMorph(other) {
+     // faster version of transform to, that benefits from
+     // having the other morph in the current morph's owner chain
+    var tfm = new Transform();
+    for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
+      tfm.preConcatenate(new Transform(morph.origin))
+         .preConcatenate(morph.getTransform())
+    }
+    return tfm;
+  }
+
   relativeBounds(relativeMorph) {
-    var tfm = relativeMorph ? this.transformToMorph(relativeMorph) :
+    var tfm = relativeMorph ? this.transformTillMorph(relativeMorph) :
                               this.getGlobalTransform(),
         bounds = tfm.transformRectToRect(this.origin.negated().extent(this.extent));
 
@@ -668,14 +679,7 @@ export class Morph {
   }
 
   getGlobalTransform() {
-    var globalTransform = new Transform(),
-        world = this.world();
-    for (var morph = this; (morph != world) && (morph != undefined); morph = morph.owner) {
-      globalTransform
-        .preConcatenate(new Transform(morph.origin))
-        .preConcatenate(morph.getTransform())
-    }
-    return globalTransform;
+    return this.transformTillMorph(this.world());
   }
 
   get globalPosition() { return this.worldPoint(pt(0,0)) }
