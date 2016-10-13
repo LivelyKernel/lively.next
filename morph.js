@@ -362,12 +362,13 @@ export class Morph {
   globalBounds() {
     if (!this.owner) return this.bounds();
     var tfm = new Transform()
-                .preConcatenate(new Transform(this.origin).inverse())
+                .preConcatenate(new Transform(this.origin.negated()))
                 .preConcatenate(this.getGlobalTransform()),
         bounds = tfm.transformRectToRect(this.innerBounds());
     if (!this.isClip()) {
-      var subBounds = this.submorphBounds(this.getGlobalTransform());
-      if (subBounds) bounds = bounds.union(subBounds);
+      this.submorphs.forEach(submorph => {
+          bounds = bounds.union(submorph.globalBounds());
+      });
     }
     return bounds;
   }
