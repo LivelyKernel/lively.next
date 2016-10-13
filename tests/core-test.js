@@ -241,10 +241,10 @@ describe("bounds", () => {
                      submorphs: [{extent: pt(100,100)}]}]}
     ]});
     // rotated by 2*-45 degs, should be at world origin, shifted up, same size as morph
-    var {x,y,width,height} = world.get("owner").bounds();
+    var {x,y,width,height} = world.get("owner").globalBounds();
     expect(x).closeTo(0, 0.1, "x");
     expect(y).closeTo(0, 0.1, "y");
-    expect(width).closeTo(200, 0.1, "width");
+    expect(width).closeTo(150, 0.1, "width");
     expect(height).closeTo(200, 0.1, "height");
   });
 
