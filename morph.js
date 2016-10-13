@@ -144,7 +144,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   animate(config) {
     const anim = this._animationQueue.registerAnimation(config);
     if (!this._animationQueue.animationsActive) {
@@ -153,7 +153,7 @@ export class Morph {
   }
 
   get layout()         { return this.getProperty("layout") }
-  set layout(value)    { 
+  set layout(value)    {
     if (value) value.container = this;
     this.addValueChange("layout", value);
   }
@@ -271,7 +271,7 @@ export class Morph {
 
   get scrollExtent() {
     return (this.submorphs.length ?
-      this.innerBounds().union(this.submorphBounds(new Transform())) :
+      this.innerBounds().union(this.submorphBounds()) :
       this.innerBounds()).extent();
   }
 
@@ -335,20 +335,6 @@ export class Morph {
     this.globalPosition = this.globalPosition.addPt(globalDelta);
   }
 
-  bounds() {
-    var tfm = this.getTransform(),
-        bounds = this.innerBounds();
-
-    bounds = tfm.transformRectToRect(bounds);
-
-    if (!this.isClip()) {
-      var subBounds = this.submorphBounds(tfm);
-      if (subBounds) bounds = bounds.union(subBounds);
-    }
-
-    return bounds;
-  }
-
   setBounds(bounds) {
     this.position = bounds.topLeft().addPt(this.origin);
     this.extent = bounds.extent();
@@ -359,28 +345,31 @@ export class Morph {
     return rect(0,0,w,h);
   }
 
-  globalBounds() {
-    if (!this.owner) return this.bounds();
-    var tfm = new Transform()
-                .preConcatenate(new Transform(this.origin.negated()))
-                .preConcatenate(this.getGlobalTransform()),
+  relativeBounds(relativeMorph) {
+    var tfm = relativeMorph ? new Transform(this.origin.negated()).preConcatenate(this.transformToMorph(relativeMorph)) :
+                              this.getGlobalTransform(),
         bounds = tfm.transformRectToRect(this.innerBounds());
+
     if (!this.isClip()) {
-      this.submorphs.forEach(submorph => {
-          bounds = bounds.union(submorph.globalBounds());
+       this.submorphs.forEach(submorph => {
+          bounds = bounds.union(submorph.relativeBounds(relativeMorph));
       });
     }
+
     return bounds;
   }
 
-  submorphBounds(tfm) {
-    tfm = tfm || this.getTransform();
-    var subBounds;
-    for (var i = 0; i < this.submorphs.length; i++) {
-      var morphBounds = this.submorphs[i].bounds();
-      subBounds = subBounds ? subBounds.union(morphBounds) : morphBounds;
-    }
-    return subBounds ? tfm.transformRectToRect(subBounds) : null;
+  bounds() {
+    return this.relativeBounds(this.owner);
+  }
+
+  globalBounds() {
+    return this.relativeBounds(this.world());
+  }
+
+  submorphBounds() {
+    return this.submorphs.map(submorph => submorph.bounds())
+                         .reduce((a,b) => a.union(b));
   }
 
   align(p1, p2) { return this.moveBy(p2.subPt(p1)); }
@@ -921,7 +910,7 @@ export class Morph {
 
     } else if (kind === "horizontal" || kind === "both directions") {
       if (newScrollRight >= this.scrollExtent.x) newScrollX = this.scrollExtent.x-1;
-      else if (newScrollLeft <= 0) newScrollX = 1;    
+      else if (newScrollLeft <= 0) newScrollX = 1;
       if (newScrollX !== undefined) {
         this.scroll = pt(newScrollX, scrollY);
         evt.stop();
@@ -1101,7 +1090,7 @@ export class Triangle extends Morph {
     var base = {width: width/2, style: "solid", color: color},
         side = {width: height/2, style: "solid", color: Color.transparent},
         side1, side2, bottom;
-  
+
     switch (this.direction) {
       case "down": side1 = "borderLeft"; side2 = "borderRight"; bottom = "borderTop"; break;
       case "up": side1 = "borderLeft"; side2 = "borderRight"; bottom = "borderBottom"; break;
@@ -1140,7 +1129,7 @@ export class Path extends Morph {
       ...props
     })
   }
-  
+
   get isSvgMorph() { return true }
 
   get vertices() { return this.getProperty("vertices")}
