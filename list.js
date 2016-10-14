@@ -1,5 +1,5 @@
 import { Morph, Text, show } from "./index.js"
-import { pt, Color, Rectangle } from "lively.graphics";
+import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { arr, fun, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
@@ -16,7 +16,10 @@ class ListItemMorph extends Text {
       lineWrapping: false,
       halosEnabled: false, readOnly: true, selectable: false,
       fixedWidth: true, fixedHeight: false, fill: null,
-      textString: "", itemIndex: undefined, ...props
+      textString: "", itemIndex: undefined, ...props,
+      selectionFontColor: props.selectionFontColor || Color.white,
+      selectionColor: props.selectionColor || Color.blue,
+      inactiveFontColor: props.fontColor || Color.black
     });
   }
 
@@ -26,8 +29,8 @@ class ListItemMorph extends Text {
     this.textString = item.string || "no item.string";
     this.position = pos;
     this.width = this.owner.width;
-    this.fill = isSelected ? Color.blue : null;
-    this.fontColor = isSelected ? Color.white : Color.black;
+    this.fill = isSelected ? props.selectionColor : null;
+    this.fontColor = isSelected ? props.selectionFontColor : props.fontColor;
   }
 
   onMouseDown(evt) {
@@ -345,8 +348,9 @@ export class List extends Morph {
             selectedIndexes,
             scroll: {x: left, y: top},
             extent: {x: width, y: height},
-            fontSize, fontFamily,
-            padding, itemPadding
+            fontSize, fontFamily, fontColor,
+            padding, itemPadding, selectionColor,
+            selectionFontColor
           } = this,
           padding = padding || Rectangle.inset(0),
           padTop = padding.top(), padLeft = padding.left(),
@@ -373,7 +377,8 @@ export class List extends Morph {
         itemMorph.displayItem(item, itemIndex,
           pt(padLeft, padTop+itemHeight*itemIndex),
           selectedIndexes.includes(itemIndex),
-          {fontFamily, fontSize, padding: itemPadding || Rectangle.inset(0)});
+          {fontFamily, fontColor, selectionColor, selectionFontColor,
+           fontSize, padding: itemPadding || Rectangle.inset(0)});
       }
   
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
@@ -477,9 +482,8 @@ export class FilterableList extends Morph {
         inputText = Text.makeInputLine({
           name: "input",
           textString: input,
-          borderWidth: 1, borderColor: Color.gray,
-          padding: Rectangle.inset(2),
-          fontSize, fontFamily
+          fontSize, fontFamily,
+          ...this.inputStyle(props.theme)
         }),
         list = new List({
           name: "list", items: [],
@@ -487,10 +491,11 @@ export class FilterableList extends Morph {
           fontSize, fontFamily,
           padding, itemPadding,
           borderWidth: props.borderWidth,
-          borderColor: props.borderColor
+          borderColor: props.borderColor,
+          ...this.listStyle(props.theme),
         });
 
-    super({borderWidth: 1, borderColor: Color.gray, submorphs: [inputText, list]});
+    super({borderWidth: 1, fill: Color.transparent, borderColor: Color.gray, submorphs: [inputText, list]});
 
     props = obj.dissoc(props, ["fontFamily", "fontSize", "input"]);
 
@@ -508,15 +513,46 @@ export class FilterableList extends Morph {
     connect(this, "extent", this, "relayout");
   }
 
+  listStyle(theme) {
+     if (theme == "dark") {
+        return {fill: Color.transparent,
+                hideScrollbars: true,
+                fontColor: Color.gray, 
+                selectionFontColor: Color.black,
+                selectionColor: Color.gray.lighter()}
+     } else { 
+        return {}
+     }
+  }
+
+  inputStyle(theme) {
+     if (theme == "dark") {
+        return {
+          borderWidth: 0,
+          borderRadius: 20,
+          fill: Color.gray.withA(0.8),
+          fontColor: Color.gray.darker(),
+          padding: rect(10,2,0,-2)
+        }
+      } else {
+        return {
+          borderWidth: 1, 
+          borderColor: Color.gray,
+          padding: Rectangle.inset(2)
+        }
+      }
+  }
+
   focus() { this.get("input").focus(); }
 
   relayout() {
     var i = this.get("input"),
         l = this.get("list"),
         ext = this.extent;
-    l.width = i.width = this.width;
-    l.top = i.bottom;
-    l.height = this.height - i.height;
+    l.width = this.width;
+    i.width = this.width;
+    l.top = i.bottom + 5;
+    l.height = this.height - i.height - 10;
   }
 
   get multiSelect() { return this.get("list").multiSelect; }

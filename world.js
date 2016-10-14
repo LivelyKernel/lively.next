@@ -5,7 +5,7 @@ import { List, FilterableList } from "./list.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
 import config from "./config.js";
-import { morph, Morph, Text, Window, TooltipViewer } from "./index.js";
+import { morph, Morph, Text, Window, TooltipViewer, GridLayout } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 import KeyHandler from "./events/KeyHandler.js";
 
@@ -327,7 +327,7 @@ var worldCommands = [
           }));
       }
 
-      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true})
+      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true, listFontFamily: "Monaco, monospace"})
 
       Promise.all(selected.map(ea =>
         Browser.browse(ea.package.address, ea.name, undefined, browser)
@@ -357,7 +357,7 @@ var worldCommands = [
 
       items = arr.sortBy(items, ea => ea.string);
 
-      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true});
+      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white", listFontFamily: "Monaco, monospace"});
       for (var i = 0; i < selected.length; i++) {
         var {package: p, shortName} = selected[i],
             b = await Browser.browse(
@@ -674,8 +674,8 @@ export class AbstractPrompt extends Morph {
 
   constructor(props = {}) {
     super({
-      fill: Color.gray.lighter(), extent: pt(300,80),
-      borderWidth: 1, borderColor: Color.gray,
+      fill: Color.black.withA(0.6), extent: pt(300,80), borderRadius: 5,
+      dropShadow: true,
       ...obj.dissoc(props, ["label", "autoRemove"])});
 
     this.build(props);
@@ -685,6 +685,10 @@ export class AbstractPrompt extends Morph {
       autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
     };
     connect(this, "extent", this, "applyLayout");
+  }
+
+  remove() {
+     this.animate({opacity: 0, duration: 300, onFinish: () => super.remove()});
   }
 
   get label() { return this.get("label").textString; }
@@ -829,13 +833,61 @@ export class ListPrompt extends AbstractPrompt {
     labelFontSize = labelFontSize || 14;
     listFontFamily = listFontFamily || labelFontFamily;
     listFontSize = listFontSize || labelFontSize;
-    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily});
-    this.get("list") || this.addMorph(new ListClass({borderWidth: 1, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect}));
-    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
-    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
+    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray});
+    this.get("list") || this.addMorph(new ListClass({borderWidth: 0, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect, theme: "dark"}));
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "Select", ...this.okButtonStyle()});
+    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel", ...this.cancelButtonStyle()});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
     connect(this.get("cancelBtn"), 'fire', this, 'reject');
+    this.initLayout();
   }
+
+  initLayout() {
+     this.layout = new GridLayout({
+        grid: [[null, "label", "label", "label", "label", null],
+               [null, "list", "list", "list", "list", null],
+               [null, null, "okBtn",null,  "cancelBtn", null],
+               [null, null, null, null, null, null]]
+     });
+
+     this.layout.row(0).fixed = 30;
+     this.layout.row(2).fixed = 25;
+     this.layout.row(3).fixed = 5;
+     this.layout.col(0).fixed = 5;
+     this.layout.col(2).fixed = 100;
+     this.layout.col(3).fixed = 5;
+     this.layout.col(4).fixed = 100;
+     this.layout.col(5).fixed = 5;
+  }
+
+   applyLayout() { }
+
+  okButtonStyle() {
+    return {
+      activeStyle: {
+        borderColor: Color.green.lighter().withA(0.8),
+        borderWidth: 2,
+        fill: Color.transparent,
+        fontColor: Color.green.lighter().withA(0.8),
+        fontStyle: "bold",
+        nativeCursor: "pointer"
+      }
+    }
+  }
+
+  cancelButtonStyle() {
+    return {
+      activeStyle: {
+        borderColor: Color.red.lighter().withA(0.8),
+        borderWidth: 2,
+        fill: Color.transparent,
+        fontColor: Color.red.lighter().withA(0.8),
+        fontStyle: "bold",
+        nativeCursor: "pointer"
+      }
+    }
+  }
+       
 
   resolve() {
     var answer = this.get("list") instanceof FilterableList ?
@@ -851,21 +903,6 @@ export class ListPrompt extends AbstractPrompt {
   }
 
   reject() { return this.state.answer.resolve({prompt: this, selected: [], filtered: [], status: "canceled"}); }
-
-  applyLayout() {
-    var label = this.get("label"),
-        list = this.get("list"),
-        okBtn = this.get("okBtn"),
-        cancelBtn = this.get("cancelBtn");
-    label.fit();
-    if (label.width > this.width) this.width = label.width;
-    list.width = this.width;
-    list.top = label.bottom;
-    cancelBtn.bottomRight = pt(this.width, this.height-3);
-    okBtn.topRight = cancelBtn.topLeft;
-    // this.height = okBtn.bottom + 3;
-    list.height = this.height - list.top - cancelBtn.height - 3;
-  }
 
   focus() { this.get("list").focus(); }
 }
