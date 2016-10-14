@@ -72,6 +72,11 @@ div.text-layer span {
   line-height: normal;
 }
 
+.hiddenScrollbar::-webkit-scrollbar { 
+  /* This is the magic bit */
+  display: none;
+}
+
 `;
 
 export class Renderer {

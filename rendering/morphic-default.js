@@ -251,7 +251,7 @@ export function defaultAttributes(morph, renderer) {
     animation: new Animation(morph),
     key: morph.id,
     id: morph.id,
-    className: morph.styleClasses.join(" "),
+    className: morph.styleClasses.concat([morph.hideScrollbars ? "hiddenScrollbar" : null]).join(" "),
     draggable: false,
 
     // rk 2016-09-13: scroll issues: just setting the scroll on the DOM node
