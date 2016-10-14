@@ -56,6 +56,7 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._animationQueue = new AnimationQueue(this);
+    this.updateTransform();
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
     Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds"]));
@@ -88,6 +89,7 @@ export class Morph {
   onChange(change) {
     if (change.prop == "layout")
         change.value && change.value.apply();
+    if (['position', 'rotation', 'scale', 'origin'].includes(change.prop)) this.updateTransform();
     this.layout && this.layout.onChange(change);
   }
 
@@ -356,14 +358,27 @@ export class Morph {
     return tfm;
   }
 
-  relativeBounds(relativeMorph) {
-    var tfm = relativeMorph ? this.transformTillMorph(relativeMorph) :
-                              this.getGlobalTransform(),
+  immediateTransformTillMorph(other) {
+    var {topLeft, topRight, bottomRight, bottomLeft} = other,
+        transformPoint = (p, morph) => other.addPt(morph.origin).matrixTransform(morph.getTransform());
+    
+    for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
+         topLeft = transformPoint(topLeft, morph);
+         topRight = transformPoint(topRight, morph);
+         bottomLeft = transformPoint(bottomLeft, morph);
+         bottomRight = transformPoint(bottomRight, morph);
+
+    }
+    return Rectangle.unionPts([topLeft, topRight, bottomLeft, bottomRight])
+  }
+
+  relativeBounds(tfm) {
+    var tfm = tfm || this.getGlobalTransform(),
         bounds = tfm.transformRectToRect(this.origin.negated().extent(this.extent));
 
     if (!this.isClip()) {
        this.submorphs.forEach(submorph => {
-          bounds = bounds.union(submorph.relativeBounds(relativeMorph));
+          bounds = bounds.union(submorph.relativeBounds(submorph.transformTillMorph(this).preConcatenate(tfm)));
       });
     }
 
@@ -371,11 +386,11 @@ export class Morph {
   }
 
   bounds() {
-    return this.relativeBounds(this.owner);
+    return this.relativeBounds(this.transformTillMorph(this.owner));
   }
 
   globalBounds() {
-    return this.relativeBounds(this.world());
+    return this.relativeBounds(this.transformTillMorph(this.world()));
   }
 
   submorphBounds() {
@@ -685,23 +700,26 @@ export class Morph {
   get globalPosition() { return this.worldPoint(pt(0,0)) }
   set globalPosition(p) { return this.position = (this.owner ? this.owner.localize(p) : p); }
 
-  getTransform() {
+  getTransform() { return this._transform }
+
+  updateTransform() {
     var scale = this.scale,
         pos = this.position,
-        moveToOrigin = new Transform(this.origin);
+        moveToOrigin = new Transform(this.origin),
+        tfm;
 
     if (typeof scale === "number") scale = pt(scale,scale);
-
     if (this.owner && this.owner.isClip()) pos = pos.subPt(this.owner.scroll);
 
-    return moveToOrigin.inverse()
-      .preConcatenate(new Transform(pos, this.rotation, scale));
+    tfm = new Transform(pos, this.rotation, scale)
+    this._transform = moveToOrigin.inverse().preConcatenate(tfm);
   }
 
   setTransform(tfm) {
     this.position = tfm.getTranslation();
     this.rotation = num.toRadians(tfm.getRotation());
     this.scale = tfm.getScalePoint().x;
+    this._transform = tfm;
   }
 
   fullContainsWorldPoint(p) { // p is in world coordinates
