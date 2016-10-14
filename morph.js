@@ -87,9 +87,10 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
-    if (change.prop == "layout")
+    if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
+        this.updateTransform();
+    if (change.prop == "layout") 
         change.value && change.value.apply();
-    if (['position', 'rotation', 'scale', 'origin'].includes(change.prop)) this.updateTransform();
     this.layout && this.layout.onChange(change);
   }
 
