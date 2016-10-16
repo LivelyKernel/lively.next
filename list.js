@@ -16,12 +16,19 @@ class ListItemMorph extends Text {
       lineWrapping: false,
       halosEnabled: false, readOnly: true, selectable: false,
       fixedWidth: true, fixedHeight: false, fill: null,
-      textString: "", itemIndex: undefined, ...props,
-      selectionFontColor: props.selectionFontColor || Color.white,
-      selectionColor: props.selectionColor || Color.blue,
-      inactiveFontColor: props.fontColor || Color.black
+      textString: "", itemIndex: undefined, 
+      ...props
     });
   }
+
+  get selectionFontColor() { return this._selectionFontColor || Color.white }
+  set selectionFontColor(c) { this._selectionFontColor = c; }
+
+  get selectionColor() { return this._selectionColor || Color.blue }
+  set selectionColor(c) { this._selectionColor = c; }
+
+  get inactiveFonctColor() { return this._inactiveFontColor || Color.black }
+  set inactiveFontColor(c) { this._inactiveFontColor = c; }
 
   displayItem(item, itemIndex, pos, isSelected = false, props) {
     if (props) Object.assign(this, props);
@@ -29,8 +36,8 @@ class ListItemMorph extends Text {
     this.textString = item.string || "no item.string";
     this.position = pos;
     this.width = this.owner.width;
-    this.fill = isSelected ? props.selectionColor : null;
-    this.fontColor = isSelected ? props.selectionFontColor : props.fontColor;
+    this.fill = isSelected ? this.selectionColor : null;
+    this.fontColor = isSelected ? this.selectionFontColor : this.fontColor;
   }
 
   onMouseDown(evt) {
