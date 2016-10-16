@@ -562,6 +562,13 @@ export class Morph {
     return this
   }
 
+  fadeOut(duration=1000) {
+    this.animate({opacity: 0, duration, onFinish: () => {
+        this.remove();
+        this.opacity = 1;
+    }})
+  }
+
   removeAllMorphs() { this.submorphs = []; }
 
   bringToFront() {
