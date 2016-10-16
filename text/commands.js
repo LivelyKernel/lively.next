@@ -552,8 +552,22 @@ var commands = [
 
   {
     name: "move lines up",
+    multiSelectAction: "single",
     exec: function(morph) {
+
       var sel = morph.selection;
+
+      if (morph.inMultiSelectMode()) { // make sure position of selections doesn't change
+        var ranges = sel.selections.map(ea => ea.range);
+        ranges.slice().sort(Range.compare).forEach(range => {
+          morph.selection = range;
+          morph.execCommand("move lines up");
+        })
+        ranges.forEach(range => { range.start.row--;  range.end.row--; });
+        morph.selection.ranges = ranges;
+        return true;
+      }
+
       if (!sel.isEmpty() && sel.end.column === 0) sel.growRight(-1);
 
       var {start, end} = sel;
@@ -569,8 +583,21 @@ var commands = [
 
   {
     name: "move lines down",
+    multiSelectAction: "single",
     exec: function(morph) {
       var sel = morph.selection;
+
+      if (morph.inMultiSelectMode()) { // make sure position of selections doesn't change
+        var ranges = sel.selections.map(ea => ea.range);
+        ranges.slice().sort(Range.compare).reverse().forEach(range => {
+          morph.selection = range;
+          morph.execCommand("move lines down");
+        })
+        ranges.forEach(range => { range.start.row++;  range.end.row++; });
+        morph.selection.ranges = ranges;
+        return true;
+      }
+
       if (!sel.isEmpty() && sel.end.column === 0) sel.growRight(-1);
       var range = sel.range, {start, end} = range;
 
