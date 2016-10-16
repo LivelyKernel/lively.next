@@ -80,8 +80,8 @@ export class RichTextControl extends Morph {
     this.addMorph({name: "italic button",    ...btnStyle, labelWithTextAttributes: makeIconStyle("italic")});
     this.addMorph({name: "underline button", ...btnStyle, labelWithTextAttributes: makeIconStyle("underline")});
     this.addMorph({name: "fontcolor button", ...btnStyle, labelWithTextAttributes: makeIconStyle("paint-brush")});
-    this.addMorph({name: "inc fontsize button", ...btnStyle, label: "+", fontSize: 18});
-    this.addMorph({name: "dec fontsize button", ...btnStyle, label: "-", fontSize: 18});
+    this.addMorph({name: "inc fontsize button", ...btnStyle, label: "➕"});
+    this.addMorph({name: "dec fontsize button", ...btnStyle, label: "➖"});
     this.addMorph({name: "link button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("link")});
     this.addMorph({name: "font button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("font")});
 
