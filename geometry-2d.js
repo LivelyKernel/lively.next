@@ -290,7 +290,7 @@ export class Rectangle {
 
   static fromElement(element) {
     // FIXME
-    if (Object.isFunction(element.getBoundingClientRect)) {
+    if (typeof element.getBoundingClientRect === "function") {
       var b = element.getBoundingClientRect();
       return rect(b.left, b.top, b.width, b.height);
     } else if (element.namespaceURI == "http://www.w3.org/1999/xhtml") {
