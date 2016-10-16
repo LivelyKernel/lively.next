@@ -217,11 +217,17 @@ class TextChunk {
                   new TextChunk(text.slice(0, i), fontMetric, textAttributes),
                   {_style, _width: x, _height, _charBounds: _charBounds.slice(0, i)}),
           nextWidth = 0,
-          charBoundsSplitted = _charBounds.slice(i).map(ea => {
-            nextWidth += ea.width; return {...ea, x: ea.x-x} }),
-          right = Object.assign(
-            new TextChunk(text.slice(i), fontMetric, textAttributes),
-            {_style, _width: nextWidth, _height, _charBounds: charBoundsSplitted});
+          charBoundsSplitted = new Array(_charBounds.length-i);
+
+      for (let j = i, k = 0; j < _charBounds.length; j++, k++) {
+        var ea = _charBounds[j];
+        nextWidth += ea.width;
+        charBoundsSplitted[k] = {...ea, x: ea.x-x};
+      }
+
+      var right = Object.assign(
+        new TextChunk(text.slice(i), fontMetric, textAttributes),
+        {_style, _width: nextWidth, _height, _charBounds: charBoundsSplitted});
 
       return [left, right]
 
@@ -279,17 +285,38 @@ class TextLayoutLine {
     return this;
   }
 
-  updateIfNecessary(newChunks) {
-    var changed = updateChunks(this.chunks, newChunks);
-    changed && this.resetCache();
-    return changed;
-  }
-
   boundsFor(column) {
     var charBounds = this.charBounds;
     return charBounds[column]
         || charBounds[charBounds.length-1]
         || {x: 0, y: 0, width: 0, height: 0};
+  }
+
+  get charBounds() {
+    if (this._charBounds === undefined) this.computeCharBounds();
+    return this._charBounds;
+  }
+
+  computeCharBounds() {
+    let prefixWidth = 0,
+        { chunks, height: lineHeight } = this,
+        nChunks = chunks.length;
+    this._charBounds = [];
+
+    for (var i = 0; i < nChunks; i++) {
+      let { charBounds, width, height } = chunks[i];
+
+      for (let j = 0; j < charBounds.length; j++) {
+        let bounds = charBounds[j],
+            {x, y, width} = bounds;
+        this._charBounds.push({x: x + prefixWidth, y, width, height: lineHeight});
+      }
+
+      prefixWidth += width;
+    }
+
+    // "newline"
+    this._charBounds.push({x: prefixWidth, y: 0, width: 0, height: lineHeight});
   }
 
   rowColumnOffsetForPixelPos(xInPixels, yInPixels) {
@@ -320,33 +347,31 @@ class TextLayoutLine {
     return result;
   }
 
-  get charBounds() {
-    if (this._charBounds === undefined) this.computeCharBounds();
-    return this._charBounds;
-  }
-
-  computeCharBounds() {
-    let prefixWidth = 0,
-        { chunks, height: lineHeight } = this,
-        nChunks = chunks.length;
-    this._charBounds = [];
-
-    for (var i = 0; i < nChunks; i++) {
-      let { charBounds, width, height } = chunks[i];
-
-      for (let j = 0; j < charBounds.length; j++) {
-        let bounds = charBounds[j],
-            {x, y, width} = bounds;
-        this._charBounds.push({x: x + prefixWidth, y, width, height: lineHeight});
-      }
-
-      prefixWidth += width;
+  chunkAtOffset(offsetX, offsetY) {
+    var x = 0;
+    for (var i = 0; i < this.chunks.length; i++) {
+      let { charBounds, width, height } = this.chunks[i];
+      if (offsetX >= x && offsetX <= x + width) return this.chunks[i];
+      x += width;
     }
-
-    // "newline"
-    this._charBounds.push({x: prefixWidth, y: 0, width: 0, height: lineHeight});
+    return null
   }
 
+  chunkAtColumn(column) {
+    var sumLength = 0;
+    for (var i = 0; i < this.chunks.length; i++) {
+      let { length } = this.chunks[i];
+      if (column >= sumLength && column <= sumLength + length) return this.chunks[i];
+      sumLength += length;
+    }
+    return null
+  }
+
+  updateIfNecessary(newChunks) {
+    var changed = updateChunks(this.chunks, newChunks);
+    changed && this.resetCache();
+    return changed;
+  }
 
 }
 
@@ -405,7 +430,7 @@ class WrappedTextLayoutLine {
     return this;
   }
 
-  updateIfNecessary(newcChunks, wrapAt) {
+  updateIfNecessary(newChunks, wrapAt) {
     // Here we create wrapped lines and figure out what the right content for
     // them is, i.e. we split the chunks that are in this line into sub-lists
     // according to wrapAt. wrapAt specifies the width at which the wrap should
@@ -416,7 +441,7 @@ class WrappedTextLayoutLine {
     // new chunks. If nothing has changed and the wrap width is the same we don't
     // need to do anything. This is an important optimization!
     let chunks = this.chunks,
-        changed = updateChunks(chunks, newcChunks) || this.wrapAt !== wrapAt;
+        changed = updateChunks(chunks, newChunks) || this.wrapAt !== wrapAt;
 
     if (!changed) return false;
 
@@ -713,10 +738,10 @@ export default class TextLayout {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  screenPositionFor(morph, point) {
+  lineAndScreenPositionAtPoint(morph, point) {
     this.updateFromMorphIfNecessary(morph);
     var lines = this.wrappedLines(morph);
-    if (!lines.length) return {row: 0, column: 0};
+    if (!lines.length) return {row: 0, column: 0, offsetX: 0, offsetY: 0, line: null};
 
     let {x,y: remainingHeight} = point, line, row = 0;
     x -= morph.padding.left();
@@ -734,7 +759,11 @@ export default class TextLayout {
     var {row: rowOffset, column: columnOffset} =
       line.rowColumnOffsetForPixelPos(x, remainingHeight);
 
-    return {row: row+rowOffset, column: columnOffset};
+    return {row: row+rowOffset, column: columnOffset, offsetX: x, offsetY: remainingHeight, line};
+  }
+
+  screenPositionFor(morph, point) {
+    return this.lineAndScreenPositionAtPoint(morph, point);
   }
 
   textIndexFor(morph, point) {
@@ -752,6 +781,19 @@ export default class TextLayout {
       textHeight += height;
     }
     return new Rectangle(morph.padding.left(), morph.padding.top(), textWidth, textHeight);
+  }
+
+  chunkAtPoint(morph, point) {
+    var {line, offsetX, offsetY} = morph.textLayout.lineAndScreenPositionAtPoint(morph, point);
+    return line ? line.chunkAtOffset(offsetX) : null;
+  }
+
+  chunkAtScreenPos(morph, {row, column}) {
+    this.updateFromMorphIfNecessary(morph);
+    let lines = this.wrappedLines(morph);
+    row = Math.max(0, Math.min(lines.length-1, row));
+    var line = lines[row];
+    return line ? line.chunkAtColumn(column) : null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

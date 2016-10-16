@@ -7,6 +7,7 @@ import { expect, chai } from "mocha-es6";
 import { pt, Color, Rectangle, Transform, rect } from "lively.graphics";
 import { dummyFontMetric as fontMetric, expectSelection } from "./test-helpers.js";
 import { TextAttribute } from "../text/attribute.js";
+import { Range } from "../text/range.js";
 
 expectSelection(chai);
 
@@ -102,6 +103,16 @@ describe("text attributes", () => {
     expect(textAttributes[0].data).deep.equals(defaultStyle);
     expect(textAttributes[1].data).deep.equals(style_a);
     expect(textAttributes[2].data).deep.equals(style_b);
+  });
+
+
+  it("attributes at position", () => {
+    var t = text("abcdef", {padding: Rectangle.inset(0), borderWidth: 0}),
+        attr = t.addTextAttribute({fontColor: "green"}, Range.create(0,0,0,6));
+    expect(t.textAttributesAt(pt(3,3))[1]).equals(attr);
+    expect(t.styleAt(pt(3,3))).containSubset({fontColor: "green"});
+    expect(t.textAttributesAtScreenPos({row: 0, column: 1})[1]).equals(attr);
+    expect(t.styleAtScreenPos({row: 0, column: 1})).containSubset({fontColor: "green"});
   });
 
 })

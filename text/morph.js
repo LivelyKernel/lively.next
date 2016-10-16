@@ -660,8 +660,9 @@ export class Text extends Morph {
       attr = TextStyleAttribute.isStyleData(attr) ?
         new TextStyleAttribute(attr) : new TextAttribute(attr);
     if (range) attr.range = range;
-    this.document.addTextAttribute(attr);
+    var attr = this.document.addTextAttribute(attr);
     this.onAttributesChanged();
+    return attr;
   }
 
   removeTextAttribute(attr) {
@@ -679,6 +680,26 @@ export class Text extends Morph {
     } else {
       this.addTextAttribute(style, {start: {row: 0, column: -1}, end: this.documentEndPosition})
     }
+  }
+
+  textAttributesAt(point) {
+    var chunk = this.textLayout.chunkAtPoint(this, point);
+    return chunk ? chunk.textAttributes : [];
+  }
+
+  textAttributesAtScreenPos(pos) {
+    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
+    return chunk ? chunk.textAttributes : [];
+  }
+
+  styleAt(point) {
+    var chunk = this.textLayout.chunkAtPoint(this, point);
+    return chunk ? chunk.style : this.styleProps;
+  }
+
+  styleAtScreenPos(pos) {
+    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
+    return chunk ? chunk.style : this.styleProps;
   }
 
   resetTextAttributes() {
