@@ -154,9 +154,6 @@ describe("text rendering", () => {
   
       expect(strings).equals(["h", "e", "l", "l", "o"]);
     });
-  });
-
-  describe("non-style attributes", () => {
 
     it("renders css classes", async () => {
       sut.addTextAttribute(TextAttribute.create({styleClasses: ["class1", "class2"]}, 0, 1, 0, 2));
@@ -164,6 +161,14 @@ describe("text rendering", () => {
  
       let chunks = getRenderedTextNodes(sut)[0].childNodes;
       expect(chunks[1].className).equals("class1 class2");
+    });
+
+    it("links", async () => {
+      sut.addTextAttribute({link: "http://foo"}, Range.create(0, 0, 0, 5));
+      await sut.whenRendered();
+      let chunks = getRenderedTextNodes(sut)[0].childNodes;
+      chunks[0].tagName
+      expect(obj.select(chunks[0], ["tagName", "href", "target"])).deep.equals({tagName:"A", href: "http://foo/", target: "_blank"});
     });
 
   });

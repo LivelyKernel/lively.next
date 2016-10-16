@@ -65,7 +65,7 @@ export class RichTextControl extends Morph {
 
   build() {
     var btnStyle = {
-      type: "button", borderRadius: 5,
+      type: "button", borderRadius: 5, padding: Rectangle.inset(0),
       grabbable: false, draggable: false
     }
 
@@ -129,8 +129,12 @@ export class RichTextControl extends Morph {
     show("NOT YET IMPLEMENTED!")
   }
 
-  changeLink() {
-    show("NOT YET IMPLEMENTED!")
+  async changeLink() {
+    var sel = this.target.selection,
+        {link} = getStyle(this.target, sel),
+        newLink = await this.world().prompt("Set link", {input: link || "https://"});
+    setStyle(this.target, sel, {link: newLink || undefined});
+    this.remove();
   }
 
   toggleUnderline() {
@@ -180,8 +184,8 @@ function setSingleStyleProperty(morph, propName, newValueFn) {
     setStyle(morph, sel, {[propName]: newValue}))
 }
 
-function getStyle(morph, range) {
-  var [[from, to, firstStyle]] = morph.document.stylesChunked(morph.selection);
+function getStyle(morph, range = morph.selection) {
+  var [[from, to, firstStyle]] = morph.document.stylesChunked(range);
   return firstStyle;
 }
 

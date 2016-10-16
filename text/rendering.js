@@ -168,7 +168,7 @@ export var defaultRenderer = {
 
     return h('div.text-layer', {
       style: {
-        pointerEvents: "none", whiteSpace: "pre",
+        whiteSpace: "pre",
         width: textWidth+"px", height: textHeight+"px",
         padding: `${padding.top()}px ${padding.right()}px ${padding.bottom()}px ${padding.left()}px`
       }
@@ -240,7 +240,7 @@ export var defaultRenderer = {
   },
 
   cursor(pos, height, visible, diminished, width) {
-      return h('div.selection-layer-part', {
+    return h('div.selection-layer-part', {
       style: {
         pointerEvents: "none", position: "absolute",
         left: pos.x-Math.ceil(width/2) + "px", top: pos.y + "px",
@@ -249,7 +249,7 @@ export var defaultRenderer = {
         zIndex: 1,
         display: visible ? "" : "none"
       }
-    })
+    });
   },
 
   renderMarkerPart(textLayouter, morph, start, end, style) {
@@ -279,16 +279,16 @@ export var defaultRenderer = {
   renderChunk(textChunk) {
     if (textChunk.rendered) return textChunk.rendered;
     var {style, text, width, height} = textChunk,
-        {fontSize, fontFamily, fontColor, backgroundColor,
-         fontWeight, fontStyle, textDecoration,
-         fixedCharacterSpacing,
-         styleClasses
-         } = style,
+        {
+          fontSize, fontFamily, fontColor, backgroundColor,
+          fontWeight, fontStyle, textDecoration,
+          fixedCharacterSpacing, nativeCursor: cursor,
+          styleClasses, link
+        } = style,
+        tagname = link ? "a" : "span",
         textNodes = text ?
           (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br");
-    backgroundColor = backgroundColor || "",
-    fontColor = fontColor || "";
-  
+
     var attrs = {
       style: {
         fontSize: fontSize + "px",
@@ -296,15 +296,21 @@ export var defaultRenderer = {
         fontWeight,
         fontStyle,
         textDecoration,
-        color: String(fontColor),
-        backgroundColor: String(backgroundColor),
+        color: fontColor ? String(fontColor) : "",
+        backgroundColor: backgroundColor ? String(backgroundColor) : "",
+        cursor
       }
     };
-  
+
+    if (link) {
+      attrs.href = link;
+      attrs.target = "_blank";
+    }
+
     if (styleClasses && styleClasses.length)
       attrs.className = styleClasses.join(" ");
-  
-    return textChunk.rendered = h("span", attrs, textNodes);
+
+    return textChunk.rendered = h(tagname, attrs, textNodes);
   }
 
 }
