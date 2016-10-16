@@ -146,7 +146,6 @@ export class RichTextControl extends Morph {
   }
 
   toggleBold() {
-debugger;
     setSingleStyleProperty(
       this.target, "fontWeight",
       fontWeight => fontWeight === "bold" || fontWeight === "700" ? "normal" : "bold")

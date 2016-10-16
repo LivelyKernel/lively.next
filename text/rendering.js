@@ -7,7 +7,7 @@ export var defaultRenderer = {
   renderMorph(renderer, morph) {
     var textLayout = morph.textLayout;
     textLayout.updateFromMorphIfNecessary(morph);
-  
+
     var cursorWidth = morph.fontSize <= 11 ? 2 : 3,
         selectionLayer = [];
     if (morph.inMultiSelectMode()) {
@@ -16,8 +16,8 @@ export var defaultRenderer = {
         selectionLayer.push(...this.renderSelectionLayer(textLayout, morph, sels[i], true/*diminished*/, 2))
       selectionLayer.push(...this.renderSelectionLayer(textLayout, morph, sels[i], false/*diminished*/, 4))
     } else selectionLayer = this.renderSelectionLayer(textLayout, morph, morph.selection, false, cursorWidth);
-    
-  
+
+
     return h("div", {
         ...defaultAttributes(morph, renderer),
         style: {
@@ -26,7 +26,7 @@ export var defaultRenderer = {
             (morph.readOnly ? "default" : "text") :
             morph.nativeCursor
         }
-      }, 
+      },
       selectionLayer
         .concat(morph.debug ? this.renderDebugLayer(textLayout, morph) : [])
         .concat(this.renderMarkerLayer(textLayout, morph))
@@ -36,9 +36,9 @@ export var defaultRenderer = {
 
   renderSelectionLayer(textLayouter, morph, selection, diminished = false, cursorWidth = 2) {
     // FIXME just hacked together... needs cleanup!!!
-  
+
     if (!selection) return [];
-  
+
     var {start, end, lead, cursorVisible} = selection,
         start               = textLayouter.docToScreenPos(morph, start),
         end                 = textLayouter.docToScreenPos(morph, end),
@@ -55,20 +55,20 @@ export var defaultRenderer = {
         leadLineHeight      = lead.row in lines ?
                                 lines[lead.row].height :
                                 defaultHeight || (defaultHeight = textLayouter.defaultCharSize(morph).height);
-  
+
     // collapsed selection -> cursor
     if (selection.isEmpty())
       return [this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
-  
+
     // single line -> one rectangle
     if (start.row === end.row)
       return [
         this.selectionLayerPart(startPos, endPos.addXY(0, endLineHeight)),
         this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)]
-  
+
     let endPosLine1 = pt(morph.width, startPos.y + lines[start.row].height),
         startPosLine2 = pt(0, endPosLine1.y);
-  
+
     // two lines -> two rectangles
     if (start.row+1 === end.row) {
       return [
@@ -76,32 +76,32 @@ export var defaultRenderer = {
         this.selectionLayerPart(startPosLine2, endPos.addXY(0, endLineHeight)),
         this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
     }
-  
+
     let endPosMiddle = pt(morph.width, endPos.y),
         startPosLast = pt(0, endPos.y);
-  
+
     // 3+ lines -> three rectangles
     return [
       this.selectionLayerPart(startPos, endPosLine1),
       this.selectionLayerPart(startPosLine2, endPosMiddle),
       this.selectionLayerPart(startPosLast, endPos.addXY(0, endLineHeight)),
       this.cursor(cursorPos, leadLineHeight, cursorVisible, diminished, cursorWidth)];
-  
+
   },
 
   renderMarkerLayer(textLayouter, morph) {
     let markers = morph._markers, parts = [];
     if (!markers) return parts;
-  
+
     for (let m of markers) {
       let {style, range: {start, end}} = m;
-  
+
       // single line
       if (start.row === end.row) {
         parts.push(this.renderMarkerPart(textLayouter, morph, start, end, style));
         continue;
       }
-  
+
       // multiple lines
       // first line
       parts.push(this.renderMarkerPart(textLayouter, morph, start, morph.lineRange(start.row).end, style));
@@ -113,7 +113,7 @@ export var defaultRenderer = {
       // last line
       parts.push(this.renderMarkerPart(textLayouter, morph, {row: end.row, column: 0}, end, style));
     }
-  
+
     return parts;
   },
 
@@ -130,7 +130,7 @@ export var defaultRenderer = {
         spacerAfter,
         lineLeft = padding.left(),
         lineTop = padding.top();
-  
+
     for (;row < lines.length; row++) {
       let {width, height} = lines[row],
           newTextHeight = textHeight + height;
@@ -138,34 +138,34 @@ export var defaultRenderer = {
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
-  
+
     textLayouter.firstVisibleLine = row;
     spacerBefore = h("div", {style: {height: textHeight+"px", width: textWidth+"px"}});
-  
+
     for (;row < lines.length; row++) {
       let {width, height} = lines[row],
           newTextHeight = textHeight + height;
-  
+
       renderedLines.push(this.renderLine(lines[row], lineLeft, lineTop));
-  
+
       textWidth = Math.max(width, textWidth);
       lineTop += height;
       textHeight += height;
-  
+
       if (textHeight >= visibleBottom) break;
     }
-  
+
     textLayouter.lastVisibleLine = row;
     lastVisibleLineBottom = textHeight;
-  
+
     for (;row < lines.length; row++) {
       let {width, height} = lines[row];
       textWidth = Math.max(width, textWidth);
       textHeight += height;
     }
-  
+
     spacerAfter = h("div", {style: {height: textHeight-lastVisibleLineBottom+"px", width: textWidth+"px"}});
-  
+
     return h('div.text-layer', {
       style: {
         pointerEvents: "none", whiteSpace: "pre",
@@ -185,7 +185,7 @@ export var defaultRenderer = {
         paddingTop = padding.top(),
         textHeight = 0,
         textWidth = 0;
-  
+
     for (let row = 0; row < lines.length; row++) {
       let {width, height, charBounds} = lines[row];
       for (let col = 0; col < charBounds.length; col++) {
@@ -205,12 +205,12 @@ export var defaultRenderer = {
           }
         }))
       }
-  
+
       textHeight += height;
       textWidth = Math.max(textWidth, width);
       if (textHeight < visibleTop || textHeight > visibleBottom) continue;
     }
-  
+
     debugHighlights.push(h("div", {
       style: {
         position: "absolute",
@@ -223,7 +223,7 @@ export var defaultRenderer = {
         zIndex: -2
       }
     }));
-  
+
     return debugHighlights
   },
 
