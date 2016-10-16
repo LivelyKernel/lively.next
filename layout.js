@@ -349,6 +349,18 @@ export class LayoutColumn extends LayoutAxis {
   emptyAxis() {
     return new LayoutColumn(new LayoutCell({column: arr.withN(this.items.length, null), layout: this.layout}));
   }
+
+  set paddingLeft(left) {
+     this.items.forEach(c => {
+        c.padding.x = left;
+     });
+  }
+
+  set paddingRight(right) {
+     this.items.forEach(c => {
+        c.padding.width = right;
+     });
+  }
   
   get before() { return this.origin.left && new LayoutColumn(this.origin.left); }
   get after() { return this.origin.right && new LayoutColumn(this.origin.right); }
@@ -435,6 +447,18 @@ export class LayoutRow extends LayoutAxis {
     
   emptyAxis() {
     return new LayoutRow(new LayoutCell({row: arr.withN(this.items.length, null), layout: this.layout}));
+  }
+
+  set paddingTop(top) {
+    this.items.forEach(c => {
+       c.padding.y = top;
+    })
+  }
+
+  set paddingBottom(bottom) {
+    this.items.forEach(c => {
+       c.padding.height = bottom;
+    })
   }
   
   get before() { return this.origin.top && new LayoutRow(this.origin.top) }
@@ -523,6 +547,8 @@ export class LayoutCell {
     this.min = {width: 0, height: 0};
     this.top = top; this.left = left;
     this.bottom = bottom; this.right = right;
+
+    this.padding = rect(0,0,0,0);
     
     if (row.length > 0) {
       this.right = new LayoutCell({row, left: this, layout});
@@ -650,7 +676,9 @@ export class LayoutCell {
   }
   
   bounds() {
-    return this.position.extent(this.extent);
+    return this.position.addPt(this.padding.topLeft())
+               .extent(this.extent.subPt(this.padding.extent())
+                                  .subPt(this.padding.topLeft()));
   }
   
 }
