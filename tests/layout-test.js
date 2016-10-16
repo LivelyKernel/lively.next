@@ -496,5 +496,18 @@ describe("layout", () => {
       m1.remove();
       expect(m.layout.row(0).col(1).group.morph).to.be.null;
     });
+
+    it("can add a padding to different axis", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.col(1).paddingLeft = 10;
+      m.layout.col(1).paddingRight = 10;
+      m.layout.row(0).paddingTop = 5;
+      m.layout.apply();
+      expect(m2.position).equals(pt(0,100));
+      expect(m1.position).equals(pt(110, 5));
+      expect(m1.topRight).equals(pt(190, 5));
+      expect(m1.width).equals(80);
+      expect(m1.height).equals(95);
+    });
   });
 })
