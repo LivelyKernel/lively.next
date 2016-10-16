@@ -31,7 +31,7 @@ function showThenHide (world, morphOrMorphs, duration = 3) {
   var morphs = Array.isArray(morphOrMorphs) ? morphOrMorphs : [morphOrMorphs];
   morphs.forEach(ea => world.addMorph(ea));
   if (duration) { // FIXME use scheduler
-    setTimeout(() => morphs.forEach(ea => ea.remove()), duration*1000);
+    setTimeout(() => morphs.forEach(ea => ea.fadeOut(2000)), duration*1000);
   }
   return morphOrMorphs;
 }
@@ -53,7 +53,7 @@ class BoundsMarker extends Morph {
   }
 
   static highlightBounds(bounds) {
-    return new this().alignWithRect(bounds);
+    return new this().alignWithBounds(bounds);
   }
 
   constructor() {
@@ -94,10 +94,15 @@ class BoundsMarker extends Morph {
   }
 
   alignWithMorph(otherMorph) {
-    return this.alignWithRect(otherMorph.globalBounds());
+    return this.alignWithBounds(otherMorph.globalBounds());
   }
 
-  alignWithRect(r) {
+  alignWithBounds(bounds) {
+    this.alignWithRect(bounds.insetBy(-20));
+    return this.alignWithRect(bounds, true)
+  }
+
+  alignWithRect(r, animated) {
     var markerWidth = 5,
         corners = this.ensureMarkerCorners(),
         markerLength = this.markerLength(r),
@@ -110,7 +115,9 @@ class BoundsMarker extends Morph {
           r.bottomRight().addXY(-markerLength, -markerWidth).extent(pt(markerLength, markerWidth)),
           r.bottomLeft(). addXY(0,-markerWidth).             extent(pt(markerLength, markerWidth)),
           r.bottomLeft(). addXY(0, -markerLength).           extent(pt(markerWidth, markerLength))];
-    corners.forEach((corner, i) => corner.setBounds(boundsForMarkers[i]));
+    corners.forEach((corner, i) => animated ? 
+                    corner.animate({bounds: boundsForMarkers[i], duration: 300}) : 
+                    corner.setBounds(boundsForMarkers[i]));
     return this;
   }
 
