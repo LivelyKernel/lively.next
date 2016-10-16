@@ -1,4 +1,4 @@
-import { Rectangle, Color, pt } from "lively.graphics";
+import { Rectangle, Color, pt, rect } from "lively.graphics";
 import { tree, arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { List, FilterableList } from "./list.js"
@@ -129,7 +129,7 @@ var worldCommands = [
               onSelection: sel => sel && sel.show(),
               width: world.visibleBounds().extent().x * 1/3,
               labelFontSize: 16,
-              listFontSize: 18,
+              listFontSize: 16,
               itemPadding: Rectangle.inset(4)
             }),
           {selected: [win]} = answer;
@@ -327,7 +327,7 @@ var worldCommands = [
           }));
       }
 
-      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true, listFontFamily: "Monaco, monospace"})
+      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true})
 
       Promise.all(selected.map(ea =>
         Browser.browse(ea.package.address, ea.name, undefined, browser)
@@ -357,7 +357,7 @@ var worldCommands = [
 
       items = arr.sortBy(items, ea => ea.string);
 
-      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white", listFontFamily: "Monaco, monospace"});
+      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white"});
       for (var i = 0; i < selected.length; i++) {
         var {package: p, shortName} = selected[i],
             b = await Browser.browse(
@@ -616,8 +616,9 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  openPrompt(promptMorph, opts = {requester: null}) {
+  openPrompt(promptMorph, opts = {requester: null, animated: false}) {
     var focused = this.focusedMorph, visBounds = this.visibleBounds();
+    
     promptMorph.openInWorldNear(
       opts.requester ?
         opts.requester.globalBounds().center() :
@@ -626,10 +627,23 @@ export class World extends Morph {
     if (promptMorph.height > visBounds.height)
       promptMorph.height = visBounds.height - 5;
 
+    if (opts.animated) {
+       var animator = new Morph({
+          fill: Color.transparent, extent: pt(1,1),  
+          opacity: 0, center: this.center
+       });
+       animator.openInWorld();
+       animator.addMorph(promptMorph);
+       animator.scale = 2;
+       animator.animate({scale: 1, opacity: 1, duration: 500, onFinish: () => {
+          // FIXME: called too soon! animator.remove(); promptMorph.openInWorld();
+       }})
+    }
+
     return promise.finally(promptMorph.activate(), () => focused && focused.focus());
   }
 
-  inform(label = "no message", opts = {fontSize: 16, requester: null}) {
+  inform(label = "no message", opts = {fontSize: 16, requester: null, animated: true}) {
     return this.openPrompt(new InformPrompt({label, ...opts}), opts);
   }
 
@@ -643,7 +657,7 @@ export class World extends Morph {
     return this.openPrompt(new TextPrompt({label, ...opts}), opts);
   }
 
-  confirm(label, opts = {requester: null}) {
+  confirm(label, opts = {requester: null, animated: true}) {
     // await this.world().confirm("test")
     return this.openPrompt(new ConfirmPrompt({label, ...opts}), opts);
   }
@@ -684,17 +698,11 @@ export class AbstractPrompt extends Morph {
       answer: null,
       autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
     };
-    connect(this, "extent", this, "applyLayout");
-  }
-
-  remove() {
-     this.animate({opacity: 0, duration: 300, onFinish: () => super.remove()});
   }
 
   get label() { return this.get("label").textString; }
   set label(label) {
     this.get("label").textString = label;
-    this.applyLayout();
   }
 
   resolve(arg) { this.state.answer.resolve(arg); }
@@ -704,7 +712,7 @@ export class AbstractPrompt extends Morph {
     this.focus();
     this.state.answer = promise.deferred();
     if (this.state.autoRemove)
-      promise.finally(this.state.answer.promise, () => this.remove());
+      promise.finally(this.state.answer.promise, () => this.fadeOut(500));
     return this.state.answer.promise;
   }
 
@@ -718,23 +726,57 @@ export class AbstractPrompt extends Morph {
     }
   }
 
+  get okButtonStyle() {
+    return {
+      activeStyle: {
+        borderColor: Color.green.lighter().withA(0.8),
+        borderWidth: 2,
+        fill: Color.transparent,
+        fontColor: Color.green.lighter().withA(0.8),
+        fontStyle: "bold",
+        nativeCursor: "pointer"
+      }
+    }
+  }
+
+  get cancelButtonStyle() {
+    return {
+      activeStyle: {
+        borderColor: Color.red.lighter().withA(0.8),
+        borderWidth: 2,
+        fill: Color.transparent,
+        fontColor: Color.red.lighter().withA(0.8),
+        fontStyle: "bold",
+        nativeCursor: "pointer"
+      }
+    }
+  }
+
 }
 
 export class InformPrompt extends AbstractPrompt {
 
   build(props) {
-    this.get("label") || this.addMorph({fontSize: 16, padding: Rectangle.inset(3), fontSize: 14, fill: null, ...props,  name: "label", type: "text", textString: "", readOnly: true});
-    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
+    this.get("label") || this.addMorph({
+        fontSize: 16, padding: Rectangle.inset(5), fontColor: Color.gray,
+        fontSize: 14, fill: null, ...props,  name: "label", type: "text", textString: props.label, readOnly: true});
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK", ...this.okButtonStyle});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
+    this.initLayout();
   }
 
-  applyLayout() {
-    var label = this.get("label"),
-        okBtn = this.get("okBtn");
-    label.fit();
-    if (label.width > this.width) this.width = label.width;
-    okBtn.topRight = pt(this.width, label.bottom);
-    this.height = okBtn.bottom;
+  initLayout() {
+     this.get("label").fit()
+     this.width = this.get("label").width + 10;
+     this.layout = new GridLayout({
+        grid: [["label", "label", "label"],
+               [null, "okBtn", null]]
+     });
+     this.layout.col(2).paddingRight = 5;
+     this.layout.col(1).fixed = 100;
+     this.layout.col(0).paddingLeft = 5;
+     this.layout.row(1).paddingBottom = 5;
+     this.layout.row(1).fixed = 30;
   }
 
   onKeyDown(evt) {
@@ -748,57 +790,73 @@ export class InformPrompt extends AbstractPrompt {
 
 export class ConfirmPrompt extends AbstractPrompt {
 
-  build() {
-    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), fontSize: 14, name: "label", type: "text", textString: "", readOnly: true});
-    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
-    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
+  build(props) {
+    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), fontSize: 14, name: "label", type: "text", textString: props.label, readOnly: true, fontColor: Color.gray});
+    this.get("okBtn") || this.addMorph({
+       name: "okBtn", type: "button", 
+       label: "OK", ...this.okButtonStyle});
+    this.get("cancelBtn") || this.addMorph({
+        name: "cancelBtn", type: "button", 
+        label: "Cancel", ...this.cancelButtonStyle});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
     connect(this.get("cancelBtn"), 'fire', this, 'reject');
+    this.initLayout();
   }
 
   resolve() { super.resolve(true); }
   reject() { super.resolve(false); }
 
-  applyLayout() {
-    var label = this.get("label"),
-        okBtn = this.get("okBtn"),
-        cancelBtn = this.get("cancelBtn");
-    label.fit();
-    label.position = pt(1,1);
-    if (label.width > this.width) this.width = label.width+2;
-    cancelBtn.topRight = pt(this.width-1, label.bottom+1);
-    okBtn.topRight = cancelBtn.topLeft;
-    this.height = okBtn.bottom + 3;
+  initLayout() {
+     // fixme: layout should be able to let one morph
+     //         define the overall width of the container
+     this.get("label").fit()
+     this.width = this.get("label").width + 10;
+     this.layout = new GridLayout({
+        grid: [["label", "label"],
+               ["okBtn", "cancelBtn"]]
+     });
+     this.layout.col(1).paddingRight = 5;
+     this.layout.col(1).paddingLeft = 2.5;
+     this.layout.col(0).paddingLeft = 5;
+     this.layout.col(0).paddingRight = 2.5;
+     this.layout.row(1).paddingBottom = 5;
+     this.layout.row(1).fixed = 30;
   }
 }
 
 export class TextPrompt extends AbstractPrompt {
 
   build({input}) {
-    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), fontSize: 14, name: "label", type: "text", textString: "", readOnly: true});
-    this.get("input") || this.addMorph(Text.makeInputLine({name: "input", textString: input || ""}));
-    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK"});
-    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel"});
+    this.get("label") || this.addMorph({
+        fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
+        name: "label", type: "text", textString: "", readOnly: true});
+    this.get("input") || this.addMorph(Text.makeInputLine({
+          name: "input", textString: input || "",
+          borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
+          fontColor: Color.gray.darker(), padding: rect(10,2,0,-2)
+    }));
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK", ...this.okButtonStyle});
+    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel", ...this.cancelButtonStyle});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
     connect(this.get("cancelBtn"), 'fire', this, 'reject');
     this.get("input").gotoDocumentEnd();
+    this.initLayout();
   }
 
   resolve() { super.resolve(this.get("input").textString); }
 
-  applyLayout() {
-    var label = this.get("label"),
-        input = this.get("input"),
-        okBtn = this.get("okBtn"),
-        cancelBtn = this.get("cancelBtn");
-    label.fit();
-    label.position = pt(1,1);
-    if (label.width > this.width) this.width = label.width+2;
-    input.width = this.width-2;
-    input.topLeft = label.bottomLeft;
-    cancelBtn.topRight = pt(this.width-1, input.bottom+1);
-    okBtn.topRight = cancelBtn.topLeft;
-    this.height = okBtn.bottom + 3;
+  initLayout() {
+     this.layout = new GridLayout({
+        grid: [["label", "label"],
+               ["input", "input"],
+               ["okBtn", "cancelBtn"]]
+     });
+     this.layout.col(1).paddingRight = 5;
+     this.layout.col(1).paddingLeft = 2.5;
+     this.layout.col(0).paddingLeft = 5;
+     this.layout.col(0).paddingRight = 2.5;
+     this.layout.row(1).paddingBottom = 5;
+     this.layout.row(2).paddingBottom = 5;
   }
 
   focus() { this.get("input").focus(); }
@@ -831,12 +889,12 @@ export class ListPrompt extends AbstractPrompt {
     var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
     labelFontSize = labelFontSize || 14;
-    listFontFamily = listFontFamily || labelFontFamily;
+    listFontFamily = listFontFamily || "Monaco, monospace";
     listFontSize = listFontSize || labelFontSize;
     this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray});
     this.get("list") || this.addMorph(new ListClass({borderWidth: 0, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect, theme: "dark"}));
-    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "Select", ...this.okButtonStyle()});
-    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel", ...this.cancelButtonStyle()});
+    this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "Select", ...this.okButtonStyle});
+    this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel", ...this.cancelButtonStyle});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
     connect(this.get("cancelBtn"), 'fire', this, 'reject');
     this.initLayout();
@@ -844,50 +902,20 @@ export class ListPrompt extends AbstractPrompt {
 
   initLayout() {
      this.layout = new GridLayout({
-        grid: [[null, "label", "label", "label", "label", null],
-               [null, "list", "list", "list", "list", null],
-               [null, null, "okBtn",null,  "cancelBtn", null],
-               [null, null, null, null, null, null]]
+        grid: [["label", "label", "label"],
+               ["list", "list", "list"],
+               [null,"okBtn", "cancelBtn"]]
      });
 
      this.layout.row(0).fixed = 30;
-     this.layout.row(2).fixed = 25;
-     this.layout.row(3).fixed = 5;
-     this.layout.col(0).fixed = 5;
+     this.layout.row(2).fixed = 30;
+     this.layout.row(2).paddingBottom = 5;
+     this.layout.col(0).paddingLeft = 5;
+     this.layout.col(1).fixed = 100;
+     this.layout.col(1).paddingRight = 5;
      this.layout.col(2).fixed = 100;
-     this.layout.col(3).fixed = 5;
-     this.layout.col(4).fixed = 100;
-     this.layout.col(5).fixed = 5;
+     this.layout.col(2).paddingRight = 5;
   }
-
-   applyLayout() { }
-
-  okButtonStyle() {
-    return {
-      activeStyle: {
-        borderColor: Color.green.lighter().withA(0.8),
-        borderWidth: 2,
-        fill: Color.transparent,
-        fontColor: Color.green.lighter().withA(0.8),
-        fontStyle: "bold",
-        nativeCursor: "pointer"
-      }
-    }
-  }
-
-  cancelButtonStyle() {
-    return {
-      activeStyle: {
-        borderColor: Color.red.lighter().withA(0.8),
-        borderWidth: 2,
-        fill: Color.transparent,
-        fontColor: Color.red.lighter().withA(0.8),
-        fontStyle: "bold",
-        nativeCursor: "pointer"
-      }
-    }
-  }
-       
 
   resolve() {
     var answer = this.get("list") instanceof FilterableList ?
