@@ -12,6 +12,9 @@ class Layout {
     this.container = container;
   }
 
+  description() { return "Describe the layout behavior here." }
+  name() { return "Name presented to the user." }
+
   onSubmorphResized(submorph) { this.apply() }
   onSubmorphAdded(submorph) { this.apply() }
   onSubmorphRemoved(submorph) { this.apply() }
@@ -40,7 +43,7 @@ class Layout {
   inspect(pointerId) {}
 }
 
-/* This is just a very simple constraint layout, that should
+/* TODO: This is just a very simple constraint layout, that should
    eventually be replaced by just dynamically appying constraints
    to morph properties that relate to other morph's properties */
 
@@ -52,6 +55,9 @@ export class FillLayout extends Layout {
     this.fixedHeight = config.fixedHeight;
     this.fixedWidth = config.fixedWidth;
   }
+
+  name() { return "Fill" }
+  description() { return "Forces all submorphs to match the extent of their owner."} 
   
   apply() {
     /* FIXME: Add support for destructuring default values */
@@ -71,6 +77,9 @@ export class FillLayout extends Layout {
 }
 
 export class VerticalLayout extends Layout {
+
+  name() { return "Vertical" }
+  description() { return "Assemble the submorphs in a vertically growing list." }
 
   apply() {
     if (this.active) return;
@@ -92,7 +101,10 @@ export class VerticalLayout extends Layout {
 
 export class HorizontalLayout extends Layout {
 
- apply() {
+  name() { return "Horizontal" }
+  description() { return "Assemble the submorphs in a horizontally growing list." }
+
+  apply() {
     if (this.active) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
@@ -112,6 +124,9 @@ export class HorizontalLayout extends Layout {
 }
 
 export class TilingLayout extends Layout {
+
+  name() { return "Tiling" }
+  description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
 
   apply() {
     var width = this.getOptimalWidth(),
@@ -691,6 +706,9 @@ export class GridLayout extends Layout {
     this.cellGroups = [];
     this.config = config;
   }
+
+  name() { return "Grid" }
+  description() { return "Aligns the submorphs alongside a configurable grid. Columns and rows and be configured to have different proportional, minimal or fixed sizes. Cells can further be grouped such that submorphs fill up multiple slots of the grid." }
 
   initGrid() {
     const grid = this.ensureGrid(this.config),
