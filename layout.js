@@ -388,7 +388,7 @@ export class LayoutColumn extends LayoutAxis {
   
   row(idx) { return this.items[idx]; }
   
-  get min() { return this.origin.min.width; }
+  get min() { return this.origin.min.width || 0; }
   set min(x) { this.adjustMin(x - this.min); }
   
   adjustMin(delta) {
@@ -396,7 +396,7 @@ export class LayoutColumn extends LayoutAxis {
       if (c.min.width + delta < 0) {
         c.min.width = 0;
       } else if (c.min.width + delta > c.width) {
-        c.min.width = c.width;
+        c.min.width += delta;
       } else {
         c.min.width += delta;
       }
@@ -481,7 +481,7 @@ export class LayoutRow extends LayoutAxis {
   
   col(idx) { return this.items[idx]; }
   
-  get min() { return this.origin.min.height; }
+  get min() { return this.origin.min.height || 0; }
   set min(x) { this.adjustMin(x - this.min); }
   
   adjustMin(delta) {
@@ -489,7 +489,7 @@ export class LayoutRow extends LayoutAxis {
       if (c.min.height + delta < 0) {
         c.min.height = 0;
       } else if (c.min.height + delta > c.height) {
-        c.min.height = c.height;
+        c.min.height += delta;
       } else {
         c.min.height += delta;
       }
