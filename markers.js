@@ -137,6 +137,7 @@ export class StatusMessage extends Morph {
       fill: Color.white,
       stayOpen: false,
       isMaximized: false,
+      dropShadow: true,
       ...props,
 
 
@@ -166,7 +167,7 @@ export class StatusMessage extends Morph {
 
   relayout() {
     this.get("messageText").setBounds(this.innerBounds().insetBy(10));
-    this.get("closeButton").topRight = this.innerBounds().topRight().addXY(-10,4);
+    this.get("closeButton").topRight = this.innerBounds().topRight().addXY(-10,10);
   }
 
   isEpiMorph() { return true }
@@ -196,8 +197,7 @@ export class StatusMessage extends Morph {
     if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 20;
     if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 20;
     ext = this.extent.maxPt(ext);
-    this.extent = ext;
-    this.center = visibleBounds.center();
+    this.animate({extent: ext, center: visibleBounds.center(), duration: 200})
     this.relayout();
   }
 

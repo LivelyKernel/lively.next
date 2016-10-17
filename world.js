@@ -602,13 +602,22 @@ export class World extends Morph {
       arr.remove(messages, m);
     }
 
-    messages.forEach(msg => !msg.isMaximized && msg.moveBy(pt(0, -msgMorph.extent.y)));
+    messages.forEach(msg => !msg.isMaximized && msg.animate({
+        position: msg.position.addPt(pt(0, -msgMorph.extent.y - 10)),
+        duration: 500
+    }));
 
-    msgMorph.align(msgMorph.bounds().bottomRight(), this.visibleBounds().bottomRight().addXY(-20, -20));
+    const msgPos = this.visibleBounds().bottomRight().addXY(-20, -20);
+    msgMorph.align(msgMorph.bounds().bottomRight(), msgPos);
+    msgMorph.topRight = msgPos.addPt(pt(0,40));
     this.addMorph(msgMorph);
+    msgMorph.animate({
+       bottomRight: msgPos,
+       duration: 500
+    });
 
     if (typeof delay !== "undefined")
-      setTimeout(() => msgMorph.stayOpen || msgMorph.remove(), delay);
+      setTimeout(() => msgMorph.stayOpen || msgMorph.fadeOut(), delay);
 
     return msgMorph;
   }
@@ -815,10 +824,12 @@ export class ConfirmPrompt extends AbstractPrompt {
         grid: [["label", "label"],
                ["okBtn", "cancelBtn"]]
      });
-     this.layout.col(1).paddingRight = 5;
-     this.layout.col(1).paddingLeft = 2.5;
      this.layout.col(0).paddingLeft = 5;
      this.layout.col(0).paddingRight = 2.5;
+     this.layout.col(0).adjustMin(100);
+     this.layout.col(1).paddingRight = 5;
+     this.layout.col(1).paddingLeft = 2.5;
+     this.layout.col(1).adjustMin(100);
      this.layout.row(1).paddingBottom = 5;
      this.layout.row(1).fixed = 30;
   }
