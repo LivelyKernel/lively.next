@@ -729,10 +729,10 @@ export class AbstractPrompt extends Morph {
   get okButtonStyle() {
     return {
       activeStyle: {
-        borderColor: Color.green.lighter().withA(0.8),
+        borderColor: Color.green.lighter(),
         borderWidth: 2,
         fill: Color.transparent,
-        fontColor: Color.green.lighter().withA(0.8),
+        fontColor: Color.green.lighter(),
         fontStyle: "bold",
         nativeCursor: "pointer"
       }
@@ -742,10 +742,10 @@ export class AbstractPrompt extends Morph {
   get cancelButtonStyle() {
     return {
       activeStyle: {
-        borderColor: Color.red.lighter().withA(0.8),
+        borderColor: Color.red.lighter(),
         borderWidth: 2,
         fill: Color.transparent,
-        fontColor: Color.red.lighter().withA(0.8),
+        fontColor: Color.red.lighter(),
         fontStyle: "bold",
         nativeCursor: "pointer"
       }
