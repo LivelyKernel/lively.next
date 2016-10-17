@@ -141,7 +141,7 @@ export class PropertyAnimation {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
 
-  get easing() { return "cubic-bezier(.86,0,.07,1)" }
+  get easing() { return this.config.easing || "cubic-bezier(.86,0,.07,1)" }
   get onFinish() { return this.config.onFinish || (() => {})}
   get duration() { return this.config.duration || 1000 }
 
