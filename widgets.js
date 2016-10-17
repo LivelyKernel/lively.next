@@ -148,13 +148,12 @@ export class Window extends Morph {
     var cache = this.propertyCache,
         bounds = this.bounds();
     if (this.minimized) {
-      // this.animate({extent: this.propertyCache.extent, easing: "easeOutQuint", duration: 300});
       cache.minimizedBounds = bounds;
-      this.animate({bounds: cache.nonMinizedBounds || bounds, easing: "easeOutQuint", duration: 300});
+      this.animate({bounds: cache.nonMinizedBounds || bounds, duration: 300});
     } else {
       cache.nonMinizedBounds = bounds;
       cache.minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25));
-      this.animate({bounds: cache.minimizedBounds, easing: "easeOutQuint", duration: 300});
+      this.animate({bounds: cache.minimizedBounds, duration: 300});
     }
     this.minimized = !this.minimized;
     this.resizer().visible = !this.minimized;
