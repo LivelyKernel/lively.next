@@ -563,7 +563,8 @@ export class Morph {
   }
 
   fadeOut(duration=1000) {
-    this.animate({opacity: 0, duration, onFinish: () => {
+    this.animate({opacity: 0, duration, easing: "ease-out", 
+                  onFinish: () => {
         this.remove();
         this.opacity = 1;
     }})
