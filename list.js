@@ -16,7 +16,7 @@ class ListItemMorph extends Text {
       lineWrapping: false,
       halosEnabled: false, readOnly: true, selectable: false,
       fixedWidth: true, fixedHeight: false, fill: null,
-      textString: "", itemIndex: undefined, 
+      textString: "", itemIndex: undefined,
       ...props
     });
   }
@@ -70,17 +70,17 @@ var listCommands = [
     name: "goto first item",
     exec: (list) => { list.gotoIndex(0); return true; }
   },
-  
+
   {
     name: "goto last item",
     exec: (list) => { list.gotoIndex(list.items.length-1); return true; }
   },
-  
+
   {
     name: "arrow up",
     exec: (list) => { list.gotoIndex(list.indexUp()); return true; }
   },
-  
+
   {
     name: "arrow down",
     exec: (list) => {
@@ -109,7 +109,7 @@ var listCommands = [
       return true;
     }
   },
-  
+
   {
     name: "select down",
     exec: (list) => {
@@ -364,30 +364,30 @@ export class List extends Morph {
           padBottom = padding.bottom(), padRight = padding.right(),
           firstItemIndex = Math.floor((top + padTop) / itemHeight),
           lastItemIndex = Math.ceil((top + height + padTop) / itemHeight);
-  
+
       listItemContainer.extent = pt(this.width + padLeft + padRight, Math.max(padTop + padBottom + itemHeight*items.length, this.height));
-  
+
       for (var i = 0; i < lastItemIndex-firstItemIndex; i++) {
         var itemIndex = firstItemIndex+i,
             item = items[itemIndex];
-  
+
         if (!item) {
           // if no items to display, remove remaining itemMorphs
           itemMorphs.slice(i).forEach(itemMorph => itemMorph.remove());
           break;
         }
-  
+
         var itemMorph = itemMorphs[i]
                     || (itemMorphs[i] = listItemContainer.addMorph(
                           new ListItemMorph({fontFamily, fontSize})));
-  
+
         itemMorph.displayItem(item, itemIndex,
           pt(padLeft, padTop+itemHeight*itemIndex),
           selectedIndexes.includes(itemIndex),
           {fontFamily, fontColor, selectionColor, selectionFontColor,
            fontSize, padding: itemPadding || Rectangle.inset(0)});
       }
-  
+
       itemMorphs.slice(lastItemIndex-firstItemIndex).forEach(ea => ea.remove());
     });
   }
@@ -419,7 +419,7 @@ export class List extends Morph {
         indexes = [];
     if (this.multiSelect) {
       if (evt.isCommandKey()) {
-      
+
         // deselect item
         if (isClickOnSelected) {
           indexes = selectedIndexes.filter(ea => ea != itemI);
@@ -427,7 +427,7 @@ export class List extends Morph {
           // just add clicked item to selection list
           indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI))
         }
-          
+
 
       } else if (evt.isShiftDown()) {
 
@@ -543,7 +543,7 @@ export class FilterableList extends Morph {
         }
       } else {
         return {
-          borderWidth: 1, 
+          borderWidth: 1,
           borderColor: Color.gray,
           padding: Rectangle.inset(2)
         }
@@ -592,7 +592,7 @@ export class FilterableList extends Morph {
             state.escaped = true;
             return state;
           }
-        
+
           if (char === " " && !state.escaped) {
             if (!state.spaceSeen && state.current) {
               state.tokens.push(state.current);
