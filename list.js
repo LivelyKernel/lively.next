@@ -521,14 +521,19 @@ export class FilterableList extends Morph {
   }
 
   listStyle(theme) {
-     if (theme == "dark") {
-        return {fill: Color.transparent,
-                hideScrollbars: true,
-                fontColor: Color.gray, 
-                selectionFontColor: Color.black,
-                selectionColor: Color.gray.lighter()}
-     } else { 
-        return {}
+    if (theme == "dark") {
+      return {
+        fill: Color.transparent,
+        hideScrollbars: true,
+        fontColor: Color.gray,
+        selectionFontColor: Color.black,
+        selectionColor: Color.gray.lighter(),
+        padding: Rectangle.inset(2, 0)
+      }
+     } else {
+        return {
+          padding: Rectangle.inset(2, 0)
+        }
      }
   }
 
@@ -556,10 +561,9 @@ export class FilterableList extends Morph {
     var i = this.get("input"),
         l = this.get("list"),
         ext = this.extent;
-    l.width = this.width;
-    i.width = this.width;
-    l.top = i.bottom + 5;
-    l.height = this.height - i.height - 10;
+    i.width = l.width = this.width;
+    l.top = i.bottom;
+    l.height = this.height - i.height;
   }
 
   get multiSelect() { return this.get("list").multiSelect; }
