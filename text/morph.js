@@ -15,6 +15,7 @@ import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
 import { defaultRenderer } from "./rendering.js"
+import { lessPosition } from "./position.js"
 
 
 const defaultTextStyle = {
@@ -537,7 +538,24 @@ export class Text extends Morph {
 
     if (!text.length) return Range.fromPositions(pos, pos);
 
+    // ensure that the default text style includes the newly inserted text
+    var defaultStyleAttr = this.defaultTextStyleAttribute
+    if (lessPosition(defaultStyleAttr.end, pos)) {
+      var prevEnd = defaultStyleAttr.end;
+      // FIXME this is a hacky version of updating the document's cache, this
+      // should better be hidden inside the doc!
+      arr.range(prevEnd.row+1, pos.row).map(row => {
+        var attrsOfLine = this.document._textAttributesByLine[row]
+                       || (this.document._textAttributesByLine[row] = []);
+        if (!attrsOfLine.includes(defaultStyleAttr))
+          attrsOfLine.unshift(defaultStyleAttr);
+      });
+      this.defaultTextStyleAttribute.end = pos;
+    }
+
+    // the document manages the actual content
     var range = this.document.insert(text, pos);
+
     this.textLayout.shiftLinesIfNeeded(this, range, "insertText");
 
     this.undoManager.undoStart(this, "insertText");
@@ -694,8 +712,6 @@ export class Text extends Morph {
     var attr = this.defaultTextStyleAttribute;
     Object.assign(attr.data, style);
     this.onAttributesChanged();
-    if (!attr) {
-    }
     return attr;
   }
 

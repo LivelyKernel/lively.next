@@ -85,6 +85,11 @@ describe("text attributes", () => {
     expect(sut.defaultTextStyle).deep.equals(computedDefaultStyle);
   });
 
+  it("default style range always reaches to end", () => {
+    sut.insertText("foo", {row: 2, column: 1});
+    expect(sut.defaultTextStyleAttribute.end).deep.equals({row: 2, column: 4});
+  });
+
   it("addTextAttribute merges style ranges", () => {
     var computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: "auto", textStyleClasses: undefined};
     sut.addTextAttribute(a);

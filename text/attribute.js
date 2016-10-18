@@ -23,10 +23,10 @@ export class TextAttribute {
 
   get isTextAttribute() { return true; }
 
-  get start() { return this.startAnchor.position }
-  set start(start) { this.startAnchor = new Anchor(undefined, start); }
-  get end() { return this.endAnchor.position }
-  set end(end) { this.endAnchor = new Anchor(undefined, end); }
+  get start() { return this._startAnchor.position }
+  set start(start) { this._startAnchor = new Anchor(undefined, start); }
+  get end() { return this._endAnchor.position }
+  set end(end) { this._endAnchor = new Anchor(undefined, end); }
 
   get range() {
     let { start, end } = this;
@@ -45,14 +45,14 @@ export class TextAttribute {
                       && obj.equals(this.data, other.data); }
 
   onInsert(range) {
-    var changedStart = this.startAnchor.onInsert(range),
-        changedEnd = this.endAnchor.onInsert(range);
+    var changedStart = this._startAnchor.onInsert(range),
+        changedEnd = this._endAnchor.onInsert(range);
     return changedStart || changedEnd;
   }
 
   onDelete(range) {
-    var changedStart = this.startAnchor.onDelete(range),
-        changedEnd = this.endAnchor.onDelete(range);
+    var changedStart = this._startAnchor.onDelete(range),
+        changedEnd = this._endAnchor.onDelete(range);
     return changedStart || changedEnd;
   }
 
@@ -69,6 +69,7 @@ export class TextAttribute {
     return `${this.constructor.name}(${range} ${obj.values(this.data)})`;
   }
 }
+
 
 export class TextStyleAttribute extends TextAttribute {
 
