@@ -91,7 +91,7 @@ export class TextStyleAttribute extends TextAttribute {
   static get styleProps() {
     return ["fontFamily", "fontSize", "fontColor", "fontWeight",
             "fontStyle", "textDecoration", "fixedCharacterSpacing",
-            "styleClasses", "link", "nativeCursor"];
+            "textStyleClasses", "link", "nativeCursor"];
   }
 
   static isStyleData(data) {

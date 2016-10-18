@@ -141,6 +141,7 @@ describe("text rendering", () => {
         // reported than on Chrome
         if (fontWeight == "400") fontWeight = "normal";
         if (fontWeight == "700") fontWeight = "bold";
+        if (textDecoration == "") textDecoration = "none";
         return { fontFamily, fontSize, fontWeight, fontStyle, textDecoration };
       });
   
@@ -156,7 +157,7 @@ describe("text rendering", () => {
     });
 
     it("renders css classes", async () => {
-      sut.addTextAttribute(TextAttribute.create({styleClasses: ["class1", "class2"]}, 0, 1, 0, 2));
+      sut.addTextAttribute(TextAttribute.create({textStyleClasses: ["class1", "class2"]}, 0, 1, 0, 2));
       await sut.whenRendered();
  
       let chunks = getRenderedTextNodes(sut)[0].childNodes;

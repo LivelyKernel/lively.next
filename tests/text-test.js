@@ -18,7 +18,7 @@ const defaultStyle = {
   fontFamily: "Monaco, monospace",
   fontSize: 10,
   fontWeight: "normal",
-  fontColor: Color.black,
+  fontColor: "black",
   fontStyle: "normal",
   textDecoration: "none",
   fixedCharacterSpacing: false
@@ -77,20 +77,23 @@ describe("text attributes", () => {
   beforeEach(() => sut = text("hello", {}))
 
   it("begins with default style range", () => {
-    var textAttributes = sut.document.textAttributesByLine[0];
+    var textAttributes = sut.document.textAttributesByLine[0],
+        computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: "auto", textStyleClasses: undefined};
     expect(textAttributes).property("length").equals(1);
     expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
-    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[0].data).deep.equals(computedDefaultStyle);
+    expect(sut.defaultTextStyle).deep.equals(computedDefaultStyle);
   });
 
   it("addTextAttribute merges style ranges", () => {
+    var computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: "auto", textStyleClasses: undefined};
     sut.addTextAttribute(a);
     var textAttributes = sut.document.textAttributesByLine[0];
 
     expect(textAttributes).property("length").equals(2);
     expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
     expect(textAttributes[1].range).stringEquals("Range(0/1 -> 0/3)");
-    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[0].data).deep.equals(computedDefaultStyle);
     expect(textAttributes[1].data).deep.equals(style_a);
 
     sut.addTextAttribute(b);
@@ -100,7 +103,7 @@ describe("text attributes", () => {
     expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
     expect(textAttributes[1].range).stringEquals("Range(0/1 -> 0/3)");
     expect(textAttributes[2].range).stringEquals("Range(0/2 -> 0/4)");
-    expect(textAttributes[0].data).deep.equals(defaultStyle);
+    expect(textAttributes[0].data).deep.equals(computedDefaultStyle);
     expect(textAttributes[1].data).deep.equals(style_a);
     expect(textAttributes[2].data).deep.equals(style_b);
   });
@@ -115,7 +118,8 @@ describe("text attributes", () => {
     expect(t.styleAtScreenPos({row: 0, column: 1})).containSubset({fontColor: "green"});
   });
 
-})
+});
+
 
 describe("anchors", () => {
 

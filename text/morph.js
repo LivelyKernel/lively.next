@@ -16,6 +16,21 @@ import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
 import { defaultRenderer } from "./rendering.js"
 
+
+const defaultTextStyle = {
+  fontFamily: "Sans-Serif",
+  fontSize: 12,
+  fontColor: Color.black,
+  fontWeight: "normal",
+  fontStyle: "normal",
+  textDecoration: "none",
+  fixedCharacterSpacing: false,
+  textStyleClasses: undefined,
+  link: undefined,
+  nativeCursor: undefined
+}
+
+
 export class Text extends Morph {
 
   static makeLabel(string, props) {
@@ -57,17 +72,20 @@ export class Text extends Morph {
     var {
       textLayout, textRenderer, lineWrapping,
       fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
-      fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing
+      fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing,
+      textStyleClasses
     } = props;
+
     props = obj.dissoc(props, [
       "textLayout", "textRenderer", "lineWrapping",
       "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
       // default style attrs: need document to be installed first
-      "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration", "fixedCharacterSpacing"
+      "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration",
+      "fixedCharacterSpacing", "textStyleClasses"
     ]);
+
     super({
-      readOnly: false,
-      draggable: false,
+      readOnly: false, draggable: false,
       fixedWidth: false, fixedHeight: false,
       padding: 0,
       useSoftTabs: config.text.useSoftTabs !== undefined ? config.text.useSoftTabs : true,
@@ -75,29 +93,32 @@ export class Text extends Morph {
       savedMarks: [],
       ...props
     });
+
     this.textLayout = textLayout || new TextLayout(fontMetric || this.env.fontMetric);
     this.textRenderer = textRenderer || defaultRenderer;
     this.changeDocument(TextDocument.fromString(textString || ""), true);
     this.undoManager = new UndoManager();
-    this._selection = selection ?
-      new (config.text.useMultiSelect ? MultiSelection : Selection)(this, selection) :
-      null /*initialized when needed to make morph creation more leightweight*/;
+    if (selection) this.selection = selection;
     this._anchors = null;
     this._markers = null;
     this.selectable = typeof selectable !== "undefined" ? selectable : true;
-    if (clipMode) this.clipMode = clipMode;
-
-    this.fontFamily = fontFamily || "Sans-Serif";
-    this.fontSize = fontSize || 12;
-    this.fontColor = fontColor || Color.black;
-    this.fontWeight = fontWeight || "normal";
-    this.fontStyle = fontStyle || "normal";
-    this.textDecoration = textDecoration || "none";
-    this.fixedCharacterSpacing = fixedCharacterSpacing !== undefined ? fixedCharacterSpacing : false;
+    if (clipMode !== undefined) this.clipMode = clipMode;
     this.lineWrapping = lineWrapping !== undefined ? lineWrapping : true;
+
+    this.setDefaultTextStyle({
+      fontFamily:            fontFamily            || defaultTextStyle.fontFamily,
+      fontSize:              fontSize              || defaultTextStyle.fontSize,
+      fontColor:             fontColor             || defaultTextStyle.fontColor,
+      fontWeight:            fontWeight            || defaultTextStyle.fontWeight,
+      fontStyle:             fontStyle             || defaultTextStyle.fontStyle,
+      textDecoration:        textDecoration        || defaultTextStyle.textDecoration,
+      fixedCharacterSpacing: fixedCharacterSpacing !== undefined ? fixedCharacterSpacing : defaultTextStyle.fixedCharacterSpacing,
+      textStyleClasses:      textStyleClasses      || defaultTextStyle.textStyleClasses
+    });
 
     if (textAndAttributes) this.textAndAttributes = textAndAttributes;
     else if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
+
     this.fit();
     this._needsFit = false;
   }
@@ -158,46 +179,46 @@ export class Text extends Morph {
     this._needsFit = true;
   }
 
-  get fontFamily() { return this.getProperty("fontFamily") }
+  get fontFamily() { return this.defaultTextStyle.fontFamily; }
   set fontFamily(fontFamily) {
     this.addValueChange("fontFamily", fontFamily);
-    this.setDefaultStyle({fontFamily});
+    this.setDefaultTextStyle({fontFamily});
   }
 
-  get fontSize() { return this.getProperty("fontSize") }
+  get fontSize() { return this.defaultTextStyle.fontSize; }
   set fontSize(fontSize) {
     this.addValueChange("fontSize", fontSize);
-    this.setDefaultStyle({fontSize});
+    this.setDefaultTextStyle({fontSize});
   }
 
-  get fontColor() { return this.getProperty("fontColor") }
+  get fontColor() { return this.defaultTextStyle.fontColor; }
   set fontColor(fontColor) {
     this.addValueChange("fontColor", fontColor);
-    this.setDefaultStyle({fontColor});
+    this.setDefaultTextStyle({fontColor});
   }
 
-  get fontWeight() { return this.getProperty("fontWeight") }
+  get fontWeight() { return this.defaultTextStyle.fontWeight; }
   set fontWeight(fontWeight) {
     this.addValueChange("fontWeight", fontWeight);
-    this.setDefaultStyle({fontWeight});
+    this.setDefaultTextStyle({fontWeight});
   }
 
-  get fontStyle() { return this.getProperty("fontStyle") }
+  get fontStyle() { return this.defaultTextStyle.fontStyle; }
   set fontStyle(fontStyle) {
     this.addValueChange("fontStyle", fontStyle);
-    this.setDefaultStyle({fontStyle});
+    this.setDefaultTextStyle({fontStyle});
   }
 
-  get textDecoration() { return this.getProperty("textDecoration") }
+  get textDecoration() { return this.defaultTextStyle.textDecoration; }
   set textDecoration(textDecoration) {
     this.addValueChange("textDecoration", textDecoration);
-    this.setDefaultStyle({textDecoration});
+    this.setDefaultTextStyle({textDecoration});
   }
 
-  get fixedCharacterSpacing() { return this.getProperty("fixedCharacterSpacing") }
+  get fixedCharacterSpacing() { return this.defaultTextStyle.fixedCharacterSpacing; }
   set fixedCharacterSpacing(fixedCharacterSpacing) {
     this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
-    this.setDefaultStyle({fixedCharacterSpacing});
+    this.setDefaultTextStyle({fixedCharacterSpacing});
   }
 
   get lineWrapping() { return this.getProperty("lineWrapping") }
@@ -430,7 +451,7 @@ export class Text extends Morph {
     this.document = doc;
     this.textLayout.reset();
     if (resetStyle)
-      this.setDefaultStyle();
+      this.setDefaultTextStyle();
     this.makeDirty();
   }
 
@@ -639,10 +660,6 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get styleProps() {
-    return obj.select(this, arr.without(TextStyleAttribute.styleProps, "styleClasses"));
-  }
-
   get textAttributes() { return this.document.textAttributes; }
   set textAttributes(attrs) {
     this.document.textAttributes = attrs;
@@ -670,16 +687,27 @@ export class Text extends Morph {
     this.onAttributesChanged();
   }
 
-  setDefaultStyle(style = this.styleProps) {
-    // cryptic way of saying "give me the existing default style"...
-    var attr = this.textAttributes.find(ea =>
-      ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0);
-    if (attr) {
-      Object.assign(attr.data, style);
-      this.onAttributesChanged();
-    } else {
-      this.addTextAttribute(style, {start: {row: 0, column: -1}, end: this.documentEndPosition})
+  set defaultTextStyle(style) { this.setDefaultTextStyle(style); }
+  get defaultTextStyle() { return this.defaultTextStyleAttribute.data; }
+
+  setDefaultTextStyle(style = obj.select(this, TextStyleAttribute.styleProps)) {
+    var attr = this.defaultTextStyleAttribute;
+    Object.assign(attr.data, style);
+    this.onAttributesChanged();
+    if (!attr) {
     }
+    return attr;
+  }
+
+  get defaultTextStyleAttribute() {
+    // currently we have this cryptic convention of having the attribute start
+    // at {row: 0, column -1}...
+    var attr = this.textAttributes.find(ea =>
+      ea.isStyleAttribute && (ea.start.row < 0 || ea.start.row === 0 && ea.start.column < 0));
+    if (!attr)
+      attr = this.addTextAttribute(new TextStyleAttribute(
+        {...defaultTextStyle}, {start: {row: 0, column: -1}, end: this.documentEndPosition}));
+    return attr;
   }
 
   textAttributesAt(point) {
@@ -694,17 +722,17 @@ export class Text extends Morph {
 
   styleAt(point) {
     var chunk = this.textLayout.chunkAtPoint(this, point);
-    return chunk ? chunk.style : this.styleProps;
+    return chunk ? chunk.style : {...this.defaultTextStyle};
   }
 
   styleAtScreenPos(pos) {
     var chunk = this.textLayout.chunkAtScreenPos(this, pos);
-    return chunk ? chunk.style : this.styleProps;
+    return chunk ? chunk.style : {...this.defaultTextStyle};
   }
 
   resetTextAttributes() {
     this.document.resetTextAttributes();
-    this.setDefaultStyle();
+    this.setDefaultTextStyle();
   }
 
   onAttributesChanged() {

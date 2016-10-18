@@ -62,12 +62,10 @@ export default class CodeEditor extends Morph {
   highlight() {
     if (!this.theme) return;
     let textMorph = this.submorphs[0],
-        tokens = this.mode.highlight(textMorph.textString),
-        defaultStyle = this.submorphs[0].styleProps;
-    let textAttributes = tokens.map(({token, from, to}) =>
-          TextAttribute.fromPositions(this.theme.styleCached(token), from, to));
-    textAttributes.unshift(TextAttribute.create(defaultStyle, 0, -1, textMorph.documentEndPosition.row+1, 0));
-    textMorph.setSortedTextAttributes(textAttributes);
+        tokens = this.mode.highlight(textMorph.textString);
+    textMorph.setSortedTextAttributes(
+      [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, from, to}) =>
+        TextAttribute.fromPositions(this.theme.styleCached(token), from, to))));
 
     if (this._checker)
       this._checker.onDocumentChange({}, this);

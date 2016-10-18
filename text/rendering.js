@@ -268,7 +268,8 @@ export var defaultRenderer = {
   },
 
   renderLine(textLayoutLine, lineLeft, lineTop) {
-    if (textLayoutLine.rendered) return textLayoutLine.rendered;
+    if (textLayoutLine.rendered)
+      return textLayoutLine.rendered;
     let { chunks, height, width } = textLayoutLine;
     height += "px";
     return textLayoutLine.rendered = h("div",
@@ -278,37 +279,39 @@ export var defaultRenderer = {
 
   renderChunk(textChunk) {
     if (textChunk.rendered) return textChunk.rendered;
+
     var {style, text, width, height} = textChunk,
         {
           fontSize, fontFamily, fontColor, backgroundColor,
           fontWeight, fontStyle, textDecoration,
           fixedCharacterSpacing, nativeCursor: cursor,
-          styleClasses, link
+          textStyleClasses, link
         } = style,
+
         tagname = link ? "a" : "span",
         textNodes = text ?
-          (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br");
+          (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br"),
 
-    var attrs = {
-      style: {
-        fontSize: fontSize + "px",
-        fontFamily,
-        fontWeight,
-        fontStyle,
-        textDecoration,
-        color: fontColor ? String(fontColor) : "",
-        backgroundColor: backgroundColor ? String(backgroundColor) : "",
-        cursor
-      }
-    };
+        attrs = {
+          style: {
+            fontSize: fontSize + "px",
+            fontFamily,
+            fontWeight,
+            fontStyle,
+            textDecoration,
+            color: fontColor ? String(fontColor) : "",
+            backgroundColor: backgroundColor ? String(backgroundColor) : "",
+            cursor
+          }
+        };
 
     if (link) {
       attrs.href = link;
       attrs.target = "_blank";
     }
 
-    if (styleClasses && styleClasses.length)
-      attrs.className = styleClasses.join(" ");
+    if (textStyleClasses && textStyleClasses.length)
+      attrs.className = textStyleClasses.join(" ");
 
     return textChunk.rendered = h(tagname, attrs, textNodes);
   }

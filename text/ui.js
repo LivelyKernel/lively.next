@@ -72,7 +72,7 @@ export class RichTextControl extends Morph {
     var makeIconStyle = name => [
       ["\u200C", {
         fontSize: 14, fontFamily: "",
-        styleClasses: ["fa", "fa-" + name]}]];
+        textStyleClasses: ["fa", "fa-" + name]}]];
 
     this.opacity = 1;
 
