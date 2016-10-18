@@ -57,7 +57,7 @@ export class RichTextControl extends Morph {
       this.topCenter = textMorph.getGlobalTransform()
           .transformRectToRect(textMorph.selectionBounds()).bottomCenter();
       this.target = textMorph;
-      this.opacity = 1;
+      this.animate({opacity: 1, duration: 1});
   }
 
   build() {
