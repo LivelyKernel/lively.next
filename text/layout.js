@@ -82,6 +82,7 @@ function styleFromTextAttributes(textAttributes) {
     if ("fontFamily" in d)            s.fontFamily = d.fontFamily;
     if ("fontSize" in d)              s.fontSize = d.fontSize;
     if ("fontColor" in d)             s.fontColor = d.fontColor;
+    if ("backgroundColor" in d)       s.backgroundColor = d.backgroundColor;
     if ("fontWeight" in d)            s.fontWeight = d.fontWeight;
     if ("fontStyle" in d)             s.fontStyle = d.fontStyle;
     if ("textDecoration" in d)        s.textDecoration = d.textDecoration;

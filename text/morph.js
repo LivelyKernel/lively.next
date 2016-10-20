@@ -25,6 +25,7 @@ const defaultTextStyle = {
   fontWeight: "normal",
   fontStyle: "normal",
   textDecoration: "none",
+  backgroundColor: undefined,
   fixedCharacterSpacing: false,
   textStyleClasses: undefined,
   link: undefined,
@@ -74,7 +75,7 @@ export class Text extends Morph {
       textLayout, textRenderer, lineWrapping,
       fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing,
-      textStyleClasses
+      backgroundColor, textStyleClasses
     } = props;
 
     props = obj.dissoc(props, [
@@ -82,7 +83,7 @@ export class Text extends Morph {
       "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
       // default style attrs: need document to be installed first
       "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration",
-      "fixedCharacterSpacing", "textStyleClasses"
+      "backgroundColor", "fixedCharacterSpacing", "textStyleClasses"
     ]);
 
     super({
@@ -109,6 +110,7 @@ export class Text extends Morph {
     this.setDefaultTextStyle({
       fontFamily:            fontFamily            || defaultTextStyle.fontFamily,
       fontSize:              fontSize              || defaultTextStyle.fontSize,
+      backgroundColor:       backgroundColor       || defaultTextStyle.backgroundColor,
       fontColor:             fontColor             || defaultTextStyle.fontColor,
       fontWeight:            fontWeight            || defaultTextStyle.fontWeight,
       fontStyle:             fontStyle             || defaultTextStyle.fontStyle,
@@ -137,6 +139,7 @@ export class Text extends Morph {
      || change.prop === "fixedHeight"
      || change.prop === "fontFamily"
      || change.prop === "fontSize"
+     || change.prop === "backgroundColor"
      || change.prop === "fontColor" // FIXME
      || change.prop === "fontWeight"
      || change.prop === "fontStyle"
