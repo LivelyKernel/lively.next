@@ -137,7 +137,7 @@ export class RichTextControl extends Morph {
   toggleUnderline() {
     setSingleStyleProperty(
       this.target, "textDecoration",
-      textDecoration => textDecoration === "underline" ? "normal" : "underline")
+      textDecoration => textDecoration === "underline" ? "none" : "underline")
   }
 
   toggleItalic() {

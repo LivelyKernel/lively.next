@@ -775,7 +775,7 @@ export class Text extends Morph {
 
   setStyleInRange(style, range = this.selection) {
     this.document.setStyleInRange(
-      style, range, this.document._textAttributes[0])
+      style, range, this.document._textAttributes[0]);
     this.onAttributesChanged();
   }
 
