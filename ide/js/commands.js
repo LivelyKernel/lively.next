@@ -4,8 +4,6 @@ import { pt, Rectangle } from "lively.graphics"
 import { chain, arr, obj, string } from "lively.lang";
 import { eqPosition, lessPosition } from "../../text/position.js"
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// FIXME move this stuff below into a JS related module
 function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, env) {
   var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js")),
       evalStrategy = evalStrategies && new evalStrategies.LivelyVmEvalStrategy();;
@@ -364,3 +362,97 @@ export var jsIdeCommands = [
     }
   }
 ];
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var openPairs = {
+  "{": "}",
+  "[": "]",
+  "(": ")",
+  "<": ">",
+  "\"": "\"",
+  "'": "'",
+  "`": "`",
+}
+
+var closePairs = {
+  "}": "{",
+  "]": "[",
+  ")": "(",
+  ">": "<",
+   "\"": "\"",
+  "'": "'",
+  "`": "`",
+}
+
+
+export var insertStringWithBehaviorCommand = {
+  name: "insertstring",
+  exec: (morph, args = {string: null, undoGroup: false}) => {
+    var string = args.string,
+        sel = morph.selection,
+        sels = sel.isMultiSelection ? sel.selections : [sel],
+        offsetColumn = 0,
+        isOpen = string in openPairs,
+        isClose = string in closePairs;
+
+    if (!isOpen && !isClose)
+      return morph.execCommand("insertstring_default", args);
+
+    var line = morph.getLine(sel.end.row),
+        left = line[sel.end.column-1],
+        right = line[sel.end.column];
+
+    if (!sel.isEmpty()) {
+      if (!isOpen)
+        return morph.execCommand("insertstring_default", args);
+      // we've selected something and are inserting an open pair => instead of
+      // replacing the selection we insert the open part in front of it and
+      // closing behind, then select everything
+      var undo = morph.undoManager.ensureNewGroup(morph);
+      morph.insertText(openPairs[string], sel.end);
+      morph.insertText(string, sel.start);
+      morph.undoManager.group(undo);
+      sel.growLeft(1);
+      return true;
+    }
+
+    // if input is closing part of a pair and we are in front of it then try
+    // to find the matching opening pair part. If this can be found we do not
+    // insert anything, just jump over the char
+    if (right in closePairs && string === right) {
+      var pos = morph.document.indexToPosition(morph.document.positionToIndex(sel.end)+1),
+          matched = morph.findMatchingBackward(pos, "left", closePairs);
+      if (matched) { sel.goRight(1); return true; }
+    }
+
+    // Normal close, not matching, just insert default
+    if (isClose && !isOpen)
+      return morph.execCommand("insertstring_default", args);
+
+    // insert pair
+    offsetColumn = 1;
+    morph.execCommand("insertstring_default", {...args, string: string + openPairs[string]})
+    sel.goLeft(1);
+    return true;
+  }
+}
+
+export var deleteBackwardsWithBehavior = {
+  name: "delete backwards",
+  exec: function(morph) {
+    if (morph.rejectsInput()) return false;
+    var sel = morph.selection,
+        line = morph.getLine(sel.end.row),
+        left = line[sel.end.column-1],
+        right = line[sel.end.column];
+    if (sel.isEmpty() && left in openPairs && right === openPairs[left]) {
+      sel.growRight(1); sel.growLeft(1);
+    } else  if (sel.isEmpty()) sel.growLeft(1);
+    sel.text = "";
+    sel.collapse();
+    return true;
+  }
+}
+
+// lively.modules.module("lively.morphic/ide/js/editor-plugin.js").reload({reloadDeps: false, resetEnv: false})

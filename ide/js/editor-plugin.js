@@ -1,13 +1,12 @@
 import { fun } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
-// import config from "../config.js";
 
 import { connect, disconnect } from "lively.bindings";
 import { TextStyleAttribute } from "../../text/attribute.js";
 
 import { completers } from "./completers.js";
 
-import { jsIdeCommands, jsEditorCommands } from "./commands.js";
+import { jsIdeCommands, jsEditorCommands, insertStringWithBehaviorCommand, deleteBackwardsWithBehavior } from "./commands.js";
 
 import JavaScriptHighlighter from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
@@ -15,11 +14,6 @@ import JavaScriptChecker from "./checker.js";
 import ChromeTheme from "../themes/chrome.js";
 import TomorrowNightTheme from "../themes/tomorrow-night.js";
 import GithubTheme from "../themes/github.js";
-
-const checkers = {
-  "plain": null,
-  "javascript": JavaScriptChecker
-};
 
 const themes = {
   "chrome": ChromeTheme,
@@ -72,7 +66,12 @@ export class JavaScriptEditorPlugin {
   }
 
   getCommands(otherCommands) {
-    return otherCommands.concat(jsIdeCommands).concat(jsEditorCommands);
+    var idx = otherCommands.findIndex(({name}) => name === "insertstring");
+    otherCommands.splice(idx, 1, {...otherCommands[idx], name: "insertstring_default"});
+    return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior]
+      .concat(otherCommands)
+      .concat(jsIdeCommands)
+      .concat(jsEditorCommands);
   }
 
 }
