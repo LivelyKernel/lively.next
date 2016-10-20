@@ -102,13 +102,14 @@ describe("occur", () => {
   var t; beforeEach(() => t = text('abc\ndef\nxyz\nbcxbc'));
 
   it("find lines matching", function() {
-    expect(new Occur(t).matchingLines({needle: 'bc'})).deep.equals([
+    var opts = {needle: 'bc'};
+    expect(new Occur({textMorph: t}).matchingLines(opts)).deep.equals([
       {row: 0, ranges: [range(0,1,0,3)], line: 'abc'},
       {row: 3, ranges: [range(3,0,3,2),range(3,3,3,5)], line: 'bcxbc'}])
   });
 
   it("display occurrences", function() {
-    var o = new Occur(t), orig = t.textString;
+    var o = new Occur({textMorph: t}), orig = t.textString;
     o.displayOccurContent({needle: 'bc'});
     expect(t.textString).equals('abc\nbcxbc');
     o.displayOriginalContent(t);
@@ -116,7 +117,7 @@ describe("occur", () => {
   });
 
   it("original position from occur doc", function() {
-    var o = new Occur(t);
+    var o = new Occur({textMorph: t});
     o.displayOccurContent({needle: 'bc'});
     expect(t.textString).equals('abc\nbcxbc');
     expect(o.occurToOriginalPosition({row: 1, column: 2})).deep.equals({row: 3, column: 2});

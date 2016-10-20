@@ -2,7 +2,7 @@
 
 import { pt, Rectangle } from "lively.graphics"
 import { chain, arr, obj, string } from "lively.lang";
-import { eqPosition, lessPosition } from "./position.js"
+import { eqPosition, lessPosition } from "../../text/position.js"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME move this stuff below into a JS related module

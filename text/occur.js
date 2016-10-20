@@ -61,8 +61,10 @@ var occurCommands = [{
 
 export class Occur {
 
-  constructor(options) {
+  constructor(options = {}) {
     this.options = options;
+    if (options.textMorph)
+      this.textMorph = options.textMorph;
   }
 
   get isOccurPlugin() { return true; }
@@ -79,6 +81,7 @@ export class Occur {
     this.displayOccurContent(this.options);
     var translatedPos = this.originalToOccurPosition(pos);
     this.textMorph.cursorPosition = translatedPos;
+    return this;
   }
 
   detach(textMorph) {
@@ -89,9 +92,9 @@ export class Occur {
     if (translatedPos)
       this.textMorph.cursorPosition = translatedPos;
     this.textMorph = null;
+    return this;
   }
 
-  // getKeyHandlers(morphKeyHandlers) { return [occurKeyHandler].concat(morphKeyHandlers); }
   getKeyHandlers(morphKeyHandlers) { return morphKeyHandlers.concat(occurKeyHandler); }
   getCommands(morphCommands) { return occurCommands.concat(morphCommands); }
 
@@ -110,7 +113,6 @@ export class Occur {
           }
         }).toArray();
   }
-
 
   displayOccurContent(options) {
     this._originalDocument = this.textMorph.document;
