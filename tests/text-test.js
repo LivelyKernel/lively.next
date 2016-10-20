@@ -68,12 +68,6 @@ async function destroyMorphicEnv() {
 
 describe("text attributes", () => {
 
-  var style_a = { fontSize: 12, fontStyle: "italic" },
-      style_b = { fontSize: 14, fontWeight: "bold" },
-      a = TextAttribute.create(style_a, 0, 1, 0, 3),
-      b = TextAttribute.create(style_b, 0, 2, 0, 4),
-      textAttributes;
-
   beforeEach(() => sut = text("hello", {}))
 
   it("begins with default style range", () => {
@@ -91,6 +85,12 @@ describe("text attributes", () => {
   });
 
   it("addTextAttribute merges style ranges", () => {
+    var style_a = { fontSize: 12, fontStyle: "italic" },
+        style_b = { fontSize: 14, fontWeight: "bold" },
+        a = TextAttribute.create(style_a, 0, 1, 0, 3),
+        b = TextAttribute.create(style_b, 0, 2, 0, 4),
+        textAttributes;
+
     var computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: "auto", textStyleClasses: undefined};
     sut.addTextAttribute(a);
     var textAttributes = sut.document.textAttributesByLine[0];
@@ -121,6 +121,36 @@ describe("text attributes", () => {
     expect(t.styleAt(pt(3,3))).containSubset({fontColor: "green"});
     expect(t.textAttributesAtScreenPos({row: 0, column: 1})[1]).equals(attr);
     expect(t.styleAtScreenPos({row: 0, column: 1})).containSubset({fontColor: "green"});
+  });
+
+  describe("text range styling", () => {
+
+    it("creates text attributes", () => {
+      sut.setStyleInRange({fontSize: 40}, range(0,1,0,3));
+      expect(sut.textAttributes).to.have.length(2);
+      expect(sut.textAttributes[0]).containSubset({...range(0,-1,0,5), data: {fontSize: 10}})
+      expect(sut.textAttributes[1]).containSubset({...range(0,1,0,3), data: {fontSize: 40}})
+    });
+
+    it("resets text attributes in range", () => {
+      sut.setStyleInRange({fontSize: 40}, range(0,1,0,3));
+      sut.resetStyleInRange(range(0,1,0,2));
+      expect(sut.textAttributes).to.have.length(2);
+      expect(sut.textAttributes[0]).containSubset({...range(0,-1,0,5), data: {fontSize: 10}})
+      expect(sut.textAttributes[1]).containSubset({...range(0,2,0,3), data: {fontSize: 40}})
+    });
+
+    it("style attributes are cleaned up / coalesced", () => {
+      sut.setStyleInRange({fontWeight: "bold"}, range(0,1,0,3));
+      sut.setStyleInRange({fontSize: 40}, range(0,2,0,5));
+
+      sut.setStyleInRange({fontSize: 10}, range(0,2,0,5));
+      var attrsOfLine = sut.document._textAttributesByLine[0];
+      expect(attrsOfLine).to.have.length(2);
+      expect(attrsOfLine[0]).containSubset({...range(0,-1,0,5), data: {fontWeight: "normal", fontSize: 10}});
+      expect(attrsOfLine[1]).containSubset({...range(0,1,0,3), data: {fontWeight: "bold"}});
+    });
+
   });
 
 });
@@ -458,7 +488,7 @@ describe("clipboard buffer / kill ring", () => {
 });
 
 describe("text movement and selection commands", () => {
-  
+
   it("selection / line string", () => {
     var t = text("hello\n world", {});
     t.selection = range(0,2,0,4);

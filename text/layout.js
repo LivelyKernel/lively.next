@@ -578,6 +578,7 @@ export default class TextLayout {
   reset(fontMetric) {
     this.layoutComputed = false;
     this.lines = [];
+    this._wrappedLines = null;
     if (fontMetric) this.fontMetric = fontMetric;
     this.firstVisibleLine = undefined;
     this.lastVisibleLine = undefined;
@@ -592,10 +593,12 @@ export default class TextLayout {
     this.updateFromMorphIfNecessary(morph);
     if (!this.lineWrapping)
       return this.lines;
+    if (this._wrappedLines)
+      return this._wrappedLines;
     var wrappedLines = [], lines = this.lines;
     for (let i = 0; i < lines.length; i++)
       wrappedLines.push(...lines[i].wrappedLines);
-    return wrappedLines;
+    return this._wrappedLines = wrappedLines;
   }
 
   rangesOfWrappedLine(morph, row) {
@@ -657,6 +660,9 @@ export default class TextLayout {
     if (this.layoutComputed) return false;
 
     // TODO: specify which lines have changed!
+
+    // reset cache
+    this._wrappedLines = null;
 
     let doc = morph.document,
         lineWrappingBefore = this.lineWrapping,

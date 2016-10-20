@@ -83,7 +83,8 @@ export class TextStyleAttribute extends TextAttribute {
   }
 
   addAdjacentAttribute(other) {
-    // Assumes that this <= other according to Range.compare!
+    // "consumes" other if this.end === other.start && this.data == other.data
+    // assumes that this <= other according to Range.compare!
     if (!eqPosition(this.end, other.start) || !obj.equals(this.data, other.data)) return false;
     this.end = other.end;
     return true;

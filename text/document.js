@@ -517,13 +517,12 @@ export default class TextDocument {
         });
 
     this.removeTextAttributes(toRemove);
-    var newAttributes = this.addSortedTextAttributes(toAdd.sort(Range.compare));
-    var startIndex = Math.max(1, this._textAttributes.indexOf(newAttributes[0])-1);
-    var endIndex = this._textAttributes.indexOf(arr.last(newAttributes))+1;
-    this._textAttributes =
-      [this._textAttributes[0]]
-      .concat(TextStyleAttribute.mergeAdjacentAttributes(
-        this._textAttributes.slice(1)));
+    this.addSortedTextAttributes(toAdd.sort(Range.compare));
+    var merged = [this._textAttributes[0]]
+                  .concat(TextStyleAttribute.mergeAdjacentAttributes(
+                    this._textAttributes.slice(1)));
+    if (this._textAttributes.length !== merged.length)
+      this.setSortedTextAttributes(merged); // using setter for updating _textAttributesByLine!
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

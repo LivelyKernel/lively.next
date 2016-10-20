@@ -374,6 +374,28 @@ describe("text document", () => {
         ]);
       });
 
+      it("remove attributes cleans up attribute stores", () => {
+        var [attr1, attr2, attr3] = doc.textAttributes = [
+          TextAttribute.create({}, 0,-1, 1, 5),
+          TextAttribute.create({}, 1,0, 1, 4),
+          TextAttribute.create({}, 1,2, 1, 5)
+        ];
+
+        expect(doc.textAttributes).equals([attr1, attr2, attr3], "before 1");
+        expect(doc.textAttributesByLine[0]).equals([attr1], "before 2");
+        expect(doc.textAttributesByLine[1]).equals([attr1, attr2, attr3], "before 3");
+
+        // doc.removeTextAttributes([attr2]);
+        // expect(doc.textAttributes).equals([attr1, attr3], "textAttributes");
+        // expect(doc.textAttributesByLine[0]).equals([attr1], "textAttributesByLine[0]");
+        // expect(doc.textAttributesByLine[1]).equals([attr1, attr3], "textAttributesByLine[1]");
+
+        doc.removeTextAttributes([attr2, attr3]);
+        expect(doc.textAttributes).equals([attr1], "textAttributes");
+        expect(doc.textAttributesByLine[0]).equals([attr1], "textAttributesByLine[0]");
+        expect(doc.textAttributesByLine[1]).equals([attr1], "textAttributesByLine[1]");
+      });
+
     });
 
     describe("on text deletion", () => {
