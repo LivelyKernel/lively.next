@@ -3,7 +3,7 @@ import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window, show } from "./index.js";
 import { FilterableList } from "./list.js";
 import { GridLayout } from "lively.morphic/layout.js";
-import { JavaScriptEditorPlugin } from "./ide/code-editor.js";
+import { JavaScriptEditorPlugin } from "./ide/js/editor-plugin.js";
 import { RichTextControl } from "lively.morphic/text/ui.js"
 import { connect } from "lively.bindings"
 import config from "./config.js"

@@ -3,7 +3,7 @@ import { arr, promise } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { Window, morph, show } from "../index.js";
 import { GridLayout } from "../layout.js";
-import { JavaScriptEditorPlugin } from "./code-editor.js";
+import { JavaScriptEditorPlugin } from "./js/editor-plugin.js";
 import config from "../config.js";
 
 

@@ -3,13 +3,18 @@ import { pt, Rectangle, Color } from "lively.graphics";
 // import config from "../config.js";
 
 import { connect, disconnect } from "lively.bindings";
-import { TextStyleAttribute } from "../text/attribute.js";
-// 
-import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
-import JavaScriptChecker from "./modes/javascript-checker.js";
-import ChromeTheme from "./themes/chrome.js";
-import TomorrowNightTheme from "./themes/tomorrow-night.js";
-import GithubTheme from "./themes/github.js";
+import { TextStyleAttribute } from "../../text/attribute.js";
+
+import { completers } from "./completers.js";
+
+import { jsIdeCommands, jsEditorCommands } from "./commands.js";
+
+import JavaScriptHighlighter from "./highlighter.js";
+import JavaScriptChecker from "./checker.js";
+
+import ChromeTheme from "../themes/chrome.js";
+import TomorrowNightTheme from "../themes/tomorrow-night.js";
+import GithubTheme from "../themes/github.js";
 
 const checkers = {
   "plain": null,
@@ -60,6 +65,14 @@ export class JavaScriptEditorPlugin {
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph);
+  }
+
+  getCompleters(otherCompleters) {
+    return completers.concat(otherCompleters);
+  }
+
+  getCommands(otherCommands) {
+    return otherCommands.concat(jsIdeCommands).concat(jsEditorCommands);
   }
 
 }
