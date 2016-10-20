@@ -1,4 +1,4 @@
-import { Token, Highlighter } from "../highlighting.js";
+import { Token, Tokenizer } from "../highlighting.js";
 
 const words = {
   keyword: ["typeof", "new", "catch", "function", "return", "catch", "switch", "var", "if", "in", "from", "while", "do", "else", "case", "break", "class", "export", "import", "throw", "extends", "const", "let", "async", "await", "default"],
@@ -7,7 +7,8 @@ const words = {
   dynamic: ["this", "super"]
 };
 
-export default class JavaScriptHighlighter extends Highlighter {
+export default class JavaScriptTokenizer extends Tokenizer {
+
   reset() {
     this.state = "default";
     this.left = 0;
@@ -16,6 +17,7 @@ export default class JavaScriptHighlighter extends Highlighter {
     this.levels = [0];
     this.rere = /\/[^\n \/]+\/[gimuy]*/g;
   }
+
   checkWord(type) {
     const found = words[type].find(w => this.checkChars(w));
     if (!found) return false;
@@ -27,6 +29,7 @@ export default class JavaScriptHighlighter extends Highlighter {
     this.left = found.length - 1;
     return true;
   }
+
   process() { // -> Token
     const c = this.next();
     switch (this.state) {
@@ -191,6 +194,7 @@ export default class JavaScriptHighlighter extends Highlighter {
     }
     return Token.default;
   }
+
 }
 
 /*

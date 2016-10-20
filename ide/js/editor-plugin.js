@@ -8,7 +8,7 @@ import { completers } from "./completers.js";
 
 import { jsIdeCommands, jsEditorCommands, insertStringWithBehaviorCommand, deleteBackwardsWithBehavior } from "./commands.js";
 
-import JavaScriptHighlighter from "./highlighter.js";
+import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
 
 import ChromeTheme from "../themes/chrome.js";
@@ -26,7 +26,7 @@ export class JavaScriptEditorPlugin {
 
   constructor(theme = "chrome") {
     this.theme = typeof theme === "string" ? new themes[theme]() : theme;
-    this.highlighter = new JavaScriptHighlighter();
+    this.highlighter = new JavaScriptTokenizer();
     this.checker = new JavaScriptChecker();
   }
 
@@ -52,10 +52,10 @@ export class JavaScriptEditorPlugin {
   highlight() {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph) return;
-    let tokens = this.highlighter.highlight(textMorph.textString);
+    let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString);
     textMorph.setSortedTextAttributes(
-      [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, from, to}) =>
-        TextStyleAttribute.fromPositions(this.theme.styleCached(token), from, to))));
+      [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, start, end}) =>
+        TextStyleAttribute.fromPositions(this.theme.styleCached(token), start, end))));
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph);

@@ -14,23 +14,23 @@ export const Token = {
 };
 
 
-export class Highlighter {
-  
+export class Tokenizer {
+
   reset() {
     // reset internal state
     throw new Error("not implemented");
   }
-  
+
   process() { // -> Token
     // process next character, updating internal state
     // and returning token for that character
     throw new Error("not implemented");
   }
-  
+
   next() { // -> char
     return this.str[this.idx];
   }
-  
+
   checkChars(chars) { // string -> boolean
     if (this.idx + chars.length - 1 >= this.str.length) return false;
     for (let i = 0; i < chars.length; i++)
@@ -38,17 +38,17 @@ export class Highlighter {
         return false;
     return true;
   }
-  
-  highlight(str) { // string -> Array<Token>
+
+  tokenize(str) { // string -> Array<Token>
     let tokens = [], lastToken = {}, row = 0, column = 0;
     this.str = str;
     this.idx = 0;
     this.reset();
     while (this.idx < this.str.length) {
-      lastToken.to = {row, column};
+      lastToken.end = {row, column};
       const token = this.process();
       if (token !== lastToken.token) {
-        lastToken = {token, from: {row, column}, to: {row, column}};
+        lastToken = {token, start: {row, column}, end: {row, column}};
         tokens.push(lastToken);
       }
       if (this.next() === "\n") {
@@ -58,26 +58,27 @@ export class Highlighter {
       }
       this.idx++;
     }
-    lastToken.to = {row, column};
+    lastToken.end = {row, column};
     return tokens;
   }
+
 }
 
 export class Theme {
-  
+
   constructor() { this._cache = {}; }
-  
+
   background() { // -> Color
     throw new Error("not implemented");
   }
-  
+
   style(token) { // Token -> Style
     // return style for token
     throw new Error("not implemented");
   }
-  
+
   styleCached(token) {
     return this._cache[token] || (this._cache[token] = this.style(token));
   }
-  
+
 }
