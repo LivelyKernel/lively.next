@@ -268,7 +268,8 @@ export class Text extends Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // markers, text ranges with styles that are rendered
+  // markers, text ranges with styles that are rendered over/below the text and
+  // do not influence the text appearance themselves
   get markers() { return this._markers; }
   addMarker(marker) {
     // id, range, style
@@ -355,6 +356,45 @@ export class Text extends Morph {
     return lastMark;
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // plugins: objects that can attach/detach to/from text objects and react to
+  // text changes as well as modify text however they see fit
+  get plugins() { return this._plugins || []; }
+  set plugins(plugins) {
+    var prevPlugins = this._plugins || [],
+        removed = arr.withoutAll(prevPlugins, plugins);
+    removed.forEach(p => this.removePlugin(p));
+    plugins.forEach(p => this.addPlugin(p)); 
+  };
+
+  addPlugin(plugin) {
+    if (!this._plugins) this._plugins = [];
+    if (!this._plugins.includes(plugin)) {
+      this._cachedKeyhandlers = null;
+      this._plugins.push(plugin);
+      plugin.attach(this);
+    }
+    return plugin;
+  }
+
+  removePlugin(plugin) {
+    if (!this._plugins || !this._plugins.includes(plugin)) return false;
+    this._cachedKeyhandlers = null;
+    arr.remove(this._plugins, plugin);
+    plugin.detach(this);
+    return true
+  }
+
+  tryPlugins(method, input) {
+    if (this._plugins)
+      this._plugins.forEach(p =>
+        typeof p[method] === "function" &&
+          (input = p[method](input)));
+    return input;
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   get clipMode()  { return this.getProperty("clipMode"); }
   set clipMode(value)  {
     this.addValueChange("clipMode", value);
@@ -364,7 +404,6 @@ export class Text extends Morph {
   textBounds() {
     return this.textLayout ? this.textLayout.textBounds(this) : this.padding.topLeft().extent(pt(0,0));
   }
-
 
   get scrollExtent() {
     return this.textBounds().extent()
@@ -379,7 +418,9 @@ export class Text extends Morph {
   set tabWidth(value)  { this.addValueChange("tabWidth", value); }
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
-  get commands() { return (this._commands || []).concat(commands); }
+  get commands() {
+    return this.tryPlugins("getCommands", (this._commands || []).concat(commands))
+  }
 
 
   execCommand(commandOrName, args, count, evt) {
@@ -1050,9 +1091,13 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // keyboard events
 
-  get keybindings() { return super.keybindings.concat(config.text.defaultKeyBindings); }
+  get keybindings() {
+    return this.tryPlugins("getKeyBindings", super.keybindings.concat(config.text.defaultKeyBindings))
+  }
   set keybindings(x) { super.keybindings = x }
-  get keyhandlers() { return super.keyhandlers.concat(this._keyhandlers || []); }
+  get keyhandlers() {    
+    return this.tryPlugins("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || []));
+  }
 
   onKeyDown(evt) {
     this.selection.cursorBlinkStart();

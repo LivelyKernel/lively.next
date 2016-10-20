@@ -9,35 +9,36 @@ import { TextSearcher } from "./search.js";
 import Document from "./document.js";
 import KeyHandler from "../events/KeyHandler.js"
 
+const occurKeyHandler = Object.assign(
+  KeyHandler.withBindings([
+    {keys: 'Escape|Ctrl-G', command: "occur exit"},
+    {keys: 'Enter', command: "occur accept"}
+  ]),
+  {isOccurHandler: true});
+
 export var occurStartCommand = {
   name: "occur",
   exec: (textMorph, opts = {}) => {
-    var alreadyInOccur = !!textMorph.document._occur,
-        occurSessionActive = new Occur(textMorph).enter(opts)
-    if (occurSessionActive && !alreadyInOccur) {
-      var keyHandler = KeyHandler.withBindings([
-        {keys: 'Escape|Ctrl-G', command: "occur exit"},
-        {keys: 'Enter', command: "occur accept"}
-      ]);
-      keyHandler.isOccurHandler = true;
-      textMorph._keyhandlers = (textMorph._keyhandlers || []).concat(keyHandler);
-      textMorph.addCommands(occurCommands)
-    }
-    return occurSessionActive;
+    if (opts.needle)
+      textMorph.addPlugin(new Occur(opts));
+    return !!opts.needle;
   }
+}
+
+function findOccurPlugin(textMorph) {
+  return textMorph.plugins.slice().reverse().find(ea => ea.isOccurPlugin);
 }
 
 var occurCommands = [{
     name: "occur exit",
     exec: function(textMorph) {
-      var occur = textMorph.document._occur;
+      var occur = findOccurPlugin(textMorph);
       if (!occur) return false;
-      occur.exit({});
-      
-      if (!textMorph.document._occur) {
-        textMorph.removeCommands(["occur exit", "occur accept"]);
-        textMorph._keyhandlers = (textMorph._keyhandlers || []).filter(ea => !ea.isOccurHandler);
-      } else textMorph.document._occur.highlight();
+      occur.options.translatePosition = true;
+      textMorph.removePlugin(occur);
+      // multiple occurs active, activate the previous one
+      var otherOccur = findOccurPlugin(textMorph)
+      if (otherOccur) otherOccur.highlight();
       return true;
     },
     readOnly: true
@@ -45,13 +46,13 @@ var occurCommands = [{
     name: "occur accept",
     bindKey: 'Enter',
     exec: (textMorph) => {
-      var occur = textMorph.document._occur;
+      var occur = findOccurPlugin(textMorph)
       if (!occur) return false;
-      occur.exit({translatePosition: true});
-      if (!textMorph.document._occur) {
-        textMorph.removeCommands(["occur exit", "occur accept"]);
-        textMorph._keyhandlers = (textMorph._keyhandlers || []).filter(ea => !ea.isOccurHandler);
-      } else textMorph.document._occur.highlight()
+      occur.options.translatePosition = true;
+      textMorph.removePlugin(occur);
+      // multiple occurs active, activate the previous one
+      var otherOccur = findOccurPlugin(textMorph)
+      if (otherOccur) otherOccur.highlight();
       return true;
     },
     readOnly: true
@@ -59,32 +60,40 @@ var occurCommands = [{
 
 
 export class Occur {
-  
-  constructor(textMorph) {
-    this.textMorph = textMorph;
+
+  constructor(options) {
+    this.options = options;
   }
 
-  enter(options) {
+  get isOccurPlugin() { return true; }
+
+  attach(textMorph) {
+    this.textMorph = textMorph;
+
     // Enables occur mode. expects that `options.needle` is a search term.
     // This search term is used to filter out all the lines that include it
     // and these then replacethe original content. The current cursor position of
-    // editor will be translated so that the cursor is on the matching row/column as it was before.
-    if (!options.needle) return false;
+    // editor will be translated so that the cursor is on the matching
+    // row/column as it was before.
     var pos = this.textMorph.cursorPosition;
-    this.displayOccurContent(options);
+    this.displayOccurContent(this.options);
     var translatedPos = this.originalToOccurPosition(pos);
     this.textMorph.cursorPosition = translatedPos;
-    return true;
   }
 
-  exit(options) {
+  detach(textMorph) {
     this.removeHighlight();
-    var pos = options.translatePosition && this.textMorph.cursorPosition,
+    var pos = this.options.translatePosition && this.textMorph.cursorPosition,
         translatedPos = pos && this.occurToOriginalPosition(pos);
     this.displayOriginalContent();
     if (translatedPos)
       this.textMorph.cursorPosition = translatedPos;
+    this.textMorph = null;
   }
+
+  // getKeyHandlers(morphKeyHandlers) { return [occurKeyHandler].concat(morphKeyHandlers); }
+  getKeyHandlers(morphKeyHandlers) { return morphKeyHandlers.concat(occurKeyHandler); }
+  getCommands(morphCommands) { return occurCommands.concat(morphCommands); }
 
   matchingLines(options = {needle: ""}) {
     if (!options.needle) return [];
@@ -108,7 +117,6 @@ export class Occur {
     var found = this.matchingLines(options),
         lines = found.map(({line}) => line),
         occurDocument = this._document = new Document(lines);
-    occurDocument._occur = this;
     occurDocument._occurMatchingLines = found;
     this.textMorph.changeDocument(occurDocument, true);
     this.highlight(options.needle);
