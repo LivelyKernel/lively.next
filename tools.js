@@ -3,9 +3,10 @@ import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window, show } from "./index.js";
 import { FilterableList } from "./list.js";
 import { GridLayout } from "lively.morphic/layout.js";
-import CodeEditor from "./ide/code-editor.js";
+import { JavaScriptEditorPlugin } from "./ide/code-editor.js";
 import { RichTextControl } from "lively.morphic/text/ui.js"
 import { connect } from "lively.bindings"
+import config from "./config.js"
 
 export class ObjectDrawer extends Morph {
 
@@ -96,14 +97,15 @@ export class Workspace extends Window {
     super({
       title: "Workspace",
       targetMorph: {
-        type: CodeEditor,
+        type: "text",
         textString: props.content || "var i = 2 + 3",
-        mode: "javascript"
+        ...config.codeEditor.defaultStyle,
+        plugins: [new JavaScriptEditorPlugin()]
       },
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
     });
-    this.targetMorph.text.__defineGetter__("evalEnvironment", function () {
+    this.targetMorph.__defineGetter__("evalEnvironment", function () {
       return {
         targetModule: "lively://lively.next-workspace/" + this.id,
         context: this.doitContext || this.owner.doitContext || this

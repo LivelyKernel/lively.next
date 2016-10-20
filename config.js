@@ -1,3 +1,5 @@
+import { Rectangle } from "lively.graphics";
+
 var config = {
   undoLevels: 20,
   halosEnabled: true,
@@ -225,11 +227,12 @@ var config = {
   },
 
   codeEditor: {
+    defaultTheme: "github",
     defaultStyle: {
-      theme: "github",
-      mode: "plain",
       fontFamily: "Hack, Monaco, monospace",
-      fontSize: 12
+      padding: Rectangle.inset(4, 2, 4, 2),
+      fontSize: 12,
+      clipMode: "auto",
     }
   }
 }

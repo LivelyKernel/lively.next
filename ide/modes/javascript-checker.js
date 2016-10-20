@@ -23,12 +23,12 @@ export default class JavaScriptChecker {
     return astModule.fuzzyParse(src, options);
   }
 
-  onDocumentChange(change, editor) {
-    this.updateAST(change, editor);
+  onDocumentChange(change, morph) {
+    this.updateAST(change, morph);
   }
 
-  updateAST(change, editor) {
-    var ast, morph = editor.text || editor;
+  updateAST(change, morph) {
+    var ast;
     
     // 1. parse
     try {

@@ -3,7 +3,8 @@ import { arr, promise } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { Window, morph, show } from "../index.js";
 import { GridLayout } from "../layout.js";
-import CodeEditor from "./code-editor.js";
+import { JavaScriptEditorPlugin } from "./code-editor.js";
+import config from "../config.js";
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -68,7 +69,7 @@ function commandsForBrowser(browser) {
         if (!m) return browser.world().inform("No module selected", {requester: browser});
 
         var {parse, query: {nodesAt}} = await System.import("lively.ast");
-        var ed = browser.get("sourceEditor").text;
+        var ed = browser.get("sourceEditor");
         var source = ed.textString;
         var parsed = parse(source);
         var nodes = nodesAt(ed.document.positionToIndex(ed.cursorPosition), parsed)
@@ -123,7 +124,7 @@ export class Browser extends Window {
     if (packageName) await browser.selectPackageNamed(packageName);
     if (packageName && moduleName) await browser.selectModuleNamed(moduleName);
     if (textPosition) {
-      var text = browser.get("sourceEditor").text;
+      var text = browser.get("sourceEditor");
       text.cursorPosition = textPosition;
       text.centerRow(textPosition.row);
     }
@@ -152,7 +153,7 @@ export class Browser extends Window {
 
   build() {
     var style = {borderWidth: 1, borderColor: Color.gray, fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"},
-        textStyle = {borderWidth: 1, borderColor: Color.gray, fontSize: 12, type: CodeEditor, mode: "javascript"},
+        textStyle = {borderWidth: 1, borderColor: Color.gray, type: "text", ...config.codeEditor.defaultStyle, plugins: [new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)]},
         container = morph({
           ...style,
           layout: new GridLayout({
@@ -166,7 +167,7 @@ export class Browser extends Window {
         });
     // FIXME? how to specify that directly??
     container.layout.grid.row(0).adjustProportion(-1/5);
-    container.get("sourceEditor").text.__defineGetter__("evalEnvironment", function () {
+    container.get("sourceEditor").__defineGetter__("evalEnvironment", function () {
       var browser = this.getWindow();
       if (!browser.selectedModule) throw new Error("Browser has no module selected");
       return {
@@ -327,7 +328,7 @@ export class Browser extends Window {
       this.title = "browser – " + pack.name + "/" + m.nameInPackage;
       var source = await system.moduleRead(m.name);
       this.get("sourceEditor").textString = source;
-      this.get("sourceEditor").text.cursorPosition = {row: 0, column: 0}
+      this.get("sourceEditor").cursorPosition = {row: 0, column: 0}
     } finally {
       this.state.moduleUpdateInProgress = null;
       deferred && deferred.resolve(m);
