@@ -459,10 +459,12 @@ export class Text extends Morph {
   // document changes
 
   changeDocument(doc, resetStyle = false) {
+    if (this.document) var defaultTextStyle = this.defaultTextStyle;
+    else resetStyle = false;
     this.document = doc;
     this.textLayout.reset();
     if (resetStyle)
-      this.setDefaultTextStyle();
+      this.setDefaultTextStyle(defaultTextStyle);
     this.makeDirty();
   }
 
@@ -688,7 +690,7 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  get textAttributes() { return this.document.textAttributes; }
+  get textAttributes() { return this.document ? this.document.textAttributes : []; }
   set textAttributes(attrs) {
     this.document.textAttributes = attrs;
     this.onAttributesChanged();
@@ -816,7 +818,7 @@ export class Text extends Morph {
 
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
-  get documentEndPosition() { return this.document.endPosition; }
+  get documentEndPosition() { return this.document ? this.document.endPosition : {row: 0, column: 0}; }
   get cursorScreenPosition() { return this.toScreenPosition(this.cursorPosition); }
   set cursorScreenPosition(p) { return this.cursorPosition = this.toDocumentPosition(p); }
 

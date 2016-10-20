@@ -72,7 +72,7 @@ describe("text attributes", () => {
 
   it("begins with default style range", () => {
     var textAttributes = sut.document.textAttributesByLine[0],
-        computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: "auto", textStyleClasses: undefined};
+        computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: undefined, textStyleClasses: undefined, backgroundColor: undefined};
     expect(textAttributes).property("length").equals(1);
     expect(textAttributes[0].range).stringEquals("Range(0/-1 -> 0/5)");
     expect(textAttributes[0].data).deep.equals(computedDefaultStyle);
@@ -91,7 +91,7 @@ describe("text attributes", () => {
         b = TextAttribute.create(style_b, 0, 2, 0, 4),
         textAttributes;
 
-    var computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: "auto", textStyleClasses: undefined};
+    var computedDefaultStyle = {...defaultStyle, link: undefined, nativeCursor: undefined, textStyleClasses: undefined, backgroundColor: undefined};
     sut.addTextAttribute(a);
     var textAttributes = sut.document.textAttributesByLine[0];
 
