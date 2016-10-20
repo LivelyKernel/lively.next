@@ -47,15 +47,12 @@ export class RichTextControl extends Morph {
 
   removeFocus() {
      if (this.target) {
-       this.animate({opacity: 0, onFinish: () => {
-           this.remove();
-           this.target = null;
-       }});
+       this.remove();
+       this.target = null;
      }
   }
 
   focusOn(textMorph) {
-      this.fading = false;
       this.openInWorld();
       this.topCenter = textMorph.getGlobalTransform()
           .transformRectToRect(textMorph.selectionBounds()).bottomCenter();
@@ -71,7 +68,7 @@ export class RichTextControl extends Morph {
 
     var makeIconStyle = name => [
       ["\u200C", {
-        fontSize: 14, fontFamily: "",
+        fontSize: 12, fontFamily: "",
         textStyleClasses: ["fa", "fa-" + name]}]];
 
     this.opacity = 1;
@@ -80,8 +77,8 @@ export class RichTextControl extends Morph {
     this.addMorph({name: "italic button",    ...btnStyle, labelWithTextAttributes: makeIconStyle("italic")});
     this.addMorph({name: "underline button", ...btnStyle, labelWithTextAttributes: makeIconStyle("underline")});
     this.addMorph({name: "fontcolor button", ...btnStyle, labelWithTextAttributes: makeIconStyle("paint-brush")});
-    this.addMorph({name: "inc fontsize button", ...btnStyle, label: "➕"});
-    this.addMorph({name: "dec fontsize button", ...btnStyle, label: "➖"});
+    this.addMorph({name: "inc fontsize button", ...btnStyle, labelWithTextAttributes: makeIconStyle("plus")});
+    this.addMorph({name: "dec fontsize button", ...btnStyle, labelWithTextAttributes: makeIconStyle("minus")});
     this.addMorph({name: "link button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("link")});
     this.addMorph({name: "font button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("font")});
 
@@ -131,9 +128,9 @@ export class RichTextControl extends Morph {
 
   async changeLink() {
     var sel = this.target.selection,
-        {link} = getStyle(this.target, sel),
+        {link} = this.target.getStyleInRange(sel),
         newLink = await this.world().prompt("Set link", {input: link || "https://"});
-    setStyle(this.target, sel, {link: newLink || undefined});
+    this.target.setStyleInRange({link: newLink || undefined}, sel);
     this.remove();
   }
 
@@ -178,20 +175,8 @@ export class RichTextControl extends Morph {
 
 function setSingleStyleProperty(morph, propName, newValueFn) {
   if (!morph) return;
-  var oldValue = getStyle(morph)[propName],
+  var oldValue = morph.getStyleInRange()[propName],
       newValue = newValueFn(oldValue);
   morph.selections.forEach(sel =>
-    setStyle(morph, sel, {[propName]: newValue}))
-}
-
-function getStyle(morph, range = morph.selection) {
-  var [[from, to, firstStyle]] = morph.document.stylesChunked(range);
-  return firstStyle;
-}
-
-function setStyle(morph, range, style) {
-  // FIXME!!!!
-  morph.document.setStyleInRange(
-    style, range, morph.document._textAttributes[0])
-  morph.onAttributesChanged();
+    morph.setStyleInRange({[propName]: newValue}, sel))
 }

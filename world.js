@@ -245,7 +245,8 @@ var worldCommands = [
       name = name || "text workspace";
 
       return world.openInWindow(
-        new Text({...obj.dissoc(opts, ["title", "content"]),
+        new Text({padding: Rectangle.inset(3),
+                  ...obj.dissoc(opts, ["title", "content"]),
                   textString: content, clipMode: "auto", name, extent}),
         {title}).activate();
     }

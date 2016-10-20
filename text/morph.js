@@ -142,10 +142,11 @@ export class Text extends Morph {
      || change.prop === "fontStyle"
      || change.prop === "textDecoration"
      || change.prop === "fixedCharacterSpacing"
+     || change.prop === "textStyleClasses"
     ) this.textLayout && (this.textLayout.layoutComputed = false);
 
     super.onChange(change);
-    textChange && signal(this, "textChange");
+    textChange && signal(this, "textChange", change);
   }
 
   get readOnly() { return this.getProperty("readOnly"); }
@@ -220,6 +221,12 @@ export class Text extends Morph {
   set fixedCharacterSpacing(fixedCharacterSpacing) {
     this.addValueChange("fixedCharacterSpacing", fixedCharacterSpacing);
     this.setDefaultTextStyle({fixedCharacterSpacing});
+  }
+
+  get textStyleClasses() { return this.defaultTextStyle.textStyleClasses; }
+  set textStyleClasses(textStyleClasses) {
+    this.addValueChange("textStyleClasses", textStyleClasses);
+    this.setDefaultTextStyle({textStyleClasses});
   }
 
   get lineWrapping() { return this.getProperty("lineWrapping") }
@@ -705,6 +712,41 @@ export class Text extends Morph {
     this.onAttributesChanged();
   }
 
+  textAttributesAt(point) {
+    var chunk = this.textLayout.chunkAtPoint(this, point);
+    return chunk ? chunk.textAttributes : [];
+  }
+
+  textAttributesAtScreenPos(pos) {
+    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
+    return chunk ? chunk.textAttributes : [];
+  }
+
+  resetTextAttributes() {
+    this.document.resetTextAttributes();
+    this.setDefaultTextStyle();
+  }
+
+  onAttributesChanged() {
+    this._needsFit = true;
+    this.textLayout && (this.textLayout.layoutComputed = false);
+    this.makeDirty();
+  }
+
+  styleAt(point) {
+    var chunk = this.textLayout.chunkAtPoint(this, point);
+    return chunk ? chunk.style : {...this.defaultTextStyle};
+  }
+
+  styleAtScreenPos(pos) {
+    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
+    return chunk ? chunk.style : {...this.defaultTextStyle};
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // text styles (ranges)
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
   set defaultTextStyle(style) { this.setDefaultTextStyle(style); }
   get defaultTextStyle() { return this.defaultTextStyleAttribute.data; }
 
@@ -726,36 +768,21 @@ export class Text extends Morph {
     return attr;
   }
 
-  textAttributesAt(point) {
-    var chunk = this.textLayout.chunkAtPoint(this, point);
-    return chunk ? chunk.textAttributes : [];
+  getStyleInRange(range = this.selection) {
+    var [[from, to, firstStyle]] = this.document.stylesChunked(range);
+    return firstStyle;
   }
 
-  textAttributesAtScreenPos(pos) {
-    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
-    return chunk ? chunk.textAttributes : [];
+  setStyleInRange(style, range = this.selection) {
+    this.document.setStyleInRange(
+      style, range, this.document._textAttributes[0])
+    this.onAttributesChanged();
   }
 
-  styleAt(point) {
-    var chunk = this.textLayout.chunkAtPoint(this, point);
-    return chunk ? chunk.style : {...this.defaultTextStyle};
+  resetStyleInRange(range = this.selection) {
+    this.setStyleInRange(this.defaultTextStyle, range);
   }
 
-  styleAtScreenPos(pos) {
-    var chunk = this.textLayout.chunkAtScreenPos(this, pos);
-    return chunk ? chunk.style : {...this.defaultTextStyle};
-  }
-
-  resetTextAttributes() {
-    this.document.resetTextAttributes();
-    this.setDefaultTextStyle();
-  }
-
-  onAttributesChanged() {
-    this._needsFit = true;
-    this.textLayout && (this.textLayout.layoutComputed = false);
-    this.makeDirty();
-  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // selection
