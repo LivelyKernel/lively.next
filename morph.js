@@ -1201,7 +1201,7 @@ export class Polygon extends Path {
 
   constructor(props) {
     if (props.vertices && props.vertices.length > 2) {
-      super(props)
+      super(props);
     } else {
       throw new Error("A polygon requires 3 or more vertices!");
     }

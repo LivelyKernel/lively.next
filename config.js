@@ -222,6 +222,15 @@ var config = {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // ide related
       {keys: "Ctrl-C E", command: "[javascript] list errors and warnings"},
+
+      {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
+      {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
+      {keys: 'Ctrl-Alt-h',                                                                        command: 'markDefun'},
+      {keys: 'Ctrl-Alt-d|Ctrl-Alt-Down',                                                          command: 'forwardDownSexp'},
+      {keys: 'Ctrl-Alt-u|Ctrl-Alt-Up',                                                            command: 'backwardUpSexp'},
+      {keys: 'Ctrl-Alt-b|Ctrl-Alt-Left',                                                          command: 'backwardSexp'},
+      {keys: 'Ctrl-Alt-f|Ctrl-Alt-Right',                                                         command: 'forwardSexp'},
+
     ]
 
   },

@@ -47,7 +47,7 @@ export class CompletionController {
 
   constructor(textMorph, completers = []) {
     this.textMorph = textMorph;
-    completers = textMorph.tryPlugins("getCompleters", completers);
+    completers = textMorph.pluginCollect("getCompleters", completers);
     this.completers = completers;
   }
 

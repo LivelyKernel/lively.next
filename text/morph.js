@@ -385,12 +385,18 @@ export class Text extends Morph {
     return true
   }
 
-  tryPlugins(method, input) {
+  pluginCollect(method, result = []) {
     if (this._plugins)
       this._plugins.forEach(p =>
         typeof p[method] === "function" &&
-          (input = p[method](input)));
-    return input;
+          (result = p[method](result)));
+    return result;
+  }
+
+  pluginInvoke(method, ...args) {
+    var plugin = this._plugins && this._plugins.slice().reverse().find(p =>
+                                    typeof p[method === "function"]);
+    return plugin ? plugin[method](...args) : undefined;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -419,7 +425,7 @@ export class Text extends Morph {
   get tab() { return this.useSoftTabs ? " ".repeat(this.tabWidth) : "\t"; }
 
   get commands() {
-    return this.tryPlugins("getCommands", (this._commands || []).concat(commands))
+    return this.pluginCollect("getCommands", (this._commands || []).concat(commands))
   }
 
 
@@ -518,6 +524,9 @@ export class Text extends Morph {
   textInRange(range) { return this.document.textInRange(range); }
   charRight({row, column} = this.cursorPosition) { return this.getLine(row).slice(column, column+1); }
   charLeft({row, column} = this.cursorPosition) { return this.getLine(row).slice(column-1, column); }
+
+  indexToPosition(index) { return this.document.indexToPosition(index); }
+  positionToIndex(position) { return this.document.positionToIndex(position); }
 
   getVisibleLine(row = this.cursorScreenPosition.row) {
     return this.textLayout.wrappedLines(this)[row].text
@@ -1092,11 +1101,11 @@ export class Text extends Morph {
   // keyboard events
 
   get keybindings() {
-    return this.tryPlugins("getKeyBindings", super.keybindings.concat(config.text.defaultKeyBindings))
+    return this.pluginCollect("getKeyBindings", super.keybindings.concat(config.text.defaultKeyBindings))
   }
   set keybindings(x) { super.keybindings = x }
   get keyhandlers() {    
-    return this.tryPlugins("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || []));
+    return this.pluginCollect("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || []));
   }
 
   onKeyDown(evt) {
@@ -1320,6 +1329,12 @@ export class Text extends Morph {
   searchForAll(needle, options = {caseSensitive: false}) {
     return new TextSearcher(this).searchForAll({needle, ...options});
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // editor support
+
+  tokenAt(pos) { return this.pluginInvoke("tokenAt", pos); }
+  astAt(pos) { return this.pluginInvoke("astAt", pos); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization

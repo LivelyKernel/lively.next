@@ -3,13 +3,21 @@ import { pt, Rectangle, Color } from "lively.graphics";
 
 import { connect, disconnect } from "lively.bindings";
 import { TextStyleAttribute } from "../../text/attribute.js";
+import { lessPosition } from "../../text/position.js"
 
 import { completers } from "./completers.js";
 
-import { jsIdeCommands, jsEditorCommands, insertStringWithBehaviorCommand, deleteBackwardsWithBehavior } from "./commands.js";
+import {
+  jsIdeCommands,
+  jsEditorCommands,
+  astEditorCommands,
+  insertStringWithBehaviorCommand,
+  deleteBackwardsWithBehavior } from "./commands.js";
 
 import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
+
+import JavaScriptNavigator from "./navigator.js";
 
 import ChromeTheme from "../themes/chrome.js";
 import TomorrowNightTheme from "../themes/tomorrow-night.js";
@@ -28,7 +36,11 @@ export class JavaScriptEditorPlugin {
     this.theme = typeof theme === "string" ? new themes[theme]() : theme;
     this.highlighter = new JavaScriptTokenizer();
     this.checker = new JavaScriptChecker();
+    this._tokens = null;
+    this._ast = null;
   }
+
+  get isEditorPlugin() { return true }
 
   attach(editor) {
     this.textMorph = editor;
@@ -61,9 +73,15 @@ export class JavaScriptEditorPlugin {
       this.checker.onDocumentChange({}, textMorph);
   }
 
-  getCompleters(otherCompleters) {
-    return completers.concat(otherCompleters);
+  tokenAt(pos) {
+    return this._tokens ?
+      this._tokens.find(({end}) => !lessPosition(end, pos)) :
+      null;
   }
+
+  getNavigator() { return new JavaScriptNavigator(); }
+
+  getCompleters(otherCompleters) { return completers.concat(otherCompleters); }
 
   getCommands(otherCommands) {
     var idx = otherCommands.findIndex(({name}) => name === "insertstring");
@@ -71,7 +89,8 @@ export class JavaScriptEditorPlugin {
     return [insertStringWithBehaviorCommand, deleteBackwardsWithBehavior]
       .concat(otherCommands)
       .concat(jsIdeCommands)
-      .concat(jsEditorCommands);
+      .concat(jsEditorCommands)
+      .concat(astEditorCommands);
   }
 
 }
