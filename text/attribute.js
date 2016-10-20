@@ -76,10 +76,15 @@ export class TextStyleAttribute extends TextAttribute {
   static mergeAdjacentAttributes(attrs) {
     // Assumes that attributes are sorted according to Range.compare!
     if (attrs.length <= 1) return attrs;
-    var [a, b, ...rest] = attrs;
-    return a.addAdjacentAttribute(b) ?
-      this.mergeAdjacentAttributes([a].concat(rest)) :
-      [a].concat(this.mergeAdjacentAttributes([b].concat(rest)))
+    // var [a, b, ...rest] = attrs;
+    var merged = attrs.slice(), i = 0;
+    while (true) {
+      var a = merged[i], b = merged[i+1];
+      if (!b) break;
+      if (a.addAdjacentAttribute(b)) merged.splice(i+1, 1);
+      else i++;
+    }
+    return merged;
   }
 
   addAdjacentAttribute(other) {
@@ -91,7 +96,7 @@ export class TextStyleAttribute extends TextAttribute {
   }
 
   static get styleProps() {
-    return ["fontFamily", "fontSize", "fontColor", "fontWeight",
+    return ["fontFamily", "fontSize", "fontColor", "fontWeight", "backgroundColor",
             "fontStyle", "textDecoration", "fixedCharacterSpacing",
             "textStyleClasses", "link", "nativeCursor"];
   }

@@ -468,7 +468,6 @@ export default class TextDocument {
       from, to,
       attr => attr !== defaultStyleAttribute && attr.isStyleAttribute)
         .forEach(([start, end, styleAttrs]) => {
-
           var [localStyleAttr, ...rest] = styleAttrs;
 
           // remove all style attributes except for a single local style
@@ -517,12 +516,11 @@ export default class TextDocument {
         });
 
     this.removeTextAttributes(toRemove);
-    this.addSortedTextAttributes(toAdd.sort(Range.compare));
-    var merged = [this._textAttributes[0]]
-                  .concat(TextStyleAttribute.mergeAdjacentAttributes(
-                    this._textAttributes.slice(1)));
-    if (this._textAttributes.length !== merged.length)
-      this.setSortedTextAttributes(merged); // using setter for updating _textAttributesByLine!
+    var merged = [
+      this._textAttributes[0]].concat(
+        TextStyleAttribute.mergeAdjacentAttributes(this._textAttributes.slice(1).concat(toAdd))
+          .sort(Range.compare));
+    this.setSortedTextAttributes(merged); // using setter for updating _textAttributesByLine!
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

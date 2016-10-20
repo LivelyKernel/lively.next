@@ -5,7 +5,7 @@ import config from "../config.js";
 import { connect } from "lively.bindings";
 import { Morph, Menu } from "../index.js";
 import { Text } from "../text/morph.js";
-import { TextAttribute } from "../text/attribute.js";
+import { TextStyleAttribute } from "../text/attribute.js";
 
 import { Token, Highlighter, Theme } from "./highlighting.js";
 import JavaScriptHighlighter from "./modes/javascript-highlighter.js";
@@ -65,7 +65,7 @@ export default class CodeEditor extends Morph {
         tokens = this.mode.highlight(textMorph.textString);
     textMorph.setSortedTextAttributes(
       [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, from, to}) =>
-        TextAttribute.fromPositions(this.theme.styleCached(token), from, to))));
+        TextStyleAttribute.fromPositions(this.theme.styleCached(token), from, to))));
 
     if (this._checker)
       this._checker.onDocumentChange({}, this);
