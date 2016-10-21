@@ -472,7 +472,7 @@ function iToP(ed, pos) { return ed.indexToPosition(pos); }
 
 function execCodeNavigator(sel) {
   return function(ed, args, count) {
-    var nav = ed.pluginInvoke("getNavigator");
+    var nav = ed.pluginInvokeFirst("getNavigator");
     if (!nav) return false;
     ed.saveMark();
     var count = (count || 1);
@@ -528,7 +528,7 @@ export var astEditorCommands = [
   bindKey: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'},
   exec: function(ed, args) {
     args = args || {};
-    var expander = ed.pluginInvoke("getNavigator");
+    var expander = ed.pluginInvokeFirst("getNavigator");
     if (!expander) return true;
 
     // if we get start/end position indexes to expand to handed in then we do
@@ -582,7 +582,7 @@ export var astEditorCommands = [
   bindKey: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},
   exec: function(ed) {
     if (ed.selection.isEmpty()) return true;
-    var expander = ed.pluginInvoke("getNavigator");
+    var expander = ed.pluginInvokeFirst("getNavigator");
     if (!expander) return true;
 
     var ast = expander.ensureAST(ed.textString);
@@ -613,7 +613,7 @@ export var astEditorCommands = [
   readOnly: true,
   bindKey: "Alt-.",
   exec: function(ed, args) {
-    var nav = ed.pluginInvoke("getNavigator");
+    var nav = ed.pluginInvokeFirst("getNavigator");
     if (!nav) return true;
 
     var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
@@ -655,7 +655,7 @@ export var astEditorCommands = [
     // in the current scope
     // 1. get the token / identifier info of what is currently selected
 
-    var nav = ed.pluginInvoke("getNavigator");
+    var nav = ed.pluginInvokeFirst("getNavigator");
     if (!nav) return true;
 
     var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);

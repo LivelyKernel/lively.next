@@ -372,7 +372,7 @@ export class Text extends Morph {
     if (!this._plugins.includes(plugin)) {
       this._cachedKeyhandlers = null;
       this._plugins.push(plugin);
-      plugin.attach(this);
+      typeof plugin.attach === "function" && plugin.attach(this);
     }
     return plugin;
   }
@@ -381,7 +381,7 @@ export class Text extends Morph {
     if (!this._plugins || !this._plugins.includes(plugin)) return false;
     this._cachedKeyhandlers = null;
     arr.remove(this._plugins, plugin);
-    plugin.detach(this);
+    typeof plugin.detach === "function" && plugin.detach(this);
     return true
   }
 
@@ -393,7 +393,7 @@ export class Text extends Morph {
     return result;
   }
 
-  pluginInvoke(method, ...args) {
+  pluginInvokeFirst(method, ...args) {
     var plugin = this._plugins && this._plugins.slice().reverse().find(p =>
                                     typeof p[method === "function"]);
     return plugin ? plugin[method](...args) : undefined;
@@ -1361,8 +1361,8 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // editor support
 
-  tokenAt(pos) { return this.pluginInvoke("tokenAt", pos); }
-  astAt(pos) { return this.pluginInvoke("astAt", pos); }
+  tokenAt(pos) { return this.pluginInvokeFirst("tokenAt", pos); }
+  astAt(pos) { return this.pluginInvokeFirst("astAt", pos); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization

@@ -69,7 +69,7 @@ describe("js code navigator definitions", () => {
 
   beforeEach(() => {
     editor = new Text({plugins: [new JavaScriptEditorPlugin()]});
-    nav = editor.pluginInvoke("getNavigator");
+    nav = editor.pluginInvokeFirst("getNavigator");
   });
 
   it("identifier at point", () => {
@@ -124,7 +124,7 @@ describe("js code navigator expand and contract", () => {
 
   beforeEach(() => {
     editor = new Text({plugins: [new JavaScriptEditorPlugin()]});
-    nav = editor.pluginInvoke("getNavigator");
+    nav = editor.pluginInvokeFirst("getNavigator");
   });
 
   it("expandRegion", function() {
