@@ -1071,10 +1071,17 @@ export class Text extends Morph {
     if (clickedOnMorph !== this) return;
     var maxClicks = 3, normedClickCount = ((clickCount - 1) % maxClicks) + 1;
 
-    if (evt.isShiftDown() && this.selectable) {
+    if (evt.isShiftDown()) {
       this.selection.lead = this.textPositionFromPoint(this.scroll.addPt(this.localize(position)));
       return true;
     }
+
+    if (evt.isAltDown()) {
+      this.selection.addRange(Range.at(this.textPositionFromPoint(this.scroll.addPt(this.localize(position)))));
+      return true;
+    }
+
+    this.selection.disableMultiSelect();
 
     if (normedClickCount === 1) return this.onMouseMove(evt);
 

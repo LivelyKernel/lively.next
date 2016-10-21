@@ -471,6 +471,13 @@ export class World extends Morph {
       evt.layoutHalo.remove();
     }
 
+    if (evt.state.menu) {
+      evt.state.menu.remove();
+    }
+  }
+
+  onMouseUp(evt) {
+    var target = evt.state.clickedOnMorph;
     if (evt.isAltDown() && config.altClickDefinesThat) {
       // FIXME currently delayed to overwrite that in old morphic
       setTimeout(() => System.global.that = target, 100);
@@ -479,13 +486,7 @@ export class World extends Morph {
       console.log(`Set global "that" to ${target}`);
       return;
     }
-
-    if (evt.state.menu) {
-      evt.state.menu.remove();
-    }
   }
-
-  onMouseUp(evt) { }
 
   menuItems() {
     return [
