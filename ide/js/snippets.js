@@ -93,10 +93,16 @@ var _snippets = [
   // ${M1?:${1:morph}}.addScript(function ${2:scriptName}(${3}) {${0}});
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // # lively.bindings.connect
+  // lively.bindings.connect
   ["con", "lively.bindings.connect(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
   ["sig", "lively.bindings.signal(${0:source}, '${1:sourceAttr}', ${2:value});"],
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // morphic stuff
+
+  ["withA", "withAllSubmorphsDo(ea => { return ${0:ea}; })"],
+  ["$w", "$world"],
+  ["$m", "$morph('${0:name}')"],
 
 ]
 
