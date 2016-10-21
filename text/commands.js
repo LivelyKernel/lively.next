@@ -217,6 +217,20 @@ var commands = [
       return true;
     }
   },
+  
+  {
+    name: "tab - snippet expand or indent",
+    scrollCursorIntoView: true,
+    exec: function(morph) {
+      var snippet = morph.snippets.find(snippet => snippet.canExpand(morph));
+      if (snippet) {
+        snippet.expandAtCursor(morph);
+        return true;
+      }
+      return morph.execCommand("insertstring", {string: morph.tab});
+    }
+  },
+
 
   {
     name: "transpose chars",

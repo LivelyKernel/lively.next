@@ -168,7 +168,7 @@ var config = {
 
       {keys: 'Enter', command: "newline"},
       {keys: 'Space', command: {command: "insertstring", args: {string: " ", undoGroup: true}}},
-      {keys: 'Tab',   command: {command: "insertstring", args: {string: "\t", undoGroup: true}}},
+      {keys: 'Tab',   command: {command: "tab - snippet expand or indent"}},
 
       {keys: {win: 'Ctrl-]', mac: 'Meta-]'}, command: "indent"},
       {keys: {win: 'Ctrl-[', mac: 'Meta-['}, command: "outdent"},
