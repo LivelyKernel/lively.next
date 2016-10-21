@@ -189,17 +189,6 @@ export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigg
 // 
 
 // 
-// # collection withAllSubmorphsDo
-// regex /(\.?[^\.\s]+|^\s*)/\.?withAl?l?S?u?b?m?o?r?p?h?s?D?o?/
-// ${M1?:${1:owner}}.withAllSubmorphsDo(ea => { return ${0:ea}; });
-// 
-// 
-// # lively world
-// snippet $w
-// \$world
-// # $morph
-// snippet $m
-// \$morph('${1:name}')${0}
 // #
 // # $world snippets
 // snippet prompt
