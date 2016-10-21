@@ -487,9 +487,27 @@ export class World extends Morph {
 
   onMouseUp(evt) { }
 
-  onContextMenu(evt) {
-    evt.stop();
-    this.openWorldMenu(this.focusedMorph);
+  menuItems() {
+    return [
+      {command: "undo",                     target: this, showKeyShortcuts: true},
+      {command: "redo",                     target: this, showKeyShortcuts: true},
+      {command: "run command",              target: this, showKeyShortcuts: true},
+      {command: "select morph",             target: this, showKeyShortcuts: true},
+      {command: "resize to fit window",     target: this, showKeyShortcuts: true},
+      {command: "window switcher",          target: this, showKeyShortcuts: true},
+      {command: "open object drawer",       target: this, showKeyShortcuts: true},
+      {command: "open workspace",           target: this, showKeyShortcuts: true},
+      {command: "open browser",             target: this, showKeyShortcuts: true},
+      {command: "choose and browse module", target: this, showKeyShortcuts: true},
+      {command: "open code search",         target: this, showKeyShortcuts: true},
+      {command: "open test runner",         target: this, showKeyShortcuts: true}];
+  }
+
+  openWorldMenu(items) {
+    var eventState =  this.env.eventDispatcher.eventState;
+    if (eventState.menu) eventState.menu.remove();    
+    return eventState.menu = items && items.length ?
+      Menu.forItems(items).openInWorldNearHand() : null;
   }
 
   onWindowScroll(evt) {}
@@ -499,24 +517,6 @@ export class World extends Morph {
     this.execCommand("resize to fit window");
   }
 
-  openWorldMenu(callingMorph) {
-    var eventState =  this.env.eventDispatcher.eventState;
-    if (eventState.menu) eventState.menu.remove();
-    return eventState.menu = Menu.forCommands(
-      ["undo",
-       "redo",
-       "run command",
-       "select morph",
-       "resize to fit window",
-       "window switcher",
-       "open object drawer",
-       "open workspace",
-       "open browser",
-       "choose and browse module",
-       "open code search",
-       "open test runner"], arr.uniq(arr.compact([callingMorph, this])), {showKeyShortcuts: true}
-     ).openInWorldNearHand();
-  }
 
   get commands() { return worldCommands.concat(super.commands); }
   get keybindings() { return super.keybindings.concat(config.globalKeyBindings); }

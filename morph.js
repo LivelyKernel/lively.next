@@ -879,7 +879,14 @@ export class Morph {
   }
   onKeyUp(evt) {}
 
-  onContextMenu(evt) {}
+  onContextMenu(evt) {
+    if (evt.targetMorph !== this) return;
+    evt.stop();
+    var items = this.menuItems();
+    if (items && items.length) evt.world.openWorldMenu(items);
+  }
+  menuItems() {}
+
   onCut(evt) {}
   onCopy(evt) {}
   onPaste(evt) {}

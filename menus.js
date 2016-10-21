@@ -54,32 +54,13 @@ export class MenuItem extends Text {
   }
 }
 
+
 export class Menu extends Morph {
 
-  static menuItemsForCommands(commandsOrNames, targets, opts = {showKeyShortcuts: true}) {
-    if (!Array.isArray(targets)) targets = [targets];
-    console.assert(targets.length > 0);
-    console.assert(targets.every(ea => ea.execCommand));
-
-    return commandsOrNames.map(ea => {
-      var justName = typeof ea === "string",
-          name = justName ? ea : ea.name,
-          keys = opts.showKeyShortcuts && justName ?
-            arr.findAndGet(targets, t => t.keysForCommand(name)) : null,
-          descr = name + (keys ? ` [${keys}]` : ""),
-          target = (typeof ea === "string" && targets.find(t => t.lookupCommand(name)))
-                || targets[0];
-
-      return [descr, () => target.execCommand(ea)]
-    });
+  static forItems(items, opts = {title: ""}) {
+    return new this({...opts, title: opts.title, items});
   }
 
-  static forCommands(commandsOrNames, targets, opts = {title: "menu", showKeyShortcuts: true}) {
-    return new this({
-      ...opts, title: opts.title,
-      items: this.menuItemsForCommands(commandsOrNames, targets, opts)
-    });
-  }
 
   constructor(props) {
     super({
@@ -105,13 +86,42 @@ export class Menu extends Morph {
   set title(value) { this.addValueChange("title", value); }
 
   get items() { return this.getProperty("items") }
-  set items(value) { this.addValueChange("items", value); }
+  set items(items) {
+    items = items.map(this.ensureItem.bind(this));
+    this.addValueChange("items", items);
+  }
 
   get padding() { return this.getProperty("padding") }
   set padding(value) { this.addValueChange("padding", value); }
 
   get itemMorphs() {
     return this.submorphs.filter(ea => ea.isMenuItem);
+  }
+
+  ensureItem(item) {
+    var invalid = ["invalid item", () => show("invalid item")];
+    if (!item) return invalid;
+
+    if (Array.isArray(item)) {
+      var [name, exec] = item;
+      if (typeof name !== "string" || typeof exec !== "function") return invalid;
+      return item;
+    }
+
+    if (item.command) {
+      var {command, showKeyShortcuts, target, alias, args} = item;
+      if (!command || !target) return invalid;
+      if (showKeyShortcuts === undefined) showKeyShortcuts = true;
+      var keys = !showKeyShortcuts ?
+          null :
+          typeof showKeyShortcuts === "string" ?
+            showKeyShortcuts :
+            target.keysForCommand(command),
+          descr = (alias || command) + (keys ? ` [${keys}]` : "");
+      return [descr, () => target.execCommand(command, args)]
+    }
+
+    return invalid;
   }
 
   updateMorphs() {
@@ -144,4 +154,5 @@ export class Menu extends Morph {
 
     this.extent = pt(maxWidth + 2*p, pos.y + p);
   }
+
 }
