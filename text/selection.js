@@ -1,12 +1,8 @@
-import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
+import { lessPosition } from "./position.js"
 import { Range, defaultRange } from "./range.js";
-import { TextAttribute } from "./attribute.js";
 import config from "../config.js";
 import { string, arr } from "lively.lang";
 import { signal } from "lively.bindings";
-
-var newline = "\n";
-
 
 export class Selection {
 
@@ -206,25 +202,6 @@ export class Selection {
       clearInterval(this.cursorBlinkProcess);
     this.cursorBlinkProcess = null;
     this._cursorVisible = true;
-  }
-
-  set style(style) {
-    let {textMorph} = this,
-        textAttribute = new TextAttribute(style, this);
-    this.textMorph.addTextAttribute(textAttribute);
-  }
-
-  getTextAttributes() {
-    let {textAttributes} = this.textMorph.document,
-        result = [];
-    textAttributes.map(ea => {
-      let intersection = this.range.intersect(ea);
-      if (!intersection.isEmpty()) {
-        let textAttribute = new TextAttribute(ea.style, intersection);
-        result.push(textAttribute);
-      }
-    });
-    return result;
   }
 
   toString() {
