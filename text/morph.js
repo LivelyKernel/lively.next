@@ -364,7 +364,7 @@ export class Text extends Morph {
     var prevPlugins = this._plugins || [],
         removed = arr.withoutAll(prevPlugins, plugins);
     removed.forEach(p => this.removePlugin(p));
-    plugins.forEach(p => this.addPlugin(p)); 
+    plugins.forEach(p => this.addPlugin(p));
   };
 
   addPlugin(plugin) {
@@ -570,10 +570,17 @@ export class Text extends Morph {
 
   get textAndAttributes() { return this.document.textAndAttributes; }
   set textAndAttributes(textAndAttributes) {
+    // 1. remove everything
     this.deleteText({start: {row: 0, column: 0}, end: this.documentEndPosition});
-    textAndAttributes.reduce((pos, [text, attrs]) =>
-      this.insertTextWithTextAttributes(text, attrs, pos).end,
-      {row: 0, column: 0});
+    // 2. set text, don't set attributes yet so that attributes don't grow
+    // across their border when more text is subsequently inserted
+    var rangesAndAttrs = textAndAttributes.map(([text, attrs]) =>
+      [this.insertText(text, this.documentEndPosition), attrs]);
+    // 3. From the ranges we get from the text insertion we now where to
+    // install the attributes
+    rangesAndAttrs.forEach(([range, attrs]) =>
+      (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
+        this.addTextAttribute(attr, range)));
     return {start: {row: 0, column: 0}, end: this.documentEndPosition};
   }
 
@@ -1104,7 +1111,7 @@ export class Text extends Morph {
     }
   }
 
-  onContextMenu(evt) {    
+  onContextMenu(evt) {
     var posClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
     var sels = this.selection.selections || [this.selection];
     if (this.selection.isEmpty() || sels.every(sel => !sel.range.containsPosition(posClicked)))
@@ -1128,11 +1135,11 @@ export class Text extends Morph {
     return this.pluginCollect("getKeyBindings", super.keybindings.concat(config.text.defaultKeyBindings))
   }
   set keybindings(x) { super.keybindings = x }
-  get keyhandlers() {    
+  get keyhandlers() {
     return this.pluginCollect("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || []));
   }
 
-  get snippets() {    
+  get snippets() {
     return this.pluginCollect("getSnippets", []);
   }
 
