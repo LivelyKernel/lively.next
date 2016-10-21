@@ -47,8 +47,8 @@ class StyleMapper {
   getShadowStyle(morph) {
     if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)}
     return {boxShadow: morph.dropShadow ?
-                    "0px 7px 35px 5px rgba(0,0,0,0.36)" :
-                    "0px 0px  0px 0px rgba(0,0,0,0.36)"}
+                    "0px 2px 6px #333" :
+                    "none"}
   }
 
   getStyleProps(morph) {
