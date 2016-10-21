@@ -63,6 +63,35 @@ describe("js code navigator expression movements", () => {
 });
 
 
+describe("js code navigator definitions", () => {
+
+  var editor, nav;
+
+  beforeEach(() => {
+    editor = new Text({plugins: [new JavaScriptEditorPlugin()]});
+    nav = editor.pluginInvoke("getNavigator");
+  });
+
+  it("identifier at point", () => {
+    editor.textString = "var xxx = 23; xxx + 3; function foo() { xxx + 2; }"
+    expect(nav.resolveIdentifierAt(editor, {row: 0, column: 16}))
+      .containSubset({
+        name: "xxx",
+        decl: {type: "VariableDeclarator", start: 4},
+        refs: [{start: 14, end: 17}, {start: 40, end: 43}]
+      });
+  });
+
+  it("def at point", () => {
+    editor.textString = "var xxx = 23; xxx + 3;"
+    nav.resolveIdentifierAt(editor, {row: 0, column: 5})
+    expect(nav.resolveIdentifierAt(editor, {row: 0, column: 5}))
+      .containSubset({name: "xxx", decl: {type: "VariableDeclarator", start: 4}});
+  });
+
+});
+
+
 function assertExpansionOrContraction(editor, expander, method, cursorIndexOrRangeOrState, expectedSelectedString) {
   var state = Array.isArray(cursorIndexOrRangeOrState) ?
         {range: cursorIndexOrRangeOrState} :

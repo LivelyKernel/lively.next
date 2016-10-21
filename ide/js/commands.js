@@ -2,6 +2,7 @@
 
 import { pt, Rectangle } from "lively.graphics"
 import { chain, arr, obj, string } from "lively.lang";
+import { Range } from "../../text/range.js"
 import { eqPosition, lessPosition } from "../../text/position.js"
 
 function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, env) {
@@ -413,7 +414,7 @@ export var insertStringWithBehaviorCommand = {
       morph.insertText(openPairs[string], sel.end);
       morph.insertText(string, sel.start);
       morph.undoManager.group(undo);
-      sel.growLeft(1);
+      sel.growRight(-1);
       return true;
     }
 
@@ -432,7 +433,9 @@ export var insertStringWithBehaviorCommand = {
 
     // insert pair
     offsetColumn = 1;
-    morph.execCommand("insertstring_default", {...args, string: string + openPairs[string]})
+    var undo = morph.undoManager.ensureNewGroup(morph);
+    morph.insertText(string + openPairs[string]);
+    morph.undoManager.group(undo);
     sel.goLeft(1);
     return true;
   }
@@ -600,6 +603,94 @@ export var astEditorCommands = [
   },
   multiSelectAction: 'forEach',
   readOnly: true
+},
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+{
+  name: "selectDefinition",
+  readOnly: true,
+  bindKey: "Alt-.",
+  exec: function(ed, args) {
+    var nav = ed.pluginInvoke("getNavigator");
+    if (!nav) return true;
+
+    var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
+    if (!found || !found.declId) { show("No symbol identifier selected"); return true; }
+
+    ed.saveMark();
+
+    ed.selection = {
+      start: ed.indexToPosition(found.declId.start),
+      end: ed.indexToPosition(found.declId.end)
+    }
+    ed.scrollCursorIntoView()
+    return true;
+  }
+},
+
+{
+  name: "selectSymbolReferenceOrDeclarationNext",
+  readOnly: true,
+  multiSelectAction: "single",
+  exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'next'}); }
+},
+
+{
+  name: "selectSymbolReferenceOrDeclarationPrev",
+  readOnly: true,
+  multiSelectAction: "single",
+  exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'prev'}); }
+},
+
+{
+  name: "selectSymbolReferenceOrDeclaration",
+  readOnly: true,
+  multiSelectAction: "single",
+  exec: function(ed, args = {direction: null/*next,prev*/}) {
+    // finds the name of the currently selected symbol and will use the JS
+    // ast to select references and declarations whose name matches the symbol
+    // in the current scope
+    // 1. get the token / identifier info of what is currently selected
+
+    var nav = ed.pluginInvoke("getNavigator");
+    if (!nav) return true;
+
+    var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
+    if (!found || !found.refs) { show("No symbol identifier selected"); return true; }
+
+    // 3. map the AST ref / decl nodes to actual text ranges
+    var sel = ed.selection,
+        ranges = found.refs.map(({start, end}) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
+            .concat(found.declId ?
+              Range.fromPositions(iToP(ed, found.declId.start), iToP(ed, found.declId.end)): [])
+            // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
+            .sort(Range.compare);
+
+    if (!ranges.length) return true;
+
+    // do we want to select all ranges or jsut the next/prev one?
+    var currentRangeIdx = ranges.map(String).indexOf(String(sel.range));
+    if (args.direction === 'next' || args.direction === 'prev') {
+      if (currentRangeIdx === -1 && ranges.length) ranges = [ranges[0]];
+      else {
+        var nextIdx = currentRangeIdx + (args.direction === 'next' ? 1 : -1);
+        if (nextIdx < 0) nextIdx = ranges.length-1;
+        else if (nextIdx >= ranges.length) nextIdx = 0;
+        ranges = [ranges[nextIdx]];
+      }
+    } else { /*select all ranges*/ }
+
+    // do the actual selection
+    // ranges.forEach(sel.addRange.bind(sel));
+    ranges.forEach(range => {
+      var existing = sel.selections.findIndex(ea => ea.range.equals(range));
+      var idx = sel.selections.length-1;
+      if (existing > -1) arr.swap(sel.selections, existing, idx);
+      else sel.addRange(range);
+    });
+    return true;
+  }
 }
 
 ];

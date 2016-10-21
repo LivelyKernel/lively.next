@@ -230,7 +230,10 @@ var config = {
       {keys: 'Ctrl-Alt-u|Ctrl-Alt-Up',                                                            command: 'backwardUpSexp'},
       {keys: 'Ctrl-Alt-b|Ctrl-Alt-Left',                                                          command: 'backwardSexp'},
       {keys: 'Ctrl-Alt-f|Ctrl-Alt-Right',                                                         command: 'forwardSexp'},
-
+      {keys: 'Alt-.',                                                         command: 'selectDefinition'},
+      {keys: "Ctrl-Shift-'", command: "selectSymbolReferenceOrDeclaration"},
+      {keys: "Ctrl-Shift-[", command: "selectSymbolReferenceOrDeclarationPrev"},
+      {keys: "Ctrl-Shift-]", command: "selectSymbolReferenceOrDeclarationNext"},
     ]
 
   },

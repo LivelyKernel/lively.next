@@ -1,4 +1,4 @@
-import { arr, promise, obj } from "lively.lang"
+import { arr, obj } from "lively.lang"
 import { Color, Rectangle, pt } from "lively.graphics"
 import { addOrChangeCSSDeclaration } from "lively.morphic/rendering/dom-helper.js";
 import { show } from "lively.morphic"
@@ -445,7 +445,6 @@ export default class TestRunner extends HTMLMorph {
       return `${msg}<pre>${test.error.stack || test.error}</pre>`;
 
     var printed = this.stringifyExpectedAndActualOfError(test.error);
-
     if (System.global.JsDiff && printed) {
       return `${msg}<p>diff + = actual, - = expected:</p><pre>${diffIt(printed.expected, printed.actual)}</pre>`;
     } else {

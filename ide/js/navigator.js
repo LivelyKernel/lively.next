@@ -1,5 +1,7 @@
 // FIXME proper dependency to lively.ast
 
+import { arr } from "lively.lang";
+
 export default class JavaScriptNavigator {
 
   ensureAST(astOrSource) {
@@ -94,7 +96,7 @@ export default class JavaScriptNavigator {
   rangeForFunctionOrDefinition(src, currentRange) {
       var isNullSelection = currentRange[0] === currentRange[1];
       return this.rangeForNodesMatching(src, currentRange[1], function(node) {
-          var typeOK = ['AssignmentExpression', 'FunctionDeclaration', 'FunctionExpression'].includes(node.type);
+          var typeOK = ['AssignmentExpression', 'FunctionDeclaration', 'FunctionExpression', 'MethodDefinition'].includes(node.type);
           if (typeOK &&
               ((isNullSelection && node.end !== currentRange[1])
             || (!isNullSelection && node.start < currentRange[0]))) return true;
@@ -103,9 +105,49 @@ export default class JavaScriptNavigator {
   }
 
 
-  // -=-=-=-=-=-=-=-
-  // expansion
-  // -=-=-=-=-=-=-=-
+  // -=-=-=-=-=-=-
+  // definitions
+  // -=-=-=-=-=-=-
+
+  resolveIdentifierAt(editor, pos/*index!*/) {
+    if (typeof pos !== "number") pos = editor.positionToIndex(pos);
+    var parsed = this.ensureAST(editor.textString),
+        scope = lively.ast.query.scopeAtIndex(parsed, pos),
+        nodes = lively.ast.query.nodesAt(pos, parsed).reverse(),
+        id = nodes.find(ea => ea.type === "Identifier");
+
+    if (!id) {
+      var node = nodes[0];
+      if (node && node.type.includes("Specifier") && node.local && node.local.type === "Identifier")
+        id = node.local;
+      if (!id)
+        return undefined;
+    }
+
+    lively.ast.query.resolveReferences(scope);
+
+    // is it a reference? find the decl details...
+    var resolved = scope.resolvedRefMap.get(id);
+    if (resolved) {
+      var refs = lively.ast.query.findReferencesAndDeclsInScope(scope, id.name);
+      return {ast: parsed, name: id.name, ...resolved, refs};
+    }
+
+    // is it a decl? find the proper decl node
+    var decls = lively.ast.query.declarationsOfScope(scope, false/*includeOuter*/);
+    if (decls.includes(id)) {
+      var found = scope.decls.find(([decl, ...refs]) => refs.includes(id))
+      var decl = found && found[0];
+      var refs = lively.ast.query.findReferencesAndDeclsInScope(scope, id.name);
+      if (decl) return {ast: parsed, ref: id, name: id.name, decl, declId: id, refs};
+    }
+
+    return null;
+  }
+
+  // -=-=-=-=-=-=-
+  // expanding
+  // -=-=-=-=-=-=-
 
   expandRegion(ed, src, ast, expandState) {
       // use token if no selection
