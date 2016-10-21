@@ -2,6 +2,7 @@
 
 import { pt, Rectangle } from "lively.graphics"
 import { chain, arr, obj, string } from "lively.lang";
+import { show } from "../../index.js"
 import { Range } from "../../text/range.js"
 import { eqPosition, lessPosition } from "../../text/position.js"
 
@@ -616,13 +617,14 @@ export var astEditorCommands = [
     if (!nav) return true;
 
     var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
-    if (!found || !found.declId) { show("No symbol identifier selected"); return true; }
+    if (!found || !found.id) { show("No symbol identifier selected"); return true; }
+    if (!found.decl) { show("Cannot find declaration of " + found.name); return true; }
 
     ed.saveMark();
 
     ed.selection = {
-      start: ed.indexToPosition(found.declId.start),
-      end: ed.indexToPosition(found.declId.end)
+      start: ed.indexToPosition(found.decl.start),
+      end: ed.indexToPosition(found.decl.end)
     }
     ed.scrollCursorIntoView()
     return true;
@@ -662,8 +664,8 @@ export var astEditorCommands = [
     // 3. map the AST ref / decl nodes to actual text ranges
     var sel = ed.selection,
         ranges = found.refs.map(({start, end}) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
-            .concat(found.declId ?
-              Range.fromPositions(iToP(ed, found.declId.start), iToP(ed, found.declId.end)): [])
+            .concat(found.decl ?
+              Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)): [])
             // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
             .sort(Range.compare);
 

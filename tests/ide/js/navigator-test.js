@@ -77,16 +77,20 @@ describe("js code navigator definitions", () => {
     expect(nav.resolveIdentifierAt(editor, {row: 0, column: 16}))
       .containSubset({
         name: "xxx",
-        decl: {type: "VariableDeclarator", start: 4},
+        decl: {start: 4, end: 7},
         refs: [{start: 14, end: 17}, {start: 40, end: 43}]
       });
   });
 
-  it("def at point", () => {
-    editor.textString = "var xxx = 23; xxx + 3;"
-    nav.resolveIdentifierAt(editor, {row: 0, column: 5})
-    expect(nav.resolveIdentifierAt(editor, {row: 0, column: 5}))
-      .containSubset({name: "xxx", decl: {type: "VariableDeclarator", start: 4}});
+  it("identifier at point inside subscope", () => {
+    editor.textString = "var xxx = 23; xxx + 3; function foo(xxx) { xxx + 2; }"
+    nav.resolveIdentifierAt(editor, {row: 0, column: 44}).refs
+    expect(nav.resolveIdentifierAt(editor, {row: 0, column: 44}))
+      .containSubset({
+        name: "xxx",
+        decl: {start: 36},
+        refs: [{start: 43, end: 46}]
+      });
   });
 
 });
