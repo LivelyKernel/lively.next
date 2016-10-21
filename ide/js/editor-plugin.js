@@ -93,4 +93,18 @@ export class JavaScriptEditorPlugin {
       .concat(astEditorCommands);
   }
 
+  getMenuItems(items) {
+    var editor = this.textMorph;
+    items = items.concat([
+      {command: "doit", target: editor, showKeyShortcuts: true},
+    ]);
+
+    var nav = this.getNavigator();
+    var ref = nav.resolveIdentifierAt(editor, editor.cursorPosition);
+    if (ref) {
+      items.push({command: "selectDefinition", alias: `jump to definition`, target: editor})
+      items.push({command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences`, target: editor})
+    }
+    return items;
+  }
 }

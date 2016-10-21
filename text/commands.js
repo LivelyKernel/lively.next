@@ -25,9 +25,11 @@ var commands = [
     doc: "attempts to copy selection via browser interface",
     scrollCursorIntoView: false,
     multiSelectAction: "single",
-    exec: (morph, opts = {delete: false, dontTryNativeClipboard: false}) => {
+    exec: (morph, opts = {collapseSelection: true, delete: false, dontTryNativeClipboard: false}) => {
       var sel = morph.selection,
-          fullText = sel.text;
+          fullText = sel.text,
+          collapseSelection = opts.hasOwnProperty("collapseSelection") ?
+            opts.collapseSelection : true;
       morph.saveMark(sel.anchor);
       morph.activeMark = null;
 
@@ -38,7 +40,7 @@ var commands = [
           morph.env.eventDispatcher.killRing.add(text);
         if (opts["delete"])
           morph.deleteText(range);
-        else if (!sel.isEmpty())
+        else if (!sel.isEmpty() && collapseSelection)
           sel.collapse(sel.lead);
       });
 
@@ -84,7 +86,7 @@ var commands = [
       //     pasted = await lively.browserExtension.doPaste();
       //   } catch(err) { /*timeout err*/}
       // }
-
+      
       // if (!pasted) {
       //   try {
       //     pasted = await morph.env.eventDispatcher.doPaste();

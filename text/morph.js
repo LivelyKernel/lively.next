@@ -15,7 +15,7 @@ import { TextSearcher } from "./search.js";
 import { signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
 import { defaultRenderer } from "./rendering.js"
-import { lessPosition } from "./position.js"
+import { lessPosition, lessEqPosition } from "./position.js"
 
 
 const defaultTextStyle = {
@@ -1097,6 +1097,23 @@ export class Text extends Morph {
     }
   }
 
+  onContextMenu(evt) {    
+    var posClicked = this.textPositionFromPoint(this.scroll.addPt(this.localize(evt.position)));
+    var sels = this.selection.selections || [this.selection];
+    if (this.selection.isEmpty() || sels.every(sel => !sel.range.containsPosition(posClicked)))
+      this.cursorPosition = posClicked;
+    return super.onContextMenu(evt);
+  }
+
+  menuItems() {
+    var items = [
+      {command: "text undo", alias: "undo", target: this, showKeyShortcuts: true},
+      {command: "text redo", alias: "redo", target: this, showKeyShortcuts: true},
+      {command: "manual clipboard copy", alias: "copy", target: this, showKeyShortcuts: this.keysForCommand("clipboard copy"), args: {collapseSelection: false, delete: false}},
+      {command: "manual clipboard paste", alias: "paste", target: this, showKeyShortcuts: this.keysForCommand("clipboard paste")}];
+
+    return this.pluginCollect("getMenuItems", items);
+  }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // keyboard events
 

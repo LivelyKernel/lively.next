@@ -1,4 +1,4 @@
-import { lessPosition, eqPosition, minPosition, maxPosition } from "./position.js"
+import { lessPosition, lessEqPosition, eqPosition, minPosition, maxPosition } from "./position.js"
 
 
 export class Range {
@@ -161,6 +161,10 @@ export class Range {
 
       case -2: return [Range.fromPositions(this.start, that.start), Range.fromPositions(that.end, this.end)];
     }
+  }
+
+  containsPosition(pos) {
+    return lessEqPosition(this.start, pos) && lessEqPosition(pos, this.end);
   }
 
   toString() {
