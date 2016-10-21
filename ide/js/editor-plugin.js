@@ -7,6 +7,8 @@ import { lessPosition } from "../../text/position.js"
 
 import { completers } from "./completers.js";
 
+import { snippets as jsSnippets } from "./snippets.js";
+
 import {
   jsIdeCommands,
   jsEditorCommands,
@@ -107,4 +109,6 @@ export class JavaScriptEditorPlugin {
     }
     return items;
   }
+
+  getSnippets() { return jsSnippets; }
 }

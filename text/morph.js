@@ -1132,6 +1132,10 @@ export class Text extends Morph {
     return this.pluginCollect("getKeyHandlers", super.keyhandlers.concat(this._keyhandlers || []));
   }
 
+  get snippets() {    
+    return this.pluginCollect("getSnippets", []);
+  }
+
   onKeyDown(evt) {
     this.selection.cursorBlinkStart();
     KeyHandler.invokeKeyHandlers(this, evt, true/*no input evts*/);
