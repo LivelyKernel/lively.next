@@ -77,7 +77,7 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
     if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
     return rewrittenSource;
   } catch (e) {
-    console.error("Error in prepareCodeForCustomCompile", e.stack);
+    console.error(`Error in prepareCodeForCustomCompile of ${fullname} ${e.stack}`);
     return source;
   }
 }

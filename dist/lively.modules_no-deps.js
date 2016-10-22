@@ -228,7 +228,7 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
     if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
     return rewrittenSource;
   } catch (e) {
-    console.error("Error in prepareCodeForCustomCompile", e.stack);
+    console.error("Error in prepareCodeForCustomCompile of " + fullname + " " + e.stack);
     return source;
   }
 }
@@ -3032,7 +3032,7 @@ var ModuleInterface = function () {
     get: function get() {
       return ["__lvVarRecorder", "global", "self", "_moduleExport", "_moduleImport", "localStorage", // for Firefox, see fetch
       "prompt", "alert", "fetch" // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
-      ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"]));
+      ].concat(lively_lang.arr.withoutAll(lively_ast.query.knownGlobals, ["pt", "rect", "rgb", "$super", "show"] /*remove those once transitioned to lively.next*/));
     }
 
     // FIXME... better to make this read-only, currently needed for loading
