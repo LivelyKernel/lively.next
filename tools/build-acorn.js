@@ -13,8 +13,8 @@ module.exports = new Promise((resolve, reject) => {
       looseSrc = fs.readFileSync(path.join(acornDir, "dist/acorn_loose.js")),
       acornAsyncSrc = `(function(acorn) {
   var module = {exports: {}};
-  ${fs.readFileSync(require.resolve("acorn-es7-plugin"))}
-  module.exports(acorn);
+  ${fs.readFileSync(require.resolve("acorn-es7-plugin/acorn-v4.js"))}
+  acorn.plugins.asyncawait = module.exports;
 })(this.acorn);`,
       acornObjectSpreadSrc = `(function(acorn) {
   var module = {exports: {}};

@@ -200,10 +200,17 @@ describe('query', function() {
       it("findDeclarationClosestToIndex", function() {
         var src = `var x = 3, yyy = 4;\nvar z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }`,
             index = 48, // second yyy of addition
-            // show(src.slice(index-1,index+1))
             parsed = parse(src),
             result = query.findDeclarationClosestToIndex(parsed, "yyy", index);
         expect(result).to.containSubset({end:14,name:"yyy",start:11,type:"Identifier"});
+      });
+      
+      it("findDeclarationClosestToIndex 2", function() {
+        var src = `var x = 3, yyy = 4;\nvar z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }`,
+            index = 73, // yyy of function
+            parsed = parse(src),
+            result = query.findDeclarationClosestToIndex(parsed, "yyy", index);
+        expect(result).to.containSubset({end:66,name:"yyy",start:63,type:"Identifier"});
       });
 
       it("findReferencesAndDeclsInScope find vars", function() {
