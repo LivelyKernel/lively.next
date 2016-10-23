@@ -123,8 +123,9 @@ var commands = [
     name: "browse clipboard",
     exec: async (morph) => {
       var {pointer, buffer} = morph.env.eventDispatcher.killRing,
+          items = buffer.map(value => ({isListItem: true, string: string.truncate(value, 80).replace(/\n/g, ""), value})),
           {selected} = await morph.world().filterableListPrompt(
-            "select items to paste", buffer, {preselect: pointer, multiSelect: true});
+            "select items to paste", items, {preselect: pointer, multiSelect: true});
       if (selected.length) {
         morph.undoManager.group();
         morph.insertTextAndSelect(selected.join("\n"));
