@@ -286,9 +286,11 @@ export var defaultRenderer = {
           fontWeight, fontStyle, textDecoration,
           fixedCharacterSpacing, nativeCursor: cursor,
           textStyleClasses, link
-        } = style,
+        } = style;
 
-        tagname = link ? "a" : "span",
+    if (text.length > 1000) text = text.slice(0,1000);
+
+    var tagname = link ? "a" : "span",
         textNodes = text ?
           (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br"),
 
