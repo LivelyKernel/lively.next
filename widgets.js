@@ -184,7 +184,10 @@ export class Window extends Morph {
   }
 
   focus() {
-    this.targetMorph && this.targetMorph.focus();
+    var w = this.world(), t = this.targetMorph;
+    if (!w || !t) return;
+    if (w.focusedMorph && (w.focusedMorph === t || t.isAncestorOf(w.focusedMorph))) return;
+    t.focus();
   }
 
   isActive() {
