@@ -34,7 +34,12 @@ export class CodeSearcher extends FilterableList {
   }
 
   constructor(props = {}) {
-    super({extent: pt(800,500), fontFamily: "Monaco, monospace", fontSize: 14, ...obj.dissoc(props, "targetBrowser")});
+    super({
+      extent: pt(800,500),
+      fontFamily: "Inconsolata, monospace",
+      fontSize: 14,
+      historyId: "lively.morphic-code searcher",
+      ...obj.dissoc(props, "targetBrowser")});
     if (props.targetBrowser)
       this.state.targetBrowser = props.targetBrowser.id;
     this.state.currentSearchTerm = "";

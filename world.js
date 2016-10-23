@@ -901,8 +901,8 @@ export class ListPrompt extends AbstractPrompt {
     this.extent = extent || pt(500,400);
     var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
-    labelFontSize = labelFontSize || 14;
-    listFontFamily = listFontFamily || "Monaco, monospace";
+    labelFontSize = labelFontSize || 15;
+    listFontFamily = listFontFamily || "Inconsolata, monospace";
     listFontSize = listFontSize || labelFontSize;
     this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray});
     this.get("list") || this.addMorph(new ListClass({borderWidth: 0, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect, theme: "dark"}));

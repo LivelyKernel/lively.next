@@ -112,8 +112,8 @@ export class SearchWidget extends Morph {
 
   constructor(props = {}) {
     var target = props.targetText,
-        fontSize = props.fontSize || 12,
-        fontFamily = props.fontFamily || "Monaco, monospace",
+        fontSize = props.fontSize || 14,
+        fontFamily = props.fontFamily || "Inconsolata, monospace",
         input = props.input || "";
 
     if (!target) throw new Error("SearchWidget needs a target text morph!");

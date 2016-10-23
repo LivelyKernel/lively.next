@@ -241,9 +241,9 @@ var config = {
   codeEditor: {
     defaultTheme: "github",
     defaultStyle: {
-      fontFamily: "Hack, Monaco, monospace",
+      fontFamily: "Inconsolata, monospace",
       padding: Rectangle.inset(4, 2, 4, 2),
-      fontSize: 12,
+      fontSize: 14,
       clipMode: "auto",
     }
   }
