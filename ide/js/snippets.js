@@ -8,8 +8,8 @@ var _snippets = [
   ["fn", "function($0) {$1}"],
   ["f", "($0) => $1"],
 
-// ["aw", ],
-// await ${0:code}
+  ["aw", "await $0"],
+
 // ["afun", ],
 // async function ${1?:functionName}(${2}) {${0}}
 // ["afn", ],
@@ -72,6 +72,14 @@ var _snippets = [
   ["keys", "Object.keys($0)"],
   ["assign", "Object.assign(${0:dest}, ${1:source})"],
 
+  ["forE", "forEach(${0:ea} => $1)"],
+  ["map", "map(${0:ea} => $1)"],
+  ["reduce", "reduce((${1:all}, ${2:ea}) => {$3}, ${0:init})"],
+  ["last", "arr.last(${0:list})"],
+  ["pluck", "arr.pluck(${0:list}, \"${1:key}\")"],
+  ["sortBy", "arr.sortBy(${0:list}, ($1) => $2)"],
+  ["join", 'join("\\n")'],
+  
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // console, debugging
   ["cl", "console.log($0)"],
@@ -94,8 +102,9 @@ var _snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // lively.bindings.connect
-  ["con", "lively.bindings.connect(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
-  ["sig", "lively.bindings.signal(${0:source}, '${1:sourceAttr}', ${2:value});"],
+  ["con", "connect(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
+  ["once", "once(${0:source}, '${1:sourceAttr}', ${2:target}, '${3:targetAttr}');"],
+  ["sig", "signal(${0:source}, '${1:sourceAttr}', ${2:value});"],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic stuff
@@ -103,7 +112,11 @@ var _snippets = [
   ["withA", "withAllSubmorphsDo(ea => { return ${0:ea}; })"],
   ["$w", "$world"],
   ["$m", "$morph('${0:name}')"],
+  ["get", 'get("${0:name}")'],
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // string stuff
+  ["$", "${$0}"]
 ]
 
 export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigger, expansion}));
