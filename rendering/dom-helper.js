@@ -134,5 +134,6 @@ export function addOrChangeLinkedCSS(id, url, doc = document) {
     doc.head.appendChild(link);
   }
   link.setAttribute('href', url);
-  return link;
+  var loaded = false; link.onload = () => loaded = true;
+  return promise.waitFor(() => !!loaded && link);
 }

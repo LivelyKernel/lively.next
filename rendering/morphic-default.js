@@ -279,7 +279,8 @@ export function renderRootMorph(world, renderer) {
 
   if (!domNode.parentNode) {
     renderer.rootNode.appendChild(domNode);
-    renderer.ensureDefaultCSS();
+    renderer.ensureDefaultCSS().then(() =>
+      world.env.fontMetric.reset());
   }
 
   patch(domNode, patches);

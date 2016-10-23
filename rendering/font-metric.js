@@ -35,8 +35,21 @@ export default class FontMetric {
 
   constructor() {
     this.charMap = {};
-    this.element = null;
     this.cachedBoundsInfo = {};
+    this.element = null;
+  }
+
+  reset() {
+    var doc, parentNode;
+    if (this.element) {
+      parentNode = this.element.parentNode;
+      doc = this.element.ownerDocument;
+    }
+    this.uninstall()
+    this.charMap = {};
+    this.cachedBoundsInfo = {};
+    if (doc && parentNode)
+      this.install(doc, parentNode);
   }
 
   install(doc, parentEl) {
