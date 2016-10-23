@@ -175,6 +175,8 @@ export class List extends Morph {
     this.update();
   }
 
+  get isList() { return true; }
+
   onChange(change) {
     var {prop} = change;
     if (prop === "fontFamily"
@@ -476,7 +478,6 @@ export class List extends Morph {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { connect } from "lively.bindings";
-import FontMetric from "./rendering/font-metric.js";
 
 export class FilterableList extends Morph {
 
@@ -486,10 +487,12 @@ export class FilterableList extends Morph {
         itemPadding = props.itemPadding,
         fontSize = props.fontSize || 11,
         input = props.input || "",
+        historyId = props.historyId || null,
         inputText = Text.makeInputLine({
           name: "input",
           textString: input,
           fontSize, fontFamily,
+          historyId,
           ...this.inputStyle(props.theme)
         }),
         list = new List({
@@ -519,6 +522,8 @@ export class FilterableList extends Morph {
     connect(this.get("list"), "selection", this, "selectionChanged");
     connect(this, "extent", this, "relayout");
   }
+
+  get isList() { return true; }
 
   listStyle(theme) {
     if (theme == "dark") {
@@ -621,6 +626,19 @@ export class FilterableList extends Morph {
     this.scrollSelectionIntoView();
   }
 
+  acceptInput() {
+    var list = this.get("list");
+    if (list.selectedIndex in list.items)
+      this.get("input").addInputToHistory(list.items[list.selectedIndex].string);
+    var result = {
+      filtered: this.state.allItems,
+      selected: list.selections,
+      status: "accepted"
+    }
+    signal(this, "accepted", result);
+    return result;
+  }
+
   get keybindings() {
     return [
       {keys: "Up|Ctrl-P",                    command: "arrow up"},
@@ -638,14 +656,10 @@ export class FilterableList extends Morph {
   }
 
   get commands()  {
-    var list = this.get("list");
     return super.commands.concat([
       {
         name: "accept input",
-        exec: (morph) => {
-          signal(morph, "accepted", list.selectedIndex in this.get("list").items ? list.selection: null);
-          return true;
-        }
+        exec: (morph) => { this.acceptInput(); return true; }
       },
 
       {
@@ -656,7 +670,8 @@ export class FilterableList extends Morph {
         }
       },
 
-      ...listCommands.map(cmd => ({...cmd, exec: (morph, opts, count) => cmd.exec(list, opts, count)}))
+      ...listCommands.map(cmd =>
+        ({...cmd, exec: (morph, opts, count) => cmd.exec(this.get("list"), opts, count)}))
     ]);
   }
 

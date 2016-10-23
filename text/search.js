@@ -151,7 +151,8 @@ export class SearchWidget extends Morph {
         fill: Color.white,
         borderWidth: 1, borderColor: Color.gray,
         padding: Rectangle.inset(2),
-        fontSize, fontFamily
+        fontSize, fontFamily,
+        historyId: "lively.morphic-text search"
       }));
 
     if (input) this.input = input;
@@ -260,6 +261,7 @@ export class SearchWidget extends Morph {
       this.state.last = this.state.inProgress;
     if (this.applySearchResult(this.state.inProgress))
       this.state.before && this.targetText.saveMark(this.state.before.position);
+    this.get("input").acceptInput(); // for history
     this.cleanup();
     this.state.before = null;
     this.remove();

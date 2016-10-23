@@ -69,6 +69,7 @@ export class CodeSearcher extends FilterableList {
   }
 
   async searchAndUpdate(searchInput) {
+    this.get("input").acceptInput(); // for history
     var filterTokens = searchInput.split(/\s+/).filter(ea => !!ea);
   
     var win = this.getWindow();

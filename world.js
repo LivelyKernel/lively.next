@@ -48,7 +48,10 @@ var worldCommands = [
                 keysPrinted = keys ? ` [${keys.join(", ")}]` : "";
             return {isListItem: true, string: `[${targetName}] ${name}${keysPrinted}`, value: ea};
           }),
-          {prompt, selected: [cmd]} = await world.filterableListPrompt("Run command", items, {extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
+          {prompt, selected: [cmd]} = await world.filterableListPrompt(
+            "Run command", items, {
+              historyId: "lively.morphic-run command",
+              extent: pt(700,900), prompt: world._cachedRunCommandPrompt})
       world._cachedRunCommandPrompt = prompt;
       return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
@@ -69,7 +72,9 @@ var worldCommands = [
       var i = 0, items = tree.map(world,
         (m, depth) => ({isListItem: true, string: `${++i} ${"  ".repeat(depth)}${m}`, value: m}),
         m => m.submorphs);
-      var {selected: morphs} = await world.filterableListPrompt("Choose morph", items, {onSelection: sel => sel && sel.show()});
+      var {selected: morphs} = await world.filterableListPrompt(
+        "Choose morph", items, {historyId: "lively.morphic-select morph",
+         onSelection: sel => sel && sel.show()});
       if (!opts.justReturn)
         morphs[0] && world.showHaloFor(morphs[0]);
       return morphs;
@@ -126,6 +131,7 @@ var worldCommands = [
           answer = await world.filterableListPrompt(
             "Choose window", wins, {
               preselect: 1,
+              historyId: "lively.morphic-window switcher",
               onSelection: sel => sel && sel.show(),
               width: world.visibleBounds().extent().x * 1/3,
               labelFontSize: 16,
@@ -328,7 +334,10 @@ var worldCommands = [
           }));
       }
 
-      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true})
+      var {selected} = await world.filterableListPrompt(
+        "Choose module to open", items, {
+          historyId: "lively.morphic-choose and browse package resources",
+          requester: browser || focused, width: 700, multiSelect: true})
 
       Promise.all(selected.map(ea =>
         Browser.browse(ea.package.address, ea.name, undefined, browser)
@@ -358,7 +367,10 @@ var worldCommands = [
 
       items = arr.sortBy(items, ea => ea.string);
 
-      var {selected} = await world.filterableListPrompt("Choose module to open", items, {requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white"});
+      var {selected} = await world.filterableListPrompt(
+        "Choose module to open", items, {
+          historyId: "lively.morphic-choose and browse module",
+          requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white"});
       for (var i = 0; i < selected.length; i++) {
         var {package: p, shortName} = selected[i],
             b = await Browser.browse(
@@ -586,6 +598,8 @@ export class World extends Morph {
     this.setStatusMessage(stringified, Color.red);
   }
 
+  showError(err) { return this.logError(err); }
+
   setStatusMessage(msg, color, delay = 5000, optStyle = {}) {
     // world.setStatusMessage("test", Color.green)
     msg = String(msg);
@@ -658,7 +672,7 @@ export class World extends Morph {
     return this.openPrompt(new InformPrompt({label, ...opts}), opts);
   }
 
-  prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false}) {
+  prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false, historyId: null}) {
     // this.world().prompt("test", {input: "123"})
     // options = {
     //   input: STRING, -- optional, prefilled input string
@@ -679,7 +693,7 @@ export class World extends Morph {
       label, items, ...opts}), opts);
   }
 
-  filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0, multiSelect: false}) {
+  filterableListPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0, multiSelect: false, historyId: null}) {
     if (opts.prompt) {
       var list = opts.prompt.get("list");
       list.items = items;
@@ -839,11 +853,12 @@ export class ConfirmPrompt extends AbstractPrompt {
 
 export class TextPrompt extends AbstractPrompt {
 
-  build({input}) {
+  build({input, historyId}) {
     this.get("label") || this.addMorph({
         fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
         name: "label", type: "text", textString: "", readOnly: true});
     this.get("input") || this.addMorph(Text.makeInputLine({
+          historyId: historyId,
           name: "input", textString: input || "",
           borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
           fontColor: Color.gray.darker(), padding: rect(10,2,0,-2)
@@ -897,7 +912,8 @@ export class ListPrompt extends AbstractPrompt {
          padding,
          itemPadding,
          extent,
-         multiSelect}) {
+         multiSelect,
+         historyId}) {
     this.extent = extent || pt(500,400);
     var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
@@ -905,7 +921,7 @@ export class ListPrompt extends AbstractPrompt {
     listFontFamily = listFontFamily || "Inconsolata, monospace";
     listFontSize = listFontSize || labelFontSize;
     this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray});
-    this.get("list") || this.addMorph(new ListClass({borderWidth: 0, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect, theme: "dark"}));
+    this.get("list") || this.addMorph(new ListClass({historyId, borderWidth: 0, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect, theme: "dark"}));
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "Select", ...this.okButtonStyle});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel", ...this.cancelButtonStyle});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
@@ -932,14 +948,8 @@ export class ListPrompt extends AbstractPrompt {
 
   resolve() {
     var answer = this.get("list") instanceof FilterableList ?
-      {
-        filtered: this.get("list").state.allItems,
-        selected: this.get("list").get("list").selections,
-        status: "accepted"
-      } : {
-        selected: this.get("list").selections,
-        status: "accepted"
-      }
+      this.get("list").acceptInput() :
+      {selected: this.get("list").selections, status: "accepted"};
     return this.state.answer.resolve(answer);
   }
 

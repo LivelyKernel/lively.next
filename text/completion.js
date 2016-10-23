@@ -135,7 +135,8 @@ export class CompletionController {
       extent: bounds.extent(),
       items, input: prefix,
       name: "text completion menu",
-      borderColor: Color.gray, borderWidth: 1
+      borderColor: Color.gray, borderWidth: 1,
+      historyId: "lively.morphic-text completion"
     }
   }
 
@@ -143,7 +144,6 @@ export class CompletionController {
     var spec = await this.completionListSpec(),
         menu = new FilterableList(spec),
         prefix = spec.input;
-
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
         var textToInsert, completion = this.sourceObj.selection;
