@@ -234,53 +234,27 @@ export var jsEditorCommands = [
   {
     name: "toggle block comment",
     exec: function(morph) {
-      var existing = blockCommentInRangeOrPos();
 
-      morph.undoManager.group();
-      if (existing) {
-        var {start, end} = existing;
-        morph.deleteText({start: {row: end.row, column: end.column-2}, end});
-        morph.deleteText({start, end: {row: start.row, column: start.column+2}});
-
-      } else {
-        morph.insertText(`/*`, morph.selection.start);
-        morph.insertText(`*/`, morph.selection.end);
-        var select = !morph.selection.isEmpty();
-        morph.selection.growLeft(2);
-        if (!select) morph.selection.collapse();
+      var token = morph.tokenAt(morph.cursorPosition)
+      if (token && token.token === "comment") {
+        var text = morph.textInRange(token)
+        if (text.match(/^\/\*/) && text.match(/\*\/$/)) {
+          morph.undoManager.group();
+          morph.replace(token, text.slice(2,-2));
+          morph.undoManager.group();
+          return true;
+        }
       }
 
       morph.undoManager.group();
+      morph.insertText(`/*`, morph.selection.start);
+      morph.insertText(`*/`, morph.selection.end);
+      morph.undoManager.group();
+      var select = !morph.selection.isEmpty();
+      morph.selection.growLeft(2);
+      if (!select) morph.selection.collapse();
 
       return true;
-
-
-      // FIXME use JS tokens for this thing...
-      function blockCommentInRangeOrPos() {
-        // blockCommentInRangeOrPos()
-
-        if (!morph.selection.isEmpty()) {
-          var selText = morph.selection.text;
-          return selText.slice(0,2) === "/*" && selText.slice(-2) === "*/" ?
-            morph.selection.range : null;
-        }
-
-        var pos = morph.cursorPosition;
-
-        var startLeft = morph.search("/*", {start: pos, backwards: true});
-        if (!startLeft) return null;
-        var endLeft = morph.search("*/", {start: pos, backwards: true});
-        // /*....*/ ... <|>
-        if (endLeft && lessPosition(startLeft, endLeft)) return null;
-
-        var endRight = morph.search("*/", {start: pos});
-        if (!endRight) return null;
-        var startRight = morph.search("/*", {start: pos});
-        // <|> ... /*....*/
-        if (startRight && lessPosition(startRight, endRight)) return null;
-
-        return {start: startLeft.range.start, end: endRight.range.end};
-      }
     }
   },
 
