@@ -89,6 +89,7 @@ export default class FontMetric {
     try {
       ({width, height} = this.element.getBoundingClientRect());
     } catch(e) { return {width: 0, height:0}; };
+
     return {height, width}
   }
 
@@ -96,27 +97,54 @@ export default class FontMetric {
     let nCols = str.length,
         bounds = new Array(nCols),
         { cachedBoundsInfo: { bounds: cachedBounds, str: cachedStr, style: cachedStyle } } = this,
-        useCache = cachedBounds && obj.equals(cachedStyle, style),
-        fontIsProportional = this.isProportional(style.fontFamily),
-        adjustSpacing = fontIsProportional && !style.fixedCharacterSpacing;
-    for (let col = 0, x = 0; col < nCols; col++) {
-      let width, height, char = str[col];
-      if (adjustSpacing) {
-        useCache = useCache && char === cachedStr[col];
-        if (useCache)
-          ({ width, height } = cachedBounds[col]);
-        else {
-          let prefix = str.substr(0, col+1);
-          ({ width, height } = this.measure(style, prefix));
-          width -= x;
-        }
-      } else {
-        ({ width, height } = this.sizeFor(style, char));
+        isMonospace = !this.isProportional(style.fontFamily);
+
+    if (isMonospace) {
+      // measuring a single char does not give us a precise width
+      var single = this.sizeFor(style, "x", true),
+          double = this.sizeFor(style, "xx", true),
+          width = double.width - single.width,
+          height = single.height, x = 0;
+      for (var i = 0; i < nCols; i++) {
+        // if (i % 10 === 0) x = this.sizeFor(style, "x".repeat(i), true).width;
+        // else x = width*i;
+        x = width*i;
+        bounds[i]= {x, y: 0, width, height};
       }
-      bounds[col] = { x, y: 0, width, height };
-      x += width;
+    } else {
+      var useCache = cachedBounds && obj.equals(cachedStyle, style),
+          adjustSpacing = !style.fixedCharacterSpacing;
+
+      for (let col = 0, x = 0; col < nCols; col++) {
+        let width, height, char = str[col];
+        if (adjustSpacing) {
+          useCache = useCache && char === cachedStr[col];
+          if (useCache)
+            ({ width, height } = cachedBounds[col]);
+          else {
+            let prefix = str.substr(0, col+1);
+            ({ width, height } = this.measure(style, prefix));
+            width -= x;
+          }
+        } else {
+
+// if (window.debugCharBoundsFor) var start = Date.now();
+
+          ({ width, height } = this.sizeFor(style, char));
+
+  // if (window.debugCharBoundsFor) {
+  //   var t = Date.now() - start;
+  //   window._debugCharBoundsFor.push(`${char} computed in ${t}ms`)
+  // }
+
+        }
+        bounds[col] = { x, y: 0, width, height };
+        x += width;
+      }
+      if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, style };
+
     }
-    if (adjustSpacing) this.cachedBoundsInfo = { bounds, str, style };
+
     return bounds;
   }
 
@@ -127,24 +155,24 @@ export default class FontMetric {
     return w_width !== i_width;
   }
 
-  sizeFor(style, char) {
+  sizeFor(style, string, forceCache = false) {
     // Select style properties relevant to individual character size
     let { fontFamily, fontSize,
           fontWeight, fontStyle, textDecoration, textStyleClasses } = style,
         relevantStyle = { fontFamily, fontSize,
                           fontWeight, fontStyle, textDecoration, textStyleClasses };
 
-    if (char.length > 1) return this.measure(relevantStyle, char);
+    if (!forceCache && string.length > 1) return this.measure(relevantStyle, string);
 
     let className = textStyleClasses ? textStyleClasses.join(" ") : "";
     let styleKey = [fontFamily, fontSize, fontWeight, fontStyle, textDecoration, className].join('-');
 
     if (!this.charMap[styleKey])
       this.charMap[styleKey] = {};
-    if (!this.charMap[styleKey][char])
-      this.charMap[styleKey][char] = this.measure(relevantStyle, char);
+    if (!this.charMap[styleKey][string])
+      this.charMap[styleKey][string] = this.measure(relevantStyle, string);
 
-    return this.charMap[styleKey][char];
+    return this.charMap[styleKey][string];
   }
 
   asciiSizes(style) {
