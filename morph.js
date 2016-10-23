@@ -9,6 +9,7 @@ import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 
 const defaultCommandHandler = new CommandHandler();
 
+
 const defaultProperties = {
   visible: true,
   name: "a morph",
@@ -81,6 +82,16 @@ export class Morph {
   }
 
   show() { return show(this); }
+
+  setStatusMessage(msg, color) {
+    var w = this.world();
+    return w ? w.setStatusMessage(msg, color) : console.log(msg)
+  }
+
+  showError(err) {
+    var w = this.world();
+    return w ? w.showError(err) : console.error(err)
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // changes
