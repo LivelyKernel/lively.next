@@ -16,6 +16,12 @@ export class Resource {
     this.url = String(url);
   }
 
+  equals(otherResource) {
+    return otherResource
+        && this.constructor == otherResource.constructor
+        && this.url === otherResource.url;
+  }
+
   toString() {
     return `${this.constructor.name}("${this.url}")`;
   }
@@ -61,6 +67,7 @@ export class Resource {
   }
 
   root() {
+    if (this.isRoot()) return this;
     var toplevel = this.url.slice(0, -this.path().length);
     return resource(toplevel + "/");
   }
