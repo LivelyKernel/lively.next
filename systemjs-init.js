@@ -1,5 +1,7 @@
 (function configure() {
 
+  System.useModuleTranslationCache = true;
+
   if (System.map['plugin-babel'] && System.map['systemjs-plugin-babel']) {
     console.log("[lively.modules] System seems already to be configured");
     return;
