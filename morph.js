@@ -370,9 +370,10 @@ export class Morph {
     return tfm;
   }
 
-  immediateTransformTillMorph(other) {
-    var {topLeft, topRight, bottomRight, bottomLeft} = other,
-        transformPoint = (p, morph) => other.addPt(morph.origin).matrixTransform(morph.getTransform());
+  immediateTransformTillMorph(other, r) {
+    var topLeft = r.topLeft(), topRight =  r.topRight(), 
+        bottomRight =  r.bottomRight(),  bottomLeft = r.bottomLeft(),
+        transformPoint = (p, morph) => p.addPt(morph.origin).matrixTransform(morph.getTransform());
     
     for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
          topLeft = transformPoint(topLeft, morph);
