@@ -42,6 +42,8 @@ function packageStore(System) {
 }
 
 function addToPackageStore(System, p) {
+  var pInSystem = System.getConfig().packages[p.url] || {};
+  p.mergeWithConfig(pInSystem);
   var store = packageStore(System);
   store[p.url] = p;
   return p;
@@ -243,7 +245,13 @@ class Package {
     this.map = {};
   }
 
-  get name() { return this._name || arr.last(this.url.replace(/[\/]+$/, "").split("/")); }
+  get name() {
+    if (this._name) return this._name;
+    var config = this.System.get(this.url + "/package.json");
+    if (config && config.name) return config.name;
+    if (this.referencedAs[0]) return this.referencedAs[0];
+    return arr.last(this.url.replace(/[\/]+$/, "").split("/"));
+  }
   set name(v) { return this._name = v; }
   get address() { return this.url; }
   set address(v) { return this.url = v; }
@@ -326,25 +334,25 @@ class Package {
   search(needle, options) { return searchInPackage(this.System, this.url, needle, options); }
 
   mergeWithConfig(config) {
-    var copy = Object.assign({}, config);
-    var {name, referencedAs, map} = copy;
+    config = {...config};
+    var {name, referencedAs, map} = config;
 
     if (referencedAs) {
-      delete copy.referencedAs
+      delete config.referencedAs
       this.referencedAs = arr.uniq(this.referencedAs.concat(referencedAs))
     }
 
     if (name) {
-      delete copy.name;
+      delete config.name;
       this._name = name;
     }
 
     if (map) {
-      delete copy.map;
+      delete config.map;
       Object.assign(this.map, map);
     }
 
-    Object.assign(this, copy);
+    Object.assign(this, config);
     return this;
   }
 
