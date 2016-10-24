@@ -3,6 +3,7 @@ import { emit } from "lively.notifications";
 import { install as installHook, isInstalled as isHookInstalled } from "./hooks.js";
 import module from "../src/module.js";
 import { computeRequireMap as requireMap } from './dependencies.js'
+import { knownModuleNames } from './system.js'
 import { isJsFile, asDir, isURL, urlResolve, join } from "./url-helpers.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -16,7 +17,8 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 }
 
 function normalizePackageURL(System, packageURL) {
-  if (Object.keys(getPackages(System)).some(ea => ea === packageURL))
+
+  if (allPackageNames(System).some(ea => ea === packageURL))
     return packageURL;
 
   var url = System.decanonicalize(packageURL.replace(/[\/]+$/, "") + "/");
@@ -223,6 +225,13 @@ function subpackageNameAndAddress(System, livelyConfig, subPackageName, pkg) {
 
 class Package {
 
+  static forModule(System, module) {
+    var id = module.id,
+        map = moduleNamesByPackageNames(System),
+        pAddress = Object.keys(map).find(pName => map[pName].includes(id));
+    return getPackage(System, pAddress, true/*normalized*/);
+  }
+
   constructor(System, packageURL) {
     // the name from the packages config, set once the config is loaded
     this._name = undefined;
@@ -238,6 +247,7 @@ class Package {
   set name(v) { return this._name = v; }
   get address() { return this.url; }
   set address(v) { return this.url = v; }
+
   path() {
     var base = this.System.baseURL;
     return this.url.indexOf(base) === 0 ? this.url.slice(base.length) : this.url;
@@ -345,8 +355,8 @@ class Package {
 
 }
 
-function getPackage(System, packageURL) {
-  var url = normalizePackageURL(System, packageURL);
+function getPackage(System, packageURL, isNormalized = false) {
+  var url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
   return packageStore(System).hasOwnProperty(url) ?
     packageStore(System)[url] :
     addToPackageStore(System, new Package(System, url));
@@ -361,19 +371,37 @@ function registerPackage(System, packageURL, packageLoadStack) { return getPacka
 function removePackage(System, packageURL) { return getPackage(System, packageURL).remove(); }
 function reloadPackage(System, packageURL) { return getPackage(System, packageURL).reload(); }
 
+function allPackageNames(System) {
+  var sysPackages = System.packages,
+      livelyPackages = packageStore(System);
+  return arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)))
+}
 
-function groupIntoPackages(System, moduleNames, packageNames) {
+function moduleNamesByPackageNames(System) {
+  var modules = knownModuleNames(System),
+      packageNames = allPackageNames(System);
 
-  return arr.groupBy(moduleNames, groupFor);
+  return modules.reduce((packageMap, moduleName) => {
+    var itsPackage = packageNames.reduce((itsPackage, packageName) => {
+      if (!moduleName.startsWith(packageName)) return itsPackage;
+      if (!itsPackage || itsPackage.length < packageName.length) return packageName;
+      return itsPackage;
+    }, null) || "no group";
+    var packageModules = packageMap[itsPackage] || (packageMap[itsPackage] = []);
+    packageModules.push(moduleName);
+    return packageMap;
+  }, {})
+}
 
-  function groupFor(moduleName) {
-    var fullname = System.decanonicalize(moduleName),
-        matching = packageNames.filter(p => fullname.indexOf(p) === 0);
+function groupIntoPackages(System, moduleIds, packageNames) {
+  return arr.groupBy(moduleIds, moduleId => {
+    var matching = packageNames.filter(p => moduleId.indexOf(p) === 0);
     return matching.length ?
       matching.reduce((specific, ea) => ea.length > specific.length ? ea : specific) :
       "no group";
-  }
+  });
 }
+
 
 function getPackages(System) {
   // returns a list like
@@ -430,6 +458,7 @@ function searchInPackage(System, packageURL, searchStr, options) {
 }
 
 export {
+  Package,
   getPackage,
   importPackage,
   registerPackage,

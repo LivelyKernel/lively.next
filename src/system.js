@@ -279,6 +279,13 @@ function searchLoadedModules(System, searchStr, options) {
         .then(res => arr.flatten(res, 1));
 }
 
+function knownModuleNames(System) {
+  var fromSystem = System.loads ?
+    Object.keys(System._loader.moduleRecords) :
+    Object.keys(System.loads);
+  return arr.uniq(fromSystem.concat(Object.keys(loadedModules(System))));
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // exports
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -287,6 +294,6 @@ export {
   getSystem, removeSystem, prepareSystem,
   printSystemConfig,
   livelySystemEnv,
-  loadedModules,
+  loadedModules, knownModuleNames,
   searchLoadedModules
 };

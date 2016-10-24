@@ -4,7 +4,7 @@ import { computeRequireMap } from  "./dependencies.js";
 import { moduleSourceChange } from "./change.js";
 import { scheduleModuleExportsChange, runScheduledExportChanges } from "./import-export.js";
 import { livelySystemEnv } from "./system.js";
-import { getPackages } from "./packages.js";
+import { Package } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
 import { emit, subscribe } from "lively.notifications";
 
@@ -367,8 +367,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   package() {
-    return getPackages(this.System).find(ea =>
-      ea.modules.some(mod => mod.name === this.id));
+    return Package.forModule(this.System, this);
   }
 
   pathInPackage() {

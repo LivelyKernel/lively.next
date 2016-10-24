@@ -1,13 +1,6 @@
 import { graph, arr, obj } from "lively.lang";
 import { loadedModules } from "./system.js";
 
-// function computeRequireMap() {
-//   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
-//     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
-//     return requireMap;
-//   }, {});
-// }
-
 function computeRequireMap(System) {
   if (System.loads) {
     var store = System.loads,
