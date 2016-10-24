@@ -1336,7 +1336,7 @@
         },
         uniq: function (array, sorted) {
             return array.reduce(function (a, value, index) {
-                if (0 === index || (sorted ? a.last() != value : a.indexOf(value) === -1))
+                if (0 === index || (sorted ? arr.last(a) != value : a.indexOf(value) === -1))
                     a.push(value);
                 return a;
             }, []);
@@ -2454,26 +2454,40 @@
 (function (exports) {
     'use strict';
     var tree = exports.tree = {
-        prewalk: function (treeNode, iterator, childGetter) {
-            iterator(treeNode);
-            (childGetter(treeNode) || []).forEach(function (ea) {
-                tree.prewalk(ea, iterator, childGetter);
+        prewalk: function (treeNode, iterator, childGetter, counter, depth) {
+            if (!counter)
+                counter = { i: 0 };
+            if (!depth)
+                depth = 0;
+            var i = counter.i++;
+            iterator(treeNode, i, depth);
+            (childGetter(treeNode, i, depth) || []).forEach(function (ea) {
+                tree.prewalk(ea, iterator, childGetter, counter, depth + 1);
             });
         },
-        postwalk: function (treeNode, iterator, childGetter) {
-            (childGetter(treeNode) || []).forEach(function (ea) {
+        postwalk: function (treeNode, iterator, childGetter, counter, depth) {
+            if (!counter)
+                counter = { i: 0 };
+            if (!depth)
+                depth = 0;
+            var i = counter.i++;
+            (childGetter(treeNode, i, depth) || []).forEach(function (ea) {
                 tree.postwalk(ea, iterator, childGetter);
             });
-            iterator(treeNode);
+            iterator(treeNode, i, depth);
         },
         detect: function (treeNode, testFunc, childGetter) {
             if (testFunc(treeNode))
                 return treeNode;
-            var found;
-            exports.arr.detect(childGetter(treeNode) || [], function (ea) {
-                return found = tree.detect(ea, testFunc, childGetter);
-            });
-            return found;
+            var children = childGetter(treeNode);
+            if (!children || !children.length)
+                return undefined;
+            for (var i = 0; i < children.length; i++) {
+                var found = tree.detect(children[i], testFunc, childGetter);
+                if (found)
+                    return found;
+            }
+            return undefined;
         },
         filter: function (treeNode, testFunc, childGetter) {
             var result = [];
@@ -3476,7 +3490,7 @@
                     return false;
                 if (alignRightAll)
                     return true;
-                return options && Object.isArray(options.align) && options.align[columnIndex] === 'right';
+                return options && Array.isArray(options.align) && options.align[columnIndex] === 'right';
             }
             tableArray.forEach(function (row) {
                 row.forEach(function (cellVal, i) {
@@ -3485,8 +3499,8 @@
                     columnWidths[i] = Math.max(columnWidths[i], String(cellVal).length);
                 });
             });
-            return tableArray.collect(function (row) {
-                return row.collect(function (cellVal, i) {
+            return tableArray.map(function (row) {
+                return row.map(function (cellVal, i) {
                     var cellString = String(cellVal);
                     return string.pad(cellString, columnWidths[i] - cellString.length, alignRight(i));
                 }).join(separator);
