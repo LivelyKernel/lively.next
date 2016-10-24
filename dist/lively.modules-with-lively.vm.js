@@ -25730,6 +25730,8 @@ exports.createFiles = createFiles;
 
 (function configure() {
 
+  System.useModuleTranslationCache = true;
+
   if (System.map['plugin-babel'] && System.map['systemjs-plugin-babel']) {
     console.log("[lively.modules] System seems already to be configured");
     return;
@@ -25893,367 +25895,6 @@ function computeRequireMap(System) {
     });
     return requireMap;
   }, {});
-}
-
-var funcCall = lively_ast.nodes.funcCall;
-var member = lively_ast.nodes.member;
-var literal = lively_ast.nodes.literal;
-
-var isNode$1 = System.get("@system-env").node;
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// code instrumentation
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-var node_modulesDir = System.decanonicalize("lively.modules/node_modules/");
-
-var exceptions = [
-// id => id.indexOf(resolve("node_modules/")) > -1,
-// id => canonicalURL(id).indexOf(node_modulesDir) > -1,
-function (id) {
-  return lively_lang.string.include(id, "acorn/src");
-}, function (id) {
-  return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js") || lively_lang.string.include(id, "systemjs-plugin-babel");
-},
-// id => lang.string.include(id, "lively.ast.es6.bundle.js"),
-function (id) {
-  return id.slice(-3) !== ".js";
-}];
-var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
-var cjsFormatCommentRegExp = /['"]format cjs['"];/;
-var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
-
-function prepareCodeForCustomCompile(source, fullname, env, debug) {
-  source = String(source);
-  var tfmOptions = {
-    topLevelVarRecorder: env.recorder,
-    varRecorderName: env.recorderName,
-    dontTransform: env.dontTransform,
-    recordGlobals: true,
-    keepPreviouslyDeclaredValues: true,
-    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
-
-  },
-      isGlobal = env.recorderName === "System.global",
-      header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
-      footer = "";
-
-  if (isGlobal) {
-    // FIXME how to update exports in that case?
-  } else {
-    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
-    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
-  }
-
-  try {
-    var rewrittenSource = header + lively_vm.evalCodeTransform(source, tfmOptions) + footer;
-    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
-    return rewrittenSource;
-  } catch (e) {
-    console.error("Error in prepareCodeForCustomCompile of " + fullname + " " + e.stack);
-    return source;
-  }
-}
-
-function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
-  source = String(source);
-  var tfmOptions = {
-    topLevelVarRecorder: env.recorder,
-    varRecorderName: env.recorderName,
-    dontTransform: env.dontTransform,
-    recordGlobals: true,
-    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
-  },
-      isGlobal = env.recorderName === "System.global";
-
-  try {
-    var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
-    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
-    return rewrittenSource;
-  } catch (e) {
-    console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
-    return source;
-  }
-}
-
-function getCachedNodejsModule(System, load) {
-  // On nodejs we might run alongside normal node modules. To not load those
-  // twice we have this little hack...
-  try {
-    var Module = System._nodeRequire("module").Module,
-        id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
-        nodeModule = Module._cache[id];
-    return nodeModule;
-  } catch (e) {
-    System.debug && console.log("[lively.modules getCachedNodejsModule] %s unknown to nodejs", load.name);
-  }
-  return null;
-}
-
-function addNodejsWrapperSource(System, load) {
-  // On nodejs we might run alongside normal node modules. To not load those
-  // twice we have this little hack...
-  var m = getCachedNodejsModule(System, load);
-  if (m) {
-    load.metadata.format = 'esm';
-    load.source = "var exports = System._nodeRequire('" + m.id + "'); export default exports;\n" + lively_lang.properties.allOwnPropertiesOrFunctions(m.exports).map(function (k) {
-      return lively_lang.classHelper.isValidIdentifier(k) ? "export var " + k + " = exports['" + k + "'];" : "/*ignoring export \"" + k + "\" b/c it is not a valid identifier*/";
-    }).join("\n");
-    System.debug && console.log("[lively.modules customTranslate] loading %s from nodejs module cache", load.name);
-    return true;
-  }
-  System.debug && console.log("[lively.modules customTranslate] %s not yet in nodejs module cache", load.name);
-  return false;
-}
-
-function customTranslate(proceed, load) {
-  // load like
-  // {
-  //   address: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
-  //   name: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
-  //   metadata: { deps: [/*...*/], entry: {/*...*/}, format: "esm", sourceMap: ... },
-  //   source: "..."
-  // }
-
-  var System = this,
-      debug = System.debug;
-
-  if (exceptions.some(function (exc) {
-    return exc(load.name);
-  })) {
-    debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
-    return proceed(load);
-  }
-
-  if (isNode$1 && addNodejsWrapperSource(System, load)) {
-    debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
-    return proceed(load);
-  }
-
-  var start = Date.now();
-
-  var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || !load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0, 5000)) || !load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0, 5000)) && esmRegEx.test(load.source),
-      isCjs = load.metadata.format == 'cjs',
-      isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-      env = module$2(System, load.name).env(),
-      instrumented = false;
-
-  var useCache = System.useModuleTranslationCache,
-      localStorage = System.global.localStorage,
-      hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
-
-  if (useCache && localStorage && isEsm) {
-    var storedHash = System.global.localStorage["[lively.modules] hash:" + load.name];
-    if (storedHash && hashForCache === storedHash) {
-      var transpiledSource = System.global.localStorage["[lively.modules] transpiled:" + load.name];
-      if (transpiledSource) {
-        load.metadata.format = "register";
-        console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now() - start);
-        return Promise.resolve(transpiledSource);
-      }
-    }
-  }
-
-  if (isEsm) {
-    load.metadata.format = "esm";
-    load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
-    load.metadata["lively.modules instrumented"] = true;
-    instrumented = true;
-    debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
-    // debug && console.log(load.source)
-  } else if (isCjs && isNode$1) {
-    load.metadata.format = "cjs";
-    var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
-    load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-    load.metadata["lively.modules instrumented"] = true;
-    instrumented = true;
-    debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name);
-    // console.log("[lively.modules] no rewrite for cjs module", load.name)
-  } else if (load.metadata.format === "global") {
-    env.recorderName = "System.global";
-    env.recorder = System.global;
-    load.metadata.format = "global";
-    load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
-    load.metadata["lively.modules instrumented"] = true;
-    instrumented = true;
-    debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name);
-  }
-
-  if (!instrumented) {
-    debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
-  }
-
-  return proceed(load).then(function (translated) {
-    if (translated.indexOf("System.register(") === 0) {
-      debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
-      translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
-    }
-
-    if (useCache && localStorage && isEsm) {
-      System.global.localStorage["[lively.modules] hash:" + load.name] = hashForCache;
-      System.global.localStorage["[lively.modules] transpiled:" + load.name] = translated;
-      console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
-    }
-
-    debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
-    return translated;
-  });
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Functions below are for re-loading modules from change.js. We typically
-// start with a load object that skips the normalize / fetch step. Since we need
-// to jumo in the "middle" of the load process and SystemJS does not provide an
-// interface to this, we need to invoke the translate / instantiate / execute
-// manually
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function instrumentSourceOfEsmModuleLoad(System, load) {
-  // brittle!
-  // The result of System.translate is source code for a call to
-  // System.register that can't be run standalone. We parse the necessary
-  // details from it that we will use to re-define the module
-  // (dependencies, setters, execute)
-  // Note: this only works for esm modules!
-
-  return System.translate(load).then(function (translated) {
-    // translated looks like
-    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
-    //   "use strict";
-    //   var x, z, y;
-    //   return {
-    //     setters: [function (_someEs6ModuleJs) { ... }],
-    //     execute: function () {...}
-    //   };
-    // });
-
-    var parsed = lively_ast.parse(translated),
-        registerCall = parsed.body[0].expression,
-        depNames = lively_lang.arr.pluck(registerCall["arguments"][0].elements, "value"),
-        declareFuncNode = registerCall["arguments"][1],
-        declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
-        declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//# sourceURL=" + load.name + "\n");
-
-    if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
-
-    return { localDeps: depNames, declare: declare };
-  });
-}
-
-function instrumentSourceOfGlobalModuleLoad(System, load) {
-  // return {localDeps: depNames, declare: declare};
-  return System.translate(load).then(function (translated) {
-    return { translated: translated };
-  });
-}
-
-function wrapModuleLoad$1(System) {
-  if (isInstalled(System, "translate", "lively_modules_translate_hook")) return;
-  install(System, "translate", function lively_modules_translate_hook(proceed, load) {
-    return customTranslate.call(System, proceed, load);
-  });
-}
-
-function unwrapModuleLoad$1(System) {
-  remove$1(System, "translate", "lively_modules_translate_hook");
-}
-
-function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
-  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
-      rec = module$2(System, moduleId).record();
-  if (rec && (name in rec.exports || addNewExport)) {
-    var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
-    pending[name] = value;
-  }
-}
-
-function runScheduledExportChanges(System, moduleId) {
-  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
-      keysAndValues = pendingExportChanges[moduleId];
-  if (!keysAndValues) return;
-  clearPendingModuleExportChanges(System, moduleId);
-  updateModuleExports(System, moduleId, keysAndValues);
-}
-
-function clearPendingModuleExportChanges(System, moduleId) {
-  var pendingExportChanges = System.get("@lively-env").pendingExportChanges;
-  delete pendingExportChanges[moduleId];
-}
-
-function updateModuleExports(System, moduleId, keysAndValues) {
-  var debug = System.debug;
-  module$2(System, moduleId).updateRecord(function (record) {
-
-    var newExports = [],
-        existingExports = [];
-
-    Object.keys(keysAndValues).forEach(function (name) {
-      var value = keysAndValues[name];
-      debug && console.log("[lively.vm es6 updateModuleExports] %s export %s = %s", moduleId, name, String(value).slice(0, 30).replace(/\n/g, "") + "...");
-
-      var isNewExport = !(name in record.exports);
-      if (isNewExport) record.__lively_modules__.evalOnlyExport[name] = true;
-      // var isEvalOnlyExport = record.__lively_vm__.evalOnlyExport[name];
-      record.exports[name] = value;
-
-      if (isNewExport) newExports.push(name);else existingExports.push(name);
-    });
-
-    // if it's a new export we don't need to update dependencies, just the
-    // module itself since no depends know about the export...
-    // HMM... what about *-imports?
-    if (newExports.length) {
-      var m = System.get(moduleId);
-      if (Object.isFrozen(m)) {
-        console.warn("[lively.vm es6 updateModuleExports] Since module %s is frozen a new module object was installed in the system. Note that only(!) exisiting module bindings are updated. New exports that were added will only be available in already loaded modules after those are reloaded!", moduleId);
-        System.set(moduleId, System.newModule(record.exports));
-      } else {
-        debug && console.log("[lively.vm es6 updateModuleExports] adding new exports to %s", moduleId);
-        newExports.forEach(function (name) {
-          Object.defineProperty(m, name, {
-            configurable: false, enumerable: true,
-            get: function get() {
-              return record.exports[name];
-            },
-            set: function set() {
-              throw new Error("exports cannot be changed from the outside");
-            }
-          });
-        });
-      }
-    }
-
-    if (existingExports.length) {
-      debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
-      for (var i = 0, l = record.importers.length; i < l; i++) {
-        var importerModule = record.importers[i];
-        if (!importerModule.locked) {
-          // via the module bindings to importer modules we refresh the values
-          // bound in those modules by triggering the setters defined in the
-          // records of those modules
-          var importerIndex,
-              found = importerModule.dependencies.some(function (dep, i) {
-            importerIndex = i;
-            return dep && dep.name === record.name;
-          });
-
-          if (found) {
-            if (debug) {
-              var mod = module$2(System, importerModule.name);
-              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
-            }
-            importerModule.setters[importerIndex](record.exports);
-          }
-
-          // rk 2016-06-09: for now don't re-execute dependent modules on save,
-          // just update module bindings
-          {
-            module$2(System, importerModule.name).evaluationDone();
-          }
-        }
-      }
-    }
-  });
 }
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj$$1) {
@@ -26453,6 +26094,20 @@ var defineProperty = function (obj$$1, key, value) {
   return obj$$1;
 };
 
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
 var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
@@ -26553,6 +26208,624 @@ var slicedToArray = function () {
     }
   };
 }();
+
+var customTranslate = function () {
+  var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(proceed, load) {
+    var _this4 = this;
+
+    var System, debug, start, isEsm, isCjs, isGlobal, env, instrumented, useCache, indexdb, hashForCache, cache, stored, id;
+    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            // load like
+            // {
+            //   address: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
+            //   name: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
+            //   metadata: { deps: [/*...*/], entry: {/*...*/}, format: "esm", sourceMap: ... },
+            //   source: "..."
+            // }
+
+            System = this, debug = System.debug;
+
+            if (!exceptions.some(function (exc) {
+              return exc(load.name);
+            })) {
+              _context5.next = 4;
+              break;
+            }
+
+            debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
+            return _context5.abrupt("return", proceed(load));
+
+          case 4:
+            if (!(isNode$1 && addNodejsWrapperSource(System, load))) {
+              _context5.next = 7;
+              break;
+            }
+
+            debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
+            return _context5.abrupt("return", proceed(load));
+
+          case 7:
+            start = Date.now();
+            isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || !load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0, 5000)) || !load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0, 5000)) && esmRegEx.test(load.source), isCjs = load.metadata.format == 'cjs', isGlobal = load.metadata.format == 'global' || !load.metadata.format, env = module$2(System, load.name).env(), instrumented = false;
+
+            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+            // cache experiment part 1
+
+            _context5.prev = 9;
+            useCache = System.useModuleTranslationCache, indexdb = System.global.indexedDB, hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
+
+            if (!(useCache && indexdb && isEsm)) {
+              _context5.next = 21;
+              break;
+            }
+
+            cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new ModuleTranslationCache());
+            _context5.next = 15;
+            return cache.fetchStoredModuleSource(load.name);
+
+          case 15:
+            stored = _context5.sent;
+
+            if (!(stored && stored.hash == hashForCache)) {
+              _context5.next = 21;
+              break;
+            }
+
+            if (!stored.source) {
+              _context5.next = 21;
+              break;
+            }
+
+            load.metadata.format = "register";
+            console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now() - start);
+            return _context5.abrupt("return", Promise.resolve(stored.source));
+
+          case 21:
+            _context5.next = 26;
+            break;
+
+          case 23:
+            _context5.prev = 23;
+            _context5.t0 = _context5["catch"](9);
+
+            console.error("[lively.modules customTranslate] error reading module translation cache: " + _context5.t0.stack);
+
+          case 26:
+            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+            if (isEsm) {
+              load.metadata.format = "esm";
+              load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+              load.metadata["lively.modules instrumented"] = true;
+              instrumented = true;
+              debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
+              // debug && console.log(load.source)
+            } else if (isCjs && isNode$1) {
+              load.metadata.format = "cjs";
+              id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
+
+              load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
+              load.metadata["lively.modules instrumented"] = true;
+              instrumented = true;
+              debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name);
+              // console.log("[lively.modules] no rewrite for cjs module", load.name)
+            } else if (load.metadata.format === "global") {
+              env.recorderName = "System.global";
+              env.recorder = System.global;
+              load.metadata.format = "global";
+              load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+              load.metadata["lively.modules instrumented"] = true;
+              instrumented = true;
+              debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name);
+            }
+
+            if (!instrumented) {
+              debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
+            }
+
+            return _context5.abrupt("return", proceed(load).then(function () {
+              var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee4(translated) {
+                var cache;
+                return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                  while (1) {
+                    switch (_context4.prev = _context4.next) {
+                      case 0:
+                        if (translated.indexOf("System.register(") === 0) {
+                          debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
+                          translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
+                        }
+
+                        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                        // cache experiment part 2
+
+                        if (!(useCache && indexdb && isEsm)) {
+                          _context4.next = 12;
+                          break;
+                        }
+
+                        cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new ModuleTranslationCache());
+                        _context4.prev = 3;
+                        _context4.next = 6;
+                        return cache.cacheModuleSource(load.name, hashForCache, translated);
+
+                      case 6:
+                        console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
+                        _context4.next = 12;
+                        break;
+
+                      case 9:
+                        _context4.prev = 9;
+                        _context4.t0 = _context4["catch"](3);
+
+                        console.error("[lively.modules customTranslate] failed storing module cache: " + _context4.t0.stack);
+
+                      case 12:
+                        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+                        debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
+                        return _context4.abrupt("return", translated);
+
+                      case 14:
+                      case "end":
+                        return _context4.stop();
+                    }
+                  }
+                }, _callee4, _this4, [[3, 9]]);
+              }));
+
+              return function (_x8) {
+                return _ref5.apply(this, arguments);
+              };
+            }()));
+
+          case 29:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee5, this, [[9, 23]]);
+  }));
+
+  return function customTranslate(_x6, _x7) {
+    return _ref4.apply(this, arguments);
+  };
+}();
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Functions below are for re-loading modules from change.js. We typically
+// start with a load object that skips the normalize / fetch step. Since we need
+// to jumo in the "middle" of the load process and SystemJS does not provide an
+// interface to this, we need to invoke the translate / instantiate / execute
+// manually
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var funcCall = lively_ast.nodes.funcCall;
+var member = lively_ast.nodes.member;
+var literal = lively_ast.nodes.literal;
+
+var isNode$1 = System.get("@system-env").node;
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// module cache experiment
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var ModuleTranslationCache = function () {
+  function ModuleTranslationCache() {
+    var dbName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "lively.modules-module-translation-cache";
+    classCallCheck(this, ModuleTranslationCache);
+
+    this.version = 1;
+    this.sourceCodeCacheStoreName = "sourceCodeStore";
+    this.dbName = dbName;
+    this.db = this.openDb();
+  }
+
+  createClass(ModuleTranslationCache, [{
+    key: "openDb",
+    value: function openDb() {
+      var _this = this;
+
+      var req = System.global.indexedDB.open(this.version);
+      return new Promise(function (resolve, reject) {
+        req.onsuccess = function (evt) {
+          resolve(this.result);
+        };
+        req.onerror = function (evt) {
+          return reject(evt.target);
+        };
+        req.onupgradeneeded = function (evt) {
+          return evt.currentTarget.result.createObjectStore(_this.sourceCodeCacheStoreName, { keyPath: 'moduleId' });
+        };
+      });
+    }
+  }, {
+    key: "deleteDb",
+    value: function deleteDb() {
+      var req = System.global.indexedDB.deleteDatabase(this.dbName);
+      return new Promise(function (resolve, reject) {
+        req.onerror = function (evt) {
+          return reject(evt.target);
+        };
+        req.onsuccess = function (evt) {
+          return resolve(evt);
+        };
+      });
+    }
+  }, {
+    key: "closeDb",
+    value: function () {
+      var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+        var db, req;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return this.db;
+
+              case 2:
+                db = _context.sent;
+                req = db.close();
+                return _context.abrupt("return", new Promise(function (resolve, reject) {
+                  req.onsuccess = function (evt) {
+                    resolve(this.result);
+                  };
+                  req.onerror = function (evt) {
+                    return reject(evt.target.errorCode);
+                  };
+                }));
+
+              case 5:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function closeDb() {
+        return _ref.apply(this, arguments);
+      }
+
+      return closeDb;
+    }()
+  }, {
+    key: "cacheModuleSource",
+    value: function () {
+      var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(moduleId, hash, source) {
+        var _this2 = this;
+
+        var db;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                _context2.next = 2;
+                return this.db;
+
+              case 2:
+                db = _context2.sent;
+                return _context2.abrupt("return", new Promise(function (resolve, reject) {
+                  var transaction = db.transaction([_this2.sourceCodeCacheStoreName], "readwrite"),
+                      store = transaction.objectStore(_this2.sourceCodeCacheStoreName);
+                  store.put({ moduleId: moduleId, hash: hash, source: source });
+                  transaction.oncomplete = resolve;
+                  transaction.onerror = reject;
+                }));
+
+              case 4:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2, this);
+      }));
+
+      function cacheModuleSource(_x2, _x3, _x4) {
+        return _ref2.apply(this, arguments);
+      }
+
+      return cacheModuleSource;
+    }()
+  }, {
+    key: "fetchStoredModuleSource",
+    value: function () {
+      var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(moduleId) {
+        var _this3 = this;
+
+        var db;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.next = 2;
+                return this.db;
+
+              case 2:
+                db = _context3.sent;
+                return _context3.abrupt("return", new Promise(function (resolve, reject) {
+                  var transaction = db.transaction([_this3.sourceCodeCacheStoreName]),
+                      objectStore = transaction.objectStore(_this3.sourceCodeCacheStoreName),
+                      req = objectStore.get(moduleId);
+                  req.onerror = reject;
+                  req.onsuccess = function (evt) {
+                    return resolve(req.result);
+                  };
+                }));
+
+              case 4:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, this);
+      }));
+
+      function fetchStoredModuleSource(_x5) {
+        return _ref3.apply(this, arguments);
+      }
+
+      return fetchStoredModuleSource;
+    }()
+  }]);
+  return ModuleTranslationCache;
+}();
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// code instrumentation
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var node_modulesDir = System.decanonicalize("lively.modules/node_modules/");
+
+var exceptions = [
+// id => id.indexOf(resolve("node_modules/")) > -1,
+// id => canonicalURL(id).indexOf(node_modulesDir) > -1,
+function (id) {
+  return lively_lang.string.include(id, "acorn/src");
+}, function (id) {
+  return lively_lang.string.include(id, "babel-core/browser.js") || lively_lang.string.include(id, "system.src.js") || lively_lang.string.include(id, "systemjs-plugin-babel");
+},
+// id => lang.string.include(id, "lively.ast.es6.bundle.js"),
+function (id) {
+  return id.slice(-3) !== ".js";
+}];
+var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
+var cjsFormatCommentRegExp = /['"]format cjs['"];/;
+var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+
+function prepareCodeForCustomCompile(source, fullname, env, debug) {
+  source = String(source);
+  var tfmOptions = {
+    topLevelVarRecorder: env.recorder,
+    varRecorderName: env.recorderName,
+    dontTransform: env.dontTransform,
+    recordGlobals: true,
+    keepPreviouslyDeclaredValues: true,
+    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+
+  },
+      isGlobal = env.recorderName === "System.global",
+      header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
+      footer = "";
+
+  if (isGlobal) {
+    // FIXME how to update exports in that case?
+  } else {
+    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
+    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
+  }
+
+  try {
+    var rewrittenSource = header + lively_vm.evalCodeTransform(source, tfmOptions) + footer;
+    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
+    return rewrittenSource;
+  } catch (e) {
+    console.error("Error in prepareCodeForCustomCompile of " + fullname + " " + e.stack);
+    return source;
+  }
+}
+
+function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
+  source = String(source);
+  var tfmOptions = {
+    topLevelVarRecorder: env.recorder,
+    varRecorderName: env.recorderName,
+    dontTransform: env.dontTransform,
+    recordGlobals: true,
+    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+  },
+      isGlobal = env.recorderName === "System.global";
+
+  try {
+    var rewrittenSource = lively_vm.evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
+    if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString += rewrittenSource;
+    return rewrittenSource;
+  } catch (e) {
+    console.error("Error in prepareTranslatedCodeForSetterCapture", e.stack);
+    return source;
+  }
+}
+
+function getCachedNodejsModule(System, load) {
+  // On nodejs we might run alongside normal node modules. To not load those
+  // twice we have this little hack...
+  try {
+    var Module = System._nodeRequire("module").Module,
+        id = Module._resolveFilename(load.name.replace(/^file:\/\//, "")),
+        nodeModule = Module._cache[id];
+    return nodeModule;
+  } catch (e) {
+    System.debug && console.log("[lively.modules getCachedNodejsModule] %s unknown to nodejs", load.name);
+  }
+  return null;
+}
+
+function addNodejsWrapperSource(System, load) {
+  // On nodejs we might run alongside normal node modules. To not load those
+  // twice we have this little hack...
+  var m = getCachedNodejsModule(System, load);
+  if (m) {
+    load.metadata.format = 'esm';
+    load.source = "var exports = System._nodeRequire('" + m.id + "'); export default exports;\n" + lively_lang.properties.allOwnPropertiesOrFunctions(m.exports).map(function (k) {
+      return lively_lang.classHelper.isValidIdentifier(k) ? "export var " + k + " = exports['" + k + "'];" : "/*ignoring export \"" + k + "\" b/c it is not a valid identifier*/";
+    }).join("\n");
+    System.debug && console.log("[lively.modules customTranslate] loading %s from nodejs module cache", load.name);
+    return true;
+  }
+  System.debug && console.log("[lively.modules customTranslate] %s not yet in nodejs module cache", load.name);
+  return false;
+}
+
+function instrumentSourceOfEsmModuleLoad(System, load) {
+  // brittle!
+  // The result of System.translate is source code for a call to
+  // System.register that can't be run standalone. We parse the necessary
+  // details from it that we will use to re-define the module
+  // (dependencies, setters, execute)
+  // Note: this only works for esm modules!
+
+  return System.translate(load).then(function (translated) {
+    // translated looks like
+    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
+    //   "use strict";
+    //   var x, z, y;
+    //   return {
+    //     setters: [function (_someEs6ModuleJs) { ... }],
+    //     execute: function () {...}
+    //   };
+    // });
+
+    var parsed = lively_ast.parse(translated),
+        registerCall = parsed.body[0].expression,
+        depNames = lively_lang.arr.pluck(registerCall["arguments"][0].elements, "value"),
+        declareFuncNode = registerCall["arguments"][1],
+        declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
+        declare = eval("var __moduleName = \"" + load.name + "\";(" + declareFuncSource + ");\n//# sourceURL=" + load.name + "\n");
+
+    if (System.debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = declare;
+
+    return { localDeps: depNames, declare: declare };
+  });
+}
+
+function instrumentSourceOfGlobalModuleLoad(System, load) {
+  // return {localDeps: depNames, declare: declare};
+  return System.translate(load).then(function (translated) {
+    return { translated: translated };
+  });
+}
+
+function wrapModuleLoad$1(System) {
+  if (isInstalled(System, "translate", "lively_modules_translate_hook")) return;
+  install(System, "translate", function lively_modules_translate_hook(proceed, load) {
+    return customTranslate.call(System, proceed, load);
+  });
+}
+
+function unwrapModuleLoad$1(System) {
+  remove$1(System, "translate", "lively_modules_translate_hook");
+}
+
+function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
+      rec = module$2(System, moduleId).record();
+  if (rec && (name in rec.exports || addNewExport)) {
+    var pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
+    pending[name] = value;
+  }
+}
+
+function runScheduledExportChanges(System, moduleId) {
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
+      keysAndValues = pendingExportChanges[moduleId];
+  if (!keysAndValues) return;
+  clearPendingModuleExportChanges(System, moduleId);
+  updateModuleExports(System, moduleId, keysAndValues);
+}
+
+function clearPendingModuleExportChanges(System, moduleId) {
+  var pendingExportChanges = System.get("@lively-env").pendingExportChanges;
+  delete pendingExportChanges[moduleId];
+}
+
+function updateModuleExports(System, moduleId, keysAndValues) {
+  var debug = System.debug;
+  module$2(System, moduleId).updateRecord(function (record) {
+
+    var newExports = [],
+        existingExports = [];
+
+    Object.keys(keysAndValues).forEach(function (name) {
+      var value = keysAndValues[name];
+      debug && console.log("[lively.vm es6 updateModuleExports] %s export %s = %s", moduleId, name, String(value).slice(0, 30).replace(/\n/g, "") + "...");
+
+      var isNewExport = !(name in record.exports);
+      if (isNewExport) record.__lively_modules__.evalOnlyExport[name] = true;
+      // var isEvalOnlyExport = record.__lively_vm__.evalOnlyExport[name];
+      record.exports[name] = value;
+
+      if (isNewExport) newExports.push(name);else existingExports.push(name);
+    });
+
+    // if it's a new export we don't need to update dependencies, just the
+    // module itself since no depends know about the export...
+    // HMM... what about *-imports?
+    if (newExports.length) {
+      var m = System.get(moduleId);
+      if (Object.isFrozen(m)) {
+        console.warn("[lively.vm es6 updateModuleExports] Since module %s is frozen a new module object was installed in the system. Note that only(!) exisiting module bindings are updated. New exports that were added will only be available in already loaded modules after those are reloaded!", moduleId);
+        System.set(moduleId, System.newModule(record.exports));
+      } else {
+        debug && console.log("[lively.vm es6 updateModuleExports] adding new exports to %s", moduleId);
+        newExports.forEach(function (name) {
+          Object.defineProperty(m, name, {
+            configurable: false, enumerable: true,
+            get: function get() {
+              return record.exports[name];
+            },
+            set: function set() {
+              throw new Error("exports cannot be changed from the outside");
+            }
+          });
+        });
+      }
+    }
+
+    if (existingExports.length) {
+      debug && console.log("[lively.vm es6 updateModuleExports] updating %s dependents of %s", record.importers.length, moduleId);
+      for (var i = 0, l = record.importers.length; i < l; i++) {
+        var importerModule = record.importers[i];
+        if (!importerModule.locked) {
+          // via the module bindings to importer modules we refresh the values
+          // bound in those modules by triggering the setters defined in the
+          // records of those modules
+          var importerIndex,
+              found = importerModule.dependencies.some(function (dep, i) {
+            importerIndex = i;
+            return dep && dep.name === record.name;
+          });
+
+          if (found) {
+            if (debug) {
+              var mod = module$2(System, importerModule.name);
+              console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
+            }
+            importerModule.setters[importerIndex](record.exports);
+          }
+
+          // rk 2016-06-09: for now don't re-execute dependent modules on save,
+          // just update module bindings
+          {
+            module$2(System, importerModule.name).evaluationDone();
+          }
+        }
+      }
+    }
+  });
+}
 
 var moduleSourceChange$1 = function () {
   var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(System, moduleId, newSource, format, options) {
@@ -27116,6 +27389,8 @@ function packageStore(System) {
 }
 
 function addToPackageStore(System, p) {
+  var pInSystem = System.getConfig().packages[p.url] || {};
+  p.mergeWithConfig(pInSystem);
   var store = packageStore(System);
   store[p.url] = p;
   return p;
@@ -27513,28 +27788,29 @@ var Package = function () {
   }, {
     key: "mergeWithConfig",
     value: function mergeWithConfig(config) {
-      var copy = Object.assign({}, config);
-      var name = copy.name;
-      var referencedAs = copy.referencedAs;
-      var map = copy.map;
+      config = _extends({}, config);
+      var _config = config;
+      var name = _config.name;
+      var referencedAs = _config.referencedAs;
+      var map = _config.map;
 
 
       if (referencedAs) {
-        delete copy.referencedAs;
+        delete config.referencedAs;
         this.referencedAs = lively_lang.arr.uniq(this.referencedAs.concat(referencedAs));
       }
 
       if (name) {
-        delete copy.name;
+        delete config.name;
         this._name = name;
       }
 
       if (map) {
-        delete copy.map;
+        delete config.map;
         Object.assign(this.map, map);
       }
 
-      Object.assign(this, copy);
+      Object.assign(this, config);
       return this;
     }
   }, {
@@ -27546,7 +27822,11 @@ var Package = function () {
   }, {
     key: "name",
     get: function get() {
-      return this._name || lively_lang.arr.last(this.url.replace(/[\/]+$/, "").split("/"));
+      if (this._name) return this._name;
+      var config = this.System.get(this.url + "/package.json");
+      if (config && config.name) return config.name;
+      if (this.referencedAs[0]) return this.referencedAs[0];
+      return lively_lang.arr.last(this.url.replace(/[\/]+$/, "").split("/"));
     },
     set: function set(v) {
       return this._name = v;
