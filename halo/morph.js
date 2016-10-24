@@ -6,6 +6,8 @@ import { string, obj, arr, num, grid } from "lively.lang";
 import { connect } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 
+import { stylizerFor } from './stylization.js'; 
+
 const itemExtent = pt(24,24);
 
 const guideGradient = [[0, Color.red.withA(0)],
@@ -219,16 +221,20 @@ export class Halo extends Morph {
           ["rotate",null,  null,  null,  null,  null, "resize"],
           [null,    "name","name","name","name","name", null]]});
 
-    this.layout.col(0).fixed = 26;
+    this.layout.col(0).fixed = 36;
+    this.layout.col(0).paddingRight = 10;
     this.layout.col(2).fixed = 26;
     this.layout.col(4).fixed = 26;
-    this.layout.col(6).fixed = 26;
+    this.layout.col(6).fixed = 36;
+    this.layout.col(6).paddingLeft = 10;
     
-    this.layout.row(0).fixed = 26;
+    this.layout.row(0).fixed = 36;
+    this.layout.row(0).paddingBottom = 10;
     this.layout.row(2).fixed = 26;
     this.layout.row(4).fixed = 26;
     this.layout.row(6).fixed = 26;
-    this.layout.row(7).fixed = 26;
+    this.layout.row(7).fixed = 36;
+    this.layout.row(7).paddingTop = 10;
     
     this.layout.col(1).row(7).group.align = "center";
     this.layout.col(1).row(7).group.resize = false;
@@ -255,6 +261,107 @@ export class Halo extends Morph {
   nameHalo() {
     return this.getSubmorphNamed("name") || this.addMorph(new NameHalo({halo: this, name: "name"}));
   }
+
+  // resizing
+
+  getGlobalRotation() {
+     return this.target.getGlobalTransform().getRotation()
+  }
+
+  getGlobalScale() {
+     return this.target.getGlobalTransform().getScale();
+  }
+
+  getResizeParts(rotation) {
+      if (rotation > 0) rotation = rotation - 360;
+      var offset = - 8 - (rotation / 45);
+      if (offset == 0) offset = 8;
+
+      return arr.zip(
+         arr.rotate(
+      [["topLeft", delta => delta, delta => delta.negated()],
+        ["topCenter", delta => delta, delta => delta.withX(0).negated()],
+        ["topRight", delta => delta, delta => delta.withX(0).negated()],
+        ["rightCenter", delta => delta, delta => pt(0,0)],
+        ["bottomRight", delta => delta, delta => pt(0,0)],
+        ["bottomCenter", delta => delta, delta => pt(0,0)],
+        ["bottomLeft", delta => delta, delta => delta.withY(0).negated()],
+        ["leftCenter", delta => delta, delta => delta.withY(0).negated()]], 
+       offset),
+      [["nwse-resize", "topLeft"],
+        ["ns-resize", "topCenter"],
+        ["nesw-resize", "topRight"],
+        ["ew-resize", "rightCenter"],
+        ["nwse-resize", "bottomRight"],
+        ["ns-resize", "bottomCenter"],
+        ["nesw-resize", "bottomLeft"],
+        ["ew-resize", "leftCenter"]])
+   }
+
+   resizeHandles() { return this.submorphs.filter(h => h.isHandle) }
+
+   updateResizeHandles() {
+       this.borderBox.remove();
+       this.resizeHandles().forEach(h => h.remove());
+       this.submorphs = [this.borderBox, ...this.resizeHalos(), ...this.submorphs];
+   }
+
+   resizeHalos() {
+       return this.getResizeParts(this.getGlobalRotation()).map(([c, l]) =>
+           this.placeHandleFor(c, l)
+       );
+   }
+
+   placeHandleFor([corner, deltaMask, originDelta], [nativeCursor, location]) {
+       const target = this.target,
+             positionInHalo = () => this.borderBox
+                                        .bounds()
+                                        .partNamed(location); 
+
+       return new Morph({
+           nativeCursor,
+           halo: this,
+           property: 'extent',
+           valueForPropertyDisplay: () => {
+              var {x: width, y: height} = this.target.extent;
+              return `${width.toFixed(1)}w ${height.toFixed(1)}h`;
+           },
+           center: positionInHalo(),
+           extent: pt(10,10),
+           isHandle: true,
+           isHaloItem: true,
+           borderWidth: 1,
+           borderColor: Color.black,
+           alignInHalo() { this.center = positionInHalo() }, 
+           onDragStart(evt) { 
+               this.halo.activeButton = this; 
+               this.tfm = this.halo.target.getGlobalTransform().inverse();
+               this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
+               this.totalScale = this.halo.getGlobalScale(); // multiply scaling
+           },
+           onDragEnd(evt) { 
+               this.halo.activeButton = null; 
+               this.halo.alignWithTarget();
+           },
+           onDrag(evt) {
+              // shift
+              const target = this.halo.target,
+                    oldPosition = target.position,
+                    oldBounds = target.innerBounds(),
+                    oldPart = oldBounds.partNamed(corner),
+                   {x,y} = deltaMask(evt.state.dragDelta),
+                   delta = this.tfm.transformDirection(
+                           pt(x * Math.cos(this.offsetRotation) / this.totalScale,
+                              y * Math.cos(this.offsetRotation) / this.totalScale)),
+                    {x: ix,y: iy,width,height} = oldBounds.withPartNamed(corner, oldPart.addPt(delta));
+              target.extent = pt(width, height);
+              target.origin = target.origin.addPt(originDelta(delta));
+              target.position = oldPosition;
+              this.halo.alignWithTarget();
+           }
+       });
+   }
+
 
   resizeHalo() {
     const halo = this;
@@ -515,6 +622,7 @@ export class Halo extends Morph {
         this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(false, this);
         this.halo.target.undoStop("rotate-halo");
+        this.halo.updateResizeHandles();
       },
 
       adaptAppearance(scaling) {
@@ -645,17 +753,17 @@ export class Halo extends Morph {
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
         //this.world().showLayoutHaloFor(this.target, this.state.pointerId);
-        var picker = new ColorPicker({extent: pt(300,150), color: this.target.fill}).openInWorldNearHand();
-        connect(picker, "color", this.target, "fill");
+        this.world().addMorph(stylizerFor(this.target, this.state.pointerId));
         this.remove();
       }
     }));
   }
 
+  get buttonControls() { return this.submorphs.filter(m => m.isHaloItem); }
+
   initButtons() {
-    this.buttonControls = [
-      this.originHalo(),
-      this.resizeHalo(),
+    this.submorphs = this.submorphs.concat([
+      ...this.resizeHalos(),
       this.closeHalo(),
       this.dragHalo(),
       this.grabHalo(),
@@ -664,8 +772,9 @@ export class Halo extends Morph {
       this.copyHalo(),
       this.rotateHalo(),
       this.stylizeHalo(),
-      this.nameHalo()
-    ];
+      this.nameHalo(),
+      this.originHalo()
+    ]);
   }
 
   updatePropertyDisplay(haloItem) {
@@ -774,7 +883,7 @@ export class Halo extends Morph {
       }
       return diagonal.vertices[1];
     } else {
-      diagonal && diagonal.animate({opacity: 0, duration: 500, onFinish: () => diagonal.remove()});
+      diagonal && diagonal.fadeOut(500);
     }
   }
 
@@ -814,7 +923,7 @@ export class Halo extends Morph {
         this.alignWithHalo();
       },
       deactivate() {
-        this.animate({opacity: 0});
+        this.fadeOut(500);
         this.alignWithHalo();
       }
     });
@@ -833,7 +942,7 @@ export class Halo extends Morph {
     const targetBounds = this.target.globalBounds(),
           worldBounds = this.target.world().innerBounds(),
           {x, y, width, height} = targetBounds.intersection(worldBounds);
-    this.setBounds(targetBounds.insetBy(-26).intersection(worldBounds));
+    this.setBounds(targetBounds.insetBy(-36).intersection(worldBounds));
     this.borderBox.setBounds(this.localize(pt(x,y)).extent(pt(width,height)));
     if (this.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
@@ -844,6 +953,7 @@ export class Halo extends Morph {
       this.buttonControls.forEach(b => { b.visible = true;});
       this.propertyDisplay.disable();
     }
+    this.resizeHandles().forEach(h => h.alignInHalo());
     this.originHalo().alignInHalo();
     return this;
   }
