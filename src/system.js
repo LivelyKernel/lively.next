@@ -82,6 +82,10 @@ function prepareSystem(System, config) {
   System.trace = true;
   config = config || {};
 
+  var useModuleTranslationCache = config.hasOwnProperty("useModuleTranslationCache") ?
+    config.useModuleTranslationCache : true;
+  System.useModuleTranslationCache = useModuleTranslationCache;
+
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
   wrapResource(System);

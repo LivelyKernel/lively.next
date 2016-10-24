@@ -1994,7 +1994,7 @@
         },
         uniq: function (array, sorted) {
             return array.reduce(function (a, value, index) {
-                if (0 === index || (sorted ? a.last() != value : a.indexOf(value) === -1))
+                if (0 === index || (sorted ? arr.last(a) != value : a.indexOf(value) === -1))
                     a.push(value);
                 return a;
             }, []);
@@ -3112,26 +3112,40 @@
 (function (exports) {
     'use strict';
     var tree = exports.tree = {
-        prewalk: function (treeNode, iterator, childGetter) {
-            iterator(treeNode);
-            (childGetter(treeNode) || []).forEach(function (ea) {
-                tree.prewalk(ea, iterator, childGetter);
+        prewalk: function (treeNode, iterator, childGetter, counter, depth) {
+            if (!counter)
+                counter = { i: 0 };
+            if (!depth)
+                depth = 0;
+            var i = counter.i++;
+            iterator(treeNode, i, depth);
+            (childGetter(treeNode, i, depth) || []).forEach(function (ea) {
+                tree.prewalk(ea, iterator, childGetter, counter, depth + 1);
             });
         },
-        postwalk: function (treeNode, iterator, childGetter) {
-            (childGetter(treeNode) || []).forEach(function (ea) {
+        postwalk: function (treeNode, iterator, childGetter, counter, depth) {
+            if (!counter)
+                counter = { i: 0 };
+            if (!depth)
+                depth = 0;
+            var i = counter.i++;
+            (childGetter(treeNode, i, depth) || []).forEach(function (ea) {
                 tree.postwalk(ea, iterator, childGetter);
             });
-            iterator(treeNode);
+            iterator(treeNode, i, depth);
         },
         detect: function (treeNode, testFunc, childGetter) {
             if (testFunc(treeNode))
                 return treeNode;
-            var found;
-            exports.arr.detect(childGetter(treeNode) || [], function (ea) {
-                return found = tree.detect(ea, testFunc, childGetter);
-            });
-            return found;
+            var children = childGetter(treeNode);
+            if (!children || !children.length)
+                return undefined;
+            for (var i = 0; i < children.length; i++) {
+                var found = tree.detect(children[i], testFunc, childGetter);
+                if (found)
+                    return found;
+            }
+            return undefined;
         },
         filter: function (treeNode, testFunc, childGetter) {
             var result = [];
@@ -4134,7 +4148,7 @@
                     return false;
                 if (alignRightAll)
                     return true;
-                return options && Object.isArray(options.align) && options.align[columnIndex] === 'right';
+                return options && Array.isArray(options.align) && options.align[columnIndex] === 'right';
             }
             tableArray.forEach(function (row) {
                 row.forEach(function (cellVal, i) {
@@ -4143,8 +4157,8 @@
                     columnWidths[i] = Math.max(columnWidths[i], String(cellVal).length);
                 });
             });
-            return tableArray.collect(function (row) {
-                return row.collect(function (cellVal, i) {
+            return tableArray.map(function (row) {
+                return row.map(function (cellVal, i) {
                     var cellString = String(cellVal);
                     return string.pad(cellString, columnWidths[i] - cellString.length, alignRight(i));
                 }).join(separator);
@@ -25858,13 +25872,6 @@ function isInstalled(System, methodName, hookOrName) {
   return false;
 }
 
-// function computeRequireMap() {
-//   return Object.keys(_currentSystem.loads).reduce((requireMap, k) => {
-//     requireMap[k] = lang.obj.values(_currentSystem.loads[k].depMap);
-//     return requireMap;
-//   }, {});
-// }
-
 function computeRequireMap(System) {
   if (System.loads) {
     var store = System.loads,
@@ -26017,6 +26024,7 @@ function customTranslate(proceed, load) {
     debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
     return proceed(load);
   }
+
   if (isNode$1 && addNodejsWrapperSource(System, load)) {
     debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name);
     return proceed(load);
@@ -26029,6 +26037,22 @@ function customTranslate(proceed, load) {
       isGlobal = load.metadata.format == 'global' || !load.metadata.format,
       env = module$2(System, load.name).env(),
       instrumented = false;
+
+  var useCache = System.useModuleTranslationCache,
+      localStorage = System.global.localStorage,
+      hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
+
+  if (useCache && localStorage && isEsm) {
+    var storedHash = System.global.localStorage["[lively.modules] hash:" + load.name];
+    if (storedHash && hashForCache === storedHash) {
+      var transpiledSource = System.global.localStorage["[lively.modules] transpiled:" + load.name];
+      if (transpiledSource) {
+        load.metadata.format = "register";
+        console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now() - start);
+        return Promise.resolve(transpiledSource);
+      }
+    }
+  }
 
   if (isEsm) {
     load.metadata.format = "esm";
@@ -26063,6 +26087,12 @@ function customTranslate(proceed, load) {
     if (translated.indexOf("System.register(") === 0) {
       debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
       translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
+    }
+
+    if (useCache && localStorage && isEsm) {
+      System.global.localStorage["[lively.modules] hash:" + load.name] = hashForCache;
+      System.global.localStorage["[lively.modules] transpiled:" + load.name] = translated;
+      console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
     }
 
     debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now() - start);
@@ -26111,8 +26141,8 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
 }
 
 function instrumentSourceOfGlobalModuleLoad(System, load) {
+  // return {localDeps: depNames, declare: declare};
   return System.translate(load).then(function (translated) {
-    // return {localDeps: depNames, declare: declare};
     return { translated: translated };
   });
 }
@@ -27064,7 +27094,8 @@ function normalizeInsidePackage(System, urlOrName, packageURL) {
 }
 
 function normalizePackageURL(System, packageURL) {
-  if (Object.keys(getPackages$1(System)).some(function (ea) {
+
+  if (allPackageNames(System).some(function (ea) {
     return ea === packageURL;
   })) return packageURL;
 
@@ -27232,6 +27263,18 @@ function subpackageNameAndAddress(System, livelyConfig, subPackageName, pkg) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var Package = function () {
+  createClass(Package, null, [{
+    key: "forModule",
+    value: function forModule(System, module) {
+      var id = module.id,
+          map = moduleNamesByPackageNames(System),
+          pAddress = Object.keys(map).find(function (pName) {
+        return map[pName].includes(id);
+      });
+      return getPackage$1(System, pAddress, true /*normalized*/);
+    }
+  }]);
+
   function Package(System, packageURL) {
     classCallCheck(this, Package);
 
@@ -27521,7 +27564,9 @@ var Package = function () {
 }();
 
 function getPackage$1(System, packageURL) {
-  var url = normalizePackageURL(System, packageURL);
+  var isNormalized = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+  var url = isNormalized ? packageURL : normalizePackageURL(System, packageURL);
   return packageStore(System).hasOwnProperty(url) ? packageStore(System)[url] : addToPackageStore(System, new Package(System, url));
 }
 
@@ -27542,19 +27587,37 @@ function reloadPackage$1(System, packageURL) {
   return getPackage$1(System, packageURL).reload();
 }
 
-function groupIntoPackages(System, moduleNames, packageNames) {
+function allPackageNames(System) {
+  var sysPackages = System.packages,
+      livelyPackages = packageStore(System);
+  return lively_lang.arr.uniq(Object.keys(sysPackages).concat(Object.keys(livelyPackages)));
+}
 
-  return lively_lang.arr.groupBy(moduleNames, groupFor);
+function moduleNamesByPackageNames(System) {
+  var modules = knownModuleNames(System),
+      packageNames = allPackageNames(System);
 
-  function groupFor(moduleName) {
-    var fullname = System.decanonicalize(moduleName),
-        matching = packageNames.filter(function (p) {
-      return fullname.indexOf(p) === 0;
+  return modules.reduce(function (packageMap, moduleName) {
+    var itsPackage = packageNames.reduce(function (itsPackage, packageName) {
+      if (!moduleName.startsWith(packageName)) return itsPackage;
+      if (!itsPackage || itsPackage.length < packageName.length) return packageName;
+      return itsPackage;
+    }, null) || "no group";
+    var packageModules = packageMap[itsPackage] || (packageMap[itsPackage] = []);
+    packageModules.push(moduleName);
+    return packageMap;
+  }, {});
+}
+
+function groupIntoPackages(System, moduleIds, packageNames) {
+  return lively_lang.arr.groupBy(moduleIds, function (moduleId) {
+    var matching = packageNames.filter(function (p) {
+      return moduleId.indexOf(p) === 0;
     });
     return matching.length ? matching.reduce(function (specific, ea) {
       return ea.length > specific.length ? ea : specific;
     }) : "no group";
-  }
+  });
 }
 
 function getPackages$1(System) {
@@ -28189,13 +28252,7 @@ var ModuleInterface = function () {
   }, {
     key: "package",
     value: function _package() {
-      var _this8 = this;
-
-      return getPackages$1(this.System).find(function (ea) {
-        return ea.modules.some(function (mod) {
-          return mod.name === _this8.id;
-        });
-      });
+      return Package.forModule(this.System, this);
     }
   }, {
     key: "pathInPackage",
@@ -28637,7 +28694,7 @@ var ModuleInterface = function () {
     key: "search",
     value: function () {
       var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
-        var _this9 = this;
+        var _this8 = this;
 
         var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
 
@@ -28648,8 +28705,8 @@ var ModuleInterface = function () {
                 options = Object.assign({ excludedModules: [] }, options);
 
                 if (!options.excludedModules.some(function (ex) {
-                  if (typeof ex === "string") return ex === _this9.id;
-                  if (ex instanceof RegExp) return ex.test(_this9.id);
+                  if (typeof ex === "string") return ex === _this8.id;
+                  if (ex instanceof RegExp) return ex.test(_this8.id);
                   return false;
                 })) {
                   _context16.next = 3;
@@ -28930,6 +28987,9 @@ function prepareSystem(System, config) {
   System.trace = true;
   config = config || {};
 
+  var useModuleTranslationCache = config.hasOwnProperty("useModuleTranslationCache") ? config.useModuleTranslationCache : true;
+  System.useModuleTranslationCache = useModuleTranslationCache;
+
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
 
   wrapResource(System);
@@ -29115,6 +29175,11 @@ function printSystemConfig$1(System) {
 
 function loadedModules$1(System) {
   return System.get("@lively-env").loadedModules;
+}
+
+function knownModuleNames(System) {
+  var fromSystem = System.loads ? Object.keys(System._loader.moduleRecords) : Object.keys(System.loads);
+  return lively_lang.arr.uniq(fromSystem.concat(Object.keys(loadedModules$1(System))));
 }
 
 /*

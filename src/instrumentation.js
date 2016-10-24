@@ -154,6 +154,7 @@ function customTranslate(proceed, load) {
     debug && console.log("[lively.modules customTranslate ignoring] %s", load.name);
     return proceed(load);
   }
+
   if (isNode && addNodejsWrapperSource(System, load)) {
     debug && console.log("[lively.modules] loaded %s from nodejs cache", load.name)
     return proceed(load);
@@ -168,6 +169,22 @@ function customTranslate(proceed, load) {
       isGlobal = load.metadata.format == 'global' || !load.metadata.format,
       env = module(System, load.name).env(),
       instrumented = false;
+
+  var useCache = System.useModuleTranslationCache,
+      localStorage = System.global.localStorage,
+      hashForCache = useCache && String(string.hashCode(load.source));
+
+  if (useCache && localStorage && isEsm) {
+    var storedHash = System.global.localStorage["[lively.modules] hash:"+load.name];
+    if (storedHash && hashForCache === storedHash) {
+      var transpiledSource = System.global.localStorage["[lively.modules] transpiled:"+load.name]
+      if (transpiledSource) {
+        load.metadata.format = "register";
+        console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now()-start);
+        return Promise.resolve(transpiledSource);
+      }
+    }
+  }
 
   if (isEsm) {
     load.metadata.format = "esm";
@@ -204,6 +221,12 @@ function customTranslate(proceed, load) {
     if (translated.indexOf("System.register(") === 0) {
       debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
       translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
+    }
+
+    if (useCache && localStorage && isEsm) {
+      System.global.localStorage["[lively.modules] hash:"+load.name] = hashForCache;
+      System.global.localStorage["[lively.modules] transpiled:"+load.name] = translated;
+      console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
     }
 
     debug && console.log("[lively.modules customTranslate] done %s after %sms", load.name, Date.now()-start);
@@ -253,46 +276,9 @@ function instrumentSourceOfEsmModuleLoad(System, load) {
   });
 }
 
-function old_instrumentSourceOfEsmModuleLoad(System, load) {
-  // brittle!
-  // The result of System.translate is source code for a call to
-  // System.register that can't be run standalone. We parse the necessary
-  // details from it that we will use to re-define the module
-  // (dependencies, setters, execute)
-  // Note: this only works for esm modules!
-
-  return System.translate(load).then(translated => {
-    // translated looks like
-    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
-    //   "use strict";
-    //   var x, z, y;
-    //   return {
-    //     setters: [function (_someEs6ModuleJs) { ... }],
-    //     execute: function () {...}
-    //   };
-    // });
-
-    var parsed            = parse(translated),
-        call              = parsed.body[0].expression,
-        moduleName        = call.arguments[0].value,
-        registerCall      = call.callee.body.body[0].expression,
-        depNames          = arr.pluck(registerCall["arguments"][0].elements, "value"),
-        declareFuncNode   = call.callee.body.body[0].expression["arguments"][1],
-        declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end),
-        declare           = eval(`var __moduleName = "${moduleName}";(${declareFuncSource});\n//# sourceURL=${moduleName}\n`);
-
-    if (System.debug && typeof $morph !== "undefined" && $morph("log"))
-      $morph("log").textString = declare;
-
-    return {localDeps: depNames, declare: declare};
-  });
-}
-
 function instrumentSourceOfGlobalModuleLoad(System, load) {
-  return System.translate(load).then(translated => {
-    // return {localDeps: depNames, declare: declare};
-    return {translated: translated};
-  });
+  // return {localDeps: depNames, declare: declare};
+  return System.translate(load).then(translated => ({translated}));
 }
 
 function wrapModuleLoad(System) {
