@@ -79,13 +79,6 @@ var _snippets = [
   ["pluck", "arr.pluck(${0:list}, \"${1:key}\")"],
   ["sortBy", "arr.sortBy(${0:list}, ($1) => $2)"],
   ["join", 'join("\\n")'],
-  
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // console, debugging
-  ["cl", "console.log($0)"],
-  ["cw", "console.warn($0)"],
-  ["ce", "console.error($0)"],
-  ["s", "show(`$0`);"],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # typeof tests
@@ -116,7 +109,15 @@ var _snippets = [
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // string stuff
-  ["$", "${$0}"]
+  ["$", "${$0}"],
+  
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // console, debugging
+  ["cl", "console.log($0)"],
+  ["cw", "console.warn($0)"],
+  ["ce", "console.error($0)"],
+  ["s", "show(`$0`);"],
+
 ]
 
 export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigger, expansion}));
