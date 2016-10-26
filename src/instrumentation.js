@@ -248,6 +248,11 @@ async function customTranslate(proceed, load) {
       if (stored && stored.hash == hashForCache) {
         if (stored.source) {
           load.metadata.format = "register";
+          load.metadata.deps = []; // the real deps will be populated when the
+                                   // system register code is run, still need
+                                   // to define it here to avoid an
+                                   // undefined entry later!
+
           console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now()-start);
           return Promise.resolve(stored.source);
         }

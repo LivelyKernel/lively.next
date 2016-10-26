@@ -529,7 +529,7 @@ var customTranslate = function () {
             useCache = System.useModuleTranslationCache, indexdb = System.global.indexedDB, hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
 
             if (!(useCache && indexdb && isEsm)) {
-              _context5.next = 21;
+              _context5.next = 22;
               break;
             }
 
@@ -541,30 +541,35 @@ var customTranslate = function () {
             stored = _context5.sent;
 
             if (!(stored && stored.hash == hashForCache)) {
-              _context5.next = 21;
+              _context5.next = 22;
               break;
             }
 
             if (!stored.source) {
-              _context5.next = 21;
+              _context5.next = 22;
               break;
             }
 
             load.metadata.format = "register";
+            load.metadata.deps = []; // the real deps will be populated when the
+            // system register code is run, still need
+            // to define it here to avoid an
+            // undefined entry later!
+
             console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now() - start);
             return _context5.abrupt("return", Promise.resolve(stored.source));
 
-          case 21:
-            _context5.next = 26;
+          case 22:
+            _context5.next = 27;
             break;
 
-          case 23:
-            _context5.prev = 23;
+          case 24:
+            _context5.prev = 24;
             _context5.t0 = _context5["catch"](9);
 
             console.error("[lively.modules customTranslate] error reading module translation cache: " + _context5.t0.stack);
 
-          case 26:
+          case 27:
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
             if (isEsm) {
@@ -652,12 +657,12 @@ var customTranslate = function () {
               };
             }()));
 
-          case 29:
+          case 30:
           case "end":
             return _context5.stop();
         }
       }
-    }, _callee5, this, [[9, 23]]);
+    }, _callee5, this, [[9, 24]]);
   }));
 
   return function customTranslate(_x6, _x7) {
