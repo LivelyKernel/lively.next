@@ -274,7 +274,7 @@ export class Halo extends Morph {
 
   getResizeParts(rotation) {
       if (rotation > 0) rotation = rotation - 360;
-      var offset = - 8 - (rotation / 45);
+      var offset = - 8 - (rotation / 45).toFixed();
       if (offset == 0) offset = 8;
 
       return arr.zip(
