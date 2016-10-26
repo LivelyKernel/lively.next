@@ -39,7 +39,7 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1),
         innerButton = halo.buttonControls.find(item =>
           submorph1.globalBounds().containsPoint(item.globalBounds().center())
-          && item != halo.originHalo());
+          && item != halo.originHalo() && !item.isHandle);
     expect(innerButton).equals(undefined, `halo item ${innerButton && innerButton.name} is inside the bounds of its target`);
     expect(halo.originHalo().globalBounds().center()).equals(submorph1.worldPoint(pt(0,0)));
   });
@@ -50,9 +50,9 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1),
         innerButton = halo.buttonControls.find(item =>
           halo.buttonControls.find(otherItem => 
-            otherItem != item &&
+            otherItem != item && !otherItem.isHandle &&
             otherItem.globalBounds().intersects(item.globalBounds()))
-          && item != halo.originHalo());
+          && item != halo.originHalo() && !item.isHandle);
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
   });
 
@@ -80,10 +80,10 @@ describe("halos", () => {
     expect(halo.getSubmorphNamed("horizontal").opacity).equals(0);
   });
 
-  it("acitve drag hides other halos and displays position", () => {
+  it("active drag hides other halos and displays position", () => {
     var halo = world.showHaloFor(submorph1),
         dragHalo = halo.dragHalo(),
-        otherHalos = halo.buttonControls.filter((b) => b != dragHalo)
+        otherHalos = halo.buttonControls.filter((b) => b != dragHalo && !b.isHandle)
     dragHalo.init();
     halo.alignWithTarget();
     expect(halo.activeButton).equals(dragHalo);
@@ -112,7 +112,9 @@ describe("halos", () => {
   it("active resize hides other halos and displays extent", () => {
     var halo = world.showHaloFor(submorph1),
         resizeHalo = halo.resizeHalo(),
-        otherHalos = halo.buttonControls.filter((b) => b != resizeHalo);
+        otherHalos = halo.buttonControls.filter((b) => 
+            b != resizeHalo && !b.isHandle 
+            && b != halo.propetyDisplay);
     resizeHalo.init();
     halo.alignWithTarget();
     expect(halo.activeButton).equals(resizeHalo);

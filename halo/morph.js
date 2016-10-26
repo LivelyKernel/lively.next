@@ -166,7 +166,7 @@ class HaloPropertyDisplay extends Text {
     });
   }
 
-  get isHaloItem() { return true; }
+  get isHaloItem() { return false; }
 
   displayedValue() { return this.textString; }
 
