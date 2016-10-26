@@ -42,7 +42,6 @@ class StyleHalo extends Morph {
            fill: Color.transparent,
            submorphs: [
              this.borderHalo(),
-             ...this.resizeHandles(), 
              this.borderRadiusHalo(),
              this.layoutHalo()
            ]
@@ -76,7 +75,7 @@ class StyleHalo extends Morph {
    isOnMorphBorder(evt) {
       const {x,y} = evt.positionIn(this.target),
             {width, height, borderRadius: br} = this.target;
-      return !arr.some(this.handles, m => m.isHaloItem && m.active) && Intersection.intersectShapes(  
+      return Intersection.intersectShapes(  
               IntersectionParams.newRoundRect(0, 0, width, height, br, br), 
               IntersectionParams.newRect(x - 5, y - 5, 10, 10)).points.length > 0;
    }
