@@ -486,6 +486,8 @@ export class World extends Morph {
     if (evt.state.menu) {
       evt.state.menu.remove();
     }
+
+    this._tooltipViewer.mouseDown(evt);
   }
 
   onMouseUp(evt) {

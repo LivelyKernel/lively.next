@@ -388,6 +388,11 @@ export class TooltipViewer {
     }
   }
 
+  mouseDown({targetMorph}) {
+    this.currentTooltip && this.currentTooltip.remove()
+    this.currentTooltip = null;
+  }
+
   hoverIntoMorph(morph) {
     this.clearScheduledTooltip();
     if (this.currentTooltip) {
@@ -400,7 +405,9 @@ export class TooltipViewer {
   hoverOutOfMorph(morph) {
     const current = this.currentTooltip;
     this.currentTooltip && this.currentTooltip.softRemove((tooltip) => {
-      this.clearTooltip(tooltip);
+      if (this.currentTooltip == tooltip) {
+          this.currentTooltip = null;
+      }
     });
   }
 
@@ -412,12 +419,6 @@ export class TooltipViewer {
 
   clearScheduledTooltip() {
     clearTimeout(this.timer);
-  }
-
-  clearTooltip(tooltip) {
-    if (this.currentTooltip == tooltip) {
-      this.currentTooltip = null;
-    }
   }
 
   showTooltipFor(morph) {
