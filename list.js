@@ -1,4 +1,5 @@
 import { Morph, Text, show } from "./index.js"
+import { Label } from "./text/label.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { arr, fun, obj } from "lively.lang";
 import { signal } from "lively.bindings";
@@ -9,35 +10,43 @@ function asItem(obj) {
   }
 }
 
-class ListItemMorph extends Text {
+class ListItemMorph extends Label {
 
   constructor(props) {
     super({
-      lineWrapping: false,
-      halosEnabled: false, readOnly: true, selectable: false,
-      fixedWidth: true, fixedHeight: false, fill: null,
+      halosEnabled: false, autofit: false, fill: null,
       textString: "", itemIndex: undefined,
+      selectionFontColor: Color.white,
+      selectionColor: Color.blue,
+      nonSelectionFontColor: Color.rgbHex("333"),
+      fontColor: Color.rgbHex("333"),
       ...props
     });
   }
 
-  get selectionFontColor() { return this._selectionFontColor || Color.white }
-  set selectionFontColor(c) { this._selectionFontColor = c; }
+  get selectionFontColor() { return this.getProperty("selectionFontColor"); }
+  set selectionFontColor(c) { this.addValueChange("selectionFontColor", c); }
 
-  get selectionColor() { return this._selectionColor || Color.blue }
-  set selectionColor(c) { this._selectionColor = c; }
+  get nonSelectionFontColor() { return this.getProperty("nonSelectionFontColor"); }
+  set nonSelectionFontColor(c) { this.addValueChange("nonSelectionFontColor", c); }
 
-  get inactiveFonctColor() { return this._inactiveFontColor || Color.black }
-  set inactiveFontColor(c) { this._inactiveFontColor = c; }
+  get selectionColor() { return this.getProperty("selectionColor"); }
+  set selectionColor(c) { this.addValueChange("selectionColor", c); }
 
-  displayItem(item, itemIndex, pos, isSelected = false, props) {
-    if (props) Object.assign(this, props);
+  displayItem(item, itemIndex, itemHeight, pos, isSelected = false, props) {
+    if (props.fontFamily) this.fontFamily = props.fontFamily;
+    if (props.selectionColor) this.selectionColor = props.selectionColor;
+    if (props.selectionFontColor) this.selectionFontColor = props.selectionFontColor;
+    if (props.nonSelectionFontColor) this.nonSelectionFontColor = props.nonSelectionFontColor;
+    if (props.fontSize) this.fontSize = props.fontSize;
+    if (props.padding) this.padding = props.padding;
+
     this.itemIndex = itemIndex;
     this.textString = item.string || "no item.string";
     this.position = pos;
-    this.width = this.owner.width;
+    this.extent = pt(this.owner.width, itemHeight);
     this.fill = isSelected ? this.selectionColor : null;
-    this.fontColor = isSelected ? this.selectionFontColor : this.fontColor;
+    this.fontColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
   }
 
   onMouseDown(evt) {
@@ -359,7 +368,7 @@ export class List extends Morph {
             extent: {x: width, y: height},
             fontSize, fontFamily, fontColor,
             padding, itemPadding, selectionColor,
-            selectionFontColor
+            selectionFontColor, nonSelectionFontColor
           } = this,
           padding = padding || Rectangle.inset(0),
           padTop = padding.top(), padLeft = padding.left(),
@@ -383,10 +392,10 @@ export class List extends Morph {
                     || (itemMorphs[i] = listItemContainer.addMorph(
                           new ListItemMorph({fontFamily, fontSize})));
 
-        itemMorph.displayItem(item, itemIndex,
+        itemMorph.displayItem(item, itemIndex, itemHeight,
           pt(padLeft, padTop+itemHeight*itemIndex),
           selectedIndexes.includes(itemIndex),
-          {fontFamily, fontColor, selectionColor, selectionFontColor,
+          {fontFamily, selectionColor, selectionFontColor, nonSelectionFontColor,
            fontSize, padding: itemPadding || Rectangle.inset(0)});
       }
 
@@ -530,7 +539,7 @@ export class FilterableList extends Morph {
       return {
         fill: Color.transparent,
         hideScrollbars: true,
-        fontColor: Color.gray,
+        nonSelectionFontColor: Color.gray,
         selectionFontColor: Color.black,
         selectionColor: Color.gray.lighter(),
         padding: Rectangle.inset(2, 0)
