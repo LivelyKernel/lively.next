@@ -212,6 +212,8 @@ class TextChunk {
 
     if (!_charBounds.length) return [this];
 
+    if (_charBounds[0].width > splitWidth) return [null, this];
+
     for (let i = 1/*min 1 char*/; i < _charBounds.length; i++) {
       let {x, width: w} = _charBounds[i],
           currentWidth = x+w;
@@ -439,7 +441,6 @@ class WrappedTextLayoutLine {
     // according to wrapAt. wrapAt specifies the width at which the wrap should
     // occur.
 
-
     // First update the chunks normally, i.e. compare old chunks of line with
     // new chunks. If nothing has changed and the wrap width is the same we don't
     // need to do anything. This is an important optimization!
@@ -470,7 +471,7 @@ class WrappedTextLayoutLine {
       let maybeNotSplittableChunk = null;
       while (true) {
 
-        let [split1, split2] = nextChunk.splitAt(wrapAt-x);
+        let [split1, split2] = x >= wrapAt ? [null, nextChunk] : nextChunk.splitAt(wrapAt-x);
 
         if (!split1 && split2 && split2 === maybeNotSplittableChunk) {
           // we have seen that chunk before and tried to split it, won't work
