@@ -942,6 +942,7 @@ export class ListPrompt extends AbstractPrompt {
      this.layout.col(0).paddingLeft = 5;
      this.layout.col(1).fixed = 100;
      this.layout.col(1).paddingRight = 5;
+     this.layout.row(1).paddingBottom = 10;
      this.layout.col(2).fixed = 100;
      this.layout.col(2).paddingRight = 5;
   }

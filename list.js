@@ -576,7 +576,7 @@ export class FilterableList extends Morph {
         l = this.get("list"),
         ext = this.extent;
     i.width = l.width = this.width;
-    l.top = i.bottom;
+    l.top = i.bottom + 5;
     l.height = this.height - i.height;
   }
 
