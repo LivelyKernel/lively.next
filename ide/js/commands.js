@@ -658,13 +658,14 @@ export var astEditorCommands = [
     } else { /*select all ranges*/ }
 
     // do the actual selection
-    // ranges.forEach(sel.addRange.bind(sel));
     ranges.forEach(range => {
-      var existing = sel.selections.findIndex(ea => ea.range.equals(range));
-      var idx = sel.selections.length-1;
-      if (existing > -1) arr.swap(sel.selections, existing, idx);
-      else sel.addRange(range);
+      var existing = sel.selections.findIndex(ea => ea.range.equals(range)),
+          idx = sel.selections.length-1;
+      existing > -1 ?
+        arr.swap(sel.selections, existing, idx) :
+        sel.addRange(range);
     });
+
     return true;
   }
 }
