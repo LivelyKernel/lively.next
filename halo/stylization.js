@@ -66,10 +66,6 @@ class StyleHalo extends Morph {
       }
    }
 
-   // resizing
-
-   get handles() { return this.submorphs[0].submorphs.filter(m => m.isHaloItem) }
-
    // border styling
 
    isOnMorphBorder(evt) {
@@ -137,8 +133,11 @@ class StyleHalo extends Morph {
           update(evt) { this.center = getPos(); },
           onDragStart(evt) { this.active = true; },
           onDrag(evt) {
+             var r = halo.target.borderRadius;
              halo.onMouseMove(evt);
-             halo.target.borderRadius -= evt.state.dragDelta.x;
+             r -= evt.state.dragDelta.x;
+             r = Math.min(halo.target.width / 2, Math.max(r, 0));
+             halo.target.borderRadius = r;
              this.center = getPos();
           },
           onDragEnd(evt) { this.active = false; }
