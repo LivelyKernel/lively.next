@@ -111,6 +111,8 @@ export default class JavaScriptNavigator {
 
   resolveIdentifierAt(editor, pos/*index!*/) {
     if (typeof pos !== "number") pos = editor.positionToIndex(pos);
+
+    // 1. is there an identifier at the cursor position?
     var parsed = this.ensureAST(editor.textString),
         nodes = lively.ast.query.nodesAt(pos, parsed).reverse(),
         id = nodes.find(ea => ea.type === "Identifier");
@@ -122,10 +124,11 @@ export default class JavaScriptNavigator {
       if (!id) return undefined;
     }
 
+    // If identifier is found we gather more information about the variable named by it
     var decl = lively.ast.query.findDeclarationClosestToIndex(parsed, id.name, pos),
         scope = decl ?
           lively.ast.query.scopeAtIndex(parsed, decl.start) :
-          lively.ast.query.scopes(parsed),
+          lively.ast.query.scopeAtIndex(parsed, pos),
         refs = lively.ast.query.findReferencesAndDeclsInScope(scope, id.name).filter(ea => ea !== decl);
 
     return {parsed, scope, id, name: id.name, decl, refs}
