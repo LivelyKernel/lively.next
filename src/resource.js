@@ -11,10 +11,24 @@ function nyi(obj, name) {
 
 export class Resource {
 
-  constructor(url, props = {}) {
-    this.isResource = true;
-    this.url = String(url);
+  static fromProps(props = {}) {
+    // props can have the keys contentType, type, size, etag, created, lastModified, url
+    // it should have at least url
+    return new this(props.url).assignProperties(props);
   }
+
+  constructor(url, opts = {}) {
+    if (!url) throw new Error("Cannot create resource without url");
+    this.url = String(url);
+    this.lastModified = undefined;
+    this.created = undefined;
+    this.etag = undefined;
+    this.size = undefined;
+    this.type = undefined;
+    this.contentType = undefined;
+  }
+
+  get isResource() { return true; }
 
   equals(otherResource) {
     return otherResource
@@ -74,6 +88,14 @@ export class Resource {
 
   asFile() {
     return resource(this.url.replace(slashEndRe, ""));
+  }
+
+  assignProperties(props) {
+    // lastModified, etag, ...
+    for (var name in props)
+      if (name !== "url")
+        this[name] = props[name]
+    return this;
   }
 
   async ensureExistance(optionalContent) {

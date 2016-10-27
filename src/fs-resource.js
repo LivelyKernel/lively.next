@@ -55,10 +55,11 @@ export class NodeJSFileResource extends Resource {
     if (depth === 1) {
       let subResources = [];
       for (let name of await readdirP(this.path())) {
-        let subResource = this.join(name);
-        subResources.push(
-          (await subResource.stat()).isDirectory() ?
-            subResource.asDirectory() : subResource);
+        let subResource = this.join(name),
+            stat =  await subResource.stat();
+        subResource = stat.isDirectory() ? subResource.asDirectory() : subResource;
+        subResource._assignPropsFromStat(stat);
+        subResources.push(subResource);
       }
       if (exclude) subResources = applyExclude(exclude, subResources);
       return subResources;
@@ -90,4 +91,17 @@ export class NodeJSFileResource extends Resource {
     return this;
   }
 
+  async readProperties(opts) {
+    return this._assignPropsFromStat(await this.stat());
+  }
+
+  _assignPropsFromStat(stat) {
+    return this.assignProperties({
+      lastModified: stat.mtime,
+      created: stat.ctime,
+      size: stat.size,
+      type: stat.isDirectory() ? "directory" : "file",
+      isLink: stat.isSymbolicLink()
+    });
+  }
 }

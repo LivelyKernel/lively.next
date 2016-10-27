@@ -165,10 +165,8 @@ export class WebDAVResource extends Resource {
     let xmlString = await res.text(),
         root = this.root();
     // list of properties for all resources in the multistatus list
-    return readXMLPropfindResult(xmlString).map(props => {
-      props.url = root.join(props.url);
-      return props;
-    });
+    return readXMLPropfindResult(xmlString).map(props =>
+      root.join(props.url).assignProperties(props));
   }
 
   async dirList(depth = 1, opts = {}) {
@@ -182,9 +180,10 @@ export class WebDAVResource extends Resource {
     if (depth <= 0) depth = 1;
 
     if (depth === 1) {
-      var urls = (await this._propfind()).slice(1/*fist node is source*/).map(({url}) => url);
-      if (exclude) urls = applyExclude(exclude, urls);
-      return urls;
+      var resources = await this._propfind(), // request to set resources props...
+          self = resources.shift();
+      if (exclude) resources = applyExclude(exclude, resources);
+      return resources;
 
     } else {
       let subResources = await this.dirList(1, opts),
@@ -199,7 +198,7 @@ export class WebDAVResource extends Resource {
 
   async readProperties(opts) {
     var props = (await this._propfind())[0];
-    return props;
+    return this.assignProperties(props); // lastModified, etag, ...
   }
 
 }

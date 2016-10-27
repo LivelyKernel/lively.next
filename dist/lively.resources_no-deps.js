@@ -190,7 +190,7 @@ var createClass = function () {
 
 
 
-var get = function get(object, property, receiver) {
+var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
 
@@ -200,7 +200,7 @@ var get = function get(object, property, receiver) {
     if (parent === null) {
       return undefined;
     } else {
-      return get(parent, property, receiver);
+      return get$1(parent, property, receiver);
     }
   } else if ("value" in desc) {
     return desc.value;
@@ -283,14 +283,37 @@ function nyi(obj, name) {
 }
 
 var Resource = function () {
+  createClass(Resource, null, [{
+    key: "fromProps",
+    value: function fromProps() {
+      var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      // props can have the keys contentType, type, size, etag, created, lastModified, url
+      // it should have at least url
+      return new this(props.url).assignProperties(props);
+    }
+  }]);
+
   function Resource(url) {
+    var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     classCallCheck(this, Resource);
 
-    this.isResource = true;
+    if (!url) throw new Error("Cannot create resource without url");
     this.url = String(url);
+    this.lastModified = undefined;
+    this.created = undefined;
+    this.etag = undefined;
+    this.size = undefined;
+    this.type = undefined;
+    this.contentType = undefined;
   }
 
   createClass(Resource, [{
+    key: "equals",
+    value: function equals(otherResource) {
+      return otherResource && this.constructor == otherResource.constructor && this.url === otherResource.url;
+    }
+  }, {
     key: "toString",
     value: function toString() {
       return this.constructor.name + "(\"" + this.url + "\")";
@@ -355,6 +378,7 @@ var Resource = function () {
   }, {
     key: "root",
     value: function root() {
+      if (this.isRoot()) return this;
       var toplevel = this.url.slice(0, -this.path().length);
       return resource(toplevel + "/");
     }
@@ -362,6 +386,14 @@ var Resource = function () {
     key: "asFile",
     value: function asFile() {
       return resource(this.url.replace(slashEndRe, ""));
+    }
+  }, {
+    key: "assignProperties",
+    value: function assignProperties(props) {
+      // lastModified, etag, ...
+      for (var name in props) {
+        if (name !== "url") this[name] = props[name];
+      }return this;
     }
   }, {
     key: "ensureExistance",
@@ -414,7 +446,7 @@ var Resource = function () {
         }, _callee, this);
       }));
 
-      function ensureExistance(_x) {
+      function ensureExistance(_x3) {
         return _ref.apply(this, arguments);
       }
 
@@ -529,12 +561,40 @@ var Resource = function () {
         }, _callee6, this);
       }));
 
-      function dirList(_x2, _x3) {
+      function dirList(_x4, _x5) {
         return _ref6.apply(this, arguments);
       }
 
       return dirList;
     }()
+  }, {
+    key: "readProperties",
+    value: function () {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee7(opts) {
+        return regeneratorRuntime.wrap(function _callee7$(_context7) {
+          while (1) {
+            switch (_context7.prev = _context7.next) {
+              case 0:
+                nyi(this, "readProperties");
+              case 1:
+              case "end":
+                return _context7.stop();
+            }
+          }
+        }, _callee7, this);
+      }));
+
+      function readProperties(_x6) {
+        return _ref7.apply(this, arguments);
+      }
+
+      return readProperties;
+    }()
+  }, {
+    key: "isResource",
+    get: function get() {
+      return true;
+    }
   }]);
   return Resource;
 }();
@@ -628,7 +688,34 @@ function davNs(xmlString) {
   return davNSMatch ? davNSMatch[1] : "d";
 }
 
-function urlListFromPropfindDocument(xmlString) {
+var propertyNodeMap = {
+  getlastmodified: "lastModified",
+  creationDate: "created",
+  getetag: "etag",
+  getcontentlength: "size",
+  resourcetype: "type", // collection or file
+  getcontenttype: "contentType" // mime type
+};
+function readPropertyNode(propNode) {
+  var result = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var tagName = propNode.tagName.replace(/[^:]+:/, ""),
+      key = propertyNodeMap[tagName],
+      value = propNode.textContent;
+  switch (key) {
+    case 'lastModified':
+    case 'created':
+      value = new Date(value);break;
+    case 'size':
+      value = Number(value);break;
+    default:
+    // code
+  }
+  result[key] = value;
+  return result;
+}
+
+function readXMLPropfindResult(xmlString) {
   // the xmlString looks like this:
   // <?xml version="1.0" encoding="utf-8"?>
   // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
@@ -650,10 +737,17 @@ function urlListFromPropfindDocument(xmlString) {
   var doc = new DOMParser().parseFromString(xmlString, "text/xml"),
       ns = davNs(xmlString),
       nodes = new XPathQuery("/" + ns + ":multistatus/" + ns + ":response").findAll(doc.documentElement),
-      urlQ = new XPathQuery(ns + ":href");
-  return nodes.slice(1 /*first node is source*/).map(function (node) {
-    var urlNode = urlQ.findFirst(node);
-    return urlNode.textContent || urlNode.text; // text is FIX for IE9+
+      urlQ = new XPathQuery(ns + ":href"),
+      propsQ = new XPathQuery(ns + ":propstat/" + ns + ":prop");
+
+  return nodes.map(function (node) {
+    var propsNode = propsQ.findFirst(node),
+        props = Array.from(propsNode.childNodes).reduce(function (props, node) {
+      return readPropertyNode(node, props);
+    }, {}),
+        urlNode = urlQ.findFirst(node);
+    props.url = urlNode.textContent || urlNode.text; // text is FIX for IE9+;
+    return props;
   });
 }
 
@@ -723,7 +817,7 @@ var WebDAVResource = function (_Resource) {
         }, _callee2, this);
       }));
 
-      function write(_x) {
+      function write(_x2) {
         return _ref2.apply(this, arguments);
       }
 
@@ -835,15 +929,70 @@ var WebDAVResource = function (_Resource) {
       return remove;
     }()
   }, {
+    key: "_propfind",
+    value: function () {
+      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+        var res, xmlString, root;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.next = 2;
+                return fetch(this.url, {
+                  method: "PROPFIND",
+                  mode: 'cors',
+                  redirect: 'follow',
+                  // body: propfindRequestPayload(),
+                  headers: new Headers({
+                    'Content-Type': 'text/xml'
+                  })
+                });
+
+              case 2:
+                res = _context6.sent;
+
+                if (res.ok) {
+                  _context6.next = 5;
+                  break;
+                }
+
+                throw new Error("Error in dirList for " + this.url + ": " + res.statusText);
+
+              case 5:
+                _context6.next = 7;
+                return res.text();
+
+              case 7:
+                xmlString = _context6.sent;
+                root = this.root();
+                return _context6.abrupt("return", readXMLPropfindResult(xmlString).map(function (props) {
+                  return root.join(props.url).assignProperties(props);
+                }));
+
+              case 10:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, this);
+      }));
+
+      function _propfind() {
+        return _ref6.apply(this, arguments);
+      }
+
+      return _propfind;
+    }()
+  }, {
     key: "dirList",
     value: function () {
-      var _ref6 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+      var _ref7 = asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
         var _this2 = this;
 
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        var exclude, res, _ret, _ret2;
+        var exclude, resources, self, _ret;
 
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
           while (1) {
@@ -863,75 +1012,21 @@ var WebDAVResource = function (_Resource) {
                 if (depth <= 0) depth = 1;
 
                 if (!(depth === 1)) {
-                  _context8.next = 11;
+                  _context8.next = 13;
                   break;
                 }
 
-                return _context8.delegateYield(regeneratorRuntime.mark(function _callee6() {
-                  var xmlString, root, result;
-                  return regeneratorRuntime.wrap(function _callee6$(_context6) {
-                    while (1) {
-                      switch (_context6.prev = _context6.next) {
-                        case 0:
-                          _context6.next = 2;
-                          return fetch(_this2.url, {
-                            method: "PROPFIND",
-                            mode: 'cors',
-                            redirect: 'follow',
-                            headers: new Headers({
-                              'Content-Type': 'text/xml'
-                            })
-                          });
+                _context8.next = 7;
+                return this._propfind();
 
-                        case 2:
-                          res = _context6.sent;
+              case 7:
+                resources = _context8.sent;
+                self = resources.shift();
 
-                          if (res.ok) {
-                            _context6.next = 5;
-                            break;
-                          }
+                if (exclude) resources = applyExclude(exclude, resources);
+                return _context8.abrupt("return", resources);
 
-                          throw new Error("Error in dirList for " + _this2.url + ": " + res.statusText);
-
-                        case 5:
-                          _context6.next = 7;
-                          return res.text();
-
-                        case 7:
-                          xmlString = _context6.sent;
-                          root = _this2.root();
-                          result = urlListFromPropfindDocument(xmlString).map(function (path) {
-                            return root.join(path);
-                          });
-
-                          if (exclude) result = applyExclude(exclude, result);
-                          return _context6.abrupt("return", {
-                            v: result
-                          });
-
-                        case 12:
-                        case "end":
-                          return _context6.stop();
-                      }
-                    }
-                  }, _callee6, _this2);
-                })(), "t0", 6);
-
-              case 6:
-                _ret = _context8.t0;
-
-                if (!((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object")) {
-                  _context8.next = 9;
-                  break;
-                }
-
-                return _context8.abrupt("return", _ret.v);
-
-              case 9:
-                _context8.next = 15;
-                break;
-
-              case 11:
+              case 13:
                 return _context8.delegateYield(regeneratorRuntime.mark(function _callee7() {
                   var subResources, subCollections;
                   return regeneratorRuntime.wrap(function _callee7$(_context7) {
@@ -962,19 +1057,19 @@ var WebDAVResource = function (_Resource) {
                       }
                     }
                   }, _callee7, _this2);
-                })(), "t1", 12);
+                })(), "t0", 14);
 
-              case 12:
-                _ret2 = _context8.t1;
+              case 14:
+                _ret = _context8.t0;
 
-                if (!((typeof _ret2 === "undefined" ? "undefined" : _typeof(_ret2)) === "object")) {
-                  _context8.next = 15;
+                if (!((typeof _ret === "undefined" ? "undefined" : _typeof(_ret)) === "object")) {
+                  _context8.next = 17;
                   break;
                 }
 
-                return _context8.abrupt("return", _ret2.v);
+                return _context8.abrupt("return", _ret.v);
 
-              case 15:
+              case 17:
               case "end":
                 return _context8.stop();
             }
@@ -982,11 +1077,41 @@ var WebDAVResource = function (_Resource) {
         }, _callee8, this);
       }));
 
-      function dirList(_x2, _x3) {
-        return _ref6.apply(this, arguments);
+      function dirList(_x3, _x4) {
+        return _ref7.apply(this, arguments);
       }
 
       return dirList;
+    }()
+  }, {
+    key: "readProperties",
+    value: function () {
+      var _ref8 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
+        var props;
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.next = 2;
+                return this._propfind();
+
+              case 2:
+                props = _context9.sent[0];
+                return _context9.abrupt("return", this.assignProperties(props));
+
+              case 4:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function readProperties(_x7) {
+        return _ref8.apply(this, arguments);
+      }
+
+      return readProperties;
     }()
   }]);
   return WebDAVResource;
@@ -1180,7 +1305,7 @@ var NodeJSFileResource = function (_Resource) {
         var depth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
         var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        var exclude, _subResources, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, name, subResource, subResources, subCollections;
+        var exclude, _subResources, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, name, subResource, stat, subResources, subCollections;
 
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
@@ -1200,7 +1325,7 @@ var NodeJSFileResource = function (_Resource) {
                 if (depth <= 0) depth = 1;
 
                 if (!(depth === 1)) {
-                  _context6.next = 46;
+                  _context6.next = 42;
                   break;
                 }
 
@@ -1218,82 +1343,70 @@ var NodeJSFileResource = function (_Resource) {
 
               case 14:
                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                  _context6.next = 30;
+                  _context6.next = 26;
                   break;
                 }
 
                 name = _step.value;
                 subResource = this.join(name);
-                _context6.t1 = _subResources;
-                _context6.next = 20;
+                _context6.next = 19;
                 return subResource.stat();
 
-              case 20:
-                if (!_context6.sent.isDirectory()) {
-                  _context6.next = 24;
-                  break;
-                }
+              case 19:
+                stat = _context6.sent;
 
-                _context6.t2 = subResource.asDirectory();
-                _context6.next = 25;
-                break;
+                subResource = stat.isDirectory() ? subResource.asDirectory() : subResource;
+                subResource._assignPropsFromStat(stat);
+                _subResources.push(subResource);
 
-              case 24:
-                _context6.t2 = subResource;
-
-              case 25:
-                _context6.t3 = _context6.t2;
-
-                _context6.t1.push.call(_context6.t1, _context6.t3);
-
-              case 27:
+              case 23:
                 _iteratorNormalCompletion = true;
                 _context6.next = 14;
                 break;
 
-              case 30:
-                _context6.next = 36;
+              case 26:
+                _context6.next = 32;
                 break;
+
+              case 28:
+                _context6.prev = 28;
+                _context6.t1 = _context6["catch"](9);
+                _didIteratorError = true;
+                _iteratorError = _context6.t1;
 
               case 32:
                 _context6.prev = 32;
-                _context6.t4 = _context6["catch"](9);
-                _didIteratorError = true;
-                _iteratorError = _context6.t4;
-
-              case 36:
-                _context6.prev = 36;
-                _context6.prev = 37;
+                _context6.prev = 33;
 
                 if (!_iteratorNormalCompletion && _iterator.return) {
                   _iterator.return();
                 }
 
-              case 39:
-                _context6.prev = 39;
+              case 35:
+                _context6.prev = 35;
 
                 if (!_didIteratorError) {
-                  _context6.next = 42;
+                  _context6.next = 38;
                   break;
                 }
 
                 throw _iteratorError;
 
-              case 42:
-                return _context6.finish(39);
+              case 38:
+                return _context6.finish(35);
 
-              case 43:
-                return _context6.finish(36);
+              case 39:
+                return _context6.finish(32);
 
-              case 44:
+              case 40:
                 if (exclude) _subResources = applyExclude(exclude, _subResources);
                 return _context6.abrupt("return", _subResources);
 
-              case 46:
-                _context6.next = 48;
+              case 42:
+                _context6.next = 44;
                 return this.dirList(1, opts);
 
-              case 48:
+              case 44:
                 subResources = _context6.sent;
                 subCollections = subResources.filter(function (ea) {
                   return ea.isDirectory();
@@ -1306,12 +1419,12 @@ var NodeJSFileResource = function (_Resource) {
                   }, subResources);
                 }));
 
-              case 51:
+              case 47:
               case "end":
                 return _context6.stop();
             }
           }
-        }, _callee6, this, [[9, 32, 36, 44], [37,, 39, 43]]);
+        }, _callee6, this, [[9, 28, 32, 40], [33,, 35, 39]]);
       }));
 
       function dirList(_x3, _x4) {
@@ -1466,6 +1579,47 @@ var NodeJSFileResource = function (_Resource) {
 
       return remove;
     }()
+  }, {
+    key: "readProperties",
+    value: function () {
+      var _ref9 = asyncToGenerator(regeneratorRuntime.mark(function _callee9(opts) {
+        return regeneratorRuntime.wrap(function _callee9$(_context9) {
+          while (1) {
+            switch (_context9.prev = _context9.next) {
+              case 0:
+                _context9.t0 = this;
+                _context9.next = 3;
+                return this.stat();
+
+              case 3:
+                _context9.t1 = _context9.sent;
+                return _context9.abrupt("return", _context9.t0._assignPropsFromStat.call(_context9.t0, _context9.t1));
+
+              case 5:
+              case "end":
+                return _context9.stop();
+            }
+          }
+        }, _callee9, this);
+      }));
+
+      function readProperties(_x7) {
+        return _ref9.apply(this, arguments);
+      }
+
+      return readProperties;
+    }()
+  }, {
+    key: "_assignPropsFromStat",
+    value: function _assignPropsFromStat(stat) {
+      return this.assignProperties({
+        lastModified: stat.mtime,
+        created: stat.ctime,
+        size: stat.size,
+        type: stat.isDirectory() ? "directory" : "file",
+        isLink: stat.isSymbolicLink()
+      });
+    }
   }]);
   return NodeJSFileResource;
 }(Resource);

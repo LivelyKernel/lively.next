@@ -118,6 +118,18 @@ describe('http', function() {
       ]);
     });
 
+    it("contains properties of resources", async () => {
+      var r = resource(testProjectDir),
+          file1 = (await r.dirList())[0],
+          {size, lastModified} = file1
+      expect(+lastModified).greaterThan(Date.now() - 1000);
+      expect(size).equals(7);
+      expect((await r.dirList()).map(ea => ea.url)).deep.equals([
+        r.join("file1.js").url,
+        r.join("sub-dir/").url
+      ]);
+    });
+
     it("of directory recursively", async () => {
       var r = resource(testProjectDir);
       expect((await r.dirList('infinity')).map(ea => ea.url)).deep.equals([
