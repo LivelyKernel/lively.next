@@ -49,7 +49,44 @@ function davNs(xmlString) {
   return davNSMatch ? davNSMatch[1] : "d";
 }
 
-function urlListFromPropfindDocument(xmlString) {
+function propfindRequestPayload() {
+  return `<?xml version="1.0" encoding="utf-8" ?>
+    <D:propfind xmlns:D="DAV:">
+      <D:prop>
+        <D:creationdate/>
+        <D:getcontentlength/>
+        <D:getcontenttype/>
+        <D:getetag/>
+        <D:getlastmodified/>
+        <D:resourcetype/>
+      </D:prop>
+    </D:propfind>`
+}
+
+const propertyNodeMap = {
+  getlastmodified: "lastModified",
+  creationDate: "created",
+  getetag: "etag",
+  getcontentlength: "size",
+  resourcetype: "type", // collection or file
+  getcontenttype: "contentType" // mime type
+}
+function readPropertyNode(propNode, result = {}) {
+  var tagName = propNode.tagName.replace(/[^:]+:/, ""),
+      key = propertyNodeMap[tagName],
+      value = propNode.textContent;
+  switch (key) {
+    case 'lastModified':
+    case 'created': value = new Date(value); break;
+    case 'size': value = Number(value); break;
+    default:
+    // code
+  }
+  result[key] = value;
+  return result;
+}
+
+function readXMLPropfindResult(xmlString) {
   // the xmlString looks like this:
   // <?xml version="1.0" encoding="utf-8"?>
   // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
@@ -71,10 +108,16 @@ function urlListFromPropfindDocument(xmlString) {
   var doc = new DOMParser().parseFromString(xmlString, "text/xml"),
       ns = davNs(xmlString),
       nodes = new XPathQuery(`/${ns}:multistatus/${ns}:response`).findAll(doc.documentElement),
-      urlQ = new XPathQuery(`${ns}:href`);
-  return nodes.slice(1/*first node is source*/).map(node => {
-    var urlNode = urlQ.findFirst(node);
-    return urlNode.textContent || urlNode.text; // text is FIX for IE9+
+      urlQ = new XPathQuery(`${ns}:href`),
+      propsQ = new XPathQuery(`${ns}:propstat/${ns}:prop`);
+
+  return nodes.map(node => {
+    var propsNode = propsQ.findFirst(node),
+        props = Array.from(propsNode.childNodes).reduce((props, node) =>
+          readPropertyNode(node, props), {}),
+        urlNode = urlQ.findFirst(node);
+    props.url = urlNode.textContent || urlNode.text; // text is FIX for IE9+;
+    return props;
   });
 }
 
@@ -105,6 +148,29 @@ export class WebDAVResource extends Resource {
     return this;
   }
 
+  async _propfind() {
+    var res = await fetch(this.url, {
+       method: "PROPFIND",
+       mode: 'cors',
+       redirect: 'follow',
+       // body: propfindRequestPayload(),
+       headers: new Headers({
+         'Content-Type': 'text/xml',
+        // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
+        // 'Depth': String(depth)
+      })
+    });
+
+    if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
+    let xmlString = await res.text(),
+        root = this.root();
+    // list of properties for all resources in the multistatus list
+    return readXMLPropfindResult(xmlString).map(props => {
+      props.url = root.join(props.url);
+      return props;
+    });
+  }
+
   async dirList(depth = 1, opts = {}) {
     // depth = number >= 1 or 'infinity'
 
@@ -116,22 +182,9 @@ export class WebDAVResource extends Resource {
     if (depth <= 0) depth = 1;
 
     if (depth === 1) {
-      var res = await fetch(this.url, {
-        method: "PROPFIND",
-      	mode: 'cors',
-      	redirect: 'follow',
-      	headers: new Headers({
-      		'Content-Type': 'text/xml',
-      		// rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
-      		// 'Depth': String(depth)
-      	})
-      })
-      if (!res.ok) throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`);
-      let xmlString = await res.text(),
-          root = this.root(),
-          result = urlListFromPropfindDocument(xmlString).map(path => root.join(path));
-      if (exclude) result = applyExclude(exclude, result);
-      return result;
+      var urls = (await this._propfind()).slice(1/*fist node is source*/).map(({url}) => url);
+      if (exclude) urls = applyExclude(exclude, urls);
+      return urls;
 
     } else {
       let subResources = await this.dirList(1, opts),
@@ -142,6 +195,11 @@ export class WebDAVResource extends Resource {
                 recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
     }
 
+  }
+
+  async readProperties(opts) {
+    var props = (await this._propfind())[0];
+    return props;
   }
 
 }

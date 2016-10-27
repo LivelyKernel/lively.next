@@ -11,7 +11,7 @@ function nyi(obj, name) {
 
 export class Resource {
 
-  constructor(url) {
+  constructor(url, props = {}) {
     this.isResource = true;
     this.url = String(url);
   }
@@ -89,5 +89,6 @@ export class Resource {
   async exists()             { nyi(this, "exists"); }
   async remove()             { nyi(this, "remove"); }
   async dirList(depth, opts) { nyi(this, "dirList"); }
+  async readProperties(opts) { nyi(this, "readProperties"); }
 
 }

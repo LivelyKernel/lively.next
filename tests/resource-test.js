@@ -28,7 +28,7 @@ describe('http', function() {
     await createFiles(testProjectDir, testProjectSpec);
     r1 = resource(testProjectDir + "file1.js");
   });
-  
+
   afterEach(async () => {
     await resource(testProjectDir).remove();
   });
@@ -99,9 +99,17 @@ describe('http', function() {
     expect(await resource(testProjectDir + "dir/b.txt").read()).equals("bbbbb");
   });
 
+  it("retrieves file props", async () => {
+    var {size, lastModified, contentType} = await r1.readProperties();    
+    expect(lively.lang.date.format(lastModified, "yyyy/mm/dd"))
+      .equals(lively.lang.date.format(new Date(), "yyyy/mm/dd")); // beware those midnight test runs!
+
+    if (contentType)
+      expect(contentType).includes("application/javascript");
+  });
+
   describe("file listing", () => {
 
-  
     it("of directory", async () => {
       var r = resource(testProjectDir);
       expect((await r.dirList()).map(ea => ea.url)).deep.equals([
@@ -109,7 +117,7 @@ describe('http', function() {
         r.join("sub-dir/").url
       ]);
     });
-  
+
     it("of directory recursively", async () => {
       var r = resource(testProjectDir);
       expect((await r.dirList('infinity')).map(ea => ea.url)).deep.equals([
@@ -124,7 +132,7 @@ describe('http', function() {
         r.join("sub-dir/sub-sub-dir/sub-sub-sub-dir/file6.txt").url
       ]);
     });
-  
+
     it("recursively up to a depth", async () => {
       var r = resource(testProjectDir);
       expect((await r.dirList(2)).map(ea => ea.url)).deep.equals([
@@ -134,7 +142,7 @@ describe('http', function() {
         r.join("sub-dir/sub-sub-dir/").url
       ]);
     });
-  
+
     it("list files with string filter", async () => {
       var r = resource(testProjectDir);
       expect((await r.dirList('infinity', {exclude: "sub-sub-dir"})).map(ea => ea.url)).deep.equals([
