@@ -377,6 +377,7 @@ var worldCommands = [
               p.name, shortName, undefined,
               i === 0 ? browser : undefined);
         b.moveBy(pt(i*20, i*20));
+        b.activate();
       }
 
       return true;
