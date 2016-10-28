@@ -15,9 +15,13 @@ export class Window extends Morph {
       borderWidth: 1,
       clipMode: "hidden",
       resizable: true,
-      ...obj.dissoc(props, ["title", "targetMorph"])
+      ...obj.dissoc(props, ["title", "targetMorph"]),
+      submorphs: [{fill: Color.transparent, name: "wrapper", 
+                   onDrag: (evt) => {this.onDrag(evt)}}]
     });
-    this.submorphs = this.submorphs.concat(this.controls());
+    const wrapper = this.getSubmorphNamed("wrapper");
+    wrapper.setBounds(this.innerBounds().withTopLeft(pt(0,25)));
+    wrapper.submorphs = (props.submorphs || []).concat(this.controls());
     if (props.targetMorph) this.targetMorph = props.targetMorph;
     this.title = props.title || this.name || "";
     this.resetPropertyCache();
@@ -37,7 +41,8 @@ export class Window extends Morph {
     this.titleLabel().center = pt(Math.max(bounds.extent().x / 2, 100), 10);
     this.resizer().bottomRight = bounds.bottomRight();
     var t = this.targetMorph;
-    t && t.setBounds(bounds.withTopLeft(pt(0,25)));
+    t && t.setBounds(bounds.withTopLeft(pt(0,25)))
+    this.getSubmorphNamed("wrapper").position = this.origin.negated(); 
   }
 
   controls() {
@@ -64,7 +69,7 @@ export class Window extends Morph {
         center: pt(15,13),
         borderColor: Color.darkRed,
         fill: Color.rgb(255,96,82),
-        onMouseDown(evt) { this.owner.close(); },
+        onMouseDown: (evt) => { this.close(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
           styleClasses: ["morph", "fa", "fa-times"],
@@ -78,7 +83,7 @@ export class Window extends Morph {
         name: "minimize",
         borderColor: Color.brown,
         fill: Color.rgb(255,190,6),
-        onMouseDown(evt) { this.owner.toggleMinimize(); },
+        onMouseDown: (evt) => { this.toggleMinimize(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
           styleClasses: ["morph", "fa", "fa-minus"], center: pt(5.5,5), opacity: 0.5
@@ -91,7 +96,7 @@ export class Window extends Morph {
         center: pt(55,13),
         borderColor: Color.darkGreen,
         fill: Color.green,
-        onMouseDown(evt) { this.owner.toggleMaximize(); },
+        onMouseDown: (evt) => { this.toggleMaximize(); },
         submorphs: [{
           fill: Color.black.withA(0), scale: 0.7, visible: false,
           styleClasses: ["morph", "fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
@@ -116,6 +121,7 @@ export class Window extends Morph {
   }
 
   resizer() {
+    const win = this;
     return this.getSubmorphNamed("resizer") || {
       name: "resizer",
       nativeCursor: "nwse-resize",
@@ -124,8 +130,8 @@ export class Window extends Morph {
       fill: Color.transparent,
       bottomRight: this.extent,
       onDrag(evt) {
-        this.owner.resizeBy(evt.state.dragDelta);
-        this.bottomRight = this.owner.extent;
+        win.resizeBy(evt.state.dragDelta);
+        this.bottomRight = win.extent;
       }
     };
   }
@@ -133,7 +139,7 @@ export class Window extends Morph {
   get title() { return this.titleLabel().textString; }
   set title(title) { this.titleLabel().textString = title; }
 
-  get targetMorph() { return arr.last(arr.withoutAll(this.submorphs, this.controls())); }
+  get targetMorph() { return arr.last(arr.withoutAll(this.getSubmorphNamed('wrapper').submorphs, this.controls())); }
   set targetMorph(targetMorph) {
     if (!targetMorph) {
       var existing = this.targetMorph;
@@ -143,7 +149,7 @@ export class Window extends Morph {
 
     if (!targetMorph.isMorph) targetMorph = morph(targetMorph); // spec
 
-    this.addMorph(targetMorph, this.resizer());
+    this.getSubmorphNamed("wrapper").addMorph(targetMorph, this.resizer());
     this.relayout();
   }
 
