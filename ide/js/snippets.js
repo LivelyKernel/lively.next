@@ -3,6 +3,14 @@ import { Snippet } from "../../text/snippets.js";
 
 var _snippets = [
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // # typeof tests
+  ["typef", 'typeof ${0:object} === "function"$1'],
+  ["types", 'typeof ${0:object} === "string"$1'],
+  ["typen", 'typeof ${0:object} === "number"$1'],
+  ["typeu", 'typeof ${0:object} === "undefined"$1'],
+  ["typenu", 'typeof ${0:object} !== "undefined"$1'],
+
   // functions
   ["fun", "function ${0:functionName}($1) {$2}"],
   ["fn", "function($0) {$1}"],
@@ -79,14 +87,6 @@ var _snippets = [
   ["pluck", "arr.pluck(${0:list}, \"${1:key}\")"],
   ["sortBy", "arr.sortBy(${0:list}, ($1) => $2)"],
   ["join", 'join("\\n")'],
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // # typeof tests
-  ["typef", 'typeof ${0:object} === "function"$1'],
-  ["types", 'typeof ${0:object} === "string"$1'],
-  ["typen", 'typeof ${0:object} === "number"$1'],
-  ["typeu", 'typeof ${0:object} === "undefined"$1'],
-  ["typenu", 'typeof ${0:object} !== "undefined"$1'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # addScript

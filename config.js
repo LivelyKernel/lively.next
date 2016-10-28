@@ -202,7 +202,7 @@ var config = {
 
       {keys: "Alt-Q", command: "fit text to column"},
 
-      {keys: {win: "Ctrl-F|Ctrl-G|Ctrl-S|F3", mac: "Meta-F|Meta-G|Ctrl-S"}, command: "search in text"},
+      {keys: {win: "Ctrl-F|Ctrl-G|Ctrl-S|F3", mac: "Meta-F|Meta-G|Ctrl-S"},                      command: "search in text"},
       {keys: {win: "Ctrl-Shift-F|Ctrl-Shift-G|Ctrl-R", mac: "Meta-Shift-F|Meta-Shift-G|Ctrl-R"}, command: {command: "search in text", args: {backwards: true}}},
 
 
@@ -225,12 +225,12 @@ var config = {
 
       {keys: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},      command: 'contractRegion'},
       {keys: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'}, command: 'expandRegion'},
-      {keys: 'Ctrl-Alt-h',                                                                        command: 'markDefun'},
-      {keys: 'Ctrl-Alt-d|Ctrl-Alt-Down',                                                          command: 'forwardDownSexp'},
-      {keys: 'Ctrl-Alt-u|Ctrl-Alt-Up',                                                            command: 'backwardUpSexp'},
-      {keys: 'Ctrl-Alt-b|Ctrl-Alt-Left',                                                          command: 'backwardSexp'},
-      {keys: 'Ctrl-Alt-f|Ctrl-Alt-Right',                                                         command: 'forwardSexp'},
-      {keys: 'Alt-.',                                                         command: 'selectDefinition'},
+      {keys: 'Ctrl-Alt-h',                command: 'markDefun'},
+      {keys: 'Ctrl-Alt-d|Ctrl-Alt-Down',  command: 'forwardDownSexp'},
+      {keys: 'Ctrl-Alt-u|Ctrl-Alt-Up',    command: 'backwardUpSexp'},
+      {keys: 'Ctrl-Alt-b|Ctrl-Alt-Left',  command: 'backwardSexp'},
+      {keys: 'Ctrl-Alt-f|Ctrl-Alt-Right', command: 'forwardSexp'},
+      {keys: 'Alt-.',        command: 'selectDefinition'},
       {keys: "Ctrl-Shift-'", command: "selectSymbolReferenceOrDeclaration"},
       {keys: "Ctrl-Shift-[", command: "selectSymbolReferenceOrDeclarationPrev"},
       {keys: "Ctrl-Shift-]", command: "selectSymbolReferenceOrDeclarationNext"},
@@ -248,7 +248,5 @@ var config = {
     }
   }
 }
-
-// $$world.withAllSubmorphsDo(ea =>delete ea._cachedKeyhandlers);
 
 export default config;
