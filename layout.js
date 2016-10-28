@@ -58,18 +58,34 @@ export class FillLayout extends Layout {
 
   name() { return "Fill" }
   description() { return "Forces all submorphs to match the extent of their owner."} 
+
+  set spacing(spacing=0) {
+     if (obj.isNumber(spacing)) {
+        var top = left = right = bottom = spacing;
+     } else {
+        var {top, left, right, bottom} = spacing;
+        top = top || 0;
+        left = left || 0;
+        right = right || 0;
+        bottom = bottom || 0;
+     }
+     this._spacing = {top, left, right, bottom}
+  }
+
+  get spacing() { return this._spacing }
   
   apply() {
     /* FIXME: Add support for destructuring default values */
     if (this.active) return;
     const {fixedWidth, fixedHeight} = this,
-          height = !fixedHeight  && this.container.height - 2 * this.spacing,
-          width = !fixedWidth && this.container.width - 2 * this.spacing;
-    
+          {top, bottom, left, right} = this.spacing,
+          height = !fixedHeight  && this.container.height - top - bottom,
+          width = !fixedWidth && this.container.width - left - right;
     this.active = true;
     this.morphs.forEach(m => {
       var m = this.container.getSubmorphNamed(m);
-      m.setBounds(pt(this.spacing,this.spacing).extent(pt(width || m.width, height || m.height)));
+      m.setBounds(pt(left,top)
+                    .extent(pt(width || m.width, height || m.height)));
     });
     this.active = false;
   }
