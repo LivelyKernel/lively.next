@@ -61,7 +61,7 @@
         })
         .then(function() { console.log("... lively.modules loaded..."); })
         .then(function() { console.log("...lively.system bootstrapped!"); })
-        .catch(err => console.error(err))
+        .catch(function(err) { console.error(err); })
       }
     </script>
   </body>
