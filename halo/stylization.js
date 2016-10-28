@@ -1,4 +1,6 @@
-import { Morph, HorizontalLayout } from "../index.js";
+import { Morph} from "../index.js";
+import { VerticalLayout, HorizontalLayout, FillLayout,
+         TilingLayout, GridLayout} from '../layout.js';
 import { Color, pt} from "lively.graphics";
 import { Intersection, IntersectionParams } from 'kld-intersections';
 import { arr } from "lively.lang";
@@ -32,6 +34,7 @@ class StyleHalo extends Morph {
 
    constructor(target, pointerId) {
        super({
+          draggable: false,
           fill: Color.transparent,
           bounds: target.globalBounds().insetBy(-50),
        });
@@ -46,6 +49,7 @@ class StyleHalo extends Morph {
              this.layoutHalo()
            ]
        }];
+       this.focus()
    }
 
    get isLayoutHalo() { return true; }
@@ -69,9 +73,12 @@ class StyleHalo extends Morph {
    // border styling
 
    isOnMorphBorder(evt) {
-      const {x,y} = evt.positionIn(this.target),
-            {width, height, borderRadius: br} = this.target;
-      return Intersection.intersectShapes(  
+      const {x,y} = evt.positionIn(this.getSubmorphNamed("borderHalo")),
+            brHalo = this.getSubmorphNamed("borderRadiusHalo"),
+            br = this.target.borderRadius,
+            {width, height} = this.target.globalBounds();
+            
+      return !brHalo.active && Intersection.intersectShapes(  
               IntersectionParams.newRoundRect(0, 0, width, height, br, br), 
               IntersectionParams.newRect(x - 5, y - 5, 10, 10)).points.length > 0;
    }
@@ -80,15 +87,16 @@ class StyleHalo extends Morph {
       const target = this.target, halo = this;
       // subscribe to the global mouse move event
       return {
+         name: "borderHalo",
          draggable: false,
          borderWidth: Math.max(3, target.borderWidth), 
          fill: Color.transparent,
          borderColor: Color.orange.withA(0.4),
          borderRadius: target.borderRadius,
-         bounds: target.innerBounds(),
+         bounds: target.globalBounds().withX(0).withY(0),
          isHaloItem: true,
          update(evt) {
-           this.setBounds(target.innerBounds());
+           this.setBounds(target.globalBounds().withX(0).withY(0));
            this.borderWidth = Math.max(3, target.borderWidth);
            this.borderRadius = target.borderRadius;
            if (halo.isOnMorphBorder(evt)) {
@@ -103,14 +111,24 @@ class StyleHalo extends Morph {
               this.active = false;
            }
          },
-         onMouseDown() {
+         onMouseDown(evt) {
             if (this.active) {
-                this.borderStyler = this.borderStyler || new BorderStyler(this.target);
-                this.borderStyler.openInWorldNearHand();
+                const bs = this.borderStyler || new BorderStyler(target);
+                bs.openInWorldNearHand();
+                bs.adjustOrigin(evt.positionIn(bs));
+                bs.scale = 0; bs.opacity = 0;
+                bs.animate({opacity: 1, scale: 1, duration: 200});
+                this.borderStyler = bs;
             } else {
-                this.picker = this.picker || new ColorPicker({extent: pt(400,450), color: this.target.fill})
-                this.picker.openInWorldNearHand();                   
-                connect(this.picker, "color", this.target, "fill");
+                const p = this.picker || new ColorPicker({
+                    extent: pt(400,310), 
+                    color: target.fill})
+                p.openInWorldNearHand();
+                p.adjustOrigin(evt.positionIn(p));
+                p.scale = 0; p.opacity = 0;
+                p.animate({opacity: 1, scale: 1, duration: 200});
+                connect(p, "color", target, "fill");
+                this.picker = p;
             }
          },
       }
@@ -119,9 +137,12 @@ class StyleHalo extends Morph {
    borderRadiusHalo() {
        const halo = this,
              getPos = () => {
-          return halo.target.innerBounds().topRight().addXY(-halo.target.borderRadius, 0)
+          return halo.target.globalBounds()
+                     .withX(0).withY(0).topRight()
+                     .addXY(-halo.target.borderRadius, 0)
        };
        return {
+          name: "borderRadiusHalo",
           type: 'ellipse',
           fill: Color.red,
           isHaloItem: true,
@@ -130,6 +151,8 @@ class StyleHalo extends Morph {
           borderColor: Color.black,
           extent: pt(10,10),
           center: getPos(),
+          onHoverIn() { this.active = true; },
+          onHoverOut() { this.active = false; },
           update(evt) { this.center = getPos(); },
           onDragStart(evt) { this.active = true; },
           onDrag(evt) {
@@ -139,6 +162,7 @@ class StyleHalo extends Morph {
              r = Math.min(halo.target.width / 2, Math.max(r, 0));
              halo.target.borderRadius = r;
              this.center = getPos();
+             this.active = true;
           },
           onDragEnd(evt) { this.active = false; }
        }
@@ -146,20 +170,58 @@ class StyleHalo extends Morph {
 
    // layout halo
 
+   getLayoutObjects() {
+       return [null,
+               new HorizontalLayout({autoResize: false}), 
+               new VerticalLayout({autoResize: false}), 
+               new FillLayout(), 
+               new TilingLayout(), 
+               new GridLayout({grid: [[null], [null], [null]]})];
+   }
+
    layoutHalo() {
        const layout = this.target.layout,
-             getPos = () => this.target.innerBounds().bottomCenter().addXY(0, 20);
+             layoutName = (l) => l ? l.name() + " Layout" : "No Layout",
+             getPos = () => this.target.globalBounds()
+                                .withX(0).withY(0)
+                                .bottomCenter().addXY(0, 20);
        return {
            borderRadius: 30,
            extent: pt(120, 75),
            topCenter: getPos(),
            fill: Color.gray.withA(.7),
            layout: new HorizontalLayout({spacing: 5}),
-           update(evt) { this.topCenter = getPos() },
+           isHaloItem: true, 
+           update(evt) { 
+              this.topCenter = getPos();
+              const [_, inspectButton] = this.submorphs;
+              if (!layout) {
+                inspectButton.opacity = .5;
+                inspectButton.nativeCursor = null;
+              } else {
+                inspectButton.opacity = 1;
+                inspectButton.nativeCursor = "pointer";
+              }
+           },
            submorphs: [
-               {type: 'text', fill: Color.transparent,
-                fixedWidth: true, width: 75, padding: 2, readOnly: true, 
-                fontStyle: 'bold', textString:  layout ? layout.name : "None"},
+               {type: 'text', fill: Color.transparent, name: "layoutPicker",
+                padding: 2, readOnly: true, 
+                fontWeight: 'bold', nativeCursor: "pointer",
+                fontStyle: 'bold', textString: layoutName(layout),
+                onMouseDown: () => {
+                   var menu = this.world().openWorldMenu(
+                      this.getLayoutObjects().map(l => {
+                         return [layoutName(l), 
+                                 () => { 
+                                     this.target.animate({layout: l}); 
+                                     this.getSubmorphNamed("layoutPicker")
+                                         .textString = layoutName(l);
+                                 }]
+                      })
+                   )
+                   menu.globalPosition = this.getSubmorphNamed("layoutPicker").globalPosition;
+                   menu.isHaloItem = true;
+                }},
                {styleClasses: ["fa", "fa-th"],
                 nativeCursor: "pointer",
                 fill: Color.transparent,
