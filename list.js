@@ -161,6 +161,35 @@ var listCommands = [
       }
       return true;
     }
+  },
+
+  {
+    name: "realign top-bottom-center",
+    exec: list => {
+      if (!list.selection) return;
+      var {padding, selectedIndex: idx, itemHeight, scroll: {x: scrollX, y: scrollY}} = list,
+          pos = pt(0, idx*itemHeight),
+          offsetX = 0, offsetY = 0,
+          h = list.height - itemHeight - padding.top() - padding.bottom();
+      if (Math.abs(pos.y - scrollY) < 2) {
+        scrollY = pos.y - h;
+      } else if (Math.abs(pos.y - scrollY - h * 0.5) < 2) {
+        scrollY = pos.y;
+      } else {
+        scrollY = pos.y - h * 0.5;
+      }
+      list.scroll = pt(scrollX, scrollY);
+      return true;
+    }
+  },
+
+  {
+    name: "print contents in text window",
+    exec: list => {      
+      var content = arr.pluck(list.items, "string").join("\n"),
+          title = "items of " + list.name;
+      return list.world().execCommand("open text window", {title, content, name: title, fontFamily: "Inconsolata, monospace"});
+    }
   }
 ];
 
@@ -410,7 +439,7 @@ export class List extends Morph {
   scrollIndexIntoView(idx) {
     var {itemHeight, width, scroll} = this,
         itemBounds = new Rectangle(0, idx*itemHeight, width, itemHeight),
-        visibleBounds = this.innerBounds().translatedBy(scroll),
+        visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(scroll),
         offsetX = 0, offsetY = 0
     if (itemBounds.bottom() > visibleBounds.bottom())
       offsetY = itemBounds.bottom() - visibleBounds.bottom()
@@ -463,18 +492,19 @@ export class List extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   get keybindings() {
     return [
-      {keys: "Up|Ctrl-P", command: "arrow up"},
-      {keys: "Down|Ctrl-N", command: "arrow down"},
-      {keys: "Shift-Up", command: "select up"},
-      {keys: "Shift-Down", command: "select down"},
+      {keys: "Up|Ctrl-P",                    command: "arrow up"},
+      {keys: "Down|Ctrl-N",                  command: "arrow down"},
+      {keys: "Shift-Up",                     command: "select up"},
+      {keys: "Shift-Down",                   command: "select down"},
       {keys: {win: "Ctrl-A", mac: "Meta-A"}, command: "select all"},
-      {keys: "Alt-V|PageUp", command: "page up"},
-      {keys: "Ctrl-V|PageDown", command: "page down"},
-      {keys: "Alt-Shift-,", command: "goto first item"},
-      {keys: "Alt-Shift-.", command: "goto last item"},
-      {keys: "Enter", command: "accept input"},
-      {keys: "Escape|Ctrl-G", command: "cancel"},
-      {keys: "Alt-Space", command: "select via filter"},
+      {keys: "Alt-V|PageUp",                 command: "page up"},
+      {keys: "Ctrl-V|PageDown",              command: "page down"},
+      {keys: "Alt-Shift-,",                  command: "goto first item"},
+      {keys: "Alt-Shift-.",                  command: "goto last item"},
+      {keys: "Enter",                        command: "accept input"},
+      {keys: "Escape|Ctrl-G",                command: "cancel"},
+      {keys: "Alt-Space",                    command: "select via filter"},
+      {keys: "Ctrl-L",                       command: "realign top-bottom-center"}
     ].concat(super.keybindings);
   }
 
@@ -576,7 +606,7 @@ export class FilterableList extends Morph {
         l = this.get("list"),
         ext = this.extent;
     i.width = l.width = this.width;
-    l.top = i.bottom + 5;
+    l.top = i.bottom;
     l.height = this.height - i.height;
   }
 

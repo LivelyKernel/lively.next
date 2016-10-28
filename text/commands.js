@@ -741,15 +741,15 @@ var commands = [
       var charBounds = morph.charBoundsFromTextPosition(morph.cursorPosition),
           pos = charBounds.topLeft(),
           h = morph.height - charBounds.height,
-          scroll = morph.scroll;
-      if (Math.abs(pos.y - scroll.y) < 2) {
-          scroll.y = pos.y - h;
-      } else if (Math.abs(pos.y - scroll.y - h * 0.5) < 2) {
-          scroll.y = pos.y;
+          {x: scrollX, y: scrollY} = morph.scroll;
+      if (Math.abs(pos.y - scrollY) < 2) {
+        scrollY = pos.y - h;
+      } else if (Math.abs(pos.y - scrollY - h * 0.5) < 2) {
+        scrollY = pos.y;
       } else {
-          scroll.y = pos.y - h * 0.5;
+        scrollY = pos.y - h * 0.5;
       }
-      morph.scroll = pt(scroll.x, scroll.y);
+      morph.scroll = pt(scrollX, scrollY);
       return true;
     }
   },
