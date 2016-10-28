@@ -271,15 +271,6 @@ async function customTranslate(proceed, load) {
     debug && console.log("[lively.modules] loaded %s as es6 module", load.name)
     // debug && console.log(load.source)
 
-  } else if (isCjs && isNode) {
-    load.metadata.format = "cjs";
-    var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
-    load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-    load.metadata["lively.modules instrumented"] = true;
-    instrumented = true;
-    debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
-    // console.log("[lively.modules] no rewrite for cjs module", load.name)
-
   } else if (load.metadata.format === "global") {
     env.recorderName = "System.global";
     env.recorder = System.global;
@@ -289,6 +280,17 @@ async function customTranslate(proceed, load) {
     instrumented = true;
     debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name)
   }
+
+  // cjs is currently not supported to be instrumented
+  // } else if (isCjs && isNode) {
+  //   load.metadata.format = "cjs";
+  //   var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
+  //   load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
+  //   load.metadata["lively.modules instrumented"] = true;
+  //   instrumented = true;
+  //   debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
+  //   // console.log("[lively.modules] no rewrite for cjs module", load.name)
+  // }
 
   if (!instrumented) {
     debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
