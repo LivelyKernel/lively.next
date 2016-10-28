@@ -85,11 +85,15 @@ export class ColorPicker extends Window {
     super({
       title: "Color Picker",
       name: "Color Picker",
-      extent: pt(400, 430),
+      extent: pt(400, 300),
+      fill: Color.black.withA(.7),
+      borderWidth: 0,
+      resizable: false,
       targetMorph: this.colorPalette(),
       commands: this.harmonyCommands,
       ...props
     });
+    this.titleLabel().fontColor = Color.gray;
     this.update();
     connect(this, "change", this, "update", {
       updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()
@@ -177,20 +181,25 @@ export class ColorPicker extends Window {
     const colorPalette = this.getSubmorphNamed("colorPalette") || new Morph({
       name: "colorPalette",
       fill: Color.transparent,
+      draggable: false,
       layout: new GridLayout({grid: [["field", "scale", "details"],
+                                     ["toggleHarmonies", "toggleHarmonies", "toggleHarmonies"],
                                      ["harmonies", "harmonies", "harmonies"]]}),
       submorphs: [this.fieldPicker(), this.scalePicker(), this.colorDetails(),
+                  this.toggleHarmoniesButton(),
                   this.harmonies()]
     })
+    colorPalette.layout.col(0).paddingLeft = 10;
     colorPalette.layout.col(1).fixed = 55;
     colorPalette.layout.col(2).fixed = 100;
     colorPalette.layout.row(0).fixed = this.colorDetails().height;
+    colorPalette.layout.row(1).fixed = 20;
     return colorPalette;
   }
 
   fieldPicker() {
     return this.getSubmorphNamed("field") || new Morph({
-      layout: new FillLayout({morphs: ["hue", "shade", "light"], spacing: 9}),
+      layout: new FillLayout({morphs: ["hue", "shade", "light"], spacing: {top: 10, bottom: 10}}),
       name: "field",
       fill: Color.transparent,
       update(colorPicker) {
@@ -299,10 +308,11 @@ export class ColorPicker extends Window {
         new Text({
           fill: Color.transparent,
           textString: key,
-          fontColor: Color.darkgray,
+          fontColor: Color.gray,
           fontWeight: "bold"}),
         new Text({
           fill: Color.transparent,
+          fontColor: Color.gray.lighter(),
           textString: obj.safeToString(value)})]
     })
   }
@@ -371,9 +381,11 @@ export class ColorPicker extends Window {
   }
 
   colorField(color) {
+     const picker = this;
      return new Morph({
          extent: pt(80, 80),
          layout: new VerticalLayout(),
+         fill: Color.transparent,
          setColor(c) {
             const [colorView, hashView] = this.submorphs;
             colorView.fill = c;
@@ -381,12 +393,53 @@ export class ColorPicker extends Window {
          },
          submorphs: [
             new Morph({fill: color, extent: pt(80, 50), 
-                       onMouseDown: () => {
-                 this.target.fill = color;
-            }}),
-            new Text({textString: color.toHexString()})
+                       onMouseDown(evt) {
+                           picker.color = this.fill;
+                           picker.update();
+                       }}),
+            new Text({textString: color.toHexString(), fill: Color.transparent,
+                      fontColor: Color.gray})
          ]
      });
+  }
+
+  toggleHarmoniesButton() {
+     return this.getSubmorphNamed("toggleHarmonies") || 
+       {name: "toggleHarmonies", fill: Color.transparent,
+        active: false,
+        onMouseDown(evt) {
+           const [toggleIndicator, _] = this.submorphs;
+           this.update(this.active = !this.active, toggleIndicator);
+        },
+        update: (active, toggleIndicator) => {
+           const duration = 300, easing = 'ease-out';
+           if (active) {
+              toggleIndicator.animate({rotation: num.toRadians(90), duration});
+              this.harmonies().animate({opacity: 1, duration, easing});
+              this.animate({height: this.height + this.harmonies().height, duration});
+           } else {
+              toggleIndicator.animate({rotation: 0, duration});
+              this.animate({height: this.height - this.harmonies().height, duration});
+              this.harmonies().animate({opacity: 0, duration, easing});
+           }
+        },
+        layout: new HorizontalLayout({spacing: 5}),
+        submorphs: [
+        {extent: pt(30,30), clipMode: "hidden", origin: pt(15,15), scale: 0.5,
+         position: pt(20,20), fill: Color.transparent, submorphs: [
+             {extent: pt(30,30), rotation: num.toRadians(45), origin: pt(15,15), position: pt(-20,0),
+              fill: Color.gray}]},
+        {
+           type: "text",
+           fill: Color.transparent,
+           fontColor: Color.gray,
+           fontWeight: 'bold',
+           textString: "Harmonies",
+           readOnly: true,
+           onMouseDown: (evt) => {
+               
+           }
+        }]};
   }
 
   harmonies() {
@@ -470,18 +523,22 @@ export class ColorPicker extends Window {
          name: "harmonySelector",
          extent: pt(150, 50),
          layout: new HorizontalLayout(),
+         fill: Color.transparent,
          onMouseDown: (evt) => {
-               this.harmonyMenu = Menu.forCommands([
-                  "Complementary", "Triadic", "Tetradic", "Quadratic", "Analogous", "Neutral"
-               ], this, {title: "Harmonies:"}).openInWorld();
+               this.harmonyMenu = Menu.forItems([
+                  {command: "Complementary", target: this}, {command: "Triadic", target: this}, 
+                  {command: "Tetradic", target: this}, {command: "Quadratic", target: this}, 
+                  {command: "Analogous", target: this}, {command: "Neutral", target: this}
+               ]).openInWorld();
                this.harmonyMenu.globalPosition = this.harmonySelector().globalPosition;
             },
          submorphs: [new Text({
             name: "harmonyLabel",
             nativeCursor: "pointer",
             fill: Color.transparent,
+            readOnly: true,
             fontSize: 15,
-            fontColor: Color.gray.darker(),
+            fontColor: Color.gray.lighter(),
             textString: this.harmony.name})]
      });
      
