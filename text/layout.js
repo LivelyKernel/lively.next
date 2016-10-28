@@ -654,8 +654,12 @@ export default class TextLayout {
     if (nRows === 0) return;
     var nInsRows = changeType === "insertText" ? nRows : 0,
         nDelRows = changeType === "deleteText" ? nRows : 0,
-        placeholderRows = Array(nInsRows);
-    this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
+        placeholderRows = Array(nInsRows),
+        from = start.row + 1,
+        to = from + nDelRows,
+        lines = this.lines;
+    // this.lines.splice(start.row+1, nDelRows, ...placeholderRows);
+    this.lines = lines.slice(0, from).concat(placeholderRows).concat(lines.slice(to));
   }
 
   updateFromMorphIfNecessary(morph) {
