@@ -105,10 +105,8 @@ function applyConfig(System, packageConfig, packageURL) {
   if (!packageInSystem.map) packageInSystem.map = {};
 
   if (sysConfig) {
-    if (sysConfig.packageConfigPaths)
-      System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths))
     if (sysConfig.main) main = sysConfig.main;
-    applySystemJSConfig(System, packageConfig, packageURL)
+    applySystemJSConfig(System, sysConfig, packageURL)
   }
 
   packageInSystem.referencedAs = packageInSystem.referencedAs || [];
@@ -128,7 +126,14 @@ function applyConfig(System, packageConfig, packageURL) {
   return packageApplyResult;
 }
 
-function applySystemJSConfig(System, systemjsConfig, pkg) {}
+function applySystemJSConfig(System, sysConfig, pkg) {
+  // console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
+  // console.log(JSON.stringify(systemjsConfig));
+  if (sysConfig.packageConfigPaths)
+    System.packageConfigPaths = arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths))
+  if (sysConfig.packages) // packages is normaly not support locally in a package.json
+    System.config({packages: sysConfig.packages})
+}
 
 function applyLivelyConfig(System, livelyConfig, pkg) {
   // configures System object from lively config JSON object.
