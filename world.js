@@ -301,8 +301,10 @@ var worldCommands = [
 
   {
     name: "open browser",
-    exec: world => {
-      return new Browser({extent: pt(700, 600), center: world.center}).activate();
+    exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
+      var browser = await Browser.browse(args.packageName, args.moduleName, undefined, {extent: pt(700, 600)});
+      browser.getWindow().activate();
+      return true;
     }
   },
 
