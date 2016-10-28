@@ -14,6 +14,7 @@ export class Window extends Morph {
       borderColor: Color.gray,
       borderWidth: 1,
       clipMode: "hidden",
+      resizable: true,
       ...obj.dissoc(props, ["title", "targetMorph"])
     });
     this.submorphs = this.submorphs.concat(this.controls());
@@ -40,7 +41,9 @@ export class Window extends Morph {
   }
 
   controls() {
-    return this.buttons().concat(this.titleLabel()).concat(this.resizer());
+    return this.buttons()
+               .concat(this.titleLabel())
+               .concat(this.resizable ? this.resizer() : []);
   }
 
   buttons() {
@@ -82,7 +85,7 @@ export class Window extends Morph {
         }]
       },
 
-      this.getSubmorphNamed("maximize") || {
+      this.resizable ? (this.getSubmorphNamed("maximize") || {
         ...defaultStyle,
         name: "maximize",
         center: pt(55,13),
@@ -93,7 +96,7 @@ export class Window extends Morph {
           fill: Color.black.withA(0), scale: 0.7, visible: false,
           styleClasses: ["morph", "fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
         }]
-      }
+      }) : undefined
 
     ]
   }
@@ -105,7 +108,7 @@ export class Window extends Morph {
       readOnly: true,
       draggable: false,
       grabbable: false,
-      fill: Color.gray.withA(0),
+      fill: Color.transparent,
       fontColor: Color.darkGray,
       reactsToPointer: false,
       selectable: false
