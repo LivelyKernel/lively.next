@@ -78,9 +78,12 @@ export class Occur {
     // editor will be translated so that the cursor is on the matching
     // row/column as it was before.
     var pos = this.textMorph.cursorPosition;
-    this.displayOccurContent(this.options);
-    var translatedPos = this.originalToOccurPosition(pos);
-    this.textMorph.cursorPosition = translatedPos;
+    var notEmpty = this.displayOccurContent(this.options);
+
+    if(notEmpty) {
+        var translatedPos = this.originalToOccurPosition(pos);
+        this.textMorph.cursorPosition = translatedPos;
+    }
     return this;
   }
 
@@ -120,8 +123,13 @@ export class Occur {
         lines = found.map(({line}) => line),
         occurDocument = this._document = new Document(lines);
     occurDocument._occurMatchingLines = found;
-    this.textMorph.changeDocument(occurDocument, true);
-    this.highlight(options.needle);
+    if (found.length > 0) {
+       this.textMorph.changeDocument(occurDocument, true);
+       this.highlight(options.needle);
+       return true;
+    } else {
+       return false;
+    }
   }
 
   displayOriginalContent() {
