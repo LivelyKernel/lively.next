@@ -86,6 +86,15 @@ describe("layout", () => {
       expect(m.height).equals(totalHeight);
     });
 
+    it("can leave the container extent untouched", () => {
+      const [item1, item2, item3] = m.submorphs;
+      m.layout = new VerticalLayout({autoResize: false});
+      var extentBefore = m.extent;
+      item1.width = 10;
+      item2.height = 10;
+      expect(m.extent).equals(extentBefore);
+    })
+
   });
 
 
