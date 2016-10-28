@@ -525,15 +525,15 @@ function installMethods(klass, instanceMethods, classMethods) {
   }
 
   // 5. undefine properties that were removed form class definition
-  var toDeleteInstance = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
+  var toDeleteInstance = lively_lang.arr.withoutAll(Object.getOwnPropertyNames(klass.prototype), instanceMethods.map(function (m) {
     return m.key;
-  }).concat(["constructor"]));
+  }).concat(["constructor", "arguments", "caller"]));
   toDeleteInstance.forEach(function (key) {
     delete klass.prototype[key];
   });
-  var toDeleteClass = lively.lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
+  var toDeleteClass = lively_lang.arr.withoutAll(Object.getOwnPropertyNames(klass), classMethods.map(function (m) {
     return m.key;
-  }).concat(["length", "name", "prototype"]));
+  }).concat(["length", "name", "prototype", "arguments", "caller"]));
   toDeleteClass.forEach(function (key) {
     delete klass[key];
   });
