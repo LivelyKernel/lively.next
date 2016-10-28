@@ -484,7 +484,7 @@ var customTranslate = function () {
   var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(proceed, load) {
     var _this4 = this;
 
-    var System, debug, start, isEsm, isCjs, isGlobal, env, instrumented, useCache, indexdb, hashForCache, cache, stored, id;
+    var System, debug, start, isEsm, isCjs, isGlobal, env, instrumented, useCache, indexdb, hashForCache, cache, stored;
     return regeneratorRuntime.wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
@@ -579,15 +579,6 @@ var customTranslate = function () {
               instrumented = true;
               debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
               // debug && console.log(load.source)
-            } else if (isCjs && isNode$1) {
-              load.metadata.format = "cjs";
-              id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
-
-              load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-              load.metadata["lively.modules instrumented"] = true;
-              instrumented = true;
-              debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name);
-              // console.log("[lively.modules] no rewrite for cjs module", load.name)
             } else if (load.metadata.format === "global") {
               env.recorderName = "System.global";
               env.recorder = System.global;
@@ -597,6 +588,17 @@ var customTranslate = function () {
               instrumented = true;
               debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name);
             }
+
+            // cjs is currently not supported to be instrumented
+            // } else if (isCjs && isNode) {
+            //   load.metadata.format = "cjs";
+            //   var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
+            //   load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
+            //   load.metadata["lively.modules instrumented"] = true;
+            //   instrumented = true;
+            //   debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
+            //   // console.log("[lively.modules] no rewrite for cjs module", load.name)
+            // }
 
             if (!instrumented) {
               debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
@@ -1699,9 +1701,8 @@ function applyConfig(System, packageConfig, packageURL) {
   if (!packageInSystem.map) packageInSystem.map = {};
 
   if (sysConfig) {
-    if (sysConfig.packageConfigPaths) System.packageConfigPaths = lively_lang.arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
     if (sysConfig.main) main = sysConfig.main;
-    applySystemJSConfig(System, packageConfig, packageURL);
+    applySystemJSConfig(System, sysConfig, packageURL);
   }
 
   packageInSystem.referencedAs = packageInSystem.referencedAs || [];
@@ -1719,7 +1720,13 @@ function applyConfig(System, packageConfig, packageURL) {
   return packageApplyResult;
 }
 
-function applySystemJSConfig(System, systemjsConfig, pkg) {}
+function applySystemJSConfig(System, sysConfig, pkg) {
+  // console.log("[lively.modules package configuration] applying SystemJS config of %s", pkg);
+  // console.log(JSON.stringify(systemjsConfig));
+  if (sysConfig.packageConfigPaths) System.packageConfigPaths = lively_lang.arr.uniq(System.packageConfigPaths.concat(sysConfig.packageConfigPaths));
+  if (sysConfig.packages) // packages is normaly not support locally in a package.json
+    System.config({ packages: sysConfig.packages });
+}
 
 function applyLivelyConfig(System, livelyConfig, pkg) {
   // configures System object from lively config JSON object.
