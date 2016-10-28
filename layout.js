@@ -5,11 +5,12 @@ import { Morph } from "./index.js";
 
 class Layout {
   
-  constructor({spacing, border, container} = {}) {
+  constructor({spacing, border, container, autoResize} = {}) {
     this.border = {top: 0, left: 0, right: 0, bottom: 0, ...border};
     this.spacing = spacing || 0;
     this.active = false;
     this.container = container;
+    this.autoResize = autoResize != undefined ? autoResize : true;
   }
 
   description() { return "Describe the layout behavior here." }
@@ -109,7 +110,7 @@ export class VerticalLayout extends Layout {
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
       maxWidth = Math.max(m.width, maxWidth);
     });
-    this.container.extent = pt(maxWidth, pos.y)
+    if (this.autoResize) this.container.extent = pt(maxWidth, pos.y)
     this.active = false;
   }
 
@@ -133,7 +134,7 @@ export class HorizontalLayout extends Layout {
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.height, maxHeight);
     });
-    this.container.extent = pt(pos.x + this.spacing, maxHeight + 2 * this.spacing);
+    if (this.autoResize) this.container.extent = pt(pos.x + this.spacing, maxHeight + 2 * this.spacing);
     this.active = false;
  }
 
