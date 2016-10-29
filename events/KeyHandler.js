@@ -220,7 +220,7 @@ export default class KeyHandler {
         return {command: "null", count: numArg};
       }
       // universal argument
-      if (keyCombo === "Ctrl-U") return {command: "null", count: 4, keyChain: ""};
+      if (keyCombo === "Ctrl-U") return {command: "null", count: 4, keyChain: "Ctrl-U"};
     }
 
     // for simple input test both upper and lowercase
