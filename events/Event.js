@@ -90,6 +90,7 @@ export class Event {
   }
 
   get targetMorph() { return this.targetMorphs[0]; }
+  get timestamp() { return this.domEvt.timeStamp; }
 
   get position() {
     if (!this.domEvt) return pt(0,0);
