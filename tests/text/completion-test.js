@@ -1,8 +1,10 @@
 /*global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after*/
+import { promise } from "lively.lang";
 import { World, MorphicEnv } from "../../index.js";
 import { Text } from "../../text/morph.js";
 import { pt, Rectangle } from "lively.graphics";
-import { CompletionController, WordCompleter, DynamicJavaScriptCompleter } from "../../text/completion.js";
+import { CompletionController, WordCompleter } from "../../text/completion.js";
+import { DynamicJavaScriptCompleter } from "../../ide/js/completers.js";
 import { expect } from "mocha-es6";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { createDOMEnvironment } from "../../rendering/dom-helper.js";
@@ -65,6 +67,7 @@ describe("completion widget", () => {
 
   it("opens it", async () => {
     await text.simulateKeys("Alt-Space");
+    await promise.delay(0);
     var menu = world.get("text completion menu");
     expect(menu.get("list").items.map(({value: {completion}}) => completion).slice(0, 2)).deep.equals(["abc", "afg"])
   });
@@ -73,6 +76,7 @@ describe("completion widget", () => {
     text.cursorDown(2)
     text.insertText("a");
     await text.simulateKeys("Alt-Space");
+    await promise.delay(0);
     var menu = world.get("text completion menu");
     expect(menu.get("input").textString).equals("a", "input line content doesn't show prefix");
     var pos = text.charBoundsFromTextPosition(text.cursorPosition).topLeft();
