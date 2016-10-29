@@ -845,7 +845,6 @@ export class Morph {
   onMouseMove(evt) {}
 
   addKeyBindings(bindings) {
-    this._cachedKeyhandlers = null;
     this.addMethodCallChangeDoing({
       target: this,
       selector: "addKeyBindings",
@@ -857,10 +856,14 @@ export class Morph {
     });
   }
   get keybindings() { return this._keybindings || []; }
-  set keybindings(bndgs) { this._cachedKeyhandlers = null; return this._keybindings = bndgs; }
+  set keybindings(bndgs) { return this._keybindings = bndgs; }
   get keyhandlers() {
-    return this._cachedKeyhandlers
-       || (this._cachedKeyhandlers = [KeyHandler.withBindings(this.keybindings)]);
+    // Note that reconstructing the keyhandler on every stroke might prove too
+    // slow. On my machine it's currently around 10ms which isn't really noticable
+    // but for snappier key behavior we might want to cache that. Tricky thing
+    // about caching is to figure out when to invalidate... keys binding changes
+    // can happen in a number of places
+    return [KeyHandler.withBindings(this.keybindings)];
   }
 
   get keyCommandMap() {

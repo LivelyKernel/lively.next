@@ -348,7 +348,6 @@ export class Text extends Morph {
   addPlugin(plugin) {
     if (!this._plugins) this._plugins = [];
     if (!this._plugins.includes(plugin)) {
-      this._cachedKeyhandlers = null;
       this._plugins.push(plugin);
       typeof plugin.attach === "function" && plugin.attach(this);
     }
@@ -357,7 +356,6 @@ export class Text extends Morph {
 
   removePlugin(plugin) {
     if (!this._plugins || !this._plugins.includes(plugin)) return false;
-    this._cachedKeyhandlers = null;
     arr.remove(this._plugins, plugin);
     typeof plugin.detach === "function" && plugin.detach(this);
     return true
