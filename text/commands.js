@@ -75,8 +75,9 @@ var commands = [
       var pasted, kr = morph.env.eventDispatcher.killRing;
 
 
-      if (opts.killRingCycleBack && (arr.last(arr.pluck(morph.commandHandler.history, "name")) || "").includes("clipboard paste"))
-        pasted = kr.back();
+      if (opts.killRingCycleBack
+       && (arr.last(arr.pluck(morph.commandHandler.history, "name")) || "")
+         .includes("clipboard paste")) pasted = kr.back();
 
       if (!pasted && kr.isCycling())
         pasted = kr.yank();
