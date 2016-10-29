@@ -96,10 +96,10 @@ function commandsForBrowser(browser) {
     return list
   }
 
-  function runTestsInModule(browser, moduleName, spec) {
+  async function runTestsInModule(browser, moduleName, spec) {
     var runner = browser.get("test runner window");
     if (!runner)
-      runner = world.execCommand("open test runner");
+      runner = await world.execCommand("open test runner");
     if (runner.minimized)
       runner.toggleMinimize();
     return spec ?
