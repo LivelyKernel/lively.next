@@ -18,14 +18,17 @@ const defaultTextStyle = {
 export class Label extends Morph {
 
   constructor(props = {}) {
+    var { fontMetric } = props;
     super({
       draggable: false,
       padding: 0,
       nativeCursor: "default",
       autofit: true,
       ...defaultTextStyle,
-      ...props
+      ...obj.dissoc(props, ["fontMetric"])
     });
+    if (fontMetric)
+      this._fontMetric = fontMetric;
   }
 
   get isLabel() { return true }
@@ -108,15 +111,23 @@ export class Label extends Morph {
   }
 
   fit() {
-    this.extent = this.textBounds().extent()
+    this.extent = this.textBounds().extent();
     this._needsFit = false;
   }
 
   textBounds() {
     // this.env.fontMetric.sizeFor(style, string)
     if (this._cachedTextBounds) return this._cachedTextBounds;
-    var padding = this.padding,
-        {width, height} = this.env.fontMetric.sizeFor(this.textStyle, this.textString);
+    var fm = this._fontMetric || this.env.fontMetric,
+        padding = this.padding,
+        width, height;
+    if (!fm.isProportional(this.fontFamily)) {
+      var {width: charWidth, height: charHeight} = fm.sizeFor(this.textStyle, "x");
+      width = this.textString.length * charWidth;
+      height = charHeight;
+    } else {
+      ({width, height} = fm.sizeFor(this.textStyle, this.textString));
+    }
     return this._cachedTextBounds = new Rectangle(0,0,
       padding.left() + padding.right() + width,
       padding.top() + padding.bottom() + height);
