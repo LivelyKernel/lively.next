@@ -1,3 +1,4 @@
+/*global System*/
 import { Rectangle, Color, pt, rect } from "lively.graphics";
 import { tree, arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
@@ -10,11 +11,6 @@ import { connect, disconnectAll } from "lively.bindings";
 import KeyHandler from "./events/KeyHandler.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--
-
-import { ObjectDrawer, Workspace } from "./tools.js";
-import { Browser } from "./ide/javascript-browser.js";
-import { CodeSearcher } from "./ide/code-search.js"
-import TestRunner from "lively.morphic/ide/test-runner.js"
 
 var worldCommands = [
 
@@ -235,7 +231,8 @@ var worldCommands = [
 
   {
     name: "open workspace",
-    exec: world => {
+    exec: async world => {
+      var { Workspace } = await System.import("lively.morphic/tools.js");
       return new Workspace({center: world.center}).activate();
     }
   },
@@ -294,7 +291,8 @@ var worldCommands = [
 
   {
     name: "open object drawer",
-    exec: world => {
+    exec: async world => {
+      var { ObjectDrawer } = await System.import("lively.morphic/tools.js")
       return new ObjectDrawer().openInWorldNearHand();
     }
   },
@@ -302,6 +300,7 @@ var worldCommands = [
   {
     name: "open browser",
     exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
+      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
       var browser = await Browser.browse(args.packageName, args.moduleName, undefined, {extent: pt(700, 600)});
       browser.getWindow().activate();
       return true;
@@ -312,6 +311,7 @@ var worldCommands = [
     name: "choose and browse package resources",
     exec: async world => {
       var browser, focused = world.focusedMorph;
+      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
       if (focused && focused.getWindow() instanceof Browser)
         browser = focused.getWindow();
 
@@ -353,6 +353,7 @@ var worldCommands = [
     name: "choose and browse module",
     exec: async world => {
       var browser, focused = world.focusedMorph;
+      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
       if (focused && focused.getWindow() instanceof Browser)
         browser = focused.getWindow();
 
@@ -388,8 +389,10 @@ var worldCommands = [
 
   {
     name: "open code search",
-    exec: world => {
+    exec: async world => {
       var browser, focused = world.focusedMorph;
+      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
+      var { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js");
       if (focused && focused.getWindow() instanceof Browser) {
         browser = focused.getWindow();
         if (browser.state.associatedSearchPanel)
@@ -401,7 +404,19 @@ var worldCommands = [
 
   {
     name: "open test runner",
-    exec: world => TestRunner.open()
+    exec: async world => {
+      var {default: TestRunner} = await System.import("lively.morphic/ide/test-runner.js");
+      return TestRunner.open();
+    }
+  },
+
+  {
+    name: "open file browser",
+    exec: async world => {
+      var { default: HTTPFileBrowser } = await System.import("lively.morphic/ide/http-file-browser.js");
+      world.openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate();
+      return true;
+    }
   }
 ]
 
