@@ -38,18 +38,18 @@ describe("text key input", () => {
   });
 
 
-  it("key input", () => {
-    t.simulateKeys("a");
+  it("key input", async () => {
+    await t.simulateKeys("a");
     expect(t.textString).equals("ahello\n world");
-    t.simulateKeys("b");
+    await t.simulateKeys("b");
     expect(t.textString).equals("abhello\n world");
-    t.simulateKeys("Right c d");
+    await t.simulateKeys("Right c d");
     expect(t.textString).equals("abhcdello\n world");
     expect(t.cursorPosition).deep.equals({row: 0, column: 5});
   });
 
-  it("key input with count", () => {
-    t.simulateKeys("Ctrl-3 a");
+  it("key input with count", async () => {
+    await t.simulateKeys("Ctrl-3 a");
     expect(t.textString).equals("aaahello\n world");
   });
 
