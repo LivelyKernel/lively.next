@@ -1,6 +1,6 @@
 /*global System*/
 
-import { chain, arr, obj, string } from "lively.lang";
+import { chain, arr, obj, string, date } from "lively.lang";
 import { pt, Rectangle } from "lively.graphics"
 import { Range } from "./range.js"
 import { show } from "../index.js"
@@ -982,8 +982,22 @@ var commands = [
     }
   }
 
-]
+];
 
+var usefulEditorCommands = [
+  {
+    name: 'insert date',
+    handlesCount: true,
+    exec: function(ed, opts, count) {
+      var dateString = date.format(new Date(), count ? 'mediumDate' : 'isoDate'/*short*/)/*long*/;
+      ed.undoManager.group();
+      ed.insertText(dateString);
+      ed.undoManager.group();
+      return true;
+    }
+  }
+];
+commands.push(...usefulEditorCommands);
 
 import { activate as iyGotoCharActivate } from "./iy-goto-char.js"
 commands.push(iyGotoCharActivate);

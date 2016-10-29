@@ -236,6 +236,10 @@ var config = {
       {keys: "Ctrl-Shift-'", command: "selectSymbolReferenceOrDeclaration"},
       {keys: "Ctrl-Shift-[", command: "selectSymbolReferenceOrDeclarationPrev"},
       {keys: "Ctrl-Shift-]", command: "selectSymbolReferenceOrDeclarationNext"},
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+      // helpful stuff
+      {keys: {mac: "Meta-Shift-L D A T E", win: "Ctrl-Shift-L D A T E"}, command: 'insert date'},
     ]
 
   },
