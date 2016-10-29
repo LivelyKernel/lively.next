@@ -182,7 +182,7 @@ export default class EventDispatcher {
 
   resetKeyInputState() {
     this.eventState.keyInputState = {
-      keyChain: undefined,
+      keyChain: "",
       count: undefined
     }
   }
@@ -450,10 +450,11 @@ export default class EventDispatcher {
       } catch (e) {
         err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
         err.originalError = e;
-        typeof $world !== "undefined" ? $world.logError(err) : console.error(err);
+        typeof this.world !== "undefined" ? this.world.logError(err) : console.error(err);
       }
       if (err || evt.stopped) break;
     }
+
     this.activations--;
     evt.onAfterDispatchCallbacks.forEach(ea => ea());
     if (err) throw err;
@@ -495,6 +496,7 @@ export default class EventDispatcher {
 
   simulateDOMEvents(...eventSpecs) {
     var doc = (this.emitter.document || this.emitter.ownerDocument);
+    var events = [];
     for (let spec of eventSpecs) {
       let {target, position, type} = spec;
 
@@ -529,9 +531,11 @@ export default class EventDispatcher {
         spec.target.scrollTop = spec.scrollTop || 0;
       }
 
-      this.dispatchDOMEvent(new SimulatedDOMEvent(spec))
+      var evt = new SimulatedDOMEvent(spec);
+      events.push(evt);
+      this.dispatchDOMEvent(evt);
     }
-    return this;
+    return events;
   }
 
   doCopy(content) {

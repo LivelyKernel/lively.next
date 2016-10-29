@@ -1,3 +1,4 @@
+import { show } from "../index.js";
 import Keys from "./Keys.js";
 import bowser from "bowser";
 import config from "../config.js";
@@ -10,9 +11,14 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 
   let {keyCombo, key, data} = evt,
       toExecute,
-      success = false,
+      executed = false,
       keyhandlers = morph.keyhandlers,
-      isInputEvent = keyCombo.startsWith("input-");
+      keyInputState = evt.keyInputState || {},
+      isInputEvent = keyCombo.startsWith("input-"),
+      nullCommand = false,
+      carryOverCount = keyInputState.count,
+      carryOverKeyChain = keyInputState.keyChain || "",
+      keyInputStateNeedsUpdate = false;
 
   if (!keyhandlers || (noInputEvents && isInputEvent)) return false;
 
@@ -21,7 +27,18 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
 
     if (!toExecute || !toExecute.command) continue;
 
-    let {command, args, passEvent, count, onlyWhenFocused} = toExecute;
+    let {command, args, passEvent, count, keyChain, onlyWhenFocused} = toExecute;
+
+    // carry count and keychain along, either to be used in the command lookup
+    // + execute process, or if there is no command (keyCombo is part of a key
+    // chain) then update the keyInputState accordingly so that count/keyChain are
+    // remembered when the next event is processed
+
+    keyInputStateNeedsUpdate = true;
+    carryOverCount = count;
+    carryOverKeyChain = keyChain;
+
+    nullCommand = command === "null"; // "null"... is there something better?!
 
     if (onlyWhenFocused) {
       var world = morph.world();
@@ -29,31 +46,45 @@ function invokeKeyHandlers(morph, evt, noInputEvents = false) {
         continue;
     }
 
-    // allow keyboardHandler to consume keys
-    success = command === "null" ? true : morph.execCommand(command, args, count, evt);
+    executed = nullCommand ? false : morph.execCommand(command, args, count, evt);
 
     // do not stop input events to not break repeating
-    if (success && evt && !isInputEvent && !passEvent)
-      typeof evt.stop === "function" && evt.stop();
+    if (executed && (!isInputEvent || command !== "insertstring")
+     && !passEvent && typeof evt.stop === "function")
+       evt.stop();
 
-    // reset count on success
-    if (success && evt && evt.keyInputState && command !== "null")
-      evt.keyInputState.count = undefined;
-
-    if (success) break;
+    if (executed || nullCommand) break;
   }
 
-  if (!success && isInputEvent && morph.onTextInput) {
-    var count = evt && evt.keyInputState ? evt.keyInputState.count : undefined;
-    success = morph.execCommand("insertstring", {
+  if (!executed && !nullCommand && isInputEvent && morph.onTextInput && !carryOverKeyChain) {
+    var count = keyInputState.count;
+    executed = morph.execCommand("insertstring", {
       string: data || key,
       undoGroup: config.text.undoGroupDelay/*ms*/
     }, count, evt);
-    if (success && evt && evt.keyInputState)
-      evt.keyInputState.count = undefined;
   }
 
-  return success;
+  if (keyInputStateNeedsUpdate) {
+    // delay setting the new keyInputState to allow all target morphs to
+    // handle key, this is necessary when multiple morphs share the same
+    // keyChain prefixes
+    // keyInputState.count = carryOverCount;
+    if (typeof evt.onAfterDispatch === "function") {
+      evt.onAfterDispatch(() => {
+        keyInputState.count = executed ? undefined : carryOverCount;
+        keyInputState.keyChain = executed ? "" : carryOverKeyChain;
+      });
+    } else {
+      keyInputState.count = executed ? undefined : carryOverCount;
+      keyInputState.keyChain = executed ? "" : carryOverKeyChain;
+    }
+  }
+
+  // when isKeyChainPrefix was detected, do not return a truthy value so that
+  // submorphs that might also be the event target can process the evt as well.
+  // This is necessary to allow for shared keyChain prefixes in multiple morphs,
+  // sth like "Ctrl-X D" in the world and "Ctrl-X Ctrl-X" in a text morph.
+  return executed && !nullCommand;
 }
 
 
@@ -170,18 +201,8 @@ export default class KeyHandler {
   }
 
   eventCommandLookup(morph, evt) {
-    // Mutates evt.keyInputState keyChain / count
-
-    let {keyCombo, keyInputState} = evt,
-        cmd = this.lookup(keyCombo, keyInputState);
-
-    // only modify keyInputState if necessary
-    if (cmd && keyInputState) {
-      keyInputState.keyChain = cmd.keyChain || "";
-      keyInputState.count = cmd.hasOwnProperty("count") ? cmd.count : undefined;
-    }
-
-    return cmd;
+    let {keyCombo, keyInputState} = evt;
+    return this.lookup(keyCombo, keyInputState);
   }
 
   lookup(keyCombo, keyInputState = {keyChain: undefined, count: undefined}) {
@@ -199,7 +220,7 @@ export default class KeyHandler {
         return {command: "null", count: numArg};
       }
       // universal argument
-      if (keyCombo === "Ctrl-U") return {command: "null", count: 4, keyChain: keyCombo};
+      if (keyCombo === "Ctrl-U") return {command: "null", count: 4, keyChain: ""};
     }
 
     // for simple input test both upper and lowercase

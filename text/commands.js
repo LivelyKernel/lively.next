@@ -969,10 +969,7 @@ var commands = [
     scrollCursorIntoView: false,
     multiSelectAction: "single",
     exec: function(morph, args, count, evt) {
-      if (evt && evt.keyInputState) {
-        evt.keyInputState.count = undefined;
-        evt.keyInputState.keyCHain = "";
-      }
+      morph.env.eventDispatcher.resetKeyInputState();
       morph.selection.disableMultiSelect
         && morph.selection.disableMultiSelect();
       if (!morph.selection.isEmpty())

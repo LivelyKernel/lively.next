@@ -224,39 +224,45 @@ describe("pointer event related", function() {
   describe("hover", () => {
 
     it("into world", async () => {
-      await env.eventDispatcher.simulateDOMEvents({target: world, type: "pointerover", position: pt(50,50)}).whenIdle();
+      await env.eventDispatcher.simulateDOMEvents({target: world, type: "pointerover", position: pt(50,50)});
       assertEventLogContains(["onHoverIn-world"]);
     });
 
     it("in and out world", async () => {
       await env.eventDispatcher.simulateDOMEvents(
         {target: world, type: "pointerover", position: pt(50,50)},
-        {target: world, type: "pointerout", position: pt(50,50)}).whenIdle();
+        {target: world, type: "pointerout", position: pt(50,50)});
+      await env.eventDispatcher.whenIdle();
       assertEventLogContains(["onHoverIn-world", "onHoverOut-world"]);
     });
 
     it("in and out single morph", async () => {
       await env.eventDispatcher.simulateDOMEvents(
         {target: submorph3, type: "pointerover", position: pt(50,50)},
-        {target: submorph3, type: "pointerout", position: pt(50,50)}).whenIdle();;
+        {target: submorph3, type: "pointerout", position: pt(50,50)});
+      await env.eventDispatcher.whenIdle();
       assertEventLogContains(["onHoverIn-world", "onHoverIn-submorph3", "onHoverOut-world","onHoverOut-submorph3"]);
     });
 
     it("hover in and out with submorph", async () => {
       // simulate the over/out dom events when moving
       // - into submorph1 => into submorph2 (contained in 1) => out of submorph2 => out of submorph1
-      await env.eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(10,10)}).whenIdle();
+      await env.eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph1, position: pt(10,10)});
+      await env.eventDispatcher.whenIdle();
 
       await env.eventDispatcher.simulateDOMEvents(
         {type: "pointerout", target: submorph1, position: pt(15,20)},
-        {type: "pointerover", target: submorph2, position: pt(15,20)}).whenIdle();
+        {type: "pointerover", target: submorph2, position: pt(15,20)});
+      await env.eventDispatcher.whenIdle();
 
       await env.eventDispatcher.simulateDOMEvents(
         {type: "pointerout", target: submorph2, position: pt(15,41)},
-        {type: "pointerover", target: submorph1, position: pt(15,41)}).whenIdle();
+        {type: "pointerover", target: submorph1, position: pt(15,41)});
+      await env.eventDispatcher.whenIdle();
 
-      await env.eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(9,9) }).whenIdle();
+      await env.eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph1, position: pt(9,9) });
 
+      await env.eventDispatcher.whenIdle();
       assertEventLogContains([
         "onHoverIn-world", "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-submorph2", "onHoverOut-world", "onHoverOut-submorph1"]);
     });
@@ -265,9 +271,9 @@ describe("pointer event related", function() {
 
       var tl = submorph1.topLeft;
       submorph2.topRight = pt(submorph1.width + 10, 0);
-      await env.eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph2, position: pt(109, 10)}).whenIdle();
-      await env.eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph2, position: pt(111, 10)}).whenIdle();
-
+      await env.eventDispatcher.simulateDOMEvents({type: "pointerover", target: submorph2, position: pt(109, 10)});
+      await env.eventDispatcher.simulateDOMEvents({type: "pointerout", target: submorph2, position: pt(111, 10)});
+      await env.eventDispatcher.whenIdle();
       assertEventLogContains([
         "onHoverIn-world", "onHoverIn-submorph1", "onHoverIn-submorph2", "onHoverOut-world", "onHoverOut-submorph1", "onHoverOut-submorph2"]);
     });
@@ -292,7 +298,7 @@ describe("scroll events", () => {
   it("has correct scroll after scroll event and onScroll is triggered", async () => {
     var called = false;
     submorph1.onScroll = () => called = true;
-    await env.eventDispatcher.simulateDOMEvents({type: "scroll", target: submorph1, scrollLeft: 20, scrollTop: 100}).whenIdle();
+    await env.eventDispatcher.simulateDOMEvents({type: "scroll", target: submorph1, scrollLeft: 20, scrollTop: 100});
     expect(submorph1.scroll).equals(pt(20,100));
     expect().assert(called, "onScroll not called");
   });
@@ -378,6 +384,23 @@ describe("key events", () => {
       await env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, key: "x"});
       await env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, key: "x"});
       expect(log).equals("2");
+      expect(env).deep.property("eventDispatcher.eventState.keyInputState")
+        .deep.equals({count: undefined, keyChain: ""});
+    });
+
+    it("dispatches keychained input events correctly", async () => {
+      var log = "";
+      world.addCommands([{name: "test", exec: () => { log += "!"; return true; }}]);
+      world.addKeyBindings([{keys: "x y", command: "test"}]);
+      submorph4.focus();
+      var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "x"});
+      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "x"});
+      var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "y"});
+      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "y"});
+      var [e] = await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "z"});
+      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({type: "input", key: "z"});
+      expect(log).equals("!");
+      expect(submorph4.textString).equals("ztext");
       expect(env).deep.property("eventDispatcher.eventState.keyInputState")
         .deep.equals({count: undefined, keyChain: ""});
     });

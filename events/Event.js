@@ -203,10 +203,11 @@ export class SimulatedDOMEvent {
       ctrlKey: false,
       shiftKey: false,
       metaKey: false,
+      stopped: false,
       ...props
     });
   }
 
-  preventDefault() {}
-  stopPropagation() {}
+  preventDefault() { this.defaultPrevented = true; }
+  stopPropagation() { this.propagationStopped = true; }
 }
