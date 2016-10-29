@@ -634,8 +634,9 @@ export class Morph {
   }
 
   openInWorldNearHand(optWorld) {
-    var world = optWorld || this.world() || this.env.world;
-    return world ? this.openInWorldNear(world.firstHand.position) : undefined;
+    var world = optWorld || this.world() || this.env.world,
+        pos = world.firstHand ? world.firstHand.position : pt(0,0);
+    return world ? this.openInWorldNear(pos) : undefined;
   }
 
   openInWorld(pos, optWorld) {
