@@ -343,6 +343,47 @@ describe("key events", () => {
     expect(pressed).equals("Alt-Shift-X")
   });
 
+  describe("command key invocation", () => {
+
+    it("command is captured by first morph that handles key", async () => {
+      var log = "";
+      submorph2.focus();
+      submorph1.addCommands([{name: "test", exec: () => { log += "1"; return true; }}]);
+      submorph2.addCommands([{name: "test", exec: () => { log += "2"; return true; }}]);
+      submorph1.addKeyBindings([{keys: "x", command: "test"}]);
+      submorph2.addKeyBindings([{keys: "x", command: "test"}]);
+      await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "x"});
+      expect(log).equals("1");
+    });
+
+    it("allows key chains", async () => {
+      var log = "";
+      submorph1.focus();
+      submorph1.addCommands([{name: "test", exec: () => { log += "!"; return true; }}]);
+      submorph1.addKeyBindings([{keys: "x y", command: "test"}]);
+      await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "x"});
+      await env.eventDispatcher.simulateDOMEvents({type: "keydown", key: "y"});
+      expect(log).equals("!");
+      expect(env).deep.property("eventDispatcher.eventState.keyInputState")
+        .deep.equals({count: undefined, keyChain: ""});
+    });
+
+    it("allows similar key chain prefixes in multiple morphs", async () => {
+      var log = "";
+      submorph1.addCommands([{name: "test", exec: () => { log += "1"; return true; }}]);
+      submorph1.addKeyBindings([{keys: "Ctrl-X y", command: "test"}]);
+      submorph1.addCommands([{name: "test", exec: () => { log += "2"; return true; }}]);
+      submorph1.addKeyBindings([{keys: "Ctrl-X Ctrl-X", command: "test"}]);
+      submorph2.focus();
+      await env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, key: "x"});
+      await env.eventDispatcher.simulateDOMEvents({type: "keydown", ctrlKey: true, key: "x"});
+      expect(log).equals("2");
+      expect(env).deep.property("eventDispatcher.eventState.keyInputState")
+        .deep.equals({count: undefined, keyChain: ""});
+    });
+
+  });
+
 });
 
 describe("event simulation", () => {
