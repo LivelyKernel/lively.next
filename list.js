@@ -448,9 +448,7 @@ export class List extends Morph {
     this.scroll = scroll.addXY(offsetX, offsetY);
   }
 
-  onScroll() {
-    fun.debounceNamed(this.id + "scroll", 81, () => this.update(), true)();
-  }
+  onScroll() { this.update(); }
 
   onItemMorphClicked(evt, itemMorph) {
     var itemI = itemMorph.itemIndex,

@@ -174,6 +174,7 @@ export default class EventDispatcher {
       dragDelta: null,
       lastDragPosition: null,
       hover: {hoveredOverMorphs: [], unresolvedPointerOut: false},
+      scroll: {interactiveScrollInProgress: null},
       keyInputState: null
     };
     this.resetKeyInputState()

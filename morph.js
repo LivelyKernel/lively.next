@@ -969,6 +969,21 @@ export class Morph {
         evt.stop();
       }
     }
+
+    // Here we install a debouncer for letting the renderer know when it is
+    // safe to update the DOM for scroll values.
+    // See MorphAfterRenderHook in rendering/morphic-default.js and
+    // https://github.com/LivelyKernel/lively.morphic/issues/88
+    // for more info
+    if (!evt.state.scroll.interactiveScrollInProgress) {
+      var {promise: p, resolve} = promise.deferred();
+      evt.state.scroll.interactiveScrollInProgress = p;
+      p.debounce = lively.lang.fun.debounce(250, () => {
+        evt.state.scroll.interactiveScrollInProgress = null;
+        resolve();
+      });
+    }
+    evt.state.scroll.interactiveScrollInProgress.debounce();
   }
 
 
