@@ -1,3 +1,4 @@
+export { default as config } from "./config.js";
 export * from "./morph.js";
 export * from "./world.js";
 export * from "./text/morph.js";
