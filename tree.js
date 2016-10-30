@@ -9,7 +9,7 @@ import { connect, disconnect, signal } from "lively.bindings"
 This module provides a tree widget to display hierarchical data. The tree data passed to the tree can be arbitrary and should be wrapped into a TreeData object. Besides the main tree structure this object receives a function to extract a name from a tree node
 
 var root = new (class extends TreeData {
-  nameOfNode(node) { return node.name }
+  display(node) { return node.name }
   isCollapsed(node) { return node.isCollapsed }
   collapse(node, bool) { node.isCollapsed = bool; }
   getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children }
@@ -39,7 +39,7 @@ var tree = new Tree({
 tree.remove()
 
 tree.scroll = pt(0, tree.nodeMorphHeight+4)
-arr.pluck(tree.submorphs[0].submorphs, "textString")
+arr.pluck(tree.nodeMorphs, "labelString")
 ["child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]
 */
 
@@ -53,6 +53,7 @@ export class TreeNode extends Label {
       nonSelectionFontColor: Color.rgbHex("333"),
       selectionColor: Color.blue,
       fontColor: Color.rgbHex("333"),
+
       ...obj.dissoc(props, ["isCollapsed", "isCollapsable"])
     });
     this.isCollapsable = props.hasOwnProperty("isCollapsable") ? props.isCollapsable : false;
@@ -88,7 +89,10 @@ export class TreeNode extends Label {
     }
   }
 
-  get toggle() { return this.submorphs[0]; }
+  get toggle() { return this.getSubmorphNamed("toggle"); }
+  get label() { return this.getSubmorphNamed("label"); }
+  get labelString() { var l = this.label; return l ? l.textString : ""; }
+  set labelString(s) { var l = this.label; l && (l.textString = s); }
 
   get selectionFontColor() { return this.getProperty("selectionFontColor"); }
   set selectionFontColor(c) { this.addValueChange("selectionFontColor", c); }
@@ -392,7 +396,7 @@ export class TreeData {
     this.root = root;
   }
 
-  nameOfNode(node) { throw new Error("Not yet implemented"); }
+  display(node) { throw new Error("Not yet implemented"); }
   isCollapsed(node) { throw new Error("Not yet implemented"); }
   collapse(node, bool) { throw new Error("Not yet implemented"); }
   getChildren(node) { throw new Error("Not yet implemented"); }
@@ -456,7 +460,7 @@ export class TreeData {
           nextNode = this.getChildren(currentNode).find(ea => eqFn(nextPathPart, ea));
 
       if (!nextNode)
-        throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.nameOfNode(currentNode)}`);
+        throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.display(currentNode)}`);
 
       currentNode = nextNode;
     }
@@ -473,7 +477,7 @@ var treeCommands = [
     exec: async tree => {
       var treeData = tree.treeData;
       var nodes = treeData.asListWithIndexAndDepth()
-      var items = nodes.map(({node, depth, i}) => ({isListItem: true, string: " ".repeat(depth)+treeData.nameOfNode(node), value: node}))
+      var items = nodes.map(({node, depth, i}) => ({isListItem: true, string: " ".repeat(depth)+treeData.display(node), value: node}))
       var {selected: [node]} = await tree.world().filterableListPrompt("Select item", items);
       if (node) {
         tree.selection = node;
@@ -641,11 +645,11 @@ var treeCommands = [
 
       tree.prewalk(
         td.root,
-        (node, i, depth) => printedNodes.push(" ".repeat(Math.max(0, depth-1))+td.nameOfNode(node)),
+        (node, i, depth) => printedNodes.push(" ".repeat(Math.max(0, depth-1))+td.display(node)),
         td.getChildren);
       printedNodes.shift();
 
-      var content = lively.lang.string.printTree(td.root, td.nameOfNode, td.getChildren),
+      var content = lively.lang.string.printTree(td.root, td.display, td.getChildren),
 
       // var content = printedNodes.join("\n"),
           title = treeMorph.getWindow() ? "printed " + treeMorph.getWindow().title : treeMorph.name;

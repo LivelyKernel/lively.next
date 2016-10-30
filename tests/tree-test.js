@@ -7,7 +7,7 @@ import { dummyFontMetric as fontMetric } from "./test-helpers.js";
 
 function testTreeData() {
   class TestTreeData extends TreeData {
-    nameOfNode(node) { return node.name }
+    display(node) { return node.morph || node.name }
     isCollapsed(node) { return node.isCollapsed }
     collapse(node, bool) { node.isCollapsed = bool; }
     getChildren(node) { return node.isLeaf ? null : node.isCollapsed ? [] : node.children }
@@ -67,7 +67,7 @@ describe("tree", () => {
     var path = ["root", "child 3", "child 3 - 2"],
         td = tree.treeData,
         found = await td.followPath(path,
-          (pathPart, node) => td.nameOfNode(node) === pathPart);
+          (pathPart, node) => td.display(node) === pathPart);
     expect(td.root.children[2].children[1]).equals(found);
   });
 
