@@ -16,6 +16,7 @@ import { World } from "./world.js";
 import { Morph, Hand, Image, Ellipse, Triangle, Path } from "./morph.js";
 import { List } from "./list.js";
 import { Text } from "./text/morph.js";
+import { Label } from "./text/label.js";
 import { Button, CheckBox } from "./widgets.js";
 
 export function morph(props = {}, opts = {restore: false}) {
@@ -31,6 +32,7 @@ export function morph(props = {}, opts = {restore: false}) {
         case 'triangle': klass = Triangle; break;
         case 'path':     klass = Path; break;
         case 'text':     klass = Text; break;
+        case 'label':    klass = Label; break;
         case 'list':     klass = List; break;
         case 'button':   klass = Button; break;
         case 'checkbox': klass = CheckBox; break;
