@@ -581,14 +581,58 @@ var treeCommands = [
   {
     name: "collapse or uncollapse all siblings",
     exec: async (tree, opts = {what: "collapse"}) => {
+
       var doCollapse = opts.what === "collapse";
-      await Promise.all(
-        tree.selectedNodeAndSiblings.map(node =>
-          !tree.treeData.isLeaf(node)
-        && tree.treeData.isCollapsed(node) !== doCollapse
-        && tree.onNodeCollapseChanged({node, isCollapsed: doCollapse})));
+      var td = tree.treeData;
+      var nodesToChange
+
+      if (doCollapse) {
+        // find all the parent nodes of the nodes deepest in the tree below the
+        // selected node and collapse those
+        if (td.isCollapsed(tree.selection)) return true;
+
+        var startNode = td.parentNode(tree.selection)
+        var maxDepth = -1;
+        lively.lang.tree.prewalk(startNode,
+          (node, i, depth) => {
+            if (depth < maxDepth) return;
+            if (depth > maxDepth) {
+              maxDepth = depth;
+              nodesToChange = [];
+            }    
+            if (depth === maxDepth)
+              arr.pushIfNotIncluded(nodesToChange, td.parentNode(node));
+          },
+          td.getChildren)
+
+      } else {
+        // find the non-leaf nodes below the selection that are at the same
+        // depth and at least one of those non-leaf nodes is collapsed:
+        // uncollapse all collapsed of this set
+        var parents = arr.compact([td.parentNode(tree.selection)]);
+        while (true) {
+          if (!parents.length) break;
+          nodesToChange = arr.flatmap(parents, n => allNonLeafChildren(n));
+          var needCollapseChange = nodesToChange.every(n => td.isCollapsed(n) === doCollapse);
+          if (!needCollapseChange) break;
+          parents = nodesToChange;
+        }
+      }
+
+      await collapseOrUncollapse(nodesToChange, doCollapse)
+
       tree.scrollSelectionIntoView();
+
       return true;
+
+      function allNonLeafChildren(parent) {
+        return td.getChildren(parent).filter(n => !td.isLeaf(n));
+      }
+      
+      function collapseOrUncollapse(nodes, doCollapse) {
+        return Promise.all(nodes.map(node => tree.onNodeCollapseChanged({node, isCollapsed: doCollapse})));
+      }
+
     }
   },
 
