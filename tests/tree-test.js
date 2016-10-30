@@ -62,4 +62,13 @@ describe("tree", () => {
     expect(tree.selectedIndex).equals(2);
     expect(tree.selection).containSubset({isCollapsed: true, name: "child 2"});
   })
+  
+  it("descends along path and returns node", async () => {
+    var path = ["root", "child 3", "child 3 - 2"],
+        td = tree.treeData,
+        found = await td.followPath(path,
+          (pathPart, node) => td.nameOfNode(node) === pathPart);
+    expect(td.root.children[2].children[1]).equals(found);
+  });
+
 });

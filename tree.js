@@ -149,7 +149,6 @@ export class TreeNode extends Label {
     this.relayout();
   }
 
-
   onMouseDown(evt) {
     if (this.toggle && evt.state.clickedOnMorph === this.toggle) {
       this.toggleCollapse();
@@ -174,7 +173,7 @@ export class Tree extends Morph {
       throw new Error("Cannot create tree without TreeData!");
 
     var { fontMetric } = props;
-    
+
     super({selection: null, clipMode: "auto", padding: Rectangle.inset(2), ...obj.dissoc(props, ["fontMetric"])});
     if (fontMetric) this._fontMetric = fontMetric;
     this.addMorph({name: "nodeItemContainer", extent: this.extent, fill: null, draggable: false, grabbable: false, clipMode: "visible"});
@@ -420,6 +419,49 @@ export class TreeData {
       (node, i, depth) => nodesWithIndex.push({node, depth, i}),
       (node) => this.getChildren(node));
     return nodesWithIndex;
+  }
+
+  async followPath(path, eqFn, startNode = this.root) {
+    // takes a path list that should denote a path into a node inside the tree.
+    // path[n] does not necessarily be directly a node of treeData, when eqFn
+    // is passed this fuction is used to find the right node for the path part
+    // eqFn(pathPath, node) should return true if pathPart denotes node and
+    // should be selected for the next descend step.
+    //
+    // Example:
+    // // Let's use a tree of resources (lively.resource) describing a file system structure.
+    // var target = resource("file://foo/bar/baz.js");
+    // // assume that treeData.root.resource === resource("file://foo/");
+    // var path = target.parents().concat(target)
+    // var found = await td.followPath(path, (resource, node) => resource.equals(node.resource));
+    // found.resource // => resource("file://foo/bar/baz.js")
+    // // + the path to the node is now uncollapsed and e.g. can be selected via
+    // tree.selection = found; tree.centerSelection();
+
+    if (!eqFn) eqFn = (pathPart, node) => pathPart === node;
+
+    var startIndex = path.findIndex(ea => eqFn(ea, startNode));
+    path = path.slice(startIndex+1);
+
+    if (!path.length) return null;
+
+    var currentNode = startNode;
+    while (true) {
+      if (!path.length) break;
+
+      if (this.isCollapsed(currentNode))
+        await this.collapse(currentNode, false);
+
+      var nextPathPart = path.shift(),
+          nextNode = this.getChildren(currentNode).find(ea => eqFn(nextPathPart, ea));
+
+      if (!nextNode)
+        throw new Error(`Cannot descend into tree, next node of ${path.join(".")} not found at ${this.nameOfNode(currentNode)}`);
+
+      currentNode = nextNode;
+    }
+
+    return currentNode;
   }
 
 }
