@@ -1,4 +1,4 @@
-import { Morph, Text, show } from "./index.js"
+import { Morph, Text, show, GridLayout } from "./index.js"
 import { Label } from "./text/label.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { arr, fun, obj } from "lively.lang";
@@ -552,12 +552,11 @@ export class FilterableList extends Morph {
 
     Object.assign(this, {items: []}, props);
 
-
-    this.relayout();
-
     connect(this.get("input"), "inputChanged", this, "updateFilter");
     connect(this.get("list"), "selection", this, "selectionChanged");
-    connect(this, "extent", this, "relayout");
+    this.layout = new GridLayout({grid: [["input"], ["list"]]})
+    this.layout.row(0).fixed = 25;
+    this.layout.row(0).paddingBottom = 5;
   }
 
   get isList() { return true; }
@@ -598,15 +597,6 @@ export class FilterableList extends Morph {
   }
 
   focus() { this.get("input").focus(); }
-
-  relayout() {
-    var i = this.get("input"),
-        l = this.get("list"),
-        ext = this.extent;
-    i.width = l.width = this.width;
-    l.top = i.bottom;
-    l.height = this.height - i.height;
-  }
 
   get multiSelect() { return this.get("list").multiSelect; }
   set multiSelect(multiSelect) { this.get("list").multiSelect = multiSelect; }
