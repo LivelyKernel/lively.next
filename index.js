@@ -8,19 +8,20 @@ export { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "./l
 export { runEval, syncEval }
 
 function runEval(code, options) {
-  options = Object.assign({
-    format: "global",
+  var {format, System: S, targetModule} = options = {
+    format: "esm",
     System: null,
-    targetModule: null
-  }, options);
+    targetModule: null,
+    ...options
+  }
 
-  var S = options.System || (typeof System !== "undefined" && System);
-  if (!S && options.targetModule) {
+  if (!S && typeof System !== "undefined") S = System;
+  if (!S && targetModule) {
     return Promise.reject(new Error("options to runEval have targetModule but cannot find system loader!"));
   }
 
-  return options.targetModule ?
-    esmEval.runEval(options.System || System, code, options) :
+  return targetModule && (["esm", "es6", "register"].includes(format))?
+    esmEval.runEval(S, code, options) :
     globalEval.runEval(code, options);
 }
 
