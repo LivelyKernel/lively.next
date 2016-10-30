@@ -692,7 +692,7 @@ export class World extends Morph {
     return this.openPrompt(new InformPrompt({label, ...opts}), opts);
   }
 
-  prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false, historyId: null}) {
+  prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false}) {
     // this.world().prompt("test", {input: "123"})
     // options = {
     //   input: STRING, -- optional, prefilled input string
@@ -877,12 +877,14 @@ export class TextPrompt extends AbstractPrompt {
     this.get("label") || this.addMorph({
         fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
         name: "label", type: "text", textString: "", readOnly: true});
+
     this.get("input") || this.addMorph(Text.makeInputLine({
-          historyId: historyId,
+          historyId,
           name: "input", textString: input || "",
           borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
           fontColor: Color.gray.darker(), padding: rect(10,2,0,-2)
     }));
+
     this.get("okBtn") || this.addMorph({name: "okBtn", type: "button", label: "OK", ...this.okButtonStyle});
     this.get("cancelBtn") || this.addMorph({name: "cancelBtn", type: "button", label: "Cancel", ...this.cancelButtonStyle});
     connect(this.get("okBtn"), 'fire', this, 'resolve');
@@ -891,7 +893,7 @@ export class TextPrompt extends AbstractPrompt {
     this.initLayout();
   }
 
-  resolve() { super.resolve(this.get("input").textString); }
+  resolve() { super.resolve(this.get("input").acceptInput()); }
 
   initLayout() {
      this.layout = new GridLayout({
