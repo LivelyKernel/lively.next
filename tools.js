@@ -94,23 +94,23 @@ export class ObjectDrawer extends Morph {
 export class Workspace extends Window {
 
   constructor(props = {}) {
+    var jsPlugin = new JavaScriptEditorPlugin();
     super({
       title: "Workspace",
       targetMorph: {
         type: "text",
-        textString: props.content || "var i = 2 + 3",
+        textString: props.content || "// Enter and evaluate JavaScript code here",
         ...config.codeEditor.defaultStyle,
-        plugins: [new JavaScriptEditorPlugin()]
+        plugins: [jsPlugin]
       },
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
     });
-    this.targetMorph.__defineGetter__("evalEnvironment", function () {
-      return {
-        targetModule: "lively://lively.next-workspace/" + this.id,
-        context: this.doitContext || this.owner.doitContext || this
-      }
-    })
+    var ed = this.targetMorph;
+    jsPlugin.evalEnvironment = {
+      targetModule: "lively://lively.next-workspace/" + ed.id,
+      context: ed, format: "esm"
+    }
   }
 
 }

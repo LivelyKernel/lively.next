@@ -152,8 +152,9 @@ export class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   build() {
+    var jsPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
     var style = {borderWidth: 1, borderColor: Color.gray, fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"},
-        textStyle = {borderWidth: 1, borderColor: Color.gray, type: "text", ...config.codeEditor.defaultStyle, plugins: [new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)]},
+        textStyle = {borderWidth: 1, borderColor: Color.gray, type: "text", ...config.codeEditor.defaultStyle, plugins: [jsPlugin]},
         container = morph({
           ...style,
           layout: new GridLayout({
@@ -167,14 +168,17 @@ export class Browser extends Window {
         });
     // FIXME? how to specify that directly??
     container.layout.grid.row(0).adjustProportion(-1/5);
-    container.get("sourceEditor").__defineGetter__("evalEnvironment", function () {
-      var browser = this.getWindow();
-      if (!browser.selectedModule) throw new Error("Browser has no module selected");
-      return {
-        targetModule: browser.selectedModule.name,
-        context: this.doitContext || this.owner.doitContext || this
+    jsPlugin.evalEnvironment = {
+      get targetModule() {
+        var browser = jsPlugin.textMorph.getWindow();
+        if (!browser.selectedModule) throw new Error("Browser has no module selected");
+        return browser.selectedModule.name;
+      },
+      context: jsPlugin.textMorph,
+      get format() {
+        return lively.modules.module(this.targetModule).format() || "global";
       }
-    });
+    }
     return container;
   }
 

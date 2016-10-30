@@ -1,5 +1,5 @@
-import { show, Morph, morph, Text } from "lively.morphic"
-import { obj, arr, fun, promise } from "lively.lang"
+import { show, Morph, morph, Text, config } from "lively.morphic"
+import { obj, arr, num, fun, promise } from "lively.lang"
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect, signal, once } from "lively.bindings"
 import { resource } from "lively.resources";
@@ -114,10 +114,9 @@ export default class TextEditor extends Morph {
       {name: "saveButton", type: "button", label: "save"},
       {name: "removeButton", type: "button", label: "remove"},
       {
+        ...config.codeEditor.defaultStyle,
         name: "contentText", type: "text",
-        fontFamily: "Inconsolata, monospace",
-        lineWrapping: false,
-        padding: Rectangle.inset(4,2), clipMode: "auto"
+        lineWrapping: false
       }
     ]
 
@@ -170,14 +169,54 @@ export default class TextEditor extends Morph {
 
   async showFileContent(resource) {
     try {
-      var contentText = this.get("contentText");
-      contentText.textString = await resource.read();
-      contentText.gotoDocumentStart();
-      contentText.scroll = pt(0.0,0.0);
+      this.state.currentFile = resource;
+      var content = await resource.read();
+      await this.prepareEditorForFile(resource, content);
       var win = this.getWindow();
       if (win) win.title = resource.name();
-      this.state.currentFile = resource;
     } catch (e) { this.showError(e); }
+  }
+
+  async prepareEditorForFile(resource, content = "") {
+    var ed = this.get("contentText");
+
+    var {editorPlugin} = this.state;
+    if (editorPlugin) ed.removePlugin(editorPlugin);
+    editorPlugin = null;
+  
+    var url = (resource || {}).url,
+        fileType = "plain text";
+
+    if (content.length > 2**20/*1MB*/) {
+      this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
+
+    } else if (url) {
+      var [_, ext] = url.match(/\.([^\.\s]+)$/) || [];
+
+      switch (ext) {
+
+        case 'js':
+          // FIXME
+          var { JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js")
+          editorPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
+          editorPlugin.evalEnvironment = {
+            get targetModule() { return url; },
+            context: ed,
+            get format() { return lively.modules.module(this.targetModule).format() || "global"; }
+          }
+          break;
+          
+        default:
+          fileType = "plain text";
+      }
+    }
+
+    if (editorPlugin) ed.addPlugin(editorPlugin);
+    this.state.editorPlugin = editorPlugin;
+
+    ed.textString = content
+    ed.gotoDocumentStart();
+    ed.scroll = pt(0,0);
   }
 
   focus() {

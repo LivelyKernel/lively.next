@@ -375,6 +375,10 @@ export class Text extends Morph {
     return plugin ? plugin[method](...args) : undefined;
   }
 
+  pluginFind(iterator) {
+    return this._plugins && this._plugins.slice().reverse().find(iterator);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   get clipMode()  { return this.getProperty("clipMode"); }
@@ -1346,14 +1350,24 @@ export class Text extends Morph {
 
   tokenAt(pos) { return this.pluginInvokeFirst("tokenAt", pos); }
   astAt(pos) { return this.pluginInvokeFirst("astAt", pos); }
+  get evalEnvironment() {
+    var p = this.pluginFind(p => p.isEditorPlugin);
+    return p && p.evalEnvironment;
+  }
+  set evalEnvironment(env) {
+    var p = this.pluginFind(p => p.isEditorPlugin);
+    p && (p.evalEnvironment = env);
+  }
+  get doitContext() { var {context} = this.evalEnvironment || {}; return context; }
+  set doitContext(c) { (this.evalEnvironment || {}).context = c; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
-    exportToJSON(options) {
-      return Object.assign(super.exportToJSON(options), {
-        textString: this.textString
-      });
-    }
+  exportToJSON(options) {
+    return Object.assign(super.exportToJSON(options), {
+      textString: this.textString
+    });
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging

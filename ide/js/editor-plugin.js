@@ -40,18 +40,24 @@ export class JavaScriptEditorPlugin {
     this.checker = new JavaScriptChecker();
     this._tokens = null;
     this._ast = null;
+    this.evalEnvironment = {format: "esm", targetModule: null, context: null}
   }
 
   get isEditorPlugin() { return true }
 
+  get isJSEditorPlugin() { return true }
+
   attach(editor) {
+    this.evalEnvironment.context = editor;
     this.textMorph = editor;
     connect(editor, "textChange", this, "onTextChange");
     this.requestHighlight();
   }
 
   detach(editor) {
+    // this.evalEnvironment.context = null;
     disconnect(editor, "textChange", this, "onTextChange");
+    this.checker.uninstall(this.textMorph);
   }
 
   onTextChange() {

@@ -13,12 +13,13 @@ function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : m
     throw new Error("doit not possible: lively.vm eval-strategies not available!")
 
   if (!env) env = morph.evalEnvironment || {}; // FIXME!
-  var {targetModule, context} = env,
+  var {targetModule, context, format} = env,
       code = morph.textInRange(range),
       context = context || morph,
-      targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
+      // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
       sourceURL = targetModule + "_doit_" + Date.now(),
-      opts = {System, targetModule, context, sourceURL};
+      format = format || "esm",
+      opts = {System, targetModule, format, context, sourceURL};
   return evalStrategy.runEval(code, opts);
 }
 
