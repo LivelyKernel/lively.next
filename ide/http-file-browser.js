@@ -171,6 +171,39 @@ var browserCommands = [
       })()
     }
   },
+
+  {
+    name: "find file and select",
+    handlesCount: true,
+    exec: async (browser, _, count) => {
+      var exclude = [".git", "node_modules"],
+          loc = browser.location,
+          items = (await loc.dirList(count || 'infinity', {exclude})).map(ea => ({
+            isListItem: true,
+            string: ea.url.slice(loc.url.length),
+            value: ea.url
+          })),
+          {selected: [targetURL]} = await browser.world().filterableListPrompt(
+            "Choose module to open", items, {
+              historyId: "lively.morphic/ide/http-file-browser-find-file",
+              requester: browser, width: 700, multiSelect: false})
+
+      if (!targetURL) {
+        browser.setStatusMessage("Canceled");
+        return true;
+      }
+
+      try {
+        await browser.gotoFile(targetURL);
+        browser.fileTree.centerSelection()
+      } catch (e) {
+        browser.showError(e);
+        return true;
+      }
+    }
+  },
+
+
 ]
 
 export default class HTTPFileBrowser extends Morph {
@@ -339,9 +372,18 @@ export default class HTTPFileBrowser extends Morph {
     this.get("selectedFileName").textString =  sel ? sel.url : "";
   }
 
+  async gotoFile(urlOrResource) {
+    var target = typeof urlOrResource === "string" ?
+          resource(urlOrResource) : urlOrResource,
+        path = target.parents().concat(target),
+        td = this.fileTree.treeData,
+        found = await td.followPath(path, (resource, node) => resource.equals(node.resource));
+    return found ? this.selectedFile = found.resource : null;
+  }
+
   async onLocationChanged() {
-    var treeData = this.get("fileTree").treeData,
-        url = this.get("locationInput").input;
+    var treeData = this.fileTree.treeData,
+        url = this.locationInput.input;
     if (!url) { this._isLoading = false; return; }
     var loc = resource(url);
     if (!loc.isDirectory()) loc = loc.asDirectory();

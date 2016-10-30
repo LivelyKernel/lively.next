@@ -351,10 +351,14 @@ var worldCommands = [
 
   {
     name: "choose and browse module",
-    exec: async world => {
-      var browser, focused = world.focusedMorph;
-      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
-      if (focused && focused.getWindow() instanceof Browser)
+    handlesCount: true,
+    exec: async (world, args, count) => {
+      var focused = world.focusedMorph, win = focused && focused.getWindow();
+      if (win && win.targetMorph && win.targetMorph.isFileBrowser)
+        return win.targetMorph.execCommand("find file and select", args, count);
+      
+      var browser, { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
+      if (win && win instanceof Browser)
         browser = focused.getWindow();
 
       var livelySystem = (await System.import("lively-system-interface")).localInterface, // FIXME
