@@ -27,7 +27,7 @@ var browserCommands = [
       } else  if (sel.isDirectory()) {
         browser.execCommand("set location to selection");
       } else {
-        var editor = TextEditor.openURL(sel.url);
+        var editor = TextEditor.openURL(sel.url, {extent: pt(600,800)});
         setTimeout(() => editor.activate(), 100);
       }
       return true;
@@ -92,11 +92,29 @@ var browserCommands = [
 
   {
     name: "refresh contents",
-    exec: async browser => {
+    exec: (browser, args, count, evt) => {
       // FIXME preserve scroll and expansion state
-      var scroll = browser.fileTree.scroll;
-      await browser.keepFileTreeStateWhile(() => browser.location = browser.location);
-      browser.fileTree.scroll = scroll;
+      // FIXME!
+      if (evt && evt.keyCombo === "input-g" && browser.locationInput.isFocused()) return false;
+
+      return (async () => {
+        var scroll = browser.fileTree.scroll;
+        await browser.keepFileTreeStateWhile(() => browser.location = browser.location);
+        browser.fileTree.scroll = scroll;
+        return true;
+      })();
+    }
+  },
+
+  {
+    name: "set file filter",
+    exec: async browser => {
+      browser.excludeFiles = browser.excludeFiles || [];
+      var excludeList = await browser.world().editListPrompt("Add or remove items to be excluded from the file list", browser.excludeFiles);
+      if (excludeList) {
+        browser.excludeFiles = excludeList;
+        await browser.execCommand("refresh contents");
+      }
       return true;
     }
   },
@@ -160,10 +178,12 @@ var browserCommands = [
       return (async () => {
         var really = await browser.world().confirm(`Really delete ${browser.selectedFile.url}?`);
         if (really) {
-          var res = browser.selectedFile;
+          var res = browser.selectedFile,
+              i = browser.fileTree.selectedIndex;
           await res.remove();
           await browser.execCommand("refresh contents");
-          browser.selectedFile = res.parent();
+          await browser.whenFinishedLoading()
+          browser.fileTree.selectedIndex = i;
         } else {
           browser.world().inform("delete canceled");
         }
@@ -226,7 +246,7 @@ var browserCommands = [
     name: "find file and select",
     handlesCount: true,
     exec: async (browser, _, count) => {
-      var exclude = [".git", "node_modules"],
+      var exclude = {exclude: browser.excludeFiles || []},
           loc = browser.location,
           items = (await loc.dirList(count || 'infinity', {exclude})).map(ea => ({
             isListItem: true,
@@ -267,8 +287,9 @@ export default class HTTPFileBrowser extends Morph {
   constructor(props = {}) {
     super({
       name: "file browser",
-      clipMode: "auto",
-      extent: pt(500,400),
+      clipMode: "visible",
+      extent: pt(500,500),
+      excludeFiles: [".git", ".DS_Store"],
       ...props
       });
 
@@ -277,11 +298,15 @@ export default class HTTPFileBrowser extends Morph {
 
   get isFileBrowser() { return true; }
 
+  get excludeFiles() { return this.getProperty("excludeFiles"); }
+  set excludeFiles(c) { this.addValueChange("excludeFiles", c); }
+
   build() {
     this.removeAllMorphs();
 
+    var browser = this;
     var treeData = new (class extends TreeData {
-      nameOfNode({resource}) {
+      display({resource}) {
         var col1Size = 19, col2Size = 8,
             {lastModified, size} = resource,
             datePrinted = lastModified ?
@@ -295,7 +320,8 @@ export default class HTTPFileBrowser extends Morph {
         if (!node.resource) return;
         if (node === this.root) bool = false;
         if (!bool && !node.subResources) {
-          var [dirs, files] = arr.partition(await node.resource.dirList(1), ea => ea.isDirectory())
+          var exclude = browser.excludeFiles || [];
+          var [dirs, files] = arr.partition(await node.resource.dirList(1, {exclude}), ea => ea.isDirectory())
           dirs = arr.sortBy(dirs, ea => ea.name().toLowerCase());
           files = arr.sortBy(files, ea => ea.name().toLowerCase());
           node.subNodes = dirs.concat(files).map(res => ({isCollapsed: true, resource: res}))
@@ -330,6 +356,7 @@ export default class HTTPFileBrowser extends Morph {
 
     var searchButton =       this.addMorph({name: "searchButton",       ...btnStyle, labelWithTextAttributes: makeIconStyle("search"), tooltip: "search for files"}),
         reloadButton =       this.addMorph({name: "reloadButton",       ...btnStyle, labelWithTextAttributes: makeIconStyle("refresh"), tooltip: "reload list"}),
+        filterButton =       this.addMorph({name: "filterButton",       ...btnStyle, labelWithTextAttributes: makeIconStyle("filter"), tooltip: "set file filter"}),
         openFileButton =     this.addMorph({name: "openFileButton",     ...btnStyle, labelWithTextAttributes: makeIconStyle("pencil-square-o"), tooltip: "open selected file"}),
         addDirectoryButton = this.addMorph({name: "addDirectoryButton", ...btnStyle, labelWithTextAttributes: makeIconStyle("folder-o"), tooltip: "add directory"}),
         addFileButton =      this.addMorph({name: "addFileButton",      ...btnStyle, labelWithTextAttributes: makeIconStyle("file-o"), tooltip: "add file"}),
@@ -341,8 +368,9 @@ export default class HTTPFileBrowser extends Morph {
     connect(fileTree, 'selection', this, 'showSelectedFile');
 
     connect(searchButton,       'fire', this, 'execCommand', {converter: () => "find file and select"});
-    connect(openFileButton,     'fire', this, 'execCommand', {converter: () => "open selected file"});
     connect(reloadButton,       'fire', this, 'execCommand', {converter: () => "refresh contents"});
+    connect(filterButton,       'fire', this, 'execCommand', {converter: () => "set file filter"});
+    connect(openFileButton,     'fire', this, 'execCommand', {converter: () => "open selected file"});
     connect(renameFileButton,   "fire", this, "execCommand", {converter: () => "rename file"});
     connect(deleteFileButton,   "fire", this, "execCommand", {converter: () => "delete file or directory"});
     connect(addFileButton,      "fire", this, "execCommand", {converter: () => "add file"});
@@ -357,8 +385,10 @@ export default class HTTPFileBrowser extends Morph {
         fileTree =         this.get("fileTree"),
         locationInput =    this.get('locationInput'),
         searchButton =     this.get('searchButton'),
-        bottomButtons =   [this.get("reloadButton"),
-                           this.get("openFileButton"),
+        topButtons =      [this.get("searchButton"),
+                           this.get("filterButton"),
+                           this.get("reloadButton")],
+        bottomButtons =   [this.get("openFileButton"),
                            this.get("addFileButton"),
                            this.get("addDirectoryButton"),
                            this.get("renameFileButton"),
@@ -369,15 +399,19 @@ export default class HTTPFileBrowser extends Morph {
         buttonHeight = 20;
 
     locationInput.position = pt(0,0);
-    locationInput.extent = pt(this.width-buttonHeight, locationInputHeight);
-    searchButton.topLeft = locationInput.topRight;
-    searchButton.extent = pt(buttonHeight, buttonHeight);
+    locationInput.extent = pt(this.width-3*buttonHeight, locationInputHeight);
+
+    topButtons.forEach(btn => btn.extent = pt(buttonHeight, buttonHeight));
+    topButtons[0].topLeft = locationInput.topRight;
+    for (var i = 1; i < topButtons.length; i++)
+      topButtons[i].topLeft = topButtons[i-1].topRight;
+
     fileTree.topLeft = locationInput.bottomLeft;
     fileTree.extent = pt(this.width, this.height - locationInputHeight - selectedFileNameHeight - buttonHeight)
     selectedFileName.topLeft = fileTree.bottomLeft;
     selectedFileName.extent = pt(this.width, selectedFileNameHeight);
 
-    bottomButtons.forEach(btn => btn.extent = pt(this.width/(nButtons+1), buttonHeight));
+    bottomButtons.forEach(btn => btn.extent = pt(this.width/nButtons, buttonHeight));
     bottomButtons[0].topLeft = selectedFileName.bottomLeft;
     for (var i = 1; i < bottomButtons.length; i++)
       bottomButtons[i].topLeft = bottomButtons[i-1].topRight;
@@ -481,8 +515,10 @@ export default class HTTPFileBrowser extends Morph {
       {keys: {mac: "Meta-C|Alt-W", win: "Ctrl-C|Alt-W"}, command: "copy file path to clipboard"},
       {keys: "Shift-=", command: "add directory"},
       {keys: {mac: "Meta-Shift-=", win: "Ctrl-Shift-="}, command: "add file"},
+      {keys: "F2", command: "set file filter"},
       {keys: "F3", command: "rename file"},
       {keys: "Backspace|Delete", command: "delete file or directory"},
+      {keys: "g", command: "refresh contents"}
     ].concat(super.keybindings);
   }
 }
