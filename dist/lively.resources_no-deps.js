@@ -311,7 +311,12 @@ var Resource = function () {
   createClass(Resource, [{
     key: "equals",
     value: function equals(otherResource) {
-      return otherResource && this.constructor == otherResource.constructor && this.url === otherResource.url;
+      if (!otherResource || this.constructor !== otherResource.constructor) return false;
+      var myURL = this.url,
+          otherURL = otherResource.url;
+      if (myURL[myURL.length - 1] === "/") myURL = myURL.slice(0, -1);
+      if (otherURL[otherURL.length - 1] === "/") otherURL = otherURL.slice(0, -1);
+      return myURL === otherURL;
     }
   }, {
     key: "toString",
@@ -332,6 +337,7 @@ var Resource = function () {
   }, {
     key: "schemeAndHost",
     value: function schemeAndHost() {
+      if (this.isRoot()) return this.asFile().url;
       return this.url.slice(0, this.url.length - this.path().length);
     }
   }, {
@@ -349,6 +355,33 @@ var Resource = function () {
         result.unshift(p);p = p.parent();
       }
       return result;
+    }
+  }, {
+    key: "isParentOf",
+    value: function isParentOf(otherRes) {
+      var _this = this;
+
+      return otherRes.schemeAndHost() === this.schemeAndHost() && otherRes.parents().some(function (p) {
+        return p.equals(_this);
+      });
+    }
+  }, {
+    key: "commonDirectory",
+    value: function commonDirectory(other) {
+      if (other.schemeAndHost() !== this.schemeAndHost()) return null;
+      if (this.isDirectory() && this.equals(other)) return this;
+      if (this.isRoot()) return this.asDirectory();
+      if (other.isRoot()) return other.asDirectory();
+      var otherParents = other.parents(),
+          myParents = this.parents(),
+          common = this.root();
+      for (var i = 0; i < myParents.length; i++) {
+        var myP = myParents[i],
+            otherP = otherParents[i];
+        if (!otherP || !myP.equals(otherP)) return common;
+        common = myP;
+      }
+      return common;
     }
   }, {
     key: "join",
@@ -373,6 +406,7 @@ var Resource = function () {
   }, {
     key: "asDirectory",
     value: function asDirectory() {
+      if (this.url.endsWith("/")) return this;
       return resource(this.url.replace(slashEndRe, "") + "/");
     }
   }, {
@@ -385,6 +419,7 @@ var Resource = function () {
   }, {
     key: "asFile",
     value: function asFile() {
+      if (!this.url.endsWith("/")) return this;
       return resource(this.url.replace(slashEndRe, ""));
     }
   }, {

@@ -31,9 +31,12 @@ export class Resource {
   get isResource() { return true; }
 
   equals(otherResource) {
-    return otherResource
-        && this.constructor == otherResource.constructor
-        && this.url === otherResource.url;
+    if (!otherResource || this.constructor !== otherResource.constructor)
+      return false;
+    var myURL = this.url, otherURL = otherResource.url;
+    if (myURL[myURL.length-1] === "/") myURL = myURL.slice(0, -1);
+    if (otherURL[otherURL.length-1] === "/") otherURL = otherURL.slice(0, -1);
+    return myURL === otherURL;
   }
 
   toString() {
@@ -52,6 +55,7 @@ export class Resource {
   }
 
   schemeAndHost() {
+    if (this.isRoot()) return this.asFile().url;
     return this.url.slice(0, this.url.length - this.path().length);
   }
 
@@ -66,6 +70,27 @@ export class Resource {
     return result;
   }
 
+  isParentOf(otherRes) {
+    return otherRes.schemeAndHost() === this.schemeAndHost()
+        && otherRes.parents().some(p => p.equals(this));
+  }
+  
+  commonDirectory(other) {
+    if (other.schemeAndHost() !== this.schemeAndHost()) return null;
+    if (this.isDirectory() && this.equals(other)) return this;
+    if (this.isRoot()) return this.asDirectory();
+    if (other.isRoot()) return other.asDirectory();
+    var otherParents = other.parents(),
+        myParents = this.parents(),
+        common = this.root();    
+    for (var i = 0; i < myParents.length; i++) {
+      var myP = myParents[i], otherP = otherParents[i];
+      if (!otherP || !myP.equals(otherP)) return common;
+      common = myP;
+    }
+    return common;
+  }
+
   join(path) {
     return resource(this.url.replace(slashEndRe, "") + "/" + path.replace(slashStartRe, ""));
   }
@@ -77,6 +102,7 @@ export class Resource {
   isDirectory() { return !this.isFile(); }
 
   asDirectory() {
+    if (this.url.endsWith("/")) return this;
     return resource(this.url.replace(slashEndRe, "") + "/");
   }
 
@@ -87,6 +113,7 @@ export class Resource {
   }
 
   asFile() {
+    if (!this.url.endsWith("/")) return this;
     return resource(this.url.replace(slashEndRe, ""));
   }
 

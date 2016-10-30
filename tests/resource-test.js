@@ -177,3 +177,26 @@ describe('http', function() {
 
   })
 });
+
+describe("url operations", () => {
+
+  it("is parent", () => {
+    var r1 = resource("http://foo/bar/oink/baz.js"),
+        r2 = resource("http://foo/bar/");
+    expect(r1.isParentOf(r2)).equals(false);
+    expect(r2.isParentOf(r1)).equals(true);
+  });
+
+  it("common directory", () => {
+    var r1 = resource("http://foo/bar/oink/baz.js"),
+        r2 = resource("http://foo/bar/zork.js"),
+        r3 = resource("https://foo/bar/zork.js"),
+        r4 = resource("http://foo/zork.js"),
+        r5 = resource("http://foo");
+    expect(r1.commonDirectory(r2).url).equals("http://foo/bar/");
+    expect(r1.commonDirectory(r3)).equals(null);
+    expect(r1.commonDirectory(r4).url).equals("http://foo/");
+    expect(r1.commonDirectory(r5).url).equals("http://foo/");
+  });
+
+});
