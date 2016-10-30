@@ -76,8 +76,8 @@ const editorCommands = [
 
 export default class TextEditor extends Morph {
 
-  static openURL(url) {
-    return this.openInWindow({location: url})
+  static openURL(url, props) {
+    return this.openInWindow({location: url, ...props})
   }
 
   static openInWindow(props) {
