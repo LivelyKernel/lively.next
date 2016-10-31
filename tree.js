@@ -348,8 +348,6 @@ export class Tree extends Morph {
       y += height;
     }
 
-// that._owner.fileTree._boundsCache
-
     nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
 
     for (; i < nodes.length; i++) {
@@ -365,9 +363,11 @@ export class Tree extends Morph {
         height = dummyNodeMorph.height;
       }
       lineHeightCache[i] = height;
-      if (y + height >= visibleTop) break;
       y += height;
     }
+
+    if (lineHeightCache.length > i)
+      lineHeightCache.splice(i, lineHeightCache.length-i)
   }
 
   async maintainViewStateWhile(whileFn, nodeIdFn) {
@@ -430,6 +430,8 @@ export class Tree extends Morph {
 
   scrollToIndex(idx, how = "into view") {
     // how = "into view"|"top"|"bottom"|"center"
+
+    if (!this._lineHeightCache) this.update();
 
     var {scroll} = this, offsetX = 0, offsetY = 0,
         lineBounds = this.lineBounds(idx),
