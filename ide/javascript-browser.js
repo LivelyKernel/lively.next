@@ -1,5 +1,5 @@
 import { Color, pt, Rectangle } from "lively.graphics";
-import { arr, promise } from "lively.lang";
+import { arr, promise, Path } from "lively.lang";
 import { connect, disconnect } from "lively.bindings";
 import { Window, morph, show } from "../index.js";
 import { GridLayout } from "../layout.js";
@@ -37,7 +37,7 @@ function commandsForBrowser(browser) {
       return true;
     }},
 
-    {name: "load or add module", exec: async (browser) => {    
+    {name: "load or add module", exec: async (browser) => {
       var p = browser.selectedPackage;
       try {
         var mods = await (await browser.systemInterface()).interactivelyAddModule(null, p ? p.address : null, browser.world());
@@ -65,26 +65,67 @@ function commandsForBrowser(browser) {
 
     {name: "run tests at point",
      exec: async (browser) => {
-       var m = browser.selectedModule;
+        var m = browser.selectedModule;
         if (!m) return browser.world().inform("No module selected", {requester: browser});
 
-        var {parse, query: {nodesAt}} = await System.import("lively.ast");
-        var ed = browser.get("sourceEditor");
-        var source = ed.textString;
-        var parsed = parse(source);
-        var nodes = nodesAt(ed.document.positionToIndex(ed.cursorPosition), parsed)
-          .filter(n => n.type === "CallExpression" && n.callee.name && n.callee.name.match(/describe|it/) && n.arguments[0].type === "Literal")
-            .map(n => ({
-              type: n.callee.name.match(/describe/) ? "suite" : "test",
-              title: n.arguments[0].value,
-          }))
+        var ed = browser.get("sourceEditor"),
+            testDescriptors = await extractTestDescriptors(
+              ed.textString, ed.document.positionToIndex(ed.cursorPosition));
 
-        if (!nodes.length)
-          return browser.world().inform("No test at " + JSON.stringify(ed.cursorPosition), {requester: browser});
+        if (!testDescriptors || !testDescriptors.length)
+          return browser.world().inform(
+            "No test at " + JSON.stringify(ed.cursorPosition),
+            {requester: browser});
 
-       var spec = {fullTitle: arr.pluck(nodes, "title").join(" "), type: arr.last(nodes).type, file: m.name}
-       return runTestsInModule(browser, m.name, spec);
-     }}
+        var spec = {
+          fullTitle: arr.pluck(testDescriptors, "title").join(" "),
+          type: arr.last(testDescriptors).type,
+          file: m.name
+        }
+
+        return runTestsInModule(browser, m.name, spec);
+     }},
+
+     {name: "run setup code of tests (before and beforeEach)",
+     exec: async (browser, args = {what: "setup"}) => {
+        var m = browser.selectedModule;
+        if (!m) return browser.world().inform("No module selected", {requester: browser});
+
+
+        var ed = browser.get("sourceEditor"),
+            testDescriptors = await extractTestDescriptors(
+              ed.textString, ed.document.positionToIndex(ed.cursorPosition));
+
+        if (!testDescriptors || !testDescriptors.length)
+          return browser.world().inform(
+            "No test at " + JSON.stringify(ed.cursorPosition),
+            {requester: browser});
+
+        // the stringified body of all before(() => ...) or after(() => ...) calls
+        var what = (args && args.what) || "setup", // or: teardown
+            prop = what === "setup" ? "setupCalls" : "teardownCalls",
+            beforeCode = testDescriptors[0][prop].map(beforeFn => {
+              var bodyStmts = beforeFn.body.body || [beforeFn.body];
+              return bodyStmts.map(lively.ast.stringify).join("\n")
+            }),
+            {coreInterface: livelySystem} = await browser.systemInterface();
+
+        try {
+          for (let snippet of beforeCode)
+            await livelySystem.runEval(beforeCode, {...ed.evalEnvironment});
+          browser.setStatusMessage(`Executed ${beforeCode.length} test ${what} functions`);
+        } catch (e) {
+          browser.showError(new Error(`Error when running ${what} calls of test:\n${e.stack}`));
+        }
+
+        return true;
+     }},
+
+     {name: "run teardown code of tests (after and afterEach)",
+      exec: async (browser) =>
+       browser.execCommand(
+         "run setup code of tests (before and beforeEach)",
+         {what: "teardown"})}
   ]
 
 
@@ -107,6 +148,47 @@ function commandsForBrowser(browser) {
       runner.targetMorph.runTestFile(moduleName);
   }
 
+  async function extractTestDescriptors(source, positionAsIndex) {
+    // Expects mocha.js like test definitions: https://mochajs.org/#getting-started
+    // Extracts nested "describe" and "it" suite and test definitions from the
+    // source code and associates setup (before(Each)) and tear down (after(Each))
+    // code with them. Handy to run tests at point etc.
+
+    var {parse, query: {nodesAt}} = await System.import("lively.ast"),
+         parsed = parse(source),
+         nodes = nodesAt(positionAsIndex, parsed)
+                   .filter(n => n.type === "CallExpression"
+                             && n.callee.name
+                             && n.callee.name.match(/describe|it/)
+                             && n.arguments[0].type === "Literal"),
+         setupCalls = nodes.map(n => {
+                         var innerCode = Path("arguments.1.body.body").get(n);
+                         if (!innerCode) return null;
+                         return innerCode
+                                   .filter(n =>
+                                        n.expression && n.expression.type === "CallExpression"
+                                     && n.expression.callee.name
+                                     && n.expression.callee.name.match(/before(Each)?/))
+                                   .map(n => n.expression.arguments[0]); }),
+         teardownCalls = nodes.map(n => {
+                         var innerCode = Path("arguments.1.body.body").get(n);
+                         if (!innerCode) return null;
+                         return innerCode
+                                   .filter(n =>
+                                        n.expression && n.expression.type === "CallExpression"
+                                     && n.expression.callee.name
+                                     && n.expression.callee.name.match(/after(Each)?/))
+                                   .map(n => n.expression.arguments[0]); }),
+
+         testDescriptors = nodes.map((n,i) => ({
+           type: n.callee.name.match(/describe/) ? "suite" : "test",
+           title: n.arguments[0].value,
+           astNode: n,
+           setupCalls: setupCalls[i],
+           teardownCalls: teardownCalls[i],
+         }));
+    return testDescriptors;
+  }
 }
 
 
@@ -192,6 +274,8 @@ export class Browser extends Window {
       {keys: "Alt-L", command: "load or add module"},
       {keys: "Ctrl-C Ctrl-T", command: "run all tests in module"},
       {keys: "Ctrl-C T", command: "run tests at point"},
+      {keys: "Ctrl-C B E F", command: "run setup code of tests (before and beforeEach)"},
+      {keys: "Ctrl-C A F T", command: "run teardown code of tests (after and afterEach)"},
     ].concat(super.keybindings);
   }
 
@@ -256,7 +340,7 @@ export class Browser extends Window {
     if (!p) return null;
     await this.selectPackageNamed(p.address);
     await this.selectModuleNamed(m.name);
-    return this.selectedModule;    
+    return this.selectedModule;
   }
 
   async onPackageSelected(p) {
@@ -272,12 +356,12 @@ export class Browser extends Window {
         this.title = "browser";
         return;
       }
-  
+
       this.title = "browser – " + p.name;
-  
+
       this.get("packageList").scrollSelectionIntoView();
       this.get("moduleList").selection = null;
-      
+
       await this.updateModuleList(p);
     } finally {
       this.state.packageUpdateInProgress = null;
@@ -302,15 +386,15 @@ export class Browser extends Window {
 
     try {
       var system = await this.systemInterface();
-  
+
       if (!m.isLoaded && m.name.endsWith("js")) {
         var err;
         try {
           await System.import(m.name);
         } catch(e) { err = e; }
-  
+
         if (err) this.world().logError(err);
-  
+
         var p = await system.getPackage(pack.address),
             isLoadedNow = p.modules.map(ea => ea.name).includes(m.name);
 
@@ -327,7 +411,7 @@ export class Browser extends Window {
           return;
         }
       }
-  
+
       this.get("moduleList").scrollSelectionIntoView();
       this.title = "browser – " + pack.name + "/" + m.nameInPackage;
       var source = await system.moduleRead(m.name);
@@ -367,7 +451,7 @@ export class Browser extends Window {
       if (module.isLoaded) { // is loaded in runtime
         await system.interactivelyChangeModule(
           null, module.name, content,
-          {targetModule: module.name, doEval: true});      
+          {targetModule: module.name, doEval: true});
       } else await system.moduleWrite(module.name, content);
     } catch(err) { return this.world().logError(err); }
 
