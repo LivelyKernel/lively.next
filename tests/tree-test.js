@@ -46,9 +46,7 @@ describe("tree", () => {
   it("renders visible items without root", () => {
     expect(arr.pluck(tree.nodeMorphs, "labelString"))
       .equals(["child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
-
-// tree.openInWorld()
-    var h = tree.nodeMorphHeight;
+    var h = tree.lineBounds(1).height;
     tree.height = h*3;
     tree.scroll = pt(0, 2*h-3);
     tree.update();
@@ -63,7 +61,7 @@ describe("tree", () => {
     expect(tree.selectedIndex).equals(2);
     expect(tree.selection).containSubset({isCollapsed: true, name: "child 2"});
   })
-  
+
   it("descends along path and returns node", async () => {
     var path = ["root", "child 3", "child 3 - 2"],
         td = tree.treeData,
