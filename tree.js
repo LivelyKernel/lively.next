@@ -228,11 +228,14 @@ export class Tree extends Morph {
     var { fontMetric } = props;
 
     super({selection: null, clipMode: "auto", padding: Rectangle.inset(2), ...obj.dissoc(props, ["fontMetric"])});
+    this.resetCache();
     if (fontMetric) this._fontMetric = fontMetric;
     this.addMorph({name: "nodeItemContainer", extent: this.extent, fill: null, draggable: false, grabbable: false, clipMode: "visible"});
     this.update();
     connect(this, 'extent', this, 'update');
   }
+
+  resetCache() { this._lineHeightCache = null; }
 
   get isTree() { return true; }
 
@@ -247,7 +250,7 @@ export class Tree extends Morph {
   }
 
   get treeData() { return this.getProperty("treeData"); }
-  set treeData(val) { this.addValueChange("treeData", val); this.update(); }
+  set treeData(val) { this.addValueChange("treeData", val); this.resetCache(); this.update(); }
 
   get selection() { return this.getProperty("selection"); }
   set selection(sel) {
@@ -286,9 +289,9 @@ export class Tree extends Morph {
   }
 
   lineBounds(idx) {
-    if (!this._lineHeightCache) this.update();
-    var y = arr.sum(this._lineHeightCache.slice(0,idx)) + this.padding.top(),
-        height = this._lineHeightCache[idx] || this.defaultNodeHeight,
+    var lineHeightCache = this._lineHeightCache,
+        y = arr.sum(lineHeightCache.slice(0,idx)) + this.padding.top(),
+        height = lineHeightCache[idx] || this.defaultNodeHeight,
         {width} = this;
     return new Rectangle(this.padding.left(), y, width, height);
   }
@@ -314,18 +317,23 @@ export class Tree extends Morph {
 
     // skip not visible notes out of scroll bounds
     for (; i < nodes.length; i++) {
-      var node = nodes[i].node,
-          displayed = treeData.display(node), height;
-      if (typeof displayed === "string") {
-        height = defaultNodeHeight;
+      var height;
+      if (lineHeightCache[i]) {
+        height = lineHeightCache[i];
       } else {
-        dummyNodeMorph.displayNode(
-          displayed, null,
-          pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
-          false, true, true);
-        height = dummyNodeMorph.height;
+        var node = nodes[i].node,
+            displayed = treeData.display(node);
+        if (typeof displayed === "string") {
+          height = defaultNodeHeight;
+        } else {
+          dummyNodeMorph.displayNode(
+            displayed, null,
+            pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
+            false, true, true);
+          height = dummyNodeMorph.height;
+        }
+        lineHeightCache[i] = height;
       }
-      lineHeightCache[i] = height;
       if (y + height >= visibleTop) break;
       y += height;
     }
@@ -358,18 +366,23 @@ export class Tree extends Morph {
     nodeMorphs.forEach(ea => ea.remove()); // remove invisible left overs
 
     for (; i < nodes.length; i++) {
-      var node = nodes[i].node,
-          displayed = treeData.display(node), height;
-      if (typeof displayed === "string") {
-        height = defaultNodeHeight;
+      var height;
+      if (lineHeightCache[i]) {
+        height = lineHeightCache[i];
       } else {
-        dummyNodeMorph.displayNode(
-          displayed, null,
-          pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
-          false, true, true);
-        height = dummyNodeMorph.height;
+        var node = nodes[i].node,
+            displayed = treeData.display(node), height;
+        if (typeof displayed === "string") {
+          height = defaultNodeHeight;
+        } else {
+          dummyNodeMorph.displayNode(
+            displayed, null,
+            pt(x+(toggleWidth+4)*(nodes[i].depth-1), y),
+            false, true, true);
+          height = dummyNodeMorph.height;
+        }
+        lineHeightCache[i] = height;
       }
-      lineHeightCache[i] = height;
       y += height;
     }
 
@@ -412,6 +425,7 @@ export class Tree extends Morph {
   }
 
   async onNodeCollapseChanged({node, isCollapsed}) {
+    this.resetCache();
     try {
       await this.treeData.collapse(node, isCollapsed);
       this.update();
@@ -437,8 +451,6 @@ export class Tree extends Morph {
 
   scrollToIndex(idx, how = "into view") {
     // how = "into view"|"top"|"bottom"|"center"
-
-    if (!this._lineHeightCache) this.update();
 
     var {scroll} = this, offsetX = 0, offsetY = 0,
         lineBounds = this.lineBounds(idx),
