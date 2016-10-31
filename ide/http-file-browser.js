@@ -328,8 +328,12 @@ export default class HTTPFileBrowser extends Morph {
         }
         node.isCollapsed = bool;
       }
-      getChildren({resource, isCollapsed, subNodes}) {
-        return !resource ? [] : !resource.isDirectory() ? null : isCollapsed ? [] : subNodes || [];
+      getChildren(parent) {
+        var {resource, isCollapsed, subNodes} = parent,
+            result = !resource ? [] : !resource.isDirectory() ? null : isCollapsed ? [] : subNodes || [];
+        // cache for faster parent lookup
+        result && result.forEach(n => this.parentMap.set(n, parent));
+        return result
       }
       isLeaf({resource}) { return resource ? !resource.isDirectory() : true }
     })({

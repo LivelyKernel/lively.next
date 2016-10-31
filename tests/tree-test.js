@@ -1,4 +1,5 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
+import { morph } from "../index.js";
 import { Tree, TreeData } from "../tree.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle, Transform } from "lively.graphics";
@@ -35,23 +36,23 @@ var tree;
 
 describe("tree", () => {
 
-  beforeEach(() => {
+  beforeEach(() =>
     tree = new Tree({
       fontMetric,
       extent: pt(200,200), fill: Color.white, border: {color: Color.gray, width: 1},
       padding: Rectangle.inset(0), treeData: testTreeData()
-    });
-  });
+    }));
 
   it("renders visible items without root", () => {
-    expect(arr.pluck(tree.submorphs[0].submorphs, "textString"))
+    expect(arr.pluck(tree.nodeMorphs, "labelString"))
       .equals(["child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
 
+// tree.openInWorld()
     var h = tree.nodeMorphHeight;
     tree.height = h*3;
-    tree.scroll = pt(0, 2*h);
+    tree.scroll = pt(0, 2*h-3);
     tree.update();
-    expect(arr.pluck(tree.submorphs[0].submorphs, "textString"))
+    expect(arr.pluck(tree.nodeMorphs, "labelString"))
       .equals(["child 2", "child 3", "child 3 - 1", "child 3 - 2"]);
   });
 
@@ -69,6 +70,23 @@ describe("tree", () => {
         found = await td.followPath(path,
           (pathPart, node) => td.display(node) === pathPart);
     expect(td.root.children[2].children[1]).equals(found);
+  });
+
+  describe("morphs as tree nodes", () => {
+
+    it("inserts morph when node specifies one in display()", async () => {
+      var m = morph({extent: pt(50,50), fill: Color.red});
+      tree.treeData.root.children[1].morph = m;
+      // tree.openInWorld()
+      // tree.remove()
+      tree.update();
+
+      expect(tree.nodeMorphs[1].submorphs[1]).equals(m, "morph not rendered in display node morph");
+      await tree.onNodeCollapseChanged({node: tree.treeData.root.children[1], isCollapsed: false})
+      expect(tree.nodes[3].name).equals("child 2 - 1", "node not uncollapsed");
+      expect(tree.nodeMorphs[2].top).gte(tree.nodeMorphs[1].bottom, "vertical layout wrong");
+    });
+
   });
 
 });
