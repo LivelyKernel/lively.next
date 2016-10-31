@@ -262,9 +262,9 @@ export class Button extends Morph {
   }
 
   get activeStyle() { return this.getProperty("activeStyle"); }
-  set activeStyle(value) { this.addValueChange("activeStyle", value); }
+  set activeStyle(value) { this.addValueChange("activeStyle", value); this.active = this.active; /*update*/ }
   get inactiveStyle() { return this.getProperty("inactiveStyle"); }
-  set inactiveStyle(value) { this.addValueChange("inactiveStyle", value); }
+  set inactiveStyle(value) { this.addValueChange("inactiveStyle", value); this.active = this.active; /*update*/ }
   get triggerStyle() { return this.getProperty("triggerStyle"); }
   set triggerStyle(value) { this.addValueChange("triggerStyle", value); }
 
