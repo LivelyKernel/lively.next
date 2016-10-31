@@ -40,7 +40,7 @@ var tree = new Tree({
 export class TreeNode extends Morph {
 
   constructor(props = {}) {
-    var {isCollapsed, isCollapsable} = props;
+    var {isCollapsed, isCollapsable, fontMetric} = props;
     super({
       textString: "",
       selectionFontColor: Color.white,
@@ -48,8 +48,9 @@ export class TreeNode extends Morph {
       selectionColor: Color.blue,
       fontColor: Color.rgbHex("333"),
 
-      ...obj.dissoc(props, ["isCollapsed", "isCollapsable"])
+      ...obj.dissoc(props, ["isCollapsed", "isCollapsable", "fontMetric"])
     });
+    if (fontMetric) this._fontMetric = fontMetric;
     this.isCollapsable = props.hasOwnProperty("isCollapsable") ? props.isCollapsable : false;
     this.isCollapsed = props.hasOwnProperty("isCollapsed") ? props.isCollapsed : false;
     this.relayout();
@@ -110,13 +111,19 @@ export class TreeNode extends Morph {
   }
 
   ensureLabel() {
-    return this.label || this.addMorph(new Label({name: "label", fill: null, fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily}))
+    return this.label || this.addMorph(new Label({
+      name: "label",
+      fill: null,
+      fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
+      fontMetric: this._fontMetric
+    }))
   }
 
   ensureToggle() {
     return this.toggle || this.addMorph({
       type: Label,
       name: "toggle",
+      fontMetric: this._fontMetric,
       fill: null, textString: "",
       padding: Rectangle.inset(2),
       fontSize: this.fontSize-3,
