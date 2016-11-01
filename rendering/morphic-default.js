@@ -159,7 +159,10 @@ export class PropertyAnimation {
     this.beforeProps = plainStyleMapper.getStyleProps(this.morph);
     for (var prop in this.changedProps) {
         if (prop == "layout") {
-           this.changedProps.layout.attachAnimated(this.duration, this.morph);
+           this.morph.layout = null;
+           if (this.changedProps.layout) {
+               this.changedProps.layout.attachAnimated(this.duration, this.morph, this.easing);
+           }
         } else if (prop == "extent" && this.morph.layout) {
               const layout = this.morph.layout;
               this.morph.layout = null;
