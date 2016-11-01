@@ -44,10 +44,12 @@ class Layout {
   inspect(pointerId) {}
 
   
-  attachAnimated(duration = 0, container) {
+  attachAnimated(duration = 0, container, easing) {
      this.container = container;
-     this.apply({duration, easing: "ease-out"});
+     this.apply({duration, easing});
+     this.active = true;
      container.layout = this;
+     this.active = false;
   }
 }
 
