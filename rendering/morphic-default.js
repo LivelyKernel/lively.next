@@ -1,4 +1,5 @@
 import {diff, patch, create} from "virtual-dom";
+import web_animations from "web-animations-polyfill";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt } from "lively.graphics";

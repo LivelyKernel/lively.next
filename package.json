@@ -13,7 +13,8 @@
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "pepjs": "^0.4.1",
     "virtual-dom": "^2.1.1",
-    "kld-intersections": "git://github.com/thelonious/kld-intersections#development"
+    "kld-intersections": "git://github.com/thelonious/kld-intersections#development",
+    "web-animations-js": "^2.2.2"
   },
   "devDependencies": {
     "jsdom": "^9.4.0",
@@ -25,7 +26,8 @@
       "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
       "bowser": "./node_modules/bowser/bowser.js",
-      "kld-intersections": "./node_modules/kld-intersections"
+      "kld-intersections": "./node_modules/kld-intersections",
+      "web-animations-polyfill": "./node_modules/web-animations-js/web-animations.min.js"
     },
     "meta": {
       "node_modules/mocha-es6/mocha-es6.js": {
@@ -38,6 +40,9 @@
       "node_modules/bowser/bowser.js": {
         "format": "global",
         "exports": "bowser"
+      },
+      "node_modules/web-animations-js/web-animations.min.js": {
+          "format": "global"
       }
     },
     "packages": {
