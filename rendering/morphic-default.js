@@ -115,7 +115,7 @@ export class PropertyAnimation {
   }
 
   convertBounds(config) {
-    var {bounds, origin, rotation, scale} = config,
+    var {bounds, origin, rotation, scale, layout} = config,
          origin = origin || pt(0,0),
          rotation = rotation || 0,
          scale = scale || 1;
@@ -158,7 +158,16 @@ export class PropertyAnimation {
   assignProps() {
     this.beforeProps = plainStyleMapper.getStyleProps(this.morph);
     for (var prop in this.changedProps) {
-        this.morph[prop] = this.changedProps[prop];
+        if (prop == "layout") {
+           this.changedProps.layout.attachAnimated(this.duration, this.morph);
+        } else if (prop == "extent" && this.morph.layout) {
+              const layout = this.morph.layout;
+              this.morph.layout = null;
+              this.morph.extent = this.changedProps.extent;
+              this.morph.animate({layout, duration: this.duration, easing: this.easing});
+        } else {
+           this.morph[prop] = this.changedProps[prop];
+        }
     }
     this.afterProps = plainStyleMapper.getStyleProps(this.morph);
   }

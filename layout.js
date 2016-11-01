@@ -42,6 +42,13 @@ class Layout {
   }
   
   inspect(pointerId) {}
+
+  
+  attachAnimated(duration = 0, container) {
+     this.container = container;
+     this.apply({duration, easing: "ease-out"});
+     container.layout = this;
+  }
 }
 
 /* TODO: This is just a very simple constraint layout, that should
@@ -75,7 +82,7 @@ export class FillLayout extends Layout {
 
   get spacing() { return this._spacing }
   
-  apply() {
+  apply(animate = false) {
     /* FIXME: Add support for destructuring default values */
     if (this.active) return;
     const {fixedWidth, fixedHeight} = this,
@@ -84,9 +91,14 @@ export class FillLayout extends Layout {
           width = !fixedWidth && this.container.width - left - right;
     this.active = true;
     this.morphs.forEach(m => {
-      var m = this.container.getSubmorphNamed(m);
-      m.setBounds(pt(left,top)
-                    .extent(pt(width || m.width, height || m.height)));
+      var m = this.container.getSubmorphNamed(m),
+          newBounds = pt(left,top).extent(pt(width || m.width, height || m.height));
+      if (animate) {
+         const {duration, easing} = animate;
+         m.animate({bounds: newBounds, duration, easing});
+      } else {
+         m.setBounds(newBounds);
+      }
     });
     this.active = false;
   }
@@ -98,7 +110,7 @@ export class VerticalLayout extends Layout {
   name() { return "Vertical" }
   description() { return "Assemble the submorphs in a vertically growing list." }
 
-  apply() {
+  apply(animate = false) {
     if (this.active) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
@@ -106,7 +118,12 @@ export class VerticalLayout extends Layout {
 
     this.active = true;
     submorphs.forEach(m => {
-      m.position = pos;
+      if (animate) {
+        const {duration, easing} = animate;
+        m.animate({position: pos, duration, easing})
+      } else {
+        m.position = pos;
+      }
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
       maxWidth = Math.max(m.width, maxWidth);
     });
@@ -121,7 +138,7 @@ export class HorizontalLayout extends Layout {
   name() { return "Horizontal" }
   description() { return "Assemble the submorphs in a horizontally growing list." }
 
-  apply() {
+  apply(animate = false) {
     if (this.active) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
@@ -130,7 +147,12 @@ export class HorizontalLayout extends Layout {
     this.maxHeight = 0;
     this.active = true;
     submorphs.forEach(m => {
-      m.position = pos;
+      if (animate) {
+        const {duration, easing} = animate;
+        m.animate({position: pos, duration, easing})
+      } else {
+        m.position = pos;
+      }
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.height, maxHeight);
     });
@@ -145,7 +167,7 @@ export class TilingLayout extends Layout {
   name() { return "Tiling" }
   description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
 
-  apply() {
+  apply(animate = false) {
     var width = this.getOptimalWidth(),
         currentRowHeight = 0,
         currentRowWidth = 0,
@@ -157,10 +179,16 @@ export class TilingLayout extends Layout {
     this.active = true;
 
     while (i < this.container.submorphs.length) {
-        var submorphExtent = this.container.submorphs[i].extent;
+        var submorphExtent = this.container.submorphs[i].extent, newPos;
         if (rowSwitch || currentRowWidth + submorphExtent.x + 2*spacing <= width) {
+            newPos = pt(currentRowWidth + spacing, previousRowHeight);
             rowSwitch = false;
-            this.container.submorphs[i].position = pt(currentRowWidth + spacing, previousRowHeight);
+            if (animate) {
+               const {duration, easing} = animate;
+               this.container.submorphs[i].animate({position: newPos, duration, easing}); 
+            } else {
+               this.container.submorphs[i].position = newPos;
+            }
             currentRowHeight = Math.max(currentRowHeight, submorphExtent.y);
             currentRowWidth += spacing + submorphExtent.x;
             i++;
@@ -211,6 +239,11 @@ export class CellGroup {
   set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
     if (conflictingGroup) conflictingGroup.morph = null;
+    if (value) {
+       this.layout.morphToGroup[value.id] = this;
+    } else {
+       if (this.layout.morphToGroup[this.morph.id] == this) delete this.layout.morphToGroup[this.morph.id];
+    }
     this.state.morph = value;
     this.layout.apply();
   }
@@ -219,15 +252,21 @@ export class CellGroup {
     return this.morph && (this.morph == morph || this.morph.name == morph)
   }
   
-  apply() {
+  apply(animate = false) {
     var target = this.morph;
     if (this.layout && this.layout.container) {
       if (target && !target.isMorph) target = this.layout.container.getSubmorphNamed(target);
     }
     if(target) {
       const bounds = this.bounds();
-      if (this.resize) target.extent = bounds.extent();
-      target[this.align] = bounds[this.align]();
+      if (animate) {
+        var extent = this.resize ? bounds.extent() : target.extent,
+            {duration, easing} = animate;
+        target.animate({[this.align]: bounds[this.align](), extent, duration, easing});
+      } else {
+        if (this.resize) target.extent = bounds.extent();
+        target[this.align] = bounds[this.align]();
+      }
     }
     
   }
@@ -721,6 +760,7 @@ export class GridLayout extends Layout {
     super(config);
     if (config.autoAssign == undefined) config.autoAssign = true;
     this.cellGroups = [];
+    this.morphToGroup = {};
     this.config = config;
   }
 
@@ -751,17 +791,22 @@ export class GridLayout extends Layout {
     arr.remove(this.cellGroups, group);
   }
 
-  apply() {
+  apply(animate = false) {
     if (this.active) return;
     this.active = true;
     if (!this.grid) this.initGrid();
-    this.cellGroups.forEach(g => g.apply());
+    // this.cellGroups.forEach(g => g.apply()); // that is slow
+    this.container.submorphs.forEach(m => {
+         const g = this.getCellGroupFor(m);
+         g && g.apply(animate);
+    });
     this.container.extent = pt(Math.max(this.grid.totalStaticWidth, this.container.width),
                                Math.max(this.grid.totalStaticHeight, this.container.height));
     this.active = false;
   }
   
   getCellGroupFor(morph) { 
+    // return morph && this.morphToGroup[morph.id];
     return morph && this.cellGroups.find(g => g.manages(morph));
   }
   
