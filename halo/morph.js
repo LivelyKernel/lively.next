@@ -335,14 +335,12 @@ export class Halo extends Morph {
            alignInHalo() { this.center = positionInHalo() }, 
            onDragStart(evt) {
                this.savedLayout = this.halo.layout;
-               this.halo.layout = null;
                this.halo.activeButton = this; 
                this.tfm = this.halo.target.getGlobalTransform().inverse();
                this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
                this.totalScale = this.halo.getGlobalScale(); // multiply scaling
            },
            onDragEnd(evt) { 
-               this.halo.layout = this.savedLayout;
                this.halo.activeButton = null; 
                this.halo.alignWithTarget();
            },
@@ -635,13 +633,11 @@ export class Halo extends Morph {
 
       detachFromLayout() {
         this.savedLayout = this.halo.layout;
-        this.halo.layout = null;
-        // this.halo.layout.col(0).row(6).group.morph = null;
+        this.halo.layout.col(0).row(6).group.morph = null;
       },
       
       attachToLayout() {
-        this.halo.layout = this.savedLayout;
-        // this.halo.layout.col(0).row(6).group.morph = "rotate";
+        this.halo.layout.col(0).row(6).group.morph = "rotate";
       },
 
       // events

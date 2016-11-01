@@ -224,8 +224,9 @@ export class TilingLayout extends Layout {
 export class CellGroup {
   
   constructor({cell, morph, layout, align}) {
-    this.state = {cells: [cell], layout: layout, morph, align, resize: true};
+    this.state = {cells: [cell], layout: layout, align, resize: true};
     layout && layout.addGroup(this);
+    this.morph = morph;
   }
   
   get morph() { 
@@ -244,7 +245,7 @@ export class CellGroup {
     if (value) {
        this.layout.morphToGroup[value.id] = this;
     } else {
-       if (this.layout.morphToGroup[this.morph.id] == this) delete this.layout.morphToGroup[this.morph.id];
+       if (this.morph && this.layout.morphToGroup[this.morph.id] == this) delete this.layout.morphToGroup[this.morph.id];
     }
     this.state.morph = value;
     this.layout.apply();
@@ -797,7 +798,6 @@ export class GridLayout extends Layout {
     if (this.active) return;
     this.active = true;
     if (!this.grid) this.initGrid();
-    // this.cellGroups.forEach(g => g.apply()); // that is slow
     this.container.submorphs.forEach(m => {
          const g = this.getCellGroupFor(m);
          g && g.apply(animate);
@@ -808,8 +808,8 @@ export class GridLayout extends Layout {
   }
   
   getCellGroupFor(morph) { 
-    // return morph && this.morphToGroup[morph.id];
-    return morph && this.cellGroups.find(g => g.manages(morph));
+    return morph && this.morphToGroup[morph.id];
+    // return morph && this.cellGroups.find(g => g.manages(morph));
   }
   
   onSubmorphRemoved(removedMorph) {
