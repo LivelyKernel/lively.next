@@ -49,7 +49,8 @@ class StyleHalo extends Morph {
              this.layoutHalo()
            ]
        }];
-       this.focus()
+       this.focus();
+       this.update();
    }
 
    get isLayoutHalo() { return true; }
@@ -73,6 +74,7 @@ class StyleHalo extends Morph {
    // border styling
 
    isOnMorphBorder(evt) {
+      if (!evt) return false;
       const {x,y} = evt.positionIn(this.getSubmorphNamed("borderHalo")),
             brHalo = this.getSubmorphNamed("borderRadiusHalo"),
             br = this.target.borderRadius,
@@ -157,7 +159,7 @@ class StyleHalo extends Morph {
           onDragStart(evt) { this.active = true; },
           onDrag(evt) {
              var r = halo.target.borderRadius;
-             halo.onMouseMove(evt);
+             halo.update(evt);
              r -= evt.state.dragDelta.x;
              r = Math.min(halo.target.width / 2, Math.max(r, 0));
              halo.target.borderRadius = r;
@@ -212,10 +214,12 @@ class StyleHalo extends Morph {
                    var menu = this.world().openWorldMenu(
                       this.getLayoutObjects().map(l => {
                          return [layoutName(l), 
-                                 () => { 
-                                     this.target.animate({layout: l}); 
+                                 () => {
+                                     this.target.animate({layout: l, 
+                                                          easing: "cubic-bezier(0.075, 0.82, 0.165, 1)"}); 
                                      this.getSubmorphNamed("layoutPicker")
                                          .textString = layoutName(l);
+                                     this.update();
                                  }]
                       })
                    )
