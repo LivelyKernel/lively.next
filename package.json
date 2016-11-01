@@ -45,9 +45,12 @@
         "main": "index.js",
         "meta": {
           "lib/Intersection.js": {
-            "format": "global"
+            "format": "cjs"
           },
           "lib/IntersectionParams.js": {
+            "format": "cjs"
+          },
+          "node_modules/kld-affine/lib/Point2D.js": {
             "format": "global"
           }
         },
