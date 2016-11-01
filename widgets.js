@@ -25,8 +25,8 @@ export class Window extends Morph {
     if (props.targetMorph) this.targetMorph = props.targetMorph;
     this.title = props.title || this.name || "";
     this.resetPropertyCache();
-    connect(this, "extent", this, "relayout");
-    connect(this.titleLabel(), "extent", this, "relayout");
+    //connect(this, "extent", this, "relayout", {updater: ($upd) => $upd()});
+    connect(this.titleLabel(), "extent", this, "relayout", {updater: ($upd) => $upd()});
   }
 
   get isWindow() { return true }
@@ -36,13 +36,22 @@ export class Window extends Morph {
     this.propertyCache = {nonMinizedBounds: null, nonMaximizedBounds: null, minimizedBounds: null};
   }
 
-  relayout() {
-    var bounds = this.innerBounds();
+  relayout(duration) {
+    var bounds = this.innerBounds(),
+        t = this.targetMorph, 
+        wrapper = this.getSubmorphNamed("wrapper"),
+        newBounds = bounds.withTopLeft(pt(0,25));
+    
     this.titleLabel().center = pt(Math.max(bounds.extent().x / 2, 100), 10);
     this.resizer().bottomRight = bounds.bottomRight();
-    var t = this.targetMorph;
-    t && t.setBounds(bounds.withTopLeft(pt(0,25)))
-    this.getSubmorphNamed("wrapper").position = this.origin.negated(); 
+    
+    if (duration) {
+        t && t.animate({bounds: newBounds, duration});
+        wrapper.animate({position: this.origin.negated(), duration})
+    } else {
+        t && t.setBounds(newBounds);
+        wrapper.position = this.origin.negated();
+    }
   }
 
   controls() {
@@ -132,6 +141,7 @@ export class Window extends Morph {
       onDrag(evt) {
         win.resizeBy(evt.state.dragDelta);
         this.bottomRight = win.extent;
+        win.relayout();
       }
     };
   }
@@ -159,10 +169,12 @@ export class Window extends Morph {
     if (this.minimized) {
       cache.minimizedBounds = bounds;
       this.animate({bounds: cache.nonMinizedBounds || bounds, duration: 300});
+      this.relayout(300);
     } else {
       cache.nonMinizedBounds = bounds;
       cache.minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25));
       this.animate({bounds: cache.minimizedBounds, duration: 300});
+      this.relayout(300);
     }
     this.minimized = !this.minimized;
     this.resizer().visible = !this.minimized;
@@ -174,12 +186,14 @@ export class Window extends Morph {
       this.animate({bounds: cache.nonMaximizedBounds, duration: 300});
       this.resizer().bottomRight = this.extent;
       this.maximized = false;
+      this.relayout(300);
     } else {
       cache.nonMaximizedBounds = this.bounds();
       this.animate({bounds: this.world().visibleBounds().insetBy(5), duration: 300});
       this.resizer().visible = true;
       this.maximized = true;
       this.minimized = false;
+      this.relayout(300);
     }
   }
 
