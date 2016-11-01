@@ -637,7 +637,7 @@ export class Halo extends Morph {
       },
       
       attachToLayout() {
-        this.halo.layout.col(0).row(6).group.morph = "rotate";
+        this.halo.layout.col(0).row(6).group.morph = this;
       },
 
       // events
