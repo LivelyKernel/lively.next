@@ -518,5 +518,14 @@ describe("layout", () => {
       expect(m1.width).equals(80);
       expect(m1.height).equals(95);
     });
+
+    it("can compensate origin", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.compensateOrigin = true;
+      m.adjustOrigin(pt(50,50));
+      m.layout.apply();
+      expect(m2.position).equals(pt(-50,50));
+      expect(m1.position).equals(pt(50, -50));
+    })
   });
 })

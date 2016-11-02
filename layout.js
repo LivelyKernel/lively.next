@@ -232,12 +232,18 @@ export class CellGroup {
   get morph() { 
     return this.state.morph;
   }
+
+  get compensateOrigin() { return this.layout.compensateOrigin }
   
   get resize() { return this.state.resize }
   set resize(forceBounds) { this.state.resize = forceBounds; this.layout.apply() }
   
   get align() { return this.state.align || "topLeft" }
-  set align(orientation) { this.state.align = orientation; this.layout.apply() }
+  set align(orientation) { 
+      this.state.align = orientation;
+      this.resize = false; 
+      this.layout.apply();
+  }
   
   set morph(value) {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
@@ -261,14 +267,15 @@ export class CellGroup {
       if (target && !target.isMorph) target = this.layout.container.getSubmorphNamed(target);
     }
     if(target) {
-      const bounds = this.bounds();
+      const bounds = this.bounds(),
+            offset = this.compensateOrigin ? this.layout.container.origin.negated() : pt(0,0)
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
             {duration, easing} = animate;
         target.animate({[this.align]: bounds[this.align](), extent, duration, easing});
       } else {
         if (this.resize) target.extent = bounds.extent();
-        target[this.align] = bounds[this.align]();
+        target[this.align] = bounds[this.align]().addPt(offset);
       }
     }
     
@@ -777,6 +784,9 @@ export class GridLayout extends Layout {
     this.config.autoAssign && this.autoAssign(this.notInLayout);
     this.grid = rows[0].col(0);
   }
+
+  get compensateOrigin() { return this.config.compensateOrigin; }
+  set compensateOrigin(compensate) { this.config.compensateOrigin = compensate }
   
   get notInLayout() { return arr.withoutAll(this.container.submorphs, this.cellGroups.map(g => g.morph)) }
   
