@@ -313,8 +313,15 @@ export default class EventDispatcher {
           events.push(dragEndEvent(domEvt, this, targetMorph, state, hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
 
-        // grap release
+        // grab release
         } else if (hand.carriesMorphs()) {
+          // make sure that the morph receiving the grabbed morphs is not a
+          // grabbed morph itself, i.e. the drop target must not be a child morph
+          // of the hand
+          if (hand.isAncestorOf(targetMorph)) {
+            targetMorph = this.world.morphsContainingPoint(defaultEvent.position)
+              .filter(m => !hand.isAncestorOf(m))[0] || this.world;
+          }
           events.push(new Event("drop", domEvt, this, [targetMorph], hand, halo, layoutHalo));
           defaultEvent.targetMorphs = [this.world];
         }
