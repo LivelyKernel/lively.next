@@ -669,8 +669,25 @@ export var astEditorCommands = [
 
     return true;
   }
-}
+},
 
+{
+  name: "change doitContext",
+  exec: async text => {
+    var [selected] = await $$world.execCommand("select morph", {
+      prompt: "select morph for doitContext",
+      justReturn: true,
+      prependItems: ["reset"],
+      filterFn: m => !m.isUsedAsEpiMorph()
+    });
+    if (selected) {
+      var reset = selected === "reset";
+      text.doitContext = reset ? null : selected;
+      text.setStatusMessage(reset ? "doitContext is now\n" + selected : "doitContext reset")
+    }
+    return true;
+  }
+}
 ];
 
 

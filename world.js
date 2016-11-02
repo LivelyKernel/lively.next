@@ -70,13 +70,18 @@ var worldCommands = [
 
   {
     name: "select morph",
-    exec: async (world, opts = {justReturn: false}) => {
-      var i = 0, items = tree.map(world,
-        (m, depth) => ({isListItem: true, string: `${++i} ${"  ".repeat(depth)}${m}`, value: m}),
-        m => m.submorphs);
-      var {selected: morphs} = await world.filterableListPrompt(
-        "Choose morph", items, {historyId: "lively.morphic-select morph",
-         onSelection: sel => sel && sel.show()});
+    exec: async (world, opts = {root: world, justReturn: false, filterFn: null, prependItems: [], prompt: null}) => {
+      var filterFn = opts.filterFn || (() => true),
+          i = 0,
+          items = arr.compact(tree.map(opts.root || world,
+            (m, depth) => filterFn(m) ?
+              {isListItem: true, string: `${++i} ${"  ".repeat(depth)}${m}`, value: m} : null,
+            m => filterFn(m) ? m.submorphs : [])),
+          {selected: morphs} = await world.filterableListPrompt(
+            opts.prompt || "Choose morph",
+            (opts.prependItems || []).concat(items),
+            {historyId: "lively.morphic-select morph",
+             onSelection: sel => sel && sel.show && sel.show()});
       if (!opts.justReturn)
         morphs[0] && world.showHaloFor(morphs[0]);
       return morphs;
