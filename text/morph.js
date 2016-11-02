@@ -53,7 +53,9 @@ export class Text extends Morph {
       textLayout, textRenderer, lineWrapping,
       fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing,
-      backgroundColor, textStyleClasses
+      backgroundColor, textStyleClasses,
+      position, rightCenter, leftCenter, topCenter, bottom, top, right, left,
+      bottomCenter, bottomLeft, bottomRight, topRight, topLeft, center
     } = props;
 
     props = obj.dissoc(props, [
@@ -102,6 +104,21 @@ export class Text extends Morph {
 
     this.fit();
     this._needsFit = false;
+    // Update position after fit
+    if (position !== undefined) this.position = position;
+    if (rightCenter !== undefined) this.rightCenter = rightCenter;
+    if (leftCenter !== undefined) this.leftCenter = leftCenter;
+    if (topCenter !== undefined) this.topCenter = topCenter;
+    if (bottom !== undefined) this.bottom = bottom;
+    if (top !== undefined) this.top = top;
+    if (right !== undefined) this.right = right;
+    if (left !== undefined) this.left = left;
+    if (bottomCenter !== undefined) this.bottomCenter = bottomCenter;
+    if (bottomLeft !== undefined) this.bottomLeft = bottomLeft;
+    if (bottomRight !== undefined) this.bottomRight = bottomRight;
+    if (topRight !== undefined) this.topRight = topRight;
+    if (topLeft !== undefined) this.topLeft = topLeft;
+    if (center !== undefined) this.center = center;
   }
 
   get isText() { return true }

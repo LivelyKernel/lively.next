@@ -18,7 +18,9 @@ const defaultTextStyle = {
 export class Label extends Morph {
 
   constructor(props = {}) {
-    var { fontMetric } = props;
+    var { fontMetric, position, rightCenter, leftCenter, topCenter,
+          bottom, top, right, left, bottomCenter, bottomLeft, bottomRight,
+          topRight, topLeft, center } = props;
     super({
       draggable: false,
       padding: 0,
@@ -29,6 +31,22 @@ export class Label extends Morph {
     });
     if (fontMetric)
       this._fontMetric = fontMetric;
+    this.fit();
+    // Update position after fit
+    if (position !== undefined) this.position = position;
+    if (rightCenter !== undefined) this.rightCenter = rightCenter;
+    if (leftCenter !== undefined) this.leftCenter = leftCenter;
+    if (topCenter !== undefined) this.topCenter = topCenter;
+    if (bottom !== undefined) this.bottom = bottom;
+    if (top !== undefined) this.top = top;
+    if (right !== undefined) this.right = right;
+    if (left !== undefined) this.left = left;
+    if (bottomCenter !== undefined) this.bottomCenter = bottomCenter;
+    if (bottomLeft !== undefined) this.bottomLeft = bottomLeft;
+    if (bottomRight !== undefined) this.bottomRight = bottomRight;
+    if (topRight !== undefined) this.topRight = topRight;
+    if (topLeft !== undefined) this.topLeft = topLeft;
+    if (center !== undefined) this.center = center;
   }
 
   get isLabel() { return true }
