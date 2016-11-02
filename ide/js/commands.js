@@ -6,21 +6,27 @@ import { show } from "../../index.js"
 import { Range } from "../../text/range.js"
 import { eqPosition, lessPosition } from "../../text/position.js"
 
-function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, env) {
-  var evalStrategies = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js")),
-      evalStrategy = evalStrategies && new evalStrategies.LivelyVmEvalStrategy();;
-  if (!evalStrategy)
-    throw new Error("doit not possible: lively.vm eval-strategies not available!")
-
-  if (!env) env = morph.evalEnvironment || {}; // FIXME!
-  var {targetModule, context, format} = env,
-      code = morph.textInRange(range),
+function buildEvalOpts(morph, additionalOpts) {
+  // FIXME, also in text/commands
+  var env = {...morph.evalEnvironment, ...additionalOpts},
+      {targetModule, context, format, remote} = env,
       context = context || morph,
       // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
       sourceURL = targetModule + "_doit_" + Date.now(),
-      format = format || "esm",
-      opts = {System, targetModule, format, context, sourceURL};
-  return evalStrategy.runEval(code, opts);
+      format = format || "esm";
+  return {System, targetModule, format, context, sourceURL, remote};
+}
+
+function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, additionalOpts) {
+
+  var {serverInterfaceFor, localInterface} = System.get(System.decanonicalize("lively-system-interface"))
+  if (!serverInterfaceFor || !localInterface)
+    throw new Error("doit not possible: lively-system-interface not available!")
+
+  var opts = buildEvalOpts(morph, additionalOpts),
+      code = morph.textInRange(range),
+      endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface;
+  return endpoint.runEval(code, opts);
 }
 
 function maybeSelectCommentOrLine(morph) {

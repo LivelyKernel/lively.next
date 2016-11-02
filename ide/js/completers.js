@@ -1,11 +1,15 @@
-function buildEvalOpts(morph) {
-  // FIXME, also in text/commands
-  var env = morph.evalEnvironment || {};
-  if (!env.targetModule) env.targetModule = "lively://lively.next-prototype_2016_08_23/" + morph.id;
-  var sourceURL = env.targetModule + "_doit_" + Date.now();
-  return {System, context: morph, sourceURL, ...env}
-}
+/*global System*/
 
+function buildEvalOpts(morph, additionalOpts) {
+  // FIXME, also in text/commands
+  var env = {...morph.evalEnvironment, ...additionalOpts},
+      {targetModule, context, format, remote} = env,
+      context = context || morph,
+      // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
+      sourceURL = targetModule + "_doit_" + Date.now(),
+      format = format || "esm";
+  return {System, targetModule, format, context, sourceURL, remote};
+}
 
 export class DynamicJavaScriptCompleter {
 
@@ -21,17 +25,21 @@ export class DynamicJavaScriptCompleter {
 
     // FIXME this should got into a seperate JavaScript support module where
     // the dependency can be properly declared
-    var mod = System.get(System.decanonicalize("lively.vm/lib/eval-strategies.js"));
-    if (!mod) return [];
-    var evalStrategy = new mod.LivelyVmEvalStrategy();
+    var {serverInterfaceFor, localInterface} = System.get(
+      System.decanonicalize("lively-system-interface"))
 
-    let completionRequest = await evalStrategy.keysOfObject(roughPrefix, buildEvalOpts(textMorph)),
-        {completions, prefix} = completionRequest,
+    if (!serverInterfaceFor || !localInterface) return [];
+
+    var opts = buildEvalOpts(textMorph),
+        _ = show(opts.targetModule),
+        endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
+        {completions, prefix} = await endpoint.dynamicCompletionsForPrefix(
+                                  opts.targetModule, roughPrefix, opts),
         count = completions.reduce((sum, [_, completions]) => sum+completions.length, 0),
         priority = 2000,
         processed = completions.reduce((all, [protoName, completions], i) => {
           return all.concat(completions.map(ea =>
-            ({info: protoName, completion: ea, prefix: completionRequest.prefix})))
+            ({info: protoName, completion: ea, prefix: prefix})))
         }, []);
 
     // assign priority:
