@@ -63,7 +63,8 @@ export class Morph {
     this.updateTransform();
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
-    Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds"]));
+    Object.assign(this, obj.dissoc(props, ["env", "type", "submorphs", "bounds", "layout"]));
+    if (props.layout) this.layout = props.layout;
   }
 
   get __only_serialize__() { return Object.keys(this._currentState); }
