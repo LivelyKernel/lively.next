@@ -27,7 +27,10 @@
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
       "bowser": "./node_modules/bowser/bowser.js",
       "kld-intersections": "./node_modules/kld-intersections",
-      "web-animations-polyfill": "./node_modules/web-animations-js/web-animations.min.js"
+      "web-animations-polyfill": { 
+          "~node": "./node_modules/web-animations-js/web-animations.min.js",
+          "node": "@empty"
+      }
     },
     "meta": {
       "node_modules/mocha-es6/mocha-es6.js": {
