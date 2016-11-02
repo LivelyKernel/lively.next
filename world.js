@@ -243,7 +243,7 @@ var worldCommands = [
   {
     name: "open workspace",
     exec: async world => {
-      var { Workspace } = await System.import("lively.morphic/tools.js");
+      var { default: Workspace } = await System.import("lively.morphic/ide/js/workspace.js");
       return new Workspace({center: world.center}).activate();
     }
   },
@@ -303,7 +303,7 @@ var worldCommands = [
   {
     name: "open object drawer",
     exec: async world => {
-      var { ObjectDrawer } = await System.import("lively.morphic/tools.js")
+      var { default: ObjectDrawer } = await System.import("lively.morphic/object-drawer.js")
       return new ObjectDrawer().openInWorldNearHand();
     }
   },
