@@ -318,6 +318,7 @@ export class Button extends Morph {
   fit() {
     var padding = this.padding,
         label = this.submorphs[0];
+    label.fit();
     this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
     return this.relayout();
   }
