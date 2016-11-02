@@ -11,7 +11,7 @@ describe("ticking scripts", function() {
 
   this.timeout(5000)
 
-  before(() => {
+  beforeEach(() => {
     world = morph({type: "world", extent: pt(300,300), submorphs: [
       {name: "aMorph", extent: pt(100,100), position: pt(10,10), fill: Color.red}]});
     aMorph = world.get("aMorph");
@@ -51,7 +51,7 @@ describe("ticking scripts", function() {
     expect().assert(script1.equals(script2), 'TargetScript equals');
   });
 
-  it("startSteppingChecksIfScriptIsThere", async function() {
+  it("start stepping checks if script is there", async function() {
     aMorph.someFunction = function(arg) { return 33 };
     aMorph.startStepping(10, 'someFunction');
     aMorph.startStepping(20, 'someFunction');

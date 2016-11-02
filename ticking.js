@@ -52,11 +52,11 @@ class Script {
 
 class TargetScript extends Script {
 
-  constructor(target, selector, args = []) {
+  constructor(target, selector, args) {
     super();
     this.target = target;
     this.selector = selector;
-    this.args = args;
+    this.args = args || [];
   }
 
   execute() {
@@ -64,7 +64,11 @@ class TargetScript extends Script {
  && this.target[this.selector].apply(this.target, this.args);
   }
 
-  equals(other) { return other.isScript && this.target == other.target && this.selector == other.selector; }
+  equals(other) {
+    return other.isScript
+        && this.target == other.target
+        && this.selector == other.selector;
+  }
 
   toString() {
     return `Script(${this.target}>>${this.selector}(${this.args.join(',')}))`;
@@ -83,7 +87,7 @@ class FunctionScript extends Script {
   equals(other) { return other.isScript && this.callback == other.callback }
 
   toString() {
-      return `Script(${this.callback.toString().replace(/\n/g, "").slice(0, 40) + "..."})`;
+    return `Script(${this.callback.toString().replace(/\n/g, "").slice(0, 40) + "..."})`;
   }
 }
 

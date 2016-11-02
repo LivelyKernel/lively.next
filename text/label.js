@@ -141,7 +141,7 @@ export class Label extends Morph {
         width, height;
     if (!fm.isProportional(this.fontFamily)) {
       var {width: charWidth, height: charHeight} = fm.sizeFor(this.textStyle, "x");
-      width = this.textString.length * charWidth;
+      width = (this.textString || "").length * charWidth;
       height = charHeight;
     } else {
       ({width, height} = fm.sizeFor(this.textStyle, this.textString));
