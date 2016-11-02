@@ -22,6 +22,8 @@ export class AbstractPrompt extends Morph {
     };
   }
 
+  get isEpiMorph() { return true }
+
   get label() { return this.get("label").textString; }
   set label(label) {
     this.get("label").textString = label;
