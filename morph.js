@@ -1,11 +1,13 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, properties } from "lively.lang";
+import { signal } from "lively.bindings";
 import { renderRootMorph, AnimationQueue } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
+import { TargetScript } from "./ticking.js";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -57,6 +59,7 @@ export class Morph {
     this._currentState = {...defaultProperties};
     this._id = newMorphId(this.constructor.name);
     this._animationQueue = new AnimationQueue(this);
+    this.tickingScripts = [];
     this.updateTransform();
     if (props.submorphs) this.submorphs = props.submorphs;
     if (props.bounds) this.setBounds(props.bounds);
@@ -100,7 +103,7 @@ export class Morph {
   onChange(change) {
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
         this.updateTransform();
-    if (change.prop == "layout") 
+    if (change.prop == "layout")
         change.value && change.value.apply();
     this.layout && this.layout.onChange(change);
   }
@@ -371,10 +374,10 @@ export class Morph {
   }
 
   immediateTransformTillMorph(other, r) {
-    var topLeft = r.topLeft(), topRight =  r.topRight(), 
+    var topLeft = r.topLeft(), topRight =  r.topRight(),
         bottomRight =  r.bottomRight(),  bottomLeft = r.bottomLeft(),
         transformPoint = (p, morph) => p.addPt(morph.origin).matrixTransform(morph.getTransform());
-    
+
     for (var morph = this; (morph != other) && (morph != undefined); morph = morph.owner) {
          topLeft = transformPoint(topLeft, morph);
          topRight = transformPoint(topRight, morph);
@@ -527,6 +530,7 @@ export class Morph {
 
       this._submorphOrderChanged = true;
       this.makeDirty();
+      submorph.resumeSteppingAll();
     });
 
 
@@ -565,6 +569,7 @@ export class Morph {
         args: [morph, index],
       }
     }, () => {
+      morph.suspendSteppingAll();
       morph._owner = null;
     });
   }
@@ -575,7 +580,7 @@ export class Morph {
   }
 
   fadeOut(duration=1000) {
-    this.animate({opacity: 0, duration, easing: "ease-out", 
+    this.animate({opacity: 0, duration, easing: "ease-out",
                   onFinish: () => {
         this.remove();
         this.opacity = 1;
@@ -1060,6 +1065,53 @@ export class Morph {
   render(renderer) { return renderer.renderMorph(this); }
   renderAsRoot(renderer) { return renderRootMorph(this, renderer); }
 
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // ticking
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  startStepping(stepTime, scriptName, ...args) {
+    var script = new TargetScript(this, scriptName, args);
+    this.removeEqualScripts(script);
+    this.tickingScripts.push(script);
+    script.startTicking(stepTime);
+    return script;
+  }
+
+  stopStepping() {
+    arr.invoke(this.tickingScripts, 'stop');
+    this.tickingScripts.length = [];
+  }
+
+  stopSteppingScriptNamed(selector) {
+    var scriptsToStop = this.tickingScripts.filter(ea => ea.selector === selector);
+    this.stopScripts(scriptsToStop);
+  }
+
+  stopScripts(scripts) {
+    arr.invoke(scripts, 'stop');
+    this.tickingScripts = arr.withoutAll(this.tickingScripts, scripts);
+  }
+
+  suspendStepping() {
+    if (this.tickingScripts)
+      arr.invoke(this.tickingScripts, 'suspend');
+  }
+
+  suspendSteppingAll() {
+    this.withAllSubmorphsDo(ea => ea.suspendStepping());
+  }
+
+  resumeStepping() {
+    arr.invoke(this.tickingScripts, 'resume');
+  }
+
+  resumeSteppingAll() {
+    this.withAllSubmorphsDo(ea => arr.invoke(ea.tickingScripts, 'resume'));
+  }
+
+  removeEqualScripts(script) {
+    this.stopScripts(this.tickingScripts.filter(ea => ea.equals(script)));
+  }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // commands
