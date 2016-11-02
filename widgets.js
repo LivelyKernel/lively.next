@@ -1,6 +1,6 @@
 import { arr, num, obj } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
-import { show, morph, Morph, Ellipse, Text, HorizontalLayout } from "./index.js";
+import { show, morph, Morph, Ellipse, Text, HorizontalLayout, GridLayout } from "./index.js";
 import { signal, connect } from "lively.bindings";
 import config from "./config.js";
 
@@ -16,17 +16,26 @@ export class Window extends Morph {
       clipMode: "hidden",
       resizable: true,
       ...obj.dissoc(props, ["title", "targetMorph"]),
-      submorphs: [{fill: Color.transparent, name: "wrapper", 
-                   onDrag: (evt) => {this.onDrag(evt)}}]
     });
-    const wrapper = this.getSubmorphNamed("wrapper");
-    wrapper.setBounds(this.innerBounds().withTopLeft(pt(0,25)));
-    wrapper.submorphs = (props.submorphs || []).concat(this.controls());
-    if (props.targetMorph) this.targetMorph = props.targetMorph;
+
+    this.submorphs = this.controls(this.resizable)
+    
+    if (props.targetMorph) {
+       this.submorphs = [props.targetMorph, ...this.submorphs];
+       this.targetMorph = this.submorphs[0];
+    }
+
+    this.layout = new GridLayout({grid: [[this.titleLabel()],
+                                         [this.targetMorph]],
+                              autoAssign: false,
+                              compensateOrigin: true}),
+    this.layout.row(0).col(0).group.align = "center";
+    this.layout.row(0).fixed = 25;
+    
     this.title = props.title || this.name || "";
     this.resetPropertyCache();
-    //connect(this, "extent", this, "relayout", {updater: ($upd) => $upd()});
-    connect(this.titleLabel(), "extent", this, "relayout", {updater: ($upd) => $upd()});
+    this.positionResizer();
+    connect(this, "extent", this, "positionResizer");
   }
 
   get isWindow() { return true }
@@ -36,22 +45,8 @@ export class Window extends Morph {
     this.propertyCache = {nonMinizedBounds: null, nonMaximizedBounds: null, minimizedBounds: null};
   }
 
-  relayout(duration) {
-    var bounds = this.innerBounds(),
-        t = this.targetMorph, 
-        wrapper = this.getSubmorphNamed("wrapper"),
-        newBounds = bounds.withTopLeft(pt(0,25));
-    
-    this.titleLabel().center = pt(Math.max(bounds.extent().x / 2, 100), 10);
-    this.resizer().bottomRight = bounds.bottomRight();
-    
-    if (duration) {
-        t && t.animate({bounds: newBounds, duration});
-        wrapper.animate({position: this.origin.negated(), duration})
-    } else {
-        t && t.setBounds(newBounds);
-        wrapper.position = this.origin.negated();
-    }
+  positionResizer() {
+    this.resizer().bottomRight = this.innerBounds().bottomRight();
   }
 
   controls() {
@@ -111,7 +106,6 @@ export class Window extends Morph {
           styleClasses: ["morph", "fa", "fa-plus"], center: pt(5.5,5), opacity: 0.5
         }]
       }) : undefined
-
     ]
   }
 
@@ -135,13 +129,11 @@ export class Window extends Morph {
       name: "resizer",
       nativeCursor: "nwse-resize",
       extent: pt(20,20),
-      opacity: 0.5,
       fill: Color.transparent,
       bottomRight: this.extent,
       onDrag(evt) {
         win.resizeBy(evt.state.dragDelta);
         this.bottomRight = win.extent;
-        win.relayout();
       }
     };
   }
@@ -149,51 +141,37 @@ export class Window extends Morph {
   get title() { return this.titleLabel().textString; }
   set title(title) { this.titleLabel().textString = title; }
 
-  get targetMorph() { return arr.last(arr.withoutAll(this.getSubmorphNamed('wrapper').submorphs, this.controls())); }
-  set targetMorph(targetMorph) {
-    if (!targetMorph) {
-      var existing = this.targetMorph;
-      existing && existing.remove();
-      return;
-    }
-
-    if (!targetMorph.isMorph) targetMorph = morph(targetMorph); // spec
-
-    this.getSubmorphNamed("wrapper").addMorph(targetMorph, this.resizer());
-    this.relayout();
-  }
-
   toggleMinimize() {
     var cache = this.propertyCache,
-        bounds = this.bounds();
+        bounds = this.bounds(),
+        duration = 200, easing = "cubic-bezier(0.19, 1, 0.22, 1)";
     if (this.minimized) {
       cache.minimizedBounds = bounds;
-      this.animate({bounds: cache.nonMinizedBounds || bounds, duration: 300});
-      this.relayout(300);
+      this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
     } else {
       cache.nonMinizedBounds = bounds;
       cache.minimizedBounds = cache.minimizedBounds || bounds.withExtent(pt(this.width, 25));
-      this.animate({bounds: cache.minimizedBounds, duration: 300});
-      this.relayout(300);
+      this.animate({bounds: cache.minimizedBounds, duration, easing});
     }
     this.minimized = !this.minimized;
     this.resizer().visible = !this.minimized;
   }
 
   toggleMaximize() {
-    var cache = this.propertyCache;
+    var cache = this.propertyCache, 
+        easing = "cubic-bezier(0.19, 1, 0.22, 1)", 
+        duration = 200;
     if (this.maximized) {
-      this.animate({bounds: cache.nonMaximizedBounds, duration: 300});
+      this.animate({bounds: cache.nonMaximizedBounds, duration, easing});
       this.resizer().bottomRight = this.extent;
       this.maximized = false;
-      this.relayout(300);
     } else {
       cache.nonMaximizedBounds = this.bounds();
-      this.animate({bounds: this.world().visibleBounds().insetBy(5), duration: 300});
+      this.animate({bounds: this.world().visibleBounds().insetBy(5), 
+                    duration, easing});
       this.resizer().visible = true;
       this.maximized = true;
       this.minimized = false;
-      this.relayout(300);
     }
   }
 
