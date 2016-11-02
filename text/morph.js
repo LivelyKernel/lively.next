@@ -387,8 +387,8 @@ export class Text extends Morph {
   }
 
   pluginInvokeFirst(method, ...args) {
-    var plugin = this._plugins && this._plugins.slice().reverse().find(p =>
-                                    typeof p[method === "function"]);
+    var plugin = this._plugins
+              && this._plugins.slice().reverse().find(p => typeof p[method === "function"]);
     return plugin ? plugin[method](...args) : undefined;
   }
 
