@@ -95,9 +95,6 @@ export class ColorPicker extends Window {
     });
     this.titleLabel().fontColor = Color.gray;
     this.update();
-    connect(this, "change", this, "update", {
-      updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()
-    });
   }
 
   onMouseDown(evt) {
@@ -160,15 +157,7 @@ export class ColorPicker extends Window {
   }
 
   update() {
-     [this.getSubmorphNamed("field"),
-      this.getSubmorphNamed("colorViewer"),
-      this.getSubmorphNamed("picker"),
-      this.getSubmorphNamed("slider"),
-      this.getSubmorphNamed("harmonies"),
-      this.getSubmorphNamed("hashViewer"),
-      this.getSubmorphNamed("hsbViewer"),
-      this.getSubmorphNamed("rgbViewer"),
-     ].forEach(p => p && p.update(this));
+     this.targetMorph.withAllSubmorphsDo(p => p.update && p.update(this));
      // would be better if this.color is the canonical place
      // rms: as long as lively.graphics/color loses the hue information
      //      when lightness or saturation drop to 0, this.color can not serve
@@ -409,9 +398,9 @@ export class ColorPicker extends Window {
         active: false,
         onMouseDown(evt) {
            const [toggleIndicator, _] = this.submorphs;
-           this.update(this.active = !this.active, toggleIndicator);
+           this.toggle(this.active = !this.active, toggleIndicator);
         },
-        update: (active, toggleIndicator) => {
+        toggle: (active, toggleIndicator) => {
            const duration = 300, easing = 'ease-out';
            if (active) {
               toggleIndicator.animate({rotation: num.toRadians(90), duration});
@@ -447,21 +436,20 @@ export class ColorPicker extends Window {
       name: "harmonies",
       layout: new HorizontalLayout({spacing: 5}),
       fill: Color.transparent,
-      update: (colorPicker) => {
-         this.harmonyVisualizer().update(colorPicker);
-         this.harmonyPalette().displayHarmony(colorPicker, this.harmony.chord())
-      },
+      opacity: 0,
       submorphs: [this.harmonyPalette(), this.harmonyControl()]
     })
   }
 
   harmonyPalette() {
+     const colorPicker = this;
      return this.getSubmorphNamed("harmonyPalette") || new Morph({
          name: "harmonyPalette",
          layout: new TilingLayout({spacing: 5}),
          fill: Color.transparent,
          width: 260,
-         displayHarmony(colorPicker, colors) {
+         update(colorPicker) {
+             const colors = colorPicker.harmony.chord();
              if (colors.length != this.submorphs.length) {
                 this.submorphs = colors.map(c => colorPicker.colorField(c))
              } else {
