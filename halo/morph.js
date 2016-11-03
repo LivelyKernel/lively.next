@@ -5,6 +5,7 @@ import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
 import { connect } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
+import { Inspector } from "../ide/js/inspector.js";
 
 import { stylizerFor } from './stylization.js'; 
 
@@ -549,7 +550,8 @@ export class Halo extends Morph {
       halo: this,
       tooltip: "Inspect the morph's local state",
       onMouseDown: (evt) => {
-        this.target.inspect();
+        Inspector.openInWindow({targetObject: this.target})
+        this.remove();
       }
     }));
   }
