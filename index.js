@@ -3,13 +3,13 @@ export * from "./morph.js";
 export * from "./world.js";
 export * from "./text/morph.js";
 export * from "./widgets.js";
-export * from "./window.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
 export * from "./list.js";
 export * from "./env.js";
 export * from "./layout.js";
 export { show } from "./markers.js"
+export { default as Window } from "./window.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

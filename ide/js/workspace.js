@@ -1,6 +1,7 @@
 import { obj } from "lively.lang";
 import { pt, Point, Color, Rectangle } from "lively.graphics";
-import { config, Window } from "../../index.js";
+import { config } from "../../index.js";
+import Window from "../../window.js";
 import { JavaScriptEditorPlugin } from "./editor-plugin.js";
 
 export default class Workspace extends Window {
