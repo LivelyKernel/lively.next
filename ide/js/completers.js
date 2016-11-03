@@ -31,7 +31,6 @@ export class DynamicJavaScriptCompleter {
     if (!serverInterfaceFor || !localInterface) return [];
 
     var opts = buildEvalOpts(textMorph),
-        _ = show(opts.targetModule),
         endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
         {completions, prefix} = await endpoint.dynamicCompletionsForPrefix(
                                   opts.targetModule, roughPrefix, opts),
