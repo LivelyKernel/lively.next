@@ -33,7 +33,9 @@ class Layout {
   }
   
   affectsLayout(submorph, {prop, value, prevValue}) {
-    return ["position", "scale", "rotation"].includes(prop) && !obj.equals(value, prevValue);
+    return ["position", "scale", "rotation"].includes(prop) 
+           && !obj.equals(value, prevValue) 
+           && this.container.submorphs.includes(submorph);
   }
 
   onSubmorphChange(submorph, change) {
