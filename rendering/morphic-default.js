@@ -117,9 +117,9 @@ export class PropertyAnimation {
 
   convertBounds(config) {
     var {bounds, origin, rotation, scale, layout} = config,
-         origin = origin || pt(0,0),
-         rotation = rotation || 0,
-         scale = scale || 1;
+         origin = origin || this.morph.origin,
+         rotation = rotation || this.morph.rotation,
+         scale = scale || this.morph.scale;
     if (bounds) {
       return {...obj.dissoc(config, ["bounds"]),
               origin, rotation, scale,
