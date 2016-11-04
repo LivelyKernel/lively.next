@@ -427,10 +427,13 @@ var worldCommands = [
 
   {
     name: "open file browser",
-    exec: async world => {
-      var { default: HTTPFileBrowser } = await System.import("lively.morphic/ide/http-file-browser.js");
-      world.openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate();
-      return true;
+    exec: async (world, opts = {}) => {
+      var { default: HTTPFileBrowser } = await System.import("lively.morphic/ide/http-file-browser.js"),
+          { location, file } = opts;
+      var browser = file ?
+        HTTPFileBrowser.forFile(file, location) :
+        HTTPFileBrowser.forLocation(location || document.location.origin);
+      return world.openInWindow(browser).activate();
     }
   }
 ]

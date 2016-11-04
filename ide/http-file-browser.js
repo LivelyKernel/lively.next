@@ -265,7 +265,7 @@ var browserCommands = [
 
       try {
         await browser.gotoFile(targetURL);
-        browser.fileTree.centerSelection()
+        browser.fileTree.centerSelection();
       } catch (e) {
         browser.showError(e);
         return true;
@@ -281,6 +281,16 @@ export default class HTTPFileBrowser extends Morph {
   static forLocation(urlOrResource, props) {
     var browser = new this(props)
     browser.location = urlOrResource;
+    return browser;
+  }
+
+  static forFile(urlOrResource, location) {
+    var res;
+    try { res = resource(urlOrResource); } catch (e) {
+      res = resource(string.joinPath(location || "", urlOrResource)); }
+    var browser = this.forLocation(location || res.root());
+    browser.gotoFile(res)
+      .then(() => browser.fileTree.centerSelection());
     return browser;
   }
 
@@ -470,6 +480,7 @@ export default class HTTPFileBrowser extends Morph {
   }
 
   async gotoFile(urlOrResource) {
+    await this.whenFinishedLoading();
     var target = typeof urlOrResource === "string" ?
           resource(urlOrResource) : urlOrResource,
         path = target.parents().concat(target),
