@@ -195,7 +195,7 @@ class StyleHalo extends Morph {
            layout: new HorizontalLayout({spacing: 5}),
            isHaloItem: true, 
            update(evt) { 
-              this.topCenter = getPos();
+              this.align(this.topCenter, getPos());
               const [_, inspectButton] = this.submorphs;
               if (!layout) {
                 inspectButton.opacity = .5;
@@ -210,15 +210,16 @@ class StyleHalo extends Morph {
                 padding: 2, readOnly: true, 
                 fontWeight: 'bold', nativeCursor: "pointer",
                 fontStyle: 'bold', textString: layoutName(layout),
-                onMouseDown: () => {
+                onMouseDown: (evt) => {
                    var menu = this.world().openWorldMenu(
                       this.getLayoutObjects().map(l => {
                          return [layoutName(l), 
                                  () => {
+                                     const p = this.getSubmorphNamed("layoutPicker");
                                      this.target.animate({layout: l, 
-                                                          easing: "cubic-bezier(0.075, 0.82, 0.165, 1)"}); 
-                                     this.getSubmorphNamed("layoutPicker")
-                                         .textString = layoutName(l);
+                                                          easing: "cubic-bezier(0.075, 0.82, 0.165, 1)"});
+                                     p.textString = layoutName(l);
+                                     p.fitIfNeeded();
                                      this.update();
                                  }]
                       })
