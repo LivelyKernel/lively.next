@@ -19,10 +19,7 @@ export default class Window extends Morph {
 
     this.submorphs = this.controls(this.resizable)
     
-    if (props.targetMorph) {
-       this.submorphs = [props.targetMorph, ...this.submorphs];
-       this.targetMorph = this.submorphs[0];
-    }
+    if (props.targetMorph) this.targetMorph = props.targetMorph;
 
     this.layout = new GridLayout({grid: [[this.titleLabel()],
                                          [this.targetMorph]],
@@ -38,6 +35,20 @@ export default class Window extends Morph {
   }
 
   get isWindow() { return true }
+
+  get targetMorph() {
+    return arr.withoutAll(this.submorphs, this.controls())[0];
+  }
+
+  set targetMorph(morph) {
+    var ctrls = this.controls();
+    arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
+    if (morph) this.addMorph(morph, ctrls[0]);
+  }
+
+  targetMorphBounds() {
+    return new Rectangle(0, 25, this.width, this.height - 25);
+  }
 
   resetPropertyCache() {
     // For remembering the position and extents of the window states
