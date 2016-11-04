@@ -5,7 +5,7 @@ import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
 import { connect } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
-import { Inspector } from "../ide/js/inspector.js";
+import Inspector from "../ide/js/inspector.js";
 
 import { stylizerFor } from './stylization.js'; 
 

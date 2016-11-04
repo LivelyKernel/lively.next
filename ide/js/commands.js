@@ -1,10 +1,11 @@
 /*global System*/
 
-import { pt, Rectangle } from "lively.graphics"
+import { pt, Rectangle } from "lively.graphics";
 import { chain, arr, obj, string } from "lively.lang";
-import { show } from "../../index.js"
-import { Range } from "../../text/range.js"
-import { eqPosition, lessPosition } from "../../text/position.js"
+import { show } from "../../index.js";
+import { Range } from "../../text/range.js";
+import { eqPosition, lessPosition } from "../../text/position.js";
+import Inspector from "./inspector.js";
 
 function buildEvalOpts(morph, additionalOpts) {
   // FIXME, also in text/commands
@@ -176,10 +177,24 @@ export var jsEditorCommands = [
 
   {
     name: "inspectit",
-    doc: "...",
+    doc: "Evaluates the expression and opens an inspector widget on the resulting object.",
+    exec: async function(morph, opts) {
+      maybeSelectCommentOrLine(morph);
+      var result, err;
+      try {
+        result = await doEval(morph, undefined, opts);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+      Inspector.openInWindow({targetObject: err ? err : result.value});
+      return result;
+    }
+  },
+
+  {
+    name: "print inspectit",
+    doc: "Prints a representation of the object showing it's properties. The count argument defines how deep (recursively) objects will be printed.",
     handlesCount: true,
     exec: async function(morph, opts, count = 1) {
-      // opts = {targetModule}
       maybeSelectCommentOrLine(morph);
       var result, err;
       try {
@@ -187,7 +202,6 @@ export var jsEditorCommands = [
         err = result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      // morph.insertTextAndSelect(err ? err.stack || String(err) : obj.inspect(result.value, {maxDepth: count}));
       morph.insertTextAndSelect(printEvalResult(result, count));
       return result;
     }

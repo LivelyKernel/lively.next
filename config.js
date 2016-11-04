@@ -99,7 +99,8 @@ var config = {
       {keys: {mac: 'Meta-D', win:  'Ctrl-D'}, command: "doit"},
       {keys: {mac: "Meta-Shift-L X B"},      command: "eval all"},
       {keys: {mac: 'Meta-P', win: 'Ctrl-P'}, command: "printit"},
-      {keys: {mac: 'Meta-I', win: 'Ctrl-I'}, command: "inspectit"},
+      {keys: {mac: 'Meta-I', win: 'Ctrl-I'}, command: "print inspectit"},
+      {keys: {mac: 'Meta-Shift-I', win: 'Ctrl-Shift-I'}, command: "inspectit"},
       {keys: {mac: 'Meta-S', win: 'Ctrl-S'}, command: "saveit"},
 
       {keys: 'Backspace',                           command: "delete backwards"},

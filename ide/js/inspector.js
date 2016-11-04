@@ -9,7 +9,27 @@ import { HorizontalResizer } from "../../resizers.js";
 import config from "../../config.js";
 
 
-var inspectorCommands = [];
+var inspectorCommands = [
+
+ {
+   name: "focus codeEditor",
+   exec: inspector => {
+     inspector.get("codeEditor").show();
+     inspector.get("codeEditor").focus();
+     return true;
+   }
+ },
+ 
+ {
+   name: "focus propertyTree",
+   exec: inspector => {
+     inspector.get("propertyTree").show();
+     inspector.get("propertyTree").focus();
+     return true;
+   }
+ }
+
+];
 
 function propertyNamesOf(obj) {
 
@@ -25,13 +45,26 @@ function propertyNamesOf(obj) {
   return keys;
 }
 
+function printValue(value) {
+  if (obj.isPrimitive(value)) return string.print(value);
+  if (Array.isArray(value)) {
+    var tooLong = value.length > 3;
+    if (tooLong) value = value.slice(0, 3);
+    var printed = string.print(value);
+    if (tooLong) printed = printed.slice(0, -1) + ", ...]";
+    return printed;
+  }
+  return string.print(value);
+}
+
 class InspectorTreeData extends TreeData {
 
   static forObject(obj) {
     return new this({propName: "???", value: obj, isCollapsed: true})
   }
 
-  display(node) { return `${node.propName}: ${string.truncate(String(node.value), 100).replace(/\n/g, "")}`; }
+  // display(node) { return `${node.propName}: ${string.truncate(String(node.value), 100).replace(/\n/g, "")}`; }
+  display(node) { return `${node.propName}: ${printValue(node.value).replace(/\n/g, "")}`; }
   isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) {
     node.isCollapsed = bool;
@@ -55,7 +88,7 @@ class InspectorTreeData extends TreeData {
 // i.get("propertyTree").onNodeCollapseChanged
 
 
-export class Inspector extends Morph {
+export default class Inspector extends Morph {
 
   static openInWindow(props) {
     var i = new this(props).openInWorld();
