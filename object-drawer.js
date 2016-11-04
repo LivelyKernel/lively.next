@@ -171,6 +171,8 @@ export default class ObjectDrawer extends Morph {
 
     var tree = this.addMorph(new Tree({
       position: pos, extent: objExt,
+      fontFamily: "Arial, sans-serif",
+      fontSize: 18,
       fill: Color.white, border: {color: Color.gray, width: 1},
       treeData: root,
       onDrag: doCopy, draggable: true,
