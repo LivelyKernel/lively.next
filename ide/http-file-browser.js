@@ -1,4 +1,4 @@
-import { show, Window, Morph, Text } from "lively.morphic"
+import { show, Window, Morph, Label, Text } from "lively.morphic"
 import { Tree, TreeData } from "lively.morphic/tree.js"
 import TextEditor from "lively.morphic/ide/text-editor.js"
 
@@ -352,30 +352,36 @@ export default class HTTPFileBrowser extends Morph {
     });
 
     var fileTree = this.addMorph(new Tree({
-      name: "fileTree", fill: Color.white, border: {color: Color.gray, width: 1}, padding: Rectangle.inset(4), treeData}))
+      name: "fileTree", treeData,
+      fill: Color.white, border: {color: Color.gray, width: 1},
+      padding: Rectangle.inset(4)
+    }))
 
-    var locationInput = this.addMorph(Text.makeInputLine({name: "locationInput", textString: "", historyId: "http-file-browser-location-input-history", padding: Rectangle.inset(4, 2)}));
+    var locationInput = this.addMorph(Text.makeInputLine({
+      name: "locationInput", textString: "",
+      historyId: "http-file-browser-location-input-history",
+      padding: Rectangle.inset(4, 2)
+    }));
 
-    this.addMorph({type: "text", name: "selectedFileName", fontSize: 14, fontFamily: "Inconsolata, monospace", readOnly: true, clipMode: "hidden"});
+    this.addMorph({
+      type: "text", name: "selectedFileName",
+      fontSize: 14, fontFamily: "Inconsolata, monospace",
+      readOnly: true, clipMode: "hidden"
+    });
 
     var btnStyle = {
       type: "button", borderRadius: 5, padding: Rectangle.inset(0),
-      grabbable: false, draggable: false
+      fontSize: 12, grabbable: false, draggable: false
     }
 
-    var makeIconStyle = name => [
-      ["\u200C", {
-        fontSize: 12, fontFamily: "",
-        textStyleClasses: ["fa", "fa-" + name]}]];
-
-    var searchButton =       this.addMorph({name: "searchButton",       ...btnStyle, labelWithTextAttributes: makeIconStyle("search"), tooltip: "search for files"}),
-        reloadButton =       this.addMorph({name: "reloadButton",       ...btnStyle, labelWithTextAttributes: makeIconStyle("refresh"), tooltip: "reload list"}),
-        filterButton =       this.addMorph({name: "filterButton",       ...btnStyle, labelWithTextAttributes: makeIconStyle("filter"), tooltip: "set file filter"}),
-        openFileButton =     this.addMorph({name: "openFileButton",     ...btnStyle, labelWithTextAttributes: makeIconStyle("pencil-square-o"), tooltip: "open selected file"}),
-        addDirectoryButton = this.addMorph({name: "addDirectoryButton", ...btnStyle, labelWithTextAttributes: makeIconStyle("folder-o"), tooltip: "add directory"}),
-        addFileButton =      this.addMorph({name: "addFileButton",      ...btnStyle, labelWithTextAttributes: makeIconStyle("file-o"), tooltip: "add file"}),
-        renameFileButton =   this.addMorph({name: "renameFileButton",   ...btnStyle, labelWithTextAttributes: makeIconStyle("window-restore"), tooltip: "rename selected file"}),
-        deleteFileButton =   this.addMorph({name: "deleteFileButton",   ...btnStyle, labelWithTextAttributes: makeIconStyle("trash-o"), tooltip: "delete selected file"});
+    var searchButton =       this.addMorph({name: "searchButton",       ...btnStyle, label: Label.icon("search"), tooltip: "search for files"}),
+        reloadButton =       this.addMorph({name: "reloadButton",       ...btnStyle, label: Label.icon("refresh"), tooltip: "reload list"}),
+        filterButton =       this.addMorph({name: "filterButton",       ...btnStyle, label: Label.icon("filter"), tooltip: "set file filter"}),
+        openFileButton =     this.addMorph({name: "openFileButton",     ...btnStyle, label: Label.icon("pencil-square-o"), tooltip: "open selected file"}),
+        addDirectoryButton = this.addMorph({name: "addDirectoryButton", ...btnStyle, label: Label.icon("folder-o"), tooltip: "add directory"}),
+        addFileButton =      this.addMorph({name: "addFileButton",      ...btnStyle, label: Label.icon("file-o"), tooltip: "add file"}),
+        renameFileButton =   this.addMorph({name: "renameFileButton",   ...btnStyle, label: Label.icon("clone"), tooltip: "rename selected file"}),
+        deleteFileButton =   this.addMorph({name: "deleteFileButton",   ...btnStyle, label: Label.icon("trash-o"), tooltip: "delete selected file"});
 
     connect(this, 'extent', this, 'relayout');
     connect(locationInput, 'input', this, 'onLocationChanged');
