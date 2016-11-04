@@ -2,6 +2,7 @@ export { default as config } from "./config.js";
 export * from "./morph.js";
 export * from "./world.js";
 export * from "./text/morph.js";
+export * from "./text/label.js";
 export * from "./widgets.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
