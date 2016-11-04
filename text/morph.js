@@ -1020,6 +1020,7 @@ export class Text extends Morph {
     let textBounds = this.textBounds().outsetByRect(this.padding);
     if (!fixedHeight) this.height = textBounds.height;
     if (!fixedWidth) this.width = textBounds.width;
+    return this;
   }
 
   fitIfNeeded() {

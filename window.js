@@ -110,15 +110,12 @@ export default class Window extends Morph {
 
   titleLabel() {
     return this.getSubmorphNamed("titleLabel") || {
-      type: "text",
+      type: "label",
       name: "titleLabel",
-      readOnly: true,
-      draggable: false,
-      grabbable: false,
       fill: Color.transparent,
       fontColor: Color.darkGray,
       reactsToPointer: false,
-      selectable: false
+      textString: ""
     };
   }
 

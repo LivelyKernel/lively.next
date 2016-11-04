@@ -2,7 +2,7 @@
 import { Rectangle, Color, pt, rect } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
-import { Morph, Text, GridLayout } from "./index.js";
+import { Morph, Text, Label, GridLayout } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 
 
@@ -52,6 +52,7 @@ export class AbstractPrompt extends Morph {
 
   get buttonStyle() {
     return {
+      type: "button",
       activeStyle: {
         borderWidth: 2,
         fill: Color.transparent,
@@ -278,13 +279,16 @@ export class EditListPrompt extends ListPrompt {
 
   build(props) {
     super.build(props);
-    var makeIconStyle = name => [
-    ["\u200C", {
-      fontSize: 12, fontFamily: "",
-      textStyleClasses: ["fa", "fa-" + name]}]];
 
-    var addBtn = this.addMorph({name: "add item button", ...this.buttonStyle, type: "button", labelWithTextAttributes: makeIconStyle("plus")});
-    var rmBtn = this.addMorph({name: "remove item button", ...this.buttonStyle, type: "button", labelWithTextAttributes: makeIconStyle("minus")});
+    var addBtn = this.addMorph({
+          name: "add item button", ...this.buttonStyle,
+          label: Label.icon("plus", {fontSize: 12})
+        }),
+        rmBtn = this.addMorph({
+          name: "remove item button",
+          ...this.buttonStyle,
+          label: Label.icon("minus", {fontSize: 12})
+        });
 
     connect(addBtn, 'fire', this, 'addItemToList');
     connect(rmBtn, 'fire', this, 'removeSelectedItemsFromList');
@@ -305,7 +309,7 @@ export class EditListPrompt extends ListPrompt {
      l.row(1).paddingBottom = 2;
      l.row(2).paddingBottom = 5;
      l.col(0).paddingLeft = l.col(4).paddingRight = 5;
-     // l.apply()
+     l.apply()
   }
 
   async removeSelectedItemsFromList() {

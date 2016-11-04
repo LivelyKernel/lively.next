@@ -1,5 +1,5 @@
 import { fun, arr } from "lively.lang"
-import { show, morph, Morph } from "../index.js"
+import { show, morph, Label, Morph } from "../index.js"
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect } from "lively.bindings"
 import { TextAttribute, TextStyleAttribute } from "./attribute.js";
@@ -66,21 +66,16 @@ export class RichTextControl extends Morph {
       grabbable: false, draggable: false
     }
 
-    var makeIconStyle = name => [
-      ["\u200C", {
-        fontSize: 12, fontFamily: "",
-        textStyleClasses: ["fa", "fa-" + name]}]];
-
     this.opacity = 1;
 
-    this.addMorph({name: "bold button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("bold")});
-    this.addMorph({name: "italic button",    ...btnStyle, labelWithTextAttributes: makeIconStyle("italic")});
-    this.addMorph({name: "underline button", ...btnStyle, labelWithTextAttributes: makeIconStyle("underline")});
-    this.addMorph({name: "fontcolor button", ...btnStyle, labelWithTextAttributes: makeIconStyle("paint-brush")});
-    this.addMorph({name: "inc fontsize button", ...btnStyle, labelWithTextAttributes: makeIconStyle("plus")});
-    this.addMorph({name: "dec fontsize button", ...btnStyle, labelWithTextAttributes: makeIconStyle("minus")});
-    this.addMorph({name: "link button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("link")});
-    this.addMorph({name: "font button",      ...btnStyle, labelWithTextAttributes: makeIconStyle("font")});
+    this.addMorph({name: "bold button",      ...btnStyle, label: Label.icon("bold")});
+    this.addMorph({name: "italic button",    ...btnStyle, label: Label.icon("italic")});
+    this.addMorph({name: "underline button", ...btnStyle, label: Label.icon("underline")});
+    this.addMorph({name: "fontcolor button", ...btnStyle, label: Label.icon("paint-brush")});
+    this.addMorph({name: "inc fontsize button", ...btnStyle, label: Label.icon("plus")});
+    this.addMorph({name: "dec fontsize button", ...btnStyle, label: Label.icon("minus")});
+    this.addMorph({name: "link button",      ...btnStyle, label: Label.icon("link")});
+    this.addMorph({name: "font button",      ...btnStyle, label: Label.icon("font")});
 
     this.addMorph({type: "triangle", name: "arrow", fill: this.fill, grabbable: false, draggable: false});
 
