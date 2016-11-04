@@ -35,7 +35,8 @@ export var multiSelectCommands = [
           last = morph.selection.selections[idx];
       if (last.isEmpty()) return true;
       var found = morph.searchForAll(last.text, {start: {column: 0, row: 0}});
-      found.forEach(({range}) => morph.selection.addRange(range));
+      found.forEach(({range}) => morph.selection.addRange(range, false));
+      morph.selection.mergeSelections();
       arr.remove(morph.selection.selections, last);
       morph.selection.selections.push(last); // make it the first again
       return true;
@@ -151,8 +152,10 @@ export var multiSelectCommands = [
       var startCol = from.column,
           endCol = to.column;
       arr.range(from.row, to.row).forEach(row =>
-        morph.getLine(row).length > Math.min(endCol, startCol) // only add if line has content at the column
-     && morph.selection.addRange({end: {row, column: endCol}, start: {row, column: startCol}}));
+        // only add if line has content at the column
+        morph.getLine(row).length > Math.min(endCol, startCol)
+     && morph.selection.addRange({end: {row, column: endCol}, start: {row, column: startCol}}, false));
+      morph.selection.mergeSelections();
       return true;
     }
   },

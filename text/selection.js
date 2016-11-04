@@ -29,10 +29,25 @@ export class Selection {
   }
 
   mergeWith(otherSel) {
-    if (!otherSel || !otherSel.isSelection)
-        return false;
-    if (Math.abs(Range.compare(this.range, otherSel.range)) > 4)
-        return false;
+    if (!otherSel || !otherSel.isSelection) return false;
+
+    // // short but slow for a lot of selections at once:
+    // if (Math.abs(Range.compare(this.range, otherSel.range)) > 4) return false;
+
+    // more verbose but a lot faster:
+    var {
+          start: {row: myStartRow, column: myStartColumn},
+          end: {row: myEndRow, column: myEndColumn}
+        } = this.range,
+        {
+          start: {row: otherStartRow, column: otherStartColumn},
+          end: {row: otherEndRow, column: otherEndColumn}
+        } = otherSel.range;
+    if (myEndRow < otherStartRow || (myEndRow === otherStartRow && myStartColumn < otherStartColumn))
+      return false;
+    if (otherEndRow < myStartRow || (otherEndRow === myStartRow && otherStartColumn < myStartColumn))
+      return false;
+
     this.range = this.range.merge(otherSel.range);
     if (otherSel.isReverse() != this.isReverse())
       this.reverse();
@@ -344,15 +359,16 @@ export class MultiSelection extends Selection {
     for (var i = 0; i < ranges.length; i++) {
       var sel = this.selections[i];
       if (sel) sel.range = ranges[i];
-      else this.addRange(ranges[i]);
+      else this.addRange(ranges[i], false);
     }
     this.removeSelections(i);
     this.mergeSelections();
   }
 
-  addRange(range) {
+  addRange(range, mergeSelections = true) {
     this.selections.push(new Selection(this.textMorph, range));
-    this.mergeSelections();
+    if (mergeSelections)
+      this.mergeSelections();
     return arr.last(this.selections).range;
   }
 }
