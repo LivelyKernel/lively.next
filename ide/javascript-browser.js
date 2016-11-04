@@ -1,11 +1,10 @@
 import { Color, pt, Rectangle } from "lively.graphics";
 import { arr, promise, Path } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
+import { connect, disconnect, noUpdate } from "lively.bindings";
 import { Window, morph, show } from "../index.js";
-import { GridLayout } from "../layout.js";
 import { JavaScriptEditorPlugin } from "./js/editor-plugin.js";
 import config from "../config.js";
-
+import { HorizontalResizer } from "../resizers.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // commands
@@ -217,9 +216,9 @@ export class Browser extends Window {
     super({
       name: "browser",
       extent: pt(700,600),
-      ...props,
-      targetMorph: this.build()
+      ...props
     });
+    this.targetMorph = this.build();
     this.state = {packageUpdateInProgress: null, moduleUpdateInProgress: null};
     this.onLoad();
   }
@@ -234,22 +233,50 @@ export class Browser extends Window {
   whenModuleUpdated() { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   build() {
-    var jsPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
-    var style = {borderWidth: 1, borderColor: Color.gray, fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"},
-        textStyle = {borderWidth: 1, borderColor: Color.gray, type: "text", ...config.codeEditor.defaultStyle, plugins: [jsPlugin]},
+    var jsPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme),
+        style = {
+          borderWidth: 1, borderColor: Color.gray,
+          fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
+        },
+        textStyle = {
+          borderWidth: 1, borderColor: Color.gray,
+          type: "text",
+          ...config.codeEditor.defaultStyle,
+          plugins: [jsPlugin]
+        },
+
+        bounds = this.targetMorphBounds(),
+
+        [
+          packageListBounds,
+          moduleListBounds,
+          resizerBounds,
+          sourceEditorBounds
+        ] = bounds.extent().extentAsRectangle().divide([
+          new Rectangle(0,   0,    0.5, 0.39),
+          new Rectangle(0.5, 0,    0.5, 0.39),
+          new Rectangle(0,   0.39, 1,   0.01),
+          new Rectangle(0,   0.4,  1,   0.60)]),
+
         container = morph({
           ...style,
-          layout: new GridLayout({
-            grid: [["packageList", "moduleList"],
-                   ["sourceEditor", "sourceEditor"]]}),
+          bounds,
           submorphs: [
-            {name: "packageList", type: "list", ...style},
-            {name: "moduleList", type: "list", ...style},
-            {name: "sourceEditor", ...textStyle, doSave: () => { this.save(); }}
+            {name: "packageList", bounds: packageListBounds, type: "list", ...style},
+            {name: "moduleList", bounds: moduleListBounds, type: "list", ...style},
+            new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
+            {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => { this.save(); }}
           ]
         });
+
+    connect(this, 'extent', this, 'relayout');
+    this._inLayout = false;
+
+    container.get("hresizer").addScalingAbove(container.get("packageList"));
+    container.get("hresizer").addScalingAbove(container.get("moduleList"));
+    container.get("hresizer").addScalingBelow(container.get("sourceEditor"));
+
     // FIXME? how to specify that directly??
-    container.layout.grid.row(0).adjustProportion(-1/5);
     jsPlugin.evalEnvironment = {
       get targetModule() {
         var browser = jsPlugin.textMorph.getWindow();
@@ -262,6 +289,32 @@ export class Browser extends Window {
       }
     }
     return container;
+  }
+
+  relayout() {
+    if (this._inLayout) return;
+    this._inLayout = true;
+
+    var container = this.targetMorph,
+        packageList = this.get("packageList"),
+        moduleList = this.get("moduleList"),
+        ed = this.get("sourceEditor"),
+        resizer = this.get("hresizer"),
+        listEditorRatio = packageList.height / (container.height - resizer.height);
+
+    container.setBounds(this.targetMorphBounds());
+
+    packageList.width = moduleList.width = container.width/2;
+    packageList.height = listEditorRatio * (container.height - resizer.height);
+    moduleList.height = packageList.height;
+    moduleList.left = packageList.right;
+
+    resizer.top = packageList.bottom;
+    ed.height = container.height-resizer.bottom;
+    ed.top = resizer.bottom;
+    ed.width = resizer.width = container.width;
+
+    this._inLayout = false;
   }
 
   get keybindings() {
