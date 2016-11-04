@@ -1,16 +1,32 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { Label } from "../../text/label.js";
+import { World, MorphicEnv, Label } from "../../index.js";
+import { createDOMEnvironment } from "../../rendering/dom-helper.js";
+import { Renderer } from "../../rendering/renderer.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle, Transform } from "lively.graphics";
 import { arr } from "lively.lang";
 import { dummyFontMetric as fontMetric } from "../test-helpers.js";
 import { create as createElement } from "virtual-dom";
 
+var env;
+async function createMorphicEnv() {
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.domEnv.document.body.style = "margin: 0";
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(new World({name: "world", extent: pt(300,300), submorphs: []}));
+}
+
+async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
+
+
 describe("label", () => {
+
+  before(createMorphicEnv);
+  after(destroyMorphicEnv);
 
   it("renders text", () => {
     var l = new Label({textString: "foo", fontSize: 20, fontMetric});
-    expect(l.render(l.env.renderer).children[0]).containSubset({
+    expect(l.render(env.renderer).children[0]).containSubset({
       properties: {style: {}},
       children: [{text: "foo"}]
     });
@@ -18,7 +34,7 @@ describe("label", () => {
 
   it("renders richt text", () => {
     var l = new Label({textAndAttributes: [["foo", {fontSize: 11}], ["bar", {fontSize: 12}]], fontSize: 20, fontMetric});
-    expect(l.render(l.env.renderer).children).containSubset([{
+    expect(l.render(env.renderer).children).containSubset([{
       properties: {style: {fontSize: "11px",}},
       children: [{text: "foo"}]
     }, {
@@ -43,6 +59,6 @@ describe("label", () => {
 
   it("makes icon labels", () => {
     var l = Label.icon("plus");
-    expect(l.value).deep.equals([["\uf067", {fontFamily: "", textStyleClasses: "fa"}]])
+    expect(l.value).deep.equals([["\uf067", {fontFamily: "", textStyleClasses: ["fa"]}]])
   })
 });

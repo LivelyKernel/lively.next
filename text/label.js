@@ -16,7 +16,7 @@ const defaultTextStyle = {
 
 export class Label extends Morph {
 
-  static icon(iconName, props = {prefix: [""], suffix: [""]}) {
+  static icon(iconName, props = {prefix: "", suffix: ""}) {
     // var l = Label.icon("users", {prefix: "??? ", suffix: " !!!", fontSize: 30}).openInWorld();
     var {prefix, suffix} = props;
     var textAndAttributes = [];
@@ -328,10 +328,25 @@ export class Label extends Morph {
   }
 }
 
+/*
+Currently only FontAwesome icons are supported
+  http://fontawesome.io/icons/
 
-// Currently only FontAwesome icons are supported
-// http://fontawesome.io/icons/
-// $$world.execCommand("open file browser", {file: "assets/font-awesome/", location: lively.modules.getPackage("lively.morphic").url});
+Resources are here
+$$world.execCommand("open file browser", {
+  file: "assets/font-awesome/",
+  location: lively.modules.getPackage("lively.morphic").url
+});
+
+Show all icons:
+$$world.openInWindow(morph({
+  extent: pt(300,300), clipMode: "auto", type: "text", fontSize: 20,
+  textAndAttributes: Object.keys(Icons).map(name =>
+    [`${Icons[name].code} ${name}\n`, {fontFamily: "", textStyleClasses: ["fa"]}])
+})).activate();
+
+*/
+
 export var Icons = {
   "500px":                               {code: "\uf26e"},
   "address-book":                        {code: "\uf2b9"},
