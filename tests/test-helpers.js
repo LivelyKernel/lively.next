@@ -3,7 +3,7 @@ import { arr, string } from "lively.lang"
 export var dummyFontMetric = {
   height: 14, width: 6,
   sizeFor(style, text) {
-    return {width: this.width, height: this.height}
+    return {width: this.width*text.length, height: this.height*text.split("\n").length}
   },
   charBoundsFor(style, text) {
     var prevX = 0;
