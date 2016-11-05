@@ -1,33 +1,28 @@
-import { Morph} from "../index.js";
+import { Morph, Text, Ellipse, Polygon, Image, Path} from "../index.js";
 import { VerticalLayout, HorizontalLayout, FillLayout,
          TilingLayout, GridLayout} from '../layout.js';
 import { Color, pt} from "lively.graphics";
 import { Intersection, IntersectionParams } from 'kld-intersections';
 import { arr } from "lively.lang";
 import { connect } from "lively.bindings";
-import { ColorPicker } from "../ide/style-editor.js";
+import { ColorPicker, BorderStyler } from "../ide/style-editor.js";
 
-const typeToStylizer = {
-   'Morph' : StyleHalo,
-   'Image' : ImageStyleHalo,
-   'Ellipse' : EllipseStyleHalo,
-   'Text' : TextStyleHalo,
-   'Polygon' : SvgStyleHalo
-}
-
-export function stylizerFor(morph, pointerId) {
-   return new StyleHalo(morph, pointerId);
-}
-
-class BorderStyler {
-
-    // border style
-    // border color
-    // border width
-    constructor(target) {
-
+/* rms: I tried doing this via polymorphic dispatch
+         on the different morphs directly, but
+         this causes weird problems with our module system,
+         probably due to the circular dependency between morph
+         and the style halos themselves. */
+         
+export function styleHaloFor(x, pointerId) {
+    var styleHaloClass = StyleHalo;
+    if (x instanceof Ellipse) {
+       styleHaloClass = EllipseStyleHalo;
+    } else if (x instanceof Image) {
+       styleHaloClass = ImageStyleHalo;
+    } else if (x instanceof Polygon || x instanceof Path) {
+       styleHaloClass = SvgStyleHalo;
     }
-
+    return new styleHaloClass(x, pointerId);
 }
 
 class StyleHalo extends Morph {
@@ -46,22 +41,27 @@ class StyleHalo extends Morph {
            submorphs: [
              this.borderHalo(),
              this.borderRadiusHalo(),
-             this.layoutHalo()
+             this.layoutControl()
            ]
        }];
        this.focus();
        this.update();
+       connect(target, "onChange", this, "update");
    }
 
    get isLayoutHalo() { return true; }
    
    onMouseMove(evt) { this.update(evt) }
 
+   remove() {
+      this.layoutHalo && this.layoutHalo.remove();
+      super.remove();
+   }
+
    update(evt) {
       this.setBounds(this.target.globalBounds().insetBy(-50));
       this.submorphs[0].submorphs.forEach(s => s.update && s.update(evt));
    }
-
 
    mouseCapturer() {
       return {
@@ -104,12 +104,10 @@ class StyleHalo extends Morph {
            if (halo.isOnMorphBorder(evt)) {
               this.animate({borderColor: Color.orange});
               halo.nativeCursor = this.nativeCursor = "pointer";
-              // this.tooltip = "Change the morph's border style."
               this.active = true;
            } else {
               this.animate({borderColor: Color.orange.withA(.4)});
               halo.nativeCursor = this.nativeCursor = null;
-              // this.tooltip = "Change the fill color of the morph.";
               this.active = false;
            }
          },
@@ -152,21 +150,33 @@ class StyleHalo extends Morph {
           borderWidth: 1,
           borderColor: Color.black,
           extent: pt(10,10),
+          origin: pt(5,5),
           center: getPos(),
           onHoverIn() { this.active = true; },
           onHoverOut() { this.active = false; },
           update(evt) { this.center = getPos(); },
-          onDragStart(evt) { this.active = true; },
+          onDragStart(evt) { 
+             this.active = true; 
+             this.borderRadiusView = this.addMorph(new Text({
+                fill: Color.black.withA(.7), borderRadius: 5,
+                padding: 5, fontColor: Color.white,
+                position: pt(10,10)
+             }));
+          },
           onDrag(evt) {
              var r = halo.target.borderRadius;
              halo.update(evt);
              r -= evt.state.dragDelta.x;
              r = Math.min(halo.target.width / 2, Math.max(r, 0));
              halo.target.borderRadius = r;
-             this.center = getPos();
+             this.position = getPos();
              this.active = true;
+             this.borderRadiusView.textString = halo.target.borderRadius + "px";
           },
-          onDragEnd(evt) { this.active = false; }
+          onDragEnd(evt) {
+            this.active = false;
+            this.borderRadiusView.remove(); 
+          }
        }
    }
 
@@ -181,23 +191,65 @@ class StyleHalo extends Morph {
                new GridLayout({grid: [[null], [null], [null]]})];
    }
 
-   layoutHalo() {
-       const layout = this.target.layout,
-             layoutName = (l) => l ? l.name() + " Layout" : "No Layout",
+   toggleLayoutHalo() {
+       const layoutControl = this.getSubmorphNamed("layoutControl"),
+             layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
+             layoutPicker = this.getSubmorphNamed('layoutPicker'),
+             borderHalo = this.getSubmorphNamed("borderHalo"),
+             borderRadiusHalo = this.getSubmorphNamed("borderRadiusHalo"),
+             controlSubmorphs = layoutControl.submorphs;
+       if (this.layoutHalo) {
+          layoutControl.layout = null;
+          layoutControl.submorphs = [this.getSubmorphNamed("layoutControlPickerWrapper")];
+          layoutControl.animate({layout: new HorizontalLayout(),
+                                 duration: 300});
+          this.layoutHalo.remove(); this.layoutHalo = null;
+          borderHalo.visible = true;
+          borderRadiusHalo.visible = true;
+          layoutHaloToggler.styleClasses = ["fa", "fa-th"];
+          layoutHaloToggler.tooltip = "Show layout halo";
+          layoutPicker.textString = this.getCurrentLayoutName();
+       } else {
+          this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.state.pointerId);
+          layoutControl.layout = null;
+          layoutControl.submorphs = [...controlSubmorphs, ...this.layoutHalo.optionControls()]
+          layoutControl.animate({layout: new VerticalLayout(), 
+                                 duration: 300});
+          borderHalo.visible = false;
+          borderRadiusHalo.visible = false;
+          this.getSubmorphNamed("layoutHaloToggler").styleClasses = ["fa", "fa-close"];
+          layoutHaloToggler.tooltip = "Close layout halo";
+          layoutPicker.textString = "Configure Layout"
+       }
+       this.update();
+   }
+
+   getCurrentLayoutName() {
+      return this.getLayoutName(this.target.layout);
+   }
+
+   getLayoutName(l) {
+      return l ? l.name() + " Layout" : "No Layout";
+   }
+
+   layoutControl() {
+       const halo = this,
              getPos = () => this.target.globalBounds()
                                 .withX(0).withY(0)
                                 .bottomCenter().addXY(0, 20);
        return {
-           borderRadius: 30,
+           name: "layoutControl",
+           borderRadius: 15,
+           clipMode: "hidden",
            extent: pt(120, 75),
            topCenter: getPos(),
            fill: Color.gray.withA(.7),
-           layout: new HorizontalLayout({spacing: 5}),
+           layout: new VerticalLayout(),
            isHaloItem: true, 
            update(evt) { 
               this.align(this.topCenter, getPos());
-              const [_, inspectButton] = this.submorphs;
-              if (!layout) {
+              const inspectButton = this.getSubmorphNamed('layoutHaloToggler');
+              if (!halo.target.layout) {
                 inspectButton.opacity = .5;
                 inspectButton.nativeCursor = null;
               } else {
@@ -205,20 +257,25 @@ class StyleHalo extends Morph {
                 inspectButton.nativeCursor = "pointer";
               }
            },
-           submorphs: [
+           submorphs: [{
+            name: "layoutControlPickerWrapper",
+            fill: Color.transparent,
+            layout: new HorizontalLayout({spacing: 5}),
+            submorphs: [
                {type: 'text', fill: Color.transparent, name: "layoutPicker",
                 padding: 2, readOnly: true, 
                 fontWeight: 'bold', nativeCursor: "pointer",
-                fontStyle: 'bold', textString: layoutName(layout),
+                fontStyle: 'bold', textString: this.getCurrentLayoutName(),
                 onMouseDown: (evt) => {
+                   if (this.layoutHalo) return;
                    var menu = this.world().openWorldMenu(
                       this.getLayoutObjects().map(l => {
-                         return [layoutName(l), 
+                         return [this.getLayoutName(l), 
                                  () => {
                                      const p = this.getSubmorphNamed("layoutPicker");
                                      this.target.animate({layout: l, 
                                                           easing: "cubic-bezier(0.075, 0.82, 0.165, 1)"});
-                                     p.textString = layoutName(l);
+                                     p.textString = this.getLayoutName(l);
                                      p.fitIfNeeded();
                                      this.update();
                                  }]
@@ -228,20 +285,28 @@ class StyleHalo extends Morph {
                    menu.isHaloItem = true;
                 }},
                {styleClasses: ["fa", "fa-th"],
+                name: "layoutHaloToggler",
                 nativeCursor: "pointer",
                 fill: Color.transparent,
-                extent: pt(20,20)}
-           ]
+                fixedWidth: true,
+                origin: pt(0,-2),
+                extent: pt(20,20),
+                tooltip: "Toggle layout halo",
+                onMouseDown: (evt) => {
+                   this.target.layout && this.toggleLayoutHalo();
+                }}
+           ]}]
        }
    }
 
 }
 
-class EllipseStyleHalo extends StyleHalo {
+export class EllipseStyleHalo extends StyleHalo {
 
     borderHalo() {
        // no handle for chaning the border radius, but different
        // circular shape of the border
+       return undefined;
     }
 
 }

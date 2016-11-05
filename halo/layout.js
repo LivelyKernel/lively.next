@@ -367,6 +367,26 @@ export class GridLayoutHalo extends Morph {
     this.focus();
   }
 
+  optionControls() {
+      const layout = this;
+      return [{type: "text", textString: "Compensate Origin", 
+               padding: rect(5,0,10,10), fill: Color.transparent,
+               fontColor: layout.compensateOrigin ? Color.green : Color.red,
+               readOnly: true,
+               onMouseDown(evt) {
+                   layout.compensateOrigin = !layout.compensateOrigin;
+                   this.fontColor = layout.compensateOrigin ? Color.green : Color.red;
+               }},
+               {type: "text", textString: "Fit morphs to cell", 
+               padding: rect(5,0,10,10), fill: Color.transparent,
+               fontColor: layout.autoResize ? Color.green : Color.red,
+               readOnly: true,
+               onMouseDown(evt) {
+                   layout.autoResize = !layout.autoResize;
+                   this.fontColor = layout.autoResize ? Color.green : Color.red;
+               }}]
+  }
+
   get isLayoutHalo() { return true }
 
   get container() { return this.state.container; }

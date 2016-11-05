@@ -6,8 +6,7 @@ import { string, obj, arr, num, grid } from "lively.lang";
 import { connect } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 import Inspector from "../ide/js/inspector.js";
-
-import { stylizerFor } from './stylization.js'; 
+import { styleHaloFor } from './stylization.js'
 
 const itemExtent = pt(24,24);
 
@@ -756,8 +755,7 @@ export class Halo extends Morph {
       halo: this,
       tooltip: "Open stylize editor",
       onMouseDown: (evt) => {
-        //this.world().showLayoutHaloFor(this.target, this.state.pointerId);
-        this.world().addMorph(stylizerFor(this.target, this.state.pointerId));
+        this.world().addMorph(styleHaloFor(this.target, this.state.pointerId));
         this.remove();
       }
     }));
