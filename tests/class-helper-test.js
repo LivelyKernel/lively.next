@@ -46,10 +46,17 @@ describe("create or extend classes", function() {
     expect(new Foo().m()).equals(23);
   });
 
-  it("is not stored in classHolder by default", async function() {
+  it("class declaration is stored in classHolder by default", async function() {
+    var Foo = await evalClass("class Foo {m() { return 23 }}")
+    expect(Foo.name).equals("Foo");
+    expect(varRecorder).to.have.property("Foo").equals(Foo);
+  });
+
+  it("class expression is not stored in classHolder by default", async function() {
     var Foo = await evalClass("var x = class Foo {m() { return 23 }}")
     expect(Foo.name).equals("Foo");
     expect(varRecorder).to.not.have.property("Foo");
+    expect(varRecorder).to.have.property("x");
   });
 
   it("is initialized with arguments from constructor call", async function() {
@@ -87,7 +94,7 @@ describe("create or extend classes", function() {
     var foo = new Foo2();
     foo.x = 23;
     expect(foo.x).equals(24);
-    
+
   });
 
   it("super in initialize", async function() {
@@ -142,7 +149,7 @@ describe("create or extend classes", function() {
     foo.m = () => 24;
     expect(foo.m()).equals(24);
   });
-  
+
   it("overridden instance methods can be removed", async function() {
     await evalClass("class Foo { m() { return 23; } }")
     const Foo2 = await evalClass("class Foo2 extends Foo { m() { return 42; } }"),

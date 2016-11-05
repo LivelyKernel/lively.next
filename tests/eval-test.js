@@ -254,12 +254,24 @@ describe("runtime", () => {
 
 });
 
+describe("declaration callback", () => {
+
+  it("invokes function when declaration is evaluated", async () => {
+    var recordings = [];
+    await runEval("var a = 1, b = 'foo'; a = 2", {
+      topLevelVarRecorder: {},
+      declarationCallback: (name, kind, val, recorder) => recordings.push([name, val])
+    });
+    expect(recordings).deep.equals([["a", 1], ["b", 'foo'], ["a", 2]])
+  });
+});
+
 describe("persistent definitions", () => {
 
   var varMapper, opts;
   beforeEach(() => {
     varMapper = {};
-    opts = {topLevelVarRecorder: varMapper, keepPreviouslyDeclaredValues: true}
+    opts = {topLevelVarRecorder: varMapper}
   });
 
   describe("primitives", () => {
