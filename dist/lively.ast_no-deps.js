@@ -12095,7 +12095,9 @@ var ScopeVisitor = function (_Visitor3) {
     value: function visitExportNamedDeclaration(node, scope, path) {
       scope.exportDecls.push(node);
       scope.exportDeclPaths.push(path);
-      return get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
+      // only descend if it's not an export {...} from "..."
+      if (!node.source) get(ScopeVisitor.prototype.__proto__ || Object.getPrototypeOf(ScopeVisitor.prototype), "visitExportNamedDeclaration", this).call(this, node, scope, path);
+      return node;
     }
   }, {
     key: "visitExportDefaultDeclaration",
@@ -12196,10 +12198,6 @@ var FixParamsForEscodegenVisitor = function (_Visitor) {
   }]);
   return FixParamsForEscodegenVisitor;
 }(Visitor);
-
-// debugger;
-// var node = lively.ast.parse("/^file:\\/\\//");
-// fixParamDefaults(node).body[0].expression.value
 
 function fixParamDefaults(parsed) {
   parsed = lively_lang.obj.deepCopy(parsed);
@@ -14490,12 +14488,18 @@ function replaceClass(node, state, path, options) {
 
   var superClassSpec = superClassRef ? objectLiteral(["referencedAs", literal(superClassReferencedAs), "value", superClassRef]) : superClass || id("undefined");
 
-  var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, classId ? {
+  // For persistent storage and retrieval of pre-existing classes in "classHolder" object
+  var useClassHolder = classId && type === "ClassDeclaration";
+
+  var classCreator = funcCall(funcExpr({}, ["superclass"], varDecl(tempLivelyClassHolderVar, state.classHolder), varDecl(tempLivelyClassVar, useClassHolder ? {
     type: "ConditionalExpression",
-    test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({ argument: member(tempLivelyClassHolderVar, classId), operator: "typeof", prefix: true, type: "UnaryExpression" }, "===", literal("function"))),
+    test: binaryExpr(funcCall(member(tempLivelyClassHolderVar, "hasOwnProperty"), literal(classId.name)), "&&", binaryExpr({
+      argument: member(tempLivelyClassHolderVar, classId),
+      operator: "typeof", prefix: true, type: "UnaryExpression"
+    }, "===", literal("function"))),
     consequent: member(tempLivelyClassHolderVar, classId),
-    alternate: constructorTemplate(classId.name)
-  } : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
+    alternate: assign(member(tempLivelyClassHolderVar, classId), constructorTemplate(classId.name))
+  } : classId ? constructorTemplate(classId.name) : constructorTemplate(null)), returnStmt(funcCall(options.functionNode, id(tempLivelyClassVar), id("superclass"), instanceProps, classProps, id(tempLivelyClassHolderVar), options.currentModuleAccessor || id("undefined")))), superClassSpec);
 
   if (type === "ClassExpression") return classCreator;
 
@@ -14569,11 +14573,11 @@ function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
     moduleExportFunc: { name: options && options.es6ExportFuncId || "_moduleExport", type: "Identifier" },
     moduleImportFunc: { name: options && options.es6ImportFuncId || "_moduleImport", type: "Identifier" },
     declarationWrapper: undefined,
-    classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : Object.assign({
+    classToFunction: options && options.hasOwnProperty("classToFunction") ? options.classToFunction : {
       classHolder: assignToObj,
       functionNode: { type: "Identifier", name: "_createOrExtendClass" },
       declarationWrapper: options && options.declarationWrapper
-    })
+    }
   }, options);
 
   var rewritten = parsed;
@@ -14812,11 +14816,21 @@ function replaceRefs(parsed, options) {
   });
 
   var replaced = replace$1(parsed, function (node, path) {
-    return node.type === "Property" && refsToReplace.indexOf(node.key) > -1 && node.shorthand ? prop(id(node.key.name), node.value) : node;
+
+    // cs 2016/06/27, 1a4661
+    // ensure keys of shorthand properties are not renamed while capturing
+    if (node.type === "Property" && refsToReplace.includes(node.key) && node.shorthand) return prop(id(node.key.name), node.value);
+
+    // declaration wrapper function for assignments
+    // "a = 3" => "a = _define('a', 'assignment', 3, _rec)"
+    if (node.type === "AssignmentExpression" && refsToReplace.includes(node.left) && options.declarationWrapper) return _extends({}, node, {
+      right: funcCall(options.declarationWrapper, literal(node.left.name), literal("assignment"), node.right, options.captureObj) });
+
+    return node;
   });
 
-  return replace$1(replaced, function (node, path) {
-    return refsToReplace.indexOf(node) > -1 ? member(options.captureObj, node) : node;
+  return replace$1(replaced, function (node, path, parent) {
+    return refsToReplace.includes(node) ? member(options.captureObj, node) : node;
   });
 }
 
