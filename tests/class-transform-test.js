@@ -8,15 +8,19 @@ import { member } from "../lib/nodes.js";
 import { parse } from "../lib/parser.js";
 import stringify from "../lib/stringify.js";
 
-function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta) {
+function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true) {
   if (methodString.includes("\n")) methodString = string.indent(methodString, "    ", 2).replace(/^\s+/, "");
   if (classMethodString.includes("\n")) classMethodString = string.indent(classMethodString, "    ", 2).replace(/^\s+/, "");
 
-  var identifier = className ? `__lively_classholder__.hasOwnProperty('${className}') && typeof __lively_classholder__.${className} === 'function' ? __lively_classholder__.${className} : __lively_classholder__.${className} = function ${className}` : "function "
+  if (!className) useClassHolder = false;
+
+  var classFunctionHeader = className ? `function ${className}` : "function ";
+  if (useClassHolder)
+    classFunctionHeader = `__lively_classholder__.hasOwnProperty('${className}') && typeof __lively_classholder__.${className} === 'function' ? __lively_classholder__.${className} : __lively_classholder__.${className} = ${classFunctionHeader}`
 
   return `function (superclass) {
     var __lively_classholder__ = ${classHolder};
-    var __lively_class__ = ${identifier}(__first_arg__) {
+    var __lively_class__ = ${classFunctionHeader}(__first_arg__) {
         if (__first_arg__ && __first_arg__[Symbol.for('lively-instance-restorer')]) {
         } else {
             this[Symbol.for('lively-instance-initialize')].apply(this, arguments);
@@ -44,7 +48,7 @@ describe("class transform", () => {
 
   it("with class expressions", () =>
       expect(stringify(classToFunctionTransform("var x = class Foo {}", opts))).to.equal(
-        `var x = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', '_rec', 'undefined')}`));
+        `var x = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', '_rec', 'undefined', false)}`));
 
   it("with anonymous class expressions", () =>
       expect(stringify(classToFunctionTransform("var x = class {}", opts))).to.equal(
