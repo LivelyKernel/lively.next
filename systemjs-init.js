@@ -1,6 +1,7 @@
+"format global";
 (function configure() {
 
-  System.useModuleTranslationCache = true;
+  System.useModuleTranslationCache = !urlQuery().noModuleCache;
 
   if (System.map['plugin-babel'] && System.map['systemjs-plugin-babel']) {
     console.log("[lively.modules] System seems already to be configured");
@@ -91,6 +92,18 @@
     } catch (e) {}
 
     return null;
+  }
+
+  function urlQuery() {
+    if (typeof document === "undefined" || !document.location) return {};
+    return (document.location.search || "").replace(/^\?/, "").split("&")
+      .reduce(function(query, ea) {
+        var split = ea.split("="), key = split[0], value = split[1];
+        if (value === "true" || value === "false") value = eval(value);
+        else if (!isNaN(Number(value))) value = Number(value);
+        query[key] = value;
+        return query;
+      }, {});
   }
 
 })();

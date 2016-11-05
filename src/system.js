@@ -83,7 +83,7 @@ function prepareSystem(System, config) {
   config = config || {};
 
   var useModuleTranslationCache = config.hasOwnProperty("useModuleTranslationCache") ?
-    config.useModuleTranslationCache : true;
+    config.useModuleTranslationCache : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
@@ -130,6 +130,19 @@ function prepareSystem(System, config) {
   System.config(config);
 
   return System;
+}
+
+// FIXME! proper config!
+function urlQuery() {
+  if (typeof document === "undefined" || !document.location) return {};
+  return (document.location.search || "").replace(/^\?/, "").split("&")
+    .reduce(function(query, ea) {
+      var split = ea.split("="), key = split[0], value = split[1];
+      if (value === "true" || value === "false") value = eval(value);
+      else if (!isNaN(Number(value))) value = Number(value);
+      query[key] = value;
+      return query;
+    }, {});
 }
 
 function normalizeHook(proceed, name, parent, parentAddress) {
