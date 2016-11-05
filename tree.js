@@ -40,17 +40,15 @@ var tree = new Tree({
 export class TreeNode extends Morph {
 
   constructor(props = {}) {
-    var {isCollapsed, isCollapsable, fontMetric} = props;
+    var {isCollapsed, isCollapsable} = props;
     super({
       textString: "",
       selectionFontColor: Color.white,
       nonSelectionFontColor: Color.rgbHex("333"),
       selectionColor: Color.blue,
       fontColor: Color.rgbHex("333"),
-
-      ...obj.dissoc(props, ["isCollapsed", "isCollapsable", "fontMetric"])
+      ...obj.dissoc(props, ["isCollapsed", "isCollapsable"])
     });
-    if (fontMetric) this._fontMetric = fontMetric;
     this.isCollapsable = props.hasOwnProperty("isCollapsable") ? props.isCollapsable : false;
     this.isCollapsed = props.hasOwnProperty("isCollapsed") ? props.isCollapsed : false;
     this.relayout();
@@ -114,9 +112,7 @@ export class TreeNode extends Morph {
 
   get toggle() {
     return this._toggle || (this._toggle = this.addMorph({
-      type: Label,
-      name: "toggle",
-      fontMetric: this._fontMetric,
+      type: Label, name: "toggle",
       fill: null, textString: this.isCollapsed ? "\uf196" : "\uf147",
       padding: Rectangle.inset(2),
       fontSize: this.fontSize-3,
@@ -128,11 +124,9 @@ export class TreeNode extends Morph {
 
   get label() {
     return this._label || (this._label = this.addMorph({
-      type: Label,
-      name: "label",
-      fill: null,
+      type: Label, name: "label",
       fontSize: this.fontSize, fontWeight: this.fontWeight, fontFamily: this.fontFamily,
-      fontMetric: this._fontMetric
+      fill: null
     }));
   }
 
@@ -233,19 +227,22 @@ export class Tree extends Morph {
     if (!props.treeData)
       throw new Error("Cannot create tree without TreeData!");
 
-    var { fontMetric } = props;
-
     super({
       selection: null, clipMode: "auto",
       padding: Rectangle.inset(2),
       fontSize: 15,
       fontFamily: "Inconsolata, monospace",
       fontColor: Color.almostBlack,
-      ...obj.dissoc(props, ["fontMetric"])
+      ...props
     });
+
     this.resetCache();
-    if (fontMetric) this._fontMetric = fontMetric;
-    this.addMorph({name: "nodeItemContainer", extent: this.extent, fill: null, draggable: false, grabbable: false, clipMode: "visible"});
+    this.addMorph({
+      name: "nodeItemContainer",
+      extent: this.extent, fill: null,
+      draggable: false, grabbable: false, clipMode: "visible"
+    });
+
     this.update();
     connect(this, 'extent', this, 'update');
   }
@@ -305,7 +302,7 @@ export class Tree extends Morph {
 
   get defaultNodeMorphTextBounds() {
     if (this._cachedNodeMorphBounds) return this._cachedNodeMorphBounds;
-    var nodeMorph = new TreeNode({fontMetric: this._fontMetric, ...this.nodeStyle});
+    var nodeMorph = new TreeNode(this.nodeStyle);
     nodeMorph.displayNode("x", null, pt(0,0), 0, false, true, true);
     var {width, height} = nodeMorph,
         {width: toggleWidth, height: toggleHeight} = nodeMorph.toggle;
@@ -341,7 +338,7 @@ export class Tree extends Morph {
     // resize container to allow scrolling
     container.extent = pt(this.width, padding.top()+padding.bottom()+nodes.length*defaultNodeHeight);
 
-    var dummyNodeMorph = new TreeNode({fontMetric: this._fontMetric, ...this.nodeStyle});
+    var dummyNodeMorph = new TreeNode(this.nodeStyle);
 
     var lineHeightCache = this._lineHeightCache || (this._lineHeightCache = [0/*root*/]);
 
@@ -374,7 +371,7 @@ export class Tree extends Morph {
       if (y >= visibleBottom) break;
       var nodeMorph = nodeMorphs.shift();
       if (!nodeMorph) {
-        nodeMorph = container.addMorph(new TreeNode({fontMetric: this._fontMetric, ...this.nodeStyle}));
+        nodeMorph = container.addMorph(new TreeNode(this.nodeStyle));
         connect(nodeMorph, 'collapseChanged', this, 'onNodeCollapseChanged');
         connect(nodeMorph, 'selected', this, 'selection');
       }

@@ -15,7 +15,9 @@ export var dummyFontMetric = {
     }, this);
   },
   defaultLineHeight(style) { return this.height; },
-  isProportional(fontFamily) { return true; }
+  isProportional(fontFamily) { return true; },
+  reset() {},
+  uninstall() {}
 }
 
 export function expectSelection(chai) {

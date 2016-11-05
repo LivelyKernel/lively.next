@@ -1,10 +1,11 @@
 /*global declare, it, describe, beforeEach, afterEach, before, after*/
-import { morph } from "../index.js";
+import { morph,  World, MorphicEnv } from "../index.js";
 import { Tree, TreeData } from "../tree.js";
 import { expect } from "mocha-es6";
 import { pt, rect, Color, Rectangle, Transform } from "lively.graphics";
 import { arr } from "lively.lang";
 import { dummyFontMetric as fontMetric } from "./test-helpers.js";
+import { createDOMEnvironment } from "../rendering/dom-helper.js";
 
 function testTreeData() {
   class TestTreeData extends TreeData {
@@ -32,18 +33,37 @@ function testTreeData() {
     ]
   });
 }
+
 var tree;
+function createTree(props) {
+  return tree = new Tree({
+    extent: pt(200,200), fill: Color.white, border: {color: Color.gray, width: 1},
+    padding: Rectangle.inset(0), treeData: testTreeData(), ...props
+  })
+}
 
-describe("tree", () => {
+var env;
+async function createMorphicEnv() {
+  env = new MorphicEnv(await createDOMEnvironment());
+  env.domEnv.document.body.style = "margin: 0";
+  env.fontMetric = fontMetric;
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(new World({extent: pt(400,300)}));
+}
+async function destroyMorphicEnv() { MorphicEnv.popDefault().uninstall(); }
 
-  beforeEach(() =>
-    tree = new Tree({
-      fontMetric,
-      extent: pt(200,200), fill: Color.white, border: {color: Color.gray, width: 1},
-      padding: Rectangle.inset(0), treeData: testTreeData()
-    }));
+describe("tree", function() {
+
+  this.timeout(10000);
+
+  beforeEach(async () => {
+    await createMorphicEnv();
+    createTree({env});
+  });
+  afterEach(() => destroyMorphicEnv());
 
   it("renders visible items without root", () => {
+    createTree({env});
     expect(arr.pluck(tree.nodeMorphs, "labelString"))
       .equals(["child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
     var h = tree.lineBounds(1).height;
