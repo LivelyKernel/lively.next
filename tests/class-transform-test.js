@@ -12,7 +12,7 @@ function classTemplate(className, superClassName, methodString, classMethodStrin
   if (methodString.includes("\n")) methodString = string.indent(methodString, "    ", 2).replace(/^\s+/, "");
   if (classMethodString.includes("\n")) classMethodString = string.indent(classMethodString, "    ", 2).replace(/^\s+/, "");
 
-  var identifier = className ? `__lively_classholder__.hasOwnProperty('${className}') && typeof __lively_classholder__.${className} === 'function' ? __lively_classholder__.${className} : function ${className}` : "function "
+  var identifier = className ? `__lively_classholder__.hasOwnProperty('${className}') && typeof __lively_classholder__.${className} === 'function' ? __lively_classholder__.${className} : __lively_classholder__.${className} = function ${className}` : "function "
 
   return `function (superclass) {
     var __lively_classholder__ = ${classHolder};
