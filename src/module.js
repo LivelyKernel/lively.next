@@ -8,6 +8,26 @@ import { Package } from "./packages.js";
 import { isURL, join } from "./url-helpers.js";
 import { emit, subscribe } from "lively.notifications";
 
+export var detectModuleFormat = (function() {
+  const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
+        cjsFormatCommentRegExp = /['"]format cjs['"];/,
+        // Stolen from SystemJS
+        esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+
+  return (source, metadata) => {
+    if (metadata && metadata.format) {
+      if (metadata.format == 'es6') metadata.format == 'esm';
+      return metadata.format;
+    }
+
+    if (esmFormatCommentRegExp.test(source.slice(0,5000))
+     || !cjsFormatCommentRegExp.test(source.slice(0,5000)) && esmRegEx.test(source))
+       return "esm";
+
+    return "global";
+  }
+})();
+
 export default function module(System, moduleName, parent) {
   var sysEnv = livelySystemEnv(System),
       id = System.decanonicalize(moduleName, parent);
@@ -67,7 +87,12 @@ class ModuleInterface {
 
     if (this._source) return Promise.resolve(this._source);
 
-    return this.System.resource(this.id).read();
+    return this.System.resource(this.id).read()
+      .then(source => this._source = source);
+  }
+  
+  setSource(source) {
+    this._source = source;
   }
 
   async ast() {
@@ -93,7 +118,9 @@ class ModuleInterface {
   format() {
     // assume esm by default
     var meta = this.metadata();
-    return meta ? meta.format : "esm";
+    if (meta && meta.format) return meta.format;
+    if (this._source) return detectModuleFormat(this._source);
+    return "global";
   }
   
   reset() {
@@ -171,6 +198,7 @@ class ModuleInterface {
     if (!options || options.doSave !== false) {
       await this.System.resource(this.id).write(newSource);
     }
+    this.setSource(newSource);
     return moduleSourceChange(this.System, this.id, newSource, this.format(), options);
   }
 

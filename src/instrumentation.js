@@ -1,8 +1,9 @@
+/*global System*/
 import { parse, nodes } from "lively.ast";
 var {funcCall, member, literal} = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from "lively.vm";
 import { arr, string, properties, classHelper } from "lively.lang";
-import module from "./module.js";
+import module, { detectModuleFormat } from "./module.js";
 import { install as installHook, remove as removeHook, isInstalled as isHookInstalled } from "./hooks.js";
 
 var isNode = System.get("@system-env").node;
@@ -101,15 +102,10 @@ var exceptions = [
       // id => lang.string.include(id, "lively.ast.es6.bundle.js"),
       id => id.slice(-3) !== ".js"
     ],
-    pendingConfigs = [], configInitialized = false,
-    esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
-    cjsFormatCommentRegExp = /['"]format cjs['"];/,
-    // Stolen from SystemJS
-    esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+    pendingConfigs = [], configInitialized = false;
 
 function getExceptions() { return exceptions; }
 function setExceptions(v) { return exceptions = v; }
-
 
 function prepareCodeForCustomCompile(source, fullname, env, debug) {
   source = String(source);
@@ -227,13 +223,15 @@ async function customTranslate(proceed, load) {
 
   var start = Date.now();
 
-  var isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6'
-           || (!load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0,5000)))
-           || (!load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0,5000)) && esmRegEx.test(load.source)),
-      isCjs = load.metadata.format == 'cjs',
-      isGlobal = load.metadata.format == 'global' || !load.metadata.format,
-      env = module(System, load.name).env(),
-      instrumented = false;
+  var format = detectModuleFormat(load.source, load.metadata),
+      mod = module(System, load.name),
+      env = mod.env(),
+      instrumented = false,
+      isEsm = format === "esm",
+      isCjs = format === "cjs",
+      isGlobal = format === "global";
+
+  mod.setSource(load.source);
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // cache experiment part 1

@@ -11,7 +11,7 @@ const dir = System.decanonicalize("lively.modules/tests/"),
       testProjectDir = dir + "test-project-1-dir/",
       testProjectSpec = {
         "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
-        "file2.js": "var internal = 1; export var y = internal;",
+        "file2.js": "var internal = 1;\nexport var y = internal;",
         "file4.js": "'format esm'; var x = 23;\n",
         "package.json": '{"name": "test-project-1", "main": "file1.js"}',
         "sub-dir": {"file3.js": "export var z = 2;"}
@@ -21,17 +21,20 @@ const dir = System.decanonicalize("lively.modules/tests/"),
       file3m = testProjectDir + "sub-dir/file3.js",
       file4m = testProjectDir + "file4.js";
 
-describe("code changes of esm format module", () => {
+let S, module1, module2, module3, module4;
 
+function changeModule2Source() {
+  // "internal = 1" => "internal = 2"
+  return module2.changeSourceAction(s => s.replace(/(internal = )([0-9]+;)/, "$12;"));
+}
 
-  function changeModule2Source() {
-    // "internal = 1" => "internal = 2"
-    return module2.changeSourceAction(s => s.replace(/(internal = )([0-9]+;)/, "$12;"));
-  }
+describe("code changes of esm format module", function() {
 
-  let S, module1, module2, module3, module4;
+  this.timeout(5000);
+
   beforeEach(async () => {
     S = getSystem("test", {baseURL: testProjectDir});
+    S.useModuleTranslationCache = false;
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module3 = module(S, file3m);
@@ -108,7 +111,7 @@ describe("code changes of esm format module", () => {
     var m = await S.import(file2m)
     expect(m).to.not.have.property("foo");
     await module2.changeSource(
-      "import { z as x } from './sub-dir/file3.js'; export var y = 3; debugger; export var foo = 4;",
+      "import { z as x } from './sub-dir/file3.js'; export var y = 3; export var foo = 4;",
       {evaluate: true});
     expect(module2.env().recorder).property("y").equal(3);
     expect(module2.env().recorder).property("foo").equal(4);
@@ -137,7 +140,7 @@ describe("code changes of esm format module", () => {
   it("affects file resource", async () => {
     await changeModule2Source();
     const newContent = await resource(file2m).read();
-    expect(newContent).to.deep.equal("var internal = 2; export var y = internal;");
+    expect(newContent).to.deep.equal("var internal = 2;\nexport var y = internal;");
   });
 
   it("writes changes despite errors", async () => {
@@ -261,7 +264,7 @@ describe("notifications of toplevel changes", () => {
     var seen = {};
     module4.subscribeToToplevelDefinitionChanges((key, val) => seen[key] = val);
     await module4.load();
-    expect(seen).containSubset({System: {}, x: 23});
+    expect(seen).containSubset({x: 23});
     seen = {};
     await module4.changeSource("'format esm'; var x = 24;", {evaluate: true});
     expect(seen).containSubset({x: 24});
