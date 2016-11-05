@@ -590,6 +590,14 @@ describe("declarations", () => {
       .equals("_rec.x = _define('x', 'var', 23, _rec);");
   });
 
+  it("assignments are wrapped in define call", () => {
+    expect(stringify(
+          rewriteToCaptureTopLevelVariables(
+            parse("x = 23;"), {name: "_rec", type: "Identifier"},
+            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+      .equals("_rec.x = _define('x', 'assignment', 23, _rec);");
+  });
+
   it("wraps class decls", () => {
     expect(stringify(
           rewriteToCaptureTopLevelVariables(
@@ -619,6 +627,7 @@ _rec.y = _define('y', 'var', destructured_1[1], _rec);`);
   });
 
 });
+
 
 describe("System.register", () => {
   
