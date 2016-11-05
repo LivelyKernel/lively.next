@@ -249,11 +249,11 @@ describe("multi select", () => {
       t.textString = "Hello\nWorld";
       t.selectLine(1)
       t.selection.addRange(range(0,2,0,5));
-      expect(t.selection.ranges).to.have.length(2);
+      expect(t.selection).stringEquals("MultiSelection(Selection(1/0 -> 1/5), Selection(0/2 -> 0/5))")
       t.selection.addRange(range(0,2,1,0));
-      expect(t.selection.ranges).to.have.length(2);
+      expect(t.selection).stringEquals("MultiSelection(Selection(1/0 -> 1/5), Selection(0/2 -> 1/0))")
       t.selection.addRange(range(0,2,1,1));
-      expect(t.selection.ranges).to.have.length(1);
+      expect(t.selection).stringEquals("MultiSelection(Selection(0/2 -> 1/5))")
     });
 
   });

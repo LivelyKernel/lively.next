@@ -43,9 +43,13 @@ export class Selection {
           start: {row: otherStartRow, column: otherStartColumn},
           end: {row: otherEndRow, column: otherEndColumn}
         } = otherSel.range;
-    if (myEndRow < otherStartRow || (myEndRow === otherStartRow && myStartColumn < otherStartColumn))
+    if (myEndRow < otherStartRow || (myEndRow === otherStartRow && myEndColumn < otherStartColumn))
       return false;
-    if (otherEndRow < myStartRow || (otherEndRow === myStartRow && otherStartColumn < myStartColumn))
+    if (otherEndRow < myStartRow || (otherEndRow === myStartRow && otherEndColumn < myStartColumn))
+      return false;
+    var borderingLeft = myEndRow === otherStartRow && myEndColumn === otherStartColumn,
+        borderingRight = myStartRow === otherEndRow && myStartColumn === otherEndColumn;
+    if ((borderingLeft && !borderingRight) || (!borderingLeft && borderingRight))
       return false;
 
     this.range = this.range.merge(otherSel.range);
