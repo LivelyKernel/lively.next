@@ -27,15 +27,19 @@ function testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, 
 function only_testVarTfm(descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, true); }
 
 
-function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta) {
+function classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true) {
   if (methodString.includes("\n")) methodString = string.indent(methodString, "    ", 2).replace(/^\s+/, "");
   if (classMethodString.includes("\n")) classMethodString = string.indent(classMethodString, "    ", 2).replace(/^\s+/, "");
 
-  var identifier = className ? `__lively_classholder__.hasOwnProperty('${className}') && typeof __lively_classholder__.${className} === 'function' ? __lively_classholder__.${className} : __lively_classholder__.${className} = function ${className}` : "function "
+  if (!className) useClassHolder = false;
+
+  var classFunctionHeader = className ? `function ${className}` : "function ";
+  if (useClassHolder)
+    classFunctionHeader = `__lively_classholder__.hasOwnProperty('${className}') && typeof __lively_classholder__.${className} === 'function' ? __lively_classholder__.${className} : __lively_classholder__.${className} = ${classFunctionHeader}`
 
   return `function (superclass) {
     var __lively_classholder__ = ${classHolder};
-    var __lively_class__ = ${identifier}(__first_arg__) {
+    var __lively_class__ = ${classFunctionHeader}(__first_arg__) {
         if (__first_arg__ && __first_arg__[Symbol.for('lively-instance-restorer')]) {
         } else {
             this[Symbol.for('lively-instance-initialize')].apply(this, arguments);
@@ -167,11 +171,11 @@ describe("ast.capturing", function() {
   
         testVarTfm("does not capture class expr",
                    "var bar = class Foo {}",
-                   `_rec.bar = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')};`);
+                   `_rec.bar = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false)};`);
   
         testVarTfm("captures var that has same name as class expr",
                    "var Foo = class Foo {}; new Foo();",
-                   `_rec.Foo = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined')};\nnew _rec.Foo();`);
+                   `_rec.Foo = ${classTemplate('Foo', 'undefined', 'undefined', 'undefined', "_rec", 'undefined', false)};\nnew _rec.Foo();`);
 
       });
 
