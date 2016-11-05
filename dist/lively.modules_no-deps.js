@@ -1,7 +1,8 @@
 
+"format global";
 (function configure() {
 
-  System.useModuleTranslationCache = true;
+  System.useModuleTranslationCache = !urlQuery().noModuleCache;
 
   if (System.map['plugin-babel'] && System.map['systemjs-plugin-babel']) {
     console.log("[lively.modules] System seems already to be configured");
@@ -92,6 +93,18 @@
     } catch (e) {}
 
     return null;
+  }
+
+  function urlQuery() {
+    if (typeof document === "undefined" || !document.location) return {};
+    return (document.location.search || "").replace(/^\?/, "").split("&")
+      .reduce(function(query, ea) {
+        var split = ea.split("="), key = split[0], value = split[1];
+        if (value === "true" || value === "false") value = eval(value);
+        else if (!isNaN(Number(value))) value = Number(value);
+        query[key] = value;
+        return query;
+      }, {});
   }
 
 })();
@@ -484,7 +497,7 @@ var customTranslate = function () {
   var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(proceed, load) {
     var _this4 = this;
 
-    var System, debug, start, isEsm, isCjs, isGlobal, env, instrumented, useCache, indexdb, hashForCache, cache, stored;
+    var System, debug, start, format, mod, env, instrumented, isEsm, isCjs, isGlobal, useCache, indexdb, hashForCache, cache, stored;
     return regeneratorRuntime.wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
@@ -520,33 +533,35 @@ var customTranslate = function () {
 
           case 7:
             start = Date.now();
-            isEsm = load.metadata.format == 'esm' || load.metadata.format == 'es6' || !load.metadata.format && esmFormatCommentRegExp.test(load.source.slice(0, 5000)) || !load.metadata.format && !cjsFormatCommentRegExp.test(load.source.slice(0, 5000)) && esmRegEx.test(load.source), isCjs = load.metadata.format == 'cjs', isGlobal = load.metadata.format == 'global' || !load.metadata.format, env = module$2(System, load.name).env(), instrumented = false;
+            format = detectModuleFormat(load.source, load.metadata), mod = module$2(System, load.name), env = mod.env(), instrumented = false, isEsm = format === "esm", isCjs = format === "cjs", isGlobal = format === "global";
+
+
+            mod.setSource(load.source);
 
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
             // cache experiment part 1
-
-            _context5.prev = 9;
+            _context5.prev = 10;
             useCache = System.useModuleTranslationCache, indexdb = System.global.indexedDB, hashForCache = useCache && String(lively_lang.string.hashCode(load.source));
 
             if (!(useCache && indexdb && isEsm)) {
-              _context5.next = 22;
+              _context5.next = 23;
               break;
             }
 
             cache = System._livelyModulesTranslationCache || (System._livelyModulesTranslationCache = new ModuleTranslationCache());
-            _context5.next = 15;
+            _context5.next = 16;
             return cache.fetchStoredModuleSource(load.name);
 
-          case 15:
+          case 16:
             stored = _context5.sent;
 
             if (!(stored && stored.hash == hashForCache)) {
-              _context5.next = 22;
+              _context5.next = 23;
               break;
             }
 
             if (!stored.source) {
-              _context5.next = 22;
+              _context5.next = 23;
               break;
             }
 
@@ -559,17 +574,17 @@ var customTranslate = function () {
             console.log("[lively.modules customTranslate] loaded %s from cache after %sms", load.name, Date.now() - start);
             return _context5.abrupt("return", Promise.resolve(stored.source));
 
-          case 22:
-            _context5.next = 27;
+          case 23:
+            _context5.next = 28;
             break;
 
-          case 24:
-            _context5.prev = 24;
-            _context5.t0 = _context5["catch"](9);
+          case 25:
+            _context5.prev = 25;
+            _context5.t0 = _context5["catch"](10);
 
             console.error("[lively.modules customTranslate] error reading module translation cache: " + _context5.t0.stack);
 
-          case 27:
+          case 28:
             // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
             if (isEsm) {
@@ -659,12 +674,12 @@ var customTranslate = function () {
               };
             }()));
 
-          case 30:
+          case 31:
           case "end":
             return _context5.stop();
         }
       }
-    }, _callee5, this, [[9, 24]]);
+    }, _callee5, this, [[10, 25]]);
   }));
 
   return function customTranslate(_x6, _x7) {
@@ -680,6 +695,7 @@ var customTranslate = function () {
 // manually
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+/*global System*/
 var funcCall = lively_ast.nodes.funcCall;
 var member = lively_ast.nodes.member;
 var literal = lively_ast.nodes.literal;
@@ -870,9 +886,6 @@ function (id) {
 function (id) {
   return id.slice(-3) !== ".js";
 }];
-var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
-var cjsFormatCommentRegExp = /['"]format cjs['"];/;
-var esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
 
 function prepareCodeForCustomCompile(source, fullname, env, debug) {
   source = String(source);
@@ -2244,6 +2257,25 @@ function searchInPackage$1(System, packageURL, searchStr, options) {
   }) : Promise.resolve([]);
 }
 
+var detectModuleFormat = function () {
+  var esmFormatCommentRegExp = /['"]format (esm|es6)['"];/,
+      cjsFormatCommentRegExp = /['"]format cjs['"];/,
+
+  // Stolen from SystemJS
+  esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+
+  return function (source, metadata) {
+    if (metadata && metadata.format) {
+      if (metadata.format == 'es6') metadata.format == 'esm';
+      return metadata.format;
+    }
+
+    if (esmFormatCommentRegExp.test(source.slice(0, 5000)) || !cjsFormatCommentRegExp.test(source.slice(0, 5000)) && esmRegEx.test(source)) return "esm";
+
+    return "global";
+  };
+}();
+
 function module$2(System, moduleName, parent) {
   var sysEnv = livelySystemEnv(System),
       id = System.decanonicalize(moduleName, parent);
@@ -2300,6 +2332,8 @@ var ModuleInterface = function () {
   }, {
     key: "source",
     value: function source() {
+      var _this2 = this;
+
       // rk 2016-06-24:
       // We should consider using lively.resource here. Unfortunately
       // System.fetch (at least with the current systemjs release) will not work in
@@ -2314,7 +2348,14 @@ var ModuleInterface = function () {
 
       if (this._source) return Promise.resolve(this._source);
 
-      return this.System.resource(this.id).read();
+      return this.System.resource(this.id).read().then(function (source) {
+        return _this2._source = source;
+      });
+    }
+  }, {
+    key: "setSource",
+    value: function setSource(source) {
+      this._source = source;
     }
   }, {
     key: "ast",
@@ -2432,7 +2473,9 @@ var ModuleInterface = function () {
     value: function format() {
       // assume esm by default
       var meta = this.metadata();
-      return meta ? meta.format : "esm";
+      if (meta && meta.format) return meta.format;
+      if (this._source) return detectModuleFormat(this._source);
+      return "global";
     }
   }, {
     key: "reset",
@@ -2503,12 +2546,12 @@ var ModuleInterface = function () {
   }, {
     key: "unloadDeps",
     value: function unloadDeps(opts) {
-      var _this2 = this;
+      var _this3 = this;
 
       opts = lively_lang.obj.merge({ forgetDeps: true, forgetEnv: true }, opts);
       this.dependents().forEach(function (ea) {
-        _this2.System.delete(ea.id);
-        if (_this2.System.loads) delete _this2.System.loads[ea.id];
+        _this3.System.delete(ea.id);
+        if (_this3.System.loads) delete _this3.System.loads[ea.id];
         if (opts.forgetEnv) ea.unloadEnv();
       });
     }
@@ -2530,7 +2573,7 @@ var ModuleInterface = function () {
     key: "reload",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(opts) {
-        var _this3 = this;
+        var _this4 = this;
 
         var toBeReloaded;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -2544,7 +2587,7 @@ var ModuleInterface = function () {
                 this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
                 _context5.next = 6;
                 return Promise.all(toBeReloaded.map(function (ea) {
-                  return ea.id !== _this3.id && ea.load();
+                  return ea.id !== _this4.id && ea.load();
                 }));
 
               case 6:
@@ -2622,9 +2665,10 @@ var ModuleInterface = function () {
                 return this.System.resource(this.id).write(newSource);
 
               case 3:
+                this.setSource(newSource);
                 return _context7.abrupt("return", moduleSourceChange$1(this.System, this.id, newSource, this.format(), options));
 
-              case 4:
+              case 5:
               case "end":
                 return _context7.stop();
             }
@@ -2641,7 +2685,7 @@ var ModuleInterface = function () {
   }, {
     key: "addDependencyToModuleRecord",
     value: function addDependencyToModuleRecord(dependency) {
-      var _this4 = this;
+      var _this5 = this;
 
       var setter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {};
 
@@ -2669,7 +2713,7 @@ var ModuleInterface = function () {
         // 2. update records of dependencies, so that they know about this module as an importer
         var impIndex,
             hasImporter = dependencyRecord.importers.some(function (imp, i) {
-          if (!imp) return;impIndex = i;return imp && imp.name === _this4.id;
+          if (!imp) return;impIndex = i;return imp && imp.name === _this5.id;
         });
         if (!hasImporter) dependencyRecord.importers.push(record);else if (record !== dependencyRecord.importers[impIndex]) dependencyRecord.importers.splice(impIndex, 1, record);
       }
@@ -2682,7 +2726,7 @@ var ModuleInterface = function () {
   }, {
     key: "dependents",
     value: function dependents() {
-      var _this5 = this;
+      var _this6 = this;
 
       // which modules (module ids) are (in)directly import module with id
       // Let's say you have
@@ -2692,13 +2736,13 @@ var ModuleInterface = function () {
       // `dependents` gives you an answer what modules are "stale" when you
       // change module1 = module2 + module3
       return lively_lang.graph.hull(lively_lang.graph.invert(computeRequireMap(this.System)), this.id).map(function (mid) {
-        return module$2(_this5.System, mid);
+        return module$2(_this6.System, mid);
       });
     }
   }, {
     key: "requirements",
     value: function requirements() {
-      var _this6 = this;
+      var _this7 = this;
 
       // which modules (module ids) are (in)directly required by module with id
       // Let's say you have
@@ -2707,7 +2751,7 @@ var ModuleInterface = function () {
       // module3: import {y} from "module2.js"; export var z = y + 1;
       // `module("./module3").requirements()` will report ./module2 and ./module1
       return lively_lang.graph.hull(computeRequireMap(this.System), this.id).map(function (mid) {
-        return module$2(_this6.System, mid);
+        return module$2(_this7.System, mid);
       });
     }
 
@@ -2767,7 +2811,7 @@ var ModuleInterface = function () {
   }, {
     key: "addGetterSettersForNewVars",
     value: function addGetterSettersForNewVars() {
-      var _this7 = this;
+      var _this8 = this;
 
       // after eval we modify the env so that all captures vars are wrapped in
       // getter/setter to be notified of changes
@@ -2794,12 +2838,12 @@ var ModuleInterface = function () {
           },
           set: function set(v) {
             rec[prefix + key] = v;
-            scheduleModuleExportsChange(_this7.System, _this7.id, key, v, false /*add export*/);
-            _this7.notifyTopLevelObservers(key);
+            scheduleModuleExportsChange(_this8.System, _this8.id, key, v, false /*add export*/);
+            _this8.notifyTopLevelObservers(key);
           }
         });
 
-        _this7.notifyTopLevelObservers(key);
+        _this8.notifyTopLevelObservers(key);
       });
     }
   }, {
@@ -3257,7 +3301,7 @@ var ModuleInterface = function () {
     key: "search",
     value: function () {
       var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
-        var _this8 = this;
+        var _this9 = this;
 
         var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
 
@@ -3268,8 +3312,8 @@ var ModuleInterface = function () {
                 options = Object.assign({ excludedModules: [] }, options);
 
                 if (!options.excludedModules.some(function (ex) {
-                  if (typeof ex === "string") return ex === _this8.id;
-                  if (ex instanceof RegExp) return ex.test(_this8.id);
+                  if (typeof ex === "string") return ex === _this9.id;
+                  if (ex instanceof RegExp) return ex.test(_this9.id);
                   return false;
                 })) {
                   _context16.next = 3;
@@ -3550,7 +3594,7 @@ function prepareSystem(System, config) {
   System.trace = true;
   config = config || {};
 
-  var useModuleTranslationCache = config.hasOwnProperty("useModuleTranslationCache") ? config.useModuleTranslationCache : true;
+  var useModuleTranslationCache = config.hasOwnProperty("useModuleTranslationCache") ? config.useModuleTranslationCache : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
 
   System.set("@lively-env", System.newModule(livelySystemEnv(System)));
@@ -3592,6 +3636,19 @@ function prepareSystem(System, config) {
   System.config(config);
 
   return System;
+}
+
+// FIXME! proper config!
+function urlQuery() {
+  if (typeof document === "undefined" || !document.location) return {};
+  return (document.location.search || "").replace(/^\?/, "").split("&").reduce(function (query$$1, ea) {
+    var split = ea.split("="),
+        key = split[0],
+        value = split[1];
+    if (value === "true" || value === "false") value = eval(value);else if (!isNaN(Number(value))) value = Number(value);
+    query$$1[key] = value;
+    return query$$1;
+  }, {});
 }
 
 function normalizeHook(proceed, name, parent, parentAddress) {
