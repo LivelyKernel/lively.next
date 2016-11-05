@@ -36,7 +36,7 @@
     "lively.notifications": "^0.3.0",
     "lively.resources": "^0.1.2",
     "lively.vm": "^0.7.10",
-    "systemjs": "^0.19.38",
+    "systemjs": "^0.19.40",
     "systemjs-plugin-babel": "0.0.13"
   },
   "devDependencies": {
