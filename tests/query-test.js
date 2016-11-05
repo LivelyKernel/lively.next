@@ -204,7 +204,7 @@ describe('query', function() {
             result = query.findDeclarationClosestToIndex(parsed, "yyy", index);
         expect(result).to.containSubset({end:14,name:"yyy",start:11,type:"Identifier"});
       });
-      
+
       it("findDeclarationClosestToIndex 2", function() {
         var src = `var x = 3, yyy = 4;\nvar z = function() { yyy + yyy + (function(yyy) { yyy+1 })(); }`,
             index = 73, // yyy of function
@@ -430,11 +430,17 @@ describe('query', function() {
         var code = "import foo from 'bar';\n"
                  + "import { baz } from 'zork';\n"
                 + "import { qux as corge } from 'quux';\n",
-                // rk not yet supproted by acorn as of 2016-01-28:
+                // rk not yet supported by acorn as of 2016-01-28:
                 // + "import { * as grault } from 'garply';\n",
             parsed = parse(code),
             scopes = query.scopes(parsed);
         expect(["foo", "baz", "corge"/*, "grault"*/]).deep.equals(query._declaredVarNames(scopes));
+      });
+
+      it('ignores export froms', function() {
+        var code = "export { foo } from 'bar';\n",
+            parsed = parse(code);
+        expect([]).deep.equals(query.findGlobalVarRefs(parsed));
       });
     });
 
@@ -464,7 +470,7 @@ describe('query', function() {
     });
 
   });
-  
+
 
   describe("helper", function() {
     var objExpr = parse("({x: 23, y: [{z: 4}]});").body[0].expression;
@@ -481,7 +487,7 @@ describe('query', function() {
   });
 
   describe("imports", () => {
-    
+
     function im(src) {
       const scope = query.scopes(parse(src));
       return query.imports(scope);
@@ -610,7 +616,7 @@ describe('query', function() {
         local: null
       });
     });
-    
+
     it("named as from", async () => {
       const result = ex("export { x as y } from './file1.js';");
       expect(result).to.have.length(1);
@@ -680,7 +686,7 @@ describe('query', function() {
         declId: {type: "Identifier", start: 13, end: 16, name: "Baz"}
       });
     });
-    
+
     it("default class", async () => {
       const result = ex("export default class Baz {}");
       expect(result).to.have.length(1);
@@ -692,7 +698,7 @@ describe('query', function() {
         declId: {type: "Identifier", start: 21, end: 24, name: "Baz"}
       });
     });
-    
+
   });
 
 });
