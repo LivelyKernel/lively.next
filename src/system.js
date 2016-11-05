@@ -298,8 +298,8 @@ function searchLoadedModules(System, searchStr, options) {
 
 function knownModuleNames(System) {
   var fromSystem = System.loads ?
-    Object.keys(System._loader.moduleRecords) :
-    Object.keys(System.loads);
+    Object.keys(System.loads) :
+    Object.keys(System._loader.moduleRecords);
   return arr.uniq(fromSystem.concat(Object.keys(loadedModules(System))));
 }
 

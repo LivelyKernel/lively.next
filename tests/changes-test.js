@@ -10,9 +10,9 @@ import module from "../src/module.js";
 const dir = System.decanonicalize("lively.modules/tests/"),
       testProjectDir = dir + "test-project-1-dir/",
       testProjectSpec = {
-        "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y };",
-        "file2.js": "var internal = 1;\nexport var y = internal;",
-        "file4.js": "'format esm'; var x = 23;\n",
+        "file1.js": "import { y, someFn } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z; export { y }; export function someOtherFn(x) { return someFn() + x; }",
+        "file2.js": "var internal = 1;\nexport var y = internal;\nexport function someFn() { return 23; }",
+        "file4.js": "'format esm'; var x = 23;",
         "package.json": '{"name": "test-project-1", "main": "file1.js"}',
         "sub-dir": {"file3.js": "export var z = 2;"}
       },
@@ -116,7 +116,8 @@ describe("code changes of esm format module", function() {
     expect(module2.env().recorder).property("y").equal(3);
     expect(module2.env().recorder).property("foo").equal(4);
     expect(m).property("y").equal(3);
-    expect(module2.record()).property("exports").deep.equal({foo: 4, y: 3}, "module record");
+    expect(module2.record()).property("exports")
+      .deep.equal({foo: 4, y: 3,someFn: m.someFn}, "module record");
     expect(m).property("foo").equal(4, "module not changes");
     var m_reimported = await S.import(file2m)
     expect(m_reimported).property("foo").equal(4, "when re-importing, new export missing?");
@@ -136,11 +137,18 @@ describe("code changes of esm format module", function() {
     expect(module4.record().dependencies).to.containSubset([{name: module2.id}]);
     expect(module4.record().importers).deep.equals([]);
   });
+  
+  it("function dependencies are updated", async () => {
+    var m1 = await S.import(module1.id);
+    expect(m1.someOtherFn(1)).equals(24);
+    await module2.changeSourceAction(src => src.replace("return 23", "return 24"))
+    expect(m1.someOtherFn(1)).equals(25);
+  });
 
   it("affects file resource", async () => {
     await changeModule2Source();
     const newContent = await resource(file2m).read();
-    expect(newContent).to.deep.equal("var internal = 2;\nexport var y = internal;");
+    expect(newContent).to.deep.equal("var internal = 2;\nexport var y = internal;\nexport function someFn() { return 23; }");
   });
 
   it("writes changes despite errors", async () => {
@@ -274,7 +282,7 @@ describe("notifications of toplevel changes", () => {
     await module1.load();
     var seen = {};
     module1.subscribeToToplevelDefinitionChanges((key, val) => seen[key] = val);
-    await module2.changeSource("var y = 123;", {evaluate: true});
+    await module2.changeSource("'format esm'; \nvar y = 123;", {evaluate: true});
     expect(seen).containSubset({y: 123});
   });
 

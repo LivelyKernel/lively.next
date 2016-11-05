@@ -289,6 +289,11 @@ class ModuleInterface {
 
       System: {configurable: true, writable: true, value: S},
 
+      [this.varDefinitionCallbackName]: {
+        value: (name, kind, value, recorder) =>
+          self.define(name, value, false/*signalChangeImmediately*/)
+      },
+
       _moduleExport: {
         value: (name, val) => {
           scheduleModuleExportsChange(S, self.id, name, val, true/*add export*/);
@@ -323,8 +328,21 @@ class ModuleInterface {
 
     });
   }
+  
+  get varDefinitionCallbackName() { return "defVar_" + this.id; }
 
-  define(varName, value) { return this.recorder[varName] = value; }
+  define(varName, value, exportImmediately = true) {
+    this.recorder[varName] = value;
+
+    scheduleModuleExportsChange(this.System, this.id, varName, value, false/*force adding export*/);
+    this.notifyTopLevelObservers(varName);
+
+    if (exportImmediately)
+      runScheduledExportChanges(this.System, this.id)
+
+    return value;
+  }
+
   undefine(varName) { delete this.recorder[varName]; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -351,41 +369,7 @@ class ModuleInterface {
   }
 
   evaluationDone() {
-    this.addGetterSettersForNewVars();
     runScheduledExportChanges(this.System, this.id);
-  }
-
-  addGetterSettersForNewVars() {
-    // after eval we modify the env so that all captures vars are wrapped in
-    // getter/setter to be notified of changes
-    // FIXME: better to not capture via assignments but use func calls...!
-    var rec = this.recorder,
-        prefix = "__lively.modules__";
-  
-    if (rec === this.System.global) {
-      console.warn(`[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!`)
-      return;
-    }
-  
-    properties.own(rec).forEach(key => {
-      if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
-      Object.defineProperty(rec, prefix + key, {
-        enumerable: false,
-        writable: true,
-        value: rec[key]
-      });
-      Object.defineProperty(rec, key, {
-        enumerable: true,
-        get: () => rec[prefix + key],
-        set: (v) => {
-          rec[prefix + key] = v;
-          scheduleModuleExportsChange(this.System, this.id, key, v, false/*add export*/);
-          this.notifyTopLevelObservers(key);
-        }
-      });
-
-      this.notifyTopLevelObservers(key);
-    });
   }
 
   env() { return this; }
