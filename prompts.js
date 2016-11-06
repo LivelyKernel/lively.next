@@ -245,21 +245,21 @@ export class ListPrompt extends AbstractPrompt {
   }
 
   initLayout() {
-     this.layout = new GridLayout({
+     var l = this.layout = new GridLayout({
         grid: [["label", "label", "label"],
                ["list", "list", "list"],
                [null,"ok button", "cancel button"]]
      });
 
-     this.layout.row(0).fixed = 30;
-     this.layout.row(2).fixed = 30;
-     this.layout.row(2).paddingBottom = 5;
-     this.layout.col(0).paddingLeft = 5;
-     this.layout.col(1).fixed = 100;
-     this.layout.col(1).paddingRight = 5;
-     this.layout.row(1).paddingBottom = 10;
-     this.layout.col(2).fixed = 100;
-     this.layout.col(2).paddingRight = 5;
+     l.row(0).fixed = 30;
+     l.row(2).fixed = 30;
+     l.row(2).paddingBottom = 5;
+     l.col(0).paddingLeft = 5;
+     l.col(1).fixed = 100;
+     l.col(1).paddingRight = 5;
+     l.row(1).paddingBottom = 10;
+     l.col(2).fixed = 100;
+     l.col(2).paddingRight = 5;
   }
 
   resolve() {
@@ -296,6 +296,7 @@ export class EditListPrompt extends ListPrompt {
 
   initLayout() {
      var l = this.layout = new GridLayout({
+        autoAssign: false,
         grid: [["label", "label", "label", "label", "label"],
                ["list", "list", "list", "list", "list"],
                ["add item button", "remove item button", null, "ok button", "cancel button"]]
@@ -308,7 +309,10 @@ export class EditListPrompt extends ListPrompt {
      l.row(0).paddingBottom = 5;
      l.row(1).paddingBottom = 2;
      l.row(2).paddingBottom = 5;
-     l.col(0).paddingLeft = l.col(4).paddingRight = 5;
+     l.col(0).paddingLeft = 5;
+     l.col(0).paddingRight = 5;
+     l.col(3).paddingRight = 5;
+     l.col(4).paddingRight = 5;
      l.apply()
   }
 
