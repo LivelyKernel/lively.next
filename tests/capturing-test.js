@@ -406,8 +406,9 @@ describe("ast.capturing", function() {
                  "function f() {\n}\n"
                + "_rec.f = f;\n"
                + "_rec.a = 23;\n"
-               + "export var x = _rec.a + 1, y = x + 2;\n"
+               + "export var x = _rec.a + 1;\n"
                + "_rec.x = x;\n"
+               + "export var y = _rec.x + 2;\n"
                + "_rec.y = y;\nexport default f;");
 
       testVarTfm("var",
@@ -545,17 +546,17 @@ describe("ast.capturing", function() {
       testVarTfm("var decl, double",
                 opts,
                 "export var x = 34, y = x + 3;",
-                "var x = _rec.x = 34;;\nvar y = _rec.y = x + 3;;\n_moduleExport('x', x);\n_moduleExport('y', y);");
+                "var x = _rec.x = 34;;\nvar y = _rec.y = _rec.x + 3;;\n_moduleExport('x', _rec.x);\n_moduleExport('y', _rec.y);");
 
       testVarTfm("let decl",
                 opts,
                 "export let x = 34;",
-                "let x = _rec.x = 34;;\n_moduleExport('x', x);");
+                "let x = _rec.x = 34;;\n_moduleExport('x', _rec.x);");
 
       testVarTfm("let decl, declarationWrapper",
                 Object.assign({}, opts, {declarationWrapper: {name: "_define", type: "Identifier"}}),
                 "export let x = 34;",
-                "let x = _rec.x = _rec._define('x', 'let', x = 34, _rec);;\n_moduleExport('x', x);");
+                "let x = _rec.x = _rec._define('x', 'let', x = 34, _rec);;\n_moduleExport('x', _rec.x);");
 
       testVarTfm("name aliased",
                 opts,
@@ -586,44 +587,44 @@ describe("ast.capturing", function() {
 
 describe("declarations", () => {
 
+  function rewriteWithWrapper(code) {
+    return stringify(
+            rewriteToCaptureTopLevelVariables(
+              parse(code), {name: "_rec", type: "Identifier"},
+              {declarationWrapper: {name: "_define", type: "Identifier"}}));
+  }
+
   it("can be wrapped in define call", () => {
-    expect(stringify(
-          rewriteToCaptureTopLevelVariables(
-            parse("var x = 23;"), {name: "_rec", type: "Identifier"},
-            {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("_rec.x = _define('x', 'var', 23, _rec);");
+    expect(rewriteWithWrapper("var x = 23;")).equals("_rec.x = _define('x', 'var', 23, _rec);");
   });
 
   it("assignments are wrapped in define call", () => {
-    expect(stringify(
-          rewriteToCaptureTopLevelVariables(
-            parse("x = 23;"), {name: "_rec", type: "Identifier"},
-            {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals("_rec.x = _define('x', 'assignment', 23, _rec);");
+    expect(rewriteWithWrapper("x = 23;")).equals("_rec.x = _define('x', 'assignment', 23, _rec);");
+  });
+
+  it("define call works for exports", () => {
+    expect(rewriteWithWrapper("export var x = 23;"))
+      .equals("export var x = 23;\n_rec.x = _define('x', 'assignment', x, _rec);");
+
+    expect(rewriteWithWrapper("export function foo() {};"))
+      .equals(`function foo() {\n}\n_rec.foo = _define('foo', 'function', foo, _rec);\nexport {\n    foo\n};\n;`);
+
+    expect(rewriteWithWrapper("export class Foo {}")).equals(`export var Foo = _define('Foo', 'class', ${classTemplate('Foo', 'undefined', "undefined", 'undefined', "_rec", 'undefined')}, _rec);\n_rec.Foo = Foo;`);
+
+    expect(rewriteWithWrapper("var x, y; x = 23; export { x, y };")).equals("_rec.x = _define('x', 'var', _rec.x || undefined, _rec);\n_rec.y = _define('y', 'var', _rec.y || undefined, _rec);\n_rec.x = _define('x', 'assignment', 23, _rec);\nvar x = _rec.x;\nvar y = _rec.y;\nexport {\n    x,\n    y\n};");
   });
 
   it("wraps class decls", () => {
-    expect(stringify(
-          rewriteToCaptureTopLevelVariables(
-            parse("class Foo {}"), {name: "_rec", type: "Identifier"},
-            {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals(`var Foo = _define('Foo', 'class', ${classTemplate('Foo', 'undefined', "undefined", 'undefined', "_rec", 'undefined')}, _rec);`);
+    expect(rewriteWithWrapper("class Foo {}")).equals(`var Foo = _define('Foo', 'class', ${classTemplate('Foo', 'undefined', "undefined", 'undefined', "_rec", 'undefined')}, _rec);`);
   });
 
   it("wraps function decls", () => {
-    expect(stringify(
-          rewriteToCaptureTopLevelVariables(
-            parse("function bar() {}"), {name: "_rec", type: "Identifier"},
-            {declarationWrapper: {name: "_define", type: "Identifier"}})))
+    expect(rewriteWithWrapper("function bar() {}"))
       .equals("function bar() {\n}\n_rec.bar = _define('bar', 'function', bar, _rec);\nbar;");
   });
 
   it("wraps destructuring", () => {
-    expect(stringify(
-          rewriteToCaptureTopLevelVariables(
-            parse("var [{x}, y] = foo"), {name: "_rec", type: "Identifier"},
-            {declarationWrapper: {name: "_define", type: "Identifier"}})))
-      .equals(
+    expect(rewriteWithWrapper("var [{x}, y] = foo")).equals(
 `var destructured_1 = _rec.foo;
 _rec.destructured_1$0 = _define('destructured_1$0', 'var', destructured_1[0], _rec);
 _rec.x = _define('x', 'var', destructured_1$0.x, _rec);
