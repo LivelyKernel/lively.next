@@ -231,8 +231,12 @@ export class CellGroup {
     this.morph = morph;
   }
   
-  get morph() { 
-    return this.state.morph;
+  get morph() {
+    if (this.state.morph) {
+       if (this.state.morph.isMorph) return this.state.morph;
+       return this.layout.container.submorphs.find(m => m.name == this.state.morph);
+    }
+    return null;
   }
 
   get compensateOrigin() { return this.layout.compensateOrigin }
@@ -251,7 +255,7 @@ export class CellGroup {
     const conflictingGroup = value && this.layout.getCellGroupFor(value);
     if (conflictingGroup) conflictingGroup.morph = null;
     if (value) {
-       this.layout.morphToGroup[value.id] = this;
+       this.layout.morphToGroup[value.id || value] = this;
     } else {
        if (this.morph && this.layout.morphToGroup[this.morph.id] == this) delete this.layout.morphToGroup[this.morph.id];
     }
@@ -265,9 +269,6 @@ export class CellGroup {
   
   apply(animate = false) {
     var target = this.morph;
-    if (this.layout && this.layout.container) {
-      if (target && !target.isMorph) target = this.layout.container.getSubmorphNamed(target);
-    }
     if(target) {
       const bounds = this.layout.fitToCell ? this.bounds() : this.position.extent(target.extent),
             offset = this.compensateOrigin ? this.layout.container.origin.negated() : pt(0,0)
@@ -823,8 +824,7 @@ export class GridLayout extends Layout {
   }
   
   getCellGroupFor(morph) { 
-    return morph && this.morphToGroup[morph.id];
-    // return morph && this.cellGroups.find(g => g.manages(morph));
+    return morph && (this.morphToGroup[morph.id] || this.morphToGroup[morph.name]);
   }
   
   onSubmorphRemoved(removedMorph) {
