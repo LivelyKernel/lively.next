@@ -197,11 +197,21 @@ export class TooltipViewer {
     this.currenMorph = world;
   }
 
+  notPartOfCurrentTooltip(newTarget) {
+     return !newTarget.ownerChain().includes(this.currentMorph);
+  }
+
+  invalidatesCurrentTooltip(newTarget) {
+     return newTarget.tooltip || this.notPartOfCurrentTooltip(newTarget);
+  }
+
   mouseMove({targetMorph}) {
     if(this.currentMorph != targetMorph) {
-      this.hoverOutOfMorph(this.currentMorph);
-      this.hoverIntoMorph(targetMorph);
-      this.currentMorph = targetMorph;
+      if (this.invalidatesCurrentTooltip(targetMorph)) {
+         this.hoverOutOfMorph(this.currentMorph);
+         this.hoverIntoMorph(targetMorph);
+         this.currentMorph = targetMorph;
+      }
     }
   }
 
