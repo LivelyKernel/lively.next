@@ -268,7 +268,9 @@ export default class TestRunner extends HTMLMorph {
           myTests = testsAndSuites.filter(ea => ea.type === "test"),
           duration = arr.sum(arr.compact(myTests.map(ea => ea.duration))),
           state = myTests.some(t => t.state === "failed") ?
-          "failed" : (myTests.every(t => t.state === "succeeded") ? "succeeded" : "")
+            "failed" : (myTests.every(t => t.state === "succeeded") ? "succeeded" : ""),
+          mod = lively.modules.module(id),
+          name = mod.package().name + mod.pathInPackage().replace(/^\./, "");
 
       var classes = ["test-file", state];
 
@@ -281,7 +283,7 @@ export default class TestRunner extends HTMLMorph {
                   ${isCollapsed ? "► " : "▼ "}</span>
                 <h2 class="${classes.join(" ")}"
                     onmousedown="${ref}.onClickFile(event, '${id}', this);"
-                 >${id}</h2>
+                 >${name}</h2>
                 <span class="duration">${duration}ms</span>
                 <input
                   type="button" class="run-button" value="run"
