@@ -49,10 +49,7 @@ export default class TextDocument {
       withLineEnding = false) {
   }
 
-  textAttributesChunkedByLine(
-      startRow = 0,
-      endRow = this.lines.length-1,
-      withLineEnding = false) {
+  textAttributesChunkedByLine(startRow, endRow, withLineEnding) {
 
     // returns an array chunked with chunked.length === lines.length
     // chunked[n] is an array that looks like
@@ -61,6 +58,10 @@ export default class TextDocument {
     // start-end-column-chunk marking a canonical text attribute range
     // This is used directly as the input for the text renderer that turns this
     // view on attributes into html elements
+
+    if (typeof startRow !== "number") startRow = 0;
+    if (typeof endRow !== "number") endRow = this.lines.length-1;
+    if (withLineEnding === undefined) withLineEnding = false;
 
     var lines = new Array(endRow), newline = this.constructor.newline;
 
