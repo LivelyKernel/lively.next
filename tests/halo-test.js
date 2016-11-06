@@ -125,7 +125,7 @@ describe("halos", () => {
     otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
 
-  it("resizes proportionally", () => {
+  xit("resizes proportionally", () => {
     var halo = world.showHaloFor(submorph1),
         resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
     resizeHandle.init(true);
