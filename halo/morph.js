@@ -10,10 +10,10 @@ import { styleHaloFor } from './stylization.js'
 
 const itemExtent = pt(24,24);
 
-const guideGradient = [[0, Color.red.withA(0)],
-                       [0.1, Color.red],
-                       [0.9, Color.red],
-                       [1.0, Color.red.withA(0)]]
+const guideGradient = [[0, Color.orange.withA(0)],
+                       [0.1, Color.orange],
+                       [0.9, Color.orange],
+                       [1.0, Color.orange.withA(0)]]
 
 class HaloItem extends Morph {
 
@@ -332,112 +332,63 @@ export class Halo extends Morph {
            isHaloItem: true,
            borderWidth: 1,
            borderColor: Color.black,
-           alignInHalo() { this.center = positionInHalo() }, 
+           alignInHalo() { this.center = positionInHalo() },
+           onKeyDown(evt) { this.proportionalMode(evt.isShiftDown()); },
+           onKeyUp(evt) { this.proportionalMode(evt.isShiftDown()); },
            onDragStart(evt) {
-               this.savedLayout = this.halo.layout;
-               this.halo.activeButton = this; 
-               this.tfm = this.halo.target.getGlobalTransform().inverse();
-               this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
-               this.totalScale = this.halo.getGlobalScale(); // multiply scaling
+               this.start(evt.isShiftDown());
            },
            onDragEnd(evt) { 
-               this.halo.activeButton = null; 
-               this.halo.alignWithTarget();
+               this.stop(evt.isShiftDown());
            },
            onDrag(evt) {
-              // shift
-              const target = this.halo.target,
-                    oldPosition = target.position,
-                    oldBounds = target.innerBounds(),
-                    oldPart = oldBounds.partNamed(corner),
-                   {x,y} = deltaMask(evt.state.dragDelta),
-                   delta = this.tfm.transformDirection(
-                           pt(x * Math.cos(this.offsetRotation) / this.totalScale,
-                              y * Math.cos(this.offsetRotation) / this.totalScale)),
-                    {x: ix,y: iy,width,height} = oldBounds.withPartNamed(corner, oldPart.addPt(delta));
+              this.update(evt.state.dragDelta, evt.isShiftDown());
+           },
+           start(proportional) {
+             this.savedLayout = this.halo.layout;
+             this.proportionalMode(proportional);
+             this.halo.activeButton = this; 
+             this.tfm = this.halo.target.getGlobalTransform().inverse();
+             this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
+           },
+           update(dragDelta, shiftDown) {
+             var target = this.halo.target,
+                 oldPosition = target.position,
+                 oldBounds = target.innerBounds(),
+                 oldPart = oldBounds.partNamed(corner),
+                 {x,y} = deltaMask(dragDelta),
+                 delta = this.tfm.transformDirection(
+                           pt(x * Math.cos(this.offsetRotation),
+                              y * Math.cos(this.offsetRotation))),
+                 delta = this.proportionalMode(shiftDown, delta),
+                 {x: ix,y: iy,width,height} = oldBounds.withPartNamed(corner, oldPart.addPt(delta));
               target.extent = pt(width, height);
               target.origin = target.origin.addPt(originDelta(delta));
               target.position = oldPosition;
               this.halo.alignWithTarget();
-           }
+           },
+           stop(proportional) {
+              this.halo.activeButton = null; 
+              this.proportionalMode(false);
+              this.halo.alignWithTarget();
+           },
+           proportionalMode(active, delta=null) {
+            this.focus();
+            if (active) {
+              const diagonal = this.halo.toggleDiagonal(true);
+              if (delta) {
+                delta = diagonal.scaleBy(
+                          diagonal.dotProduct(delta) /
+                          diagonal.dotProduct(diagonal));
+              }
+              return delta;
+            } else {
+              this.halo.toggleDiagonal(false);
+              return delta;
+            }
+          }
        });
    }
-
-
-  resizeHalo() {
-    const halo = this;
-    return this.getSubmorphNamed("resize") || this.addMorph(new HaloItem({
-      name: "resize",
-      styleClasses: ["halo-item", "fa", "fa-crop"],
-      origin: pt(12, 12),
-      property: 'extent',
-      halo: this,
-      tooltip: "Drag to resize the selected morph",
-
-      valueForPropertyDisplay: () => {
-        var {x: width, y: height} = this.target.extent;
-        return `${width.toFixed(1)}w ${height.toFixed(1)}h`;
-      },
-
-      update(delta, proportional=false) {
-        delta = this.proportionalMode(proportional, delta);
-        halo.target.resizeBy(delta.scaleBy(1 / halo.target.scale));
-        halo.alignWithTarget();
-      },
-
-      init(proportional=false) {
-        halo.target.undoStart("resize-halo");
-        this.proportionalMode(proportional);
-        halo.activeButton = this;
-      },
-
-      stop(proportional=false) {
-        halo.target.undoStop("resize-halo");
-        this.proportionalMode(false);
-        halo.activeButton = null;
-        halo.alignWithTarget();
-      },
-
-      adaptAppearance(proportional) {
-        this.proportionalMode(proportional);
-        if (proportional) {
-          this.styleClasses = ["halo-item", "fa", "fa-expand"];
-          this.rotation = -Math.PI / 2;
-        } else {
-          this.styleClasses = ["halo-item", "fa", "fa-crop"];
-          this.rotation = 0;
-        }
-      },
-
-      onDragStart(evt) { this.init(evt.isShiftDown()) },
-      onDrag(evt) { this.update(evt.state.dragDelta, evt.isShiftDown()) },
-      onDragEnd(evt) { this.stop(evt.isShiftDown()) },
-
-      onKeyDown(evt) {
-        this.adaptAppearance(evt.isShiftDown());
-      },
-
-      onKeyUp(evt) {
-        this.adaptAppearance(false);
-      },
-
-      proportionalMode(active, delta=null) {
-        if (active) {
-          const diagonal = halo.toggleDiagonal(true);
-          if (delta) {
-            delta = diagonal.scaleBy(
-                      diagonal.dotProduct(delta) /
-                      diagonal.dotProduct(diagonal));
-          }
-          return delta;
-        } else {
-          halo.toggleDiagonal(false);
-          return delta;
-        }
-      }
-
-    }));
-  }
 
   closeHalo() {
     return this.getSubmorphNamed("close") || this.addMorph(new HaloItem({
