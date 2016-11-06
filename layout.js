@@ -269,7 +269,7 @@ export class CellGroup {
       if (target && !target.isMorph) target = this.layout.container.getSubmorphNamed(target);
     }
     if(target) {
-      const bounds = this.bounds(),
+      const bounds = this.layout.fitToCell ? this.bounds() : this.position.extent(target.extent),
             offset = this.compensateOrigin ? this.layout.container.origin.negated() : pt(0,0)
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
@@ -339,7 +339,7 @@ export class CellGroup {
         (cell.bottom == null || cell.bottom.group != this));
   }
   
-  position() {
+  get position() {
     return this.topLeft.position();
   }
   
@@ -770,7 +770,7 @@ export class GridLayout extends Layout {
 
   constructor(config) {
     super(config);
-    if (config.autoAssign == undefined) config.autoAssign = true;
+    config = {autoAssign: true, fitToCell: true, ...config};
     this.cellGroups = [];
     this.morphToGroup = {};
     this.config = config;
@@ -789,6 +789,9 @@ export class GridLayout extends Layout {
 
   get compensateOrigin() { return this.config.compensateOrigin; }
   set compensateOrigin(compensate) { this.config.compensateOrigin = compensate }
+
+  get fitToCell() { return this.config.fitToCell }
+  set fitToCell(fit) { this.config.fitToCell = fit }
   
   get notInLayout() { return arr.withoutAll(this.container.submorphs, this.cellGroups.map(g => g.morph)) }
   
