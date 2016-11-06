@@ -208,9 +208,27 @@ export class List extends Morph {
       padding: props.padding || Rectangle.inset(3),
       itemPadding: props.itemPadding || Rectangle.inset(1),
       multiSelect: false,
+      ...this.listStyle(props.theme),
       ...props
     });
     this.update();
+  }
+
+  listStyle(theme) {
+    if (theme == "dark") {
+      return {
+        fill: Color.transparent,
+        hideScrollbars: true,
+        nonSelectionFontColor: Color.gray,
+        selectionFontColor: Color.black,
+        selectionColor: Color.gray.lighter(),
+        padding: Rectangle.inset(2, 0)
+      }
+     } else {
+        return {
+          padding: Rectangle.inset(2, 0)
+        }
+     }
   }
 
   get isList() { return true; }
@@ -539,7 +557,7 @@ export class FilterableList extends Morph {
           padding, itemPadding,
           borderWidth: props.borderWidth,
           borderColor: props.borderColor,
-          ...this.listStyle(props.theme),
+          theme: props.theme
         });
 
     super({borderWidth: 1, fill: Color.transparent, borderColor: Color.gray, submorphs: [inputText, list]});
@@ -560,23 +578,6 @@ export class FilterableList extends Morph {
   }
 
   get isList() { return true; }
-
-  listStyle(theme) {
-    if (theme == "dark") {
-      return {
-        fill: Color.transparent,
-        hideScrollbars: true,
-        nonSelectionFontColor: Color.gray,
-        selectionFontColor: Color.black,
-        selectionColor: Color.gray.lighter(),
-        padding: Rectangle.inset(2, 0)
-      }
-     } else {
-        return {
-          padding: Rectangle.inset(2, 0)
-        }
-     }
-  }
 
   inputStyle(theme) {
      if (theme == "dark") {
