@@ -538,7 +538,7 @@ export class FilterableList extends Morph {
 
   constructor(props = {}) {
     var fontFamily = props.fontFamily || "Helvetica Neue, Arial, sans-serif",
-        padding = props.padding,
+        padding = props.padding || Rectangle.inset(2,0),
         itemPadding = props.itemPadding,
         fontSize = props.fontSize || 11,
         input = props.input || "",
