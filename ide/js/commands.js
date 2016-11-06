@@ -18,14 +18,17 @@ function buildEvalOpts(morph, additionalOpts) {
   return {System, targetModule, format, context, sourceURL, remote};
 }
 
-function doEval(morph, range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range, additionalOpts) {
+function doEval(
+  morph,
+  range = morph.selection.isEmpty() ? morph.lineRange() : morph.selection.range,
+  additionalOpts,
+  code = morph.textInRange(range)) {
 
   var {serverInterfaceFor, localInterface} = System.get(System.decanonicalize("lively-system-interface"))
   if (!serverInterfaceFor || !localInterface)
     throw new Error("doit not possible: lively-system-interface not available!")
 
   var opts = buildEvalOpts(morph, additionalOpts),
-      code = morph.textInRange(range),
       endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface;
   return endpoint.runEval(code, opts);
 }
@@ -204,6 +207,39 @@ export var jsEditorCommands = [
       morph.selection.collapseToEnd();
       morph.insertTextAndSelect(printEvalResult(result, count));
       return result;
+    }
+  },
+
+  {
+    name: "undefine variable",
+    doc: "Finds the variable at cursor position (or position passed) and undefines it in the module toplevel scope.",
+    exec: async function(ed, opts = {varName: null, position: null}) {
+      var {varName, position} = opts;
+
+      if (!varName) {
+        if (!position) position = ed.cursorPosition;  
+        var nav = ed.pluginInvokeFirst("getNavigator"),
+            parsed = nav.ensureAST(ed.textString),
+            node = lively.ast.query.nodesAt(ed.positionToIndex(position), parsed)
+                    .reverse().find(ea => ea.type === "Identifier");
+        if (!node) { ed.showError(new Error("no identifier found!")); return true; }
+        varName = node.name
+      }
+
+      var opts = buildEvalOpts(ed),
+          source = `lively.modules.module("${opts.targetModule}").undefine("${varName}")`,
+          result, err;
+
+      try {
+        result = await doEval(ed, null, opts, source);
+        err = result.isError ? result.value : null;
+      } catch (e) { err = e; }
+
+      err ?
+        ed.showError(err) :
+        ed.setStatusMessage(`${varName} undefined`);
+
+      return true;
     }
   },
 
@@ -684,8 +720,10 @@ export var astEditorCommands = [
           idx = sel.selections.length-1;
       existing > -1 ?
         arr.swap(sel.selections, existing, idx) :
-        sel.addRange(range);
+        sel.addRange(range, false);
     });
+
+    sel.mergeSelections();
 
     return true;
   }
