@@ -589,7 +589,7 @@ var customTranslate = function () {
 
             if (isEsm) {
               load.metadata.format = "esm";
-              load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+              load.source = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
               load.metadata["lively.modules instrumented"] = true;
               instrumented = true;
               debug && console.log("[lively.modules] loaded %s as es6 module", load.name);
@@ -598,7 +598,7 @@ var customTranslate = function () {
               env.recorderName = "System.global";
               env.recorder = System.global;
               load.metadata.format = "global";
-              load.source = prepareCodeForCustomCompile(load.source, load.name, env, debug);
+              load.source = prepareCodeForCustomCompile(System, load.source, load.name, env, mod, debug);
               load.metadata["lively.modules instrumented"] = true;
               instrumented = true;
               debug && console.log("[lively.modules] loaded %s as instrumented global module", load.name);
@@ -628,7 +628,7 @@ var customTranslate = function () {
                       case 0:
                         if (translated.indexOf("System.register(") === 0) {
                           debug && console.log("[lively.modules customTranslate] Installing System.register setter captures for %s", load.name);
-                          translated = prepareTranslatedCodeForSetterCapture(translated, load.name, env, debug);
+                          translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, env, mod, debug);
                         }
 
                         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -887,7 +887,7 @@ function (id) {
   return id.slice(-3) !== ".js";
 }];
 
-function prepareCodeForCustomCompile(source, fullname, env, debug) {
+function prepareCodeForCustomCompile(System, source, moduleId, env, module, debug) {
   source = String(source);
   var tfmOptions = {
     topLevelVarRecorder: env.recorder,
@@ -895,18 +895,20 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
     dontTransform: env.dontTransform,
     recordGlobals: true,
     keepPreviouslyDeclaredValues: true,
-    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+    declarationWrapperName: module.varDefinitionCallbackName,
+    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
 
   },
       isGlobal = env.recorderName === "System.global",
-      header = debug ? "console.log(\"[lively.modules] executing module " + fullname + "\");\n" : "",
+      header = debug ? "console.log(\"[lively.modules] executing module " + moduleId + "\");\n" : "",
       footer = "";
 
   if (isGlobal) {
     // FIXME how to update exports in that case?
+    delete tfmOptions.declarationWrapperName;
   } else {
-    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + fullname + "\").recorder;";
-    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + fullname + "\");";
+    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;";
+    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + moduleId + "\");";
   }
 
   try {
@@ -914,19 +916,20 @@ function prepareCodeForCustomCompile(source, fullname, env, debug) {
     if (debug && typeof $morph !== "undefined" && $morph("log")) $morph("log").textString = rewrittenSource;
     return rewrittenSource;
   } catch (e) {
-    console.error("Error in prepareCodeForCustomCompile of " + fullname + " " + e.stack);
+    console.error("Error in prepareCodeForCustomCompile of " + moduleId + " " + e.stack);
     return source;
   }
 }
 
-function prepareTranslatedCodeForSetterCapture(source, fullname, env, debug) {
+function prepareTranslatedCodeForSetterCapture(System, source, moduleId, env, module, debug) {
   source = String(source);
   var tfmOptions = {
     topLevelVarRecorder: env.recorder,
     varRecorderName: env.recorderName,
     dontTransform: env.dontTransform,
     recordGlobals: true,
-    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(fullname))
+    declarationWrapperName: module.varDefinitionCallbackName,
+    currentModuleAccessor: funcCall(member(funcCall(member("System", "get"), literal("@lively-env")), "moduleEnv"), literal(moduleId))
   },
       isGlobal = env.recorderName === "System.global";
 
@@ -2765,7 +2768,16 @@ var ModuleInterface = function () {
   }, {
     key: "define",
     value: function define(varName, value) {
-      return this.recorder[varName] = value;
+      var exportImmediately = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+      this.recorder[varName] = value;
+
+      scheduleModuleExportsChange(this.System, this.id, varName, value, false /*force adding export*/);
+      this.notifyTopLevelObservers(varName);
+
+      if (exportImmediately) runScheduledExportChanges(this.System, this.id);
+
+      return value;
     }
   }, {
     key: "undefine",
@@ -2805,46 +2817,7 @@ var ModuleInterface = function () {
   }, {
     key: "evaluationDone",
     value: function evaluationDone() {
-      this.addGetterSettersForNewVars();
       runScheduledExportChanges(this.System, this.id);
-    }
-  }, {
-    key: "addGetterSettersForNewVars",
-    value: function addGetterSettersForNewVars() {
-      var _this8 = this;
-
-      // after eval we modify the env so that all captures vars are wrapped in
-      // getter/setter to be notified of changes
-      // FIXME: better to not capture via assignments but use func calls...!
-      var rec = this.recorder,
-          prefix = "__lively.modules__";
-
-      if (rec === this.System.global) {
-        console.warn("[lively.modules] addGetterSettersForNewVars: recorder === global, refraining from installing setters!");
-        return;
-      }
-
-      lively_lang.properties.own(rec).forEach(function (key) {
-        if (key.indexOf(prefix) === 0 || rec.__lookupGetter__(key)) return;
-        Object.defineProperty(rec, prefix + key, {
-          enumerable: false,
-          writable: true,
-          value: rec[key]
-        });
-        Object.defineProperty(rec, key, {
-          enumerable: true,
-          get: function get() {
-            return rec[prefix + key];
-          },
-          set: function set(v) {
-            rec[prefix + key] = v;
-            scheduleModuleExportsChange(_this8.System, _this8.id, key, v, false /*add export*/);
-            _this8.notifyTopLevelObservers(key);
-          }
-        });
-
-        _this8.notifyTopLevelObservers(key);
-      });
     }
   }, {
     key: "env",
@@ -2972,7 +2945,7 @@ var ModuleInterface = function () {
         }, _callee10, this);
       }));
 
-      function _localDeclForRefAt(_x6) {
+      function _localDeclForRefAt(_x7) {
         return _ref10.apply(this, arguments);
       }
 
@@ -3038,7 +3011,7 @@ var ModuleInterface = function () {
         }, _callee11, this);
       }));
 
-      function _importForNSRefAt(_x7) {
+      function _importForNSRefAt(_x8) {
         return _ref11.apply(this, arguments);
       }
 
@@ -3102,7 +3075,7 @@ var ModuleInterface = function () {
         }, _callee12, this);
       }));
 
-      function _resolveImportedDecl(_x8) {
+      function _resolveImportedDecl(_x9) {
         return _ref13.apply(this, arguments);
       }
 
@@ -3162,7 +3135,7 @@ var ModuleInterface = function () {
         }, _callee13, this);
       }));
 
-      function bindingPathForExport(_x9) {
+      function bindingPathForExport(_x10) {
         return _ref14.apply(this, arguments);
       }
 
@@ -3231,7 +3204,7 @@ var ModuleInterface = function () {
         }, _callee14, this);
       }));
 
-      function bindingPathForRefAt(_x10) {
+      function bindingPathForRefAt(_x11) {
         return _ref15.apply(this, arguments);
       }
 
@@ -3261,7 +3234,7 @@ var ModuleInterface = function () {
         }, _callee15, this);
       }));
 
-      function definitionForRefAt(_x11) {
+      function definitionForRefAt(_x12) {
         return _ref18.apply(this, arguments);
       }
 
@@ -3301,7 +3274,7 @@ var ModuleInterface = function () {
     key: "search",
     value: function () {
       var _ref19 = asyncToGenerator(regeneratorRuntime.mark(function _callee16(searchStr, options) {
-        var _this9 = this;
+        var _this8 = this;
 
         var src, re, flags, match, res, i, j, line, lineStart, _res$j, idx, length, lineEnd;
 
@@ -3312,8 +3285,8 @@ var ModuleInterface = function () {
                 options = Object.assign({ excludedModules: [] }, options);
 
                 if (!options.excludedModules.some(function (ex) {
-                  if (typeof ex === "string") return ex === _this9.id;
-                  if (ex instanceof RegExp) return ex.test(_this9.id);
+                  if (typeof ex === "string") return ex === _this8.id;
+                  if (ex instanceof RegExp) return ex.test(_this8.id);
                   return false;
                 })) {
                   _context16.next = 3;
@@ -3395,7 +3368,7 @@ var ModuleInterface = function () {
         }, _callee16, this);
       }));
 
-      function search(_x12, _x13) {
+      function search(_x13, _x14) {
         return _ref19.apply(this, arguments);
       }
 
@@ -3423,48 +3396,55 @@ var ModuleInterface = function () {
       return this._recorder = v;
     },
     get: function get() {
+      var _Object$create;
+
       if (this._recorder) return this._recorder;
 
       var S = this.System,
           self = this;
 
-      return this._recorder = Object.create(S.global, {
+      return this._recorder = Object.create(S.global, (_Object$create = {
 
-        System: { configurable: true, writable: true, value: S },
+        System: { configurable: true, writable: true, value: S }
 
-        _moduleExport: {
-          value: function value(name, val) {
-            scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
-          }
-        },
-
-        _moduleImport: {
-          value: function value(depName, key) {
-            var depId = S.decanonicalize(depName, self.id),
-                depExports = S.get(depId);
-
-            if (!depExports) {
-              console.warn("import of " + key + " failed: " + depName + " (tried as " + self.id + ") is not loaded!");
-              return undefined;
-            }
-
-            self.addDependencyToModuleRecord(module$2(S, depId),
-            // setter is only installed if there isn't a setter already. In
-            // those cases we make sure that at least the module varRecorder gets
-            // updated, which is good enough for "virtual modules"
-            function (imports) {
-              return Object.assign(self.recorder, imports);
-            });
-
-            if (key == undefined) return depExports;
-
-            if (!depExports.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
-
-            return depExports[key];
-          }
+      }, defineProperty(_Object$create, this.varDefinitionCallbackName, {
+        value: function value(name, kind, _value, recorder) {
+          return self.define(name, _value, false /*signalChangeImmediately*/);
         }
+      }), defineProperty(_Object$create, "_moduleExport", {
+        value: function value(name, val) {
+          scheduleModuleExportsChange(S, self.id, name, val, true /*add export*/);
+        }
+      }), defineProperty(_Object$create, "_moduleImport", {
+        value: function value(depName, key) {
+          var depId = S.decanonicalize(depName, self.id),
+              depExports = S.get(depId);
 
-      });
+          if (!depExports) {
+            console.warn("import of " + key + " failed: " + depName + " (tried as " + self.id + ") is not loaded!");
+            return undefined;
+          }
+
+          self.addDependencyToModuleRecord(module$2(S, depId),
+          // setter is only installed if there isn't a setter already. In
+          // those cases we make sure that at least the module varRecorder gets
+          // updated, which is good enough for "virtual modules"
+          function (imports) {
+            return Object.assign(self.recorder, imports);
+          });
+
+          if (key == undefined) return depExports;
+
+          if (!depExports.hasOwnProperty(key)) console.warn("import from " + depExports + ": Has no export " + key + "!");
+
+          return depExports[key];
+        }
+      }), _Object$create));
+    }
+  }, {
+    key: "varDefinitionCallbackName",
+    get: function get() {
+      return "defVar_" + this.id;
     }
   }]);
   return ModuleInterface;
@@ -3798,7 +3778,7 @@ function loadedModules$1(System) {
 }
 
 function knownModuleNames(System) {
-  var fromSystem = System.loads ? Object.keys(System._loader.moduleRecords) : Object.keys(System.loads);
+  var fromSystem = System.loads ? Object.keys(System.loads) : Object.keys(System._loader.moduleRecords);
   return lively_lang.arr.uniq(fromSystem.concat(Object.keys(loadedModules$1(System))));
 }
 
