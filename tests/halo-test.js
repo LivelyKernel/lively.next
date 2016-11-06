@@ -94,8 +94,10 @@ describe("halos", () => {
   })
 
   it("resize resizes", () => {
-    var halo = world.showHaloFor(submorph1);
-    halo.resizeHalo().update(pt(10,5));
+    var halo = world.showHaloFor(submorph1),
+        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
+    resizeHandle.init()
+    resizeHandle.update(pt(10,5));
     expect(submorph1.extent).equals(pt(110, 105));
   });
 
@@ -103,15 +105,16 @@ describe("halos", () => {
     submorph1.origin = pt(20,30);
     submorph1.position = pt(100,100);
     var halo = world.showHaloFor(submorph1, "test-pointer-1"),
-        resizeButton = halo.resizeHalo(),
+        resizeButton = halo.resizeHandles().find(h => h.corner == "bottomRight"),
         resizeButtonCenter = resizeButton.globalBounds().center();
+    resizeButton.init();
     resizeButton.update(pt(42,42));
     expect(halo.borderBox.extent).equals(submorph1.extent);
   });
 
   it("active resize hides other halos and displays extent", () => {
     var halo = world.showHaloFor(submorph1),
-        resizeHalo = halo.resizeHalo(),
+        resizeHalo = halo.resizeHandles().find(h => h.corner == "bottomRight"),
         otherHalos = halo.buttonControls.filter((b) => 
             b != resizeHalo && !b.isHandle 
             && b != halo.propetyDisplay);
@@ -123,19 +126,28 @@ describe("halos", () => {
   });
 
   it("resizes proportionally", () => {
-    var halo = world.showHaloFor(submorph1);
-    halo.resizeHalo().init(true);
+    var halo = world.showHaloFor(submorph1),
+        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
+    resizeHandle.init(true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
-    halo.resizeHalo().update(pt(10,5), true);
+    resizeHandle.update(pt(10,5), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
-    halo.resizeHalo().update(pt(1000,500), true);
+    resizeHandle.update(pt(1000,500), true);
+    expect(submorph1.extent.x).equals(submorph1.extent.y);
+    resizeHandle = halo.resizeHandles().find(h => h.corner == "rightCenter");
+    resizeHandle.init(true);
+    expect(submorph1.extent.x).equals(submorph1.extent.y);
+    resizeHandle.update(pt(10,5), true);
+    expect(submorph1.extent.x).equals(submorph1.extent.y);
+    resizeHandle.update(pt(1000,500), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
   });
 
   it("shows a visual guide when resizing proportionally", () => {
-    var halo = world.showHaloFor(submorph1);
-    halo.resizeHalo().init(true);
-    halo.resizeHalo().update(pt(10,5), true);
+    var halo = world.showHaloFor(submorph1),
+        resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
+    resizeHandle.init(true);
+    resizeHandle.update(pt(10,5), true);
     var d = halo.getSubmorphNamed("diagonal");
     expect(d).to.not.be.undefined;
   });
@@ -157,6 +169,8 @@ describe("halos", () => {
     halo.rotateHalo().position = pt(55,55);
     halo.rotateHalo().update(num.toRadians(10));
     expect(halo.rotateHalo().position).equals(pt(55,55));
+    halo.rotateHalo().stop();
+    expect(halo.rotateHalo().position).not.equals(pt(55,55));
   })
 
   it("rotate snaps to 45 degree angles", () => {

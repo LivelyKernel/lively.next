@@ -321,6 +321,7 @@ export class Halo extends Morph {
        return new Morph({
            nativeCursor,
            halo: this,
+           corner,
            property: 'extent',
            valueForPropertyDisplay: () => {
               var {x: width, y: height} = this.target.extent;
@@ -336,7 +337,7 @@ export class Halo extends Morph {
            onKeyDown(evt) { this.proportionalMode(evt.isShiftDown()); },
            onKeyUp(evt) { this.proportionalMode(evt.isShiftDown()); },
            onDragStart(evt) {
-               this.start(evt.isShiftDown());
+               this.init(evt.isShiftDown());
            },
            onDragEnd(evt) { 
                this.stop(evt.isShiftDown());
@@ -344,14 +345,14 @@ export class Halo extends Morph {
            onDrag(evt) {
               this.update(evt.state.dragDelta, evt.isShiftDown());
            },
-           start(proportional) {
+           init(proportional=false) {
              this.savedLayout = this.halo.layout;
              this.proportionalMode(proportional);
              this.halo.activeButton = this; 
              this.tfm = this.halo.target.getGlobalTransform().inverse();
              this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
            },
-           update(dragDelta, shiftDown) {
+           update(dragDelta, shiftDown=false) {
              var target = this.halo.target,
                  oldPosition = target.position,
                  oldBounds = target.innerBounds(),
