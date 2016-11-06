@@ -18307,6 +18307,15 @@ var ScopeVisitor = function (_Visitor3) {
       return node;
     }
   }, {
+    key: "visitMetaProperty",
+    value: function visitMetaProperty(node, scope, path) {
+      // this is the new.target thing
+      var visitor = this;
+      // node['meta'] = visitor.accept(node['meta'], scope, path.concat(['meta']));
+      // node['property'] = visitor.accept(node['property'],scope, path.concat(['property']));
+      return node;
+    }
+  }, {
     key: "visitBreakStatement",
     value: function visitBreakStatement(node, scope, path) {
       return node;
