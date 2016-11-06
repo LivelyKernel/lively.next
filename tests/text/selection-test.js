@@ -245,6 +245,14 @@ describe("multi select", () => {
       expect(t.selection).stringEquals("MultiSelection(Selection(1/5 -> 1/5), Selection(0/4 -> 0/4))")
     });
 
+    it("same range", function() {
+      t.textString = "Hello\nWorld";
+      t.selection.addRange(range(0,1,0,4));
+      t.selection.addRange(range(0,4,0,4));
+      // expect(t.selection.ranges).to.have.length(2);
+      expect(t.selection).stringEquals("MultiSelection(Selection(1/5 -> 1/5), Selection(0/1 -> 0/4))")
+    });
+
     it("overlapping", function() {
       t.textString = "Hello\nWorld";
       t.selectLine(1)

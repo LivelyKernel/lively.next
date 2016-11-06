@@ -28,28 +28,32 @@ export class Selection {
     this.textMorph.removeAnchor(this.endAnchor);
   }
 
+  compareRangesForMerge(a, b) {
+    var {start: {row: startRowA, column: startColA}, end: {row: endRowA, column: endColA}} = a,
+        {start: {row: startRowB, column: startColB}, end: {row: endRowB, column: endColB}} = b
+
+    if (startRowA < startRowB || (startRowA === startRowB && startColA < startColB)) {
+        if (endRowA < startRowB || (endRowA === startRowB && endColA < startColB))
+            return "separate";
+        if (endRowA === startRowB && endColA === startColB)
+            return (startRowB === endRowB && startColB === endColB) ?
+              "overlapping" : "bordering";
+        return "overlapping";
+    }
+
+    if (startRowA === startRowB && startColA === startColB) {
+        if (endRowA === endRowB && endColA === endColB)
+            return "equal";
+        return "overlapping";
+    }
+    return this.compareRangesForMerge(b, a);
+  }
+
   mergeWith(otherSel) {
     if (!otherSel || !otherSel.isSelection) return false;
 
-    // // short but slow for a lot of selections at once:
-    // if (Math.abs(Range.compare(this.range, otherSel.range)) > 4) return false;
-
-    // more verbose but a lot faster:
-    var {
-          start: {row: myStartRow, column: myStartColumn},
-          end: {row: myEndRow, column: myEndColumn}
-        } = this.range,
-        {
-          start: {row: otherStartRow, column: otherStartColumn},
-          end: {row: otherEndRow, column: otherEndColumn}
-        } = otherSel.range;
-    if (myEndRow < otherStartRow || (myEndRow === otherStartRow && myEndColumn < otherStartColumn))
-      return false;
-    if (otherEndRow < myStartRow || (otherEndRow === myStartRow && otherEndColumn < myStartColumn))
-      return false;
-    var borderingLeft = myEndRow === otherStartRow && myEndColumn === otherStartColumn,
-        borderingRight = myStartRow === otherEndRow && myStartColumn === otherEndColumn;
-    if ((borderingLeft && !borderingRight) || (!borderingLeft && borderingRight))
+    var compared = this.compareRangesForMerge(this.range, otherSel.range);
+    if (compared === "separate" || compared === "bordering")
       return false;
 
     this.range = this.range.merge(otherSel.range);
