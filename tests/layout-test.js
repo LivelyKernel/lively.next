@@ -195,10 +195,10 @@ describe("layout", () => {
       var a = grid.row(2).col(2),
           b = grid.row(1).col(2),
           aGroup = a.group;
-      expect(aGroup.morph).not.to.be.undefined;
-      expect(b.group.morph).to.be.undefined;
+      expect(aGroup.morph).not.to.be.null;
+      expect(b.group.morph).to.be.null;
       b.group.connect(a);
-      expect(b.group.morph).not.to.be.undefined;
+      expect(b.group.morph).not.to.be.null;
     })
     
     it("computes the group's bounds", () => {
