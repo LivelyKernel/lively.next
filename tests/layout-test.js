@@ -527,5 +527,23 @@ describe("layout", () => {
       expect(m2.position).equals(pt(-50,50));
       expect(m1.position).equals(pt(50, -50));
     })
+
+    it("allows submorphs to preserve their original extent", () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout.fitToCell = false;
+      m1.extent = pt(22,33);
+      m.layout.apply();
+      expect(m1.extent).equals(pt(22,33));
+    })
+
+    it("also layouts submorphs that are added afterwards", () => {
+      m.layout = new GridLayout({grid:
+                          [[null, "m1", null],
+                           ["m2", "m2", "m4"],
+                           [null, null, "m3"]]
+                      });
+      m.addMorph({name: "m4", extent: pt(22,22)});
+      expect(m.getSubmorphNamed("m4").bounds()).equals(rect(200,100,100,100));
+    })
   });
 })
