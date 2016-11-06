@@ -203,6 +203,20 @@ var defineProperty = function (obj$$1, key, value) {
   return obj$$1;
 };
 
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
 var get$1 = function get$1(object, property, receiver) {
   if (object === null) object = Function.prototype;
   var desc = Object.getOwnPropertyDescriptor(object, property);
@@ -695,18 +709,28 @@ function evalCodeTransform(code, options) {
     var blacklist = (options.dontTransform || []).concat(["arguments"]),
         undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
         varRecorder = id(options.varRecorderName || '__lvVarRecorder'),
-        es6ClassToFunctionOptions = undefined,
-        declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
+        es6ClassToFunctionOptions = undefined;
 
-    if (options.keepPreviouslyDeclaredValues) {
-      // 2.1 declare a function that should wrap all definitions, i.e. all var
+    if (options.declarationWrapperName || typeof options.declarationCallback === "function") {
+      // 2.1 declare a function that wraps all definitions, i.e. all var
       // decls, functions, classes etc that get captured will be wrapped in this
-      // function. When using this with the option.keepPreviouslyDeclaredValues
-      // we will use a wrapping function that keeps the identity of prevously
-      // defined objects
-      options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
-      options.topLevelVarRecorder[declarationWrapperName] = declarationWrapperForKeepingValues;
+      // function. This allows to define some behavior that is run whenever
+      // variables get initialized or changed as well as transform values.
+      // The parameters passed are:
+      //   name, kind, value, recorder
+      // Note that the return value of declarationCallback is used as the
+      // actual value in the code being executed. This allows to transform the
+      // value as necessary but also means that declarationCallback needs to
+      // return sth meaningful!
+      var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
 
+      options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
+
+      if (options.declarationCallback) options.topLevelVarRecorder[declarationWrapperName] = options.declarationCallback;
+    }
+
+    var transformES6Classes = options.hasOwnProperty("transformES6Classes") ? options.transformES6Classes : true;
+    if (transformES6Classes) {
       // Class declarations and expressions are converted into a function call
       // to `createOrExtendClass`, a helper that will produce (or extend an
       // existing) constructor function in a way that allows us to redefine
@@ -746,41 +770,22 @@ function evalCodeTransform(code, options) {
   return result;
 }
 
-function evalCodeTransformOfSystemRegisterSetters(code, options) {
+function evalCodeTransformOfSystemRegisterSetters(code) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
   if (!options.topLevelVarRecorder) return code;
+
+  if (typeof options.declarationCallback === "function" || options.declarationWrapperName) {
+    var declarationWrapperName = options.declarationWrapperName || defaultDeclarationWrapperName;
+    options.declarationWrapper = member(id(options.varRecorderName), literal(declarationWrapperName), true);
+    if (options.declarationCallback) options.topLevelVarRecorder[declarationWrapperName] = options.declarationCallback;
+  }
 
   var parsed = lively_ast.parse(code),
       blacklist = (options.dontTransform || []).concat(["arguments"]),
       undeclaredToTransform = !!options.recordGlobals ? null /*all*/ : lively_lang.arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist),
-      result = lively_ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), { exclude: blacklist });
-
+      result = lively_ast.capturing.rewriteToRegisterModuleToCaptureSetters(parsed, id(options.varRecorderName || '__lvVarRecorder'), _extends({ exclude: blacklist }, options));
   return lively_ast.stringify(result);
-}
-
-function declarationWrapperForKeepingValues(name, kind, value, recorder) {
-  // show(`declaring ${name}, a ${kind}, value ${value}`);
-
-  if (kind === "function") return value;
-  if (kind === "class") {
-    recorder[name] = value;
-    return value;
-  }
-
-  // if (!value || typeof value !== "object" || Array.isArray(value) || value.constructor === RegExp)
-  //   return value;
-
-  // if (recorder.hasOwnProperty(name) && typeof recorder[name] === "object") {
-  //   if (Object.isFrozen(recorder[name])) return value;
-  //   try {
-  //     copyProperties(value, recorder[name]);
-  //     return recorder[name];
-  //   } catch (e) {
-  //     console.error(`declarationWrapperForKeepingValues: could not copy properties for object ${name}, won't keep identity of previously defined object!`)
-  //     return value;
-  //   }
-  // }
-
-  return value;
 }
 
 /*global: global, System*/
@@ -796,7 +801,7 @@ var endEvalFunctionName = "lively.vm-on-eval-end";
 function _normalizeEvalOptions(opts) {
   if (!opts) opts = {};
 
-  opts = Object.assign({
+  opts = _extends({
     targetModule: null,
     sourceURL: opts.targetModule,
     runtime: null,
@@ -809,8 +814,7 @@ function _normalizeEvalOptions(opts) {
     waitForPromise: true,
     wrapInStartEndCall: false,
     onStartEval: null,
-    onEndEval: null,
-    keepPreviouslyDeclaredValues: true
+    onEndEval: null
   }, opts);
 
   if (opts.targetModule) {
@@ -871,7 +875,6 @@ function runEval$1(code, options, thenDo) {
   //   wrapInStartEndCall: BOOLEAN
   //   onStartEval: FUNCTION()?,
   //   onEndEval: FUNCTION(err, value)? // note: we pass in the value of last expr, not EvalResult!
-  //   keepPreviouslyDeclaredValues: BOOLEAN // maintain the identity of objects that were declared before
   // }
 
   if (typeof options === 'function' && arguments.length === 2) {
@@ -1254,53 +1257,73 @@ function babelPluginTranspilerForAsyncAwaitCode(System, babelWrapper, filename, 
 
 var runEval$2 = function () {
   var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(System, code, options) {
-    var originalCode, fullname, env, recorder, recorderName, dontTransform, transpiler, header, result;
+    var originalCode, _options, format, targetModule, parentModule, parentAddress, meta, module, recorder, recorderName, dontTransform, transpiler, header, result;
+
     return regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
-            options = lively_lang.obj.merge({
+            options = _extends({
               targetModule: null, parentModule: null,
               parentAddress: null,
               es6Transpile: true,
               transpiler: null, // function with params: source, options
-              transpilerOptions: null
+              transpilerOptions: null,
+              format: "esm"
             }, options);
             originalCode = code;
 
 
             System.debug && console.log("[lively.module] runEval: " + code.slice(0, 100).replace(/\n/mg, " ") + "...");
 
-            _context3.next = 5;
-            return System.normalize(options.targetModule || "*scratch*", options.parentModule, options.parentAddress);
+            _options = options;
+            format = _options.format;
+            targetModule = _options.targetModule;
+            parentModule = _options.parentModule;
+            parentAddress = _options.parentAddress;
+            _context3.next = 10;
+            return System.normalize(targetModule || "*scratch*", parentModule, parentAddress);
 
-          case 5:
-            fullname = _context3.sent;
+          case 10:
+            targetModule = _context3.sent;
 
-            options.targetModule = fullname;
+            options.targetModule = targetModule;
 
-            _context3.next = 9;
-            return System.import(fullname);
+            if (format) {
+              meta = System.getConfig().meta[targetModule];
 
-          case 9:
-            _context3.next = 11;
-            return ensureImportsAreLoaded(System, code, fullname);
+              if (!meta) meta = {};
+              if (!meta[targetModule]) meta[targetModule] = {};
+              if (!meta[targetModule].format) {
+                meta[targetModule].format = format;
+                System.config(meta);
+              }
+            }
 
-          case 11:
-            env = System.get("@lively-env").moduleEnv(fullname);
-            recorder = env.recorder;
-            recorderName = env.recorderName;
-            dontTransform = env.dontTransform;
+            _context3.next = 15;
+            return System.import(targetModule);
+
+          case 15:
             _context3.next = 17;
-            return getEs6Transpiler(System, options, env);
+            return ensureImportsAreLoaded(System, code, targetModule);
 
           case 17:
+            module = System.get("@lively-env").moduleEnv(targetModule);
+            recorder = module.recorder;
+            recorderName = module.recorderName;
+            dontTransform = module.dontTransform;
+            _context3.next = 23;
+            return getEs6Transpiler(System, options, module);
+
+          case 23:
             transpiler = _context3.sent;
             header = "var _moduleExport = " + recorderName + "._moduleExport,\n" + ("    _moduleImport = " + recorderName + "._moduleImport;\n");
 
 
             code = header + code;
-            options = Object.assign({ waitForPromise: true }, options, {
+            options = _extends({
+              waitForPromise: true
+            }, options, {
               recordGlobals: true,
               dontTransform: dontTransform,
               varRecorderName: recorderName,
@@ -1311,25 +1334,26 @@ var runEval$2 = function () {
               es6ExportFuncId: "_moduleExport",
               es6ImportFuncId: "_moduleImport",
               transpiler: transpiler,
+              declarationWrapperName: module.varDefinitionCallbackName,
               currentModuleAccessor: funcCall(member$1(funcCall(member$1("System", "get"), literal$1("@lively-env")), "moduleEnv"), literal$1(options.targetModule))
             });
 
-            System.debug && console.log("[lively.module] runEval in module " + fullname + " started");
+            System.debug && console.log("[lively.module] runEval in module " + targetModule + " started");
 
             lively_notifications.emit("lively.vm/doitrequest", {
               code: originalCode,
               waitForPromise: options.waitForPromise,
               targetModule: options.targetModule }, Date.now(), System);
 
-            _context3.next = 25;
+            _context3.next = 31;
             return runEval$1(code, options);
 
-          case 25:
+          case 31:
             result = _context3.sent;
 
 
-            System.get("@lively-env").evaluationDone(fullname);
-            System.debug && console.log("[lively.module] runEval in module " + fullname + " done");
+            System.get("@lively-env").evaluationDone(targetModule);
+            System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
 
             lively_notifications.emit("lively.vm/doitresult", {
               code: originalCode, result: result,
@@ -1338,7 +1362,7 @@ var runEval$2 = function () {
 
             return _context3.abrupt("return", result);
 
-          case 30:
+          case 36:
           case "end":
             return _context3.stop();
         }
@@ -1500,26 +1524,25 @@ var LivelyVmEvalStrategy = function (_EvalStrategy2) {
       if (!options.targetModule) throw new Error("runEval called but options.targetModule not specified!");
 
       return Object.assign({
-        sourceURL: options.targetModule + "_doit_" + Date.now(),
-        keepPreviouslyDeclaredValues: true
+        sourceURL: options.targetModule + "_doit_" + Date.now()
       }, options);
     }
   }, {
     key: "runEval",
     value: function () {
       var _ref5 = asyncToGenerator(regeneratorRuntime.mark(function _callee5(source, options) {
-        var conf;
+        var System;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
                 options = this.normalizeOptions(options);
-                conf = { meta: {} };
-                conf.meta[options.targetModule] = { format: "esm" };
-                lively.modules.System.config(conf);
+                System = options.System || lively.modules.System;
+
+                System.config({ meta: defineProperty({}, options.targetModule, { format: "esm" }) });
                 return _context5.abrupt("return", lively.vm.runEval(source, options));
 
-              case 5:
+              case 4:
               case "end":
                 return _context5.stop();
             }
@@ -2070,18 +2093,23 @@ var evalStrategies = Object.freeze({
 });
 
 function runEval$$1(code, options) {
-  options = Object.assign({
-    format: "global",
+  var _options = options = _extends({
+    format: "esm",
     System: null,
     targetModule: null
   }, options);
 
-  var S = options.System || typeof System !== "undefined" && System;
-  if (!S && options.targetModule) {
+  var format = _options.format;
+  var S = _options.System;
+  var targetModule = _options.targetModule;
+
+
+  if (!S && typeof System !== "undefined") S = System;
+  if (!S && targetModule) {
     return Promise.reject(new Error("options to runEval have targetModule but cannot find system loader!"));
   }
 
-  return options.targetModule ? runEval$2(options.System || System, code, options) : runEval$1(code, options);
+  return targetModule && ["esm", "es6", "register"].includes(format) ? runEval$2(S, code, options) : runEval$1(code, options);
 }
 
 function syncEval$$1(code, options) {
