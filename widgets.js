@@ -179,6 +179,7 @@ export class CheckBox extends Morph {
       borderWidth: 0,
       active: true,
       checked: false,
+      fill: Color.transparent,
       ...props,
     });
   }
