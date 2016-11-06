@@ -36,7 +36,7 @@
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.1.1',
+        version: 'v4.4.7',
         browser: true,
         env: {},
         argv: [],
@@ -823,12 +823,16 @@
         result.push(this.maybeBlock(stmt.body, flags));
         return result;
       };
-      CodeGenerator.prototype.generatePropertyKey = function (expr, computed) {
+      CodeGenerator.prototype.generatePropertyKey = function (expr, computed, value) {
         var result = [];
         if (computed) {
           result.push('[');
         }
-        result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
+        if (value.type === 'AssignmentPattern') {
+          result.push(this.AssignmentPattern(value, Precedence.Sequence, E_TTT));
+        } else {
+          result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
+        }
         if (computed) {
           result.push(']');
         }
@@ -958,7 +962,10 @@
         },
         ClassDeclaration: function (stmt, flags) {
           var result, fragment;
-          result = ['class ' + stmt.id.name];
+          result = ['class'];
+          if (stmt.id) {
+            result = join(result, this.generateExpression(stmt.id, Precedence.Sequence, E_TTT));
+          }
           if (stmt.superClass) {
             fragment = join('extends', this.generateExpression(stmt.superClass, Precedence.Assignment, E_TTT));
             result = join(result, fragment);
@@ -1620,10 +1627,11 @@
         },
         MetaProperty: function (expr, precedence, flags) {
           var result;
-          result = [];
-          result.push(expr.meta);
-          result.push('.');
-          result.push(expr.property);
+          result = [
+            expr.meta.type === Syntax.Identifier ? expr.meta.name : String(expr.meta),
+            '.',
+            expr.property.type === Syntax.Identifier ? expr.property.name : String(expr.property)
+          ];
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
@@ -1756,13 +1764,13 @@
           }
           if (expr.kind === 'get' || expr.kind === 'set') {
             fragment = [
-              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
+              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed, expr.value)),
               this.generateFunctionBody(expr.value)
             ];
           } else {
             fragment = [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed),
+              this.generatePropertyKey(expr.key, expr.computed, expr.value),
               this.generateFunctionBody(expr.value)
             ];
           }
@@ -1773,22 +1781,22 @@
             return [
               expr.kind,
               noEmptySpace(),
-              this.generatePropertyKey(expr.key, expr.computed),
+              this.generatePropertyKey(expr.key, expr.computed, expr.value),
               this.generateFunctionBody(expr.value)
             ];
           }
           if (expr.shorthand) {
-            return this.generatePropertyKey(expr.key, expr.computed);
+            return this.generatePropertyKey(expr.key, expr.computed, expr.value);
           }
           if (expr.method) {
             return [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed),
+              this.generatePropertyKey(expr.key, expr.computed, expr.value),
               this.generateFunctionBody(expr.value)
             ];
           }
           return [
-            this.generatePropertyKey(expr.key, expr.computed),
+            this.generatePropertyKey(expr.key, expr.computed, expr.value),
             ':' + space,
             this.generateExpression(expr.value, Precedence.Assignment, E_TTT)
           ];
@@ -1840,7 +1848,7 @@
           return result;
         },
         AssignmentPattern: function (expr, precedence, flags) {
-          return this.generateAssignment(expr.left, expr.right, expr.operator, precedence, flags);
+          return this.generateAssignment(expr.left, expr.right, '=', precedence, flags);
         },
         ObjectPattern: function (expr, precedence, flags) {
           var result, i, iz, multiline, property, that = this;
@@ -1945,6 +1953,9 @@
           }
           if (typeof expr.value === 'boolean') {
             return expr.value ? 'true' : 'false';
+          }
+          if (expr.regex) {
+            return '/' + expr.regex.pattern + '/' + expr.regex.flags;
           }
           return generateRegExp(expr.value);
         },
@@ -2187,7 +2198,7 @@
         'escodegen.js',
         'package.json'
       ],
-      'version': '1.8.0',
+      'version': '1.8.1',
       'engines': { 'node': '>=0.12.0' },
       'maintainers': [{
           'name': 'Yusuke Suzuki',
@@ -2206,7 +2217,7 @@
       },
       'optionalDependencies': { 'source-map': '~0.2.0' },
       'devDependencies': {
-        'acorn-6to5': '^0.11.1-25',
+        'acorn': '^2.7.0',
         'bluebird': '^2.3.11',
         'bower-registry-client': '^0.2.1',
         'chai': '^1.10.0',

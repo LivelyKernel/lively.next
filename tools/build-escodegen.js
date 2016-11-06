@@ -1,28 +1,27 @@
+/*global module, require, __dirname, process*/
+
 // even though acorn comes as es6 package there are certain issues with the
 // module structures such as importing directories, not properly exporting which
 // doesn't work with most es6 module systems. To make things easier for us we
 // create one acorn bundle here that will "export" the lib into global.acorn
 
-var fs = require("fs"),
+var path = require("path"),
+    fs = require("fs"),
+    execSync = require("child_process").execSync,
+    astDir = path.join(__dirname, ".."),
     ast = require("../dist/lively.ast.js"),
-    https = require("https"),
-    tag = "0e8280aa061a0dbefb32d277a05015baa7f3e7f2",
-    url = `https://raw.githubusercontent.com/estools/escodegen/${tag}/escodegen.browser.js`,
+    escodegenRepo = "https://github.com/LivelyKernel/escodegen",
+    escodegenVersion = "master",
     targetFile1 = "dist/escodegen.browser.js",
     targetFile2 = "dist/escodegen.js"; // also works in node.js
 
-module.exports = new Promise((resolve, reject) => https.get(url, resolve))
-  .then(res => new Promise((resolve, reject) => {
-    var data = "";
-    res.on("error", reject);
-    res.on("data", d => data += String(d));
-    res.on("end", () => resolve(data));
-  }))
+module.exports =
+  installEscodegen()
   .then(source => { fs.writeFileSync(targetFile1, source); return source; })
   .then(globalizeFreeRefsAndThis)
   .then(flexibleGlobal)
   .then(source => fs.writeFileSync(targetFile2, source))
-  .then(() => console.log(`acorn bundled into ${process.cwd()}/${targetFile1} and ${process.cwd()}/${targetFile2}`))
+  .then(() => console.log(`escodegen bundled into ${process.cwd()}/${targetFile1} and ${process.cwd()}/${targetFile2}`))
   .catch(err => { console.error(err.stack || err); throw err; })
 
 function globalizeFreeRefsAndThis(source) {
@@ -49,4 +48,37 @@ function flexibleGlobal(source) {
     typeof global!=="undefined" ? global :
       typeof self!=="undefined" ? self : this);
 `;
+}
+
+function installEscodegen() {
+  var buildDir = path.join(astDir, "escodegen-build");
+
+  return new Promise((resolve, reject) => {
+    // 1. clone + build
+
+    try {
+  
+      if (fs.existsSync(buildDir)) execSync("rm -rf " + buildDir);
+      
+      var commands = [
+        {cmd: `git clone --branch ${escodegenVersion} ${escodegenRepo} ${buildDir}`, opts: {cwd: astDir, stdio: null}},
+        {cmd: "npm install", opts: {cwd: buildDir, stdio: null}},
+        {cmd: "npm run-script build", opts: {cwd: buildDir, stdio: null}}
+      ]
+  
+      commands.forEach((ea) => {
+        console.log(`Running command ${ea.cmd}...`)
+        execSync(ea.cmd, ea.opts);
+        console.log(`... ${ea.cmd} done`)
+      });
+  
+      var source = fs.readFileSync(path.join(buildDir, "escodegen.browser.js"));
+      execSync("rm -rf " + buildDir);
+      resolve(String(source));
+
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    }
+  });
 }

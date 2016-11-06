@@ -5365,7 +5365,7 @@ module.exports = function(acorn) {
       var cwd = '/';
       return {
         title: 'browser',
-        version: 'v4.1.1',
+        version: 'v4.4.7',
         browser: true,
         env: {},
         argv: [],
@@ -6152,12 +6152,16 @@ module.exports = function(acorn) {
         result.push(this.maybeBlock(stmt.body, flags));
         return result;
       };
-      CodeGenerator.prototype.generatePropertyKey = function (expr, computed) {
+      CodeGenerator.prototype.generatePropertyKey = function (expr, computed, value) {
         var result = [];
         if (computed) {
           result.push('[');
         }
-        result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
+        if (value.type === 'AssignmentPattern') {
+          result.push(this.AssignmentPattern(value, Precedence.Sequence, E_TTT));
+        } else {
+          result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
+        }
         if (computed) {
           result.push(']');
         }
@@ -6287,7 +6291,10 @@ module.exports = function(acorn) {
         },
         ClassDeclaration: function (stmt, flags) {
           var result, fragment;
-          result = ['class ' + stmt.id.name];
+          result = ['class'];
+          if (stmt.id) {
+            result = join(result, this.generateExpression(stmt.id, Precedence.Sequence, E_TTT));
+          }
           if (stmt.superClass) {
             fragment = join('extends', this.generateExpression(stmt.superClass, Precedence.Assignment, E_TTT));
             result = join(result, fragment);
@@ -6949,10 +6956,11 @@ module.exports = function(acorn) {
         },
         MetaProperty: function (expr, precedence, flags) {
           var result;
-          result = [];
-          result.push(expr.meta);
-          result.push('.');
-          result.push(expr.property);
+          result = [
+            expr.meta.type === Syntax.Identifier ? expr.meta.name : String(expr.meta),
+            '.',
+            expr.property.type === Syntax.Identifier ? expr.property.name : String(expr.property)
+          ];
           return parenthesize(result, Precedence.Member, precedence);
         },
         UnaryExpression: function (expr, precedence, flags) {
@@ -7085,13 +7093,13 @@ module.exports = function(acorn) {
           }
           if (expr.kind === 'get' || expr.kind === 'set') {
             fragment = [
-              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
+              join(expr.kind, this.generatePropertyKey(expr.key, expr.computed, expr.value)),
               this.generateFunctionBody(expr.value)
             ];
           } else {
             fragment = [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed),
+              this.generatePropertyKey(expr.key, expr.computed, expr.value),
               this.generateFunctionBody(expr.value)
             ];
           }
@@ -7102,22 +7110,22 @@ module.exports = function(acorn) {
             return [
               expr.kind,
               noEmptySpace(),
-              this.generatePropertyKey(expr.key, expr.computed),
+              this.generatePropertyKey(expr.key, expr.computed, expr.value),
               this.generateFunctionBody(expr.value)
             ];
           }
           if (expr.shorthand) {
-            return this.generatePropertyKey(expr.key, expr.computed);
+            return this.generatePropertyKey(expr.key, expr.computed, expr.value);
           }
           if (expr.method) {
             return [
               generateMethodPrefix(expr),
-              this.generatePropertyKey(expr.key, expr.computed),
+              this.generatePropertyKey(expr.key, expr.computed, expr.value),
               this.generateFunctionBody(expr.value)
             ];
           }
           return [
-            this.generatePropertyKey(expr.key, expr.computed),
+            this.generatePropertyKey(expr.key, expr.computed, expr.value),
             ':' + space,
             this.generateExpression(expr.value, Precedence.Assignment, E_TTT)
           ];
@@ -7169,7 +7177,7 @@ module.exports = function(acorn) {
           return result;
         },
         AssignmentPattern: function (expr, precedence, flags) {
-          return this.generateAssignment(expr.left, expr.right, expr.operator, precedence, flags);
+          return this.generateAssignment(expr.left, expr.right, '=', precedence, flags);
         },
         ObjectPattern: function (expr, precedence, flags) {
           var result, i, iz, multiline, property, that = this;
@@ -7274,6 +7282,9 @@ module.exports = function(acorn) {
           }
           if (typeof expr.value === 'boolean') {
             return expr.value ? 'true' : 'false';
+          }
+          if (expr.regex) {
+            return '/' + expr.regex.pattern + '/' + expr.regex.flags;
           }
           return generateRegExp(expr.value);
         },
@@ -7516,7 +7527,7 @@ module.exports = function(acorn) {
         'escodegen.js',
         'package.json'
       ],
-      'version': '1.8.0',
+      'version': '1.8.1',
       'engines': { 'node': '>=0.12.0' },
       'maintainers': [{
           'name': 'Yusuke Suzuki',
@@ -7535,7 +7546,7 @@ module.exports = function(acorn) {
       },
       'optionalDependencies': { 'source-map': '~0.2.0' },
       'devDependencies': {
-        'acorn-6to5': '^0.11.1-25',
+        'acorn': '^2.7.0',
         'bluebird': '^2.3.11',
         'bower-registry-client': '^0.2.1',
         'chai': '^1.10.0',
@@ -12120,89 +12131,7 @@ var ScopeVisitor = function (_Visitor3) {
 var es = escodegen.escodegen || escodegen;
 
 function stringify(node, opts) {
-  return es.generate(fixParamDefaults(node), opts);
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// rk 2016-04-10: escodegen cannot deal with how default parameters are
-// represented by the AST format acorn uses (and which adheres to the offical
-// Mozilla ES AST spec)
-// for that purpose we implement a transformer here that will convert an AST like this
-//   {
-//     body: {body: [],type: "BlockStatement"},
-//     expression: false,
-//     generator: false,
-//     id: { name: "foo", type: "Identifier" },
-//     params: [{
-//         left: { name: "a", type: "Identifier" },
-//         right: { type: "Literal", value: 3 },
-//         type: "AssignmentPattern"
-//       }],
-//     type: "FunctionDeclaration"
-//   }
-//   (lively.ast.parse("function foo(a = 3) {}"))
-// into an ast like this
-//   {
-//     "type": "FunctionDeclaration",
-//     "id": { "type": "Identifier", "name": "foo" },
-//     "params": [{ "type": "Identifier", "name": "a" }],
-//     "defaults": [{ "type": "Literal", "value": 3, "raw": "3" }],
-//     "body": { "type": "BlockStatement", "body": [] },
-//     "generator": false,
-//     "expression": false
-//   }
-
-var FixParamsForEscodegenVisitor = function (_Visitor) {
-  inherits(FixParamsForEscodegenVisitor, _Visitor);
-
-  function FixParamsForEscodegenVisitor() {
-    classCallCheck(this, FixParamsForEscodegenVisitor);
-    return possibleConstructorReturn(this, (FixParamsForEscodegenVisitor.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor)).apply(this, arguments));
-  }
-
-  createClass(FixParamsForEscodegenVisitor, [{
-    key: "fixFunctionNode",
-    value: function fixFunctionNode(node) {
-      node.defaults = node.params.map(function (p, i) {
-        if (p.type === "AssignmentPattern") {
-          node.params[i] = p.left;
-          return p.right;
-        }
-        return undefined;
-      });
-    }
-  }, {
-    key: "visitFunction",
-    value: function visitFunction(node, state, path) {
-      this.fixFunctionNode(node);
-      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunction", this).call(this, node, state, path);
-    }
-  }, {
-    key: "visitArrowFunctionExpression",
-    value: function visitArrowFunctionExpression(node, state, path) {
-      this.fixFunctionNode(node);
-      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitArrowFunctionExpression", this).call(this, node, state, path);
-    }
-  }, {
-    key: "visitFunctionExpression",
-    value: function visitFunctionExpression(node, state, path) {
-      this.fixFunctionNode(node);
-      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionExpression", this).call(this, node, state, path);
-    }
-  }, {
-    key: "visitFunctionDeclaration",
-    value: function visitFunctionDeclaration(node, state, path) {
-      this.fixFunctionNode(node);
-      return get(FixParamsForEscodegenVisitor.prototype.__proto__ || Object.getPrototypeOf(FixParamsForEscodegenVisitor.prototype), "visitFunctionDeclaration", this).call(this, node, state, path);
-    }
-  }]);
-  return FixParamsForEscodegenVisitor;
-}(Visitor);
-
-function fixParamDefaults(parsed) {
-  parsed = lively_lang.obj.deepCopy(parsed);
-  new FixParamsForEscodegenVisitor().accept(parsed, null, []);
-  return parsed;
+  return es.generate(node, opts);
 }
 
 /*global acorn*/
