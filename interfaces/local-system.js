@@ -14,8 +14,8 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
-    options = lively.lang.obj.merge({targetModule: moduleName}, options);
-    var result = await vm.completions.getCompletions(code => vm.runEval(code, options), prefix);
+    var result = await vm.completions.getCompletions(
+      code => vm.runEval(code, {targetModule: moduleName, ...options}), prefix);
     if (result.isError) throw result.value;
     return {
       completions: result.completions,

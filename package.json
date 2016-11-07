@@ -1,6 +1,6 @@
 {
   "name": "lively-system-interface",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": "https://github.com/LivelyKernel/lively-system-interface",
   "dependencies": {
     "lively.modules": "*",
@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "mocha-es6": "^0.3.5",
-    "systemjs": "^0.19.31"
+    "systemjs": "^0.19.40"
   },
   "systemjs": {
     "map": {

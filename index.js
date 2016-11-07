@@ -45,11 +45,11 @@ export class Interface {
   packageConfChange(source, confFile) { return this.coreInterface.packageConfChange(source, confFile); }
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) { return this.coreInterface.keyValueListOfVariablesInModule(moduleName, sourceOrAst); }
 
-  interactivelyCreatePackage(a, b) { return interactivelyCreatePackage(this.coreInterface, a, b); }
+  interactivelyCreatePackage(requester) { return interactivelyCreatePackage(this.coreInterface, requester); }
   interactivelyLoadPackage(a, b)   { return interactivelyLoadPackage(this.coreInterface, a, b); }
   interactivelyReloadPackage(a, b) { return interactivelyReloadPackage(this.coreInterface, a, b); }
   interactivelyUnloadPackage(vmEditor, packageURL, world) { return interactivelyUnloadPackage(this.coreInterface, vmEditor, packageURL, world); }
-  interactivelyRemovePackage(a, b) { return interactivelyRemovePackage(this.coreInterface, a, b); }
+  interactivelyRemovePackage(requester, pkgURL) { return interactivelyRemovePackage(this.coreInterface, requester, pkgURL); }
 
   importModule(name)         { return this.coreInterface.importModule(name); }
   forgetModule(name, opts)   { return this.coreInterface.forgetModule(name, opts); }
@@ -61,11 +61,11 @@ export class Interface {
 
   shortModuleName(moduleId, itsPackage)                               { return shortModuleName(this.coreInterface, moduleId, itsPackage); }
   showExportsAndImportsOf(a, b)                                       { return showExportsAndImportsOf(this.coreInterface, a, b); }
-  interactivelyChangeModule(vmEditor, moduleName, newSource, options) { return interactivelyChangeModule(this.coreInterface, vmEditor, moduleName, newSource, options); }
+  interactivelyChangeModule(moduleName, newSource, options)           { return interactivelyChangeModule(this.coreInterface, moduleName, newSource, options); }
   interactivelyReloadModule(vmEditor, moduleName)                     { return interactivelyReloadModule(this.coreInterface, vmEditor, moduleName); }
   interactivelyUnloadModule(vmEditor, moduleName)                     { return interactivelyUnloadModule(this.coreInterface, vmEditor, moduleName); }
-  interactivelyRemoveModule(vmEditor, moduleName)                     { return interactivelyRemoveModule(this.coreInterface, vmEditor, moduleName); }
-  interactivelyAddModule(vmEditor, relatedPackageOrModule, world) { return interactivelyAddModule(this.coreInterface, vmEditor, relatedPackageOrModule, world); }
+  interactivelyRemoveModule(requester, moduleName)                    { return interactivelyRemoveModule(this.coreInterface, requester, moduleName); }
+  interactivelyAddModule(requester, relatedPackageOrModule)           { return interactivelyAddModule(this.coreInterface, requester, relatedPackageOrModule); }
 
   searchInPackage(packageURL, searchTerm, options) { return this.coreInterface.searchInPackage(packageURL, searchTerm, options); }
   async searchInAllPackages(searchTerm, options) {

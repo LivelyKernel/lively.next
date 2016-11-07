@@ -1,7 +1,7 @@
 import { parseJsonLikeObj } from "../helpers.js";
 import { resource } from "lively.resources";
 
-async function loadPackage(system, vmEditor, spec) {
+async function loadPackage(system, spec) {
   await system.importPackage(spec.address + "/");
   if (spec.main) await system.importModule(spec.main.toString());
   if (spec.test) {
@@ -17,26 +17,23 @@ async function loadPackage(system, vmEditor, spec) {
       console.warn(`Cannot load test of new package: ${e}`);
     }
   }
-  
-  if (vmEditor) {
-    await vmEditor.updateModuleList();
-    await vmEditor.uiSelect(spec);
-    vmEditor.focus();
-  }
 
   return system.getPackage(spec.address);
 }
 
-export async function interactivelyCreatePackage(system, vmEditor) {
-  var name = await $world.prompt("Enter package name", {input: "", historyId: "lively.vm-editor-add-package-name", useLastInput: true});
+export async function interactivelyCreatePackage(system, requester) {
+  var world = requester.world(),
+      name = await world.prompt("Enter package name", {
+        input: "", historyId: "lively.vm-editor-add-package-name", useLastInput: true});
+
   if (!name) throw "Canceled";
 
-  var guessedAddress = (await system.normalize(resource((await system.getConfig()).baseURL).join(name).asDirectory().url)).replace(/\/\.js$/, "/");
+  var baseURL = (await system.getConfig()).baseURL,
+      maybePackageDir = resource(baseURL).join(name).asDirectory().url,
+      guessedAddress = (await system.normalize(maybePackageDir)).replace(/\/\.js$/, "/");
 
-  if (guessedAddress.endsWith(".js"))
-    guessedAddress = resource(guessedAddress).parent().url;
-
-  var loc = await $world.prompt("Confirm or change package location", {input: guessedAddress, historyId: "lively.vm-editor-add-package-address"});
+  var loc = await world.prompt("Confirm or change package location", {
+    input: guessedAddress, historyId: "lively.vm-editor-add-package-address"});
 
   if (!loc) throw "Canceled";
 
@@ -55,7 +52,7 @@ export async function interactivelyCreatePackage(system, vmEditor) {
     }
   });
 
-  return loadPackage(system, vmEditor, {
+  return loadPackage(system, {
     name: name,
     address: address,
     configFile: url.join("package.json").url,
@@ -66,7 +63,7 @@ export async function interactivelyCreatePackage(system, vmEditor) {
 
 }
 
-export async function interactivelyLoadPackage(system, vmEditor, related = vmEditor ? vmEditor.state.selection && vmEditor.state.selection.name : null, world) {
+export async function interactivelyLoadPackage(system, requester, relatedPackageAddress = null) {
 
   // var vmEditor = that.owner;
   // var system = vmEditor.systemInterface()
@@ -74,26 +71,28 @@ export async function interactivelyLoadPackage(system, vmEditor, related = vmEdi
   var spec = {name: "", address: "", type: "package"}
 
   var config = await system.getConfig();
-  var relatedPackage = related && (await system.getPackage(related) || await system.getPackageForModule(related));
+  if (relatedPackageAddress)
+    var relatedPackage = await system.getPackage(relatedPackageAddress)
+                      || await system.getPackageForModule(relatedPackageAddress);
 
-  var dir = await (world || $world).prompt("What is the package directory?", {
-    input: (relatedPackage && relatedPackage.address) || config.baseURL,
+  var dir = await requester.world().prompt("What is the package directory?", {
+    input: relatedPackage ? relatedPackage.address : config.baseURL,
     historyId: "lively.vm-editor-package-load-history",
     useLastInput: false
-  })
+  });
 
   if (!dir) throw "Canceled";
 
-  if (dir.indexOf(URL.root.protocol) === 0) {
-    var relative = new URL(dir).relativePathFrom(URL.root);
-    if (relative.include("..")) {
-      throw new Error(`The package path ${relative} is not inside the Lively directory (${URL.root})`)
-    }
-  }
+  // if (dir.indexOf(URL.root.protocol) === 0) {
+  //   var relative = new URL(dir).relativePathFrom(URL.root);
+  //   if (relative.include("..")) {
+  //     throw new Error(`The package path ${relative} is not inside the Lively directory (${URL.root})`)
+  //   }
+  // }
 
   spec.address = dir.replace(/\/$/, "");
   spec.url = new URL(spec.address + "/");
-  spec.configFile = spec.url.withFilename("package.json").toString();
+  spec.configFile = resource(spec.url).join("package.json").url;
 
   try {
     JSON.parse(await system.moduleRead(spec.configFile)).name
@@ -102,7 +101,7 @@ export async function interactivelyLoadPackage(system, vmEditor, related = vmEdi
     system.resourceEnsureExistance(spec.configFile, `{\n  "name": "${spec.name}",\n  "version": "0.1.0"\n}`);
   }
 
-  return loadPackage(system, vmEditor, spec);
+  return loadPackage(system, spec);
 }
 
 export async function interactivelyReloadPackage(system, vmEditor, packageURL) {
@@ -130,20 +129,19 @@ export async function interactivelyUnloadPackage(system, vmEditor, packageURL, w
   }
 }
 
-export async function interactivelyRemovePackage(system, vmEditor, packageURL, world = $world) {
-  var p = await system.getPackage(packageURL);
-  var really = await world.confirm(`Really remove package ${p.name}??`);
-  if (!really) throw "Cancelled";
+export async function interactivelyRemovePackage(system, requester, packageURL) {
+  var world = requester.world(),
+      p = await system.getPackage(packageURL),
+      really = await world.confirm(`Really remove package ${p.name}??`);
+
+  if (!really) throw "Canceled";
+
   system.removePackage(packageURL);
+
   var really2 = await world.confirm(`Also remove directory ${p.name} including ${p.modules.length} modules?`);
   if (really2) {
     var really3 = await world.confirm(`REALLY *remove* directory ${p.name}? No undo possible...`);
     if (really3) await system.resourceRemove(p.address);
-  }
-  
-  if (vmEditor) {
-    await vmEditor.updateModuleList()
-    await vmEditor.uiSelect(null);
   }
 }
 

@@ -52,7 +52,9 @@ export class HTTPCoreInterface extends AbstractCoreInterface {
   }
 
   runEvalAndStringify(source, opts) {
-    if (this.currentEval) return this.currentEval.then(() => this.runEvalAndStringify(source, opts));
+    if (this.currentEval)
+      return this.currentEval.then(() => this.runEvalAndStringify(source, opts));
+
     return this.currentEval = Promise.resolve().then(async () => {
       var result = await this.runEval(`
 var result;
