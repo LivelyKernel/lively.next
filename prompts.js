@@ -165,6 +165,68 @@ export class ConfirmPrompt extends AbstractPrompt {
   }
 }
 
+
+export class MultipleChoicePrompt extends AbstractPrompt {
+
+  build(props = {choices: ["No choice"]}) {
+    var {label, choices} = props;
+    if (label)
+      this.addMorph({
+        name: "label", type: "label", value: label,
+        fill: null, padding: Rectangle.inset(3),
+        fontSize: 14, fontColor: Color.gray
+      });
+
+    choices.forEach((choice, i) => {
+      var btn = this.addMorph({
+        name: "button " + i, type: "button",
+        padding: Rectangle.inset(6, 4),
+        label: choice, ...this.okButtonStyle});
+      btn.choice = choice;
+      connect(btn, 'fire', this, 'resolve', {converter: function() { return this.sourceObj.choice; }});
+    });
+
+    this.initLayout();
+  }
+
+  initLayout() {
+    // fixme: layout should be able to let one morph
+    //         define the overall width of the container
+    var label = this.get("label");
+    label && label.fit();
+    var buttons = this.submorphs.filter(({isButton}) => isButton);
+    buttons.forEach(ea => ea.fit())
+
+    this.width = Math.max(
+      label ? label.width + 10 : 0,
+      buttons.reduce((width, ea) => width + ea.width, 0) + 20);
+
+    this.layout = new GridLayout({
+       grid: label ?
+               [arr.withN(buttons.length, "label"),
+                buttons.map(({name}) => name)] :
+               [buttons.map(({name}) => name)],
+       spacing: 4
+    });
+    this.layout.col(0).paddingLeft = 10;
+    this.layout.col(this.layout.columnCount-1).paddingRight = 10;
+  }
+
+  onKeyDown(evt) {
+    if (/^[0-9]$/.test(evt.keyCombo)) {
+      var n = Number(evt.keyCombo)-1;
+      var btn = this.get("button " + n);
+      if (btn) {
+        btn.trigger()
+        return evt.stop();
+      }
+    }
+    return super.onKeyDown(evt);
+  }
+
+
+}
+
 export class TextPrompt extends AbstractPrompt {
 
   build({input, historyId}) {

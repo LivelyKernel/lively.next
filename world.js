@@ -8,10 +8,11 @@ import { Morph, Text, Window, TooltipViewer, config } from "./index.js";
 import KeyHandler from "./events/KeyHandler.js";
 
 import {
-  AbstractPrompt, 
-  InformPrompt, 
-  ConfirmPrompt, 
-  TextPrompt, 
+  AbstractPrompt,
+  InformPrompt,
+  ConfirmPrompt,
+  MultipleChoicePrompt,
+  TextPrompt,
   ListPrompt,
   EditListPrompt
 } from "./prompts.js";
@@ -556,7 +557,7 @@ export class World extends Morph {
 
   openWorldMenu(items) {
     var eventState =  this.env.eventDispatcher.eventState;
-    if (eventState.menu) eventState.menu.remove();    
+    if (eventState.menu) eventState.menu.remove();
     return eventState.menu = items && items.length ?
       Menu.forItems(items).openInWorldNearHand() : null;
   }
@@ -681,7 +682,7 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   openPrompt(promptMorph, opts = {requester: null, animated: false}) {
     var focused = this.focusedMorph, visBounds = this.visibleBounds();
-    
+
     promptMorph.openInWorldNear(
       opts.requester ?
         opts.requester.globalBounds().center() :
@@ -692,7 +693,7 @@ export class World extends Morph {
 
     if (opts.animated) {
        var animator = new Morph({
-          fill: Color.transparent, extent: pt(1,1),  
+          fill: Color.transparent, extent: pt(1,1),
           opacity: 0, center: this.center
        });
        animator.openInWorld();
@@ -723,6 +724,11 @@ export class World extends Morph {
   confirm(label, opts = {requester: null, animated: true}) {
     // await this.world().confirm("test")
     return this.openPrompt(new ConfirmPrompt({label, ...opts}), opts);
+  }
+
+  multipleChoicePrompt(label, opts = {requester: null, animated: true, choices: []}) {
+    // await this.world().multipleChoicePrompt("test", {choices: ["1","2","3","4"]})
+    return this.openPrompt(new MultipleChoicePrompt({label, ...opts}), opts);
   }
 
   listPrompt(label = "", items = [], opts = {requester: null, onSelection: null, preselect: 0}) {
