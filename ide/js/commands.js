@@ -332,13 +332,13 @@ export var jsEditorCommands = [
       var range = morph.selection.range,
           lines = morph.withSelectedLinesDo(line => line),
           indent = arr.min([range.start.column].concat(
-            chain(lines).map(function(line) { return line.match(/^\s*/); })
+            chain(lines).map(line => line.match(/^\s*/))
               .flatten().compact().pluck('length').value())),
           length = arr.max(lines.map(ea => ea.length)) - indent,
           fence = Array(Math.ceil(length / 2) + 1).join('-=') + '-';
 
       // comment range
-      // morph.toggleCommentLines();
+      morph.execCommand("toggle comment");
       morph.collapseSelection();
 
       // insert upper fence
