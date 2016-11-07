@@ -1345,14 +1345,16 @@ var runEval$2 = function () {
               waitForPromise: options.waitForPromise,
               targetModule: options.targetModule }, Date.now(), System);
 
-            _context3.next = 31;
+            System.get("@lively-env").evaluationStart(targetModule);
+
+            _context3.next = 32;
             return runEval$1(code, options);
 
-          case 31:
+          case 32:
             result = _context3.sent;
 
 
-            System.get("@lively-env").evaluationDone(targetModule);
+            System.get("@lively-env").evaluationEnd(targetModule);
             System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
 
             lively_notifications.emit("lively.vm/doitresult", {
@@ -1362,7 +1364,7 @@ var runEval$2 = function () {
 
             return _context3.abrupt("return", result);
 
-          case 36:
+          case 37:
           case "end":
             return _context3.stop();
         }
