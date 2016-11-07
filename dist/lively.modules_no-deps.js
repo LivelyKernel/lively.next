@@ -555,7 +555,7 @@ var customTranslate = function () {
           case 16:
             stored = _context5.sent;
 
-            if (!(stored && stored.hash == hashForCache)) {
+            if (!(stored && stored.hash == hashForCache && stored.timestamp >= ModuleTranslationCache.earliestDate)) {
               _context5.next = 23;
               break;
             }
@@ -707,6 +707,13 @@ var isNode$1 = System.get("@system-env").node;
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var ModuleTranslationCache = function () {
+  createClass(ModuleTranslationCache, null, [{
+    key: "earliestDate",
+    get: function get() {
+      return +new Date("Sun Nov 06 2016 16:00:00 GMT-0800 (PST)");
+    }
+  }]);
+
   function ModuleTranslationCache() {
     var dbName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "lively.modules-module-translation-cache";
     classCallCheck(this, ModuleTranslationCache);
@@ -804,8 +811,9 @@ var ModuleTranslationCache = function () {
                 db = _context2.sent;
                 return _context2.abrupt("return", new Promise(function (resolve, reject) {
                   var transaction = db.transaction([_this2.sourceCodeCacheStoreName], "readwrite"),
-                      store = transaction.objectStore(_this2.sourceCodeCacheStoreName);
-                  store.put({ moduleId: moduleId, hash: hash, source: source });
+                      store = transaction.objectStore(_this2.sourceCodeCacheStoreName),
+                      timestamp = Date.now();
+                  store.put({ moduleId: moduleId, hash: hash, source: source, timestamp: timestamp });
                   transaction.oncomplete = resolve;
                   transaction.onerror = reject;
                 }));
@@ -907,8 +915,8 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
     // FIXME how to update exports in that case?
     delete tfmOptions.declarationWrapperName;
   } else {
-    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;";
-    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + moduleId + "\");";
+    header += "System.get(\"@lively-env\").evaluationStart(\"" + moduleId + "\");\nvar " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;";
+    footer += "\nSystem.get(\"@lively-env\").evaluationEnd(\"" + moduleId + "\");";
   }
 
   try {
@@ -1024,6 +1032,7 @@ function unwrapModuleLoad$1(System) {
 }
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
+  if (System.debug) console.log("[lively.modules] exported var changed: \"" + name + "\" => " + value + " (" + moduleId + ")");
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = module$2(System, moduleId).record();
   if (rec && (name in rec.exports || addNewExport)) {
@@ -1107,13 +1116,14 @@ function updateModuleExports(System, moduleId, keysAndValues) {
               var mod = module$2(System, importerModule.name);
               console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
             }
-            importerModule.setters[importerIndex](record.exports);
-          }
 
-          // rk 2016-06-09: for now don't re-execute dependent modules on save,
-          // just update module bindings
-          {
-            module$2(System, importerModule.name).evaluationDone();
+            // We could run the entire module again with
+            //   importerModule.execute();
+            // but this has too many unwanted side effects, so just run the
+            // setters:
+            module$2(System, importerModule.name).evaluationStart();
+            importerModule.setters[importerIndex](record.exports);
+            module$2(System, importerModule.name).evaluationEnd();
           }
         }
       }
@@ -1192,7 +1202,7 @@ var moduleSourceChange$1 = function () {
 
 var moduleSourceChangeEsm = function () {
   var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
-    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
+    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -1332,16 +1342,9 @@ var moduleSourceChangeEsm = function () {
             });
 
             // 3. execute module body
-            result = declared.execute();
+            return _context2.abrupt("return", declared.execute());
 
-            // for updating records, modules, etc
-            // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
-
-            System.get("@lively-env").evaluationDone(load.name);
-
-            return _context2.abrupt("return", result);
-
-          case 48:
+          case 46:
           case "end":
             return _context2.stop();
         }
@@ -2312,6 +2315,8 @@ var ModuleInterface = function () {
     this._scope = null;
     this._observersOfTopLevelState = [];
 
+    this._evaluationsInProgress = 0;
+
     lively_notifications.subscribe("lively.modules/modulechanged", function (data) {
       if (data.module === _this.id) _this.reset();
     });
@@ -2775,6 +2780,13 @@ var ModuleInterface = function () {
       scheduleModuleExportsChange(this.System, this.id, varName, value, false /*force adding export*/);
       this.notifyTopLevelObservers(varName);
 
+      // immediately update exports (recursivly) when flagged or when the module
+      // is not currently executing. During module execution we wait until the
+      // entire module is done to avoid triggering the expensive update process
+      // multiple times
+      // ...whether or not this is in accordance with an upcoming es6 module spec
+      // I don't know...
+      exportImmediately = exportImmediately || !this.isEvalutionInProgress();
       if (exportImmediately) runScheduledExportChanges(this.System, this.id);
 
       return value;
@@ -2814,10 +2826,25 @@ var ModuleInterface = function () {
         return ea !== funcOrName;
       });
     }
+
+    // evaluationStart/End are also compiled into instrumented module code so are
+    // also activated during module executions
+
   }, {
-    key: "evaluationDone",
-    value: function evaluationDone() {
+    key: "evaluationStart",
+    value: function evaluationStart() {
+      this._evaluationsInProgress++;
+    }
+  }, {
+    key: "evaluationEnd",
+    value: function evaluationEnd() {
+      this._evaluationsInProgress--;
       runScheduledExportChanges(this.System, this.id);
+    }
+  }, {
+    key: "isEvalutionInProgress",
+    value: function isEvalutionInProgress() {
+      return this._evaluationsInProgress > 0;
     }
   }, {
     key: "env",
@@ -3515,8 +3542,11 @@ function livelySystemEnv(System) {
       return System.get(System.decanonicalize("lively.modules/index.js"));
     },
 
-    evaluationDone: function evaluationDone(moduleId) {
-      module$2(System, moduleId).evaluationDone();
+    evaluationStart: function evaluationStart(moduleId) {
+      module$2(System, moduleId).evaluationStart();
+    },
+    evaluationEnd: function evaluationEnd(moduleId) {
+      module$2(System, moduleId).evaluationEnd();
     },
     dumpConfig: function dumpConfig() {
       return JSON.stringify({

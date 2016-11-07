@@ -20746,8 +20746,6 @@ function classToFunctionTransform(sourceOrAst, options) {
   return replaced;
 }
 
-var merge = Object.assign;
-
 function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
   /* replaces var and function declarations with assignment statements.
    * Example:
@@ -20760,7 +20758,7 @@ function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
 
   if (!assignToObj) assignToObj = { type: "Identifier", name: "__rec" };
 
-  options = Object.assign({
+  options = _extends({
     ignoreUndeclaredExcept: null,
     includeRefs: null,
     excludeRefs: options && options.exclude || [],
@@ -20835,6 +20833,8 @@ function rewriteToCaptureTopLevelVariables(parsed, assignToObj, options) {
   //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
   rewritten = replaceClassDecls(rewritten, options);
 
+  rewritten = splitExportDeclarations(rewritten, options);
+
   // 6. es6 export declaration are left untouched but a capturing assignment
   // is added after the export so that we get the value:
   // "export var x = 23;" => "export var x = 23; Global.x = x;"
@@ -20876,7 +20876,7 @@ function rewriteToRegisterModuleToCaptureSetters(parsed, assignToObj, options) {
   // This allows us to capture (and potentially re-export) imports and their
   // changes without actively running the module again.
 
-  options = merge({
+  options = _extends({
     captureObj: assignToObj || { type: "Identifier", name: "__rec" },
     exclude: [],
     declarationWrapper: undefined
@@ -21013,13 +21013,33 @@ function replaceRefs(parsed, options) {
   var topLevel = topLevelDeclsAndRefs(parsed),
       refsToReplace = topLevel.refs.filter(function (ref) {
     return shouldRefBeCaptured(ref, topLevel, options);
-  });
+  }),
+      locallyIgnored = [];
 
   var replaced = replace$1(parsed, function (node, path) {
 
     // cs 2016/06/27, 1a4661
     // ensure keys of shorthand properties are not renamed while capturing
     if (node.type === "Property" && refsToReplace.includes(node.key) && node.shorthand) return prop(id(node.key.name), node.value);
+
+    // don't replace var refs in expressions such as "export { x }" or "export var x;"
+    // We make sure that those var references are defined in insertDeclarationsForExports()
+    if (node.type === "ExportNamedDeclaration") {
+      var declaration = node.declaration;
+      var specifiers = node.specifiers;
+
+      if (declaration) {
+        if (declaration.id) locallyIgnored.push(declaration.id);else if (declaration.declarations) locallyIgnored.push.apply(locallyIgnored, toConsumableArray(declaration.declarations.map(function (_ref) {
+          var id$$1 = _ref.id;
+          return id$$1;
+        })));
+      }
+      specifiers && specifiers.forEach(function (_ref2) {
+        var local = _ref2.local;
+        return locallyIgnored.push(local);
+      });
+      return node;
+    }
 
     // declaration wrapper function for assignments
     // "a = 3" => "a = _define('a', 'assignment', 3, _rec)"
@@ -21030,7 +21050,7 @@ function replaceRefs(parsed, options) {
   });
 
   return replace$1(replaced, function (node, path, parent) {
-    return refsToReplace.includes(node) ? member(options.captureObj, node) : node;
+    return refsToReplace.includes(node) && !locallyIgnored.includes(node) ? member(options.captureObj, node) : node;
   });
 }
 
@@ -21045,12 +21065,18 @@ function replaceVarDecls(parsed, options) {
 
   var topLevel = topLevelDeclsAndRefs(parsed);
   return replaceWithMany(parsed, function (node) {
-    if (topLevel.varDecls.indexOf(node) === -1 || node.declarations.every(function (decl) {
+    if (!topLevel.varDecls.includes(node) || node.declarations.every(function (decl) {
       return !shouldDeclBeCaptured(decl, options);
     })) return node;
 
-    return lively_lang.arr.flatmap(node.declarations, function (decl) {
-      if (!shouldDeclBeCaptured(decl, options)) return [{ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] }];
+    var replaced = [];
+    for (var i = 0; i < node.declarations.length; i++) {
+      var decl = node.declarations[i];
+
+      if (!shouldDeclBeCaptured(decl, options)) {
+        replaced.push({ type: "VariableDeclaration", kind: node.kind || "var", declarations: [decl] });
+        continue;
+      }
 
       var init = decl.init || {
         operator: "||",
@@ -21070,12 +21096,15 @@ function replaceVarDecls(parsed, options) {
           return decl[annotationSym] && decl[annotationSym].capture ? assignExpr(options.captureObj, decl.declarations[0].id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.declarations[0].id.name), literal(node.kind), decl.declarations[0].init, options.captureObj) : decl.declarations[0].init, false) : decl;
         });
         topLevel.declaredNames.push(declRootName);
-        return [varDecl(declRoot, initWrapped, node.kind)].concat(extractions);
+        replaced.push.apply(replaced, toConsumableArray([varDecl(declRoot, initWrapped, node.kind)].concat(extractions)));
+        continue;
       }
 
       // This is rewriting normal vars
-      return [assignExpr(options.captureObj, decl.id, initWrapped, false)];
-    });
+      replaced.push(assignExpr(options.captureObj, decl.id, initWrapped, false));
+    }
+
+    return replaced;
   });
 }
 
@@ -21085,15 +21114,10 @@ function replaceClassDecls(parsed, options) {
 
   var topLevel = topLevelDeclsAndRefs(parsed);
   if (!topLevel.classDecls.length) return parsed;
+
   for (var i = parsed.body.length - 1; i >= 0; i--) {
     var stmt = parsed.body[i];
-    if (topLevel.classDecls.indexOf(stmt) !== -1) {
-      if (false && options.declarationWrapper) {
-        parsed.body.splice(i, 1, varDecl(stmt.id, assignExpr(options.captureObj, stmt.id, funcCall(options.declarationWrapper, literal(stmt.id.name), literal("class"), stmt, options.captureObj), false), "var"));
-      } else {
-        parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
-      }
-    }
+    if (topLevel.classDecls.includes(stmt)) parsed.body.splice(i + 1, 0, assignExpr(options.captureObj, stmt.id, stmt.id, false));
   }
   return parsed;
 }
@@ -21123,9 +21147,7 @@ function additionalIgnoredDecls(parsed, options) {
     var decl = topLevel.scope.varDecls[i],
         path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
         parent = path.slice(0, -1).get(parsed);
-    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
-      ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
-    }
+    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
   }
 
   return topLevel.scope.catches.map(function (ea) {
@@ -21146,30 +21168,12 @@ function additionalIgnoredRefs(parsed, options) {
     var decl = topLevel.scope.varDecls[i],
         path = lively_lang.Path(topLevel.scope.varDeclPaths[i]),
         parent = path.slice(0, -1).get(parsed);
-    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement" || parent.type === "ExportNamedDeclaration") {
-      ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
-    }
+    if (parent.type === "ForStatement" || parent.type === "ForInStatement" || parent.type === "ForOfStatement") ignoreDecls.push.apply(ignoreDecls, toConsumableArray(decl.declarations));
   }
 
-  var ignoredImportAndExportNames = [];
-  for (var i = 0; i < parsed.body.length; i++) {
-    var stmt = parsed.body[i];
-    if (!options.es6ImportFuncId && stmt.type === "ImportDeclaration") {
-      ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, toConsumableArray(stmt.specifiers.filter(function (ea) {
-        return ea.type === "ImportSpecifier";
-      }).map(function (ea) {
-        return ea.imported.name;
-      })));
-    } else if (!options.es6ExportFuncId && (stmt.type === "ExportNamedDeclaration" || stmt.type === "ExportDefaultDeclaration") && stmt.specifiers) {
-      ignoredImportAndExportNames.push.apply(ignoredImportAndExportNames, toConsumableArray(stmt.specifiers.map(function (specifier) {
-        return specifier.local.name;
-      })));
-    }
-  }
-
-  return [].concat(topLevel.scope.catches.map(function (ea) {
+  return topLevel.scope.catches.map(function (ea) {
     return ea.name;
-  })).concat(ignoredImportAndExportNames).concat(helpers.declIds(ignoreDecls.map(function (ea) {
+  }).concat(helpers.declIds(ignoreDecls.map(function (ea) {
     return ea.id;
   })).map(function (ea) {
     return ea.name;
@@ -21181,14 +21185,41 @@ function shouldDeclBeCaptured(decl, options) {
 }
 
 function shouldRefBeCaptured(ref, toplevel, options) {
-  return toplevel.scope.importDecls.indexOf(ref) === -1 && lively_lang.arr.flatmap(toplevel.scope.exportDecls, function (ea) {
-    return ea.declarations ? ea.declarations : ea.declaration ? [ea.declaration] : [];
-  }).indexOf(ref) === -1 && options.excludeRefs.indexOf(ref.name) === -1 && (!options.includeRefs || options.includeRefs.indexOf(ref.name) !== -1);
+  if (toplevel.scope.importDecls.includes(ref)) return false;
+  for (var i = 0; i < toplevel.scope.exportDecls.length; i++) {
+    var ea = toplevel.scope.exportDecls[i];
+    if (ea.declarations && ea.declarations.includes(ref)) return false;
+    if (ea.declaration === ref) return false;
+  }
+  if (options.excludeRefs.includes(ref.name)) return false;
+  if (options.includeRefs && !options.includeRefs.includes(ref.name)) return false;
+  return true;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // capturing specific code
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function splitExportDeclarations(parsed, options) {
+  var stmts = parsed.body,
+      newNodes = parsed.body = [];
+  for (var i = 0; i < stmts.length; i++) {
+    var stmt = stmts[i];
+    if (stmt.type !== "ExportNamedDeclaration" || !stmt.declaration || stmt.declaration.type !== "VariableDeclaration" || stmt.declaration.declarations.length <= 1) {
+      newNodes.push(stmt);continue;
+    }
+
+    var decls = stmt.declaration.declarations;
+    for (var j = 0; j < decls.length; j++) {
+      newNodes.push({
+        type: "ExportNamedDeclaration",
+        specifiers: [],
+        declaration: varDecl(decls[j].id, decls[j].init, stmt.declaration.kind)
+      });
+    }
+  }
+  return parsed;
+}
 
 function insertCapturesForExportDeclarations(parsed, options) {
   var body = [];
@@ -21202,12 +21233,19 @@ function insertCapturesForExportDeclarations(parsed, options) {
     // capture: "export default function foo () {};", "export var x = 23, y = 3;"
     if (stmt.type !== "ExportNamedDeclaration" && stmt.type !== "ExportDefaultDeclaration" || !stmt.declaration) {
       /*...*/
+
     } else if (stmt.declaration.declarations) {
       body.push.apply(body, toConsumableArray(stmt.declaration.declarations.map(function (decl) {
-        return assignExpr(options.captureObj, decl.id, decl.id, false);
+        var assignVal = decl.id;
+        if (options.declarationWrapper) {
+          var alreadyWrapped = decl.init.callee && decl.init.callee.name === options.declarationWrapper.name;
+          if (!alreadyWrapped) assignVal = funcCall(options.declarationWrapper, literal(decl.id.name), literal("assignment"), decl.id, options.captureObj);
+        }
+        return assignExpr(options.captureObj, decl.id, assignVal, false);
       })));
     } else if (stmt.declaration.type === "FunctionDeclaration") {
       /*handled by function rewriter as last step*/
+
     } else if (stmt.declaration.type === "ClassDeclaration") {
       body.push(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
     }
@@ -21288,7 +21326,6 @@ function es6ModuleTransforms(parsed, options) {
           nodes = [stmt.declaration].concat(exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id));
         } else {
           nodes = decls.map(function (decl) {
-            options.excludeRefs.push(decl.id);
             options.excludeDecls.push(decl.id);
             return varDecl(decl.id, assignExpr(options.captureObj, decl.id, options.declarationWrapper ? funcCall(options.declarationWrapper, literal(decl.id.name), literal(stmt.declaration.kind), decl, options.captureObj) : decl.init, false), stmt.declaration.kind);
           }).concat(decls.map(function (decl) {
@@ -21349,7 +21386,7 @@ function putFunctionDeclsInFront(parsed, options) {
 
     // what we capture:
     init = options.declarationWrapper ? funcCall(options.declarationWrapper, literal(funcId.name), literal("function"), funcId, options.captureObj) : funcId,
-        declFront = Object.assign({}, decl);
+        declFront = _extends({}, decl);
 
     if (Array.isArray(parent)) {
       // If the parent is a body array we remove the original func decl from it
@@ -21404,58 +21441,70 @@ function transformPattern(pattern, transformState) {
   // //  + "var arg$0$b = arg$0.b;\n"
   // //  + "var arg$0$b$c = arg$0$b.c;\n"
   // //  + "var a = arg$0$b$c[0];"
-  if (pattern.type === "ArrayPattern") {
-    return transformArrayPattern(pattern, transformState);
-  } else if (pattern.type === "ObjectPattern") {
-    return transformObjectPattern(pattern, transformState);
-  } else {
-    return [];
-  }
+  return pattern.type === "ArrayPattern" ? transformArrayPattern(pattern, transformState) : pattern.type === "ObjectPattern" ? transformObjectPattern(pattern, transformState) : [];
 }
 
 function transformArrayPattern(pattern, transformState) {
   var declaredNames = transformState.declaredNames,
-      p = annotationSym;
-  return lively_lang.arr.flatmap(pattern.elements, function (el, i) {
+      p = annotationSym,
+      transformed = [];
+
+  for (var i = 0; i < pattern.elements.length; i++) {
+    var el = pattern.elements[i];
 
     // like [a]
     if (el.type === "Identifier") {
-      return [merge(varDecl(el, member(transformState.parent, id(i), true)), defineProperty({}, p, { capture: true }))];
+      var decl = varDecl(el, member(transformState.parent, id(i), true));
+      decl[p] = { capture: true };
+      transformed.push(decl);
 
       // like [...foo]
     } else if (el.type === "RestElement") {
-      return [merge(varDecl(el.argument, {
+      var decl = varDecl(el.argument, {
         type: "CallExpression",
         arguments: [{ type: "Literal", value: i }],
-        callee: member(transformState.parent, id("slice"), false) }), defineProperty({}, p, { capture: true }))];
+        callee: member(transformState.parent, id("slice"), false) });
+      decl[p] = { capture: true };
+      transformed.push(decl);
 
       // like [{x}]
     } else {
       var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + i)),
-          helperVar = merge(varDecl(helperVarId, member(transformState.parent, i)), defineProperty({}, p, { capture: true }));
+          helperVar = varDecl(helperVarId, member(transformState.parent, i));
+      helperVar[p] = { capture: true };
       declaredNames.push(helperVarId.name);
-      return [helperVar].concat(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames }));
+      transformed.push(helperVar);
+      transformed.push.apply(transformed, toConsumableArray(transformPattern(el, { parent: helperVarId, declaredNames: declaredNames })));
     }
-  });
+  }
+  return transformed;
 }
 
 function transformObjectPattern(pattern, transformState) {
   var declaredNames = transformState.declaredNames,
-      p = annotationSym;
-  return lively_lang.arr.flatmap(pattern.properties, function (prop$$1) {
+      p = annotationSym,
+      transformed = [];
+
+  for (var i = 0; i < pattern.properties.length; i++) {
+    var prop$$1 = pattern.properties[i];
 
     // like {x: y}
     if (prop$$1.value.type == "Identifier") {
-      return [merge(varDecl(prop$$1.value, member(transformState.parent, prop$$1.key)), defineProperty({}, p, { capture: true }))];
+      var decl = varDecl(prop$$1.value, member(transformState.parent, prop$$1.key));
+      decl[p] = { capture: true };
+      transformed.push(decl);
 
       // like {x: {z}} or {x: [a]}
     } else {
       var helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + "$" + prop$$1.key.name)),
-          helperVar = merge(varDecl(helperVarId, member(transformState.parent, prop$$1.key)), defineProperty({}, p, { capture: false }));
+          helperVar = varDecl(helperVarId, member(transformState.parent, prop$$1.key));
+      helperVar[p] = { capture: false };
       declaredNames.push(helperVarId.name);
-      return [helperVar].concat(transformPattern(prop$$1.value, { parent: helperVarId, declaredNames: declaredNames }));
+      transformed.push.apply(transformed, toConsumableArray([helperVar].concat(transformPattern(prop$$1.value, { parent: helperVarId, declaredNames: declaredNames }))));
     }
-  });
+  }
+
+  return transformed;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -23367,14 +23416,16 @@ var runEval$2 = function () {
               waitForPromise: options.waitForPromise,
               targetModule: options.targetModule }, Date.now(), System);
 
-            _context3.next = 31;
+            System.get("@lively-env").evaluationStart(targetModule);
+
+            _context3.next = 32;
             return runEval$1(code, options);
 
-          case 31:
+          case 32:
             result = _context3.sent;
 
 
-            System.get("@lively-env").evaluationDone(targetModule);
+            System.get("@lively-env").evaluationEnd(targetModule);
             System.debug && console.log("[lively.module] runEval in module " + targetModule + " done");
 
             lively_notifications.emit("lively.vm/doitresult", {
@@ -23384,7 +23435,7 @@ var runEval$2 = function () {
 
             return _context3.abrupt("return", result);
 
-          case 36:
+          case 37:
           case "end":
             return _context3.stop();
         }
@@ -26453,7 +26504,7 @@ var customTranslate = function () {
           case 16:
             stored = _context5.sent;
 
-            if (!(stored && stored.hash == hashForCache)) {
+            if (!(stored && stored.hash == hashForCache && stored.timestamp >= ModuleTranslationCache.earliestDate)) {
               _context5.next = 23;
               break;
             }
@@ -26605,6 +26656,13 @@ var isNode$1 = System.get("@system-env").node;
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 var ModuleTranslationCache = function () {
+  createClass(ModuleTranslationCache, null, [{
+    key: "earliestDate",
+    get: function get() {
+      return +new Date("Sun Nov 06 2016 16:00:00 GMT-0800 (PST)");
+    }
+  }]);
+
   function ModuleTranslationCache() {
     var dbName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "lively.modules-module-translation-cache";
     classCallCheck(this, ModuleTranslationCache);
@@ -26702,8 +26760,9 @@ var ModuleTranslationCache = function () {
                 db = _context2.sent;
                 return _context2.abrupt("return", new Promise(function (resolve, reject) {
                   var transaction = db.transaction([_this2.sourceCodeCacheStoreName], "readwrite"),
-                      store = transaction.objectStore(_this2.sourceCodeCacheStoreName);
-                  store.put({ moduleId: moduleId, hash: hash, source: source });
+                      store = transaction.objectStore(_this2.sourceCodeCacheStoreName),
+                      timestamp = Date.now();
+                  store.put({ moduleId: moduleId, hash: hash, source: source, timestamp: timestamp });
                   transaction.oncomplete = resolve;
                   transaction.onerror = reject;
                 }));
@@ -26805,8 +26864,8 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
     // FIXME how to update exports in that case?
     delete tfmOptions.declarationWrapperName;
   } else {
-    header += "var " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;";
-    footer += "\nSystem.get(\"@lively-env\").evaluationDone(\"" + moduleId + "\");";
+    header += "System.get(\"@lively-env\").evaluationStart(\"" + moduleId + "\");\nvar " + env.recorderName + " = System.get(\"@lively-env\").moduleEnv(\"" + moduleId + "\").recorder;";
+    footer += "\nSystem.get(\"@lively-env\").evaluationEnd(\"" + moduleId + "\");";
   }
 
   try {
@@ -26922,6 +26981,7 @@ function unwrapModuleLoad$1(System) {
 }
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
+  if (System.debug) console.log("[lively.modules] exported var changed: \"" + name + "\" => " + value + " (" + moduleId + ")");
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = module$2(System, moduleId).record();
   if (rec && (name in rec.exports || addNewExport)) {
@@ -27005,13 +27065,14 @@ function updateModuleExports(System, moduleId, keysAndValues) {
               var mod = module$2(System, importerModule.name);
               console.log("[lively.vm es6 updateModuleExports] calling setters of " + mod["package"]().name + mod.pathInPackage().replace(/^./, ""));
             }
-            importerModule.setters[importerIndex](record.exports);
-          }
 
-          // rk 2016-06-09: for now don't re-execute dependent modules on save,
-          // just update module bindings
-          {
-            module$2(System, importerModule.name).evaluationDone();
+            // We could run the entire module again with
+            //   importerModule.execute();
+            // but this has too many unwanted side effects, so just run the
+            // setters:
+            module$2(System, importerModule.name).evaluationStart();
+            importerModule.setters[importerIndex](record.exports);
+            module$2(System, importerModule.name).evaluationEnd();
           }
         }
       }
@@ -27090,7 +27151,7 @@ var moduleSourceChange$1 = function () {
 
 var moduleSourceChangeEsm = function () {
   var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(System, moduleId, newSource, options) {
-    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record, result;
+    var debug, load, updateData, _exports, declared, deps, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, depName, depId, depModule, exports, prevLoad, mod, record;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -27230,16 +27291,9 @@ var moduleSourceChangeEsm = function () {
             });
 
             // 3. execute module body
-            result = declared.execute();
+            return _context2.abrupt("return", declared.execute());
 
-            // for updating records, modules, etc
-            // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
-
-            System.get("@lively-env").evaluationDone(load.name);
-
-            return _context2.abrupt("return", result);
-
-          case 48:
+          case 46:
           case "end":
             return _context2.stop();
         }
@@ -28210,6 +28264,8 @@ var ModuleInterface = function () {
     this._scope = null;
     this._observersOfTopLevelState = [];
 
+    this._evaluationsInProgress = 0;
+
     lively_notifications.subscribe("lively.modules/modulechanged", function (data) {
       if (data.module === _this.id) _this.reset();
     });
@@ -28673,6 +28729,13 @@ var ModuleInterface = function () {
       scheduleModuleExportsChange(this.System, this.id, varName, value, false /*force adding export*/);
       this.notifyTopLevelObservers(varName);
 
+      // immediately update exports (recursivly) when flagged or when the module
+      // is not currently executing. During module execution we wait until the
+      // entire module is done to avoid triggering the expensive update process
+      // multiple times
+      // ...whether or not this is in accordance with an upcoming es6 module spec
+      // I don't know...
+      exportImmediately = exportImmediately || !this.isEvalutionInProgress();
       if (exportImmediately) runScheduledExportChanges(this.System, this.id);
 
       return value;
@@ -28712,10 +28775,25 @@ var ModuleInterface = function () {
         return ea !== funcOrName;
       });
     }
+
+    // evaluationStart/End are also compiled into instrumented module code so are
+    // also activated during module executions
+
   }, {
-    key: "evaluationDone",
-    value: function evaluationDone() {
+    key: "evaluationStart",
+    value: function evaluationStart() {
+      this._evaluationsInProgress++;
+    }
+  }, {
+    key: "evaluationEnd",
+    value: function evaluationEnd() {
+      this._evaluationsInProgress--;
       runScheduledExportChanges(this.System, this.id);
+    }
+  }, {
+    key: "isEvalutionInProgress",
+    value: function isEvalutionInProgress() {
+      return this._evaluationsInProgress > 0;
     }
   }, {
     key: "env",
@@ -29413,8 +29491,11 @@ function livelySystemEnv(System) {
       return System.get(System.decanonicalize("lively.modules/index.js"));
     },
 
-    evaluationDone: function evaluationDone(moduleId) {
-      module$2(System, moduleId).evaluationDone();
+    evaluationStart: function evaluationStart(moduleId) {
+      module$2(System, moduleId).evaluationStart();
+    },
+    evaluationEnd: function evaluationEnd(moduleId) {
+      module$2(System, moduleId).evaluationEnd();
     },
     dumpConfig: function dumpConfig() {
       return JSON.stringify({
