@@ -223,17 +223,15 @@ class AttributeConnection {
         callOrSetTarget(newValue, oldValue);
     } catch(e) {
       // FIXME: checks should not be scatter all over the code
-      if (lively.Config.get('loadRewrittenCode') && e.unwindException)
-        throw e.unwindException;
-      var world = window.lively &&
-        lively.morphic &&
-        lively.morphic.World &&
-        lively.morphic.World.current();
+      // if (lively.Config.get('loadRewrittenCode') && e.unwindException)
+      //   throw e.unwindException;
+      var world = (this.sourceObj && typeof this.sourceObj.world === "function" && this.sourceObj.world())
+               || (this.targetObj && typeof this.targetObj.world === "function" && this.targetObj.world());
       if (world) {
         world.logError(e, 'AttributeConnection>>update: ');
       } else {
-                alert('Error when trying to update ' + this + ' with value '
-                     + newValue + ':\n' + e + '\n' + e.stack);
+        console.error('Error when trying to update ' + this + ' with value '
+             + newValue + ':\n' + e + '\n' + e.stack);
       }
     } finally {
       delete this.isActive;
