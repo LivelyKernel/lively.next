@@ -16,7 +16,6 @@ export class AbstractPrompt extends Morph {
       ...obj.dissoc(props, ["label", "autoRemove"])});
 
     this.build(props);
-    this.label = props.label || "no label";
     this.state = {
       answer: null,
       autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
@@ -95,11 +94,17 @@ export class AbstractPrompt extends Morph {
 
 export class InformPrompt extends AbstractPrompt {
 
-  build(props) {
-    this.get("label") || this.addMorph({
-        fontSize: 16, padding: Rectangle.inset(5), fontColor: Color.gray,
-        fontSize: 14, fill: null, ...props,  name: "label", type: "text", textString: props.label, readOnly: true});
-    this.get("ok button") || this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
+  build(props = {}) {
+    var {label} = props;
+    this.addMorph({
+      name: "label", type: "label", value: label,
+      padding: Rectangle.inset(5), fontColor: Color.gray,
+      fontSize: 14, fill: null, ...props
+    });
+    this.addMorph({
+      name: "ok button", type: "button", label: "OK",
+      ...this.okButtonStyle
+    });
     connect(this.get("ok button"), 'fire', this, 'resolve');
     this.initLayout();
   }
@@ -130,13 +135,18 @@ export class InformPrompt extends AbstractPrompt {
 export class ConfirmPrompt extends AbstractPrompt {
 
   build(props) {
-    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), fontSize: 14, name: "label", type: "text", textString: props.label, readOnly: true, fontColor: Color.gray});
-    this.get("ok button") || this.addMorph({
-       name: "ok button", type: "button",
-       label: "OK", ...this.okButtonStyle});
-    this.get("cancel button") || this.addMorph({
-        name: "cancel button", type: "button",
-        label: "Cancel", ...this.cancelButtonStyle});
+    this.addMorph({
+      name: "label", type: "label", value: props.label,
+      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray
+    });
+    this.addMorph({
+      name: "ok button", type: "button",
+      label: "OK", ...this.okButtonStyle
+    });
+    this.addMorph({
+      name: "cancel button", type: "button",
+      label: "Cancel", ...this.cancelButtonStyle
+    });
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
     this.initLayout();
@@ -282,7 +292,8 @@ export class ListPrompt extends AbstractPrompt {
       connect(this.get("list"), "selection", props, "onSelection");
   }
 
-  build({listFontSize,
+  build({label,
+         listFontSize,
          listFontFamily,
          labelFontSize,
          labelFontFamily,
@@ -292,18 +303,38 @@ export class ListPrompt extends AbstractPrompt {
          extent,
          multiSelect,
          historyId}) {
+
     this.extent = extent || pt(500,400);
     var ListClass = filterable ? FilterableList : List;
     labelFontFamily = labelFontFamily || "Helvetica Neue, Arial, sans-serif";
     labelFontSize = labelFontSize || 15;
     listFontFamily = listFontFamily || "Inconsolata, monospace";
     listFontSize = listFontSize || labelFontSize;
-    this.get("label") || this.addMorph({fill: null, padding: Rectangle.inset(3), name: "label", type: "text", textString: " ", readOnly: true, selectable: false, fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray});
-    this.get("list") || this.addMorph(new ListClass({historyId, borderWidth: 0, borderColor: Color.gray, name: "list", fontSize: listFontSize, fontFamily: listFontFamily, padding, itemPadding, multiSelect, theme: "dark"}));
-    this.get("ok button") || this.addMorph({name: "ok button", type: "button", label: "Select", ...this.okButtonStyle});
-    this.get("cancel button") || this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+
+    this.addMorph({
+      name: "label", type: "label", value: label,
+      fill: null, padding: Rectangle.inset(3),
+      fontSize: labelFontSize, fontFamily: labelFontFamily, fontColor: Color.gray
+    });
+
+    this.addMorph(new ListClass({
+      name: "list", multiSelect,
+      historyId, borderWidth: 0, borderColor: Color.gray,
+      fontSize: listFontSize, fontFamily: listFontFamily,
+      padding, itemPadding, theme: "dark"
+    }));
+
+    this.addMorph({
+      name: "ok button", type: "button", label: "Select",
+      ...this.okButtonStyle
+    });
+    this.addMorph({
+      name: "cancel button", type: "button", label: "Cancel",
+      ...this.cancelButtonStyle
+    });
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
+
     this.initLayout();
   }
 

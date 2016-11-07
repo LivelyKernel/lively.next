@@ -176,7 +176,7 @@ export class Label extends Morph {
     // used
     var fm = this._fontMetric || this.env.fontMetric,
         [[text, chunkStyle]] = this.textAndAttributes,
-        style = {...this.textStyle, chunkStyle},
+        style = {...this.textStyle, ...chunkStyle},
         padding = this.padding,
         width, height;
     if (!fm.isProportional(style.fontFamily)) {
