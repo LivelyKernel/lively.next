@@ -286,6 +286,15 @@ function shadowCss(morph) {
             `drop-shadow(0px 0px 0px rgb(120, 120, 120))`;
 }
 
+function initDOMState(renderer, world) {
+  renderer.rootNode.appendChild(renderer.domNode);
+  renderer.ensureDefaultCSS()
+    .then(() => promise.delay(500))
+    .then(() => world.env.fontMetric.reset())
+    .then(() => world.withAllSubmorphsDo(ea => (ea.isText || ea.isLabel) && ea.forceRerender()))
+    .catch(err => console.error());
+}
+
 export function renderRootMorph(world, renderer) {
   if (!world.needsRerender()) return;
 
@@ -294,12 +303,7 @@ export function renderRootMorph(world, renderer) {
       newTree = renderer.render(world),
       patches = diff(tree, newTree);
 
-  if (!domNode.parentNode) {
-    renderer.rootNode.appendChild(domNode);
-    if (world.env.fontMetric)
-      renderer.ensureDefaultCSS().then(() =>
-        world.env.fontMetric.reset());
-  }
+  if (!domNode.parentNode) initDOMState(renderer, world);
 
   patch(domNode, patches);
 }
