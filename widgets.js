@@ -1,9 +1,49 @@
-import { obj } from "lively.lang";
+import { obj, num } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { show, morph, Morph, Text, Label, List, HorizontalLayout } from "./index.js";
 import { Icon } from "./icons.js";
 import { signal, connect } from "lively.bindings";
 import config from "./config.js";
+
+export class ValueScrubber extends Text {
+
+  constructor(props) {
+      this.scrubbedValue = props.value || 0;
+      super({
+        fill: Color.transparent, draggable: true,
+        textString: this.scrubbedValue.toString(),
+        ...props
+      });
+  }
+
+  onDragStart(evt) {
+     this.execCommand("toggle active mark");
+     this.initPos = evt.position;
+     this.factorLabel = new Tooltip({
+          position: evt.hand.position.addXY(10,10),
+          description: "1x"}).openInWorld();
+  }
+
+  onDrag(evt) {
+      // x delta is the offset to the original value
+      // y is the scale
+      const {x, y} = evt.position.subPt(this.initPos),
+            scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
+            
+      signal(this, "scrub", this.scrubbedValue + Math.round(x * scaleFactor));
+      this.textString = (this.scrubbedValue + Math.round(x * scaleFactor)).toString();
+      this.factorLabel.description = scaleFactor + "x";
+      this.factorLabel.position = evt.hand.position.addXY(10,10);
+  }
+
+  onDragEnd(evt) {
+      const {x, y} = this.initPos.subPt(evt.position),
+            scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
+      this.scrubbedValue += Math.round(x * scaleFactor);
+      this.factorLabel.softRemove();
+  }
+
+}
 
 export class Button extends Morph {
 
@@ -299,9 +339,14 @@ class Tooltip extends Morph {
     });
   }
 
+  set description(string) {
+      const [descriptor] = this.submorphs;
+      descriptor.textString = string;
+  }
+
   softRemove(cb) {
     this.animate({opacity: 0, onFinish: () => {
-      cb(this);
+      cb && cb(this);
       this.remove()
     }});
   }
