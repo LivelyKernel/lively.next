@@ -60,7 +60,8 @@ export class Text extends Morph {
 
     props = obj.dissoc(props, [
       "textLayout", "textRenderer", "lineWrapping",
-      "textString","fontMetric", "selectable", "selection", "clipMode", "textAttributes",
+      "textString","fontMetric", "selectable", "selection", "clipMode",
+      "textAttributes", "textAndAttributes",
       // default style attrs: need document to be installed first
       "fontFamily", "fontSize", "fontColor", "fontWeight", "fontStyle", "textDecoration",
       "backgroundColor", "fixedCharacterSpacing", "textStyleClasses"
