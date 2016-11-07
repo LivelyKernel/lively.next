@@ -438,7 +438,7 @@ export class Halo extends Morph {
         var undo = this.halo.target.undoInProgress,
             dropTarget = this.morphBeneath(hand.position);
         undo.addTarget(dropTarget);
-        hand.dropMorphsOn(dropTarget);
+        dropTarget.onDrop({hand});
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
         this.halo.toggleMorphHighlighter(false, dropTarget);

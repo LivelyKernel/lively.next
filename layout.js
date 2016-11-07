@@ -18,7 +18,7 @@ class Layout {
 
   onSubmorphResized(submorph) { this.apply() }
   onSubmorphAdded(submorph) { this.apply() }
-  onSubmorphRemoved(submorph) { this.apply() }
+  onSubmorphRemoved(submorph) { this.apply() }  
   
   onChange({selector, args, prop, value, prevValue}) {
     switch (selector) {
@@ -42,9 +42,6 @@ class Layout {
     if ("extent" == change.prop && !change.value.equals(change.prevValue)) this.onSubmorphResized(submorph);
     if (this.affectsLayout(submorph, change)) this.apply();
   }
-  
-  inspect(pointerId) {}
-
   
   attachAnimated(duration = 0, container, easing) {
      this.container = container;
@@ -81,14 +78,15 @@ export class FillLayout extends Layout {
         right = right || 0;
         bottom = bottom || 0;
      }
-     this._spacing = {top, left, right, bottom}
+     this._spacing = {top, left, right, bottom};
+     this.apply();
   }
 
   get spacing() { return this._spacing }
   
   apply(animate = false) {
     /* FIXME: Add support for destructuring default values */
-    if (this.active) return;
+    if (this.active || !this.container) return;
     const {fixedWidth, fixedHeight} = this,
           {top, bottom, left, right} = this.spacing,
           height = !fixedHeight  && this.container.height - top - bottom,
@@ -114,8 +112,18 @@ export class VerticalLayout extends Layout {
   name() { return "Vertical" }
   description() { return "Assemble the submorphs in a vertically growing list." }
 
+  inspect(pointerId) {
+    return new FlexLayoutHalo(this.container, pointerId);
+  }
+
+  get autoResize() { return this._autoResize; }
+  set autoResize(active) { this._autoResize = active; this.apply(); }
+
+  get spacing() { return this._spacing }
+  set spacing(offset) { this._spacing = offset; this.apply(); }
+
   apply(animate = false) {
-    if (this.active) return;
+    if (this.active || !this.container) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
         maxWidth = 0;
@@ -131,7 +139,8 @@ export class VerticalLayout extends Layout {
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
       maxWidth = Math.max(m.width, maxWidth);
     });
-    if (this.autoResize) this.container.extent = pt(maxWidth, pos.y)
+    if (this.autoResize && this.container.submorphs.length > 0) 
+        this.container.extent = pt(maxWidth, pos.y)
     this.active = false;
   }
 
@@ -142,8 +151,18 @@ export class HorizontalLayout extends Layout {
   name() { return "Horizontal" }
   description() { return "Assemble the submorphs in a horizontally growing list." }
 
+  inspect(pointerId) {
+    return new FlexLayoutHalo(this.container, pointerId);
+  }
+
+  get autoResize() { return this._autoResize; }
+  set autoResize(active) { this._autoResize = active; this.apply(); }
+
+  get spacing() { return this._spacing }
+  set spacing(offset) { this._spacing = offset; this.apply(); }
+
   apply(animate = false) {
-    if (this.active) return;
+    if (this.active || !this.container) return;
     var pos = pt(this.spacing, this.spacing),
         submorphs = this.container.submorphs,
         maxHeight = 0;
@@ -160,7 +179,7 @@ export class HorizontalLayout extends Layout {
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.height, maxHeight);
     });
-    if (this.autoResize) this.container.extent = pt(pos.x + this.spacing, maxHeight + 2 * this.spacing);
+    if (this.autoResize && this.container.submorphs.length > 0) this.container.extent = pt(pos.x + this.spacing, maxHeight + 2 * this.spacing);
     this.active = false;
  }
 
@@ -170,6 +189,10 @@ export class TilingLayout extends Layout {
 
   name() { return "Tiling" }
   description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
+
+  inspect(pointerId) {
+    return new FlexLayoutHalo(this.container, pointerId);
+  }
 
   apply(animate = false) {
     var width = this.getOptimalWidth(),
@@ -341,7 +364,7 @@ export class CellGroup {
   }
   
   get position() {
-    return this.topLeft.position();
+    return this.topLeft.position;
   }
   
 }
@@ -431,7 +454,16 @@ export class LayoutColumn extends LayoutAxis {
   }
   
   emptyAxis() {
-    return new LayoutColumn(new LayoutCell({column: arr.withN(this.items.length, null), layout: this.layout}));
+    const col = new LayoutColumn(new LayoutCell({
+         column: arr.withN(this.items.length, null), 
+         layout: this.layout
+    }));
+    arr.zip(col.items, this.items).forEach(([n, o]) => {
+      n.proportion.height = o.proportion.height;
+      n.fixed.height = o.fixed.height;
+      n.min.height = o.min.height;
+    })
+    return col;
   }
 
   set paddingLeft(left) {
@@ -530,7 +562,17 @@ export class LayoutRow extends LayoutAxis {
   }
     
   emptyAxis() {
-    return new LayoutRow(new LayoutCell({row: arr.withN(this.items.length, null), layout: this.layout}));
+    const row = new LayoutRow(new LayoutCell({
+         row: arr.withN(this.items.length, null), 
+         layout: this.layout
+    }));
+    
+    arr.zip(row.items, this.items).forEach(([n, o]) => {
+      n.proportion.width = o.proportion.width;
+      n.fixed.width = o.fixed.width;
+      n.min.width = o.min.width;
+    })
+    return row;
   }
 
   set paddingTop(top) {
@@ -789,10 +831,10 @@ export class GridLayout extends Layout {
   }
 
   get compensateOrigin() { return this.config.compensateOrigin; }
-  set compensateOrigin(compensate) { this.config.compensateOrigin = compensate }
+  set compensateOrigin(compensate) { this.config.compensateOrigin = compensate; this.apply() }
 
   get fitToCell() { return this.config.fitToCell }
-  set fitToCell(fit) { this.config.fitToCell = fit }
+  set fitToCell(fit) { this.config.fitToCell = fit; this.apply() }
   
   get notInLayout() { return arr.withoutAll(this.container.submorphs, this.cellGroups.map(g => g.morph)) }
   
