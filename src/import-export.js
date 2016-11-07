@@ -1,6 +1,7 @@
 import module from "./module.js"
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
+  if (System.debug) console.log(`[lively.modules] exported var changed: "${name}" => ${value} (${moduleId})`);
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = module(System, moduleId).record();
   if (rec && (name in rec.exports || addNewExport)) {
@@ -80,17 +81,14 @@ function updateModuleExports(System, moduleId, keysAndValues) {
               let mod = module(System, importerModule.name);
               console.log(`[lively.vm es6 updateModuleExports] calling setters of ${mod["package"]().name}${mod.pathInPackage().replace(/^./, "")}`);
             }
-            importerModule.setters[importerIndex](record.exports);
-          }
 
-          // rk 2016-06-09: for now don't re-execute dependent modules on save,
-          // just update module bindings
-          if (false) {
-            // For exising exports we find the execution func of each dependent module and run that
-            // FIXME this means we run the entire modules again, side effects and all!!!
-            importerModule.execute();
-          } else {
-            module(System, importerModule.name).evaluationDone();
+            // We could run the entire module again with
+            //   importerModule.execute();
+            // but this has too many unwanted side effects, so just run the
+            // setters:
+            module(System, importerModule.name).evaluationStart();
+            importerModule.setters[importerIndex](record.exports);
+            module(System, importerModule.name).evaluationEnd();
           }
         }
       }

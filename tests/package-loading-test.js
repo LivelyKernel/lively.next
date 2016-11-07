@@ -246,8 +246,7 @@ describe("mutual dependent packages", () => {
   it("can be imported", async () => {
     await getPackage(System, p1Dir).import()
     expect(module(System, `${p1Dir}index.js`).env().recorder).property("y").equals(2);
-    // FIXME! see https://github.com/LivelyKernel/lively.modules/issues/6
-    // expect(moduleEnv(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
+    expect(module(System, `${p2Dir}index.js`).recorder).property("x").equals(3);
   });
 
 });

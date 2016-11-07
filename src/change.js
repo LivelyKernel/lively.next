@@ -91,13 +91,7 @@ async function moduleSourceChangeEsm(System, moduleId, newSource, options) {
   deps.forEach((d,i) => declared.setters[i](d.exports));
 
   // 3. execute module body
-  var result = declared.execute();
-
-  // for updating records, modules, etc
-  // FIXME... Actually this gets compiled into the source and won't need to run again??!!!
-  System.get("@lively-env").evaluationDone(load.name);
-
-  return result;
+  return declared.execute();
 }
 
 async function moduleSourceChangeGlobal(System, moduleId, newSource, options) {

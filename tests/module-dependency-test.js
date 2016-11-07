@@ -7,10 +7,10 @@ import { getSystem, removeSystem } from "../src/system.js";
 import module from "../src/module.js";
 
 var dir = System.decanonicalize("lively.modules/tests/"),
-    testProjectDir = dir + "test-project-1-dir/",
+    testProjectDir = dir + "test-module-deps/",
     testProjectSpec = {
       "file1.js": "import { y } from './file2.js'; import { z } from './sub-dir/file3.js'; export var x = y + z;",
-      "file2.js": "export var y = 1;",
+      "file2.js": "export var y = 1; function inc() { y = y+1; }",
       "package.json": '{"name": "test-project-1", "main": "file1.js", "systemjs": {"main": "file1.js"}}',
       "sub-dir": {"file3.js": "export var z = 2;"}
     },
@@ -18,16 +18,16 @@ var dir = System.decanonicalize("lively.modules/tests/"),
     file2m = testProjectDir + "file2.js",
     file3m = testProjectDir + "sub-dir/file3.js";
 
+let S, module1, module2, module3;
 
 describe("dependencies", () => {
 
-  let S, module1, module2, module3;
-  beforeEach(() => {
+  beforeEach(async () => {
     S = getSystem("test", {baseURL: testProjectDir});
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module3 = module(S, file3m);
-    return createFiles(testProjectDir, testProjectSpec);
+    await createFiles(testProjectDir, testProjectSpec);
   });
 
   afterEach(() => { removeSystem("test"); return removeDir(testProjectDir); });
@@ -42,8 +42,21 @@ describe("dependencies", () => {
     expect(module2.dependents()).to.deep.equal([module1]);
   });
 
+  it("updates exports when internal state changes", async () => {
+    await S.import("file1.js");
+    var {y} = await S.import("file2.js");
+    expect(y).equals(1);
+    expect(module2.recorder.y).equals(1);
+    expect(module1.recorder.y).equals(1);
+    module2.recorder.inc()
+    var {y} = await S.import("file2.js");
+    expect(y).equals(2, "exported state not updated");
+    expect(module2.recorder.y).equals(2, "local state not updated");
+    expect(module1.recorder.y).equals(2, "imported state in module 1 not update");
+  });
+
   describe("unload module", () => {
-    
+
     it("forgets module and recordings", async () => {
       await S.import("file1.js");
       await module2.unload();
@@ -52,7 +65,7 @@ describe("dependencies", () => {
       expect(module1.env().recorder).to.not.have.property("x");
       expect(module2.env().recorder).to.not.have.property("y");
     });
-  
+
   });
 
 })

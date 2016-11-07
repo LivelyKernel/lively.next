@@ -22,8 +22,12 @@ function livelySystemEnv(System) {
     // TODO this is just a test, won't work in all cases...
     get itself() { return System.get(System.decanonicalize("lively.modules/index.js")); },
 
-    evaluationDone(moduleId) {
-      module(System, moduleId).evaluationDone();
+    evaluationStart(moduleId) {
+      module(System, moduleId).evaluationStart();
+    },
+
+    evaluationEnd(moduleId) {
+      module(System, moduleId).evaluationEnd();
     },
 
     dumpConfig() {

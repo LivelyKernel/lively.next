@@ -52,12 +52,14 @@ class ModuleInterface {
     // execution and eval
     this.recorderName = "__lvVarRecorder";
     this._recorder = null;
-    
+
     // cached values
     this._source = null;
     this._ast = null;
     this._scope = null;
     this._observersOfTopLevelState = [];
+
+    this._evaluationsInProgress = 0;
 
     subscribe("lively.modules/modulechanged", data => {
       if (data.module === this.id) this.reset();
@@ -90,7 +92,7 @@ class ModuleInterface {
     return this.System.resource(this.id).read()
       .then(source => this._source = source);
   }
-  
+
   setSource(source) {
     this._source = source;
   }
@@ -99,17 +101,17 @@ class ModuleInterface {
     if (this._ast) return this._ast;
     return this._ast = parse(await this.source());
   }
-  
+
   async scope() {
     if (this._scope) return this._scope;
     const ast = await this.ast();
     return this._scope = query.topLevelDeclsAndRefs(ast).scope;
   }
-  
+
   async resolvedScope() {
     return this._scope = query.resolveReferences(await this.scope());
   }
-  
+
   metadata() {
     var load = this.System.loads ? this.System.loads[this.id] : null;
     return load ? load.metadata : null;
@@ -122,7 +124,7 @@ class ModuleInterface {
     if (this._source) return detectModuleFormat(this._source);
     return "global";
   }
-  
+
   reset() {
     this._source = null;
     this._ast = null;
@@ -328,7 +330,7 @@ class ModuleInterface {
 
     });
   }
-  
+
   get varDefinitionCallbackName() { return "defVar_" + this.id; }
 
   define(varName, value, exportImmediately = true) {
@@ -337,6 +339,13 @@ class ModuleInterface {
     scheduleModuleExportsChange(this.System, this.id, varName, value, false/*force adding export*/);
     this.notifyTopLevelObservers(varName);
 
+    // immediately update exports (recursivly) when flagged or when the module
+    // is not currently executing. During module execution we wait until the
+    // entire module is done to avoid triggering the expensive update process
+    // multiple times
+    // ...whether or not this is in accordance with an upcoming es6 module spec
+    // I don't know...
+    exportImmediately = exportImmediately || !this.isEvalutionInProgress();
     if (exportImmediately)
       runScheduledExportChanges(this.System, this.id)
 
@@ -368,8 +377,19 @@ class ModuleInterface {
       this._observersOfTopLevelState.filter(ea => ea !== funcOrName);
   }
 
-  evaluationDone() {
+  // evaluationStart/End are also compiled into instrumented module code so are
+  // also activated during module executions
+  evaluationStart() {
+    this._evaluationsInProgress++;
+  }
+
+  evaluationEnd() {
+    this._evaluationsInProgress--;
     runScheduledExportChanges(this.System, this.id);
+  }
+
+  isEvalutionInProgress() {
+    return this._evaluationsInProgress > 0;
   }
 
   env() { return this; }
@@ -404,7 +424,7 @@ class ModuleInterface {
           scope = await this.scope();
     return query.exports(scope);
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // bindings
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -414,7 +434,7 @@ class ModuleInterface {
           ref = query.refWithDeclAt(pos, scope);
     return ref && {decl: ref.decl, id: ref.declId, declModule: this};
   }
-  
+
   async _importForNSRefAt(pos) {
     // if pos points to "x" of a property "m.x" with an import * as "m"
     // then this returns [<importStmt>, <m>, "x"]
@@ -485,7 +505,7 @@ class ModuleInterface {
     const imM = module(this.System, imDecl.source.value, this.id);
     return [{decl: imDecl, declModule: this, id}].concat(await imM.bindingPathForExport(name));
   }
-  
+
   async definitionForRefAt(pos) {
     const path = await this.bindingPathForRefAt(pos);
     return path.length < 1 ? null : path[path.length - 1].decl;
@@ -563,6 +583,6 @@ class ModuleInterface {
 
     return res;
   }
-  
+
   toString() { return `module(${this.id})`; }
 }

@@ -31,6 +31,10 @@ function canonicalURL(url) {
 
 export class ModuleTranslationCache {
 
+  static get earliestDate() {
+    return +(new Date("Sun Nov 06 2016 16:00:00 GMT-0800 (PST)"))
+  }
+
   constructor(dbName = "lively.modules-module-translation-cache") {
     this.version = 1;
     this.sourceCodeCacheStoreName = "sourceCodeStore";
@@ -47,7 +51,7 @@ export class ModuleTranslationCache {
         evt.currentTarget.result.createObjectStore(this.sourceCodeCacheStoreName, {keyPath: 'moduleId'});
     });
   }
-  
+
   deleteDb() {
     var req = System.global.indexedDB.deleteDatabase(this.dbName);
     return new Promise((resolve, reject) => {
@@ -55,27 +59,28 @@ export class ModuleTranslationCache {
       req.onsuccess = evt => resolve(evt);
     });
   }
-  
+
   async closeDb() {
     var db = await this.db;
     var req = db.close();
     return new Promise((resolve, reject) => {
       req.onsuccess = function(evt) { resolve(this.result); };
-      req.onerror = evt => reject(evt.target.errorCode);  
+      req.onerror = evt => reject(evt.target.errorCode);
     })
   }
-  
+
   async cacheModuleSource(moduleId, hash, source) {
     var db = await this.db;
     return new Promise((resolve, reject) => {
       var transaction = db.transaction([this.sourceCodeCacheStoreName], "readwrite"),
-          store = transaction.objectStore(this.sourceCodeCacheStoreName);
-      store.put({moduleId, hash, source});  
+          store = transaction.objectStore(this.sourceCodeCacheStoreName),
+          timestamp = Date.now();
+      store.put({moduleId, hash, source, timestamp});
       transaction.oncomplete = resolve;
       transaction.onerror = reject;
     });
   }
-  
+
   async fetchStoredModuleSource(moduleId) {
     var db = await this.db;
     return new Promise((resolve, reject) => {
@@ -131,8 +136,8 @@ function prepareCodeForCustomCompile(System, source, moduleId, env, module, debu
     // FIXME how to update exports in that case?
     delete tfmOptions.declarationWrapperName;
   } else {
-    header += `var ${env.recorderName} = System.get("@lively-env").moduleEnv("${moduleId}").recorder;`;
-    footer += `\nSystem.get("@lively-env").evaluationDone("${moduleId}");`
+    header += `System.get("@lively-env").evaluationStart("${moduleId}");\nvar ${env.recorderName} = System.get("@lively-env").moduleEnv("${moduleId}").recorder;`;
+    footer += `\nSystem.get("@lively-env").evaluationEnd("${moduleId}");`
   }
 
   try {
@@ -246,7 +251,7 @@ async function customTranslate(proceed, load) {
       var cache = System._livelyModulesTranslationCache
                || (System._livelyModulesTranslationCache = new ModuleTranslationCache()),
           stored = await cache.fetchStoredModuleSource(load.name);
-      if (stored && stored.hash == hashForCache) {
+      if (stored && stored.hash == hashForCache && stored.timestamp >= ModuleTranslationCache.earliestDate) {
         if (stored.source) {
           load.metadata.format = "register";
           load.metadata.deps = []; // the real deps will be populated when the
