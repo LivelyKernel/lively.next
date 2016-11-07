@@ -1056,6 +1056,12 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
 
+  forceRerender() {
+    // expensive!
+    this.textLayout.reset();
+    this.makeDirty();
+  }
+
   aboutToRender(renderer) {
     super.aboutToRender(renderer);
     this.fitIfNeeded();

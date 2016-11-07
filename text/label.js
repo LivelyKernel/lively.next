@@ -244,6 +244,11 @@ export class Label extends Morph {
         this.textBoundsSingleChunk() : this.textBoundsAllChunks();
   }
 
+  forceRerender() {
+    this._cachedTextBounds = null;
+    this.makeDirty();
+  }
+
   render(renderer) {
     if (this._needsFit) this.fit();
 
