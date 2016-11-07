@@ -114,11 +114,6 @@ describe("text plugins", () => {
   });
 
   it("snippet stops when leaving snippet range", async () => {
-text = new Text({textString: "Hello\n World"})
-
-// text.openInWorld()
-// text.remove()
-
     text.textString = "foobaz";
     text.cursorPosition = {row: 0, column: 3};
     new Snippet({trigger: "foo", expansion: "$2b$1a$0r"}).tryTrigger(text);
@@ -126,6 +121,13 @@ text = new Text({textString: "Hello\n World"})
     await text.simulateKeys("Right Right")
     expect(text.selection).selectionEquals("Selection(0/4 -> 0/4)")
     expect().assert(!text.plugins.some(ea => ea.isTextSnippet), "snippet still in plugins");
+  });
+
+  it("expands multiple lines with right indentation", async () => {
+    text.textString = "  baz";
+    text.cursorPosition = {row: 0, column: 5};
+    new Snippet({trigger: "baz", expansion: "a\nb"}).tryTrigger(text);
+    expect(text.textString).equals("  a\n  b")
   });
 
 });

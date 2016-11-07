@@ -25,7 +25,7 @@ export class Snippet {
     this.textMorph = textMorph;
     connect(this.textMorph, "selectionChange", this, "onCursorMove");
   }
-  
+
   detach(textMorph) {
     if (!this.isExpanding) return;
     disconnect(textMorph, "selectionChange", this, "onCursorMove");
@@ -36,7 +36,7 @@ export class Snippet {
     var {startAnchor, endAnchor, isExpanding} = this.expansionState;
     if (!isExpanding) { this.resetExpansionState(); return; }
 
-    var range = Range.fromPositions(startAnchor.position, endAnchor.position);    
+    var range = Range.fromPositions(startAnchor.position, endAnchor.position);
     if (!range.containsPosition(this.textMorph.cursorPosition))
       this.resetExpansionState();
   }
@@ -59,14 +59,10 @@ export class Snippet {
   get isExpanding() { return this.expansionState.isExpanding; }
 
   createExpansionSteps(expansion) {
-
-// var expansion = "function ${0:name}() { $1 }"
-
     var steps = [],
         matches = lively.lang.string.reMatches(expansion, /\$[0-9]+|\$\{[0-9]+:[^\}]*\}/g),
         offset = 0;
 
-// ({start, end, match} = matches[0])
     matches.forEach(({start, end, match}) => {
       var n, prefill = "";
       if (match.startsWith("${")) {
@@ -85,9 +81,21 @@ export class Snippet {
   }
 
   expandAtCursor(textMorph) {
-    var {expansion, steps} = this.createExpansionSteps(this.expansion),
-        m = textMorph,
-        sel = m.selection;
+    var m = textMorph, sel = m.selection,
+        indent = m.cursorPosition.column,
+        expansion = this.expansion;
+
+    if (this.trigger)
+      indent -= this.trigger.length;
+    indent = Math.max(0, indent);
+
+    if (indent) {
+      var lines = string.lines(expansion);
+      lines = [lines[0], ...lines.slice(1).map(line => string.indent(line, " ", indent))];
+      expansion = lines.join("\n");
+    }
+
+    var {expansion, steps} = this.createExpansionSteps(expansion);
 
     if (this.trigger)
       sel.growLeft(this.trigger.length)
@@ -121,6 +129,7 @@ export class Snippet {
             "content": "fooooo"
           }
         });
+
     this.expansionState = {
       marker, startAnchor, endAnchor,
       stepIndex: 0, steps, isExpanding: true
@@ -164,7 +173,7 @@ export class Snippet {
         name: "[snippet] next expansion step",
         exec: (textMorph) => { this.nextStep(); return true; }
       },
-      
+
       {
         name: "[snippet] cancel expansion",
         exec: (textMorph) => { this.resetExpansionState(); return true; }
