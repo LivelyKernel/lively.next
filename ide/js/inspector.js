@@ -81,12 +81,10 @@ class InspectorTreeData extends TreeData {
 
 }
 
-// var i = Inspector.openInWindow({targetObject: this})
-// i.remove()
-
-// i.targetObject = this
-// i.get("propertyTree").onNodeCollapseChanged
-
+// inspect(this)
+export function inspect(targetObject) {
+  return Inspector.openInWindow({targetObject});
+}
 
 export default class Inspector extends Morph {
 
