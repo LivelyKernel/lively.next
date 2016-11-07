@@ -776,12 +776,12 @@ export class Morph {
     try {
       return this.getSubmorphNamed(name)
           || (this.getNameTest(this, name) && this)
-          || this.getOwnerNamed(name);
+          || this.getOwnerOrOwnerSubmorphNamed(name);
     } catch(e) {
       if (e.constructor == RangeError && e.message == "Maximum call stack size exceeded") {
         e = new Error("'get' failed due to a stack overflow. The most\n"
           + "likely source of the problem is using 'get' as part of\n"
-          + "toString, because 'get' calls 'getOwnerNamed', which\n"
+          + "toString, because 'get' calls 'getOwnerOrOwnerSubmorphNamed', which\n"
           + "calls 'toString' on this. Try using 'getSubmorphNamed' instead,\n"
           + "which only searches in this' children.\nOriginal error:\n" + e.stack);
       }
@@ -815,8 +815,13 @@ export class Morph {
   }
 
   getOwnerNamed(name) {
+    return this.ownerChain().find(ea => ea.name === name);
+  }
+
+  getOwnerOrOwnerSubmorphNamed(name) {
     var owner = this.owner;
     if (!owner) return null;
+    if (owner.name === name) return owner;
     for (var i = 0; i < owner.submorphs.length; i++) {
       var morph = owner.submorphs[i];
       if (morph === this) continue;
@@ -824,7 +829,7 @@ export class Morph {
       var foundInMorph = morph.getSubmorphNamed(name);
       if (foundInMorph) return foundInMorph;
     }
-    return this.owner.getOwnerNamed(name);
+    return this.owner.getOwnerOrOwnerSubmorphNamed(name);
   }
 
   getMorphWithId(id) {

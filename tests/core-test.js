@@ -108,6 +108,8 @@ describe("relationship", () => {
 
   describe("morph lookup", () => {
 
+    afterEach(() => createDummyWorld());
+
     it("get() finds a morph by name", () => {
       expect(world.get("submorph2")).equals(submorph2);
       expect(submorph2.get("submorph3")).equals(submorph3);
@@ -116,10 +118,13 @@ describe("relationship", () => {
     });
 
     it("allows double naming", () => {
-      submorph1.submorphs = [{name: "a morph"},{name: "a morph", submorphs: [{name: 'another morph'}]},{name: "a morph"}]
+      submorph1.submorphs = [
+        {name: "a morph"},
+        {name: "a morph", submorphs: [{name: 'another morph'}]},
+        {name: "a morph"}];
       var m = world.get('another morph');
       expect(m.owner).equals(submorph1.submorphs[1]);
-      expect(m.get("a morph")).equals(submorph1.submorphs[0]);
+      expect(m.get("a morph")).equals(submorph1.submorphs[1]);
     });
 
     it("get() uses toString", () => {
@@ -129,6 +134,11 @@ describe("relationship", () => {
 
     it("get() works with RegExp", () => {
       expect(world.get(/rph3/)).equals(submorph3);
+    });
+    
+    it("get() finds owner or submorph of owners", () => {
+      expect(submorph2.getOwnerNamed("submorph1")).equals(submorph1);
+      expect(submorph2.get("submorph1")).equals(submorph1);
     });
 
   });
