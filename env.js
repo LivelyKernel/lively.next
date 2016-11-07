@@ -98,4 +98,11 @@ export class MorphicEnv {
     return world.whenRendered().then(() => this);
   }
 
+  deleteHistory() {
+    var {changeManager, world, fontMetric} = this;
+    changeManager && (changeManager.changes.length = 0);
+    world && world.withAllSubmorphsDo(ea => ea.undoManager && ea.undoManager.reset());
+    fontMetric && fontMetric.reset();
+  }
+
 }
