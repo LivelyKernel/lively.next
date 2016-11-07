@@ -95,6 +95,14 @@ describe("layout", () => {
       expect(m.extent).equals(extentBefore);
     })
 
+    it("will not resize the container if no submorphs present", () => {
+      var extentBefore = m.extent;
+      m.layout.autoResize = false;
+      m.submorphs = [];
+      m.layout.autoResize = true;
+      expect(m.extent).equals(extentBefore);
+    })
+
   });
 
 
