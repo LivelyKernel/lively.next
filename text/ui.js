@@ -3,6 +3,7 @@ import { show, morph, Label, Morph } from "../index.js"
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect } from "lively.bindings"
 import { TextAttribute, TextStyleAttribute } from "./attribute.js";
+import { Icon } from "../icons.js";
 import { ColorPicker } from "../ide/style-editor.js";
 
 const cachedControls = new WeakMap();
@@ -68,14 +69,14 @@ export class RichTextControl extends Morph {
 
     this.opacity = 1;
 
-    this.addMorph({name: "bold button",      ...btnStyle, label: Label.icon("bold")});
-    this.addMorph({name: "italic button",    ...btnStyle, label: Label.icon("italic")});
-    this.addMorph({name: "underline button", ...btnStyle, label: Label.icon("underline")});
-    this.addMorph({name: "fontcolor button", ...btnStyle, label: Label.icon("paint-brush")});
-    this.addMorph({name: "inc fontsize button", ...btnStyle, label: Label.icon("plus")});
-    this.addMorph({name: "dec fontsize button", ...btnStyle, label: Label.icon("minus")});
-    this.addMorph({name: "link button",      ...btnStyle, label: Label.icon("link")});
-    this.addMorph({name: "font button",      ...btnStyle, label: Label.icon("font")});
+    this.addMorph({name: "bold button",      ...btnStyle, label: Icon.makeLabel("bold")});
+    this.addMorph({name: "italic button",    ...btnStyle, label: Icon.makeLabel("italic")});
+    this.addMorph({name: "underline button", ...btnStyle, label: Icon.makeLabel("underline")});
+    this.addMorph({name: "fontcolor button", ...btnStyle, label: Icon.makeLabel("paint-brush")});
+    this.addMorph({name: "inc fontsize button", ...btnStyle, label: Icon.makeLabel("plus")});
+    this.addMorph({name: "dec fontsize button", ...btnStyle, label: Icon.makeLabel("minus")});
+    this.addMorph({name: "link button",      ...btnStyle, label: Icon.makeLabel("link")});
+    this.addMorph({name: "font button",      ...btnStyle, label: Icon.makeLabel("font")});
 
     this.addMorph({type: "triangle", name: "arrow", fill: this.fill, grabbable: false, draggable: false});
 

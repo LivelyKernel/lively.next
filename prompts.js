@@ -2,6 +2,7 @@
 import { Rectangle, Color, pt, rect } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
+import { Icon } from "./icons.js"
 import { Morph, Text, Label, GridLayout } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
 
@@ -282,12 +283,12 @@ export class EditListPrompt extends ListPrompt {
 
     var addBtn = this.addMorph({
           name: "add item button", ...this.buttonStyle,
-          label: Label.icon("plus", {fontSize: 12})
+          label: Icon.makeLabel("plus", {fontSize: 12})
         }),
         rmBtn = this.addMorph({
           name: "remove item button",
           ...this.buttonStyle,
-          label: Label.icon("minus", {fontSize: 12})
+          label: Icon.makeLabel("minus", {fontSize: 12})
         });
 
     connect(addBtn, 'fire', this, 'addItemToList');

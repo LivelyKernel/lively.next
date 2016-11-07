@@ -4,8 +4,6 @@ import { show, morph, Morph, Text, Label, List, HorizontalLayout } from "./index
 import { signal, connect } from "lively.bindings";
 import config from "./config.js";
 
-// new Button({label: Label.icon("plus")}).openInWorld()
-
 export class Button extends Morph {
 
   constructor(props) {

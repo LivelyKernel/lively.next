@@ -5,6 +5,7 @@ import { Window, morph, show } from "../index.js";
 import { JavaScriptEditorPlugin } from "./js/editor-plugin.js";
 import config from "../config.js";
 import { HorizontalResizer } from "../resizers.js";
+import { Icon } from "../icons.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // commands
