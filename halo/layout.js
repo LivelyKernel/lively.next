@@ -3,6 +3,8 @@ import { Ellipse, Morph, Path, Text,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
+import { CheckBox, ValueScrubber} from "../widgets.js";
+import { connect } from "lively.bindings";
 
 class AxisHalo extends Morph {
   
@@ -368,26 +370,28 @@ export class GridLayoutHalo extends Morph {
   }
 
   optionControls() {
-      const layout = this;
-      return [{type: "text", textString: "Compensate Origin", 
+      const layout = this.target,
+            compensateOrigin = new CheckBox({
+                name: "compensateOrigin", 
+                checked: layout.compensateOrigin}),
+            fitToCell = new CheckBox({
+                name: "fitToCell", checked: layout.fitToCell});
+      connect(compensateOrigin, "toggle", layout, "compensateOrigin");
+      connect(fitToCell, "toggle", layout, "fitToCell");
+      connect(compensateOrigin, "toggle", this, "alignWithTarget");
+      return [[{type: "text", textString: "Compensate Origin", 
                padding: rect(5,0,10,10), fill: Color.transparent,
-               fontColor: layout.compensateOrigin ? Color.green : Color.red,
-               readOnly: true,
-               onMouseDown(evt) {
-                   layout.compensateOrigin = !layout.compensateOrigin;
-                   this.fontColor = layout.compensateOrigin ? Color.green : Color.red;
-               }},
-               {type: "text", textString: "Fit morphs to cell", 
+               fontColor: Color.gray.darker(),
+               readOnly: true}, compensateOrigin],
+               [{type: "text", textString: "Fit morphs to cell", 
                padding: rect(5,0,10,10), fill: Color.transparent,
-               fontColor: layout.autoResize ? Color.green : Color.red,
-               readOnly: true,
-               onMouseDown(evt) {
-                   layout.autoResize = !layout.autoResize;
-                   this.fontColor = layout.autoResize ? Color.green : Color.red;
-               }}]
+               fontColor: Color.gray.darker(),
+               readOnly: true}, fitToCell]]
+              .map(x => { return {submorphs: x, fill: Color.transparent, 
+                                  layout: new HorizontalLayout()}})
   }
 
-  get isLayoutHalo() { return true }
+  get isLayoutHalo() { return false }
 
   get container() { return this.state.container; }
   get target() { return this.state.target; }
@@ -395,6 +399,7 @@ export class GridLayoutHalo extends Morph {
   alignWithTarget() {
     this.target.apply();
     this.position = this.container.globalPosition;
+    if (this.target.compensateOrigin) this.moveBy(this.container.origin.negated())
     this.extent = this.container.extent;
     this.addMissingGuides();
     arr.reverse(this.guides).forEach(guide => guide.alignWithTarget());
@@ -558,9 +563,10 @@ export class GridLayoutHalo extends Morph {
       onHover(evt) {
         // if hand carries a morph, preview the alignment of the morph
       },
-      onDrop(droppedMorph) {
-        // the dropped Morph is placed into the cell of the layout
-        console.log(droppedMorph);
+      onDrop(evt) {
+        const [m] = evt.hand.grabbedMorphs; // pick the first of the grabbed submorphs
+        evt.hand.dropMorphsOn(self.container);
+        cellGroup.morph = m;
       },
       alignWithTarget() {
         const bounds = cellGroup.bounds();
@@ -569,7 +575,7 @@ export class GridLayoutHalo extends Morph {
           topLeft.center = this.innerBounds().topLeft();
           bottomRight.center = this.innerBounds().bottomRight();
         } else {
-          self.guides.remove(this);
+          arr.remove(self.guides, this);
           this.remove();
         }
       }
@@ -579,17 +585,53 @@ export class GridLayoutHalo extends Morph {
 
 export class FlexLayoutHalo extends Morph {
 
-
-  inspectHorizontalLayout() {
-
+    constructor(container, pointerId) {
+    super({
+      styleClasses: ["morph", "halo"],
+      extent: container.extent,
+      fill: Color.transparent
+    });
+    this.state = {container, pointerId, target: container.layout}
+    this.alignWithTarget();
   }
 
-  inspectVerticalLayout() {
-    this.inspectHorizontalLayout();
+  onDrop(evt) {
+    this.world().logError("drop in container")
+    evt.hand.dropMorphsOn(this.container);
   }
 
-  inspectTilingLayout() {
+  alignWithTarget() { 
+       this.setBounds(this.container.globalBounds());
+  };
 
+  get target() { return this.state.target }
+  get container() { return this.state.container }
+
+  updateResizePolicy(auto) {
+      if (auto) this.originalExtent = this.container.extent;
+      this.target.autoResize = auto;
+      if (!auto) this.container.extent = this.originalExtent;
+      this.alignWithTarget()
+  }
+
+  optionControls() {
+      const layout = this.target,
+            spacing = new ValueScrubber({
+                name: "spacing", value: layout.spacing}),
+            autoResize = new CheckBox({
+                name: "autoResize", checked: layout.autoResize});
+      connect(spacing, "scrub", layout, "spacing");
+      connect(autoResize, "toggle", this, "updateResizePolicy");      
+      return [[{type: "text", textString: "Resize Container", 
+               padding: rect(5,0,10,10), fill: Color.transparent,
+               fontColor: Color.gray.darker(),
+               readOnly: true}, autoResize],
+               [{type: "text", textString: "Submorph Spacing", 
+               padding: rect(5,0,10,10), fill: Color.transparent,
+               fontColor: Color.gray.darker(),
+               readOnly: true}, spacing]]
+              .map(x => { return {submorphs: x, fill: Color.transparent, 
+                                  layout: new HorizontalLayout()}})
   }
 
 }
