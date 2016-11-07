@@ -31,14 +31,18 @@ export class Icon {
     var {prefix, suffix} = props;
     var textAndAttributes = [];
     if (prefix) textAndAttributes.push(typeof prefix === "string" ? [prefix || "", {}] : prefix);
-    textAndAttributes.push([
-      Icons[iconName].code || `icon ${iconName} not found`,
-       {fontFamily: "", textStyleClasses: ["fa"]}]);
+    textAndAttributes.push(this.textAttribute(iconName));
     if (suffix) textAndAttributes.push(typeof suffix === "string" ? [suffix || "", {}] : suffix);
     return new Label({
       value: textAndAttributes,
       ...obj.dissoc(props, ["prefix", "suffix"])
     });
+  }
+
+  static textAttribute(iconName) {
+    return [
+      Icons[iconName].code || `icon ${iconName} not found`,
+       {fontFamily: "", textStyleClasses: ["fa"]}]
   }
 
 }

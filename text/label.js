@@ -301,6 +301,7 @@ export class Label extends Morph {
 
   renderChunk(text, chunkStyle) {
     var {
+          backgroundColor,
           fontColor,
           fontFamily,
           fontSize,
@@ -311,6 +312,7 @@ export class Label extends Morph {
         } = chunkStyle || {},
         style = {},
         attrs = {style};
+    if (backgroundColor) style.backgroundColor = String(backgroundColor);
     if (fontFamily) style.fontFamily = fontFamily;
     if (fontSize) style.fontSize = fontSize + "px";
     if (fontColor) style.fontColor = String(fontColor);

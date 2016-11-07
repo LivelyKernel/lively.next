@@ -1,6 +1,7 @@
 import { obj } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { show, morph, Morph, Text, Label, List, HorizontalLayout } from "./index.js";
+import { Icon } from "./icons.js";
 import { signal, connect } from "lively.bindings";
 import config from "./config.js";
 
@@ -26,21 +27,6 @@ export class Button extends Morph {
       borderWidth: 1,
       active: true,
       padding: Rectangle.inset(0),
-      activeStyle: {
-        borderColor: Color.gray,
-        fill: Color.rgb(240,240,240),
-        fontColor: Color.almostBlack,
-        nativeCursor: "pointer"
-      },
-      inactiveStyle: {
-        borderColor: Color.gray.withA(0.5),
-        fill: Color.rgba(240,240,240, 0.5),
-        fontColor: Color.almostBlack.withA(0.5),
-        nativeCursor: "not-allowed"
-      },
-      triggerStyle: {
-        fill: Color.rgb(161,161,161)
-      },
       submorphs: [label],
       ...obj.dissoc(props, ["label", "fontFamily", "fontSize", "fontColor"])
     });
@@ -58,12 +44,43 @@ export class Button extends Morph {
 
   get isButton() { return true }
 
-  get activeStyle() { return this.getProperty("activeStyle"); }
-  set activeStyle(value) { this.addValueChange("activeStyle", value); this.active = this.active; /*update*/ }
-  get inactiveStyle() { return this.getProperty("inactiveStyle"); }
-  set inactiveStyle(value) { this.addValueChange("inactiveStyle", value); this.active = this.active; /*update*/ }
-  get triggerStyle() { return this.getProperty("triggerStyle"); }
-  set triggerStyle(value) { this.addValueChange("triggerStyle", value); }
+  get defaultActiveStyle() {
+    return {
+      borderColor: Color.gray,
+      fill: Color.rgb(240,240,240),
+      fontColor: Color.almostBlack,
+      nativeCursor: "pointer"
+    }
+  }
+  get activeStyle() { return this.getProperty("activeStyle") || this.defaultActiveStyle; }
+  set activeStyle(value) {
+    this.addValueChange("activeStyle", {...this.defaultActiveStyle, ...value});
+    this.active = this.active; /*update*/
+  }
+
+  get defaultInactiveStyle() {
+    return {
+      borderColor: Color.gray.withA(0.5),
+      fill: Color.rgba(240,240,240, 0.5),
+      fontColor: Color.almostBlack.withA(0.5),
+      nativeCursor: "not-allowed"
+    }
+  }
+  get inactiveStyle() { return this.getProperty("inactiveStyle") || this.defaultInactiveStyle; }
+  set inactiveStyle(value) {
+    this.addValueChange("inactiveStyle", {...this.defaultInactiveStyle, ...value});
+    this.active = this.active; /*update*/
+  }
+
+  get defaultTriggerStyle() {
+    return {
+      fill: Color.rgb(161,161,161)
+    }
+  }
+  get triggerStyle() { return this.getProperty("triggerStyle") || this.defaultTriggerStyle; }
+  set triggerStyle(value) {
+    this.addValueChange("triggerStyle", {...this.defaultTriggerStyle, ...value});
+  }
 
   relayout() {
     var padding = this.padding,
@@ -286,6 +303,48 @@ class Tooltip extends Morph {
       cb(this);
       this.remove()
     }});
+  }
+
+}
+
+
+class DropDownList extends Button {
+
+  // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
+
+  constructor(props = {}) {
+    super({
+      borderRadius: 2,
+      ...obj.dissoc(props, ["items", "selection"])
+    });
+    this.list = new List({items: props.items || [], border: this.border});
+    connect(this.list, "selection", this, "selection");
+    connect(this, "fire", this, "toggleList");
+    if (props.selection) this.selection = props.selection;
+  }
+
+  isListVisible() { return this.list.owner === this; }
+
+  get selection() { return this.getProperty("selection"); }
+  set selection(value) {
+    this.addValueChange("selection", value);
+    if (!value) {
+      this.list.selection = null;
+      this.label = "";
+    } else {
+      var item = this.list.find(value);
+      this.label = item ?
+        [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")] :
+        "selection not found in list";
+      this.list.selection = value;
+    }
+  }
+
+  toggleList() {
+    if (this.isListVisible()) { this.list.remove(); return; }
+    this.addMorph(this.list);
+    this.list.topLeft = this.innerBounds().bottomLeft();
+    this.list.extent = pt(this.width, 100);
   }
 
 }
