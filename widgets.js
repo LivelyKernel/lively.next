@@ -14,7 +14,8 @@ export class Button extends Morph {
     } else {
       label = {
         type: "label", name: "label",
-        value: label, fill: Color.white.withA(0)
+        value: label, fill: Color.white.withA(0),
+        padding: Rectangle.inset(0),
       }
     }
 
@@ -24,7 +25,7 @@ export class Button extends Morph {
       extent: pt(100,24),
       borderWidth: 1,
       active: true,
-      padding: Rectangle.inset(2),
+      padding: Rectangle.inset(0),
       activeStyle: {
         borderColor: Color.gray,
         fill: Color.rgb(240,240,240),
@@ -54,6 +55,8 @@ export class Button extends Morph {
     connect(this, "change", this, "relayout", {updater: ($upd, {prop}) => ["extent", "padding"].includes(prop) && $upd()})
     connect(this.submorphs[0], "change", this, "relayout", {updater: ($upd, {prop}) => ["extent"].includes(prop) && $upd()})
   }
+
+  get isButton() { return true }
 
   get activeStyle() { return this.getProperty("activeStyle"); }
   set activeStyle(value) { this.addValueChange("activeStyle", value); this.active = this.active; /*update*/ }
