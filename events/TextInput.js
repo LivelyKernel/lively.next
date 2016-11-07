@@ -43,7 +43,7 @@ export default class TextInput {
     var doc = newRootNode.ownerDocument,
         textareaNode = domState.textareaNode = doc.createElement("textarea");
 
-    textareaNode.style = `
+    textareaNode.setAttribute("style", `
       position: absolute;
       /*extent cannot be 0, input won't work correctly in Chrome 52.0*/
       width: 20px; height: 20px;
@@ -65,7 +65,7 @@ export default class TextInput {
       -webkit-user-select: text;
       user-select: text;
       /*with pre-line chrome inserts &nbsp; instead of space*/
-      white-space: pre!important;`;
+      white-space: pre!important;`);
 
     if (bowser.tablet || bowser.mobile)
       textareaNode.setAttribute("x-palm-disable-auto-cap", true);
