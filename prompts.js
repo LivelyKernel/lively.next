@@ -111,16 +111,16 @@ export class InformPrompt extends AbstractPrompt {
 
   initLayout() {
      this.get("label").fit()
-     this.width = this.get("label").width + 10;
-     this.layout = new GridLayout({
+     this.width = Math.max(this.get("label").width + 10, 120);
+     const l = this.layout = new GridLayout({
         grid: [["label", "label", "label"],
                [null, "ok button", null]]
      });
-     this.layout.col(2).paddingRight = 5;
-     this.layout.col(1).fixed = 100;
-     this.layout.col(0).paddingLeft = 5;
-     this.layout.row(1).paddingBottom = 5;
-     this.layout.row(1).fixed = 30;
+     l.col(2).paddingRight = 5;
+     l.col(1).fixed = 100;
+     l.col(0).paddingLeft = 5;
+     l.row(1).paddingBottom = 5;
+     l.row(1).fixed = 30;
   }
 
   onKeyDown(evt) {
@@ -160,18 +160,18 @@ export class ConfirmPrompt extends AbstractPrompt {
      //         define the overall width of the container
      this.get("label").fit()
      this.width = this.get("label").width + 10;
-     this.layout = new GridLayout({
+     const l = this.layout = new GridLayout({
         grid: [["label", "label"],
                ["ok button", "cancel button"]]
      });
-     this.layout.col(0).paddingLeft = 5;
-     this.layout.col(0).paddingRight = 2.5;
-     this.layout.col(0).adjustMin(100);
-     this.layout.col(1).paddingRight = 5;
-     this.layout.col(1).paddingLeft = 2.5;
-     this.layout.col(1).adjustMin(100);
-     this.layout.row(1).paddingBottom = 5;
-     this.layout.row(1).fixed = 30;
+     l.col(0).paddingLeft = 5;
+     l.col(0).paddingRight = 2.5;
+     l.col(0).adjustMin(100);
+     l.col(1).paddingRight = 5;
+     l.col(1).paddingLeft = 2.5;
+     l.col(1).adjustMin(100);
+     l.row(1).paddingBottom = 5;
+     l.row(1).fixed = 30;
   }
 }
 
@@ -190,7 +190,7 @@ export class MultipleChoicePrompt extends AbstractPrompt {
     choices.forEach((choice, i) => {
       var btn = this.addMorph({
         name: "button " + i, type: "button",
-        padding: Rectangle.inset(6, 4),
+        padding: Rectangle.inset(10, 8),
         label: choice, ...this.okButtonStyle});
       btn.choice = choice;
       connect(btn, 'fire', this, 'resolve', {converter: function() { return this.sourceObj.choice; }});
@@ -209,17 +209,21 @@ export class MultipleChoicePrompt extends AbstractPrompt {
 
     this.width = Math.max(
       label ? label.width + 10 : 0,
-      buttons.reduce((width, ea) => width + ea.width, 0) + 20);
+      buttons.reduce((width, ea) => width + ea.width + 10, 0) + 20);
 
-    this.layout = new GridLayout({
+    const l = this.layout = new GridLayout({
+       fitToCell: false,
        grid: label ?
                [arr.withN(buttons.length, "label"),
                 buttons.map(({name}) => name)] :
                [buttons.map(({name}) => name)],
-       spacing: 4
     });
-    this.layout.col(0).paddingLeft = 10;
-    this.layout.col(this.layout.columnCount-1).paddingRight = 10;
+    buttons.forEach((b, i) => {
+      l.col(i).paddingLeft = 5;
+      l.col(i).proportion = (b.width + 10) / (this.width - 20);
+      l.col(i).paddingRight = 5;
+    })
+    l.row(1).paddingBottom = 5;
   }
 
   onKeyDown(evt) {
@@ -251,7 +255,7 @@ export class TextPrompt extends AbstractPrompt {
       historyId,
       name: "input", textString: input || "",
       borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
-      fontColor: Color.gray.darker(), padding: Rectangle.inset(10,5)
+      fontColor: Color.gray.darker(), padding: Rectangle.inset(10,4)
     }));
     input.gotoDocumentEnd();
     input.scrollCursorIntoView();
@@ -272,19 +276,19 @@ export class TextPrompt extends AbstractPrompt {
   resolve() { super.resolve(this.get("input").acceptInput()); }
 
   initLayout() {
-     this.layout = new GridLayout({
+     const l = this.layout = new GridLayout({
         grid: [["label", "label", "label"],
                ["input", "input", "input"],
                [null,    "ok button", "cancel button"]]
      });
-     this.layout.col(2).fixed = 100;
-     this.layout.col(1).fixed = 100;
-     this.layout.col(2).paddingRight = 5;
-     this.layout.col(2).paddingLeft = 2.5;
-     this.layout.col(0).paddingLeft = 5;
-     this.layout.col(0).paddingRight = 2.5;
-     this.layout.row(1).paddingBottom = 5;
-     this.layout.row(2).paddingBottom = 5;
+     l.col(2).fixed = 100;
+     l.col(1).fixed = 100;
+     l.col(2).paddingRight = 5;
+     l.col(2).paddingLeft = 2.5;
+     l.col(0).paddingLeft = 5;
+     l.col(0).paddingRight = 2.5;
+     l.row(1).paddingBottom = 5;
+     l.row(2).paddingBottom = 5;
   }
 
   focus() { this.get("input").focus(); }
@@ -419,7 +423,6 @@ export class EditListPrompt extends ListPrompt {
      l.col(0).paddingRight = 5;
      l.col(3).paddingRight = 5;
      l.col(4).paddingRight = 5;
-     l.apply()
   }
 
   async removeSelectedItemsFromList() {
