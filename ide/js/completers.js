@@ -8,13 +8,39 @@ function buildEvalOpts(morph, additionalOpts) {
       // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
       sourceURL = targetModule + "_doit_" + Date.now(),
       format = format || "esm";
-  return {System, targetModule, format, context, sourceURL, remote};
+  return remote ?
+    {targetModule, format, sourceURL, remote} : 
+    {System, targetModule, format, context, sourceURL}
 }
 
 export class DynamicJavaScriptCompleter {
 
   isValidPrefix(prefix) {
     return /\.[a-z0-9_]*$/i.test(prefix);
+  }
+
+  isMethodCallCompletion(completion) {
+    return completion.endsWith(")") && completion.indexOf("(") > 0;
+  }
+
+  isValidIdentifier(completion) {
+    if (typeof completion !== "string") return false;
+    // method call completion like foo(bar)
+    if (this.isMethodCallCompletion(completion))
+      completion = completion.slice(0, completion.indexOf("("));
+    if (/^[a-z_\$][0-9a-z_\$]*$/i.test(completion)) return true;
+    return false;
+  }
+
+  wrapInBrackets(completion) {
+    var n = Number(completion);
+    if (!isNaN(n)) return `[${completion}]`;
+    var trailing = "";
+    if (this.isMethodCallCompletion(completion)) {
+      trailing = completion.slice(completion.indexOf("("));
+      completion = completion.slice(0, completion.indexOf("("));
+    }
+    return `["${completion.replace(/\"/g, '\\"')}"]${trailing}`;
   }
 
   async compute(textMorph) {
@@ -32,13 +58,29 @@ export class DynamicJavaScriptCompleter {
 
     var opts = buildEvalOpts(textMorph),
         endpoint = opts.remote ? serverInterfaceFor(opts.remote) : localInterface,
-        {completions, prefix} = await endpoint.dynamicCompletionsForPrefix(
-                                  opts.targetModule, roughPrefix, opts),
-        count = completions.reduce((sum, [_, completions]) => sum+completions.length, 0),
+        {isError, value: err, completions, prefix} = await endpoint.dynamicCompletionsForPrefix(
+                                                      opts.targetModule, roughPrefix, opts);
+
+    if (isError) {
+      console.warn(`javascript completer encountered error: ${err.stack || err}`)
+      return [];
+    }
+
+    var count = completions.reduce((sum, [_, completions]) => sum+completions.length, 0),
         priority = 2000,
         processed = completions.reduce((all, [protoName, completions], i) => {
-          return all.concat(completions.map(ea =>
-            ({info: protoName, completion: ea, prefix: prefix})))
+          return all.concat(completions.map(ea => ({
+            info: protoName,
+            completion: ea,
+            customInsertionFn: this.isValidIdentifier(ea) ? null :
+              (complString, prefix, textMorph, {start, end}) => {
+                var before = {row: start.row, column: start.column-1},
+                    range = textMorph.textInRange({start: before, end: start}) === "." ?
+                      {start: before, end} : {start, end};
+                textMorph.replace(range, this.wrapInBrackets(ea));
+              },
+            prefix: this.isValidIdentifier(ea) ? prefix : "." + prefix
+          })))
         }, []);
 
     // assign priority:

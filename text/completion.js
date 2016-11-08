@@ -56,7 +56,9 @@ export class CompletionController {
     for (var c of this.completers)
       try {
         completions = completions.concat(await c.compute(this.textMorph, prefix));
-      } catch (e) {}
+      } catch (e) {
+        console.warn(`Error in completer ${c}: ${e.stack || e}`);
+      }
 
     var infoCol = completions.reduce((maxCol, ea) => Math.max(ea.completion.length, maxCol), 0) + 1,
         maxCol = infoCol;
@@ -146,14 +148,17 @@ export class CompletionController {
         prefix = spec.input;
     connect(menu, "accepted", this, "insertCompletion", {
       updater: function($upd) {
-        var textToInsert, completion = this.sourceObj.selection;
+        var textToInsert,
+            customInsertionFn = null,
+            completion = this.sourceObj.selection;
         if (completion) {
           if (completion.prefix) prefix = completion.prefix;
           textToInsert = completion.completion;
+          customInsertionFn = completion.customInsertionFn;
         } else {
           textToInsert = this.sourceObj.get("input").textString;
         }
-        $upd(textToInsert, prefix);
+        $upd(textToInsert, prefix, customInsertionFn);
       }, varMapping: {prefix}});
     connect(menu, "accepted", menu, "remove");
     connect(menu, "canceled", menu, "remove");
@@ -167,7 +172,7 @@ export class CompletionController {
     menu.get("input").focus();
   }
 
-  insertCompletion(completion, prefix) {
+  insertCompletion(completion, prefix, customInsertionFn) {
     var m = this.textMorph, doc = m.document,
         selections = m.selection.isMultiSelection ?
           m.selection.selections : [m.selection];
@@ -177,7 +182,9 @@ export class CompletionController {
       var end = sel.lead,
           start = prefix ?
             doc.indexToPosition(doc.positionToIndex(end) - prefix.length) : end;
-      m.replace({start, end}, completion);
+      typeof customInsertionFn === "function" ?
+        customInsertionFn(completion, prefix, m, {start, end}, sel) :
+        m.replace({start, end}, completion);
     });
     m.undoManager.group();
   }
