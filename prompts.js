@@ -239,23 +239,33 @@ export class MultipleChoicePrompt extends AbstractPrompt {
 
 export class TextPrompt extends AbstractPrompt {
 
-  build({input, historyId}) {
-    this.get("label") || this.addMorph({
-        fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
-        name: "label", type: "text", textString: "", readOnly: true});
+  get maxWidth() { return 800; }
 
-    this.get("input") || this.addMorph(Text.makeInputLine({
-          historyId,
-          name: "input", textString: input || "",
-          borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
-          fontColor: Color.gray.darker(), padding: rect(10,2,0,-2)
+  build({label, input, historyId}) {
+    this.addMorph({
+      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
+      name: "label", type: "label", value: label
+    });
+
+    var input = this.addMorph(Text.makeInputLine({
+      historyId,
+      name: "input", textString: input || "",
+      borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
+      fontColor: Color.gray.darker(), padding: Rectangle.inset(10,5)
     }));
+    input.gotoDocumentEnd();
+    input.scrollCursorIntoView();
+    var inputWidth = input.textBounds().width;
+    // if the input string we pre-fill is wide than we try to make it fit
+    if (inputWidth > this.width-10)
+      this.width = Math.min(this.maxWidth, inputWidth+10);
 
-    this.get("ok button") || this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
-    this.get("cancel button") || this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+    this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
+    this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+
     connect(this.get("ok button"), 'fire', this, 'resolve');
     connect(this.get("cancel button"), 'fire', this, 'reject');
-    this.get("input").gotoDocumentEnd();
+
     this.initLayout();
   }
 
@@ -263,12 +273,14 @@ export class TextPrompt extends AbstractPrompt {
 
   initLayout() {
      this.layout = new GridLayout({
-        grid: [["label", "label"],
-               ["input", "input"],
-               ["ok button", "cancel button"]]
+        grid: [["label", "label", "label"],
+               ["input", "input", "input"],
+               [null,    "ok button", "cancel button"]]
      });
-     this.layout.col(1).paddingRight = 5;
-     this.layout.col(1).paddingLeft = 2.5;
+     this.layout.col(2).fixed = 100;
+     this.layout.col(1).fixed = 100;
+     this.layout.col(2).paddingRight = 5;
+     this.layout.col(2).paddingLeft = 2.5;
      this.layout.col(0).paddingLeft = 5;
      this.layout.col(0).paddingRight = 2.5;
      this.layout.row(1).paddingBottom = 5;
