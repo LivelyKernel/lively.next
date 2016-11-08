@@ -3,6 +3,7 @@ export * from "./morph.js";
 export * from "./world.js";
 export * from "./text/morph.js";
 export * from "./text/label.js";
+export * from "./buttons.js";
 export * from "./widgets.js";
 export * from "./menus.js";
 export * from "./html-morph.js";
@@ -19,7 +20,8 @@ import { Morph, Hand, Image, Ellipse, Triangle, Path } from "./morph.js";
 import { List } from "./list.js";
 import { Text } from "./text/morph.js";
 import { Label } from "./text/label.js";
-import { Button, CheckBox } from "./widgets.js";
+import { Button } from "./buttons.js";
+import { CheckBox } from "./widgets.js";
 
 export function morph(props = {}, opts = {restore: false}) {
   var klass = Morph;
