@@ -420,30 +420,36 @@ export class Tree extends Morph {
       lineHeightCache.splice(i, lineHeightCache.length-i)
   }
 
-  async maintainViewStateWhile(whileFn, nodeIdFn) {
-    // keeps the scroll, selection, and node collapse state, useful when updating the list
-    // specify a nodeIdFn to compare old and new nodes, useful when you
-    // generate a new tree but still want to have the same elements uncollapsed in
-    // the new.
-
+  buildViewState(nodeIdFn) {
     if (typeof nodeIdFn !== "function")
       nodeIdFn = node => node;
 
-    var selId = this.selection ? nodeIdFn(this.selection) : -1,
+    var selId = this.selection ? nodeIdFn(this.selection) : null,
         collapsedMap = new Map();
 
     lively.lang.tree.prewalk(this.treeData.root,
       node => collapsedMap.set(nodeIdFn(node), this.treeData.isCollapsed(node)),
       node => this.treeData.getChildren(node));
 
-    await whileFn();
+    return {
+      selectionId: selId,
+      collapsedMap,
+      scroll: this.scroll
+    }
+  }
 
-    var i = 0, newSelIndex = -1;
+  async applyViewState(viewState, nodeIdFn) {
+    if (typeof nodeIdFn !== "function")
+      nodeIdFn = node => node;
+
+    var { selectionId, collapsedMap, scroll } = viewState,
+        i = 0, newSelIndex = -1;
+
     while (true) {
       var nodes = this.nodes;
       if (i >= nodes.length) break;
       var id = nodeIdFn(nodes[i]);
-      if (selId === id) newSelIndex = i;
+      if (selectionId === id) newSelIndex = i;
       if (collapsedMap.has(id) && !collapsedMap.get(id))
         await this.treeData.collapse(nodes[i], false);
       i++;
@@ -451,7 +457,19 @@ export class Tree extends Morph {
 
     this.update();
     this.selectedIndex = newSelIndex;
+    this.scroll = scroll;
     this.scrollSelectionIntoView();
+  }
+
+  async maintainViewStateWhile(whileFn, nodeIdFn) {
+    // keeps the scroll, selection, and node collapse state, useful when updating the list
+    // specify a nodeIdFn to compare old and new nodes, useful when you
+    // generate a new tree but still want to have the same elements uncollapsed in
+    // the new.
+
+    var viewState = this.buildViewState(nodeIdFn);
+    await whileFn();
+    await this.applyViewState(viewState, nodeIdFn);
   }
 
   async onNodeCollapseChanged({node, isCollapsed}) {

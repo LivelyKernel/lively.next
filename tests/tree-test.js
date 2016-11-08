@@ -63,7 +63,6 @@ describe("tree", function() {
   afterEach(() => destroyMorphicEnv());
 
   it("renders visible items without root", () => {
-    createTree({env});
     expect(arr.pluck(tree.nodeMorphs, "labelString"))
       .equals(["child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
     var h = tree.lineBounds(1).height;
@@ -107,4 +106,27 @@ describe("tree", function() {
 
   });
 
+  describe("view state", () => {
+  
+    it("can be externalized and applied", async () => {
+      var tree1 = tree,
+          tree2 = createTree();
+      // env.world.addMorph(tree1); // env.world.addMorph(tree2);
+      // tree2.moveBy(pt(300,0))
+      // tree1.remove(); tree2.remove();
+      
+      tree2.nodes.forEach((n) => tree2.treeData.collapse(n, true));
+      tree2.update();
+
+      expect(tree2.nodes).equals([tree2.treeData.root]);
+      expect(tree2.treeData.root).not.equals(tree1.treeData.root);
+
+      var viewState = tree1.buildViewState((n) => n.name);
+      await tree2.applyViewState(viewState, (n) => n.name);
+
+      expect(arr.pluck(tree2.nodes, "name"))
+        .equals(["root", "child 1", "child 2", "child 3", "child 3 - 1", "child 3 - 2", "child 4"]);
+    });
+  
+  });
 });
