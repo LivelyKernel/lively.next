@@ -277,7 +277,7 @@ export var jsEditorCommands = [
       var {backend} = opts;
       if (backend === undefined) {
         backend = await text.world().prompt(
-          "choose eval backend", {historyId: "js-workspace-eval-backend"});
+          "choose eval backend", {historyId: "js-eval-backend-history"});
         if (!backend) {
           text.setStatusMessage("Canceled");
           return true;
