@@ -17,15 +17,26 @@ var browserCommands = [
 
   {
     name: "open selected file",
-    exec: browser => {
+    exec: (browser, opts = {openInNewBrowser: false}) => {
       // Allow "Enter" inside location input
       if (browser.locationInput.isFocused()) return false;
 
       var sel = browser.selectedFile;
       if (!sel) {
         browser.setStatusMessage("No file selected");
-      } else  if (sel.isDirectory()) {
+
+      } else if (opts.openInNewBrowser) {
+        var viewState = browser.fileTree.buildViewState(({resource: {url}}) => url),
+            newBrowser = HTTPFileBrowser.forFile(browser.selectedFile, browser.location),
+            position = browser.getWindow().position.addXY(10,10);
+        browser.world().openInWindow(newBrowser, {position}).activate();
+        return newBrowser.whenFinishedLoading()
+          .then(() => newBrowser.fileTree.applyViewState(viewState, ({resource: {url}}) => url))
+          .then(() => newBrowser)
+
+      } else if (sel.isDirectory()) {
         browser.execCommand("set location to selection");
+
       } else {
         var editor = TextEditor.openURL(sel.url, {extent: pt(600,800)});
         setTimeout(() => editor.activate(), 100);
@@ -246,9 +257,9 @@ var browserCommands = [
     name: "find file and select",
     handlesCount: true,
     exec: async (browser, _, count) => {
-      var exclude = {exclude: browser.excludeFiles || []},
+      var opts = {exclude: browser.excludeFiles || []},
           loc = browser.location,
-          items = (await loc.dirList(count || 'infinity', {exclude})).map(ea => ({
+          items = (await loc.dirList(count || 'infinity', opts)).map(ea => ({
             isListItem: true,
             string: ea.url.slice(loc.url.length),
             value: ea.url
@@ -529,6 +540,7 @@ export default class HTTPFileBrowser extends Morph {
   get keybindings() {
     return [
       {keys: "Enter", command: "open selected file"},
+      {keys: {mac: "Meta-Enter", win: "Ctrl-Enter"}, command: {command: "open selected file", args: {openInNewBrowser: true}}},
       {keys: "Alt-Up", command: "focus location input"},
       {keys: "Alt-Down", command: "focus file tree"},
       {keys: "Alt-.", command: "set location to selection"},
