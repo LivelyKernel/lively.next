@@ -1,20 +1,35 @@
 import { Text, Morph, show } from "./index.js";
-import { arr } from "lively.lang";
+import { arr, obj } from "lively.lang";
 import { pt, Color } from "lively.graphics";
 
 export class MenuItem extends Text {
 
-  constructor({textString, action, props}) {
+  constructor({textString, action, props} = {}) {
     super({
-     fixedWidth: false, fixedHeight: false,
-     fill: null,
-     fontSize: 14,
-     draggable: false,
-     readOnly: true,
-     nativeCursor: "pointer",
-     textString,
-     action,
-     ...props});
+      fixedWidth: false, fixedHeight: false,
+      fill: null,
+      fontSize: 14,
+      draggable: false,
+      readOnly: true,
+      nativeCursor: "pointer",
+      textString,
+      action,
+      ...obj.dissoc(props, ["selected"])
+    });
+    this.selected = props.hasOwnProperty("selected") ? props.selected : false;
+  }
+
+  get selected() { return this.getProperty("selected"); }
+  set selected(value) {
+    if (this.selected === value) return;
+    this.addValueChange("selected", value);
+    if (value) {
+      this.fontColor = Color.white;
+      this.fill = Color.blue;
+    } else {
+      this.fill = Color.null;
+      this.fontColor = Color.black;
+    }
   }
 
   get action() { return this.getProperty("action") }
@@ -22,23 +37,13 @@ export class MenuItem extends Text {
 
   get isMenuItem() { return true; }
 
-  select() {
-    this.fontColor = Color.white;
-    this.fill = Color.blue;
-  }
-
-  deselect() {
-    this.fill = Color.null;
-    this.fontColor = Color.black;
-  }
-
   onHoverIn(evt) {
-    this.owner.itemMorphs.forEach(ea => ea !== this && ea.deselect());
-    this.select();
+    this.owner.itemMorphs.forEach(ea => ea !== this && (ea.selected = false));
+    this.selected = true;
   }
 
   onHoverOut(evt) {
-    this.deselect();
+    this.selected = false;
   }
 
   onMouseDown(evt) {
