@@ -1,6 +1,7 @@
 import { pt, Color, rect } from "lively.graphics";
 import { arr, grid, properties, num, obj } from "lively.lang";
-import { GridLayoutHalo, FlexLayoutHalo } from "./halo/layout.js";
+import { GridLayoutHalo, FlexLayoutHalo, 
+         TilingLayoutHalo, FillLayoutHalo } from "./halo/layout.js";
 import { Morph } from "./index.js";
 
 class Layout {
@@ -191,7 +192,7 @@ export class TilingLayout extends Layout {
   description() { return "Make the submorphs fill their owner, inserting breaks to defer intersecting the bounds as much as possible." }
 
   inspect(pointerId) {
-    return new FlexLayoutHalo(this.container, pointerId);
+    return new TilingLayoutHalo(this.container, pointerId);
   }
 
   apply(animate = false) {
@@ -293,7 +294,7 @@ export class CellGroup {
   apply(animate = false) {
     var target = this.morph;
     if(target) {
-      const bounds = this.layout.fitToCell ? this.bounds() : this.position.extent(target.extent),
+      const bounds = this.layout.fitToCell ? this.bounds() : this.bounds().topLeft().extent(target.extent),
             offset = this.compensateOrigin ? this.layout.container.origin.negated() : pt(0,0)
       if (animate) {
         var extent = this.resize ? bounds.extent() : target.extent,
