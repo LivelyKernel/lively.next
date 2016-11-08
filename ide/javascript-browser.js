@@ -424,7 +424,8 @@ export class Browser extends Window {
           ...style,
           bounds,
           submorphs: [
-            {name: "browserCommands", bounds: browserCommandsBounds, fill: Color.gray.lighter(),
+            {name: "browserCommands", bounds: browserCommandsBounds, fill: Color.white,
+             borderTop: {color: Color.gray, width: 1},
              draggable: false, layout: new HorizontalLayout({spacing: 2, autoResize: false}),
              submorphs: [
               {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
