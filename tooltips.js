@@ -97,11 +97,10 @@ class Tooltip extends Morph {
     descriptor.value = stringOrAttributes;
   }
 
-  softRemove(cb) {
-    this.animate({opacity: 0, onFinish: () => {
-      cb && cb(this);
-      this.remove()
-    }});
+  async softRemove(cb) {
+    await this.animate({opacity: 0});
+    cb && cb(this);
+    this.remove()
   }
 
 }

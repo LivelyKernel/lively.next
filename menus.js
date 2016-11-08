@@ -79,12 +79,12 @@ export class Menu extends Morph {
     this.updateMorphs();
   }
 
-  remove() {
-     this.animate({
+  async remove() {
+    await this.animate({
         opacity: 0,
-        duration: 300,
-        onFinish: () => super.remove()
-      });
+        duration: 300
+    });
+    super.remove()
   }
 
   get title() { return this.getProperty("title") }

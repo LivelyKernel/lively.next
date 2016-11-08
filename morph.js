@@ -163,11 +163,13 @@ export class Morph {
   // morphic interface
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  animate(config) {
+  async animate(config) {
     const anim = this._animationQueue.registerAnimation(config);
     if (!this._animationQueue.animationsActive) {
       anim && anim.finish();
+      return this;
     }
+    return anim ? anim.asPromise() : this;
   }
 
   get layout()         { return this.getProperty("layout") }
@@ -580,12 +582,10 @@ export class Morph {
     return this
   }
 
-  fadeOut(duration=1000) {
-    this.animate({opacity: 0, duration, easing: "ease-out",
-                  onFinish: () => {
-        this.remove();
-        this.opacity = 1;
-    }})
+  async fadeOut(duration=1000) {
+    await this.animate({opacity: 0, duration, easing: "ease-out"});
+    this.remove();
+    this.opacity = 1;
   }
 
   removeAllMorphs() { this.submorphs = []; }

@@ -698,7 +698,7 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  openPrompt(promptMorph, opts = {requester: null, animated: false}) {
+  async openPrompt(promptMorph, opts = {requester: null, animated: false}) {
     var focused = this.focusedMorph, visBounds = this.visibleBounds();
 
     promptMorph.openInWorldNear(
@@ -717,9 +717,8 @@ export class World extends Morph {
        animator.openInWorld();
        animator.addMorph(promptMorph);
        animator.scale = 2;
-       animator.animate({scale: 1, opacity: 1, duration: 500, onFinish: () => {
-          // FIXME: called too soon! animator.remove(); promptMorph.openInWorld();
-       }})
+       await animator.animate({scale: 1, opacity: 1, duration: 500});
+       animator.remove(); promptMorph.openInWorld();
     }
 
     return promise.finally(promptMorph.activate(), () => focused && focused.focus());

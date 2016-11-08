@@ -110,9 +110,18 @@ export class PropertyAnimation {
     this.maskedProps = obj.select(morph, properties.own(this.changedProps));
   }
 
+  asPromise() {
+     return new Promise((resolve, reject) => {
+         this.resolvePromise = () => {
+              this.onFinish(this);
+              resolve(this.morph);             
+         }
+     })
+  }
+
   finish() {
     this.queue.removeAnimation(this);
-    this.onFinish();
+    this.resolvePromise ? this.resolvePromise() : this.onFinish();
   }
 
   convertBounds(config) {
@@ -144,6 +153,7 @@ export class PropertyAnimation {
 
   get easing() { return this.config.easing || "cubic-bezier(.86,0,.07,1)" }
   get onFinish() { return this.config.onFinish || (() => {})}
+  set onFinish(cb) { this.config.onFinish = cb }
   get duration() { return this.config.duration || 1000 }
 
   getAnimationProps() {
@@ -191,7 +201,7 @@ export class PropertyAnimation {
              this.morph.makeDirty();
          }
       }
-    } else {
+    } else if (!this.active) {
       this.onFinish();
     }
   }
