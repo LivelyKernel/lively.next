@@ -26,6 +26,7 @@ export class AbstractCoreInterface {
   resourceRemove(url)                      { todo("resourceRemove") }
   resourceWrite(url, source)               { todo("resourceWrite") }
   resourceCreateFiles(baseDir, spec)       { todo("resourceCreateFiles") }
+  resourceDirList(baseDir, depth, opts)    { todo("resourceDirList") }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // system related
@@ -68,7 +69,7 @@ export class AbstractCoreInterface {
 
   async resourcesOfPackage(packageOrAddress, exclude = [".git", "node_modules", ".optimized-loading-cache"]) {
     var p = packageOrAddress.address ? packageOrAddress : await this.getPackage(packageOrAddress),
-        resourceURLs = (await resource(p.address).dirList('infinity', {exclude})).map(ea => ea.url),
+        resourceURLs = (await this.resourceDirList(p.address, 'infinity', {exclude})).map(ea => ea.url),
         loadedModules = arr.groupByKey(p.modules, "name");
     return resourceURLs.map(url => {
       var nameInPackage = url.replace(p.address, "").replace(/^\//, "");

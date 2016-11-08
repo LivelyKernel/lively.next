@@ -4,35 +4,6 @@ import * as ast from "lively.ast";
 import { promise } from "lively.lang";
 import { module } from "lively.modules";
 
-// ast.transform.wrapInFunction("var x = 23; x + foo + bar; class Foo {}; Foo")
-// var s = new HttpEvalStrategy("http://localhost:3000/eval")
-// s.keysOfObject(_x17, _x18)
-// await s.runEval("1 + 2", {targetModule: moduleId()})
-// livelySystem.localInterface.dynamicCompletionsForPrefix(moduleName, prefix, options)
-
-// var server = new HTTPCoreInterface("http://localhost:3000/eval")
-// server.constructor === HTTPCoreInterface
-// server.dynamicCompletionsForPrefix("lively://remote-lively-system/", "proces", {targetModule: "lively://remote-lively-system/"})
-// server.runEval("var x = {foo: 23}; x", {targetModule: m})
-
-
-// var m = "file:///Users/robert/Lively/LivelyKernel2/packages/lively-system-interface/index.js"
-// var source = await server.resourceRead(m)
-// await server.importsAndExportsOf(m, source)
-// await server.importModule(m)
-// await server.keyValueListOfVariablesInModule(m, source)
-// var result = await server.resourceWrite("file:///Users/robert/Lively/LivelyKernel2/test.js", "bar2")
-// var result = await server.resourceRead("file:///Users/robert/Lively/LivelyKernel2/test.js")
-// var result = await server.normalizeSync("lively.modules")
-// var result = await server.normalize("lively.modules")
-// var result = await server.printSystemConfig("lively.modules")
-// var result = await server.getConfig()
-// var result = await server.moduleFormat("file:///Users/robert/Lively/LivelyKernel2/packages/lively-system-interface/index.js")
-// var result = await server.moduleFormat("file:///Users/robert/Lively/LivelyKernel2/test.js")
-// var result = await server.getPackages()
-// result
-// var result = await server.getModules()
-// System.getConfig
 
 export class HTTPCoreInterface extends AbstractCoreInterface {
 
@@ -48,7 +19,13 @@ export class HTTPCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async dynamicCompletionsForPrefix(moduleName, prefix, options) {
-    return this.runEvalAndStringify(`await livelySystem.localInterface.dynamicCompletionsForPrefix(${JSON.stringify(moduleName)}, ${JSON.stringify(prefix)}, ${JSON.stringify(options)})`);
+    var src = `
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+          mName = ${JSON.stringify(moduleName)},
+          prefix = ${JSON.stringify(prefix)},
+          opts = ${JSON.stringify(options)};
+      await livelySystem.localInterface.dynamicCompletionsForPrefix(mName, prefix, opts);`;
+    return this.runEvalAndStringify(src);
   }
 
   runEvalAndStringify(source, opts) {
@@ -112,6 +89,12 @@ try {
   resourceWrite(url, source) { return this.evalWithResource(url, "write", source); }
   resourceCreateFiles(baseDir, spec) {
     return this.runEvalAndStringify(`var {createFiles} = await System.import("lively.resources"); await createFiles("${baseDir}", ${JSON.stringify(spec)})`);
+  }
+  resourceDirList(url, depth, opts) {
+    return this.runEvalAndStringify(`
+      var {resource} = await System.import("lively.resources");
+      (await resource("${url}").dirList(${JSON.stringify(depth)}, ${JSON.stringify(opts)}))
+        .map(({url}) => ({url}))`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

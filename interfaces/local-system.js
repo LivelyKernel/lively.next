@@ -38,6 +38,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   resourceRemove(url) { return resource(url).remove(); }
   resourceWrite(url, source) { return resource(url).write(source); }
   resourceCreateFiles(baseDir, spec) { return createFiles(baseDir, spec); }
+  resourceDirList(url, depth, opts) { return resource(url).dirList(depth, opts); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // system related
