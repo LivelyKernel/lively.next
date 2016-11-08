@@ -717,13 +717,14 @@ export class DropDownList extends Button {
       ...obj.dissoc(props, ["items", "selection"])
     });
     this.list = new List({items: props.items || [], border: this.border});
-    connect(this.list, "selection", this, "selection");
     connect(this, "fire", this, "toggleList");
     if (props.selection) this.selection = props.selection;
   }
 
   isListVisible() { return this.list.owner === this; }
 
+  get items() { return this.list.items; }
+  set items(value) { this.list.items = value; }
   get selection() { return this.getProperty("selection"); }
   set selection(value) {
     this.addValueChange("selection", value);
@@ -740,10 +741,45 @@ export class DropDownList extends Button {
   }
 
   toggleList() {
-    if (this.isListVisible()) { this.list.remove(); return; }
-    this.addMorph(this.list);
-    this.list.topLeft = this.innerBounds().bottomLeft();
-    this.list.extent = pt(this.width, 100);
+    var list = this.list;
+    if (this.isListVisible()) {
+      signal(this, "deactivated");
+      this.selection = list.selection;
+      list.remove();
+    } else {
+      signal(this, "activated");
+      this.addMorph(list);
+      list.topLeft = this.innerBounds().bottomLeft();
+      list.extent = pt(this.width, 100);
+      list.focus();
+    }
+  }
+
+  get commands() {
+    return [
+      {
+        name: "accept",
+        exec: () => {
+          if (this.isListVisible()) this.toggleList();
+          return true;
+        }
+      },
+      
+      {
+        name: "cancel",
+        exec: () => {
+          if (this.isListVisible()) this.list.remove();
+          return true;
+        }
+      }
+    ].concat(super.commands);
+  }
+
+  get keybindings() {
+    return super.keybindings.concat([
+      {keys: "Enter", command: "accept"},
+      {keys: "Escape|Ctrl-G", command: "cancel"}
+    ]);
   }
 
 }
