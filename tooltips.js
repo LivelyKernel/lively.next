@@ -72,7 +72,7 @@ export class TooltipViewer {
 
 }
 
-class Tooltip extends Morph {
+export class Tooltip extends Morph {
 
   constructor(props) {
     super({

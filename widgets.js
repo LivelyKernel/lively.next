@@ -2,6 +2,7 @@ import { obj, num } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Morph, Button, List, Text } from "./index.js";
 import { Icon } from "./icons.js";
+import { Tooltip } from "./tooltips.js";
 import { signal, connect } from "lively.bindings";
 import config from "./config.js";
 
