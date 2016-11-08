@@ -28,6 +28,9 @@ export default class InputLine extends Text {
     input: string to pre-fill the input text
 
   Example:
+
+    InputLine.getHistory("name query");
+
     var input = Text.makeInputLine({
       fill: Color.green,
       historyId: "name query",
@@ -70,8 +73,7 @@ export default class InputLine extends Text {
     return hist;
   }
   
-  static resetHistory(id) {
-    var hist = {items: [], max: 50, index: 0};
+  static setHistory(id, hist = {items: [], max: 50, index: 0}) {
     this.histories.set(id, hist);
     this.addHistoryToLocalSorage(id, hist);
     return hist;
@@ -99,23 +101,26 @@ export default class InputLine extends Text {
     this.addValueChange("label", value);
   }
 
+  get allowDuplicatesInHistory() { return false }
+
   get historyId() { return this.getProperty("historyId"); }
   set historyId(value) { this.addValueChange("historyId", value); }
 
   get clearOnInput() { return this.getProperty("clearOnInput"); }
   set clearOnInput(value) { this.addValueChange("clearOnInput", value); }
 
-  resetHistory() {
-    this._inputHistory = this.historyId ?
-      this.constructor.resetHistory(this.historyId) :
-      {items: [], max: 30, index: 0};
-  }
+  resetHistory() { this.inputHistory = {items: [], max: 50, index: 0}; }
 
   get inputHistory() {
     if (this._inputHistory) return this._inputHistory;
     return this._inputHistory = this.historyId ?
       this.constructor.getHistory(this.historyId) :
       {items: [], max: 30, index: 0};
+  }
+
+  set inputHistory(hist) {
+    this._inputHistory = hist;
+    this.historyId && this.constructor.setHistory(this.historyId, this._inputHistory);
   }
 
   get input() {
@@ -165,6 +170,11 @@ export default class InputLine extends Text {
       hist.items = items = items.slice(-hist.max);
     }
     hist.index = items.length - 1;
+    if (!this.allowDuplicatesInHistory) {
+      for (var i = hist.items.length-1; i--; )
+        if (hist.items[i] === input) {
+          hist.items.splice(i, 1); hist.index--; }
+    }
     this.historyId && this.constructor.addHistoryToLocalSorage(this.historyId, hist);
   }
 
@@ -205,7 +215,24 @@ export default class InputLine extends Text {
       {name: "accept input", exec: () => { this.acceptInput(); return true; }},
       {name: "show previous input from history", exec: () => { this.showHistItem('prev'); return true; }},
       {name: "show next input from history", exec: () => { this.showHistItem('next'); return true; }},
-      {name: "browse history", exec: () => { this.browseHistory(); return true; }}
+      {name: "browse history", exec: () => { this.browseHistory(); return true; }},
+      {
+        name: "remove items from history",
+        exec: async inputLine => {
+          var hist = inputLine.inputHistory,
+              items = hist.items.map((item, i) =>
+                ({isListItem: true, string: item, value: i})).reverse(),
+              {selected} = await inputLine.world().filterableListPrompt(
+                            "Choose items to delete:", items, {multiSelect: true});
+
+          arr.sort(selected).reverse().forEach(index => {
+            if (index < hist.index) hist.index--;
+            hist.items.splice(index, 1);
+          });
+          inputLine.inputHistory = hist;
+          return true;
+        }
+      }
     ].concat(super.commands);
   }
 
@@ -216,6 +243,7 @@ export default class InputLine extends Text {
       {keys: "Up|Ctrl-Up|Alt-P", command: "show previous input from history"},
       {keys: "Down|Ctrl-Down|Alt-N", command: "show next input from history"},
       {keys: "Alt-H", command: "browse history"},
+      {keys: "Alt-Shift-H", command: "remove items from history"}
     ]);
   }
 }
