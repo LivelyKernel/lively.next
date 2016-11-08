@@ -4,7 +4,8 @@ import { tree, arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
-import { Morph, Text, Window, TooltipViewer, config } from "./index.js";
+import { Morph, Text, Window, config } from "./index.js";
+import { TooltipViewer } from "./tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
 import {
