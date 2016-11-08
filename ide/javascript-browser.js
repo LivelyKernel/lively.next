@@ -2,6 +2,8 @@ import { Color, pt, Rectangle } from "lively.graphics";
 import { arr, promise, Path, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
 import { Window, morph, show, Label, HorizontalLayout } from "../index.js";
+import { DropDownList } from "../list.js";
+import InputLine from "../text/input-line.js";
 import { JavaScriptEditorPlugin } from "./js/editor-plugin.js";
 import config from "../config.js";
 import { HorizontalResizer } from "../resizers.js";
@@ -41,7 +43,8 @@ function commandsForBrowser(browser) {
           value: loc
         }))
 
-        var {selected: [choice]} = await browser.world().filterableListPrompt("Jumpt to location", items, {preselect: currentIdx})
+        var {selected: [choice]} = await browser.world().filterableListPrompt(
+                                    "Jumpt to location", items, {preselect: currentIdx});
         if (choice) {
           if (left.includes(choice)) {
             browser.state.history.left = left.slice(0, left.indexOf(choice) + 1);
@@ -378,8 +381,7 @@ export class Browser extends Window {
 
   build() {
 
-    var jsPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme),
-        style = {
+    var style = {
           // borderWidth: 1, borderColor: Color.gray,
           fontSize: 14, fontFamily: "Helvetica Neue, Arial, sans-serif"
         },
@@ -387,7 +389,7 @@ export class Browser extends Window {
           borderWidth: 1, borderColor: Color.gray,
           type: "text",
           ...config.codeEditor.defaultStyle,
-          plugins: [jsPlugin]
+          plugins: [new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)]
         },
 
         btnStyle = {
@@ -424,16 +426,6 @@ export class Browser extends Window {
           ...style,
           bounds,
           submorphs: [
-            {name: "browserCommands", bounds: browserCommandsBounds, fill: Color.white,
-             borderTop: {color: Color.gray, width: 1},
-             draggable: false, layout: new HorizontalLayout({spacing: 2, autoResize: false}),
-             submorphs: [
-              {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
-              {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
-              {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
-              {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
-              {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
-              ]},
             {name: "packageList", bounds: packageListBounds, type: "list", ...style,
              borderRight: {color: Color.gray, width: 1},
              borderBottom: {color: Color.gray, width: 1},
@@ -454,7 +446,17 @@ export class Browser extends Window {
                {...btnStyle, name: "addModuleButton", label: Icon.makeLabel("plus"), tooltip: "add module"},
                {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"}]},
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
-            {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => { this.save(); }}
+            {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => { this.save(); }},
+            {name: "browserCommands", bounds: browserCommandsBounds, fill: Color.white,
+             borderTop: {color: Color.gray, width: 1},
+             draggable: false, layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+             submorphs: [
+               {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
+               {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
+               {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
+               {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
+               {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
+               this.ensureEvalBackEndList()]}
           ]
         });
 
@@ -478,19 +480,50 @@ export class Browser extends Window {
     container.get("hresizer").addFixed(container.get("moduleCommands"));
     container.get("hresizer").addScalingBelow(container.get("sourceEditor"));
 
-    // FIXME? how to specify that directly??
-    jsPlugin.evalEnvironment = {
-      get targetModule() {
-        var browser = jsPlugin.textMorph.getWindow();
-        if (!browser.selectedModule) throw new Error("Browser has no module selected");
-        return browser.selectedModule.name;
-      },
-      context: jsPlugin.textMorph,
-      get format() {
-        return lively.modules.module(this.targetModule).format() || "global";
-      }
-    }
     return container;
+  }
+
+  get jsPlugin() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
+
+  ensureEvalBackEndList() {
+    var list = this.getSubmorphNamed("eval backend list");
+    if (!list) {
+      list = new DropDownList({
+        fontSize: 10,
+        name: "eval backend list",
+        extent: pt(120, 20)
+      });
+      connect(list, 'selection', this, 'interactivelyChangeEvalBackend');
+      // for updating the list items when list is opened:
+      connect(list, 'activated', this, 'ensureEvalBackEndList');
+    }
+    if (!this.targetMorph) return list;
+
+    var currentBackend = this.jsPlugin.evalEnvironment.remote || "local",
+        backends = arr.uniq(
+                  arr.compact([
+                    "new backend...",
+                    "local", currentBackend,
+                    ...InputLine.getHistory("js-eval-backend-history").items]));
+    noUpdate({sourceObj: list, sourceAttribute: "selection"}, () => {
+      list.items = backends;
+      list.selection = currentBackend;
+    });
+    return list;
+  }
+
+  async interactivelyChangeEvalBackend(choice) {
+    var oldRemote = this.jsPlugin.evalEnvironment.remote || "local";
+    if (!choice) choice = "local";
+    if (choice === "new backend...") choice = undefined;
+    await this.get("sourceEditor").execCommand("change eval backend", {backend: choice});
+    var newRemote = this.jsPlugin.evalEnvironment.remote || "local";
+    this.ensureEvalBackEndList();
+    this.focus();
+    if (newRemote !== oldRemote) {
+      this.reset();
+      this.reloadPackages();
+    }
   }
 
   relayout() {
@@ -551,7 +584,11 @@ export class Browser extends Window {
   }
 
   async systemInterface() {
-    return (await System.import("lively-system-interface")).localInterface;
+    var livelySystem = await System.import("lively-system-interface"),
+        remote = this.jsPlugin.evalEnvironment.remote;
+    return !remote || remote === "local" ?
+      livelySystem.localInterface :
+      livelySystem.serverInterfaceFor(remote);
   }
 
   get selectedModule() {
@@ -597,6 +634,32 @@ export class Browser extends Window {
     return p;
   }
 
+  async onPackageSelected(p) {
+    if (!this.state.packageUpdateInProgress) {
+      var deferred = promise.deferred();
+      this.state.packageUpdateInProgress = deferred.promise;
+    }
+
+    try {
+      if (!p) {
+        this.get("moduleList").items = [];
+        this.get("sourceEditor").textString = "";
+        this.title = "browser";
+        return;
+      }
+
+      this.title = "browser – " + p.name;
+
+      this.get("packageList").scrollSelectionIntoView();
+      this.get("moduleList").selection = null;
+
+      await this.updateModuleList(p);
+    } finally {
+      this.state.packageUpdateInProgress = null;
+      deferred && deferred.resolve(p);
+    }
+  }
+
   async selectModuleNamed(mName) {
     var list = this.get("moduleList"),
         m = list.selection = list.values.find(({nameInPackage, name}) =>
@@ -624,32 +687,6 @@ export class Browser extends Window {
     return this.selectedModule;
   }
 
-  async onPackageSelected(p) {
-    if (!this.state.packageUpdateInProgress) {
-      var deferred = promise.deferred();
-      this.state.packageUpdateInProgress = deferred.promise;
-    }
-
-    try {
-      if (!p) {
-        this.get("moduleList").items = [];
-        this.get("sourceEditor").textString = "";
-        this.title = "browser";
-        return;
-      }
-
-      this.title = "browser – " + p.name;
-
-      this.get("packageList").scrollSelectionIntoView();
-      this.get("moduleList").selection = null;
-
-      await this.updateModuleList(p);
-    } finally {
-      this.state.packageUpdateInProgress = null;
-      deferred && deferred.resolve(p);
-    }
-  }
-
   async onModuleSelected(m) {
 
     var pack = this.get("packageList").selection;
@@ -670,9 +707,8 @@ export class Browser extends Window {
 
       if (!m.isLoaded && m.name.endsWith("js")) {
         var err;
-        try {
-          await System.import(m.name);
-        } catch(e) { err = e; }
+        try { system.importModule(m.name); }
+        catch(e) { err = e; }
 
         if (err) this.world().logError(err);
 
@@ -692,6 +728,14 @@ export class Browser extends Window {
           return;
         }
       }
+
+      var format = (await system.moduleFormat(m.name)) || "esm";
+
+      Object.assign(this.jsPlugin.evalEnvironment, {
+        targetModule: m.name,
+        context: this.get("sourceEditor"),
+        format
+      });
 
       this.get("moduleList").scrollSelectionIntoView();
       this.title = "browser – " + pack.name + "/" + m.nameInPackage;
