@@ -1,11 +1,19 @@
-/*global System*/
-
 import { pt, Rectangle } from "lively.graphics";
 import { chain, arr, obj, string } from "lively.lang";
 import { show } from "../../index.js";
 import { Range } from "../../text/range.js";
 import { eqPosition, lessPosition } from "../../text/position.js";
 import Inspector from "./inspector.js";
+
+function getEvalEnv(morph) {
+  var plugin = morph.pluginFind(p => p.isJSEditorPlugin);
+  return plugin ? plugin.evalEnvironment : null
+}
+
+function setEvalEnv(morph, newEnv) {
+  var plugin = morph.pluginFind(p => p.isJSEditorPlugin);
+  if (plugin) Object.assign(plugin.evalEnvironment, newEnv);
+}
 
 function buildEvalOpts(morph, additionalOpts) {
   // FIXME, also in text/commands
@@ -15,7 +23,9 @@ function buildEvalOpts(morph, additionalOpts) {
       // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
       sourceURL = targetModule + "_doit_" + Date.now(),
       format = format || "esm";
-  return {System, targetModule, format, context, sourceURL, remote};
+  return remote ?
+    {targetModule, format, sourceURL, remote} : 
+    {System, targetModule, format, context, sourceURL}
 }
 
 function doEval(
@@ -244,6 +254,45 @@ export var jsEditorCommands = [
   },
 
   {
+    name: "change doitContext",
+    exec: async text => {
+      var [selected] = await text.world().execCommand("select morph", {
+        prompt: "select morph for doitContext",
+        justReturn: true,
+        prependItems: ["reset"],
+        filterFn: m => !m.isUsedAsEpiMorph()
+      });
+      if (selected) {
+        var reset = selected === "reset";
+        text.doitContext = reset ? null : selected;
+        text.setStatusMessage(reset ? "doitContext is now\n" + selected : "doitContext reset")
+      }
+      return true;
+    }
+  },
+
+  {
+    name: "change eval backend",
+    exec: async (text, opts = {backend: undefined}) => {
+      var {backend} = opts;
+      if (backend === undefined) {
+        backend = await text.world().prompt(
+          "choose eval backend", {historyId: "js-workspace-eval-backend"});
+        if (!backend) {
+          text.setStatusMessage("Canceled");
+          return true;
+        }
+      }
+      if (backend === "local") backend = null;
+      setEvalEnv(text, {remote: backend})
+      text.setStatusMessage(`Eval backend is now ${backend || "local"}`);
+      return true;
+    }
+  },
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  {
     name: "toggle comment",
     exec: function(morph) {
 
@@ -374,6 +423,7 @@ export var jsEditorCommands = [
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export var jsIdeCommands = [
+
   {
     name: "[javascript] list errors and warnings",
     exec: async text => {
@@ -394,6 +444,7 @@ export var jsIdeCommands = [
       return true;
     }
   }
+
 ];
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -402,7 +453,6 @@ var openPairs = {
   "{": "}",
   "[": "]",
   "(": ")",
-  "<": ">",
   "\"": "\"",
   "'": "'",
   "`": "`",
@@ -412,7 +462,6 @@ var closePairs = {
   "}": "{",
   "]": "[",
   ")": "(",
-  ">": "<",
    "\"": "\"",
   "'": "'",
   "`": "`",
@@ -727,27 +776,10 @@ export var astEditorCommands = [
 
     return true;
   }
-},
-
-{
-  name: "change doitContext",
-  exec: async text => {
-    var [selected] = await $$world.execCommand("select morph", {
-      prompt: "select morph for doitContext",
-      justReturn: true,
-      prependItems: ["reset"],
-      filterFn: m => !m.isUsedAsEpiMorph()
-    });
-    if (selected) {
-      var reset = selected === "reset";
-      text.doitContext = reset ? null : selected;
-      text.setStatusMessage(reset ? "doitContext is now\n" + selected : "doitContext reset")
-    }
-    return true;
-  }
 }
+
 ];
 
+lively.modules.module("lively.morphic/ide/js/editor-plugin.js")
+  .reload({reloadDeps: false, resetEnv: false});
 
-
-lively.modules.module("lively.morphic/ide/js/editor-plugin.js").reload({reloadDeps: false, resetEnv: false})
