@@ -470,12 +470,14 @@ export class LayoutColumn extends LayoutAxis {
      this.items.forEach(c => {
         c.padding.x = left;
      });
+     this.layout.apply();
   }
 
   set paddingRight(right) {
      this.items.forEach(c => {
         c.padding.width = right;
      });
+     this.layout.apply();
   }
   
   get before() { return this.origin.left && new LayoutColumn(this.origin.left); }
@@ -578,13 +580,15 @@ export class LayoutRow extends LayoutAxis {
   set paddingTop(top) {
     this.items.forEach(c => {
        c.padding.y = top;
-    })
+    });
+    this.layout.apply();
   }
 
   set paddingBottom(bottom) {
     this.items.forEach(c => {
        c.padding.height = bottom;
-    })
+    });
+    this.layout.apply();
   }
   
   get before() { return this.origin.top && new LayoutRow(this.origin.top) }
