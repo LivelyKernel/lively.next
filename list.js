@@ -1,5 +1,6 @@
-import { Morph, Text, show, GridLayout } from "./index.js"
+import { Morph, Text, show, GridLayout, Button } from "./index.js"
 import { Label } from "./text/label.js"
+import { Icon } from "./icons.js"
 import { pt, Color, Rectangle, rect } from "lively.graphics";
 import { arr, fun, obj } from "lively.lang";
 import { signal } from "lively.bindings";
@@ -701,6 +702,48 @@ export class FilterableList extends Morph {
       ...listCommands.map(cmd =>
         ({...cmd, exec: (morph, opts, count) => cmd.exec(this.get("list"), opts, count)}))
     ]);
+  }
+
+}
+
+
+export class DropDownList extends Button {
+
+  // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
+
+  constructor(props = {}) {
+    super({
+      borderRadius: 2,
+      ...obj.dissoc(props, ["items", "selection"])
+    });
+    this.list = new List({items: props.items || [], border: this.border});
+    connect(this.list, "selection", this, "selection");
+    connect(this, "fire", this, "toggleList");
+    if (props.selection) this.selection = props.selection;
+  }
+
+  isListVisible() { return this.list.owner === this; }
+
+  get selection() { return this.getProperty("selection"); }
+  set selection(value) {
+    this.addValueChange("selection", value);
+    if (!value) {
+      this.list.selection = null;
+      this.label = "";
+    } else {
+      var item = this.list.find(value);
+      this.label = item ?
+        [[item.string || String(item), {}], [" ", {}], Icon.textAttribute("caret-down")] :
+        "selection not found in list";
+      this.list.selection = value;
+    }
+  }
+
+  toggleList() {
+    if (this.isListVisible()) { this.list.remove(); return; }
+    this.addMorph(this.list);
+    this.list.topLeft = this.innerBounds().bottomLeft();
+    this.list.extent = pt(this.width, 100);
   }
 
 }
