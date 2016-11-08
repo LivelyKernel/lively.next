@@ -17,7 +17,7 @@ export default class Window extends Morph {
       ...obj.dissoc(props, ["title", "targetMorph"]),
     });
 
-    this.submorphs = this.controls(this.resizable)
+    this.submorphs = this.controls(this.resizable);
     
     if (props.targetMorph) this.targetMorph = props.targetMorph;
 
@@ -30,8 +30,8 @@ export default class Window extends Morph {
     
     this.title = props.title || this.name || "";
     this.resetPropertyCache();
-    this.positionResizer();
-    connect(this, "extent", this, "positionResizer");
+    this.relayoutControls();
+    connect(this, "extent", this, "relayoutControls");
   }
 
   get isWindow() { return true }
@@ -55,7 +55,7 @@ export default class Window extends Morph {
     this.propertyCache = {nonMinizedBounds: null, nonMaximizedBounds: null, minimizedBounds: null};
   }
 
-  positionResizer() {
+  relayoutControls() {
     this.resizer().bottomRight = this.innerBounds().bottomRight();
   }
 
