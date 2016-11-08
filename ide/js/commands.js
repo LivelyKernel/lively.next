@@ -13,6 +13,7 @@ function getEvalEnv(morph) {
 function setEvalEnv(morph, newEnv) {
   var plugin = morph.pluginFind(p => p.isJSEditorPlugin);
   if (plugin) Object.assign(plugin.evalEnvironment, newEnv);
+  return plugin.evalEnvironment;
 }
 
 function buildEvalOpts(morph, additionalOpts) {
@@ -284,9 +285,8 @@ export var jsEditorCommands = [
         }
       }
       if (backend === "local") backend = null;
-      setEvalEnv(text, {remote: backend})
       text.setStatusMessage(`Eval backend is now ${backend || "local"}`);
-      return true;
+      return setEvalEnv(text, {remote: backend});
     }
   },
 

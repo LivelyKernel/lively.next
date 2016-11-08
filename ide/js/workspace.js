@@ -21,7 +21,7 @@ export default class Workspace extends Window {
       extent: pt(400,300),
       ...obj.dissoc(props, ["content"])
     });
-    this.ensureEvalBackEndList();
+    this.addMorph(this.ensureEvalBackEndList());
     var ed = this.targetMorph;
     this.jsPlugin.evalEnvironment = {
       targetModule: "lively://lively.next-workspace/" + ed.id,
@@ -45,7 +45,11 @@ export default class Workspace extends Window {
   ensureEvalBackEndList() {
     var list = this.getSubmorphNamed("eval backend list");
     if (!list) {
-      list = this.addMorph(new DropDownList({name: "eval backend list", extent: pt(120, 20)}));
+      list = new DropDownList({
+        fontSize: 10,
+        name: "eval backend list",
+        extent: pt(120, 20)
+      });
       connect(list, 'selection', this, 'interactivelyChangeEvalBackend');
       // for updating the list items when list is opened:
       connect(list, 'activated', this, 'ensureEvalBackEndList');
