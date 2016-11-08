@@ -714,9 +714,16 @@ export class DropDownList extends Button {
   constructor(props = {}) {
     super({
       borderRadius: 2,
+      padding: Rectangle.inset(3,2),
       ...obj.dissoc(props, ["items", "selection"])
     });
-    this.list = new List({items: props.items || [], border: this.border});
+    this.list = new List({
+      items: props.items || [],
+      fontSize: this.fontSize,
+      fontFamily: this.fontFamily,
+      fontColor: this.fontColor,
+      border: this.border
+    });
     connect(this, "fire", this, "toggleList");
     if (props.selection) this.selection = props.selection;
   }
