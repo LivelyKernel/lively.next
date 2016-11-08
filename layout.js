@@ -340,7 +340,6 @@ export class CellGroup {
   }
   
   disconnect(cell, newGroup=null) {
-    // remove partial row and col ?
     cell.group = newGroup || new CellGroup({morph: null, layout: this.layout, cell});
     arr.remove(this.cells, cell);
     if (this.cells.length < 1 && this.layout) this.layout.removeGroup(this);
@@ -551,6 +550,7 @@ export class LayoutColumn extends LayoutAxis {
       if (c.left) c.left.right = c.right;
       if (c.right) c.right.left = c.left;
       c.group.disconnect(c);
+      this.layout.removeGroup(c.group);
     });
     a.equalizeDynamicAxis();
   }
@@ -658,6 +658,7 @@ export class LayoutRow extends LayoutAxis {
       if (c.top) c.top.bottom = c.bottom;
       if (c.bottom) c.bottom.top = c.top;
       c.group.disconnect(c);
+      this.layout.removeGroup(c.group);
     });
     a.equalizeDynamicAxis();
   }
