@@ -4,6 +4,7 @@ import { Morph, Button, List, Text } from "./index.js";
 import { Icon } from "./icons.js";
 import { Tooltip } from "./tooltips.js";
 import { signal, connect } from "lively.bindings";
+import { Tooltip } from "./tooltips.js";
 import config from "./config.js";
 
 export class ValueScrubber extends Text {
@@ -12,7 +13,7 @@ export class ValueScrubber extends Text {
       this.scrubbedValue = props.value || 0;
       super({
         fill: Color.transparent, draggable: true,
-        textString: this.scrubbedValue.toString(),
+        textString: obj.toString(this.scrubbedValue),
         ...props
       });
   }
@@ -42,6 +43,10 @@ export class ValueScrubber extends Text {
             scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
       this.scrubbedValue += Math.round(x * scaleFactor);
       this.factorLabel.softRemove();
+  }
+
+  set value(v) {
+      this.scrubbedValue = obj.toString(v);
   }
 
 }
