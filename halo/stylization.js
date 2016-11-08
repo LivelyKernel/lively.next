@@ -76,7 +76,7 @@ class StyleHalo extends Morph {
    isOnMorphBorder(evt) {
       if (!evt) return false;
       const {x,y} = evt.positionIn(this.getSubmorphNamed("borderHalo")),
-            brHalo = this.getSubmorphNamed("borderRadiusHalo"),
+            brHalo = this.getSubmorphNamed("borderRadiusHalo") || {active: false},
             br = this.target.borderRadius,
             {width, height} = this.target.globalBounds();
             
@@ -167,7 +167,7 @@ class StyleHalo extends Morph {
              var r = halo.target.borderRadius;
              halo.update(evt);
              r -= evt.state.dragDelta.x;
-             r = Math.min(halo.target.width / 2, Math.max(r, 0));
+             r = Math.round(Math.min(halo.target.width / 2, Math.max(r, 0)));
              halo.target.borderRadius = r;
              this.position = getPos();
              this.active = true;
@@ -303,9 +303,7 @@ class StyleHalo extends Morph {
 
 export class EllipseStyleHalo extends StyleHalo {
 
-    borderHalo() {
-       // no handle for chaning the border radius, but different
-       // circular shape of the border
+    borderRadiusHalo() {
        return undefined;
     }
 
