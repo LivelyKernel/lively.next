@@ -60,7 +60,13 @@ export class HTMLMorph extends Morph {
   get html() { return this.domNode.innerHTML; }
   set html(value) { this.domNode.innerHTML = value; }
 
-  get domNode() { return this._domNode || (this._domNode = this.document.createElement("div")); }
+  get domNode() {
+    if (!this._domNode) {
+      this._domNode = this.document.createElement("div")
+      this._domNode.setAttribute("style", "position: absolute; width: 100%; height: 100%;");
+    }
+    return this._domNode
+  }
   set domNode(node) { return this._domNode = node; }
 
   get document() { return this.env.renderer.domEnvironment.document; }
