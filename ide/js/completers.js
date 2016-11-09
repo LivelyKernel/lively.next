@@ -8,6 +8,7 @@ function buildEvalOpts(morph, additionalOpts) {
       // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
       sourceURL = targetModule + "_doit_" + Date.now(),
       format = format || "esm";
+  if (remote === "local") remote = null;
   return remote ?
     {targetModule, format, sourceURL, remote} : 
     {System, targetModule, format, context, sourceURL}

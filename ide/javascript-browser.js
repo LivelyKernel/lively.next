@@ -200,6 +200,15 @@ function commandsForBrowser(browser) {
     },
 
     {
+      name: "change eval backend via dropdown list",
+      exec: browser => {
+        var list = browser.ensureEvalBackEndList();
+        list.toggleList(); list.list.focus();
+        return true;
+      }
+    },
+
+    {
       name: "run tests at point",
       exec: async (browser) => {
         var m = browser.selectedModule;
@@ -285,9 +294,13 @@ function commandsForBrowser(browser) {
       runner = await world.execCommand("open test runner");
     if (runner.minimized)
       runner.toggleMinimize();
+
+    runner = runner.getWindow().targetMorph;
+    runner.backend = browser.backend;
+
     return spec ?
-      runner.targetMorph[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
-      runner.targetMorph.runTestFile(moduleName);
+      runner[spec.type === "suite" ? "runSuite" : "runTest"](spec.fullTitle):
+      runner.runTestFile(moduleName);
   }
 
   async function extractTestDescriptors(source, positionAsIndex) {
@@ -340,7 +353,11 @@ function commandsForBrowser(browser) {
 
 export class Browser extends Window {
 
-  static async browse(packageName, moduleName, textPosition = {row: 0, column: 0}, browserOrProps = {}) {
+  static async browse(
+    packageName, moduleName,
+    textPosition = {row: 0, column: 0},
+    browserOrProps = {}, optBackend
+  ) {
     var browser = browserOrProps instanceof Browser ? browserOrProps : new this(browserOrProps);
     if (!browser.world())
       browser.openInWorldNearHand();
@@ -352,6 +369,7 @@ export class Browser extends Window {
       text.cursorPosition = textPosition;
       text.centerRow(textPosition.row);
     }
+    if (optBackend) browser.backend = optBackend;
     return browser;
   }
 
@@ -499,7 +517,7 @@ export class Browser extends Window {
     }
     if (!this.targetMorph) return list;
 
-    var currentBackend = this.jsPlugin.evalEnvironment.remote || "local",
+    var currentBackend = this.backend,
         backends = arr.uniq(
                   arr.compact([
                     "new backend...",
@@ -513,11 +531,11 @@ export class Browser extends Window {
   }
 
   async interactivelyChangeEvalBackend(choice) {
-    var oldRemote = this.jsPlugin.evalEnvironment.remote || "local";
+    var oldRemote = this.backend;
     if (!choice) choice = "local";
     if (choice === "new backend...") choice = undefined;
     await this.get("sourceEditor").execCommand("change eval backend", {backend: choice});
-    var newRemote = this.jsPlugin.evalEnvironment.remote || "local";
+    var newRemote = this.backend;
     this.ensureEvalBackEndList();
     this.focus();
     if (newRemote !== oldRemote) {
@@ -570,6 +588,7 @@ export class Browser extends Window {
       {keys: "Alt-P", command: "browser history backward"},
       {keys: "Alt-N", command: "browser history forward"},
       {keys: "Alt-H", command: "browser history browse"},
+      {keys: "Meta-Shift-L b a c k e n d", command: "change eval backend via dropdown list"}
     ].concat(super.keybindings);
   }
 
@@ -578,14 +597,22 @@ export class Browser extends Window {
   reset() {
     connect(this.get("packageList"), "selection", this, "onPackageSelected");
     connect(this.get("moduleList"), 'selection', this, 'onModuleSelected');
+    this.get("moduleList").selection = null;
+    this.get("packageList").selection = null;
     this.get("packageList").items = [];
     this.get("moduleList").items = [];
     this.get("sourceEditor").textString = ""
   }
 
+  get backend() { return this.jsPlugin.evalEnvironment.remote || "local"; }
+  set backend(remote) {
+    this.jsPlugin.evalEnvironment.remote = remote;
+    this.ensureEvalBackEndList();
+  }
+
   async systemInterface() {
     var livelySystem = await System.import("lively-system-interface"),
-        remote = this.jsPlugin.evalEnvironment.remote;
+        remote = this.backend;
     return !remote || remote === "local" ?
       livelySystem.localInterface :
       livelySystem.serverInterfaceFor(remote);
@@ -619,6 +646,7 @@ export class Browser extends Window {
   async onLoad() {
     this.reset();
     this.reloadPackages();
+    this.ensureEvalBackEndList();
   }
 
   async reloadPackages() {
