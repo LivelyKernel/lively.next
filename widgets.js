@@ -66,6 +66,7 @@ export class ValueScrubber extends Text {
   }
 
   set value(v) {
+      v = Math.max(this.min, Math.min(this.max, v));
       this.scrubbedValue = v;
       this.textString = obj.safeToString(v) || "";
       if (this.unit) this.textString += " " + this.unit;
