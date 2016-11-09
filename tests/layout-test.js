@@ -477,6 +477,21 @@ describe("layout", () => {
       expect(m2.width).closeTo(150, 0.0001);
       expect(m.layout.col(3).adjustedProportion).equals(0);
       expect(m.layout.col(0).adjustedProportion).closeTo(1, 0.0001);
+      m.width = 400;
+      m.layout.col(3).fixed = 100;
+      m.layout.col(2).fixed = 100;
+      m.layout.col(1).fixed = 100;
+      m.layout.apply();
+      expect(m.layout.col(0).dynamicLength).equals(100);
+      m.layout.col(0).adjustStretch(300);
+      m.layout.apply();
+      expect(m.layout.col(0).dynamicLength).equals(400);
+      expect(m.layout.col(0).proportion).equals(4/7);
+      expect(m.layout.col(0).length).equals(400);
+      expect(m.width).equals(700);
+      expect(m2.width).closeTo(400, 0.001);
+      expect(m3.width).closeTo(100, 0.0001);
+      expect(m1.width).closeTo(100, 0.0001);
     })
 
     it("can add rows and columns", () => {
