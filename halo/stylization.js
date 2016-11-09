@@ -55,6 +55,8 @@ class StyleHalo extends Morph {
 
    remove() {
       this.layoutHalo && this.layoutHalo.remove();
+      this.borderStyler && this.borderStyler.remove();
+      this.picker && this.picker.remove();
       super.remove();
    }
 
@@ -113,14 +115,13 @@ class StyleHalo extends Morph {
          },
          onMouseDown(evt) {
             if (this.active) {
-                const bs = this.borderStyler || new BorderStyler(target);
+                const bs = halo.borderStyler || new BorderStyler(target);
                 bs.openInWorldNearHand();
-                bs.adjustOrigin(evt.positionIn(bs));
                 bs.scale = 0; bs.opacity = 0;
                 bs.animate({opacity: 1, scale: 1, duration: 200});
-                this.borderStyler = bs;
+                halo.borderStyler = bs;
             } else {
-                const p = this.picker || new ColorPicker({
+                const p = halo.picker || new ColorPicker({
                     extent: pt(400,310), 
                     color: target.fill})
                 p.openInWorldNearHand();
@@ -128,7 +129,7 @@ class StyleHalo extends Morph {
                 p.scale = 0; p.opacity = 0;
                 p.animate({opacity: 1, scale: 1, duration: 200});
                 connect(p, "color", target, "fill");
-                this.picker = p;
+                halo.picker = p;
             }
          },
       }
@@ -315,15 +316,15 @@ class ImageStyleHalo extends StyleHalo {
 
 }
 
-class TextStyleHalo extends StyleHalo {
-
-    // basically just displays the rich text styling mode all the time
-
-}
-
 class SvgStyleHalo extends StyleHalo {
 
     // provides a more advances border styler, that besides border stylizer
     // also provides the abilitiy to add/remove anchors, and modify them
+
+}
+
+class TextStyleHalo extends StyleHalo {
+
+    // basically just displays the rich text styling mode all the time
 
 }

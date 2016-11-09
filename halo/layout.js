@@ -583,6 +583,10 @@ export class GridLayoutHalo extends Morph {
   }
 }
 
+export class TilingLayoutHalo extends Morph {
+
+}
+
 export class FlexLayoutHalo extends Morph {
 
     constructor(container, pointerId) {

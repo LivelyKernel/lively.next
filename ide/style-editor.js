@@ -1,11 +1,120 @@
 import { Window, GridLayout, FillLayout, Ellipse, Text,
          VerticalLayout, HorizontalLayout, Image, 
          TilingLayout, Morph, morph, Menu } from "../index.js";
-import { Rectangle, Color, LinearGradient, pt, Point } from "lively.graphics";
+import { Rectangle, Color, LinearGradient, pt, Point, rect } from "lively.graphics";
 import { obj, num, arr } from "lively.lang";
 import { signal, connect } from "lively.bindings";
+import { ValueScrubber } from "../widgets.js";
+import { Icon } from "../icons.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
+
+/*TODO:  Move this to a more appropriate location */
+
+export class Slider extends Morph {
+
+}
+
+export class RotateSlider extends Ellipse {
+
+}
+
+export class DropDownSelector extends Morph {
+
+     constructor({target, property, values}) {
+        this.values = values;
+        this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
+                                     opacity: 0, fontSize: 14, 
+                                     fontColor: Color.gray.darker()
+                              });
+        super({border: {
+                  radius: 3, 
+                  color: Color.gray.darker(), 
+                  style: "solid"},
+                target, property,
+                layout: new HorizontalLayout({spacing: 4}),
+                submorphs: [{
+                    type: "text", name: "currentValue", 
+                    textString: target[property], 
+                    padding: 0, readOnly: true,
+                  }, this.dropDownLabel]
+               });
+     }
+
+     get commands() {
+        return this.values.map(v => {return {name: v, exec: (self, v) => { this.value = v }}});
+     }
+
+     set value(v) {
+        this.target[this.property] = v;
+        this.get("currentValue").textString = obj.safeToString(v);
+     }
+
+     onHoverIn() {
+        this.dropDownLabel.animate({opacity: 1, duration: 300});
+     }
+
+     onHoverOut() {
+        this.dropDownLabel.animate({opacity: 0, duration: 200});
+     }
+ 
+     onMouseDown(evt) {
+         this.menu = this.world().openWorldMenu(this.values.map(v => 
+           { return {command: v, target: this, args: v}}));
+         this.menu.globalPosition = this.globalPosition;
+     }
+
+}
+
+export class PropertyInspector extends Morph {
+
+   constructor(props) {
+       const btnStyle = {
+          type: "button",
+          border: {radius: 3, style: "solid", color: Color.gray}
+       }, {target, property} = props;
+       super({
+           fill: Color.transparent,
+           extent:pt(55, 20), 
+           submorphs: [new ValueScrubber({
+                        name: "value", 
+                        borderRadius: 3, fill: Color.white,
+                        padding: 3, fontSize: 13,
+                        borderColor: Color.gray.darker(), 
+                        value: target[property], ...props}),
+                        {name: "up", ...btnStyle, label: Icon.makeLabel(
+                                  "sort-asc", {padding: rect(2,0,0,0)})},
+                        {name: "down", ...btnStyle, label: Icon.makeLabel(
+                                  "sort-desc", {padding: rect(0,0,0,2)})}]
+       });
+       this.target = target;
+       this.property = property;
+       this.initLayout();
+       connect(this.get("value"), "scrub", this.target, this.property);
+       connect(this.get("up"), "fire", this, "increment");
+       connect(this.get("down"), "fire", this, "decrement");
+   }
+
+   update() {
+       this.get("value").value = this.target[this.property];
+   }
+
+   increment() { this.target[this.property] += 1; this.update() }
+
+   decrement() { this.target[this.property] -= 1; this.update() }
+
+   initLayout() {
+      const l = this.layout = new GridLayout({
+                      grid:[["value", "up"],
+                            ["value", "down"]]
+                    });
+      l.col(1).paddingLeft = 5;
+      l.col(1).paddingRight = 5;
+      l.col(1).fixed = 25;
+      return l;
+   }
+
+}
 
 /* TODO: All of the color harmonies as well as the hsv based color storing should
          be moved into lively.graphics */
@@ -90,7 +199,7 @@ export class ColorPicker extends Window {
       borderWidth: 0,
       resizable: false,
       targetMorph: this.colorPalette(),
-      commands: this.harmonyCommands,
+      isHaloItem: true,
       ...props
     });
     this.titleLabel().fontColor = Color.gray;
@@ -108,7 +217,7 @@ export class ColorPicker extends Window {
       this._harmony = h;
    }
 
-  get harmonyCommands() {
+  get commands() {
     return [Complementary, Triadic, Tetradic, Quadratic,  Analogous, Neutral].map(harmony => {
        return {name: harmony.name,
                exec: colorPicker => { 
@@ -531,4 +640,122 @@ export class ColorPicker extends Window {
      });
      
   }
+}
+
+// TODO: add Color palette as first instance to selecting a color
+
+export class ColorPickerField extends Morph {
+
+   constructor({property, target}) {
+      super({
+         property, target,
+         extent: pt(20,20),
+         borderRadius: 5, clipMode: "hidden",
+         borderWidth: 1, borderColor: Color.gray.darker(),
+      })
+      const topRight = this.innerBounds().topRight(),
+            bottomLeft = this.innerBounds().bottomLeft();
+      
+      this.submorphs = [{
+             name: "topLeft",
+             extent: pt(20,20)
+         }, {
+             name: "bottomRight",
+             extent: pt(40,20),
+             origin: pt(40,0), topRight, 
+             rotation: num.toRadians(-45)
+      }];
+
+      this.update();
+      connect(this.target, "change", this, "update");
+   }
+
+   update() {
+      this.get("topLeft").fill = this.target[this.property];
+      this.get("bottomRight").fill = this.target[this.property].withA(1);
+   }
+
+   onMouseDown(evt) {
+      const p = this.picker || new ColorPicker({
+                    extent: pt(400,310), 
+                    color: this.target[this.property]})
+      p.openInWorldNearHand();
+      p.adjustOrigin(evt.positionIn(p));
+      p.scale = 0; p.opacity = 0;
+      p.animate({opacity: 1, scale: 1, duration: 200});
+      connect(p, "color", this.target, this.property);
+      this.picker = p;
+   }
+
+}
+
+export class BorderStyler extends Morph {
+
+  constructor(target) {
+    super({
+      name: "BorderStyler",
+      dropShadow: true,
+      draggable: true, 
+      extent: pt(150,300),
+      fill: Color.gray,
+      borderRadius: 7,
+      borderColor: Color.gray.darker(),
+      layout: new VerticalLayout({spacing: 5}),
+      submorphs: [
+         this.borderControl(target),
+         //this.shadowControl(),
+         this.clipControl(target)
+      ]
+    });
+  }
+
+  get isHaloItem() { return true }
+
+  createControl(name, controlElement) {
+     // TODO: make the control element collapsable
+     return {
+      fill: Color.transparent, 
+      layout: new VerticalLayout(),
+      submorphs: [
+        {type: "text", textString: name, 
+         fontColor: Color.black, padding: rect(5,0,0,0), 
+         fill: Color.transparent},
+        controlElement
+     ]}
+  }
+
+  clipControl(target) {
+     return this.createControl("Clip Mode", 
+     
+     {layout: new HorizontalLayout({spacing: 5}),
+      fill: Color.transparent,
+      submorphs: [
+       new DropDownSelector({
+           target, property: "clipMode", 
+           values: ["visible", "hidden", "scroll"]
+     })]});
+  }
+
+  borderControl(target) {
+     return this.createControl("Border", {
+             layout: new HorizontalLayout({spacing: 5, compensateOrigin: true}),
+             fill: Color.transparent, draggable: false, 
+             submorphs: [new DropDownSelector({target, property: "borderStyle", values: ["solid", "dashed"]}), 
+                         new ColorPickerField({target, property: "borderColor"}),
+                         new PropertyInspector({min: 0, target, unit: "pt", property: "borderWidth"})]
+              })
+  }
+
+  shadowControl() {
+     return this.createControl("Shadow", {
+        // position (angle), distance, blur, color, opacity?
+        layout: new GridLayout({grid: [["distanceSlider"],
+                                       ["blurSlider"],
+                                       ["angleSlider", "angleControl", "colorPicker"]]}),
+        submorphs: [new Slider(), new Slider(), 
+                    new RotateSlider(), new PropertyInspector(),
+                    new ColorPickerField()]
+     })
+  }
+  
 }
