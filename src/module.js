@@ -57,6 +57,7 @@ class ModuleInterface {
     this._source = null;
     this._ast = null;
     this._scope = null;
+    this._package = null;
     this._observersOfTopLevelState = [];
 
     this._evaluationsInProgress = 0;
@@ -129,6 +130,7 @@ class ModuleInterface {
     this._source = null;
     this._ast = null;
     this._scope = null;
+    this._package = null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -399,7 +401,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   package() {
-    return Package.forModule(this.System, this);
+    return this._package || (this._package = Package.forModule(this.System, this));
   }
 
   pathInPackage() {
@@ -537,7 +539,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async search(searchStr, options) {
-    options = Object.assign({excludedModules: []}, options);
+    options = {excludedModules: [], ...options};
 
     if (options.excludedModules.some(ex => {
         if (typeof ex === "string") return ex === this.id;
