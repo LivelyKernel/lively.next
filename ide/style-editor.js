@@ -21,8 +21,8 @@ export class RotateSlider extends Ellipse {
 
 export class DropDownSelector extends Morph {
 
-     constructor({target, property, values}) {
-        this.values = values;
+     constructor(props) {
+        const {target, property} = props;
         this.dropDownLabel = Icon.makeLabel("chevron-circle-down", {
                                      opacity: 0, fontSize: 14, 
                                      fontColor: Color.gray.darker()
@@ -31,8 +31,8 @@ export class DropDownSelector extends Morph {
                   radius: 3, 
                   color: Color.gray.darker(), 
                   style: "solid"},
-                target, property,
                 layout: new HorizontalLayout({spacing: 4}),
+                ...props,
                 submorphs: [{
                     type: "text", name: "currentValue", 
                     textString: target[property], 
@@ -62,6 +62,7 @@ export class DropDownSelector extends Morph {
          this.menu = this.world().openWorldMenu(this.values.map(v => 
            { return {command: v, target: this, args: v}}));
          this.menu.globalPosition = this.globalPosition;
+         this.menu.isHaloItem = this.isHaloItem;
      }
 
 }
@@ -712,9 +713,9 @@ export class BorderStyler extends Morph {
   get isHaloItem() { return true }
 
   createControl(name, controlElement) {
-     // TODO: make the control element collapsable
      return {
       fill: Color.transparent, 
+      draggable: true, onDrag: (evt) =>  this.onDrag(evt),
       layout: new VerticalLayout(),
       submorphs: [
         {type: "text", textString: name, 
@@ -731,6 +732,7 @@ export class BorderStyler extends Morph {
       fill: Color.transparent,
       submorphs: [
        new DropDownSelector({
+           isHaloItem: true,
            target, property: "clipMode", 
            values: ["visible", "hidden", "scroll"]
      })]});
@@ -739,8 +741,8 @@ export class BorderStyler extends Morph {
   borderControl(target) {
      return this.createControl("Border", {
              layout: new HorizontalLayout({spacing: 5, compensateOrigin: true}),
-             fill: Color.transparent, draggable: false, 
-             submorphs: [new DropDownSelector({target, property: "borderStyle", values: ["solid", "dashed"]}), 
+             fill: Color.transparent, 
+             submorphs: [new DropDownSelector({target, isHaloItem: true, property: "borderStyle", values: ["solid", "dashed"]}), 
                          new ColorPickerField({target, property: "borderColor"}),
                          new PropertyInspector({min: 0, target, unit: "pt", property: "borderWidth"})]
               })
