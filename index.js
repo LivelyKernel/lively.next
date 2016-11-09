@@ -67,15 +67,29 @@ export class Interface {
   interactivelyRemoveModule(requester, moduleName)                    { return interactivelyRemoveModule(this.coreInterface, requester, moduleName); }
   interactivelyAddModule(requester, relatedPackageOrModule)           { return interactivelyAddModule(this.coreInterface, requester, relatedPackageOrModule); }
 
-  searchInPackage(packageURL, searchTerm, options) { return this.coreInterface.searchInPackage(packageURL, searchTerm, options); }
+  // -=-=-=-
+  // search
+  // -=-=-=-
+  searchInPackage(packageURL, searchTerm, options) {
+    return this.coreInterface.searchInPackage(packageURL, searchTerm, options);
+  }
   async searchInAllPackages(searchTerm, options) {
-    var packages = this.coreInterface.getPackages(), results = [];
+    var packages = await this.coreInterface.getPackages(),
+        results = [];
     for (let {url} of packages) {
-      if (url)
-        results = results.concat(await this.coreInterface.searchInPackage(url, searchTerm, options));
+      if (!url) continue;
+      var packageResults = await this.coreInterface.searchInPackage(url, searchTerm, options)
+      results = results.concat(packageResults);
     }
     return results;
   }
+  
+  // -=-=-=-=-
+  // testing
+  // -=-=-=-=-
+  loadMochaTestFile(file, testsByFile) { return this.coreInterface.loadMochaTestFile(file, testsByFile); }
+  runMochaTests(grep, testsByFile, onChange, onError) { return this.coreInterface.runMochaTests(grep, testsByFile, onChange, onError); }
+
 }
 
 export var localInterface = new Interface(new LocalCoreInterface());

@@ -146,7 +146,9 @@ try {
   }
 
   packageConfChange(source, confFile) {
-    return this.runEvalAndStringify(`await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
   }
 
 
@@ -190,7 +192,41 @@ try {
   }
 
   keyValueListOfVariablesInModule(moduleName, sourceOrAst) {
-    return this.runEvalAndStringify(`await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.keyValueListOfVariablesInModule(${JSON.stringify(moduleName)}, ${JSON.stringify(sourceOrAst)})`);
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // search
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  searchInPackage(packageURL, searchString, options) {
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface"));
+      await livelySystem.localInterface.searchInPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(searchString)}, ${JSON.stringify(options)})`);
+  }
+
+
+  // -=-=-=-
+  // tests
+  // -=-=-=-
+
+  async loadMochaTestFile(file, testsByFile = []) {
+    return this.runEvalAndStringify(`
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+          {testsByFile} = await livelySystem.localInterface.loadMochaTestFile(${JSON.stringify(file)}, ${JSON.stringify(testsByFile)}), result;
+      result = {testsByFile}`);
+  }
+
+  async runMochaTests(grep, testsByFile, onChange, onError) {
+    if (grep && grep instanceof RegExp)
+      grep = {isRegExp: true, value:  String(grep).replace(/^\/|\/$/g, "")};
+    return this.runEvalAndStringify(`
+      var grep = ${JSON.stringify(grep)};
+      if (grep && grep.isRegExp)
+        grep = new RegExp(grep.value);
+      var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
+          {testsByFile, isError, value: error} = await livelySystem.localInterface.runMochaTests(grep, ${JSON.stringify(testsByFile || [])}), result;
+      result = {testsByFile, isError, error}`);
+  }
 }
