@@ -2,7 +2,6 @@ import { obj, num } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { Morph, Button, List, Text } from "./index.js";
 import { Icon } from "./icons.js";
-import { Tooltip } from "./tooltips.js";
 import { signal, connect } from "lively.bindings";
 import { Tooltip } from "./tooltips.js";
 import config from "./config.js";
@@ -13,7 +12,9 @@ export class ValueScrubber extends Text {
       this.scrubbedValue = props.value || 0;
       super({
         fill: Color.transparent, draggable: true,
-        textString: obj.toString(this.scrubbedValue),
+        textString: obj.safeToString(this.scrubbedValue),
+        min: -Infinity,
+        max: Infinity,
         ...props
       });
   }
@@ -31,22 +32,27 @@ export class ValueScrubber extends Text {
       // y is the scale
       const {x, y} = evt.position.subPt(this.initPos),
             scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
-            
-      signal(this, "scrub", this.scrubbedValue + Math.round(x * scaleFactor));
-      this.textString = (this.scrubbedValue + Math.round(x * scaleFactor)).toString();
+      signal(this, "scrub", this.getCurrentValue(x, scaleFactor));
+      this.textString = obj.safeToString(this.scrubbedValue + Math.round(x * scaleFactor));
+      if (this.unit) this.textString += " " + this.unit;
       this.factorLabel.description = scaleFactor + "x";
       this.factorLabel.position = evt.hand.position.addXY(10,10);
+  }
+
+  getCurrentValue(delta, s) {
+      const v = this.scrubbedValue + Math.round(delta * s);
+      return Math.max(this.min, Math.min(this.max, v));
   }
 
   onDragEnd(evt) {
       const {x, y} = this.initPos.subPt(evt.position),
             scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
-      this.scrubbedValue += Math.round(x * scaleFactor);
+      this.scrubbedValue = this.getCurrentValue(x, scaleFactor);
       this.factorLabel.softRemove();
   }
 
   set value(v) {
-      this.scrubbedValue = obj.toString(v);
+      this.scrubbedValue = v;
   }
 
 }
