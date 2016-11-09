@@ -574,8 +574,11 @@ class ModuleInterface {
       var lineEnd = src.slice(lineStart).indexOf("\n");
       if (lineEnd === -1) lineEnd = src.length;
       else lineEnd += lineStart;
+      var p = this.package();
       res[j] = {
-        module: this,
+        moduleId: this.id,
+        packageName: p.name,
+        pathInPackage: this.pathInPackage(),
         length,
         line, column: i - lineStart,
         lineString: src.slice(lineStart, lineEnd)

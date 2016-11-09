@@ -464,10 +464,11 @@ function getPackages(System) {
 function searchInPackage(System, packageURL, searchStr, options) {
   packageURL = packageURL.replace(/\/$/, "");
   var p = getPackages(System).find(p => p.address == packageURL);
-  return p ? Promise.all(
-    p.modules.map(m => module(System, m.name).search(searchStr, options)))
-        .then(res => arr.flatten(res, 1)) :
-        Promise.resolve([])
+  return !p ? Promise.resolve([]) :
+    Promise.all(
+      p.modules.map(m => module(System, m.name)
+        .search(searchStr, options)))
+          .then(res => arr.flatten(res, 1));
 }
 
 export {
