@@ -322,7 +322,7 @@ var worldCommands = [
 
   {
     name: "choose and browse package resources",
-    exec: async (world, opts = {browser: null}) => {
+    exec: async (world, opts = {browser: null, backend: null}) => {
       var browser = opts.browser
            || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser));
 
@@ -330,7 +330,11 @@ var worldCommands = [
         browser = browser.getWindow();
       else browser = null;
 
-      var livelySystem = (await System.import("lively-system-interface")).localInterface, // FIXME
+      var backend = opts.backend || (browser && browser.backend),
+          systemInterface = await System.import("lively-system-interface"),
+          livelySystem = backend && backend !== "local" ?
+            systemInterface.serverInterfaceFor(backend) :
+            systemInterface.localInterface, // FIXME
           pkgs = await livelySystem.getPackages(),
           pkgs = pkgs.filter(({address}) => "no group" !== address),
           items = [];
@@ -358,7 +362,7 @@ var worldCommands = [
 
       var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
       Promise.all(selected.map(ea =>
-        Browser.browse(ea.package.address, ea.name, undefined, browser)
+        Browser.browse(ea.package.address, ea.name, undefined, browser, backend)
           .then(browser => browser.activate())));
 
       return true;
@@ -368,7 +372,7 @@ var worldCommands = [
   {
     name: "choose and browse module",
     handlesCount: true,
-    exec: async (world, opts = {browser: null}, count) => {
+    exec: async (world, opts = {browser: undefined, backend: undefined}, count) => {
 
       if (!opts.browser) { // invoked from a file browser? => use it
         var focused = world.focusedMorph,
@@ -377,7 +381,15 @@ var worldCommands = [
           return win.targetMorph.execCommand("find file and select", opts, count);
       }
 
-      var livelySystem = (await System.import("lively-system-interface")).localInterface, // FIXME
+      var browser = opts.browser
+                 || (focused && focused.ownerChain().find(ea => ea.isBrowser)),
+          { Browser } = await System.import("lively.morphic/ide/javascript-browser.js"),
+          backend = opts.backend || (browser && browser.backend),
+          remote = backend && backend !== "local" ? backend : null,
+          systemInterface = await System.import("lively-system-interface"),
+          livelySystem = remote ?
+            systemInterface.serverInterfaceFor(remote) :
+            systemInterface.localInterface, // FIXME
           pkgs = await livelySystem.getPackages(),
           items = [];
 
@@ -394,10 +406,7 @@ var worldCommands = [
 
       items = arr.sortBy(items, ea => ea.string);
 
-      var browser = opts.browser
-                 || (focused && focused.ownerChain().find(ea => ea.isBrowser)),
-          { Browser } = await System.import("lively.morphic/ide/javascript-browser.js"),
-          {selected} = await world.filterableListPrompt(
+      var {selected} = await world.filterableListPrompt(
             "Choose module to open", items, {
               historyId: "lively.morphic-choose and browse module",
               requester: browser || focused, width: 700, multiSelect: true, listFontColor: "white"});
@@ -406,7 +415,8 @@ var worldCommands = [
         var {package: p, shortName} = selected[i],
             b = await Browser.browse(
               p.name, shortName, undefined,
-              i === 0 ? browser : undefined);
+              i === 0 ? browser : undefined,
+              backend);
         b.moveBy(pt(i*20, i*20));
         b.activate();
       }
@@ -417,7 +427,7 @@ var worldCommands = [
 
   {
     name: "open code search",
-    exec: async (world, opts = {browser: null}) => {
+    exec: async (world, opts = {browser: null, backend: null}) => {
       var browser = opts.browser
                  || (world.focusedMorph && world.focusedMorph.ownerChain().find(ea => ea.isBrowser)),
           { CodeSearcher } = await System.import("lively.morphic/ide/code-search.js");
@@ -427,10 +437,12 @@ var worldCommands = [
           return browser.state.associatedSearchPanel.getWindow().activate();
       } else browser = null;
 
-      var searcher = CodeSearcher.inWindow({
-        title: "code search", extent: pt(800, 500),
-        targetBrowser: browser
-      }).activate();
+      var backend = opts.backend || (browser && browser.backend),
+          searcher = CodeSearcher.inWindow({
+            title: "code search", extent: pt(800, 500),
+            targetBrowser: browser,
+            backend
+          }).activate();
       if (browser) browser.state.associatedSearchPanel = searcher;
       return searcher;
     }
