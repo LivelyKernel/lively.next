@@ -6,13 +6,15 @@ import { Browser } from "./javascript-browser.js";
 import { connect, disconnectAll } from "lively.bindings"
 
 
-export async function doSearch(searchTerm, excludes = [/systemjs-plugin-babel/]) {
+export async function doSearch(livelySystem, searchTerm, excludes = [/systemjs-plugin-babel/]) {
   if (searchTerm.length <= 2) { return []; }
 
-  var system = System.get(System.decanonicalize("lively-system-interface/index.js")),
-      found = await system.localInterface.searchInAllPackages(searchTerm, {excludedModules: excludes}),
-      items = found.reduce((result, ea) => {
-        var nameAndLine = `${ea.module.package().name}${ea.module.pathInPackage().replace(/^\./, "")}:${ea.line}`;
+  var found = await livelySystem.searchInAllPackages(searchTerm, {excludedModules: excludes});
+  if (found[0] && found[0].isError)
+    throw found[0].value
+
+  var items = found.reduce((result, ea) => {
+        var nameAndLine = `${ea.packageName}${ea.pathInPackage.replace(/^\./, "")}:${ea.line}`;
         result.maxModuleNameLength = Math.max(result.maxModuleNameLength, nameAndLine.length) + 1;
         result.items.push({
           isListItem: true,
@@ -28,9 +30,13 @@ export async function doSearch(searchTerm, excludes = [/systemjs-plugin-babel/])
 
 export class CodeSearcher extends FilterableList {
 
-  static inWindow(props = {title: "code search", targetBrowser: null}) {
+  static inWindow(props = {title: "code search", targetBrowser: null, backend: null}) {
     var searcher = new this(props);
-    return new Window({...obj.dissoc(props, "targetBrowser"), extent: searcher.extent.addXY(0, 25), targetMorph: searcher});
+    return new Window({
+      ...obj.dissoc(props, ["targetBrowser", "backend"]),
+      extent: searcher.extent.addXY(0, 25),
+      targetMorph: searcher
+    });
   }
 
   constructor(props = {}) {
@@ -39,12 +45,39 @@ export class CodeSearcher extends FilterableList {
       fontFamily: "Inconsolata, monospace",
       fontSize: 14,
       historyId: "lively.morphic-code searcher",
-      ...obj.dissoc(props, "targetBrowser")});
+      ...obj.dissoc(props, "targetBrowser", "backend")});
     if (props.targetBrowser)
       this.state.targetBrowser = props.targetBrowser.id;
     this.state.currentSearchTerm = "";
     this.state.currentFilters = "";
+    this.state.backend = props.backend || "local";
     connect(this, "accepted", this, "openBrowserForSelection");
+  }
+
+  get browser() {
+    var w = this.world();
+    if (!w || !this.state.targetBrowser) return null;
+    return w.getMorphWithId(this.state.targetBrowser);
+  }
+
+  get backend() {
+    var browser = this.browser;
+    return browser ? browser.backend : this.state.backend;
+  }
+
+  set backend(backend) {
+    var browser = this.browser;
+    if (browser) browser.backend = backend;
+    else this.state.backend = backend;
+  }
+
+  async getLivelySystem() {
+    var backend = this.backend,
+        remote = backend && backend !== "local" ? backend : null,
+        systemInterface = await System.import("lively-system-interface");
+    return remote ?
+      systemInterface.serverInterfaceFor(remote) :
+      systemInterface.localInterface; // FIXME
   }
 
   updateFilter() {
@@ -61,7 +94,7 @@ export class CodeSearcher extends FilterableList {
       // if (this.typingIndicator) this.typingIndicator.then(i => i.remove());
       // this.typingIndicator = null;
       try {
-        this.searchAndUpdate(needle);
+        await this.searchAndUpdate(needle);
       } catch(err) {
         this.world().logError(err);
       }
@@ -80,7 +113,7 @@ export class CodeSearcher extends FilterableList {
         newSearch = searchTerm != this.state.currentSearchTerm;
     if (newSearch) {
       this.state.currentSearchTerm = searchTerm;
-      this.items = await doSearch(searchTerm);
+      this.items = await doSearch(await this.getLivelySystem(), searchTerm);
     }
   
     filterTokens = filterTokens.map(ea => ea.toLowerCase());
@@ -94,15 +127,13 @@ export class CodeSearcher extends FilterableList {
 
   async openBrowserForSelection() {
     if (!this.selection) return;
-    var {column, line, module} = this.selection,
-        browserOrProps = (this.state.targetBrowser ?
-          this.world().getMorphWithId(this.state.targetBrowser) : null)
-             || {center: this.globalBounds().center()},
+    var {browser, selection: {column, line, packageName, pathInPackage}} = this,
+        browserOrProps = browser,
         browser = await Browser.browse(
-          module.package().name,
-          module.pathInPackage().replace(/^\.\//, ""),
-          {column, row: line-1},
-          browserOrProps);
+          packageName,
+          pathInPackage.replace(/^\.\//, ""),
+          {column, row: line-1}, browserOrProps,
+          browser? browser.backend : this.backend);
     browser.state.associatedSearchPanel = this;
     return browser.activate();
   }
