@@ -9,14 +9,15 @@ import config from "./config.js";
 export class ValueScrubber extends Text {
 
   constructor(props) {
-      this.scrubbedValue = props.value || 0;
       super({
         fill: Color.transparent, draggable: true,
         textString: obj.safeToString(this.scrubbedValue),
         min: -Infinity,
         max: Infinity,
-        ...props
+        ...obj.dissoc(props, ["value"])
       });
+
+      this.value = props.value || 0;
   }
 
   onDragStart(evt) {
@@ -27,13 +28,26 @@ export class ValueScrubber extends Text {
           description: "1x"}).openInWorld();
   }
 
+  onKeyDown(evt) {
+    super.onKeyDown(evt);
+    if ("Enter" == evt.keyCombo) {
+      const [v, unit] = this.textString.split(" ");
+      if (v) {
+         this.value = parseFloat(v);
+         signal(this, "scrub", this.scrubbedValue);
+      }
+      evt.stop();
+    }
+  }
+
   onDrag(evt) {
       // x delta is the offset to the original value
       // y is the scale
       const {x, y} = evt.position.subPt(this.initPos),
-            scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01);
-      signal(this, "scrub", this.getCurrentValue(x, scaleFactor));
-      this.textString = obj.safeToString(this.scrubbedValue + Math.round(x * scaleFactor));
+            scaleFactor = num.roundTo(Math.exp(-y / this.world().height * 4), 0.01),
+            v = this.getCurrentValue(x, scaleFactor);
+      signal(this, "scrub", v);
+      this.textString = obj.safeToString(v);
       if (this.unit) this.textString += " " + this.unit;
       this.factorLabel.description = scaleFactor + "x";
       this.factorLabel.position = evt.hand.position.addXY(10,10);
@@ -53,6 +67,8 @@ export class ValueScrubber extends Text {
 
   set value(v) {
       this.scrubbedValue = v;
+      this.textString = obj.safeToString(v) || "";
+      if (this.unit) this.textString += " " + this.unit;
   }
 
 }
