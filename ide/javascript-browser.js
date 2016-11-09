@@ -1,7 +1,7 @@
 import { Color, pt, Rectangle } from "lively.graphics";
 import { arr, promise, Path, string } from "lively.lang";
 import { connect, disconnect, noUpdate } from "lively.bindings";
-import { Window, morph, show, Label, HorizontalLayout } from "../index.js";
+import { Window, morph, show, Label, HorizontalLayout, GridLayout } from "../index.js";
 import { DropDownList } from "../list.js";
 import InputLine from "../text/input-line.js";
 import { JavaScriptEditorPlugin } from "./js/editor-plugin.js";
@@ -465,16 +465,21 @@ export class Browser extends Window {
                {...btnStyle, name: "removeModuleButton", label: Icon.makeLabel("minus"), tooltip: "remove package"}]},
             new HorizontalResizer({name: "hresizer", bounds: resizerBounds}),
             {name: "sourceEditor", bounds: sourceEditorBounds, ...textStyle, doSave: () => { this.save(); }},
-            {name: "browserCommands", bounds: browserCommandsBounds, fill: Color.white,
-             borderTop: {color: Color.gray, width: 1},
-             draggable: false, layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+            {layout: new GridLayout({grid:[["commands", null, "eval backend list"]]}),
+             fill: Color.white, borderTop: {color: Color.gray, width: 1}, draggable: false, 
+             bounds: browserCommandsBounds, name: "browserCommands", 
              submorphs: [
-               {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
-               {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
-               {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
-               {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
-               {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
-               this.ensureEvalBackEndList()]}
+               {name: "commands", layout: new HorizontalLayout({spacing: 2, autoResize: false}),
+                fill: Color.transparent,
+                submorphs: [
+                 {...btnStyle, name: "searchButton", label: Icon.makeLabel("search"), tooltip: "code search"},
+                 {...btnStyle, name: "browseModulesButton", label: Icon.makeLabel("navicon"), tooltip: "list all modules"},
+                 {...btnStyle, name: "historyBackwardButton", label: Icon.makeLabel("step-backward"), tooltip: "back in browse history"},
+                 {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
+                 {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
+                 ]},
+                this.ensureEvalBackEndList()]
+             },
           ]
         });
 
@@ -498,6 +503,9 @@ export class Browser extends Window {
     container.get("hresizer").addFixed(container.get("moduleCommands"));
     container.get("hresizer").addScalingBelow(container.get("sourceEditor"));
 
+    const l = container.get("browserCommands").layout;
+    l.col(2).fixed = 100; l.row(0).paddingTop = 1; l.row(0).paddingBottom = 1;
+ 
     return container;
   }
 
