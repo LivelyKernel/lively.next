@@ -1,7 +1,6 @@
 import module from "./module.js"
 
 function scheduleModuleExportsChange(System, moduleId, name, value, addNewExport) {
-  if (System.debug) console.log(`[lively.modules] exported var changed: "${name}" => ${value} (${moduleId})`);
   var pendingExportChanges = System.get("@lively-env").pendingExportChanges,
       rec = module(System, moduleId).record();
   if (rec && (name in rec.exports || addNewExport)) {
