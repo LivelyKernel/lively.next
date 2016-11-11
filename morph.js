@@ -1252,10 +1252,8 @@ export class Image extends Morph {
 export class Path extends Morph {
 
   constructor(props) {
-    super({
-      vertices: [],
-      ...props
-    })
+    super(props);
+    this.vertices = props.vertices || []
   }
 
   onChange(change) {
@@ -1266,7 +1264,8 @@ export class Path extends Morph {
         this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()))
     if (change.prop == "vertices") {
        this.adjustingVertices = true;
-       this.extent = Rectangle.unionPts([pt(0,0), ...change.value]).extent();
+       this.extent = Rectangle.unionPts([pt(0,0), pt(this.borderWidth, this.borderWidth), 
+                                         ...change.value]).extent();
        this.adjustingVertices = false;
     }
     super.onChange(change);
