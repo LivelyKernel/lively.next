@@ -8,6 +8,7 @@ import config from "./config.js";
 import CommandHandler from "./CommandHandler.js";
 import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
 import { TargetScript } from "./ticking.js";
+import { connect } from "lively.bindings";
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -1257,26 +1258,29 @@ export class Path extends Morph {
     })
   }
 
+  onChange(change) {
+    if (change.prop == "extent"
+        && change.value 
+        && change.prevValue
+        && !this.adjustingVertices) 
+        this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()))
+    if (change.prop == "vertices") {
+       this.adjustingVertices = true;
+       this.extent = Rectangle.unionPts([pt(0,0), ...change.value]).extent();
+       this.adjustingVertices = false;
+    }
+    super.onChange(change);
+  }
+
   get isSvgMorph() { return true }
 
   get vertices() { return this.getProperty("vertices")}
-  set vertices(value) { this.addValueChange("vertices", value)}
+  set vertices(value) { this.addValueChange("vertices", value); }
 
-  resizeBy(delta) {
-    const oldExtent = this.extent;
-    super.resizeBy(delta);
-    this.scaleVerticesBy(this.extent.scaleByPt(oldExtent.inverted()));
-  }
 
-  setBounds(bounds) {
-    const oldExtent = this.extent;
-    super.setBounds(bounds);
-    this.scaleVerticesBy(this.extent.scaleByPt(oldExtent.inverted()));
-  }
-
-  scaleVerticesBy(scale) {
-    const vs = this.vertices;
-    this.vertices = vs && vs.map((v) => v.scaleByPt(scale));
+  adjustVertices(delta) {
+     const vs = this.vertices;
+     this.vertices = vs && vs.map((v) => v.scaleByPt(delta));
   }
 
   addVertex(v, before=null) {
