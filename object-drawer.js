@@ -84,10 +84,8 @@ export default class ObjectDrawer extends Morph {
 
     this.addMorph(new Polygon({
       name: "poly", vertices: makeStarVertices(10, 70),
-      origin: pt(70,70),
-      // center: pos.addPt(pt(2*70, 2*70).scaleBy(.5)),
-      center: pos, // ????
-      extent: pt(2*70, 2*70), fill: Color.yellow,
+      position: pos,
+      fill: Color.yellow,
       grabbable: false,
       onDrag: doCopy
     }));
