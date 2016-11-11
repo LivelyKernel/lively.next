@@ -183,7 +183,7 @@ class ColorHarmony {
 
 class Complementary extends ColorHarmony {
 
-    get name() { return "Complementary" }
+    get name() { return "Complement" }
     steps() { return 1 }
     stepSize() { return 180 }
 
@@ -658,19 +658,29 @@ export class ColorPicker extends Window {
   }
 
   harmonySelector() {
+     const dropDownIndicator = Icon.makeLabel("chevron-circle-down", {
+               fontColor: Color.gray.lighter(),
+               fontSize: 14, opacity: 0}
+           );
      return this.getSubmorphNamed("harmonySelector") || new Morph({
          name: "harmonySelector",
          extent: pt(150, 50),
-         layout: new HorizontalLayout(),
+         layout: new HorizontalLayout({spacing: 5}),
          fill: Color.transparent,
          onMouseDown: (evt) => {
                this.harmonyMenu = Menu.forItems([
-                  {command: "Complementary", target: this}, {command: "Triadic", target: this}, 
+                  {command: "Complement", target: this}, {command: "Triadic", target: this}, 
                   {command: "Tetradic", target: this}, {command: "Quadratic", target: this}, 
                   {command: "Analogous", target: this}, {command: "Neutral", target: this}
                ]).openInWorld();
                this.harmonyMenu.globalPosition = this.harmonySelector().globalPosition;
             },
+         onHoverIn() {
+            dropDownIndicator.animate({opacity: 1, duration: 200});
+         },
+         onHoverOut() {
+            dropDownIndicator.animate({opacity: 0, duration: 200});
+         },
          submorphs: [new Text({
             name: "harmonyLabel",
             nativeCursor: "pointer",
@@ -678,7 +688,8 @@ export class ColorPicker extends Window {
             readOnly: true,
             fontSize: 15,
             fontColor: Color.gray.lighter(),
-            textString: this.harmony.name})]
+            textString: this.harmony.name}),
+          dropDownIndicator]
      });
      
   }
