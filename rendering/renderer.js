@@ -244,11 +244,11 @@ export class Renderer {
   renderSvgMorph(morph, svg) {
     const {position, filter,
            display, top, left, opacity, 
-           transform, transformOrigin} = defaultStyle(morph),
+           transform, transformOrigin, cursor} = defaultStyle(morph),
           {width, height} = morph.innerBounds(),
           defs = morph.gradient && renderGradient(morph);
     return h("div", {...defaultAttributes(morph, this),
-                     style: {transform, transformOrigin, position, opacity,
+                     style: {transform, transformOrigin, position, opacity, cursor,
                              width: width + 'px', height: height + 'px',
                              display, filter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
