@@ -141,7 +141,7 @@ export class VerticalLayout extends Layout {
       maxWidth = Math.max(m.width, maxWidth);
     });
     if (this.autoResize && this.container.submorphs.length > 0) 
-        this.container.extent = pt(maxWidth, pos.y)
+        this.container.extent = pt(maxWidth + 2 * this.spacing, pos.y)
     this.active = false;
   }
 
@@ -180,7 +180,8 @@ export class HorizontalLayout extends Layout {
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.height, maxHeight);
     });
-    if (this.autoResize && this.container.submorphs.length > 0) this.container.extent = pt(pos.x + this.spacing, maxHeight + 2 * this.spacing);
+    if (this.autoResize && this.container.submorphs.length > 0) 
+         this.container.extent = pt(pos.x, maxHeight + 2 * this.spacing);
     this.active = false;
  }
 
