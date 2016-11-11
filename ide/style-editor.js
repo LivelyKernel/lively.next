@@ -1,6 +1,6 @@
 import { Window, GridLayout, FillLayout, Ellipse, Text,
          VerticalLayout, HorizontalLayout, Image, 
-         TilingLayout, Morph, morph, Menu } from "../index.js";
+         TilingLayout, Morph, morph, Menu, Path } from "../index.js";
 import { Rectangle, Color, LinearGradient, pt, Point, rect } from "lively.graphics";
 import { obj, num, arr } from "lively.lang";
 import { signal, connect } from "lively.bindings";
@@ -11,12 +11,53 @@ const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-c
 
 /*TODO:  Move this to a more appropriate location */
 
-export class Slider extends Morph {
+export class RotateSlider extends Ellipse {
 
 }
 
-export class RotateSlider extends Ellipse {
+export class Slider extends Morph {
 
+    constructor(props) {
+        const slider = this;
+        super({
+           height: 20,
+           fill: Color.transparent,
+           ...props
+        });
+        this.submorphs = [
+           new Path({
+                borderColor: Color.gray.darker(),
+                borderWidth: 4,
+                vertices: [this.leftCenter.addXY(7.5,0), 
+                           this.rightCenter.addXY(-7.5,0)]
+              }),
+              {type: "ellipse", fill: Color.gray.lighter(), name: "slideHandle",
+               borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: true,
+               extent: pt(15,15),
+               onDrag(evt) {
+                  slider.onSlide(this, evt.state.dragDelta);
+               }}
+         ];
+         connect(this, "extent", this, "update");
+         this.update();
+    }
+
+    normalize(v) {
+        return Math.abs(v / (this.max - this.min));
+    }
+
+    update() {
+        const x = (this.width - 15) * this.normalize(this.target[this.property]);
+        this.get("slideHandle").center = pt(x + 7.5, 10);
+    }
+
+    onSlide(slideHandle, delta) {
+       const oldValue = this.target[this.property],
+             newValue = oldValue + delta.x / this.width;
+       this.target[this.property] = Math.max(this.min, Math.min(this.max, newValue));
+       this.update();
+    }
+    
 }
 
 export class DropDownSelector extends Morph {
