@@ -742,33 +742,67 @@ export class ColorPickerField extends Morph {
 
 }
 
-export class BorderStyler extends Morph {
+class Styler extends Morph {
 
-  constructor(target) {
-    super({
-      name: "BorderStyler",
-      dropShadow: true,
-      draggable: true, 
-      extent: pt(150,300),
-      fill: Color.gray,
-      borderRadius: 7,
-      borderColor: Color.gray.darker(),
-      layout: new VerticalLayout({spacing: 5}),
-      submorphs: [
-         this.borderControl(target),
-         //this.shadowControl(),
-         this.clipControl(target)
-      ]
-    });
-  }
+   constructor(props) {
+      const {title} = props;
+      super({
+        name: "BorderStyler",
+        dropShadow: true,
+        draggable: true,
+        borderColor: Color.gray,
+        borderWidth: 4,
+        fill: Color.black.withA(.7),
+        borderRadius: 15,
+        layout: new VerticalLayout({spacing: 5}),
+        ...props,
+        submorphs: [{
+           fill: Color.transparent,
+           layout: new HorizontalLayout(),
+           submorphs: [{
+             type: "text", fontWeight: "bold", padding: 5,
+             fontColor: Color.gray, fontSize: 12, readOnly: true,
+             textString: title, fill: Color.transparent
+        }]
+    }]});
+   }
 
-  get isHaloItem() { return true }
+   quit() {
+      signal(this, "active", false);
+      this.remove()
+   }
+   
+   async open() {
+      if (this.opened) return;
+      const [wrapper] = this.submorphs,
+            {submorphs: [instruction]} = wrapper,
+            duration = 200;
+      this.layout = null;
+      wrapper.addMorphAt(Icon.makeLabel("times-circle-o", {
+           fontSize: 22, fontColor: Color.gray.darker(),
+           nativeCursor: "pointer", onMouseDown: () => this.quit()}), 0);
+      instruction.animate({fontColor: Color.gray.darker(), duration});
+      this.controls(this.target).forEach(c => {
+         c.opacity = 0;
+         this.addMorph(c).animate({opacity: 1, duration});
+      });
+      this.animate({
+          fill: Color.gray,
+          borderWidth: 1, borderRadius: 7,
+          borderColor: Color.gray.darker(),
+          duration, layout: new VerticalLayout({spacing: 5})
+      });
+      this.opened = true;
+      return false;
+   }
 
-  createControl(name, controlElement) {
+   get isHaloItem() { return true }
+
+   createControl(name, controlElement) {
      return {
       fill: Color.transparent, 
       draggable: true, onDrag: (evt) =>  this.onDrag(evt),
-      layout: new VerticalLayout(),
+      layout: new VerticalLayout({spacing: 5}),
       submorphs: [
         {type: "text", textString: name, 
          fontColor: Color.black, padding: rect(5,0,0,0), 
@@ -777,17 +811,64 @@ export class BorderStyler extends Morph {
      ]}
   }
 
+
+}
+
+export class BodyStyler extends Styler {
+   
+   controls(target) {
+       return [
+           this.fillControl(target),
+           this.opacityControl(target)
+           //this.shadowControl(target)
+       ]
+   }
+
+   opacityControl(target) {
+      return this.createControl("Opacity", new Slider({
+             target, min: 0, max: 1, 
+             property: "opacity", width: 150
+      }));
+   }
+
+   fillControl(target) {
+      return this.createControl("Fill", new ColorPickerField({target, property: "fill"}));
+   }
+
+   shadowControl() {
+     return this.createControl("Shadow", {
+        // position (angle), distance, blur, color, opacity?
+        layout: new GridLayout({grid: [["distanceSlider"],
+                                       ["blurSlider"],
+                                       ["angleSlider", "angleControl", "colorPicker"]]}),
+        submorphs: [new Slider(), new Slider(), 
+                    new RotateSlider(), new PropertyInspector(),
+                    new ColorPickerField()]
+     })
+  }
+   
+}
+
+export class BorderStyler extends Styler {
+
+  controls(target) {
+     return [
+         this.borderControl(target),
+         this.clipControl(target)
+      ]
+  }
+  
   clipControl(target) {
      return this.createControl("Clip Mode", 
-     
-     {layout: new HorizontalLayout({spacing: 5}),
-      fill: Color.transparent,
-      submorphs: [
-       new DropDownSelector({
-           isHaloItem: true,
-           target, property: "clipMode", 
-           values: ["visible", "hidden", "scroll"]
-     })]});
+       {layout: new HorizontalLayout({spacing: 5}),
+        fill: Color.transparent,
+        submorphs: [
+         new DropDownSelector({
+             isHaloItem: true,
+             target, property: "clipMode", 
+             values: ["visible", "hidden", "scroll"]
+       })]
+     });
   }
 
   borderControl(target) {
@@ -798,18 +879,6 @@ export class BorderStyler extends Morph {
                          new ColorPickerField({target, property: "borderColor"}),
                          new PropertyInspector({min: 0, target, unit: "pt", property: "borderWidth"})]
               })
-  }
-
-  shadowControl() {
-     return this.createControl("Shadow", {
-        // position (angle), distance, blur, color, opacity?
-        layout: new GridLayout({grid: [["distanceSlider"],
-                                       ["blurSlider"],
-                                       ["angleSlider", "angleControl", "colorPicker"]]}),
-        submorphs: [new Slider(), new Slider(), 
-                    new RotateSlider(), new PropertyInspector(),
-                    new ColorPickerField()]
-     })
   }
   
 }
