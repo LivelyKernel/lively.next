@@ -27,11 +27,11 @@ export var defaultRenderer = {
             morph.nativeCursor
         }
       },
-      selectionLayer
+      [renderer.renderSubmorphs(morph)]
+        .concat(selectionLayer)
         .concat(morph.debug ? this.renderDebugLayer(textLayout, morph) : [])
         .concat(this.renderMarkerLayer(textLayout, morph))
-        .concat(this.renderTextLayer(textLayout, morph))
-        .concat(renderer.renderSubmorphs(morph)));
+        .concat(this.renderTextLayer(textLayout, morph)));
   },
 
   renderSelectionLayer(textLayouter, morph, selection, diminished = false, cursorWidth = 2) {

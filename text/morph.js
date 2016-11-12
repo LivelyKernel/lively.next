@@ -16,6 +16,7 @@ import commands from "./commands.js";
 import { defaultRenderer } from "./rendering.js";
 import { lessPosition, lessEqPosition } from "./position.js";
 import InputLine from "./input-line.js";
+import { Label } from "./label.js";
 
 
 const defaultTextStyle = {
@@ -35,13 +36,12 @@ const defaultTextStyle = {
 
 export class Text extends Morph {
 
-  static makeLabel(string, props) {
-    return new Text({
-      textString: string,
+  static makeLabel(value, props) {
+    return new Label({
+      value,
       fontFamily: "Helvetica Neue, Arial, sans-serif",
-      fontColor: Color.black,
+      fontColor: Color.almostBlack,
       fontSize: 11,
-      readOnly: true,
       ...props
     });
   }

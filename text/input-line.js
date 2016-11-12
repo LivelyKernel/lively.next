@@ -35,8 +35,10 @@ export default class InputLine extends Text {
       fill: Color.green,
       historyId: "name query",
       label: "What is your name? ",
+      placeholder: "type your name in here",
       width: 300
     }).openInWorld();
+
     connect(input, 'input', input, 'remove');
     connect(input, 'input', input.world(), 'setStatusMessage');
     input.focus()
@@ -80,14 +82,15 @@ export default class InputLine extends Text {
   }
 
   constructor(props = {}) {
-    var {label} = props;
+    var {label, placeholder} = props;
     super({
       extent: pt(100, 20), padding: Rectangle.inset(1),
       clipMode: "auto", lineWrapping: false,
       historyId: null, clearOnInput: false,
-      ...obj.dissoc(props, ["label"])
+      ...obj.dissoc(props, ["label", "placeholder"])
     })
     if (label) this.label = label || "";
+    if (placeholder) this.placeholder = placeholder;
     this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
     connect(this, 'textChange', this, 'onInputChanged');
     connect(this, 'selectionChange', this, 'fixCursor');
@@ -130,6 +133,40 @@ export default class InputLine extends Text {
     return input;
   }
   set input(val) { this.textString = this.label + val; }
+
+  get placeholder() {
+    return this._placeHolder ? this._placeHolder.value : null;
+  }
+  set placeholder(val) {
+    if (!val) {
+      if (this._placeHolder) {
+        this._placeHolder.remove();
+        this._placeHolder = null;
+      }
+    } else {
+      if (!this._placeHolder) {
+        this._placeHolder = this.addMorph(Text.makeLabel(val, {
+          ...this.defaultTextStyle,
+          name: "placeholder",
+          reactsToPointer: false,
+          fontColor: Color.gray
+        }));
+        this._placeHolder.onInputChange = () => {
+          this._placeHolder.visible = !this.input.length;
+        }
+        this._placeHolder.onLabelChange = () => {
+          let fm = this.env.fontMetric,
+              style = this.defaultTextStyle,
+              w = fm.sizeFor(style, this.label).width;
+          this._placeHolder.leftCenter = this.leftCenter.addXY(w + this.padding.left(), 0);
+        }
+        connect(this, "inputChanged", this._placeHolder, "onInputChange");
+        connect(this, "label", this._placeHolder, "onLabelChange")
+        this._placeHolder.onInputChange();
+        this._placeHolder.onLabelChange();
+      }
+    }
+  }
 
   clear() {
     this.input = "";
