@@ -1076,8 +1076,12 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // ticking
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  startStepping(stepTime, scriptName, ...args) {
-    var script = new TargetScript(this, scriptName, args);
+  startStepping(/*stepTime, scriptName, ...args*/) {
+    // stepTime is optional
+    var args = Array.from(arguments),
+        stepTime = typeof args[0] === "number" ? args.shift() : null,
+        scriptName = args.shift(),
+        script = new TargetScript(this, scriptName, args);
     this.removeEqualScripts(script);
     this.tickingScripts.push(script);
     script.startTicking(stepTime);
