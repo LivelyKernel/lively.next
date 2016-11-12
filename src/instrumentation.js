@@ -30,12 +30,25 @@ function canonicalURL(url) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export class ModuleTranslationCache {
-
   static get earliestDate() {
     return +(new Date("Sun Nov 06 2016 16:00:00 GMT-0800 (PST)"))
   }
 
+  cacheModuleSource(moduleId, hash, source) { throw new Error("not yet implemented"); }
+  fetchStoredModuleSource(moduleId) { throw new Error("not yet implemented"); }
+}
+
+export class NodeModuleTranslationCache extends ModuleTranslationCache {
+
+  async fetchStoredModuleSource(moduleId) {
+
+  }
+}
+
+export class BrowserModuleTranslationCache extends ModuleTranslationCache {
+
   constructor(dbName = "lively.modules-module-translation-cache") {
+    super();
     this.version = 1;
     this.sourceCodeCacheStoreName = "sourceCodeStore";
     this.dbName = dbName;
@@ -89,7 +102,7 @@ export class ModuleTranslationCache {
         req = objectStore.get(moduleId);
       req.onerror = reject;
       req.onsuccess = evt => resolve(req.result)
-    })
+    });
   }
 }
 
@@ -249,9 +262,9 @@ async function customTranslate(proceed, load) {
         hashForCache = useCache && String(string.hashCode(load.source));
     if (useCache && indexdb && isEsm) {
       var cache = System._livelyModulesTranslationCache
-               || (System._livelyModulesTranslationCache = new ModuleTranslationCache()),
+               || (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache()),
           stored = await cache.fetchStoredModuleSource(load.name);
-      if (stored && stored.hash == hashForCache && stored.timestamp >= ModuleTranslationCache.earliestDate) {
+      if (stored && stored.hash == hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate) {
         if (stored.source) {
           load.metadata.format = "register";
           load.metadata.deps = []; // the real deps will be populated when the
@@ -312,7 +325,7 @@ async function customTranslate(proceed, load) {
     // cache experiment part 2
     if (useCache && indexdb && isEsm) {
       var cache = System._livelyModulesTranslationCache
-               || (System._livelyModulesTranslationCache = new ModuleTranslationCache());
+               || (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
       try {
         await cache.cacheModuleSource(load.name, hashForCache, translated)
         console.log("[lively.modules customTranslate] stored cached version for %s", load.name);
