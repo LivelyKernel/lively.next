@@ -9,6 +9,7 @@ var targetFile1 = "dist/lively.modules_no-deps.js";
 var targetFile2 = "dist/lively.modules.js";
 var targetFile3 = "dist/lively.modules-with-lively.vm.js";
 
+var semverSource = fs.readFileSync(require.resolve("semver"));
 var notificationsSource = fs.readFileSync(require.resolve("lively.notifications/dist/lively.notifications_no-deps.js"));
 var astSource = fs.readFileSync(require.resolve("lively.ast/dist/lively.ast_no-deps.js"));
 var langSource = fs.readFileSync(require.resolve("lively.lang/dist/lively.lang.dev.js"));
@@ -20,19 +21,23 @@ var regeneratorSource = fs.readFileSync(require.resolve("babel-regenerator-runti
 module.exports = Promise.resolve()
   .then(() => rollup.rollup({
     entry: "index.js",
-    plugins: [babel({
-      exclude: 'node_modules/**',
-      sourceMap: true,
-      babelrc: false,
-      plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
-      presets: [["es2015", {"modules": false}]]
-    })]
+    external: ["semver"],
+    plugins: [
+      babel({
+        exclude: 'node_modules/**',
+        sourceMap: true,
+        babelrc: false,
+        plugins: ['transform-async-to-generator', "syntax-object-rest-spread", "transform-object-rest-spread", "external-helpers"],
+        presets: [["es2015", {"modules": false}]]
+      })
+    ]
   }))
   .then(bundle =>
     bundle.generate({
       format: 'iife',
       moduleName: 'lively.modules',
       globals: {
+        "semver": "semver",
         "lively.lang": "lively.lang",
         "lively.ast": "lively.ast",
         "lively.vm": "lively.vm",
@@ -47,9 +52,19 @@ module.exports = Promise.resolve()
     // FIXME rollup inlines our optional assignment that we need for self-dev
 
     source = source.replace('defaultSystem || prepareSystem(GLOBAL.System)', 'exports.System || prepareSystem(GLOBAL.System)');
+
+    var semverSourcePatched = `
+var semver;
+(function(exports, module) {
+${semverSource}
+semver = exports;
+})({}, {});
+`;
+
     var noDeps = `
 ${initSource}\n
 (function() {
+${semverSourcePatched}
   var GLOBAL = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
         typeof self!=="undefined" ? self : this;

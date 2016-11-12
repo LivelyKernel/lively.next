@@ -339,3 +339,8 @@ import { wrapModuleLoad as _wrapModuleLoad, unwrapModuleLoad as _unwrapModuleLoa
 function wrapModuleLoad() { _wrapModuleLoad(defaultSystem); }
 function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// semver
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+export { default as semver } from "semver";

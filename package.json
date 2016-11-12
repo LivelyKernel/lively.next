@@ -27,6 +27,7 @@
       "lively.ast": "./node_modules/lively.ast",
       "lively.vm": "./node_modules/lively.vm",
       "lively.notifications": "./node_modules/lively.notifications",
+      "semver": "./node_modules/semver",
       "mocha-es6": "./node_modules/mocha-es6"
     }
   },
@@ -36,6 +37,7 @@
     "lively.notifications": "^0.3.0",
     "lively.resources": "^0.1.2",
     "lively.vm": "^0.7.36",
+    "semver": "^5.3.0",
     "systemjs": "^0.19.40",
     "systemjs-plugin-babel": "0.0.13"
   },
