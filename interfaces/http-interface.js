@@ -227,6 +227,19 @@ try {
         grep = new RegExp(grep.value);
       var livelySystem = System.get(System.decanonicalize("lively-system-interface")),
           {testsByFile, isError, value: error} = await livelySystem.localInterface.runMochaTests(grep, ${JSON.stringify(testsByFile || [])}), result;
+      error = error ? String(error.stack || error) : null;
+      if (testsByFile) {
+        testsByFile.forEach(ea =>
+          ea.tests.forEach(ea => {
+            if (!ea.error) return;
+            var {message, stack, actual, expected} = ea.error;
+            ea.error = {
+              message: message || String(ea.error),
+              stack: stack,
+              actual, exected
+            }
+          }));
+      }
       result = {testsByFile, isError, error}`);
   }
 }
