@@ -82,9 +82,11 @@ export default class ObjectDrawer extends Morph {
       })
     }
 
+    var r = 65;
     this.addMorph(new Polygon({
-      name: "poly", vertices: makeStarVertices(10, 70),
-      position: pos,
+      name: "poly", vertices: makeStarVertices(10, r),
+      position: pos.addPt(pt(r,r)),
+      origin: pt(r,r),
       fill: Color.yellow,
       grabbable: false,
       onDrag: doCopy
@@ -178,6 +180,7 @@ export default class ObjectDrawer extends Morph {
         this.draggable = false;
         this.grabbable = false;
         this.submorphs = [{name: "nodeItemContainer", extent: this.extent, fill: null, draggable: false, grabbable: false, clipMode: "visible"}]
+        this.update()
       }
     }));
 
