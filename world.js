@@ -466,6 +466,20 @@ var worldCommands = [
         HTTPFileBrowser.forLocation(location || document.location.origin);
       return world.openInWindow(browser).activate();
     }
+  },
+
+  {
+    name: "open file",
+    exec: async (world, opts = {url: null}) => {
+      var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
+          { url } = opts;
+      if (!url)
+        url = await world.prompt("Enter file location", {
+          historyId: "lively.morphic-open-file-history", useLastInput: true
+        });
+
+      return url ? TextEditor.openURL(url, obj.dissoc(opts, ["url"])) : null;
+    }
   }
 ]
 

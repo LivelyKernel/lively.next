@@ -26,6 +26,7 @@ var config = {
     {keys: "Alt-T", command: {command: "choose and browse module", onlyWhenFocused: false}},
     {keys: "Alt-Shift-T", command: {command: "choose and browse package resources", onlyWhenFocused: false}},
     {keys: "Ctrl-X D", command: "open file browser"},
+    {keys: "Ctrl-X Ctrl-F", command: "open file"},
 
     {keys: {win: "Ctrl-Shift-F", mac: "Meta-Shift-F"}, command: {command: "open code search", onlyWhenFocused: false}},
 
