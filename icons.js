@@ -45,6 +45,10 @@ export class Icon {
        {fontFamily: "", textStyleClasses: ["fa"]}]
   }
 
+  static setIcon(label, iconName) {
+     label.textAndAttributes = [this.textAttribute(iconName)];
+  }
+
 }
 
 export var Icons = {
