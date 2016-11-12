@@ -289,10 +289,10 @@ export var defaultRenderer = {
         } = style;
 
     if (text.length > 1000) text = text.slice(0,1000);
+    text = text.replace(/\t/g, " ");
 
     var tagname = link ? "a" : "span",
-        textNodes = text ?
-          (fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text) : h("br"),
+        textNodes = fixedCharacterSpacing ? text.split("").map(c => h("span", c)) : text,
 
         attrs = {
           style: {
