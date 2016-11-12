@@ -28,25 +28,36 @@ var chaiSrc = (function() {
 
 })();
 
-var targetFile = "mocha-es6.js";
-var targetFileMocha = "dist/mocha.js";
-var targetFileChai = "dist/chai.js";
+var targetFile = "mocha-es6.js",
+    targetFileMocha = "dist/mocha.js",
+    targetFileChai = "dist/chai.js";
 
 module.exports = Promise.resolve()
+
   .then(() => rollup.rollup({
     entry: "index.js",
     plugins: [babel({
       exclude: 'node_modules/**', sourceMap: false,
-      "presets": ["es2015-rollup"],
-      babelrc: false,
-      plugins: ['transform-async-to-generator']
+      presets: [["es2015", {"modules": false}]],
+      plugins: [
+        "external-helpers",
+        "transform-async-to-generator",
+        "syntax-object-rest-spread",
+        "transform-object-rest-spread"
+      ],
+      babelrc: false
     })]
   }))
+
   .then(bundle =>
     bundle.generate({
       format: 'iife',
       moduleName: 'mochaEs6',
-      globals: {"mocha": "mocha", "chai": "chai", "lively.modules": "lively.modules"}
+      globals: {
+        "mocha": "mocha",
+        "chai": "chai",
+        "lively.modules": "lively.modules"
+      }
     }))
 
   .then(bundled => {

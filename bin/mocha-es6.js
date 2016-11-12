@@ -10,6 +10,7 @@ var path      = require("path");
 var fs        = require("fs");
 var dir       = process.cwd();
 var mochaDir  = path.join(__dirname, "..");
+var step      = 1;
 var args;
 
 lively.lang.promise.chain([
@@ -19,12 +20,13 @@ lively.lang.promise.chain([
     modules.unwrapModuleLoad();
     readProcessArgs();
   },
-  () => console.log("1. Linking node_modules to local projects"),
+  () => console.log(`${step++}. Linking node_modules to local projects`),
   () => require("./link-node_modules-into-packages.js")(dir),
-  () => console.log("2. Looking for test files via globs " + args.files.join(", ")),
+  () => runPreScript(),
+  () => console.log(`${step++}. Looking for test files via globs ${args.files.join(", ")}`),
   () => findTestFiles(args.files),
   (files, state) => state.testFiles = files,
-  (_, state) => console.log("3. Running tests in\n  " + state.testFiles.join("\n  ")),
+  (_, state) => console.log(`${step++}. Running tests in\n  ${state.testFiles.join("\n  ")}`),
   (_, state) => {
     lively.modules.changeSystem(lively.modules.getSystem("system-for-test"), true);
     return mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir});
@@ -40,6 +42,16 @@ function readProcessArgs() {
     alias: {}
   });
   args.files = args._;
+}
+
+function runPreScript() {
+  if (!args["pre-script"]) return;
+  console.log(`${step++}. Running pre-script ${args["pre-script"]}`);
+  return System.import(args["pre-script"])
+    .then(function(preScript) {
+      return typeof preScript.default === "function" ?
+        preScript.default() : null;
+    })
 }
 
 function findTestFiles(files) {

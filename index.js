@@ -89,10 +89,10 @@ function gatherTests(suite, depth) {
 }
 
 async function loadTestFiles(files, options) {
-  options = Object.assign({
+  options = {
     global: System.global,
     mocha: new (mocha.constructor)({reporter: options.reporter}),
-    reporter: ConsoleReporter}, options);
+    reporter: ConsoleReporter, ...options};
 
   var testState = {mocha: options.mocha, files: [], tests: []};
   for (var file of files) {
@@ -104,13 +104,16 @@ async function loadTestFiles(files, options) {
   return testState;
 }
 
-async function loadTestFile(file, options) {
-  options = Object.assign({
+async function loadTestFile(file, options = {}) {
+  options = {
     global: System.global,
     mocha: new (mocha.constructor)({reporter: options.reporter}),
-    reporter: ConsoleReporter}, options);
+    reporter: ConsoleReporter, ...options
+  };
 
-  (options.logger || console).log("[mocha-es6] loading test module %s", file);
+  var logger = options.logger || console;
+
+  logger.log("[mocha-es6] loading test module %s...", file);
   var file = await System.normalize(file)
   System.delete(file);
   var m = options.mocha;
@@ -118,8 +121,10 @@ async function loadTestFile(file, options) {
   m.suite.emit('pre-require', options.global, file, m);
   var imported = await System.import(file)
   m.suite.emit('require', imported, file, m)
-  m.suite.emit('post-require', options.global, file, m)
-  return {mocha: m, file: file, tests: gatherTests(m.suite, 0)};
+  m.suite.emit('post-require', options.global, file, m);
+  var tests = gatherTests(m.suite, 0);
+  logger.log("[mocha-es6] ...loading done, %s tests", tests.length);
+  return {mocha: m, file: file, tests};
 }
 
 function prepareMocha(mocha, GLOBAL) {

@@ -18930,371 +18930,583 @@ var GLOBAL = typeof window !== "undefined" ? window :
     typeof global!=="undefined" ? global :
       typeof self!=="undefined" ? self : this;
 (function (exports,lively_modules,mocha,chai) {
-  'use strict';
+'use strict';
 
-  mocha = 'default' in mocha ? mocha['default'] : mocha;
-  var chai__default = 'default' in chai ? chai['default'] : chai;
+mocha = 'default' in mocha ? mocha['default'] : mocha;
+var chai__default = 'default' in chai ? chai['default'] : chai;
 
-  var babelHelpers = {};
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
 
-  babelHelpers.asyncToGenerator = function (fn) {
-    return function () {
-      var gen = fn.apply(this, arguments);
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
       return new Promise(function (resolve, reject) {
-        function step(key, arg) {
-          try {
-            var info = gen[key](arg);
-            var value = info.value;
-          } catch (error) {
-            reject(error);
-            return;
-          }
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
 
-          if (info.done) {
-            resolve(value);
-          } else {
-            return Promise.resolve(value).then(function (value) {
-              return step("next", value);
-            }, function (err) {
-              return step("throw", err);
-            });
-          }
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
         }
-
-        return step("next");
       });
-    };
-  };
+    }
 
-  babelHelpers;
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
 
-  var loadTestFiles = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee(files, options) {
-      var testState, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, file, _testState;
-
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              options = Object.assign({
-                global: System.global,
-                mocha: new mocha.constructor({ reporter: options.reporter }),
-                reporter: ConsoleReporter }, options);
-
-              testState = { mocha: options.mocha, files: [], tests: [] };
-              _iteratorNormalCompletion = true;
-              _didIteratorError = false;
-              _iteratorError = undefined;
-              _context.prev = 5;
-              _iterator = files[Symbol.iterator]();
-
-            case 7:
-              if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                _context.next = 17;
-                break;
-              }
-
-              file = _step.value;
-              _context.next = 11;
-              return loadTestFile(file, options);
-
-            case 11:
-              _testState = _context.sent;
-
-              testState.files.push(_testState.file);
-              testState.tests = testState.tests.concat(_testState.tests);
-
-            case 14:
-              _iteratorNormalCompletion = true;
-              _context.next = 7;
-              break;
-
-            case 17:
-              _context.next = 23;
-              break;
-
-            case 19:
-              _context.prev = 19;
-              _context.t0 = _context["catch"](5);
-              _didIteratorError = true;
-              _iteratorError = _context.t0;
-
-            case 23:
-              _context.prev = 23;
-              _context.prev = 24;
-
-              if (!_iteratorNormalCompletion && _iterator.return) {
-                _iterator.return();
-              }
-
-            case 26:
-              _context.prev = 26;
-
-              if (!_didIteratorError) {
-                _context.next = 29;
-                break;
-              }
-
-              throw _iteratorError;
-
-            case 29:
-              return _context.finish(26);
-
-            case 30:
-              return _context.finish(23);
-
-            case 31:
-              return _context.abrupt("return", testState);
-
-            case 32:
-            case "end":
-              return _context.stop();
-          }
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
         }
-      }, _callee, this, [[5, 19, 23, 31], [24,, 26, 30]]);
-    }));
-    return function loadTestFiles(_x, _x2) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var loadTestFile = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee2(file, options) {
-      var m, imported;
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              options = Object.assign({
-                global: System.global,
-                mocha: new mocha.constructor({ reporter: options.reporter }),
-                reporter: ConsoleReporter }, options);
-
-              (options.logger || console).log("[mocha-es6] loading test module %s", file);
-              _context2.next = 4;
-              return System.normalize(file);
-
-            case 4:
-              file = _context2.sent;
-
-              System.delete(file);
-              m = options.mocha;
-
-              prepareMocha(m, options.global);
-              m.suite.emit('pre-require', options.global, file, m);
-              _context2.next = 11;
-              return System.import(file);
-
-            case 11:
-              imported = _context2.sent;
-
-              m.suite.emit('require', imported, file, m);
-              m.suite.emit('post-require', options.global, file, m);
-              return _context2.abrupt("return", { mocha: m, file: file, tests: gatherTests(m.suite, 0) });
-
-            case 15:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, this);
-    }));
-    return function loadTestFile(_x3, _x4) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var runTestFiles = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee3(files, options) {
-      var testState, mocha, grep;
-      return regeneratorRuntime.wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              if (!options) options = {};
-
-              if (!options.package) {
-                _context3.next = 6;
-                break;
-              }
-
-              (options.logger || console).log("[mocha-es6] importing package %s", options.package);
-              _context3.next = 5;
-              return lively.modules.importPackage(options.package);
-
-            case 5:
-              files = files.map(function (f) {
-                return f.match(/^(\/|[a-z-A-Z]:\\|[^:]+:\/\/)/) ? f : join(options.package, f);
-              });
-
-            case 6:
-              _context3.next = 8;
-              return loadTestFiles(files, options);
-
-            case 8:
-              testState = _context3.sent;
-              mocha = testState.mocha;
-              grep = options.grep || mocha.options.grep || /.*/;
-
-
-              mocha.grep(grep);
-              options.invert && mocha.invert();
-
-              (options.logger || console).log("[mocha-es6] start running tests");
-              _context3.prev = 14;
-              return _context3.abrupt("return", new Promise(function (resolve, reject) {
-                return mocha.run(function (failures) {
-                  return resolve(failures);
-                });
-              }));
-
-            case 18:
-              _context3.prev = 18;
-              _context3.t0 = _context3["catch"](14);
-
-              (options.logger || console).log("[mocha-es6] error running tests!\n" + _context3.t0.stack);
-              console.error(_context3.t0);
-              throw _context3.t0;
-
-            case 23:
-            case "end":
-              return _context3.stop();
-          }
-        }
-      }, _callee3, this, [[14, 18]]);
-    }));
-    return function runTestFiles(_x5, _x6) {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  var test = function () {
-    var ref = babelHelpers.asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
-      var file;
-      return regeneratorRuntime.wrap(function _callee4$(_context4) {
-        while (1) {
-          switch (_context4.prev = _context4.next) {
-            case 0:
-              file = "tests/eval-support-test.js";
-              file = "http://localhost:9001/node_modules/lively.ast/tests/eval-support-test.js";
-              _context4.next = 4;
-              return runTestFiles([file], { package: "http://localhost:9001/node_modules/lively.ast" });
-
-            case 4:
-            case "end":
-              return _context4.stop();
-          }
-        }
-      }, _callee4, this);
-    }));
-    return function test() {
-      return ref.apply(this, arguments);
-    };
-  }();
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // custom assertions
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  chai__default.Assertion.addChainableMethod('stringEquals', function (obj) {
-    var expected = String(obj),
-        actual = String(this._obj);
-
-    return this.assert(expected === actual, 'expected ' + actual + ' to equal' + expected, 'expected ' + actual + ' to not equal' + expected, expected, actual, true /*show diff*/);
-  });
-
-  function lively_equals(_super) {
-    return function (other) {
-      if (this.__flags.deep) return _super.apply(this, arguments);else if (Array.isArray(this._obj) && arrayEquals(this._obj, other)) {/*do nothin'*/} else if (this._obj && typeof this._obj.equals === "function" && this._obj.equals(other)) {/*do nothin'*/} else _super.apply(this, arguments);
-    };
-
-    function arrayEquals(array, otherArray) {
-      var len = array.length;
-      if (!otherArray || len !== otherArray.length) return false;
-
-      for (var i = 0; i < len; i++) {
-        if (Array.isArray(array[i])) {
-          if (!arrayEquals(array[i], otherArray[i])) return false;
-          continue;
-        }
-        if (array[i] && otherArray[i] && typeof array[i].equals === "function" && typeof otherArray[i].equals === "function") {
-          if (!array[i].equals(otherArray[i])) return false;
-          continue;
-        }
-        if (array[i] != otherArray[i]) return false;
+      } catch (err) {
+        settle("throw", err);
       }
-      return true;
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
     }
   }
 
-  chai__default.Assertion.overwriteMethod('equal', lively_equals);
-  chai__default.Assertion.overwriteMethod('eq', lively_equals);
-  chai__default.Assertion.overwriteMethod('equals', lively_equals);
-
-  function ConsoleReporter(runner) {
-    var passes = 0;
-    var failures = 0;
-
-    runner.on('pass', function (test) {
-      passes++;
-      console.log('pass: %s', test.fullTitle());
-    });
-
-    runner.on('fail', function (test, err) {
-      failures++;
-      console.log('fail: %s -- error: %s', test.fullTitle(), err.stack || err.message || err);
-    });
-
-    runner.on('end', function () {
-      console.log('end: %d/%d', passes, passes + failures);
-    });
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // test loading and running
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
 
-  function gatherTests(suite, depth) {
-    return [{ title: suite.title, fullTitle: suite.fullTitle(), depth: depth, type: "suite" }].concat(suite.tests.map(function (ea) {
-      return { title: ea.title, fullTitle: ea.fullTitle(), type: "test", depth: depth };
-    })).concat(suite.suites.reduce(function (tests, suite) {
-      return tests.concat(gatherTests(suite, depth + 1));
-    }, []));
-  }
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
 
-  function prepareMocha(mocha, GLOBAL) {
-    mocha.suite.on('pre-require', function (context) {
-      GLOBAL.afterEach = context.afterEach || context.teardown;
-      GLOBAL.after = context.after || context.suiteTeardown;
-      GLOBAL.beforeEach = context.beforeEach || context.setup;
-      GLOBAL.before = context.before || context.suiteSetup;
-      GLOBAL.describe = context.describe || context.suite;
-      GLOBAL.it = context.it || context.test;
-      GLOBAL.setup = context.setup || context.beforeEach;
-      GLOBAL.suiteSetup = context.suiteSetup || context.before;
-      GLOBAL.suiteTeardown = context.suiteTeardown || context.after;
-      GLOBAL.suite = context.suite || context.describe;
-      GLOBAL.teardown = context.teardown || context.afterEach;
-      GLOBAL.test = context.test || context.it;
-      GLOBAL.run = context.run;
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+var asyncToGenerator = function (fn) {
+  return function () {
+    var gen = fn.apply(this, arguments);
+    return new Promise(function (resolve, reject) {
+      function step(key, arg) {
+        try {
+          var info = gen[key](arg);
+          var value = info.value;
+        } catch (error) {
+          reject(error);
+          return;
+        }
+
+        if (info.done) {
+          resolve(value);
+        } else {
+          return Promise.resolve(value).then(function (value) {
+            step("next", value);
+          }, function (err) {
+            step("throw", err);
+          });
+        }
+      }
+
+      return step("next");
     });
-    mocha.ui("bdd");
+  };
+};
+
+
+
+
+
+
+
+
+
+
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
   }
 
-  function join(pathA, pathB) {
-    if (pathA[pathA.length] === "/") pathA = pathA.slice(0, -1);
-    if (pathB[0] === "/") pathB = pathB.slice(1);
-    return pathA + "/" + pathB;
+  return target;
+};
+
+var get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var set = function set(object, property, value, receiver) {
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent !== null) {
+      set(parent, property, value, receiver);
+    }
+  } else if ("value" in desc && desc.writable) {
+    desc.value = value;
+  } else {
+    var setter = desc.set;
+
+    if (setter !== undefined) {
+      setter.call(receiver, value);
+    }
   }
 
-  exports.loadTestFile = loadTestFile;
-  exports.loadTestFiles = loadTestFiles;
-  exports.runTestFiles = runTestFiles;
-  exports.chai = chai__default;
-  exports.mocha = mocha;
-  exports.expect = chai.expect;
+  return value;
+};
+
+var loadTestFiles = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(files, options) {
+    var testState, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, file, _testState;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            options = _extends({
+              global: System.global,
+              mocha: new mocha.constructor({ reporter: options.reporter }),
+              reporter: ConsoleReporter }, options);
+
+            testState = { mocha: options.mocha, files: [], tests: [] };
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _iteratorError = undefined;
+            _context.prev = 5;
+            _iterator = files[Symbol.iterator]();
+
+          case 7:
+            if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+              _context.next = 17;
+              break;
+            }
+
+            file = _step.value;
+            _context.next = 11;
+            return loadTestFile(file, options);
+
+          case 11:
+            _testState = _context.sent;
+
+            testState.files.push(_testState.file);
+            testState.tests = testState.tests.concat(_testState.tests);
+
+          case 14:
+            _iteratorNormalCompletion = true;
+            _context.next = 7;
+            break;
+
+          case 17:
+            _context.next = 23;
+            break;
+
+          case 19:
+            _context.prev = 19;
+            _context.t0 = _context["catch"](5);
+            _didIteratorError = true;
+            _iteratorError = _context.t0;
+
+          case 23:
+            _context.prev = 23;
+            _context.prev = 24;
+
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+
+          case 26:
+            _context.prev = 26;
+
+            if (!_didIteratorError) {
+              _context.next = 29;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 29:
+            return _context.finish(26);
+
+          case 30:
+            return _context.finish(23);
+
+          case 31:
+            return _context.abrupt("return", testState);
+
+          case 32:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this, [[5, 19, 23, 31], [24,, 26, 30]]);
+  }));
+
+  return function loadTestFiles(_x, _x2) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+var loadTestFile = function () {
+  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2(file) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var logger, m, imported, tests;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            options = _extends({
+              global: System.global,
+              mocha: new mocha.constructor({ reporter: options.reporter }),
+              reporter: ConsoleReporter }, options);
+
+            logger = options.logger || console;
+
+
+            logger.log("[mocha-es6] loading test module %s...", file);
+            _context2.next = 5;
+            return System.normalize(file);
+
+          case 5:
+            file = _context2.sent;
+
+            System.delete(file);
+            m = options.mocha;
+
+            prepareMocha(m, options.global);
+            m.suite.emit('pre-require', options.global, file, m);
+            _context2.next = 12;
+            return System.import(file);
+
+          case 12:
+            imported = _context2.sent;
+
+            m.suite.emit('require', imported, file, m);
+            m.suite.emit('post-require', options.global, file, m);
+            tests = gatherTests(m.suite, 0);
+
+            logger.log("[mocha-es6] ...loading done, %s tests", tests.length);
+            return _context2.abrupt("return", { mocha: m, file: file, tests: tests });
+
+          case 18:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, this);
+  }));
+
+  return function loadTestFile(_x3, _x4) {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
+var runTestFiles = function () {
+  var _ref3 = asyncToGenerator(regeneratorRuntime.mark(function _callee3(files, options) {
+    var testState, mocha$$1, grep;
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            if (!options) options = {};
+
+            if (!options.package) {
+              _context3.next = 6;
+              break;
+            }
+
+            (options.logger || console).log("[mocha-es6] importing package %s", options.package);
+            _context3.next = 5;
+            return lively.modules.importPackage(options.package);
+
+          case 5:
+            files = files.map(function (f) {
+              return f.match(/^(\/|[a-z-A-Z]:\\|[^:]+:\/\/)/) ? f : join(options.package, f);
+            });
+
+          case 6:
+            _context3.next = 8;
+            return loadTestFiles(files, options);
+
+          case 8:
+            testState = _context3.sent;
+            mocha$$1 = testState.mocha;
+            grep = options.grep || mocha$$1.options.grep || /.*/;
+
+
+            mocha$$1.grep(grep);
+            options.invert && mocha$$1.invert();
+
+            (options.logger || console).log("[mocha-es6] start running tests");
+            _context3.prev = 14;
+            return _context3.abrupt("return", new Promise(function (resolve, reject) {
+              return mocha$$1.run(function (failures) {
+                return resolve(failures);
+              });
+            }));
+
+          case 18:
+            _context3.prev = 18;
+            _context3.t0 = _context3["catch"](14);
+
+            (options.logger || console).log("[mocha-es6] error running tests!\n" + _context3.t0.stack);
+            console.error(_context3.t0);
+            throw _context3.t0;
+
+          case 23:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, this, [[14, 18]]);
+  }));
+
+  return function runTestFiles(_x6, _x7) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
+var test = function () {
+  var _ref4 = asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+    var file;
+    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            file = "tests/eval-support-test.js";
+            file = "http://localhost:9001/node_modules/lively.ast/tests/eval-support-test.js";
+            _context4.next = 4;
+            return runTestFiles([file], { package: "http://localhost:9001/node_modules/lively.ast" });
+
+          case 4:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4, this);
+  }));
+
+  return function test() {
+    return _ref4.apply(this, arguments);
+  };
+}();
+
+/*global System,global*/
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// custom assertions
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+chai__default.Assertion.addChainableMethod('stringEquals', function (obj) {
+  var expected = String(obj),
+      actual = String(this._obj);
+
+  return this.assert(expected === actual, 'expected ' + actual + ' to equal' + expected, 'expected ' + actual + ' to not equal' + expected, expected, actual, true /*show diff*/);
+});
+
+function lively_equals(_super) {
+  return function (other) {
+    if (this.__flags.deep) return _super.apply(this, arguments);else if (Array.isArray(this._obj) && arrayEquals(this._obj, other)) {/*do nothin'*/} else if (this._obj && typeof this._obj.equals === "function" && this._obj.equals(other)) {/*do nothin'*/} else _super.apply(this, arguments);
+  };
+
+  function arrayEquals(array, otherArray) {
+    var len = array.length;
+    if (!otherArray || len !== otherArray.length) return false;
+
+    for (var i = 0; i < len; i++) {
+      if (Array.isArray(array[i])) {
+        if (!arrayEquals(array[i], otherArray[i])) return false;
+        continue;
+      }
+      if (array[i] && otherArray[i] && typeof array[i].equals === "function" && typeof otherArray[i].equals === "function") {
+        if (!array[i].equals(otherArray[i])) return false;
+        continue;
+      }
+      if (array[i] != otherArray[i]) return false;
+    }
+    return true;
+  }
+}
+
+chai__default.Assertion.overwriteMethod('equal', lively_equals);
+chai__default.Assertion.overwriteMethod('eq', lively_equals);
+chai__default.Assertion.overwriteMethod('equals', lively_equals);
+
+function ConsoleReporter(runner) {
+  var passes = 0;
+  var failures = 0;
+
+  runner.on('pass', function (test) {
+    passes++;
+    console.log('pass: %s', test.fullTitle());
+  });
+
+  runner.on('fail', function (test, err) {
+    failures++;
+    console.log('fail: %s -- error: %s', test.fullTitle(), err.stack || err.message || err);
+  });
+
+  runner.on('end', function () {
+    console.log('end: %d/%d', passes, passes + failures);
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// test loading and running
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function gatherTests(suite, depth) {
+  return [{ title: suite.title, fullTitle: suite.fullTitle(), depth: depth, type: "suite" }].concat(suite.tests.map(function (ea) {
+    return { title: ea.title, fullTitle: ea.fullTitle(), type: "test", depth: depth };
+  })).concat(suite.suites.reduce(function (tests, suite) {
+    return tests.concat(gatherTests(suite, depth + 1));
+  }, []));
+}
+
+function prepareMocha(mocha$$1, GLOBAL) {
+  mocha$$1.suite.on('pre-require', function (context) {
+    GLOBAL.afterEach = context.afterEach || context.teardown;
+    GLOBAL.after = context.after || context.suiteTeardown;
+    GLOBAL.beforeEach = context.beforeEach || context.setup;
+    GLOBAL.before = context.before || context.suiteSetup;
+    GLOBAL.describe = context.describe || context.suite;
+    GLOBAL.it = context.it || context.test;
+    GLOBAL.setup = context.setup || context.beforeEach;
+    GLOBAL.suiteSetup = context.suiteSetup || context.before;
+    GLOBAL.suiteTeardown = context.suiteTeardown || context.after;
+    GLOBAL.suite = context.suite || context.describe;
+    GLOBAL.teardown = context.teardown || context.afterEach;
+    GLOBAL.test = context.test || context.it;
+    GLOBAL.run = context.run;
+  });
+  mocha$$1.ui("bdd");
+}
+
+function join(pathA, pathB) {
+  if (pathA[pathA.length] === "/") pathA = pathA.slice(0, -1);
+  if (pathB[0] === "/") pathB = pathB.slice(1);
+  return pathA + "/" + pathB;
+}
+
+exports.loadTestFile = loadTestFile;
+exports.loadTestFiles = loadTestFiles;
+exports.runTestFiles = runTestFiles;
+exports.chai = chai__default;
+exports.mocha = mocha;
+exports.expect = chai.expect;
 
 }((this.mochaEs6 = this.mochaEs6 || {}),lively.modules,mocha,chai));
+
   if (typeof module !== "undefined" && module.exports)
     module.exports = GLOBAL.mochaEs6;
 })();
