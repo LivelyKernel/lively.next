@@ -18305,7 +18305,24 @@ function parse(source, options) {
     };
   }
 
-  var parsed = acorn.parse(source, options);
+  try {
+    var parsed = acorn.parse(source, options);
+  } catch (err) {
+    if (typeof SyntaxError !== "undefined" && err instanceof SyntaxError && err.loc) {
+      var lines = source.split("\n");
+      var message = err.message;
+      var _err$loc = err.loc;
+      var row = _err$loc.line;
+      var column = _err$loc.column;
+      var pos = err.pos;
+      var line = lines[row - 1];
+      var newMessage = "Syntax error at line " + row + " column " + column + " (index " + pos + ") \"" + message + "\"\nsource: " + line.slice(0, column) + "<--SyntaxError-->" + line.slice(column);
+      var betterErr = new SyntaxError(newMessage);
+      betterErr.loc = { line: row, column: column };
+      betterErr.pos = pos;
+      throw betterErr;
+    } else throw err;
+  }
 
   if (options.addSource) addSource(parsed, source);
 
