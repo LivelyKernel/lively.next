@@ -38,8 +38,6 @@ describe("search", () => {
       const res = await module1.search("hello");
       expect(res).to.containSubset([{
         moduleId: file1m,
-        pathInPackage: "./file1.js",
-        packageName: "search-test-project",
         lineString: "export var x = 'hello';",
         line: 2,
         column: 16,
@@ -163,6 +161,8 @@ describe("search", () => {
     it("finds string constants", async () => {
       const res = await searchInPackage(S, testProjectDir, "hello");
       expect(res).to.containSubset([{
+        pathInPackage: "./file1.js",
+        packageName: "search-test-project",
         moduleId: file1m,
         line: 2,
         column: 16,
