@@ -515,9 +515,9 @@ export default class TestRunner extends HTMLMorph {
                 onmousedown="${this.htmlRef}.runTest('${id}')"></input>
               <div
                 onmousedown="${this.htmlRef}.onClickError(event, '${id}', '${file}', this);"
-                class="error ${this.renderedError ? "" : "hidden"}"
+                class="error ${test.error ? "" : "hidden"}"
                 style="margin-left: ${depthOffset+10}px;"
-                >${this.renderedError}
+                >${this.renderError(test)}
               </div>
             </div>`
   }
