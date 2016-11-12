@@ -63,7 +63,7 @@ const editorCommands = [
       } else {
         await fileBrowser.world().inform("delete file canceled");
       }
-        
+
     } catch (e) {
       fileBrowser.showError(`Error writing ${f.url}: ${e.stack || e}`);
     }
@@ -183,7 +183,7 @@ export default class TextEditor extends Morph {
     var {editorPlugin} = this.state;
     if (editorPlugin) ed.removePlugin(editorPlugin);
     editorPlugin = null;
-  
+
     var url = (resource || {}).url,
         fileType = "plain text";
 
@@ -193,10 +193,10 @@ export default class TextEditor extends Morph {
     } else if (url) {
       var [_, ext] = url.match(/\.([^\.\s]+)$/) || [];
 
+      // FIXME
       switch (ext) {
 
         case 'js':
-          // FIXME
           var { JavaScriptEditorPlugin } = await System.import("lively.morphic/ide/js/editor-plugin.js")
           editorPlugin = new JavaScriptEditorPlugin(config.codeEditor.defaultTheme);
           editorPlugin.evalEnvironment = {
@@ -205,7 +205,12 @@ export default class TextEditor extends Morph {
             get format() { return lively.modules.module(this.targetModule).format() || "global"; }
           }
           break;
-          
+
+        case 'json':
+          var { JSONEditorPlugin } = await System.import("lively.morphic/ide/json/editor-plugin.js")
+          editorPlugin = new JSONEditorPlugin(config.codeEditor.defaultTheme);
+          break;
+
         default:
           fileType = "plain text";
       }
