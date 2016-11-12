@@ -245,21 +245,23 @@ export class TextPrompt extends AbstractPrompt {
 
   get maxWidth() { return 800; }
 
-  build({label, input, historyId}) {
+  build({label, input, historyId, useLastInput}) {
     this.addMorph({
       fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
       name: "label", type: "label", value: label
     });
 
-    var input = this.addMorph(Text.makeInputLine({
+    var inputLine = this.addMorph(Text.makeInputLine({
       historyId,
       name: "input", textString: input || "",
       borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
       fontColor: Color.gray.darker(), padding: Rectangle.inset(10,4)
     }));
-    input.gotoDocumentEnd();
-    input.scrollCursorIntoView();
-    var inputWidth = input.textBounds().width;
+    if (!input && historyId && useLastInput)
+      inputLine.textString = arr.last(inputLine.inputHistory.items);
+    inputLine.gotoDocumentEnd();
+    inputLine.scrollCursorIntoView();
+    var inputWidth = inputLine.textBounds().width;
     // if the input string we pre-fill is wide than we try to make it fit
     if (inputWidth > this.width-10)
       this.width = Math.min(this.maxWidth, inputWidth+10);
@@ -318,7 +320,8 @@ export class ListPrompt extends AbstractPrompt {
          itemPadding,
          extent,
          multiSelect,
-         historyId}) {
+         historyId,
+         useLastInput}) {
 
     this.extent = extent || pt(500,400);
     var ListClass = filterable ? FilterableList : List;
@@ -335,7 +338,8 @@ export class ListPrompt extends AbstractPrompt {
 
     this.addMorph(new ListClass({
       name: "list", multiSelect,
-      historyId, borderWidth: 0, borderColor: Color.gray,
+      historyId, useLastInput,
+      borderWidth: 0, borderColor: Color.gray,
       fontSize: listFontSize, fontFamily: listFontFamily,
       padding, itemPadding, theme: "dark"
     }));
