@@ -2317,6 +2317,7 @@ var NodeJSFileResource = function (_Resource) {
   return NodeJSFileResource;
 }(Resource);
 
+/*global System*/
 function resource(url) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
   if (url.isResource) return url;
@@ -2395,8 +2396,97 @@ var createFiles = function () {
   };
 }();
 
+function loadViaScript(url, onLoadCb) {
+  var _this = this;
+
+  // load JS code by inserting a <script src="..." /> tag into the
+  // DOM. This allows cross domain script loading and JSONP
+
+  var parentNode = document.head,
+      xmlNamespace = parentNode.namespaceURI,
+      useBabelJsForScriptLoad = false,
+      SVGNamespace = "http://www.w3.org/2000/svg",
+      XLINKNamespace = "http://www.w3.org/1999/xlink";
+
+  return new Promise(function (resolve, reject) {
+    var script = document.createElementNS(xmlNamespace, 'script');
+
+    if (useBabelJsForScriptLoad && typeof babel !== "undefined") {
+      script.setAttribute('type', "text/babel");
+    } else {
+      script.setAttribute('type', 'text/ecmascript');
+    }
+
+    parentNode.appendChild(script);
+    script.setAttributeNS(null, 'id', url);
+
+    script.namespaceURI === SVGNamespace ? script.setAttributeNS(_this.XLINKNamespace, 'href', url) : script.setAttribute('src', url);
+
+    script.onload = resolve;
+    script.onerror = reject;
+    script.setAttributeNS(null, 'async', true);
+  });
+}
+
+var ensureFetch = function () {
+  var _ref2 = asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+    var thisModuleId, fetchInterface, moduleId;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (!("fetch" in System.global)) {
+              _context2.next = 2;
+              break;
+            }
+
+            return _context2.abrupt("return", Promise.resolve());
+
+          case 2:
+            thisModuleId = System.decanonicalize("lively.resources");
+
+            if (!System.get("@system-env").node) {
+              _context2.next = 10;
+              break;
+            }
+
+            _context2.next = 6;
+            return System.normalize("fetch-ponyfill", thisModuleId);
+
+          case 6:
+            moduleId = _context2.sent.replace("file://", "");
+
+            fetchInterface = System._nodeRequire(moduleId);
+            _context2.next = 13;
+            break;
+
+          case 10:
+            _context2.next = 12;
+            return System.import("fetch-ponyfill", thisModuleId);
+
+          case 12:
+            fetchInterface = _context2.sent;
+
+          case 13:
+            Object.assign(System.global, fetchInterface());
+
+          case 14:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, this);
+  }));
+
+  return function ensureFetch() {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
 exports.resource = resource;
 exports.createFiles = createFiles;
+exports.loadViaScript = loadViaScript;
+exports.ensureFetch = ensureFetch;
 
 }((this.lively.resources = this.lively.resources || {}),typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}));
 
