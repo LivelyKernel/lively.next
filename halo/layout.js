@@ -5,6 +5,7 @@ import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
 import { CheckBox, ValueScrubber} from "../widgets.js";
 import { connect } from "lively.bindings";
+import { PropertyInspector } from "../ide/style-editor.js"
 
 class AxisHalo extends Morph {
   
@@ -388,7 +389,7 @@ export class GridLayoutHalo extends Morph {
                fontColor: Color.gray.darker(),
                readOnly: true}, fitToCell]]
               .map(x => { return {submorphs: x, fill: Color.transparent, 
-                                  layout: new HorizontalLayout()}})
+                                  layout: new HorizontalLayout({spacing: 3})}})
   }
 
   get isLayoutHalo() { return false }
@@ -620,11 +621,9 @@ export class FlexLayoutHalo extends Morph {
 
   optionControls() {
       const layout = this.target,
-            spacing = new ValueScrubber({
-                name: "spacing", value: layout.spacing}),
+            spacing = new PropertyInspector({min: 0, target: layout, unit: "px", property: "spacing"}),
             autoResize = new CheckBox({
                 name: "autoResize", checked: layout.autoResize});
-      connect(spacing, "scrub", layout, "spacing");
       connect(autoResize, "toggle", this, "updateResizePolicy");      
       return [[{type: "text", textString: "Resize Container", 
                padding: rect(5,0,10,10), fill: Color.transparent,
@@ -635,7 +634,7 @@ export class FlexLayoutHalo extends Morph {
                fontColor: Color.gray.darker(),
                readOnly: true}, spacing]]
               .map(x => { return {submorphs: x, fill: Color.transparent, 
-                                  layout: new HorizontalLayout()}})
+                                  layout: new HorizontalLayout({spacing: 3})}})
   }
 
 }
