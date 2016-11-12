@@ -21,19 +21,18 @@ const dir = System.decanonicalize("lively.modules/tests/"),
 describe("search", () => {
 
   let S, module1, module2;
+
   before(async () => {
+    await createFiles(testProjectDir, testProjectSpec);
     S = getSystem("test", {baseURL: dir});
     module1 = mod(S, file1m);
     module2 = mod(S, file2m);
-    await createFiles(testProjectDir, testProjectSpec);
   });
 
-  after(async () => {
-    await removeDir(testProjectDir);
-  });
+  after(() => removeDir(testProjectDir));
 
   describe("in modules", () => {
-
+  
     it("finds string constants", async () => {
       const res = await module1.search("hello");
       expect(res).to.containSubset([{
@@ -44,7 +43,7 @@ describe("search", () => {
         length: 5
       }]);
     });
-
+  
     it("finds comments", async () => {
       const res = await module2.search("comment");
       expect(res).to.containSubset([{
@@ -55,7 +54,7 @@ describe("search", () => {
         length: 7
       }]);
     });
-
+  
     describe("by regex", () => {
       it("finds comments", async () => {
         const res = await module1.search(/(im|ex)port/);
@@ -75,13 +74,13 @@ describe("search", () => {
   });
 
   describe("in all loaded modules", () => {
-
+  
     it("does not find unloaded string constants", async () => {
       module1.unload(); module2.unload();
       const res = await searchLoadedModules(S, "hello");
       expect(res).to.containSubset([]);
     });
-
+  
     it("finds string constants", async () => {
       await S.import(file1m);
       const res = await searchLoadedModules(S, "hello");
@@ -92,7 +91,7 @@ describe("search", () => {
         length: 5
       }]);
     });
-
+  
     it("finds comments", async () => {
       await S.import(file1m);
       const res = await searchLoadedModules(S, "comment");
@@ -103,7 +102,7 @@ describe("search", () => {
         length: 7
       }]);
     });
-
+  
     it("finds syntax", async () => {
       await S.import(file1m);
       await S.import(file2m);
@@ -120,7 +119,7 @@ describe("search", () => {
         length: 6
       }]);
     });
-
+  
     describe("by regex", () => {
       it("finds comments", async () => {
         const res = await searchLoadedModules(S, /(im|ex)port/);
@@ -142,7 +141,7 @@ describe("search", () => {
         }]);
       });
     });
-
+  
     describe("can exclude modules", () => {
       it("finds comments", async () => {
         const res = await searchLoadedModules(S, /(im|ex)port/, {excludedModules: [file1m]});
@@ -155,8 +154,8 @@ describe("search", () => {
 
   describe("in packages", () => {
 
-    beforeEach(async () => await importPackage(S, testProjectDir));
-    afterEach(async () => await removePackage(S, testProjectDir));
+    beforeEach(() => importPackage(S, testProjectDir));
+    afterEach(() => removePackage(S, testProjectDir));
 
     it("finds string constants", async () => {
       const res = await searchInPackage(S, testProjectDir, "hello");
@@ -164,9 +163,7 @@ describe("search", () => {
         pathInPackage: "./file1.js",
         packageName: "search-test-project",
         moduleId: file1m,
-        line: 2,
-        column: 16,
-        length: 5
+        line: 2, column: 16, length: 5
       }]);
     });
 

@@ -57,7 +57,6 @@ class ModuleInterface {
     this._source = null;
     this._ast = null;
     this._scope = null;
-    this._package = null;
     this._observersOfTopLevelState = [];
 
     this._evaluationsInProgress = 0;
@@ -130,7 +129,6 @@ class ModuleInterface {
     this._source = null;
     this._ast = null;
     this._scope = null;
-    this._package = null;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -401,7 +399,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   package() {
-    return this._package || (this._package = Package.forModule(this.System, this));
+    return Package.forModule(this.System, this);
   }
 
   pathInPackage() {
