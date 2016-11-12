@@ -31,7 +31,7 @@ export class Slider extends Morph {
                 vertices: [this.leftCenter.addXY(7.5,0), 
                            this.rightCenter.addXY(-7.5,0)]
               }),
-              {type: "ellipse", fill: Color.gray.lighter(), name: "slideHandle",
+              {type: "ellipse", fill: Color.gray, name: "slideHandle",
                borderColor: Color.gray.darker(), borderWidth: 1, dropShadow: true,
                extent: pt(15,15),
                onDrag(evt) {
@@ -742,7 +742,7 @@ export class ColorPickerField extends Morph {
 
 }
 
-class Styler extends Morph {
+class StyleEditor extends Morph {
 
    constructor(props) {
       const {title} = props;
@@ -759,21 +759,23 @@ class Styler extends Morph {
         submorphs: [{
            fill: Color.transparent,
            layout: new HorizontalLayout(),
+           onDrag: (evt) => this.onDrag(evt),
            submorphs: [{
              type: "text", fontWeight: "bold", padding: 5,
              fontColor: Color.gray, fontSize: 12, readOnly: true,
-             textString: title, fill: Color.transparent
+             textString: title, fill: Color.transparent, draggable: true,
+             onDrag: (evt) => this.onDrag(evt)
         }]
     }]});
    }
 
    quit() {
-      signal(this, "active", false);
+      this.active = false;
       this.remove()
    }
    
    async open() {
-      if (this.opened) return;
+      if (this.active) return;
       const [wrapper] = this.submorphs,
             {submorphs: [instruction]} = wrapper,
             duration = 200;
@@ -787,12 +789,12 @@ class Styler extends Morph {
          this.addMorph(c).animate({opacity: 1, duration});
       });
       this.animate({
-          fill: Color.gray,
+          fill: Color.gray.lighter(),
           borderWidth: 1, borderRadius: 7,
-          borderColor: Color.gray.darker(),
+          borderColor: Color.gray,
           duration, layout: new VerticalLayout({spacing: 5})
       });
-      this.opened = true;
+      this.active = true;
       return false;
    }
 
@@ -814,7 +816,7 @@ class Styler extends Morph {
 
 }
 
-export class BodyStyler extends Styler {
+export class BodyStyleEditor extends StyleEditor {
    
    controls(target) {
        return [
@@ -849,7 +851,7 @@ export class BodyStyler extends Styler {
    
 }
 
-export class BorderStyler extends Styler {
+export class BorderStyleEditor extends StyleEditor {
 
   controls(target) {
      return [
@@ -881,4 +883,147 @@ export class BorderStyler extends Styler {
               })
   }
   
+}
+
+export class LayoutStyleEditor extends Morph {
+
+    getLayoutObjects() {
+       return [null,
+               new HorizontalLayout({autoResize: false}), 
+               new VerticalLayout({autoResize: false}), 
+               new FillLayout(), 
+               new TilingLayout(), 
+               new GridLayout({grid: [[null], [null], [null]]})];
+   }
+
+   remove() {
+       this.layoutHalo && this.layoutHalo.remove();
+       super.remove();
+   }
+
+   async toggle() {
+       const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
+             layoutPicker = this.getSubmorphNamed('layoutPicker');
+       if (this.layoutHalo) {
+          this.halo.showStyleGuides = true;
+          this.layout = null;
+          this.submorphs = [this.getSubmorphNamed("layoutControlPickerWrapper")];
+          layoutPicker.textString = this.getCurrentLayoutName();
+          this.layoutHalo.remove(); this.layoutHalo = null;
+          Icon.setIcon(layoutHaloToggler, "th");
+          layoutHaloToggler.fontSize = 14; layoutHaloToggler.padding = 3;
+          layoutHaloToggler.tooltip = "Show layout halo";
+          await this.animate({
+                layout: new HorizontalLayout(),
+                duration: 300
+          });
+       } else {
+          this.halo.showStyleGuides = false;
+          this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
+          this.layout = null;
+          this.submorphs = [...this.submorphs, ...this.layoutHalo.optionControls()]
+          layoutPicker.textString = "Configure Layout";
+          Icon.setIcon(layoutHaloToggler, "times-circle-o");
+          layoutHaloToggler.fontSize = 22; layoutHaloToggler.padding = 0;
+          layoutHaloToggler.tooltip = "Close layout halo";
+          this.animate({
+             layout: new VerticalLayout({spacing: 0}),
+             duration: 300
+          });
+       }
+       this.update(true);
+   }
+
+   getCurrentLayoutName() {
+      return this.getLayoutName(this.target.layout);
+   }
+
+   getLayoutName(l) {
+      return l ? l.name() + " Layout" : "No Layout";
+   }
+
+   openLayoutMenu() {
+     if (this.layoutHalo) return;
+     var menu = this.world().openWorldMenu(
+        this.getLayoutObjects().map(l => {
+           return [this.getLayoutName(l), 
+                   () => {
+                       const p = this.getSubmorphNamed("layoutPicker");
+                       this.target.animate({layout: l, 
+                                            easing: "cubic-bezier(0.075, 0.82, 0.165, 1)"});
+                       p.textString = this.getLayoutName(l);
+                       p.fitIfNeeded();
+                       this.update();
+                   }]
+        })
+     )
+     menu.globalPosition = this.getSubmorphNamed("layoutPicker").globalPosition;
+     menu.isHaloItem = true;
+   }
+
+   update(animated) { 
+      const topCenter = this.target
+                            .globalBounds()
+                            .withX(0).withY(0)
+                            .bottomCenter().addXY(50, 70),
+            inspectButton = this.getSubmorphNamed('layoutHaloToggler');
+      if (animated) {
+         this.animate({topCenter, duration: 300});
+      } else { this.topCenter = topCenter; }
+      if (!this.target.layout) {
+        inspectButton.opacity = .5;
+        inspectButton.nativeCursor = null;
+      } else {
+        inspectButton.opacity = 1;
+        inspectButton.nativeCursor = "pointer";
+      }
+   }
+
+   constructor(props) {
+       const {target} = props;
+       super({
+           name: "layoutControl",
+           border: {radius: 15, color: Color.gray, width: 1},
+           clipMode: "hidden", dropShadow: true,
+           extent: pt(120, 75),
+           fill: Color.gray.lighter(),
+           layout: new VerticalLayout(),
+           isHaloItem: true,
+           ...props, 
+       });
+       this.submorphs = [{
+            name: "layoutControlPickerWrapper",
+            fill: Color.transparent,
+            layout: new HorizontalLayout({spacing: 5}),
+            submorphs: [
+               this.layoutHaloToggler(),
+               this.layoutPicker()
+           ]}];
+       this.update(false);
+   }
+
+   layoutPicker() {
+      return {
+          type: 'text', fill: Color.transparent, name: "layoutPicker",
+          padding: 2, readOnly: true,  fontColor: Color.black.lighter(),
+          fontWeight: 'bold', nativeCursor: "pointer", padding: 3,
+          fontStyle: 'bold', textString: this.getCurrentLayoutName(),
+          onMouseDown: (evt) => {
+             this.openLayoutMenu();
+        }
+      }
+   }
+
+   layoutHaloToggler() {
+      return Icon.makeLabel("th", {
+                  name: "layoutHaloToggler",
+                  nativeCursor: "pointer",
+                  fontSize: 15, fontColor: Color.black.lighter(),
+                  padding: 3,
+                  tooltip: "Toggle layout halo",
+                  onMouseDown: (evt) => {
+                     this.target.layout && this.toggle();
+                  }
+               })
+   }
 }
