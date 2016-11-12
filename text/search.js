@@ -1,10 +1,11 @@
 import { Rectangle, pt, Color } from "lively.graphics";
 import { connect, disconnect } from "lively.bindings"
-import { obj, promise } from "lively.lang";
+import { obj, promise, Path } from "lively.lang";
 import { Morph, Text, Button } from "../index.js";
 import { show } from "lively.morphic";
 import { lessPosition, minPosition, maxPosition } from "./position.js";
 import { occurStartCommand } from "./occur.js";
+import { Icon } from "../icons.js";
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // finds string / regexp matches in text morphs
@@ -47,7 +48,7 @@ export class TextSearcher {
       if (lessPosition(pos, inRange.start) || lessPosition(inRange.end, pos))
         return this.STOP;
     }
-    
+
     var {row, column} = pos,
         chunk = lines[row].slice(column) + (multiline ? "\n" + lines.slice(row+1).join("\n") : ""),
         reMatch = chunk.match(needle);
@@ -89,7 +90,7 @@ export class TextSearcher {
 
     return result === this.STOP ? null : result;
   }
-  
+
   searchForAll(options) {
     var results = [];
     var i = 0;
@@ -129,14 +130,13 @@ export class SearchWidget extends Morph {
 
     this.targetText = target;
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-    
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    var labelStyle = {fontFamily: "Helvetica Neue, Arial, sans-serif", fontSize: 12},
-        label = this.addMorph(Text.makeLabel("Enter search term:", {name: "label", ...labelStyle, topLeft: pt(4,4)})),
-        acceptButton = this.addMorph(new Button({name: "acceptButton", label: "✔", ...labelStyle})).fit(),
-        cancelButton = this.addMorph(new Button({name: "cancelButton", label: "X", ...labelStyle})).fit(),
-        nextButton = this.addMorph(new Button({name: "nextButton", label: "⬇", ...labelStyle})).fit(),
-        prevButton = this.addMorph(new Button({name: "prevButton", label: "⬆", ...labelStyle})).fit();
+    let btnStyle = {fontSize: 18, extent: pt(24,24), activeStyle: {borderWidth: 0, fill: null, fontColor: Color.gray.darker()}},
+        acceptButton = this.addMorph(new Button({name: "acceptButton", label: [Icon.textAttribute("check-circle-o")], ...btnStyle})),
+        cancelButton = this.addMorph(new Button({name: "cancelButton", label: [Icon.textAttribute("times-circle-o")], ...btnStyle})),
+        nextButton = this.addMorph(new Button({name: "nextButton", label: [Icon.textAttribute("arrow-circle-o-down")], ...btnStyle})),
+        prevButton = this.addMorph(new Button({name: "prevButton", label: [Icon.textAttribute("arrow-circle-o-up")], ...btnStyle}));
 
     connect(acceptButton, "fire", this, "execCommand", {converter: () => "accept search"});
     connect(cancelButton, "fire", this, "execCommand", {converter: () => "cancel search"});
@@ -145,18 +145,37 @@ export class SearchWidget extends Morph {
 
     var inputMorph = this.addMorph(
       Text.makeInputLine({
-        name: "input",
+        name: "searchInput",
         width: this.width,
         textString: input,
         fill: Color.white,
         borderWidth: 1, borderColor: Color.gray,
         padding: Rectangle.inset(2),
         fontSize, fontFamily,
+        placeholder: "search input",
         historyId: "lively.morphic-text search"
       }));
 
     if (input) this.input = input;
     connect(inputMorph, "inputChanged", this, "search");
+
+
+    var replaceInput = this.addMorph(
+      Text.makeInputLine({
+        name: "replaceInput",
+        width: this.width,
+        textString: input,
+        fill: Color.white,
+        borderWidth: 1, borderColor: Color.gray,
+        padding: Rectangle.inset(2),
+        fontSize, fontFamily,
+        placeholder: "replace input",
+        historyId: "lively.morphic-text replace"
+      }));
+
+    var replaceButton = this.addMorph(new Button({name: "replaceButton", label: "replace", extent: pt(80, 20), fontColor: Color.gray.darker(), activeStyle: {border: {width: 2, color: Color.gray.darker()}, fill: null}}));
+    connect(replaceButton, "fire", this, "execCommand", {converter: () => "replace and go to next"});
+
 
     this.relayout();
 
@@ -182,15 +201,66 @@ export class SearchWidget extends Morph {
       {name: "cancel search", exec: () => { this.cancelSearch(); return true; }},
       {name: "search next", exec: () => { this.searchNext(); return true; }},
       {name: "search prev", exec: () => { this.searchPrev(); return true; }},
-      {name: "yank next word from text", exec: () => {
-        var text = this.targetText,
-            word = text.wordRight(),
-            input = this.get("input");
-        if (!input.selection.isEmpty()) input.selection.text = "";
-        var string = text.textInRange({start: text.cursorPosition, end: word.range.end});
-        input.textString += string;
-        return true;
-      }},
+
+      {
+        name: "accept search or replace and go to next",
+        exec: (_, args, count) => {
+          return this.execCommand(
+              this.get("replaceInput").isFocused() ?
+                "replace and go to next" :
+                "accept search", args, count);
+        }
+      },
+
+
+      {
+        name: "replace current search location with replace input",
+        exec: () => {
+          var search = Path("state.inProgress").get(this);
+          if (search.found) {
+            var replacement = this.get("replaceInput").textString;
+            this.get("replaceInput").get("replaceInput").acceptInput(); // for history
+            if (search.needle instanceof RegExp) {
+              replacement = search.found.match.replace(search.needle, replacement);
+            }
+            this.targetText.replace(search.found.range, replacement);
+          }
+          return true;
+        }
+      },
+
+      {
+        name: "replace and go to next",
+        exec: () => {
+          this.execCommand("replace current search location with replace input");
+          this.execCommand(this.state.backwards ? "search prev" : "search next");
+          return true;
+        }
+      },
+
+      {
+        name: "change focus",
+        exec: () => {
+          if (this.get("searchInput").isFocused())
+            this.get("replaceInput").focus();
+          else
+            this.get("searchInput").focus();
+          return true;
+        }
+      },
+
+      {
+        name: "yank next word from text",
+        exec: () => {
+          var text = this.targetText,
+              word = text.wordRight(),
+              input = this.get("searchInput");
+          if (!input.selection.isEmpty()) input.selection.text = "";
+          var string = text.textInRange({start: text.cursorPosition, end: word.range.end});
+          input.textString += string;
+          return true;
+        }
+      },
     ]);
 
     // override existing commands
@@ -203,7 +273,8 @@ export class SearchWidget extends Morph {
     ]);
 
     this.addKeyBindings([
-      {keys: "Enter", command: "accept search"},
+      {keys: "Enter", command: "accept search or replace and go to next"},
+      {keys: "Tab", command: "change focus"},
       {keys: "Ctrl-O", command: "occur with search term"},
       {keys: "Ctrl-W", command: "yank next word from text"},
       {keys: "Escape|Ctrl-G", command: "cancel search"},
@@ -217,25 +288,37 @@ export class SearchWidget extends Morph {
         cancelButton = this.get("cancelButton"),
         prevButton = this.get("prevButton"),
         nextButton = this.get("nextButton"),
-        inputMorph = this.get("input");
+        searchInput = this.get("searchInput"),
+        replaceButton = this.get("replaceButton"),
+        replaceInput = this.get("replaceInput");
 
-    acceptButton.extent = pt(20, prevButton.height);
-    cancelButton.extent = pt(20, prevButton.height);
-    cancelButton.topRight = this.innerBounds().topRight().addXY(-2,2)
-    acceptButton.topRight = cancelButton.topLeft.addXY(-4,0);
-    prevButton.topRight = acceptButton.topLeft.addXY(-10, 0);
-    nextButton.topRight = prevButton.topLeft.addXY(-3,0);
-    inputMorph.width = this.width - 10;
-    inputMorph.topCenter = this.innerBounds().topCenter().withY(cancelButton.bottom+3);
-    this.height = inputMorph.bottom + 3;
+    acceptButton.top = prevButton.top = nextButton.top = cancelButton.top = 2
+    cancelButton.right = this.innerBounds().right() - 2;
+    acceptButton.right = cancelButton.left;
+    prevButton.right = acceptButton.left;
+    nextButton.right = prevButton.left;
+
+
+    searchInput.topLeft = pt(4,4);
+    replaceInput.topLeft = searchInput.bottomLeft.addXY(0, 4);
+    replaceInput.width = searchInput.width = nextButton.left - 4;
+    replaceButton.top = replaceInput.top;
+    replaceButton.center = pt(nextButton.left + (cancelButton.right - nextButton.left)/2, replaceInput.center.y);
+
+    // inputMorph.topCenter = this.innerBounds().topCenter().withY(cancelButton.bottom+3);
+    this.height = replaceInput.bottom + 3;
   }
 
   focus() {
-    this.get("input").focus();
+    this.get("searchInput").focus();
   }
 
-  get input() { return this.get("input").textString; }
-  set input(v) { this.get("input").textString = v; }
+  get input() {
+    var text = this.get("searchInput").textString,
+        reMatch = text.match(/^\/(.*)\/([a-z]*)$/);
+    return reMatch ? new RegExp(reMatch[1], reMatch[2]) : text;
+  }
+  set input(v) { this.get("searchInput").textString = String(v); }
 
   cleanup() {
     this.removeSearchMarkers();
@@ -261,7 +344,7 @@ export class SearchWidget extends Morph {
       this.state.last = this.state.inProgress;
     if (this.applySearchResult(this.state.inProgress))
       this.state.before && this.targetText.saveMark(this.state.before.position);
-    this.get("input").acceptInput(); // for history
+    this.get("searchInput").acceptInput(); // for history
     this.cleanup();
     this.state.before = null;
     this.remove();
@@ -293,7 +376,7 @@ export class SearchWidget extends Morph {
         {startRow, endRow} = text.whatsVisible,
         lines = text.document.lines,
         i = 0;
-    
+
     for (var row = startRow; row <= endRow; row++) {
       var line = lines[row] || "";
       for (var col = 0; col < line.length; col++) {
@@ -312,8 +395,7 @@ export class SearchWidget extends Morph {
         }
       }
     }
-    
-    
+
     var positionRange;
     if (this.state.backwards) {
       let {row, column} = found.range.start;
@@ -358,9 +440,9 @@ export class SearchWidget extends Morph {
       selectionReverse: sel.isReverse()
     }
 
-    
+
     if (state.last && state.last.found) {
-      var inputMorph = this.get("input");
+      var inputMorph = this.get("searchInput");
       // FIXME...! noUpdate etc
       disconnect(inputMorph, "inputChanged", this, "search");
       this.input = state.last.needle;
@@ -368,7 +450,7 @@ export class SearchWidget extends Morph {
       this.addSearchMarkersForPreview(state.last.found);
     }
 
-    this.get("input").selectAll();
+    this.get("searchInput").selectAll();
     this.focus();
   }
 
