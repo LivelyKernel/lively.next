@@ -1,16 +1,22 @@
-/*global beforeEach, afterEach, describe, it*/
+/*global beforeEach, afterEach, before, after, describe, it*/
 
 import { expect } from "mocha-es6";
 
 import Tracker from "../l2l/tracker.js";
 import Client from "../l2l/client.js";
+import { ensure as serverEnsure, close as serverClose } from "../server.js"
+
+var hostname = "localhost", port = 9009, testServer;
+var tracker, client1;
 
 describe('l2l', function() {
 
-  var tracker, client1;
+  before(async () => testServer = await serverEnsure({port, hostname}));
+  after(async () => serverClose(testServer));
+
   beforeEach(async () => {
-    tracker = await Tracker.namespace("l2l-test");
-    client1 = await Client.open("http://localhost:3000/lively.com", {namespace: "l2l-test"});
+    tracker = await Tracker.namespace("l2l-test", testServer);
+    client1 = await Client.open(`http://${hostname}:${port}/lively.com`, {namespace: "l2l-test"});
     await tracker.open();
     await client1.open();
   });

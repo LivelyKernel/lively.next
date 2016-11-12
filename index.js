@@ -1,32 +1,14 @@
-require("systemjs");
-require("lively.modules");
-require("socket.io")
+"format cjs";
 
-// System.debug = true;
+require("socket.io");
 
-var port = 3000;
-var hostname = "localhost";
-var isMain = !module.parent;
-
-if (isMain) {
-  var args = process.argv.slice(1),
-      portArgIndex = args.findIndex(arg => arg === "-p" || arg === "--port");
-  if (portArgIndex && args[portArgIndex+1] && Number(args[portArgIndex+1]))
-    port = Number(args[portArgIndex+1]);
+if (typeof fetch === "undefined") {
+  console.log("Installing fetch polyfill...")
+  System.import("lively.resources")
+    .then(function(res) { return res.ensureFetch(); })
+    .then(function() { console.log("fetch polyfill installed"); })
+    .catch(function(err) {
+      console.error("Error installing fetch:");
+      console.error(err);
+    });
 }
-
-System.debug = false;
-
-lively.modules.registerPackage(".")
-
-  .then(() => System.import("./server.js"))
-  .then((server) => server.ensure({port, hostname}))
-  .then((state) => console.log(`[lively.server] ${state.options.hostname}:${state.options.port} running`))
-
-  .then(() => lively.modules.importPackage("lively-system-interface"))
-  .then(() => console.log(`[lively.server] lively-system-interface loaded`))
-
-  .catch(err => {
-    console.error(`Error starting server: ${err.stack}`);
-    process.exit(1);
-  });

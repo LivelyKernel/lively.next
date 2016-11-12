@@ -1,20 +1,38 @@
 {
-  "name": "lively.com",
+  "name": "lively.server",
   "version": "0.1.0",
   "dependencies": {
-    "lively.modules": "*",
     "lively-system-interface": "*",
+    "lively.modules": "*",
+    "lively.resources": "*",
+    "minimist": "^1.2.0",
     "socket.io": "^1.5.1",
     "socket.io-client": "^1.5.1",
     "systemjs": "^0.19.40"
   },
+  "devDependencies": {
+    "mocha-es6": "^0.3.10"
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
+    "start": "$npm_node_execpath bin/start-server.js --port 9011 --hostname 0.0.0.0"
+  },
+  "systemjs": {
+    "map": {
+      "socket.io-client": {
+        "~node": "./node_modules/socket.io-client/socket.io.js",
+        "node": "./node_modules/socket.io-client/lib/index.js"
+      }
+    }
+  },
   "lively": {
-    "main": "index-node.js",
+    "main": "server.js",
     "packageMap": {
       "lively.modules": "./node_modules/lively.modules",
       "lively-system-interface": "./node_modules/lively-system-interface",
       "socket.io": "./node_modules/socket.io",
-      "socket.io-client": "./node_modules/socket.io-client"
+      "socket.io-client": "./node_modules/socket.io-client",
+      "mocha-es6": "./node_modules/mocha-es6"
     }
   }
 }

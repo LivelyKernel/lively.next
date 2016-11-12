@@ -24,6 +24,21 @@ export function ensure(options) {
   return find(options) || start(options);
 }
 
+export function close(serverState = {}) {
+  var {server, io, options} = serverState;
+
+  if (options) {
+    if (serverState !== find(options))
+      console.warn("Stored server state does not match serverState passed to close()!");
+    serverStateMap.delete(serverKey(options));
+  }
+
+  return new Promise((resolve, reject) => {
+    serverState.server.close(resolve);
+    serverState.io.close();
+  });
+}
+
 export async function start(options) {
   var {hostname, port, socketIOPath} = {...defaultOptions, ...options},
       server = http.createServer(),
@@ -78,7 +93,7 @@ function ignoreSocketIO(path = "/lively.com") {
   return function(req, res, next) {
     if (req.url.startsWith(path)) {
       // socket.io handles it
-      // console.log(`[lively.com] request to ${req.url} ignored -> socket.io handles it`);
+      // console.log(`[lively.server] request to ${req.url} ignored -> socket.io handles it`);
     } else next();
   }
 }
