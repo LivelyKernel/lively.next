@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "lively.resources": "*",
-    "lively.bindings": "*",
+    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "lively.lang": "*"
   },
   "devDependencies": {
