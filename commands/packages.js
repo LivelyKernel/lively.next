@@ -97,7 +97,7 @@ export async function interactivelyLoadPackage(system, requester, relatedPackage
   try {
     JSON.parse(await system.moduleRead(spec.configFile)).name
   } catch (e) {
-    spec.name = spec.url.filename().replace(/\/$/, "");
+    spec.name = String(spec.url).replace(/\/$/, "");
     system.resourceEnsureExistance(spec.configFile, `{\n  "name": "${spec.name}",\n  "version": "0.1.0"\n}`);
   }
 
