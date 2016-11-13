@@ -2,7 +2,7 @@
   "name": "lively.server",
   "version": "0.1.0",
   "dependencies": {
-    "lively-system-interface": "*",
+    "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
     "lively.modules": "*",
     "lively.resources": "*",
     "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
