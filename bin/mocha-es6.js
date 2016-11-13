@@ -45,13 +45,12 @@ function readProcessArgs() {
 }
 
 function runPreScript() {
-  if (!args["pre-script"]) return;
-  console.log(`${step++}. Running pre-script ${args["pre-script"]}`);
-  return System.import(args["pre-script"])
-    .then(function(preScript) {
-      return typeof preScript.default === "function" ?
-        preScript.default() : null;
-    })
+  var scriptPath = args["pre-script"];
+  if (!scriptPath) return;
+  if (!path.isAbsolute(scriptPath))
+    scriptPath = path.join(process.cwd(), scriptPath);
+  console.log(`${step++}. Running pre-script ${scriptPath}`);
+  return require(scriptPath)
 }
 
 function findTestFiles(files) {
