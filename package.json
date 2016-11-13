@@ -1,0 +1,32 @@
+{
+  "name": "lively.2lively",
+  "version": "0.1.0",
+  "dependencies": {
+    "lively.resources": "*",
+    "lively.lang": "*",
+    "socket.io-client": "^1.5.1"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.3.10",
+    "lively.server": "*"
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js"
+  },
+  "systemjs": {
+    "map": {
+      "socket.io-client": {
+        "~node": "./node_modules/socket.io-client/socket.io.js",
+        "node": "./node_modules/socket.io-client/lib/index.js"
+      }
+    }
+  },
+  "lively": {
+    "packageMap": {
+      "lively.server": "./node_modules/lively.server",
+      "socket.io-client": "./node_modules/socket.io-client",
+      "mocha-es6": "./node_modules/mocha-es6"
+    }
+  }
+}
+
