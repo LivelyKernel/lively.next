@@ -25410,6 +25410,11 @@ var NodeJSFileResource = function (_Resource) {
   }
 
   createClass(NodeJSFileResource, [{
+    key: "path",
+    value: function path() {
+      return this.url.replace("file://", "");
+    }
+  }, {
     key: "stat",
     value: function () {
       var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
@@ -31158,6 +31163,234 @@ function knownModuleNames(System) {
   return lively_lang.arr.uniq(fromSystem.concat(Object.keys(loadedModules$1(System))));
 }
 
+var buildPackageMap = function () {
+  var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee(dir) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { maxDepth: 0, excludes: [] };
+    var map = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var depth = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+    var maxDepth, excludes, config, key, node_modules, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, url;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            // fetches the package.json config of dir and stores version and dependencies
+            // into package map. Recursively searches in node_modules either until
+            // maxDepth is reached or all packages have been visited. Since the
+            // name@version is used for testing if package was seen, can deal with cyclic
+            // symlinks.
+            // Return value looks like
+            //    { 'lively.server@0.1.0': 
+            //       { url: 'file:///Users/robert/Lively/lively-dev/lively.server',
+            //         name: 'lively.server',
+            //         version: '0.1.0',
+            //         dependencies: 
+            //          { 'lively.modules': '*',
+            //            'socket.io': '^1.5.1' },
+            //         devDependencies: { 'mocha-es6': '*' },
+            //         main: undefined } }
+
+            maxDepth = options.maxDepth;
+            excludes = options.excludes;
+
+            if (!(maxDepth > 0 && depth > maxDepth)) {
+              _context.next = 4;
+              break;
+            }
+
+            return _context.abrupt("return", map);
+
+          case 4:
+            _context.prev = 4;
+            _context.t0 = JSON;
+            _context.next = 8;
+            return lively_resources.resource(dir).join("package.json").read();
+
+          case 8:
+            _context.t1 = _context.sent;
+            config = _context.t0.parse.call(_context.t0, _context.t1);
+            key = config.name + "@" + config.version;
+
+            if (!(map[key] || excludes.includes(config.name))) {
+              _context.next = 13;
+              break;
+            }
+
+            return _context.abrupt("return", map);
+
+          case 13:
+
+            map[key] = _extends({
+              url: dir
+            }, lively_lang.obj.select(config, ["name", "version", "dependencies", "devDependencies", "main"]));
+
+            _context.next = 19;
+            break;
+
+          case 16:
+            _context.prev = 16;
+            _context.t2 = _context["catch"](4);
+            return _context.abrupt("return", map);
+
+          case 19:
+            _context.prev = 19;
+            _context.next = 22;
+            return lively_resources.resource(dir).join("node_modules").dirList(1);
+
+          case 22:
+            node_modules = _context.sent;
+            _context.next = 28;
+            break;
+
+          case 25:
+            _context.prev = 25;
+            _context.t3 = _context["catch"](19);
+            return _context.abrupt("return", map);
+
+          case 28:
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _iteratorError = undefined;
+            _context.prev = 31;
+            _iterator = node_modules[Symbol.iterator]();
+
+          case 33:
+            if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+              _context.next = 41;
+              break;
+            }
+
+            url = _step.value.url;
+            _context.next = 37;
+            return buildPackageMap(url, options, map, depth + 1);
+
+          case 37:
+            map = _context.sent;
+
+          case 38:
+            _iteratorNormalCompletion = true;
+            _context.next = 33;
+            break;
+
+          case 41:
+            _context.next = 47;
+            break;
+
+          case 43:
+            _context.prev = 43;
+            _context.t4 = _context["catch"](31);
+            _didIteratorError = true;
+            _iteratorError = _context.t4;
+
+          case 47:
+            _context.prev = 47;
+            _context.prev = 48;
+
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+
+          case 50:
+            _context.prev = 50;
+
+            if (!_didIteratorError) {
+              _context.next = 53;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 53:
+            return _context.finish(50);
+
+          case 54:
+            return _context.finish(47);
+
+          case 55:
+            return _context.abrupt("return", map);
+
+          case 56:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this, [[4, 16], [19, 25], [31, 43, 47, 55], [48,, 50, 54]]);
+  }));
+
+  return function buildPackageMap(_x, _x2, _x3, _x4) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+function resolvePackageDependencies(pkg, packageMap) {
+  // util.inspect(resolvePackageDependencies(packageMap["socket.io@1.5.1"], packageMap))
+  // =>
+  // "{ debug: 'debug@2.2.0',
+  //   'engine.io': 'engine.io@1.7.2', ...}
+
+  var deps = _extends({}, pkg.dependencies, pkg.devDependencies);
+  return Object.keys(deps).reduce(function (depMap, depName) {
+    var depVersion = deps[depName];
+
+    var _ref2 = lively_lang.obj.values(packageMap).find(function (_ref3) {
+      var name = _ref3.name;
+      var version = _ref3.version;
+      return name === depName && lively.modules.semver.satisfies(version, depVersion);
+    }) || {};
+
+    var name = _ref2.name;
+    var version = _ref2.version;
+
+    depMap[depName] = name ? name + "@" + version : undefined;
+    return depMap;
+  }, {});
+}
+
+function dependencyGraph(packageMap) {
+  // builds dependency graph of package-name@version tuples:
+  // {'lively.server@0.1.0':  ['lively.modules@0.5.41', ...],
+  //  'lively.modules@0.5.41': [...]}
+
+  var packages = lively_lang.obj.values(packageMap),
+      cachedVersionQueries = {};
+
+  return Object.keys(packageMap).reduce(function (depMap, name) {
+    var pkg = packageMap[name],
+        deps = _extends({}, pkg.dependencies, pkg.devDependencies);
+    depMap[name] = Object.keys(deps).map(function (depName) {
+      return findAvailablePackage(depName, deps[depName]);
+    }).filter(function (ea) {
+      return !!ea;
+    });
+    return depMap;
+  }, {});
+
+  function findAvailablePackage(depName, depVersionRange) {
+    var cacheKey = depName + "@" + depVersionRange;
+    if (cacheKey in cachedVersionQueries) return cachedVersionQueries[cacheKey];
+
+    var _ref4 = packages.find(function (_ref5) {
+      var name = _ref5.name;
+      var version = _ref5.version;
+      return name === depName && lively.modules.semver.satisfies(version, depVersionRange);
+    }) || {};
+
+    var name = _ref4.name;
+    var version = _ref4.version;
+
+    return cachedVersionQueries[cacheKey] = name ? name + "@" + version : undefined;
+  }
+}
+
+
+
+var dependencies = Object.freeze({
+	buildPackageMap: buildPackageMap,
+	resolvePackageDependencies: resolvePackageDependencies,
+	dependencyGraph: dependencyGraph
+});
+
 /*
 
   ### `lively.modules.importPackage(packageName)`
@@ -31481,6 +31714,9 @@ function wrapModuleLoad$$1() {
 function unwrapModuleLoad$$1() {
   unwrapModuleLoad$1(exports.System);
 }
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// cjs
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 exports.getSystem = getSystem;
 exports.removeSystem = removeSystem;
@@ -31503,6 +31739,7 @@ exports.installHook = installHook;
 exports.removeHook = removeHook;
 exports.wrapModuleLoad = wrapModuleLoad$$1;
 exports.unwrapModuleLoad = unwrapModuleLoad$$1;
+exports.cjs = dependencies;
 exports.semver = semver;
 
 }((this.lively.modules = this.lively.modules || {}),lively.lang,lively.ast,lively.notifications,lively.vm,lively.resources,semver));

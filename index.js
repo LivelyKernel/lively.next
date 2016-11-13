@@ -341,6 +341,12 @@ function unwrapModuleLoad() { _unwrapModuleLoad(defaultSystem); }
 export { wrapModuleLoad, unwrapModuleLoad }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// cjs
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import * as cjs from "./cjs/dependencies.js";
+export { cjs };
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // semver
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 export { default as semver } from "semver";

@@ -42,13 +42,18 @@ export async function buildPackageMap(
 
   } catch (e) { return map; }
 
-  var node_modules = await resource(dir).join("node_modules").dirList(1);
-  node_modules.forEach(({url}) => buildPackageMap(url, maxDepth, excludes, map, depth+1));
+  try {
+    var node_modules = await resource(dir).join("node_modules").dirList(1);
+  } catch (e) { return map; }
+
+  for (let {url} of node_modules)
+    map = await buildPackageMap(url, options, map, depth+1);
+
   return map;
 }
 
 
-function resolvePackageDependencies(pkg, packageMap) {
+export function resolvePackageDependencies(pkg, packageMap) {
   // util.inspect(resolvePackageDependencies(packageMap["socket.io@1.5.1"], packageMap))
   // =>
   // "{ debug: 'debug@2.2.0',
@@ -65,7 +70,7 @@ function resolvePackageDependencies(pkg, packageMap) {
 }
 
 
-function dependencyGraph(packageMap) {
+export function dependencyGraph(packageMap) {
   // builds dependency graph of package-name@version tuples:
   // {'lively.server@0.1.0':  ['lively.modules@0.5.41', ...],
   //  'lively.modules@0.5.41': [...]}
