@@ -20,6 +20,10 @@ const readFileP = wrapInPromise(readFile),
 
 export class NodeJSFileResource extends Resource {
 
+  path() {
+    return this.url.replace("file://", "");
+  }
+
   async stat() {
     return lstatP(this.path());
   }

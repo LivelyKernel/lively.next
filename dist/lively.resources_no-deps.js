@@ -1190,6 +1190,11 @@ var NodeJSFileResource = function (_Resource) {
   }
 
   createClass(NodeJSFileResource, [{
+    key: "path",
+    value: function path() {
+      return this.url.replace("file://", "");
+    }
+  }, {
     key: "stat",
     value: function () {
       var _ref = asyncToGenerator(regeneratorRuntime.mark(function _callee() {
