@@ -1,0 +1,39 @@
+{
+  "name": "lively.shell",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively.shell"
+  },
+  "dependencies": {
+    "lively.resources": "*",
+    "lively.bindings": "*",
+    "lively.lang": "*"
+  },
+  "devDependencies": {
+    "mocha-es6": "^0.3.11",
+    "lively.server": "https://github.com/LivelyKernel/lively.server.git",
+    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git"
+  },
+  "systemjs": {
+    "map": {
+      "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
+      "fs": {"node": "@node/fs", "~node": "@empty"},
+      "util": {"node": "@node/util", "~node": "@empty"},
+      "path": {"node": "@node/path", "~node": "@empty"}
+    }
+  },
+  "lively": {
+    "main": "index.js",
+    "packageMap": {
+      "lively.bindings": "./node_modules/lively.bindings",
+      "lively.resources": "./node_modules/lively.resources",
+      "lively.lang": "./node_modules/lively.lang",
+      "lively.server": "./node_modules/lively.server",
+      "lively.2lively": "./node_modules/lively.2lively"
+    }
+  },
+  "scripts": {
+    "test": "mocha-es6 tests/*-test.js"
+  }
+}
