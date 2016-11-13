@@ -206,6 +206,7 @@ export class Halo extends Morph {
     this.focus();
     this.alignWithTarget();
     this.initLayout();
+    connect(this.target, "onChange", this, "alignWithTarget")
   }
   
   initLayout() {
@@ -366,7 +367,6 @@ export class Halo extends Morph {
               target.extent = pt(width, height);
               target.origin = target.origin.addPt(originDelta(delta));
               target.position = oldPosition;
-              this.halo.alignWithTarget();
            },
            stop(proportional) {
               this.halo.activeButton = null; 
@@ -479,7 +479,6 @@ export class Halo extends Morph {
           newPos = newPos.griddedBy(pt(10,10));
         }
         this.target.globalPosition = newPos;
-        this.alignWithTarget();
         this.toggleMesh(grid);
       },
       onDragStart(evt) { this.init() },
@@ -556,7 +555,6 @@ export class Halo extends Morph {
         var newRotation = initRotation + (angleToTarget - angle);
         newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45))
         this.halo.target.rotation = newRotation;
-        this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
       },
 
@@ -565,7 +563,6 @@ export class Halo extends Morph {
         angle = gauge.theta();
         initRotation = this.halo.target.rotation;
         this.halo.target.scale = num.detent(gauge.dist(pt(0,0)) / scaleGauge.dist(pt(0,0)), 0.1, 0.5);
-        this.halo.alignWithTarget();
         this.halo.toggleRotationIndicator(true, this);
       },
 
@@ -692,7 +689,6 @@ export class Halo extends Morph {
             newOrigin = this.target.localize(globalOrigin.addPt(delta));
         delta = newOrigin.subPt(oldOrigin);
         this.target.adjustOrigin(this.target.origin.addPt(delta));
-        this.alignWithTarget();
       },
       onDragStart(evt) { this.init(); },
       onDragEnd(evt) { this.stop(); },
