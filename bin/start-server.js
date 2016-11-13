@@ -28,7 +28,7 @@ lively.modules.registerPackage(".")
   .then(() => console.log(`[lively.server] ${step++}. starting server...`))
   .then(() => System.import("./server.js"))
   .then((server) => server.ensure({port, hostname}))
-  .then((state) => console.log(`[lively.server] ${step++}. Lively server at ${state.options.hostname}:${state.options.port} running`))
+  .then((state) => console.log(`[lively.server] ${step++}. Lively server at ${state.hostname}:${state.port} running`))
 
   .catch(err => {
     console.error(`Error starting server: ${err.stack}`);

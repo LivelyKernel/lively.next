@@ -1,16 +1,22 @@
+import { promise } from "lively.lang";
 import * as http from "http";
 import socketio from "socket.io";
+
+import Tracker from "lively.2lively/tracker.js";
 
 // System.decanonicalize("socket.io", "file:///Users/robert/Lively/lively-dev/lively.server/server.js");
 
 // Array.from(serverStateMap.keys())
 
-const serverStateMap = new Map();
+var debug = false;
+
+const serverStateMap = serverStateMap || new Map();
 
 export const defaultOptions = {
+  l2lNamespace: "l2l",
   hostname: "localhost",
   port: 3000,
-  socketIOPath: '/lively.com'
+  socketIOPath: '/lively-socket.io'
 };
 
 function serverKey(opts) {
@@ -26,26 +32,47 @@ export function ensure(options) {
   return find(options) || start(options);
 }
 
-export function close(serverState = {}) {
-  var {server, io, options} = serverState;
+export async function close(serverState = {}) {
+  var {server, io, l2lTracker, hostname, port} = serverState;
 
-  if (options) {
-    if (serverState !== find(options))
+  debug && console.log(`[lively.server] closing server ${hostname}:${port}`)
+
+  if (hostname) {
+    if (serverState !== find({hostname, port}))
       console.warn("Stored server state does not match serverState passed to close()!");
-    serverStateMap.delete(serverKey(options));
+    serverStateMap.delete(serverKey({hostname, port}));
   }
 
-  return new Promise((resolve, reject) => {
-    serverState.server.close(resolve);
-    serverState.io.close();
-  });
+  try {
+    await l2lTracker.remove();
+    debug && console.log(`[lively.server] l2l tracker ${l2lTracker} stopped`)
+  } catch (e) {
+    console.error(`Error closing l2l tracker ${l2lTracker}: ${e.stack}`);
+  }
+
+  try {
+    await promise.timeout(300, new Promise(resolve => server.close(resolve)));
+    debug && console.log(`[lively.server] http server stopped`)
+  } catch (e) {
+    // hmm timeout in server close doesn't seem to be a problem...
+    debug && console.error(`Error closing http server: ${e.stack}`);
+  }
+
+  try {
+    io.close();
+    debug && console.log(`[lively.server] socket.io stopped`)
+  } catch (e) {
+    console.error(`Error closing socket.io server: ${e.stack}`);
+  }
 }
 
 export async function start(options) {
-  var {hostname, port, socketIOPath} = {...defaultOptions, ...options},
+  options = {...defaultOptions, ...options};
+  var {hostname, port, socketIOPath} = options,
       server = http.createServer(),
       io = socketio(server, {path: socketIOPath}),
-			state = {server, io, options};
+      l2lTracker = Tracker.ensure({namespace: options.l2lNamespace, io, hostname, port}),
+    		state = {server, io, l2lTracker, ...options};
 
   serverStateMap.set(serverKey({hostname, port}), state);
 
@@ -60,6 +87,10 @@ export async function start(options) {
   listeners.forEach(ea => server.on("request", ea));
 
   server.listen(port, hostname);
+  
+  l2lTracker.whenOnline(1000)
+    .then(() => console.log(`[lively.server] started ${l2lTracker}`))
+    .catch(err => console.error(`Error starting l2l tracker ${err.stack}`))
 
   return state;
 }
@@ -91,7 +122,7 @@ function cors(req, res, next) {
   next();
 }
 
-function ignoreSocketIO(path = "/lively.com") {
+function ignoreSocketIO(path = defaultOptions.socketIOPath) {
   return function(req, res, next) {
     if (req.url.startsWith(path)) {
       // socket.io handles it

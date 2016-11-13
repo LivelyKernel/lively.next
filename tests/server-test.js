@@ -12,7 +12,7 @@ var tracker, client1;
 describe('lively.server', function() {
 
   before(async () => testServer = await serverEnsure({port, hostname}));
-  after(async () => serverClose(testServer));
+  after(() => serverClose(testServer));
 
   it("runs and accepts requests", async () => {
     expect(async () => {
@@ -25,8 +25,8 @@ describe('lively.server', function() {
     ioServer.on("connection", (socket) => {
       socket.on("test", (evt, ackFn) => ackFn("OK"));
     });
-    var clientSocket = ioClient(`http://${hostname}:${port}`, {path: ioServer.path()});
-    var answer = await new Promise(resolve => clientSocket.emit("test", {}, resolve));
+    var clientSocket = ioClient(`http://${hostname}:${port}`, {path: ioServer.path()}),
+        answer = await new Promise(resolve => clientSocket.emit("test", {}, resolve));
     expect(answer).equals("OK");
   });
 });

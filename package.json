@@ -5,14 +5,14 @@
     "lively-system-interface": "*",
     "lively.modules": "*",
     "lively.resources": "*",
-    "lively.2lively": "*",
+    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
     "minimist": "^1.2.0",
     "socket.io": "^1.5.1",
     "systemjs": "^0.19.40"
   },
   "devDependencies": {
     "socket.io-client": "^1.5.1",
-    "mocha-es6": "^0.3.10"
+    "mocha-es6": "^0.3.11"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
