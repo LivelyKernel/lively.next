@@ -1,6 +1,8 @@
 import * as http from "http";
 import socketio from "socket.io";
 
+// System.decanonicalize("socket.io", "file:///Users/robert/Lively/lively-dev/lively.server/server.js");
+
 // Array.from(serverStateMap.keys())
 
 const serverStateMap = new Map();
