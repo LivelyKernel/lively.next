@@ -1266,10 +1266,10 @@ export class Path extends Morph {
         && change.prevValue
         && !this.adjustingVertices) 
         this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()))
-    if (change.prop == "vertices") {
+    if (["vertices", "borderWidth"].includes(change.prop)) {
        this.adjustingVertices = true;
-       this.extent = Rectangle.unionPts([pt(0,0), pt(this.borderWidth, this.borderWidth), 
-                                         ...change.value]).extent();
+       this.extent = Rectangle.unionPts([pt(0,0), ...change.value]).extent()
+                                        .addXY(2 * this.borderWidth, 2 * this.borderWidth);
        this.adjustingVertices = false;
     }
     super.onChange(change);
