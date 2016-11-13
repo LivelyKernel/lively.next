@@ -1,16 +1,29 @@
 /*global Map*/
 import L2LConnection from "./interface.js";
 
-export default class Tracker extends L2LConnection {
+// Array.from(L2LTracker._trackers.keys());
+// Array.from(L2LTracker._trackers.values())[1].remove()
 
-  static namespace(ns, serverState) {
-    var {io, options: {port, hostname, socketIOPath}} = serverState;
+export default class L2LTracker extends L2LConnection {
+
+  static trackerKey(hostname, port, ioPath, namespace) {
+    return `${hostname}:${port}${ioPath}-${namespace}`
+  }
+
+  static ensure(options) {
+    // options should include
+    //   namespace - socket.io namespace to use
+    //   io - io server instance
+    //   port, hostname,
+    //   autoOpen - defaults to true
+    var {io, port, hostname, namespace, autoOpen} = options;
     if (!this._trackers) this._trackers = new Map();
-    var key = `${hostname}:${port}-${socketIOPath}-ns`,
+    var key = this.trackerKey(hostname, port, io.path(), namespace),
         tracker = this._trackers.get(key);
     if (!tracker) {
-      tracker = new this(ns, io);
-      this._trackers.set(ns, tracker);
+      tracker = new this(namespace, io);
+      this._trackers.set(key, tracker);
+      if (autoOpen || autoOpen === undefined) tracker.open();
     }
     return tracker;
   }
@@ -22,8 +35,11 @@ export default class Tracker extends L2LConnection {
     this._open = false;
     this._connectionHandler = null;
     this.clients = new Map();
-    this.addService("register", function(tracker, msg, ackfn, socket) { tracker.registerClient(msg, ackfn, socket); });
-    this.addService("unregister", function(tracker, msg, ackfn, socket) { tracker.unregisterClient(msg, ackfn, socket); });
+
+    this.addService("register",
+      (tracker, msg, ackfn, socket) => tracker.registerClient(msg, ackfn, socket));
+    this.addService("unregister",
+      (tracker, msg, ackfn, socket) => tracker.unregisterClient(msg, ackfn, socket));
   }
 
   get ioNamespace() { return this.io.of(this.namespace); }
@@ -41,13 +57,13 @@ export default class Tracker extends L2LConnection {
   }
 
   open() {
-    if (this.isOnline()) return;
+    if (this.isOnline()) return Promise.resolve(this);
 
     if (this.debug) console.log(`[${this}] starts listening to connection events`);
 
     this._open = true;
     this.ioNamespace.on("connection", this._connectionHandler = this.onConnection.bind(this));
-    return Promise.resolve();
+    return Promise.resolve(this);
   }
 
   close() {
@@ -75,8 +91,9 @@ export default class Tracker extends L2LConnection {
   }
 
   remove() {
-    if (this.constructor._trackers)
-      this.constructor._trackers.delete(this.namespace);
+    for (let [key, tracker] of this.constructor._trackers)
+      if (tracker === this)
+        this.constructor._trackers.delete(key)
     return this.close();
   }
 
@@ -112,7 +129,7 @@ export default class Tracker extends L2LConnection {
   }
 
   send(msg, ackFn) {
-    msg = this.ensureMessageProps(msg);
+    [msg, ackFn] = this.prepareSend(msg, ackFn);
     this.whenOnline().then(() => {
       var {action, target} = msg,
           socket = this.getSocketForClientId(target);

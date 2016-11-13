@@ -2,11 +2,11 @@
 
 import { expect } from "mocha-es6";
 
-import Tracker from "../tracker.js";
-import Client from "../client.js";
+import L2LTracker from "../tracker.js";
+import L2LClient from "../client.js";
 import { ensure as serverEnsure, close as serverClose } from "lively.server/server.js"
 
-var hostname = "localhost", port = 9009, ioNamespace = "l2l-test";
+var hostname = "localhost", port = 9009, namespace = "l2l-test";
 var testServer, tracker, client1;
 
 describe('l2l', function() {
@@ -15,23 +15,21 @@ describe('l2l', function() {
   after(async () => serverClose(testServer));
 
   beforeEach(async () => {
-    tracker = await Tracker.namespace(ioNamespace, testServer);
-    client1 = await Client.open(`http://${hostname}:${port}/lively.com`, {namespace: ioNamespace});
-    await tracker.open();
-    await client1.open();
+    var url = `http://${hostname}:${port}${testServer.io.path()}`;
+    tracker = await L2LTracker.ensure({namespace, ...testServer});
+    client1 = await L2LClient.ensure({url, namespace});
+    await client1.whenRegistered(300);
   });
 
   afterEach(async () => {
-    if (client1) await client1.remove();
-    if (tracker) await tracker.remove();
+    client1 && await client1.remove();
+    tracker && await tracker.remove();
   });
 
   it("client registers and gets own id and tracker id", async () => {
     expect(client1.isOnline()).equals(true, "1: isOnline");
 
-    expect(client1.isRegistered()).equals(false, "2: isRegistered");
-    await client1.register();
-    expect(client1.isRegistered()).equals(true, "3: isRegistered");
+    expect(client1.isRegistered()).equals(true, "2: isRegistered");
 
     expect(client1).property("id").is.a("string");
     expect(client1).property("trackerId").is.a("string");
@@ -42,10 +40,9 @@ describe('l2l', function() {
   });
 
   it("client unregisters", async () => {
-    await client1.register();
-    expect(client1.isRegistered()).equals(true);
+    expect(client1.isRegistered()).equals(true, 1);
     await client1.unregister();
-    expect(client1.isRegistered()).equals(false);
+    expect(client1.isRegistered()).equals(false, 2);
     expect().assert(!tracker.clients.has(client1.id), "client1 still in tracker clients");
   });
 
@@ -71,8 +68,6 @@ describe('l2l', function() {
   });
 
   it('custom action in client', async () => {
-    await client1.register();
-
     var client1Received = [];
     client1.addService("test", (tracker, msg, ackFn, sender) => {
       client1Received.push(msg);

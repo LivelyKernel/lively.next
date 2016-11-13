@@ -4,7 +4,7 @@ import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
 
-export default class Client extends L2LConnection {
+export default class L2LClient extends L2LConnection {
 
   static clientKey(origin, path, namespace) {
     origin = origin.replace(/\/$/, "");
@@ -13,17 +13,27 @@ export default class Client extends L2LConnection {
     return `${origin}-${path}-${namespace}`
   }
 
-  static open(serverURL, opts = {namespace: null}) {
+  static ensure(options = {url: null, namespace: null}) {
+    // url specifies hostname + port + io path
+    // namespace is io namespace
+
+    var {url, namespace, autoOpen} = options;
+
+    if (!url) throw new Error("L2LClient needs server url!")
+
     if (!this._clients) this._clients = new Map();
 
-    var res = resource(serverURL),
+    var res = resource(url),
         origin = res.root().url.replace(/\/+$/, ""),
         path = res.path(),
-        namespace = opts.namespace || "l2l",
+        namespace = namespace ? namespace : "",
         key = this.clientKey(origin, path, namespace),
         client = this._clients.get(key);
     if (client) return client;
+
     client = new this(origin, path, namespace);
+    if (autoOpen || autoOpen === undefined) { client.open(); client.register(); }
+
     this._clients.set(key, client);
     return client;
   }
@@ -48,30 +58,32 @@ export default class Client extends L2LConnection {
   isRegistered() { return !!this.trackerId; }
 
   async open() {
-    if (this.isOnline()) return;
+    if (this.isOnline()) return this;
 
     await this.close();
 
     var url = resource(this.origin).join(this.namespace).url,
-        socket = this._socketioClient = ioClient(url, {path: this.path});
+        opts = {path: this.path, transports: ['websocket'], upgrade: false},
+        socket = this._socketioClient = ioClient(url, opts);
+
 
     if (this.debug) console.log(`[${this}] connecting`);
 
-    socket.on("error",            (err) =>    console.log(`[${this}] errored: ${err}`))
-    socket.on("close",            (reason) => console.log(`[${this}] closed: ${reason}`))
-    socket.on("connect",          () =>       console.log(`[${this}] connected`))
-    socket.on("disconnect",       () =>       console.log(`[${this}] disconnected`))
-    socket.on("reconnect",        () =>       console.log(`[${this}] reconnected`))
-    socket.on("reconnecting",     () =>       console.log(`[${this}] reconnecting`))
-    socket.on("reconnect_failed", () =>       console.log(`[${this}] could not reconnect`))
-    socket.on("reconnect_error",  (err) =>    console.log(`[${this}] reconnect error ${err}`))
+    socket.on("error",            (err) =>    this.debug && console.log(`[${this}] errored: ${err}`))
+    socket.on("close",            (reason) => this.debug && console.log(`[${this}] closed: ${reason}`))
+    socket.on("connect",          () =>       this.debug && console.log(`[${this}] connected`))
+    socket.on("disconnect",       () =>       this.debug && console.log(`[${this}] disconnected`))
+    socket.on("reconnect",        () =>       this.debug && console.log(`[${this}] reconnected`))
+    socket.on("reconnecting",     () =>       this.debug && console.log(`[${this}] reconnecting`))
+    socket.on("reconnect_failed", () =>       this.debug && console.log(`[${this}] could not reconnect`))
+    socket.on("reconnect_error",  (err) =>    this.debug && console.log(`[${this}] reconnect error ${err}`))
 
     this.installEventToMessageTranslator(socket);
 
     return new Promise((resolve, reject) => {
       socket.once("error", reject);
       socket.once("connect", resolve);
-    });
+    }).then(() => this);
   }
 
   async close() {
@@ -102,8 +114,10 @@ export default class Client extends L2LConnection {
     this.debug && console.log(`[${this}] register`)
 
     try {
+      var prevTrackerId = this.trackerId || "tracker";
       var {data: {trackerId}} = await this.sendToAndWait("tracker", "register", {});
       this.trackerId = trackerId;
+      this.renameTarget(prevTrackerId, trackerId);
     } catch (e) {
       this.unregister();
       throw new Error(`Error in register request of ${this}: ${e}`);
@@ -113,12 +127,21 @@ export default class Client extends L2LConnection {
   async unregister() {
     if (!this.isRegistered()) return;
     this.debug && console.log(`[${this}] unregister`);
+    var trackerId = this.trackerId;
     try { await this.sendToAndWait(this.trackerId, "unregister", {}); } catch (e) {}
+    this.renameTarget(trackerId, "tracker");
     this.trackerId = null;
   }
 
+  whenRegistered(timeout) {
+    return promise.waitFor(timeout, () => this.isRegistered())
+            .catch(err =>
+              Promise.reject(/timeout/i.test(String(err)) ?
+                new Error(`Timeout in ${this}.whenRegistered`) : err))
+  }
+
   send(msg, ackFn) {
-    msg = this.ensureMessageProps(msg);
+    [msg, ackFn] = this.prepareSend(msg, ackFn);
     this.whenOnline().then(() => {
       var socket = this.socket,
           {action, target} = msg;

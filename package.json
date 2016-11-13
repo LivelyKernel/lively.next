@@ -7,8 +7,8 @@
     "socket.io-client": "^1.5.1"
   },
   "devDependencies": {
-    "mocha-es6": "^0.3.10",
-    "lively.server": "*"
+    "mocha-es6": "^0.3.11",
+    "lively.server": "https://github.com/LivelyKernel/lively.server.git"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js"
@@ -16,8 +16,8 @@
   "systemjs": {
     "map": {
       "socket.io-client": {
-        "~node": "./node_modules/socket.io-client/socket.io.js",
-        "node": "./node_modules/socket.io-client/lib/index.js"
+        "~node": "socket.io-client/socket.io.js",
+        "node": "socket.io-client/lib/index.js"
       }
     }
   },

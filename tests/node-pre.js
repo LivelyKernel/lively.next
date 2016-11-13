@@ -1,10 +1,13 @@
 // pre-loading the dependencies here so we don't have to configure SystemJS
 // with all the sub-sub-sub packages
 
+function requireFromPackage(moduleName, pkgName) {
 var path = require("path"),
     module = require("module"),
-    lookupPaths = [path.join(require.resolve("lively.server"), "../node_modules")],
-    socktioMain = module._resolveFilename("socket.io", {paths: lookupPaths});
+    lookupPaths = [path.join(require.resolve(pkgName), "../node_modules")],
+    id = module._resolveFilename(moduleName, {paths: lookupPaths});
+  return require(id);
+}
 
-require(socktioMain);
+requireFromPackage("socket.io", "lively.server");
 require("socket.io-client");
