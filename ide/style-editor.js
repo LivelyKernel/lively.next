@@ -769,8 +769,9 @@ class StyleEditor extends Morph {
     }]});
    }
 
-   quit() {
+   close() {
       this.active = false;
+      signal(this, "close", false);
       this.remove()
    }
    
@@ -782,7 +783,7 @@ class StyleEditor extends Morph {
       this.layout = null;
       wrapper.addMorphAt(Icon.makeLabel("times-circle-o", {
            fontSize: 22, fontColor: Color.gray.darker(),
-           nativeCursor: "pointer", onMouseDown: () => this.quit()}), 0);
+           nativeCursor: "pointer", onMouseDown: () => this.close()}), 0);
       instruction.animate({fontColor: Color.gray.darker(), duration});
       this.controls(this.target).forEach(c => {
          c.opacity = 0;
@@ -905,7 +906,8 @@ export class LayoutStyleEditor extends Morph {
        const layoutHaloToggler = this.getSubmorphNamed("layoutHaloToggler"),
              layoutPicker = this.getSubmorphNamed('layoutPicker');
        if (this.layoutHalo) {
-          this.halo.showStyleGuides = true;
+          this.active = false;
+          this.halo.showStyleGuides(true);
           this.layout = null;
           this.submorphs = [this.getSubmorphNamed("layoutControlPickerWrapper")];
           layoutPicker.textString = this.getCurrentLayoutName();
@@ -918,7 +920,8 @@ export class LayoutStyleEditor extends Morph {
                 duration: 300
           });
        } else {
-          this.halo.showStyleGuides = false;
+          this.active = true;
+          this.halo.showStyleGuides(false);
           this.layoutHalo = this.world().showLayoutHaloFor(this.target, this.pointerId);
           this.layout = null;
           this.submorphs = [...this.submorphs, ...this.layoutHalo.optionControls()]
