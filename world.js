@@ -584,10 +584,10 @@ export class World extends Morph {
   }
 
   onDragStart(evt) {
-     const startPos = evt.positionIn(this);
+     this.selectionStartPos = evt.positionIn(this);
      this.morphSelection = this.addMorph({
         isSelectionElement: true,
-        position: startPos, extent: evt.state.dragDelta,
+        position: this.selectionStartPos, extent: evt.state.dragDelta,
         fill: Color.gray.withA(.2),
         borderWidth: 2, borderColor: Color.gray
      });
@@ -595,10 +595,10 @@ export class World extends Morph {
   }
 
   onDrag(evt) {
-     this.morphSelection.resizeBy(evt.state.dragDelta);
-     const selectionBounds = this.morphSelection.bounds();
+     const selectionBounds = Rectangle.fromAny(evt.position, this.selectionStartPos)
+     this.morphSelection.setBounds(selectionBounds);
      this.submorphs.forEach(c => {
-         if (c.isSelectionElement) return;
+         if (c.isSelectionElement || c.isHand) return;
          const candidateBounds = c.bounds(),
                included = selectionBounds.containsRect(candidateBounds);
          
@@ -613,7 +613,7 @@ export class World extends Morph {
          }
          if (this.selectedMorphs[c.id] && !included) {
             this.selectedMorphs[c.id].remove();
-            delete this.selectedMorphs[c];
+            delete this.selectedMorphs[c.id];
          }
      })
   }
@@ -676,7 +676,7 @@ export class World extends Morph {
   }
 
   showHaloForSelection(selection, pointerId = this.firstHand && this.firstHand.pointerId) {
-     return this.addMorph(new Halo(pointerId, selection)).alignWithTarget();
+     return selection.length > 0 && this.addMorph(new Halo(pointerId, selection)).alignWithTarget();
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
