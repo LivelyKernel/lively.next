@@ -6,4 +6,4 @@ An implementation of the [Morphic user interface framework](http://ftp.squeak.or
 
 ## License
 
-[MIT](License)
+[MIT](LICENSE)
