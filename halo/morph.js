@@ -3,7 +3,7 @@ import { Ellipse, Morph, Path, Text,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
-import { connect } from "lively.bindings";
+import { connect, disconnect } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 import Inspector from "../ide/js/inspector.js";
 import { styleHaloFor } from './stylization.js'
@@ -207,6 +207,10 @@ export class Halo extends Morph {
     this.alignWithTarget();
     this.initLayout();
     connect(this.target, "onChange", this, "alignWithTarget")
+  }
+  remove() {
+    disconnect(this.target, "onChange", this, "alignWithTarget");
+    super.remove();
   }
   
   initLayout() {
