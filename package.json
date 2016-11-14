@@ -8,10 +8,10 @@
     "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
     "minimist": "^1.2.0",
     "socket.io": "^1.5.1",
+    "socket.io-client": "^1.5.1",
     "systemjs": "^0.19.40"
   },
   "devDependencies": {
-    "socket.io-client": "^1.5.1",
     "mocha-es6": "^0.3.11"
   },
   "scripts": {
