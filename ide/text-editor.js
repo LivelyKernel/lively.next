@@ -211,6 +211,11 @@ export default class TextEditor extends Morph {
           editorPlugin = new JSONEditorPlugin(config.codeEditor.defaultTheme);
           break;
 
+        case 'md':
+          var { MarkdownEditorPlugin } = await System.import("lively.morphic/ide/md/editor-plugin.js")
+          editorPlugin = new MarkdownEditorPlugin(config.codeEditor.defaultTheme);
+          break;
+
         default:
           fileType = "plain text";
       }
