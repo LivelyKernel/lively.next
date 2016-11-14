@@ -7,11 +7,37 @@ import { Morph } from '../index.js';
 
 export class ShadowObject {
 
-    constructor({rotation, distance, blur, color} = {}) {
+    constructor({rotation, distance, blur, color, morph} = {}) {
         this.rotation = rotation || 45; // in degrees
         this.distance = distance || 2;
         this.blur = blur || 6;
         this.color = color || Color.gray.darker();
+        this.morph = morph;
+    }
+
+    get distance() { return this._distance }
+    get blur() { return this._blur }
+    get rotation() { return this._rotation }
+    get color() { return this._color }
+
+    set distance(d) {
+       this._distance = d;
+       if (this.morph) this.morph.dropShadow = this;
+    }
+
+    set blur(b) {
+       this._blur = b;
+       if (this.morph) this.morph.dropShadow = this;
+    }
+
+    set rotation(r) {
+       this._rotation = r;
+       if (this.morph) this.morph.dropShadow = this;
+    }
+
+    set color(c) {
+       this._color = c;
+       if (this.morph) this.morph.dropShadow = this;
     }
 
     get isShadowObject() { return true; }
