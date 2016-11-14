@@ -1,7 +1,7 @@
 import { Color, pt, rect, Rectangle, Transform } from "lively.graphics";
 import { string, obj, arr, num, promise, tree, properties } from "lively.lang";
 import { signal } from "lively.bindings";
-import { renderRootMorph, AnimationQueue } from "./rendering/morphic-default.js"
+import { renderRootMorph, AnimationQueue, ShadowObject } from "./rendering/morphic-default.js"
 import { morph, show } from "./index.js";
 import { MorphicEnv } from "./env.js";
 import config from "./config.js";
@@ -333,7 +333,10 @@ export class Morph {
   set visible(value)  { this.addValueChange("visible", value); }
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) { this.addValueChange("dropShadow", value); }
+  set dropShadow(value) { 
+      if (value && !value.isShadowObject) value = config.defaultShadow;
+      this.addValueChange("dropShadow", value); 
+  }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
   set styleClasses(value)  {

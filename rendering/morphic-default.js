@@ -2,13 +2,32 @@ import {diff, patch, create} from "virtual-dom";
 import web_animations from "web-animations-polyfill";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
-import { Transform, Color, pt } from "lively.graphics";
+import { Transform, Color, pt, Point } from "lively.graphics";
 import { Morph } from '../index.js';
+
+export class ShadowObject {
+
+    constructor({rotation, distance, blur, color} = {}) {
+        this.rotation = rotation || 45; // in degrees
+        this.distance = distance || 2;
+        this.blur = blur || 6;
+        this.color = color || Color.gray.darker();
+    }
+
+    get isShadowObject() { return true; }
+    
+    toCss() {
+       const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
+       return `${this.color.toString()} ${x}px ${y}px ${this.blur}px`
+    }
+
+}
 
 class StyleMapper {
 
   getTransform({position, origin, scale, rotation}) {
-    return {transform: `translateX(${position.x - origin.x}px) translateY(${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`}
+    return {
+       transform: `translateX(${position.x - origin.x}px) translateY(${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`}
   }
 
   getTransformOrigin({origin}) {
@@ -48,7 +67,7 @@ class StyleMapper {
   getShadowStyle(morph) {
     if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)}
     return {boxShadow: morph.dropShadow ?
-                    "0px 2px 6px #333" :
+                    morph.dropShadow.toCss():
                     "none"}
   }
 
