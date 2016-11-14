@@ -470,6 +470,7 @@ export class Halo extends Morph {
       init() {
         this.halo.target.undoStart("drag-halo");
         this.halo.activeButton = this;
+        this.actualPos = this.halo.target.position;
       },
       stop() {
         this.halo.target.undoStop("drag-halo");
@@ -477,20 +478,17 @@ export class Halo extends Morph {
         this.halo.alignWithTarget();
         this.halo.toggleMesh(false);
       },
-      update: (delta, grid=false) => {
-        var newPos = this.target.globalPosition.addPt(delta);
+      update(delta, grid=false) {
+        var newPos = this.actualPos.addPt(delta);
+        this.actualPos = newPos;
         if (grid) {
           newPos = newPos.griddedBy(pt(10,10));
         }
-        this.target.globalPosition = newPos;
-        this.toggleMesh(grid);
+        this.halo.target.position = newPos;
+        this.halo.toggleMesh(grid);
       },
       onDragStart(evt) { this.init() },
-      onDrag(evt) { this.update(
-                    this.halo.tranformMoveDeltaDependingOnHaloPosition(
-                        evt, evt.state.dragDelta, "topRight"
-                      ),
-                    evt.isAltDown()); },
+      onDrag(evt) { this.update(evt.state.dragDelta, evt.isAltDown()); },
       onDragEnd(evt) { this.stop() },
       onKeyUp(evt) { this.halo.toggleMesh(false) }
     }));
@@ -743,22 +741,6 @@ export class Halo extends Morph {
     if (this.changingName) return;
     this.buttonControls.map(b => b.onKeyUp(evt));
   }
-
-  tranformMoveDeltaDependingOnHaloPosition(evt, moveDelta, cornerName) {
-    // Griding and rounding might move the morph differently
-    // so we have to recalculate the delta...
-    if(!evt.isAltDown())
-        return moveDelta
-
-    var pos = this.target.bounds()[cornerName]()
-    var newOffset = evt.position.subPt(this.target.owner.worldPoint(pos))
-    this.startOffset = this.startOffset || newOffset;
-
-    var deltaOffset = newOffset.subPt(this.startOffset)
-
-    moveDelta = moveDelta.addPt(deltaOffset);
-    return moveDelta
- }
 
   toggleMesh(active) {
     var mesh = this.getSubmorphNamed("mesh"), 
