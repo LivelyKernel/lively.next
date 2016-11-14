@@ -1,8 +1,7 @@
 import { Rectangle } from "lively.graphics";
-import { ShadowObject } from "./rendering/morphic-default.js";
 
 var config = {
-  defaultShadow: new ShadowObject(),
+  defaultShadow: {distance: 2, blur: 6},
   undoLevels: 20,
   halosEnabled: true,
   altClickDefinesThat: true,
