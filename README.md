@@ -1,15 +1,9 @@
 # lively.morphic [![Build Status](https://travis-ci.org/LivelyKernel/lively.morphic.svg?branch=master)](https://travis-ci.org/LivelyKernel/lively.morphic)
-## Examples
 
-Render two boxes:
+An implemention of the [Morphic user interface framework](http://ftp.squeak.org/docs/Self-4.0-UI-Framework.pdf) for lively.next.
 
-```js
-import { pt, Color } from "lively.graphics";
-import { Renderer } from "lively.morphic/renderer.js";
-import { Morph } from "lively.morphic/morph.js";
+![demo](https://lively-web.org/users/robertkrahn/lively.next/inspector-demo-1.gif)
 
-var world = new Morph({extent: pt(300,300)})
-world.addMorph(new Morph({position: pt(34,20), extent: pt(50,100), fill: Color.green}))
-world.addMorph(new Morph({position: pt(104,20), extent: pt(50,100), fill: Color.red}))
-new Renderer().renderWorldLoop(world, document.body)
-```
+## License
+
+[MIT](License)
