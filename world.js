@@ -494,7 +494,7 @@ export class World extends Morph {
 
   get isWorld() { return true }
 
-  get draggable() { return false; }
+  get draggable() { return true; }
   set draggable(_) {}
   get grabbable() { return false; }
   set grabbable(_) {}
@@ -583,6 +583,49 @@ export class World extends Morph {
     }
   }
 
+  onDragStart(evt) {
+     const startPos = evt.positionIn(this);
+     this.morphSelection = this.addMorph({
+        isSelectionElement: true,
+        position: startPos, extent: evt.state.dragDelta,
+        fill: Color.gray.withA(.2),
+        borderWidth: 2, borderColor: Color.gray
+     });
+     this.selectedMorphs = {};
+  }
+
+  onDrag(evt) {
+     this.morphSelection.resizeBy(evt.state.dragDelta);
+     const selectionBounds = this.morphSelection.bounds();
+     this.submorphs.forEach(c => {
+         if (c.isSelectionElement) return;
+         const candidateBounds = c.bounds(),
+               included = selectionBounds.containsRect(candidateBounds);
+         
+         if (!this.selectedMorphs[c.id] && included) {
+            this.selectedMorphs[c.id] = this.addMorph({
+                isSelectionElement: true,
+                bounds: candidateBounds,
+                borderColor: Color.red,
+                borderWidth: 1,
+                fill: Color.transparent
+            }, this.morphSelection);
+         }
+         if (this.selectedMorphs[c.id] && !included) {
+            this.selectedMorphs[c.id].remove();
+            delete this.selectedMorphs[c];
+         }
+     })
+  }
+
+  onDragEnd(evt) {
+     this.morphSelection.fadeOut(200);
+     obj.values(this.selectedMorphs).map(m => m.remove());
+     this.showHaloForSelection(Object.keys(this.selectedMorphs)
+                                     .map(id => this.getMorphWithId(id)));
+     this.selectedMorphs = {};
+  }
+
   menuItems() {
     return [
       {command: "undo",                     target: this, showKeyShortcuts: true},
@@ -630,6 +673,10 @@ export class World extends Morph {
 
   showHaloFor(morph, pointerId = this.firstHand && this.firstHand.pointerId) {
     return this.addMorph(new Halo(pointerId, morph)).alignWithTarget();
+  }
+
+  showHaloForSelection(selection, pointerId = this.firstHand && this.firstHand.pointerId) {
+     return this.addMorph(new Halo(pointerId, selection)).alignWithTarget();
   }
 
   layoutHaloForPointerId(pointerId = this.firstHand && this.firstHand.pointerId) {
