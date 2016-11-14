@@ -187,6 +187,85 @@ class HaloPropertyDisplay extends Text {
   }
 }
 
+class SelectionTarget extends Morph {
+
+   constructor(selectedMorphs) {
+      super({visible: false});
+      this.selectedMorphs = selectedMorphs;
+      this.alignWithSelection();
+      this.initialized = true;
+   }
+
+   alignWithSelection() {
+      const bounds = this.selectedMorphs
+                         .map(m => m.globalBounds())
+                         .reduce((a,b) => a.union(b));
+      this.setBounds(bounds);
+   }
+
+   onGrab() {
+      // shove all of the selected Morphs into the hand
+   }
+
+   onDrop() {
+      // shove all of the selected into new owner, excluding self
+   }
+
+   updateExtent({prevValue, value}) {
+      const delta = value.subPt(prevValue);
+      this.selectedMorphs.forEach(m => {
+         m.resizeBy(delta);
+      })
+   }
+
+   updatePosition({prevValue, value}) {
+      const delta = value.subPt(prevValue);
+      this.selectedMorphs.forEach(m => {
+         m.moveBy(delta);
+      })
+   }
+
+   updateRotation({prevValue, value}) {
+      const delta = value - prevValue;
+      this.selectedMorphs.forEach(m => {
+         const oldOrigin = m.origin;
+         m.adjustOrigin(m.localize(this.worldPoint(pt(0,0))))
+         m.rotation += delta;
+         m.adjustOrigin(oldOrigin);
+      })
+   }
+
+   updateScale({prevValue, value}) {
+      const delta = value - prevValue;
+      this.selectedMorphs.forEach(m => {
+         const oldOrigin = m.origin;
+         m.adjustOrigin(m.localize(this.worldPoint(pt(0,0))))
+         m.scale += delta;
+         m.adjustOrigin(oldOrigin);
+      })
+   }
+ 
+   onChange(change) {
+       super.onChange(change);
+       if (!this.initialized) return;
+       switch (change.prop) {
+            case "extent": 
+               this.updateExtent(change);
+               break;
+            case "scale": 
+               this.updateScale(change);
+               break;
+            case "position": 
+               this.updatePosition(change);
+               break;
+            case "rotation": 
+               this.updateRotation(change);
+       }
+       return change;
+   }
+
+}
+
 export class Halo extends Morph {
 
   get isEpiMorph() { return true; }
@@ -201,6 +280,7 @@ export class Halo extends Morph {
       name: "border-box", fill: Color.transparent, 
       borderColor: Color.red, borderWidth: 2
     });
+    target = this.prepareTarget(target);
     this.state = {pointerId, target, draggedButton: null}
     this.initButtons();
     this.focus();
@@ -208,8 +288,18 @@ export class Halo extends Morph {
     this.initLayout();
     connect(this.target, "onChange", this, "alignWithTarget")
   }
+
+  prepareTarget(target) {
+     if (obj.isArray(target)) {
+         this.targetProxy = target[0].world().addMorph(new SelectionTarget(target));
+         return this.targetProxy;
+     }
+     return target;
+  }
+  
   remove() {
     disconnect(this.target, "onChange", this, "alignWithTarget");
+    this.targetProxy && this.targetProxy.remove();
     super.remove();
   }
   
