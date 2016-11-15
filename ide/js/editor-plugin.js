@@ -1,4 +1,4 @@
-import { fun } from "lively.lang";
+import { fun, arr } from "lively.lang";
 import { pt, Rectangle, Color } from "lively.graphics";
 
 import { connect, disconnect } from "lively.bindings";
@@ -31,7 +31,6 @@ const themes = {
   "github" : GithubTheme
 };
 
-
 export class JavaScriptEditorPlugin {
 
   constructor(theme = "chrome") {
@@ -58,13 +57,14 @@ export class JavaScriptEditorPlugin {
     // this.evalEnvironment.context = null;
     disconnect(editor, "textChange", this, "onTextChange");
     this.checker.uninstall(this.textMorph);
+    this.textMorph = null;
   }
 
   onTextChange() {
     this.requestHighlight();
   }
 
-  requestHighlight(immediate = false) {  
+  requestHighlight(immediate = false) {
     if (immediate) this.highlight();
     else fun.debounceNamed(this.id + "-requestHighlight", 500, () => this.highlight())();
   }
@@ -72,6 +72,7 @@ export class JavaScriptEditorPlugin {
   highlight() {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph) return;
+
     let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString);
     textMorph.setSortedTextAttributes(
       [textMorph.defaultTextStyleAttribute].concat(tokens.map(({token, start, end}) =>

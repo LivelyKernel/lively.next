@@ -98,7 +98,7 @@ export default class JavaScriptTokenizer extends Tokenizer {
           return Token.id;
         }
         return Token.default;
-        
+
       case "sstring":
         if (this.skipNext) {
           this.skipNext = false;
@@ -138,7 +138,7 @@ export default class JavaScriptTokenizer extends Tokenizer {
           return Token.default;
         }
         return Token.string;
-        
+
       case "comment":
         if (this.commentEnding) {
           this.commentEnding = false;
@@ -147,7 +147,7 @@ export default class JavaScriptTokenizer extends Tokenizer {
           this.commentEnding = true;
         }
         return Token.comment;
-        
+
       case "linecomment":
         if (c === '\n') {
           this.state = "default";
@@ -158,15 +158,15 @@ export default class JavaScriptTokenizer extends Tokenizer {
         if (/[0-9a-zA-Z_\$]/.test(c)) { //TODO unicode
           return Token.id;
         }
-          this.state = "default";
+        this.state = "default";
         return this.process();
-        
+
       case "keyword":
         if (--this.left === 0) {
           this.state = "default";
         }
         return Token.keyword;
-        
+
       case "constant":
         if (--this.left === 0) {
           this.state = "default";
@@ -178,19 +178,19 @@ export default class JavaScriptTokenizer extends Tokenizer {
           this.state = "default";
         }
         return Token.global;
-      
+
       case "dynamic":
         if (--this.left === 0) {
           this.state = "default";
         }
         return Token.dynamic;
-        
+
       case "regex":
         if (--this.left === 0) {
           this.state = "default";
         }
         return Token.regex;
-        
+
     }
     return Token.default;
   }
