@@ -1264,7 +1264,6 @@ export class Path extends Morph {
 
   constructor(props) {
     super(props);
-    this.vertices = props.vertices || []
   }
 
   onChange(change) {
@@ -1284,7 +1283,7 @@ export class Path extends Morph {
 
   get isSvgMorph() { return true }
 
-  get vertices() { return this.getProperty("vertices")}
+  get vertices() { return this.getProperty("vertices") || []}
   set vertices(value) { this.addValueChange("vertices", value); }
 
 
