@@ -892,7 +892,8 @@ export class Morph {
           platformKeys = findKeysForPlatform(keys, platform) || keys,
           command = binding.command,
           name = typeof command === "string" ? command : command.command || command.name;
-      return platformKeys.split("|").reduce((keyMap, combo) => {
+
+      return (platformKeys || "").split("|").reduce((keyMap, combo) => {
         keyMap[combo] = {name, command};
         return keyMap;
       }, keyMap);
@@ -1246,7 +1247,7 @@ export class Image extends Morph {
   constructor(props) {
     super(props);
     if (!this.imageUrl)
-      this.imageUrl = 'http://localhost:9001/core/media/lively-web-logo-small.png'
+      this.imageUrl = '/core/media/lively-web-logo-small.png'
   }
 
   get isImage() { return true }
