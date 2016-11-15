@@ -601,9 +601,7 @@ function noUpdate(noUpdateSpec, func) {
     var proto = AttributeConnection.prototype;
     if (!proto.isActive) proto.isActive = 0;
     proto.isActive++;
-    try {
-      result = func();
-    } finally {
+    try { result = func(); } finally {
       proto.isActive--;
       if (proto.isActive <= 0) proto.isActive;
     }
@@ -613,17 +611,14 @@ function noUpdate(noUpdateSpec, func) {
         targetObj = noUpdateSpec.targetObj,
         targetAttr = noUpdateSpec.targetAttribute,
         filter = targetObj && targetAttr ?
-          function(ea) { return ea.getSourceAttrName() === attr
-                             && targetObj === ea.getTargetObj()
-                             && targetAttr === ea.getTargetMethodName(); }:
-          function(ea) { return ea.getSourceAttrName() === attr; },
-        conns = obj.attributeConnections.select(filter);
-    conns.invoke('activate');
-    try {
-      result = func();
-    } finally {
-      conns.invoke('deactivate');
-    }
+          ea => ea.getSourceAttrName() === attr
+                   && targetObj === ea.getTargetObj()
+                   && targetAttr === ea.getTargetMethodName() :
+          ea => ea.getSourceAttrName() === attr,
+        conns = obj.attributeConnections.filter(filter);
+    arr.invoke(conns, 'activate');
+    try { result = func(); }
+    finally { arr.invoke(conns,'deactivate'); }
   }
   return result;
 }
