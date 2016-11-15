@@ -47,6 +47,11 @@ export class ShadowObject {
        return `${this.color.toString()} ${x}px ${y}px ${this.blur}px`
     }
 
+    toFilterCss() {
+       const {x, y} = Point.polar(this.distance, num.toRadians(this.rotation));
+       return `drop-shadow(${x}px ${y}px ${this.blur}px ${this.color.toString()})`;
+    }
+
 }
 
 class StyleMapper {
@@ -337,7 +342,7 @@ export function defaultAttributes(morph, renderer) {
 
 function shadowCss(morph) {
   return morph.dropShadow ?
-            `drop-shadow(0px 5px 10px rgb(120, 120, 120))` :
+            morph.dropShadow.toFilterCss() :
             `drop-shadow(0px 0px 0px rgb(120, 120, 120))`;
 }
 
