@@ -360,6 +360,7 @@ export class GridLayoutHalo extends Morph {
       styleClasses: ["morph", "halo"],
       borderColor: Color.orange,
       borderWidth: 2,
+      borderRadius: container.borderRadius,
       extent: container.extent,
       fill: Color.transparent
     });
@@ -425,9 +426,14 @@ export class GridLayoutHalo extends Morph {
   }
   
   initCellGuides() {
-    
+    const cellContainer = this.addMorph({
+       fill: Color.transparent,
+       borderRadius: this.borderRadius,
+       extent: this.extent,
+       clipMode: "hidden"
+    })
     this.target.cellGroups.forEach(group => {
-      this.addMorph(this.cellGuide(group));
+      cellContainer.addMorph(this.cellGuide(group));
     })
     
     this.addMorph(this.resizer());
@@ -561,8 +567,12 @@ export class GridLayoutHalo extends Morph {
         self.addMorph(this.remove());
         this.submorphs.forEach(b => { b.visible = true });
       },
-      onHover(evt) {
+      onHoverIn(evt) {
         // if hand carries a morph, preview the alignment of the morph
+        if (evt.hand.grabbedMorphs.length > 0) this.fill = Color.orange.withA(.7);
+      },
+      onHoverOut(evt) {
+        this.fill = Color.transparent;
       },
       onDrop(evt) {
         const [m] = evt.hand.grabbedMorphs; // pick the first of the grabbed submorphs
@@ -592,6 +602,7 @@ export class FlexLayoutHalo extends Morph {
 
     constructor(container, pointerId) {
     super({
+      isHaloItem: true,
       styleClasses: ["morph", "halo"],
       extent: container.extent,
       fill: Color.transparent
@@ -600,8 +611,40 @@ export class FlexLayoutHalo extends Morph {
     this.alignWithTarget();
   }
 
+  onHoverIn(evt) {
+     if (evt.hand.grabbedMorphs.length > 0) this.previewDrop(evt.hand.grabbedMorphs);
+  }
+
+  onHoverOut(evt) {
+     this.removePreviews();
+  }
+
+  previewDrop(morphs) {
+     this.previews = morphs.map(morph => 
+         this.container.addMorph({
+           isHaloItem: true,
+           bounds: morph.bounds(),
+           fill: Color.orange.withA(.3),
+           borderColor: Color.orange,
+           borderWidth: 2,
+           opacity: 1,
+           borderStyle: "dashed",
+           step() { this.opacity == 1 ? 
+                      this.animate({opacity: .5, duration: 2000}) : 
+                      this.animate({opacity: 1, duration: 2000}); 
+           }
+        }));
+     this.previews.forEach(p => {
+         p.step(); p.startStepping(2000, "step")
+     });
+  }
+
+  removePreviews() {
+    this.previews.forEach(p => p.remove());
+  }
+
   onDrop(evt) {
-    this.world().logError("drop in container")
+    this.removePreviews();
     evt.hand.dropMorphsOn(this.container);
   }
 

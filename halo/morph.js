@@ -2,7 +2,7 @@ import { Ellipse, Morph, Path, Text,
          HorizontalLayout, GridLayout, 
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
-import { string, obj, arr, num, grid } from "lively.lang";
+import { string, obj, arr, num, grid, properties } from "lively.lang";
 import { connect, disconnect, signal } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 import Inspector from "../ide/js/inspector.js";
@@ -589,8 +589,15 @@ export class Halo extends Morph {
       halo: this,
       tooltip: "Grab the morph",
       valueForPropertyDisplay() {
-        dropTarget = this.morphBeneath(this.hand.position);
-        this.halo.toggleMorphHighlighter(dropTarget && dropTarget != this.world(), dropTarget);
+        var dropTarget = this.morphBeneath(this.hand.position),
+            belongsToHalo = dropTarget.isHaloItem || dropTarget.ownerChain().find(m => m.isHaloItem);
+        if (!belongsToHalo) {
+            this.halo.toggleMorphHighlighter(dropTarget && dropTarget != this.world(), dropTarget, true);
+            this.prevDropTarget 
+                && this.prevDropTarget != dropTarget 
+                && this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
+            this.prevDropTarget = dropTarget;
+        }
         return dropTarget && dropTarget.name;
       },
 
@@ -613,7 +620,7 @@ export class Halo extends Morph {
         dropTarget.onDrop({hand});
         this.halo.activeButton = null;
         this.halo.alignWithTarget();
-        this.halo.toggleMorphHighlighter(false, dropTarget);
+        this.halo.toggleMorphHighlighter(false, this.prevDropTarget);
         this.halo.target.undoStop("grab-halo");
       },
 
@@ -1018,11 +1025,14 @@ export class Halo extends Morph {
     rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
   }
 
-  morphHighlighter(morph) {
+  morphHighlighter(morph, showLayout) {
     var halo = this;
     this.morphHighlighters = this.morphHighlighters || {};
+    properties.forEachOwn(this.morphHighlighters, (_, h) => h.alignWithHalo());
+    if (morph.ownerChain().find(owner => owner.isHaloItem)) return null;
     this.morphHighlighters[morph.id] = this.morphHighlighters[morph.id] || this.addMorphBack({
       opacity: 0,
+      target: morph,
       name: "morphHighlighter",
       fill: Color.orange.withA(0.5),
       alignWithHalo() {
@@ -1031,13 +1041,19 @@ export class Halo extends Morph {
           this.extent = this.target.globalBounds().extent();
         }
       },
-      show(target) {
-        this.target = target;
-        this.animate({opacity: 1, duration: 500});
-        this.alignWithHalo();
+      show() {
+        if (this.target.layout && showLayout) {
+           this.layoutHalo = this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
+        } else {
+           this.animate({opacity: 1, duration: 500});
+           this.alignWithHalo();
+        } 
       },
-      deactivate(target) {
-        if (this.target != target) return;
+      deactivate() {
+        if (this.layoutHalo) {
+            this.layoutHalo.remove();
+            this.layoutHalo = null;
+        }
         this.animate({opacity: 0, duration: 500});
         this.alignWithHalo();
       }
@@ -1045,12 +1061,12 @@ export class Halo extends Morph {
     return this.morphHighlighters[morph.id];
   }
 
-  toggleMorphHighlighter(active, target) {
-    const morphHighlighter = this.morphHighlighter(target);
+  toggleMorphHighlighter(active, target, showLayout = false) {
+    const morphHighlighter = this.morphHighlighter(target, showLayout);
     if (active && target && target != this.world()) {
-      morphHighlighter.show(target);
+      morphHighlighter && morphHighlighter.show(target);
     } else {
-      morphHighlighter.deactivate(target);
+      morphHighlighter && morphHighlighter.deactivate(target);
     }
   }
 
