@@ -569,11 +569,13 @@ export class Halo extends Morph {
       halo: this,
       tooltip: "Remove this morph from the world",
       update: () => {
-        this.remove();
         var o = this.target.owner
         o.undoStart("close-halo");
-        this.target.remove();
+        this.target.selectedMorphs ? 
+                     this.target.selectedMorphs.forEach(m => m.remove()) :
+                     this.target.remove();
         o.undoStop("close-halo");
+        this.remove();
       },
       onMouseDown(evt) { this.update(); }
     }));
