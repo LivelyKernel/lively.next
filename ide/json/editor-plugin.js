@@ -5,6 +5,8 @@ import { connect, disconnect } from "lively.bindings";
 import { TextStyleAttribute } from "../../text/attribute.js";
 import { lessPosition } from "../../text/position.js"
 
+import { JavaScriptEditorPlugin } from "../js/editor-plugin.js";
+
 import ChromeTheme from "../themes/chrome.js";
 import TomorrowNightTheme from "../themes/tomorrow-night.js";
 import GithubTheme from "../themes/github.js";
@@ -18,107 +20,94 @@ const themes = {
 var warnStyle = {"border-bottom": "2px dotted orange"},
     errorStyle = {"background-color": "red"};
 
-var jju;
+
+import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
+import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-json.js";
 
 class JSONTokenizer {
 
-  async ensureJJU() {
-    if (jju) return;
-    var url = "http://rlidwka.github.io/jju/jju.js";
-    System.config({meta: {[url]: {format: "global", exports: "require"}}});
-    var jjuRequire = await System.import(url);
-    return jju = jjuRequire("jju");
-  }
-
   tokenize(string) {
-    if (!jju) { this.ensureJJU(); /*next time*/ return []; }
-    var pos = {row: 0, column: 0};
-    return jju.tokenize(string).map((token, i) => {
-      var {type, raw} = token;
-      switch (type) {
-        case "newline": pos = {row: pos.row+1, column: 0}; return null;
-        case "key": type = "string"; break
-        case "literal":
-          if (raw === "null") type = "keyword"
-          else if (!isNaN(Number(raw))) type = "numeric"
-          else type = "string";
-          break;
-      }
-      var start = pos,
-          end = pos = {row: pos.row, column: pos.column + raw.length};
-      return {...token, type, start, end};
-    }).filter(ea => !!ea)
+    var pos = {row: 0, column: 0},
+        tokens = prism.tokenize(string, prism.languages.json),
+        styles = [];
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i],
+          currentTokens = [token];
+      if (typeof token === "string")
+        token = tokens[i] = {matchedStr: token, type: "default"}
+      token.start = {...pos};
+      var lines = token.matchedStr.split("\n");
+      if (lines.length === 1) pos.column += lines[0].length;
+      else pos = {row: pos.row + lines.length-1, column: arr.last(lines).length}
+      token.end = {...pos};
+    }
+    return tokens;
   }
 
 }
 
-export class JSONEditorPlugin {
+export class JSONEditorPlugin extends JavaScriptEditorPlugin {
 
   constructor(theme = "chrome") {
-    this.theme = typeof theme === "string" ? new themes[theme]() : theme;
-    // this.highlighter = new JavaScriptTokenizer();
+    super(theme);
     this.tokenizer = new JSONTokenizer();
-    this.tokenizer.ensureJJU();
     this._tokens = [];
   }
 
-  get isEditorPlugin() { return true }
-
   get isJSONEditorPlugin() { return true }
 
-  attach(editor) {
-    this.textMorph = editor;
-    connect(editor, "textChange", this, "onTextChange");
-    this.requestHighlight();
-  }
-
   detach(editor) {
-    // this.evalEnvironment.context = null;
-    disconnect(editor, "textChange", this, "onTextChange");
-  }
-
-  onTextChange() {
-    this.requestHighlight();
-  }
-
-  requestHighlight(immediate = false) {  
-    if (immediate) this.highlight();
-    else fun.debounceNamed(this.id + "-requestHighlight", 500, () => this.highlight())();
+    this.textMorph.removeMarker("js-syntax-error");
+    super.detach(editor);
   }
 
   highlight() {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph) return;
-    
+
+    var tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
+        styles = tokens.map(({type, start, end}) => 
+          tokens.type !== "default" &&
+            TextStyleAttribute.fromPositions(this.theme.styleCached(type),start, end))
+              .filter(Boolean);
+    textMorph.setSortedTextAttributes([textMorph.defaultTextStyleAttribute].concat(styles));
+
     try {
-      let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString);
-
+      JSON.parse(textMorph.textString);
       textMorph.removeMarker("js-syntax-error")
-
-      textMorph.setSortedTextAttributes(
-        [textMorph.defaultTextStyleAttribute].concat(tokens.map(({type, start, end}) =>
-          TextStyleAttribute.fromPositions(this.theme.styleCached(type), start, end))));
-
     } catch (err) {
-      if (err instanceof SyntaxError) {
-        var {column, row} = err;
-        row--;
+      if (!(err instanceof SyntaxError)) throw err
 
+      var pos;
+
+      var [_, index] = err.message.match(/position ([0-9]+)/) || [];
+      if (index && !isNaN(Number(index)))  {
+        pos = textMorph.indexToPosition(Number(index));
+      }
+      if (!pos) {
+        var [_, line] = err.message.match(/line ([0-9]+)/) || [],
+            [_, column] = err.message.match(/column ([0-9]+)/) || [];
+        if (!isNaN(Number(line))) pos = {row: Number(line)-1, column: Number(column)};
+      }
+
+      if (!pos) {
+        var {column, line} = err;
+        if (typeof line === "number") pos = {row: line-1, column};
+      }
+
+      if (!pos || isNaN(pos.row) || isNaN(pos.column))
+        textMorph.showError("JSON editor plugin detected JSON parse error but cannot find error position");
+      else {
         textMorph.addMarker({
           id: "js-syntax-error",
-          range: {start: {column: column-1, row}, end: {column: column+1, row}},
+          range: {start: {column: pos.column-1, row: pos.row}, end: {column: pos.column+1, row: pos.row}},
           style: errorStyle,
           type: "js-syntax-error"
-        })
-      } else throw err
+        });
+      }
+
     }
 
-  }
-
-  tokenAt(pos) {
-    return this._tokens ?
-      this._tokens.find(({end}) => !lessPosition(end, pos)) :
-      null;
   }
 
 }

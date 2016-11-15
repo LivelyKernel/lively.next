@@ -5,6 +5,7 @@ import { Window, morph, show, Label, HorizontalLayout, GridLayout } from "../ind
 import { DropDownList } from "../list.js";
 import InputLine from "../text/input-line.js";
 import { JavaScriptEditorPlugin } from "./js/editor-plugin.js";
+import { JSONEditorPlugin } from "./json/editor-plugin.js";
 import config from "../config.js";
 import { HorizontalResizer } from "../resizers.js";
 import { Icon } from "../icons.js";
@@ -509,7 +510,7 @@ export class Browser extends Window {
     return container;
   }
 
-  get jsPlugin() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
+  get editorPlugin() { return this.get("sourceEditor").pluginFind(p => p.isEditorPlugin); }
 
   ensureEvalBackEndList() {
     var list = this.getSubmorphNamed("eval backend list");
@@ -612,9 +613,9 @@ export class Browser extends Window {
     this.get("sourceEditor").textString = ""
   }
 
-  get backend() { return this.jsPlugin.evalEnvironment.remote || "local"; }
+  get backend() { return this.editorPlugin.evalEnvironment.remote || "local"; }
   set backend(remote) {
-    this.jsPlugin.evalEnvironment.remote = remote;
+    this.editorPlugin.evalEnvironment.remote = remote;
     this.ensureEvalBackEndList();
   }
 
@@ -647,8 +648,10 @@ export class Browser extends Window {
 
   async packageResources(p) {
     // await this.packageResources(this.selectedPackage)
-    return (await (await this.systemInterface()).resourcesOfPackage(p.address))
-      .filter(({name}) => name.endsWith(".js") || name.endsWith(".json"));
+    try {
+      return (await (await this.systemInterface()).resourcesOfPackage(p.address))
+        .filter(({name}) => name.endsWith(".js") || name.endsWith(".json"));
+    } catch (e) { this.showError(e); return []; }
   }
 
   async onLoad() {
@@ -729,8 +732,13 @@ export class Browser extends Window {
 
     if (!m) {
       this.get("sourceEditor").textString = "";
-      this.title = "browser – " + pack && pack.name || "";
+      this.title = "browser – " + (pack && pack.name || "");
       return;
+    }
+
+    if (!pack) {
+      this.showError(new Error("Browser>>onModuleSelected called but no package selected!" + m));
+      return
     }
 
     if (!this.state.moduleUpdateInProgress) {
@@ -741,7 +749,7 @@ export class Browser extends Window {
     try {
       var system = await this.systemInterface();
 
-      if (!m.isLoaded && m.name.endsWith("js")) {
+      if (!m.isLoaded && m.name.endsWith(".js")) {
         var err;
         try { system.importModule(m.name); }
         catch(e) { err = e; }
@@ -765,25 +773,48 @@ export class Browser extends Window {
         }
       }
 
-      var format = (await system.moduleFormat(m.name)) || "esm";
-
-      Object.assign(this.jsPlugin.evalEnvironment, {
-        targetModule: m.name,
-        context: this.get("sourceEditor"),
-        format
-      });
-
       this.get("moduleList").scrollSelectionIntoView();
       this.title = "browser – " + pack.name + "/" + m.nameInPackage;
       var source = await system.moduleRead(m.name);
       this.get("sourceEditor").textString = source;
       this.get("sourceEditor").cursorPosition = {row: 0, column: 0}
 
+      await this.prepareCodeEditorForModule(m);
+
       this.historyRecord();
     } finally {
       this.state.moduleUpdateInProgress = null;
       deferred && deferred.resolve(m);
     }
+  }
+
+  async prepareCodeEditorForModule(module) {
+    var system = await this.systemInterface(),
+        format = (await system.moduleFormat(module.name)) || "esm",
+        [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
+    // FIXME we already have such "mode" switching code in the text editor...
+    // combine these?!
+    var Mode = JavaScriptEditorPlugin;
+    switch (ext) {
+      case 'js': /*default*/break;
+      case 'json': Mode = JSONEditorPlugin; break;
+    }
+
+    // switch text mode
+    if (this.editorPlugin.constructor !== Mode) {
+      var env = this.editorPlugin.evalEnvironment;
+      this.get("sourceEditor").removePlugin(this.editorPlugin);
+      this.get("sourceEditor").addPlugin(new Mode(config.codeEditor.defaultTheme));
+      Object.assign(this.editorPlugin, env);
+      this.editorPlugin.highlight();
+    }
+
+    Object.assign(this.editorPlugin.evalEnvironment, {
+      targetModule: module.name,
+      context: this.get("sourceEditor"),
+      format
+    });
+
   }
 
   async updateModuleList(p = this.selectedPackage) {
@@ -809,12 +840,32 @@ export class Browser extends Window {
 
     var content = this.get("sourceEditor").textString,
         system = await this.systemInterface();
+        system = await that.owner.owner.systemInterface();
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // FIXME!!!!!! redundant with module load / prepare "mode" code!
+    var format = (await system.moduleFormat(module.name)) || "esm",
+        [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
     try {
-      if (module.isLoaded) { // is loaded in runtime
-        await system.interactivelyChangeModule(
-          module.name, content, {targetModule: module.name, doEval: true});
-      } else await system.moduleWrite(module.name, content);
+      // deal with non-js code, this needs to be cleaned up as well!
+      if (ext !== "js") {
+        await system.coreInterface.resourceWrite(module.name, content);
+        if (arr.last(module.name.split("/")) === "package.json") {
+          await system.packageConfChange(content, module.name);
+          this.world().setStatusMessage("updated package config", Color.green);
+        }
+
+      // js save
+      } else {
+        if (module.isLoaded) { // is loaded in runtime
+          await system.interactivelyChangeModule(
+            module.name, content, {targetModule: module.name, doEval: true});
+        } else await system.coreInterface.resourceWrite(module.name, content);
+      }
+
     } catch(err) { return this.world().logError(err); }
 
     this.world().setStatusMessage("saved " + module.nameInPackage, Color.green);
