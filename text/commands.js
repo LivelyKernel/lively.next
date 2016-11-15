@@ -87,7 +87,7 @@ var commands = [
       //     pasted = await lively.browserExtension.doPaste();
       //   } catch(err) { /*timeout err*/}
       // }
-      
+
       // if (!pasted) {
       //   try {
       //     pasted = await morph.env.eventDispatcher.doPaste();
@@ -219,7 +219,7 @@ var commands = [
       return true;
     }
   },
-  
+
   {
     name: "tab - snippet expand or indent",
     scrollCursorIntoView: true,
@@ -806,7 +806,7 @@ var commands = [
         var sels = morph.inMultiSelectMode() ?  sel.selections : [sel]
         sels.forEach(sel => sel.anchor = sel.lead);
       }
-      
+
       return true;
     }
   },
@@ -993,7 +993,41 @@ var usefulEditorCommands = [
       ed.undoManager.group();
       return true;
     }
+  },
+
+  {
+    name: 'sort lines',
+    exec: function(text) {
+      var {start: {row: startRow}, end: {row: endRow}} = text.selection,
+          lines = [];
+      text.withLinesDo(startRow, endRow, line => {
+        var idx = lines.findIndex(ea => ea > line);
+        idx > -1 ? lines.splice(idx, 0, line) : lines.push(line)
+      })  ;
+      text.undoManager.group();
+      text.replace(
+        {start: {row: startRow, column: 0}, end: {row: endRow+1, column: 0}},
+        lines.join("\n") + "\n");
+      text.undoManager.group();
+      return true;
+    }
+  },
+
+  {
+    name: 'remove duplicate lines (uniq)',
+    exec: function(text) {
+      var {start: {row: startRow}, end: {row: endRow}} = text.selection,
+          lines = [];
+      text.withLinesDo(startRow, endRow, line => arr.pushIfNotIncluded(lines, line));
+      text.undoManager.group();
+      text.replace(
+        {start: {row: startRow, column: 0}, end: {row: endRow+1, column: 0}},
+        lines.join("\n") + "\n");
+      text.undoManager.group();
+      return true;
+    }
   }
+
 ];
 commands.push(...usefulEditorCommands);
 
