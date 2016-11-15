@@ -170,7 +170,7 @@ function normalizeHook(proceed, name, parent, parentAddress) {
       }
 
       // Fix issue with accidentally adding .js
-      var m = result.match(/(.*json)\.js/i);
+      var m = result.match(/(.*\.json)\.js/i);
       if (m) return m[1];
 
       return result;
@@ -201,7 +201,7 @@ function decanonicalizeHook(proceed, name, parent, isPlugin) {
   }
 
   // Fix issue with accidentally adding .js
-  var m = result.match(/(.*json)\.js/i);
+  var m = result.match(/(.*\.json)\.js/i);
   if (m) return m[1];
 
   return result;
