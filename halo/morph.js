@@ -546,7 +546,7 @@ export class Halo extends Morph {
            proportionalMode(active, delta=null) {
             this.focus();
             if (active) {
-              const diagonal = this.halo.toggleDiagonal(true);
+              const diagonal = this.halo.toggleDiagonal(true, corner);
               if (delta) {
                 delta = diagonal.scaleBy(
                           diagonal.dotProduct(delta) /
@@ -554,7 +554,7 @@ export class Halo extends Morph {
               }
               return delta;
             } else {
-              this.halo.toggleDiagonal(false);
+              this.halo.toggleDiagonal(false, corner);
               return delta;
             }
           }
@@ -965,13 +965,22 @@ export class Halo extends Morph {
     this.focus();
   }
 
-  toggleDiagonal(active) {
+  toggleDiagonal(active, corner) {
     var diagonal = this.getSubmorphNamed("diagonal"),
         {x,y,width, height } = this.target.globalBounds(),
         bounds = this.localize(pt(x,y))
                      .extent(pt(width, height))
-                     .scaleRectTo(this.innerBounds());
+                     .scaleRectTo(this.innerBounds()),
+        vertices = {"topLeft": [bounds.bottomRight(), bounds.topLeft()],
+                    "topRight": [bounds.bottomLeft(), bounds.topRight()],
+                    "bottomRight": [pt(0,0), bounds.extent()],
+                    "bottomLeft": [bounds.topRight(), bounds.bottomLeft()]};
+        
     if (active) {
+      if (!vertices[corner]) {
+      
+      }
+      const [v1, v2] = vertices[corner];
       if (diagonal) {
         diagonal.setBounds(bounds);
       } else {
@@ -982,10 +991,10 @@ export class Halo extends Morph {
           borderWidth: 2,
           bounds,
           gradient: guideGradient,
-          vertices: [pt(0,0), bounds.extent()]}));
+          vertices: [v1, v2]}));
         diagonal.animate({opacity: 1, duration: 500});
       }
-      return diagonal.vertices[1];
+      return v2.subPt(v1);
     } else {
       diagonal && diagonal.fadeOut(500);
     }
