@@ -281,6 +281,24 @@ export class EllipseStyleHalo extends StyleHalo {
        return undefined;
     }
 
+    borderHaloShape(props) {
+      const halo = this;
+      return {
+         ...super.borderHaloShape(props),
+         type: "ellipse"
+      }
+    }
+
+    isOnMorphBorder(evt) {
+      if (!evt) return false;
+      const {x,y} = evt.positionIn(this.getSubmorphNamed("borderHalo")),
+            {width, height} = this.target;
+            
+      return Intersection.intersectShapes(  
+              IntersectionParams.newEllipse(new Point2D(width / 2, height / 2), width / 2, height / 2), 
+              IntersectionParams.newRect(x - 7.5, y - 7.5, 15, 15)).points.length > 0;
+   }
+
 }
 
 class SvgStyleHalo extends StyleHalo {
