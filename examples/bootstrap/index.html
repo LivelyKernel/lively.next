@@ -30,32 +30,33 @@
         .then(function() { console.log("... lively.morphic loaded"); })
         .catch(function(err) { console.error(err); })
 
-
       function bootstrapLivelySystem() {
+        var origin = document.location.origin;
+
         // for loading an instrumented version of the packages comprising the lively.system
         return Promise.resolve()
         .then(function() { console.log("1. loading initial system so we can bootstrap..."); })
-        .then(function () { return lively.modules.importPackage('http://localhost:9001/node_modules/lively-system-interface/'); })
+        .then(function () { return lively.modules.importPackage(origin + '/node_modules/lively-system-interface/'); })
         .then(function() { console.log("... done!"); })
 
         .then(function() { console.log("2. preparing to bootstrap..."); })
 
-        .then(function () { return lively.modules.removePackage('http://localhost:9001/node_modules/lively-modules/'); })
-        .then(function() { return lively.modules.importPackage("http://localhost:9001/node_modules/lively-system-interface/node_modules/lively.lang"); }).then(function(m) {
+        .then(function () { return lively.modules.removePackage(origin + '/node_modules/lively-modules/'); })
+        .then(function() { return lively.modules.importPackage(origin + "/node_modules/lively-system-interface/node_modules/lively.lang"); }).then(function(m) {
           delete m._prevLivelyGlobal
           // lively.lang = m;
         })
         .then(function() { console.log("... lively.lang loaded..."); })
-        .then(function() { return lively.modules.importPackage("http://localhost:9001/node_modules/lively-system-interface/node_modules/lively.ast"); }).then(function(m) {
+        .then(function() { return lively.modules.importPackage(origin + "/node_modules/lively-system-interface/node_modules/lively.ast"); }).then(function(m) {
           lively.ast = m;
         })
         .then(function() { console.log("... lively.ast loaded..."); })
-        .then(function() { return lively.modules.importPackage("http://localhost:9001/node_modules/lively-system-interface/node_modules/lively.vm"); }).then(function(m) {
+        .then(function() { return lively.modules.importPackage(origin + "/node_modules/lively-system-interface/node_modules/lively.vm"); }).then(function(m) {
           lively.vm = m;
           lively.lang.VM = m;
         })
         .then(function() { console.log("... lively.vm loaded..."); })
-        .then(function() { return lively.modules.importPackage("http://localhost:9001/node_modules/lively-system-interface/node_modules/lively.modules"); }).then(function(m) {
+        .then(function() { return lively.modules.importPackage(origin + "/node_modules/lively-system-interface/node_modules/lively.modules"); }).then(function(m) {
           lively.modules = m;
           lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad();
         })
