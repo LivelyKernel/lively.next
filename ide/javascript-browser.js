@@ -840,7 +840,6 @@ export class Browser extends Window {
 
     var content = this.get("sourceEditor").textString,
         system = await this.systemInterface();
-        system = await that.owner.owner.systemInterface();
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // FIXME!!!!!! redundant with module load / prepare "mode" code!
