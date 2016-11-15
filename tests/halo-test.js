@@ -58,17 +58,19 @@ describe("halos", () => {
 
   it("name shows name", () => {
     var halo = world.showHaloFor(submorph1);
-    expect(halo.nameHalo().nameHolder.textString).equals(submorph1.name);
+    expect(halo.nameHalo().nameHolders[0].textString).equals(submorph1.name);
   })
 
   it("drag drags", () => {
     var halo = world.showHaloFor(submorph1);
+    halo.dragHalo().init();
     halo.dragHalo().update(pt(10,5));
     expect(submorph1.position).equals(pt(20, 15));
   });
   
   it("drags gridded and shows guides", () => {
     var halo = world.showHaloFor(submorph1);
+    halo.dragHalo().init();
     halo.dragHalo().update(pt(10,11), true);
     expect(submorph1.position).equals(pt(20, 20));
     expect(halo.getSubmorphNamed("mesh")).not.to.be.null;
