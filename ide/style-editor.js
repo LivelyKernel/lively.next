@@ -4,7 +4,7 @@ import { Window, GridLayout, FillLayout, Ellipse, Text,
 import { Rectangle, Color, LinearGradient, pt, Point, rect } from "lively.graphics";
 import { obj, num, arr } from "lively.lang";
 import { signal, connect } from "lively.bindings";
-import { ValueScrubber } from "../widgets.js";
+import { ValueScrubber, CheckBox } from "../widgets.js";
 import { Icon } from "../icons.js";
 
 const WHEEL_URL = 'https://www.sessions.edu/wp-content/themes/divi-child/color-calculator/wheel-5-ryb.png'
@@ -114,8 +114,9 @@ export class PropertyInspector extends Morph {
        const btnStyle = {
           type: "button",
           border: {radius: 3, style: "solid", color: Color.gray}
-       }, {target, property} = props;
+       }, {target, property, name} = props;
        super({
+           name,
            fill: Color.transparent,
            extent:pt(55, 20), 
            submorphs: [new ValueScrubber({
@@ -123,7 +124,8 @@ export class PropertyInspector extends Morph {
                         borderRadius: 3, fill: Color.white,
                         padding: 3, fontSize: 13,
                         borderColor: Color.gray.darker(), 
-                        value: target[property], ...props}),
+                        value: target[property], 
+                        ...obj.dissoc(props, ["name"])}),
                         {name: "up", ...btnStyle, label: Icon.makeLabel(
                                   "sort-asc", {padding: rect(2,0,0,0)})},
                         {name: "down", ...btnStyle, label: Icon.makeLabel(
@@ -699,12 +701,14 @@ export class ColorPicker extends Window {
 
 export class ColorPickerField extends Morph {
 
-   constructor({property, target}) {
+   constructor(props) {
+      const {property, target} = props;
       super({
          property, target,
          extent: pt(20,20),
          borderRadius: 5, clipMode: "hidden",
          borderWidth: 1, borderColor: Color.gray.darker(),
+         ...props
       })
       const topRight = this.innerBounds().topRight(),
             bottomLeft = this.innerBounds().bottomLeft();
@@ -720,8 +724,10 @@ export class ColorPickerField extends Morph {
       }];
 
       this.update();
-      connect(this.target, "change", this, "update");
+      connect(this.target, "onChange", this, "update");
    }
+
+
 
    update() {
       this.get("topLeft").fill = this.target[this.property];
@@ -737,6 +743,7 @@ export class ColorPickerField extends Morph {
       p.scale = 0; p.opacity = 0;
       p.animate({opacity: 1, scale: 1, duration: 200});
       connect(p, "color", this.target, this.property);
+      connect(p, "color", this, "update");
       this.picker = p;
    }
 
@@ -814,6 +821,39 @@ class StyleEditor extends Morph {
      ]}
   }
 
+  createToggledControl({title, render, target, property}) {
+    if (!target || !property) throw Error("Please pass property AND target to toggled control.");
+    const toggler = new CheckBox({checked: target[property]}),
+          flap = new Morph({
+            clipMode: "hidden",
+            fill: Color.transparent, 
+            draggable: true, onDrag: (evt) =>  this.onDrag(evt),
+            layout: new VerticalLayout({spacing: 5}),
+            toggle(value) {
+                if (value) {
+                    value = this.memoizedValue || value;
+                } else {
+                    this.memoizedValue = target[property];
+                }
+                target[property] = value;
+                const [title] = this.submorphs,
+                      controls =  render(target[property]);
+                this.submorphs = [title, ...controls ? [controls] : []];
+            },
+            submorphs: [
+              {fill: Color.transparent, layout: new HorizontalLayout(),
+               submorphs: [
+                {type: "text", textString: title, 
+                 fontColor: Color.black, padding: rect(5,0,0,0), 
+                 fill: Color.transparent},
+                toggler]}
+           ]});
+           
+     connect(toggler, "toggle", flap, "toggle");
+     flap.toggle(target[property]);
+     return flap;
+  }
+
 
 }
 
@@ -822,8 +862,8 @@ export class BodyStyleEditor extends StyleEditor {
    controls(target) {
        return [
            this.fillControl(target),
-           this.opacityControl(target)
-           //this.shadowControl(target)
+           this.opacityControl(target),
+           this.shadowControl(target)
        ]
    }
 
@@ -839,15 +879,53 @@ export class BodyStyleEditor extends StyleEditor {
    }
 
    shadowControl() {
-     return this.createControl("Shadow", {
-        // position (angle), distance, blur, color, opacity?
-        layout: new GridLayout({grid: [["distanceSlider"],
-                                       ["blurSlider"],
-                                       ["angleSlider", "angleControl", "colorPicker"]]}),
-        submorphs: [new Slider(), new Slider(), 
-                    new RotateSlider(), new PropertyInspector(),
-                    new ColorPickerField()]
-     })
+     return this.createToggledControl({
+          title: "Drop Shadow",
+          target: this.target, property: "dropShadow",
+          render: (value) => {
+             if (!value) return null;
+             const distanceInspector = new PropertyInspector({
+                  name: "distanceSlider", 
+                  min: 0, target: value,
+                  property: "distance"
+             }),
+             angleSlider = new PropertyInspector({
+                  name: "angleSlider",
+                  min: 0, max: 360,
+                  target: value,
+                  property: "rotation"
+             }),
+             blurInspector = new PropertyInspector({
+                 name: "blurSlider",
+                 min: 0, target: value,
+                 property: "blur"
+             });
+             const control = new Morph({
+                  width: 180, height: 100, fill: Color.transparent, 
+                  layout: new GridLayout({
+                      autoAssign: false, 
+                      fitToCell: false,
+                      grid: [
+                      ["distanceLabel", null, "distanceSlider"],
+                      ["blurLabel", null, "blurSlider"],
+                      ["angleLabel", "angleSlider", "colorPicker"]]}),
+                  submorphs: [
+                    {type: "label", value: "Distance: ", name: "distanceLabel"}, distanceInspector, 
+                    {type: "label", value: "Blur: ", name: "blurLabel"}, blurInspector, 
+                    {type: "label", value: "Angle: ", name: "angleLabel"}, angleSlider,
+                    new ColorPickerField({
+                         target: value,
+                         name: "colorPicker",
+                         property: "color"
+                    })]
+               });
+             control.layout.col(0).paddingLeft = 5;
+             control.layout.row(0).paddingBottom = 5;
+             control.layout.row(1).paddingBottom = 5;
+             control.layout.row(2).paddingBottom = 5;
+             return control;
+          }
+          })
   }
    
 }
