@@ -3,10 +3,11 @@ import { Ellipse, Morph, Path, Text,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid } from "lively.lang";
-import { connect, disconnect } from "lively.bindings";
+import { connect, disconnect, signal } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 import Inspector from "../ide/js/inspector.js";
-import { styleHaloFor } from './stylization.js'
+import { styleHaloFor } from './stylization.js';
+import { Icon } from '../icons.js';
 
 const itemExtent = pt(24,24);
 
@@ -40,6 +41,87 @@ class HaloItem extends Morph {
 
 }
 
+class NameHolder extends Text {
+
+   constructor(props) {
+      super({
+        padding: 6,
+        tooltip: "Click to edit the morph's name",
+        draggable: false,
+        fill: Color.transparent,
+        fontColor: Color.darkgray,
+        active: true,
+        ...props});
+   }
+
+   onHoverIn(evt) {
+     if (this.highlightOnHover && this.active) {
+           this.halo.toggleMorphHighlighter(true, this.target);
+           this.fontColor = Color.orange;
+        }
+   }
+
+   onHoverOut(evt) {
+      if (this.highlightOnHover) {
+         this.halo.toggleMorphHighlighter(false, this.target);
+         this.fontColor = Color.darkgray;
+      }
+   }
+
+   onKeyDown(evt) {
+    if ("Enter" == evt.keyCombo) {
+      this.updateName(this.textString);
+      evt.stop();
+    } else {
+      super.onKeyDown(evt);
+    }
+  }
+
+  onMouseUp() {
+    signal(this, "active", [true, this]);
+  }
+
+  onMouseDown(evt) {
+    super.onMouseDown(evt);
+    this.fontColor = Color.darkgray;
+    this.halo.toggleMorphHighlighter(false, this.target);
+  }
+
+  onKeyUp(evt) {
+    super.onKeyUp(evt);
+    const newName = this.textString,
+          owner = this.target.owner;
+    this.validName = (!owner || !owner.getSubmorphNamed(newName) ||
+                          this.target.name == newName);
+    signal(this, "valid", [this.validName, newName]);
+  }
+
+  update() {
+     this.textString = this.target.name;
+     this.fit();
+  }
+
+  activate() {
+     this.readOnly = false;
+     this.active = true;
+     this.animate({opacity: 1});
+  }
+
+  deactivate() {
+     this.readOnly = true;
+     this.active = false;
+     this.animate({opacity: .3});
+  }
+
+  updateName(newName) {
+    if (this.validName) {
+      this.target.name = newName;
+      signal(this, "active", [false, this]);
+    }
+  }
+
+}
+
 class NameHalo extends HaloItem {
 
   constructor(props) {
@@ -48,21 +130,11 @@ class NameHalo extends HaloItem {
         borderRadius: 15,
         fill: Color.gray.withA(.7),
         borderColor: Color.green,
-        layout: new HorizontalLayout({spacing: 3}),
+        layout: new HorizontalLayout({spacing: 0}),
         ...props
       });
 
-    this.nameHolder = new Text({
-        padding: 2,
-        tooltip: "Click to edit the morph's name",
-        fixedHeight: true,
-        height: 20,
-        fill: Color.gray.withA(0),
-        draggable: false,
-        fill: Color.transparent,
-        fontColor: Color.darkgray});
-
-    this.addMorph(this.nameHolder);
+    this.initNameHolders();
 
     this.validityIndicator = new Text({
       origin: pt(-1,-1),
@@ -76,9 +148,10 @@ class NameHalo extends HaloItem {
       fixedHeight: true,
       extent: pt(20,20),
       onMouseDown: (evt) => {
-        if (!this.validName) {
-          this.halo.toggleMorphHighlighter(true, this.get(this.nameHolder.textString));
-          setTimeout(() => this.halo.toggleMorphHighlighter(false), 1000);
+        const m = this.conflictingMorph;
+        if (this.conflictingMorph) {
+          this.halo.toggleMorphHighlighter(true, m);
+          setTimeout(() => this.halo.toggleMorphHighlighter(false, m), 1000);
         }
       }
       });
@@ -86,35 +159,55 @@ class NameHalo extends HaloItem {
     this.alignInHalo();
   }
 
-  updateName(newName) {
-    if (this.validName) {
-      this.halo.target.name = newName;
-      this.toggleActive(false);
-    }
+  targets() {
+     return this.halo.target.isMorphSelection ? this.halo.target.selectedMorphs.map(target => {
+           return {target, highlightOnHover: true}
+         }) : [{target: this.halo.target, highlightOnHover: false}];
   }
 
-  toggleActive(active) {
+  initNameHolders() {
+    this.nameHolders = this.targets().map(
+          ({target, highlightOnHover}) => {
+               const nh = new NameHolder({halo: this.halo, highlightOnHover, target});
+               connect(nh, "active", this, "toggleActive");
+               connect(nh, "valid", this, "toggleNameValid");
+               return nh;
+            });
+    this.submorphs = arr.interpose(this.nameHolders, {
+          extent: pt(1,25), fill: Color.black.withA(.4)
+      });
+  }
+
+  toggleActive([active, nameHolder]) {
     if (this.halo.changingName === active) return;
     this.halo.changingName = active;
     if (active) {
+      this.nameHolders.forEach(nh => {
+         if (nh != nameHolder) nh.deactivate();
+      });
       this.borderWidth = 3;
       this.addMorph(this.validityIndicator);
       setTimeout(() => this.nameHolder.selectAll());
       
     } else {
+      this.nameHolders.forEach(nh => {
+         if (nh != nameHolder) nh.activate();
+      });
       this.borderWidth = 0;
       this.validityIndicator.remove();
     }
     this.alignInHalo();
   }
 
-  toggleNameValid(valid) {
+  toggleNameValid([valid, name]) {
     this.validName = valid;
     if (valid) {
+      this.conflictingMorph = null;
       this.borderColor = Color.green;
       this.validityIndicator.fontColor = Color.green;
       this.validityIndicator.styleClasses = ["fa", "fa-check"];
     } else {
+      this.conflictingMorph = this.get(name);
       this.borderColor = Color.red;
       this.validityIndicator.fontColor = Color.red;
       this.validityIndicator.styleClasses = ["fa", "fa-exclamation-circle"];
@@ -122,28 +215,9 @@ class NameHalo extends HaloItem {
   }
 
   alignInHalo() {
-    this.nameHolder.textString = this.halo.target.name;
-    this.nameHolder.fit();
+    this.nameHolders.forEach(nh => nh.update())
     var {x, y} = this.halo.innerBounds().bottomCenter().addPt(pt(0, 2));
     this.topCenter = pt(Math.max(x, 30), Math.max(y, 80));
-  }
-
-  onKeyDown(evt) {
-    if ("Enter" == evt.keyCombo) {
-      this.updateName(this.nameHolder.textString);
-      evt.stop();
-    }
-  }
-
-  onMouseUp() {
-    this.toggleActive(true);
-  }
-
-  onKeyUp(evt) {
-    const newName = this.nameHolder.textString,
-          owner = this.halo.target.owner;
-    this.toggleNameValid(!owner || !owner.getSubmorphNamed(newName) ||
-                          this.halo.target.name == newName);
   }
 }
 
@@ -195,6 +269,8 @@ class SelectionTarget extends Morph {
       this.alignWithSelection();
       this.initialized = true;
    }
+
+   get isMorphSelection() { return true }
 
    alignWithSelection() {
       const bounds = this.selectedMorphs
@@ -931,9 +1007,10 @@ export class Halo extends Morph {
     rotationIndicator.vertices = [localize(originPos), localize(haloItem.center)];
   }
 
-  morphHighlighter() {
+  morphHighlighter(morph) {
     var halo = this;
-    return this.getSubmorphNamed("morphHighlighter") || this.addMorphBack({
+    this.morphHighlighters = this.morphHighlighters || {};
+    this.morphHighlighters[morph.id] = this.morphHighlighters[morph.id] || this.addMorphBack({
       opacity: 0,
       name: "morphHighlighter",
       fill: Color.orange.withA(0.5),
@@ -948,19 +1025,21 @@ export class Halo extends Morph {
         this.animate({opacity: 1, duration: 500});
         this.alignWithHalo();
       },
-      deactivate() {
-        this.fadeOut(500);
+      deactivate(target) {
+        if (this.target != target) return;
+        this.animate({opacity: 0, duration: 500});
         this.alignWithHalo();
       }
     });
+    return this.morphHighlighters[morph.id];
   }
 
   toggleMorphHighlighter(active, target) {
-    const morphHighlighter = this.morphHighlighter();
+    const morphHighlighter = this.morphHighlighter(target);
     if (active && target && target != this.world()) {
       morphHighlighter.show(target);
     } else {
-      morphHighlighter.deactivate();
+      morphHighlighter.deactivate(target);
     }
   }
 
@@ -975,7 +1054,7 @@ export class Halo extends Morph {
       this.activeButton.visible = true;
       this.updatePropertyDisplay(this.activeButton);
     } else {
-      if (this.changingName) this.nameHalo().toggleActive(false);
+      if (this.changingName) this.nameHalo().toggleActive([false]);
       this.buttonControls.forEach(b => { b.visible = true;});
       this.propertyDisplay.disable();
     }
