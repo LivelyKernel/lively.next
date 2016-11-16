@@ -78,8 +78,6 @@ describe("halos", () => {
     expect(halo.getSubmorphNamed("horizontal")).not.to.be.null;
     halo.dragHalo().stop();
     expect(halo.getSubmorphNamed("mesh").opacity).equals(0);
-    expect(halo.getSubmorphNamed("vertical").opacity).equals(0);
-    expect(halo.getSubmorphNamed("horizontal").opacity).equals(0);
   });
 
   it("active drag hides other halos and displays position", () => {
