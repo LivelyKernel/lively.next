@@ -1,6 +1,6 @@
 import {diff, patch, create} from "virtual-dom";
 import "gsap";
-import "gsap-css";
+//import "gsap-css";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt, Point } from "lively.graphics";
@@ -133,8 +133,7 @@ export class AnimationQueue {
   maskedProps() { 
      const l = this.animations.length;
      if (l > 0) {
-        const [before, after] = this.animations[l - 1].getAnimationProps();
-        return before;
+        return obj.merge(this.animations.map(a => a.getAnimationProps()[0]));
      } else {
         return {}
      } 
@@ -208,7 +207,7 @@ export class PropertyAnimation {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
 
-  get easing() { return Power4.easeInOut }
+  get easing() { return this.config.easing || Power4.easeInOut }
   get onFinish() { return this.config.onFinish || (() => {})}
   set onFinish(cb) { this.config.onFinish = cb }
   get duration() { return this.config.duration || 1000 }
@@ -245,17 +244,16 @@ export class PropertyAnimation {
   }
 
   start(node) {
-    if(node.animate && !this.active) {
+    if(TweenMax && !this.active) {
       this.active = true;
       let animationProps = this.getAnimationProps();
       if (animationProps) {
-         TweenLite.fromTo(node, this.duration / 1000, 
-                        animationProps[0],
+         TweenMax.fromTo(node, this.duration / 1000, 
+                         animationProps[0],
                         {...animationProps[1],
-                        ease: this.easing,
-                        onComplete: () => {
+                         ease: this.easing,
+                         onComplete: () => {
                            this.finish();
-                           // anim.cancel();
                            this.morph.makeDirty();
                        }});
       }
