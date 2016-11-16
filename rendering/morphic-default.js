@@ -1,5 +1,6 @@
 import {diff, patch, create} from "virtual-dom";
-import web_animations from "web-animations-polyfill";
+import "gsap";
+import "gsap-css";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt, Point } from "lively.graphics";
@@ -129,6 +130,16 @@ export class AnimationQueue {
     this.animations = [];
   }
 
+  maskedProps() { 
+     const l = this.animations.length;
+     if (l > 0) {
+        const [before, after] = this.animations[l - 1].getAnimationProps();
+        return before;
+     } else {
+        return {}
+     } 
+  }
+
   get animationsActive() { return true }
 
   registerAnimation(config) {
@@ -154,10 +165,6 @@ export class PropertyAnimation {
     this.queue = queue;
     this.morph = morph;
     this.config = this.convertBounds(config);
-    // we assume that all of the visual morph properties are values,
-    // meaning that we can safely consider them immutable for the
-    // time they are witheld from being rendered
-    this.maskedProps = obj.select(morph, properties.own(this.changedProps));
   }
 
   asPromise() {
@@ -201,19 +208,20 @@ export class PropertyAnimation {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
 
-  get easing() { return this.config.easing || "cubic-bezier(.86,0,.07,1)" }
+  get easing() { return Power4.easeInOut }
   get onFinish() { return this.config.onFinish || (() => {})}
   set onFinish(cb) { this.config.onFinish = cb }
   get duration() { return this.config.duration || 1000 }
 
   getAnimationProps() {
+    const unchangedProps = [];
     for (var prop in this.beforeProps) {
       if (obj.equals(this.afterProps[prop], this.beforeProps[prop])) {
-         delete this.beforeProps[prop];
-         delete this.afterProps[prop];
+         unchangedProps.push(prop);
       }
     }
-    return [this.beforeProps, this.afterProps];
+    return [obj.dissoc(this.beforeProps, unchangedProps), 
+            obj.dissoc(this.afterProps, unchangedProps)];
   }
 
   assignProps() {
@@ -241,15 +249,15 @@ export class PropertyAnimation {
       this.active = true;
       let animationProps = this.getAnimationProps();
       if (animationProps) {
-         let anim = node.animate(animationProps,
-                       {easing: this.easing,
-                        fill: "none",
-                        duration: this.duration});
-         anim.onfinish = () => {
-             this.finish();
-             anim.cancel();
-             this.morph.makeDirty();
-         }
+         TweenLite.fromTo(node, this.duration / 1000, 
+                        animationProps[0],
+                        {...animationProps[1],
+                        ease: this.easing,
+                        onComplete: () => {
+                           this.finish();
+                           // anim.cancel();
+                           this.morph.makeDirty();
+                       }});
       }
     } else if (!this.active) {
       this.onFinish();
@@ -266,6 +274,7 @@ export function defaultStyle(morph) {
 
   return {
     ...plainStyleMapper.getStyleProps(morph),
+    ...morph._animationQueue.maskedProps(),
     position: "absolute",
     overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",

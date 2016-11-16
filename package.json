@@ -14,7 +14,7 @@
     "pepjs": "^0.4.1",
     "virtual-dom": "^2.1.1",
     "kld-intersections": "git://github.com/thelonious/kld-intersections#development",
-    "web-animations-js": "^2.2.2"
+    "gsap": "^1.19.0"
   },
   "devDependencies": {
     "jsdom": "^9.4.0",
@@ -27,9 +27,13 @@
       "virtual-dom": "./node_modules/virtual-dom/dist/virtual-dom.js",
       "bowser": "./node_modules/bowser/bowser.js",
       "kld-intersections": "./node_modules/kld-intersections",
-      "web-animations-polyfill": { 
-          "~node": "./node_modules/web-animations-js/web-animations.min.js",
-          "node": "@empty"
+      "gsap": {
+        "~node": "./node_modules/gsap/src/minified/TweenMax.min.js",
+        "node": "@empty"
+      },
+      "gsap-css": {
+        "~node": "./node_modules/gsap/src/minified/plugins/CSSPlugin.min.js",
+        "node": "@empty"
       }
     },
     "meta": {
@@ -44,8 +48,8 @@
         "format": "global",
         "exports": "bowser"
       },
-      "node_modules/web-animations-js/web-animations.min.js": {
-          "format": "global"
+      "node_modules/gsap/src/minified/*": {
+        "format": "global"
       }
     },
     "packages": {
