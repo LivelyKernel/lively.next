@@ -4,11 +4,13 @@ import "gsap";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt, Point } from "lively.graphics";
-import { Morph } from '../index.js';
+import { Morph, config } from '../index.js';
 
 export class ShadowObject {
 
-    constructor({rotation, distance, blur, color, morph} = {}) {
+    constructor(args) {
+        if (obj.isBoolean(args)) args = config.defaultShadow;
+        const {rotation, distance, blur, color, morph} = args;
         this.rotation = rotation || 45; // in degrees
         this.distance = distance || 2;
         this.blur = blur || 6;

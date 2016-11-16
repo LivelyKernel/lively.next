@@ -335,7 +335,7 @@ export class Morph {
   get dropShadow()      { return this.getProperty("dropShadow"); }
   set dropShadow(value) { 
       if (value && !value.isShadowObject) {
-        if (!value.isShadowObject) value = new ShadowObject(config.defaultShadow);
+        if (!value.isShadowObject) value = new ShadowObject(value);
         value.morph = this;
       }
       this.addValueChange("dropShadow", value); 
