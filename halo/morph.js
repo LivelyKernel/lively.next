@@ -919,45 +919,42 @@ export class Halo extends Morph {
     if (active) {
         const {width, height, extent} = this.world(),
               defaultGuideProps = {
-                     opacity: 0,
+                     opacity: 1,
                      borderStyle: "dashed",
-                     position: this.localize(pt(0,0)), 
+                     position: pt(0,0), 
                      extent,
                      borderWidth: 2,
                      borderColor: Color.orange},
                {x, y} = this.target.worldPoint(pt(0,0));
         // init
-         vertical = this.getSubmorphNamed("vertical") || this.addMorphBack(
-           new Path({
+         vertical = this.getSubmorphNamed("vertical") || new Path({
              ...defaultGuideProps,
              name: "vertical",
              vertices: [pt(x,0), pt(x, height)]
-           }));
-         horizontal = this.getSubmorphNamed("horizontal") || this.addMorphBack(
-           new Path({
+           });
+         horizontal = this.getSubmorphNamed("horizontal") || new Path({
              ...defaultGuideProps,
              name: "horizontal",
              vertices: [pt(0,y), pt(width, y)]
-           }));
+           });
          mesh = mesh || this.addMorphBack(new Morph({
             name: "mesh", opacity: 0,
             onKeyUp: (evt) => this.toggleMesh(false),
             extent, position: this.localize(pt(2,2)),
             styleClasses: ["morph", "halo-mesh"], fill: null,
+            submorphs: [horizontal, vertical],
             alignWithHalo: () => {
-              var {x, y} = this.target.worldPoint(pt(0,0)),
+              var {x, y} = this.target.worldPoint(pt(-3,-3)),
                   {height, width} = this.world();
-              horizontal.position = this.localize(pt(0,0));
               horizontal.vertices = [pt(0,y), pt(width, y)];
-              vertical.position = this.localize(pt(0,0));
               vertical.vertices = [pt(x,0), pt(x, height)];
               mesh.position = this.localize(pt(2,2));
             },
             show() {
-              mesh.opacity = horizontal.opacity = vertical.opacity = 1;
+               mesh.animate({opacity: 1, duration: 300});
             },
             hide: () => {
-              mesh.opacity = horizontal.opacity = vertical.opacity = 0;
+              mesh.animate({opacity: 0, duration: 700});
             }
           }));
         mesh.show();
