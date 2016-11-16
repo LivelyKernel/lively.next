@@ -136,17 +136,10 @@ class NameHalo extends HaloItem {
 
     this.initNameHolders();
 
-    this.validityIndicator = new Text({
-      origin: pt(-1,-1),
-      name: "validityIcon",
-      styleClasses: ["morph", "fa", "fa-check"],
-      readOnly: true,
-      draggable: false,
-      fill: Color.transparent,
+    this.validityIndicator = Icon.makeLabel("check", {
       fontColor: Color.green,
-      fixedWidth: true,
-      fixedHeight: true,
-      extent: pt(20,20),
+      fontSize: 15,
+      padding: rect(4,4,4,0),
       onMouseDown: (evt) => {
         const m = this.conflictingMorph;
         if (this.conflictingMorph) {
@@ -204,13 +197,15 @@ class NameHalo extends HaloItem {
     if (valid) {
       this.conflictingMorph = null;
       this.borderColor = Color.green;
+      this.validityIndicator.nativeCursor = "auto";
       this.validityIndicator.fontColor = Color.green;
-      this.validityIndicator.styleClasses = ["fa", "fa-check"];
+      Icon.setIcon(this.validityIndicator, "check")
     } else {
       this.conflictingMorph = this.get(name);
       this.borderColor = Color.red;
       this.validityIndicator.fontColor = Color.red;
-      this.validityIndicator.styleClasses = ["fa", "fa-exclamation-circle"];
+      this.validityIndicator.nativeCursor = "pointer";
+      Icon.setIcon(this.validityIndicator, "exclamation-circle")
     }
   }
 
