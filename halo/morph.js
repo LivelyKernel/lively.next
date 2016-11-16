@@ -924,7 +924,7 @@ export class Halo extends Morph {
                      position: this.localize(pt(0,0)), 
                      extent,
                      borderWidth: 2,
-                     gradient: guideGradient},
+                     borderColor: Color.orange},
                {x, y} = this.target.worldPoint(pt(0,0));
         // init
          vertical = this.getSubmorphNamed("vertical") || this.addMorphBack(
@@ -1014,6 +1014,7 @@ export class Halo extends Morph {
     rotationIndicator = rotationIndicator || this.addMorphBack(new Path({
       name: "rotationIndicator",
       borderColor: Color.red,
+      borderWidth: 1,
       vertices: []
     }));
     rotationIndicator.setBounds(haloItem.bounds().union(this.innerBounds()));

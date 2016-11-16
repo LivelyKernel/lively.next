@@ -215,30 +215,26 @@ export class Renderer {
   }
 
   renderPath(path) {
-    const vertices = [],
-          edge = ({x: x1, y: y1}, {x: x2, y: y2}) =>
-                  h("path",
+    const vertices = h("path",
                     {namespace: "http://www.w3.org/2000/svg",
+                     id : path.id,
                      attributes:
-                      {"sroke-width": path.borderWidth,
-                       stroke: path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor,
-                       d: "M"+x1+","+y1+" "+"L"+x2+","+y2}});
-
-    for (var i = 0; i < path.vertices.length - 1; i++) {
-      vertices.push(edge(path.vertices[i], path.vertices[i + 1]));
-    }
+                      {style: "stroke-width:" + path.borderWidth +
+                       "; stroke:" + (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
+                       d: "M" + path.vertices.map(({x, y}) => `${x},${y}`).join(" L")}});
     return this.renderSvgMorph(path, vertices);
   }
 
   renderPolygon(polygon) {
     const vertices = h("polygon",
                         {namespace: "http://www.w3.org/2000/svg",
+                         id: polygon.id,
                          attributes:
-                          {style: "fill:" + (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill) +
+                          {style: "fill:" + (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill.toString()) +
                                   ";stroke-width:" + polygon.borderWidth +
-                                  ";stroke:" + polygon.borderColor,
+                                  ";stroke:" + polygon.borderColor.toString(),
                            points: polygon.vertices.map(({x,y}) => x + "," + y).join(" ")}});
-    return this.renderSvgMorph(polygon, [vertices]);
+    return this.renderSvgMorph(polygon, vertices);
   }
 
   renderSvgMorph(morph, svg) {
@@ -254,9 +250,9 @@ export class Renderer {
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
                         style: {position: "absolute", "pointer-events": "none"},
                         attributes:
-                         {width, height, "viewBox": [0,0,width,height].join(" "),
+                         {width, height, "viewBox": [-morph.borderWidth,-morph.borderWidth,width,height].join(" "),
                         ...(morph.borderStyle == "dashed" && {"stroke-dasharray": "7 4"})}},
-                  [defs].concat(svg)),
+                  [defs, svg]),
                 this.renderSubmorphs(morph)]);
   }
 }
