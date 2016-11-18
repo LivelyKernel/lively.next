@@ -9,9 +9,13 @@ import { connect, disconnectAll } from "lively.bindings"
 export async function doSearch(livelySystem, searchTerm, excludes = [/systemjs-plugin-babel/]) {
   if (searchTerm.length <= 2) { return []; }
 
-  var found = await livelySystem.searchInAllPackages(searchTerm, {excludedModules: excludes});
-  if (found[0] && found[0].isError)
-    throw found[0].value
+  var searchResult = await livelySystem.searchInAllPackages(searchTerm, {excludedModules: excludes});
+
+  var [errors, found] = arr.partition(searchResult, ({isError}) => isError)
+
+  if (errors.length) {
+    show(`Errors in search results:\n${arr.pluck(errors, "value").join("\n")}`);
+  }
 
   var items = found.reduce((result, ea) => {
         var nameAndLine = `${ea.packageName}${ea.pathInPackage.replace(/^\./, "")}:${ea.line}`;
