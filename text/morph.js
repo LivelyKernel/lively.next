@@ -427,7 +427,7 @@ export class Text extends Morph {
 
 
   execCommand(commandOrName, args, count, evt) {
-    var {name, command} = this.lookupCommand(commandOrName);
+    var {name, command} = this.lookupCommand(commandOrName) || {};
     if (!command) return undefined;
 
     var multiSelect = this.inMultiSelectMode(),

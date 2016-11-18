@@ -46,7 +46,7 @@ export default class CommandHandler {
     // 2. a spec object like {command: "cmd name", args: {...}, handlesCount: BOOL, }
     // 3. a proper command object {name: STRING, exec: FUNCTION, ....}
 
-    var {name, command} = this.lookupCommand(commandOrName, morph);
+    var {name, command} = this.lookupCommand(commandOrName, morph) || {};
 
     if (!command) {
       console.warn(`Cannot find command ${name || commandOrName}`);
