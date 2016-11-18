@@ -38,7 +38,7 @@ export default class ClientCommand extends CommandInterface {
     }
 
     this.process = {pid};
-    debug && console.error(`[${this}] got pid ${pid}`);
+    debug && console.log(`[${this}] got pid ${pid}`);
 
     this._whenStarted.resolve();
 
