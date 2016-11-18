@@ -370,8 +370,12 @@ export class Halo extends Morph {
 
   prepareTarget(target) {
      if (obj.isArray(target)) {
-         this.targetProxy = target[0].world().addMorph(new SelectionTarget(target));
-         return this.targetProxy;
+         const [firstSelected] = target;
+         if (target.length > 1) {
+             this.targetProxy = firstSelected.world().addMorph(new SelectionTarget(target));
+             return this.targetProxy;
+         }
+         return firstSelected
      }
      return target;
   }
