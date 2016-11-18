@@ -595,12 +595,44 @@ export class GridLayoutHalo extends Morph {
 }
 
 export class TilingLayoutHalo extends Morph {
+  
+  constructor(container, pointerId) {
+    super({
+      isHaloItem: true,
+      styleClasses: ["morph", "halo"],
+      extent: container.extent,
+      fill: Color.transparent
+    });
+    this.state = {container, pointerId, target: container.layout}
+    this.alignWithTarget();
+  }
 
+  get container() { return this.state.container }
+  get target() { return this.state.target }
+  
+  alignWithTarget() { 
+     this.setBounds(this.container.globalBounds());
+  };
+
+  optionControls() {
+      const layout = this.target,
+            spacing = new PropertyInspector({
+                              min: 0, target: layout, 
+                              unit: "px", property: "spacing"});
+      return [[{type: "text", textString: "Submorph Spacing", 
+               padding: rect(5,0,10,10), fill: Color.transparent,
+               fontColor: Color.gray.darker(),
+               readOnly: true}, spacing]]
+              .map(x => { return {submorphs: x, fill: Color.transparent, 
+                                  layout: new HorizontalLayout({spacing: 3})}})
+  }
+
+  
 }
 
 export class FlexLayoutHalo extends Morph {
 
-    constructor(container, pointerId) {
+  constructor(container, pointerId) {
     super({
       isHaloItem: true,
       styleClasses: ["morph", "halo"],
