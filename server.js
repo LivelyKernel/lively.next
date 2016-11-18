@@ -7,6 +7,9 @@ import Tracker from "lively.2lively/tracker.js";
 // System.decanonicalize("socket.io", "file:///Users/robert/Lively/lively-dev/lively.server/server.js");
 
 // Array.from(serverStateMap.keys())
+// var tracker = find({hostname: "0.0.0.0", port: 9010}).l2lTracker;
+// Array.from(tracker._incomingOrderNumberingBySenders)
+// Array.from(tracker._outgoingOrderNumberingByTargets)
 
 var debug = false;
 
@@ -159,3 +162,4 @@ function evalHandler(route) {
   }
 
 }
+
