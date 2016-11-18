@@ -1,12 +1,10 @@
-import { fun, arr } from "lively.lang";
-import { pt, Rectangle, Color } from "lively.graphics";
-
-import { connect, disconnect } from "lively.bindings";
 import { TextStyleAttribute } from "../../text/attribute.js";
-import { lessPosition } from "../../text/position.js"
+
+import JavaScriptTokenizer from "./highlighter.js";
+import JavaScriptChecker from "./checker.js";
+import JavaScriptNavigator from "./navigator.js";
 
 import { completers } from "./completers.js";
-
 import { snippets as jsSnippets } from "./snippets.js";
 
 import {
@@ -16,25 +14,13 @@ import {
   insertStringWithBehaviorCommand,
   deleteBackwardsWithBehavior } from "./commands.js";
 
-import JavaScriptTokenizer from "./highlighter.js";
-import JavaScriptChecker from "./checker.js";
+import EditorPlugin from "../editor-plugin.js";
 
-import JavaScriptNavigator from "./navigator.js";
 
-import ChromeTheme from "../themes/chrome.js";
-import TomorrowNightTheme from "../themes/tomorrow-night.js";
-import GithubTheme from "../themes/github.js";
+export class JavaScriptEditorPlugin extends EditorPlugin {
 
-const themes = {
-  "chrome": ChromeTheme,
-  "tomorrowNight": TomorrowNightTheme,
-  "github" : GithubTheme
-};
-
-export class JavaScriptEditorPlugin {
-
-  constructor(theme = "chrome") {
-    this.theme = typeof theme === "string" ? new themes[theme]() : theme;
+  constructor(theme) {
+    super(theme)
     this.highlighter = new JavaScriptTokenizer();
     this.checker = new JavaScriptChecker();
     this._tokens = null;
@@ -42,36 +28,21 @@ export class JavaScriptEditorPlugin {
     this.evalEnvironment = {format: "esm", targetModule: null, context: null}
   }
 
-  get isEditorPlugin() { return true }
-
   get isJSEditorPlugin() { return true }
 
   attach(editor) {
+    super.attach(editor);
     this.evalEnvironment.context = editor;
-    this.textMorph = editor;
-    connect(editor, "textChange", this, "onTextChange");
-    this.requestHighlight();
   }
 
   detach(editor) {
-    // this.evalEnvironment.context = null;
-    disconnect(editor, "textChange", this, "onTextChange");
+    super.detach(editor);
     this.checker.uninstall(this.textMorph);
-    this.textMorph = null;
-  }
-
-  onTextChange() {
-    this.requestHighlight();
-  }
-
-  requestHighlight(immediate = false) {
-    if (immediate) this.highlight();
-    else fun.debounceNamed(this.id + "-requestHighlight", 500, () => this.highlight())();
   }
 
   highlight() {
     let textMorph = this.textMorph;
-    if (!this.theme || !textMorph) return;
+    if (!this.theme || !textMorph || !textMorph.document) return;
 
     let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString);
     textMorph.setSortedTextAttributes(
@@ -80,12 +51,6 @@ export class JavaScriptEditorPlugin {
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph);
-  }
-
-  tokenAt(pos) {
-    return this._tokens ?
-      this._tokens.find(({end}) => !lessPosition(end, pos)) :
-      null;
   }
 
   getNavigator() { return new JavaScriptNavigator(); }

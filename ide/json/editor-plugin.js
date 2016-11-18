@@ -1,28 +1,13 @@
-import { fun, arr } from "lively.lang";
-import { pt, Rectangle, Color } from "lively.graphics";
-
-import { connect, disconnect } from "lively.bindings";
+import { arr } from "lively.lang";
 import { TextStyleAttribute } from "../../text/attribute.js";
-import { lessPosition } from "../../text/position.js"
-
 import { JavaScriptEditorPlugin } from "../js/editor-plugin.js";
 
-import ChromeTheme from "../themes/chrome.js";
-import TomorrowNightTheme from "../themes/tomorrow-night.js";
-import GithubTheme from "../themes/github.js";
-
-const themes = {
-  "chrome": ChromeTheme,
-  "tomorrowNight": TomorrowNightTheme,
-  "github" : GithubTheme
-};
+import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
+import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-json.js";
 
 var warnStyle = {"border-bottom": "2px dotted orange"},
     errorStyle = {"background-color": "red"};
 
-
-import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
-import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-json.js";
 
 class JSONTokenizer {
 
@@ -63,7 +48,7 @@ export class JSONEditorPlugin extends JavaScriptEditorPlugin {
 
   highlight() {
     let textMorph = this.textMorph;
-    if (!this.theme || !textMorph) return;
+    if (!this.theme || !textMorph || !textMorph.document) return;
 
     var tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
         styles = tokens.map(({type, start, end}) => 
