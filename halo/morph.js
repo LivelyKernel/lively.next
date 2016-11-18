@@ -650,9 +650,11 @@ export class Halo extends Morph {
       tooltip: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid.",
       valueForPropertyDisplay: () => this.target.position,
       init() {
-        this.halo.target.undoStart("drag-halo");
+        const target = this.halo.target;
+        target.undoStart("drag-halo");
         this.halo.activeButton = this;
-        this.actualPos = this.halo.target.position;
+        this.actualPos = target.position;
+        this.targetTransform = target.owner.getGlobalTransform().inverse();
       },
       stop() {
         this.halo.target.undoStop("drag-halo");
@@ -661,7 +663,7 @@ export class Halo extends Morph {
         this.halo.toggleMesh(false);
       },
       update(delta, grid=false) {
-        var newPos = this.actualPos.addPt(delta);
+        var newPos = this.actualPos.addPt(this.targetTransform.transformDirection(delta));
         this.actualPos = newPos;
         if (grid) {
           newPos = newPos.griddedBy(pt(10,10));
