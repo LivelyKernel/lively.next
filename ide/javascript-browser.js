@@ -805,7 +805,7 @@ export class Browser extends Window {
       var env = this.editorPlugin.evalEnvironment;
       this.get("sourceEditor").removePlugin(this.editorPlugin);
       this.get("sourceEditor").addPlugin(new Mode(config.codeEditor.defaultTheme));
-      Object.assign(this.editorPlugin, env);
+      Object.assign(this.editorPlugin.evalEnvironment, env);
       this.editorPlugin.highlight();
     }
 
