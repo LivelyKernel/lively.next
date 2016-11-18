@@ -67,6 +67,15 @@ describe("halos", () => {
     halo.dragHalo().update(pt(10,5));
     expect(submorph1.position).equals(pt(20, 15));
   });
+
+  it("drags correctly of owner is transformed", () => {
+    var halo = world.showHaloFor(submorph2);
+    submorph2.owner.rotateBy(45);
+    const prevGlobalPos = submorph2.globalPosition;
+    halo.dragHalo().init();
+    halo.dragHalo().update(pt(10,5));
+    expect(submorph2.globalPosition).equals(prevGlobalPos.addXY(10,5));
+  })
   
   it("drags gridded and shows guides", () => {
     var halo = world.showHaloFor(submorph1);
