@@ -32,3 +32,33 @@ window.addEventListener('beforeunload', function(evt) {
   evt.returnValue = msg;
   return msg;
 }, true);
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+import ClientCommand from "lively.shell/client-command.js";
+import L2LClient from "lively.2lively/client.js";
+
+startLively2Lively()
+  .then(() => console.log("[lively.2lively] setup done"))
+  .catch(err => console.error(err))
+
+async function startLively2Lively() {
+  // await lively.modules.removePackage("http://localhost:9001/node_modules/lively.server");
+  // await lively.modules.removePackage("socket.io-client");
+  // await lively.modules.removePackage("http://localhost:9001/node_modules/lively.2lively");
+  // await lively.modules.importPackage("http://localhost:9001/node_modules/lively.2lively");
+
+  // await lively.modules.importPackage("http://localhost:9001/node_modules/lively.shell");
+
+  // await System.normalize("socket.io-client", System.decanonicalize("lively.2lively/client.js"))
+
+
+
+  var client1 = await L2LClient.ensure({url: "http://localhost:9010/lively-socket.io", namespace: "l2l"});
+  ClientCommand.installLively2LivelyServices(client1);
+
+  // var cmd = new ClientCommand(client1)
+  // await cmd.spawn({command: "ls"})
+  // cmd.stdout
+
+}
