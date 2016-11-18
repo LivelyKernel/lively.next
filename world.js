@@ -878,6 +878,7 @@ export class Hand extends Morph {
   }
 
   grab(morph) {
+    if (obj.isArray(morph)) return morph.forEach(m => this.grab(m));
     this.prevMorphProps = {
       dropShadow: morph.dropShadow,
       reactsToPointer: morph.reactsToPointer

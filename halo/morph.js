@@ -3,7 +3,7 @@ import { Ellipse, Morph, Path, Text,
          VerticalLayout, morph, Menu } from "../index.js";
 import { Color, pt, rect, Line, Rectangle } from "lively.graphics";
 import { string, obj, arr, num, grid, properties } from "lively.lang";
-import { connect, disconnect, signal } from "lively.bindings";
+import { connect, disconnect, disconnectAll, signal, once } from "lively.bindings";
 import { ColorPicker } from "../ide/style-editor.js";
 import Inspector from "../ide/js/inspector.js";
 import { styleHaloFor } from './stylization.js';
@@ -265,6 +265,8 @@ class SelectionTarget extends Morph {
       this.initialized = true;
    }
 
+   get isHaloItem() { return true }
+
    get isMorphSelection() { return true }
 
    alignWithSelection() {
@@ -274,12 +276,18 @@ class SelectionTarget extends Morph {
       this.setBounds(bounds);
    }
 
-   onGrab() {
+   onGrab(evt) {
       // shove all of the selected Morphs into the hand
+      this.grabbingHand = evt.hand;
+      this.selectionGrabbed = true;
+      evt.hand.grab(this.selectedMorphs);
+      once(evt.hand, "dropMorphsOn", this, "onGrabEnd");
+      connect(evt.hand, "position", this, "alignWithSelection");
    }
 
-   onDrop() {
-      // shove all of the selected into new owner, excluding self
+   onGrabEnd() {
+      this.selectionGrabbed = false;
+      disconnectAll(this.grabbingHand);
    }
 
    updateExtent({prevValue, value}) {
@@ -318,7 +326,7 @@ class SelectionTarget extends Morph {
  
    onChange(change) {
        super.onChange(change);
-       if (!this.initialized) return;
+       if (!this.initialized || this.selectionGrabbed) return;
        switch (change.prop) {
             case "extent": 
                this.updateExtent(change);
@@ -600,7 +608,7 @@ export class Halo extends Morph {
         var undo = this.halo.target.undoStart("grab-halo");
         undo.addTarget(this.halo.target.owner);
         this.hand = hand;
-        hand.grab(this.halo.target);
+        this.halo.target.onGrab({hand});
         this.halo.activeButton = this;
       },
 
