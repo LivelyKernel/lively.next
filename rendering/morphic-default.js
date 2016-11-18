@@ -254,6 +254,9 @@ export class PropertyAnimation {
                          animationProps[0],
                         {...animationProps[1],
                          ease: this.easing,
+                         onOverwrite: (args) => {
+                           this.finish();
+                         },
                          onComplete: () => {
                            this.finish();
                            this.morph.makeDirty();
