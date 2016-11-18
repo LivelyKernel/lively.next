@@ -360,7 +360,7 @@ export class SearchWidget extends Morph {
         {backwards, found: {range: {start, end}}} = searchResult,
         pos = backwards ? start : end;
     select ? sel.lead = pos : text.cursorPosition = pos;
-    text.scrollCursorIntoView();
+    text.centerRow();
     return searchResult;
   }
 
