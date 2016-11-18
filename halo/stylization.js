@@ -103,6 +103,16 @@ class StyleHalo extends Morph {
               IntersectionParams.newRect(x - 7.5, y - 7.5, 15, 15)).points.length > 0;
    }
 
+   openBorderStyler() {
+      this.borderStyler.open();
+      connect(this.borderStyler, "close", this, "deselect");
+   }
+
+   openBodyStyler() {
+      this.bodyStyler.open();
+      connect(this.bodyStyler, "close", this, "deselect");
+   }
+
    borderHaloShape(props) {
       const halo = this, target = this.target;
       return {
@@ -136,9 +146,9 @@ class StyleHalo extends Morph {
          },
          onMouseDown(evt) {
             if (this.borderSelected) {
-                halo.borderStyler.open();
+                !halo.borderStyler.active && halo.openBorderStyler();
             } else {
-                halo.bodyStyler.open();
+                !halo.bodyStyler.active && halo.openBodyStyler();
             }
             this.get("borderHalo").borderColor = Color.transparent;
          },
@@ -347,6 +357,12 @@ class SvgStyleHalo extends StyleHalo {
               IntersectionParams.newPolygon(vertices.map(v => new Point2D(v.x, v.y))), 
               IntersectionParams.newRect(x - 5, y - 5, 10, 10)).points.length > 0;
    }
+
+   openBorderStyler() {
+       super.openBorderStyler();
+       connect(this.borderStyler, "close", this, "clearVertexHandles");
+       this.initVertexHandles();
+   }
     
     borderHaloShape(props) {
         const halo = this;
@@ -356,16 +372,6 @@ class SvgStyleHalo extends StyleHalo {
            vertices: this.target.vertices,
            alignWithTarget() {
               this.vertices = halo.target.vertices;
-           },
-           onMouseDown(evt) {
-               if (this.borderSelected && !halo.vertexHandles) {
-                  this.borderColor = Color.transparent;
-                  halo.borderStyler.open();
-                  connect(halo.borderStyler, "close", halo, "clearVertexHandles");
-                  halo.initVertexHandles();
-               } else if (halo.bodyStyler) {
-                  halo.bodyStyler.open();
-               }
            }  
         }
     }

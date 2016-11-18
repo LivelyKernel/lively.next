@@ -27,7 +27,7 @@ export class Slider extends Morph {
         this.submorphs = [
            new Path({
                 borderColor: Color.gray.darker(),
-                borderWidth: 4,
+                borderWidth: 1,
                 vertices: [this.leftCenter.addXY(7.5,0), 
                            this.rightCenter.addXY(-7.5,0)]
               }),
@@ -814,7 +814,7 @@ class StyleEditor extends Morph {
       draggable: true, onDrag: (evt) =>  this.onDrag(evt),
       layout: new VerticalLayout({spacing: 5}),
       submorphs: [
-        {type: "text", textString: name, 
+        {type: "text", textString: name, fontSize: 12, fontWeight: 'bold',
          fontColor: Color.black, padding: rect(5,0,0,0), 
          fill: Color.transparent},
         controlElement
@@ -843,7 +843,7 @@ class StyleEditor extends Morph {
             submorphs: [
               {fill: Color.transparent, layout: new HorizontalLayout(),
                submorphs: [
-                {type: "text", textString: title, 
+                {type: "text", textString: title, fontSize: 12, fontWeight: "bold",
                  fontColor: Color.black, padding: rect(5,0,0,0), 
                  fill: Color.transparent},
                 toggler]}
@@ -901,7 +901,7 @@ export class BodyStyleEditor extends StyleEditor {
                  property: "blur"
              });
              const control = new Morph({
-                  width: 180, height: 100, fill: Color.transparent, 
+                  width: 150, height: 100, fill: Color.transparent, 
                   layout: new GridLayout({
                       autoAssign: false, 
                       fitToCell: false,
@@ -1031,7 +1031,7 @@ export class LayoutStyleEditor extends Morph {
                    () => {
                        const p = this.getSubmorphNamed("layoutPicker");
                        this.target.animate({layout: l, 
-                                            easing: "cubic-bezier(0.075, 0.82, 0.165, 1)"});
+                                            easing: "easeOutQuint"});
                        p.textString = this.getLayoutName(l);
                        p.fitIfNeeded();
                        this.update();

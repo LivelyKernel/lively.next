@@ -151,7 +151,7 @@ export default class Window extends Morph {
   toggleMinimize() {
     var cache = this.propertyCache,
         bounds = this.bounds(),
-        duration = 200, easing = "cubic-bezier(0.19, 1, 0.22, 1)";
+        duration = 200, easing = "easeOutQuint";
     if (this.minimized) {
       cache.minimizedBounds = bounds;
       this.animate({bounds: cache.nonMinizedBounds || bounds, duration, easing});
@@ -166,7 +166,7 @@ export default class Window extends Morph {
 
   toggleMaximize() {
     var cache = this.propertyCache, 
-        easing = "cubic-bezier(0.19, 1, 0.22, 1)", 
+        easing = "easeOutQuint", 
         duration = 200;
     if (this.maximized) {
       this.animate({bounds: cache.nonMaximizedBounds, duration, easing});

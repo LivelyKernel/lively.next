@@ -209,7 +209,7 @@ export class PropertyAnimation {
     return obj.dissoc(this.config, ["easing", "onFinish", "duration"]);
   }
 
-  get easing() { return this.config.easing || Power4.easeInOut }
+  get easing() { return this.config.easing || "easeInOutQuint" }
   get onFinish() { return this.config.onFinish || (() => {})}
   set onFinish(cb) { this.config.onFinish = cb }
   get duration() { return this.config.duration || 1000 }
