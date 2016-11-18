@@ -32,12 +32,12 @@ class StyleHalo extends Morph {
        super({
           draggable: false,
           fill: Color.transparent,
-          bounds: target.globalBounds().insetBy(-50),
+          bounds: target.globalBounds().insetBy(-10),
        });
        this.state = {pointerId};
        this.target = target;
        this.submorphs = [{
-           position: pt(50,50),
+           position: pt(10,10),
            fill: Color.transparent,
            submorphs: [
              this.borderHalo(),
@@ -57,8 +57,13 @@ class StyleHalo extends Morph {
    }
 
    get isLayoutHalo() { return true; }
+   get isHaloItem() { return true; }
    
    onMouseMove(evt) { this.update(evt) }
+
+   onMouseDown(evt) { 
+      this.get("borderHalo").onMouseDown(evt) 
+   }
 
    remove() {
       this.borderStyler && this.borderStyler.remove();
@@ -145,12 +150,12 @@ class StyleHalo extends Morph {
            this.borderRadius = target.borderRadius;
          },
          onMouseDown(evt) {
-            if (this.borderSelected) {
+            if (halo.borderStyler) {
                 !halo.borderStyler.active && halo.openBorderStyler();
-            } else {
+            } else if (halo.bodyStyler) {
                 !halo.bodyStyler.active && halo.openBodyStyler();
             }
-            this.get("borderHalo").borderColor = Color.transparent;
+            this.borderColor = Color.transparent;
          },
          ...props
       }
