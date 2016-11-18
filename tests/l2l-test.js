@@ -2,6 +2,7 @@
 
 import { expect } from "mocha-es6";
 
+import { promise } from "lively.lang";
 import L2LTracker from "../tracker.js";
 import L2LClient from "../client.js";
 import { ensure as serverEnsure, close as serverClose } from "lively.server/server.js"
@@ -16,7 +17,7 @@ describe('l2l', function() {
 
   beforeEach(async () => {
     var url = `http://${hostname}:${port}${testServer.io.path()}`;
-    tracker = await L2LTracker.ensure({namespace, ...testServer});
+    tracker = await L2LTracker.ensure(Object.assign({namespace}, testServer));
     client1 = await L2LClient.ensure({url, namespace});
     await client1.whenRegistered(300);
   });
@@ -88,5 +89,36 @@ describe('l2l', function() {
       sender: client1.id, inResponseTo: "test-message-1"
     });
   });
+  
+
+  describe("failure handling", () => {
+  
+    it('handler does not call ack', async () => {
+      var trackerReceived = [];
+      tracker.addService("test", (tracker, msg, ackFn, sender) => {/*nothing*/});
+      tracker.addService("test-2", (tracker, msg, ackFn, sender) => { ackFn("OK"); });
+      try {
+        await client1.sendToAndWait(tracker.id, "test", {})
+        expect().assert(false, "sending 'test' did not throw")
+      } catch (e) { expect(e).match(/timeout/i); }
+      expect(await client1.sendToAndWait(tracker.id, "test-2", {})).property("data", "OK");
+    });
+
+
+    it("switching tracker", async () => {
+      console.log("tracker going down")
+      await tracker.remove();
+      await promise.delay(300);
+      console.log("tracker down")
+      expect().assert(!client1.isOnline(), "client still connected");
+      expect().assert(!client1.isRegistered(), "client still registered");
+      var newTracker = await L2LTracker.ensure({namespace, ...testServer});
+      await newTracker.open()
+      expect(newTracker).not.equals(tracker, "no new tracker created");
+      client1.trackerId
+      await client1.whenRegistered(300);
+    });
+  });
+
 
 });

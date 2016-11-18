@@ -3,6 +3,7 @@ import { promise, string } from "lively.lang";
 import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
+import { defaultActions } from "./default-actions.js";
 
 export default class L2LClient extends L2LConnection {
 
@@ -34,6 +35,9 @@ export default class L2LClient extends L2LConnection {
     client = new this(origin, path, namespace);
     if (autoOpen || autoOpen === undefined) { client.open(); client.register(); }
 
+    Object.keys(defaultActions).forEach(name =>
+      client.addService(name, defaultActions[name]));
+
     this._clients.set(key, client);
     return client;
   }
@@ -45,6 +49,14 @@ export default class L2LClient extends L2LConnection {
     this.namespace = namespace.replace(/^\/?/, "/");
     this.trackerId = null;
     this._socketioClient = null;
+    // not socket.io already does auto reconnect when network fails but if the
+    // socket.io server disconnects a socket, it won't retry by itself. We want
+    // that behavior for l2l, howver
+    this._reconnectState = {
+      autoReconnect: true,
+      isReconnecting: false,
+      isReconnectingViaSocketio: false
+    };
   }
 
   get socket() { return this._socketioClient; }
@@ -55,7 +67,7 @@ export default class L2LClient extends L2LConnection {
     return this.socket && this.socket.connected;
   }
 
-  isRegistered() { return !!this.trackerId; }
+  isRegistered() { return this.isOnline() && !!this.trackerId; }
 
   async open() {
     if (this.isOnline()) return this;
@@ -71,12 +83,43 @@ export default class L2LClient extends L2LConnection {
 
     socket.on("error",            (err) =>    this.debug && console.log(`[${this}] errored: ${err}`))
     socket.on("close",            (reason) => this.debug && console.log(`[${this}] closed: ${reason}`))
-    socket.on("connect",          () =>       this.debug && console.log(`[${this}] connected`))
-    socket.on("disconnect",       () =>       this.debug && console.log(`[${this}] disconnected`))
-    socket.on("reconnect",        () =>       this.debug && console.log(`[${this}] reconnected`))
-    socket.on("reconnecting",     () =>       this.debug && console.log(`[${this}] reconnecting`))
     socket.on("reconnect_failed", () =>       this.debug && console.log(`[${this}] could not reconnect`))
     socket.on("reconnect_error",  (err) =>    this.debug && console.log(`[${this}] reconnect error ${err}`))
+
+    socket.on("connect", () => {
+      this.debug && console.log(`[${this}] connected`);
+      this._reconnectState.isReconnecting = false;
+      this._reconnectState.isReconnectingViaSocketio = false;
+    })
+
+    socket.on("disconnect", () => {
+      this.debug && console.log(`[${this}] disconnected`)
+      if (!this.trackerId) return;
+      this.renameTarget(this.trackerId, "tracker");
+      this.trackerId = null;
+
+      if (this._reconnectState.autoReconnect) {
+        this._reconnectState.isReconnecting = true;
+        setTimeout(() => {
+          // if socket.io isn't auto reconnecting we are doing it manually
+          if (this._reconnectState.isReconnectingViaSocketio) return;
+          this.open(); this.register();
+        }, 500);
+      }
+    });
+
+    socket.on("reconnecting", () => {
+      this.debug && console.log(`[${this}] reconnecting`)
+      this._reconnectState.isReconnecting = true;
+      this._reconnectState.isReconnectingViaSocketio = true;
+    });
+
+    socket.on("reconnect", () => {
+      this.debug && console.log(`[${this}] reconnected`);
+      this._reconnectState.isReconnecting = false;
+      this._reconnectState.isReconnectingViaSocketio = false;
+      this.register();
+    });
 
     this.installEventToMessageTranslator(socket);
 
@@ -114,10 +157,9 @@ export default class L2LClient extends L2LConnection {
     this.debug && console.log(`[${this}] register`)
 
     try {
-      var prevTrackerId = this.trackerId || "tracker";
-      var {data: {trackerId}} = await this.sendToAndWait("tracker", "register", {});
+      var {data: {trackerId, messageNumber}} = await this.sendToAndWait("tracker", "register", {});
       this.trackerId = trackerId;
-      this.renameTarget(prevTrackerId, trackerId);
+      this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
     } catch (e) {
       this.unregister();
       throw new Error(`Error in register request of ${this}: ${e}`);

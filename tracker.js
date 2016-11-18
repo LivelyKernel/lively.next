@@ -1,5 +1,6 @@
 /*global Map*/
 import L2LConnection from "./interface.js";
+import { defaultActions } from "./default-actions.js";
 
 // Array.from(L2LTracker._trackers.keys());
 // Array.from(L2LTracker._trackers.values())[1].remove()
@@ -24,6 +25,8 @@ export default class L2LTracker extends L2LConnection {
       tracker = new this(namespace, io);
       this._trackers.set(key, tracker);
       if (autoOpen || autoOpen === undefined) tracker.open();
+      Object.keys(defaultActions).forEach(name =>
+        tracker.addService(name, defaultActions[name]));
     }
     return tracker;
   }
@@ -118,7 +121,8 @@ export default class L2LTracker extends L2LConnection {
   registerClient({sender, data}, answerFn, socket) {
     this.debug && console.log(`[${this}] got register request ${JSON.stringify({sender, data})}`);
     this.clients.set(sender, {socketId: socket.id});
-    typeof answerFn === "function" && answerFn({trackerId: this.id});
+    var msgNo = this._outgoingOrderNumberingByTargets.get(sender);
+    typeof answerFn === "function" && answerFn({nextMessageNumber: msgNo, trackerId: this.id});
   }
 
   unregisterClient(_, answerFn, socket) {
