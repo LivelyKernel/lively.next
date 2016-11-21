@@ -983,6 +983,7 @@ var commands = [
 ];
 
 var usefulEditorCommands = [
+
   {
     name: 'insert date',
     handlesCount: true,
@@ -1026,6 +1027,102 @@ var usefulEditorCommands = [
       text.undoManager.group();
       return true;
     }
+  },
+
+  {
+    name: "change string inflection",
+    handlesCount: true,
+    multiSelectAction: "single",
+    exec: async function(textMorph, opts, count) {
+      if (textMorph.selection.isEmpty())
+        textMorph.selection = textMorph.wordAt().range;
+
+      var ranges = textMorph.selection.ranges,
+          string = textMorph.textInRange(ranges[0]);
+
+      if (!string) {
+        textMorph.setStatusMessage("Please select some text");
+        return true;
+      }
+
+      var type = detectCamelCaseType(string),
+          offers = arr.without(['uppercased','dashed','spaced'], type),
+          {selected: [choice]} = await textMorph.world().listPrompt("Convert " + type + " into?", offers, {});
+
+      if (!choice) return true;
+
+      textMorph.undoManager.group();
+      ranges.forEach((range,i) => {
+        var string = textMorph.textInRange(range),
+            replacement = convertCamelCased(string, choice);
+        textMorph.replace(range, replacement);
+      });
+      textMorph.undoManager.group();
+
+      textMorph.focus();
+      return true;
+
+      // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+      // TODO move to lively.lang.string
+      function convertCamelCased(string, intoType) {
+        // intoType = 'uppercased'|'dashed'|'spaced'
+        // Example:
+        // convertCamelCased("fooBar", "dashed")      // => foo-bar
+        // convertCamelCased("fooBar", "spaced")      // => foo bar
+        // convertCamelCased("foo bar", "uppercased") // => fooBar
+        // convertCamelCased("foo-bar", "spaced")     // => foo bar
+        // convertCamelCased("foo-bar", "uppercased") // => fooBar
+        var match, replace, fromType = detectCamelCaseType(string).trim();
+
+        if (fromType === 'uppercased') match = /\s*[A-Z0-9]+/g;
+        else if (fromType === 'dashed') match = /-\w/g;
+        else if (fromType === 'spaced') match = /\s+.?/g;
+
+        if (intoType === 'uppercased') replace = m => m.trim().replace(/^-/, "").toUpperCase();
+        else if (intoType === 'dashed') replace = m => "-" + m.trim().replace(/^-/, "").toLowerCase();
+        else if (intoType === 'spaced') replace = m => " " + m.trim().replace(/^-/, "").toLowerCase();
+
+        return string.replace(match, replace);
+      }
+
+      function detectCamelCaseType(string) {
+        if (string.match(/[A-Z]/)) return 'uppercased';
+        if (string.match(/-/)) return 'dashed';
+        if (string.match(/\s/)) return 'spaced';
+        return 'unknown';
+      }
+    }
+  },
+
+  {
+    name: 'spell check word',
+    exec: async function(text, opts) {
+      var word = text.wordAt();
+      if (!word.string) {
+        text.setStatusMessage('no word for spellcheck!');
+        return true;
+      }
+
+      var {spellCheckWord} = await System.import("lively.morphic/ide/shell/spell-checker.js");
+      var suggestions = await spellCheckWord(word.string)
+
+      if (!suggestions.length) {
+        text.setStatusMessage('no suggestions for word ' + word.string);
+        return true;
+      }
+
+      var {selected: [choice]} = await text.world().filterableListPrompt(
+        "Choose replacement for " + word.string, suggestions);
+
+      if (choice) {
+        text.undoManager.group();
+        text.replace(word.range, choice);
+        text.undoManager.group();
+      }
+
+      return true;
+    }
   }
 
 ];
@@ -1042,5 +1139,8 @@ commands.push(...searchCommands);
 
 import { multiSelectCommands } from "./multi-select-commands.js";
 commands.push(...multiSelectCommands);
+
+import { commands as navCommands } from "./code-navigation-commands.js";
+commands.push(...navCommands);
 
 export default commands;

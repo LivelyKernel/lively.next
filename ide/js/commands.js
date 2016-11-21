@@ -231,7 +231,7 @@ export var jsEditorCommands = [
       if (!varName) {
         if (!position) position = ed.cursorPosition;  
         var nav = ed.pluginInvokeFirst("getNavigator"),
-            parsed = nav.ensureAST(ed.textString),
+            parsed = nav.ensureAST(ed),
             node = lively.ast.query.nodesAt(ed.positionToIndex(position), parsed)
                     .reverse().find(ea => ea.type === "Identifier");
         if (!node) { ed.showError(new Error("no identifier found!")); return true; }
@@ -545,242 +545,105 @@ export var deleteBackwardsWithBehavior = {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // ast commands
 
-import { once } from "lively.bindings"
+// note: additional generic ast commands are in text/code-navigation-commands.js
 
 // helper
 function pToI(ed, pos) { return ed.positionToIndex(pos); }
 function iToP(ed, pos) { return ed.indexToPosition(pos); }
 
-function execCodeNavigator(sel) {
-  return function(ed, args, count) {
-    var nav = ed.pluginInvokeFirst("getNavigator");
-    if (!nav) return false;
-    ed.saveMark();
-    var count = (count || 1);
-    for (var i = 0; i < count; i++) { nav[sel](ed, args); }
-    return true;
-  }
-}
-
 export var astEditorCommands = [
-
-{
-  name: 'forwardSexp',
-  bindKey: 'Ctrl-Alt-f|Ctrl-Alt-Right',
-  exec: execCodeNavigator('forwardSexp'),
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-{
-  name: 'backwardSexp',
-  bindKey: 'Ctrl-Alt-b|Ctrl-Alt-Left',
-  exec: execCodeNavigator('backwardSexp'),
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-{
-  name: 'backwardUpSexp',
-  bindKey: 'Ctrl-Alt-u|Ctrl-Alt-Up',
-  exec: execCodeNavigator('backwardUpSexp'),
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-{ 
-  name: 'forwardDownSexp',
-  bindKey: 'Ctrl-Alt-d|Ctrl-Alt-Down',
-  exec: execCodeNavigator('forwardDownSexp'),
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-{
-  name: 'markDefun',
-  bindKey: 'Ctrl-Alt-h',
-  exec: execCodeNavigator('markDefun'),
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-{
-  name: 'expandRegion',
-  bindKey: {win: 'Shift-Ctrl-E|Ctrl-Shift-Space', mac: 'Shift-Command-Space|Ctrl-Shift-Space'},
-  exec: function(ed, args) {
-    args = args || {};
-    var expander = ed.pluginInvokeFirst("getNavigator");
-    if (!expander) return true;
-
-    // if we get start/end position indexes to expand to handed in then we do
-    // that
-    var newState;
-    var start = args.start, end = args.end;
-    if (typeof start === "number" && typeof end === "number") {
-      var state = ensureExpandState();
-      newState = {range: [start, end], prev: ensureExpandState()}
-
-    } else {
-      // ... otherwise we leave it to the code navigator...
-      var ast = expander.ensureAST(ed.textString);
-      if (!ast) return;
-
-      var newState = expander.expandRegion(ed, ed.textString, ast, ensureExpandState());
-    }
-
-    if (newState && newState.range) {
+  
+  {
+    name: "selectDefinition",
+    readOnly: true,
+    bindKey: "Alt-.",
+    exec: function(ed, args) {
+      var nav = ed.pluginInvokeFirst("getNavigator");
+      if (!nav) return true;
+  
+      var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
+      if (!found || !found.id) { show("No symbol identifier selected"); return true; }
+      if (!found.decl) { show("Cannot find declaration of " + found.name); return true; }
+  
+      ed.saveMark();
+  
       ed.selection = {
-        start: iToP(ed, newState.range[0]),
-        end: iToP(ed, newState.range[1])};
-      ed.$expandRegionState = newState;
-    }
-
-    once(ed, "selectionChange", () => ed.$expandRegionState = null, "call");
-
-    return true;
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-      
-
-    function ensureExpandState() {
-      var state = ed.$expandRegionState;
-      var pos = pToI(ed, ed.cursorPosition);
-      if (state
-        // has cursor moved? invalidate expansion state
-       && (state.range  [0] === pos || state.range[1] === pos)) 
-         return state;
-
-      var range = ed.selection.range;
-      return ed.$expandRegionState = {
-        range: [pToI(ed, range.start), pToI(ed, range.end)]
-      };
-    }
-  },
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-{
-  name: 'contractRegion',
-  bindKey: {win: 'Shift-Ctrl-S|Ctrl-Alt-Space', mac: 'Ctrl-Command-space|Ctrl-Alt-Space'},
-  exec: function(ed) {
-    if (ed.selection.isEmpty()) return true;
-    var expander = ed.pluginInvokeFirst("getNavigator");
-    if (!expander) return true;
-
-    var ast = expander.ensureAST(ed.textString);
-    if (!ast) return true;
-
-    var state = ed.$expandRegionState;
-    if (!state) return true;
-
-    var newState = expander.contractRegion(ed, ed.textString, ast, state);
-    if (newState && newState.range) {
-      ed.selection = {
-        start: iToP(ed, newState.range[0]),
-        end: iToP(ed, newState.range[1])};
-      ed.$expandRegionState = newState;
-    }
-
-    once(ed, "selectionChange", () => ed.$expandRegionState = null, "call");
-    return true;
-  },
-  multiSelectAction: 'forEach',
-  readOnly: true
-},
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-{
-  name: "selectDefinition",
-  readOnly: true,
-  bindKey: "Alt-.",
-  exec: function(ed, args) {
-    var nav = ed.pluginInvokeFirst("getNavigator");
-    if (!nav) return true;
-
-    var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
-    if (!found || !found.id) { show("No symbol identifier selected"); return true; }
-    if (!found.decl) { show("Cannot find declaration of " + found.name); return true; }
-
-    ed.saveMark();
-
-    ed.selection = {
-      start: ed.indexToPosition(found.decl.start),
-      end: ed.indexToPosition(found.decl.end)
-    }
-    ed.scrollCursorIntoView()
-    return true;
-  }
-},
-
-{
-  name: "selectSymbolReferenceOrDeclarationNext",
-  readOnly: true,
-  multiSelectAction: "single",
-  exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'next'}); }
-},
-
-{
-  name: "selectSymbolReferenceOrDeclarationPrev",
-  readOnly: true,
-  multiSelectAction: "single",
-  exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'prev'}); }
-},
-
-{
-  name: "selectSymbolReferenceOrDeclaration",
-  readOnly: true,
-  multiSelectAction: "single",
-  exec: function(ed, args = {direction: null/*next,prev*/}) {
-    // finds the name of the currently selected symbol and will use the JS
-    // ast to select references and declarations whose name matches the symbol
-    // in the current scope
-    // 1. get the token / identifier info of what is currently selected
-
-    var nav = ed.pluginInvokeFirst("getNavigator");
-    if (!nav) return true;
-
-    var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
-    if (!found || !found.refs) { show("No symbol identifier selected"); return true; }
-
-    // 3. map the AST ref / decl nodes to actual text ranges
-    var sel = ed.selection,
-        ranges = found.refs.map(({start, end}) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
-            .concat(found.decl ?
-              Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)): [])
-            // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
-            .sort(Range.compare);
-
-    if (!ranges.length) return true;
-
-    // do we want to select all ranges or jsut the next/prev one?
-    var currentRangeIdx = ranges.map(String).indexOf(String(sel.range));
-    if (args.direction === 'next' || args.direction === 'prev') {
-      if (currentRangeIdx === -1 && ranges.length) ranges = [ranges[0]];
-      else {
-        var nextIdx = currentRangeIdx + (args.direction === 'next' ? 1 : -1);
-        if (nextIdx < 0) nextIdx = ranges.length-1;
-        else if (nextIdx >= ranges.length) nextIdx = 0;
-        ranges = [ranges[nextIdx]];
+        start: ed.indexToPosition(found.decl.start),
+        end: ed.indexToPosition(found.decl.end)
       }
-    } else { /*select all ranges*/ }
-
-    // do the actual selection
-    ranges.forEach(range => {
-      var existing = sel.selections.findIndex(ea => ea.range.equals(range)),
-          idx = sel.selections.length-1;
-      existing > -1 ?
-        arr.swap(sel.selections, existing, idx) :
-        sel.addRange(range, false);
-    });
-
-    sel.mergeSelections();
-
-    return true;
+      ed.scrollCursorIntoView()
+      return true;
+    }
+  },
+  
+  {
+    name: "selectSymbolReferenceOrDeclarationNext",
+    readOnly: true,
+    multiSelectAction: "single",
+    exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'next'}); }
+  },
+  
+  {
+    name: "selectSymbolReferenceOrDeclarationPrev",
+    readOnly: true,
+    multiSelectAction: "single",
+    exec: function(ed) { ed.execCommand('selectSymbolReferenceOrDeclaration', {direction: 'prev'}); }
+  },
+  
+  {
+    name: "selectSymbolReferenceOrDeclaration",
+    readOnly: true,
+    multiSelectAction: "single",
+    exec: function(ed, args = {direction: null/*next,prev*/}) {
+      // finds the name of the currently selected symbol and will use the JS
+      // ast to select references and declarations whose name matches the symbol
+      // in the current scope
+      // 1. get the token / identifier info of what is currently selected
+  
+      var nav = ed.pluginInvokeFirst("getNavigator");
+      if (!nav) return true;
+  
+      var found = nav.resolveIdentifierAt(ed, ed.cursorPosition);
+      if (!found || !found.refs) { show("No symbol identifier selected"); return true; }
+  
+      // 3. map the AST ref / decl nodes to actual text ranges
+      var sel = ed.selection,
+          ranges = found.refs.map(({start, end}) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
+              .concat(found.decl ?
+                Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)): [])
+              // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
+              .sort(Range.compare);
+  
+      if (!ranges.length) return true;
+  
+      // do we want to select all ranges or jsut the next/prev one?
+      var currentRangeIdx = ranges.map(String).indexOf(String(sel.range));
+      if (args.direction === 'next' || args.direction === 'prev') {
+        if (currentRangeIdx === -1 && ranges.length) ranges = [ranges[0]];
+        else {
+          var nextIdx = currentRangeIdx + (args.direction === 'next' ? 1 : -1);
+          if (nextIdx < 0) nextIdx = ranges.length-1;
+          else if (nextIdx >= ranges.length) nextIdx = 0;
+          ranges = [ranges[nextIdx]];
+        }
+      } else { /*select all ranges*/ }
+  
+      // do the actual selection
+      ranges.forEach(range => {
+        var existing = sel.selections.findIndex(ea => ea.range.equals(range)),
+            idx = sel.selections.length-1;
+        existing > -1 ?
+          arr.swap(sel.selections, existing, idx) :
+          sel.addRange(range, false);
+      });
+  
+      sel.mergeSelections();
+  
+      return true;
+    }
   }
-}
 
 ];
 
 lively.modules.module("lively.morphic/ide/js/editor-plugin.js")
   .reload({reloadDeps: false, resetEnv: false});
-
