@@ -3371,7 +3371,17 @@ var Package = function () {
   }, {
     key: "search",
     value: function search(needle, options) {
-      return searchInPackage$1(this.System, this.url, needle, options);
+      var _this = this;
+
+      var packageURL = this.url.replace(/\/$/, ""),
+          p = getPackages$1(this.System).find(function (p) {
+        return p.address == packageURL;
+      });
+      return !p ? Promise.resolve([]) : Promise.all(p.modules.map(function (m) {
+        return module$2(_this.System, m.name).search(needle, options);
+      })).then(function (res) {
+        return lively_lang.arr.flatten(res, 1);
+      });
     }
   }, {
     key: "mergeWithConfig",
@@ -3531,22 +3541,6 @@ function getPackages$1(System) {
   });
 
   return result;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// search
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function searchInPackage$1(System, packageURL, searchStr, options) {
-  packageURL = packageURL.replace(/\/$/, "");
-  var p = getPackages$1(System).find(function (p) {
-    return p.address == packageURL;
-  });
-  return !p ? Promise.resolve([]) : Promise.all(p.modules.map(function (m) {
-    return module$2(System, m.name).search(searchStr, options);
-  })).then(function (res) {
-    return lively_lang.arr.flatten(res, 1);
-  });
 }
 
 var detectModuleFormat = function () {
@@ -5617,9 +5611,7 @@ function getPackage$$1(packageURL) {
 function applyPackageConfig(packageConfig, packageURL) {
   return applyConfig(exports.System, packageConfig, packageURL);
 }
-function searchInPackage$$1(packageURL, searchString, options) {
-  return searchInPackage$1(exports.System, packageURL, searchString, options);
-}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // changing modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -5670,7 +5662,6 @@ exports.reloadPackage = reloadPackage$$1;
 exports.getPackages = getPackages$$1;
 exports.getPackage = getPackage$$1;
 exports.applyPackageConfig = applyPackageConfig;
-exports.searchInPackage = searchInPackage$$1;
 exports.moduleSourceChange = moduleSourceChange$$1;
 exports.requireMap = requireMap;
 exports.isHookInstalled = isHookInstalled;

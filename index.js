@@ -285,9 +285,9 @@ import {
   reloadPackage as _reloadPackage,
   applyConfig as _applyPackageConfig,
   getPackages as _getPackages,
-  getPackage as _getPackage,
-  searchInPackage as _searchInPackage
-} from './src/packages.js'
+  getPackage as _getPackage
+} from './src/packages.js';
+
 function importPackage(packageURL) { return _importPackage(defaultSystem, packageURL); }
 function registerPackage(packageURL) { return _registerPackage(defaultSystem, packageURL); }
 function removePackage(packageURL) { return _removePackage(defaultSystem, packageURL); }
@@ -295,7 +295,7 @@ function reloadPackage(packageURL) { return _reloadPackage(defaultSystem, packag
 function getPackages() { return _getPackages(defaultSystem); }
 function getPackage(packageURL) { return _getPackage(defaultSystem, packageURL); }
 function applyPackageConfig(packageConfig, packageURL) { return _applyPackageConfig(defaultSystem, packageConfig, packageURL); }
-function searchInPackage(packageURL, searchString, options) { return _searchInPackage(defaultSystem, packageURL, searchString, options); }
+
 export {
   importPackage,
   registerPackage,
@@ -303,8 +303,7 @@ export {
   reloadPackage,
   getPackages,
   getPackage,
-  applyPackageConfig,
-  searchInPackage
+  applyPackageConfig
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

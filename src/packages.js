@@ -336,7 +336,15 @@ class Package {
 
   reload() { this.remove(); return this.import(); }
 
-  search(needle, options) { return searchInPackage(this.System, this.url, needle, options); }
+  search(needle, options) {
+    var packageURL = this.url.replace(/\/$/, ""),
+        p = getPackages(this.System).find(p => p.address == packageURL);
+    return !p ? Promise.resolve([]) :
+      Promise.all(
+        p.modules.map(m => module(this.System, m.name)
+          .search(needle, options)))
+            .then(res => arr.flatten(res, 1));
+   }
 
   mergeWithConfig(config) {
     config = {...config};
@@ -457,20 +465,6 @@ function getPackages(System) {
   return result;
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// search
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function searchInPackage(System, packageURL, searchStr, options) {
-  packageURL = packageURL.replace(/\/$/, "");
-  var p = getPackages(System).find(p => p.address == packageURL);
-  return !p ? Promise.resolve([]) :
-    Promise.all(
-      p.modules.map(m => module(System, m.name)
-        .search(searchStr, options)))
-          .then(res => arr.flatten(res, 1));
-}
-
 export {
   Package,
   getPackage,
@@ -479,6 +473,5 @@ export {
   removePackage,
   reloadPackage,
   applyConfig,
-  getPackages,
-  searchInPackage
+  getPackages
 };
