@@ -664,6 +664,11 @@ export class Morph {
     return this;
   }
 
+  openInWindow(opts = {title: this.name, name: "window for " + this.name, world: null}) {
+    var world = opts.world || this.world() || this.env.world;
+    return world.openInWindow(this, obj.dissoc(opts, ["world"]));
+  }
+
   isAncestorOf(aMorph) {
     // check if aMorph is somewhere in my submorph tree
     var owner = aMorph.owner;
