@@ -165,15 +165,26 @@ export default class L2LConnection {
       if (typeof this.actions[selector] === "function") {
         this.invokeServiceHandler(selector, msg, ackFn, socket)
       } else {
-        if (socket._events && !Object.keys(socket._events).includes(selector))
+        if (socket._events && !Object.keys(socket._events).includes(selector)) {
           console.warn(`WARNING [${this}] Unhandled message: ${selector}`);
+          if (typeof ackFn === "function")
+            ackFn({
+              sender: this.id,
+              inResponseTo: msg.id,
+              data:  {isError: true, error: "message not understood: " + selector}
+            });
+        }
       }
 
       setTimeout(() => this.invokeOutOfOrderMessages(msg.sender), 0);
     } catch (e) {
       console.error(`Error when handling ${selector}: ${e.stack || e}`);
-      // if (typeof ackFn === "function")
-        // ackFn({action: "messageError", data: {selector: eventName}})
+      if (typeof ackFn === "function")
+        ackFn({
+          sender: this.id,
+          inResponseTo: msg.id,
+          data: {isError: true, error: String(e.stack || e)}
+        });
     }
   }
 
