@@ -1,4 +1,5 @@
 import { TextStyleAttribute } from "../../text/attribute.js";
+import { lessEqPosition } from "../../text/position.js";
 
 import JavaScriptTokenizer from "./highlighter.js";
 import JavaScriptChecker from "./checker.js";
@@ -23,7 +24,7 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
     super(theme)
     this.highlighter = new JavaScriptTokenizer();
     this.checker = new JavaScriptChecker();
-    this._tokens = null;
+    this._tokens = [];
     this._ast = null;
     this.evalEnvironment = {format: "esm", targetModule: null, context: null}
   }
@@ -36,8 +37,8 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
   }
 
   detach(editor) {
-    super.detach(editor);
     this.checker.uninstall(this.textMorph);
+    super.detach(editor);
   }
 
   highlight() {
@@ -51,6 +52,11 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
 
     if (this.checker)
       this.checker.onDocumentChange({}, textMorph);
+  }
+
+  tokenAt(pos) {
+    return this._tokens.find(({start,end}) =>
+      lessEqPosition(start, pos) && lessEqPosition(pos, end));
   }
 
   getNavigator() { return new JavaScriptNavigator(); }

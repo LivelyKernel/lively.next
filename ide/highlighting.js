@@ -19,11 +19,14 @@ export const Token = {
   boolean: "boolean",
   cdata: "cdata",
   constant: "constant",
+  "diff-file-header": "diff-file-header",
+  "diff-hunk-header": "diff-hunk-header",
   deleted: "deleted",
   doctype: "doctype",
   entity: "entity",
   function: "function",
   important: "important",
+  coord: "coord",
   inserted: "inserted",
   italic: "italic",
   namespace: "namespace",
@@ -105,6 +108,7 @@ export class Theme {
   }
 
   styleCached(token) {
+    return this.style(token);
     return this._cache[token] || (this._cache[token] = this.style(token));
   }
 

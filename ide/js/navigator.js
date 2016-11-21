@@ -4,11 +4,8 @@ import { arr } from "lively.lang";
 
 export default class JavaScriptNavigator {
 
-  ensureAST(astOrSource) {
-    return typeof astOrSource === "string" ?
-      lively.ast.fuzzyParse(astOrSource) :
-      astOrSource;
-  }
+  ensureAST(ed) { return this.parse(ed.textString); }
+  parse(source) { return lively.ast.fuzzyParse(source); }
 
   move(selector, ed) {
     var select = !!ed.activeMark || !ed.selection.isEmpty(),
@@ -34,7 +31,7 @@ export default class JavaScriptNavigator {
   forwardDownSexp(ed) { this.move("_forwardDownSexp", ed); }
 
   _forwardSexp(src, pos) {
-      var ast = this.ensureAST(src),
+      var ast = this.parse(src),
           nodes = lively.ast.acorn.walk.findNodesIncluding(ast, pos),
           containingNode = nodes.reverse().find(function(n) { return n.end !== pos; });
       if (!containingNode) return pos;
@@ -46,7 +43,7 @@ export default class JavaScriptNavigator {
   }
 
   _backwardSexp(src, pos) {
-      var ast = this.ensureAST(src),
+      var ast = this.parse(src),
           nodes = lively.ast.acorn.walk.findNodesIncluding(ast, pos),
           containingNode = nodes.reverse().find(function(n) { return n.start !== pos; });
       if (!containingNode) return pos;
@@ -58,14 +55,14 @@ export default class JavaScriptNavigator {
   }
 
   _backwardUpSexp(src, pos) {
-      var ast = this.ensureAST(src),
+      var ast = this.parse(src),
           nodes = lively.ast.acorn.walk.findNodesIncluding(ast, pos),
           containingNode = nodes.reverse().find(function(n) { return n.start !== pos; });
       return containingNode ? containingNode.start : pos;
   }
 
   _forwardDownSexp(src, pos) {
-      var ast = this.ensureAST(src),
+      var ast = this.parse(src),
           found = lively.ast.acorn.walk.findNodeAfter(ast, pos, function(type, node) { return node.start > pos; });
       return found ? found.node.start : pos;
   }
@@ -87,7 +84,7 @@ export default class JavaScriptNavigator {
   rangeForNodesMatching(src, pos, func) {
       // if the cursor is at a position that has a containing node matching func
       // return start/end index of that node
-      var ast = this.ensureAST(src),
+      var ast = this.parse(src),
           nodes = lively.ast.acorn.walk.findNodesIncluding(ast, pos),
           containingNode = nodes.reverse().find(func);
       return containingNode ? [containingNode.start, containingNode.end] : null;
@@ -113,7 +110,7 @@ export default class JavaScriptNavigator {
     if (typeof pos !== "number") pos = editor.positionToIndex(pos);
 
     // 1. is there an identifier at the cursor position?
-    var parsed = this.ensureAST(editor.textString),
+    var parsed = this.ensureAST(editor),
         nodes = lively.ast.query.nodesAt(pos, parsed).reverse(),
         id = nodes.find(ea => ea.type === "Identifier");
 
