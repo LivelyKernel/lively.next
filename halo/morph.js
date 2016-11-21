@@ -549,8 +549,8 @@ export class Halo extends Morph {
            borderWidth: 1,
            borderColor: Color.black,
            alignInHalo() { this.center = positionInHalo() },
-           onKeyUp(evt) { if (this.halo.activeButton == this) this.halo.toggleDiagonal(corner, evt.isShiftDown()) },
-           onKeyDown(evt) { if (this.halo.activeButton == this) this.halo.toggleDiagonal(corner, evt.isShiftDown()) },
+           onKeyUp(evt) { if (this.halo.activeButton == this) this.halo.toggleDiagonal(evt.isShiftDown(), corner) },
+           onKeyDown(evt) { if (this.halo.activeButton == this) this.halo.toggleDiagonal(evt.isShiftDown(), corner) },
            onDragStart(evt) {
                this.init(evt.position, evt.isShiftDown());
            },
@@ -559,6 +559,7 @@ export class Halo extends Morph {
            },
            onDrag(evt) {
               this.update(evt.position, evt.isShiftDown());
+              this.focus();
            },
            init(startPos, proportional=false) {
              this.startPos = startPos; this.startBounds = this.halo.target.bounds();
@@ -567,7 +568,7 @@ export class Halo extends Morph {
              this.halo.activeButton = this; 
              this.tfm = this.halo.target.getGlobalTransform().inverse();
              this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
-             this.halo.toggleDiagonal(proportional);
+             this.halo.toggleDiagonal(proportional, corner);
            },
            update(currentPos, shiftDown=false) {
              var target = this.halo.target,
@@ -953,7 +954,7 @@ export class Halo extends Morph {
         const {width, height, extent} = this.world(),
               defaultGuideProps = {
                      opacity: 1,
-                     borderStyle: "dashed",
+                     borderStyle: "dotted",
                      position: pt(0,0), 
                      extent,
                      borderWidth: 2,
@@ -998,6 +999,7 @@ export class Halo extends Morph {
   }
 
   toggleDiagonal(active, corner) {
+    if (rect(0).sides.includes(corner)) return;
     var diagonal = this.getSubmorphNamed("diagonal"),
         {x,y,width, height } = this.target.globalBounds(),
         bounds = this.localize(pt(x,y))
@@ -1007,20 +1009,16 @@ export class Halo extends Morph {
                     topRight: [pt(0, height), pt(width, 0)],
                     bottomRight: [pt(0,0), pt(width, height)],
                     bottomLeft: [pt(width, 0), pt(0, height)]};
-        
     if (active) {
-      if (!vertices[corner]) {
-         return rect(1,1,1,1);
-      }
-      const [v1, v2] = vertices[corner];
       if (diagonal) {
         diagonal.setBounds(bounds);
       } else {
+        const [v1, v2] = vertices[corner];
         diagonal = this.addMorphBack(new Path({
           opacity: 0,
           name: "diagonal",
-          borderStyle: "dashed",
-          borderWidth: 2,
+          borderStyle: "dotted",
+          borderWidth: 5,
           bounds,
           gradient: guideGradient,
           vertices: [v1, v2]}));
