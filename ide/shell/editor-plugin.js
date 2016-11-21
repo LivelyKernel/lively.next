@@ -1,25 +1,15 @@
+/*global localStorage*/
 import { arr } from "lively.lang";
 import EditorPlugin from "../editor-plugin.js";
 import { TextStyleAttribute } from "../../text/attribute.js";
-
-import L2LClient from "lively.2lively/client.js";
-import ClientCommand from "lively.shell/client-command.js";
-
-
-// FIXME put this in either config or have it provided by server
-var defaultConnection = {url: "http://localhost:9010/lively-socket.io", namespace: "l2l"};
-
-function runCommand(commandString) {
-  var client = L2LClient.ensure(defaultConnection);
-  ClientCommand.installLively2LivelyServices(client);
-  var cmd = new ClientCommand(client);
-  cmd.spawn({command: commandString});
-  return cmd;
-}
-
+import { defaultDirectory, runCommand } from "./shell-interface.js";
+import { shellCompleters } from "./completers.js";
 
 import prism from "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.js";
 import "https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-bash.js";
+
+var defaultDir;
+Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
 
 class ShellTokenizer {
 
@@ -48,22 +38,87 @@ export class ShellEditorPlugin extends EditorPlugin {
   constructor(theme) {
     super(theme)
     this.tokenizer = new ShellTokenizer();
+    this.state = {cwd:  null, command: null}
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // editor plugin related
   get isShellEditorPlugin() { return true }
+
+  get options() { return this.state; }
+  set options(o) { return this.state = Object.assign(this.state, o); }
 
   highlight() {
     let textMorph = this.textMorph;
     if (!this.theme || !textMorph || !textMorph.document) return;
 
     let tokens = this._tokens = this.tokenizer.tokenize(textMorph.textString),
-        styles = tokens.map(({type, start, end}) => 
+        styles = tokens.map(({type, start, end}) =>
           tokens.type !== "default" &&
             TextStyleAttribute.fromPositions(this.theme.styleCached(type),start, end))
               .filter(Boolean);
     textMorph.setSortedTextAttributes([textMorph.defaultTextStyleAttribute].concat(styles));
   }
 
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // shell related
+  get cwd() { return this.state.cwd || defaultDir || ""; }
+  set cwd(cwd) { this.state.cwd = cwd; }
+
+  get command() { return this.state.command; }
+  set command(cmd) { this.state.command = cmd; }
+
+
+  async changeCwdInteractively() {
+    var cwd = this.cwd,
+        dirs = this.knownCwds,
+        dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)),
+        {status, list: newDirs, selections: [choice]} = await this.textMorph.world().editListPrompt(
+          "Choose working directory:", dirs, {
+            historyId: "lively.morphic-ide/shell-changeCwdInteractively-hist-list",
+            preselect: dirs.indexOf(cwd)
+          }) || {};
+
+    if (status === "canceled") return;
+
+    this.knownCwds = newDirs;
+
+    if (!choice) return;
+    this.textMorph.setStatusMessage(choice);
+    this.cwd = choice;
+
+    this.updateWindowTitle();
+  }
+
+  get knownCwds() {
+    if (typeof localStorage === "undefined") return [];
+    try {
+      var cwds = localStorage.getItem("lively.morphic-ide/shell-known-cwds");
+      return cwds ? JSON.parse(cwds) : [];
+    } catch (e) { return []; }
+  }
+
+  set knownCwds(cwds) {
+    if (typeof localStorage === "undefined") return;
+    try {
+      localStorage.setItem("lively.morphic-ide/shell-known-cwds", JSON.stringify(cwds));
+    } catch (e) { console.error(e); }
+  }
+
+  updateWindowTitle() {
+    var win = this.textMorph.getWindow();
+    if (!win || !win.title.includes("Shell Workspace")) return;
+
+    var part1 = "Shell Workspace",
+        part2 = this.command && this.command.isRunning() ?
+                  ` (running ${this.command.pid})` : "",
+        part3 = !this.cwd ? "" : ` - ${this.cwd}`
+
+    win.title = [part1, part2, part3].join("");
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // UI
   getCommands(otherCommands) {
     var ed = this.textMorph;
 
@@ -73,15 +128,56 @@ export class ShellEditorPlugin extends EditorPlugin {
         exec: async (_, opts = {printit: false}) => {
           var sel = ed.selection;
           if (sel.isEmpty()) ed.selectLine(sel.lead.row);
-          var cmd = runCommand(sel.text);
-          await cmd.whenDone();
-          var printedResult = cmd.stdout.trim() + "\n" + cmd.stderr.trim();
+          var cmd = this.command = runCommand(sel.text, {cwd: this.cwd});
+
+          sel.collapseToEnd();
+
           if (opts.printit) {
-            sel.collapseToEnd();
-            ed.insertTextAndSelect(printedResult);
-          } else  ed.setStatusMessage(printedResult);
+            var insert = out => {
+              var {start} = sel;
+              sel.collapseToEnd();
+              ed.insertText(out);
+              sel.range = {start, end: ed.cursorPosition}
+            }
+            cmd.on("stdout", insert);
+            cmd.on("stderr", insert);
+          }
+
+          this.updateWindowTitle();
+          await cmd.whenStarted();
+          this.updateWindowTitle();
+          await cmd.whenDone();
+          this.updateWindowTitle();
+
+          if (opts.printit) {
+            cmd.removeListener("stdout", insert)
+            cmd.removeListener("stderr", insert)
+          } else {
+            ed.setStatusMessage(cmd.output.trim());
+          }
+
           return true;
         }
+      },
+
+      {
+        name: "[shell] kill current command",
+        exec: async (_, opts = {signal: undefined}) => {
+          var {command: cmd} = this;
+          if (!cmd) {
+            ed.setStatusMessage("No command running");
+            return true;
+          }
+
+          ed.setStatusMessage(`Sending signal ${opts.signal || "KILL"} to command ${cmd.pid}`);
+          await cmd.kill(opts.signal);
+          return true;
+        }
+      },
+
+      {
+        name: "[shell] change working directory",
+        exec: async () => { await this.changeCwdInteractively(); return true; }
       }
     ].concat(otherCommands)
   }
@@ -89,7 +185,19 @@ export class ShellEditorPlugin extends EditorPlugin {
   getKeyBindings(otherKeybindings) {
     return otherKeybindings.concat([
       {keys: {mac: "Meta-D", win: "Ctrl-D"}, command: {command: "[shell] spawn command from selected text", args: {printit: false}}},
-      {keys: {mac: "Meta-P", win: "Ctrl-P"}, command: {command: "[shell] spawn command from selected text", args: {printit: true}}}
+      {keys: {mac: "Meta-P", win: "Ctrl-P"}, command: {command: "[shell] spawn command from selected text", args: {printit: true}}},
+      {keys: "Ctrl-C", command: {command: "[shell] kill current command", args: {signal: "INT"}}},
+      {keys: {mac: "Meta-Shift-L D I R", win: "Ctrl-Shift-L D I R"}, command: "[shell] change working directory"}
     ]);
+  }
+
+  getSnippets(otherSnippets) {
+    return otherSnippets.concat([
+      ["findjs", "find ${0:.} \\( -name ${1:excluded} \\) -prune -o -iname '*.js' -type f -print0 | xargs -0 grep -nH ${2:what}"]
+    ])
+  }
+
+  getCompleters(completers) {
+    return completers.concat(shellCompleters);
   }
 }
