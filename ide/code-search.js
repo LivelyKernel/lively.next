@@ -2,7 +2,7 @@ import { fun, arr, obj, promise, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { morph, Morph, Window, show } from "../index.js";
 import { FilterableList } from "../list.js";
-import { Browser } from "./javascript-browser.js";
+import Browser from "./js/browser/index.js";
 import { connect, disconnectAll } from "lively.bindings"
 
 
