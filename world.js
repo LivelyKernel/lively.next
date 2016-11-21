@@ -4,7 +4,7 @@ import { tree, arr, obj, promise } from "lively.lang";
 import { Halo } from "./halo/morph.js"
 import { Menu } from "./menus.js"
 import { show, StatusMessage } from "./markers.js";
-import { Morph, Text, Window, config } from "./index.js";
+import { Morph, Text, Window, config, MorphicEnv } from "./index.js";
 import { TooltipViewer } from "./tooltips.js";
 import KeyHandler from "./events/KeyHandler.js";
 
@@ -244,9 +244,28 @@ var worldCommands = [
 
   {
     name: "open workspace",
-    exec: async world => {
-      var { default: Workspace } = await System.import("lively.morphic/ide/js/workspace.js");
+    exec: async (world, opts = {language: "javascript"}) => {
+      var lang = opts.language || "javascript",
+          workspaceModules = {
+            "javascript": "lively.morphic/ide/js/workspace.js",
+            get "js"() { return this["javascript"]; },
+            "shell": "lively.morphic/ide/shell/workspace.js"
+          },
+          { default: Workspace } = await System.import(workspaceModules[lang]);
       return new Workspace({center: world.center}).activate();
+    }
+  },
+
+  {
+    name: "open shell workspace",
+    exec: (world, opts) => world.execCommand("open workspace", {...opts, language: "shell"})
+  },
+
+  {
+    name: "open shell terminal",
+    exec: async (world, opts) => {
+      var { default: Terminal } = await System.import("lively.morphic/ide/shell/terminal.js");
+      return Terminal.open(opts).openInWorldNearHand();
     }
   },
 
@@ -274,28 +293,23 @@ var worldCommands = [
       var {textA, textB, extent} = opts;
 
       // import * as diff from "https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"
-      var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js");
-      var diffed = diffInWindow(textA, textB, {extent, fontFamily: "monospace"});
+      var diff = await System.import("https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js"),
+          diffed = diffInWindow(textA, textB, {extent, fontFamily: "monospace"});
+      return diffed;
 
       function diffInWindow(textA, textB, opts) {
-        var diffed = diff.diffChars(textA, textB);
+        var diffed = diff.diffChars(textA, textB),
+            win = world.execCommand("open text window", opts),
+            textMorph = win.targetMorph;
+        win.extent = pt(300, 200).maxPt(textMorph.textBounds().extent());
 
-        var insertions = diffed.map(({count, value, added, removed}) => {
+        textMorph.textAndAttributes = diffed.map(({count, value, added, removed}) => {
           var attribute = removed ?
               {fontWeight: "normal", textDecoration: "line-through", fontColor: Color.red} : added ?
               {fontWeight: "bold", textDecoration: "", fontColor: Color.green} :
               {fontWeight: "normal", textDecoration: "", fontColor: Color.darkGray};
-          return { text: value, attribute }
-        })
-
-        var win = world.execCommand("open text window", opts),
-            textMorph = win.targetMorph;
-
-        insertions.forEach(({text, attribute}) => {
-          textMorph.insertTextWithTextAttributes(text, attribute ? [attribute] : [])
+          return [value, attribute];
         });
-
-        win.width = textMorph.textBounds().width
 
         return textMorph;
       }
@@ -313,7 +327,7 @@ var worldCommands = [
   {
     name: "open browser",
     exec: async (world, args = {packageName: "lively.morphic", moduleName: "morph.js"}) => {
-      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js"),
+      var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
           browser = await Browser.browse(args.packageName, args.moduleName, undefined, {extent: pt(700, 600)});
       browser.getWindow().activate();
       return browser;
@@ -360,7 +374,7 @@ var worldCommands = [
           historyId: "lively.morphic-choose and browse package resources",
           requester: browser, width: 700, multiSelect: true})
 
-      var { Browser } = await System.import("lively.morphic/ide/javascript-browser.js");
+      var { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js");
       Promise.all(selected.map(ea =>
         Browser.browse(ea.package.address, ea.name, undefined, browser, backend)
           .then(browser => browser.activate())));
@@ -383,7 +397,7 @@ var worldCommands = [
 
       var browser = opts.browser
                  || (focused && focused.ownerChain().find(ea => ea.isBrowser)),
-          { Browser } = await System.import("lively.morphic/ide/javascript-browser.js"),
+          { default: Browser } = await System.import("lively.morphic/ide/js/browser/index.js"),
           backend = opts.backend || (browser && browser.backend),
           remote = backend && backend !== "local" ? backend : null,
           systemInterface = await System.import("lively-system-interface"),
@@ -485,6 +499,8 @@ var worldCommands = [
 
 export class World extends Morph {
 
+  static defaultWorld() { return MorphicEnv.default().world; }
+
   constructor(props) {
     super(props);
     this.addStyleClass("world");
@@ -515,7 +531,7 @@ export class World extends Morph {
   activeWindow() { return this.getWindows().reverse().find(ea => ea.isActive()); }
   getWindows() { return this.submorphs.filter(ea => ea.isWindow); }
   openInWindow(morph, opts = {title: morph.name, name: "window for " + morph.name}) {
-    return new Window({...opts, extent: morph.extent.addXY(0, 25), targetMorph: morph});
+    return new Window({...opts, extent: morph.extent.addXY(0, 25), targetMorph: morph}).openInWorld();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -782,6 +798,9 @@ export class World extends Morph {
     if (promptMorph.height > visBounds.height)
       promptMorph.height = visBounds.height - 5;
 
+    if (typeof opts.customize === "function")
+      opts.customize(promptMorph);
+
     if (opts.animated) {
        var animator = new Morph({
           fill: Color.transparent, extent: pt(1,1),
@@ -897,3 +916,5 @@ export class Hand extends Morph {
     });
   }
 }
+
+export function $world() { return World.defaultWorld(); }
