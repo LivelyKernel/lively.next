@@ -105,7 +105,7 @@ describe("halos", () => {
   it("resize resizes", () => {
     var halo = world.showHaloFor(submorph1),
         resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
-    resizeHandle.init()
+    resizeHandle.init(pt(0,0))
     resizeHandle.update(pt(10,5));
     expect(submorph1.extent).equals(pt(110, 105));
   });
@@ -116,7 +116,7 @@ describe("halos", () => {
     var halo = world.showHaloFor(submorph1, "test-pointer-1"),
         resizeButton = halo.resizeHandles().find(h => h.corner == "bottomRight"),
         resizeButtonCenter = resizeButton.globalBounds().center();
-    resizeButton.init();
+    resizeButton.init(pt(0,0));
     resizeButton.update(pt(42,42));
     expect(halo.borderBox.extent).equals(submorph1.extent);
   });
@@ -134,17 +134,17 @@ describe("halos", () => {
     otherHalos.forEach((h) => expect(h).to.have.property("visible", false));
   });
 
-  xit("resizes proportionally", () => {
+  it("resizes proportionally", () => {
     var halo = world.showHaloFor(submorph1),
         resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
-    resizeHandle.init(true);
+    resizeHandle.init(pt(0,0), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle.update(pt(10,5), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle.update(pt(1000,500), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle = halo.resizeHandles().find(h => h.corner == "rightCenter");
-    resizeHandle.init(true);
+    resizeHandle.init(pt(0,0), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
     resizeHandle.update(pt(10,5), true);
     expect(submorph1.extent.x).equals(submorph1.extent.y);
@@ -155,7 +155,7 @@ describe("halos", () => {
   it("shows a visual guide when resizing proportionally", () => {
     var halo = world.showHaloFor(submorph1),
         resizeHandle = halo.resizeHandles().find(h => h.corner == "bottomRight");
-    resizeHandle.init(true);
+    resizeHandle.init(pt(0,0), true);
     resizeHandle.update(pt(10,5), true);
     var d = halo.getSubmorphNamed("diagonal");
     expect(d).to.not.be.undefined;
