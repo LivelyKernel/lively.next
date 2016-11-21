@@ -28,12 +28,10 @@ export default class EditorPlugin {
 
   get isEditorPlugin() { return true }
 
-  get isShellEditorPlugin() { return true }
-
   attach(editor) {
     this.textMorph = editor;
     connect(editor, "textChange", this, "onTextChange");
-    this.requestHighlight();
+    this.highlight();
   }
 
   detach(editor) {
