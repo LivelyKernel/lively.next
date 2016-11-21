@@ -214,26 +214,44 @@ export class Renderer {
       ]);
   }
 
+  // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
+
+  getPathAttributes(path) {
+     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path),
+             "stroke": (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
+              d: "M" + path.vertices.map(({x, y}) => `${x},${y}`).join(" L")}
+  }
+
+  getSvgBorderStyle(svg) {
+      const style = {
+          solid: {},
+          dashed: {"stroke-dasharray": svg.borderWidth * 1.61 + " " + svg.borderWidth},
+          dotted: {"stroke-dasharray": "1 " + svg.borderWidth * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
+      }
+      return style[svg.borderStyle];
+  }
+
+  getPolygonAttributes(polygon) {
+     return {"stroke-width": polygon.borderWidth,
+             ...this.getSvgBorderStyle(polygon),
+             "stroke": polygon.borderColor.toString(),
+             "fill": (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill.toString()),
+             points: polygon.vertices.map(({x,y}) => (x - polygon.borderWidth) + "," + (y - polygon.borderWidth)).join(" ")}
+  }
+
   renderPath(path) {
     const vertices = h("path",
                     {namespace: "http://www.w3.org/2000/svg",
-                     id : path.id,
-                     attributes:
-                      {style: "stroke-width:" + path.borderWidth +
-                       "; stroke:" + (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
-                       d: "M" + path.vertices.map(({x, y}) => `${x},${y}`).join(" L")}});
+                     id : "svg" + path.id,
+                     attributes: this.getPathAttributes(path)});
     return this.renderSvgMorph(path, vertices);
   }
 
   renderPolygon(polygon) {
     const vertices = h("polygon",
                         {namespace: "http://www.w3.org/2000/svg",
-                         id: polygon.id,
-                         attributes:
-                          {style: "fill:" + (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill.toString()) +
-                                  ";stroke-width:" + polygon.borderWidth +
-                                  ";stroke:" + polygon.borderColor.toString(),
-                           points: polygon.vertices.map(({x,y}) => x + "," + y).join(" ")}});
+                         id: "svg" + polygon.id,
+                         attributes: this.getPolygonAttributes(polygon)});
     return this.renderSvgMorph(polygon, vertices);
   }
 
@@ -250,8 +268,7 @@ export class Renderer {
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
                         style: {position: "absolute", "pointer-events": "none"},
                         attributes:
-                         {width, height, "viewBox": [-morph.borderWidth,-morph.borderWidth,width,height].join(" "),
-                        ...(morph.borderStyle == "dashed" && {"stroke-dasharray": "7 4"})}},
+                         {width, height, "viewBox": [-morph.borderWidth,-morph.borderWidth, width ,height].join(" ")}},
                   [defs, svg]),
                 this.renderSubmorphs(morph)]);
   }
