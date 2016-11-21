@@ -1,6 +1,7 @@
 import { promise, num } from "lively.lang";
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from "./dom-helper.js";
-import { defaultStyle, defaultAttributes, render } from "./morphic-default.js";
+import { defaultStyle, defaultAttributes, render, 
+         pathAttributes, polygonAttributes, svgAttributes } from "./morphic-default.js";
 import { h } from "virtual-dom";
 import { pt } from "lively.graphics";
 
@@ -216,34 +217,11 @@ export class Renderer {
 
   // FIXME: The gradient handling is inconsistent to the way its handled in "vanilla" morphs
 
-  getPathAttributes(path) {
-     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path),
-             "stroke": (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
-              d: "M" + path.vertices.map(({x, y}) => `${x},${y}`).join(" L")}
-  }
-
-  getSvgBorderStyle(svg) {
-      const style = {
-          solid: {},
-          dashed: {"stroke-dasharray": svg.borderWidth * 1.61 + " " + svg.borderWidth},
-          dotted: {"stroke-dasharray": "1 " + svg.borderWidth * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
-      }
-      return style[svg.borderStyle];
-  }
-
-  getPolygonAttributes(polygon) {
-     return {"stroke-width": polygon.borderWidth,
-             ...this.getSvgBorderStyle(polygon),
-             "stroke": polygon.borderColor.toString(),
-             "fill": (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill.toString()),
-             points: polygon.vertices.map(({x,y}) => (x - polygon.borderWidth) + "," + (y - polygon.borderWidth)).join(" ")}
-  }
-
   renderPath(path) {
     const vertices = h("path",
                     {namespace: "http://www.w3.org/2000/svg",
                      id : "svg" + path.id,
-                     attributes: this.getPathAttributes(path)});
+                     ...pathAttributes(path)});
     return this.renderSvgMorph(path, vertices);
   }
 
@@ -251,7 +229,7 @@ export class Renderer {
     const vertices = h("polygon",
                         {namespace: "http://www.w3.org/2000/svg",
                          id: "svg" + polygon.id,
-                         attributes: this.getPolygonAttributes(polygon)});
+                         ...polygonAttributes(polygon)});
     return this.renderSvgMorph(polygon, vertices);
   }
 
@@ -267,8 +245,7 @@ export class Renderer {
                              display, filter, "pointer-events": "auto"}},
               [h("svg", {namespace: "http://www.w3.org/2000/svg", version: "1.1",
                         style: {position: "absolute", "pointer-events": "none"},
-                        attributes:
-                         {width, height, "viewBox": [-morph.borderWidth,-morph.borderWidth, width ,height].join(" ")}},
+                        ...svgAttributes(morph)},
                   [defs, svg]),
                 this.renderSubmorphs(morph)]);
   }

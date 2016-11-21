@@ -1,6 +1,5 @@
 import {diff, patch, create} from "virtual-dom";
 import "gsap";
-//import "gsap-css";
 import bowser from "bowser";
 import { num, obj, arr, properties, promise } from "lively.lang";
 import { Transform, Color, pt, Point } from "lively.graphics";
@@ -59,24 +58,24 @@ export class ShadowObject {
 
 class StyleMapper {
 
-  getTransform({position, origin, scale, rotation}) {
+  static getTransform({position, origin, scale, rotation}) {
     return {
        transform: `translateX(${position.x - origin.x}px) translateY(${position.y - origin.y}px) rotate(${num.toDegrees(rotation)}deg) scale(${scale},${scale})`}
   }
 
-  getTransformOrigin({origin}) {
+  static getTransformOrigin({origin}) {
     return origin && {transformOrigin: `${origin.x}px ${origin.y}px`};
   }
 
-  getDisplay({visible}) {
+  static getDisplay({visible}) {
     return (visible != null) && {display: visible ? "inline" : "none"};
   }
 
-  getBorderRadius({borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop}) {
+  static getBorderRadius({borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop}) {
     return {borderRadius: `${borderRadiusTop}px ${borderRadiusTop}px ${borderRadiusBottom}px ${borderRadiusBottom}px / ${borderRadiusLeft}px ${borderRadiusRight}px ${borderRadiusRight}px ${borderRadiusLeft}px`};
   }
 
-  getBorder({borderWidthLeft, borderColorLeft, borderStyleLeft,
+  static getBorder({borderWidthLeft, borderColorLeft, borderStyleLeft,
              borderWidthRight, borderColorRight, borderStyleRight,
              borderWidthBottom, borderColorBottom, borderStyleBottom,
              borderWidthTop, borderColorTop, borderStyleTop}) {
@@ -88,24 +87,51 @@ class StyleMapper {
     }
   }
 
-  getFill({fill}) {
+  static getFill({fill}) {
     return fill && {background: fill.toString()}
   }
 
-  getExtentStyle({width, height, extent}) {
+  static getExtentStyle({width, height, extent}) {
     if(width && height) return {width: width + 'px', height: height + 'px'};
     if(extent) return {width: extent.x + 'px', height: extent.y + 'px'};
     return null;
   }
 
-  getShadowStyle(morph) {
+  static getShadowStyle(morph) {
     if (morph.isSvgMorph || morph.isImage) return {filter: shadowCss(morph)}
     return {boxShadow: morph.dropShadow ?
                     morph.dropShadow.toCss():
                     "none"}
   }
 
-  getStyleProps(morph) {
+  static getSvgAttributes({width, height, borderWidth}) {
+     return {width, height, "viewBox": [-borderWidth,-borderWidth, width ,height].join(" ")};
+  }
+
+  static getPathAttributes(path) {
+     return {"stroke-width": path.borderWidth, ...this.getSvgBorderStyle(path),
+             "stroke": (path.gradient ? "url(#gradient-" + path.id + ")" : path.borderColor.toString()),
+              d: "M" + path.vertices.map(({x, y}) => `${x},${y}`).join(" L")}
+  }
+
+  static getSvgBorderStyle(svg) {
+      const style = {
+          solid: {},
+          dashed: {"stroke-dasharray": svg.borderWidth * 1.61 + " " + svg.borderWidth},
+          dotted: {"stroke-dasharray": "1 " + svg.borderWidth * 2,"stroke-linecap": "round", "stroke-linejoin": "round",}
+      }
+      return style[svg.borderStyle];
+  }
+
+  static getPolygonAttributes(polygon) {
+     return {"stroke-width": polygon.borderWidth,
+             ...this.getSvgBorderStyle(polygon),
+             "stroke": polygon.borderColor.toString(),
+             "fill": (polygon.gradient ? "url(#gradient-" + polygon.id + ")" : polygon.fill.toString()),
+             points: polygon.vertices.map(({x,y}) => (x - polygon.borderWidth) + "," + (y - polygon.borderWidth)).join(" ")}
+  }
+
+  static getStyleProps(morph) {
     return {
       ...this.getFill(morph),
       ...this.getTransform(morph),
@@ -121,10 +147,6 @@ class StyleMapper {
 
 }
 
-// classes do not seem to inherit static members
-// forcing us to create singletons
-const plainStyleMapper = new StyleMapper();
-
 export class AnimationQueue {
 
   constructor(morph) {
@@ -132,10 +154,10 @@ export class AnimationQueue {
     this.animations = [];
   }
 
-  maskedProps() { 
+  maskedProps(type) { 
      const l = this.animations.length;
      if (l > 0) {
-        return obj.merge(this.animations.map(a => a.getAnimationProps()[0]));
+        return obj.merge(this.animations.map(a => a.getAnimationProps(type)[0]));
      } else {
         return {}
      } 
@@ -153,6 +175,7 @@ export class AnimationQueue {
   }
 
   startAnimationsFor(node) { this.animations.forEach(anim => anim.start(node)); }
+  startSvgAnimationsFor(svgNode, type) { this.animations.forEach(anim => anim.startSvg(svgNode, type)) }
 
   removeAnimation(animation) {
     arr.remove(this.animations, animation);
@@ -166,6 +189,7 @@ export class PropertyAnimation {
     this.queue = queue;
     this.morph = morph;
     this.config = this.convertBounds(config);
+    this.needsAnimation = {svg: morph.isSvgMorph, path: morph.isPath, polygon: morph.isPolygon};
   }
 
   asPromise() {
@@ -214,41 +238,83 @@ export class PropertyAnimation {
   set onFinish(cb) { this.config.onFinish = cb }
   get duration() { return this.config.duration || 1000 }
 
-  getAnimationProps() {
+
+  getChangedProps(before, after) {
     const unchangedProps = [];
-    for (var prop in this.beforeProps) {
-      if (obj.equals(this.afterProps[prop], this.beforeProps[prop])) {
+    for (var prop in before) {
+      if (obj.equals(after[prop], before[prop])) {
          unchangedProps.push(prop);
       }
     }
-    return [obj.dissoc(this.beforeProps, unchangedProps), 
-            obj.dissoc(this.afterProps, unchangedProps)];
+    return [obj.dissoc(before, unchangedProps), 
+            obj.dissoc(after, unchangedProps)];
+  }
+
+  getAnimationProps(type) {
+    const [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]);
+    if (before.d) {
+        // var before_d = before.d.splitBy(" "), after_d = after.d.splitBy(" ");
+        // repeat last element until points are of equal number
+    }
+    if (before.points) {
+        // var before_points = before.points.splitBy(" "), after_points = after.points.splitBy(" ");
+        // repeat last element until points are of equal number
+    }
+     return [before, after]
   }
 
   assignProps() {
-    this.beforeProps = plainStyleMapper.getStyleProps(this.morph);
+    this.beforeProps = {css: StyleMapper.getStyleProps(this.morph),
+                        svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
+                        path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
+                        polygon: this.morph.isPolygon && StyleMapper.getPolygonAttributes(this.morph)};
     for (var prop in this.changedProps) {
+        // FIXME: This is all a hack due to the lack of animation information inside the changes.
+        //        This retrospective introduction of animations can be circumvented by the change event
+        //        actually carrying information about wether or not a property is being animated.
         if (prop == "layout") {
            this.morph.layout = null;
            if (this.changedProps.layout) {
                this.changedProps.layout.attachAnimated(this.duration, this.morph, this.easing);
            }
-        } else if (prop == "extent" && this.morph.layout) {
-              const layout = this.morph.layout;
+           continue;
+        }
+        if (prop == "extent" && this.morph.layout) {   
+              var layout = this.morph.layout;
               this.morph.layout = null;
               this.morph.extent = this.changedProps.extent;
               this.morph.animate({layout, duration: this.duration, easing: this.easing});
-        } else {
-           this.morph[prop] = this.changedProps[prop];
         }
+        this.morph[prop] = this.changedProps[prop];
     }
-    this.afterProps = plainStyleMapper.getStyleProps(this.morph);
+    this.afterProps = {css: StyleMapper.getStyleProps(this.morph),
+                       svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
+                       path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
+                       polygon: this.morph.isPolygon && StyleMapper.getPolygonAttributes(this.morph)};
+  }
+
+  startSvg(svgNode, type) {
+     if (TweenMax && this.needsAnimation[type]) {
+       this.needsAnimation[type] = false;
+       const [before, after] = this.getAnimationProps(type);
+       TweenMax.fromTo(svgNode, 
+                       this.duration / 1000, 
+                       {attr: before}, 
+                       {attr: after, ease: this.easing,
+                        onOverwrite: (args) => {
+                           this.finish();
+                         },
+                         onComplete: () => {
+                           this.finish();
+                           this.morph.makeDirty();
+                       }});
+     }
   }
 
   start(node) {
-    if(TweenMax && !this.active) {
+    if (TweenMax && !this.active) {
       this.active = true;
-      let animationProps = this.getAnimationProps();
+      let animationProps = this.getAnimationProps("css");
       if (animationProps) {
          TweenMax.fromTo(node, this.duration / 1000, 
                          animationProps[0],
@@ -276,8 +342,8 @@ export function defaultStyle(morph) {
   } = morph;
 
   return {
-    ...plainStyleMapper.getStyleProps(morph),
-    ...morph._animationQueue.maskedProps(),
+    ...StyleMapper.getStyleProps(morph),
+    ...morph._animationQueue.maskedProps("css"),
     position: "absolute",
     overflow: clipMode,
     "pointer-events": reactsToPointer ? "auto" : "none",
@@ -335,6 +401,12 @@ Animation.prototype.hook = function(node) {
   this.morph._animationQueue.startAnimationsFor(node);
 }
 
+export function SvgAnimation(morph, type) { this.morph = morph; this.type = type; };
+SvgAnimation.prototype.hook = function(node) {
+  this.morph._animationQueue.startSvgAnimationsFor(node, this.type);
+}
+
+
 export function defaultAttributes(morph, renderer) {
   return {
     animation: new Animation(morph),
@@ -350,6 +422,26 @@ export function defaultAttributes(morph, renderer) {
     // scrollLeft: morph.scroll.x, scrollTop: morph.scroll.y,
     "morph-after-render-hook": new MorphAfterRenderHook(morph, renderer)
   };
+}
+
+export function svgAttributes(svg) {
+   return {animation: new SvgAnimation(svg, "svg"),
+           attributes: {
+             ...StyleMapper.getSvgAttributes(svg),
+             ...svg._animationQueue.maskedProps("svg")}}
+}
+
+export function pathAttributes(path) {
+   return {animation: new SvgAnimation(path, "path"), 
+           attributes: {...StyleMapper.getPathAttributes(path),
+           ...path._animationQueue.maskedProps("path")}};
+}
+
+export function polygonAttributes(polygon) {
+   return {animation: new SvgAnimation(polygon, "polygon"), 
+           attributes: {
+           ...StyleMapper.getPolygonAttributes(polygon),
+           ...polygon._animationQueue.maskedProps("polygon")}};
 }
 
 function shadowCss(morph) {

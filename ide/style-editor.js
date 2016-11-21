@@ -956,7 +956,7 @@ export class BorderStyleEditor extends StyleEditor {
      return this.createControl("Border", {
              layout: new HorizontalLayout({spacing: 5, compensateOrigin: true}),
              fill: Color.transparent, 
-             submorphs: [new DropDownSelector({target, isHaloItem: true, property: "borderStyle", values: ["solid", "dashed"]}), 
+             submorphs: [new DropDownSelector({target, isHaloItem: true, property: "borderStyle", values: ["solid", "dashed", "dotted"]}), 
                          new ColorPickerField({target, property: "borderColor"}),
                          new PropertyInspector({min: 0, target, unit: "pt", property: "borderWidth"})]
               })

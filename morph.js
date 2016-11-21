@@ -1271,6 +1271,8 @@ export class Path extends Morph {
     super(props);
   }
 
+  get isPath() { return true; }
+
   onChange(change) {
     if (change.prop == "extent"
         && change.value
@@ -1320,6 +1322,8 @@ export class Polygon extends Path {
       throw new Error("A polygon requires 3 or more vertices!");
     }
   }
+
+  get isPolygon() { return true; }
 
   render(renderer) {
     return renderer.renderPolygon(this);
