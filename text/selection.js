@@ -96,6 +96,7 @@ export class Selection {
     this.textMorph.makeDirty();
     signal(this.textMorph, "selectionChange", this);
   }
+  get directedRange() { return {end: this.lead, start: this.anchor}; }
 
   updateFromAnchors() {
     this.range = {start: this.startAnchor.position, end: this.endAnchor.position};
