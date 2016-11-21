@@ -37,6 +37,7 @@ export default class GithubTheme extends Theme {
 
       case Token.error:    return { backgroundColor: Color.rgbHex("#ff4c4c") };
 
+      case Token.coord:    return { backgroundColor: Color.rgbHex("#cccccc") };
       case Token.inserted:    return { backgroundColor: Color.rgbHex("#6cff6c") };
       case Token.deleted:    return { backgroundColor: Color.rgbHex("#ff6c6c") };
 
