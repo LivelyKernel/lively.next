@@ -23,6 +23,7 @@ var config = {
     {keys: "Alt-Shift-C", command: "toggle minimize active window"},
 
     {keys: {win: "Ctrl-K", mac: "Meta-K"}, command: {command: "open workspace", onlyWhenFocused: false}},
+    {keys: "Alt-Shift-1", command: {command: "open shell terminal", onlyWhenFocused: false}},
     {keys: {win: "Ctrl-B", mac: "Meta-B"}, command: {command: "open browser", onlyWhenFocused: false}},
     {keys: "Alt-T", command: {command: "choose and browse module", onlyWhenFocused: false}},
     {keys: "Alt-Shift-T", command: {command: "choose and browse package resources", onlyWhenFocused: false}},
@@ -244,6 +245,8 @@ var config = {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // helpful stuff
       {keys: {mac: "Meta-Shift-L D A T E", win: "Ctrl-Shift-L D A T E"}, command: 'insert date'},
+      {keys: "Ctrl-C i", command: "change string inflection"},
+      {keys: "Alt-Shift-4"/*Alt-Shift-$*/, command: 'spell check word'},
     ]
 
   },
