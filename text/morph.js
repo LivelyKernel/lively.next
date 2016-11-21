@@ -14,10 +14,10 @@ import { TextSearcher } from "./search.js";
 import { connect, signal } from "lively.bindings"; // for makeInputLine
 import commands from "./commands.js";
 import { defaultRenderer } from "./rendering.js";
-import { lessPosition, lessEqPosition } from "./position.js";
+import { lessPosition, lessEqPosition, eqPosition } from "./position.js";
 import InputLine from "./input-line.js";
 import { Label } from "./label.js";
-
+import { Snippet } from "./snippets.js";
 
 const defaultTextStyle = {
   fontFamily: "Sans-Serif",
@@ -50,16 +50,16 @@ export class Text extends Morph {
 
   constructor(props = {}) {
     var {
-      textLayout, textRenderer, lineWrapping,
+      textLayout, textRenderer, lineWrapping, plugins,
       fontMetric, textString, selectable, selection, clipMode, textAttributes, textAndAttributes,
       fontFamily, fontSize, fontColor, fontWeight, fontStyle, textDecoration, fixedCharacterSpacing,
       backgroundColor, textStyleClasses,
       position, rightCenter, leftCenter, topCenter, bottom, top, right, left,
-      bottomCenter, bottomLeft, bottomRight, topRight, topLeft, center
+      bottomCenter, bottomLeft, bottomRight, topRight, topLeft, center,
     } = props;
 
     props = obj.dissoc(props, [
-      "textLayout", "textRenderer", "lineWrapping",
+      "textLayout", "textRenderer", "lineWrapping", "plugins",
       "textString","fontMetric", "selectable", "selection", "clipMode",
       "textAttributes", "textAndAttributes",
       // default style attrs: need document to be installed first
@@ -102,6 +102,8 @@ export class Text extends Morph {
 
     if (textAndAttributes) this.textAndAttributes = textAndAttributes;
     else if (textAttributes) textAttributes.map(range => this.addTextAttribute(range));
+
+    if (plugins) this.plugins = plugins;
 
     this.fit();
     this._needsFit = false;
@@ -599,6 +601,11 @@ export class Text extends Morph {
     else this.selection.text = text;
   }
 
+  append(text) {
+    return this.saveExcursion(() =>
+      this.insertText(text, this.documentEndPosition));
+  }
+
   insertText(text, pos = this.cursorPosition) {
     text = String(text);
 
@@ -859,6 +866,12 @@ export class Text extends Morph {
       [this.selection];
   }
 
+  set selections(sels) {
+    this.selection = sels[0];
+    if (!this.selection.isMultiSelection) return;
+    sels.slice(1).forEach(ea => this.selection.addRange(ea));
+  }
+
   selectionBounds() {
     return this.selections.map(sel => {
       var start = this.charBoundsFromTextPosition(sel.start),
@@ -873,6 +886,7 @@ export class Text extends Morph {
   get cursorPosition() { return this.selection.lead; }
   set cursorPosition(p) { this.selection.range = {start: p, end: p}; }
   get documentEndPosition() { return this.document ? this.document.endPosition : {row: 0, column: 0}; }
+  isAtDocumentEnd() { return eqPosition(this.cursorPosition, this.documentEndPosition); }
   get cursorScreenPosition() { return this.toScreenPosition(this.cursorPosition); }
   set cursorScreenPosition(p) { return this.cursorPosition = this.toDocumentPosition(p); }
 
@@ -986,15 +1000,28 @@ export class Text extends Morph {
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
 
-  keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
+  async keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
     // doFn has some effect on the text that might change the scrolled
     // position, like changing the font size. This function ensures that the
     // text position given will be at the same scroll offset after running the doFn
     var {scroll, selection: {lead: pos}} = this,
         offset = this.charBoundsFromTextPosition(pos).y - scroll.y;
-    try { doFn(); } finally {
+    try {
+      var result = await doFn();
+      await promise.delay(0);
+      return result;
+    } finally {
       this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset);
     }
+  }
+
+  async saveExcursion(doFn) {
+    var sels = this.selection.isMultiSelection ?
+      this.selection.selections.map(ea => ea.directedRange) :
+      [this.selection];
+    try {
+      return await this.keepPosAtSameScrollOffsetWhile(doFn);
+    } finally { this.selections = sels; }
   }
 
   alignRow(row, how = "center") {
@@ -1144,7 +1171,11 @@ export class Text extends Morph {
   }
 
   get snippets() {
-    return this.pluginCollect("getSnippets", []);
+    return this.pluginCollect("getSnippets", []).map(snippet => {
+      if (snippet.isTextSnippet) return snippet;
+      var [trigger, expansion] = snippet;
+      return new Snippet({trigger, expansion});
+    })
   }
 
   onKeyDown(evt) {
