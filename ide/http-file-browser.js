@@ -121,7 +121,7 @@ var browserCommands = [
     name: "set file filter",
     exec: async browser => {
       browser.excludeFiles = browser.excludeFiles || [];
-      var excludeList = await browser.world().editListPrompt("Add or remove items to be excluded from the file list", browser.excludeFiles);
+      var {list: excludeList} = await browser.world().editListPrompt("Add or remove items to be excluded from the file list", browser.excludeFiles);
       if (excludeList) {
         browser.excludeFiles = excludeList;
         await browser.execCommand("refresh contents");

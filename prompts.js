@@ -47,6 +47,7 @@ export class AbstractPrompt extends Morph {
     switch (evt.keyCombo) {
       case 'Enter': this.resolve(); evt.stop(); break;
       case 'Escape': this.reject(); evt.stop(); break;
+      default: return super.onKeyDown(evt);
     }
   }
 
@@ -126,6 +127,7 @@ export class InformPrompt extends AbstractPrompt {
   onKeyDown(evt) {
     switch (evt.keyCombo) {
       case 'Escape': case 'Enter': this.resolve(); evt.stop(); break;
+      default: return super.onKeyDown(evt);
     }
   }
 
@@ -257,8 +259,10 @@ export class TextPrompt extends AbstractPrompt {
       borderWidth: 0, borderRadius: 20, fill: Color.gray.withA(0.8),
       fontColor: Color.gray.darker(), padding: Rectangle.inset(10,4)
     }));
-    if (!input && historyId && useLastInput)
-      inputLine.textString = arr.last(inputLine.inputHistory.items);
+    if (historyId && useLastInput) {
+      var lastInput = arr.last(inputLine.inputHistory.items)
+      if (lastInput) inputLine.textString = lastInput;
+    }
     inputLine.gotoDocumentEnd();
     inputLine.scrollCursorIntoView();
     var inputWidth = inputLine.textBounds().width;
@@ -440,27 +444,31 @@ export class EditListPrompt extends ListPrompt {
   }
 
   async addItemToList() {
-    var toAdd = await this.world().prompt(
-      "Input to add to the list", {historyId: "EditListPrompt-input-history"});
+    var list = this.get("list"),
+        input = list.selection ? list.items[list.selectedIndex].string : "",
+        toAdd = await this.world().prompt(
+          "Input to add to the list", {historyId: "EditListPrompt-input-history", input});
     if (!toAdd) return;
     var list = this.get("list"),
         insertAt = list.selection ? list.selectedIndex+1 : list.items.length;
     list.addItemAt(toAdd, insertAt);
     list.focus();
+    list.selectedIndex = insertAt;
   }
 
   onKeyDown(evt) {
     switch (evt.keyCombo) {
       case 'Ctrl-G': this.get("list").selection = null; evt.stop(); break;
       case 'Shift-=': case '+': this.addItemToList(); evt.stop(); break;
-      case 'Delete': case 'Backspace': this.removeSelectedItemsFromList(); evt.stop(); break;
+      case '-': case 'Delete': case 'Backspace': this.removeSelectedItemsFromList(); evt.stop(); break;
     }
     return super.onKeyDown(evt);
   }
 
   resolve() {
-    return this.state.answer.resolve(this.get("list").values);
+    var {values: list, selections} = this.get("list");
+    return this.state.answer.resolve({list, selections});
   }
 
-  reject() { return this.state.answer.resolve(null); }
+  reject() { return this.state.answer.resolve({list: [], selections: [], status: "canceled"}); }
 }
