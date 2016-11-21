@@ -12,8 +12,8 @@ import { Icon } from '../icons.js';
 const itemExtent = pt(24,24);
 
 const guideGradient = [[0, Color.orange.withA(0)],
-                       [0.1, Color.orange],
-                       [0.9, Color.orange],
+                       [0.2, Color.orange],
+                       [0.8, Color.orange],
                        [1.0, Color.orange.withA(0)]]
 
 class HaloItem extends Morph {
@@ -457,14 +457,14 @@ export class Halo extends Morph {
 
       return arr.zip(
          arr.rotate(
-      [["topLeft", delta => delta, delta => delta.negated()],
-        ["topCenter", delta => delta, delta => delta.withX(0).negated()],
-        ["topRight", delta => delta, delta => delta.withX(0).negated()],
-        ["rightCenter", delta => delta, delta => pt(0,0)],
-        ["bottomRight", delta => delta, delta => pt(0,0)],
-        ["bottomCenter", delta => delta, delta => pt(0,0)],
-        ["bottomLeft", delta => delta, delta => delta.withY(0).negated()],
-        ["leftCenter", delta => delta, delta => delta.withY(0).negated()]], 
+      [["topLeft", delta => delta.negated()],
+        ["topCenter", delta => delta.withX(0).negated()],
+        ["topRight", delta => delta.withX(0).negated()],
+        ["rightCenter", delta => pt(0,0)],
+        ["bottomRight", delta => pt(0,0)],
+        ["bottomCenter", delta => pt(0,0)],
+        ["bottomLeft", delta => delta.withY(0).negated()],
+        ["leftCenter", delta => delta.withY(0).negated()]], 
        offset),
       [["nwse-resize", "topLeft"],
         ["ns-resize", "topCenter"],
@@ -490,6 +490,43 @@ export class Halo extends Morph {
        );
    }
 
+   proportionalDelta(corner, delta, bounds) {
+    const {width, height} = bounds,
+    diagonals  = {
+       topLeft: pt(-1,-1), topCenter: pt(0,-1), topRight: pt(1,-1),
+       leftCenter: pt(-1, 0),                   rightCenter: pt(1,0),
+       bottomLeft: pt(-1, 1), bottomCenter: pt(0,1), bottomRight: pt(1,1)
+    
+    }, w = width / Math.max(width, height), h = height / Math.max(height, width), 
+    gradients = {
+       topLeft: pt(-w,-h), topCenter: pt(1/(2 * height/width),-1), topRight: pt(w,-h),
+       leftCenter: pt(-1,height/(2 * width)),   rightCenter: pt(1,height/(3 * width)),
+       bottomLeft: pt(-w,h), bottomCenter: pt(1/(2 * height/width),1), bottomRight: pt(w,h)
+    },
+    diagonal = diagonals[corner], gradient = gradients[corner];
+    return gradient.scaleBy(diagonal.dotProduct(delta)/diagonal.dotProduct(diagonal));
+  }
+
+   updateBoundsFor(corner, proportional, delta, bounds, origin) {
+      var proportionalMask = {
+         topLeft: rect(-1,-1,1,1),
+         topCenter: proportional ? rect(1,-1,0,1) : rect(0,-1,0,1),
+         topRight: rect(0,-1,1,1),
+         rightCenter: proportional ? rect(0,1,1,1) : rect(0,0,1,0),
+         bottomRight: rect(0,0,1,1),
+         bottomCenter: proportional ? rect(1,0,0,1) : rect(0,0,0,1),
+         bottomLeft: rect(-1,0,1,1),
+         leftCenter: proportional ? rect(-1,1,1,0) : rect(-1,0,1,0)
+        },
+        {x,y,width,height} = proportionalMask[corner],
+        delta = proportional ? this.proportionalDelta(corner, delta, bounds) : delta,
+        offsetRect = rect(delta.x * x, delta.y * y, delta.x * width, delta.y * height),
+        oldPosition = this.target.position;
+       this.target.setBounds(bounds.insetByRect(offsetRect));
+       this.target.origin = origin.addPt({x: -offsetRect.x, y: -offsetRect.y});
+       this.target.position = oldPosition;
+   }
+
    placeHandleFor([corner, deltaMask, originDelta], [nativeCursor, location]) {
        const target = this.target,
              positionInHalo = () => this.borderBox
@@ -512,59 +549,41 @@ export class Halo extends Morph {
            borderWidth: 1,
            borderColor: Color.black,
            alignInHalo() { this.center = positionInHalo() },
-           onKeyDown(evt) { this.proportionalMode(evt.isShiftDown()); },
-           onKeyUp(evt) { this.proportionalMode(evt.isShiftDown()); },
+           onKeyUp(evt) { if (this.halo.activeButton == this) this.halo.toggleDiagonal(corner, evt.isShiftDown()) },
+           onKeyDown(evt) { if (this.halo.activeButton == this) this.halo.toggleDiagonal(corner, evt.isShiftDown()) },
            onDragStart(evt) {
-               this.init(evt.isShiftDown());
+               this.init(evt.position, evt.isShiftDown());
            },
            onDragEnd(evt) { 
                this.stop(evt.isShiftDown());
            },
            onDrag(evt) {
-              this.update(evt.state.dragDelta, evt.isShiftDown());
+              this.update(evt.position, evt.isShiftDown());
            },
-           init(proportional=false) {
+           init(startPos, proportional=false) {
+             this.startPos = startPos; this.startBounds = this.halo.target.bounds();
+             this.startOrigin = this.halo.target.origin;
              this.savedLayout = this.halo.layout;
-             this.proportionalMode(proportional);
              this.halo.activeButton = this; 
              this.tfm = this.halo.target.getGlobalTransform().inverse();
              this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
+             this.halo.toggleDiagonal(proportional);
            },
-           update(dragDelta, shiftDown=false) {
+           update(currentPos, shiftDown=false) {
              var target = this.halo.target,
                  oldPosition = target.position,
-                 oldBounds = target.innerBounds(),
-                 oldPart = oldBounds.partNamed(corner),
-                 {x,y} = deltaMask(dragDelta),
+                 {x,y} = this.startPos.subPt(currentPos),
                  delta = this.tfm.transformDirection(
                            pt(x * Math.cos(this.offsetRotation),
-                              y * Math.cos(this.offsetRotation))),
-                 delta = this.proportionalMode(shiftDown, delta),
-                 {x: ix,y: iy,width,height} = oldBounds.withPartNamed(corner, oldPart.addPt(delta));
-              target.extent = pt(width, height);
-              target.origin = target.origin.addPt(originDelta(delta));
-              target.position = oldPosition;
+                              y * Math.cos(this.offsetRotation)));
+              this.halo.updateBoundsFor(corner, shiftDown, delta, this.startBounds, this.startOrigin);
+              this.halo.toggleDiagonal(shiftDown, corner);
            },
            stop(proportional) {
               this.halo.activeButton = null; 
-              this.proportionalMode(false);
               this.halo.alignWithTarget();
-           },
-           proportionalMode(active, delta=null) {
-            this.focus();
-            if (active) {
-              const diagonal = this.halo.toggleDiagonal(true, corner);
-              if (delta) {
-                delta = diagonal.scaleBy(
-                          diagonal.dotProduct(delta) /
-                          diagonal.dotProduct(diagonal));
-              }
-              return delta;
-            } else {
-              this.halo.toggleDiagonal(false, corner);
-              return delta;
-            }
-          }
+              this.halo.toggleDiagonal(false);
+           }
        });
    }
 
@@ -984,14 +1003,14 @@ export class Halo extends Morph {
         bounds = this.localize(pt(x,y))
                      .extent(pt(width, height))
                      .scaleRectTo(this.innerBounds()),
-        vertices = {"topLeft": [bounds.bottomRight(), bounds.topLeft()],
-                    "topRight": [bounds.bottomLeft(), bounds.topRight()],
-                    "bottomRight": [pt(0,0), bounds.extent()],
-                    "bottomLeft": [bounds.topRight(), bounds.bottomLeft()]};
+        vertices = {topLeft: [pt(width, height), pt(0,0)],
+                    topRight: [pt(0, height), pt(width, 0)],
+                    bottomRight: [pt(0,0), pt(width, height)],
+                    bottomLeft: [pt(width, 0), pt(0, height)]};
         
     if (active) {
       if (!vertices[corner]) {
-      
+         return rect(1,1,1,1);
       }
       const [v1, v2] = vertices[corner];
       if (diagonal) {
@@ -1005,9 +1024,9 @@ export class Halo extends Morph {
           bounds,
           gradient: guideGradient,
           vertices: [v1, v2]}));
+        diagonal.setBounds(bounds);
         diagonal.animate({opacity: 1, duration: 500});
       }
-      return v2.subPt(v1);
     } else {
       diagonal && diagonal.fadeOut(500);
     }
