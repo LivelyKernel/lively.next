@@ -333,12 +333,12 @@ export class Morph {
   set visible(value)  { this.addValueChange("visible", value); }
 
   get dropShadow()      { return this.getProperty("dropShadow"); }
-  set dropShadow(value) { 
+  set dropShadow(value) {
       if (value && !value.isShadowObject) {
         if (!value.isShadowObject) value = new ShadowObject(value);
         value.morph = this;
       }
-      this.addValueChange("dropShadow", value); 
+      this.addValueChange("dropShadow", value);
   }
 
   get styleClasses()       { return this.getProperty("styleClasses").slice(); }
@@ -1273,9 +1273,9 @@ export class Path extends Morph {
 
   onChange(change) {
     if (change.prop == "extent"
-        && change.value 
+        && change.value
         && change.prevValue
-        && !this.adjustingVertices) 
+        && !this.adjustingVertices)
         this.adjustVertices(change.value.scaleByPt(change.prevValue.inverted()))
     if (["vertices", "borderWidth"].includes(change.prop)) {
        this.adjustingVertices = true;
