@@ -11,6 +11,7 @@ export default class CommandInterface {
   }
 
   constructor() {
+    this.commandString = "";
     this.process = null;
     this.stdout = "";
     this.stderr = "";
@@ -20,14 +21,20 @@ export default class CommandInterface {
     events.makeEmitter(this);
   }
 
+  get isShellCommand() { return true; }
+
   get status() {
     if (!this.process) return "not started";
     if (this.exitCode === undefined) return `running, pid ${this.pid}`;
-    return `exited, pid ${this.pid}, ${this.exitCode}`;
+    return `exited ${this.exitCode}, pid ${this.pid}`;
   }
 
   get pid() {
     return this.process ? this.process.pid : null;
+  }
+
+  get output() {
+    return this.stdout + (this.stderr ? "\n" + this.stderr : "");
   }
 
   isRunning() {
@@ -53,7 +60,7 @@ export default class CommandInterface {
   kill(signal = "KILL") {}
 
   toString() {
-    return `${this.constructor.name}(${this.status})`;
+    return `${this.constructor.name}(${this.commandString}, ${this.status})`;
   }
 
 }

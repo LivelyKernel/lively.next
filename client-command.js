@@ -1,8 +1,36 @@
 import CommandInterface from "./command-interface.js";
-import { promise, arr } from "lively.lang";
+import { promise, arr, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
 var debug = true;
+
+export function runCommand(commandString, opts = {}) {
+  var {l2lClient} = opts;
+
+  if (!l2lClient)
+    throw new Error("lively.shell client side runCommand needs opts.l2lClient!")
+
+  ClientCommand.installLively2LivelyServices(l2lClient);
+  var cmd = new ClientCommand(l2lClient);
+  cmd.spawn({command: commandString, ...obj.dissoc(opts, ["l2lClient"])});
+  return cmd;
+}
+
+var dirCache = {}
+export function defaultDirectory(l2lClient) {
+  if (dirCache[l2lClient.trackerId]) return dirCache[l2lClient.trackerId];
+  return Promise.resolve().then(async () => {
+    var {data: {defaultDirectory}} = await l2lClient.sendToAndWait(l2lClient.trackerId, "lively.shell.info", {});
+    return dirCache[l2lClient.trackerId] = defaultDirectory;
+  })
+}
+
+// await serverEnv()
+export async function env(l2lClient) {
+  var {data: {env}} = await l2lClient.sendToAndWait(l2lClient.trackerId, "lively.shell.env", {})
+  return env;
+}
+
 
 export default class ClientCommand extends CommandInterface {
 
@@ -18,15 +46,18 @@ export default class ClientCommand extends CommandInterface {
     this.l2lClient = l2lClient;
   }
 
-  async spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null}) {  
-  
+  async spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null}) {
+
     this.debug && console.log(`${this} spawning ${cmdInstructions.command}`);
     this.debug && this.whenStarted().then(() => console.log(`${this} started`));
     this.debug && this.whenDone().then(() => console.log(`${this} exited`));
 
     arr.pushIfNotIncluded(this.constructor.commands, this);
 
-    var con = this.l2lClient
+    var cmd = cmdInstructions.command;
+    this.commandString = Array.isArray(cmd) ? cmd.join("") : cmd;
+
+    var con = this.l2lClient;
     var {data: {status, error, pid}} = await con.sendToAndWait(
                                         con.trackerId, "lively.shell.spawn", cmdInstructions);
     if (error) {
@@ -39,6 +70,7 @@ export default class ClientCommand extends CommandInterface {
 
     this.process = {pid};
     debug && console.log(`[${this}] got pid ${pid}`);
+    signal(this, "pid", pid);
 
     this._whenStarted.resolve();
 
@@ -70,17 +102,14 @@ export default class ClientCommand extends CommandInterface {
   }
 
   onClose(code) {
-console.log("onClose| removing " + this)
     arr.remove(this.constructor.commands, this);
     this.exitCode = code;
     this.emit('close', code);
     signal(this, 'close', code);
     this._whenDone.resolve(this);
   }
-  
-  onError(err) {
-console.log("onError| removing " + this)
 
+  onError(err) {
     arr.remove(this.constructor.commands, this);
     this.stderr += err.stack;
     this.exitCode = 1;

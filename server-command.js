@@ -1,4 +1,5 @@
 import CommandInterface from "./command-interface.js"
+import { stripAnsiAttributes } from "./ansi-color-parser.js"
 import { promise, arr } from "lively.lang";
 import { signal } from "lively.bindings";
 import { spawn, exec } from "child_process";
@@ -107,19 +108,24 @@ export default class ServerCommand extends CommandInterface {
     this.debug = debug;
   }
 
-  spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null}) {
+  spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null, stripAnsiAttributes: true}) {
+
+    var options = {
+      env: null, cwd: null, stdin: null,
+      stripAnsiAttributes: true,
+      ...cmdInstructions
+    }
 
     if (this.process) {
       throw new Error(`${this} already has process attached, won't spawn again!`);
     }
 
-    var {command, env, cwd, stdin} = cmdInstructions
+    var command = cmdInstructions.command;
+    var {env, cwd, stdin} = options;
     env = Object.assign(Object.create(defaultEnv), env);
     cwd = cwd || process.cwd();
 
     prepareForAskpass(env)
-
-    var options = {env, cwd, stdio: 'pipe', detached: true};
 
     command = Array.isArray(command) ? command.join(" ") : String(command);
 
@@ -137,7 +143,7 @@ export default class ServerCommand extends CommandInterface {
       ["cmd", ["/C", command]] :
       ["/bin/bash", ["-c", command]]
 
-    var proc = spawn(command, args, options);
+    var proc = spawn(command, args, {env, cwd, stdio: 'pipe', detached: true});
 
     if (this.debug) console.log('Running command: "%s" (%s)', [command].concat(args).join(' '), proc.pid);
 
@@ -146,12 +152,12 @@ export default class ServerCommand extends CommandInterface {
         proc.stdin.end(stdin);
     }
 
-    this.attachTo(proc);
+    this.attachTo(proc, options);
 
     return this;
   }
 
-  attachTo(proc) {
+  attachTo(proc, options = {stripAnsiAttributes: true}) {
     this.process = proc;
 
     arr.pushIfNotIncluded(this.constructor.commands, this);
@@ -164,6 +170,7 @@ export default class ServerCommand extends CommandInterface {
     proc.stdout.on('data', (data) => {
       this.debug && console.log('STDOUT: ' + data);
       var arg = String(data);
+      if (options.stripAnsiAttributes) arg = stripAnsiAttributes(arg);
       this.stdout += arg;
       this.emit('stdout', arg);
       signal(this, 'stdout', arg);
@@ -172,9 +179,10 @@ export default class ServerCommand extends CommandInterface {
     proc.stderr.on('data', (data) => {
       this.debug && console.log('STDERR: ' + data);
       var arg = String(data);
+      if (options.stripAnsiAttributes) arg = stripAnsiAttributes(arg);
       this.stderr += arg;
-      this.emit('output', arg);
-      signal(this, 'output', arg);
+      this.emit('stderr', arg);
+      signal(this, 'stderr', arg);
     });
 
     proc.on('close', (code) => {
@@ -258,7 +266,16 @@ var L2LServices = {
       }
     }
     typeof ackFn === "function" && ackFn(answer);
+  },
+
+  async "lively.shell.info"(tracker, _, ackFn) {
+    ackFn({defaultDirectory: process.cwd()});
+  },
+
+  async "lively.shell.env"(tracker, _, ackFn) {
+    ackFn({env: process.env});
   }
+
 }
 
 
