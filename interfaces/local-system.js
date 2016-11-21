@@ -185,7 +185,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   // search
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   searchInPackage(packageURL, searchString, options) {
-    return modules.searchInPackage(packageURL, searchString, options);
+    return modules.getPackage(packageURL).search(searchString, options);
   }
 
   // -=-=-=-

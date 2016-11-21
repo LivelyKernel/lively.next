@@ -57,20 +57,20 @@ export async function interactivelyRemoveModule(system, requester, moduleName) {
   return p;
 }
 
-export async function interactivelyAddModule(system, requester, relatedPackageOrModule) {
+export async function interactivelyAddModule(system, requester, relatedPackageOrModuleName) {
 
   var root = new URL((await system.getConfig()).baseURL);
 
-  if (relatedPackageOrModule) {
-    var p = (await system.getPackage(relatedPackageOrModule))
-         || (await system.getPackageForModule(relatedPackageOrModule))
+  if (relatedPackageOrModuleName) {
+    var p = (await system.getPackage(relatedPackageOrModuleName))
+         || (await system.getPackageForModule(relatedPackageOrModuleName))
     if (p) root = new URL(p.address);
   }
 
   var candidates = await _searchForExistingFiles(requester, String(root), p);
 
   if (candidates.includes("[create new module]")) {
-    var fullname = await _askForModuleName(system, String(root), requester.world());
+    var fullname = await _askForModuleName(system, relatedPackageOrModuleName || String(root), requester.world());
     candidates = [fullname];
   }
 
