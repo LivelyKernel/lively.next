@@ -265,6 +265,10 @@ class SelectionTarget extends Morph {
       this.initialized = true;
    }
 
+   selectsMorph(morph) {
+     return this.selectedMorphs.includes(morph);
+   }
+
    get isHaloItem() { return true }
 
    get isMorphSelection() { return true }
@@ -355,7 +359,7 @@ export class Halo extends Morph {
       fill: Color.transparent,
     });
     this.borderBox = this.addMorph({
-      isHalo: true,
+      isHalo: true, isHaloItem: true,
       name: "border-box", fill: Color.transparent, 
       borderColor: Color.red, borderWidth: 2
     });
@@ -367,6 +371,45 @@ export class Halo extends Morph {
     this.initLayout();
     connect(this.target, "onChange", this, "alignWithTarget")
   }
+
+  get isHaloItem() { return true }
+
+  addMorphToSelection(morph) {
+      const currentTargets = this.target.isMorphSelection ? 
+                                  this.target.selectedMorphs : [this.target];
+      this.world().showHaloForSelection([...currentTargets, morph], this.state.pointerId);
+      this.remove();
+  }
+
+  removeMorphFromSelection(morph) {
+     if (this.target.isMorphSelection) {
+        arr.remove(this.target.selectedMorphs, morph);
+        this.world().showHaloForSelection(this.target.selectedMorphs, this.state.pointerId);
+     }
+     this.remove();
+  }
+
+  isAlreadySelected(morph) {
+     return this.target == morph || 
+            (this.target.isMorphSelection && this.target.selectsMorph(morph));
+  }
+
+  onMouseDown(evt) {
+     const target = evt.state.clickedOnMorph;
+     if (!evt.isCommandKey() && 
+         target == this.borderBox) return this.remove();
+     if (evt.isShiftDown()) {
+         const actualMorph = this.target.isMorphSelection ? 
+           this.target.morphBeneath(evt.position) : this.morphBeneath(evt.position);
+         this.isAlreadySelected(actualMorph) ?
+             this.removeMorphFromSelection(actualMorph) :
+             this.addMorphToSelection(actualMorph);
+     }
+     if (target == this.borderBox && evt.isCommandKey()) {
+        this.target.owner && this.world().showHaloFor(this.target.owner, evt.domEvt.pointerId);
+        this.remove();
+     }
+  } 
 
   prepareTarget(target) {
      if (obj.isArray(target)) {

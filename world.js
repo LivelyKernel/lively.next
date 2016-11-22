@@ -551,6 +551,11 @@ export class World extends Morph {
   onMouseDown(evt) {
     var target = evt.state.clickedOnMorph;
 
+    if (!target.isHaloItem && evt.halo && evt.isCommandKey() && evt.isShiftDown()) {
+       evt.halo.addMorphToSelection(target);
+       return;  
+    }
+
     var addHalo = target.halosEnabled && !evt.halo && evt.isCommandKey();
     if (addHalo) {
       this.showHaloFor(target, evt.domEvt.pointerId);
@@ -566,13 +571,6 @@ export class World extends Morph {
         this.showHaloFor(target, evt.domEvt.pointerId);
         return;
       }
-      // propagate to halo to owner
-      addHalo = target == evt.halo.borderBox && evt.isCommandKey() && evt.halo.target.owner;
-      if (addHalo) {
-        this.showHaloFor(evt.halo.target.owner, evt.domEvt.pointerId);
-        return
-      }
-      return;
     }
 
     removeHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
