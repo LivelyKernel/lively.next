@@ -6,17 +6,20 @@ import { morph } from "../index.js";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { num } from "lively.lang";
 
-var world, submorph1, submorph2, eventDispatcher;
+var world, submorph1, submorph2, submorph3, eventDispatcher;
 function createDummyWorld() {
   world = morph({
     type: "world", name: "world", extent: pt(1000,1000),
     submorphs: [{
         name: "submorph1", extent: pt(100,100), position: pt(10,10), fill: Color.red,
         submorphs: [{name: "submorph2", extent: pt(20,20), position: pt(5,10), fill: Color.green}]
+      }, {
+         name: "submorph3", extent: pt(100,100), position: pt(400,400), fill: Color.blue,
       }]
   });
   submorph1 = world.submorphs[0];
   submorph2 = submorph1.submorphs[0];
+  submorph3 = world.get("submorph3");
   return world;
 }
 
@@ -55,6 +58,26 @@ describe("halos", () => {
           && item != halo.originHalo() && !item.isHandle && item != halo.borderBox);
     expect(innerButton).equals(undefined, `halo item ${innerButton} is inside the bounds of its target`);
   });
+
+  it("can select multiple morphs", () => {
+     var halo = world.showHaloForSelection([submorph1, submorph2]);
+     expect(halo.target.selectedMorphs).equals([submorph1, submorph2]);
+     expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds().union(submorph2.globalBounds()));
+  });
+
+  it("can select and deselect morphs from selection",() => {
+    var halo = world.showHaloForSelection([submorph1, submorph2]);
+    halo = halo.addMorphToSelection(submorph3);
+    expect(halo.target.selectedMorphs).equals([submorph1, submorph2, submorph3]);
+    expect(halo.borderBox.globalBounds()).equals(submorph1.globalBounds()
+                                 .union(submorph2.globalBounds())
+                                 .union(submorph3.globalBounds()));
+    halo = halo.removeMorphFromSelection(submorph2);
+    expect(halo.target.selectedMorphs).equals([submorph1, submorph3]);
+    expect(halo.borderBox.globalBounds()).equals(
+                                  submorph1.globalBounds()
+                                 .union(submorph3.globalBounds()));
+  })
 
   it("name shows name", () => {
     var halo = world.showHaloFor(submorph1);

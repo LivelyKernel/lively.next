@@ -375,16 +375,17 @@ export class Halo extends Morph {
   get isHaloItem() { return true }
 
   addMorphToSelection(morph) {
-      const currentTargets = this.target.isMorphSelection ? 
+      const world = this.world(), 
+            currentTargets = this.target.isMorphSelection ? 
                                   this.target.selectedMorphs : [this.target];
-      this.world().showHaloForSelection([...currentTargets, morph], this.state.pointerId);
       this.remove();
+      return world.showHaloForSelection([...currentTargets, morph], this.state.pointerId);
   }
 
   removeMorphFromSelection(morph) {
      if (this.target.isMorphSelection) {
         arr.remove(this.target.selectedMorphs, morph);
-        this.world().showHaloForSelection(this.target.selectedMorphs, this.state.pointerId);
+        return this.world().showHaloForSelection(this.target.selectedMorphs, this.state.pointerId);
      }
      this.remove();
   }
