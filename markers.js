@@ -57,7 +57,7 @@ class BoundsMarker extends Morph {
   }
 
   constructor() {
-    super({borderWidth: 0, fill: null, reactsToPointer: false});
+    super({borderWidth: 0, fill: Color.transparent, reactsToPointer: false});
 
     // this.ignoreEvents();
   }
@@ -115,9 +115,12 @@ class BoundsMarker extends Morph {
           r.bottomRight().addXY(-markerLength, -markerWidth).extent(pt(markerLength, markerWidth)),
           r.bottomLeft(). addXY(0,-markerWidth).             extent(pt(markerLength, markerWidth)),
           r.bottomLeft(). addXY(0, -markerLength).           extent(pt(markerWidth, markerLength))];
-    corners.forEach((corner, i) => animated ? 
-                    corner.animate({bounds: boundsForMarkers[i], duration: 300}) : 
-                    corner.setBounds(boundsForMarkers[i]));
+    corners.forEach((corner, i) => corner.setBounds(boundsForMarkers[i]));
+    if (animated) {
+       this.adjustOrigin(r.center());
+       this.opacity = 0, this.scale = 1.5;
+       this.animate({opacity: 1, scale: 1, duration: 300});
+    }
     return this;
   }
 
