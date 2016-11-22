@@ -551,7 +551,9 @@ export class World extends Morph {
   onMouseDown(evt) {
     var target = evt.state.clickedOnMorph;
 
-    if (!target.isHaloItem && evt.halo && evt.isCommandKey() && evt.isShiftDown()) {
+    if (!target.isHaloItem && 
+         evt.halo && evt.halo.borderBox != target &&
+         evt.isCommandKey() && evt.isShiftDown()) {
        evt.halo.addMorphToSelection(target);
        return;  
     }

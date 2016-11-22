@@ -359,7 +359,7 @@ export class Halo extends Morph {
       fill: Color.transparent,
     });
     this.borderBox = this.addMorph({
-      isHalo: true, isHaloItem: true,
+      isHalo: true,
       name: "border-box", fill: Color.transparent, 
       borderColor: Color.red, borderWidth: 2
     });
@@ -383,11 +383,12 @@ export class Halo extends Morph {
   }
 
   removeMorphFromSelection(morph) {
+     const world = this.world();
+     this.remove();
      if (this.target.isMorphSelection) {
         arr.remove(this.target.selectedMorphs, morph);
-        return this.world().showHaloForSelection(this.target.selectedMorphs, this.state.pointerId);
+        return world.showHaloForSelection(this.target.selectedMorphs, this.state.pointerId);
      }
-     this.remove();
   }
 
   isAlreadySelected(morph) {
@@ -405,6 +406,7 @@ export class Halo extends Morph {
          this.isAlreadySelected(actualMorph) ?
              this.removeMorphFromSelection(actualMorph) :
              this.addMorphToSelection(actualMorph);
+         return;
      }
      if (target == this.borderBox && evt.isCommandKey()) {
         this.target.owner && this.world().showHaloFor(this.target.owner, evt.domEvt.pointerId);
