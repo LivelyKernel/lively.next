@@ -373,7 +373,8 @@ export class Rectangle {
   }
 
   withTopRight(p) {
-    return rect(p.addXY(-this.width,0), p.addXY(0, this.height));
+    //return rect(p.addXY(-this.width,0), p.addXY(0, this.height));
+    return Rectangle.fromAny(this.bottomLeft(), p);
   }
 
   withBottomRight(p) {
