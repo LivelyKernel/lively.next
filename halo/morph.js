@@ -611,6 +611,7 @@ export class Halo extends Morph {
              this.startPos = startPos; this.startBounds = this.halo.target.bounds();
              this.startOrigin = this.halo.target.origin;
              this.savedLayout = this.halo.layout;
+             this.halo.layout = null;
              this.halo.activeButton = this; 
              this.tfm = this.halo.target.getGlobalTransform().inverse();
              this.offsetRotation = num.toRadians(this.halo.getGlobalRotation() % 45); // add up rotations
@@ -627,6 +628,7 @@ export class Halo extends Morph {
               this.halo.toggleDiagonal(shiftDown, corner);
            },
            stop(proportional) {
+              this.halo.layout = this.savedLayout;
               this.halo.activeButton = null; 
               this.halo.alignWithTarget();
               this.halo.toggleDiagonal(false);
@@ -835,11 +837,11 @@ export class Halo extends Morph {
 
       detachFromLayout() {
         this.savedLayout = this.halo.layout;
-        this.halo.layout.col(0).row(6).group.morph = null;
+        this.halo.layout = null;
       },
       
       attachToLayout() {
-        this.halo.layout.col(0).row(6).group.morph = this;
+        this.halo.layout = this.savedLayout;
       },
 
       // events
