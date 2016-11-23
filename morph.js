@@ -146,6 +146,10 @@ export class Morph {
     return this.env.changeManager.recordChangesStopForMorph(this, id);
   }
 
+  withMetaDo(meta, doFn) {
+    return this.env.changeManager.doWithValueChangeMeta(meta, this, doFn);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // undo
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

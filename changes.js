@@ -147,6 +147,7 @@ export class ChangeManager {
     this.changeRecorders = {};
 
     this.changeGroupStack = [];
+    this.defaultMeta = {};
   }
 
   changesFor(morph) { return this.changes.filter(c => c.target === morph); }
@@ -156,8 +157,15 @@ export class ChangeManager {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interface for adding changes, used by morphs
 
+  doWithValueChangeMeta(meta, morph, doFn) {
+     this.defaultMeta = meta;
+     const res = doFn(morph);
+     this.defaultMeta = {};
+     return res;
+  }
+
   addValueChange(morph, prop, value, meta) {
-    var change = new ValueChange(morph, prop, value, meta);
+    var change = new ValueChange(morph, prop, value, {...this.defaultMeta, ...meta});
     return this._record(morph, change);
   }
 
