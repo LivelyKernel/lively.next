@@ -21,21 +21,19 @@ if (isMain) {
 
 lively.modules.registerPackage(".")
   .then(() => console.log(`[lively.server] ${step++}. preparing system...`))
+  
+  // 1. This loads the lively system
   .then(() => System.import("lively.resources"))
   .then(resources => resources.ensureFetch())
   .then(() => lively.modules.importPackage("lively-system-interface"))
 
+  // 2. this loads and starts the server
   .then(() => console.log(`[lively.server] ${step++}. starting server...`))
   .then(() => System.import("./server.js"))
-  .then((server) => server.ensure({port, hostname}))
-  .then(state =>
-    System.import("lively.shell/server-command.js")
-      .then(serverCommand => serverCommand.default.installLively2LivelyServices(state.l2lTracker))
-      .then(() => state))
-  .then((state) => console.log(`[lively.server] ${step++}. Lively server at ${state.hostname}:${state.port} running`))
+  .then(serverMod => serverMod.start({port, hostname}))
+  .then((server) => console.log(`[lively.server] ${step++}. ${server} running`))
 
   .catch(err => {
     console.error(`Error starting server: ${err.stack}`);
     process.exit(1);
   });
-

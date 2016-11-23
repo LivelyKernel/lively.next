@@ -1,165 +1,289 @@
-import { promise } from "lively.lang";
+import { promise, arr, obj } from "lively.lang";
 import * as http from "http";
-import socketio from "socket.io";
 
-import Tracker from "lively.2lively/tracker.js";
+// Array.from(LivelyServer.servers.keys())
+// var s = LivelyServer.ensure({hostname: "0.0.0.0", port: "9010"})
+// var s = LivelyServer.ensure({hostname: "localhost", port: "9010"})
+// s.server.listeners("request")
+// s.findPlugin("l2l").l2lNamespace
+// s.findPlugin("socketio").io.path()
 
-// System.decanonicalize("socket.io", "file:///Users/robert/Lively/lively-dev/lively.server/server.js");
 
-// Array.from(serverStateMap.keys())
-// var tracker = find({hostname: "0.0.0.0", port: 9010}).l2lTracker;
-// Array.from(tracker._incomingOrderNumberingBySenders)
-// Array.from(tracker._outgoingOrderNumberingByTargets)
+import CorsPlugin from "./plugins/cors.js";
+import SocketioPlugin from "./plugins/socketio.js";
+import EvalPlugin from "./plugins/eval.js";
+import L2lPlugin from "./plugins/l2l.js";
+import ShellPlugin from "./plugins/remote-shell.js";
 
-var debug = false;
 
-const serverStateMap = serverStateMap || new Map();
+export async function start(opts = {}) {
+  // opts = {port, hostname, ...}
 
-export const defaultOptions = {
-  l2lNamespace: "l2l",
-  hostname: "localhost",
-  port: 3000,
-  socketIOPath: '/lively-socket.io'
-};
-
-function serverKey(opts) {
-  var {hostname, port} = {...defaultOptions, ...opts};
-  return `${hostname}:${port}`;
-}
-
-export function find(options) {
-  return serverStateMap.get(serverKey(options));
-}
-
-export function ensure(options) {
-  return find(options) || start(options);
-}
-
-export async function close(serverState = {}) {
-  var {server, io, l2lTracker, hostname, port} = serverState;
-
-  debug && console.log(`[lively.server] closing server ${hostname}:${port}`)
-
-  if (hostname) {
-    if (serverState !== find({hostname, port}))
-      console.warn("Stored server state does not match serverState passed to close()!");
-    serverStateMap.delete(serverKey({hostname, port}));
+  opts = {
+    plugins: [],
+    ...opts
   }
 
-  try {
-    await l2lTracker.remove();
-    debug && console.log(`[lively.server] l2l tracker ${l2lTracker} stopped`)
-  } catch (e) {
-    console.error(`Error closing l2l tracker ${l2lTracker}: ${e.stack}`);
-  }
+  var server = LivelyServer.ensure(opts);
+  await server.whenStarted();
 
-  try {
-    await promise.timeout(300, new Promise(resolve => server.close(resolve)));
-    debug && console.log(`[lively.server] http server stopped`)
-  } catch (e) {
-    // hmm timeout in server close doesn't seem to be a problem...
-    debug && console.error(`Error closing http server: ${e.stack}`);
-  }
+  server.addPlugins([
+    new ShellPlugin(opts),
+    new EvalPlugin(),
+    new CorsPlugin(),
+    new L2lPlugin(),
+    new SocketioPlugin(opts),
+  ]);
 
-  try {
-    io.close();
-    debug && console.log(`[lively.server] socket.io stopped`)
-  } catch (e) {
-    console.error(`Error closing socket.io server: ${e.stack}`);
-  }
+  return server;
 }
 
-export async function start(options) {
-  options = {...defaultOptions, ...options};
-  var {hostname, port, socketIOPath} = options,
-      server = http.createServer(),
-      io = socketio(server, {path: socketIOPath}),
-      l2lTracker = Tracker.ensure({namespace: options.l2lNamespace, io, hostname, port}),
-    		state = {server, io, l2lTracker, ...options};
+export default class LivelyServer {
 
-  serverStateMap.set(serverKey({hostname, port}), state);
+  static canonicalizeOptions(opts) {
+    return {
+      hostname: "localhost",
+      port: 9101,
+      debug: true,
+      ...opts
+    }
+  }
 
-  // we dance this little dance to ensure that our handlers are added before
-  // the socket.io handler so we can inject cors headers. In newer nodes
-  // emitter.prependListener can be used instead
-  var listeners = server.listeners("request");
-  server.removeAllListeners("request");
-  server.on("request", (req, res) =>
-    handlers(socketIOPath).reduceRight((next, handler) =>
-      () => handler(req, res, next), () => {})());
-  listeners.forEach(ea => server.on("request", ea));
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // server instance storage
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  server.listen(port, hostname);
-  
-  l2lTracker.whenOnline(1000)
-    .then(() => console.log(`[lively.server] started ${l2lTracker}`))
-    .catch(err => console.error(`Error starting l2l tracker ${err.stack}`))
+  static get servers() {
+    return this._servers || (this._servers = new Map());
+  }
 
-  return state;
-}
+  static _key(opts) {
+    var {hostname, port} = this.canonicalizeOptions(opts);
+    return `${hostname}:${port}`;
+  }
 
-function handlers(socketIOPath) {
-  // late bound
-  return [
-    cors,
-    ignoreSocketIO(socketIOPath),
-    evalHandler("/eval"),
-    defaultHandler("/")
-  ]
-}
+  static _register(server) { this.servers.set(this._key(server), server); }
+  static _unregister(server) { this.servers.delete(this._key(server)); }
 
-function defaultHandler(route) {
-  return function httpHandler(req, res, next) {
+  static find(opts) { return this.servers.get(this._key(opts)); }
+  static ensure(opts) { return this.find(opts) || new this(opts).start(); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  constructor(opts) {
+    opts = this.constructor.canonicalizeOptions(opts);
+    this.hostname = opts.hostname;
+    this.port = opts.port;
+    this.debug = opts.debug;
+    this.plugins = opts.plugins || [];
+
+    // state = "not started", "listening", "starting", "closed"
+    this._state = "not started";
+    this._requestFn = null;
+  }
+
+  isListening() { return this._state === "listening"; }
+
+  isClosed() { return this._state !== "starting" && this._state !== "listening"; }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // lifetime
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  whenStarted(timeout = 1000) {
+    return promise.waitFor(timeout, () => this.isListening()).then(() => this);
+  }
+
+  whenClosed(timeout = 1000) {
+    return promise.waitFor(timeout, () => this.isClosed()).then(() => this);
+  }
+
+  start() {
+    if (this._state === "starting") { console.log(`${this} already starting`); return this; }
+    if (this.isListening()) return this;
+
+    this.constructor._register(this);
+
+    this._state = "starting";
+
+    var {debug, hostname, port} = this,
+        server = http.createServer();
+
+    this.server = server;
+
+    this._requestFn = (req, res) => this.handleRequest(req, res);
+    server.on("request", this._requestFn);
+
+    server.listen(port, hostname, () => {
+      this._state = "listening";
+      this.debug && console.log(`[lively.server] ${this} listening`);
+    });
+
+    server.once("close", () => {
+      this._state = "closed";
+      this.debug && console.log(`[lively.server] ${this} closed`);
+    });
+
+    return this
+  }
+
+  async close(serverState = {}) {
+    if (this.isClosed()) return this;
+
+    debug && console.log(`[lively.server] initialize shutdown of ${this}`)
+
+    var {debug, server} = this;
+
+    server.removeListener("request", this._requestFn);
+
+    this.whenClosed(() => this.constructor._unregister(this));
+
+    server.close();
+
+    return this;
+  }
+
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // http handling
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  handleRequest(req, res) {
+    var handlers = this.plugins.filter(ea => typeof ea.handleRequest === "function");
+    handlers.reduceRight(
+      (next, plugin) => () => {
+        try {
+          plugin.handleRequest(req, res, next);
+        } catch (e) {
+          var msg = `Error in handleRequest of ${plugin.name}:\n${e.stack}`;
+          console.error(msg);
+          res.writeHead(500);
+          res.end(msg);
+        }
+      }, () => this.defaultHandleRequest(req, res))();
+  }
+
+  defaultHandleRequest(req, res) {
     res.writeHead(200);
     res.end("lively.server");
   }
-}
 
-function cors(req, res, next) {
-  var allowOrigin = req.headers.origin || "*";
-  res.setHeader("Access-Control-Allow-Origin", allowOrigin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Depth, Cookie, Set-Cookie, Accept, Access-Control-Allow-Credentials, Origin, Content-Type, Request-Id , X-Api-Version, X-Request-Id, Authorization");
-  res.setHeader('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS, PROPFIND, REPORT, MKCOL');
-  res.setHeader("Access-Control-Expose-Headers", "Date, Etag, Set-Cookie");
-  next();
-}
 
-function ignoreSocketIO(path = defaultOptions.socketIOPath) {
-  return function(req, res, next) {
-    if (req.url.startsWith(path)) {
-      // socket.io handles it
-      // console.log(`[lively.server] request to ${req.url} ignored -> socket.io handles it`);
-    } else next();
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // plugin helpers
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  findPlugin(name) {
+    return this.plugins.find(ea => ea.name === name || ea.constructor.name === name);
   }
-}
 
-function evalHandler(route) {
-  return function postHandler(req, res, next) {
-    if (route !== req.url || req.method !== "POST") return next();
-    var data = '';
-    req.on('data', d => data += d.toString());
-    req.on('end', () => {
-      Promise.resolve().then(() => {
-        var result = eval(data);
-        if (!(result instanceof Promise)) {
-          console.error("unexpected eval result:" + result)
-          throw new Error("unexpected eval result:" + result);
-        }
-        return result;
-      })
-      .then(evalResult => JSON.stringify(evalResult))
-      .then(stringifiedEvalResult => {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(stringifiedEvalResult);
-      })
-      .catch(err => {
-        console.error("eval error: " + err);
-        res.writeHead(400, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify({isError: true, value: String(err.stack || err)}));
-      });
+  async addPlugin(plugin) { await this.addPlugins([plugin]); return plugin; }
+
+  async addPlugins(plugins) {
+    if (!plugins.length) return;
+
+    if (!plugins.every(p => p.name))
+      throw new Error("Plugin needs a name!");
+
+    // 1. Find plugins that are new
+    var toInstall = plugins.filter(p => !this.plugins.includes(p));
+
+    // 2. if plugins with same name are isntalled, remove those
+    var names = toInstall.map(ea => ea.name),
+        toRemove = this.plugins.filter(ea => names.includes(ea.name));
+    this.removePlugins(toRemove);
+    
+    // 3. Determine right order depending on plugin requirements
+    this.plugins = this.orderPlugins([...this.plugins, ...toInstall]);
+
+    // 4. ensure that setup callback of plugins gets called
+    var toInstallOrdered = this.plugins.filter(p => toInstall.includes(p));
+    for (let p of toInstallOrdered) {
+      if (!(typeof p.setup === "function")) continue;
+      try {
+        await promise.timeout(300, Promise.resolve(p.setup(this)));
+      } catch (e) {
+       console.error(`Error in setup of plugin ${p.name}:\n${e.stack}`) 
+      }
+    }
+    
+    this.debug && console.log(`[${this}] Installed plugins: ${toInstallOrdered.map(ea => ea.name).join(", ")}`);
+  }
+
+  removePlugin(plugin) {
+    this.removePlugins([plugin]);
+  }
+
+  removePlugins(pluginsOrNames) {
+    if (!pluginsOrNames.length) return;
+
+    var names = pluginsOrNames.map(ea => typeof ea === "string" ? ea : ea.name),
+        toRemove = this.plugins.filter(ea => names.includes(ea.name));
+
+    toRemove.forEach(p => {
+      try { typeof p.shutdown === "function" && p.shutdown(); }
+      catch (e) { console.error(`Error when shutting down plugin ${p.name}:\n${e.stack}`)}
     });
+
+    this.plugins = arr.withoutAll(this.plugins, toRemove);
+    
+    this.debug && console.log(`[${this}] Removed plugins: ${toRemove.map(ea => ea.name).join(", ")}`);
+  }
+
+  orderPlugins(plugins) {
+    // Orders a list of handlers like
+    //   {name: "foo", after: ["bar"], before: ["zork"]}
+    // so that before / after requirements are fullfilled
+
+    // 1. Group handlers by name
+    var byName = arr.groupByKey(plugins, "name");
+    // Multiple handlers with same name not allowed!
+    var nonUniqName = byName.toArray().find(ea => ea.length !== 1);
+    if (nonUniqName)
+      throw new Error(`Found non-uniquely named handlers: ${obj.inspect(nonUniqName, {maxDepth: 2})}`)
+    byName = byName.mapGroups((name, [handler]) => handler);
+    var remaining = obj.values(byName);
+    var requirements = remaining.reduce((reqs, p) =>
+      Object.assign(reqs, {[p.name]: {before: p.before || [], after: p.after || []}}), {})
+
+    // 2. convert "before" requirement into "after"
+    remaining.forEach(({name, before}) =>
+      requirements[name].before.forEach(otherName => requirements[otherName].after.push(name)));
+
+    var resolvedGroups = [],
+        resolvedNames = [],
+        lastLength = remaining.length + 1;
+
+    // compute order
+    while (remaining.length) {
+      if (lastLength === remaining.length)
+        throw new Error("Circular dependencies in handler order, could not resolve handlers "
+                          + remaining.map(ea => ea.name).join(", "))
+      lastLength = remaining.length;
+    	 var resolvedNow = remaining.filter(({name}) => isSubset(requirements[name].after, resolvedNames));
+      resolvedNames.push(...resolvedNow.map(ea => ea.name));
+      resolvedGroups.push(resolvedNow);
+      remaining = arr.withoutAll(remaining, resolvedNow);
+    }
+
+    return arr.flatten(resolvedGroups, 1);
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    function isSubset(list1, list2) {
+      // are all elements in list1 in list2?
+      for (var i = 0; i < list1.length; i++)
+        if (!list2.includes(list1[i]))
+          return false;
+      return true;
+    }
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  toString() {
+    var {_state, hostname, port} = this;
+    return `LivelyServer(${hostname}:${port} ${_state})`;
   }
 
 }
-
