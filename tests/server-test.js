@@ -11,6 +11,14 @@ import LivelyServer from "../server.js";
 var hostname = "localhost", port = 9009, testServer;
 var tracker, client1;
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+import CorsPlugin from "../plugins/cors.js";
+import SocketioPlugin from "../plugins/socketio.js";
+import EvalPlugin from "../plugins/eval.js";
+import L2lPlugin from "../plugins/l2l.js";
+import ShellPlugin from "../plugins/remote-shell.js";
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 describe('lively.server', function() {
 
   before(async () => {
@@ -24,13 +32,12 @@ describe('lively.server', function() {
   });
 
   it("runs and accepts requests", async () => {
-    expect(async () => {
-      await resource(`http://${hostname}:${port}`).read();
-    }).not.to.throw();
+    expect(async () => await resource(`http://${hostname}:${port}`).read())
+      .not.to.throw();
   });
 
   it("has socket.io server", async () => {
-    testServer.addPlugin(new SocketioPlugin());
+    await testServer.addPlugins([new CorsPlugin(), new SocketioPlugin()]);
     var io = testServer.findPlugin("socketio").io;
     io.on("connection", (socket) => {
       socket.on("test", (evt, ackFn) => ackFn("OK"));
@@ -43,32 +50,15 @@ describe('lively.server', function() {
 });
 
 
-import CorsPlugin from "../plugins/cors.js";
-import SocketioPlugin from "../plugins/socketio.js";
-import EvalPlugin from "../plugins/eval.js";
-import L2lPlugin from "../plugins/l2l.js";
-import ShellPlugin from "../plugins/remote-shell.js";
-
-// testServer.plugins[0]
-// testServer.addPlugins([new CorsPlugin()])
-  // server.addPlugins([
-  //   new CorsPlugin(),
-  //   new EvalPlugin(),
-  //   new SocketioPlugin(opts),
-  //   new L2lPlugin(),
-  //   new ShellPlugin(opts)
-  // ]);
-
-
 describe('lively.server middleware', function() {
 
   function makePlugin(n) {
     return {
       name: "plugin" + n,
       setupCalled: 0,
-      shutdownCalled: 0,
+      closeCalled: 0,
       setup() { this.setupCalled++; },
-      shutdown() { this.shutdownCalled++; }
+      close() { this.closeCalled++; }
     };
   }
 
@@ -90,12 +80,12 @@ describe('lively.server middleware', function() {
     server.addPlugin(plugin1);
     expect(server.plugins).equals([plugin1]);
     expect(plugin1.setupCalled).equals(1);
-    expect(plugin1.shutdownCalled).equals(0);
+    expect(plugin1.closeCalled).equals(0);
 
     server.removePlugin(plugin1);
     expect(server.plugins).equals([]);
     expect(plugin1.setupCalled).equals(1);
-    expect(plugin1.shutdownCalled).equals(1);
+    expect(plugin1.closeCalled).equals(1);
   });
 
   it("installs plugins in right order", () => {

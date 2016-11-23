@@ -35,6 +35,10 @@ export async function start(opts = {}) {
     new SocketioPlugin(opts),
   ]);
 
+  // for (let p of server.plugins)
+  //   if (typeof p.setup === "function")
+  //   	await p.setup(server);
+
   return server;
 }
 
@@ -140,6 +144,12 @@ export default class LivelyServer {
 
     server.close();
 
+    for (let p of this.plugins) {
+      try { typeof p.close === "function" && await p.close(); } catch (e) {
+        console.error(`[ ${this}] Error in shutdown of plugin ${p.name}:\n${e.stack}`);
+      }
+    }
+
     return this;
   }
 
@@ -221,7 +231,7 @@ export default class LivelyServer {
         toRemove = this.plugins.filter(ea => names.includes(ea.name));
 
     toRemove.forEach(p => {
-      try { typeof p.shutdown === "function" && p.shutdown(); }
+      try { typeof p.close === "function" && p.close(); }
       catch (e) { console.error(`Error when shutting down plugin ${p.name}:\n${e.stack}`)}
     });
 
@@ -241,20 +251,32 @@ export default class LivelyServer {
     var nonUniqName = byName.toArray().find(ea => ea.length !== 1);
     if (nonUniqName)
       throw new Error(`Found non-uniquely named handlers: ${obj.inspect(nonUniqName, {maxDepth: 2})}`)
-    byName = byName.mapGroups((name, [handler]) => handler);
+    byName = byName.mapGroups((name, [plugin]) => plugin);
+
+
+    // 2. convert "before" requirement into "after" and check if all plugins
+    // mentioned in after/before are actually there
+    var requirements = byName.mapGroups((name, {before, after}) => {
+          before = before || [];
+          after = after || [];
+          var missing = before.concat(after).filter(name => !byName[name]);
+          if (missing.length)
+            throw new Error(`Error in ${this} orderPlugins: Plugin ${name} requires ${missing.join(", ")} but ${missing.length === 1 ? "this plugin" : "those plugins"} cannot be found.`)
+          return {before, after}
+        });
+
     var remaining = obj.values(byName);
-    var requirements = remaining.reduce((reqs, p) =>
-      Object.assign(reqs, {[p.name]: {before: p.before || [], after: p.after || []}}), {})
-
-    // 2. convert "before" requirement into "after"
     remaining.forEach(({name, before}) =>
-      requirements[name].before.forEach(otherName => requirements[otherName].after.push(name)));
+      requirements[name].before.forEach(otherName =>
+        requirements[otherName].after.push(name)));
 
+
+
+    // compute order
     var resolvedGroups = [],
         resolvedNames = [],
         lastLength = remaining.length + 1;
 
-    // compute order
     while (remaining.length) {
       if (lastLength === remaining.length)
         throw new Error("Circular dependencies in handler order, could not resolve handlers "
