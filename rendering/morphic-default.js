@@ -167,11 +167,13 @@ export class AnimationQueue {
 
   registerAnimation(config) {
     const anim = new PropertyAnimation(this, this.morph, config);
-    if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
-      anim.assignProps();
-      this.animations.push(anim);
-      return anim;
-    }
+    return this.morph.withMetaDo({animation: anim}, () => {
+      if (!this.animations.find(a => a.equals(anim)) && anim.affectsMorph) {
+        anim.assignProps();
+        this.animations.push(anim);
+        return anim;
+      }
+    })
   }
 
   startAnimationsFor(node) { this.animations.forEach(anim => anim.start(node)); }
@@ -263,34 +265,17 @@ export class PropertyAnimation {
      return [before, after]
   }
 
+  gatherAnimationProps() {
+     return {css: StyleMapper.getStyleProps(this.morph),
+             svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
+             path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
+             polygon: this.morph.isPolygon && StyleMapper.getPolygonAttributes(this.morph)}
+  }
+
   assignProps() {
-    this.beforeProps = {css: StyleMapper.getStyleProps(this.morph),
-                        svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
-                        path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
-                        polygon: this.morph.isPolygon && StyleMapper.getPolygonAttributes(this.morph)};
-    for (var prop in this.changedProps) {
-        // FIXME: This is all a hack due to the lack of animation information inside the changes.
-        //        This retrospective introduction of animations can be circumvented by the change event
-        //        actually carrying information about wether or not a property is being animated.
-        if (prop == "layout") {
-           this.morph.layout = null;
-           if (this.changedProps.layout) {
-               this.changedProps.layout.attachAnimated(this.duration, this.morph, this.easing);
-           }
-           continue;
-        }
-        if (prop == "extent" && this.morph.layout) {   
-              var layout = this.morph.layout;
-              this.morph.layout = null;
-              this.morph.extent = this.changedProps.extent;
-              this.morph.animate({layout, duration: this.duration, easing: this.easing});
-        }
-        this.morph[prop] = this.changedProps[prop];
-    }
-    this.afterProps = {css: StyleMapper.getStyleProps(this.morph),
-                       svg: this.morph.isSvgMorph && StyleMapper.getSvgAttributes(this.morph),
-                       path: this.morph.isPath && StyleMapper.getPathAttributes(this.morph),
-                       polygon: this.morph.isPolygon && StyleMapper.getPolygonAttributes(this.morph)};
+    this.beforeProps = this.gatherAnimationProps();
+    Object.assign(this.morph, this.changedProps);
+    this.afterProps = this.gatherAnimationProps();
   }
 
   startSvg(svgNode, type) {

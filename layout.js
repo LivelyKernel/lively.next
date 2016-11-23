@@ -21,7 +21,8 @@ class Layout {
   onSubmorphAdded(submorph) { this.apply() }
   onSubmorphRemoved(submorph) { this.apply() }  
   
-  onChange({selector, args, prop, value, prevValue}) {
+  onChange({selector, args, prop, value, prevValue, meta}) {
+    const anim = meta && meta.animation;
     switch (selector) {
       case "removeMorph":
         this.onSubmorphRemoved(args[0]);
@@ -30,7 +31,7 @@ class Layout {
         this.onSubmorphAdded(args[0]);
         break;
     }
-    if (prop == "extent" && !(value && value.equals(prevValue))) this.apply();
+    if (prop == "extent" && !(value && value.equals(prevValue))) this.apply(anim);
   }
   
   affectsLayout(submorph, {prop, value, prevValue}) {

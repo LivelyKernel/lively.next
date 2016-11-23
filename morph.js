@@ -103,10 +103,16 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange(change) {
+    const anim = change.meta && change.meta.animation;
     if (['position', 'rotation', 'scale', 'origin', 'reactsToPointer'].includes(change.prop))
         this.updateTransform();
-    if (change.prop == "layout")
-        change.value && change.value.apply();
+    if (change.prop == "layout") {
+       if (anim) {
+          change.value && change.value.attachAnimated(anim.duration, this, anim.easing);  
+       } else {
+          change.value && change.value.apply();
+       }
+    }
     this.layout && this.layout.onChange(change);
   }
 
