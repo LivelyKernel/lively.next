@@ -134,9 +134,9 @@ export class VerticalLayout extends Layout {
     submorphs.forEach(m => {
       if (animate) {
         const {duration, easing} = animate;
-        m.animate({position: pos, duration, easing})
+        m.animate({topLeft: pos, duration, easing})
       } else {
-        m.position = pos;
+        m.topLeft = pos;
       }
       pos = m.bottomLeft.addPt(pt(0, this.spacing));
       maxWidth = Math.max(m.width, maxWidth);
@@ -174,9 +174,9 @@ export class HorizontalLayout extends Layout {
     submorphs.forEach(m => {
       if (animate) {
         const {duration, easing} = animate;
-        m.animate({position: pos, duration, easing})
+        m.animate({topLeft: pos, duration, easing})
       } else {
-        m.position = pos;
+        m.topLeft = pos;
       }
       pos = m.topRight.addPt(pt(this.spacing, 0));
       maxHeight = Math.max(m.height, maxHeight);
