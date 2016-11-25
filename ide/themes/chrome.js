@@ -37,12 +37,12 @@ export default class ChromeTheme extends Theme {
 
       case Token.error:    return { backgroundColor: Color.rgbHex("#ff4c4c") };
 
-      case Token["diff-file-header"]: return { fontColor: Color.white, backgroundColor: Color.rgbHex("#888") };
+      case Token["diff-file-header"]: return { fontColor: Color.white, fontWeight: "bold", backgroundColor: Color.rgba(136,136,136, .7) };
       case Token["diff-hunk-header"]:
-      case Token.coord:    return { backgroundColor: Color.rgbHex("#cccccc") };
+      case Token.coord:    return { backgroundColor: Color.rgba(204,204,204, .4), fontWeight: "bold" };
 
-      case Token.inserted:    return { backgroundColor: Color.rgbHex("#6cff6c") };
-      case Token.deleted:    return { backgroundColor: Color.rgbHex("#ff6c6c") };
+      case Token.inserted:    return { backgroundColor: Color.rgba(108,255,108, .3) };
+      case Token.deleted:    return { backgroundColor: Color.rgba(255,108,108, .3) };
 
       case Token.url:    return { textDecoration: "underline", fontColor: Color.rgbHex("#2c2cff") };
       case Token.important:    return { fontStyle: "italic", fontColor: Color.orange };
