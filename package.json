@@ -6,9 +6,10 @@
     "url": "https://github.com/LivelyKernel/lively.shell"
   },
   "dependencies": {
-    "lively.resources": "*",
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
-    "lively.lang": "*"
+    "lively.lang": "*",
+    "lively.resources": "*",
+    "socket.io-client": "^1.6.0"
   },
   "devDependencies": {
     "mocha-es6": "^0.3.11",
@@ -18,9 +19,18 @@
   "systemjs": {
     "map": {
       "mocha-es6": "./node_modules/mocha-es6/mocha-es6.js",
-      "fs": {"node": "@node/fs", "~node": "@empty"},
-      "util": {"node": "@node/util", "~node": "@empty"},
-      "path": {"node": "@node/path", "~node": "@empty"}
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      },
+      "util": {
+        "node": "@node/util",
+        "~node": "@empty"
+      },
+      "path": {
+        "node": "@node/path",
+        "~node": "@empty"
+      }
     }
   },
   "lively": {

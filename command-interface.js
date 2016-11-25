@@ -18,6 +18,7 @@ export default class CommandInterface {
     this.exitCode = undefined;
     this._whenDone = promise.deferred();
     this._whenStarted = promise.deferred();
+    this.startTime = 0;
     events.makeEmitter(this);
   }
 

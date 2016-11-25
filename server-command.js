@@ -1,18 +1,22 @@
+/*global System, process*/
+
 import CommandInterface from "./command-interface.js"
 import { stripAnsiAttributes } from "./ansi-color-parser.js"
-import { promise, arr } from "lively.lang";
+import { promise, arr, string } from "lively.lang";
 import { signal } from "lively.bindings";
 import { spawn, exec } from "child_process";
 import { inspect, format } from "util";
 import fs from "fs";
 import path from "path";
 
-var debug = true;
+var debug = false;
 
 var isWindows = process.platform !== 'linux'
              && process.platform !== 'darwin'
              && process.platform.include('win');
 
+
+var binDir = System.decanonicalize("lively.shell/bin").replace(/^file:\/\//, "");
 
 var defaultEnv = Object.assign(
   Object.create(process.env), {
@@ -20,8 +24,9 @@ var defaultEnv = Object.assign(
     PAGER:'ul | cat -s',
     MANPAGER:'ul | cat -s',
     TERM:"xterm",
-    // PATH: path.join(dir, 'bin') + path.delimiter + process.env.PATH
+    PATH: binDir + path.delimiter + process.env.PATH
   })
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -31,30 +36,22 @@ var defaultEnv = Object.assign(
  */
 var askPassScript = '';
 ;(function setupAskpass() {
-return;
-    var baseName = 'bin/askpass' + (isWindows ? ".win.sh" : ".sh");
-    askPassScript = path.join(process.env.WORKSPACE_LK, baseName);
-    if (!isWindows) fs.chmod(askPassScript, parseInt("0755", 8));
+  askPassScript = path.join(binDir, 'askpass' + (isWindows ? ".win.sh" : ".sh"));
+  if (!isWindows)
+    try { fs.chmodSync(askPassScript, parseInt("0755", 8)); }
+    catch (e) { console.error(e.stack) };
 })();
-
-
-function prepareForAskpass(env) {
-  if (!env["ASKPASS_SESSIONID"] || !askPassScript) return;
-  env['SUDO_ASKPASS'] = env['SSH_ASKPASS'] = env['GIT_ASKPASS'] = askPassScript;
-}
-
 
 /*
  * EDITOR support
  */
 var editorScript = '';
 ;(function setupEditor() {
-return;
-    var baseName = 'bin/lively-as-editor.sh';
-    editorScript = path.join(process.env.WORKSPACE_LK, baseName);
-    if (!isWindows) fs.chmod(editorScript, parseInt("0755", 8));
+  editorScript = path.join(binDir, "lively-as-editor.sh");
+  if (!isWindows)
+    try { fs.chmodSync(editorScript, parseInt("0755", 8)); }
+    catch (e) { console.error(e.stack) };
 })();
-
 
 
 /*
@@ -62,38 +59,37 @@ return;
  * to do a full process tree kill
  */
 function defaultKill(pid, signal, thenDo) {
-    // signal = "SIGKILL"|"SIGQUIT"|"SIGINT"|...
-    debug && console.log('signal pid %s with', pid, signal);
-    signal = signal.toUpperCase().replace(/^SIG/, '');
-    exec('kill -s ' + signal + " " + pid, function(code, out, err) {
-        debug && console.log('signal result: ', out, err);
-        thenDo(code, out, err);
-    });
+  // signal = "SIGKILL"|"SIGQUIT"|"SIGINT"|...
+  debug && console.log('signal pid %s with', pid, signal);
+  signal = signal.toUpperCase().replace(/^SIG/, '');
+  exec('kill -s ' + signal + " " + pid, function(code, out, err) {
+    debug && console.log('signal result: ', out, err);
+    thenDo(code, out, err);
+  });
 }
 
 function pkillKill(pid, signal, thenDo) {
-    // signal = "SIGKILL"|"SIGQUIT"|"SIGINT"|...
-    signal = signal.toUpperCase().replace(/^SIG/, '');
-    // rk 2015-07-15: properly killing piped processes -- currently this only
-    // works when making the spawned process a group leader
-    var killCmd = format('pkill -%s -g $(ps opgid= "%s")', signal, pid);
-    debug && console.log('signal pid %s with %s (%s)', pid, signal, killCmd);
-    exec(killCmd, function(code, out, err) {
-        debug && console.log('signal result: ', out, err);
-        thenDo(code, out, err);
-    });
+  // signal = "SIGKILL"|"SIGQUIT"|"SIGINT"|...
+  signal = signal.toUpperCase().replace(/^SIG/, '');
+  // rk 2015-07-15: properly killing piped processes -- currently this only
+  // works when making the spawned process a group leader
+  var killCmd = format('pkill -%s -g $(ps opgid= "%s")', signal, pid);
+  debug && console.log('signal pid %s with %s (%s)', pid, signal, killCmd);
+  exec(killCmd, function(code, out, err) {
+    debug && console.log('signal result: ', out, err);
+    thenDo(code, out, err);
+  });
 }
 
 var doKill = defaultKill;
 (function determineKillCommand() {
-    exec('which pkill', function(code) { if (!code) doKill = pkillKill; });
+  exec('which pkill', function(code) { if (!code) doKill = pkillKill; });
 })();
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // var c = new Command();
 // c.spawn({command: "ls"})
-
 
 export default class ServerCommand extends CommandInterface {
 
@@ -108,24 +104,33 @@ export default class ServerCommand extends CommandInterface {
     this.debug = debug;
   }
 
-  spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null, stripAnsiAttributes: true}) {
 
+  envForCommand(opts = {env: {}}) {
+    // here we set environment variables for the command to be run. the stuff
+    // below is to support the bin/command2lively.js script and related scripts
+    // like askpass support
+    var env = {...opts.env};
+    if (env["ASKPASS_SESSIONID"] && askPassScript)
+      env['SUDO_ASKPASS'] = env['SSH_ASKPASS'] = env['GIT_ASKPASS'] = askPassScript;
+    return env
+  }
+
+  spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null, stripAnsiAttributes: true}) {
     var options = {
       env: null, cwd: null, stdin: null,
       stripAnsiAttributes: true,
       ...cmdInstructions
     }
 
+    this.startTime = new Date();
+
     if (this.process) {
       throw new Error(`${this} already has process attached, won't spawn again!`);
     }
 
-    var command = cmdInstructions.command;
-    var {env, cwd, stdin} = options;
-    env = Object.assign(Object.create(defaultEnv), env);
+    var {command, cwd, stdin} = options,
+        env = Object.assign(Object.create(defaultEnv), this.envForCommand(options));
     cwd = cwd || process.cwd();
-
-    prepareForAskpass(env)
 
     command = Array.isArray(command) ? command.join(" ") : String(command);
 
@@ -135,21 +140,20 @@ export default class ServerCommand extends CommandInterface {
       /\$[a-zA-Z0-9_]+/g,
       match => env[match.slice(1,match.length)] || match);
 
-    // if (!isWindows) {
-    //   command = format("source %s/bin/lively.profile; %s", dir, command)
-    // }
+    if (!isWindows) command = `source ${binDir}/lively.profile; ${command}`
 
     var [command, args] = isWindows ?
       ["cmd", ["/C", command]] :
       ["/bin/bash", ["-c", command]]
 
+console.log(env)
     var proc = spawn(command, args, {env, cwd, stdio: 'pipe', detached: true});
 
     if (this.debug) console.log('Running command: "%s" (%s)', [command].concat(args).join(' '), proc.pid);
 
     if (stdin) {
-        this.debug && console.log('setting stdin to: %s', stdin);
-        proc.stdin.end(stdin);
+      this.debug && console.log('setting stdin to: %s', stdin);
+      proc.stdin.end(stdin);
     }
 
     this.attachTo(proc, options);
@@ -226,13 +230,8 @@ var L2LServices = {
   async "lively.shell.spawn"(tracker, {sender, data}, ackFn) {
     var answer;
     try {
-
-      debug && console.log("[lively.shell] Starting ServerCommand from l2l", data)
-
-      var cmd = new ServerCommand();
-      cmd.spawn(data);
-
-      var pid = cmd.pid;
+      var cmd = new ServerCommand().spawn(data),
+          pid = cmd.pid;
 
       cmd.on("stdout", stdout =>
         tracker.sendTo(sender, "lively.shell.onOutput", {pid, stdout}));
@@ -303,49 +302,6 @@ var L2LServices = {
 
 // var L2LService = {
 //
-//   runShellCommand(sessionServer, connection, msg) {
-//
-//     function answer(hasMore, data) {
-//         connection.send({
-//             expectMoreResponses: hasMore,
-//             action: msg.action + 'Result',
-//             inResponseTo: msg.messageId, data: data});
-//     }
-//
-//     var cmdInstructions = msg.data;
-//     var auth = lively.lookup("request.httpRequest.headers.authorization", connection);
-//     if (auth) {
-//       cmdInstructions.env = cmdInstructions.env || {};
-//       cmdInstructions.env.L2L_ASKPASS_AUTH_HEADER = auth; // needed in bin/commandline2lively.js
-//     }
-//
-//     var cmd = new Command().spawn(cmdInstructions);
-//     var pid = cmd.process.pid
-//
-//     answer(true, {pid: pid});
-//     cmd.on('output', function(out) { answer(true, out); });
-//     cmd.on('close', function(exit) { answer(false, exit); });
-//   },
-//
-//   stopShellCommand: function(sessionServer, connection, msg) {
-//     // kill
-//     function answer(data) {
-//         connection.send({action: msg.action + 'Result',
-//             inResponseTo: msg.messageId, data: data});
-//     }
-//     var pid = msg.data.pid, signal = msg.data.signal || "SIGKILL";
-//     if (!pid) { answer({commandIsRunning: false, error: 'no pid'}); return; }
-//     var cmd = findShellCommand(pid);
-//     if (!cmd) { answer({commandIsRunning: false, error: 'command not found'}); return; }
-//     signal = signal.toUpperCase().replace(/^SIG/, '');
-//     doKill(pid, cmd, signal, function(code, out, err) {
-//         answer({
-//             commandIsRunning: !!code,
-//             message: 'signal send',
-//             out: String(out), err: String(err)});
-//     });
-//   },
-//
 //   writeToShellCommand: function(sessionServer, connection, msg) {
 //     // sends input (stdin) to running processes
 //     function answer(data) {
@@ -368,21 +324,6 @@ var L2LServices = {
 
 
 
-//
-// /*
-//  * this is the state that holds on to running shell commands
-//  * [{process: null, stdout: '', stderr: '', lastExitCode: null}]
-//  */
-//
-
-
-// function formattedResponseText(type, data) {
-//     var s = String(data);
-//     return '<SHELLCOMMAND$' + type.toUpperCase() + s.length + '>' + s;
-// }
-//
-//
-//
 //
 // // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //

@@ -2,7 +2,10 @@ import CommandInterface from "./command-interface.js";
 import { promise, arr, obj } from "lively.lang";
 import { signal } from "lively.bindings";
 
-var debug = true;
+var debug = false;
+
+// http://localhost:9001/node_modules/lively.shell/client-command.js
+// http://localhost:9001/node_modules/lively.2lively/node_modules/lively.server/node_modules/lively.shell/client-command.js
 
 export function runCommand(commandString, opts = {}) {
   var {l2lClient} = opts;
@@ -70,20 +73,46 @@ export default class ClientCommand extends CommandInterface {
     this.l2lClient = l2lClient;
   }
 
+  envForCommand(opts) {
+    // here we set environment variables for the command to be run. the stuff
+    // below is to support the bin/command2lively.js script and related scripts
+    // like askpass support
+    var {id, origin, path, namespace} = this.l2lClient
+    var {env, owner} = opts || {}
+    env = env || {};
+    if (owner) env.LIVELY_COMMAND_OWNER = owner;
+    return {
+      // L2L_ASKPASS_AUTH_HEADER:
+      ASKPASS_SESSIONID: id,
+      L2L_EDITOR_SESSIONID: id,
+      L2L_SESSIONTRACKER_SERVER: origin,
+      L2L_SESSIONTRACKER_PATH: path,
+      L2L_SESSIONTRACKER_NS: namespace,
+      ...env
+    }
+  }
+
   async spawn(cmdInstructions = {command: null, env: {}, cwd: null, stdin: null}) {
 
-    this.debug && console.log(`${this} spawning ${cmdInstructions.command}`);
+    var {l2lClient} = this,
+        {command, env, cwd, stdin} = cmdInstructions;
+
+    this.startTime = new Date();
+
+    env = this.envForCommand(cmdInstructions);
+
+    this.debug && console.log(`${this} spawning ${command}`);
     this.debug && this.whenStarted().then(() => console.log(`${this} started`));
     this.debug && this.whenDone().then(() => console.log(`${this} exited`));
 
     arr.pushIfNotIncluded(this.constructor.commands, this);
 
-    var cmd = cmdInstructions.command;
-    this.commandString = Array.isArray(cmd) ? cmd.join("") : cmd;
+    this.commandString = Array.isArray(command) ? command.join("") : command;
 
-    var con = this.l2lClient;
-    var {data: {status, error, pid}} = await con.sendToAndWait(
-                                        con.trackerId, "lively.shell.spawn", cmdInstructions);
+
+    var {data: {status, error, pid}} = await l2lClient.sendToAndWait(l2lClient.trackerId,
+                                        "lively.shell.spawn", {command, env, cwd, stdin});
+
     if (error) {
       debug && console.error(`[${this}] error at start: ${error}`);
       this.process = {error};
