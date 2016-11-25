@@ -600,6 +600,15 @@ export class World extends Morph {
     }
   }
 
+  onMouseWheel(evt) {
+    // When holding shift pressed you can scroll around in the world without
+    // scrolling an individual clipped morph that might be below the mouse cursor
+    if (evt.isShiftDown()) {
+      window.scrollBy(-evt.domEvt.wheelDeltaX, -evt.domEvt.wheelDeltaY)
+      evt.stop();
+    }
+  }
+
   onDragStart(evt) {
      this.selectionStartPos = evt.positionIn(this);
      this.morphSelection = this.addMorph({
