@@ -55,7 +55,7 @@ export default class InputLine extends Text {
     }
   }
 
-  static addHistoryToLocalSorage(id, hist) {
+  static addHistoryToLocalStorage(id, hist) {
     if (typeof localStorage === "undefined") return;
     try {
       localStorage.setItem("lively.morphic-inputline-" + id, JSON.stringify(hist));
@@ -74,10 +74,10 @@ export default class InputLine extends Text {
     this.histories.set(id, hist);
     return hist;
   }
-  
+
   static setHistory(id, hist = {items: [], max: 50, index: 0}) {
     this.histories.set(id, hist);
-    this.addHistoryToLocalSorage(id, hist);
+    this.addHistoryToLocalStorage(id, hist);
     return hist;
   }
 
@@ -212,15 +212,33 @@ export default class InputLine extends Text {
         if (hist.items[i] === input) {
           hist.items.splice(i, 1); hist.index--; }
     }
-    this.historyId && this.constructor.addHistoryToLocalSorage(this.historyId, hist);
+    this.historyId && this.constructor.addHistoryToLocalStorage(this.historyId, hist);
   }
 
   async browseHistory() {
     var items = this.inputHistory.items.map((item, i) =>
-          ({isListItem: true, string: item, value: i})).reverse();
-    var {selected: [item]} = await this.world().filterableListPrompt("Choose item:", items);
+          ({isListItem: true, string: item, value: i})).reverse(),
+        {selected: [item]} = await this.world().filterableListPrompt(
+                                "Choose item:", items, {commands: [this.histEditCommandForHistBrowse()]});
     typeof item === "number" && this.setAndShowHistItem(item);
     this.focus();
+  }
+
+  histEditCommandForHistBrowse() {
+    return {
+      name: "edit history " + this.historyId,
+      exec: async prompt => {
+        var items = this.inputHistory.items.slice().reverse()
+        var {status, list: values} = await prompt.world().editListPrompt(
+                                        "edit history " + this.historyId, items)
+        if ("canceled" === status) return true;
+        items = items.filter(ea => ea.isListItem ? values.includes(ea.value) : values.includes(ea));
+        this.inputHistory = {...this.inputHistory, items};
+        prompt.get("list").items = items.map((item, i) =>
+          ({isListItem: true, string: item, value: i})).reverse()
+        return true;
+      }
+    }
   }
 
   setAndShowHistItem(idx) {
