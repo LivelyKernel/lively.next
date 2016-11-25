@@ -105,4 +105,16 @@ export class MorphicEnv {
     fontMetric && fontMetric.reset();
   }
 
+  printStatus() {
+    var {changeManager, world, fontMetric} = this,
+        morphsWithUndo = 0, undoChanges = 0;
+    world && world.withAllSubmorphsDo(ea => {
+      if (!ea.undoManager) return;
+      morphsWithUndo++;
+      undoChanges += ea.undoManager.undos.length + ea.undoManager.redos.length
+    });
+    return `${changeManager.changes.length} changes recorded\n${morphsWithUndo} morphs with undos\n${undoChanges} undo changes`
+    
+  }
+
 }
