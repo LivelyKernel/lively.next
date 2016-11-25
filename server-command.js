@@ -205,9 +205,15 @@ export default class ServerCommand extends CommandInterface {
     });
   }
 
+  writeToStdin(content) {
+    if (!this.isRunning()) return;
+    debug && console.log(`[${this}] writing to stdin ${string.truncate(String(content), 100)}`);
+    this.process.stdin.write(content);
+  }
+
   kill(signal = "KILL") {
     if (!this.process || this.exitCode !== undefined) return Promise.resolve();
-    debug && console.log(`${this} signaling ${signal}`);
+    debug && console.log(`[${this}] signaling ${signal}`);
     return new Promise((resolve, reject) =>
       doKill(this.pid, signal, err => err ? reject(err) : resolve()));
   }
@@ -249,6 +255,22 @@ var L2LServices = {
       answer = {status: "errored", error: e.stack};
     }
 
+    typeof ackFn === "function" && ackFn(answer);
+  },
+
+  async "lively.shell.writeToStdin"(tracker, {sender, data: {pid, stdin}}, ackFn) {
+    var answer, cmd;
+    if (!pid) answer = {status: "errored", error: "No pid"};
+    else if (!(cmd = ServerCommand.findCommand(pid))) {
+      answer = {status: "errored", error: "Cannot find command with pid " + pid};
+    } else {
+      try {
+        await cmd.writeToStdin(stdin);
+        answer = {status: "OK"}
+      } catch (e) {
+        answer = {status: "errored", error: e.stack || String(e)}
+      }
+    }
     typeof ackFn === "function" && ackFn(answer);
   },
 

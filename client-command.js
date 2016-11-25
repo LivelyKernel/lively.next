@@ -77,6 +77,13 @@ export default class ClientCommand extends CommandInterface {
     return this;
   }
 
+  async writeToStdin(content) {
+    if (!this.isRunning()) return;
+    var {l2lClient, pid} = this;
+    await l2lClient.sendToAndWait(l2lClient.trackerId,
+      "lively.shell.writeToStdin", {pid, stdin: String(content)});
+  }
+
   async kill(signal = "KILL") {
     if (!this.isRunning()) return;
     debug && console.log(`${this} requesting kill`)

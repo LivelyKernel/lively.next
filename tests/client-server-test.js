@@ -52,4 +52,14 @@ describe('lively.shell', function() {
     expect(cmd.stdout).equals("1\n")
   });
 
+  it("sends input to command", async () => {
+    var cmd = new ClientCommand(l2lClient);
+    await cmd.spawn({command: "read a; echo $a"});
+    await cmd.whenStarted();
+    await cmd.writeToStdin("aaa");
+    cmd.writeToStdin("bbb\n");
+    await cmd.whenDone()
+    expect(cmd.stdout).equals("aaabbb\n")
+  });
+
 });
