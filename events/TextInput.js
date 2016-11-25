@@ -210,7 +210,9 @@ export default class TextInput {
   }
 
   onRootNodeFocus(evt) {
-    this.focus();
+    var {textareaNode, rootNode} = this.domState || {};
+    if (evt.target === textareaNode || evt.target === rootNode)
+      this.focus();
     this.inputState.composition = null;
   }
 
