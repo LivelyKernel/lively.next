@@ -81,9 +81,21 @@ export default class TextEditor extends Morph {
     return this.openInWindow({location: url, ...props})
   }
 
+  static openAsEDITOR(file, props) {
+    // returns "saved" or "aborted"
+    var editor = this.openURL(file, props);
+    return new Promise((resolve, reject) => {
+      once(editor, 'contentSaved', resolve, 'call', {
+        updater: function($upd) { $upd(null, "saved"); this.sourceObj.close(); }
+      });
+      once(editor, 'closed', resolve, 'call', {updater: $upd => $upd(null, "aborted")});
+    })
+  }
+
   static openInWindow(props) {
     var ed = new this(props);
-    return ed.env.world.openInWindow(ed).activate();
+    ed.env.world.openInWindow(ed).activate();
+    return ed;
   }
 
   constructor(props = {}) {
