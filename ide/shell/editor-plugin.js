@@ -1,5 +1,6 @@
 /*global localStorage*/
-import { arr } from "lively.lang";
+import { arr, string } from "lively.lang";
+import { signal } from "lively.bindings";
 import EditorPlugin from "../editor-plugin.js";
 import { TextStyleAttribute } from "../../text/attribute.js";
 import { defaultDirectory, runCommand } from "./shell-interface.js";
@@ -38,7 +39,7 @@ export class ShellEditorPlugin extends EditorPlugin {
   constructor(theme) {
     super(theme)
     this.tokenizer = new ShellTokenizer();
-    this.state = {cwd:  null, command: null}
+    this.state = {cwd:  defaultDir, command: null}
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -63,16 +64,19 @@ export class ShellEditorPlugin extends EditorPlugin {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // shell related
   get cwd() { return this.state.cwd || defaultDir || ""; }
-  set cwd(cwd) { this.state.cwd = cwd; }
+  set cwd(cwd) { this.state.cwd = cwd; signal(this, "cwd", cwd); }
 
   get command() { return this.state.command; }
-  set command(cmd) { this.state.command = cmd; }
+  set command(cmd) { this.state.command = cmd; signal(this, "command", cmd);}
 
+  runCommand(cmd, opts) {
+    return this.command = runCommand(cmd, {cwd: this.cwd, owner: this.textMorph.id, ...opts});
+  }
 
   async changeCwdInteractively() {
     var cwd = this.cwd,
         dirs = this.knownCwds,
-        dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)),
+        dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)).filter(Boolean),
         {status, list: newDirs, selections: [choice]} = await this.textMorph.world().editListPrompt(
           "Choose working directory:", dirs, {
             historyId: "lively.morphic-ide/shell-changeCwdInteractively-hist-list",
@@ -112,7 +116,7 @@ export class ShellEditorPlugin extends EditorPlugin {
     var part1 = "Shell Workspace",
         part2 = this.command && this.command.isRunning() ?
                   ` (running ${this.command.pid})` : "",
-        part3 = !this.cwd ? "" : ` - ${this.cwd}`
+        part3 = !this.cwd ? "" : ` - ${lively.lang.string.truncateLeft(this.cwd, 35)}`
 
     win.title = [part1, part2, part3].join("");
   }
@@ -128,7 +132,7 @@ export class ShellEditorPlugin extends EditorPlugin {
         exec: async (_, opts = {printit: false}) => {
           var sel = ed.selection;
           if (sel.isEmpty()) ed.selectLine(sel.lead.row);
-          var cmd = this.command = runCommand(sel.text, {cwd: this.cwd});
+          var cmd = this.runCommand(sel.text, {});
 
           sel.collapseToEnd();
 
