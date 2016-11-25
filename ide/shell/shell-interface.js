@@ -7,7 +7,8 @@ import {
 
 
 // FIXME put this in either config or have it provided by server
-var defaultConnection = {url: "http://localhost:9010/lively-socket.io", namespace: "l2l"};
+// var defaultConnection = {url: `${document.location.origin}/lively-socket.io`, namespace: "l2l"};
+var defaultConnection = {url: `http://localhost:9010/lively-socket.io`, namespace: "l2l"};
 
 // var cmd = runCommand("ls"); await cmd.whenDone(); cmd.stdout;
 export function runCommand(commandString, opts = {}) {  
@@ -19,6 +20,25 @@ export function defaultDirectory() { return _defaultDirectory(L2LClient.ensure(d
 
 // await env()
 export function env() { return _env(L2LClient.ensure(defaultConnection)); }
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function readFile(path, options = {}) {
+  options = options || {};
+  var cmd = runCommand(`cat "${path}"`, options);
+  return cmd.whenDone().then(() => cmd.output);
+}
+
+function writeFile(path, options, thenDo) {
+  if (typeof options === "string") options = {content: options};
+  options = options || {};
+  options.content = options.content || '';
+  if (this.PLATFORM !== 'win32') path = '"' + path + '"';
+  var cmd = this.run('tee ' + path, {stdin: options.content, cwd: options.cwd});
+  if (options.onEnd) lively.bindings.connect(cmd, 'end', options, 'onEnd');
+  if (thenDo) lively.bindings.connect(cmd, 'end', {thenDo: thenDo}, 'thenDo');
+  return cmd;
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -53,7 +73,7 @@ export function parseCommand(cmd) {
         //         "ASKPASS_SESSIONID": session.sessionId,
         //         "L2L_EDITOR_SESSIONID": session.sessionId,
         //         "EDITOR": "lively-as-editor.sh",
-        //         "L2L_SESSIONTRACKER_URL": String(session.sessionTrackerURL.withFilename('connect'))
+        //         "L2L_SESSIONTRACKER_SERVER": String(session.sessionTrackerURL.withFilename('connect'))
         //     });
         // }
 
