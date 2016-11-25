@@ -61,15 +61,25 @@ export default class L2LConnection {
     // installEventToMessageTranslator, this here is just to notice of things
     // really go wrong
     // FIXME: set timeoutMs to receiver timeout time!
-    var timeout = {}, timeoutMs = 1000,
-        answer = await Promise.race([
-          promise.delay(timeoutMs, timeout),
-          new Promise(resolve => this.send(msg, resolve))
-        ]);
+
+    var sendP = new Promise(resolve => this.send(msg, resolve));
+
+    var timeout = {},
+        timeoutMs = this.options.ackTimeout + 400;
+    if ("ackTimeout" in msg) {
+      if (!msg.ackTimeout || msg.ackTimeout < 0) timeoutMs = null;
+      else timeoutMs = msg.ackTimeout + 400;
+    }
+
+    var answer = await (promise ?
+      Promise.race([promise.delay(timeoutMs, timeout), sendP]) : sendP);
+
     if (answer === timeout)
       throw new Error(`Timout sending ${msg.action}`);
-    if (answer.data && answer.data.error)
-      throw new Error(answer.data.error);
+
+    var err = answer.error || (answer.data && answer.data.error);
+    if (err) throw new Error(err);
+
     return answer;
   }
 
@@ -92,15 +102,11 @@ export default class L2LConnection {
 
     if (typeof ackFn === "function") {
       var sender = this,
-          expectedNextIncomingN = sender._incomingOrderNumberingBySenders.get(target) || 0,
           originalAckFn = ackFn;
       ackFn = function(msg) {
         // here we receive an ack, we count sender as one more received message
         // as it matters in the message ordering
         var incomingN = sender._incomingOrderNumberingBySenders.get(msg.sender) || 0;
-
-        if (expectedNextIncomingN !== incomingN)
-          console.error(`[MSG ORDER] [${sender}] expected ack to be message no ${expectedNextIncomingN} but it is ${incomingN}`);
 
         (sender.debug || debugMessageOrder) && console.log(`[MSG ORDER] ${sender} received ack for ${msg.action} as msg ${incomingN}`);
 
@@ -117,6 +123,16 @@ export default class L2LConnection {
     return [msg, ackFn];
   }
 
+  prepareAnswerMessage(forMsg, answerData) {
+    return {
+      action: forMsg.action + "-response",
+      inResponseTo: forMsg.messageId,
+      target: forMsg.sender,
+      data: answerData,
+      sender: this.id
+    }
+  }
+
   installEventToMessageTranslator(socket) {
     var self = this;
 
@@ -129,20 +145,29 @@ export default class L2LConnection {
     }
 
     socket.on("*", function(eventName, msg) {
+      if (eventName && typeof eventName === "object" && eventName.action) {
+        msg = eventName;
+        eventName = msg.action;
+      }
       var lastArg = arguments[arguments.length-1],
           ackFn = typeof lastArg === "function" ? lastArg : null;
       msg = msg === ackFn ? null : msg;
 
       if (!msg || !msg.data || typeof msg.n !== "number" || !msg.sender) {
         console.warn(`${self} received non-conformant message ${eventName}:`, arguments);
+        typeof ackFn === "function" && ackFn({data: {error: "invalid l2l message"}});
         return;
       }
 
-      self.dispatchL2LMessage(msg, socket, ackFn);
+      self.receive(msg, socket, ackFn);
     });
   }
 
-  dispatchL2LMessage(msg, socket, ackFn) {
+  receive(msg, socket, ackFn) {
+    this.dispatchL2LMessageToSelf(msg, socket, ackFn);
+  }
+
+  dispatchL2LMessageToSelf(msg, socket, ackFn) {
     var selector = msg.action;
     try {
       var expectedN = this._incomingOrderNumberingBySenders.get(msg.sender) || 0,
@@ -165,14 +190,11 @@ export default class L2LConnection {
       if (typeof this.actions[selector] === "function") {
         this.invokeServiceHandler(selector, msg, ackFn, socket)
       } else {
-        if (socket._events && !Object.keys(socket._events).includes(selector)) {
+        if (!socket._events || !Object.keys(socket._events).includes(selector)) {
           console.warn(`WARNING [${this}] Unhandled message: ${selector}`);
           if (typeof ackFn === "function")
-            ackFn({
-              sender: this.id,
-              inResponseTo: msg.id,
-              data:  {isError: true, error: "message not understood: " + selector}
-            });
+            ackFn(this.prepareAnswerMessage(msg,
+              {isError: true, error: "message not understood: " + selector}))
         }
       }
 
@@ -180,11 +202,8 @@ export default class L2LConnection {
     } catch (e) {
       console.error(`Error when handling ${selector}: ${e.stack || e}`);
       if (typeof ackFn === "function")
-        ackFn({
-          sender: this.id,
-          inResponseTo: msg.id,
-          data: {isError: true, error: String(e.stack || e)}
-        });
+        ackFn(this.prepareAnswerMessage(msg,
+          {isError: true, error: String(e.stack || e)}))
     }
   }
 
@@ -217,7 +236,7 @@ export default class L2LConnection {
       // invocation should be received "later" then the ack
       var ackCalled = false,
           ackTimedout = false,
-          timeoutMs = this.options.ackTimeout,
+          timeoutMs = "ackTimeout" in msg ? msg.ackTimeout : this.options.ackTimeout,
           ackN = this._outgoingOrderNumberingByTargets.get(msg.sender) || 0;
 
       this._outgoingOrderNumberingByTargets.set(msg.sender, ackN + 1);
@@ -234,19 +253,13 @@ export default class L2LConnection {
         }
         ackCalled = true;
 
-        ackFn({
-          action: msg.action + "-response",
-          inResponseTo: msg.messageId,
-          target: msg.sender,
-          data: answerData,
-          sender: this.id
-        });
+        ackFn(this.prepareAnswerMessage(msg, answerData));
 
         if (this.debug || debugMessageOrder)
           console.log(`[MSG ORDER] ${this} sending ${ackN} (ack for ${msg.action})`);
       };
 
-      setTimeout(() => {
+      timeoutMs && setTimeout(() => {
         if (ackCalled) return;
         answerFn({
           isError: true,
