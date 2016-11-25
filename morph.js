@@ -1070,7 +1070,7 @@ export class Morph {
     exported.name = exported.name.replace(
         /copy( [0-9]+)?$/,
         (_, num) => `copy ${num && num.trim() ? Number(num)+1 : "1"}`);
-    return morph(exported);
+    return morph({attributeConnections: [], ...exported});
   }
 
 

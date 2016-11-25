@@ -707,6 +707,7 @@ export class World extends Morph {
 
   visibleBounds () {
     // the bounds call seems to slow down halos...
+    if (!this.env.renderer) return this.innerBounds();
     return this.windowBounds().intersection(this.innerBounds());
   }
 

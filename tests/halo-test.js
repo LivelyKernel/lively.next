@@ -366,7 +366,7 @@ describe("halos", () => {
     var copy = halo.target;
     expect(copy).not.equals(submorph2);
     hand.position = submorph1.globalBounds().center();
-    halo.copyHalo().update(hand)
+    halo.copyHalo().stop(hand)
     expect(halo.borderBox.globalPosition).equals(copy.globalBounds().topLeft());
     expect(copy.owner).equals(submorph1);
   });
