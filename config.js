@@ -247,6 +247,8 @@ var config = {
       {keys: {mac: "Meta-Shift-L D A T E", win: "Ctrl-Shift-L D A T E"}, command: 'insert date'},
       {keys: "Ctrl-C i", command: "change string inflection"},
       {keys: "Alt-Shift-4"/*Alt-Shift-$*/, command: 'spell check word'},
+      {keys: "Alt-Shift-\\"/*Alt-Shift-|*/, command: "[shell] run shell command on region"},
+      {keys: {mac: "Meta-Shift-L O P E N", win: "Ctrl-Shift-L O P E N"}, command: "open file at cursor"},
     ]
 
   },
