@@ -19,19 +19,22 @@ export default class Workspace extends Window {
         plugins: [new ShellEditorPlugin()]
       },
       extent: pt(400,300),
-      ...obj.dissoc(props, ["content"])
+      ...obj.dissoc(props, ["content", "cwd"])
     });
-    this.addMorph(this.ensureCwdButton());
+    var btn = this.addMorph(this.ensureCwdButton(this.shellPlugin.cwd));
+    connect(this.shellPlugin, 'cwd', btn, 'label',
+      {converter: cwd => lively.lang.string.truncateLeft(cwd, 50)});
   }
 
   get shellPlugin() { return this.targetMorph.pluginFind(p => p.isShellEditorPlugin); }
 
-  ensureCwdButton() {
+  ensureCwdButton(cwd) {
     var btn = this.getSubmorphNamed("changeCwdButton")
      if (btn) return btn;
      btn = morph({
       type: "button", name: "changeCwdButton",
-      label: "cwd...", extent: pt(60,20), borderRadius: 3
+      padding: Rectangle.inset(4,2),
+      label: cwd || "...", extent: pt(60,20), borderRadius: 3
     });
     connect(btn, 'fire', this, 'execCommand', {converter: () => "[shell] change working directory"});
     return btn;
@@ -45,7 +48,7 @@ export default class Workspace extends Window {
     super.relayoutControls();
     var list = this.getSubmorphNamed("changeCwdButton");
     if (list)
-      list.topRight = this.innerBounds().topRight().addXY(-5, 2);
+      list.topRight = this.targetMorph.topRight.addXY(-5, 2);
   }
 
   get keybindings() {
@@ -69,14 +72,14 @@ export default class Workspace extends Window {
       {
         name: "[shell] open running command in terminal",
         exec(workspace) {
-          var command = workspace.shellPlugin.command;
+          var {command, cwd} = workspace.shellPlugin;
           if (!command) {
             workspace.setStatusMessage("No command running!");
             return true;
           }
           workspace.shellPlugin.command = null;
           workspace.shellPlugin.updateWindowTitle();
-          return Terminal.forCommand(command)
+          return Terminal.forCommand(command, {cwd});
         }
       }
     ]
