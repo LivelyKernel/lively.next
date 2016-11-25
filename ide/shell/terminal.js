@@ -1,7 +1,7 @@
 import { pt, Rectangle, rect, Color } from "lively.graphics"
 import { connect, disconnect } from "lively.bindings";
 import { arr, obj } from "lively.lang";
-import { runCommand } from "./shell-interface.js";
+import { defaultDirectory } from "./shell-interface.js";
 import ClientCommand from "lively.shell/client-command.js";
 import { GridLayout } from "lively.morphic/layout.js";
 import { Morph, Text, World, config } from "lively.morphic";
@@ -62,7 +62,9 @@ export default class Terminal extends Morph {
   }
 
   static runCommand(cmdString, options) {
-    return this.forCommand(runCommand(cmdString, options), options);
+    var win = this.open(options), term  = win.targetMorph;
+    term.runCommand(cmdString, options);
+    return win;
   }
 
   static forCommand(command, options) {
@@ -80,12 +82,13 @@ export default class Terminal extends Morph {
   constructor(props = {}) {
     super({
       extent: pt(600, 300),
-      ...obj.dissoc(props, ["command"])
+      ...obj.dissoc(props, ["command", "cwd"])
     });
-    this.state = {command: null};
+    this.state = {command: null, lastFocused: null};
     this.build(props);
     if (props.command)
       this.command = props.command;
+    this.cwd = props.cwd || defaultDirectory();
   }
 
   get defaultStyle() {
@@ -113,13 +116,15 @@ export default class Terminal extends Morph {
       ...props
     }));
     connect(input, "input", this, "execCommand",
-      {updater: ($upd, command) => $upd("[shell terminal] run command", {command})});
+      {updater: ($upd, command) => $upd("[shell terminal] run command or send input", {command})});
 
 
     var btn = this.addMorph({
       type: "button", name: "changeCwdButton",
-      label: "cwd...", extent: pt(60,20), borderRadius: 3
+      label: "cwd...", extent: pt(60,20), borderRadius: 3,
+      padding: Rectangle.inset(4, 2)
     });
+    connect(this.shellPlugin, 'cwd', btn, 'label');
     connect(this, 'extent', btn, 'topRight', {converter: ext => ext.withY(0)});
     connect(btn, 'fire', this, 'execCommand', {converter: () => "[shell] change working directory"});
 
@@ -130,7 +135,10 @@ export default class Terminal extends Morph {
 
   }
 
-  focus() { this.getSubmorphNamed("input").focus(); }
+  focus() {
+    var target = this.state.lastFocused || "input";
+    this.getSubmorphNamed(target).focus();
+  }
 
   clear() { this.getSubmorphNamed("output").textString = ""; }
 
@@ -138,8 +146,7 @@ export default class Terminal extends Morph {
     var win = this.getWindow();
     if (!win) return;
     var title = "Term",
-        {cwd, command} = this;
-    if (cwd) title += " " + cwd;
+        {command} = this;
     if (command) {
       var {commandString, status} = command;
       title += ` - ${commandString ? commandString + " " : ""}${status}`;
@@ -226,7 +233,6 @@ export default class Terminal extends Morph {
         name: "[shell] change working directory",
         exec: async term => {
           await term.shellPlugin.changeCwdInteractively();
-          term.updateWindowTitle();
           return true;
         }
       }
@@ -240,14 +246,14 @@ export default class Terminal extends Morph {
       .pluginFind(ea => ea.isShellEditorPlugin);
   }
   get cwd() { return this.shellPlugin.cwd; }
-  set cwd(cwd) { this.shellPlugin.cwd = cwd; this.updateWindowTitle(); }
+  set cwd(cwd) { this.shellPlugin.cwd = cwd; }
 
-  get command() { return this.state.command; }
+  get command() { return this.shellPlugin.command; }
   set command(cmd) {
     if (this.command && this.command.isRunning())
       throw new Error(`${this.command} still running`);
 
-    this.state.command = cmd;
+    this.shellPlugin.command = cmd;
     cmd.stdout && this.addOutput(cmd.stdout);
     cmd.stdout && this.addOutput(cmd.stderr);
     connect(cmd, 'stdout', this, 'addOutput');
@@ -257,6 +263,7 @@ export default class Terminal extends Morph {
     connect(cmd, 'close', this, 'updateWindowTitle');
     connect(cmd, 'close', this, 'updateTextMode');
     this.updateWindowTitle();
+    this.updateTextMode();
   }
 
   addOutput(text) {
@@ -265,9 +272,14 @@ export default class Terminal extends Morph {
     ed.append(text);
 
     if (isAtFileEnd) {
-      ed.gotoDocumentEnd()
-      ed.scrollCursorIntoView()
+      ed.gotoDocumentEnd();
+      ed.scrollCursorIntoView();
     }
   }
 
+  runCommand(cmd, opts) {
+    if (this.command && this.command.isRunning())
+      throw new Error(`${this.command} still running`);
+    return this.command = this.shellPlugin.runCommand(cmd, opts);
+  }
 }
