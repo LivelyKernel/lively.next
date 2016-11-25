@@ -1,7 +1,7 @@
-import { arr, obj } from "lively.lang";
+import { arr, obj, string } from "lively.lang";
 import { pt, Color, Rectangle } from "lively.graphics";
 import { show, morph, Morph, GridLayout } from "./index.js";
-import { connect } from "lively.bindings";
+import { connect, signal } from "lively.bindings";
 
 export default class Window extends Morph {
 
@@ -146,7 +146,10 @@ export default class Window extends Morph {
   }
 
   get title() { return this.titleLabel().textString; }
-  set title(title) { this.titleLabel().textString = title; }
+  set title(title) {
+    var sanitized = string.truncate(String(title).replace(/\n/g, ""), 300);
+    this.titleLabel().textString = sanitized;
+  }
 
   toggleMinimize() {
     var cache = this.propertyCache,
@@ -183,7 +186,13 @@ export default class Window extends Morph {
   }
 
   close() {
-    this.remove()
+    var world = this.world();
+    this.remove();
+    signal(this, "windowClosed", this);
+    if (this.targetMorph && typeof this.targetMorph.onWindowClose === "function")
+      this.targetMorph.onWindowClose();
+
+    world.activeWindow() && world.activeWindow().focus();
   }
 
   onMouseDown(evt) {
@@ -213,6 +222,8 @@ export default class Window extends Morph {
 
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
     this.focus();
+
+    signal(this, "windowActivated", this);
     return this;
   }
 
