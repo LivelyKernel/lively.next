@@ -904,14 +904,17 @@ export class Morph {
     var platform = this.keyhandlers[0].platform;
     return this.keybindings.reduce((keyMap, binding) => {
       var keys = binding.keys,
-          platformKeys = findKeysForPlatform(keys, platform) || keys,
+          platformKeys = findKeysForPlatform(keys, platform),
           command = binding.command,
           name = typeof command === "string" ? command : command.command || command.name;
 
-      return (platformKeys || "").split("|").reduce((keyMap, combo) => {
-        keyMap[combo] = {name, command};
+      if (typeof platformKeys !== "string") {
+        // console.warn(`in ${this}.keyCommandMap: platformKeys for ${command} is strange:`, platformKeys);
         return keyMap;
-      }, keyMap);
+      }
+
+      return platformKeys.split("|").reduce((keyMap, combo) =>
+        Object.assign(keyMap, {[combo]: {name, command}}), keyMap);
     }, {});
   }
 
