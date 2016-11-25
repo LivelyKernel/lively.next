@@ -95,7 +95,7 @@ var config = {
       {keys: {mac: 'Meta-X', win: 'Ctrl-X'}, command: {command: "clipboard cut", passEvent: true}},
       {keys: {mac: 'Meta-V', win: 'Ctrl-V'}, command: {command: "clipboard paste", passEvent: true}},
 
-      {keys: {mac: 'Meta-Z', win: 'Ctrl-Z'},             command: "text undo"},
+      {keys: {mac: 'Meta-Z|Ctrl-Shift--|Ctrl-x u', win: 'Ctrl-Z|Ctrl-Shift--|Ctrl-x u'}, command: "text undo"},
       {keys: {mac: 'Meta-Shift-Z', win: 'Ctrl-Shift-Z'}, command: "text redo"},
 
       {keys: {mac: 'Meta-A|Ctrl-X H', win: 'Ctrl-A|Ctrl-X H'}, command: "select all"},
@@ -209,8 +209,8 @@ var config = {
 
       {keys: "Alt-Q", command: "fit text to column"},
 
-      {keys: {win: "Ctrl-F|Ctrl-G|Ctrl-S|F3", mac: "Meta-F|Meta-G|Ctrl-S"},                      command: "search in text"},
-      {keys: {win: "Ctrl-Shift-F|Ctrl-Shift-G|Ctrl-R", mac: "Meta-Shift-F|Meta-Shift-G|Ctrl-R"}, command: {command: "search in text", args: {backwards: true}}},
+      {keys: {win: "Ctrl-F|Ctrl-G|F3", mac: "Meta-F|Meta-G|Ctrl-S"},                      command: "search in text"},
+      {keys: {win: "Ctrl-Shift-F|Ctrl-Shift-G", mac: "Meta-Shift-F|Meta-Shift-G|Ctrl-R"}, command: {command: "search in text", args: {backwards: true}}},
 
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
