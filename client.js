@@ -3,7 +3,7 @@ import { promise, string } from "lively.lang";
 import { resource } from "lively.resources";
 import ioClient from "socket.io-client";
 import L2LConnection from "./interface.js";
-import { defaultActions } from "./default-actions.js";
+import { defaultActions, defaultClientActions } from "./default-actions.js";
 
 export default class L2LClient extends L2LConnection {
 
@@ -12,6 +12,12 @@ export default class L2LClient extends L2LConnection {
     path = path.replace(/^\//, "");
     namespace = namespace.replace(/^\//, "");
     return `${origin}-${path}-${namespace}`
+  }
+
+  static default() {
+    // FIXME
+    var key = L2LClient._clients.keys().next().value;
+    return L2LClient._clients.get(key);
   }
 
   static ensure(options = {url: null, namespace: null}) {
@@ -35,9 +41,6 @@ export default class L2LClient extends L2LConnection {
     client = new this(origin, path, namespace);
     if (autoOpen || autoOpen === undefined) { client.open(); client.register(); }
 
-    Object.keys(defaultActions).forEach(name =>
-      client.addService(name, defaultActions[name]));
-
     this._clients.set(key, client);
     return client;
   }
@@ -57,6 +60,12 @@ export default class L2LClient extends L2LConnection {
       isReconnecting: false,
       isReconnectingViaSocketio: false
     };
+    
+    Object.keys(defaultActions).forEach(name =>
+      this.addService(name, defaultActions[name]));
+
+    Object.keys(defaultClientActions).forEach(name =>
+      this.addService(name, defaultClientActions[name]));
   }
 
   get socket() { return this._socketioClient; }
@@ -75,7 +84,8 @@ export default class L2LClient extends L2LConnection {
     await this.close();
 
     var url = resource(this.origin).join(this.namespace).url,
-        opts = {path: this.path, transports: ['websocket'], upgrade: false},
+        // opts = {path: this.path, transports: ['websocket', 'polling']},
+        opts = {path: this.path, transports: ['polling'], upgrade: false},
         socket = this._socketioClient = ioClient(url, opts);
 
 
