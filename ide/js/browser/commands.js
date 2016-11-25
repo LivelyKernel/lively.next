@@ -192,15 +192,6 @@ export default function browserCommands(browser) {
     },
 
     {
-      name: "change eval backend via dropdown list",
-      exec: browser => {
-        var list = browser.ensureEvalBackEndList();
-        list.toggleList(); list.list.focus();
-        return true;
-      }
-    },
-
-    {
       name: "run tests at point",
       exec: async (browser) => {
         var m = browser.selectedModule;

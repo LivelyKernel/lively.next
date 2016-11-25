@@ -8,6 +8,8 @@ import { JSONEditorPlugin } from "lively.morphic/ide/json/editor-plugin.js";
 import { HorizontalResizer } from "lively.morphic/resizers.js";
 import { Icon } from "lively.morphic/icons.js";
 import { JavaScriptEditorPlugin } from "../editor-plugin.js";
+import EvalBackendChooser from "../eval-backend-ui.js";
+
 import browserCommands from "./commands.js";
 import { Tree, TreeData } from "lively.morphic/tree.js"
 
@@ -29,7 +31,7 @@ class CodeDefTreeData extends TreeData {
     });
   }
 
-  display(node) { return node.name }
+  display(node) { return String(node.name) }
   isLeaf(node) { return !node.children }
   isCollapsed(node) { return node.isCollapsed; }
   collapse(node, bool) { node.isCollapsed = bool; }
@@ -124,7 +126,6 @@ export default class Browser extends Window {
   async onLoad() {
     this.reset();
     this.reloadPackages();
-    this.ensureEvalBackEndList();
   }
 
   build() {
@@ -224,7 +225,7 @@ export default class Browser extends Window {
                  {...btnStyle, name: "browseHistoryButton", label: Icon.makeLabel("history"), tooltip: "show browse history"},
                  {...btnStyle, name: "historyForwardButton", label: Icon.makeLabel("step-forward"), tooltip: "forward in browse history"},
                  ]},
-                this.ensureEvalBackEndList()]}
+                EvalBackendChooser.default.ensureEvalBackendDropdown(this, "local")]}
           ]
         });
 
@@ -342,7 +343,14 @@ export default class Browser extends Window {
   get backend() { return this.editorPlugin.evalEnvironment.remote || "local"; }
   set backend(remote) {
     this.editorPlugin.evalEnvironment.remote = remote;
-    this.ensureEvalBackEndList();
+  }
+  setEvalBackend(newRemote) {
+    var oldRemote = this.backend;
+    if (newRemote !== oldRemote) {
+      this.backend = newRemote;
+      this.reset();
+      this.reloadPackages();
+    }
   }
 
   async systemInterface() {
@@ -718,51 +726,6 @@ export default class Browser extends Window {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // eval backend
-
-  ensureEvalBackEndList() {
-    var list = this.getSubmorphNamed("eval backend list");
-    if (!list) {
-      list = new DropDownList({
-        fontSize: 10,
-        name: "eval backend list",
-        extent: pt(120, 20)
-      });
-      connect(list, 'selection', this, 'interactivelyChangeEvalBackend');
-      // for updating the list items when list is opened:
-      connect(list, 'activated', this, 'ensureEvalBackEndList');
-    }
-    if (!this.targetMorph) return list;
-
-    var currentBackend = this.backend,
-        backends = arr.uniq(
-                  arr.compact([
-                    "new backend...",
-                    "local", currentBackend,
-                    ...InputLine.getHistory("js-eval-backend-history").items]));
-    noUpdate({sourceObj: list, sourceAttribute: "selection"}, () => {
-      list.items = backends;
-      list.selection = currentBackend;
-    });
-    return list;
-  }
-
-  async interactivelyChangeEvalBackend(choice) {
-    var oldRemote = this.backend;
-    if (!choice) choice = "local";
-    if (choice === "new backend...") choice = undefined;
-    await this.getSubmorphNamed("sourceEditor").execCommand("change eval backend", {backend: choice});
-    var newRemote = this.backend;
-    this.ensureEvalBackEndList();
-    this.focus();
-    if (newRemote !== oldRemote) {
-      this.reset();
-      this.reloadPackages();
-    }
-  }
-
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -784,10 +747,13 @@ export default class Browser extends Window {
       {keys: "Alt-P", command: "browser history backward"},
       {keys: "Alt-N", command: "browser history forward"},
       {keys: "Alt-H", command: "browser history browse"},
-      {keys: "Meta-Shift-L b a c k e n d", command: "change eval backend via dropdown list"}
+      {keys: "Meta-Shift-L b a c k e n d", command: "activate eval backend dropdown list"}
     ].concat(super.keybindings);
   }
 
-  get commands() { return browserCommands(this); }
+  get commands() {
+    return browserCommands(this)
+      .concat(EvalBackendChooser.default.activateEvalBackendCommand(this));
+  }
 
 }

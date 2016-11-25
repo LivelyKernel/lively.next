@@ -6,6 +6,7 @@ import { HTMLMorph } from "lively.morphic/html-morph.js"
 import InputLine from "lively.morphic/text/input-line.js"
 import { DropDownList } from "lively.morphic/list.js"
 import { connect, noUpdate } from "lively.bindings"
+import EvalBackendChooser from "./js/eval-backend-ui.js";
 
 function testsFromSource(source) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
@@ -200,55 +201,20 @@ export default class TestRunner extends HTMLMorph {
 
     this.backend = null;
 
+    this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, this.backend));
     this.update();
   }
 
   relayout() {
-    this.ensureEvalBackEndList().topRight = this.innerBounds().topRight();
+    this.get("eval backend list").topRight = this.innerBounds().topRight();
   }
 
   get backend() { return this.state.backend; }
   set backend(x) {
     this.state.backend = x;
-    this.ensureEvalBackEndList();
+    this.get("eval backend list") && (this.get("eval backend list").selection = x);
   }
-
-  ensureEvalBackEndList() {
-    var list = this.getSubmorphNamed("eval backend list");
-    if (!list) {
-      list = this.addMorph(new DropDownList({
-        fontSize: 10,
-        name: "eval backend list",
-        extent: pt(120, 20)
-      }));
-      connect(list, 'selection', this, 'interactivelyChangeEvalBackend');
-      // for updating the list items when list is opened:
-      connect(list, 'activated', this, 'ensureEvalBackEndList');
-    }
-
-    var currentBackend = this.backend || "local",
-        backends = arr.uniq(
-                  arr.compact([
-                    "new backend...",
-                    "local", currentBackend,
-                    ...InputLine.getHistory("js-eval-backend-history").items]));
-    noUpdate({sourceObj: list, sourceAttribute: "selection"}, () => {
-      list.items = backends;
-      list.selection = currentBackend;
-    });
-
-    return list;
-  }
-
-  async interactivelyChangeEvalBackend(choice) {
-    var oldRemote = this.backend;
-    if (!choice) choice = "local";
-    if (choice === "new backend...") {
-      var newRemote = await this.world().prompt(
-        "choose eval backend", {historyId: "js-eval-backend-history"});
-    } else newRemote = choice;
-    this.backend = newRemote;
-  }
+  setEvalBackend(choice) { this.backend = choice; }
 
   async getLivelySystem() {
     var systemInterface = await System.import("lively-system-interface");
