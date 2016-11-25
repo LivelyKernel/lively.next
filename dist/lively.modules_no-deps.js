@@ -3378,7 +3378,10 @@ var Package = function () {
         return p.address == packageURL;
       });
       return !p ? Promise.resolve([]) : Promise.all(p.modules.map(function (m) {
-        return module$2(_this.System, m.name).search(needle, options);
+        return module$2(_this.System, m.name).search(needle, options).catch(function (err) {
+          console.error("Error searching module " + m.name + ":\n" + err.stack);
+          return [];
+        });
       })).then(function (res) {
         return lively_lang.arr.flatten(res, 1);
       });

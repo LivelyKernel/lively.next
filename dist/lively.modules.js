@@ -4678,6 +4678,11 @@
             truncation = truncation === undefined ? '...' : truncation;
             return s.length > length ? s.slice(0, length - truncation.length) + truncation : String(s);
         },
+        truncateLeft: function (s, length, truncation) {
+            length = length || 30;
+            truncation = truncation === undefined ? '...' : truncation;
+            return s.length > length ? truncation + s.slice(-length) : String(s);
+        },
         regExpEscape: function (s) {
             return s.replace(/([-()\[\]{}+?*.$\^|,:#<!\\])/g, '\\$1').replace(/\x08/g, '\\x08');
         },
@@ -24603,6 +24608,12 @@ var Resource = function () {
     this.size = undefined;
     this.type = undefined;
     this.contentType = undefined;
+    this.user = undefined;
+    this.group = undefined;
+    this.mode = undefined;
+    this._isDirectory = undefined;
+    this._isLink = undefined;
+    this.linkCount = undefined;
   }
 
   createClass(Resource, [{
@@ -24724,8 +24735,13 @@ var Resource = function () {
     value: function assignProperties(props) {
       // lastModified, etag, ...
       for (var name in props) {
-        if (name !== "url") this[name] = props[name];
-      }return this;
+        if (name === "url") continue;
+        // rename some properties to not create conflicts
+        var myPropName = name;
+        if (name === "isLink" || name === "isDirectory") myPropName = "_" + name;
+        this[myPropName] = props[name];
+      }
+      return this;
     }
   }, {
     key: "ensureExistance",
@@ -25962,12 +25978,16 @@ var NodeJSFileResource = function (_Resource) {
 }(Resource);
 
 /*global System*/
+var extensions = []; // [{name, matches, resourceClass}]
+
 function resource(url) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
   if (url.isResource) return url;
   url = String(url);
-  if (url.match(/^http/i)) return new WebDAVResource(url);
-  if (url.match(/^file/i)) return new NodeJSFileResource(url);
+  for (var i = 0; i < extensions.length; i++) {
+    if (extensions[i].matches(url)) return new extensions[i].resourceClass(url);
+  }if (url.startsWith("http:") || url.startsWith("https:")) return new WebDAVResource(url);
+  if (url.startsWith("file:")) return new NodeJSFileResource(url);
   throw new Error("Cannot find resource type for url " + url);
 }
 
@@ -26127,10 +26147,32 @@ var ensureFetch = function () {
   };
 }();
 
+function registerExtension(extension) {
+  // extension = {name: STRING, matches: FUNCTION, resourceClass: RESOURCE}
+  // name: uniquely identifying this extension
+  // predicate matches gets a resource url (string) passed and decides if the
+  // extension handles it
+  // resourceClass needs to implement the Resource interface
+  var name = extension.name;
+
+  extensions = extensions.filter(function (ea) {
+    return ea.name !== name;
+  }).concat(extension);
+}
+
+function unregisterExtension(extension) {
+  var name = typeof extension === "string" ? extension : extension.name;
+  extensions = extensions.filter(function (ea) {
+    return ea.name !== name;
+  });
+}
+
 exports.resource = resource;
 exports.createFiles = createFiles;
 exports.loadViaScript = loadViaScript;
 exports.ensureFetch = ensureFetch;
+exports.registerExtension = registerExtension;
+exports.unregisterExtension = unregisterExtension;
 
 }((this.lively.resources = this.lively.resources || {}),typeof module !== 'undefined' && typeof module.require === 'function' ? module.require('fs') : {readFile: function() { throw new Error('fs module not available'); }}));
 
@@ -29516,7 +29558,10 @@ var Package = function () {
         return p.address == packageURL;
       });
       return !p ? Promise.resolve([]) : Promise.all(p.modules.map(function (m) {
-        return module$2(_this.System, m.name).search(needle, options);
+        return module$2(_this.System, m.name).search(needle, options).catch(function (err) {
+          console.error("Error searching module " + m.name + ":\n" + err.stack);
+          return [];
+        });
       })).then(function (res) {
         return lively_lang.arr.flatten(res, 1);
       });

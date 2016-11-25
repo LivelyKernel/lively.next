@@ -340,10 +340,12 @@ class Package {
     var packageURL = this.url.replace(/\/$/, ""),
         p = getPackages(this.System).find(p => p.address == packageURL);
     return !p ? Promise.resolve([]) :
-      Promise.all(
-        p.modules.map(m => module(this.System, m.name)
-          .search(needle, options)))
-            .then(res => arr.flatten(res, 1));
+      Promise.all(p.modules.map(m =>
+        module(this.System, m.name).search(needle, options)
+          .catch(err => {
+            console.error(`Error searching module ${m.name}:\n${err.stack}`);
+            return [];
+          }))).then(res => arr.flatten(res, 1));
    }
 
   mergeWithConfig(config) {
