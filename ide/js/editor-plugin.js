@@ -43,6 +43,7 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
 
   highlight() {
     let textMorph = this.textMorph;
+
     if (!this.theme || !textMorph || !textMorph.document) return;
 
     let tokens = this._tokens = this.highlighter.tokenize(textMorph.textString);
@@ -82,11 +83,16 @@ export class JavaScriptEditorPlugin extends EditorPlugin {
     var nav = this.getNavigator();
     var ref = nav.resolveIdentifierAt(editor, editor.cursorPosition);
     if (ref) {
-      items.push({command: "selectDefinition", alias: `jump to definition`, target: editor})
-      items.push({command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences`, target: editor})
+      items.push(
+        {command: "selectDefinition", alias: `jump to definition`, target: editor},
+        {command: "selectSymbolReferenceOrDeclaration", alias: `select all occurrences`, target: editor});
     }
     return items;
   }
 
   getSnippets() { return jsSnippets; }
+  
+  getComment() {
+    return {lineCommentStart: "//", blockCommentStart: "/*", blockCommentEnd: "*/"}
+  }
 }
