@@ -14,13 +14,16 @@ export class AbstractPrompt extends Morph {
     super({
       fill: Color.black.withA(0.6), extent: pt(300,80), borderRadius: 5,
       dropShadow: true,
-      ...obj.dissoc(props, ["label", "autoRemove"])});
+      ...obj.dissoc(props, ["label", "autoRemove", "commands", "keybindings"])});
 
     this.build(props);
     this.state = {
       answer: null,
       autoRemove: props.hasOwnProperty("autoRemove") ? props.autoRemove : true
     };
+
+    if (props.commands) this.addCommands(props.commands);
+    if (props.keybindings) this.addKeyBindings(props.keybindings);
   }
 
   get isEpiMorph() { return true }
@@ -492,7 +495,9 @@ export class EditListPrompt extends ListPrompt {
     var list = this.get("list"),
         input = list.selection ? list.items[list.selectedIndex].string : "",
         toAdd = await this.world().prompt(
-          "Input to add to the list", {historyId: "EditListPrompt-input-history", input});
+          "Input to add to the list", {
+            historyId: this.historyId || "EditListPrompt-input-history",
+            input});
     if (!toAdd) return;
     var list = this.get("list"),
         insertAt = list.selection ? list.selectedIndex+1 : list.items.length;
