@@ -984,7 +984,7 @@ export class Text extends Morph {
 
   centerRow(row = this.cursorPosition.row, offset = pt(0,0)) {
     var charBounds = this.charBoundsFromTextPosition({row, column: 0}),
-        pos = charBounds.leftCenter();
+        pos = charBounds.leftCenter().addXY(-this.padding.left(), 0);
     this.scroll = pos.addXY(0, -this.height/2).addPt(offset);
   }
 
@@ -996,32 +996,41 @@ export class Text extends Morph {
         // if no line wrapping is enabled we add a little horizontal offset so
         // that characters at line end are better visible
         charBounds =   this.lineWrapping ? charBounds : charBounds.insetByPt(pt(-20, 0)),
-        delta = charBounds.topLeft().subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
+        delta = charBounds.topLeft()
+          .addXY(-this.padding.left(), 0)
+          .subPt(paddedBounds.translateForInclusion(charBounds).topLeft());
     this.scroll = this.scroll.addPt(delta).addPt(offset);
   }
 
-  async keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
+  keepPosAtSameScrollOffsetWhile(doFn, pos = this.cursorPosition) {
     // doFn has some effect on the text that might change the scrolled
     // position, like changing the font size. This function ensures that the
     // text position given will be at the same scroll offset after running the doFn
     var {scroll, selection: {lead: pos}} = this,
-        offset = this.charBoundsFromTextPosition(pos).y - scroll.y;
+        offset = this.charBoundsFromTextPosition(pos).y - scroll.y,
+        isPromise = false,
+        cleanup = () => this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset);
+
     try {
-      var result = await doFn();
-      await promise.delay(0);
-      return result;
-    } finally {
-      this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset);
-    }
+      var result = doFn();
+      isPromise = result && result instanceof Promise;
+    } finally { !isPromise && cleanup(); }
+    if (isPromise) result.then(cleanup).catch(cleanup);
+    return result;
   }
 
-  async saveExcursion(doFn) {
+  saveExcursion(doFn) {
     var sels = this.selection.isMultiSelection ?
-      this.selection.selections.map(ea => ea.directedRange) :
-      [this.selection];
+                this.selection.selections.map(ea => ea.directedRange) :
+                [this.selection],
+        isPromise = false,
+        cleanup = () => this.selections = sels;
     try {
-      return await this.keepPosAtSameScrollOffsetWhile(doFn);
-    } finally { this.selections = sels; }
+      var result = this.keepPosAtSameScrollOffsetWhile(doFn);
+      isPromise = result && result instanceof Promise;
+    } finally { !isPromise && cleanup(); };
+    if (isPromise) result.then(cleanup).catch(cleanup);
+    return result;
   }
 
   alignRow(row, how = "center") {
@@ -1221,6 +1230,7 @@ export class Text extends Morph {
     this.makeDirty();
     this.selection.cursorBlinkStart();
   }
+
   onBlur(evt) {
     this.makeDirty();
     this.selection.cursorBlinkStop();
