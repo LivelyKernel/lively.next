@@ -657,8 +657,7 @@ export class FilterableList extends Morph {
 
   acceptInput() {
     var list = this.get("list");
-    if (list.selectedIndex in list.items)
-      this.get("input").addInputToHistory(list.items[list.selectedIndex].string);
+    this.get("input").acceptInput();
     var result = {
       filtered: this.state.allItems,
       selected: list.selections,
