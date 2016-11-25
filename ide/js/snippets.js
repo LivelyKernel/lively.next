@@ -100,6 +100,16 @@ var _snippets = [
   ["sig", "signal(${0:source}, '${1:sourceAttr}', ${2:value});"],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // # lively.lang
+
+  ["ll",  "lively.lang."],
+  ["lls", "lively.lang.string."],
+  ["lla", "lively.lang.arr."],
+  ["llo", "lively.lang.obj."],
+  ["llf", "lively.lang.fun."],
+  ["llp", "lively.lang.promise."],
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // morphic stuff
 
   ["withA", "withAllSubmorphsDo(ea => { return ${0:ea}; })"],
@@ -118,6 +128,7 @@ var _snippets = [
   ["ce", "console.error($0)"],
   ["s", "show(`$0`);"],
 
+  ["l2lC", 'import L2LClient from "lively.2lively/client.js";\nvar l2lClient = L2LClient.default();$0']
 ]
 
 export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigger, expansion}));
@@ -186,20 +197,6 @@ export var snippets = _snippets.map(([trigger, expansion]) => new Snippet({trigg
 // ${0}
 // });
 // 
-// # lively.lang
-// snippet ll
-// lively.lang.$0
-// snippet lls
-// lively.lang.string.
-// snippet lla
-// lively.lang.arr.
-// snippet llo
-// lively.lang.obj.
-// snippet llf
-// lively.lang.fun.
-// name llp
-// regex /.*/llp(\()?(\))?/(\))?/
-// lively.lang.promise.${M1?($0${M2?${M2}:)}}
 // 
 
 // 
