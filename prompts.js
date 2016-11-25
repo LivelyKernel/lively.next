@@ -2,6 +2,7 @@
 import { Rectangle, Color, pt, rect } from "lively.graphics";
 import { arr, obj, promise } from "lively.lang";
 import { List, FilterableList } from "./list.js"
+import { PasswordInputLine } from "./text/input-line.js"
 import { Icon } from "./icons.js"
 import { Morph, Text, Label, GridLayout } from "./index.js";
 import { connect, disconnectAll } from "lively.bindings";
@@ -269,6 +270,50 @@ export class TextPrompt extends AbstractPrompt {
     // if the input string we pre-fill is wide than we try to make it fit
     if (inputWidth > this.width-10)
       this.width = Math.min(this.maxWidth, inputWidth+10);
+
+    this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
+    this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});
+
+    connect(this.get("ok button"), 'fire', this, 'resolve');
+    connect(this.get("cancel button"), 'fire', this, 'reject');
+
+    this.initLayout();
+  }
+
+  resolve() { super.resolve(this.get("input").acceptInput()); }
+
+  initLayout() {
+     const l = this.layout = new GridLayout({
+        grid: [["label", "label", "label"],
+               ["input", "input", "input"],
+               [null,    "ok button", "cancel button"]]
+     });
+     l.col(2).fixed = 100;
+     l.col(1).fixed = 100;
+     l.col(2).paddingRight = 5;
+     l.col(2).paddingLeft = 2.5;
+     l.col(0).paddingLeft = 5;
+     l.col(0).paddingRight = 2.5;
+     l.row(1).paddingBottom = 5;
+     l.row(2).paddingBottom = 5;
+  }
+
+  focus() { this.get("input").focus(); }
+}
+
+export class PasswordPrompt extends AbstractPrompt {
+
+  get maxWidth() { return 800; }
+
+  build({label, placeholder}) {
+    this.addMorph({
+      fill: null, padding: Rectangle.inset(3), fontSize: 14, fontColor: Color.gray,
+      name: "label", type: "label", value: label
+    });
+
+    var passwordInput = this.addMorph(new PasswordInputLine({
+      name: "input", placeholder: placeholder || "", borderWidth: 0
+    }));
 
     this.addMorph({name: "ok button", type: "button", label: "OK", ...this.okButtonStyle});
     this.addMorph({name: "cancel button", type: "button", label: "Cancel", ...this.cancelButtonStyle});

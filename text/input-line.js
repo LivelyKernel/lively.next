@@ -284,3 +284,44 @@ export default class InputLine extends Text {
     ]);
   }
 }
+
+
+
+import { HTMLMorph } from "../html-morph.js"
+
+export class PasswordInputLine extends HTMLMorph {
+  constructor(opts = {}) {
+    super(opts);
+    this.html = `<input style="height: calc(100% - 6px); width: calc(100% - 6px);" type="password" value="">`;
+    // hmm key events aren't dispatched by default...
+    this.ensureInputNode().then(node =>
+      node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, "onKeyDown"));
+  }
+
+  get inputNode() { return this.domNode.childNodes[0]; }
+  ensureInputNode() { return this.whenRendered().then(() => this.inputNode); }
+
+  get input() { return this.inputNode.value || ""; }
+  set input(val) { this.ensureInputNode().then(n => n.value = val); }
+
+  get placeholder() { return this.inputNode.placeholder; }
+  set placeholder(val) { this.ensureInputNode().then(n => n.placeholder = val); }
+
+  focus() { this.ensureInputNode().then(n => n.focus()); }
+
+  acceptInput() { var i = this.input; signal(this, "input", i);; return i; }
+  onInputChanged(change) { signal(this, "inputChanged", change); }
+
+  get commands() {
+    return [
+      {name: "accept input", exec: () => { this.acceptInput(); return true; }}
+    ].concat(super.commands);
+  }
+
+  get keybindings() {
+    return super.keybindings.concat([
+      {keys: "Enter", command: "accept input"},
+      {keys: {mac: "Meta-S", win: "Ctrl-S"}, command: "accept input"}
+    ]);
+  }
+}

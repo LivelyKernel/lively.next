@@ -14,6 +14,7 @@ import {
   ConfirmPrompt,
   MultipleChoicePrompt,
   TextPrompt,
+  PasswordPrompt,
   ListPrompt,
   EditListPrompt
 } from "./prompts.js";
@@ -617,7 +618,7 @@ export class World extends Morph {
          if (c.isSelectionElement || c.isHand) return;
          const candidateBounds = c.bounds(),
                included = selectionBounds.containsRect(candidateBounds);
-         
+
          if (!this.selectedMorphs[c.id] && included) {
             this.selectedMorphs[c.id] = this.addMorph({
                 isSelectionElement: true,
@@ -822,13 +823,18 @@ export class World extends Morph {
   }
 
   prompt(label, opts = {requester: null, input: "", historyId: null, useLastInput: false}) {
-    // this.world().prompt("test", {input: "123"})
+    // await this.world().prompt("test", {input: "123"})
     // options = {
     //   input: STRING, -- optional, prefilled input string
     //   historyId: STRING, -- id to identify the input history for this prompt
     //   useLastInput: BOOLEAN -- use history for default input?
     // }
     return this.openPrompt(new TextPrompt({label, ...opts}), opts);
+  }
+
+  passwordPrompt(label, opts = {requester: null, input: ""}) {
+    // await this.world().passwordPrompt("secret")
+    return this.openPrompt(new PasswordPrompt({label, ...opts}), opts);
   }
 
   confirm(label, opts = {requester: null, animated: true}) {
