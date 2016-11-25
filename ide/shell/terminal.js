@@ -176,19 +176,31 @@ export default class Terminal extends Morph {
     return super.commands.concat([
       {
         name: "focus input",
-        exec: term => { var m = term.getSubmorphNamed("input"); m.show(); m.focus(); return true; }
+        exec: term => {
+          term.state.lastFocused = "input"
+          var m = term.getSubmorphNamed("input");
+          m.show(); m.focus(); return true;
+        }
       },
 
       {
         name: "focus output",
-        exec: term => { var m = term.getSubmorphNamed("output"); m.show(); m.focus(); return true; }
+        exec: term => {
+          term.state.lastFocused = "output";
+          var m = term.getSubmorphNamed("output");
+          m.show(); m.focus(); return true;
+        }
       },
       
       {
-        name: "[shell terminal] run command",
+        name: "[shell terminal] run command or send input",
         exec: (term, opts = {command: ""}) => {
-          term.clear();
-          term.command = runCommand(opts.command, {cwd: term.cwd});
+          if (term.command && term.command.isRunning()) {
+            term.command.writeToStdin(opts.command + "\n");
+          } else {
+            term.clear();
+            term.command = term.runCommand(opts.command, obj.dissoc(opts, ["command"]));
+          }
           return true;
         }
       },
