@@ -35,8 +35,10 @@ window.addEventListener('beforeunload', function(evt) {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import ClientCommand from "lively.shell/client-command.js";
 import L2LClient from "lively.2lively/client.js";
+import ClientCommand from "lively.shell/client-command.js";
+import { resourceExtension } from "lively.shell/client-resource.js";
+import { registerExtension } from "lively.resources";
 
 startLively2Lively()
   .then(() => console.log("[lively.2lively] setup done"))
@@ -53,10 +55,13 @@ async function startLively2Lively() {
   // await System.normalize("socket.io-client", System.decanonicalize("lively.2lively/client.js"))
 
 
-
-  var client1 = await L2LClient.ensure({url: "http://localhost:9010/lively-socket.io", namespace: "l2l"});
+  var l2lURL = `${document.location.origin}/lively-socket.io`;
+  var l2lURL = `http://localhost:9010/lively-socket.io`;
+  var client1 = await L2LClient.ensure({url: l2lURL, namespace: "l2l"});
   ClientCommand.installLively2LivelyServices(client1);
-
+  resourceExtension.resourceClass.defaultL2lClient = client1;
+  registerExtension(resourceExtension);
+  
   // var cmd = new ClientCommand(client1)
   // await cmd.spawn({command: "ls"})
   // cmd.stdout

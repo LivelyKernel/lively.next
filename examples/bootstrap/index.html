@@ -61,7 +61,6 @@
               origin + "/node_modules/lively-system-interface/node_modules/lively.modules",
               function(m) { lively.modules = m; lively.modules.unwrapModuleLoad(); lively.modules.wrapModuleLoad(); })})
 
-          .then(function() { return importPackageAndDo(origin + "/node_modules/lively.shell"); })
           .then(function() { return importPackageAndDo(origin + "/node_modules/lively.2lively"); })
 
           .then(function() { console.log("...lively.system bootstrapped!"); })
