@@ -28,18 +28,19 @@ const editorCommands = [
 
 {
   name: "save file",
-  exec: async fileBrowser => {
-    var f = fileBrowser.state.currentFile
+  exec: async textEditor => {
+    var f = textEditor.state.currentFile
     if (!f) {
-      fileBrowser.setStatusMessage("No file selected");
+      textEditor.setStatusMessage("No file selected");
       return true;
     }
 
     try {
-      await f.write(fileBrowser.get("contentText").textString);
-      fileBrowser.setStatusMessage(`${f.url} saved`, Color.green);
+      await f.write(textEditor.get("contentText").textString);
+      textEditor.setStatusMessage(`${f.url} saved`, Color.green);
+      signal(textEditor, "contentSaved");
     } catch (e) {
-      fileBrowser.showError(`Error writing ${f.url}: ${e.stack || e}`);
+      textEditor.showError(`Error writing ${f.url}: ${e.stack || e}`);
     }
 
     return true;
@@ -92,12 +93,13 @@ export default class TextEditor extends Morph {
       fill: Color.white,
       border: {width: 1, color: Color.black},
       // clipMode: "auto",
-      extent: pt(500,400),
+      extent: pt(700,600),
       ...obj.dissoc(props, ["location"])
       });
 
     this.state = {
-      currentFile: null
+      currentFile: null,
+      loadPromise: null
     }
 
     this.build();
@@ -122,7 +124,7 @@ export default class TextEditor extends Morph {
 
     var [input, loadButton, saveButton, removeButton, contentText] = this.submorphs;
     connect(this, 'extent', this, 'relayout');
-    connect(input, 'input', this, 'onUrlInputChanged');
+    connect(input, 'input', this, 'location');
     connect(loadButton, 'fire', this, 'execCommand', {converter: () => "load file"});
     connect(saveButton, 'fire', this, 'execCommand', {converter: () => "save file"});
     connect(removeButton, 'fire', this, 'execCommand', {converter: () => "remove file"});
@@ -135,8 +137,36 @@ export default class TextEditor extends Morph {
   }
 
   set location(val) {
-    this.get("urlInput").input = val;
+    var url = val,
+        lineNumber = null,
+        colonIndex = val.lastIndexOf(":");
+
+    if (colonIndex > -1 && val.slice(colonIndex+1).match(/^[0-9]+$/)) {
+      lineNumber = Number(val.slice(colonIndex+1));
+      url = val.slice(0, colonIndex);
+    }
+
+    this.get("urlInput").input = val || "";
     this.get("urlInput").acceptInput();
+    if (this.get("urlInput").isFocused())
+      this.get("contentText").focus();
+    this.showFileContent(resource(url));
+    if (lineNumber) this.lineNumber = lineNumber;
+  }
+
+  get lineNumber() {
+    return this.getSubmorphNamed("contentText").cursorPosition.row;
+  }
+
+  set lineNumber(val) {
+    var row = Number(val);
+    if (isNaN(row)) return;
+    this.whenLoaded().then(() => {
+
+      var ed = this.getSubmorphNamed("contentText");
+      ed.cursorPosition = {row, column: 0};
+      ed.centerRow(row);
+    })
   }
 
   reload() { this.location = this.location; }
@@ -160,21 +190,23 @@ export default class TextEditor extends Morph {
     contentText.height = this.height - loadButton.bottom;
   }
 
-  onUrlInputChanged() {
-    try {
-      var loc = resource(this.get("urlInput").input);
-    } catch (e) { this.showError(e); }
-    return this.showFileContent(loc);
+  async whenLoaded() {
+    if (!this.state) await promise.waitFor(1000, () => this.state);
+    return this.state.loadPromise || Promise.resolve(this);
   }
 
   async showFileContent(resource) {
+    var deferred = promise.deferred();
+    this.state.loadPromise = deferred.promise;
     try {
       this.state.currentFile = resource;
       var content = await resource.read();
       await this.prepareEditorForFile(resource, content);
       var win = this.getWindow();
       if (win) win.title = resource.name();
-    } catch (e) { this.showError(e); }
+      deferred.resolve(this);
+    } catch (e) { this.showError(e); deferred.reject(e); }
+    return this.state.loadPromise;
   }
 
   async prepareEditorForFile(resource, content = "") {
@@ -191,6 +223,7 @@ export default class TextEditor extends Morph {
       this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
 
     } else if (url) {
+
       var [_, ext] = url.match(/\.([^\.\s]+)$/) || [];
 
       // FIXME
@@ -231,6 +264,15 @@ export default class TextEditor extends Morph {
 
   focus() {
     this.get("contentText").focus();
+  }
+
+  close() {
+    var win = this.getWindow();
+    win ? win.close() : this.remove();
+  }
+
+  onWindowClose() {
+    signal(this, "closed");
   }
 
   get commands() {
