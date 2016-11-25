@@ -1,4 +1,4 @@
-import { Resource } from "./resource.js";
+import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
 
 import { readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat } from "fs";
@@ -18,7 +18,7 @@ const readFileP = wrapInPromise(readFile),
       unlinkP = wrapInPromise(unlink),
       lstatP = wrapInPromise(lstat);
 
-export class NodeJSFileResource extends Resource {
+export default class NodeJSFileResource extends Resource {
 
   path() {
     return this.url.replace("file://", "");

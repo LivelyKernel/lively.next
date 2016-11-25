@@ -1,6 +1,6 @@
 /*global fetch, Headers, DOMParser, XPathEvaluator, XPathResult, Namespace*/
 
-import { Resource } from "./resource.js";
+import Resource from "./resource.js";
 import { applyExclude } from "./helpers.js";
 
 class XPathQuery {
@@ -121,7 +121,7 @@ function readXMLPropfindResult(xmlString) {
   });
 }
 
-export class WebDAVResource extends Resource {
+export default class WebDAVResource extends Resource {
 
   async read() {
     return (await fetch(this.url, {mode: 'cors'})).text();

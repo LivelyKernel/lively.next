@@ -2,7 +2,8 @@
 
 import { expect } from "mocha-es6";
 
-import { resource, createFiles } from "../index.js";
+import { resource, createFiles, registerExtension, unregisterExtension } from "../index.js";
+import Resource from "../src/resource.js";
 
 var dir = System.normalizeSync("lively.resources/tests/"),
     testProjectDir = dir + "temp-for-tests/",
@@ -200,3 +201,20 @@ describe("url operations", () => {
   });
 
 });
+
+describe("extensions", () => {
+
+  it("registers and unregisters resource extension", async () => {
+    registerExtension({
+      name: "test-resource",
+      matches: url => url.startsWith("xxx:"),
+      resourceClass: class extends Resource {
+        async read() { return this.url.split(":")[1]; }
+      }
+    });
+    expect(await resource("xxx:fooo").read()).equals("fooo");
+    unregisterExtension("test-resource");
+    expect(() => resource("xxx:fooo")).throws();
+  });
+
+})

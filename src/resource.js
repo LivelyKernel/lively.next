@@ -9,7 +9,7 @@ function nyi(obj, name) {
   throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
 }
 
-export class Resource {
+export default class Resource {
 
   static fromProps(props = {}) {
     // props can have the keys contentType, type, size, etag, created, lastModified, url
@@ -26,6 +26,12 @@ export class Resource {
     this.size = undefined;
     this.type = undefined;
     this.contentType = undefined;
+    this.user = undefined;
+    this.group = undefined;
+    this.mode = undefined;
+    this._isDirectory = undefined;
+    this._isLink = undefined;
+    this.linkCount = undefined;
   }
 
   get isResource() { return true; }
@@ -119,9 +125,14 @@ export class Resource {
 
   assignProperties(props) {
     // lastModified, etag, ...
-    for (var name in props)
-      if (name !== "url")
-        this[name] = props[name]
+    for (var name in props) {
+      if (name === "url") continue;
+      // rename some properties to not create conflicts
+      var myPropName = name;
+      if (name === "isLink" || name === "isDirectory")
+        myPropName = "_" + name;
+      this[myPropName] = props[name]
+    }
     return this;
   }
 

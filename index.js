@@ -1,13 +1,18 @@
 /*global System*/
-import { WebDAVResource } from "./src/http-resource.js";
-import { NodeJSFileResource } from "./src/fs-resource.js";
+import WebDAVResource from "./src/http-resource.js";
+import NodeJSFileResource from "./src/fs-resource.js";
+
+var extensions = []; // [{name, matches, resourceClass}]
 
 export function resource(url) {
   if (!url) throw new Error("lively.resource resource constructor: expects url but got " + url);
   if (url.isResource) return url;
   url = String(url);
-  if (url.match(/^http/i)) return new WebDAVResource(url);
-  if (url.match(/^file/i)) return new NodeJSFileResource(url);
+  for (var i = 0; i < extensions.length; i++)
+    if (extensions[i].matches(url))
+      return new extensions[i].resourceClass(url)
+  if (url.startsWith("http:") || url.startsWith("https:")) return new WebDAVResource(url);
+  if (url.startsWith("file:")) return new NodeJSFileResource(url);
   throw new Error(`Cannot find resource type for url ${url}`);
 }
 
@@ -83,4 +88,19 @@ export async function ensureFetch() {
     fetchInterface = await System.import("fetch-ponyfill", thisModuleId)
   } 
   Object.assign(System.global, fetchInterface())
+}
+
+export function registerExtension(extension) {
+  // extension = {name: STRING, matches: FUNCTION, resourceClass: RESOURCE}
+  // name: uniquely identifying this extension
+  // predicate matches gets a resource url (string) passed and decides if the
+  // extension handles it
+  // resourceClass needs to implement the Resource interface
+  var {name} = extension;
+  extensions = extensions.filter(ea => ea.name !== name).concat(extension);
+}
+
+export function unregisterExtension(extension) {
+  var name = typeof extension === "string" ? extension : extension.name;
+  extensions = extensions.filter(ea => ea.name !== name);
 }
