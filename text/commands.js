@@ -1123,6 +1123,51 @@ var usefulEditorCommands = [
 
       return true;
     }
+  },
+
+  {
+    name: "[shell] run shell command on region",
+    multiSelectAction: "single",
+    exec: async function(ed, opts) {
+      var input = ed.textInRange(ed.selection),
+          options = !input || input.length === 0 ? {} : {stdin: input},
+          cmdString = await ed.world().prompt('Enter shell command to run on region.',
+                              {historyId: 'lively.ide.execShellCommand'}),
+          {runCommand} = await System.import("lively.morphic/ide/shell/shell-interface.js")
+      if (!cmdString) return ed.setStatusMessage('No command entered, aborting...!')
+      var cmd = runCommand(cmdString, options);
+      try {
+        await cmd.whenDone();
+        var result = cmd.output.trim();
+        ed.undoManager.group();
+        ed.selection.selections.forEach(sel => sel.text = result);
+        ed.undoManager.group();
+      } catch (e) { ed.showError(e); }
+      return true;
+    }
+  },
+  
+  {
+    name: "open file at cursor",
+    exec: async function(ed, opts) {
+      var line = ed.getLine(),
+          startRow = ed.cursorPosition.row,
+          start = ed.document.scanBackward(ed.cursorPosition,
+                    (c, pos) => (pos.column <= 0 || c.match(/\s/)) && pos) || {row: 0, column: 0},
+          end = ed.document.scanForward(ed.cursorPosition,
+                  (c, pos) => (pos.row != startRow || c.match(/\s/)) && pos) || ed.documentEndPosition,
+          text = ed.textInRange({start,end}).replace(/\s/g, ""),
+
+          // read "urls" and line numbers like "./users/robertkrahn/config.js:611:"
+          parts = text.split(":"),
+          url = parts[0].match(/^file|http/) ? `${parts.shift()}:${parts.shift()}` : parts.shift();
+      if (parts[0].match(/^[0-9]+$/)) url += ":" + parts.shift();
+
+      var { default: TextEditor } = await System.import("lively.morphic/ide/text-editor.js"),
+          textEd = TextEditor.openInWindow();
+      textEd.location = url;
+      return textEd;
+    }
   }
 
 ];
